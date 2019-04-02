@@ -45,7 +45,7 @@ gem "attr_encrypted", "~> 3.0.0"
 gem 'devise'
 gem 'devise_token_auth'
 gem 'omniauth'
-gem 'devise_invitable', '~> 1.7.0'
+gem 'devise_invitable', '~> 2.0.0'
 
 # Getting some knowledge
 gem 'newrelic_rpm'

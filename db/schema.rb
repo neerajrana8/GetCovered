@@ -10,10 +10,33 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_04_02_210253) do
+ActiveRecord::Schema.define(version: 2019_04_02_211503) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
+
+  create_table "accounts", force: :cascade do |t|
+    t.string "title"
+    t.string "slug"
+    t.string "call_sign"
+    t.boolean "enabled", default: false, null: false
+    t.boolean "whitelabel", default: false, null: false
+    t.boolean "tos_accepted", default: false, null: false
+    t.datetime "tos_accepted_at"
+    t.string "tos_acceptance_ip"
+    t.boolean "verified", default: false, null: false
+    t.string "stripe_id"
+    t.jsonb "contact_info", default: {}
+    t.jsonb "settings", default: {}
+    t.bigint "staff_id"
+    t.bigint "agency_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["agency_id"], name: "index_accounts_on_agency_id"
+    t.index ["call_sign"], name: "index_accounts_on_call_sign", unique: true
+    t.index ["staff_id"], name: "index_accounts_on_staff_id"
+    t.index ["stripe_id"], name: "index_accounts_on_stripe_id", unique: true
+  end
 
   create_table "agencies", force: :cascade do |t|
     t.string "title"
@@ -31,7 +54,9 @@ ActiveRecord::Schema.define(version: 2019_04_02_210253) do
     t.jsonb "settings", default: {}
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "staff_id"
     t.index ["call_sign"], name: "index_agencies_on_call_sign", unique: true
+    t.index ["staff_id"], name: "index_agencies_on_staff_id"
     t.index ["stripe_id"], name: "index_agencies_on_stripe_id", unique: true
   end
 
@@ -57,8 +82,20 @@ ActiveRecord::Schema.define(version: 2019_04_02_210253) do
     t.json "tokens"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "invitation_token"
+    t.datetime "invitation_created_at"
+    t.datetime "invitation_sent_at"
+    t.datetime "invitation_accepted_at"
+    t.integer "invitation_limit"
+    t.string "invited_by_type"
+    t.bigint "invited_by_id"
+    t.integer "invitations_count", default: 0
     t.index ["confirmation_token"], name: "index_staffs_on_confirmation_token", unique: true
     t.index ["email"], name: "index_staffs_on_email", unique: true
+    t.index ["invitation_token"], name: "index_staffs_on_invitation_token", unique: true
+    t.index ["invitations_count"], name: "index_staffs_on_invitations_count"
+    t.index ["invited_by_id"], name: "index_staffs_on_invited_by_id"
+    t.index ["invited_by_type", "invited_by_id"], name: "index_staffs_on_invited_by_type_and_invited_by_id"
     t.index ["organizable_type", "organizable_id"], name: "index_staffs_on_organizable_type_and_organizable_id"
     t.index ["reset_password_token"], name: "index_staffs_on_reset_password_token", unique: true
     t.index ["uid", "provider"], name: "index_staffs_on_uid_and_provider", unique: true
