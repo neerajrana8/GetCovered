@@ -16,7 +16,20 @@ namespace :docker do
   task up: :environment do
     system("docker-compose up -d --force-recreate")
   end
-
+  
+  desc "Migrate Docker"
+	task migrate: :environment do
+		system("docker-compose run web rails db:migrate")
+	end
+	
+	desc "Install from Docker"
+	task install: :environment do
+		Rake::Task['docker:down'].invoke
+		Rake::Task['docker:build'].invoke
+		system("docker-compose run web rails db:create")
+		Rake::Task['docker:migrate'].invoke
+	end
+	
   desc "Start Docker"
   task start: :environment do
 		Rake::Task['docker:build'].invoke
