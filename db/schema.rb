@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_04_02_224529) do
+ActiveRecord::Schema.define(version: 2019_04_02_224720) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -58,6 +58,35 @@ ActiveRecord::Schema.define(version: 2019_04_02_224529) do
     t.index ["call_sign"], name: "index_agencies_on_call_sign", unique: true
     t.index ["staff_id"], name: "index_agencies_on_staff_id"
     t.index ["stripe_id"], name: "index_agencies_on_stripe_id", unique: true
+  end
+
+  create_table "profiles", force: :cascade do |t|
+    t.string "first_name"
+    t.string "last_name"
+    t.string "middle_name"
+    t.string "title"
+    t.string "suffix"
+    t.string "full_name"
+    t.string "contact_email"
+    t.string "contact_phone"
+    t.date "birth_date"
+    t.string "profileable_type"
+    t.bigint "profileable_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.string "invitation_token"
+    t.datetime "invitation_created_at"
+    t.datetime "invitation_sent_at"
+    t.datetime "invitation_accepted_at"
+    t.integer "invitation_limit"
+    t.string "invited_by_type"
+    t.bigint "invited_by_id"
+    t.integer "invitations_count", default: 0
+    t.index ["invitation_token"], name: "index_profiles_on_invitation_token", unique: true
+    t.index ["invitations_count"], name: "index_profiles_on_invitations_count"
+    t.index ["invited_by_id"], name: "index_profiles_on_invited_by_id"
+    t.index ["invited_by_type", "invited_by_id"], name: "index_profiles_on_invited_by_type_and_invited_by_id"
+    t.index ["profileable_type", "profileable_id"], name: "index_profiles_on_profileable_type_and_profileable_id"
   end
 
   create_table "staffs", force: :cascade do |t|
