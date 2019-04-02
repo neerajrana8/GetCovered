@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_04_02_224720) do
+ActiveRecord::Schema.define(version: 2019_04_02_224705) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -74,18 +74,6 @@ ActiveRecord::Schema.define(version: 2019_04_02_224720) do
     t.bigint "profileable_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.string "invitation_token"
-    t.datetime "invitation_created_at"
-    t.datetime "invitation_sent_at"
-    t.datetime "invitation_accepted_at"
-    t.integer "invitation_limit"
-    t.string "invited_by_type"
-    t.bigint "invited_by_id"
-    t.integer "invitations_count", default: 0
-    t.index ["invitation_token"], name: "index_profiles_on_invitation_token", unique: true
-    t.index ["invitations_count"], name: "index_profiles_on_invitations_count"
-    t.index ["invited_by_id"], name: "index_profiles_on_invited_by_id"
-    t.index ["invited_by_type", "invited_by_id"], name: "index_profiles_on_invited_by_type_and_invited_by_id"
     t.index ["profileable_type", "profileable_id"], name: "index_profiles_on_profileable_type_and_profileable_id"
   end
 
