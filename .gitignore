@@ -21,3 +21,11 @@
 
 # Ignore master key for decrypting credentials and more.
 /config/master.key
+
+.env
+.envrc
+
+.DS_Store
+._.DS_Store
+**/.DS_Store
+**/._.DS_Store
