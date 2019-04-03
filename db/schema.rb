@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_04_02_224705) do
+ActiveRecord::Schema.define(version: 2019_04_03_073913) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -58,6 +58,24 @@ ActiveRecord::Schema.define(version: 2019_04_02_224705) do
     t.index ["call_sign"], name: "index_agencies_on_call_sign", unique: true
     t.index ["staff_id"], name: "index_agencies_on_staff_id"
     t.index ["stripe_id"], name: "index_agencies_on_stripe_id", unique: true
+  end
+
+  create_table "charges", force: :cascade do |t|
+    t.integer "status"
+    t.integer "status_information"
+    t.integer "refund_status"
+    t.integer "payment_method"
+    t.integer "amount_returned_via_dispute"
+    t.integer "amount_refunded"
+    t.integer "amount_lost_to_disputes"
+    t.integer "amount_in_queued_refunds"
+    t.integer "dispute_count"
+    t.string "stripe_id"
+    t.bigint "invoice_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["invoice_id"], name: "index_charges_on_invoice_id"
+    t.index ["stripe_id"], name: "charge_stripe_id"
   end
 
   create_table "profiles", force: :cascade do |t|

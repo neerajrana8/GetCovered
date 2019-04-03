@@ -360,8 +360,5 @@ DEPENDENCIES
   twilio-ruby (~> 4.11.1)
   tzinfo-data
 
-RUBY VERSION
-   ruby 2.5.1p57
-
 BUNDLED WITH
    1.16.2
