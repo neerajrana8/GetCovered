@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_04_03_073913) do
+ActiveRecord::Schema.define(version: 2019_04_03_083615) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -93,6 +93,26 @@ ActiveRecord::Schema.define(version: 2019_04_03_073913) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["profileable_type", "profileable_id"], name: "index_profiles_on_profileable_type_and_profileable_id"
+  end
+
+  create_table "refunds", force: :cascade do |t|
+    t.string "stripe_id"
+    t.integer "amount"
+    t.string "currency"
+    t.string "failure_reason"
+    t.integer "stripe_reason"
+    t.string "receipt_number"
+    t.integer "stripe_status"
+    t.integer "status"
+    t.string "full_reason"
+    t.string "error_message"
+    t.integer "amount_returned_via_dispute"
+    t.bigint "charge_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["charge_id"], name: "index_refunds_on_charge_id"
+    t.index ["status"], name: "refund_status"
+    t.index ["stripe_id"], name: "refund_stripe_id"
   end
 
   create_table "staffs", force: :cascade do |t|
