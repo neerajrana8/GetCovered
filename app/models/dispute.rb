@@ -50,7 +50,7 @@ class Dispute < ApplicationRecord
 
   # Methods
 
-  def update_from_stripe_hash(hash)
+  def update_from_stripe_hash(dispute_hash)
     update(
       amount: dispute_hash['amount'],
       reason: dispute_hash['reason'],
