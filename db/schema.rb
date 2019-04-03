@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_04_03_084732) do
+ActiveRecord::Schema.define(version: 2019_04_03_090338) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -90,6 +90,19 @@ ActiveRecord::Schema.define(version: 2019_04_03_084732) do
     t.index ["charge_id"], name: "index_disputes_on_charge_id"
     t.index ["status"], name: "dispute_status"
     t.index ["stripe_id"], name: "dispute_stripe_id"
+  end
+
+  create_table "payments", force: :cascade do |t|
+    t.boolean "active"
+    t.integer "status"
+    t.integer "amount"
+    t.integer "reason"
+    t.string "stripe_id"
+    t.bigint "charge_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["charge_id"], name: "index_payments_on_charge_id"
+    t.index ["stripe_id"], name: "stripe_payment", unique: true
   end
 
   create_table "profiles", force: :cascade do |t|
