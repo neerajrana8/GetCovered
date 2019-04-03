@@ -11,9 +11,12 @@ class Staff < ActiveRecord::Base
   after_initialize :initialize_staff
   
   # belongs_to relationships
+  belongs_to :organizable, 
+    polymorphic: true,
+    required: false
   
   # has_many relationships
-  
+      
   # has_one relationships
   has_one :profile,
   		as: :profileable,
