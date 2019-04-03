@@ -6,6 +6,9 @@ class User < ActiveRecord::Base
   devise :invitable, :database_authenticatable, :registerable,
          :recoverable, :rememberable, :trackable, :validatable
   include DeviseTokenAuth::Concerns::User
+
+  # Active Record Callbacks
+  after_initialize :initialize_user
   
   # belongs_to relationships
   
@@ -17,4 +20,10 @@ class User < ActiveRecord::Base
   		autosave: true
   		
   	accepts_nested_attributes_for :profile
+  	
+  	private
+  		
+  		def initialize_user
+	  		# Blank for now...
+	  	end
 end

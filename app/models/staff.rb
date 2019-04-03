@@ -6,4 +6,24 @@ class Staff < ActiveRecord::Base
   devise :invitable, :database_authenticatable, :registerable,
          :recoverable, :rememberable, :trackable, :validatable
   include DeviseTokenAuth::Concerns::User
+
+  # Active Record Callbacks
+  after_initialize :initialize_staff
+  
+  # belongs_to relationships
+  
+  # has_many relationships
+  
+  # has_one relationships
+  has_one :profile,
+  		as: :profileable,
+  		autosave: true
+  		
+  	accepts_nested_attributes_for :profile
+  	
+  	private
+  		
+  		def initialize_staff
+	  		# Blank for now...
+	  	end
 end
