@@ -6,7 +6,9 @@
 class Invoice < ApplicationRecord
   # ActiveRecord Callbacks
 
-  after_initialize  :initialize_invoice
+  # All initialization was moved to database. Only user assignment is left, 
+  # which will be uncommented when Policy is ready.
+  # after_initialize  :initialize_invoice
 
   before_validation :calculate_subtotal, if: -> { line_items.count > 0 }
 
@@ -439,7 +441,7 @@ class Invoice < ApplicationRecord
   private
 
   def initialize_invoice
-    self.user ||= policy.user unless policy.nil?
+    self.user ||= policy&.user
   end
 
   # Calculation Methods
