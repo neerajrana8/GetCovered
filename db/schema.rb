@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_04_03_090338) do
+ActiveRecord::Schema.define(version: 2019_04_03_112910) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -103,6 +103,15 @@ ActiveRecord::Schema.define(version: 2019_04_03_090338) do
     t.datetime "updated_at", null: false
     t.index ["charge_id"], name: "index_payments_on_charge_id"
     t.index ["stripe_id"], name: "stripe_payment", unique: true
+  end
+
+  create_table "policy_types", force: :cascade do |t|
+    t.string "title"
+    t.integer "slug"
+    t.jsonb "defaults", default: {"options"=>{}, "deductibles"=>{}, "coverage_limits"=>{}}
+    t.boolean "enabled"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
   end
 
   create_table "profiles", force: :cascade do |t|
