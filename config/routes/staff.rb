@@ -1,0 +1,3 @@
+namespace :stuff do
+  
+end
