@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_04_03_112910) do
+ActiveRecord::Schema.define(version: 2019_04_03_121239) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -60,6 +60,15 @@ ActiveRecord::Schema.define(version: 2019_04_03_112910) do
     t.index ["stripe_id"], name: "index_agencies_on_stripe_id", unique: true
   end
 
+  create_table "application_modules", force: :cascade do |t|
+    t.string "title"
+    t.string "slug"
+    t.jsonb "nodes", default: {}
+    t.boolean "enabled"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
   create_table "charges", force: :cascade do |t|
     t.integer "status"
     t.integer "status_information"
@@ -90,6 +99,50 @@ ActiveRecord::Schema.define(version: 2019_04_03_112910) do
     t.index ["charge_id"], name: "index_disputes_on_charge_id"
     t.index ["status"], name: "dispute_status"
     t.index ["stripe_id"], name: "dispute_stripe_id"
+  end
+
+  create_table "invoices", force: :cascade do |t|
+    t.string "number"
+    t.integer "status", default: 0
+    t.datetime "status_changed"
+    t.text "description"
+    t.date "due_date"
+    t.date "available_date"
+    t.date "term_first_date"
+    t.date "term_last_date"
+    t.integer "renewal_cycle", default: 0
+    t.integer "total", default: 0
+    t.integer "subtotal", default: 0
+    t.integer "tax", default: 0
+    t.decimal "tax_percent", precision: 5, scale: 2, default: "0.0"
+    t.jsonb "system_data", default: {}
+    t.integer "amount_refunded", default: 0
+    t.integer "amount_to_refund_on_completion", default: 0
+    t.boolean "has_pending_refund", default: false
+    t.jsonb "pending_refund_data", default: {}
+    t.bigint "user_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id"], name: "index_invoices_on_user_id"
+  end
+
+  create_table "line_items", force: :cascade do |t|
+    t.string "title"
+    t.integer "price", default: 0
+    t.bigint "invoice_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["invoice_id"], name: "index_line_items_on_invoice_id"
+  end
+
+  create_table "module_permissions", force: :cascade do |t|
+    t.bigint "application_module_id"
+    t.string "permissible_type"
+    t.bigint "permissible_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["application_module_id"], name: "index_module_permissions_on_application_module_id"
+    t.index ["permissible_type", "permissible_id"], name: "permissible_access_index"
   end
 
   create_table "payments", force: :cascade do |t|
