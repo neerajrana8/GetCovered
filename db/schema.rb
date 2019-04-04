@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_04_04_082323) do
+ActiveRecord::Schema.define(version: 2019_04_04_085627) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -124,6 +124,24 @@ ActiveRecord::Schema.define(version: 2019_04_04_082323) do
     t.index ["agency_id"], name: "index_insurable_rates_on_agency_id"
     t.index ["carrier_id"], name: "index_insurable_rates_on_carrier_id"
     t.index ["insurable_id"], name: "index_insurable_rates_on_insurable_id"
+  end
+
+  create_table "insurables", force: :cascade do |t|
+    t.string "title"
+    t.string "slug"
+    t.boolean "enabled", default: false
+    t.bigint "account_id"
+    t.bigint "insurable_type_id"
+    t.bigint "insurable_id"
+    t.integer "category", default: 0
+    t.jsonb "profile", default: {}
+    t.boolean "covered", default: false
+    t.jsonb "carrier_data", default: {}
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id"], name: "index_insurables_on_account_id"
+    t.index ["insurable_id"], name: "index_insurables_on_insurable_id"
+    t.index ["insurable_type_id"], name: "index_insurables_on_insurable_type_id"
   end
 
   create_table "invoices", force: :cascade do |t|
