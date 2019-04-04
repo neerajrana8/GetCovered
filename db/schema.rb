@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_04_04_085627) do
+ActiveRecord::Schema.define(version: 2019_04_04_101725) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -67,6 +67,16 @@ ActiveRecord::Schema.define(version: 2019_04_04_085627) do
     t.boolean "enabled"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+  end
+
+  create_table "carrier_policy_types", force: :cascade do |t|
+    t.jsonb "defaults", default: {"options"=>{}, "deductibles"=>{}, "coverage_limits"=>{}}
+    t.bigint "carrier_id"
+    t.bigint "policy_type_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["carrier_id"], name: "index_carrier_policy_types_on_carrier_id"
+    t.index ["policy_type_id"], name: "index_carrier_policy_types_on_policy_type_id"
   end
 
   create_table "charges", force: :cascade do |t|
