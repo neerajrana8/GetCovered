@@ -60,10 +60,6 @@ class Dispute < ApplicationRecord
 
   private
 
-    def initialize_dispute
-      # do nothing; any nil fields stay nil
-    end
-
     def set_active_flag
       self.active = !self.class.closed_dispute_statuses.include?(status)
     end

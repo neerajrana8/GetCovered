@@ -7,7 +7,7 @@ Rails.application.routes.draw do
 
   draw :public
   draw :staff
-  draw :superadmin
+  draw :super_admin
   draw :user
   
 end

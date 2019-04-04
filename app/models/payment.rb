@@ -100,7 +100,7 @@ class Payment < ApplicationRecord
   private
 
     def initialize_payment
-      self.amount_refunded ||= '0.00' # Can we delete this? We have no amount_refunded!
+      # self.amount_refunded ||= '0.00' # Can we delete this? We have no amount_refunded!
       self.user_in_system = true if self.user_in_system.nil?
     end
 

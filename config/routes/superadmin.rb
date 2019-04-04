@@ -1,3 +1,3 @@
-namespace :superAdmin do
+namespace :super_admin do
   
 end

@@ -1,3 +1,3 @@
-namespace :stuff do
+namespace :staff do
   
 end
