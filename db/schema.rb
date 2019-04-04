@@ -70,15 +70,15 @@ ActiveRecord::Schema.define(version: 2019_04_03_121239) do
   end
 
   create_table "charges", force: :cascade do |t|
-    t.integer "status"
-    t.integer "status_information"
-    t.integer "refund_status"
-    t.integer "payment_method"
-    t.integer "amount_returned_via_dispute"
-    t.integer "amount_refunded"
-    t.integer "amount_lost_to_disputes"
-    t.integer "amount_in_queued_refunds"
-    t.integer "dispute_count"
+    t.integer "status", default: 0
+    t.string "status_information"
+    t.integer "refund_status", default: 0
+    t.integer "payment_method", default: 0
+    t.integer "amount_returned_via_dispute", default: 0
+    t.integer "amount_refunded", default: 0
+    t.integer "amount_lost_to_disputes", default: 0
+    t.integer "amount_in_queued_refunds", default: 0
+    t.integer "dispute_count", default: 0
     t.string "stripe_id"
     t.bigint "invoice_id"
     t.datetime "created_at", null: false
@@ -137,12 +137,12 @@ ActiveRecord::Schema.define(version: 2019_04_03_121239) do
 
   create_table "module_permissions", force: :cascade do |t|
     t.bigint "application_module_id"
-    t.string "permissible_type"
-    t.bigint "permissible_id"
+    t.string "permissable_type"
+    t.bigint "permissable_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["application_module_id"], name: "index_module_permissions_on_application_module_id"
-    t.index ["permissible_type", "permissible_id"], name: "permissible_access_index"
+    t.index ["permissable_type", "permissable_id"], name: "permissable_access_index"
   end
 
   create_table "payments", force: :cascade do |t|
@@ -195,7 +195,7 @@ ActiveRecord::Schema.define(version: 2019_04_03_121239) do
     t.integer "status"
     t.string "full_reason"
     t.string "error_message"
-    t.integer "amount_returned_via_dispute"
+    t.integer "amount_returned_via_dispute", default: 0
     t.bigint "charge_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false

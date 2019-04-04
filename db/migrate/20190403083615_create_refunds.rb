@@ -19,7 +19,7 @@ class CreateRefunds < ActiveRecord::Migration[5.2]
         }
       t.string :full_reason
       t.string :error_message
-      t.integer :amount_returned_via_dispute
+      t.integer :amount_returned_via_dispute, default: 0
       t.references :charge
 
       t.timestamps
