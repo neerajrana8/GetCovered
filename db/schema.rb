@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_04_04_081159) do
+ActiveRecord::Schema.define(version: 2019_04_04_082323) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -99,6 +99,31 @@ ActiveRecord::Schema.define(version: 2019_04_04_081159) do
     t.index ["charge_id"], name: "index_disputes_on_charge_id"
     t.index ["status"], name: "dispute_status"
     t.index ["stripe_id"], name: "dispute_stripe_id"
+  end
+
+  create_table "insurable_rates", force: :cascade do |t|
+    t.string "title"
+    t.string "schedule"
+    t.string "sub_schedule"
+    t.text "description"
+    t.boolean "liability_only"
+    t.integer "number_insured"
+    t.jsonb "deductibles", default: {}
+    t.jsonb "coverage_limits", default: {}
+    t.integer "interval", default: 0
+    t.integer "premium", default: 0
+    t.boolean "activated"
+    t.date "activated_on"
+    t.date "deactivated_on"
+    t.boolean "paid_in_full"
+    t.bigint "carrier_id"
+    t.bigint "agency_id"
+    t.bigint "insurable_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["agency_id"], name: "index_insurable_rates_on_agency_id"
+    t.index ["carrier_id"], name: "index_insurable_rates_on_carrier_id"
+    t.index ["insurable_id"], name: "index_insurable_rates_on_insurable_id"
   end
 
   create_table "invoices", force: :cascade do |t|

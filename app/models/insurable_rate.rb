@@ -1,0 +1,2 @@
+class InsurableRate < ApplicationRecord
+end
