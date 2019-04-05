@@ -1,0 +1,2 @@
+class LeaseUser < ApplicationRecord
+end

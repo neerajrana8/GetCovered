@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_04_04_101725) do
+ActiveRecord::Schema.define(version: 2019_04_05_073954) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -97,6 +97,22 @@ ActiveRecord::Schema.define(version: 2019_04_04_101725) do
     t.index ["stripe_id"], name: "charge_stripe_id"
   end
 
+  create_table "claims", force: :cascade do |t|
+    t.string "subject"
+    t.text "description"
+    t.datetime "time_of_loss"
+    t.integer "status", default: 0
+    t.string "claimant_type"
+    t.bigint "claimant_id"
+    t.bigint "insurable_id"
+    t.bigint "policy_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["claimant_type", "claimant_id"], name: "index_claims_on_claimant_type_and_claimant_id"
+    t.index ["insurable_id"], name: "index_claims_on_insurable_id"
+    t.index ["policy_id"], name: "index_claims_on_policy_id"
+  end
+
   create_table "disputes", force: :cascade do |t|
     t.string "stripe_id"
     t.integer "amount"
@@ -109,6 +125,36 @@ ActiveRecord::Schema.define(version: 2019_04_04_101725) do
     t.index ["charge_id"], name: "index_disputes_on_charge_id"
     t.index ["status"], name: "dispute_status"
     t.index ["stripe_id"], name: "dispute_stripe_id"
+  end
+
+  create_table "events", force: :cascade do |t|
+    t.integer "verb", default: 0
+    t.integer "format", default: 0
+    t.integer "interface", default: 0
+    t.string "process"
+    t.string "endpoint"
+    t.datetime "started"
+    t.datetime "completed"
+    t.text "request"
+    t.text "response"
+    t.string "eventable_type"
+    t.bigint "eventable_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["eventable_type", "eventable_id"], name: "index_events_on_eventable_type_and_eventable_id"
+  end
+
+  create_table "histories", force: :cascade do |t|
+    t.integer "action", default: 0
+    t.json "data", default: {}
+    t.string "recordable_type"
+    t.bigint "recordable_id"
+    t.string "authorable_type"
+    t.bigint "authorable_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["authorable_type", "authorable_id"], name: "index_histories_on_authorable_type_and_authorable_id"
+    t.index ["recordable_type", "recordable_id"], name: "index_histories_on_recordable_type_and_recordable_id"
   end
 
   create_table "insurable_rates", force: :cascade do |t|
@@ -179,6 +225,31 @@ ActiveRecord::Schema.define(version: 2019_04_04_101725) do
     t.index ["user_id"], name: "index_invoices_on_user_id"
   end
 
+  create_table "lease_users", force: :cascade do |t|
+    t.bigint "lease_id"
+    t.bigint "user_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["lease_id"], name: "index_lease_users_on_lease_id"
+    t.index ["user_id"], name: "index_lease_users_on_user_id"
+  end
+
+  create_table "leases", force: :cascade do |t|
+    t.string "reference"
+    t.date "start_date"
+    t.date "end_date"
+    t.string "type"
+    t.integer "status", default: 0
+    t.boolean "covered", default: false
+    t.bigint "unit_id"
+    t.bigint "account_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id"], name: "index_leases_on_account_id"
+    t.index ["reference"], name: "lease_reference", unique: true
+    t.index ["unit_id"], name: "index_leases_on_unit_id"
+  end
+
   create_table "line_items", force: :cascade do |t|
     t.string "title"
     t.integer "price", default: 0
@@ -207,6 +278,21 @@ ActiveRecord::Schema.define(version: 2019_04_04_101725) do
     t.datetime "updated_at", null: false
     t.index ["application_module_id"], name: "index_module_permissions_on_application_module_id"
     t.index ["permissable_type", "permissable_id"], name: "permissable_access_index"
+  end
+
+  create_table "notifications", force: :cascade do |t|
+    t.string "subject"
+    t.text "message"
+    t.integer "status", default: 0
+    t.integer "delivery_method", default: 0
+    t.integer "code", default: 0
+    t.integer "action", default: 0
+    t.integer "template", default: 0
+    t.string "notifiable_type"
+    t.bigint "notifiable_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["notifiable_type", "notifiable_id"], name: "index_notifications_on_notifiable_type_and_notifiable_id"
   end
 
   create_table "payments", force: :cascade do |t|
