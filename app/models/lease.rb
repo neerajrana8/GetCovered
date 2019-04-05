@@ -17,8 +17,8 @@ class Lease < ApplicationRecord
   after_commit :update_unit_occupation
 
   # Relationships
-  belongs_to :unit,
-    required: true
+  # belongs_to :unit,
+  #  required: true
     
   has_one :building,
     through: :unit
