@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_04_05_073954) do
+ActiveRecord::Schema.define(version: 2019_04_05_105748) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -182,6 +182,16 @@ ActiveRecord::Schema.define(version: 2019_04_05_073954) do
     t.index ["insurable_id"], name: "index_insurable_rates_on_insurable_id"
   end
 
+  create_table "insurable_types", force: :cascade do |t|
+    t.string "title"
+    t.string "slug"
+    t.integer "category"
+    t.jsonb "profile_attributes", default: {}
+    t.boolean "enabled"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
   create_table "insurables", force: :cascade do |t|
     t.string "title"
     t.string "slug"
@@ -223,6 +233,33 @@ ActiveRecord::Schema.define(version: 2019_04_05_073954) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["user_id"], name: "index_invoices_on_user_id"
+  end
+
+  create_table "lease_type_insurable_types", force: :cascade do |t|
+    t.boolean "enabled", default: true
+    t.bigint "lease_type_id"
+    t.bigint "insurable_type_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["insurable_type_id"], name: "index_lease_type_insurable_types_on_insurable_type_id"
+    t.index ["lease_type_id"], name: "index_lease_type_insurable_types_on_lease_type_id"
+  end
+
+  create_table "lease_type_policy_types", force: :cascade do |t|
+    t.boolean "enabled", default: true
+    t.bigint "lease_type_id"
+    t.bigint "policy_type_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["lease_type_id"], name: "index_lease_type_policy_types_on_lease_type_id"
+    t.index ["policy_type_id"], name: "index_lease_type_policy_types_on_policy_type_id"
+  end
+
+  create_table "lease_types", force: :cascade do |t|
+    t.string "title"
+    t.boolean "enabled", default: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
   end
 
   create_table "lease_users", force: :cascade do |t|
