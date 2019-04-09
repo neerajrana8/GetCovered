@@ -1,0 +1,2 @@
+class PolicyType < ApplicationRecord
+end
