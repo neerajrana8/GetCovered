@@ -6,6 +6,13 @@
 # have been assigned the Account in their organizable relationship.
 
 class Account < ApplicationRecord
+  # Concerns
+  include EarningsReport, 
+          RecordChange, 
+          SetCallSign, 
+          SetSlug,
+          StripeConnect
+  
   # Active Record Callbacks
   after_initialize :initialize_agency
   

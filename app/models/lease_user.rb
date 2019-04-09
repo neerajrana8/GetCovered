@@ -3,7 +3,6 @@
 
 class LeaseUser < ApplicationRecord
   # Concerns
-  include SetAccountUser
   
   # Callbacks
   after_create :record_master_policy_coverage_user, :record_user_on_lease_history, :set_account_user
