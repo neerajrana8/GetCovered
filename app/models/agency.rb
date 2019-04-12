@@ -6,6 +6,13 @@
 # Agency in their organizable relationship.
 
 class Agency < ApplicationRecord
+	# Concerns
+	include EarningsReport, 
+					RecordChange, 
+					SetCallSign, 
+					SetSlug,
+					StripeConnect
+
   # Active Record Callbacks
   after_initialize :initialize_agency
   

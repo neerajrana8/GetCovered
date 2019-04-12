@@ -1,5 +1,6 @@
 class Insurable < ApplicationRecord
-  # has_many :insurables
+  # Concerns
+  include CarrierQbeCommunity, EarningsReport, RecordChange
   
   enum category: ['property', 'entity']
   
