@@ -79,7 +79,7 @@ group :development, :test do
   gem 'rails-controller-testing'
   gem 'guard-rspec'
   gem 'database_cleaner'
-  gem 'rubocop', '~> 0.48.1', require: false
+  gem 'rubocop', '~> 0.63.1', require: false
   # RDoc for Documentation
   gem 'rdoc'  
 end

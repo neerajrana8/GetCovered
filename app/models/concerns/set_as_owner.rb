@@ -19,12 +19,12 @@ module SetAsOwner
       
       end  
     elsif parent_class === 'Staff'
-      if account.staffs.count === 1
+      # if account.staffs.count === 1
         
-        account.update(staff_id: id, enabled: true, owned: true)
-        update_column(:permissions, "owner")
+      #   account.update(staff_id: id, enabled: true, owned: true)
+      #   update_column(:permissions, "owner")
          
-      end      
+      # end      
     end
     
   end
