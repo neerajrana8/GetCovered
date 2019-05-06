@@ -21,8 +21,6 @@ module TokenValidationMethods
     case resource_type
     when 'User'
       'v1/user/users/show.json'
-    when 'SuperAdmin'
-      'v1/utility/super_admins/show.json'
     when 'Staff'
       'v1/account/staffs/show.json'
     else
