@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_04_18_075612) do
+ActiveRecord::Schema.define(version: 2019_04_30_090929) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -436,6 +436,7 @@ ActiveRecord::Schema.define(version: 2019_04_18_075612) do
     t.datetime "last_sign_in_at"
     t.string "current_sign_in_ip"
     t.string "last_sign_in_ip"
+    t.integer "role", default: 0
     t.index ["confirmation_token"], name: "index_staffs_on_confirmation_token", unique: true
     t.index ["email"], name: "index_staffs_on_email", unique: true
     t.index ["invitation_token"], name: "index_staffs_on_invitation_token", unique: true
@@ -444,37 +445,8 @@ ActiveRecord::Schema.define(version: 2019_04_18_075612) do
     t.index ["invited_by_type", "invited_by_id"], name: "index_staffs_on_invited_by_type_and_invited_by_id"
     t.index ["organizable_type", "organizable_id"], name: "index_staffs_on_organizable_type_and_organizable_id"
     t.index ["reset_password_token"], name: "index_staffs_on_reset_password_token", unique: true
+    t.index ["role"], name: "index_staffs_on_role"
     t.index ["uid", "provider"], name: "index_staffs_on_uid_and_provider", unique: true
-  end
-
-  create_table "super_admins", force: :cascade do |t|
-    t.string "provider", default: "email", null: false
-    t.string "uid", default: "", null: false
-    t.string "encrypted_password", default: "", null: false
-    t.string "reset_password_token"
-    t.datetime "reset_password_sent_at"
-    t.boolean "allow_password_change", default: false
-    t.datetime "remember_created_at"
-    t.string "confirmation_token"
-    t.datetime "confirmed_at"
-    t.datetime "confirmation_sent_at"
-    t.string "unconfirmed_email"
-    t.string "email"
-    t.boolean "enabled", default: false, null: false
-    t.jsonb "settings", default: {}
-    t.jsonb "notification_options", default: {}
-    t.json "tokens"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.integer "sign_in_count", default: 0, null: false
-    t.datetime "current_sign_in_at"
-    t.datetime "last_sign_in_at"
-    t.string "current_sign_in_ip"
-    t.string "last_sign_in_ip"
-    t.index ["confirmation_token"], name: "index_super_admins_on_confirmation_token", unique: true
-    t.index ["email"], name: "index_super_admins_on_email", unique: true
-    t.index ["reset_password_token"], name: "index_super_admins_on_reset_password_token", unique: true
-    t.index ["uid", "provider"], name: "index_super_admins_on_uid_and_provider", unique: true
   end
 
   create_table "users", force: :cascade do |t|

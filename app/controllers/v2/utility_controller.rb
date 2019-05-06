@@ -5,7 +5,7 @@
 
 module V1
   class UtilityController < V1Controller
-    before_action :authenticate_super_admin!
+    # before_action :authenticate_super_admin!
 
     private
 

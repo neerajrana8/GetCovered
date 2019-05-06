@@ -1,12 +1,4 @@
 Rails.application.routes.draw do
-  mount_devise_token_auth_for 'SuperAdmin', 
-    at: 'v1/utility/auth',
-    skip: [:invitations],
-    controllers: {
-      sessions: 'super_admins/sessions',
-      token_validations:  'super_admins/token_validations',
-      passwords: 'super_admins/passwords'
-    }
             
   mount_devise_token_auth_for 'Staff', 
     at: 'v1/account/auth', 
@@ -41,7 +33,6 @@ Rails.application.routes.draw do
 
   draw :public
   draw :staff
-  draw :super_admin
   draw :user
   
 end
