@@ -3,10 +3,9 @@
 # file: app/controllers/v1/account/invoices_controller.rb
 
 module V1
-  module Account
+  module Staff
     class InvoicesController < StaffController
-      before_action :set_invoice,
-        only: :show
+      before_action :set_invoice, only: :show
 
       def index
         if params[:short]

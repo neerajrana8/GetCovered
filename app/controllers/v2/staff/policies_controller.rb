@@ -3,7 +3,7 @@
 # file: app/controllers/v1/account/policies_controller.rb
 
 module V1
-  module Account
+  module Staff
     class PoliciesController < StaffController
       before_action :set_policy,
         only: :show
