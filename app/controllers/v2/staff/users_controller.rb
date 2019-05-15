@@ -2,8 +2,8 @@
 # V1 Account Users Controller
 # file: app/controllers/v1/account/users_controller.rb
 
-module V1
-  module Account
+module V2
+  module Staff
     class UsersController < StaffController
       before_action :set_user,
         only: [:show, :update]

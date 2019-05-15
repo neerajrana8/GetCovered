@@ -1,9 +1,5 @@
-##
-# V1 Account Charges Controller
-# file: app/controllers/v1/account/charges_controller.rb
-
-module V1
-  module Account
+module V2
+  module Staff
     class ChargesController < StaffController
       before_action :set_charge, only: :show
       before_action :only_super_admins, only: [:credit, :edit, :destroy]

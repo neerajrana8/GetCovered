@@ -1,9 +1,5 @@
-##
-# V1 Account Claims Controller
-# file: app/controllers/v1/account/claims_controller.rb
-
-module V1
-  module Account
+module V2
+  module Staff
     class ClaimsController < StaffController
       before_action :set_claim, only: [:show, :update]
       before_action :only_super_admins, only: :destroy

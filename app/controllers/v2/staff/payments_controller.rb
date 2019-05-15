@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module V1
+module V2
   module Staff
     class PaymentsController < StaffController
       before_action :set_payment, only: :show, if: -> { current_staff.agent? }

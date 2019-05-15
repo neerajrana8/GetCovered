@@ -1,4 +1,4 @@
-module V1
+module V2
   module Staff
     class CarrierPolicyTypesController < StaffController
       before_action :set_carrier_policy_type, only: [:edit, :show, :update, :destroy]

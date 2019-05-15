@@ -1,7 +1,7 @@
-module V1
+module V2
   module Staff
-    
     class PolicyTypesController < StaffController
+      before_action :only_super_admins
       before_action :set_policy_type, only: [:show, :update, :destroy]
       
       def index

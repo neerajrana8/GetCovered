@@ -1,4 +1,4 @@
-module V1
+module V2
   module Staff
     class ApplicationModulesController < StaffController
       before_action :set_application_module, only: [:edit, :show, :update, :destroy]

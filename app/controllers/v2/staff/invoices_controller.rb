@@ -1,8 +1,7 @@
 ##
-# V1 Account Invoices Controller
 # file: app/controllers/v1/account/invoices_controller.rb
 
-module V1
+module V2
   module Staff
     class InvoicesController < StaffController
       before_action :set_invoice, only: :show

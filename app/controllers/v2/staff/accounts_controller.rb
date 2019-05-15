@@ -1,7 +1,7 @@
 # V1 Account Accounts Controller
 # file: app/controllers/v1/account/accounts_controller.rb
 
-module V1
+module V2
   module Staff
     class AccountsController < StaffController
       before_action :set_account, only: [:show, :update], if: -> { current_staff.agent? }

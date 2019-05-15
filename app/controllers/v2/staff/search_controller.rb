@@ -1,9 +1,5 @@
-##
-# V1 Account Search Controller
-# file: app/controllers/v1/account/search_controller.rb
-
-module V1
-  module Account
+module V2
+  module Staff
     class SearchController < StaffController
       before_action :draw
       

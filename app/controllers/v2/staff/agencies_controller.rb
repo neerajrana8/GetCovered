@@ -1,8 +1,4 @@
-##
-# V1 Utility Agencies Controller
-# file: app/controllers/v1/utility/agencies_controller.rb
-
-module V1
+module V2
   module Staff
     class AgenciesController < StaffController
       before_action :set_agency, only: [:show, :update], if: -> { current_staff.super_admin? }

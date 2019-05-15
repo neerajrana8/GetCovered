@@ -1,9 +1,5 @@
-##
-# V1 Account Reports Controller
-# file: app/controllers/v1/account/reports_controller.rb
-
-module V1
-  module Account
+module V2
+  module Staff
     class ReportsController < StaffController
       before_action :set_owner
       before_action :set_report,

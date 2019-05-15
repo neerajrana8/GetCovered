@@ -1,8 +1,4 @@
-##
-# V1 Account Policies Controller
-# file: app/controllers/v1/account/policies_controller.rb
-
-module V1
+module V2
   module Staff
     class PoliciesController < StaffController
       before_action :set_policy,

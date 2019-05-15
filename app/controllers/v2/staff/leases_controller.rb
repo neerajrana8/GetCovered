@@ -1,9 +1,6 @@
 # frozen_string_literal: true
 
-# V1 Account Leases Controller
-# file: app/controllers/v1/account/leases_controller.rb
-
-module V1
+module V2
   module Staff
     class LeasesController < StaffController
       before_action :only_super_admins, only: [:destroy]

@@ -1,9 +1,5 @@
-##
-# V1 Account Staffs Controller
-# file: app/controllers/v1/account/staffs_controller.rb
-
-module V1
-  module Account
+module V2
+  module Staff
     class StaffsController < StaffController
       before_action :set_staff,
         only: [:show, :update, :create_assignment, :delete_assignment]

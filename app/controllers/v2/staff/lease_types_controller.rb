@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module V1
+module V2
   module Staff
     class LeaseTypesController < StaffController
       before_action :only_super_admins
