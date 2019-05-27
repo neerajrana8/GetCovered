@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
 @view = {
-  table_name: 'refunds',
+  table_name: 'payments',
   relationship_plural: [
-    "notifications": { index: true, show: true, short: false }
+    "histories": { index: true, show: true, short: false }
   ],
   relationship_singular: [
     "charge": { index: false, show: true, short: false }
@@ -25,7 +25,11 @@
       }
     },
     user: {
-      available: false
+      available: true,
+      exclusions: {
+        models: [:user],
+        fields: [:stripe_id]
+      }
     },
     public: {
       available: false
