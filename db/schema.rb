@@ -79,6 +79,19 @@ ActiveRecord::Schema.define(version: 2019_04_30_090929) do
     t.index ["stuff_id"], name: "index_assignments_on_stuff_id"
   end
 
+  create_table "branding_profiles", force: :cascade do |t|
+    t.string "title"
+    t.string "url"
+    t.boolean "default", default: false, null: false
+    t.jsonb "styles"
+    t.string "profileable_type"
+    t.bigint "profileable_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["profileable_type", "profileable_id"], name: "index_branding_profiles_on_profileable_type_and_profileable_id"
+    t.index ["url"], name: "index_branding_profiles_on_url", unique: true
+  end
+
   create_table "carrier_policy_types", force: :cascade do |t|
     t.jsonb "defaults", default: {"options"=>{}, "deductibles"=>{}, "coverage_limits"=>{}}
     t.bigint "carrier_id"

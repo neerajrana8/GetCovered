@@ -24,11 +24,14 @@ class Agency < ApplicationRecord
   has_many :staff,
   		as: :organizable
   		
-  	has_many :account_staff,
-  		through: :accounts,
-  		as: :organizable,
-  		source: :staff,
-  		class_name: 'Staff'
+	has_many :account_staff,
+		through: :accounts,
+		as: :organizable,
+		source: :staff,
+		class_name: 'Staff'
+  		
+  has_many :branding_profiles,
+    as: :profileable
       
   # has_one relationships
   # blank for now...
