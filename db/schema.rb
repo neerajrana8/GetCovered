@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_04_30_090929) do
+ActiveRecord::Schema.define(version: 2019_06_10_235823) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -36,6 +36,28 @@ ActiveRecord::Schema.define(version: 2019_04_30_090929) do
     t.index ["call_sign"], name: "index_accounts_on_call_sign", unique: true
     t.index ["staff_id"], name: "index_accounts_on_staff_id"
     t.index ["stripe_id"], name: "index_accounts_on_stripe_id", unique: true
+  end
+
+  create_table "addresses", force: :cascade do |t|
+    t.string "street_number"
+    t.string "street_name"
+    t.string "street_two"
+    t.string "city"
+    t.string "state"
+    t.string "county"
+    t.string "zip_code"
+    t.string "plus_four"
+    t.string "country"
+    t.string "full"
+    t.string "full_searchable"
+    t.float "latitude"
+    t.float "longitude"
+    t.string "timezone"
+    t.string "addressable_type"
+    t.bigint "addressable_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["addressable_type", "addressable_id"], name: "index_addresses_on_addressable_type_and_addressable_id"
   end
 
   create_table "agencies", force: :cascade do |t|

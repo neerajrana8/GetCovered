@@ -1,6 +1,7 @@
 GEM
   remote: https://rubygems.org/
   specs:
+    StreetAddress (1.0.6)
     actioncable (5.2.2.1)
       actionpack (= 5.2.2.1)
       nio4r (~> 2.0)
@@ -325,6 +326,7 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
+  StreetAddress
   attr_encrypted (~> 3.0.0)
   bootsnap (>= 1.1.0)
   byebug
