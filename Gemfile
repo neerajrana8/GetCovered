@@ -70,6 +70,7 @@ gem 'kaminari'
 gem 'mailgun-ruby', '~>1.1.6'
 gem 'premailer-rails'
 
+gem 'geocoder'
 gem 'StreetAddress', :require => "street_address"
 
 group :development, :test do
