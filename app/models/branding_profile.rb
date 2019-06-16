@@ -12,7 +12,6 @@ class BrandingProfile < ApplicationRecord
   belongs_to :profileable, 
     polymorphic: true
     
-    
   scope :default, -> { where(default: true) }
     
   private

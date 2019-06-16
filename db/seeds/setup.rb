@@ -11,10 +11,61 @@ def adduser(user_type, chash)
   @user
 end
 
+##
+# Setting up base Staff
+
 @site_staff = [
   { email: 'dylan@getcoveredllc.com', password: 'TestingPassword1234', password_confirmation: 'TestingPassword1234', role: 'super_admin', enabled: true, profile_attributes: { first_name: 'Dylan', last_name: 'Gaines' }}
 ]
 
 @site_staff.each do |staff|
   adduser(Staff, staff)
+end
+
+##
+# Setting up base Policy Types
+
+@policy_types = [
+  { title: "Residential", designation: "HO4", enabled: true },
+  { title: "Master Policy", designation: "MASTER", enabled: true },
+  { title: "Commercial", designation: "BOP", enabled: true }
+]
+
+@policy_types.each do |pt|
+  policy_type = PolicyType.create(pt)
+end
+
+##
+# Setting up base Carriers
+
+@carriers = [
+  { title: "Queensland Business Insurance", syncable: false, rateable: true, quotable: true, bindable: true, verifiable: false, enabled: true },
+  { title: "Queensland Business Specialty Insurance", syncable: false, rateable: true, quotable: true, bindable: true, verifiable: false, enabled: true },
+  { title: "Crum & Forester", syncable: false, rateable: true, quotable: true, bindable: true, verifiable: false, enabled: true }
+]
+
+@carriers.each do |carrier|
+  carrier = Carrier.new(carrier)
+  if carrier.save
+    
+    fees = { "renewal" => 0, "new_business" => 0 }
+    
+    if carrier.id ==1
+      policy_type = PolicyType.find(1)
+      fees = { "renewal" => 0, "new_business" => 2000 }
+    elsif carrier.id == 2
+      policy_type = PolicyType.find(2)
+    elsif carrier.id == 3
+      policy_type = PolicyType.find(3)
+    end
+    
+    carrier.policy_types << policy_type
+    carrier_policy_type = CarrierPolicyType.where(policy_type_id: policy_type.id, carrier_id: carrier.id).take
+    
+    51.times do |state|
+      available = state == 0 || state == 11 ? false : true
+      carrier_policy_type.carrier_policy_type_availabilities << CarrierPolicyTypeAvailability.new(state: state, available: available, fees: fees)
+    end
+    
+  end
 end

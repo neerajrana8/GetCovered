@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_06_10_235823) do
+ActiveRecord::Schema.define(version: 2019_06_15_162826) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -101,6 +101,24 @@ ActiveRecord::Schema.define(version: 2019_06_10_235823) do
     t.index ["stuff_id"], name: "index_assignments_on_stuff_id"
   end
 
+  create_table "billing_strategies", force: :cascade do |t|
+    t.string "title"
+    t.string "slug"
+    t.boolean "enabled", default: false, null: false
+    t.jsonb "new_business", default: {"payments"=>[100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "payments_per_term"=>1, "remainder_added_to_deposit"=>true}
+    t.jsonb "renewal"
+    t.jsonb "fees", default: [{"flat"=>true, "title"=>"Service Fee", "amount"=>0, "per_payment"=>true}]
+    t.boolean "locked", default: false, null: false
+    t.bigint "agency_id"
+    t.bigint "carrier_id"
+    t.bigint "policy_type_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["agency_id"], name: "index_billing_strategies_on_agency_id"
+    t.index ["carrier_id"], name: "index_billing_strategies_on_carrier_id"
+    t.index ["policy_type_id"], name: "index_billing_strategies_on_policy_type_id"
+  end
+
   create_table "branding_profiles", force: :cascade do |t|
     t.string "title"
     t.string "url"
@@ -114,14 +132,42 @@ ActiveRecord::Schema.define(version: 2019_06_10_235823) do
     t.index ["url"], name: "index_branding_profiles_on_url", unique: true
   end
 
+  create_table "carrier_policy_type_availabilities", force: :cascade do |t|
+    t.integer "state"
+    t.boolean "available", default: false, null: false
+    t.jsonb "fees", default: {"payment"=>0, "renewal"=>0, "new_business"=>0, "reinstatement"=>0}
+    t.jsonb "zip_code_blacklist", default: []
+    t.bigint "carrier_policy_type_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["carrier_policy_type_id"], name: "index_carrier_policy_availability"
+  end
+
   create_table "carrier_policy_types", force: :cascade do |t|
-    t.jsonb "defaults", default: {"options"=>{}, "deductibles"=>{}, "coverage_limits"=>{}}
+    t.jsonb "policy_defaults", default: {"options"=>{}, "deductibles"=>{}, "coverage_limits"=>{}}
+    t.jsonb "application_defaults", default: {}
+    t.boolean "application_required", default: false, null: false
     t.bigint "carrier_id"
     t.bigint "policy_type_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["carrier_id"], name: "index_carrier_policy_types_on_carrier_id"
     t.index ["policy_type_id"], name: "index_carrier_policy_types_on_policy_type_id"
+  end
+
+  create_table "carriers", force: :cascade do |t|
+    t.string "title"
+    t.string "slug"
+    t.string "call_sign"
+    t.boolean "syncable", default: false, null: false
+    t.boolean "rateable", default: false, null: false
+    t.boolean "quotable", default: false, null: false
+    t.boolean "bindable", default: false, null: false
+    t.boolean "verifiable", default: false, null: false
+    t.boolean "enabled", default: false, null: false
+    t.jsonb "settings", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
   end
 
   create_table "charges", force: :cascade do |t|
@@ -392,9 +438,9 @@ ActiveRecord::Schema.define(version: 2019_06_10_235823) do
 
   create_table "policy_types", force: :cascade do |t|
     t.string "title"
-    t.integer "slug"
-    t.jsonb "defaults", default: {"options"=>{}, "deductibles"=>{}, "coverage_limits"=>{}}
-    t.boolean "enabled"
+    t.string "slug"
+    t.string "designation"
+    t.boolean "enabled", default: false, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
   end
