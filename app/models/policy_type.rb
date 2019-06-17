@@ -11,6 +11,8 @@ class PolicyType < ApplicationRecord
   has_many :carrier_policy_types
   has_many :carriers, 
     through: :carrier_policy_types
+    
+  has_many :commission_strategies
   
   # Validations
   validates :title, presence: true,

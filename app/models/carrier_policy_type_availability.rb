@@ -1,5 +1,5 @@
 ##
-# Carrier Policy Type Availability Model
+# =Carrier Policy Type Availability Model
 # file: +app/models/carrier_policy_type_availability.rb+
 
 class CarrierPolicyTypeAvailability < ApplicationRecord
@@ -32,7 +32,7 @@ class CarrierPolicyTypeAvailability < ApplicationRecord
   def toggle_blacklist(zip_code = nil)
     response = { success: false, action: nil }
     
-      unless zip_code.nil?
+    unless zip_code.nil?
       if zip_code_blacklist.include?(zip_code)
         zip_code_blacklist.delete(zip_code)
         response[:action] = "remove"

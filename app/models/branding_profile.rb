@@ -1,5 +1,5 @@
 ##
-# Branding Profile Model
+# =Branding Profile Model
 # file: +app/models/branding_profile.rb+
 
 class BrandingProfile < ApplicationRecord

@@ -15,7 +15,7 @@ end
 # Setting up base Staff
 
 @site_staff = [
-  { email: 'dylan@getcoveredllc.com', password: 'TestingPassword1234', password_confirmation: 'TestingPassword1234', role: 'super_admin', enabled: true, profile_attributes: { first_name: 'Dylan', last_name: 'Gaines' }}
+  { email: 'admin@getcoveredllc.com', password: 'TestingPassword1234', password_confirmation: 'TestingPassword1234', role: 'super_admin', enabled: true, profile_attributes: { first_name: 'Dylan', last_name: 'Gaines' }}
 ]
 
 @site_staff.each do |staff|
@@ -50,11 +50,16 @@ end
     
     fees = { "renewal" => 0, "new_business" => 0 }
     
-    if carrier.id ==1
+    # Add Residential to Queensland Business Insurance
+    if carrier.id == 1
       policy_type = PolicyType.find(1)
       fees = { "renewal" => 0, "new_business" => 2000 }
+      
+    # Add Master to Queensland Business Specialty Insurance
     elsif carrier.id == 2
       policy_type = PolicyType.find(2)
+      
+    # Add Commercial to Crum & Forester
     elsif carrier.id == 3
       policy_type = PolicyType.find(3)
     end

@@ -15,6 +15,12 @@ class Carrier < ApplicationRecord
   has_many :carrier_policy_type_availabilities, 
     through: :carrier_policy_types
   
+  has_many :carrier_agencies
+  has_many :agencies,
+    through: :carrier_agencies
+  
+  has_many :commission_strategies
+  
   # Validations
   validates :title, presence: true,
                     uniqueness: true  
