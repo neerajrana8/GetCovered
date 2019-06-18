@@ -30,9 +30,11 @@ Rails.application.routes.draw do
     controllers: { 
       invitations: 'users/invitations' 
     }
-
-  draw :public
-  draw :staff
-  draw :user
+  
+  namespace :v2 do
+    draw :public
+    draw :staff
+    draw :user
+  end
   
 end

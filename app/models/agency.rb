@@ -8,7 +8,7 @@
 class Agency < ApplicationRecord
 	# Concerns
 	include EarningsReport, 
-					RecordChange, 
+					# RecordChange, 
 					SetCallSign, 
 					SetSlug,
 					StripeConnect
@@ -19,16 +19,31 @@ class Agency < ApplicationRecord
   # belongs_to relationships
   
   # has_many relationships
+  has_many :carrier_agencies
+  has_many :carriers,
+    through: :carrier_agencies
+  has_many :carrier_agency_authorizations,
+    through: :carrier_agencies
+    
   has_many :accounts
   
   has_many :staff,
   		as: :organizable
   		
-  	has_many :account_staff,
-  		through: :accounts,
-  		as: :organizable,
-  		source: :staff,
-  		class_name: 'Staff'
+	has_many :account_staff,
+		through: :accounts,
+		as: :organizable,
+		source: :staff,
+		class_name: 'Staff'
+  		
+  has_many :branding_profiles,
+    as: :profileable
+
+  has_many :commission_strategies,
+    as: :commissionable
+  		
+  has_many :fees,
+    as: :ownerable
       
   # has_one relationships
   # blank for now...

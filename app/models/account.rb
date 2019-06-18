@@ -22,6 +22,9 @@ class Account < ApplicationRecord
   # has_many relationships
   has_many :staff,
   		as: :organizable
+  		
+  has_many :branding_profiles,
+    as: :profileable
       
   # has_one relationships
   # blank for now...

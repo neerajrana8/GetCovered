@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_04_30_090929) do
+ActiveRecord::Schema.define(version: 2019_06_18_030119) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -36,6 +36,28 @@ ActiveRecord::Schema.define(version: 2019_04_30_090929) do
     t.index ["call_sign"], name: "index_accounts_on_call_sign", unique: true
     t.index ["staff_id"], name: "index_accounts_on_staff_id"
     t.index ["stripe_id"], name: "index_accounts_on_stripe_id", unique: true
+  end
+
+  create_table "addresses", force: :cascade do |t|
+    t.string "street_number"
+    t.string "street_name"
+    t.string "street_two"
+    t.string "city"
+    t.integer "state"
+    t.string "county"
+    t.string "zip_code"
+    t.string "plus_four"
+    t.string "country"
+    t.string "full"
+    t.string "full_searchable"
+    t.float "latitude"
+    t.float "longitude"
+    t.string "timezone"
+    t.string "addressable_type"
+    t.bigint "addressable_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["addressable_type", "addressable_id"], name: "index_addresses_on_addressable_type_and_addressable_id"
   end
 
   create_table "agencies", force: :cascade do |t|
@@ -79,14 +101,94 @@ ActiveRecord::Schema.define(version: 2019_04_30_090929) do
     t.index ["stuff_id"], name: "index_assignments_on_stuff_id"
   end
 
+  create_table "billing_strategies", force: :cascade do |t|
+    t.string "title"
+    t.string "slug"
+    t.boolean "enabled", default: false, null: false
+    t.jsonb "new_business", default: {"payments"=>[100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "payments_per_term"=>1, "remainder_added_to_deposit"=>true}
+    t.jsonb "renewal"
+    t.boolean "locked", default: false, null: false
+    t.bigint "agency_id"
+    t.bigint "carrier_id"
+    t.bigint "policy_type_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["agency_id"], name: "index_billing_strategies_on_agency_id"
+    t.index ["carrier_id"], name: "index_billing_strategies_on_carrier_id"
+    t.index ["policy_type_id"], name: "index_billing_strategies_on_policy_type_id"
+  end
+
+  create_table "branding_profiles", force: :cascade do |t|
+    t.string "title"
+    t.string "url"
+    t.boolean "default", default: false, null: false
+    t.jsonb "styles"
+    t.string "profileable_type"
+    t.bigint "profileable_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["profileable_type", "profileable_id"], name: "index_branding_profiles_on_profileable_type_and_profileable_id"
+    t.index ["url"], name: "index_branding_profiles_on_url", unique: true
+  end
+
+  create_table "carrier_agencies", force: :cascade do |t|
+    t.string "external_carrier_id"
+    t.bigint "carrier_id"
+    t.bigint "agency_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["agency_id"], name: "index_carrier_agencies_on_agency_id"
+    t.index ["carrier_id"], name: "index_carrier_agencies_on_carrier_id"
+    t.index ["external_carrier_id"], name: "index_carrier_agencies_on_external_carrier_id", unique: true
+  end
+
+  create_table "carrier_agency_authorizations", force: :cascade do |t|
+    t.integer "state"
+    t.boolean "available", default: false, null: false
+    t.jsonb "zip_code_blacklist", default: []
+    t.bigint "carrier_agency_id"
+    t.bigint "policy_type_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["carrier_agency_id"], name: "index_carrier_agency_authorizations_on_carrier_agency_id"
+    t.index ["policy_type_id"], name: "index_carrier_agency_authorizations_on_policy_type_id"
+  end
+
+  create_table "carrier_policy_type_availabilities", force: :cascade do |t|
+    t.integer "state"
+    t.boolean "available", default: false, null: false
+    t.jsonb "zip_code_blacklist", default: []
+    t.bigint "carrier_policy_type_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["carrier_policy_type_id"], name: "index_carrier_policy_availability"
+  end
+
   create_table "carrier_policy_types", force: :cascade do |t|
-    t.jsonb "defaults", default: {"options"=>{}, "deductibles"=>{}, "coverage_limits"=>{}}
+    t.jsonb "policy_defaults", default: {"options"=>{}, "deductibles"=>{}, "coverage_limits"=>{}}
+    t.jsonb "application_defaults", default: {}
+    t.boolean "application_required", default: false, null: false
     t.bigint "carrier_id"
     t.bigint "policy_type_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["carrier_id"], name: "index_carrier_policy_types_on_carrier_id"
     t.index ["policy_type_id"], name: "index_carrier_policy_types_on_policy_type_id"
+  end
+
+  create_table "carriers", force: :cascade do |t|
+    t.string "title"
+    t.string "slug"
+    t.string "call_sign"
+    t.boolean "syncable", default: false, null: false
+    t.boolean "rateable", default: false, null: false
+    t.boolean "quotable", default: false, null: false
+    t.boolean "bindable", default: false, null: false
+    t.boolean "verifiable", default: false, null: false
+    t.boolean "enabled", default: false, null: false
+    t.jsonb "settings", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
   end
 
   create_table "charges", force: :cascade do |t|
@@ -123,6 +225,27 @@ ActiveRecord::Schema.define(version: 2019_04_30_090929) do
     t.index ["policy_id"], name: "index_claims_on_policy_id"
   end
 
+  create_table "commission_strategies", force: :cascade do |t|
+    t.integer "amount", default: 10, null: false
+    t.integer "type", default: 0, null: false
+    t.integer "fulfillment_schedule", default: 0, null: false
+    t.boolean "amortize", default: false, null: false
+    t.boolean "per_payment", default: false, null: false
+    t.boolean "enabled", default: false, null: false
+    t.boolean "locked", default: false, null: false
+    t.integer "house_override", default: 10, null: false
+    t.integer "override_type", default: 0, null: false
+    t.bigint "carrier_id"
+    t.bigint "policy_type_id"
+    t.string "commissionable_type"
+    t.bigint "commissionable_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["carrier_id"], name: "index_commission_strategies_on_carrier_id"
+    t.index ["commissionable_type", "commissionable_id"], name: "index_strategy_on_type_and_id"
+    t.index ["policy_type_id"], name: "index_commission_strategies_on_policy_type_id"
+  end
+
   create_table "disputes", force: :cascade do |t|
     t.string "stripe_id"
     t.integer "amount"
@@ -152,6 +275,26 @@ ActiveRecord::Schema.define(version: 2019_04_30_090929) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["eventable_type", "eventable_id"], name: "index_events_on_eventable_type_and_eventable_id"
+  end
+
+  create_table "fees", force: :cascade do |t|
+    t.string "title"
+    t.string "slug"
+    t.integer "amount", default: 0, null: false
+    t.integer "amount_type", default: 0, null: false
+    t.integer "type", default: 0, null: false
+    t.boolean "per_payment", default: false, null: false
+    t.boolean "amortize", default: false, null: false
+    t.boolean "enabled", default: false, null: false
+    t.boolean "locked", default: false, null: false
+    t.string "assignable_type"
+    t.bigint "assignable_id"
+    t.string "ownerable_type"
+    t.bigint "ownerable_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["assignable_type", "assignable_id"], name: "index_fees_on_assignable_type_and_assignable_id"
+    t.index ["ownerable_type", "ownerable_id"], name: "index_fees_on_ownerable_type_and_ownerable_id"
   end
 
   create_table "histories", force: :cascade do |t|
@@ -327,6 +470,19 @@ ActiveRecord::Schema.define(version: 2019_04_30_090929) do
     t.index ["permissable_type", "permissable_id"], name: "permissable_access_index"
   end
 
+  create_table "notes", force: :cascade do |t|
+    t.text "content"
+    t.string "excerpt"
+    t.integer "visibility", default: 0, null: false
+    t.bigint "staff_id"
+    t.string "noteable_type"
+    t.bigint "noteable_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["noteable_type", "noteable_id"], name: "index_notes_on_noteable_type_and_noteable_id"
+    t.index ["staff_id"], name: "index_notes_on_staff_id"
+  end
+
   create_table "notifications", force: :cascade do |t|
     t.string "subject"
     t.text "message"
@@ -355,11 +511,54 @@ ActiveRecord::Schema.define(version: 2019_04_30_090929) do
     t.index ["stripe_id"], name: "stripe_payment", unique: true
   end
 
+  create_table "policy_applications", force: :cascade do |t|
+    t.string "reference"
+    t.string "external_reference"
+    t.date "effective_date"
+    t.date "expiration_date"
+    t.integer "status", default: 0, null: false
+    t.datetime "status_updated_on"
+    t.jsonb "fields", default: []
+    t.bigint "carrier_id"
+    t.bigint "policy_type_id"
+    t.bigint "agency_id"
+    t.bigint "account_id"
+    t.bigint "policy_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id"], name: "index_policy_applications_on_account_id"
+    t.index ["agency_id"], name: "index_policy_applications_on_agency_id"
+    t.index ["carrier_id"], name: "index_policy_applications_on_carrier_id"
+    t.index ["policy_id"], name: "index_policy_applications_on_policy_id"
+    t.index ["policy_type_id"], name: "index_policy_applications_on_policy_type_id"
+  end
+
+  create_table "policy_quotes", force: :cascade do |t|
+    t.string "reference"
+    t.string "external_reference"
+    t.integer "status"
+    t.datetime "status_updated_on"
+    t.integer "premium"
+    t.integer "tax"
+    t.integer "est_fees"
+    t.integer "total_premium"
+    t.bigint "policy_application_id"
+    t.bigint "agency_id"
+    t.bigint "account_id"
+    t.bigint "policy_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id"], name: "index_policy_quotes_on_account_id"
+    t.index ["agency_id"], name: "index_policy_quotes_on_agency_id"
+    t.index ["policy_application_id"], name: "index_policy_quotes_on_policy_application_id"
+    t.index ["policy_id"], name: "index_policy_quotes_on_policy_id"
+  end
+
   create_table "policy_types", force: :cascade do |t|
     t.string "title"
-    t.integer "slug"
-    t.jsonb "defaults", default: {"options"=>{}, "deductibles"=>{}, "coverage_limits"=>{}}
-    t.boolean "enabled"
+    t.string "slug"
+    t.string "designation"
+    t.boolean "enabled", default: false, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
   end

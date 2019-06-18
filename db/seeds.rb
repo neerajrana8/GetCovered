@@ -1,7 +1,11 @@
-# This file should contain all the record creation needed to seed the database with its default values.
-# The data can then be loaded with the rails db:seed command (or created alongside the database with db:setup).
-#
-# Examples:
-#
-#   movies = Movie.create([{ name: 'Star Wars' }, { name: 'Lord of the Rings' }])
-#   Character.create(name: 'Luke', movie: movies.first)
+if ENV["section"] =~ /setup|agency|account|insurable|users|policy/
+  
+  puts "Running: #{ENV["section"].titlecase}"
+  require Rails.root.join("db/seeds/#{ ENV["section"] }.rb")
+  
+elsif ENV["section"].nil?
+  
+  puts "\nNO SECTION SELECTION"
+  puts "Option availability in order: setup, agency, account, insurable, users, policy\n"
+
+end
