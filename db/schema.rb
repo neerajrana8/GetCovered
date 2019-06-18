@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_06_17_163748) do
+ActiveRecord::Schema.define(version: 2019_06_18_030119) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -509,6 +509,49 @@ ActiveRecord::Schema.define(version: 2019_06_17_163748) do
     t.datetime "updated_at", null: false
     t.index ["charge_id"], name: "index_payments_on_charge_id"
     t.index ["stripe_id"], name: "stripe_payment", unique: true
+  end
+
+  create_table "policy_applications", force: :cascade do |t|
+    t.string "reference"
+    t.string "external_reference"
+    t.date "effective_date"
+    t.date "expiration_date"
+    t.integer "status", default: 0, null: false
+    t.datetime "status_updated_on"
+    t.jsonb "fields", default: []
+    t.bigint "carrier_id"
+    t.bigint "policy_type_id"
+    t.bigint "agency_id"
+    t.bigint "account_id"
+    t.bigint "policy_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id"], name: "index_policy_applications_on_account_id"
+    t.index ["agency_id"], name: "index_policy_applications_on_agency_id"
+    t.index ["carrier_id"], name: "index_policy_applications_on_carrier_id"
+    t.index ["policy_id"], name: "index_policy_applications_on_policy_id"
+    t.index ["policy_type_id"], name: "index_policy_applications_on_policy_type_id"
+  end
+
+  create_table "policy_quotes", force: :cascade do |t|
+    t.string "reference"
+    t.string "external_reference"
+    t.integer "status"
+    t.datetime "status_updated_on"
+    t.integer "premium"
+    t.integer "tax"
+    t.integer "est_fees"
+    t.integer "total_premium"
+    t.bigint "policy_application_id"
+    t.bigint "agency_id"
+    t.bigint "account_id"
+    t.bigint "policy_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id"], name: "index_policy_quotes_on_account_id"
+    t.index ["agency_id"], name: "index_policy_quotes_on_agency_id"
+    t.index ["policy_application_id"], name: "index_policy_quotes_on_policy_application_id"
+    t.index ["policy_id"], name: "index_policy_quotes_on_policy_id"
   end
 
   create_table "policy_types", force: :cascade do |t|
