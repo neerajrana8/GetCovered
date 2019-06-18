@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_06_16_215056) do
+ActiveRecord::Schema.define(version: 2019_06_17_163748) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -107,7 +107,6 @@ ActiveRecord::Schema.define(version: 2019_06_16_215056) do
     t.boolean "enabled", default: false, null: false
     t.jsonb "new_business", default: {"payments"=>[100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "payments_per_term"=>1, "remainder_added_to_deposit"=>true}
     t.jsonb "renewal"
-    t.jsonb "fees", default: [{"flat"=>true, "title"=>"Service Fee", "amount"=>0, "per_payment"=>true}]
     t.boolean "locked", default: false, null: false
     t.bigint "agency_id"
     t.bigint "carrier_id"
@@ -143,10 +142,21 @@ ActiveRecord::Schema.define(version: 2019_06_16_215056) do
     t.index ["external_carrier_id"], name: "index_carrier_agencies_on_external_carrier_id", unique: true
   end
 
+  create_table "carrier_agency_authorizations", force: :cascade do |t|
+    t.integer "state"
+    t.boolean "available", default: false, null: false
+    t.jsonb "zip_code_blacklist", default: []
+    t.bigint "carrier_agency_id"
+    t.bigint "policy_type_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["carrier_agency_id"], name: "index_carrier_agency_authorizations_on_carrier_agency_id"
+    t.index ["policy_type_id"], name: "index_carrier_agency_authorizations_on_policy_type_id"
+  end
+
   create_table "carrier_policy_type_availabilities", force: :cascade do |t|
     t.integer "state"
     t.boolean "available", default: false, null: false
-    t.jsonb "fees", default: {"payment"=>0, "renewal"=>0, "new_business"=>0, "reinstatement"=>0}
     t.jsonb "zip_code_blacklist", default: []
     t.bigint "carrier_policy_type_id"
     t.datetime "created_at", null: false
@@ -271,9 +281,12 @@ ActiveRecord::Schema.define(version: 2019_06_16_215056) do
     t.string "title"
     t.string "slug"
     t.integer "amount", default: 0, null: false
+    t.integer "amount_type", default: 0, null: false
     t.integer "type", default: 0, null: false
     t.boolean "per_payment", default: false, null: false
+    t.boolean "amortize", default: false, null: false
     t.boolean "enabled", default: false, null: false
+    t.boolean "locked", default: false, null: false
     t.string "assignable_type"
     t.bigint "assignable_id"
     t.string "ownerable_type"

@@ -1,11 +1,12 @@
 ##
-# =Carrier Policy Type Availability Model
-# file: +app/models/carrier_policy_type_availability.rb+
+# Carrier Agency Authorization Model
+# file: +app/models/carrier_agency_authorization.rb+
 
-class CarrierPolicyTypeAvailability < ApplicationRecord
+class CarrierAgencyAuthorization < ApplicationRecord
   include Blacklistable
   
-  belongs_to :carrier_policy_type
+  belongs_to :carrier_agency
+  belongs_to :policy_type
   		
   has_many :fees,
     as: :assignable
@@ -20,12 +21,12 @@ class CarrierPolicyTypeAvailability < ApplicationRecord
                 WV: 49, WY: 50 }
   
   validates_presence_of :state           
-  validate :one_state_per_carrier_policy_type
+  validate :one_state_per_carrier_agency
   
   private
   
-    def one_state_per_carrier_policy_type
-      if carrier_policy_type.carrier_policy_type_availabilities.where(state: state).count > 1
+    def one_state_per_carrier_agency
+      if carrier_agency.carrier_agency_authorizations.where(state: state).count > 1
         errors.add(:state, "record for parent Carrier Policy Type already exists") 
       end
     end

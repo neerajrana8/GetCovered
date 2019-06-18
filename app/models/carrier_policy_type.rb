@@ -1,5 +1,5 @@
 ##
-# Carrier Policy Type Model
+# =Carrier Policy Type Model
 # file: +app/models/carrier_policy_type.rb+
 
 class CarrierPolicyType < ApplicationRecord

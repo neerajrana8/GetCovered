@@ -6,6 +6,8 @@ class CarrierAgency < ApplicationRecord
   belongs_to :carrier
   belongs_to :agency
   
+  has_many :carrier_agency_authorizations
+  
   validate :carrier_agency_assignment_unique
   
   private

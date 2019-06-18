@@ -44,16 +44,13 @@ end
   { title: "Crum & Forester", syncable: false, rateable: true, quotable: true, bindable: true, verifiable: false, enabled: true }
 ]
 
-@carriers.each do |carrier|
-  carrier = Carrier.new(carrier)
+@carriers.each do |c|
+  carrier = Carrier.new(c)
   if carrier.save
-    
-    fees = { "renewal" => 0, "new_business" => 0 }
     
     # Add Residential to Queensland Business Insurance
     if carrier.id == 1
       policy_type = PolicyType.find(1)
-      fees = { "renewal" => 0, "new_business" => 2000 }
       
     # Add Master to Queensland Business Specialty Insurance
     elsif carrier.id == 2
@@ -69,7 +66,8 @@ end
     
     51.times do |state|
       available = state == 0 || state == 11 ? false : true
-      carrier_policy_type.carrier_policy_type_availabilities << CarrierPolicyTypeAvailability.new(state: state, available: available, fees: fees)
+      carrier_policy_availability = CarrierPolicyTypeAvailability.create(state: state, available: available, carrier_policy_type: carrier_policy_type)
+      carrier_policy_availability.fees.create(title: "Origination Fee", type: :ORIGINATION, amount: 25, enabled: true, ownerable: carrier)
     end
     
   end

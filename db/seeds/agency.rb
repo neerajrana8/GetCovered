@@ -23,7 +23,20 @@ if @agency.save
     adduser(Staff, staff)
   end
   
-  Carrier.find_each { |c|  @agency.carriers << c }
+  @index = 1
+  
+  Carrier.find_each do |c|  
+    @agency.carriers << c 
+    carrier_agency = CarrierAgency.where(carrier: c, agency: @agency).take
+    
+    51.times do |state|
+      available = state == 0 || state == 11 ? false : true
+      authorization = CarrierAgencyAuthorization.create(state: state, available: available, carrier_agency: carrier_agency, policy_type: PolicyType.find(@index))
+      Fee.create(title: "Service Fee", type: :MISC, per_payment: true, amount: 8, amount_type: :PERCENTAGE, enabled: true, assignable: authorization, ownerable: @agency)
+    end    
+    
+    @index += 1
+  end
   
   @agency.commission_strategies.create(carrier: Carrier.find(1), policy_type: PolicyType.find(1), amount: 30, type: 0, house_override: 0)
   @agency.commission_strategies.create(carrier: Carrier.find(2), policy_type: PolicyType.find(2), amount: 22, type: 0, house_override: 0)

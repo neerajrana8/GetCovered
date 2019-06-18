@@ -20,6 +20,9 @@ class Carrier < ApplicationRecord
     through: :carrier_agencies
   
   has_many :commission_strategies
+  		
+  has_many :fees,
+    as: :ownerable
   
   # Validations
   validates :title, presence: true,

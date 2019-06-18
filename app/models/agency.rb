@@ -22,6 +22,8 @@ class Agency < ApplicationRecord
   has_many :carrier_agencies
   has_many :carriers,
     through: :carrier_agencies
+  has_many :carrier_agency_authorizations,
+    through: :carrier_agencies
     
   has_many :accounts
   
@@ -39,6 +41,9 @@ class Agency < ApplicationRecord
 
   has_many :commission_strategies,
     as: :commissionable
+  		
+  has_many :fees,
+    as: :ownerable
       
   # has_one relationships
   # blank for now...
