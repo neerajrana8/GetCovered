@@ -61,13 +61,16 @@ end
       policy_type = PolicyType.find(3)
     end
     
-    carrier.policy_types << policy_type
-    carrier_policy_type = CarrierPolicyType.where(policy_type_id: policy_type.id, carrier_id: carrier.id).take
+    carrier_policy_type = carrier.carrier_policy_types.new(policy_type: policy_type, application_required: carrier.id == 2 ? false : true)
     
-    51.times do |state|
-      available = state == 0 || state == 11 ? false : true
-      carrier_policy_availability = CarrierPolicyTypeAvailability.create(state: state, available: available, carrier_policy_type: carrier_policy_type)
-      carrier_policy_availability.fees.create(title: "Origination Fee", type: :ORIGINATION, amount: 25, enabled: true, ownerable: carrier)
+    if carrier_policy_type.save()
+      51.times do |state|
+        available = state == 0 || state == 11 ? false : true
+        carrier_policy_availability = CarrierPolicyTypeAvailability.create(state: state, available: available, carrier_policy_type: carrier_policy_type)
+        carrier_policy_availability.fees.create(title: "Origination Fee", type: :ORIGINATION, amount: 25, enabled: true, ownerable: carrier)
+      end      
+    else
+      pp carrier_policy_type.errors
     end
     
   end
