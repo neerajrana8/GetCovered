@@ -1,7 +1,8 @@
-# =QBE Community Functions Concern
-# file: +app/models/concerns/carrier_qbe_community.rb+
+##
+# =QBE Insurable Functions Concern
+# file: +app/models/concerns/carrier_qbe_insurable.rb+
 
-module CarrierQbeCommunity
+module CarrierQbeInsurable
   extend ActiveSupport::Concern
 
   included do

@@ -1,6 +1,10 @@
-class PolicyQuote < ApplicationRecord
-  belongs_to :policy_application
-  belongs_to :agency
-  belongs_to :account
-  belongs_to :policy
+class PolicyQuote < ApplicationRecord  
+  
+  # Concerns
+  include CarrierQbeQuote
+  
+  belongs_to :policy_application, optional: true
+  belongs_to :agency, optional: true
+  belongs_to :account, optional: true
+  belongs_to :policy, optional: true
 end
