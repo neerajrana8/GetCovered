@@ -180,6 +180,7 @@ ActiveRecord::Schema.define(version: 2019_06_27_015547) do
     t.string "title"
     t.string "slug"
     t.string "call_sign"
+    t.string "integration_designation"
     t.boolean "syncable", default: false, null: false
     t.boolean "rateable", default: false, null: false
     t.boolean "quotable", default: false, null: false
@@ -514,7 +515,7 @@ ActiveRecord::Schema.define(version: 2019_06_27_015547) do
   create_table "policies", force: :cascade do |t|
     t.string "number"
     t.date "effective_date"
-    t.date "expiration"
+    t.date "expiration_date"
     t.boolean "auto_renew", default: false, null: false
     t.date "last_renewed_on"
     t.integer "renew_count"

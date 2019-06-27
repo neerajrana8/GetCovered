@@ -5,7 +5,7 @@
 class PolicyApplication < ApplicationRecord  
   
   # Concerns
-  include CarrierQbePolicy
+  include CarrierQbePolicyApplication
   
   # Active Record Callbacks
   after_initialize :initialize_policy_application
@@ -32,6 +32,14 @@ class PolicyApplication < ApplicationRecord
     source: :user
     
   has_many :policy_quotes
+	
+  enum status: { STARTED: 0, IN_PROGRESS: 1, COMPLETE: 2, QUOTE_IN_PROGRESS: 3, 
+	  						 QUOTE_FAILED: 4, QUOTED: 5, MORE_REQUIRED: 6, REJECTED: 7 }	
+	
+	def quote
+		self.send("#{ carrier.integration_designation }_quote") if complete?
+		return false if !complete?
+	end
     
   private 
   

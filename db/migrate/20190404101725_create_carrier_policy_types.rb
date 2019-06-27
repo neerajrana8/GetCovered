@@ -6,7 +6,7 @@ class CreateCarrierPolicyTypes < ActiveRecord::Migration[5.2]
         deductibles: {},
         options: {}
       }
-      t.jsonb :application_defaults, default: {}
+      t.jsonb :application_fields, default: {}
       t.boolean :application_required, :null => false, :default => false
       t.references :carrier
       t.references :policy_type

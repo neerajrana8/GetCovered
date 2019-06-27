@@ -3,7 +3,7 @@ class CreatePolicies < ActiveRecord::Migration[5.2]
     create_table :policies do |t|
       t.string :number
       t.date :effective_date
-      t.date :expiration
+      t.date :expiration_date
       t.boolean :auto_renew, :null => false, :default => false
       t.date :last_renewed_on
       t.integer :renew_count
