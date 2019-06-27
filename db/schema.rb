@@ -581,19 +581,19 @@ ActiveRecord::Schema.define(version: 2019_06_27_015547) do
     t.index ["policy_id"], name: "index_policy_coverages_on_policy_id"
   end
 
-  create_table "policy_premiums", force: :cascade do |t|
+  create_table "policy_premia", force: :cascade do |t|
     t.integer "base", default: 0
     t.integer "taxes", default: 0
     t.integer "total_fees", default: 0
     t.integer "total", default: 0
     t.boolean "enabled", default: false, null: false
     t.datetime "enabled_changed"
-    t.bigint "policy_application_id"
+    t.bigint "policy_quote_id"
     t.bigint "policy_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["policy_application_id"], name: "index_policy_premiums_on_policy_application_id"
-    t.index ["policy_id"], name: "index_policy_premiums_on_policy_id"
+    t.index ["policy_id"], name: "index_policy_premia_on_policy_id"
+    t.index ["policy_quote_id"], name: "index_policy_premia_on_policy_quote_id"
   end
 
   create_table "policy_quotes", force: :cascade do |t|

@@ -33,8 +33,13 @@ class PolicyApplication < ApplicationRecord
     
   has_many :policy_quotes
 	
-  enum status: { STARTED: 0, IN_PROGRESS: 1, COMPLETE: 2, QUOTE_IN_PROGRESS: 3, 
-	  						 QUOTE_FAILED: 4, QUOTED: 5, MORE_REQUIRED: 6, REJECTED: 7 }	
+	validates_presence_of :expiration_date, :effective_date
+  validate :date_order, 
+    unless: Proc.new { |pol| pol.effective_date.nil? or pol.expiration_date.nil? }	
+	
+  enum status: { STARTED: 0, IN_PROGRESS: 1, COMPLETE: 2, ABANDONED: 3, 
+	  						 QUOTE_IN_PROGRESS: 4, QUOTE_FAILED: 5, QUOTED: 6, 
+	  						 MORE_REQUIRED: 7, REJECTED: 8 }	
 	
 	def quote
 		self.send("#{ carrier.integration_designation }_quote") if complete?
@@ -51,4 +56,10 @@ class PolicyApplication < ApplicationRecord
 	  	carrier_policy_type = CarrierPolicyType.where(carrier: carrier, policy_type: policy_type).take
 	  	self.fields = carrier_policy_type.application_fields
 	  end
+	
+    def date_order
+      if expiration_date < effective_date
+        errors.add(:expiration_date, "expiration date cannot be before effective date.")  
+      end  
+    end	
 end

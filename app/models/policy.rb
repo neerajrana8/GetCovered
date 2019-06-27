@@ -62,10 +62,30 @@ class Policy < ApplicationRecord
     through: :primary_policy_user
   
   has_many :policy_coverages, autosave: true
+  has_many :coverages, -> { where(enabled: true) }, class_name: 'PolicyCoverage'
   has_many :policy_premiums, autosave: true
+  has_one :premium, -> { where(enabled: true).take }, class_name: 'PolicyPremium'
   
   accepts_nested_attributes_for :policy_coverages, :policy_premiums
 	
 	validates_presence_of :expiration_date, :effective_date
+  validate :date_order, 
+    unless: Proc.new { |pol| pol.effective_date.nil? or pol.expiration_date.nil? }	
+	
+  enum status: { APPLICATION_STARTED: 0, APPLICATION_ABANDONED: 1, APPLICATION_COMPLETE: 2, APPLICATION_REJECTED: 3, 
+	  						 QUOTE_IN_PROGRESS: 4, QUOTE_FAILED: 5, QUOTED: 6, QUOTE_REJECTED: 7, QUOTE_ACCEPTED: 8,
+	  						 AWAITING_ACH: 9, PAID: 10, BOUND: 11, BOUND_WITH_WARNING: 12, BIND_ERROR: 12, BIND_REJECTED: 13,
+	  						 RENEWING: 14, RENEWED: 15, EXPIRED: 16, CANCELLED: 17, REINSTATED: 18, 
+	  						 EXTERNAL_UNVERIFIED: 19, EXTERNAL_VERIFIED: 20 }
+	
+	enum billing_dispute_status: { UNDISPUTED: 0, DISPUTED: 1, AWATING_POSTDISPUTE_PROCESSING: 2, NOT_REQUIRED: 3 }
+		
+	private
+	
+    def date_order
+      if expiration_date < effective_date
+        errors.add(:expiration_date, "expiration date cannot be before effective date.")  
+      end  
+    end	
   
 end
