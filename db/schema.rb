@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_06_18_030119) do
+ActiveRecord::Schema.define(version: 2019_06_27_015547) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -511,6 +511,40 @@ ActiveRecord::Schema.define(version: 2019_06_18_030119) do
     t.index ["stripe_id"], name: "stripe_payment", unique: true
   end
 
+  create_table "policies", force: :cascade do |t|
+    t.string "number"
+    t.date "effective_date"
+    t.date "expiration"
+    t.boolean "auto_renew", default: false, null: false
+    t.date "last_renewed_on"
+    t.integer "renew_count"
+    t.integer "billing_status"
+    t.integer "billing_dispute_count"
+    t.date "billing_behind_since"
+    t.integer "cancellation_code"
+    t.string "cancellation_date_date"
+    t.integer "status"
+    t.datetime "status_changed_on"
+    t.integer "billing_dispute_status"
+    t.boolean "billing_enabled", default: false, null: false
+    t.boolean "system_purchased", default: false, null: false
+    t.boolean "serviceable", default: false, null: false
+    t.boolean "has_outstanding_refund", default: false, null: false
+    t.jsonb "system_data", default: {}
+    t.bigint "agency_id"
+    t.bigint "account_id"
+    t.bigint "carrier_id"
+    t.bigint "policy_type_id"
+    t.bigint "billing_profie_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id"], name: "index_policies_on_account_id"
+    t.index ["agency_id"], name: "index_policies_on_agency_id"
+    t.index ["billing_profie_id"], name: "index_policies_on_billing_profie_id"
+    t.index ["carrier_id"], name: "index_policies_on_carrier_id"
+    t.index ["policy_type_id"], name: "index_policies_on_policy_type_id"
+  end
+
   create_table "policy_applications", force: :cascade do |t|
     t.string "reference"
     t.string "external_reference"
@@ -531,6 +565,34 @@ ActiveRecord::Schema.define(version: 2019_06_18_030119) do
     t.index ["carrier_id"], name: "index_policy_applications_on_carrier_id"
     t.index ["policy_id"], name: "index_policy_applications_on_policy_id"
     t.index ["policy_type_id"], name: "index_policy_applications_on_policy_type_id"
+  end
+
+  create_table "policy_coverages", force: :cascade do |t|
+    t.string "coverage_type"
+    t.string "display_title"
+    t.integer "limit", default: 0
+    t.integer "deductible", default: 0
+    t.boolean "enabled", default: false, null: false
+    t.datetime "enabled_changed"
+    t.bigint "policy_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["policy_id"], name: "index_policy_coverages_on_policy_id"
+  end
+
+  create_table "policy_premiums", force: :cascade do |t|
+    t.integer "base", default: 0
+    t.integer "taxes", default: 0
+    t.integer "total_fees", default: 0
+    t.integer "total", default: 0
+    t.boolean "enabled", default: false, null: false
+    t.datetime "enabled_changed"
+    t.bigint "policy_application_id"
+    t.bigint "policy_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["policy_application_id"], name: "index_policy_premiums_on_policy_application_id"
+    t.index ["policy_id"], name: "index_policy_premiums_on_policy_id"
   end
 
   create_table "policy_quotes", force: :cascade do |t|
@@ -561,6 +623,19 @@ ActiveRecord::Schema.define(version: 2019_06_18_030119) do
     t.boolean "enabled", default: false, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+  end
+
+  create_table "policy_users", force: :cascade do |t|
+    t.boolean "primary", default: false, null: false
+    t.boolean "spouse", default: false, null: false
+    t.bigint "policy_application_id"
+    t.bigint "policy_id"
+    t.bigint "user_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["policy_application_id"], name: "index_policy_users_on_policy_application_id"
+    t.index ["policy_id"], name: "index_policy_users_on_policy_id"
+    t.index ["user_id"], name: "index_policy_users_on_user_id"
   end
 
   create_table "profiles", force: :cascade do |t|
