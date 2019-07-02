@@ -4,6 +4,7 @@ class CreateCarriers < ActiveRecord::Migration[5.2]
       t.string :title
       t.string :slug
       t.string :call_sign
+      t.string :integration_designation
       t.boolean :syncable, :null => false, :default => false
       t.boolean :rateable, :null => false, :default => false
       t.boolean :quotable, :null => false, :default => false
