@@ -20,11 +20,11 @@ class CreatePolicies < ActiveRecord::Migration[5.2]
       t.boolean :serviceable, :null => false, :default => false
       t.boolean :has_outstanding_refund, :null => false, :default => false
       t.jsonb :system_data, default: {}
+      t.references :insurable
       t.references :agency
       t.references :account
       t.references :carrier
       t.references :policy_type
-      t.references :billing_profie
 
       t.timestamps
     end

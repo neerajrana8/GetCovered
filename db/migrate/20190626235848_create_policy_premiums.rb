@@ -9,6 +9,8 @@ class CreatePolicyPremiums < ActiveRecord::Migration[5.2]
       t.datetime :enabled_changed
       t.references :policy_quote
       t.references :policy
+      t.references :billing_strategy
+      t.references :commission_strategy
 
       t.timestamps
     end

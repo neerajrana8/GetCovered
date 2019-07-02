@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_06_27_015547) do
+ActiveRecord::Schema.define(version: 2019_07_02_010801) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -242,9 +242,30 @@ ActiveRecord::Schema.define(version: 2019_06_27_015547) do
     t.bigint "commissionable_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "commission_strategy_id"
     t.index ["carrier_id"], name: "index_commission_strategies_on_carrier_id"
+    t.index ["commission_strategy_id"], name: "index_commission_strategies_on_commission_strategy_id"
     t.index ["commissionable_type", "commissionable_id"], name: "index_strategy_on_type_and_id"
     t.index ["policy_type_id"], name: "index_commission_strategies_on_policy_type_id"
+  end
+
+  create_table "commissions", force: :cascade do |t|
+    t.integer "amount"
+    t.integer "deductions"
+    t.integer "total"
+    t.boolean "approved"
+    t.date "distributes"
+    t.boolean "paid"
+    t.string "stripe_transaction_id"
+    t.bigint "policy_premium_id"
+    t.bigint "commission_strategy_id"
+    t.string "commissionable_type"
+    t.bigint "commissionable_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["commission_strategy_id"], name: "index_commissions_on_commission_strategy_id"
+    t.index ["commissionable_type", "commissionable_id"], name: "index_commissions_on_commissionable_type_and_commissionable_id"
+    t.index ["policy_premium_id"], name: "index_commissions_on_policy_premium_id"
   end
 
   create_table "disputes", force: :cascade do |t|
@@ -532,17 +553,17 @@ ActiveRecord::Schema.define(version: 2019_06_27_015547) do
     t.boolean "serviceable", default: false, null: false
     t.boolean "has_outstanding_refund", default: false, null: false
     t.jsonb "system_data", default: {}
+    t.bigint "insurable_id"
     t.bigint "agency_id"
     t.bigint "account_id"
     t.bigint "carrier_id"
     t.bigint "policy_type_id"
-    t.bigint "billing_profie_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["account_id"], name: "index_policies_on_account_id"
     t.index ["agency_id"], name: "index_policies_on_agency_id"
-    t.index ["billing_profie_id"], name: "index_policies_on_billing_profie_id"
     t.index ["carrier_id"], name: "index_policies_on_carrier_id"
+    t.index ["insurable_id"], name: "index_policies_on_insurable_id"
     t.index ["policy_type_id"], name: "index_policies_on_policy_type_id"
   end
 
@@ -590,10 +611,23 @@ ActiveRecord::Schema.define(version: 2019_06_27_015547) do
     t.datetime "enabled_changed"
     t.bigint "policy_quote_id"
     t.bigint "policy_id"
+    t.bigint "billing_strategy_id"
+    t.bigint "commission_strategy_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.index ["billing_strategy_id"], name: "index_policy_premia_on_billing_strategy_id"
+    t.index ["commission_strategy_id"], name: "index_policy_premia_on_commission_strategy_id"
     t.index ["policy_id"], name: "index_policy_premia_on_policy_id"
     t.index ["policy_quote_id"], name: "index_policy_premia_on_policy_quote_id"
+  end
+
+  create_table "policy_premium_fees", force: :cascade do |t|
+    t.bigint "policy_premium_id"
+    t.bigint "fee_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["fee_id"], name: "index_policy_premium_fees_on_fee_id"
+    t.index ["policy_premium_id"], name: "index_policy_premium_fees_on_policy_premium_id"
   end
 
   create_table "policy_quotes", force: :cascade do |t|
