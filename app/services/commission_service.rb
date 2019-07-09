@@ -19,10 +19,9 @@ class CommissionService
   end
   
   def process_get_covered_commission
-    account_commission = create_commission(commission_strategy, policy_premium.amount)
+    account_commission = create_commission(commission_strategy, policy_premium)
     create_deductable_commission(account_commission)
   end
-
 
   def calculate_amount(type, premium_amount)
     amount = 0
@@ -36,16 +35,19 @@ class CommissionService
   end
 
   def process_third_party_commission
-    account_commission = create_commission(commission_strategy, policy_premium.amount)
+    account_commission = create_commission(commission_strategy)
     agency_commission = create_deductable_commission(account_commission)
     get_covered_strategy = commission_strategy&.commission_strategy&.commission_strategy
-    get_covered_commission = create_commission(get_covered_strategy, policy_premium.amount)
+    get_covered_commission = create_commission(get_covered_strategy)
   end
 
-  def create_commission(commission_strategy, premium_amount)
-    amount = calculate_amount(commission_strategy.type, premium_amount)
-    commission = Commission.create(commission_strategy: commission_strategy,
-                                   amount: amount)
+  def create_commission(commission_strategy)
+    amount = calculate_amount(commission_strategy.type, policy_premium.amount)
+    commission = Commission.create do |c|
+      c.commission_strategy = commission_strategy
+      c.amount = amount
+      c.policy_premium = policy_premium
+    end
     commission
   end
 
@@ -56,6 +58,7 @@ class CommissionService
       c.amount = amount
       c.deduction_amount = account_commission.amount
       c.total = c.amount - c.deduction_amount
+      c.policy_premium = policy_premium
     end
     commission
   end
