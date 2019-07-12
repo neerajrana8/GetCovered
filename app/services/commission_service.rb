@@ -19,7 +19,7 @@ class CommissionService
   end
   
   def process_get_covered_commission
-    account_commission = create_commission(commission_strategy, policy_premium)
+    account_commission = create_commission(commission_strategy)
     create_deductable_commission(account_commission)
   end
 
