@@ -41,6 +41,8 @@ class Agency < ApplicationRecord
 
   has_many :commission_strategies,
     as: :commissionable
+  
+  has_many :billing_strategies
   		
   has_many :fees,
     as: :ownerable

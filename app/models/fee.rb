@@ -19,6 +19,6 @@ class Fee < ApplicationRecord
   private
     
     def prevent_amortize_of_per_payment_fees
-      errors.add(:amortize, "cannot be selected for a fee charged on every payment") if per_payment?  
+      errors.add(:amortize, "cannot be selected for a fee charged on every payment") if per_payment? && amortize? 
     end
 end

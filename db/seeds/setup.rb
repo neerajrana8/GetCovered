@@ -36,6 +36,22 @@ end
 end
 
 ##
+# Setting up base Insurable Types
+
+@insurable_types = [
+  { title: "Residential Community", category: "property", enabled: true },
+  { title: "Mixed Use Community", category: "property", enabled: true },
+  { title: "Commercial Community", category: "property", enabled: true },
+  { title: "Residential Unit", category: "property", enabled: true },
+  { title: "Commercial Unit", category: "property", enabled: true },
+  { title: "Small Business", category: "entity", enabled: true }
+]
+
+@insurable_types.each do |it|
+  insurable_type = InsurableType.create(it)
+end
+
+##
 # Setting up base Carriers
 
 @carriers = [
@@ -46,12 +62,33 @@ end
 
 @carriers.each do |c|
   carrier = Carrier.new(c)
-  if carrier.save
+  if carrier.save!
     
     # Add Residential to Queensland Business Insurance
     if carrier.id == 1
       policy_type = PolicyType.find(1)
-      
+      carrier_insurable_type = CarrierInsurableType.create!(carrier: carrier, insurable_type: InsurableType.find(1),
+                                                            profile_attributes: {
+                                                              "pref_facility": "MDU",
+                                                              "occupancy_type": "Other",
+                                                              "construction_type": nil,
+                                                              "protection_device_cd": "F",
+                                                              "alarm_credit": false,
+                                                              "professionally_managed": false,
+                                                              "professionally_managed_year": nil,
+                                                              "construction_year": nil,
+                                                              "bceg": nil,
+                                                              "ppc": nil,
+                                                              "gated": false
+                                                            },
+                                                            profile_data: {
+                                                              "rates_resolved": false,
+                                                              "rates_last_resolved_on": nil,
+                                                              "county_resolved": false,
+                                                              "county_last_resolved_on": nil,
+                                                              "property_info_resolved": false,
+                                                              "property_info_last_resolved_on": nil
+                                                            })
     # Add Master to Queensland Business Specialty Insurance
     elsif carrier.id == 2
       policy_type = PolicyType.find(2)

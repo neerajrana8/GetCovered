@@ -8,9 +8,7 @@ class CreateInsurables < ActiveRecord::Migration[5.2]
       t.references :insurable_type
       t.references :insurable
       t.integer :category, default: 0
-      t.jsonb :profile, default: {}
       t.boolean :covered, default: false
-      t.jsonb :carrier_data, default: {}
 
       t.timestamps
     end

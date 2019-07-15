@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_07_02_010801) do
+ActiveRecord::Schema.define(version: 2019_07_15_171545) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -152,6 +152,29 @@ ActiveRecord::Schema.define(version: 2019_07_02_010801) do
     t.datetime "updated_at", null: false
     t.index ["carrier_agency_id"], name: "index_carrier_agency_authorizations_on_carrier_agency_id"
     t.index ["policy_type_id"], name: "index_carrier_agency_authorizations_on_policy_type_id"
+  end
+
+  create_table "carrier_insurable_profiles", force: :cascade do |t|
+    t.jsonb "attributes", default: {}
+    t.jsonb "data", default: {}
+    t.bigint "carrier_id"
+    t.bigint "insurable_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["carrier_id"], name: "index_carrier_insurable_profiles_on_carrier_id"
+    t.index ["insurable_id"], name: "index_carrier_insurable_profiles_on_insurable_id"
+  end
+
+  create_table "carrier_insurable_types", force: :cascade do |t|
+    t.jsonb "profile_attributes", default: {}
+    t.jsonb "profile_data", default: {}
+    t.boolean "enabled", default: false, null: false
+    t.bigint "carrier_id"
+    t.bigint "insurable_type_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["carrier_id"], name: "index_carrier_insurable_types_on_carrier_id"
+    t.index ["insurable_type_id"], name: "index_carrier_insurable_types_on_insurable_type_id"
   end
 
   create_table "carrier_policy_type_availabilities", force: :cascade do |t|
@@ -361,7 +384,6 @@ ActiveRecord::Schema.define(version: 2019_07_02_010801) do
     t.string "title"
     t.string "slug"
     t.integer "category"
-    t.jsonb "profile_attributes", default: {}
     t.boolean "enabled"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
@@ -375,9 +397,7 @@ ActiveRecord::Schema.define(version: 2019_07_02_010801) do
     t.bigint "insurable_type_id"
     t.bigint "insurable_id"
     t.integer "category", default: 0
-    t.jsonb "profile", default: {}
     t.boolean "covered", default: false
-    t.jsonb "carrier_data", default: {}
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["account_id"], name: "index_insurables_on_account_id"

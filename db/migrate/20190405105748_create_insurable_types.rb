@@ -4,7 +4,6 @@ class CreateInsurableTypes < ActiveRecord::Migration[5.2]
       t.string        :title
       t.string        :slug
       t.integer       :category
-      t.jsonb         :profile_attributes, default: {}
       t.boolean       :enabled
       t.timestamps
     end
