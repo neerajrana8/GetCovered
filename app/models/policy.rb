@@ -40,8 +40,9 @@ class Policy < ApplicationRecord
   
   # Concerns
   include CarrierQbePolicy,
-  				CarrierCrumPolicy
-  
+          CarrierCrumPolicy,
+          ElasticsearchSearchable
+
   belongs_to :agency
   belongs_to :account
   belongs_to :carrier
@@ -79,7 +80,30 @@ class Policy < ApplicationRecord
 	  						 EXTERNAL_UNVERIFIED: 19, EXTERNAL_VERIFIED: 20 }
 	
 	enum billing_dispute_status: { UNDISPUTED: 0, DISPUTED: 1, AWATING_POSTDISPUTE_PROCESSING: 2, NOT_REQUIRED: 3 }
-		
+  
+  settings index: { number_of_shards: 1 } do
+    mappings dynamic: 'false' do
+      indexes :auto_renew, type: 'keyword'
+      indexes :billing_behind_since, type: 'date'
+      indexes :billing_dispute_count, type: :integer
+      indexes :billing_dispute_status, type: :integer
+      indexes :billing_enabled, type: 'keyword'
+      indexes :billing_status, type: :integer
+      indexes :cancellation_code, type: :integer
+      indexes :cancellation_date_date, type: 'date'
+      indexes :effective_date, type: 'date'
+      indexes :expiration_date, type: 'date'
+      indexes :has_outstanding_refund, type: 'keyword'
+      indexes :last_renewed_on, type: 'date'
+      indexes :number, type: :string
+      indexes :renew_count, type: :integer
+      indexes :serviceable, type: 'keyword'
+      indexes :status, type: :integer
+      indexes :status_changed_on, type: 'date'
+      indexes :system_purchased, type: 'keyword'
+    end
+  end
+
 	private
 	
     def date_order
