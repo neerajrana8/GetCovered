@@ -70,10 +70,10 @@ class Lease < ApplicationRecord
     mappings dynamic: 'false' do
       indexes :reference, analyzer: 'english'
       indexes :type, analyzer: 'english'
-      indexes :status
-      indexes :covered
-      indexes :unit_id
-      indexes :account_id
+      indexes :status, type: :integer
+      indexes :covered, type: 'keyword'
+      indexes :unit_id, type: 'keyword'
+      indexes :account_id, type: 'keyword'
       indexes :start_date, type: 'date'
       indexes :end_date, type: 'date'
     end
