@@ -10,7 +10,7 @@ class CommissionService
   end
   
   def process
-    case agency
+    case agency.title
     when 'Get Covered'
       process_get_covered_commission
     else
@@ -23,13 +23,13 @@ class CommissionService
     create_deductable_commission(account_commission)
   end
 
-  def calculate_amount(type, premium_amount)
+  def calculate_amount(commission_strategy, premium_amount)
     amount = 0
-    case type
+    case commission_strategy.type
     when 'PERCENT'
       amount = (Money.new(premium_amount) * commission_strategy.amount / 100).cents
     when 'FLAT'
-      amount = premium_amount
+      amount = commission_strategy.amount
     end
     amount
   end
@@ -42,23 +42,26 @@ class CommissionService
   end
 
   def create_commission(commission_strategy)
-    amount = calculate_amount(commission_strategy.type, policy_premium.amount)
+    amount = calculate_amount(commission_strategy, policy_premium.total)
     commission = Commission.create do |c|
       c.commission_strategy = commission_strategy
       c.amount = amount
       c.policy_premium = policy_premium
+      c.commissionable = agency
     end
     commission
   end
 
   def create_deductable_commission(account_commission)
     parent_commission_strategy = commission_strategy.commission_strategy
-    amount = calculate_amount(parent_commission_strategy.type, policy_premium.amount)
+    amount = calculate_amount(parent_commission_strategy, policy_premium.total)
     commission = Commission.create do |c|
       c.amount = amount
-      c.deduction_amount = account_commission.amount
-      c.total = c.amount - c.deduction_amount
+      c.commission_strategy = parent_commission_strategy
+      c.deductions = account_commission.amount
+      c.total = c.amount - c.deductions
       c.policy_premium = policy_premium
+      c.commissionable = agency
     end
     commission
   end
