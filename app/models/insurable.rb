@@ -17,7 +17,26 @@ class Insurable < ApplicationRecord
   
   enum category: ['property', 'entity']
   
+  # Insurable.primary_address
+  #
+  
   def primary_address
 		return addresses.where(primary: true).take 
 	end
+	
+	# Insurable.create_profile_for_carrier(carrier_id)
+	#
+	
+	def create_profile_for_carrier(carrier_id)
+  	carrier = Carrier.find(carrier_id)
+    if carrier.carrier_insurable_types
+              .exists?(insurable_type == insurable_type)
+      carrier_insurable_type = carrier.carrier_insurable_types
+                                      .where(insurable_type_id: self.insurable_type_id).take
+      self.carrier_insurable_profiles.create!(traits: carrier_insurable_type.profile_traits, 
+                                              data: carrier_insurable_type.profile_data,
+                                              carrier: carrier)
+    end  	
+  end
+
 end

@@ -125,6 +125,9 @@ require 'faker'
 																			 enabled: true, category: 'property',
 																			 addresses_attributes: [ addr ])
 	if @community.save
+  	
+  	@community.create_profile_for_carrier(1)
+  	
     units_per_floor = rand(15..30)
     floors = rand(1..4).to_i
     
@@ -139,7 +142,7 @@ require 'faker'
         																		 enabled: true, category: 'property', account: @account)
         
         if @unit.save
-          pp @unit
+          @unit.create_profile_for_carrier(1)
         else
           puts "\nUnit Save Error\n"
           pp @unit.errors.to_json

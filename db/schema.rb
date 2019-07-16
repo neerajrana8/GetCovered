@@ -156,7 +156,7 @@ ActiveRecord::Schema.define(version: 2019_07_15_171545) do
   end
 
   create_table "carrier_insurable_profiles", force: :cascade do |t|
-    t.jsonb "attributes", default: {}
+    t.jsonb "traits", default: {}
     t.jsonb "data", default: {}
     t.bigint "carrier_id"
     t.bigint "insurable_id"
@@ -167,7 +167,7 @@ ActiveRecord::Schema.define(version: 2019_07_15_171545) do
   end
 
   create_table "carrier_insurable_types", force: :cascade do |t|
-    t.jsonb "profile_attributes", default: {}
+    t.jsonb "profile_traits", default: {}
     t.jsonb "profile_data", default: {}
     t.boolean "enabled", default: false, null: false
     t.bigint "carrier_id"

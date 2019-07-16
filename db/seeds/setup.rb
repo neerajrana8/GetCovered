@@ -68,7 +68,7 @@ end
     if carrier.id == 1
       policy_type = PolicyType.find(1)
       carrier_insurable_type = CarrierInsurableType.create!(carrier: carrier, insurable_type: InsurableType.find(1),
-                                                            enabled: true, profile_attributes: {
+                                                            enabled: true, profile_traits: {
                                                               "pref_facility": "MDU",
                                                               "occupancy_type": "Other",
                                                               "construction_type": nil,
