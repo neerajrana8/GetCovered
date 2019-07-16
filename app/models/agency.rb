@@ -46,6 +46,12 @@ class Agency < ApplicationRecord
   		
   has_many :fees,
     as: :ownerable
+	
+	has_many :addresses,
+       as: :addressable,
+       autosave: true
+
+  accepts_nested_attributes_for :addresses
       
   # has_one relationships
   # blank for now...

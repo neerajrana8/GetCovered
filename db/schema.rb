@@ -53,6 +53,7 @@ ActiveRecord::Schema.define(version: 2019_07_15_171545) do
     t.float "latitude"
     t.float "longitude"
     t.string "timezone"
+    t.boolean "primary", default: false, null: false
     t.string "addressable_type"
     t.bigint "addressable_id"
     t.datetime "created_at", null: false

@@ -23,6 +23,9 @@ class Carrier < ApplicationRecord
   		
   has_many :fees,
     as: :ownerable
+    
+  has_many :carrier_insurable_types
+  has_many :carrier_insurable_profiles
   
   # Validations
   validates :title, presence: true,

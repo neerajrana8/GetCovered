@@ -12,7 +12,27 @@ def adduser(user_type, chash)
   @user
 end
 
-@agency = Agency.new(title: "Get Covered", enabled: true, whitelabel: true, tos_accepted: true, tos_accepted_at: Time.current, tos_acceptance_ip: nil, verified: false, stripe_id: nil, master_agency: true)
+@agency = Agency.new(title: "Get Covered", 
+										 enabled: true, 
+										 whitelabel: true, 
+										 tos_accepted: true, 
+										 tos_accepted_at: Time.current, 
+										 tos_acceptance_ip: nil, 
+										 verified: false, 
+										 stripe_id: nil, 
+										 master_agency: true,
+										 addresses_attributes: [
+											 {
+												 street_number: "265",
+												 street_name: "Canal St",
+												 street_two: "#205",
+												 city: "New York",
+												 state: "NY",
+												 county: "NEW YORK",
+												 zip_code: "10013",
+												 primary: true
+											 }
+										 ])
 
 if @agency.save
   @site_staff = [

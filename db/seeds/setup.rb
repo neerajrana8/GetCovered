@@ -68,7 +68,7 @@ end
     if carrier.id == 1
       policy_type = PolicyType.find(1)
       carrier_insurable_type = CarrierInsurableType.create!(carrier: carrier, insurable_type: InsurableType.find(1),
-                                                            profile_attributes: {
+                                                            enabled: true, profile_attributes: {
                                                               "pref_facility": "MDU",
                                                               "occupancy_type": "Other",
                                                               "construction_type": nil,
@@ -89,6 +89,8 @@ end
                                                               "property_info_resolved": false,
                                                               "property_info_last_resolved_on": nil
                                                             })
+      carrier_insurable_type = CarrierInsurableType.create!(carrier: carrier, insurable_type: InsurableType.find(4), enabled: true)
+                                                            
     # Add Master to Queensland Business Specialty Insurance
     elsif carrier.id == 2
       policy_type = PolicyType.find(2)

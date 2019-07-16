@@ -8,7 +8,7 @@
 class Account < ApplicationRecord
   # Concerns
   include EarningsReport, 
-          RecordChange, 
+          # RecordChange, 
           SetCallSign, 
           SetSlug,
           StripeConnect
@@ -25,6 +25,14 @@ class Account < ApplicationRecord
   		
   has_many :branding_profiles,
     as: :profileable
+	
+	has_many :insurables
+	
+	has_many :addresses,
+       as: :addressable,
+       autosave: true
+
+  accepts_nested_attributes_for :addresses
 
   validates_presence_of :title
   	
