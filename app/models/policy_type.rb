@@ -17,8 +17,8 @@ class PolicyType < ApplicationRecord
   # Validations
   validates :title, presence: true,
                     uniqueness: true
-  validates :designation, presence: true,
-                          uniqueness: true      
+  # validates :designation, presence: true,
+  #                         uniqueness: true      
       
   private
   

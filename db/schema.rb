@@ -165,9 +165,7 @@ ActiveRecord::Schema.define(version: 2019_07_02_010801) do
   end
 
   create_table "carrier_policy_types", force: :cascade do |t|
-    t.jsonb "policy_defaults", default: {"options"=>{}, "deductibles"=>{}, "coverage_limits"=>{}}
-    t.jsonb "application_fields", default: {}
-    t.boolean "application_required", default: false, null: false
+    t.jsonb "defaults", default: {"options"=>{}, "deductibles"=>{}, "coverage_limits"=>{}}
     t.bigint "carrier_id"
     t.bigint "policy_type_id"
     t.datetime "created_at", null: false
@@ -653,9 +651,9 @@ ActiveRecord::Schema.define(version: 2019_07_02_010801) do
 
   create_table "policy_types", force: :cascade do |t|
     t.string "title"
-    t.string "slug"
-    t.string "designation"
-    t.boolean "enabled", default: false, null: false
+    t.integer "slug"
+    t.jsonb "defaults", default: {"options"=>{}, "deductibles"=>{}, "coverage_limits"=>{}}
+    t.boolean "enabled"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
   end

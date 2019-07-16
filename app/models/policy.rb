@@ -46,7 +46,7 @@ class Policy < ApplicationRecord
   belongs_to :account
   belongs_to :carrier
   belongs_to :policy_type
-  belongs_to :billing_profie
+  # belongs_to :billing_profie
   
   has_many :policy_quotes
   has_one :policy_application
