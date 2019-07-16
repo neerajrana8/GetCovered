@@ -3,7 +3,7 @@
 
 class Lease < ApplicationRecord
   # Concerns
-  include RecordChange
+  include RecordChange, ElasticsearchSearchable
 
   # Active Record Callbacks
   after_initialize :initialize_lease
@@ -65,7 +65,20 @@ class Lease < ApplicationRecord
   self.inheritance_column = nil
 
   enum status: [ :pending, :approved, :current, :expired, :rejected ]
-  
+
+  settings index: { number_of_shards: 1 } do
+    mappings dynamic: 'false' do
+      indexes :reference, analyzer: 'english'
+      indexes :type, analyzer: 'english'
+      indexes :status, type: :integer
+      indexes :covered, type: 'keyword'
+      indexes :unit_id, type: 'keyword'
+      indexes :account_id, type: 'keyword'
+      indexes :start_date, type: 'date'
+      indexes :end_date, type: 'date'
+    end
+  end
+
   # Lease.active?
   def active?
     range = start_date..end_date
