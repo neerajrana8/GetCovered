@@ -11,7 +11,7 @@ class CreateLeases < ActiveRecord::Migration[5.2]
       t.string :type
       t.integer :status, default: 0
       t.boolean :covered, default: false
-      t.references :unit
+      t.references :insurable
       t.references :account
 
       t.timestamps

@@ -29,3 +29,5 @@
 ._.DS_Store
 **/.DS_Store
 **/._.DS_Store
+
+config/master.key

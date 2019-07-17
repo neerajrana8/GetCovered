@@ -1,6 +1,6 @@
 class Insurable < ApplicationRecord
   # Concerns
-  # include CarrierQbeCommunity, EarningsReport, RecordChange
+  include CarrierQbeInsurable#, EarningsReport, RecordChange
   
   belongs_to :account
   belongs_to :insurable, optional: true
@@ -8,6 +8,11 @@ class Insurable < ApplicationRecord
   
   has_many :insurables
   has_many :carrier_insurable_profiles
+	
+	has_many :events,
+	    as: :eventable
+	    
+  has_many :leases
 	
 	has_many :addresses,
        as: :addressable,
@@ -17,6 +22,9 @@ class Insurable < ApplicationRecord
   
   enum category: ['property', 'entity']
   
+  scope :residential_communities, -> { joins(:insurable_type).where("insurable_types.title = 'Residential Community'")}
+  scope :residential_units, -> { joins(:insurable_type).where("insurable_types.title = 'Residential Unit'")}
+  
   # Insurable.primary_address
   #
   
@@ -24,19 +32,28 @@ class Insurable < ApplicationRecord
 		return addresses.where(primary: true).take 
 	end
 	
-	# Insurable.create_profile_for_carrier(carrier_id)
+	# Insurable.create_carrier_profile(carrier_id)
 	#
 	
-	def create_profile_for_carrier(carrier_id)
+	def create_carrier_profile(carrier_id)
   	carrier = Carrier.find(carrier_id)
-    if carrier.carrier_insurable_types
-              .exists?(insurable_type == insurable_type)
+    if !carrier.nil? && carrier.carrier_insurable_types
+                               .exists?(insurable_type: insurable_type)
       carrier_insurable_type = carrier.carrier_insurable_types
-                                      .where(insurable_type_id: self.insurable_type_id).take
+                                      .where(insurable_type: insurable_type).take
       self.carrier_insurable_profiles.create!(traits: carrier_insurable_type.profile_traits, 
                                               data: carrier_insurable_type.profile_data,
                                               carrier: carrier)
     end  	
   end
+  
+  # Insurable.carrier_profile(carrier_id)
+  #
+  
+  def carrier_profile(carrier_id)
+    unless carrier_id.nil?
+		  return carrier_insurable_profiles.where(carrier_id: carrier_id).take 
+		end
+	end
 
 end

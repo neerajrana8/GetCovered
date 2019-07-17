@@ -26,6 +26,8 @@ class Agency < ApplicationRecord
     through: :carrier_agencies
     
   has_many :accounts
+  has_many :insurables,
+    through: :accounts
   
   has_many :staff,
   		as: :organizable

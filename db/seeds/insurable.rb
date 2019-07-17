@@ -11,7 +11,8 @@ require 'faker'
     county: "Champaign",
     state: "IL",
     zip_code: "61853",
-    plus_four: "9364"
+    plus_four: "9364",
+    primary: true
   },
   {
     street_number: "1514",
@@ -20,7 +21,8 @@ require 'faker'
     county: "Polk",
     state: "FL",
     zip_code: "33823",
-    plus_four: "9718"
+    plus_four: "9718",
+    primary: true
   },
   {
     street_number: "3201",
@@ -29,7 +31,8 @@ require 'faker'
     county: "LOS ANGELES",
     state: "CA",
     zip_code: "90034",
-    plus_four: "5203"
+    plus_four: "5203",
+    primary: true
   },
   {
     street_number: "2625",
@@ -38,7 +41,8 @@ require 'faker'
     county: "Ventura",
     state: "CA",
     zip_code: "91361",
-    plus_four: "5751"
+    plus_four: "5751",
+    primary: true
   },
   {
     street_number: "70",
@@ -47,7 +51,8 @@ require 'faker'
     county: "Erie",
     state: "NY",
     zip_code: "14043",
-    plus_four: "1508"
+    plus_four: "1508",
+    primary: true
   },
   {
     street_number: "1755",
@@ -56,7 +61,8 @@ require 'faker'
     county: "LOS ANGELES",
     state: "CA",
     zip_code: "90024",
-    plus_four: "6809"
+    plus_four: "6809",
+    primary: true
   },
   {
     street_number: "5009",
@@ -65,7 +71,8 @@ require 'faker'
     county: "ORANGE",
     state: "FL",
     zip_code: "32839",
-    plus_four: "5340"
+    plus_four: "5340",
+    primary: true
   },
   {
     street_number: "1102",
@@ -74,7 +81,8 @@ require 'faker'
     county: "SAINT LOUIS",
     state: "MO",
     zip_code: "63088",
-    plus_four: "1289"
+    plus_four: "1289",
+    primary: true
   },
   {
     street_number: "240",
@@ -83,7 +91,8 @@ require 'faker'
     county: "SAINT LOUIS",
     state: "MO",
     zip_code: "63021",
-    plus_four: "5707"
+    plus_four: "5707",
+    primary: true
   },
   {
     street_number: "7111",
@@ -92,7 +101,8 @@ require 'faker'
     county: "JEFFERSON",
     state: "KY",
     zip_code: "40219",
-    plus_four: "3078"
+    plus_four: "3078",
+    primary: true
   },
   {
     street_number: "13900",
@@ -101,7 +111,8 @@ require 'faker'
     county: "MECKLENBURG",
     state: "NC",
     zip_code: "28278",
-    plus_four: "7493"
+    plus_four: "7493",
+    primary: true
   },
   {
     street_number: "1340",
@@ -110,23 +121,31 @@ require 'faker'
     county: "FAIRFIELD",
     state: "CT",
     zip_code: "06902",
-    plus_four: "2452"
+    plus_four: "2452",
+    primary: true
   } 	
 ]
 
 @building_name_options = ['Estates', 'Gardens', 'Homes', 'Place']
 @account = Account.find(1)
-@insurable_type = InsurableType.find(1)
+@residential_community_insurable_type = InsurableType.find(1)
+@residential_unit_insurable_type = InsurableType.find(4)
 
 @addresses.each do |addr|
 	
 	@community = @account.insurables.new(title: "#{Faker::Movies::LordOfTheRings.location} #{@building_name_options[rand(0..3)]}", 
-																			 insurable_type: @insurable_type, 
+																			 insurable_type: @residential_community_insurable_type, 
 																			 enabled: true, category: 'property',
 																			 addresses_attributes: [ addr ])
 	if @community.save
   	
-  	@community.create_profile_for_carrier(1)
+  	@community.create_carrier_profile(1)
+  	
+  	# puts "[#{ @community.title }] Accessing QBE Zip Code"
+  	@community.get_qbe_zip_code()
+  	
+  	# puts "[#{ @community.title }] Accessing QBE Property Info"
+  	@community.get_qbe_property_info()
   	
     units_per_floor = rand(15..30)
     floors = rand(1..4).to_i
@@ -138,11 +157,11 @@ require 'faker'
       units_per_floor.times do |unit_num|
         
         mailing_id = floor_id + (unit_num + 1)
-        @unit = @community.insurables.new(title: mailing_id, insurable_type: InsurableType.find(4),
+        @unit = @community.insurables.new(title: mailing_id, insurable_type: @residential_unit_insurable_type,
         																		 enabled: true, category: 'property', account: @account)
         
         if @unit.save
-          @unit.create_profile_for_carrier(1)
+          @unit.create_carrier_profile(1)
         else
           puts "\nUnit Save Error\n"
           pp @unit.errors.to_json

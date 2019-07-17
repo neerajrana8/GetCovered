@@ -19,6 +19,8 @@ class Event < ApplicationRecord
   
   enum interface: ['REST', 'SOAP']
   
+  enum status: ['in_progress', 'success', 'error']
+  
   validates :request, 
     presence: true,
     if: Proc.new { |ev| ev.format == 'json' || ev.format == 'xml'  }

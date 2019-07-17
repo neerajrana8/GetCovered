@@ -310,6 +310,7 @@ ActiveRecord::Schema.define(version: 2019_07_15_171545) do
     t.integer "verb", default: 0
     t.integer "format", default: 0
     t.integer "interface", default: 0
+    t.integer "status", default: 0
     t.string "process"
     t.string "endpoint"
     t.datetime "started"
@@ -474,13 +475,13 @@ ActiveRecord::Schema.define(version: 2019_07_15_171545) do
     t.string "type"
     t.integer "status", default: 0
     t.boolean "covered", default: false
-    t.bigint "unit_id"
+    t.bigint "insurable_id"
     t.bigint "account_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["account_id"], name: "index_leases_on_account_id"
+    t.index ["insurable_id"], name: "index_leases_on_insurable_id"
     t.index ["reference"], name: "lease_reference", unique: true
-    t.index ["unit_id"], name: "index_leases_on_unit_id"
   end
 
   create_table "line_items", force: :cascade do |t|

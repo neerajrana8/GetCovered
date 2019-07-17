@@ -1,0 +1,28 @@
+<soapenv:Envelope 
+  xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" 
+  xmlns:proc="<%= Rails.application.credentials.qbe[:uri] %>">
+  <soapenv:Header/>
+  <soapenv:Body>
+    <proc:processRenterRequest>
+      <xmldata>
+        <![CDATA[
+          <?xml version='1.0' standalone='yes'?>
+          <zipcode_find version="1.0">
+            <heading>
+              <program name="<%= request[:heading][:program][:name] %>" requesttimestamp="<%= request[:heading][:program][:requesttimestamp] %>" ClientName="<%= request[:heading][:program][:ClientName] %>"/>
+            </heading>
+            <request type="<%= request[:data][:type] %>">
+              <senderID><%= request[:data][:senderID] %></senderID>
+              <receiverID>32917</receiverID>
+              <prop_number><%= request[:data][:prop_number] %></prop_number>
+              <prop_street><%= request[:data][:prop_street] %></prop_street>
+              <prop_city><%= request[:data][:prop_city] %></prop_city>
+              <prop_state><%= request[:data][:prop_state] %></prop_state>
+              <prop_zipcode><%= request[:data][:prop_zipcode] %></prop_zipcode>
+            </request>
+          </zipcode_find>
+        ]]>
+      </xmldata>
+    </proc:processRenterRequest>
+  </soapenv:Body>
+</soapenv:Envelope>

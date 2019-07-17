@@ -4,6 +4,7 @@ class CreateEvents < ActiveRecord::Migration[5.2]
       t.integer :verb, default: 0
       t.integer :format, default: 0
       t.integer :interface, default: 0
+      t.integer :status, default: 0
       t.string :process
       t.string :endpoint
       t.datetime :started
