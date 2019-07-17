@@ -1,0 +1,42 @@
+<soapenv:Envelope 
+  xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" 
+  xmlns:proc="<%= Rails.application.credentials.qbe[:uri][Rails.application.credentials.rails_env.to_sym] %>">
+  <soapenv:Header/>
+  <soapenv:Body>
+    <proc:processRenterRequest>
+      <xmldata>
+        <![CDATA[
+          <?xml version="1.0"?>
+          <renters_request version="1.0">
+            <heading>
+              <program name="<%= request[:heading][:program][:name] %>" requesttimestamp="<%= request[:heading][:program][:requesttimestamp] %>" ClientName="<%= request[:heading][:program][:ClientName] %>"/>
+            </heading>
+            <request type="<%= request[:data][:type] %>">
+              <senderID><%= request[:data][:senderID] %></senderID>
+              <receiverID>32917</receiverID>
+              <agent_id><%= request[:data][:agent_id] %></agent_id>
+              <current_system_date><%= request[:data][:current_system_date] %></current_system_date>
+              <prop_city><%= request[:data][:prop_city] %></prop_city>
+              <prop_county><%= request[:data][:prop_county] %></prop_county>
+              <prop_state><%= request[:data][:prop_state] %></prop_state>
+              <prop_zipcode><%= request[:data][:prop_zipcode] %></prop_zipcode>
+              <pref_facility><%= request[:data][:pref_facility] %></pref_facility>
+              <occupancy_type><%= request[:data][:occupancy_type] %></occupancy_type>
+              <units_on_site><%= request[:data][:units_on_site] %></units_on_site>
+              <age_of_facility><%= request[:data][:age_of_facility] %></age_of_facility>
+              <gated_community><%= request[:data][:gated_community] %></gated_community>
+              <prof_managed><%= request[:data][:prof_managed] %></prof_managed>
+              <prof_managed_year><%= request[:data][:prof_managed_year] %></prof_managed_year>
+              <num_insured><%= request[:data][:num_insured] %></num_insured>
+              <effective_date><%= request[:data][:effective_date] %></effective_date>
+              <constr_type><%= request[:data][:constr_type] %></constr_type>
+              <protection_device_code><%= request[:data][:protection_device_code] %></protection_device_code>
+              <bceg_code><%= request[:data][:bceg] %></bceg_code>
+              <ppc_code><%= request[:data][:ppc] %></ppc_code>              
+            </request>
+          </renters_request>
+        ]]>
+      </xmldata>
+    </proc:processRenterRequest>
+  </soapenv:Body>
+</soapenv:Envelope>

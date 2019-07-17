@@ -9,24 +9,30 @@ module CarrierQbeInsurable
 	  
 	  # Get QBE Zip Code
 	  #
-	  # Example:
+	  # Example: 
 	  #   @community = Community.find(1)
 	  #   @community.get_qbe_zip_code
 	  #   => nil
 	  
 	  def get_qbe_zip_code
 	    
+	    return if self.insurable_type.title != "Residential Community"
+	    @carrier = Carrier.where(title: 'Queensland Business Insurance').take
+	    @carrier_profile = carrier_profile(@carrier.id)
+	    @address = primary_address()
+	    
 	    set_error = false
 	    
-	    unless address.nil? ||
-	           carrier_settings["qbe"]["county_resolved"] == true
-	      # When an address and county resolved
+	    unless @address.nil? ||
+	           @carrier_profile.data["county_resolved"] == true
+	           
+	      # When an @address and county resolved
 	      event = events.new(
 	        verb: 'post', 
 	        format: 'xml', 
 	        interface: 'SOAP',
 	        process: 'qbe_get_zipcode', 
-	        endpoint: ENV.fetch("QBE_SOAP_URI")
+	        endpoint: Rails.application.credentials.qbe[:uri][Rails.application.credentials.rails_env.to_sym]
 	      )
 	      
 	      return false if @already_in_on_create.nil? == false
@@ -39,8 +45,14 @@ module CarrierQbeInsurable
 	      }
 	      
 	      qbe_service = QbeService.new(:action => 'getZipCode')
-	      qbe_service.build_request({ prop_zipcode: address.postal_code })
-	      event.request_xml = qbe_service.compiled_rxml  
+	      qbe_service.build_request({ prop_zipcode: @address.zip_code })
+	      event.request = qbe_service.compiled_rxml  
+	        
+        if Rails.application.credentials.rails_env == "development"
+	        puts "\nGet Zipcode"
+	        puts event.request
+	        puts "\n"
+	      end
 	      
 	      if event.save  
 	        # If event saves
@@ -57,19 +69,25 @@ module CarrierQbeInsurable
 	        qbe_request_timer[:total] = (complete_time - qbe_request_timer[:start]).to_f
 	        event.completed = complete_time
 	        
-	        self.carrier_settings["qbe"]["api_metrics"]["get_zip_code"].push({
-	          duration: "%.4f" % qbe_request_timer[:total],
-	          date_time: Time.current.iso8601(9)
-	        })
+#	        self.carrier_settings["qbe"]["api_metrics"]["get_zip_code"].push({
+#	          duration: "%.4f" % qbe_request_timer[:total],
+#	          date_time: Time.current.iso8601(9)
+#	        })
 	        
-	        event.response_xml = qbe_data[:data]
+	        event.response = qbe_data[:data]
+	        
+	        if Rails.application.credentials.rails_env == "development"
+  	        puts event.response
+  	        puts "\n"
+  	      end
+  	      
 	        event.status = qbe_data[:error] ? 'error' : 'success'
 	        
 	        unless qbe_data[:error] # QBE Response Success
 	        		          
-	          self.carrier_settings["qbe"]["county_resolution"]["selected"] = nil
-	          self.carrier_settings["qbe"]["county_resolution"]["results"].clear
-	          self.carrier_settings["qbe"]["county_resolution"]["matches"].clear
+	          @carrier_profile.data["county_resolution"]["selected"] = nil
+	          @carrier_profile.data["county_resolution"]["results"].clear
+	          @carrier_profile.data["county_resolution"]["matches"].clear
 	        	
 	        	xml_doc = Nokogiri::XML(qbe_data[:data])
 	          xml_zip_codes = xml_doc.css("//ZipExtract")
@@ -77,7 +95,7 @@ module CarrierQbeInsurable
 	          # Process QBE_Data
 	          if xml_zip_codes.length > 0
 	            # There is at least one county
-	            self.carrier_settings["qbe"]["county_resolution"]["available"] = true
+	            @carrier_profile.data["county_resolution"]["available"] = true
 	  
 	            xml_zip_codes.each do |opt|
 	              
@@ -87,43 +105,46 @@ module CarrierQbeInsurable
 	                :county => opt.attributes["county"].value
 	              }
 	              
-	              self.carrier_settings["qbe"]["county_resolution"]["results"].push(tmp_opt)
+	              @carrier_profile.data["county_resolution"]["results"].push(tmp_opt)
 	              
 	            end
 	            
-	            self.carrier_settings["qbe"]["county_resolution"]["matches"] = self.carrier_settings["qbe"]["county_resolution"]["results"].dup
+	            @carrier_profile.data["county_resolution"]["matches"] = @carrier_profile.data["county_resolution"]["results"].dup
 	            
-	            if address.county.nil?
-	              self.carrier_settings["qbe"]["county_resolution"]["matches"].select! { |opt| opt[:locality] == address.locality }
+	            if @address.county.nil?
+	              @carrier_profile.data["county_resolution"]["matches"].select! { |opt| opt[:locality] == @address.city }
 	            else
-	              self.carrier_settings["qbe"]["county_resolution"]["matches"].select! { |opt| opt[:locality] == address.locality && opt[:county] == address.county.upcase }        
+	              @carrier_profile.data["county_resolution"]["matches"].select! { |opt| opt[:locality] == @address.city && opt[:county] == @address.county.upcase }        
 	            end
 	  
-	            case self.carrier_settings["qbe"]["county_resolution"]["matches"].length
+	            case @carrier_profile.data["county_resolution"]["matches"].length
 	              when 0
-	                self.carrier_settings["qbe"]["county_resolution"]["available"] = false # MOOSE WARNING: this is a temporary answer to the question of how to handle nonempty results with empty matches.
+	                @carrier_profile.data["county_resolution"]["available"] = false # MOOSE WARNING: this is a temporary answer to the question of how to handle nonempty results with empty matches.
 	              when 1
-	                self.carrier_settings["qbe"]["county_resolution"]["selected"] = self.carrier_settings["qbe"]["county_resolution"]["matches"][0][:seq]
-	                self.carrier_settings["qbe"]["county_resolved"] = true
-	                self.carrier_settings["qbe"]["county_resolved_on"] = Time.current.strftime("%m/%d/%Y %I:%M %p")
+	                @carrier_profile.data["county_resolution"]["selected"] = @carrier_profile.data["county_resolution"]["matches"][0][:seq]
+	                @carrier_profile.data["county_resolved"] = true
+	                @carrier_profile.data["county_resolved_on"] = Time.current.strftime("%m/%d/%Y %I:%M %p")
 	                
-	                address.update_column :county, self.carrier_settings["qbe"]["county_resolution"]["matches"][0][:county].titlecase
+	                @address.update_column :county, @carrier_profile.data["county_resolution"]["matches"][0][:county].titlecase
 	            end
-	             
+	            
+	            @carrier_profile.save
+	           
 	          else
 	          
 	            # No County Listing for ZipCode
-	            self.carrier_settings["qbe"]["county_resolution"]["available"] = false  
+	            @carrier_profile.data["county_resolution"]["available"] = false  
+	            @carrier_profile.save
 	            
 	          end
 	          # / Process QBE_Data
 	        	
-	        	check_carrier_process_error("qbe", false, { process: "get_qbe_zip_code" })
+	        	# check_carrier_process_error("qbe", false, { process: "get_qbe_zip_code" })
 	        	
 	        else # QBE Response Failure
 	        	
 	        	set_error = true
-	        	check_carrier_process_error("qbe", true, { error: qbe_data[:code], process: "get_qbe_zip_code", message: qbe_data[:message] })
+	        	# check_carrier_process_error("qbe", true, { error: qbe_data[:code], process: "get_qbe_zip_code", message: qbe_data[:message] })
 	        
 	        end # QBE Response Complete
 	        
@@ -145,7 +166,7 @@ module CarrierQbeInsurable
 	        pp event.errors
 	      end
 	    else
-	      # When an address or county are not resolved
+	      # When an @address or county are not resolved
 	      set_error = nil
 	    end
 	    
@@ -160,17 +181,22 @@ module CarrierQbeInsurable
 	  #   => nil
 	  
 	  def get_qbe_property_info
+  	  
+	    return if self.insurable_type.title != "Residential Community"
+	    @carrier = Carrier.where(title: 'Queensland Business Insurance').take
+	    @carrier_profile = carrier_profile(@carrier.id)
+	    @address = primary_address()  	  
 	    
 	    set_error = false
 	    
-	    if carrier_settings["qbe"]["county_resolved"] == true
+	    if @carrier_profile.data["county_resolved"] == true
 	
 	      event = events.new(
 	        verb: 'post', 
 	        format: 'xml', 
 	        interface: 'SOAP',
 	        process: 'qbe_property_info', 
-	        endpoint: ENV.fetch("QBE_SOAP_URI")
+	        endpoint: Rails.application.credentials.qbe[:uri][Rails.application.credentials.rails_env.to_sym]
 	      )      
 	      
 	      return false if @already_in_on_create.nil? == false
@@ -184,14 +210,20 @@ module CarrierQbeInsurable
 	      
 	      qbe_service = QbeService.new(:action => 'PropertyInfo')
 	      
-	      qbe_service.build_request({ prop_number: address.street_number,
-	                                  prop_street: address.street_one,
-	                                  prop_city: address.locality,
-	                                  prop_state: address.region,
-	                                  prop_zipcode: address.postal_code })
+	      qbe_service.build_request({ prop_number: @address.street_number,
+	                                  prop_street: @address.street_name,
+	                                  prop_city: @address.city,
+	                                  prop_state: @address.state,
+	                                  prop_zipcode: @address.zip_code })
 	
-	      event.request_xml = qbe_service.compiled_rxml
-	
+	      event.request = qbe_service.compiled_rxml
+        
+        if Rails.application.credentials.rails_env == "development"
+          puts"\nGet Property Info"
+          puts event.request
+          puts"\n"
+        end
+        
 	      if event.save
 	        # If Event Saves
 	        start_time = Time.now                  
@@ -206,30 +238,37 @@ module CarrierQbeInsurable
 	        qbe_request_timer[:total] = (complete_time - qbe_request_timer[:start]).to_f
 	        event.completed = complete_time
 	        
-	        self.carrier_settings["qbe"]["api_metrics"]["get_property_info"].push({
-	          duration: "%.4f" % qbe_request_timer[:total],
-	          date_time: Time.current.iso8601(9)
-	        })
+	        #self.carrier_settings["qbe"]["api_metrics"]["get_property_info"].push({
+	        #  duration: "%.4f" % qbe_request_timer[:total],
+	        #  date_time: Time.current.iso8601(9)
+	        #})
 	        
-	        event.response_xml = qbe_data[:data]
+	        event.response = qbe_data[:data]
+	        
+  	      if Rails.application.credentials.rails_env == "development"
+            puts event.response
+            puts"\n"
+          end
+          
 	        event.status = qbe_data[:error] ? 'error' : 'success'
 	        
 	        unless qbe_data[:error] # QBE Response Success
 	        	
 	        	xml_doc = Nokogiri::XML(qbe_data[:data])
 	        		          
-	          self.ppc = xml_doc.css("PPC_Code").first.content unless xml_doc.css("PPC_Code").first.nil?
-	          self.bceg = xml_doc.css("BCEG_Code").first.content unless xml_doc.css("BCEG_Code").first.nil?
+	          @carrier_profile.traits['ppc'] = xml_doc.css("PPC_Code").first.content unless xml_doc.css("PPC_Code").first.nil?
+	          @carrier_profile.traits['bceg'] = xml_doc.css("BCEG_Code").first.content unless xml_doc.css("BCEG_Code").first.nil?
 	        	
-	        	self.carrier_settings["qbe"]["property_info_resolved"] = true
-	        	self.carrier_settings["qbe"]["property_info_resolved_on"] = Time.current.strftime("%m/%d/%Y %I:%M %p")
+	        	@carrier_profile.data["property_info_resolved"] = true
+	        	@carrier_profile.data["property_info_resolved_on"] = Time.current.strftime("%m/%d/%Y %I:%M %p")
 	        	
-	        	check_carrier_process_error("qbe", false, { process: "get_qbe_property_info" })
+	        	@carrier_profile.save()
+	        	# check_carrier_process_error("qbe", false, { process: "get_qbe_property_info" })
 	        	
 	        else # QBE Response Failure
 	        	
 	        	set_error = true
-	        	check_carrier_process_error("qbe", true, { error: qbe_data[:code], process: "get_qbe_property_info", message: qbe_data[:message] })
+	        	# check_carrier_process_error("qbe", true, { error: qbe_data[:code], process: "get_qbe_property_info", message: qbe_data[:message] })
 	        
 	        end # QBE Response Complete
 	        
@@ -252,7 +291,7 @@ module CarrierQbeInsurable
 	        pp event.errors        
 	      end
 	    else
-	      # When an address or county are not resolved
+	      # When an @address or county are not resolved
 	      set_error = nil
 	    end    
 	    
@@ -345,7 +384,7 @@ module CarrierQbeInsurable
 	           carrier_settings["qbe"]["property_info_resolved"] != true
 	      # Ready to roll... number_insured is not nil, county is true
 	      # and property info has been resolved
-	      split_deductible = address.region == "FL" ? true : false
+	      split_deductible = @address.state == "FL" ? true : false
 	      
 	      qbe_service = QbeService.new(:action => 'getRates')
 	      
@@ -360,10 +399,10 @@ module CarrierQbeInsurable
 	      
 	      qbe_request_options = {
 	        num_insured: number_insured,
-	        prop_city: address.locality,
-	        prop_county: address.county,
-	        prop_state: address.region,
-	        prop_zipcode: address.combined_postal_code,
+	        prop_city: @address.city,
+	        prop_county: @address.county,
+	        prop_state: @address.state,
+	        prop_zipcode: @address.combined_postal_code,
 	        units_on_site: units.count,
 	        age_of_facility: construction_year,
 	        ppc: ppc,
@@ -383,7 +422,7 @@ module CarrierQbeInsurable
 	        interface: 'SOAP',
 	        process: 'get_qbe_rates',
 	        request_xml: qbe_service.compiled_rxml,
-	        endpoint: ENV.fetch("QBE_SOAP_URI")
+	        endpoint: Rails.application.credentials.qbe[:uri][Rails.application.credentials.rails_env.to_sym]
 	      )
 	
 	      if event.save
@@ -406,7 +445,7 @@ module CarrierQbeInsurable
 	          date_time: Time.current.iso8601(9)
 	        })
 	        
-	        event.response_xml = qbe_data[:data]
+	        event.response = qbe_data[:data]
 	        event.status = qbe_data[:error] ? 'error' : 'success'
 	        
 	        unless qbe_data[:error] # QBE Response Success
@@ -645,7 +684,7 @@ module CarrierQbeInsurable
 	                
 	              else
 	              
-	                puts "\nRATE ERROR\n".red
+	                puts "\nRATE ERROR\n"
 	                pp qbe_rate
 	                set_error = true
 	                process_status[:error] = true

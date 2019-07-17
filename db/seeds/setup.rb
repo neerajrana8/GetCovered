@@ -82,12 +82,24 @@ end
                                                               "gated": false
                                                             },
                                                             profile_data: {
-                                                              "rates_resolved": false,
-                                                              "rates_last_resolved_on": nil,
                                                               "county_resolved": false,
                                                               "county_last_resolved_on": nil,
+                                                              "county_resolution": {
+                                                                "selected": nil,
+                                                                "results": [],
+                                                                "matches": []
+                                                              },
                                                               "property_info_resolved": false,
-                                                              "property_info_last_resolved_on": nil
+                                                              "property_info_last_resolved_on": nil,
+                                                              "get_rates_resolved": false,
+                                                              "get_rates_resolved_on": nil,
+                                                              "rates_resolution": {
+                                                                "1": false,
+                                                                "2": false,
+                                                                "3": false,
+                                                                "4": false,
+                                                                "5": false
+                                                              }
                                                             })
       carrier_insurable_type = CarrierInsurableType.create!(carrier: carrier, insurable_type: InsurableType.find(4), enabled: true)
                                                             

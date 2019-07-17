@@ -3,7 +3,7 @@
 
 class Lease < ApplicationRecord
   # Concerns
-  include RecordChange
+  # include RecordChange
 
   # Active Record Callbacks
   after_initialize :initialize_lease
@@ -16,24 +16,10 @@ class Lease < ApplicationRecord
 
   after_commit :update_unit_occupation
 
-  # Relationships
-  # belongs_to :unit,
-  #  required: true
-    
-  has_one :building,
-    through: :unit
-    
-  has_one :community,
-    through: :building
-
   belongs_to :account, 
     required: true
-
-  has_one :policy,
-    through: :unit
-
-  has_one :master_policy_coverage,
-    through: :unit
+    
+  belongs_to :insurable
 
   has_many :lease_users
 
@@ -135,7 +121,7 @@ class Lease < ApplicationRecord
 
     ## Initialize Lease
     def initialize_lease
-      self.type = self.unit.type unless self.unit.nil?
+      # self.type = self.unit.type unless self.unit.nil?
     end
 
     def set_type
