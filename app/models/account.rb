@@ -25,9 +25,11 @@ class Account < ApplicationRecord
   		
   has_many :branding_profiles,
     as: :profileable
-      
-  # has_one relationships
-  # blank for now...
+
+  has_many :histories,
+    as: :recordable
+
+  validates_presence_of :title
   	
   	private
   		
