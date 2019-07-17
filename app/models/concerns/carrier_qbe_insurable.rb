@@ -25,14 +25,21 @@ module CarrierQbeInsurable
 	    
 	    unless @address.nil? ||
 	           @carrier_profile.data["county_resolved"] == true
+<<<<<<< HEAD
 	           
+=======
+>>>>>>> 5a89309a7b882e3e3079e1b7599ef086d88aaac0
 	      # When an @address and county resolved
 	      event = events.new(
 	        verb: 'post', 
 	        format: 'xml', 
 	        interface: 'SOAP',
 	        process: 'qbe_get_zipcode', 
+<<<<<<< HEAD
 	        endpoint: Rails.application.credentials.qbe[:uri][Rails.application.credentials.rails_env.to_sym]
+=======
+	        endpoint: Rails.application.credentials.qbe[:uri]
+>>>>>>> 5a89309a7b882e3e3079e1b7599ef086d88aaac0
 	      )
 	      
 	      return false if @already_in_on_create.nil? == false
@@ -196,7 +203,11 @@ module CarrierQbeInsurable
 	        format: 'xml', 
 	        interface: 'SOAP',
 	        process: 'qbe_property_info', 
+<<<<<<< HEAD
 	        endpoint: Rails.application.credentials.qbe[:uri][Rails.application.credentials.rails_env.to_sym]
+=======
+	        endpoint: Rails.application.credentials.qbe[:uri]
+>>>>>>> 5a89309a7b882e3e3079e1b7599ef086d88aaac0
 	      )      
 	      
 	      return false if @already_in_on_create.nil? == false
@@ -422,7 +433,11 @@ module CarrierQbeInsurable
 	        interface: 'SOAP',
 	        process: 'get_qbe_rates',
 	        request_xml: qbe_service.compiled_rxml,
+<<<<<<< HEAD
 	        endpoint: Rails.application.credentials.qbe[:uri][Rails.application.credentials.rails_env.to_sym]
+=======
+	        endpoint: Rails.application.credentials.qbe[:uri]
+>>>>>>> 5a89309a7b882e3e3079e1b7599ef086d88aaac0
 	      )
 	
 	      if event.save

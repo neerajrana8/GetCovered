@@ -259,7 +259,11 @@ class QbeService
 
       begin
         
+<<<<<<< HEAD
         call_data[:response] = HTTParty.post(Rails.application.credentials.qbe[:uri][Rails.application.credentials.rails_env.to_sym],
+=======
+        call_data[:response] = HTTParty.post(Rails.application.credentials.qbe[:uri],
+>>>>>>> 5a89309a7b882e3e3079e1b7599ef086d88aaac0
                                      				 body: self.compiled_rxml,
 																		 				 headers: {
 																		 				   "PreAuthenticate" => "TRUE",
