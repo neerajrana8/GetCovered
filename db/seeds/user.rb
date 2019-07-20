@@ -9,7 +9,7 @@
   if occupied_chance > 33
     
     @lease = unit.leases.new
-    pp @lease
+    # pp @lease
     
   end
 end

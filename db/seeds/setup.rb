@@ -39,17 +39,35 @@ end
 # Setting up base Insurable Types
 
 @insurable_types = [
-  { title: "Residential Community", category: "property", enabled: true },
-  { title: "Mixed Use Community", category: "property", enabled: true },
-  { title: "Commercial Community", category: "property", enabled: true },
-  { title: "Residential Unit", category: "property", enabled: true },
-  { title: "Commercial Unit", category: "property", enabled: true },
-  { title: "Small Business", category: "entity", enabled: true }
+  { title: "Residential Community", category: "property", enabled: true }, # ID: 1
+  { title: "Mixed Use Community", category: "property", enabled: true }, # ID: 2
+  { title: "Commercial Community", category: "property", enabled: true }, # ID: 3
+  { title: "Residential Unit", category: "property", enabled: true }, # ID:4
+  { title: "Commercial Unit", category: "property", enabled: true }, # ID: 5
+  { title: "Small Business", category: "entity", enabled: true } # ID: 6
 ]
 
 @insurable_types.each do |it|
-  insurable_type = InsurableType.create(it)
+  InsurableType.create(it)
 end
+
+##
+# Lease Types
+
+@lease_types = [
+  { title: 'Residential', enabled: true }, # ID: 1
+  { title: 'Commercial', enabled: true } # ID: 2
+]
+
+@lease_types.each do |lt|
+  LeaseType.create(lt)
+end
+
+LeaseType.find(1).insurable_types << InsurableType.find(4)
+LeaseType.find(1).policy_types << PolicyType.find(1)
+LeaseType.find(1).policy_types << PolicyType.find(2)
+LeaseType.find(2).insurable_types << InsurableType.find(5)
+LeaseType.find(2).policy_types << PolicyType.find(3)
 
 ##
 # Setting up base Carriers
