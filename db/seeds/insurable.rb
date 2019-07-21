@@ -140,6 +140,13 @@ require 'faker'
 	if @community.save
   	
   	@community.create_carrier_profile(1)
+  	@profile = @community.carrier_profile(1)
+  	
+  	@profile.traits['construction_year'] = rand(1979..2005)
+  	@profile.traits['professionally_managed'] = true
+  	@profile.traits['professionally_managed_year'] = @profile.traits['construction_year'] + 1
+		
+  	@profile.save()
   	
   	# puts "[#{ @community.title }] Accessing QBE Zip Code"
   	@community.get_qbe_zip_code()
@@ -163,11 +170,14 @@ require 'faker'
         if @unit.save
           @unit.create_carrier_profile(1)
         else
-          puts "\nUnit Save Error\n"
+          puts "\nUnit Save Error\n\n"
           pp @unit.errors.to_json
         end                
       end
     end
+    
+  	@community.reset_qbe_rates(true, true)
+	
 	end
 
 end

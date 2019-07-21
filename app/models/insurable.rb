@@ -1,3 +1,6 @@
+# Insurable Model
+# file: app/models/insurable.rb
+
 class Insurable < ApplicationRecord
   # Concerns
   include CarrierQbeInsurable#, EarningsReport, RecordChange
@@ -8,6 +11,7 @@ class Insurable < ApplicationRecord
   
   has_many :insurables
   has_many :carrier_insurable_profiles
+  has_many :insurable_rates
 	
 	has_many :events,
 	    as: :eventable
@@ -22,8 +26,13 @@ class Insurable < ApplicationRecord
   
   enum category: ['property', 'entity']
   
-  scope :residential_communities, -> { joins(:insurable_type).where("insurable_types.title = 'Residential Community'")}
-  scope :residential_units, -> { joins(:insurable_type).where("insurable_types.title = 'Residential Unit'")}
+  ['Residential', 'Commercial'].each do |major_type|
+	  ['Community', 'Unit'].each do |minor_type|
+		  scope "#{ major_type.downcase }_#{ minor_type.downcase.pluralize }".to_sym, -> { joins(:insurable_type).where("insurable_types.title = '#{ major_type } #{ minor_type }'") }
+		end
+	end
+#   scope :residential_communities, -> { joins(:insurable_type).where("insurable_types.title = 'Residential Community'")}
+# 	scope :residential_units, -> { joins(:insurable_type).where("insurable_types.title = 'Residential Unit'")}
   
   # Insurable.primary_address
   #

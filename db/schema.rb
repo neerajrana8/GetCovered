@@ -460,6 +460,7 @@ ActiveRecord::Schema.define(version: 2019_07_15_171545) do
   end
 
   create_table "lease_users", force: :cascade do |t|
+    t.boolean "primary", default: false
     t.bigint "lease_id"
     t.bigint "user_id"
     t.datetime "created_at", null: false
@@ -472,15 +473,16 @@ ActiveRecord::Schema.define(version: 2019_07_15_171545) do
     t.string "reference"
     t.date "start_date"
     t.date "end_date"
-    t.string "type"
     t.integer "status", default: 0
     t.boolean "covered", default: false
+    t.bigint "lease_type_id"
     t.bigint "insurable_id"
     t.bigint "account_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["account_id"], name: "index_leases_on_account_id"
     t.index ["insurable_id"], name: "index_leases_on_insurable_id"
+    t.index ["lease_type_id"], name: "index_leases_on_lease_type_id"
     t.index ["reference"], name: "lease_reference", unique: true
   end
 

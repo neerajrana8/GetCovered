@@ -117,7 +117,8 @@ LeaseType.find(2).policy_types << PolicyType.find(3)
                                                                 "3": false,
                                                                 "4": false,
                                                                 "5": false
-                                                              }
+                                                              },
+                                                              "ho4_enabled": true
                                                             })
       carrier_insurable_type = CarrierInsurableType.create!(carrier: carrier, insurable_type: InsurableType.find(4), enabled: true)
                                                             

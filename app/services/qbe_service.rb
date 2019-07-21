@@ -125,7 +125,7 @@ class QbeService
         type: "Quote", 
         senderID: Rails.application.credentials.qbe[:un], 
         receiverID: 32917, 
-        agent_id: ENV.fetch("QBE_AGENT_CODE"),
+        agent_id: Rails.application.credentials.qbe[:agent_code],
         current_system_date: Time.current.strftime("%m/%d/%Y"),
         prop_city: "San Francisco",
         prop_county: "SAN FRANCISCO",
@@ -152,7 +152,7 @@ class QbeService
         type: "Quote", 
         senderID: Rails.application.credentials.qbe[:un], 
         receiverID: 32917, 
-        agent_id: ENV.fetch("QBE_AGENT_CODE"),
+        agent_id: Rails.application.credentials.qbe[:agent_code],
         current_system_date: Time.current.strftime("%m/%d/%Y"),
         prop_city: "San Francisco",
         prop_county: "SAN FRANCISCO",
@@ -266,9 +266,7 @@ class QbeService
 																		 				 	 "Authorization" => "Basic #{ auth_headers }",
 																		 				   "Content-Type" => "text/xml"
                                      				 })
-                                     				 
-      pp call_data
-      
+            
       rescue => e
         
         puts "\nERROR\n"
@@ -281,8 +279,6 @@ class QbeService
         }
       
       end
-      
-      pp call_data[:response]
       
       unless call_data[:error]	
       	
