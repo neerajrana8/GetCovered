@@ -23,7 +23,9 @@ class Address < ApplicationRecord
                 OH: 35, OK: 36, OR: 37, PA: 38, RI: 39, SC: 40, SD: 41, 
                 TN: 42, TX: 43, UT: 44, VA: 45, VT: 46, WA: 47, WI: 48, 
                 WV: 49, WY: 50 }
-    
+  
+  # scope :residential_communities, -> { joins(:insurable).where() }
+  
   # Address.full_street_address
   # Returns full street address of Address from available variables
   def full_street_address

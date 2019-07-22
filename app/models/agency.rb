@@ -26,6 +26,8 @@ class Agency < ApplicationRecord
     through: :carrier_agencies
     
   has_many :accounts
+  has_many :insurables,
+    through: :accounts
   
   has_many :staff,
   		as: :organizable
@@ -41,9 +43,17 @@ class Agency < ApplicationRecord
 
   has_many :commission_strategies,
     as: :commissionable
+  
+  has_many :billing_strategies
   		
   has_many :fees,
     as: :ownerable
+	
+	has_many :addresses,
+       as: :addressable,
+       autosave: true
+
+  accepts_nested_attributes_for :addresses
       
   # has_one relationships
   # blank for now...

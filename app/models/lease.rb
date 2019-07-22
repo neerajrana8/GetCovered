@@ -3,37 +3,24 @@
 
 class Lease < ApplicationRecord
   # Concerns
-  include RecordChange, ElasticsearchSearchable
+  include ElasticsearchSearchable
 
   # Active Record Callbacks
   after_initialize :initialize_lease
 
   before_validation :set_type,
-    unless: Proc.new { |lease| lease.unit.nil? }
+    unless: Proc.new { |lease| lease.insurable.nil? }
   
   before_validation :set_reference,
   	if: Proc.new { |lease| lease.reference.nil? }
 
-  after_commit :update_unit_occupation
-
-  # Relationships
-  # belongs_to :unit,
-  #  required: true
-    
-  has_one :building,
-    through: :unit
-    
-  has_one :community,
-    through: :building
+  # after_commit :update_unit_occupation
 
   belongs_to :account, 
     required: true
-
-  has_one :policy,
-    through: :unit
-
-  has_one :master_policy_coverage,
-    through: :unit
+    
+  belongs_to :insurable
+  belongs_to :lease_type
 
   has_many :lease_users
 
@@ -49,17 +36,17 @@ class Lease < ApplicationRecord
   validate :start_date_precedes_end_date,
     unless: Proc.new { |lease| lease.end_date.nil? || lease.start_date.nil? }
 
-  validates :type, presence: true,
-    format: { with: /Residential|Commercial/, message: "must be Residential or Commercial" }
+  #validates :type, presence: true,
+  #  format: { with: /Residential|Commercial/, message: "must be Residential or Commercial" }
 
-  validate :lease_type_matches_unit_type_if_present,
-    unless: Proc.new { |lease| lease.unit.nil? }
+  #validate :lease_type_matches_unit_type_if_present,
+  #  unless: Proc.new { |lease| lease.unit.nil? }
 
-  validate :policy_account_matches_lease_account,
-    unless: Proc.new { |lease| lease.policy.nil? || lease.policy.account.nil? || account.nil? }
+  #validate :policy_account_matches_lease_account,
+  #  unless: Proc.new { |lease| lease.policy.nil? || lease.policy.account.nil? || account.nil? }
 
-  validate :unit_account_matches_lease_account,
-    unless: Proc.new { |lease| lease.unit.nil? || account.nil? }
+  #validate :unit_account_matches_lease_account,
+  #  unless: Proc.new { |lease| lease.unit.nil? || account.nil? }
 
   # Allow use of .type without invoking STI
   self.inheritance_column = nil
@@ -148,11 +135,11 @@ class Lease < ApplicationRecord
 
     ## Initialize Lease
     def initialize_lease
-      self.type = self.unit.type unless self.unit.nil?
+      # self.type = self.unit.type unless self.unit.nil?
     end
 
     def set_type
-      self.type ||= unit.type
+      # self.type ||= unit.type
     end
 
     def start_date_precedes_end_date

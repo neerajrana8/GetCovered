@@ -15,6 +15,7 @@ class CreateAddresses < ActiveRecord::Migration[5.2]
       t.float :latitude
       t.float :longitude
       t.string :timezone
+      t.boolean :primary, :null => false, :default => false
       t.references :addressable, polymorphic: true
 
       t.timestamps

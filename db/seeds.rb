@@ -1,4 +1,4 @@
-if ENV["section"] =~ /setup|agency|account|insurable|users|policy/
+if ENV["section"] =~ /setup|agency|account|insurable|user|policy/
   
   puts "Running: #{ENV["section"].titlecase}"
   require Rails.root.join("db/seeds/#{ ENV["section"] }.rb")
@@ -6,6 +6,6 @@ if ENV["section"] =~ /setup|agency|account|insurable|users|policy/
 elsif ENV["section"].nil?
   
   puts "\nNO SECTION SELECTION"
-  puts "Option availability in order: setup, agency, account, insurable, users, policy\n"
+  puts "Option availability in order: setup, agency, account, insurable, user, policy\n"
 
 end

@@ -5,7 +5,11 @@ class BillingStrategy < ApplicationRecord
   belongs_to :agency
   belongs_to :carrier
   belongs_to :policy_type
-             
+  
+  has_many :fees, as: :assignable
+
+  accepts_nested_attributes_for :fees
+  
   validate :carrier_accepts_policy_type
   validate :agency_authorized_for_carrier
   

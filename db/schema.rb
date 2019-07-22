@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_07_02_010801) do
+ActiveRecord::Schema.define(version: 2019_07_15_171545) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -53,6 +53,7 @@ ActiveRecord::Schema.define(version: 2019_07_02_010801) do
     t.float "latitude"
     t.float "longitude"
     t.string "timezone"
+    t.boolean "primary", default: false, null: false
     t.string "addressable_type"
     t.bigint "addressable_id"
     t.datetime "created_at", null: false
@@ -154,6 +155,29 @@ ActiveRecord::Schema.define(version: 2019_07_02_010801) do
     t.index ["policy_type_id"], name: "index_carrier_agency_authorizations_on_policy_type_id"
   end
 
+  create_table "carrier_insurable_profiles", force: :cascade do |t|
+    t.jsonb "traits", default: {}
+    t.jsonb "data", default: {}
+    t.bigint "carrier_id"
+    t.bigint "insurable_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["carrier_id"], name: "index_carrier_insurable_profiles_on_carrier_id"
+    t.index ["insurable_id"], name: "index_carrier_insurable_profiles_on_insurable_id"
+  end
+
+  create_table "carrier_insurable_types", force: :cascade do |t|
+    t.jsonb "profile_traits", default: {}
+    t.jsonb "profile_data", default: {}
+    t.boolean "enabled", default: false, null: false
+    t.bigint "carrier_id"
+    t.bigint "insurable_type_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["carrier_id"], name: "index_carrier_insurable_types_on_carrier_id"
+    t.index ["insurable_type_id"], name: "index_carrier_insurable_types_on_insurable_type_id"
+  end
+
   create_table "carrier_policy_type_availabilities", force: :cascade do |t|
     t.integer "state"
     t.boolean "available", default: false, null: false
@@ -165,7 +189,10 @@ ActiveRecord::Schema.define(version: 2019_07_02_010801) do
   end
 
   create_table "carrier_policy_types", force: :cascade do |t|
-    t.jsonb "defaults", default: {"options"=>{}, "deductibles"=>{}, "coverage_limits"=>{}}
+    t.jsonb "policy_defaults", default: {"options"=>{}, "deductibles"=>{}, "coverage_limits"=>{}}
+    t.jsonb "application_fields", default: []
+    t.jsonb "application_questions", default: []
+    t.boolean "application_required", default: false, null: false
     t.bigint "carrier_id"
     t.bigint "policy_type_id"
     t.datetime "created_at", null: false
@@ -284,6 +311,7 @@ ActiveRecord::Schema.define(version: 2019_07_02_010801) do
     t.integer "verb", default: 0
     t.integer "format", default: 0
     t.integer "interface", default: 0
+    t.integer "status", default: 0
     t.string "process"
     t.string "endpoint"
     t.datetime "started"
@@ -359,7 +387,6 @@ ActiveRecord::Schema.define(version: 2019_07_02_010801) do
     t.string "title"
     t.string "slug"
     t.integer "category"
-    t.jsonb "profile_attributes", default: {}
     t.boolean "enabled"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
@@ -373,9 +400,7 @@ ActiveRecord::Schema.define(version: 2019_07_02_010801) do
     t.bigint "insurable_type_id"
     t.bigint "insurable_id"
     t.integer "category", default: 0
-    t.jsonb "profile", default: {}
     t.boolean "covered", default: false
-    t.jsonb "carrier_data", default: {}
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["account_id"], name: "index_insurables_on_account_id"
@@ -436,6 +461,7 @@ ActiveRecord::Schema.define(version: 2019_07_02_010801) do
   end
 
   create_table "lease_users", force: :cascade do |t|
+    t.boolean "primary", default: false
     t.bigint "lease_id"
     t.bigint "user_id"
     t.datetime "created_at", null: false
@@ -448,16 +474,17 @@ ActiveRecord::Schema.define(version: 2019_07_02_010801) do
     t.string "reference"
     t.date "start_date"
     t.date "end_date"
-    t.string "type"
     t.integer "status", default: 0
     t.boolean "covered", default: false
-    t.bigint "unit_id"
+    t.bigint "lease_type_id"
+    t.bigint "insurable_id"
     t.bigint "account_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["account_id"], name: "index_leases_on_account_id"
+    t.index ["insurable_id"], name: "index_leases_on_insurable_id"
+    t.index ["lease_type_id"], name: "index_leases_on_lease_type_id"
     t.index ["reference"], name: "lease_reference", unique: true
-    t.index ["unit_id"], name: "index_leases_on_unit_id"
   end
 
   create_table "line_items", force: :cascade do |t|
@@ -572,7 +599,8 @@ ActiveRecord::Schema.define(version: 2019_07_02_010801) do
     t.date "expiration_date"
     t.integer "status", default: 0, null: false
     t.datetime "status_updated_on"
-    t.jsonb "fields", default: {}
+    t.jsonb "fields", default: []
+    t.jsonb "questions", default: []
     t.bigint "carrier_id"
     t.bigint "policy_type_id"
     t.bigint "agency_id"

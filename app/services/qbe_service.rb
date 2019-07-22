@@ -85,12 +85,12 @@ class QbeService
   def build_request(args = {}, build_request = true, post_compile_request = true, obj = nil, users = nil)
     
     options = {
-      version: "1.0", 
+      version: Rails.application.credentials.version, 
       heading: { 
         program: {
           name: "Renters",
           requesttimestamp: Time.current.strftime("%m/%d/%Y %I:%M %p"), 
-          ClientName: ENV.fetch("QBE_AGENT_CODE")
+          ClientName: Rails.application.credentials.qbe[:agent_code]
         }
       }
     }
@@ -99,7 +99,7 @@ class QbeService
       
       options[:data] = {
         type: "Zip Code Search", 
-        senderID: ENV.fetch("QBE_SOAP_UN"), 
+        senderID: Rails.application.credentials.qbe[:un], 
         receiverID: 32917, 
         prop_zipcode: 90034
       }.merge!(args)
@@ -109,7 +109,7 @@ class QbeService
     
       options[:data] = {
         type: "PropertyInfo", 
-        senderID: ENV.fetch("QBE_SOAP_UN"), 
+        senderID: Rails.application.credentials.qbe[:un], 
         receiverID: 32917, 
         prop_number: 435,
         prop_street: "Serenity Lane",
@@ -123,9 +123,9 @@ class QbeService
     
       options[:data] = {
         type: "Quote", 
-        senderID: ENV.fetch("QBE_SOAP_UN"), 
+        senderID: Rails.application.credentials.qbe[:un], 
         receiverID: 32917, 
-        agent_id: ENV.fetch("QBE_AGENT_CODE"),
+        agent_id: Rails.application.credentials.qbe[:agent_code],
         current_system_date: Time.current.strftime("%m/%d/%Y"),
         prop_city: "San Francisco",
         prop_county: "SAN FRANCISCO",
@@ -150,9 +150,9 @@ class QbeService
     
       options[:data] = {
         type: "Quote", 
-        senderID: ENV.fetch("QBE_SOAP_UN"), 
+        senderID: Rails.application.credentials.qbe[:un], 
         receiverID: 32917, 
-        agent_id: ENV.fetch("QBE_AGENT_CODE"),
+        agent_id: Rails.application.credentials.qbe[:agent_code],
         current_system_date: Time.current.strftime("%m/%d/%Y"),
         prop_city: "San Francisco",
         prop_county: "SAN FRANCISCO",
@@ -228,7 +228,7 @@ class QbeService
   # Build Request File
   
   def build_request_file(post_compile=true)
-    self.rxml = ERB.new(File.read("#{ Rails.root.to_s }/app/views/v1/qbe/#{ self.action }.xml.erb"))
+    self.rxml = ERB.new(File.read("#{ Rails.root.to_s }/app/views/v2/qbe/#{ self.action }.xml.erb"))
     compile_request() unless post_compile === false
   end
   
@@ -259,16 +259,17 @@ class QbeService
 
       begin
         
-        call_data[:response] = HTTParty.post(ENV.fetch("QBE_SOAP_URI"),
+        call_data[:response] = HTTParty.post(Rails.application.credentials.qbe[:uri][Rails.application.credentials.rails_env.to_sym],
                                      				 body: self.compiled_rxml,
 																		 				 headers: {
 																		 				   "PreAuthenticate" => "TRUE",
 																		 				 	 "Authorization" => "Basic #{ auth_headers }",
 																		 				   "Content-Type" => "text/xml"
                                      				 })
+            
       rescue => e
         
-        puts "\nERROR\n".red
+        puts "\nERROR\n"
         
         call_data = {
           error: true,
@@ -311,7 +312,7 @@ class QbeService
       
       display_status = call_data[:error] ? "ERROR" : "SUCCESS"
       display_status_color = call_data[:error] ? :red : :green
-      puts "#{ "[".yellow } #{ "QBE Service".blue } #{ "]".yellow }#{ "[".yellow } #{display_status.colorize(display_status_color)} #{ "]".yellow }: #{ action.to_s.blue }"
+      # puts "#{ "[".yellow } #{ "QBE Service".blue } #{ "]".yellow }#{ "[".yellow } #{display_status.colorize(display_status_color)} #{ "]".yellow }: #{ action.to_s.blue }"
       
       return call_data
       
@@ -319,7 +320,7 @@ class QbeService
 #       
 #       begin
 #         
-#         soap_request = HTTParty.post(ENV.fetch("QBE_SOAP_URI"),
+#         soap_request = HTTParty.post(Rails.application.credentials.qbe[:uri],
 #                                      body: self.compiled_rxml,
 #                                      headers: {
 #                                        "PreAuthenticate" => "TRUE",
@@ -560,6 +561,6 @@ class QbeService
   private
     
     def auth_headers
-      return Base64.encode64("#{ ENV.fetch("QBE_SOAP_UN") }:#{ ENV.fetch("QBE_SOAP_PW") }")  
+      return Base64.encode64("#{ Rails.application.credentials.qbe[:un] }:#{ Rails.application.credentials.qbe[:pw] }")  
     end
 end

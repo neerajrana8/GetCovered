@@ -7,7 +7,8 @@ class CreatePolicyApplications < ActiveRecord::Migration[5.2]
       t.date :expiration_date
       t.integer :status, :null => false, :default => 0
       t.datetime :status_updated_on
-      t.jsonb :fields, default: {}
+      t.jsonb :fields, default: []
+      t.jsonb :questions, default: []
       t.references :carrier
       t.references :policy_type
       t.references :agency
