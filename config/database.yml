@@ -28,8 +28,9 @@ local:
 
 development:
   <<: *default
-  host: localhost
-  database: gc_v2_local
+  host: db
+  database: gc_v2_development
+  username: postgres
 
   # The specified database role being used to connect to postgres.
   # To create additional roles in postgres see `$ createuser --help`.
@@ -63,7 +64,7 @@ development:
 # Do not set this db to the same as development or production.
 test:
   <<: *default
-  host: localhost
+  host: db
   database: gc_v2_test
   username: postgres
 
