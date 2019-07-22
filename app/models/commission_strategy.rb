@@ -10,6 +10,7 @@ class CommissionStrategy < ApplicationRecord
   # Turn off single table inheritance
   self.inheritance_column = :_type_disabled
   
+  belongs_to :commission_strategy, optional: true
   belongs_to :carrier
   belongs_to :policy_type
   belongs_to :commissionable, polymorphic: true

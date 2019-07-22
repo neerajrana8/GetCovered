@@ -679,9 +679,9 @@ ActiveRecord::Schema.define(version: 2019_07_15_171545) do
 
   create_table "policy_types", force: :cascade do |t|
     t.string "title"
-    t.string "slug"
-    t.string "designation"
-    t.boolean "enabled", default: false, null: false
+    t.integer "slug"
+    t.jsonb "defaults", default: {"options"=>{}, "deductibles"=>{}, "coverage_limits"=>{}}
+    t.boolean "enabled"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
   end

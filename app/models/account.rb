@@ -34,6 +34,9 @@ class Account < ApplicationRecord
 
   accepts_nested_attributes_for :addresses
 
+  has_many :histories,
+    as: :recordable
+
   validates_presence_of :title
   	
   	private

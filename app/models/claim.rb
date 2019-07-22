@@ -3,7 +3,7 @@
 
 class Claim < ApplicationRecord
   # Concerns
-  include RecordChange
+  include RecordChange, ElasticsearchSearchable
   
   # Active Record Callbacks
   after_initialize  :initialize_claim
@@ -32,6 +32,15 @@ class Claim < ApplicationRecord
   # Enum Options
   enum status: [:submitted, :read, :completed, :rejected]
   
+  settings index: { number_of_shards: 1 } do
+    mappings dynamic: 'false' do
+      indexes :subject, analyzer: 'english'
+      indexes :description, analyzer: 'english'
+      indexes :claimant_type, analyzer: 'english'
+      indexes :time_of_loss, type: 'date'
+    end
+  end
+
   private
   
     def initialize_claim

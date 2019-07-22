@@ -11,7 +11,7 @@ class Staff < ActiveRecord::Base
   include RecordChange
   include DeviseTokenAuth::Concerns::User
 
-  enum role: { staff: 0, agent: 1, super_admin: 2 }
+  enum role: { staff: 0, agent: 1, owner: 2, super_admin: 3 }
   # Active Record Callbacks
   after_initialize :initialize_staff
 
