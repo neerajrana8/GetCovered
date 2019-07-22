@@ -190,7 +190,8 @@ ActiveRecord::Schema.define(version: 2019_07_15_171545) do
 
   create_table "carrier_policy_types", force: :cascade do |t|
     t.jsonb "policy_defaults", default: {"options"=>{}, "deductibles"=>{}, "coverage_limits"=>{}}
-    t.jsonb "application_fields", default: {}
+    t.jsonb "application_fields", default: []
+    t.jsonb "application_questions", default: []
     t.boolean "application_required", default: false, null: false
     t.bigint "carrier_id"
     t.bigint "policy_type_id"
@@ -598,7 +599,8 @@ ActiveRecord::Schema.define(version: 2019_07_15_171545) do
     t.date "expiration_date"
     t.integer "status", default: 0, null: false
     t.datetime "status_updated_on"
-    t.jsonb "fields", default: {}
+    t.jsonb "fields", default: []
+    t.jsonb "questions", default: []
     t.bigint "carrier_id"
     t.bigint "policy_type_id"
     t.bigint "agency_id"
