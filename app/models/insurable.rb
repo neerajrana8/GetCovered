@@ -16,6 +16,11 @@ class Insurable < ApplicationRecord
 	has_many :events,
 	    as: :eventable
 	    
+	has_many :assignments,
+			as: :assignable
+	has_many :staffs,
+			through: :assignments
+	    
   has_many :leases
 	
 	has_many :addresses,
@@ -40,7 +45,15 @@ class Insurable < ApplicationRecord
   def primary_address
 		return addresses.where(primary: true).take 
 	end
-	
+
+  # Insurable.primary_staff
+  #
+  
+  def primary_staff
+		assignment = assignments.where(primary: true).take
+		return assignment.staff.nil? ? nil : assignment.staff
+	end
+		
 	# Insurable.create_carrier_profile(carrier_id)
 	#
 	

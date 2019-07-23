@@ -3,12 +3,12 @@
 
 class Assignment < ApplicationRecord
   
-  after_create :record_related_history_create
-  before_destroy :record_related_history_destory
+  #after_create :record_related_history_create
+  #before_destroy :record_related_history_destory
   
   # Relationship
   belongs_to :staff
-  belongs_to :assignable, plymorphic: true 
+  belongs_to :assignable, polymorphic: true 
 
   # TODO need to refactor because stuff has no account_id
   #validate :staff_and_community_share_account,
@@ -31,7 +31,7 @@ class Assignment < ApplicationRecord
           users: { 
             model: 'Staff', 
             id: staff.id, 
-            message: "#{ staff.profile.full_name } assigned to #{ assignable.name }"
+            message: "#{ staff.profile.full_name } assigned to #{ assignable.title }"
           }
         }, 
         action: 'create_related'
@@ -50,7 +50,7 @@ class Assignment < ApplicationRecord
           users: { 
             model: 'Staff', 
             id: staff.id, 
-            message: "#{ staff.profile.full_name } removed from #{ assignable.name }"
+            message: "#{ staff.profile.full_name } removed from #{ assignable.title }"
           }
         }, 
         action: 'remove_related'

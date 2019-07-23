@@ -27,6 +27,8 @@ class Staff < ActiveRecord::Base
            as: :recordable,
            class_name: 'History',
            foreign_key: :recordable_id
+           
+  has_many :assignments
 
   # has_one relationships
   has_one :profile,

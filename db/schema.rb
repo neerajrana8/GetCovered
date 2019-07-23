@@ -93,13 +93,14 @@ ActiveRecord::Schema.define(version: 2019_07_15_171545) do
   end
 
   create_table "assignments", force: :cascade do |t|
-    t.bigint "stuff_id"
+    t.boolean "primary"
+    t.bigint "staff_id"
     t.string "assignable_type"
     t.bigint "assignable_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["assignable_type", "assignable_id"], name: "index_assignments_on_assignable_type_and_assignable_id"
-    t.index ["stuff_id"], name: "index_assignments_on_stuff_id"
+    t.index ["staff_id"], name: "index_assignments_on_staff_id"
   end
 
   create_table "billing_strategies", force: :cascade do |t|
