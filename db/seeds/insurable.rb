@@ -139,6 +139,13 @@ require 'faker'
 																			 addresses_attributes: [ addr ])
 	if @community.save
   	
+  	@account.staff.each do |staff|
+	  	Assignment.create!(staff: staff, assignable: @community)	
+	  end
+	  
+	  assignment = @community.assignments.order("RANDOM()").take
+	  assignment.update(primary: true)
+  	
   	@community.create_carrier_profile(1)
   	@profile = @community.carrier_profile(1)
   	

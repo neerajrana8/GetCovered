@@ -35,7 +35,8 @@ end
 
 if @account.save
   @site_staff = [
-    { email: 'dylan@rent-os.com', password: 'TestingPassword1234', password_confirmation: 'TestingPassword1234', role: 'agent', enabled: true, organizable: @account, profile_attributes: { first_name: 'Dylan', last_name: 'Gaines' }}
+    { email: 'dylan@rent-os.com', password: 'TestingPassword1234', password_confirmation: 'TestingPassword1234', role: 'agent', enabled: true, organizable: @account, profile_attributes: { first_name: 'Dylan', last_name: 'Gaines', job_title: 'Chief Technical Officer' }},
+    { email: 'brandon@rent-os.com', password: 'TestingPassword1234', password_confirmation: 'TestingPassword1234', role: 'agent', enabled: true, organizable: @account, profile_attributes: { first_name: 'Brandon', last_name: 'Tobman', job_title: 'Chief Executive Officer' }}
   ]
   
   @site_staff.each do |staff|
