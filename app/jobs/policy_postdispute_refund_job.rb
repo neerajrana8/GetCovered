@@ -21,6 +21,6 @@ class PolicyPostdisputeRefundJob < ApplicationJob
   private
     
     def set_policies
-      @policies = Policy.in_system?(true).awaiting_postdispute_processing
+      @policies = Policy.in_system?(true).AWATING_POSTDISPUTE_PROCESSING
     end
 end

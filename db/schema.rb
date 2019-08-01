@@ -589,6 +589,8 @@ ActiveRecord::Schema.define(version: 2019_07_29_110837) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.boolean "policy_in_system"
+    t.date "next_payment_date"
+    t.boolean "auto_pay"
     t.index ["account_id"], name: "index_policies_on_account_id"
     t.index ["agency_id"], name: "index_policies_on_agency_id"
     t.index ["carrier_id"], name: "index_policies_on_carrier_id"

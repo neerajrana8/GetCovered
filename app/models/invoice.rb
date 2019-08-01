@@ -54,7 +54,7 @@ class Invoice < ApplicationRecord
 
   validates :tax_percent, presence: true
 
-  # validates :policy, presence: true
+  validates :policy, presence: true
 
   validates :user, presence: true
 

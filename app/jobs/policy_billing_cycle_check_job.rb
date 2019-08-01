@@ -26,7 +26,7 @@ class PolicyBillingCycleCheckJob < ApplicationJob
     
     def set_policies
       @policies = Policy.in_system?(true)
-                        .accepted
+                        .QUOTE_ACCEPTED
                         .where(next_payment_date: Time.current.to_date - 1.days)
     end
 end

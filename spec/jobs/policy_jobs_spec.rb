@@ -3,6 +3,32 @@
 require 'rails_helper'
 
 describe 'Policy jobs spec', type: :request do
-    
   
+  it 'should generate payments for enabled next payment date policies' do
+    user = FactoryBot.create(:user)
+    policy_type = FactoryBot.create(:policy_type)
+    policy = FactoryBot.build(:policy)
+    policy.policy_in_system = true
+    policy.policy_type = policy_type
+    policy.status = 'QUOTE_ACCEPTED'
+    policy.next_payment_date = Time.current.to_date - 1.days
+    policy.billing_enabled = true
+    policy.auto_pay = false
+    policy.save!
+    expect { PolicyBillingCycleCheckJob.perform_now }.to change { ActionMailer::Base.deliveries.size }.by(1)
+  end
+  
+  it 'should perform queued refunds' do
+    user = FactoryBot.create(:user)
+    policy_type = FactoryBot.create(:policy_type)
+    policy = FactoryBot.build(:policy)
+    policy.policy_in_system = true
+    policy.policy_type = policy_type
+    policy.billing_dispute_status = 'AWATING_POSTDISPUTE_PROCESSING'
+    policy.next_payment_date = Time.current.to_date - 1.days
+    policy.billing_enabled = true
+    policy.auto_pay = false
+    policy.save!
+    PolicyPostdisputeRefundJob.perform_now
+  end
 end

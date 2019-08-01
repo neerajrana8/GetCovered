@@ -37,6 +37,8 @@
 # +updated_at+:: (DateTime) The last date time model was successfuly edited
 
 class Policy < ApplicationRecord
+
+  scope :in_system?, -> (in_system) { where(policy_in_system: in_system) }
   
   # Concerns
   include CarrierQbePolicy,
@@ -53,11 +55,11 @@ class Policy < ApplicationRecord
   has_one :policy_application
   
   has_many :policy_users
-  has_many :users,
-    through: :policy_users
+  has_many :users, through: :policy_users
     
   has_one :primary_policy_user, -> { where(primary: true).first }, 
     class_name: 'PolicyUser'
+  
   has_one :primary_user,
     class_name: 'User',
     through: :primary_policy_user
@@ -66,7 +68,16 @@ class Policy < ApplicationRecord
   has_many :coverages, -> { where(enabled: true) }, class_name: 'PolicyCoverage'
   has_many :policy_premiums, autosave: true
   has_one :premium, -> { where(enabled: true).take }, class_name: 'PolicyPremium'
-  
+ 
+    has_many :invoices
+
+  has_many :charges,
+    through: :invoices
+
+  has_many :refunds,
+    through: :charges
+
+
   accepts_nested_attributes_for :policy_coverages, :policy_premiums
 	
 	validates_presence_of :expiration_date, :effective_date
@@ -81,6 +92,27 @@ class Policy < ApplicationRecord
 	
 	enum billing_dispute_status: { UNDISPUTED: 0, DISPUTED: 1, AWATING_POSTDISPUTE_PROCESSING: 2, NOT_REQUIRED: 3 }
   
+
+  # Perform Postdispute Processing
+  #
+  # Performs all queued refunds after payment disputes have been resolved.
+  #
+  # Example:
+  #   @policy = Policy.find(1)
+  #   @policy.perform_postdispute_processing
+  #   => nil
+  def perform_postdispute_processing
+    if self.policy_in_system?
+      refunds.queued.each { |rfnd| rfnd.process(true) }
+      self.with_lock do
+        update(billing_dispute_status: 'undisputed') if billing_dispute_status == 'awaiting_postdispute_processing'
+      end
+    else
+      return nil
+    end
+  end
+
+
   settings index: { number_of_shards: 1 } do
     mappings dynamic: 'false' do
       indexes :auto_renew, type: 'keyword'
