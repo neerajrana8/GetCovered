@@ -1,5 +1,5 @@
 class InsurableType < ApplicationRecord
-
+	include ElasticsearchSearchable
 	has_many :insurables
 	has_many :carrier_insurable_types
 
