@@ -57,19 +57,20 @@ class Policy < ApplicationRecord
   has_many :policy_users
   has_many :users, through: :policy_users
     
-  has_one :primary_policy_user, -> { where(primary: true).first }, 
+  has_one :primary_policy_user, -> { where(primary: true) }, 
     class_name: 'PolicyUser'
   
   has_one :primary_user,
     class_name: 'User',
-    through: :primary_policy_user
+    through: :primary_policy_user,
+    source: :user
   
   has_many :policy_coverages, autosave: true
   has_many :coverages, -> { where(enabled: true) }, class_name: 'PolicyCoverage'
   has_many :policy_premiums, autosave: true
   has_one :premium, -> { where(enabled: true).take }, class_name: 'PolicyPremium'
  
-    has_many :invoices
+  has_many :invoices
 
   has_many :charges,
     through: :invoices

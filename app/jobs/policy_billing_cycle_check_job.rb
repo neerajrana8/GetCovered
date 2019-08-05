@@ -16,8 +16,8 @@ class PolicyBillingCycleCheckJob < ApplicationJob
   def perform(*args)
     @policies.each do |policy|
       if policy.auto_pay == false
-        UserCoverageMailer.with(user: policy.user, 
-                                policy: policy).auto_pay_fail  
+        UserCoverageMailer.with(user: policy.primary_user, 
+                                policy: policy).auto_pay_fail.deliver
       end
     end
   end
@@ -25,8 +25,6 @@ class PolicyBillingCycleCheckJob < ApplicationJob
   private
     
     def set_policies
-      @policies = Policy.in_system?(true)
-                        .QUOTE_ACCEPTED
-                        .where(next_payment_date: Time.current.to_date - 1.days)
+      @policies = Policy.in_system?(true).QUOTE_ACCEPTED
     end
 end

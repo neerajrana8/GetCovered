@@ -6,12 +6,13 @@ describe 'Policy jobs spec', type: :request do
   
   it 'should generate payments for enabled next payment date policies' do
     user = FactoryBot.create(:user)
+    primary_policy_user = FactoryBot.create(:policy_user)
     policy_type = FactoryBot.create(:policy_type)
     policy = FactoryBot.build(:policy)
     policy.policy_in_system = true
     policy.policy_type = policy_type
     policy.status = 'QUOTE_ACCEPTED'
-    policy.next_payment_date = Time.current.to_date - 1.days
+    policy.primary_policy_user = primary_policy_user
     policy.billing_enabled = true
     policy.auto_pay = false
     policy.save!
@@ -25,7 +26,6 @@ describe 'Policy jobs spec', type: :request do
     policy.policy_in_system = true
     policy.policy_type = policy_type
     policy.billing_dispute_status = 'AWATING_POSTDISPUTE_PROCESSING'
-    policy.next_payment_date = Time.current.to_date - 1.days
     policy.billing_enabled = true
     policy.auto_pay = false
     policy.save!

@@ -589,7 +589,6 @@ ActiveRecord::Schema.define(version: 2019_07_29_110837) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.boolean "policy_in_system"
-    t.date "next_payment_date"
     t.boolean "auto_pay"
     t.index ["account_id"], name: "index_policies_on_account_id"
     t.index ["agency_id"], name: "index_policies_on_agency_id"
@@ -824,7 +823,6 @@ ActiveRecord::Schema.define(version: 2019_07_29_110837) do
     t.datetime "last_sign_in_at"
     t.string "current_sign_in_ip"
     t.string "last_sign_in_ip"
-    t.string "stripe_id"
     t.index ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["invitation_token"], name: "index_users_on_invitation_token", unique: true
