@@ -65,6 +65,9 @@ class Invoice < ApplicationRecord
   enum status: %w[upcoming available processing complete missed canceled]
 
   scope :unpaid, -> { where(status: %w[available missed]) }
+  scope :unpaid_past_due, -> { 
+    where(status: %w[available missed]).where('due_date < ?', DateTime.now)
+  }
 
   # Methods
 

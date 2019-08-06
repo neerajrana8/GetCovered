@@ -39,7 +39,10 @@
 class Policy < ApplicationRecord
 
   scope :in_system?, -> (in_system) { where(policy_in_system: in_system) }
-  
+  scope :with_missed_invoices, -> {
+    joins(:invoices).merge(Invoice.unpaid_past_due)
+  }
+
   # Concerns
   include CarrierQbePolicy,
           CarrierCrumPolicy,

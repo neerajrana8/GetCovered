@@ -25,6 +25,6 @@ class PolicyBillingCycleCheckJob < ApplicationJob
   private
     
     def set_policies
-      @policies = Policy.in_system?(true).QUOTE_ACCEPTED
+      @policies = Policy.in_system?(true).QUOTE_ACCEPTED.with_missed_invoices
     end
 end

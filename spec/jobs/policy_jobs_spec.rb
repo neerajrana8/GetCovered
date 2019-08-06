@@ -16,6 +16,16 @@ describe 'Policy jobs spec', type: :request do
     policy.billing_enabled = true
     policy.auto_pay = false
     policy.save!
+    invoice = Invoice.new do |i|
+      i.user = user
+      i.status = 'missed'
+      i.number = Time.now.to_i
+      i.due_date = 1.day.ago
+      i.available_date = 1.day.ago
+      i.policy = policy
+    end
+    invoice.save!
+
     expect { PolicyBillingCycleCheckJob.perform_now }.to change { ActionMailer::Base.deliveries.size }.by(1)
   end
   
