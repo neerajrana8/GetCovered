@@ -8,7 +8,9 @@ namespace :gc do
     task total: :environment do
     	Rake::Task['gc:flush:schema'].invoke
     	
-    	['setup', 'agency', 'account', 'insurable', 'user', 'policy'].each do |section|
+    	['setup', 'agency', 'account', 'insurable-residential', 
+	  	 'insurable-commercial', 'user', 'policy-residential', 
+			 'policy-commercial'].each do |section|
     		system("rails db:seed section=#{ section }")
     	end
     end  
@@ -17,7 +19,9 @@ namespace :gc do
     task data: :environment do
     	Rake::Task['gc:flush:all'].invoke
     	
-    	['setup', 'agency', 'account', 'insurable', 'user', 'policy'].each do |section|
+    	['setup', 'agency', 'account', 'insurable-residential', 
+	  	 'insurable-commercial', 'user', 'policy-residential', 
+			 'policy-commercial'].each do |section|
     		system("rails db:seed section=#{ section }")
     	end
     end
@@ -43,6 +47,10 @@ namespace :gc do
     	Rake::Task['db:migrate'].invoke
     end
     
+    desc "remove all elasticsearch indexes"
+		task elasticsearch: :environment do
+			system("curl -XDELETE http://localhost:9200/_all")
+		end    
   end
 
 end
