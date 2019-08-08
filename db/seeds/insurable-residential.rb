@@ -127,65 +127,79 @@ require 'faker'
 ]
 
 @building_name_options = ['Estates', 'Gardens', 'Homes', 'Place']
-@account = Account.find(1)
 @residential_community_insurable_type = InsurableType.find(1)
 @residential_unit_insurable_type = InsurableType.find(4)
 
-@addresses.each do |addr|
-	
-	@community = @account.insurables.new(title: "#{Faker::Movies::LordOfTheRings.location} #{@building_name_options[rand(0..3)]}", 
-																			 insurable_type: @residential_community_insurable_type, 
-																			 enabled: true, category: 'property',
-																			 addresses_attributes: [ addr ])
-	if @community.save
-  	
-  	@account.staff.each do |staff|
-	  	Assignment.create!(staff: staff, assignable: @community)	
-	  end
-	  
-	  assignment = @community.assignments.order("RANDOM()").take
-	  assignment.update(primary: true)
-  	
-  	@community.create_carrier_profile(1)
-  	@profile = @community.carrier_profile(1)
-  	
-  	@profile.traits['construction_year'] = rand(1979..2005)
-  	@profile.traits['professionally_managed'] = true
-  	@profile.traits['professionally_managed_year'] = @profile.traits['construction_year'] + 1
-		
-  	@profile.save()
-  	
-  	# puts "[#{ @community.title }] Accessing QBE Zip Code"
-  	@community.get_qbe_zip_code()
-  	
-  	# puts "[#{ @community.title }] Accessing QBE Property Info"
-  	@community.get_qbe_property_info()
-  	
-    units_per_floor = rand(15..30)
-    floors = rand(1..4).to_i
-    
-    floors.times do |floor|
-      
-      floor_id = (floor + 1) * 100
-      
-      units_per_floor.times do |unit_num|
-        
-        mailing_id = floor_id + (unit_num + 1)
-        @unit = @community.insurables.new(title: mailing_id, insurable_type: @residential_unit_insurable_type,
-        																		 enabled: true, category: 'property', account: @account)
-        
-        if @unit.save
-          @unit.create_carrier_profile(1)
-        else
-          puts "\nUnit Save Error\n\n"
-          pp @unit.errors.to_json
-        end                
-      end
-    end
-    
-  	@community.reset_qbe_rates(true, true)
-	
-	end
+@accounts = Account.all
+# Account.find_each { |a| @accounts << a if a.agency.offers_policy_type_in_region(1, a.primary_address.state) }
 
+@accounts.each do |account|
+	3.times do |i|
+	
+		addr = @addresses[Insurable.residential_communities.count]
+
+		@community = account.insurables.new(title: "#{Faker::Movies::LordOfTheRings.location} #{@building_name_options[rand(0..3)]}", 
+																				 insurable_type: @residential_community_insurable_type, 
+																				 enabled: true, category: 'property',
+																				 addresses_attributes: [ addr ])
+		
+		args = { 
+			carrier_id: 1,
+			policy_type_id: 1,
+			state: addr[:state],
+			zip_code: addr[:zip_code],
+			plus_four: addr[:plus_four]
+		}
+				
+		if @community.account.agency.offers_policy_type_in_region(args) && @community.save
+	  	
+	  	account.staff
+	  					.order("RANDOM()")
+	  					.each do |staff|
+		  					
+		  	Assignment.create!(staff: staff, assignable: @community)	
+		  end
+	  	
+	  	@community.create_carrier_profile(1)
+	  	@profile = @community.carrier_profile(1)
+	  	
+	  	@profile.traits['construction_year'] = rand(1979..2005)
+	  	@profile.traits['professionally_managed'] = true
+	  	@profile.traits['professionally_managed_year'] = @profile.traits['construction_year'] + 1
+			
+	  	@profile.save()
+	  	
+	  	# puts "[#{ @community.title }] Accessing QBE Zip Code"
+	  	@community.get_qbe_zip_code()
+	  	
+	  	# puts "[#{ @community.title }] Accessing QBE Property Info"
+	  	@community.get_qbe_property_info()
+	  	
+	    units_per_floor = rand(15..30)
+	    floors = rand(1..4).to_i
+	    
+	    floors.times do |floor|
+	      
+	      floor_id = (floor + 1) * 100
+	      
+	      units_per_floor.times do |unit_num|
+	        
+	        mailing_id = floor_id + (unit_num + 1)
+	        @unit = @community.insurables.new(title: mailing_id, insurable_type: @residential_unit_insurable_type,
+	        																		 enabled: true, category: 'property', account: account)
+	        
+	        if @unit.save
+	          @unit.create_carrier_profile(1)
+	        else
+	          puts "\nUnit Save Error\n\n"
+	          pp @unit.errors.to_json
+	        end                
+	      end
+	    end
+	    
+	  	@community.reset_qbe_rates(true, true)
+		
+		end
+		
+	end
 end
-    
