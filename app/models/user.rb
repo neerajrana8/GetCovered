@@ -30,11 +30,21 @@ class User < ActiveRecord::Base
   # VALIDATIONS
   validates :email, uniqueness: true
 
+  # Override payment_method attribute getters and setters to store data
+  # as encrypted
+  def payment_methods=(methods)
+    super(EncryptionService.encrypt(methods))
+  end
+
+  def payment_methods
+    super.nil? ? super : EncryptionService.decrypt(super)
+  end
+
 
   # Set Stripe ID
   #
   # Assigns stripe customer id to end user
-  
+
   def set_stripe_id(token = nil, token_type = 'card', default = false)
     if stripe_id.nil? && valid?
       
