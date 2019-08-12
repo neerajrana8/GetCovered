@@ -65,9 +65,36 @@ LeaseType.find(2).policy_types << PolicyType.find(3)
 # Setting up base Carriers
 
 @carriers = [
-  { title: "Queensland Business Insurance", syncable: false, rateable: true, quotable: true, bindable: true, verifiable: false, enabled: true },
-  { title: "Queensland Business Specialty Insurance", syncable: false, rateable: true, quotable: true, bindable: true, verifiable: false, enabled: true },
-  { title: "Crum & Forester", syncable: false, rateable: true, quotable: true, bindable: true, verifiable: false, enabled: true }
+  { 
+	  title: "Queensland Business Insurance", 
+	  integration_designation: 'qbe',
+	  syncable: false, 
+	  rateable: true, 
+	  quotable: true, 
+	  bindable: true, 
+	  verifiable: false, 
+	  enabled: true 
+	},
+  { 
+	  title: "Queensland Business Specialty Insurance",  
+	  integration_designation: 'qbe_specialty',
+	  syncable: false, 
+	  rateable: true, 
+	  quotable: true, 
+	  bindable: true, 
+	  verifiable: false, 
+	  enabled: true 
+	},
+  { 
+	  title: "Crum & Forester", 
+	  integration_designation: 'crum', 
+	  syncable: false, 
+	  rateable: true, 
+	  quotable: true, 
+	  bindable: true, 
+	  verifiable: false, 
+	  enabled: true 
+	}
 ]
 
 @carriers.each do |c|
@@ -89,42 +116,48 @@ LeaseType.find(2).policy_types << PolicyType.find(3)
 			  	answer_type: "NUMBER",
 			  	default_answer: 1,
 			    policy_type: policy_type,
-			    section: 'FIELDS'
+			    section: 'fields',
+			    enabled: true
 		    },	    
 		    {
 			    title: "Do you operate a business in your rental apartment/home?",
 			    answer_type: "BOOLEAN",
 			    default_answer: 'false',
 			    policy_type: policy_type,
-			    section: 'QUESTIONS'
+			    section: 'questions',
+			    enabled: true
 		    },
 		    {
 			    title: "Has any animal that you or your roommate(s) own ever bitten a person or someone else’s pet?",
 			    answer_type: "BOOLEAN",
 			    default_answer: 'false',
 			    policy_type: policy_type,
-			    section: 'QUESTIONS'
+			    section: 'questions',
+			    enabled: true
 		    },
 		    {
 			    title: "Do you or your roommate(s) own snakes, exotic or wild animals?",
 			    answer_type: "BOOLEAN",
 			    default_answer: 'false',
 			    policy_type: policy_type,
-			    section: 'QUESTIONS'
+			    section: 'questions',
+			    enabled: true
 		    },
 		    {
 			    title: "Is your dog(s) any of these breeds: Akita, Pit Bull (Staffordshire Bull Terrier, America Pit Bull Terrier, American Staffordshire Terrier, Bull Terrier), Chow, Rottweiler, Wolf Hybrid, Malamute or any mix of the above listed breeds?",
 			    answer_type: "BOOLEAN",
 			    default_answer: 'false',
 			    policy_type: policy_type,
-			    section: 'QUESTIONS'
+			    section: 'questions',
+			    enabled: true
 		    },
 		    {
 			    title: "Have you had any liability claims, whether or not a payment was made, in the last 3 years?",
 			    answer_type: "BOOLEAN",
 			    default_answer: 'false',
 			    policy_type: policy_type,
-			    section: 'QUESTIONS'
+			    section: 'questions',
+			    enabled: true
 		    }
 	    ].each do |policy_application_field|
 		    carrier.policy_application_fields.create!(policy_application_field)
@@ -188,58 +221,74 @@ LeaseType.find(2).policy_types << PolicyType.find(3)
 			    title: "Do you already have an insurance policy for your business, or have you applied for insurance through any agent other than \"Get Covered\"?",
 			    answer_type: "BOOLEAN",
 			    default_answer: 'false',
+			  	desired_answer: 'false',
 			    policy_type: policy_type,
-			    section: 'QUESTIONS'
+			    section: 'questions',
+			    enabled: true
 		    },
 		    {
 			    title: "Currently sell or has it sold in the past any fire arms, ammunitions or weapons of any kind?",
 			    answer_type: "BOOLEAN",
 			    default_answer: 'false',
+			  	desired_answer: 'false',
 			    policy_type: policy_type,
-			    section: 'QUESTIONS'
+			    section: 'questions',
+			    enabled: true
 		    },
 		    {
 			    title: "Sell any products or perform any services for any military, law enforcement or other armed forces or services?",
 			    answer_type: "BOOLEAN",
 			    default_answer: 'false',
+			  	desired_answer: 'false',
 			    policy_type: policy_type,
-			    section: 'QUESTIONS'
+			    section: 'questions',
+			    enabled: true
 		    },
 		    {
 			    title: "Own or operate any manned or unmanned aviation devices (aircraft, helicopters, drones etc)?",
 			    answer_type: "BOOLEAN",
 			    default_answer: 'false',
+			  	desired_answer: 'false',
 			    policy_type: policy_type,
-			    section: 'QUESTIONS'
+			    section: 'questions',
+			    enabled: true
 		    },
 		    {
 			    title: "Directly import more than 5% of the cost of goods sold from a country or territory outside the U.S,?",
 			    answer_type: "BOOLEAN",
 			    default_answer: 'false',
+			  	desired_answer: 'false',
 			    policy_type: policy_type,
-			    section: 'QUESTIONS'
+			    section: 'questions',
+			    enabled: true
 		    },
 		    {
 			    title: "Have any discontinued or ongoing operations involving the manufacturing, blending, repackaging or relabeling of components or products made by others?",
 			    answer_type: "BOOLEAN",
 			    default_answer: 'false',
+			  	desired_answer: 'false',
 			    policy_type: policy_type,
-			    section: 'QUESTIONS'
+			    section: 'questions',
+			    enabled: true
 		    },
 		    {
 			    title: "Have any business premises that are open to the public?",
 			    answer_type: "BOOLEAN",
 			    default_answer: 'false',
+			  	desired_answer: 'false',
 			    policy_type: policy_type,
-			    section: 'QUESTIONS',
+			    section: 'questions',
+			    enabled: true,
 			    policy_application_fields_attributes: [
 						{
 							title: 'If YES, is your business open past 12:00 AM?',
 					    answer_type: "BOOLEAN",
 					    default_answer: 'false',
+							desired_answer: 'false',
 					    policy_type: policy_type,
-					    section: 'QUESTIONS',
-							carrier: carrier
+					    section: 'questions',
+							carrier: carrier,
+							enabled: true
 						}
 					]
 				},
@@ -247,54 +296,71 @@ LeaseType.find(2).policy_types << PolicyType.find(3)
 					title: "Have a requirement  to post motor carrier financial responsibility filings to any Federal and or State Department of Transportation (DOT) or other agency?",
 			    answer_type: "BOOLEAN",
 			    default_answer: 'false',
+			  	desired_answer: 'false',
 			    policy_type: policy_type,
-			    section: 'QUESTIONS'
+			    section: 'questions',
+			    enabled: true
 				},
 				{
 					title: "Hire non-employee drivers to perform delivery of your products or services?",
 			    answer_type: "BOOLEAN",
 			    default_answer: 'false',
+			  	desired_answer: 'false',
 			    policy_type: policy_type,
-			    section: 'QUESTIONS'
+			    section: 'questions',
+			    enabled: true
 				},
 				{
 					title: "Have any employees use their own personal vehicles to make deliveries (food or otherwise) for 
 ten (10) days or or more per month?",
 			    answer_type: "BOOLEAN",
 			    default_answer: 'false',
+			  	desired_answer: 'false',
 			    policy_type: policy_type,
-			    section: 'QUESTIONS'
+			    section: 'questions',
+			    enabled: true
 				},
 				{
 					title: "Please indicate the number of loss events to your business or claims made against you by others, whether covered by insurance or not, regardless of fault within the last three (3) years:",
 			    answer_type: "BOOLEAN",
 			    default_answer: 'false',
+			  	desired_answer: 'false',
 			    policy_type: policy_type,
-			    section: 'QUESTIONS',
+			    section: 'questions',
+			    enabled: true,
 			    policy_application_fields_attributes: [
 						{
 							title: 'Property loss events or claims:',
 					    answer_type: "NUMBER",
-					    default_answer: 'false',
+					    default_answer: '0',
+							desired_answer: '0',
+							answer_options: [0, 1, 2, 3],
 					    policy_type: policy_type,
-					    section: 'QUESTIONS',
-							carrier: carrier
+					    section: 'questions',
+							carrier: carrier,
+							enabled: true
 						},
 						{
 							title: 'General Liability events or claims:',
 					    answer_type: "NUMBER",
-					    default_answer: 'false',
+					    default_answer: '0',
+							desired_answer: '0',
+							answer_options: [0, 1, 2, 3],
 					    policy_type: policy_type,
-					    section: 'QUESTIONS',
-							carrier: carrier
+					    section: 'questions',
+							carrier: carrier,
+							enabled: true
 						},
 						{
 							title: 'Professional or Errors & Omissions Claims:',
 					    answer_type: "NUMBER",
-					    default_answer: 'false',
+					    default_answer: '0',
+							desired_answer: '0',
+							answer_options: [0, 1, 2, 3],
 					    policy_type: policy_type,
-					    section: 'QUESTIONS',
-							carrier: carrier
+					    section: 'questions',
+							carrier: carrier,
+							enabled: true
 						}
 					]
 				}

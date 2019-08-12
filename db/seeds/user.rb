@@ -4,8 +4,8 @@
 require 'faker'
 require './db/seeds/functions'
 
-@units = Insurable.residential_units
-@units.each do |unit|
+@residential_units = Insurable.residential_units
+@residential_units.each do |unit|
   
   # Create a 66% Occupancy Rate
   occupied_chance = rand(0..100)
