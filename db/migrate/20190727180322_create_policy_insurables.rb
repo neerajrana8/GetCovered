@@ -5,6 +5,7 @@ class CreatePolicyInsurables < ActiveRecord::Migration[5.2]
       t.boolean :primary, default: false
       t.boolean :current, default: false
       t.references :policy
+      t.references :policy_application
       t.references :insurable
 
       t.timestamps

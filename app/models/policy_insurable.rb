@@ -8,7 +8,8 @@ class PolicyInsurable < ApplicationRecord
 	
 	before_create :set_first_as_primary
 	
-  belongs_to :policy
+  belongs_to :policy_application
+  belongs_to :policy, optional: true
   belongs_to :insurable
   
   validate :one_primary_per_insurable
@@ -16,7 +17,8 @@ class PolicyInsurable < ApplicationRecord
   private
   	
   	def set_first_as_primary
-	  	self.primary = true if policy.insurables.count == 0
+	  	query_model = policy.nil? ? policy_application : policy
+	  	self.primary = true if query_model.insurables.count == 0
 	  end
 	  
 	  def one_primary_per_insurable
