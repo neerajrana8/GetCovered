@@ -31,6 +31,10 @@ class Event < ApplicationRecord
   
   validates_presence_of :process
 
+	def duration
+		return started.nil? || completed.nil? ? nil : (completed - started) * 1000.0
+	end
+
   private
     
     def initialize_event

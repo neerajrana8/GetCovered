@@ -14,6 +14,7 @@ class Staff < ActiveRecord::Base
   enum role: { staff: 0, agent: 1, owner: 2, super_admin: 3 }
   # Active Record Callbacks
   after_initialize :initialize_staff
+  after_create :set_first_as_primary_on_organizable
 
   # belongs_to relationships
   # belongs_to :account, required: true
@@ -39,6 +40,12 @@ class Staff < ActiveRecord::Base
 
   private
 
-  def initialize_staff
-  end
+	  def initialize_staff
+	  end
+
+		def set_first_as_primary_on_organizable
+			unless organizable.nil?
+				self.organizable.update staff_id: id if organizable.staff.count == 1
+			end	
+		end
 end

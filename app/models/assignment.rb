@@ -5,6 +5,7 @@ class Assignment < ApplicationRecord
   
   #after_create :record_related_history_create
   #before_destroy :record_related_history_destory
+  before_create :set_first_as_primary
   
   # Relationship
   belongs_to :staff
@@ -61,6 +62,18 @@ class Assignment < ApplicationRecord
       end 
     
     end
+    
+    def set_first_as_primary
+	    unless assignable.nil?
+	  		self.primary = true if assignable.assignments.count == 0
+	  	end
+	  end
+	  
+	  def one_primary_per_assignable
+			if primary == true
+				errors.add(:primary, "one primary per assignable") if staff.assignments.count >= 1 	
+			end  
+		end
     
     # TODO need to refactor because stuff has no account_id
     # def staff_and_community_share_account
