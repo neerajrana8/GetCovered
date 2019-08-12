@@ -1,7 +1,7 @@
 class CreatePolicies < ActiveRecord::Migration[5.2]
   def change
     create_table :policies do |t|
-      t.string :number
+      t.string :number, index: { unique: true }
       t.date :effective_date
       t.date :expiration_date
       t.boolean :auto_renew, :null => false, :default => false
@@ -20,7 +20,6 @@ class CreatePolicies < ActiveRecord::Migration[5.2]
       t.boolean :serviceable, :null => false, :default => false
       t.boolean :has_outstanding_refund, :null => false, :default => false
       t.jsonb :system_data, default: {}
-      t.references :insurable
       t.references :agency
       t.references :account
       t.references :carrier

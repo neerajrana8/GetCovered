@@ -8,6 +8,8 @@ class CreatePolicyCoverages < ActiveRecord::Migration[5.2]
       t.boolean :enabled, :null => false, :default => false
       t.datetime :enabled_changed
       t.references :policy
+      t.references :policy_quote
+      t.references :insurable_rate
 
       t.timestamps
     end

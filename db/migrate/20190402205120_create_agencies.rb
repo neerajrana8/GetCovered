@@ -14,6 +14,7 @@ class CreateAgencies < ActiveRecord::Migration[5.2]
       t.boolean :master_agency, :null => false, :default => false
       t.jsonb :contact_info, :default => {}
       t.jsonb :settings, :default => {}
+      t.references :agency
 
       t.timestamps
     end

@@ -1,6 +1,7 @@
 class CreateCommissionStrategies < ActiveRecord::Migration[5.2]
   def change
     create_table :commission_strategies do |t|
+	    t.string :title, :null => false
       t.integer :amount, :null => false, :default => 10
       t.integer :type, :null => false, :default => 0
       t.integer :fulfillment_schedule, :null => false, :default => 0
