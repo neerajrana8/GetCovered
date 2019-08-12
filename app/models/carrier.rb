@@ -4,7 +4,8 @@
 
 class Carrier < ApplicationRecord
   include SetSlug,
-  				SetCallSign
+          SetCallSign,
+          ElasticsearchSearchable
   
   after_initialize  :initialize_carrier
   
@@ -31,6 +32,13 @@ class Carrier < ApplicationRecord
   validates :title, presence: true,
                     uniqueness: true  
       
+  settings index: { number_of_shards: 1 } do
+    mappings dynamic: 'false' do
+      indexes :title, type: :text, analyzer: 'english'
+      indexes :call_sign, type: :text, analyzer: 'english'
+    end
+  end
+
   private
   
     def initialize_carrier

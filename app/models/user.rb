@@ -7,6 +7,7 @@ class User < ActiveRecord::Base
          :trackable, :validatable, :invitable, validate_on_invite: true
   include RecordChange
   include DeviseTokenAuth::Concerns::User
+  include ElasticsearchSearchable
 
   # Active Record Callbacks
   after_initialize :initialize_user
@@ -29,7 +30,7 @@ class User < ActiveRecord::Base
 
   # VALIDATIONS
   validates :email, uniqueness: true
-
+  
   # Override payment_method attribute getters and setters to store data
   # as encrypted
   def payment_methods=(methods)
@@ -162,8 +163,13 @@ class User < ActiveRecord::Base
     end
     return false
   end
-
-
+  
+  settings index: { number_of_shards: 1 } do
+    mappings dynamic: 'false' do
+      indexes :email, type: :text
+    end
+  end
+  
   private
 
   def initialize_user

@@ -5,7 +5,7 @@
 class PolicyApplication < ApplicationRecord  
   
   # Concerns
-  include CarrierQbePolicyApplication
+  include CarrierQbePolicyApplication, ElasticsearchSearchable
   
   # Active Record Callbacks
   after_initialize :initialize_policy_application
@@ -40,7 +40,14 @@ class PolicyApplication < ApplicationRecord
   enum status: { STARTED: 0, IN_PROGRESS: 1, COMPLETE: 2, ABANDONED: 3, 
 	  						 QUOTE_IN_PROGRESS: 4, QUOTE_FAILED: 5, QUOTED: 6, 
 	  						 MORE_REQUIRED: 7, REJECTED: 8 }	
-	
+  
+  settings index: { number_of_shards: 1 } do
+    mappings dynamic: 'false' do
+      indexes :reference, type: :text, analyzer: 'english'
+      indexes :external_reference, type: :text, analyzer: 'english'
+    end
+  end
+
 	def quote
 		self.send("#{ carrier.integration_designation }_quote") if complete?
 		return false if !complete?

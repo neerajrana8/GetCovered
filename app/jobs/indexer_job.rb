@@ -9,7 +9,7 @@ class IndexerJob < ApplicationJob
   queue_as :elasticsearch
 
   Logger = Sidekiq.logger.level == Logger::DEBUG ? Sidekiq.logger : nil
-  Client = Elasticsearch::Client.new host: (ENV['ELASTICSEARCH_URL'] || 'http://localhost:9200'), logger: Logger
+  Client = Elasticsearch::Client.new host: (ENV['ELASTICSEARCH_URL'] || 'http://elasticsearch:9200'), logger: Logger
 
   def perform(klass, index_name, operation, record_id)
     logger.debug [operation, "ID: #{record_id}"]
@@ -24,7 +24,7 @@ class IndexerJob < ApplicationJob
         record.__elasticsearch__.client = Client
         record.__elasticsearch__.update_document
       when /delete/
-        Client.delete index: index_name, id: id, ignore: 404
+        Client.delete index: index_name, id: record_id, ignore: 404
       else raise ArgumentError, "Unknown operation '#{operation}'"
     end
   end 

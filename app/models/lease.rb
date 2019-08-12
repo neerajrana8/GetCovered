@@ -55,14 +55,7 @@ class Lease < ApplicationRecord
 
   settings index: { number_of_shards: 1 } do
     mappings dynamic: 'false' do
-      indexes :reference, analyzer: 'english'
-      indexes :type, analyzer: 'english'
-      indexes :status, type: :integer
-      indexes :covered, type: 'keyword'
-      indexes :unit_id, type: 'keyword'
-      indexes :account_id, type: 'keyword'
-      indexes :start_date, type: 'date'
-      indexes :end_date, type: 'date'
+      indexes :reference, type: :text, analyzer: 'english'
     end
   end
 
