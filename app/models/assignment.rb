@@ -8,7 +8,7 @@ class Assignment < ApplicationRecord
   
   # Relationship
   belongs_to :staff
-  belongs_to :assignable, plymorphic: true 
+  belongs_to :assignable, polymorphic: true 
 
   # TODO need to refactor because stuff has no account_id
   #validate :staff_and_community_share_account,

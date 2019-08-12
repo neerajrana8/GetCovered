@@ -69,7 +69,7 @@ class Lease < ApplicationRecord
   def activate
     if status == 'approved'
       update status: 'current'
-      update covered: true if unit.covered
+      # update covered: true if unit.covered
             
       related_history = {
         data: { 
@@ -121,7 +121,8 @@ class Lease < ApplicationRecord
   end
     
   def related_records_list
-    return ['community', 'building', 'unit', 'account']  
+    # return ['community', 'building', 'unit', 'account']
+    return []  
   end
 
   private
