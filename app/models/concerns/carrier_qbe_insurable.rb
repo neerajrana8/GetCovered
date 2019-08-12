@@ -413,7 +413,7 @@ module CarrierQbeInsurable
 	        prop_city: @address.city,
 	        prop_county: @address.county,
 	        prop_state: @address.state,
-	        prop_zipcode: @address.combined_postal_code,
+	        prop_zipcode: @address.combined_zip_code,
 	        units_on_site: insurables.residential_units.count,
 	        age_of_facility: @carrier_profile.traits['construction_year'],
 	        ppc: @carrier_profile.traits['ppc'],
