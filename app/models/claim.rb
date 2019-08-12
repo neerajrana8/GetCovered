@@ -34,10 +34,10 @@ class Claim < ApplicationRecord
   
   settings index: { number_of_shards: 1 } do
     mappings dynamic: 'false' do
-      indexes :subject, analyzer: 'english'
-      indexes :description, analyzer: 'english'
-      indexes :claimant_type, analyzer: 'english'
-      indexes :time_of_loss, type: 'date'
+      indexes :subject, type: :text, analyzer: 'english'
+      indexes :description, type: :text, analyzer: 'english'
+      indexes :claimant_type, type: :text, analyzer: 'english'
+      indexes :time_of_loss, type: :date
     end
   end
 

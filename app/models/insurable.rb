@@ -3,7 +3,7 @@
 
 class Insurable < ApplicationRecord
   # Concerns
-  include CarrierQbeInsurable#, EarningsReport, RecordChange
+  include CarrierQbeInsurable, ElasticsearchSearchable#, EarningsReport, RecordChange
   
   belongs_to :account
   belongs_to :insurable, optional: true
@@ -26,6 +26,7 @@ class Insurable < ApplicationRecord
   
   enum category: ['property', 'entity']
   
+  
   ['Residential', 'Commercial'].each do |major_type|
 	  ['Community', 'Unit'].each do |minor_type|
 		  scope "#{ major_type.downcase }_#{ minor_type.downcase.pluralize }".to_sym, -> { joins(:insurable_type).where("insurable_types.title = '#{ major_type } #{ minor_type }'") }
@@ -34,6 +35,11 @@ class Insurable < ApplicationRecord
 #   scope :residential_communities, -> { joins(:insurable_type).where("insurable_types.title = 'Residential Community'")}
 # 	scope :residential_units, -> { joins(:insurable_type).where("insurable_types.title = 'Residential Unit'")}
   
+  settings index: { number_of_shards: 1 } do
+    mappings dynamic: 'false' do
+      indexes :title, type: :text, analyzer: 'english'
+    end
+  end
   # Insurable.primary_address
   #
   

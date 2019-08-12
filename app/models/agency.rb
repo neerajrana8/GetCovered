@@ -11,7 +11,8 @@ class Agency < ApplicationRecord
 					# RecordChange, 
 					SetCallSign, 
 					SetSlug,
-					StripeConnect
+          StripeConnect,
+          ElasticsearchSearchable
 
   # Active Record Callbacks
   after_initialize :initialize_agency
@@ -54,7 +55,14 @@ class Agency < ApplicationRecord
        autosave: true
 
   accepts_nested_attributes_for :addresses
-      
+  
+  settings index: { number_of_shards: 1 } do
+    mappings dynamic: 'false' do
+      indexes :title, type: :text, analyzer: 'english'
+      indexes :call_sign, type: :text, analyzer: 'english'
+    end
+  end
+
   # has_one relationships
   # blank for now...
   	

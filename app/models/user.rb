@@ -7,6 +7,7 @@ class User < ActiveRecord::Base
          :trackable, :validatable, :invitable, validate_on_invite: true
   include RecordChange
   include DeviseTokenAuth::Concerns::User
+  include ElasticsearchSearchable
 
   # Active Record Callbacks
   after_initialize :initialize_user
@@ -29,6 +30,12 @@ class User < ActiveRecord::Base
 
   # VALIDATIONS
   validates :email, uniqueness: true
+
+  settings index: { number_of_shards: 1 } do
+    mappings dynamic: 'false' do
+      indexes :email, type: :text
+    end
+  end
 
   private
 
