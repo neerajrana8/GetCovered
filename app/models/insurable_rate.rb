@@ -62,7 +62,7 @@ class InsurableRate < ApplicationRecord
 
       if !persisted? && 
          insurable.primary_address.state == "FL"
-        self.deductibles["hurricaine"] ||= "%.2f" % 0.00  
+        self.deductibles["hurricane"] ||= "%.2f" % 0.00  
       end
 
       self.coverage_limits ||= {}
