@@ -2,6 +2,9 @@
 # file: app/models/profile.rb
 
 class Profile < ApplicationRecord
+
+  include ElasticsearchSearchable
+
   belongs_to :profileable, 
     polymorphic: true,
     required: false
@@ -11,6 +14,14 @@ class Profile < ApplicationRecord
 
   # Validations
   validates_presence_of :first_name, :last_name
+
+  settings index: { number_of_shards: 1 } do
+    mappings dynamic: 'false' do
+      indexes :first_name, type: :text, analyzer: 'english'
+      indexes :last_name, type: :text, analyzer: 'english'
+      indexes :full_name, type: :text, analyzer: 'english'
+    end
+  end
 
   private  
 

@@ -263,7 +263,7 @@ class Charge < ApplicationRecord
           stripe_charge = Stripe::Charge.create({
             amount: amount,
             currency: 'usd',
-            description: "Policy ##{invoice.policy.policy_number}, Invoice ##{invoice.number}",
+            description: "Policy ##{invoice.policy.number}, Invoice ##{invoice.number}",
             customer: invoice.user.stripe_id,
             source: stripe_source
           }.delete_if { |k,v| v.nil? })

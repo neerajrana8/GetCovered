@@ -1,11 +1,12 @@
-class PolicyQuote < ApplicationRecord  
-  
+# frozen_string_literal: true
+
+class PolicyQuote < ApplicationRecord
   # Concerns
-  # include CarrierQbeQuote
+  include CarrierQbeQuote, ElasticsearchSearchable
   
   before_validation :set_reference,
   	if: Proc.new { |quote| quote.reference.nil? }
-  
+
   belongs_to :policy_application, optional: true
   
   belongs_to :agency, optional: true
@@ -18,6 +19,13 @@ class PolicyQuote < ApplicationRecord
 	has_many :policy_rates
 	has_many :insurable_rates,
 		through: :policy_rates
+
+  settings index: { number_of_shards: 1 } do
+    mappings dynamic: 'false' do
+      indexes :reference, type: :text, analyzer: 'english'
+      indexes :external_reference, type: :text, analyzer: 'english'
+    end
+  end
   
   private
     
@@ -36,5 +44,5 @@ class PolicyQuote < ApplicationRecord
 	    
 	    return return_status	  	  
 	  end
-	  
+  
 end

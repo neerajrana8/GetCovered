@@ -4,13 +4,25 @@
 module ElasticsearchSearchable
   extend ActiveSupport::Concern
   included do
-    require 'elasticsearch/model'
     include Elasticsearch::Model
     include Elasticsearch::Model::Callbacks
     include Elasticsearch::Model::Indexing
 
-    index_name "get-covered-#{name.downcase.pluralize}-#{Rails.env}"
+    name = self.name.downcase.pluralize
+    index_name = "get-covered-#{name}-#{Rails.env}"
 
-    after_touch { __elasticsearch__.index_document }
+    index_name index_name
+
+    after_commit on: [:create] do
+      IndexerJob.perform_now(self.class, index_name, :index, id)
+    end
+
+    after_commit on: [:update] do
+      IndexerJob.perform_now(self.class, index_name, :update, id)
+    end
+
+    after_commit on: [:destroy] do
+      IndexerJob.perform_now(self.class, index_name, :delete, id)
+    end
   end
 end

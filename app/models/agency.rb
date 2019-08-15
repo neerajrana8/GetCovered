@@ -11,7 +11,8 @@ class Agency < ApplicationRecord
 					# RecordChange, 
 					SetCallSign, 
 					SetSlug,
-					StripeConnect
+          StripeConnect,
+          ElasticsearchSearchable
 
   # Active Record Callbacks
   after_initialize :initialize_agency
@@ -115,7 +116,14 @@ class Agency < ApplicationRecord
 		end	
 		return result
 	end
-  	
+  
+  settings index: { number_of_shards: 1 } do
+    mappings dynamic: 'false' do
+      indexes :title, type: :text, analyzer: 'english'
+      indexes :call_sign, type: :text, analyzer: 'english'
+    end
+  end
+  
 	private
 		
 		def initialize_agency

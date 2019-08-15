@@ -5,7 +5,7 @@
 class PolicyApplication < ApplicationRecord  
   
   # Concerns
-  include CarrierQbePolicyApplication
+  include CarrierQbePolicyApplication, ElasticsearchSearchable
   
   # Active Record Callbacks
   after_initialize :initialize_policy_application
@@ -69,7 +69,7 @@ class PolicyApplication < ApplicationRecord
 	# Calls quote method for applicable carrier & service
 	# using the naming convention #{ carrier.integration_designation }_quote 
 	# if the method exists.	
-						 	
+  
 	def quote
 		method = "#{ carrier.integration_designation }_quote"
 		self.send(method) if complete? && self.respond_to?(method)
@@ -94,7 +94,14 @@ class PolicyApplication < ApplicationRecord
 															.count > 0 ? primary_insurable().insurable_rates.where(query) : 
 																					 primary_insurable().insurable.insurable_rates.where(query)
 	end
-    
+
+  settings index: { number_of_shards: 1 } do
+    mappings dynamic: 'false' do
+      indexes :reference, type: :text, analyzer: 'english'
+      indexes :external_reference, type: :text, analyzer: 'english'
+    end
+  end
+  
   private 
   
     def initialize_policy_application

@@ -2,7 +2,9 @@
 # file: +app/models/address.rb+
 
 class Address < ApplicationRecord
-  
+
+  include ElasticsearchSearchable
+
   geocoded_by :full
     
   before_save :set_full,
@@ -28,6 +30,30 @@ class Address < ApplicationRecord
   
   # scope :residential_communities, -> { joins(:insurable).where() }
   
+  settings index: { number_of_shards: 1 } do
+    mappings dynamic: 'false' do
+      indexes :street_number, type: :text, analyzer: 'english'
+      indexes :street_name, type: :text, analyzer: 'english'
+      indexes :street_two, type: :text, analyzer: 'english'
+      indexes :city, type: :text, analyzer: 'english'
+      indexes :state, type: :text, analyzer: 'english'
+      indexes :county, type: :text, analyzer: 'english'
+      indexes :zip_code, type: :text, analyzer: 'english'
+      indexes :plus_four, type: :text, analyzer: 'english'
+      indexes :full, type: :text, analyzer: 'english'
+      indexes :full_searchable, type: :text, analyzer: 'english'
+      indexes :location, type: 'geo_point'
+      indexes :timezone, type: :text, analyzer: 'english'
+      indexes :primary, type: :boolean
+      indexes :created_at, type: :date
+      indexes :updated_at, type: :date
+    end
+  end
+
+  def as_indexed_json(options={})
+    as_json(options).merge location: { lat: latitude, lon: longitude }
+  end
+
   # Address.full_street_address
   # Returns full street address of Address from available variables
   def full_street_address

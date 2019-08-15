@@ -18,7 +18,7 @@ class Invoice < ApplicationRecord
 
   # ActiveRecord Associations
 
-  # belongs_to :policy # Policy not yet created
+  belongs_to :policy
 
   belongs_to :user
 
@@ -34,11 +34,11 @@ class Invoice < ApplicationRecord
 
   has_many :histories, as: :recordable
 
-  has_many :notifications, as: :eventable
+  has_many :notifications, as: :notifiable
 
   # Validations
 
-  validates :number, presence: true, unique: true
+  validates :number, presence: true, uniqueness: true
 
   validates :subtotal, presence: true
 
@@ -54,7 +54,7 @@ class Invoice < ApplicationRecord
 
   validates :tax_percent, presence: true
 
-  # validates :policy, presence: true
+  validates :policy, presence: true
 
   validates :user, presence: true
 
@@ -65,6 +65,9 @@ class Invoice < ApplicationRecord
   enum status: %w[upcoming available processing complete missed canceled]
 
   scope :unpaid, -> { where(status: %w[available missed]) }
+  scope :unpaid_past_due, -> { 
+    where(status: %w[available missed]).where('due_date < ?', DateTime.now)
+  }
 
   # Methods
 
@@ -356,15 +359,15 @@ class Invoice < ApplicationRecord
       if due_date >= Time.current.to_date
         invoice_status = 'available'
         user_notification_subject = 'Get Covered: Policy Payment Failure'
-        user_notification_message = "A payment for your renters insurance policy ##{policy.policy_number}, invoice ##{number} has failed.  Please submit another payment before #{due_date.strftime('%m/%d/%Y')}."
+        user_notification_message = "A payment for your renters insurance policy ##{policy.number}, invoice ##{number} has failed.  Please submit another payment before #{due_date.strftime('%m/%d/%Y')}."
         agent_notification_subject = 'Get Covered: Policy Payment Failure'
-        agent_notification_message = "A payment for renters insurance policy ##{policy.policy_number}, invoice ##{number} has failed.  Payment due #{due_date.strftime('%m/%d/%Y')}."
+        agent_notification_message = "A payment for renters insurance policy ##{policy.number}, invoice ##{number} has failed.  Payment due #{due_date.strftime('%m/%d/%Y')}."
       else
         invoice_status = 'missed'
         user_notification_subject = 'Get Covered: Policy behind'
-        user_notification_message = "A payment for your renters insurance policy ##{policy.policy_number}, invoice ##{number} has failed.  Your policy is now past due.  Please submit a payment immediately to prevent cancellation of coverage."
+        user_notification_message = "A payment for your renters insurance policy ##{policy.number}, invoice ##{number} has failed.  Your policy is now past due.  Please submit a payment immediately to prevent cancellation of coverage."
         agent_notification_subject = 'Get Covered: Policy behind'
-        agent_notification_message = "A payment for renters insurance policy ##{policy.policy_number}, invoice ##{number} has failed.  This policy is now past due."
+        agent_notification_message = "A payment for renters insurance policy ##{policy.number}, invoice ##{number} has failed.  This policy is now past due."
       end
 
       update status: invoice_status
@@ -373,7 +376,7 @@ class Invoice < ApplicationRecord
           # if we are here, then a proration was applied to the invoice while payment was processing, and payment then failed
           failure_is_postproration = true
           agent_notification_subject = 'Get Covered: Post-Cancelation Policy Payment Failure'
-          agent_notification_message = "A payment for renters insurance policy ##{policy.policy_number}, invoice #{number} has failed. The payment was marked for proration adjustments via refund upon success, because the policy was canceled while the payment was being processed. No proration adjustment refunds will be issued; no payment was collected for this invoice."
+          agent_notification_message = "A payment for renters insurance policy ##{policy.number}, invoice #{number} has failed. The payment was marked for proration adjustments via refund upon success, because the policy was canceled while the payment was being processed. No proration adjustment refunds will be issued; no payment was collected for this invoice."
           notifications.create(
             notifiable: SystemDaemon.find_by_process('notify_canceled_policy_payment_failure'),
             action: 'invoice_payment_failed_after_proration',
@@ -385,7 +388,7 @@ class Invoice < ApplicationRecord
       end
 
       # Find agents to notify
-      policy_agents = policy.agency.agents
+      policy_agents = policy.agency.account_staff
 
       # Notify responsible user
       unless failure_is_postproration

@@ -259,6 +259,7 @@ ActiveRecord::Schema.define(version: 2019_08_15_002456) do
     t.bigint "invoice_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "amount", default: 0
     t.index ["invoice_id"], name: "index_charges_on_invoice_id"
     t.index ["stripe_id"], name: "charge_stripe_id"
   end
@@ -459,6 +460,8 @@ ActiveRecord::Schema.define(version: 2019_08_15_002456) do
     t.bigint "user_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "policy_id"
+    t.index ["policy_id"], name: "index_invoices_on_policy_id"
     t.index ["user_id"], name: "index_invoices_on_user_id"
   end
 
@@ -613,6 +616,8 @@ ActiveRecord::Schema.define(version: 2019_08_15_002456) do
     t.bigint "policy_type_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "policy_in_system"
+    t.boolean "auto_pay"
     t.index ["account_id"], name: "index_policies_on_account_id"
     t.index ["agency_id"], name: "index_policies_on_agency_id"
     t.index ["carrier_id"], name: "index_policies_on_carrier_id"
@@ -889,6 +894,8 @@ ActiveRecord::Schema.define(version: 2019_08_15_002456) do
     t.datetime "last_sign_in_at"
     t.string "current_sign_in_ip"
     t.string "last_sign_in_ip"
+    t.string "stripe_id"
+    t.jsonb "payment_methods"
     t.index ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["invitation_token"], name: "index_users_on_invitation_token", unique: true
