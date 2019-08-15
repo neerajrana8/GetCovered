@@ -46,12 +46,6 @@ module CarrierQbeInsurable
 	      qbe_service = QbeService.new(:action => 'getZipCode')
 	      qbe_service.build_request({ prop_zipcode: @address.zip_code })
 	      event.request = qbe_service.compiled_rxml  
-	        
-#         if Rails.application.credentials.rails_env == "development"
-# 	        puts "\nGet Zipcode"
-# 	        puts event.request
-# 	        puts "\n"
-# 	      end
 	      
 	      if event.save  
 	        # If event saves
@@ -68,17 +62,7 @@ module CarrierQbeInsurable
 	        qbe_request_timer[:total] = (complete_time - qbe_request_timer[:start]).to_f
 	        event.completed = complete_time
 	        
-#	        self.carrier_settings["qbe"]["api_metrics"]["get_zip_code"].push({
-#	          duration: "%.4f" % qbe_request_timer[:total],
-#	          date_time: Time.current.iso8601(9)
-#	        })
-	        
 	        event.response = qbe_data[:data]
-	        
-# 	        if Rails.application.credentials.rails_env == "development"
-#   	        puts event.response
-#   	        puts "\n"
-#   	      end
   	      
 	        event.status = qbe_data[:error] ? 'error' : 'success'
 	        
@@ -237,17 +221,7 @@ module CarrierQbeInsurable
 	        qbe_request_timer[:total] = (complete_time - qbe_request_timer[:start]).to_f
 	        event.completed = complete_time
 	        
-	        #self.carrier_settings["qbe"]["api_metrics"]["get_property_info"].push({
-	        #  duration: "%.4f" % qbe_request_timer[:total],
-	        #  date_time: Time.current.iso8601(9)
-	        #})
-	        
 	        event.response = qbe_data[:data]
-	        
-#   	      if Rails.application.credentials.rails_env == "development"
-#             puts event.response
-#             puts"\n"
-#           end
           
 	        event.status = qbe_data[:error] ? 'error' : 'success'
 	        
@@ -572,7 +546,7 @@ module CarrierQbeInsurable
 	                coverage_limits = {}
 	                
 	                unless qbe_rate.attributes["covclimit"].nil?
-	                  coverage_limits["cov_c"] = qbe_rate.attributes["covclimit"].value.to_i * 100
+	                  coverage_limits["coverage_c"] = qbe_rate.attributes["covclimit"].value.to_i * 100
 	                end
 	                
 	                unless qbe_rate.attributes["liablimit"].nil?

@@ -11,14 +11,27 @@ module CarrierQbePolicyApplication
 	  
 	  def qbe_estimate(rates = nil)
 			raise ArgumentError, 'Argument "rates" cannot be nil' if rates.nil?
+			raise ArgumentError, 'Argument "rates" must be an array' if !rates.is_a?(Array)
 		  quote = policy_quotes.new(agency: agency, account: account)
 		  if quote.save
-			  rates.each do |r| 
-					pp r
-					pp PolicyCoverage.new()
-				end
+				rates.each { |rate| quote.policy_rates.create!(insurable_rate: rate) }
+				quote_rate_premiums = quote.insurable_rates.map { |r| r.premium.to_f }
+				quote.update premium: quote_rate_premiums.inject { |sum, rate| sum + rate }
 			end
 		end
+		
+		# QBE Add Policy Fee
+		#
+    
+    def qbe_add_policy_fee
+      if available_rates(:optional, :policy_fee).count > 0
+        
+        available_rates(:optional, :policy_fee).each do |policy_fee|
+          rates << policy_fee  
+        end
+         
+      end
+    end		
 	  
 	  # QBE Quote
 	  # 
@@ -43,6 +56,8 @@ module CarrierQbePolicyApplication
 
 				if community_profile.data['ho4_enabled'] == true # If community profile is ho4_enabled
 					
+					quote = policy_quotes.find(quote_id) unless quote_id.nil?
+					
 					update status: 'quote_in_progress'
 	        event = events.new(
 	          verb: 'post', 
@@ -66,10 +81,10 @@ module CarrierQbePolicyApplication
 	          prof_managed: community_profile.traits['professionally_managed'] == true ? 1 : 0,
 	          prof_managed_year: community_profile.traits['professionally_managed_year'] == true ? "" : community_profile.traits['professionally_managed_year'],
 	          effective_date: effective_date.strftime("%m/%d/%Y"),
-	          premium: 150,
-	          premium_pif: 149,
+	          premium: quote.premium.to_f / 100,
+	          premium_pif: quote.premium.to_f / 100,
 	          num_insured: users.count,
-	          lia_amount: 15000
+	          lia_amount: quote.insurable_rates.liability.first.coverage_limits["liability"].to_f / 100
 	        }
 	  
 	        qbe_service.build_request(qbe_request_options)
@@ -95,7 +110,6 @@ module CarrierQbePolicyApplication
 										account: account
 		 							)
 		 						else
-		 							quote = policy_quotes.find(quote_id)
 		 							quote.premium = (xml_min_prem.attribute('tax').value.to_f * 100).to_i
 		 							quote.tax = (xml_min_prem.attribute('tax').value.to_f * 100).to_i
 		 						end
