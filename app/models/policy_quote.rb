@@ -14,6 +14,10 @@ class PolicyQuote < ApplicationRecord
 	
 	has_many :events,
 	    as: :eventable
+	    
+	has_many :policy_rates
+	has_many :insurable_rates,
+		through: :policy_rates
   
   private
     
