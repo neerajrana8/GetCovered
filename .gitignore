@@ -31,3 +31,5 @@
 **/._.DS_Store
 
 config/master.key
+
+dump.rdb
