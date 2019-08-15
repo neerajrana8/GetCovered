@@ -16,40 +16,61 @@ module StripeConnect
     
     return false if prevent_for_master
     
-    if owned? && stripe_id.nil?
+    if stripe_id.nil?
       
-      profile = owner.profile
+      profile = staff.first.profile
+			
+			request = {
+        :type => 'custom',
+        :country => 'US',
+        :business_name => title,
+        :email => owner.email,
+        :legal_entity => {
+          :first_name => profile.first_name,
+          :last_name => profile.last_name,
+          :type => "company"
+        }				
+			}
+			
+      event = events.new(
+        verb: 'post', 
+        format: 'json', 
+        interface: 'REST',
+        process: 'stripe_connect_create_account', 
+        endpoint: 'https://api.stripe.com/v1/accounts',
+        request: request,
+        started: Time.now
+      ) 
     
       begin
         
-        stripe_account = Stripe::Account.create(
-          :type => 'custom',
-          :country => 'US',
-          :business_name => title,
-          :email => owner.email,
-          :legal_entity => {
-            :first_name => profile.first_name,
-            :last_name => profile.last_name,
-            :type => "company"
-          }
-        )
+        stripe_account = Stripe::Account.create(request)
 
       rescue Stripe::APIConnectionError,
              Stripe::StripeError,
              Stripe::APIError => e
         
         # Need to create an action to add to queue for later processing
-        # pp e
+        event.respone = e
+        event.status = 'error'
         
       end
       
+      event.completed = Time.now
+      
       unless stripe_account.nil? || 
              stripe_account["id"].nil?
+        
+        event.status = 'success'
+        event.response = stripe_account
+        
         output_request_to_logs("SUCCESS", "create_stripe_connect_account")
         update(stripe_id: stripe_account["id"])
       else
         output_request_to_logs("ERROR", "create_stripe_connect_account")
       end
+      
+      event.save
       
     end
   end
@@ -81,55 +102,94 @@ module StripeConnect
       :business_tax_id => nil,
       :business_name => nil,
       :personal_id_number => nil,
-      :file => nil
+      :file => nil,
+      :ip_address => nil
     }.merge!(args)
     
-    if owned? && 
-       !stripe_id.nil?
+    puts "\n\nIP ADDRESS NULL\n".red if options[:ip_adress].nil?			    
+    options[:ip_adress] = '127.0.0.1'
+    puts "\nIP ADDRESS COULD NOT BE ASSIGNED\n\n".red if options[:ip_adress].nil?
+    puts "\nIP ADDRESS ASSIGNED\n\n".green if !options[:ip_adress].nil?
+    			    
+    if !stripe_id.nil? 
       
       profile = owner.profile
-      
-      stripe_account_instance = Stripe::Account.retrieve(stripe_id)
-      
-      stripe_account_instance.legal_entity.address = {
-        :city => address.locality,
-        :line1 => address.combined_street_address,
-        :postal_code => address.combined_postal_code,
-        :state => address.region
-      }
-      
-      if tos_accepted?
-        if stripe_account_instance["tos_acceptance"]["date"].nil? || 
-           stripe_account_instance["tos_acceptance"]["ip"].nil?
-          
-          stripe_account_instance["tos_acceptance"]["date"] = tos_acceptance_date.nil? ? nil : 
-                                                                                         tos_acceptance_date.to_i
-          stripe_account_instance["tos_acceptance"]["ip"] = tos_acceptance_ip
+
+	    event = events.new(
+	      verb: 'post', 
+	      format: 'json', 
+	      interface: 'REST',
+	      process: 'stripe_connect_validate_account', 
+	      endpoint: 'https://api.stripe.com/v1/accounts',
+	      request: options,
+	      started: Time.now
+	    )
+ 
+      begin
         
-        end
-      end
-      
-      stripe_account_instance["legal_entity"]["business_name"] = options[:business_name] unless options[:business_name].nil?
-      stripe_account_instance["legal_entity"]["business_tax_id"] = options[:business_tax_id] unless options[:business_tax_id].nil?
-      stripe_account_instance["legal_entity"]["dob"]["day"] = profile.birth_date.strftime("%-d") if stripe_account_instance["legal_entity"]["dob"]["day"].nil?
-      stripe_account_instance["legal_entity"]["dob"]["month"] = profile.birth_date.strftime("%-m") if stripe_account_instance["legal_entity"]["dob"]["month"].nil?
-      stripe_account_instance["legal_entity"]["dob"]["year"] = profile.birth_date.strftime("%Y") if stripe_account_instance["legal_entity"]["dob"]["year"].nil?
-      stripe_account_instance["legal_entity"]["personal_id_number"] = options[:personal_id_number] unless options[:personal_id_number].nil?
-      
-      unless options[:file].nil?
+        stripe_account_instance = Stripe::Account.retrieve(stripe_id)
+
+      rescue Stripe::APIConnectionError,
+             Stripe::StripeError,
+             Stripe::APIError => e
         
-        identity_document = Stripe::FileUpload.create(
-          :purpose => 'identity_document',
-          :file => File.new("#{Rails.root.to_s}#{options[:file]}")
-        )
-        
-        stripe_account_instance["legal_entity"]["verification"]["document"] = identity_document["id"] unless identity_document["id"].nil?
+        # Need to create an action to add to queue for later processing
+        pp e
+        event.response = e
+        event.status = 'error'
         
       end
-        
-      output_request_to_logs("SUCCESS", "validate_stripe_connect_account")
       
-      stripe_account_instance.save
+      unless event.status == 'error'
+	      
+        event.response = stripe_account_instance
+        event.status = 'success'
+
+	      stripe_account_instance.legal_entity.address = {
+	        :city => primary_address.city,
+	        :line1 => primary_address.combined_street_address,
+	        :postal_code => primary_address.combined_zip_code,
+	        :state => primary_address.state
+	      }
+	      
+	      if tos_accepted?
+	        if stripe_account_instance["tos_acceptance"]["date"].nil? || 
+	           stripe_account_instance["tos_acceptance"]["ip"].nil?
+	          
+	          stripe_account_instance["tos_acceptance"]["date"] = tos_accepted_at.nil? ? nil : 
+	                                                                                         tos_accepted_at.to_i
+	          stripe_account_instance["tos_acceptance"]["ip"] = tos_acceptance_ip
+	        
+	        end
+	      end
+	      
+	      stripe_account_instance["legal_entity"]["business_name"] = options[:business_name] unless options[:business_name].nil?
+	      stripe_account_instance["legal_entity"]["business_tax_id"] = options[:business_tax_id] unless options[:business_tax_id].nil?
+	      stripe_account_instance["legal_entity"]["dob"]["day"] = profile.birth_date.strftime("%-d") if stripe_account_instance["legal_entity"]["dob"]["day"].nil?
+	      stripe_account_instance["legal_entity"]["dob"]["month"] = profile.birth_date.strftime("%-m") if stripe_account_instance["legal_entity"]["dob"]["month"].nil?
+	      stripe_account_instance["legal_entity"]["dob"]["year"] = profile.birth_date.strftime("%Y") if stripe_account_instance["legal_entity"]["dob"]["year"].nil?
+	      stripe_account_instance["legal_entity"]["personal_id_number"] = options[:personal_id_number] unless options[:personal_id_number].nil?
+	      
+	      unless options[:file].nil?
+	        
+	        identity_document = Stripe::FileUpload.create(
+	          :purpose => 'identity_document',
+	          :file => File.new("#{Rails.root.to_s}#{options[:file]}")
+	        )
+	        
+	        stripe_account_instance["legal_entity"]["verification"]["document"] = identity_document["id"] unless identity_document["id"].nil?
+	        
+	      end
+	        
+	      output_request_to_logs("SUCCESS", "validate_stripe_connect_account")
+	      
+	      pp stripe_account_instance
+	      
+	      stripe_account_instance.save
+	      
+	    end
+      
+      event.save()
       
     end  
   end
@@ -145,8 +205,7 @@ module StripeConnect
     
     return false if prevent_for_master
     
-    if owned? && 
-       !stripe_id.nil?
+    if !stripe_id.nil?
         
       output_request_to_logs("SUCCESS", "retrieve_external_accounts")
       
@@ -183,8 +242,7 @@ module StripeConnect
       :account_number => nil
     }.merge!(args)
     
-    if owned? && 
-       !stripe_id.nil? &&
+    if !stripe_id.nil? &&
        !options[:object].nil? &&
        !options[:country].nil? &&
        !options[:currency].nil? &&
@@ -215,8 +273,7 @@ module StripeConnect
     
     return false if prevent_for_master
     
-    if owned? && 
-       !stripe_id.nil? &&
+    if !stripe_id.nil? &&
        !external_account_id.nil?
       
       stripe_account_instance = stripe_account
@@ -268,8 +325,7 @@ module StripeConnect
     
     return false if prevent_for_master
     
-    if owned? && 
-       !stripe_id.nil? 
+    if !stripe_id.nil? 
       
       output_request_to_logs("SUCCESS", "stripe_account")
       

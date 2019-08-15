@@ -1,11 +1,29 @@
-if ENV["section"] =~ /setup|agency|account|insurable|user|policy/
-  
+@opts = ['setup', 'agency', 'account', 'insurable-residential', 
+	  		 'insurable-commercial', 'user', 'policy-residential', 
+				 'policy-commercial']
+
+def display_options()
+	@string = ""
+	@opts.each_with_index do |o, i|
+		@string += o
+		@string += ", " unless @opts.length - 1 == i	
+	end
+	return @string
+end
+
+if @opts.include?(ENV["section"])
+	 
   puts "Running: #{ENV["section"].titlecase}"
   require Rails.root.join("db/seeds/#{ ENV["section"] }.rb")
+
+elsif !@opts.include?(ENV["section"])
+
+	puts "\nInvalid Section Selection"
+	puts "Option availability in order: #{ display_options() }\n"
   
 elsif ENV["section"].nil?
   
   puts "\nNO SECTION SELECTION"
-  puts "Option availability in order: setup, agency, account, insurable, user, policy\n"
+  puts "Option availability in order: \n"
 
 end

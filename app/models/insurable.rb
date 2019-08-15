@@ -12,9 +12,20 @@ class Insurable < ApplicationRecord
   has_many :insurables
   has_many :carrier_insurable_profiles
   has_many :insurable_rates
+  
+  has_many :policy_insurables
+  has_many :policies,
+  	through: :policy_insurables
+  has_many :policy_applications,
+  	through: :policy_insurables
 	
 	has_many :events,
 	    as: :eventable
+	    
+	has_many :assignments,
+			as: :assignable
+	has_many :staffs,
+			through: :assignments
 	    
   has_many :leases
 	
@@ -32,8 +43,6 @@ class Insurable < ApplicationRecord
 		  scope "#{ major_type.downcase }_#{ minor_type.downcase.pluralize }".to_sym, -> { joins(:insurable_type).where("insurable_types.title = '#{ major_type } #{ minor_type }'") }
 		end
 	end
-#   scope :residential_communities, -> { joins(:insurable_type).where("insurable_types.title = 'Residential Community'")}
-# 	scope :residential_units, -> { joins(:insurable_type).where("insurable_types.title = 'Residential Unit'")}
   
   settings index: { number_of_shards: 1 } do
     mappings dynamic: 'false' do
@@ -44,9 +53,22 @@ class Insurable < ApplicationRecord
   #
   
   def primary_address
-		return addresses.where(primary: true).take 
+	  if addresses.count == 0
+			return !insurable.nil? ? insurable.primary_address() : 
+															 addresses.where(primary: true).take
+		else
+			return addresses.where(primary: true).take
+		end
 	end
-	
+
+  # Insurable.primary_staff
+  #
+  
+  def primary_staff
+		assignment = assignments.where(primary: true).take
+		return assignment.staff.nil? ? nil : assignment.staff
+	end
+		
 	# Insurable.create_carrier_profile(carrier_id)
 	#
 	

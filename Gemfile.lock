@@ -66,6 +66,7 @@ GEM
     builder (3.2.3)
     byebug (11.0.1)
     coderay (1.1.2)
+    colorize (0.8.1)
     concurrent-ruby (1.1.5)
     connection_pool (2.2.2)
     crass (1.0.4)
@@ -352,6 +353,7 @@ DEPENDENCIES
   attr_encrypted (~> 3.0.0)
   bootsnap (>= 1.1.0)
   byebug
+  colorize
   database_cleaner
   devise
   devise_invitable (~> 2.0.0)

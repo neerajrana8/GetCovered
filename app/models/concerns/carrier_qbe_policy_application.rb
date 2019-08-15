@@ -6,168 +6,135 @@ module CarrierQbePolicyApplication
 
   included do
 	  
+	  # QBE Estimate
+	  # 
+	  
+	  def qbe_estimate(rates = nil)
+			raise ArgumentError, 'Argument "rates" cannot be nil' if rates.nil?
+			raise ArgumentError, 'Argument "rates" must be an array' if !rates.is_a?(Array)
+		  quote = policy_quotes.new(agency: agency, account: account)
+		  if quote.save
+				rates.each { |rate| quote.policy_rates.create!(insurable_rate: rate) }
+				quote_rate_premiums = quote.insurable_rates.map { |r| r.premium.to_f }
+				quote.update premium: quote_rate_premiums.inject { |sum, rate| sum + rate }
+			end
+		end
+		
+		# QBE Add Policy Fee
+		#
+    
+    def qbe_add_policy_fee
+      if available_rates(:optional, :policy_fee).count > 0
+        
+        available_rates(:optional, :policy_fee).each do |policy_fee|
+          rates << policy_fee  
+        end
+         
+      end
+    end		
+	  
 	  # QBE Quote
 	  # 
-	  # Takes Policy Application data and sends to QBE to create a quote
+	  # Takes Policy Application data and 
+	  # sends to QBE to create a quote
 	  
-	  def qbe_quote
-	    if self.policy_in_system? && 
-		     self.carrier == Carrier.find_by_call_sign('QBE')
-		    
-	      to_return = nil
-	      region = address.region.upcase
-	      
-	      if persisted? && 
-	         status == "in_progress" &&
-	         carrier.id == 2
-	  
+	  def qbe_quote(quote_id = nil)
+		  quote_success = false
+		  status_check = self.complete? || self.quote_failed?
+		  
+		  # If application complete or quote_failed 
+		  # and carrier is QBE will figure out the 
+		  # "I" later - Dylan August 10, 2019
+		  if status_check &&
+			   self.carrier == Carrier.find_by_call_sign('QBI') 
+				
+        unit = primary_insurable()
+        unit_profile = unit.carrier_profile(carrier.id)
+        community = unit.insurable
+        community_profile = community.carrier_profile(carrier.id)
+        address = unit.primary_address()
+
+				if community_profile.data['ho4_enabled'] == true # If community profile is ho4_enabled
+					
+					quote = policy_quotes.find(quote_id) unless quote_id.nil?
+					
+					update status: 'quote_in_progress'
 	        event = events.new(
 	          verb: 'post', 
 	          format: 'xml', 
 	          interface: 'SOAP',
 	          process: 'get_min_prem', 
-	          endpoint: ENV.fetch("QBE_SOAP_URI")
-	        )
-	             
-	        qbe_request_timer = {
-	          total: nil,
-	          start: nil,
-	          end: nil
-	        }
-	  
+	          endpoint: Rails.application.credentials.qbe[:uri]
+	        )	
+					
 	        qbe_service = QbeService.new(:action => 'getMinPrem')
-	  
-	        alt_premium_discount = paid_in_full? ? 1.01 : 0.98
-	        base_premium = premium.to_f
-	        alt_premium = (base_premium * alt_premium_discount).to_i
-	  
+					
 	        qbe_request_options = { 
-	          prop_city: community.address.locality,
-	          prop_county: community.address.county,
-	          prop_state: community.address.region,
-	          prop_zipcode: community.address.combined_postal_code,
-	          city_limit: community.in_city_limits? ? 1 : 0,
-	          units_on_site: community.units.count,
-	          age_of_facility: community.construction_year,
-	          gated_community: community.gated_access == true ? 1 : 0,
-	          prof_managed: community.professionally_managed == true ? 1 : 0,
-	          prof_managed_year: community.professionally_managed_year.nil? ? "" : 
-	                                                                          community.professionally_managed_year,
+	          prop_city: address.city,
+	          prop_county: address.county,
+	          prop_state: address.state,
+	          prop_zipcode: address.combined_zip_code,
+	          city_limit: community_profile.traits['city_limit'] == true ? 1 : 0,
+	          units_on_site: community.insurables.count,
+	          age_of_facility: community_profile.traits['construction_year'],
+	          gated_community: community_profile.traits['gated_access'] == true ? 1 : 0,
+	          prof_managed: community_profile.traits['professionally_managed'] == true ? 1 : 0,
+	          prof_managed_year: community_profile.traits['professionally_managed_year'] == true ? "" : community_profile.traits['professionally_managed_year'],
 	          effective_date: effective_date.strftime("%m/%d/%Y"),
-	          premium: premium.to_f / 100,
-	          premium_pif: premium.to_f / 100,
-	          num_insured: insured.length,
-	          lia_amount: liability_coverage.nil? ? 10000 : liability_coverage.coverage_limits["liability"].to_f / 100
+	          premium: quote.premium.to_f / 100,
+	          premium_pif: quote.premium.to_f / 100,
+	          num_insured: users.count,
+	          lia_amount: quote.insurable_rates.liability.first.coverage_limits["liability"].to_f / 100
 	        }
 	  
 	        qbe_service.build_request(qbe_request_options)
 	  
-	        event.request_xml = qbe_service.compiled_rxml
+	        event.request = qbe_service.compiled_rxml
 	  
-	        if event.save
-	          
-	          start_time = Time.now
-	          qbe_request_timer[:start] = start_time
-	          event.started = start_time
-	  
+	        if event.save # If event saves after creation
+	          event.started = Time.now
 	          qbe_data = qbe_service.call()
-	  
-	          complete_time = Time.now
-	          qbe_request_timer[:end] = complete_time
-	          qbe_request_timer[:total] = (complete_time - start_time).to_f
-	          event.completed = complete_time
-	  
-	          carrier_data["api_metrics"]["getMinPrem"].push({ 
-	            duration: "%.4f" % qbe_request_timer[:total],
-	            date_time: Time.current.iso8601(9)
-	          })
+	          event.completed = Time.now
 	        
-		        event.response_xml = qbe_data[:data]
+		        event.response = qbe_data[:data]
 		        event.status = qbe_data[:error] ? 'error' : 'success'
-
-		        unless qbe_data[:error] # QBE Response Success
-
-	            xml_doc = Nokogiri::XML(qbe_data[:data])  
-	            xml_min_prem = xml_doc.css('//Additional_Premium')
-	            
-	            response_hash = {
-	              min_premium: (xml_min_prem.attribute('min_premium').value.to_f * 100).to_i,
-	              min_premium_paid_in_full: (xml_min_prem.attribute('min_premium_pif').value.to_f * 100).to_i,
-	              tax: (xml_min_prem.attribute('tax').value.to_f * 100).to_i,
-	              tax_paid_in_full: (xml_min_prem.attribute('tax_pif').value.to_f * 100).to_i,
-	              consent_to_rate_precentage: xml_min_prem.attribute('ctr_precentage').value,
-	              consent_to_rate_precentage_paid_in_full: xml_min_prem.attribute('ctr_precentage_pif').value,
-	              total_premium: (xml_min_prem.attribute('total_premium').value.to_f * 100).ceil().to_i,
-	              total_premium_paid_in_full: (xml_min_prem.attribute('total_premium_pif').value.to_f * 100).ceil().to_i,
-	              additional_insured_charge: xml_min_prem.attribute('number_named_insured_chrg').value.to_i,
-	              payments: {
-	                month: {
-	                  first_payment: (xml_min_prem.attribute('monthly_down_pymnt').value.to_f * 100).to_i,
-	                  remaining_payments: (xml_min_prem.attribute('monthly_subsequent_pymnt').value.to_f * 100).to_i,
-	                  next_payment_date: xml_min_prem.attribute('next_installment_date').value
-	                },
-	                quarter_year: {
-	                  first_payment: (xml_min_prem.attribute('quarterly_down_payment').value.to_f * 100).to_i,
-	                  remaining_payments: (xml_min_prem.attribute('monthly_subsequent_pymnt').value.to_f * 100).to_i,
-	                  next_payment_date: xml_min_prem.attribute('quarterly_next_installment_date').value
-	                },
-	                half_year: {
-	                  first_payment: (xml_min_prem.attribute('semi_down_payment').value.to_f * 100).to_i,
-	                  remaining_payments: (xml_min_prem.attribute('semi_subsequent_pymnt').value.to_f * 100).to_i,
-	                  next_payment_date: xml_min_prem.attribute('semi_next_installment_date').value
-	                }
-	              }
-	            }
-	            
-	            self.status = "verifying"
-	            self.carrier_data['get_min_prem_response'] = response_hash
-	            self.carrier_data['get_min_prem_resolved_on'] = Time.current
-	            self.carrier_data['get_min_prem_resolved'] = true
-	            
-	            unless region == "FL"
-	              self.tax = self.paid_in_full? ? Integer(carrier_data['get_min_prem_response'][:tax_paid_in_full]) : 
-	                                              Integer(carrier_data['get_min_prem_response'][:tax])
-	              self.total_premium = self.paid_in_full? ? Integer(carrier_data['get_min_prem_response'][:total_premium_paid_in_full]) :
-	                                                        Integer(carrier_data['get_min_prem_response'][:total_premium])
-	            else
-	              self.tax = Integer(carrier_data['get_min_prem_response'][:tax])
-	              self.total_premium = Integer(carrier_data['get_min_prem_response'][:total_premium]) 
-	            end
-	            
-	            if save() && reload()
-	              to_return = build_invoice_schedule() ? true : false
-	            else
-	              # Policy Save Error Block
-	              puts "Error".red
-	              pp self.errors
-	              to_return = false
-	            end
-		        	
-		        else # QBE Response Failure
-		        
-	            pp qbe_data[:data]
-	            to_return = false
-		        
-		        end # QBE Response Complete
-	  
-	          if event.save
-	            # do nothing
-	          else
-	            # event failed to save after the request returned
-	            pp event.errors
-	            to_return = false
-	          end
-	        else
-	          # event failed to save after initialization
-	          pp event.errors
-	          to_return = false
-	        end
-	      end
-	      
-	      return to_return
-	    else
-	      return nil
-	    end  	  
+		        if event.save # If event saves after QBE call
+			        unless qbe_data[:error] # QBE Response Success
+		            xml_doc = Nokogiri::XML(qbe_data[:data])  
+		            xml_min_prem = xml_doc.css('//Additional_Premium')
+		            if quote_id.nil?			        
+					        quote = policy_quotes.new(
+										premium: (xml_min_prem.attribute('tax').value.to_f * 100).to_i,
+										tax: (xml_min_prem.attribute('tax').value.to_f * 100).to_i,
+										agency: agency,
+										account: account
+		 							)
+		 						else
+		 							quote.premium = (xml_min_prem.attribute('tax').value.to_f * 100).to_i
+		 							quote.tax = (xml_min_prem.attribute('tax').value.to_f * 100).to_i
+		 						end
+	 							if quote.save
+		 							update status: 'quoted'
+		 							return true
+		 						else
+		 							puts "\nQuote Save Error"
+		 							pp quote.errors
+		 							update status: 'quote_failed'	
+		 						end
+		 					else # QBE Response Success Failure
+		 						puts "\QBE Request Unsuccessful, Event ID: #{ event.id }"
+		 						update status: 'quote_failed'
+ 							end # / QBE Response Success
+ 						else
+		 					puts "\Post QBE Request Event Save Error"
+ 							update status: 'quote_failed'
+			      end # / If event saves after QBE call
+			    else
+			    	update status: 'quote_failed'
+					end # / If event saves after creation
+				end # / If community profile is ho4_enabled
+				
+		  end # If application complete and carrier is QBE  	  
     end
     
   end

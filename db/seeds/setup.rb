@@ -1,15 +1,7 @@
 # Initial Seed Setup File
 # file: db/seeds/setup.rb
 
-def adduser(user_type, chash)
-  @user = user_type.new(chash)
-  @user.invite! do |u|
-    u.skip_invitation = true
-  end
-  token = Devise::VERSION >= "3.1.0" ? @user.instance_variable_get(:@raw_invitation_token) : @user.invitation_token
-  user_type.accept_invitation!({invitation_token: token}.merge(chash))
-  @user
-end
+require './db/seeds/functions'
 
 ##
 # Setting up base Staff
@@ -19,7 +11,7 @@ end
 ]
 
 @site_staff.each do |staff|
-  adduser(Staff, staff)
+  SeedFunctions.adduser(Staff, staff)
 end
 
 ##
@@ -73,9 +65,36 @@ LeaseType.find(2).policy_types << PolicyType.find(3)
 # Setting up base Carriers
 
 @carriers = [
-  { title: "Queensland Business Insurance", syncable: false, rateable: true, quotable: true, bindable: true, verifiable: false, enabled: true },
-  { title: "Queensland Business Specialty Insurance", syncable: false, rateable: true, quotable: true, bindable: true, verifiable: false, enabled: true },
-  { title: "Crum & Forester", syncable: false, rateable: true, quotable: true, bindable: true, verifiable: false, enabled: true }
+  { 
+	  title: "Queensland Business Insurance", 
+	  integration_designation: 'qbe',
+	  syncable: false, 
+	  rateable: true, 
+	  quotable: true, 
+	  bindable: true, 
+	  verifiable: false, 
+	  enabled: true 
+	},
+  { 
+	  title: "Queensland Business Specialty Insurance",  
+	  integration_designation: 'qbe_specialty',
+	  syncable: false, 
+	  rateable: true, 
+	  quotable: true, 
+	  bindable: true, 
+	  verifiable: false, 
+	  enabled: true 
+	},
+  { 
+	  title: "Crum & Forester", 
+	  integration_designation: 'crum', 
+	  syncable: false, 
+	  rateable: true, 
+	  quotable: true, 
+	  bindable: true, 
+	  verifiable: false, 
+	  enabled: true 
+	}
 ]
 
 @carriers.each do |c|
@@ -87,47 +106,62 @@ LeaseType.find(2).policy_types << PolicyType.find(3)
     # Add Residential to Queensland Business Insurance
     if carrier.id == 1
 	    
+	    # Get Residential (HO4) Policy Type
+      policy_type = PolicyType.find(1)
+	    
 	    # Create template for QBE Residential Policy Application
-	    carrier_policy_type.application_fields = [
+	    [
 		    {
 			  	title: "Number of Insured",
-			  	type: "integer",
-			  	default: 1,
-			  	options: nil  
-		    }
-	    ]
-	    
-	    # Create Template for QBE Residential Policy Questions
-	    carrier_policy_type.application_questions = [
+			  	answer_type: "NUMBER",
+			  	default_answer: 1,
+			    policy_type: policy_type,
+			    section: 'fields',
+			    enabled: true
+		    },	    
 		    {
 			    title: "Do you operate a business in your rental apartment/home?",
-			    type: "boolean",
-			    default: false
+			    answer_type: "BOOLEAN",
+			    default_answer: 'false',
+			    policy_type: policy_type,
+			    section: 'questions',
+			    enabled: true
 		    },
 		    {
 			    title: "Has any animal that you or your roommate(s) own ever bitten a person or someone else’s pet?",
-			    type: "boolean",
-			    default: false
+			    answer_type: "BOOLEAN",
+			    default_answer: 'false',
+			    policy_type: policy_type,
+			    section: 'questions',
+			    enabled: true
 		    },
 		    {
 			    title: "Do you or your roommate(s) own snakes, exotic or wild animals?",
-			    type: "boolean",
-			    default: false
+			    answer_type: "BOOLEAN",
+			    default_answer: 'false',
+			    policy_type: policy_type,
+			    section: 'questions',
+			    enabled: true
 		    },
 		    {
 			    title: "Is your dog(s) any of these breeds: Akita, Pit Bull (Staffordshire Bull Terrier, America Pit Bull Terrier, American Staffordshire Terrier, Bull Terrier), Chow, Rottweiler, Wolf Hybrid, Malamute or any mix of the above listed breeds?",
-			    type: "boolean",
-			    default: false
+			    answer_type: "BOOLEAN",
+			    default_answer: 'false',
+			    policy_type: policy_type,
+			    section: 'questions',
+			    enabled: true
 		    },
 		    {
 			    title: "Have you had any liability claims, whether or not a payment was made, in the last 3 years?",
-			    type: "boolean",
-			    default: false
+			    answer_type: "BOOLEAN",
+			    default_answer: 'false',
+			    policy_type: policy_type,
+			    section: 'questions',
+			    enabled: true
 		    }
-	    ]    
-	    
-	    # Get Residential (HO4) Policy Type
-      policy_type = PolicyType.find(1)
+	    ].each do |policy_application_field|
+		    carrier.policy_application_fields.create!(policy_application_field)
+		  end  
       
       # Create QBE Insurable Type for Residential Communities with fields required for integration
       carrier_insurable_type = CarrierInsurableType.create!(carrier: carrier, insurable_type: InsurableType.find(1),
@@ -176,51 +210,164 @@ LeaseType.find(2).policy_types << PolicyType.find(3)
       
     # Add Commercial to Crum & Forester
     elsif carrier.id == 3
+			crum_service = CrumService.new()
+			crum_service.refresh_all_class_codes()
+			
       policy_type = PolicyType.find(3)
-      
+			
 	    # Create Template for Crum & Forester Commercial (B.O.P.) Questions
-	    carrier_policy_type.application_questions = [
+	    [
 		    {
-			    title: "Do you already have an insurance policy for your business, or have you applied for insurance through any agent other than “Get Covered”?",
-			    type: "boolean",
-			    default: false
+			    title: "Do you already have an insurance policy for your business, or have you applied for insurance through any agent other than \"Get Covered\"?",
+			    answer_type: "BOOLEAN",
+			    default_answer: 'false',
+			  	desired_answer: 'false',
+			    policy_type: policy_type,
+			    section: 'questions',
+			    enabled: true
 		    },
 		    {
 			    title: "Currently sell or has it sold in the past any fire arms, ammunitions or weapons of any kind?",
-			    type: "boolean",
-			    default: false
+			    answer_type: "BOOLEAN",
+			    default_answer: 'false',
+			  	desired_answer: 'false',
+			    policy_type: policy_type,
+			    section: 'questions',
+			    enabled: true
 		    },
 		    {
 			    title: "Sell any products or perform any services for any military, law enforcement or other armed forces or services?",
-			    type: "boolean",
-			    default: false
+			    answer_type: "BOOLEAN",
+			    default_answer: 'false',
+			  	desired_answer: 'false',
+			    policy_type: policy_type,
+			    section: 'questions',
+			    enabled: true
 		    },
 		    {
 			    title: "Own or operate any manned or unmanned aviation devices (aircraft, helicopters, drones etc)?",
-			    type: "boolean",
-			    default: false
+			    answer_type: "BOOLEAN",
+			    default_answer: 'false',
+			  	desired_answer: 'false',
+			    policy_type: policy_type,
+			    section: 'questions',
+			    enabled: true
 		    },
 		    {
 			    title: "Directly import more than 5% of the cost of goods sold from a country or territory outside the U.S,?",
-			    type: "boolean",
-			    default: false
+			    answer_type: "BOOLEAN",
+			    default_answer: 'false',
+			  	desired_answer: 'false',
+			    policy_type: policy_type,
+			    section: 'questions',
+			    enabled: true
 		    },
 		    {
 			    title: "Have any discontinued or ongoing operations involving the manufacturing, blending, repackaging or relabeling of components or products made by others?",
-			    type: "boolean",
-			    default: false
-		    },
-		    {
-			    title: "Have any discontinued or ongoing operations involving the storage, application, transportation, recycling or disposal of any hazardous materials or substances?",
-			    type: "boolean",
-			    default: false
+			    answer_type: "BOOLEAN",
+			    default_answer: 'false',
+			  	desired_answer: 'false',
+			    policy_type: policy_type,
+			    section: 'questions',
+			    enabled: true
 		    },
 		    {
 			    title: "Have any business premises that are open to the public?",
-			    type: "boolean",
-			    default: false
-		    }
-	    ]       
+			    answer_type: "BOOLEAN",
+			    default_answer: 'false',
+			  	desired_answer: 'false',
+			    policy_type: policy_type,
+			    section: 'questions',
+			    enabled: true,
+			    policy_application_fields_attributes: [
+						{
+							title: 'If YES, is your business open past 12:00 AM?',
+					    answer_type: "BOOLEAN",
+					    default_answer: 'false',
+							desired_answer: 'false',
+					    policy_type: policy_type,
+					    section: 'questions',
+							carrier: carrier,
+							enabled: true
+						}
+					]
+				},
+				{
+					title: "Have a requirement  to post motor carrier financial responsibility filings to any Federal and or State Department of Transportation (DOT) or other agency?",
+			    answer_type: "BOOLEAN",
+			    default_answer: 'false',
+			  	desired_answer: 'false',
+			    policy_type: policy_type,
+			    section: 'questions',
+			    enabled: true
+				},
+				{
+					title: "Hire non-employee drivers to perform delivery of your products or services?",
+			    answer_type: "BOOLEAN",
+			    default_answer: 'false',
+			  	desired_answer: 'false',
+			    policy_type: policy_type,
+			    section: 'questions',
+			    enabled: true
+				},
+				{
+					title: "Have any employees use their own personal vehicles to make deliveries (food or otherwise) for 
+ten (10) days or or more per month?",
+			    answer_type: "BOOLEAN",
+			    default_answer: 'false',
+			  	desired_answer: 'false',
+			    policy_type: policy_type,
+			    section: 'questions',
+			    enabled: true
+				},
+				{
+					title: "Please indicate the number of loss events to your business or claims made against you by others, whether covered by insurance or not, regardless of fault within the last three (3) years:",
+			    answer_type: "BOOLEAN",
+			    default_answer: 'false',
+			  	desired_answer: 'false',
+			    policy_type: policy_type,
+			    section: 'questions',
+			    enabled: true,
+			    policy_application_fields_attributes: [
+						{
+							title: 'Property loss events or claims:',
+					    answer_type: "NUMBER",
+					    default_answer: '0',
+							desired_answer: '0',
+							answer_options: [0, 1, 2, 3],
+					    policy_type: policy_type,
+					    section: 'questions',
+							carrier: carrier,
+							enabled: true
+						},
+						{
+							title: 'General Liability events or claims:',
+					    answer_type: "NUMBER",
+					    default_answer: '0',
+							desired_answer: '0',
+							answer_options: [0, 1, 2, 3],
+					    policy_type: policy_type,
+					    section: 'questions',
+							carrier: carrier,
+							enabled: true
+						},
+						{
+							title: 'Professional or Errors & Omissions Claims:',
+					    answer_type: "NUMBER",
+					    default_answer: '0',
+							desired_answer: '0',
+							answer_options: [0, 1, 2, 3],
+					    policy_type: policy_type,
+					    section: 'questions',
+							carrier: carrier,
+							enabled: true
+						}
+					]
+				}
+	    ].each do |policy_application_field|
+		    carrier.policy_application_fields.create!(policy_application_field)
+		  end
+		        
     end
     
     # Set policy type from if else block above

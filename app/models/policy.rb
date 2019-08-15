@@ -4,9 +4,9 @@
 #
 # All that is evil... the Policy model stalks the application
 # with silent precision.  Wreaking havoc on everything and everyone
-# who touches it.
+# who touches it.  Fear what lies ahead.
 #
-# - Dylan Gaines
+# - Dylan Gaines (added sometime in 2017)
 #
 # Attributes:
 # +number+:: (String) A unique policy number provided for synced policies by QBE.  Indexed.
@@ -54,6 +54,10 @@ class Policy < ApplicationRecord
   belongs_to :policy_type
   # belongs_to :billing_profie
   
+  has_many :policy_insurables
+  has_many :insurables,
+  	through: :policy_insurables
+  
   has_many :policy_quotes
   has_one :policy_application
   
@@ -69,8 +73,13 @@ class Policy < ApplicationRecord
     source: :user
   
   has_many :policy_coverages, autosave: true
-  has_many :coverages, -> { where(enabled: true) }, class_name: 'PolicyCoverage'
+  has_many :coverages, -> { where(enabled: true) }, 
+  	class_name: 'PolicyCoverage'
+  	
   has_many :policy_premiums, autosave: true
+  has_one :premium, -> { where(enabled: true).take }, 
+  	class_name: 'PolicyPremium'
+
   has_one :premium, -> { where(enabled: true).take }, class_name: 'PolicyPremium'
  
   has_many :invoices
@@ -80,7 +89,6 @@ class Policy < ApplicationRecord
 
   has_many :refunds,
     through: :charges
-
 
   accepts_nested_attributes_for :policy_coverages, :policy_premiums
 	

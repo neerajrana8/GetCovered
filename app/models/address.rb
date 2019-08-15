@@ -11,6 +11,8 @@ class Address < ApplicationRecord
               :set_full_searchable,
               :from_full
 
+	before_create :set_first_as_primary
+
   after_validation :geocode
     
   belongs_to :addressable, 
@@ -56,7 +58,7 @@ class Address < ApplicationRecord
   # Returns full street address of Address from available variables
   def full_street_address
     [combined_street_address(), street_two, 
-     combined_locality_region(), combined_postal_code()].compact
+     combined_locality_region(), combined_zip_code()].compact
              .join(', ')
              .gsub(/\s+/, ' ')
              .strip
@@ -116,7 +118,7 @@ class Address < ApplicationRecord
   def set_full_searchable
     self.full_searchable = [combined_street_address(), street_two, 
                             combined_locality_region(), 
-                            combined_postal_code()].compact
+                            combined_zip_code()].compact
                                     .join(' ')
                                     .gsub(/\s+/, ' ')
                                     .strip
@@ -129,12 +131,18 @@ class Address < ApplicationRecord
                                .strip  
   end
 
-  def combined_postal_code
+  def combined_zip_code
     return plus_four.nil? ? zip_code : "#{zip_code}-#{plus_four}"
   end
   
   def combined_locality_region
     return "#{city}, #{state}"  
   end 
+  
+  def set_first_as_primary
+		unless addressable.nil?
+			self.primary = true if addressable.addresses.count == 0
+		end  
+	end
       
 end

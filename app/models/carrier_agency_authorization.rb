@@ -7,6 +7,7 @@ class CarrierAgencyAuthorization < ApplicationRecord
   
   belongs_to :carrier_agency
   belongs_to :policy_type
+  belongs_to :agency
   		
   has_many :fees,
     as: :assignable

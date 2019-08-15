@@ -2,7 +2,7 @@
 # file: app/models/qbe_service.rb
 #
 # Example:
-#   >> @net_service = NetService.new({ attributes... })
+#   >> @qbe_service = QbeService.new({ attributes... })
 #   => #<QbeService:0x0000000000000000 @request={}, @action="", @rxml="">
 
 require "base64"

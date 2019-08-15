@@ -4,6 +4,8 @@
 # An account is an entity which owns or lists property and entity's either in need
 # of coverage or to track existing coverage.  Accounts are controlled by staff who 
 # have been assigned the Account in their organizable relationship.
+# export PUBLISHABLE_KEY="pk_test_EfYPHgUKyZYzJjWegJmBr2DR"
+# export SECRET_KEY="sk_test_IBSW1QDuu306wJQCUQkattsa"
 
 class Account < ApplicationRecord
   # Concerns
@@ -29,6 +31,9 @@ class Account < ApplicationRecord
 	
 	has_many :insurables
 	
+	has_many :events,
+	    as: :eventable
+	
 	has_many :addresses,
        as: :addressable,
        autosave: true
@@ -39,17 +44,26 @@ class Account < ApplicationRecord
     as: :recordable
 
   validates_presence_of :title
+  
+  def owner
+	  return staff.where(id: staff_id).take
+	end
+  
+  def primary_address
+		return addresses.where(primary: true).take 
+	end
 
   settings index: { number_of_shards: 1 } do
     mappings dynamic: 'false' do
       indexes :title, type: :text, analyzer: 'english'
       indexes :call_sign, type: :text, analyzer: 'english'
     end
-  end
+  end  
+  
+	private
+		
+		def initialize_agency
+  		# Blank for now...
+  	end
 
-  private
-  		
-  		def initialize_agency
-	  		# Blank for now...
-	  	end
 end

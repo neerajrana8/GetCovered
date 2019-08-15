@@ -19,14 +19,19 @@ class Carrier < ApplicationRecord
   has_many :carrier_agencies
   has_many :agencies,
     through: :carrier_agencies
+  has_many :carrier_agency_authorizations,
+    through: :carrier_agencies
   
   has_many :commission_strategies
-  		
+  	
   has_many :fees,
     as: :ownerable
     
   has_many :carrier_insurable_types
   has_many :carrier_insurable_profiles
+  has_many :carrier_class_codes
+  
+  has_many :policy_application_fields
   
   # Validations
   validates :title, presence: true,
