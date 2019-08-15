@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_07_27_180322) do
+ActiveRecord::Schema.define(version: 2019_08_15_002456) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -673,23 +673,6 @@ ActiveRecord::Schema.define(version: 2019_07_27_180322) do
     t.index ["policy_type_id"], name: "index_policy_applications_on_policy_type_id"
   end
 
-  create_table "policy_coverages", force: :cascade do |t|
-    t.string "coverage_type"
-    t.string "display_title"
-    t.integer "limit", default: 0
-    t.integer "deductible", default: 0
-    t.boolean "enabled", default: false, null: false
-    t.datetime "enabled_changed"
-    t.bigint "policy_id"
-    t.bigint "policy_quote_id"
-    t.bigint "insurable_rate_id"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["insurable_rate_id"], name: "index_policy_coverages_on_insurable_rate_id"
-    t.index ["policy_id"], name: "index_policy_coverages_on_policy_id"
-    t.index ["policy_quote_id"], name: "index_policy_coverages_on_policy_quote_id"
-  end
-
   create_table "policy_insurables", force: :cascade do |t|
     t.integer "value", default: 0
     t.boolean "primary", default: false
@@ -751,6 +734,17 @@ ActiveRecord::Schema.define(version: 2019_07_27_180322) do
     t.index ["agency_id"], name: "index_policy_quotes_on_agency_id"
     t.index ["policy_application_id"], name: "index_policy_quotes_on_policy_application_id"
     t.index ["policy_id"], name: "index_policy_quotes_on_policy_id"
+  end
+
+  create_table "policy_rates", force: :cascade do |t|
+    t.bigint "policy_id"
+    t.bigint "policy_quote_id"
+    t.bigint "insurable_rate_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["insurable_rate_id"], name: "index_policy_rates_on_insurable_rate_id"
+    t.index ["policy_id"], name: "index_policy_rates_on_policy_id"
+    t.index ["policy_quote_id"], name: "index_policy_rates_on_policy_quote_id"
   end
 
   create_table "policy_types", force: :cascade do |t|
