@@ -2,7 +2,8 @@
 
 class PolicyQuote < ApplicationRecord
   # Concerns
-  include CarrierQbeQuote, ElasticsearchSearchable
+  #include CarrierQbeQuote, ElasticsearchSearchable
+  include ElasticsearchSearchable
   
   before_validation :set_reference,
   	if: Proc.new { |quote| quote.reference.nil? }

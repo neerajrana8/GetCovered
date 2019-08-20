@@ -9,6 +9,7 @@ class Invoice < ApplicationRecord
   # All initialization was moved to database. Only user assignment is left, 
   # which will be uncommented when Policy is ready.
   # after_initialize  :initialize_invoice
+  include ElasticsearchSearchable
 
   before_validation :calculate_subtotal, if: -> { line_items.count > 0 }
 
@@ -69,6 +70,11 @@ class Invoice < ApplicationRecord
     where(status: %w[available missed]).where('due_date < ?', DateTime.now)
   }
 
+  settings index: { number_of_shards: 1 } do
+    mappings dynamic: 'false' do
+      indexes :number, type: :text
+    end
+  end
   # Methods
 
   # Apply Proration
