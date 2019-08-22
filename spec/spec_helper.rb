@@ -99,13 +99,14 @@ RSpec.configure do |config|
   #   # as the one that triggered the failure.
   #   Kernel.srand config.seed
 
-  Elasticsearch::Model.client = Elasticsearch::Client.new host: 'http://localhost:9200', logger: nil
+  Elasticsearch::Model.client = Elasticsearch::Client.new host: 'http://localhost:9200', log: false
 
   ES_CLASSES = %w[Account Address Agency Carrier Insurable Invoice Lease Policy PolicyApplication PolicyQuote Profile Staff User].freeze
+
   config.around :each, elasticsearch: true do |example|
     ES_CLASSES.each do |esc|
       klass = esc.constantize
-      klass.__elasticsearch__.create_index! force: true
+      klass.__elasticsearch__.create_index!
       klass.__elasticsearch__.refresh_index!
     end
     example.run

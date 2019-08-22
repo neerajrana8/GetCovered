@@ -1,6 +1,6 @@
-require 'rails_helper'
+# frozen_string_literal: true
 
-RSpec.describe Address, elasticsearch: true, :type => :model do
+RSpec.describe Address, elasticsearch: true, type: :model do
   it 'Address in Los Angeles should be indexed' do
     FactoryBot.create(:address, city: 'Los Angeles')
     Address.__elasticsearch__.refresh_index!

@@ -1,6 +1,6 @@
-require 'rails_helper'
+# frozen_string_literal: true
 
-RSpec.describe Lease, elasticsearch: true, :type => :model do
+RSpec.describe Lease, elasticsearch: true, type: :model do
   it 'Lease with reference test should be indexed' do
     FactoryBot.create(:lease, reference: 'test')
     Lease.__elasticsearch__.refresh_index!

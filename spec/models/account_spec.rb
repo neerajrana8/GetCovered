@@ -1,6 +1,6 @@
-require 'rails_helper'
+# frozen_string_literal: true
 
-RSpec.describe Account, elasticsearch: true, :type => :model do
+RSpec.describe Account, elasticsearch: true, type: :model do
   it 'Account Get Covered should be indexed' do
     FactoryBot.create(:account)
     # refresh the index 

@@ -1,6 +1,6 @@
 FactoryBot.define do
   factory :carrier do
-    title { "Test Carrier" }
+    sequence(:title) { |n| "title#{n}" }
     transient do
       policy_types_count { 1 }
     end
