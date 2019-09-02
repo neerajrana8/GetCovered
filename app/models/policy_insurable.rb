@@ -11,7 +11,15 @@ class PolicyInsurable < ApplicationRecord
   belongs_to :policy, optional: true
   belongs_to :insurable
   
-  validate :one_primary_per_insurable
+	validate :one_primary_per_insurable
+	
+	validate :same_account
+
+	def same_account
+		if insurable.account != policy_application.account
+			errors.add(:insurable, 'insurable must belong to same account as policy application')
+		end
+	end
   
   private
   	
