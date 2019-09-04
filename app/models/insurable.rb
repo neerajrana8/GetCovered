@@ -90,8 +90,25 @@ class Insurable < ApplicationRecord
   
   def must_belong_to_same_account_if_parent_insurable
     return if insurable.nil?
-
+    
     errors.add(:account, "must belong to same account as parent") if insurable.account != self.account
   end
   
+  def authorized_to_provide_for_address?(carrier_id, policy_type_id)
+    authorized = false
+    addresses.each do |address|
+      return true if authorized == true
+
+      args = { 
+        carrier_id: carrier_id,
+        policy_type_id: policy_type_id,
+        state: address.state,
+        zip_code: address.zip_code,
+        plus_four: address.plus_four
+      }
+      authorized = self.account.agency.offers_policy_type_in_region(args)
+    end
+    authorized
+  end
+
 end
