@@ -2,9 +2,11 @@
 
 class PolicyQuote < ApplicationRecord
   # Concerns
-  #include CarrierQbeQuote, ElasticsearchSearchable
-  include ElasticsearchSearchable
+  include CarrierQbePolicyQuote, ElasticsearchSearchable
+  # include ElasticsearchSearchable
   
+  before_save :set_status_updated_on,
+  	if: Proc.new { |quote| quote.status_changed? }
   before_validation :set_reference,
   	if: Proc.new { |quote| quote.reference.nil? }
 
@@ -20,6 +22,13 @@ class PolicyQuote < ApplicationRecord
 	has_many :policy_rates
 	has_many :insurable_rates,
 		through: :policy_rates
+		
+	has_one :policy_premium	
+	
+	accepts_nested_attributes_for :policy_premium
+	
+  enum status: { available: 0, expired: 1, accepted: 2, 
+	  						 declined: 3, abandoned: 4 }
 
   settings index: { number_of_shards: 1 } do
     mappings dynamic: 'false' do
@@ -29,6 +38,10 @@ class PolicyQuote < ApplicationRecord
   end
   
   private
+    
+    def set_status_updated_on
+	    self.status_updated_on = Time.now
+	  end
     
     def set_reference
 	    return_status = false

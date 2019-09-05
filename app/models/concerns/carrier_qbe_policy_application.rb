@@ -16,7 +16,8 @@ module CarrierQbePolicyApplication
 		  if quote.save
 				rates.each { |rate| quote.policy_rates.create!(insurable_rate: rate) }
 				quote_rate_premiums = quote.insurable_rates.map { |r| r.premium.to_f }
-				quote.update premium: quote_rate_premiums.inject { |sum, rate| sum + rate }
+				quote.create_policy_premium estimate: quote_rate_premiums.inject { |sum, rate| sum + rate },
+																		enabled: true
 			end
 		end
 		
@@ -104,14 +105,18 @@ module CarrierQbePolicyApplication
 		            xml_min_prem = xml_doc.css('//Additional_Premium')
 		            if quote_id.nil?			        
 					        quote = policy_quotes.new(
-										premium: (xml_min_prem.attribute('tax').value.to_f * 100).to_i,
-										tax: (xml_min_prem.attribute('tax').value.to_f * 100).to_i,
 										agency: agency,
-										account: account
+										account: account,
+										policy_premium_attributes: {
+											base: (xml_min_prem.attribute('total_premium').value.to_f * 100).to_i,
+											taxes: (xml_min_prem.attribute('tax').value.to_f * 100).to_i,
+											enabled: true
+										}
 		 							)
 		 						else
-		 							quote.premium = (xml_min_prem.attribute('tax').value.to_f * 100).to_i
-		 							quote.tax = (xml_min_prem.attribute('tax').value.to_f * 100).to_i
+		 							
+		 							quote.policy_premium.update base: (xml_min_prem.attribute('total_premium').value.to_f * 100).to_i,
+		 																					taxes: (xml_min_prem.attribute('tax').value.to_f * 100).to_i
 		 						end
 	 							if quote.save
 		 							update status: 'quoted'

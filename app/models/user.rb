@@ -11,7 +11,9 @@ class User < ActiveRecord::Base
 
   # Active Record Callbacks
   after_initialize :initialize_user
-
+	
+	has_many :invoices
+	
   has_many :authored_histories,
            as: :authorable,
            class_name: 'History',
@@ -28,18 +30,22 @@ class User < ActiveRecord::Base
 
   accepts_nested_attributes_for :profile
 
+
+  enum current_payment_method: ['none', 'ach_unverified', 'ach_verified', 'card', 'other'], 
+    _prefix: true
+
   # VALIDATIONS
   validates :email, uniqueness: true
   
   # Override payment_method attribute getters and setters to store data
   # as encrypted
-  def payment_methods=(methods)
-    super(EncryptionService.encrypt(methods))
-  end
-
-  def payment_methods
-    super.nil? ? super : EncryptionService.decrypt(super)
-  end
+#   def payment_methods=(methods)
+#     super(EncryptionService.encrypt(methods))
+#   end
+# 
+#   def payment_methods
+#     super.nil? ? super : EncryptionService.decrypt(super)
+#   end
 
 
   # Set Stripe ID
@@ -171,8 +177,17 @@ class User < ActiveRecord::Base
   end
   
   private
-
-  def initialize_user
-    # Blank for now...
-  end
+  
+    def initialize_user
+      self.current_payment_method ||= 'none'
+      self.payment_methods ||= {
+        'default' => nil,
+        'by_id' => {},
+        'fingerprint_index' => {
+          'ach' => {},
+          'card' => {}
+        }
+      }
+      self.tokens ||= {}
+  	end
 end
