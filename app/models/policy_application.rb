@@ -10,8 +10,7 @@ class PolicyApplication < ApplicationRecord
   # Active Record Callbacks
   after_initialize :initialize_policy_application
   
-  before_validation :set_reference,
-  	if: Proc.new { |app| app.reference.nil? }
+  before_validation :set_reference, if: Proc.new { |app| app.reference.nil? }
   
   after_create :set_up_application_answers
   
@@ -21,20 +20,15 @@ class PolicyApplication < ApplicationRecord
   belongs_to :account
   belongs_to :policy, optional: true
   
-  has_many :addresses,
-    as: :addressable,
-    autosave: true
+  has_many :addresses, as: :addressable, autosave: true
     
   has_many :policy_insurables
-  has_many :insurables,
-  	through: :policy_insurables
+  has_many :insurables, through: :policy_insurables, before_add: :check_address
   
   has_many :policy_users
-  has_many :users,
-    through: :policy_users
+  has_many :users, through: :policy_users
 	
-	has_many :events,
-	    as: :eventable
+	has_many :events, as: :eventable
     
   has_one :primary_policy_user, -> { where(primary: true).take }, 
     class_name: 'PolicyUser'
@@ -100,12 +94,15 @@ class PolicyApplication < ApplicationRecord
       indexes :reference, type: :text, analyzer: 'english'
       indexes :external_reference, type: :text, analyzer: 'english'
     end
-  end
+	end
+	
+	def check_address(insurable)
+		throw :no_address if insurable.addresses.empty?
+	end
   
   private 
   
     def initialize_policy_application
-	       
     end
 	
     def date_order
