@@ -166,7 +166,7 @@ class User < ActiveRecord::Base
   
   settings index: { number_of_shards: 1 } do
     mappings dynamic: 'false' do
-      indexes :email, type: :text
+      indexes :email, type: :string
     end
   end
   

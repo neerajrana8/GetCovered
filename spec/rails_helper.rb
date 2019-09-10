@@ -62,4 +62,14 @@ RSpec.configure do |config|
   config.filter_rails_from_backtrace!
   # arbitrary gems may also be filtered via:
   # config.filter_gems_from_backtrace("gem name")
+
+  config.after :suite do
+    $stderr.puts ''
+    $stderr.puts ''
+    $stderr.puts '##    Removing ES test indexes    ##'
+    ES_CLASSES.each do |esc|
+      klass = esc.constantize
+      klass.__elasticsearch__.delete_index! index: klass.index_name
+    end
+  end
 end
