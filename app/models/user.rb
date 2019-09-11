@@ -39,13 +39,13 @@ class User < ActiveRecord::Base
   
   # Override payment_method attribute getters and setters to store data
   # as encrypted
-#   def payment_methods=(methods)
-#     super(EncryptionService.encrypt(methods))
-#   end
-# 
-#   def payment_methods
-#     super.nil? ? super : EncryptionService.decrypt(super)
-#   end
+  def payment_methods=(methods)
+    super(EncryptionService.encrypt(methods))
+  end
+
+  def payment_methods
+    super.nil? ? super : EncryptionService.decrypt(super)
+  end
 
 
   # Set Stripe ID

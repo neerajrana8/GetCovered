@@ -1,6 +1,6 @@
 development: &default
-  host: 127.0.0.1:9200
-#   log: true
+  host: http://localhost:9200
+  log: true
 test:
   host: http://elasticsearch:9200
 staging:

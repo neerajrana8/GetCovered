@@ -1,5 +1,5 @@
 config = {
-  host: "http://elasticsearch:9200/",
+  host: "http://127.0.0.1:9200",
   transport_options: {
     request: { timeout: 5 }
   }
