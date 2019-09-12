@@ -1,6 +1,6 @@
 sidekiq_config = { 
-	:host => ENV.fetch("JOB_WORKER_URL"),
-	:port => ENV.fetch("JOB_WORKER_PORT") 
+	:host => Rails.application.credentials.redis[Rails.application.credentials.rails_env.to_sym][:host],
+	:port => Rails.application.credentials.redis[Rails.application.credentials.rails_env.to_sym][:port] 
 }
 
 Sidekiq.configure_server do |config|

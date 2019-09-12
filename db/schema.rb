@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_08_15_002456) do
+ActiveRecord::Schema.define(version: 2019_09_05_023626) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -713,6 +713,7 @@ ActiveRecord::Schema.define(version: 2019_08_15_002456) do
     t.bigint "commission_strategy_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "estimate"
     t.index ["billing_strategy_id"], name: "index_policy_premia_on_billing_strategy_id"
     t.index ["commission_strategy_id"], name: "index_policy_premia_on_commission_strategy_id"
     t.index ["policy_id"], name: "index_policy_premia_on_policy_id"
@@ -903,6 +904,7 @@ ActiveRecord::Schema.define(version: 2019_08_15_002456) do
     t.string "last_sign_in_ip"
     t.string "stripe_id"
     t.jsonb "payment_methods"
+    t.integer "current_payment_method"
     t.index ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["invitation_token"], name: "index_users_on_invitation_token", unique: true

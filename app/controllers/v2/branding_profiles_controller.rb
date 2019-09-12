@@ -4,7 +4,7 @@
 module V2
   class BrandingProfilesController
     
-    before_action :set_branding_profile
+    # before_action :set_branding_profile
     
     def show
     end
