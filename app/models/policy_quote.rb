@@ -1,3 +1,6 @@
+##
+# =Policy Quote Model
+# file: +app/models/policy_quote.rb+
 # frozen_string_literal: true
 
 class PolicyQuote < ApplicationRecord
@@ -20,7 +23,9 @@ class PolicyQuote < ApplicationRecord
 	has_many :policy_rates
 	has_many :insurable_rates,
 		through: :policy_rates
-
+	
+	has_one :policy_premium
+	
   settings index: { number_of_shards: 1 } do
     mappings dynamic: 'false' do
       indexes :reference, type: :text, analyzer: 'english'

@@ -377,7 +377,7 @@ ten (10) days or or more per month?",
       51.times do |state|
         available = state == 0 || state == 11 ? false : true
         carrier_policy_availability = CarrierPolicyTypeAvailability.create(state: state, available: available, carrier_policy_type: carrier_policy_type)
-        carrier_policy_availability.fees.create(title: "Origination Fee", type: :ORIGINATION, amount: 25, enabled: true, ownerable: carrier)
+        carrier_policy_availability.fees.create(title: "Origination Fee", type: :ORIGINATION, amount: 2500, enabled: true, ownerable: carrier)
       end      
     else
       pp carrier_policy_type.errors
