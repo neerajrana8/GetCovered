@@ -15,8 +15,6 @@ module CarrierQbePolicyApplication
 		  quote = policy_quotes.new(agency: agency, account: account)
 		  if quote.save
 				rates.each { |rate| quote.policy_rates.create!(insurable_rate: rate) }
-				quote_rate_premiums = quote.insurable_rates.map { |r| r.premium.to_f }
-				quote.update premium: quote_rate_premiums.inject { |sum, rate| sum + rate }
 			end
 		end
 		

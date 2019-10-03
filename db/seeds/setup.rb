@@ -20,6 +20,7 @@ end
 @policy_types = [
   { title: "Residential", designation: "HO4", enabled: true },
   { title: "Master Policy", designation: "MASTER", enabled: true },
+  { title: "Master Policy Coverage", designation: "MASTER-COVERAGE", enabled: true },
   { title: "Commercial", designation: "BOP", enabled: true }
 ]
 
@@ -59,7 +60,7 @@ LeaseType.find(1).insurable_types << InsurableType.find(4)
 LeaseType.find(1).policy_types << PolicyType.find(1)
 LeaseType.find(1).policy_types << PolicyType.find(2)
 LeaseType.find(2).insurable_types << InsurableType.find(5)
-LeaseType.find(2).policy_types << PolicyType.find(3)
+LeaseType.find(2).policy_types << PolicyType.find(4)
 
 ##
 # Setting up base Carriers
@@ -204,16 +205,17 @@ LeaseType.find(2).policy_types << PolicyType.find(3)
       # Create QBE Insurable Type for Residential Units with fields required for integration (none in this example)                                  
       carrier_insurable_type = CarrierInsurableType.create!(carrier: carrier, insurable_type: InsurableType.find(4), enabled: true)
                                                             
-    # Add Master to Queensland Business Specialty Insurance
+    # Add Master to Queensland Business Specialty Insurance 
     elsif carrier.id == 2
       policy_type = PolicyType.find(2)
+      policy_sub_type = PolicyType.find(3)
       
     # Add Commercial to Crum & Forester
     elsif carrier.id == 3
 			crum_service = CrumService.new()
 			crum_service.refresh_all_class_codes()
 			
-      policy_type = PolicyType.find(3)
+      policy_type = PolicyType.find(4)
 			
 	    # Create Template for Crum & Forester Commercial (B.O.P.) Questions
 	    [

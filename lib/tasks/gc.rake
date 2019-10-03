@@ -7,6 +7,7 @@ namespace :gc do
     desc "total Get Covered local reset"
     task total: :environment do
     	Rake::Task['gc:flush:schema'].invoke
+    	Rake::Task['gc:flush:elasticsearch'].invoke
     	
     	['setup', 'agency', 'account', 'insurable-residential', 
 	  	 'insurable-commercial', 'user', 'policy-residential', 
@@ -18,6 +19,7 @@ namespace :gc do
     desc "data Get Covered local reset"
     task data: :environment do
     	Rake::Task['gc:flush:all'].invoke
+    	Rake::Task['gc:flush:elasticsearch'].invoke
     	
     	['setup', 'agency', 'account', 'insurable-residential', 
 	  	 'insurable-commercial', 'user', 'policy-residential', 

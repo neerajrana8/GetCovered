@@ -168,7 +168,7 @@ end
 		elsif carrier.id == 2
 			@policy_type = PolicyType.find(2)
 		elsif carrier.id == 3
-			@policy_type = PolicyType.find(3)
+			@policy_type = PolicyType.find(4)
 			@fee_amount = 800
 		end
 		
@@ -272,7 +272,7 @@ end
 		                                                      payments_per_term: 12, remainder_added_to_deposit: true },
 		                                      renewal: { payments: [8.37, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33], 
 		                                                      payments_per_term: 12, remainder_added_to_deposit: true },
-		                                      carrier: @crum, policy_type: PolicyType.find(3), 
+		                                      carrier: @crum, policy_type: PolicyType.find(4), 
                                   				fees_attributes: [
 	                                  				{ 
 		                                  				title: "Service Fee", 
@@ -286,13 +286,13 @@ end
 																						
 @master_agency.commission_strategies.create!(title: 'Get Covered / Crum Commercial Commission',
 																						carrier: Carrier.find(3), 
-																						policy_type: PolicyType.find(3), 
+																						policy_type: PolicyType.find(4), 
 																						amount: 15, 
 																						type: 0, 
 																						house_override: 0)
 @master_agency.commission_strategies.create!(title: 'Get Covered / Crum Producer Commission',
 																						carrier: Carrier.find(3), 
-																						policy_type: PolicyType.find(3), 
+																						policy_type: PolicyType.find(4), 
 																						amount: 3, 
 																						type: 0, 
 																						house_override: 0)
@@ -432,7 +432,7 @@ end
   authorization = CarrierAgencyAuthorization.create(state: state, 
   																									available: available, 
   																									carrier_agency: CarrierAgency.where(carrier: @crum, agency: @sub_commercial_agency).take, 
-  																									policy_type: PolicyType.find(3),
+  																									policy_type: PolicyType.find(4),
   																									agency: @sub_commercial_agency)
   Fee.create(title: "Service Fee", 
   					 type: :MISC, 
@@ -452,7 +452,7 @@ end
 		                                                      payments_per_term: 12, remainder_added_to_deposit: true },
 		                                      renewal: { payments: [8.37, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33], 
 		                                                      payments_per_term: 12, remainder_added_to_deposit: true },
-		                                      carrier: @crum, policy_type: PolicyType.find(3), 
+		                                      carrier: @crum, policy_type: PolicyType.find(4), 
                                   				fees_attributes: [
 	                                  				{ 
 		                                  				title: "Service Fee", 
@@ -466,7 +466,7 @@ end
 		                                      
 @sub_commercial_agency.commission_strategies.create!(title: "#{ @sub_commercial_agency.title } / Crum Commercial Commission", 
 																						carrier: @crum, 
-																						policy_type: PolicyType.find(3), 
+																						policy_type: PolicyType.find(4), 
 																						amount: 12, 
 																						type: 0, 
 																						commission_strategy_id: 8)

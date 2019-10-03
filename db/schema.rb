@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_08_15_002456) do
+ActiveRecord::Schema.define(version: 2019_10_03_184028) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -678,6 +678,19 @@ ActiveRecord::Schema.define(version: 2019_08_15_002456) do
     t.index ["policy_type_id"], name: "index_policy_applications_on_policy_type_id"
   end
 
+  create_table "policy_coverages", force: :cascade do |t|
+    t.string "title"
+    t.string "designation"
+    t.integer "limit", default: 0
+    t.integer "deductible", default: 0
+    t.bigint "policy_id"
+    t.bigint "policy_application_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["policy_application_id"], name: "index_policy_coverages_on_policy_application_id"
+    t.index ["policy_id"], name: "index_policy_coverages_on_policy_id"
+  end
+
   create_table "policy_insurables", force: :cascade do |t|
     t.integer "value", default: 0
     t.boolean "primary", default: false
@@ -725,10 +738,6 @@ ActiveRecord::Schema.define(version: 2019_08_15_002456) do
     t.string "external_reference"
     t.integer "status"
     t.datetime "status_updated_on"
-    t.integer "premium"
-    t.integer "tax"
-    t.integer "est_fees"
-    t.integer "total_premium"
     t.bigint "policy_application_id"
     t.bigint "agency_id"
     t.bigint "account_id"
@@ -906,4 +915,6 @@ ActiveRecord::Schema.define(version: 2019_08_15_002456) do
     t.index ["uid", "provider"], name: "index_users_on_uid_and_provider", unique: true
   end
 
+  add_foreign_key "policy_coverages", "policies"
+  add_foreign_key "policy_coverages", "policy_applications"
 end
