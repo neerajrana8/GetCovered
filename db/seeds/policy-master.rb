@@ -2,13 +2,17 @@
 
 @master_policies = [
   {
-		effective_date: Time.current.to_date - 6.months + iter.days,
-		expiration_date: Time.current.to_date + 6.months + iter.days,    
+		effective_date: Time.current.to_date - 6.months,
+		expiration_date: Time.current.to_date + 6.months,    
     status: "BOUND",
     auto_renew: true,
     agency: @agency,
     account: @agency.accounts.first,
-    policy_type: PolicyType.find(2)
+    policy_type: PolicyType.find(2),
+    carrier: Carrier.find(2),
+    policy_premiums_attributes: [
+	    { total: 700, enabled: true }
+    ],
     policy_coverages_attributes: [
       { title: "Liability Coverage", designation: "liability_coverage", limit: rand(700000..1000000).round(-3), deductible: 0 },
       { title: "Expanded Liability Coverage", designation: "expanded_liability", limit: rand(700000..1000000).round(-3), deductible: 0 },
@@ -19,3 +23,12 @@
     ]
   }
 ]
+
+@master_policies.each do |mp|
+	policy = Policy.new(mp)
+	if policy.save
+		puts "YAY!"
+	else
+		pp policy.errors
+	end	
+end
