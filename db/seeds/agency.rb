@@ -168,7 +168,7 @@ end
 		elsif carrier.id == 2
 			@policy_type = PolicyType.find(2)
 		elsif carrier.id == 3
-			@policy_type = PolicyType.find(3)
+			@policy_type = PolicyType.find(4)
 			@fee_amount = 800
 		end
 		
@@ -193,24 +193,64 @@ end
 # QBE / Get Covered Billing & Comission Strategies
 
 @master_agency.billing_strategies.create!(title: 'Annually', enabled: true, carrier: @qbe, 
-                                  				policy_type: PolicyType.find(1))
+                                  				policy_type: PolicyType.find(1), 
+                                  				fees_attributes: [
+	                                  				{ 
+		                                  				title: "Service Fee", 
+		                                  				type: :MISC, 
+		                                  				per_payment: true,
+		                                  				amount: 1000, 
+		                                  				enabled: true, 
+		                                  				ownerable: @master_agency 
+		                                  			}
+                                  				])
                                   
 @master_agency.billing_strategies.create!(title: 'Bi-Annually', enabled: true, 
 		                                      new_business: { payments: [50, 0, 0, 0, 0, 0, 50, 0, 0, 0, 0, 0], 
 		                                                      payments_per_term: 2, remainder_added_to_deposit: true },
-		                                      carrier: @qbe, policy_type: PolicyType.find(1))
+		                                      carrier: @qbe, policy_type: PolicyType.find(1), 
+                                  				fees_attributes: [
+	                                  				{ 
+		                                  				title: "Service Fee", 
+		                                  				type: :MISC, 
+		                                  				per_payment: true,
+		                                  				amount: 1000, 
+		                                  				enabled: true, 
+		                                  				ownerable: @master_agency 
+		                                  			}
+                                  				])
                                   
 @master_agency.billing_strategies.create!(title: 'Quarterly', enabled: true, 
 		                                      new_business: { payments: [25, 0, 0, 25, 0, 0, 25, 0, 0, 25, 0, 0], 
 		                                                      payments_per_term: 4, remainder_added_to_deposit: true },
-		                                      carrier: @qbe, policy_type: PolicyType.find(1))
+		                                      carrier: @qbe, policy_type: PolicyType.find(1), 
+                                  				fees_attributes: [
+	                                  				{ 
+		                                  				title: "Service Fee", 
+		                                  				type: :MISC, 
+		                                  				per_payment: true,
+		                                  				amount: 1000, 
+		                                  				enabled: true, 
+		                                  				ownerable: @master_agency 
+		                                  			}
+                                  				])
                                   
 @master_agency.billing_strategies.create!(title: 'Monthly', enabled: true, 
 		                                      new_business: { payments: [22.01, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09], 
 		                                                      payments_per_term: 12, remainder_added_to_deposit: true },
 		                                      renewal: { payments: [8.37, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33], 
 		                                                      payments_per_term: 12, remainder_added_to_deposit: true },
-		                                      carrier: @qbe, policy_type: PolicyType.find(1))
+		                                      carrier: @qbe, policy_type: PolicyType.find(1), 
+                                  				fees_attributes: [
+	                                  				{ 
+		                                  				title: "Service Fee", 
+		                                  				type: :MISC, 
+		                                  				per_payment: true,
+		                                  				amount: 1000, 
+		                                  				enabled: true, 
+		                                  				ownerable: @master_agency 
+		                                  			}
+                                  				])
 
 @master_agency.commission_strategies.create!(title: 'Get Covered / QBE Residential Commission', 
 																						carrier: Carrier.find(1), 
@@ -232,17 +272,27 @@ end
 		                                                      payments_per_term: 12, remainder_added_to_deposit: true },
 		                                      renewal: { payments: [8.37, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33], 
 		                                                      payments_per_term: 12, remainder_added_to_deposit: true },
-		                                      carrier: @crum, policy_type: PolicyType.find(3))
+		                                      carrier: @crum, policy_type: PolicyType.find(4), 
+                                  				fees_attributes: [
+	                                  				{ 
+		                                  				title: "Service Fee", 
+		                                  				type: :MISC, 
+		                                  				per_payment: true,
+		                                  				amount: 1000, 
+		                                  				enabled: true, 
+		                                  				ownerable: @master_agency 
+		                                  			}
+                                  				])
 																						
 @master_agency.commission_strategies.create!(title: 'Get Covered / Crum Commercial Commission',
 																						carrier: Carrier.find(3), 
-																						policy_type: PolicyType.find(3), 
+																						policy_type: PolicyType.find(4), 
 																						amount: 15, 
 																						type: 0, 
 																						house_override: 0)
 @master_agency.commission_strategies.create!(title: 'Get Covered / Crum Producer Commission',
 																						carrier: Carrier.find(3), 
-																						policy_type: PolicyType.find(3), 
+																						policy_type: PolicyType.find(4), 
 																						amount: 3, 
 																						type: 0, 
 																						house_override: 0)
@@ -296,24 +346,64 @@ end
 # QBE / Sub Residential Billing & Comission Strategies
 
 @sub_residential_agency.billing_strategies.create!(title: 'Annually', enabled: true, carrier: @qbe, 
-                                  				policy_type: PolicyType.find(1))
+                                  				policy_type: PolicyType.find(1), 
+                                  				fees_attributes: [
+	                                  				{ 
+		                                  				title: "Service Fee", 
+		                                  				type: :MISC, 
+		                                  				per_payment: true,
+		                                  				amount: 1000, 
+		                                  				enabled: true, 
+		                                  				ownerable: @sub_residential_agency 
+		                                  			}
+                                  				])
                                   
 @sub_residential_agency.billing_strategies.create!(title: 'Bi-Annually', enabled: true, 
 		                                      new_business: { payments: [50, 0, 0, 0, 0, 0, 59, 0, 0, 0, 0, 0], 
 		                                                      payments_per_term: 2, remainder_added_to_deposit: true },
-		                                      carrier: @qbe, policy_type: PolicyType.find(1))
+		                                      carrier: @qbe, policy_type: PolicyType.find(1), 
+                                  				fees_attributes: [
+	                                  				{ 
+		                                  				title: "Service Fee", 
+		                                  				type: :MISC, 
+		                                  				per_payment: true,
+		                                  				amount: 1000, 
+		                                  				enabled: true, 
+		                                  				ownerable: @sub_residential_agency 
+		                                  			}
+                                  				])
                                   
 @sub_residential_agency.billing_strategies.create!(title: 'Quarterly', enabled: true, 
 		                                      new_business: { payments: [25, 0, 0, 25, 0, 0, 25, 0, 0, 25, 0, 0], 
 		                                                      payments_per_term: 4, remainder_added_to_deposit: true },
-		                                      carrier: @qbe, policy_type: PolicyType.find(1))
+		                                      carrier: @qbe, policy_type: PolicyType.find(1), 
+                                  				fees_attributes: [
+	                                  				{ 
+		                                  				title: "Service Fee", 
+		                                  				type: :MISC, 
+		                                  				per_payment: true,
+		                                  				amount: 1000, 
+		                                  				enabled: true, 
+		                                  				ownerable: @sub_residential_agency 
+		                                  			}
+                                  				])
                                   
 @sub_residential_agency.billing_strategies.create!(title: 'Monthly', enabled: true, 
 		                                      new_business: { payments: [22.01, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09], 
 		                                                      payments_per_term: 12, remainder_added_to_deposit: true },
 		                                      renewal: { payments: [8.37, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33], 
 		                                                      payments_per_term: 12, remainder_added_to_deposit: true },
-		                                      carrier: @qbe, policy_type: PolicyType.find(1))
+		                                      carrier: @qbe, policy_type: PolicyType.find(1), 
+                                  				fees_attributes: [
+	                                  				{ 
+		                                  				title: "Service Fee", 
+		                                  				type: :MISC, 
+		                                  				per_payment: true,
+		                                  				amount: 1000, 
+		                                  				enabled: true, 
+		                                  				ownerable: @sub_residential_agency 
+		                                  			}
+                                  				])
 
 @sub_residential_agency.commission_strategies.create!(title: "#{ @sub_residential_agency.title } / QBE Residential Commission", 
 																						carrier: @qbe, 
@@ -342,7 +432,7 @@ end
   authorization = CarrierAgencyAuthorization.create(state: state, 
   																									available: available, 
   																									carrier_agency: CarrierAgency.where(carrier: @crum, agency: @sub_commercial_agency).take, 
-  																									policy_type: PolicyType.find(3),
+  																									policy_type: PolicyType.find(4),
   																									agency: @sub_commercial_agency)
   Fee.create(title: "Service Fee", 
   					 type: :MISC, 
@@ -362,11 +452,21 @@ end
 		                                                      payments_per_term: 12, remainder_added_to_deposit: true },
 		                                      renewal: { payments: [8.37, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33], 
 		                                                      payments_per_term: 12, remainder_added_to_deposit: true },
-		                                      carrier: @crum, policy_type: PolicyType.find(3))	
+		                                      carrier: @crum, policy_type: PolicyType.find(4), 
+                                  				fees_attributes: [
+	                                  				{ 
+		                                  				title: "Service Fee", 
+		                                  				type: :MISC, 
+		                                  				per_payment: true,
+		                                  				amount: 1000, 
+		                                  				enabled: true, 
+		                                  				ownerable: @sub_residential_agency 
+		                                  			}
+                                  				])	
 		                                      
 @sub_commercial_agency.commission_strategies.create!(title: "#{ @sub_commercial_agency.title } / Crum Commercial Commission", 
 																						carrier: @crum, 
-																						policy_type: PolicyType.find(3), 
+																						policy_type: PolicyType.find(4), 
 																						amount: 12, 
 																						type: 0, 
 																						commission_strategy_id: 8)

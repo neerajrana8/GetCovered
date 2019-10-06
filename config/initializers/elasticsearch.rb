@@ -1,5 +1,5 @@
 config = {
-  host: "http://127.0.0.1:9200",
+  host: "#{ ENV['ELASTICSEARCH_URL'] }",
   transport_options: {
     request: { timeout: 5 }
   }

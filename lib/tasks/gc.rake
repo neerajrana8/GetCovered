@@ -7,6 +7,8 @@ namespace :gc do
     desc "total Get Covered local reset"
     task total: :environment do
     	Rake::Task['gc:flush:schema'].invoke
+    	Rake::Task['gc:flush:elasticsearch'].invoke
+    	Rake::Task['gc:flush:redis'].invoke
     	
     	['setup', 'agency', 'account', 'insurable-residential', 
 	  	 'insurable-commercial', 'user', 'policy-residential', 
@@ -18,6 +20,8 @@ namespace :gc do
     desc "data Get Covered local reset"
     task data: :environment do
     	Rake::Task['gc:flush:all'].invoke
+    	Rake::Task['gc:flush:elasticsearch'].invoke
+    	Rake::Task['gc:flush:redis'].invoke
     	
     	['setup', 'agency', 'account', 'insurable-residential', 
 	  	 'insurable-commercial', 'user', 'policy-residential', 
@@ -50,7 +54,14 @@ namespace :gc do
     desc "remove all elasticsearch indexes"
 		task elasticsearch: :environment do
 			system("curl -XDELETE http://localhost:9200/_all")
-		end    
+		  puts "\n"
+		end   
+		
+		desc "remove all redis keys"
+		task redis: :environment do
+		  system("redis-cli FLUSHALL")
+		  puts "\n"
+		end 
   end
 
 end

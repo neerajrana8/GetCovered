@@ -18,6 +18,7 @@ class PolicyApplication < ApplicationRecord
   belongs_to :policy_type
   belongs_to :agency
   belongs_to :account
+  belongs_to :billing_strategy
   belongs_to :policy, optional: true
   
   has_many :addresses, as: :addressable, autosave: true
@@ -38,7 +39,13 @@ class PolicyApplication < ApplicationRecord
     source: :user
     
   has_many :policy_quotes
-  
+  has_many :policy_premiums,
+    through: :policy_quotes
+	    
+	has_many :policy_rates
+	has_many :insurable_rates,
+		through: :policy_rates
+    
   has_many :policy_application_answers
   has_many :policy_application_fields,
   	through: :policy_application_answers

@@ -1,12 +1,16 @@
+##
+# =Policy Quote Model
+# file: +app/models/policy_quote.rb+
 # frozen_string_literal: true
 
 class PolicyQuote < ApplicationRecord
   # Concerns
-  include CarrierQbePolicyQuote, ElasticsearchSearchable
-  # include ElasticsearchSearchable
+  #include CarrierQbeQuote, ElasticsearchSearchable
+  include ElasticsearchSearchable
+
+
+  after_initialize  :initialize_policy_quote
   
-  before_save :set_status_updated_on,
-  	if: Proc.new { |quote| quote.status_changed? }
   before_validation :set_reference,
   	if: Proc.new { |quote| quote.reference.nil? }
 
@@ -22,14 +26,19 @@ class PolicyQuote < ApplicationRecord
 	has_many :policy_rates
 	has_many :insurable_rates,
 		through: :policy_rates
-		
-	has_one :policy_premium	
 	
-	accepts_nested_attributes_for :policy_premium
+	has_one :policy_premium
 	
-  enum status: { available: 0, expired: 1, accepted: 2, 
-	  						 declined: 3, abandoned: 4 }
-
+  enum status: { AWAITING_ESTIMATE: 0, ESTIMATED: 1, QUOTED: 2, QUOTE_FAILED: 3, ABANDONED: 4 }
+	
+	def mark_successful
+  	policy_application.update status: 'quoted' if update status: 'QUOTED'
+  end
+  
+  def mark_failure
+  	policy_application.update status: 'quote_failed' if update status: 'QUOTE_FAILED'
+  end
+  
   settings index: { number_of_shards: 1 } do
     mappings dynamic: 'false' do
       indexes :reference, type: :text, analyzer: 'english'
@@ -38,6 +47,9 @@ class PolicyQuote < ApplicationRecord
   end
   
   private
+    def initialize_policy_quote
+      # self.status ||= :AWAITING_ESTIMATE
+    end
     
     def set_status_updated_on
 	    self.status_updated_on = Time.now
