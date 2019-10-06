@@ -9,12 +9,16 @@ module CarrierQbePolicyApplication
 	  # QBE Estimate
 	  # 
 	  
-	  def qbe_estimate(rates = nil)
+	  def qbe_estimate(rates = nil, quote_id = nil)
 			raise ArgumentError, 'Argument "rates" cannot be nil' if rates.nil?
 			raise ArgumentError, 'Argument "rates" must be an array' if !rates.is_a?(Array)
-		  quote = policy_quotes.new(agency: agency, account: account)
+		  quote = quote_id.nil? ? policy_quotes.new(agency: agency, account: account) : 
+		                          policy_quotes.find(quote_id)
 		  if quote.save
-				rates.each { |rate| quote.policy_rates.create!(insurable_rate: rate) }
+				rates.each { |rate| policy_rates.create!(insurable_rate: rate) }
+				quote_rate_premiums = insurable_rates.map { |r| r.premium.to_f }
+				quote.update est_premium: quote_rate_premiums.inject { |sum, rate| sum + rate },
+				             status: "ESTIMATED"
 			end
 		end
 		
@@ -37,8 +41,11 @@ module CarrierQbePolicyApplication
 	  # sends to QBE to create a quote
 	  
 	  def qbe_quote(quote_id = nil)
+			raise ArgumentError, 'Argument "quote_id" cannot be nil' if quote_id.nil?
+			
 		  quote_success = false
 		  status_check = self.complete? || self.quote_failed?
+		  quote = policy_quotes.find(quote_id)
 		  
 		  # If application complete or quote_failed 
 		  # and carrier is QBE will figure out the 
@@ -53,8 +60,6 @@ module CarrierQbePolicyApplication
         address = unit.primary_address()
 
 				if community_profile.data['ho4_enabled'] == true # If community profile is ho4_enabled
-					
-					quote = policy_quotes.find(quote_id) unless quote_id.nil?
 					
 					update status: 'quote_in_progress'
 	        event = events.new(
@@ -79,10 +84,10 @@ module CarrierQbePolicyApplication
 	          prof_managed: community_profile.traits['professionally_managed'] == true ? 1 : 0,
 	          prof_managed_year: community_profile.traits['professionally_managed_year'] == true ? "" : community_profile.traits['professionally_managed_year'],
 	          effective_date: effective_date.strftime("%m/%d/%Y"),
-	          premium: quote.premium.to_f / 100,
-	          premium_pif: quote.premium.to_f / 100,
+	          premium: quote.est_premium.to_f / 100,
+	          premium_pif: quote.est_premium.to_f / 100,
 	          num_insured: users.count,
-	          lia_amount: quote.insurable_rates.liability.first.coverage_limits["liability"].to_f / 100
+	          lia_amount: insurable_rates.liability.first.coverage_limits["liability"].to_f / 100
 	        }
 	  
 	        qbe_service.build_request(qbe_request_options)
@@ -93,42 +98,56 @@ module CarrierQbePolicyApplication
 	          event.started = Time.now
 	          qbe_data = qbe_service.call()
 	          event.completed = Time.now
-	        
+            
 		        event.response = qbe_data[:data]
 		        event.status = qbe_data[:error] ? 'error' : 'success'
 		        if event.save # If event saves after QBE call
 			        unless qbe_data[:error] # QBE Response Success
 		            xml_doc = Nokogiri::XML(qbe_data[:data])  
 		            xml_min_prem = xml_doc.css('//Additional_Premium')
-		            if quote_id.nil?			        
-					        quote = policy_quotes.new(
-										premium: (xml_min_prem.attribute('tax').value.to_f * 100).to_i,
-										tax: (xml_min_prem.attribute('tax').value.to_f * 100).to_i,
-										agency: agency,
-										account: account
-		 							)
-		 						else
-		 							quote.premium = (xml_min_prem.attribute('tax').value.to_f * 100).to_i
-		 							quote.tax = (xml_min_prem.attribute('tax').value.to_f * 100).to_i
-		 						end
-	 							if quote.save
-		 							update status: 'quoted'
+  
+	 					    response_premium = (xml_min_prem.attribute('total_premium').value.to_f * 100).to_i
+	 					    tax = (xml_min_prem.attribute('tax').value.to_f * 100).to_i
+	 					    base_premium = response_premium - tax
+	 					    
+	 					    premium = PolicyPremium.new base: base_premium,
+	 					                                taxes: tax,
+	 					                                billing_strategy: quote.policy_application.billing_strategy,
+	 					                                policy_quote: quote
+	 					    
+	 					    quote_method = premium.save ? "mark_successful" : "mark_failure"                           
+	 					    quote.send(quote_method)
+	 							
+  	 						if quote.status == 'QUOTED'
+      						premium.set_fees
+      						premium.calculate_fees
+      						premium.calculate_total
 		 							return true
 		 						else
-		 							puts "\nQuote Save Error"
+		 							puts "\nQuote Save Error\n"
 		 							pp quote.errors
-		 							update status: 'quote_failed'	
+		 							return false
 		 						end
+		 						
 		 					else # QBE Response Success Failure
+		 						
 		 						puts "\QBE Request Unsuccessful, Event ID: #{ event.id }"
-		 						update status: 'quote_failed'
+		 						quote.mark_failure()
+		 						return false
+		 						
  							end # / QBE Response Success
  						else
+ 						
 		 					puts "\Post QBE Request Event Save Error"
- 							update status: 'quote_failed'
+ 							quote.mark_failure()
+ 							return false
+ 							
 			      end # / If event saves after QBE call
 			    else
-			    	update status: 'quote_failed'
+			    
+			    	quote.mark_failure()
+			    	return false
+					
 					end # / If event saves after creation
 				end # / If community profile is ho4_enabled
 				

@@ -7,7 +7,10 @@ class PolicyQuote < ApplicationRecord
   # Concerns
   #include CarrierQbeQuote, ElasticsearchSearchable
   include ElasticsearchSearchable
-  
+
+
+  after_initialize  :initialize_policy_quote
+    
   before_validation :set_reference,
   	if: Proc.new { |quote| quote.reference.nil? }
 
@@ -26,6 +29,16 @@ class PolicyQuote < ApplicationRecord
 	
 	has_one :policy_premium
 	
+  enum status: { AWAITING_ESTIMATE: 0, ESTIMATED: 1, QUOTED: 2, QUOTE_FAILED: 3, ABANDONED: 4 }
+	
+	def mark_successful
+  	policy_application.update status: 'quoted' if update status: 'QUOTED'
+  end
+  
+  def mark_failure
+  	policy_application.update status: 'quote_failed' if update status: 'QUOTE_FAILED'
+  end
+	
   settings index: { number_of_shards: 1 } do
     mappings dynamic: 'false' do
       indexes :reference, type: :text, analyzer: 'english'
@@ -34,6 +47,9 @@ class PolicyQuote < ApplicationRecord
   end
   
   private
+    def initialize_policy_quote
+      # self.status ||= :AWAITING_ESTIMATE
+    end
     
     def set_reference
 	    return_status = false

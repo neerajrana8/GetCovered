@@ -7,6 +7,10 @@ class PolicyPremium < ApplicationRecord
   belongs_to :policy_quote
   belongs_to :billing_strategy
   
+  has_many :policy_premium_fees
+  has_many :fees, 
+    through: :policy_premium_fees
+  
   def application
 		return policy_quote.policy_application  
 	end
@@ -26,10 +30,30 @@ class PolicyPremium < ApplicationRecord
 		  :carrier_policy_type => carrier_policy_type
 	  ).take
 		
-		fees = regional_availability.fees + billing_strategy.fees
-
-		pp fees
+		found_fees = regional_availability.fees + billing_strategy.fees
+		found_fees.each { |fee| self.fees << fee }
 		
-		return fees
 	end
+	
+	def calculate_fees
+  	
+    self.fees.each do |fee|
+      if fee.amount_type == "FLAT"
+        if fee.per_payment
+          self.total_fees += fee.amount * billing_strategy.new_business["payments"].count { |x| x > 0 }      
+        else
+          self.total_fees += fee.amount
+        end  
+      else
+        self.total_fees += (fee.amount.to_f / 100) * self.base
+      end
+    end
+    
+    save()
+  end
+  
+  def calculate_total
+    self.total = self.base + self.taxes + self.total_fees
+    save() if self.total > 0
+  end
 end
