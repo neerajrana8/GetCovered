@@ -105,7 +105,7 @@ module CarrierQbePolicyApplication
 			        unless qbe_data[:error] # QBE Response Success
 		            xml_doc = Nokogiri::XML(qbe_data[:data])  
 		            xml_min_prem = xml_doc.css('//Additional_Premium')
-  
+                
 	 					    response_premium = (xml_min_prem.attribute('total_premium').value.to_f * 100).to_i
 	 					    tax = (xml_min_prem.attribute('tax').value.to_f * 100).to_i
 	 					    base_premium = response_premium - tax

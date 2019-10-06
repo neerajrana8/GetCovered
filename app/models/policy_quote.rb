@@ -10,7 +10,7 @@ class PolicyQuote < ApplicationRecord
 
 
   after_initialize  :initialize_policy_quote
-    
+  
   before_validation :set_reference,
   	if: Proc.new { |quote| quote.reference.nil? }
 
@@ -38,7 +38,7 @@ class PolicyQuote < ApplicationRecord
   def mark_failure
   	policy_application.update status: 'quote_failed' if update status: 'QUOTE_FAILED'
   end
-	
+  
   settings index: { number_of_shards: 1 } do
     mappings dynamic: 'false' do
       indexes :reference, type: :text, analyzer: 'english'
@@ -50,6 +50,10 @@ class PolicyQuote < ApplicationRecord
     def initialize_policy_quote
       # self.status ||= :AWAITING_ESTIMATE
     end
+    
+    def set_status_updated_on
+	    self.status_updated_on = Time.now
+	  end
     
     def set_reference
 	    return_status = false

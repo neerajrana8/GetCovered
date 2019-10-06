@@ -11,7 +11,9 @@ class User < ActiveRecord::Base
 
   # Active Record Callbacks
   after_initialize :initialize_user
-
+	
+	has_many :invoices
+	
   has_many :authored_histories,
            as: :authorable,
            class_name: 'History',
@@ -27,6 +29,10 @@ class User < ActiveRecord::Base
           autosave: true
 
   accepts_nested_attributes_for :profile
+
+
+  enum current_payment_method: ['none', 'ach_unverified', 'ach_verified', 'card', 'other'], 
+    _prefix: true
 
   # VALIDATIONS
   validates :email, uniqueness: true
@@ -166,13 +172,22 @@ class User < ActiveRecord::Base
   
   settings index: { number_of_shards: 1 } do
     mappings dynamic: 'false' do
-      indexes :email, type: :text
+      indexes :email, type: :string
     end
   end
   
   private
-
-  def initialize_user
-    # Blank for now...
-  end
+  
+    def initialize_user
+      self.current_payment_method ||= 'none'
+      self.payment_methods ||= {
+        'default' => nil,
+        'by_id' => {},
+        'fingerprint_index' => {
+          'ach' => {},
+          'card' => {}
+        }
+      }
+      self.tokens ||= {}
+  	end
 end

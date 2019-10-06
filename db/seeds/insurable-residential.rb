@@ -130,7 +130,7 @@ require 'faker'
 @residential_community_insurable_type = InsurableType.find(1)
 @residential_unit_insurable_type = InsurableType.find(4)
 
-@accounts = Account.all
+@accounts = Account.first(4)
 
 @accounts.each do |account|
 	3.times do |i|
@@ -197,8 +197,9 @@ require 'faker'
 		    end
 		    
 		  	@community.reset_qbe_rates(true, true)
-			
-			end			
+			else	
+				pp @community.errors
+			end	
 		end		
 		
 	end

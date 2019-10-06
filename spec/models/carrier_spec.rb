@@ -1,14 +1,14 @@
-require 'rails_helper'
+# frozen_string_literal: true
 
-RSpec.describe Carrier, elasticsearch: true, :type => :model do
+RSpec.describe Carrier, elasticsearch: true, type: :model do
   it 'Carrier Test Carrier should be indexed' do
-    FactoryBot.create(:carrier)
+    FactoryBot.create(:carrier, title: 'Test Carrier')
     Carrier.__elasticsearch__.refresh_index!
     expect(Carrier.search('Test Carrier').records.length).to eq(1)
   end
 
   it 'Carrier Wrong Name should not be indexed' do
-    FactoryBot.create(:carrier)
+    FactoryBot.create(:carrier, title: 'Test Carrier')
     Carrier.__elasticsearch__.refresh_index!
     expect(Carrier.search('Wrong Name').records.length).to eq(0)
   end

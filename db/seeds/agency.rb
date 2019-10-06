@@ -206,7 +206,7 @@ end
                                   				])
                                   
 @master_agency.billing_strategies.create!(title: 'Bi-Annually', enabled: true, 
-		                                      new_business: { payments: [50, 0, 0, 0, 0, 0, 59, 0, 0, 0, 0, 0], 
+		                                      new_business: { payments: [50, 0, 0, 0, 0, 0, 50, 0, 0, 0, 0, 0], 
 		                                                      payments_per_term: 2, remainder_added_to_deposit: true },
 		                                      carrier: @qbe, policy_type: PolicyType.find(1), 
                                   				fees_attributes: [

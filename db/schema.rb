@@ -75,11 +75,9 @@ ActiveRecord::Schema.define(version: 2019_10_06_154116) do
     t.boolean "master_agency", default: false, null: false
     t.jsonb "contact_info", default: {}
     t.jsonb "settings", default: {}
-    t.bigint "agency_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.bigint "staff_id"
-    t.index ["agency_id"], name: "index_agencies_on_agency_id"
     t.index ["call_sign"], name: "index_agencies_on_call_sign", unique: true
     t.index ["staff_id"], name: "index_agencies_on_staff_id"
     t.index ["stripe_id"], name: "index_agencies_on_stripe_id", unique: true
@@ -95,14 +93,13 @@ ActiveRecord::Schema.define(version: 2019_10_06_154116) do
   end
 
   create_table "assignments", force: :cascade do |t|
-    t.boolean "primary"
-    t.bigint "staff_id"
+    t.bigint "stuff_id"
     t.string "assignable_type"
     t.bigint "assignable_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["assignable_type", "assignable_id"], name: "index_assignments_on_assignable_type_and_assignable_id"
-    t.index ["staff_id"], name: "index_assignments_on_staff_id"
+    t.index ["stuff_id"], name: "index_assignments_on_stuff_id"
   end
 
   create_table "billing_strategies", force: :cascade do |t|
@@ -149,13 +146,11 @@ ActiveRecord::Schema.define(version: 2019_10_06_154116) do
   create_table "carrier_agency_authorizations", force: :cascade do |t|
     t.integer "state"
     t.boolean "available", default: false, null: false
-    t.jsonb "zip_code_blacklist", default: {}
+    t.jsonb "zip_code_blacklist", default: []
     t.bigint "carrier_agency_id"
     t.bigint "policy_type_id"
-    t.bigint "agency_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["agency_id"], name: "index_carrier_agency_authorizations_on_agency_id"
     t.index ["carrier_agency_id"], name: "index_carrier_agency_authorizations_on_carrier_agency_id"
     t.index ["policy_type_id"], name: "index_carrier_agency_authorizations_on_policy_type_id"
   end
@@ -209,7 +204,7 @@ ActiveRecord::Schema.define(version: 2019_10_06_154116) do
   create_table "carrier_policy_type_availabilities", force: :cascade do |t|
     t.integer "state"
     t.boolean "available", default: false, null: false
-    t.jsonb "zip_code_blacklist", default: {}
+    t.jsonb "zip_code_blacklist", default: []
     t.bigint "carrier_policy_type_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
@@ -281,7 +276,6 @@ ActiveRecord::Schema.define(version: 2019_10_06_154116) do
   end
 
   create_table "commission_strategies", force: :cascade do |t|
-    t.string "title", null: false
     t.integer "amount", default: 10, null: false
     t.integer "type", default: 0, null: false
     t.integer "fulfillment_schedule", default: 0, null: false
@@ -610,6 +604,7 @@ ActiveRecord::Schema.define(version: 2019_10_06_154116) do
     t.boolean "serviceable", default: false, null: false
     t.boolean "has_outstanding_refund", default: false, null: false
     t.jsonb "system_data", default: {}
+    t.bigint "insurable_id"
     t.bigint "agency_id"
     t.bigint "account_id"
     t.bigint "carrier_id"
@@ -621,7 +616,7 @@ ActiveRecord::Schema.define(version: 2019_10_06_154116) do
     t.index ["account_id"], name: "index_policies_on_account_id"
     t.index ["agency_id"], name: "index_policies_on_agency_id"
     t.index ["carrier_id"], name: "index_policies_on_carrier_id"
-    t.index ["number"], name: "index_policies_on_number", unique: true
+    t.index ["insurable_id"], name: "index_policies_on_insurable_id"
     t.index ["policy_type_id"], name: "index_policies_on_policy_type_id"
   end
 
@@ -720,6 +715,7 @@ ActiveRecord::Schema.define(version: 2019_10_06_154116) do
     t.bigint "commission_strategy_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "estimate"
     t.index ["billing_strategy_id"], name: "index_policy_premia_on_billing_strategy_id"
     t.index ["commission_strategy_id"], name: "index_policy_premia_on_commission_strategy_id"
     t.index ["policy_id"], name: "index_policy_premia_on_policy_id"
@@ -794,7 +790,6 @@ ActiveRecord::Schema.define(version: 2019_10_06_154116) do
     t.string "middle_name"
     t.string "title"
     t.string "suffix"
-    t.string "job_title"
     t.string "full_name"
     t.string "contact_email"
     t.string "contact_phone"
@@ -910,6 +905,7 @@ ActiveRecord::Schema.define(version: 2019_10_06_154116) do
     t.string "last_sign_in_ip"
     t.string "stripe_id"
     t.jsonb "payment_methods"
+    t.integer "current_payment_method"
     t.index ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["invitation_token"], name: "index_users_on_invitation_token", unique: true

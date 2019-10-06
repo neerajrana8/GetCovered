@@ -30,8 +30,13 @@ require './db/seeds/functions'
 			  	email = "#{ name[:first].downcase }#{ name[:last].downcase }@#{email_providers[rand(0..3)]}.com"
 	        
 	        unless User.exists?(:email => email)
-				  	@lease.users << User.create!(email: email, password: 'TestingPassword1234', password_confirmation: 'TestingPassword1234',
+				  	user = User.new(email: email, password: 'TestingPassword1234', password_confirmation: 'TestingPassword1234',
 				  													     profile_attributes: { first_name: name[:first], last_name: name[:last] })		
+						if user.save
+							puts "User #{ user.profile.full_name } Saved"
+							@lease.users << user
+							user.attach_payment_source("tok_visa", true) if @lease.users.count == 1
+	        	end
 	        	break        
 		      end
 

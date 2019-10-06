@@ -13,6 +13,7 @@ class CrumService
   include HTTParty
   include ActiveModel::Validations
   include ActiveModel::Conversion
+	include ActionView::Helpers::NumberHelper
   extend ActiveModel::Naming
   
   attr_accessor :action,
@@ -24,6 +25,9 @@ class CrumService
       with: /quote|bind|/, 
       message: "must be from approved list" 
     }
+  
+  # CrumService.get_token
+  # 
     
   def get_token
 	  
@@ -72,12 +76,18 @@ class CrumService
     return call_data
     
 	end
+  
+  # CrumService.refresh_all_class_codes
+  # 
 	
 	def refresh_all_class_codes
 		states().each do |state|
 			get_class_code(state: state)	
 		end
 	end
+  
+  # CrumService.get_class_code
+  # 
 	
 	def get_class_code(state: nil)
 		
@@ -123,92 +133,144 @@ class CrumService
 		end
 		
 	end
+  
+  # CrumService.format_phone(number)
+  # 
+  
+	def format_phone(number = nil)
+		raise ArgumentError, 'Argument "number" cannot be nil' if number.nil?
+		modified_number = number.gsub(/\s+/,'')
+		modified_number = modified_number.gsub(/[()-+.]/,'').tr('-', '')
+		modified_number = modified_number.start_with?('1') &&
+										  modified_number.length > 10 ? modified_number[1..-1] : 
+																										modified_number
+		return number_to_phone(modified_number)
+	end  
+  
+  # CrumService.add_new_quote(args)
+  # 
 	
-	def add_new_quote
+	def add_new_quote(args = {})
+		
+		opts = {
+			user_email: nil,
+			policy_start_date: nil,
+			policy_end_date: nil,
+			business: {
+				number_of_insured: 1,
+				business_name: nil,
+				business_type: nil,
+				phone: nil,
+				website: nil,
+				contact_name: nil,
+				contact_title: nil,
+				contact_phone: nil,
+				contact_email: nil,
+				business_started: nil,
+				business_description: nil,
+				full_time_employees: nil,
+				part_time_employees: nil,
+				major_class: nil,
+				sub_class: nil,
+				class_code: nil,	
+				annual_sales: nil	
+			},
+			premise: {
+				address: nil,
+				owned: nil,	
+				sqr_footage: nil,
+			},
+			policy_limits: {
+				liability: nil,
+				aggregate_limit: nil,
+				building_limit: nil,
+				business_personal_property: nil			
+			}
+		}.merge!(args)
 		
 		get_token()
 		
 		request_template = {
-		  "method": "AddNewBOPQuote",
+		  "method": "AddNewUATQuote",
 		  "quoteDetails": {
 		    "policyService": {
 		      "policyHeader": {
-		        "serviceName": "",
-		        "agencyReferenceID": "",
+		        "serviceName": "BOPAddOrUpdatePolicy",
+		        "agencyReferenceID": Rails.application.credentials.crum[:client_id],
 		        "quoteNumber": "",
 		        "policyNumber": "",
 		        "userCredentials": {
-		          "userName": "username@email.com"
+		          "userName": Rails.application.credentials.crum[:auth][:un]
 		        }
 		      },
 		      "data": {
 		        "producerInfo": {
-		          "name": "Producer Name",
-		          "code": "12345",
-		          "producerContactName": "Producer Contact Name",
-		          "producerEmail": "Producer Contact Email"
+		          "name": "Get Covered LLC",
+		          "code": Rails.application.credentials.crum[:producer_code],
+		          "producerContactName": "Brandon Tobman",
+		          "producerEmail": "brandon@getcoveredllc.com"
 		        },
 		        "account": {
-		          "applicantBusinessType": "Business Type ",
+		          "applicantBusinessType": opts[:business][:business_type],
 		          "insuredInformation": [
 		            {
-		              "numberOfInsured": "1",
-		              "businessName": "Businees Name",
-		              "address1": "Address1",
-		              "address2": "address2",
-		              "city": "City",
-		              "state": "State",
-		              "zipCode": "1234",
-		              "county": "county",
-		              "primaryPhone": "714-965-1776",
-		              "applicantWebsiteUrl": "http://website.com/"
+		              "numberOfInsured": opts[:business][:number_of_insured],
+		              "businessName": opts[:business][:business_name],
+		              "address1": "#{ opts[:premise][:address][:street_number] } #{ opts[:premise][:address][:street_name] }",
+		              "address2": "",
+		              "city": opts[:premise][:address][:city],
+		              "state": opts[:premise][:address][:state],
+		              "zipCode": opts[:premise][:address][:zip_code],
+		              "county": opts[:premise][:address][:county],
+		              "primaryPhone": format_phone(opts[:business][:phone]),
+		              "applicantWebsiteUrl": opts[:business][:website]
 		            }
 		          ],
 		          "contactInformation": [
 		            {
-		              "contactName": "contactName",
-		              "contactTitle": "contactTitle",
-		              "contactPhone": "contactPhone",
-		              "contactEmail": "contactEmail"
+		              "contactName": opts[:business][:contact_name],
+		              "contactTitle": opts[:business][:contact_title],
+		              "contactPhone": format_phone(opts[:business][:contact_phone]),
+		              "contactEmail": opts[:business][:contact_email]
 		            }
 		          ],
 		          "natureOfBusiness": {
-		            "businessDateStarted": "businessDateStarted",
-		            "descriptionOfPrimaryOperation": "descriptionOfPrimaryOperation"
+		            "businessDateStarted": opts[:business][:business_started].strftime('%Y-%m-%d'),
+		            "descriptionOfPrimaryOperation": opts[:business][:business_description]
 		          },
 		          "premises": [
 		            {
 		              "locationNumber": "1",
-		              "street": "street",
-		              "city": "city",
-		              "state": "state",
-		              "county": "county",
-		              "zipCode": "92646",
-		              "premisesFullTimeEmployee": "1",
-		              "premisesPartTimeEmployee": "0",
+		              "street": "#{ opts[:premise][:address][:street_number] } #{ opts[:premise][:address][:street_name] }",
+		              "city": opts[:premise][:address][:city],
+		              "state": opts[:premise][:address][:state],
+		              "county": opts[:premise][:address][:county],
+		              "zipCode": opts[:premise][:address][:zip_code],
+		              "premisesFullTimeEmployee": opts[:business][:full_time_employees],
+		              "premisesPartTimeEmployee": opts[:business][:part_time_employees],
 		              "occupancy": {
-		                "majorClass": "majorClass",
-		                "subClass": "subClass",
-		                "classCode": "classCode"
+		                "majorClass": opts[:business][:major_class],
+		                "subClass": opts[:business][:sub_class],
+		                "classCode": opts[:business][:class_code]
 		              },
-		              "isBuildingOwned": "No",
-		              "squareFootage": "0000",
-		              "annualSales": "0000",
-		              "buildingLimit": "0000",
-		              "businessPropertyPersonallimit": "000000",
+		              "isBuildingOwned": opts[:premise][:owned],
+		              "squareFootage": opts[:premise][:sqr_footage],
+		              "annualSales": opts[:business][:annual_sales],
+		              "buildingLimit": opts[:policy_limits][:building_limit],
+		              "businessPropertyPersonallimit": opts[:policy_limits][:business_personal_property],
 		              "eligible": ""
 		            }
 		          ],
 		          "otherBusinessVenture": "none"
 		        },
 		        "policy": {
-		          "effectiveDate": "2019-06-10",
-		          "expirationDate": "2020-05-10",
+		          "effectiveDate": opts[:policy_start_date].strftime('%Y-%m-%d'),
+		          "expirationDate": opts[:policy_end_date].strftime('%Y-%m-%d'),
 		          "liablityCoverages": {
-		            "liablityOccurence": "00000",
-		            "liablityAggregate": "00000",
-		            "liablityBldgLimit": "00000",
-		            "liablityPersonalPropertyLimit": "00000"
+		            "liablityOccurence": opts[:policy_limits][:liability],
+		            "liablityAggregate": opts[:policy_limits][:aggregate_limit],
+		            "liablityBldgLimit": opts[:policy_limits][:building_limit],
+		            "liablityPersonalPropertyLimit": opts[:policy_limits][:business_personal_property]
 		          },
 		          "policyID": "",
 		          "quoteID": "",
@@ -218,7 +280,7 @@ class CrumService
 		          "quoteNumber": "",
 		          "policyNumber": "",
 		          "status": "",
-		          "transactionDate": "2019-05-08",
+		          "transactionDate": Time.now.strftime('%Y-%m-%d'),
 		          "policyType": "New",
 		          "writingCompany": "07",
 		          "totalInsuredValuePerPolicy": "",
@@ -296,11 +358,38 @@ class CrumService
 		    }
 		  }
 		}
-
+		
+# 		start_time = Time.now
+# 		
+# 		error = false
+# 			
+# 		begin	
+#     	request = HTTParty.post(Rails.application.credentials.crum[:uri][:add_quote],
+#     													body: request_template.to_json,
+# 															headers: {
+# 																"Content-Type": "application/json",
+# 																"Authorization": self.token["IdToken"]
+# 															})
+#     rescue => e
+#     	puts "ERROR\n".red
+#       pp e
+#       error = true
+#     end
+#     
+#     end_time = Time.now
+#     
+# 		@event = Agency.find(1).events.create!(request: request_template.to_json, 
+# 																					 response: request.to_json,
+# 																					 started: start_time,
+# 																					 completed: end_time,
+# 																					 status: error ? 'error' : 'success',
+# 																					 verb: 'post',
+# 																					 process: 'new_crum_quote',
+# 																					 endpoint: Rails.application.credentials.crum[:uri][:add_quote])
 				
 	end
   
-  # states
+  # CrumService.states
   # method to return an array of state abbrivations
   
   def states
