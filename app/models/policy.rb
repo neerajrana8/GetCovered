@@ -91,7 +91,10 @@ class Policy < ApplicationRecord
     through: :charges
 
   accepts_nested_attributes_for :policy_coverages, :policy_premiums
-	
+  
+  validate :same_agency_as_account
+  validate :status_allowed
+  validate :carrier_agency
 	validates_presence_of :expiration_date, :effective_date
   validate :date_order, 
     unless: Proc.new { |pol| pol.effective_date.nil? or pol.expiration_date.nil? }	
@@ -122,6 +125,25 @@ class Policy < ApplicationRecord
     end
   end
 
+  def same_agency_as_account
+		if agency != account.agency
+			errors.add(:account, 'policy must belong to the same agency as account')
+		end
+  end
+  
+  def carrier_agency
+    if agency.carrier_agency != carrier.carrier_agency
+			errors.add(:agency, 'carrier agency must exist')
+		end
+  end
+
+  def status_allowed
+    if policy_in_system?(true)
+      if (status.AWAITING_PAYMENT? || status.AWAITING_ACH?) && invoices.paid.count.zero?
+        errors.add(:status, 'must have at least one paid invoice to change status')
+      end
+    end
+  end
 
   settings index: { number_of_shards: 1 } do
     mappings dynamic: 'false' do
