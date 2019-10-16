@@ -2,7 +2,7 @@
 # V1 User Invoices Controller
 # file: app/controllers/v1/user/invoices_controller.rb
 
-module V1
+module V2
   module User
     class InvoicesController < UserController
       before_action :set_invoice,

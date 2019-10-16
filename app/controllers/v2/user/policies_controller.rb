@@ -2,7 +2,7 @@
 # V1 User Policies Controller
 # file: app/controllers/v1/user/policies_controller.rb
 
-module V1
+module V2
   module User
     class PoliciesController < UserController
       before_action :set_policy,

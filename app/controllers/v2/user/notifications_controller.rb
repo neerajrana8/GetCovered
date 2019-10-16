@@ -2,7 +2,7 @@
 #
 # file: app/controllers/v1/user/notifications_controller.rb
 
-module V1
+module V2
   module User
     class NotificationsController < UserController
       

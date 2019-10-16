@@ -3,7 +3,7 @@
 # V1 User Users Controller
 # file: app/controllers/v1/user/users_controller.rb
 
-module V1
+module V2
   module User
     class UsersController < UserController
       before_action :set_user

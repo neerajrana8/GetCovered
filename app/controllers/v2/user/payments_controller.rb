@@ -2,7 +2,7 @@
 # V1 User Payments Controller
 # file: app/controllers/v1/user/payments_controller.rb
 
-module V1
+module V2
   module User
     class PaymentsController < UserController
       before_action :set_payment,

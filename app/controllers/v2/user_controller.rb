@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
-# V1 User Controller
+# V2 User Controller
 # file: app/controllers/v1/user_controller.rb
 
-module V1
+module V2
   class UserController < V1Controller
     before_action :authenticate_user!
 

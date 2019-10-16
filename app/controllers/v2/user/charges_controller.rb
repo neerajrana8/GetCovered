@@ -2,7 +2,7 @@
 # V1 User Charges Controller
 # file: app/controllers/v1/user/charges_controller.rb
 
-module V1
+module V2
   module User
     class ChargesController < UserController
       before_action :set_charge, only: :show

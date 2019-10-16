@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-# V1 Staff Controller
+# V2 Staff Controller
 # file: app/controllers/v1/staff_controller.rb
-module V1
+module V2
   class StaffController < V1Controller
     before_action :authenticate_staff!
     before_action :set_scope_association

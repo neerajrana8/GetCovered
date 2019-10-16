@@ -2,7 +2,7 @@
 # V1 User Coverage Levels Controller
 # file: app/controllers/v1/user/coverage_levels_controller.rb
 
-module V1
+module V2
   module User
     class CoverageLevelsController < UserController
       before_action :set_carrier
