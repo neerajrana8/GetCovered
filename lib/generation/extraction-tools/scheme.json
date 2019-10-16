@@ -1,0 +1,5716 @@
+{
+  "models": {
+    "Account": {
+      "fields": {
+        "agency_id": {
+          "name": "agency_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "agency"
+        },
+        "call_sign": {
+          "name": "call_sign",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "contact_info": {
+          "name": "contact_info",
+          "type": "jsonb",
+          "sql_type": "jsonb"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "enabled": {
+          "name": "enabled",
+          "type": "boolean",
+          "sql_type": "boolean"
+        },
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "sql_type": "bigint"
+        },
+        "settings": {
+          "name": "settings",
+          "type": "jsonb",
+          "sql_type": "jsonb"
+        },
+        "slug": {
+          "name": "slug",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "staff_id": {
+          "name": "staff_id",
+          "type": "integer",
+          "sql_type": "bigint"
+        },
+        "stripe_id": {
+          "name": "stripe_id",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "title": {
+          "name": "title",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "tos_acceptance_ip": {
+          "name": "tos_acceptance_ip",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "tos_accepted": {
+          "name": "tos_accepted",
+          "type": "boolean",
+          "sql_type": "boolean"
+        },
+        "tos_accepted_at": {
+          "name": "tos_accepted_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "verified": {
+          "name": "verified",
+          "type": "boolean",
+          "sql_type": "boolean"
+        },
+        "whitelabel": {
+          "name": "whitelabel",
+          "type": "boolean",
+          "sql_type": "boolean"
+        }
+      },
+      "associations": {
+        "addresses": {
+          "source_model": "Account",
+          "type": "has_many",
+          "target": [
+            "Address"
+          ],
+          "as": "addressable",
+          "autosave": true
+        },
+        "agency": {
+          "source_model": "Account",
+          "type": "belongs_to",
+          "polymorphic": false,
+          "foreign_key": "agency_id",
+          "target": [
+            "Agency"
+          ]
+        },
+        "branding_profiles": {
+          "source_model": "Account",
+          "type": "has_many",
+          "target": [
+            "BrandingProfile"
+          ],
+          "as": "profileable"
+        },
+        "events": {
+          "source_model": "Account",
+          "type": "has_many",
+          "target": [
+            "Event"
+          ],
+          "as": "eventable"
+        },
+        "histories": {
+          "source_model": "Account",
+          "type": "has_many",
+          "target": [
+            "History"
+          ],
+          "as": "recordable"
+        },
+        "insurables": {
+          "source_model": "Account",
+          "type": "has_many",
+          "target": [
+            "Insurable"
+          ]
+        },
+        "staff": {
+          "source_model": "Account",
+          "type": "has_many",
+          "target": [
+            "Staff"
+          ],
+          "as": "organizable"
+        }
+      }
+    },
+    "Address": {
+      "fields": {
+        "addressable_id": {
+          "name": "addressable_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "addressable"
+        },
+        "addressable_type": {
+          "name": "addressable_type",
+          "type": "belongs_to_type",
+          "sql_type": "character varying",
+          "association_name": "addressable"
+        },
+        "city": {
+          "name": "city",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "country": {
+          "name": "country",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "county": {
+          "name": "county",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "full": {
+          "name": "full",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "full_searchable": {
+          "name": "full_searchable",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "sql_type": "bigint"
+        },
+        "latitude": {
+          "name": "latitude",
+          "type": "float",
+          "sql_type": "double precision"
+        },
+        "longitude": {
+          "name": "longitude",
+          "type": "float",
+          "sql_type": "double precision"
+        },
+        "plus_four": {
+          "name": "plus_four",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "primary": {
+          "name": "primary",
+          "type": "boolean",
+          "sql_type": "boolean"
+        },
+        "state": {
+          "name": "state",
+          "type": "enum",
+          "sql_type": "integer",
+          "enum_values": {
+            "AK": 0,
+            "AL": 1,
+            "AR": 2,
+            "AZ": 3,
+            "CA": 4,
+            "CO": 5,
+            "CT": 6,
+            "DC": 7,
+            "DE": 8,
+            "FL": 9,
+            "GA": 10,
+            "HI": 11,
+            "IA": 12,
+            "ID": 13,
+            "IL": 14,
+            "IN": 15,
+            "KS": 16,
+            "KY": 17,
+            "LA": 18,
+            "MA": 19,
+            "MD": 20,
+            "ME": 21,
+            "MI": 22,
+            "MN": 23,
+            "MO": 24,
+            "MS": 25,
+            "MT": 26,
+            "NC": 27,
+            "ND": 28,
+            "NE": 29,
+            "NH": 30,
+            "NJ": 31,
+            "NM": 32,
+            "NV": 33,
+            "NY": 34,
+            "OH": 35,
+            "OK": 36,
+            "OR": 37,
+            "PA": 38,
+            "RI": 39,
+            "SC": 40,
+            "SD": 41,
+            "TN": 42,
+            "TX": 43,
+            "UT": 44,
+            "VA": 45,
+            "VT": 46,
+            "WA": 47,
+            "WI": 48,
+            "WV": 49,
+            "WY": 50
+          }
+        },
+        "street_name": {
+          "name": "street_name",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "street_number": {
+          "name": "street_number",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "street_two": {
+          "name": "street_two",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "timezone": {
+          "name": "timezone",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "zip_code": {
+          "name": "zip_code",
+          "type": "string",
+          "sql_type": "character varying"
+        }
+      },
+      "associations": {
+        "addressable": {
+          "source_model": "Address",
+          "type": "belongs_to",
+          "polymorphic": true,
+          "foreign_key": "addressable_id",
+          "foreign_type": "addressable_type",
+          "target": [
+
+          ],
+          "optional": true
+        }
+      }
+    },
+    "Agency": {
+      "fields": {
+        "agency_id": {
+          "name": "agency_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "agency"
+        },
+        "call_sign": {
+          "name": "call_sign",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "contact_info": {
+          "name": "contact_info",
+          "type": "jsonb",
+          "sql_type": "jsonb"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "enabled": {
+          "name": "enabled",
+          "type": "boolean",
+          "sql_type": "boolean"
+        },
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "sql_type": "bigint"
+        },
+        "master_agency": {
+          "name": "master_agency",
+          "type": "boolean",
+          "sql_type": "boolean"
+        },
+        "settings": {
+          "name": "settings",
+          "type": "jsonb",
+          "sql_type": "jsonb"
+        },
+        "slug": {
+          "name": "slug",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "staff_id": {
+          "name": "staff_id",
+          "type": "integer",
+          "sql_type": "bigint"
+        },
+        "stripe_id": {
+          "name": "stripe_id",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "title": {
+          "name": "title",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "tos_acceptance_ip": {
+          "name": "tos_acceptance_ip",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "tos_accepted": {
+          "name": "tos_accepted",
+          "type": "boolean",
+          "sql_type": "boolean"
+        },
+        "tos_accepted_at": {
+          "name": "tos_accepted_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "verified": {
+          "name": "verified",
+          "type": "boolean",
+          "sql_type": "boolean"
+        },
+        "whitelabel": {
+          "name": "whitelabel",
+          "type": "boolean",
+          "sql_type": "boolean"
+        }
+      },
+      "associations": {
+        "account_staff": {
+          "source_model": "Agency",
+          "type": "has_many",
+          "through": "accounts",
+          "target": [
+            "Staff"
+          ],
+          "as": "organizable"
+        },
+        "accounts": {
+          "source_model": "Agency",
+          "type": "has_many",
+          "target": [
+            "Account"
+          ]
+        },
+        "addresses": {
+          "source_model": "Agency",
+          "type": "has_many",
+          "target": [
+            "Address"
+          ],
+          "as": "addressable",
+          "autosave": true
+        },
+        "agencies": {
+          "source_model": "Agency",
+          "type": "has_many",
+          "target": [
+            "Agency"
+          ]
+        },
+        "agency": {
+          "source_model": "Agency",
+          "type": "belongs_to",
+          "polymorphic": false,
+          "foreign_key": "agency_id",
+          "target": [
+            "Agency"
+          ],
+          "optional": true
+        },
+        "billing_strategies": {
+          "source_model": "Agency",
+          "type": "has_many",
+          "target": [
+            "BillingStrategy"
+          ]
+        },
+        "branding_profiles": {
+          "source_model": "Agency",
+          "type": "has_many",
+          "target": [
+            "BrandingProfile"
+          ],
+          "as": "profileable"
+        },
+        "carrier_agencies": {
+          "source_model": "Agency",
+          "type": "has_many",
+          "target": [
+            "CarrierAgency"
+          ]
+        },
+        "carrier_agency_authorizations": {
+          "source_model": "Agency",
+          "type": "has_many",
+          "through": "carrier_agencies",
+          "target": [
+            "CarrierAgencyAuthorization"
+          ]
+        },
+        "carriers": {
+          "source_model": "Agency",
+          "type": "has_many",
+          "through": "carrier_agencies",
+          "target": [
+            "Carrier"
+          ]
+        },
+        "commission_strategies": {
+          "source_model": "Agency",
+          "type": "has_many",
+          "target": [
+            "CommissionStrategy"
+          ],
+          "as": "commissionable"
+        },
+        "events": {
+          "source_model": "Agency",
+          "type": "has_many",
+          "target": [
+            "Event"
+          ],
+          "as": "eventable"
+        },
+        "fees": {
+          "source_model": "Agency",
+          "type": "has_many",
+          "target": [
+            "Fee"
+          ],
+          "as": "ownerable"
+        },
+        "insurables": {
+          "source_model": "Agency",
+          "type": "has_many",
+          "through": "accounts",
+          "target": [
+            "Insurable"
+          ]
+        },
+        "staff": {
+          "source_model": "Agency",
+          "type": "has_many",
+          "target": [
+            "Staff"
+          ],
+          "as": "organizable"
+        }
+      }
+    },
+    "ApplicationModule": {
+      "fields": {
+        "created_at": {
+          "name": "created_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "enabled": {
+          "name": "enabled",
+          "type": "boolean",
+          "sql_type": "boolean"
+        },
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "sql_type": "bigint"
+        },
+        "nodes": {
+          "name": "nodes",
+          "type": "jsonb",
+          "sql_type": "jsonb"
+        },
+        "slug": {
+          "name": "slug",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "title": {
+          "name": "title",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        }
+      },
+      "associations": {
+      }
+    },
+    "Assignment": {
+      "fields": {
+        "assignable_id": {
+          "name": "assignable_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "assignable"
+        },
+        "assignable_type": {
+          "name": "assignable_type",
+          "type": "belongs_to_type",
+          "sql_type": "character varying",
+          "association_name": "assignable"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "sql_type": "bigint"
+        },
+        "primary": {
+          "name": "primary",
+          "type": "boolean",
+          "sql_type": "boolean"
+        },
+        "staff_id": {
+          "name": "staff_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "staff"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        }
+      },
+      "associations": {
+        "assignable": {
+          "source_model": "Assignment",
+          "type": "belongs_to",
+          "polymorphic": true,
+          "foreign_key": "assignable_id",
+          "foreign_type": "assignable_type",
+          "target": [
+
+          ]
+        },
+        "staff": {
+          "source_model": "Assignment",
+          "type": "belongs_to",
+          "polymorphic": false,
+          "foreign_key": "staff_id",
+          "target": [
+            "Staff"
+          ]
+        }
+      }
+    },
+    "BillingStrategy": {
+      "fields": {
+        "agency_id": {
+          "name": "agency_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "agency"
+        },
+        "carrier_id": {
+          "name": "carrier_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "carrier"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "enabled": {
+          "name": "enabled",
+          "type": "boolean",
+          "sql_type": "boolean"
+        },
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "sql_type": "bigint"
+        },
+        "locked": {
+          "name": "locked",
+          "type": "boolean",
+          "sql_type": "boolean"
+        },
+        "new_business": {
+          "name": "new_business",
+          "type": "jsonb",
+          "sql_type": "jsonb"
+        },
+        "policy_type_id": {
+          "name": "policy_type_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "policy_type"
+        },
+        "renewal": {
+          "name": "renewal",
+          "type": "jsonb",
+          "sql_type": "jsonb"
+        },
+        "slug": {
+          "name": "slug",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "title": {
+          "name": "title",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        }
+      },
+      "associations": {
+        "agency": {
+          "source_model": "BillingStrategy",
+          "type": "belongs_to",
+          "polymorphic": false,
+          "foreign_key": "agency_id",
+          "target": [
+            "Agency"
+          ]
+        },
+        "carrier": {
+          "source_model": "BillingStrategy",
+          "type": "belongs_to",
+          "polymorphic": false,
+          "foreign_key": "carrier_id",
+          "target": [
+            "Carrier"
+          ]
+        },
+        "fees": {
+          "source_model": "BillingStrategy",
+          "type": "has_many",
+          "target": [
+            "Fee"
+          ],
+          "as": "assignable",
+          "autosave": true
+        },
+        "policy_type": {
+          "source_model": "BillingStrategy",
+          "type": "belongs_to",
+          "polymorphic": false,
+          "foreign_key": "policy_type_id",
+          "target": [
+            "PolicyType"
+          ]
+        }
+      }
+    },
+    "BrandingProfile": {
+      "fields": {
+        "created_at": {
+          "name": "created_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "default": {
+          "name": "default",
+          "type": "boolean",
+          "sql_type": "boolean"
+        },
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "sql_type": "bigint"
+        },
+        "profileable_id": {
+          "name": "profileable_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "profileable"
+        },
+        "profileable_type": {
+          "name": "profileable_type",
+          "type": "belongs_to_type",
+          "sql_type": "character varying",
+          "association_name": "profileable"
+        },
+        "styles": {
+          "name": "styles",
+          "type": "jsonb",
+          "sql_type": "jsonb"
+        },
+        "title": {
+          "name": "title",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "url": {
+          "name": "url",
+          "type": "string",
+          "sql_type": "character varying"
+        }
+      },
+      "associations": {
+        "profileable": {
+          "source_model": "BrandingProfile",
+          "type": "belongs_to",
+          "polymorphic": true,
+          "foreign_key": "profileable_id",
+          "foreign_type": "profileable_type",
+          "target": [
+
+          ]
+        }
+      }
+    },
+    "Carrier": {
+      "fields": {
+        "bindable": {
+          "name": "bindable",
+          "type": "boolean",
+          "sql_type": "boolean"
+        },
+        "call_sign": {
+          "name": "call_sign",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "enabled": {
+          "name": "enabled",
+          "type": "boolean",
+          "sql_type": "boolean"
+        },
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "sql_type": "bigint"
+        },
+        "integration_designation": {
+          "name": "integration_designation",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "quotable": {
+          "name": "quotable",
+          "type": "boolean",
+          "sql_type": "boolean"
+        },
+        "rateable": {
+          "name": "rateable",
+          "type": "boolean",
+          "sql_type": "boolean"
+        },
+        "settings": {
+          "name": "settings",
+          "type": "jsonb",
+          "sql_type": "jsonb"
+        },
+        "slug": {
+          "name": "slug",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "syncable": {
+          "name": "syncable",
+          "type": "boolean",
+          "sql_type": "boolean"
+        },
+        "title": {
+          "name": "title",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "verifiable": {
+          "name": "verifiable",
+          "type": "boolean",
+          "sql_type": "boolean"
+        }
+      },
+      "associations": {
+        "agencies": {
+          "source_model": "Carrier",
+          "type": "has_many",
+          "through": "carrier_agencies",
+          "target": [
+            "Agency"
+          ]
+        },
+        "carrier_agencies": {
+          "source_model": "Carrier",
+          "type": "has_many",
+          "target": [
+            "CarrierAgency"
+          ]
+        },
+        "carrier_agency_authorizations": {
+          "source_model": "Carrier",
+          "type": "has_many",
+          "through": "carrier_agencies",
+          "target": [
+            "CarrierAgencyAuthorization"
+          ]
+        },
+        "carrier_class_codes": {
+          "source_model": "Carrier",
+          "type": "has_many",
+          "target": [
+            "CarrierClassCode"
+          ]
+        },
+        "carrier_insurable_profiles": {
+          "source_model": "Carrier",
+          "type": "has_many",
+          "target": [
+            "CarrierInsurableProfile"
+          ]
+        },
+        "carrier_insurable_types": {
+          "source_model": "Carrier",
+          "type": "has_many",
+          "target": [
+            "CarrierInsurableType"
+          ]
+        },
+        "carrier_policy_type_availabilities": {
+          "source_model": "Carrier",
+          "type": "has_many",
+          "through": "carrier_policy_types",
+          "target": [
+            "CarrierPolicyTypeAvailability"
+          ]
+        },
+        "carrier_policy_types": {
+          "source_model": "Carrier",
+          "type": "has_many",
+          "target": [
+            "CarrierPolicyType"
+          ]
+        },
+        "commission_strategies": {
+          "source_model": "Carrier",
+          "type": "has_many",
+          "target": [
+            "CommissionStrategy"
+          ]
+        },
+        "fees": {
+          "source_model": "Carrier",
+          "type": "has_many",
+          "target": [
+            "Fee"
+          ],
+          "as": "ownerable"
+        },
+        "policy_application_fields": {
+          "source_model": "Carrier",
+          "type": "has_many",
+          "target": [
+            "PolicyApplicationField"
+          ]
+        },
+        "policy_types": {
+          "source_model": "Carrier",
+          "type": "has_many",
+          "through": "carrier_policy_types",
+          "target": [
+            "PolicyType"
+          ]
+        }
+      }
+    },
+    "CarrierAgency": {
+      "fields": {
+        "agency_id": {
+          "name": "agency_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "agency"
+        },
+        "carrier_id": {
+          "name": "carrier_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "carrier"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "external_carrier_id": {
+          "name": "external_carrier_id",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "sql_type": "bigint"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        }
+      },
+      "associations": {
+        "agency": {
+          "source_model": "CarrierAgency",
+          "type": "belongs_to",
+          "polymorphic": false,
+          "foreign_key": "agency_id",
+          "target": [
+            "Agency"
+          ]
+        },
+        "carrier": {
+          "source_model": "CarrierAgency",
+          "type": "belongs_to",
+          "polymorphic": false,
+          "foreign_key": "carrier_id",
+          "target": [
+            "Carrier"
+          ]
+        },
+        "carrier_agency_authorizations": {
+          "source_model": "CarrierAgency",
+          "type": "has_many",
+          "target": [
+            "CarrierAgencyAuthorization"
+          ]
+        }
+      }
+    },
+    "CarrierAgencyAuthorization": {
+      "fields": {
+        "agency_id": {
+          "name": "agency_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "agency"
+        },
+        "available": {
+          "name": "available",
+          "type": "boolean",
+          "sql_type": "boolean"
+        },
+        "carrier_agency_id": {
+          "name": "carrier_agency_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "carrier_agency"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "sql_type": "bigint"
+        },
+        "policy_type_id": {
+          "name": "policy_type_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "policy_type"
+        },
+        "state": {
+          "name": "state",
+          "type": "enum",
+          "sql_type": "integer",
+          "enum_values": {
+            "AK": 0,
+            "AL": 1,
+            "AR": 2,
+            "AZ": 3,
+            "CA": 4,
+            "CO": 5,
+            "CT": 6,
+            "DC": 7,
+            "DE": 8,
+            "FL": 9,
+            "GA": 10,
+            "HI": 11,
+            "IA": 12,
+            "ID": 13,
+            "IL": 14,
+            "IN": 15,
+            "KS": 16,
+            "KY": 17,
+            "LA": 18,
+            "MA": 19,
+            "MD": 20,
+            "ME": 21,
+            "MI": 22,
+            "MN": 23,
+            "MO": 24,
+            "MS": 25,
+            "MT": 26,
+            "NC": 27,
+            "ND": 28,
+            "NE": 29,
+            "NH": 30,
+            "NJ": 31,
+            "NM": 32,
+            "NV": 33,
+            "NY": 34,
+            "OH": 35,
+            "OK": 36,
+            "OR": 37,
+            "PA": 38,
+            "RI": 39,
+            "SC": 40,
+            "SD": 41,
+            "TN": 42,
+            "TX": 43,
+            "UT": 44,
+            "VA": 45,
+            "VT": 46,
+            "WA": 47,
+            "WI": 48,
+            "WV": 49,
+            "WY": 50
+          }
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "zip_code_blacklist": {
+          "name": "zip_code_blacklist",
+          "type": "jsonb",
+          "sql_type": "jsonb"
+        }
+      },
+      "associations": {
+        "agency": {
+          "source_model": "CarrierAgencyAuthorization",
+          "type": "belongs_to",
+          "polymorphic": false,
+          "foreign_key": "agency_id",
+          "target": [
+            "Agency"
+          ]
+        },
+        "carrier_agency": {
+          "source_model": "CarrierAgencyAuthorization",
+          "type": "belongs_to",
+          "polymorphic": false,
+          "foreign_key": "carrier_agency_id",
+          "target": [
+            "CarrierAgency"
+          ]
+        },
+        "fees": {
+          "source_model": "CarrierAgencyAuthorization",
+          "type": "has_many",
+          "target": [
+            "Fee"
+          ],
+          "as": "assignable"
+        },
+        "policy_type": {
+          "source_model": "CarrierAgencyAuthorization",
+          "type": "belongs_to",
+          "polymorphic": false,
+          "foreign_key": "policy_type_id",
+          "target": [
+            "PolicyType"
+          ]
+        }
+      }
+    },
+    "CarrierClassCode": {
+      "fields": {
+        "appetite": {
+          "name": "appetite",
+          "type": "boolean",
+          "sql_type": "boolean"
+        },
+        "carrier_id": {
+          "name": "carrier_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "carrier"
+        },
+        "class_code": {
+          "name": "class_code",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "enabled": {
+          "name": "enabled",
+          "type": "boolean",
+          "sql_type": "boolean"
+        },
+        "eq": {
+          "name": "eq",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "eqsl": {
+          "name": "eqsl",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "external_id": {
+          "name": "external_id",
+          "type": "integer",
+          "sql_type": "integer"
+        },
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "sql_type": "bigint"
+        },
+        "industry_program": {
+          "name": "industry_program",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "major_category": {
+          "name": "major_category",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "naics_code": {
+          "name": "naics_code",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "policy_type_id": {
+          "name": "policy_type_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "policy_type"
+        },
+        "search_value": {
+          "name": "search_value",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "sic_code": {
+          "name": "sic_code",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "state_code": {
+          "name": "state_code",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "sub_category": {
+          "name": "sub_category",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        }
+      },
+      "associations": {
+        "carrier": {
+          "source_model": "CarrierClassCode",
+          "type": "belongs_to",
+          "polymorphic": false,
+          "foreign_key": "carrier_id",
+          "target": [
+            "Carrier"
+          ]
+        },
+        "policy_type": {
+          "source_model": "CarrierClassCode",
+          "type": "belongs_to",
+          "polymorphic": false,
+          "foreign_key": "policy_type_id",
+          "target": [
+            "PolicyType"
+          ]
+        }
+      }
+    },
+    "CarrierInsurableProfile": {
+      "fields": {
+        "carrier_id": {
+          "name": "carrier_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "carrier"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "data": {
+          "name": "data",
+          "type": "jsonb",
+          "sql_type": "jsonb"
+        },
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "sql_type": "bigint"
+        },
+        "insurable_id": {
+          "name": "insurable_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "insurable"
+        },
+        "traits": {
+          "name": "traits",
+          "type": "jsonb",
+          "sql_type": "jsonb"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        }
+      },
+      "associations": {
+        "carrier": {
+          "source_model": "CarrierInsurableProfile",
+          "type": "belongs_to",
+          "polymorphic": false,
+          "foreign_key": "carrier_id",
+          "target": [
+            "Carrier"
+          ]
+        },
+        "insurable": {
+          "source_model": "CarrierInsurableProfile",
+          "type": "belongs_to",
+          "polymorphic": false,
+          "foreign_key": "insurable_id",
+          "target": [
+            "Insurable"
+          ]
+        }
+      }
+    },
+    "CarrierInsurableType": {
+      "fields": {
+        "carrier_id": {
+          "name": "carrier_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "carrier"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "enabled": {
+          "name": "enabled",
+          "type": "boolean",
+          "sql_type": "boolean"
+        },
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "sql_type": "bigint"
+        },
+        "insurable_type_id": {
+          "name": "insurable_type_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "insurable_type"
+        },
+        "profile_data": {
+          "name": "profile_data",
+          "type": "jsonb",
+          "sql_type": "jsonb"
+        },
+        "profile_traits": {
+          "name": "profile_traits",
+          "type": "jsonb",
+          "sql_type": "jsonb"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        }
+      },
+      "associations": {
+        "carrier": {
+          "source_model": "CarrierInsurableType",
+          "type": "belongs_to",
+          "polymorphic": false,
+          "foreign_key": "carrier_id",
+          "target": [
+            "Carrier"
+          ]
+        },
+        "insurable_type": {
+          "source_model": "CarrierInsurableType",
+          "type": "belongs_to",
+          "polymorphic": false,
+          "foreign_key": "insurable_type_id",
+          "target": [
+            "InsurableType"
+          ]
+        }
+      }
+    },
+    "CarrierPolicyType": {
+      "fields": {
+        "application_fields": {
+          "name": "application_fields",
+          "type": "jsonb",
+          "sql_type": "jsonb"
+        },
+        "application_questions": {
+          "name": "application_questions",
+          "type": "jsonb",
+          "sql_type": "jsonb"
+        },
+        "application_required": {
+          "name": "application_required",
+          "type": "boolean",
+          "sql_type": "boolean"
+        },
+        "carrier_id": {
+          "name": "carrier_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "carrier"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "sql_type": "bigint"
+        },
+        "policy_defaults": {
+          "name": "policy_defaults",
+          "type": "jsonb",
+          "sql_type": "jsonb"
+        },
+        "policy_type_id": {
+          "name": "policy_type_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "policy_type"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        }
+      },
+      "associations": {
+        "carrier": {
+          "source_model": "CarrierPolicyType",
+          "type": "belongs_to",
+          "polymorphic": false,
+          "foreign_key": "carrier_id",
+          "target": [
+            "Carrier"
+          ]
+        },
+        "carrier_policy_type_availabilities": {
+          "source_model": "CarrierPolicyType",
+          "type": "has_many",
+          "target": [
+            "CarrierPolicyTypeAvailability"
+          ]
+        },
+        "policy_type": {
+          "source_model": "CarrierPolicyType",
+          "type": "belongs_to",
+          "polymorphic": false,
+          "foreign_key": "policy_type_id",
+          "target": [
+            "PolicyType"
+          ]
+        }
+      }
+    },
+    "CarrierPolicyTypeAvailability": {
+      "fields": {
+        "available": {
+          "name": "available",
+          "type": "boolean",
+          "sql_type": "boolean"
+        },
+        "carrier_policy_type_id": {
+          "name": "carrier_policy_type_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "carrier_policy_type"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "sql_type": "bigint"
+        },
+        "state": {
+          "name": "state",
+          "type": "enum",
+          "sql_type": "integer",
+          "enum_values": {
+            "AK": 0,
+            "AL": 1,
+            "AR": 2,
+            "AZ": 3,
+            "CA": 4,
+            "CO": 5,
+            "CT": 6,
+            "DC": 7,
+            "DE": 8,
+            "FL": 9,
+            "GA": 10,
+            "HI": 11,
+            "IA": 12,
+            "ID": 13,
+            "IL": 14,
+            "IN": 15,
+            "KS": 16,
+            "KY": 17,
+            "LA": 18,
+            "MA": 19,
+            "MD": 20,
+            "ME": 21,
+            "MI": 22,
+            "MN": 23,
+            "MO": 24,
+            "MS": 25,
+            "MT": 26,
+            "NC": 27,
+            "ND": 28,
+            "NE": 29,
+            "NH": 30,
+            "NJ": 31,
+            "NM": 32,
+            "NV": 33,
+            "NY": 34,
+            "OH": 35,
+            "OK": 36,
+            "OR": 37,
+            "PA": 38,
+            "RI": 39,
+            "SC": 40,
+            "SD": 41,
+            "TN": 42,
+            "TX": 43,
+            "UT": 44,
+            "VA": 45,
+            "VT": 46,
+            "WA": 47,
+            "WI": 48,
+            "WV": 49,
+            "WY": 50
+          }
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "zip_code_blacklist": {
+          "name": "zip_code_blacklist",
+          "type": "jsonb",
+          "sql_type": "jsonb"
+        }
+      },
+      "associations": {
+        "carrier_policy_type": {
+          "source_model": "CarrierPolicyTypeAvailability",
+          "type": "belongs_to",
+          "polymorphic": false,
+          "foreign_key": "carrier_policy_type_id",
+          "target": [
+            "CarrierPolicyType"
+          ]
+        },
+        "fees": {
+          "source_model": "CarrierPolicyTypeAvailability",
+          "type": "has_many",
+          "target": [
+            "Fee"
+          ],
+          "as": "assignable"
+        }
+      }
+    },
+    "Charge": {
+      "fields": {
+        "amount": {
+          "name": "amount",
+          "type": "integer",
+          "sql_type": "integer"
+        },
+        "amount_in_queued_refunds": {
+          "name": "amount_in_queued_refunds",
+          "type": "integer",
+          "sql_type": "integer"
+        },
+        "amount_lost_to_disputes": {
+          "name": "amount_lost_to_disputes",
+          "type": "integer",
+          "sql_type": "integer"
+        },
+        "amount_refunded": {
+          "name": "amount_refunded",
+          "type": "integer",
+          "sql_type": "integer"
+        },
+        "amount_returned_via_dispute": {
+          "name": "amount_returned_via_dispute",
+          "type": "integer",
+          "sql_type": "integer"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "dispute_count": {
+          "name": "dispute_count",
+          "type": "integer",
+          "sql_type": "integer"
+        },
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "sql_type": "bigint"
+        },
+        "invoice_id": {
+          "name": "invoice_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "invoice"
+        },
+        "payment_method": {
+          "name": "payment_method",
+          "type": "enum",
+          "sql_type": "integer",
+          "enum_values": {
+            "unknown": 0,
+            "card": 1,
+            "bank_account": 2,
+            "account_credit": 3
+          }
+        },
+        "refund_status": {
+          "name": "refund_status",
+          "type": "enum",
+          "sql_type": "integer",
+          "enum_values": {
+            "not_refunded": 0,
+            "partially_refunded": 1,
+            "totally_refunded": 2
+          }
+        },
+        "status": {
+          "name": "status",
+          "type": "enum",
+          "sql_type": "integer",
+          "enum_values": {
+            "processing": 0,
+            "pending": 1,
+            "succeeded": 2,
+            "failed": 3
+          }
+        },
+        "status_information": {
+          "name": "status_information",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "stripe_id": {
+          "name": "stripe_id",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        }
+      },
+      "associations": {
+        "disputes": {
+          "source_model": "Charge",
+          "type": "has_many",
+          "target": [
+            "Dispute"
+          ]
+        },
+        "invoice": {
+          "source_model": "Charge",
+          "type": "belongs_to",
+          "polymorphic": false,
+          "foreign_key": "invoice_id",
+          "target": [
+            "Invoice"
+          ]
+        },
+        "payments": {
+          "source_model": "Charge",
+          "type": "has_many",
+          "target": [
+            "Payment"
+          ]
+        },
+        "policy": {
+          "source_model": "Charge",
+          "type": "has_one",
+          "through": "invoice",
+          "target": [
+            "Policy"
+          ]
+        },
+        "refunds": {
+          "source_model": "Charge",
+          "type": "has_many",
+          "target": [
+            "Refund"
+          ]
+        },
+        "user": {
+          "source_model": "Charge",
+          "type": "has_one",
+          "through": "invoice",
+          "target": [
+            "User"
+          ]
+        }
+      }
+    },
+    "Claim": {
+      "fields": {
+        "claimant_id": {
+          "name": "claimant_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "claimant"
+        },
+        "claimant_type": {
+          "name": "claimant_type",
+          "type": "belongs_to_type",
+          "sql_type": "character varying",
+          "association_name": "claimant"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "sql_type": "text"
+        },
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "sql_type": "bigint"
+        },
+        "insurable_id": {
+          "name": "insurable_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "insurable"
+        },
+        "policy_id": {
+          "name": "policy_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "policy"
+        },
+        "status": {
+          "name": "status",
+          "type": "enum",
+          "sql_type": "integer",
+          "enum_values": {
+            "submitted": 0,
+            "read": 1,
+            "completed": 2,
+            "rejected": 3
+          }
+        },
+        "subject": {
+          "name": "subject",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "time_of_loss": {
+          "name": "time_of_loss",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        }
+      },
+      "associations": {
+        "claimant": {
+          "source_model": "Claim",
+          "type": "belongs_to",
+          "polymorphic": true,
+          "foreign_key": "claimant_id",
+          "foreign_type": "claimant_type",
+          "target": [
+
+          ]
+        },
+        "histories": {
+          "source_model": "Claim",
+          "type": "has_many",
+          "target": [
+            "History"
+          ],
+          "as": "recordable"
+        },
+        "insurable": {
+          "source_model": "Claim",
+          "type": "belongs_to",
+          "polymorphic": false,
+          "foreign_key": "insurable_id",
+          "target": [
+            "Insurable"
+          ]
+        },
+        "policy": {
+          "source_model": "Claim",
+          "type": "belongs_to",
+          "polymorphic": false,
+          "foreign_key": "policy_id",
+          "target": [
+            "Policy"
+          ]
+        }
+      }
+    },
+    "Commission": {
+      "fields": {
+        "amount": {
+          "name": "amount",
+          "type": "integer",
+          "sql_type": "integer"
+        },
+        "approved": {
+          "name": "approved",
+          "type": "boolean",
+          "sql_type": "boolean"
+        },
+        "commission_strategy_id": {
+          "name": "commission_strategy_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "commission_strategy"
+        },
+        "commissionable_id": {
+          "name": "commissionable_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "commissionable"
+        },
+        "commissionable_type": {
+          "name": "commissionable_type",
+          "type": "belongs_to_type",
+          "sql_type": "character varying",
+          "association_name": "commissionable"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "deductions": {
+          "name": "deductions",
+          "type": "integer",
+          "sql_type": "integer"
+        },
+        "distributes": {
+          "name": "distributes",
+          "type": "date",
+          "sql_type": "date"
+        },
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "sql_type": "bigint"
+        },
+        "paid": {
+          "name": "paid",
+          "type": "boolean",
+          "sql_type": "boolean"
+        },
+        "policy_premium_id": {
+          "name": "policy_premium_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "policy_premium"
+        },
+        "stripe_transaction_id": {
+          "name": "stripe_transaction_id",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "total": {
+          "name": "total",
+          "type": "integer",
+          "sql_type": "integer"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        }
+      },
+      "associations": {
+        "commission_strategy": {
+          "source_model": "Commission",
+          "type": "belongs_to",
+          "polymorphic": false,
+          "foreign_key": "commission_strategy_id",
+          "target": [
+            "CommissionStrategy"
+          ]
+        },
+        "commissionable": {
+          "source_model": "Commission",
+          "type": "belongs_to",
+          "polymorphic": true,
+          "foreign_key": "commissionable_id",
+          "foreign_type": "commissionable_type",
+          "target": [
+
+          ]
+        },
+        "policy_premium": {
+          "source_model": "Commission",
+          "type": "belongs_to",
+          "polymorphic": false,
+          "foreign_key": "policy_premium_id",
+          "target": [
+            "PolicyPremium"
+          ]
+        }
+      }
+    },
+    "CommissionStrategy": {
+      "fields": {
+        "amortize": {
+          "name": "amortize",
+          "type": "boolean",
+          "sql_type": "boolean"
+        },
+        "amount": {
+          "name": "amount",
+          "type": "integer",
+          "sql_type": "integer"
+        },
+        "carrier_id": {
+          "name": "carrier_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "carrier"
+        },
+        "commission_strategy_id": {
+          "name": "commission_strategy_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "commission_strategy"
+        },
+        "commissionable_id": {
+          "name": "commissionable_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "commissionable"
+        },
+        "commissionable_type": {
+          "name": "commissionable_type",
+          "type": "belongs_to_type",
+          "sql_type": "character varying",
+          "association_name": "commissionable"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "enabled": {
+          "name": "enabled",
+          "type": "boolean",
+          "sql_type": "boolean"
+        },
+        "fulfillment_schedule": {
+          "name": "fulfillment_schedule",
+          "type": "enum",
+          "sql_type": "integer",
+          "enum_values": {
+            "MONTHLY": 0,
+            "QUARTERLY": 1,
+            "ANNUALLY": 2,
+            "REAL_TIME": 3
+          }
+        },
+        "house_override": {
+          "name": "house_override",
+          "type": "integer",
+          "sql_type": "integer"
+        },
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "sql_type": "bigint"
+        },
+        "locked": {
+          "name": "locked",
+          "type": "boolean",
+          "sql_type": "boolean"
+        },
+        "override_type": {
+          "name": "override_type",
+          "type": "enum",
+          "sql_type": "integer",
+          "enum_values": {
+            "PERCENT": 0,
+            "FLAT": 1
+          }
+        },
+        "per_payment": {
+          "name": "per_payment",
+          "type": "boolean",
+          "sql_type": "boolean"
+        },
+        "policy_type_id": {
+          "name": "policy_type_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "policy_type"
+        },
+        "title": {
+          "name": "title",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "type": {
+          "name": "type",
+          "type": "enum",
+          "sql_type": "integer",
+          "enum_values": {
+            "PERCENT": 0,
+            "FLAT": 1
+          }
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        }
+      },
+      "associations": {
+        "carrier": {
+          "source_model": "CommissionStrategy",
+          "type": "belongs_to",
+          "polymorphic": false,
+          "foreign_key": "carrier_id",
+          "target": [
+            "Carrier"
+          ]
+        },
+        "commission_strategy": {
+          "source_model": "CommissionStrategy",
+          "type": "belongs_to",
+          "polymorphic": false,
+          "foreign_key": "commission_strategy_id",
+          "target": [
+            "CommissionStrategy"
+          ],
+          "optional": true
+        },
+        "commissionable": {
+          "source_model": "CommissionStrategy",
+          "type": "belongs_to",
+          "polymorphic": true,
+          "foreign_key": "commissionable_id",
+          "foreign_type": "commissionable_type",
+          "target": [
+
+          ]
+        },
+        "policy_type": {
+          "source_model": "CommissionStrategy",
+          "type": "belongs_to",
+          "polymorphic": false,
+          "foreign_key": "policy_type_id",
+          "target": [
+            "PolicyType"
+          ]
+        }
+      }
+    },
+    "Dispute": {
+      "fields": {
+        "active": {
+          "name": "active",
+          "type": "boolean",
+          "sql_type": "boolean"
+        },
+        "amount": {
+          "name": "amount",
+          "type": "integer",
+          "sql_type": "integer"
+        },
+        "charge_id": {
+          "name": "charge_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "charge"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "sql_type": "bigint"
+        },
+        "reason": {
+          "name": "reason",
+          "type": "enum",
+          "sql_type": "integer",
+          "enum_values": {
+            "duplicate": 0,
+            "fraudulent": 1,
+            "subscription_canceled": 2,
+            "product_unacceptable": 3,
+            "product_not_received": 4,
+            "unrecognized": 5,
+            "credit_not_processed": 6,
+            "general": 7,
+            "incorrect_account_details": 8,
+            "insufficient_funds": 9,
+            "bank_cannot_process": 10,
+            "debit_not_authorized": 11,
+            "customer_initiated": 12
+          }
+        },
+        "status": {
+          "name": "status",
+          "type": "enum",
+          "sql_type": "integer",
+          "enum_values": {
+            "warning_needs_response": 0,
+            "warning_under_review": 1,
+            "warning_closed": 2,
+            "needs_response": 3,
+            "under_review": 4,
+            "charge_refunded": 5,
+            "won": 6,
+            "lost": 7
+          }
+        },
+        "stripe_id": {
+          "name": "stripe_id",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        }
+      },
+      "associations": {
+        "charge": {
+          "source_model": "Dispute",
+          "type": "belongs_to",
+          "polymorphic": false,
+          "foreign_key": "charge_id",
+          "target": [
+            "Charge"
+          ]
+        },
+        "invoice": {
+          "source_model": "Dispute",
+          "type": "has_one",
+          "through": "charge",
+          "target": [
+            "Invoice"
+          ]
+        },
+        "policy": {
+          "source_model": "Dispute",
+          "type": "has_one",
+          "through": "invoice",
+          "target": [
+            "Policy"
+          ]
+        },
+        "user": {
+          "source_model": "Dispute",
+          "type": "has_one",
+          "through": "invoice",
+          "target": [
+            "User"
+          ]
+        }
+      }
+    },
+    "Event": {
+      "fields": {
+        "completed": {
+          "name": "completed",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "endpoint": {
+          "name": "endpoint",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "eventable_id": {
+          "name": "eventable_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "eventable"
+        },
+        "eventable_type": {
+          "name": "eventable_type",
+          "type": "belongs_to_type",
+          "sql_type": "character varying",
+          "association_name": "eventable"
+        },
+        "format": {
+          "name": "format",
+          "type": "enum",
+          "sql_type": "integer",
+          "enum_values": {
+            "json": 0,
+            "xml": 1
+          }
+        },
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "sql_type": "bigint"
+        },
+        "interface": {
+          "name": "interface",
+          "type": "enum",
+          "sql_type": "integer",
+          "enum_values": {
+            "REST": 0,
+            "SOAP": 1
+          }
+        },
+        "process": {
+          "name": "process",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "request": {
+          "name": "request",
+          "type": "text",
+          "sql_type": "text"
+        },
+        "response": {
+          "name": "response",
+          "type": "text",
+          "sql_type": "text"
+        },
+        "started": {
+          "name": "started",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "status": {
+          "name": "status",
+          "type": "enum",
+          "sql_type": "integer",
+          "enum_values": {
+            "in_progress": 0,
+            "success": 1,
+            "error": 2
+          }
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "verb": {
+          "name": "verb",
+          "type": "enum",
+          "sql_type": "integer",
+          "enum_values": {
+            "get": 0,
+            "put": 1,
+            "post": 2,
+            "patch": 3,
+            "delete": 4,
+            "options": 5
+          }
+        }
+      },
+      "associations": {
+        "eventable": {
+          "source_model": "Event",
+          "type": "belongs_to",
+          "polymorphic": true,
+          "foreign_key": "eventable_id",
+          "foreign_type": "eventable_type",
+          "target": [
+
+          ]
+        }
+      }
+    },
+    "Fee": {
+      "fields": {
+        "amortize": {
+          "name": "amortize",
+          "type": "boolean",
+          "sql_type": "boolean"
+        },
+        "amount": {
+          "name": "amount",
+          "type": "integer",
+          "sql_type": "integer"
+        },
+        "amount_type": {
+          "name": "amount_type",
+          "type": "enum",
+          "sql_type": "integer",
+          "enum_values": {
+            "FLAT": 0,
+            "PERCENTAGE": 1
+          }
+        },
+        "assignable_id": {
+          "name": "assignable_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "assignable"
+        },
+        "assignable_type": {
+          "name": "assignable_type",
+          "type": "belongs_to_type",
+          "sql_type": "character varying",
+          "association_name": "assignable"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "enabled": {
+          "name": "enabled",
+          "type": "boolean",
+          "sql_type": "boolean"
+        },
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "sql_type": "bigint"
+        },
+        "locked": {
+          "name": "locked",
+          "type": "boolean",
+          "sql_type": "boolean"
+        },
+        "ownerable_id": {
+          "name": "ownerable_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "ownerable"
+        },
+        "ownerable_type": {
+          "name": "ownerable_type",
+          "type": "belongs_to_type",
+          "sql_type": "character varying",
+          "association_name": "ownerable"
+        },
+        "per_payment": {
+          "name": "per_payment",
+          "type": "boolean",
+          "sql_type": "boolean"
+        },
+        "slug": {
+          "name": "slug",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "title": {
+          "name": "title",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "type": {
+          "name": "type",
+          "type": "enum",
+          "sql_type": "integer",
+          "enum_values": {
+            "ORIGINATION": 0,
+            "RENEWAL": 1,
+            "REINSTATEMENT": 2,
+            "MISC": 3
+          }
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        }
+      },
+      "associations": {
+        "assignable": {
+          "source_model": "Fee",
+          "type": "belongs_to",
+          "polymorphic": true,
+          "foreign_key": "assignable_id",
+          "foreign_type": "assignable_type",
+          "target": [
+
+          ]
+        },
+        "ownerable": {
+          "source_model": "Fee",
+          "type": "belongs_to",
+          "polymorphic": true,
+          "foreign_key": "ownerable_id",
+          "foreign_type": "ownerable_type",
+          "target": [
+
+          ]
+        }
+      }
+    },
+    "History": {
+      "fields": {
+        "action": {
+          "name": "action",
+          "type": "enum",
+          "sql_type": "integer",
+          "enum_values": {
+            "create": 0,
+            "update": 1,
+            "remove": 2,
+            "create_related": 3,
+            "update_related": 4,
+            "remove_related": 5
+          }
+        },
+        "authorable_id": {
+          "name": "authorable_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "authorable"
+        },
+        "authorable_type": {
+          "name": "authorable_type",
+          "type": "belongs_to_type",
+          "sql_type": "character varying",
+          "association_name": "authorable"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "data": {
+          "name": "data",
+          "type": "json",
+          "sql_type": "json"
+        },
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "sql_type": "bigint"
+        },
+        "recordable_id": {
+          "name": "recordable_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "recordable"
+        },
+        "recordable_type": {
+          "name": "recordable_type",
+          "type": "belongs_to_type",
+          "sql_type": "character varying",
+          "association_name": "recordable"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        }
+      },
+      "associations": {
+        "authorable": {
+          "source_model": "History",
+          "type": "belongs_to",
+          "polymorphic": true,
+          "foreign_key": "authorable_id",
+          "foreign_type": "authorable_type",
+          "target": [
+
+          ],
+          "optional": true
+        },
+        "recordable": {
+          "source_model": "History",
+          "type": "belongs_to",
+          "polymorphic": true,
+          "foreign_key": "recordable_id",
+          "foreign_type": "recordable_type",
+          "target": [
+
+          ]
+        }
+      }
+    },
+    "Insurable": {
+      "fields": {
+        "account_id": {
+          "name": "account_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "account"
+        },
+        "category": {
+          "name": "category",
+          "type": "enum",
+          "sql_type": "integer",
+          "enum_values": {
+            "property": 0,
+            "entity": 1
+          }
+        },
+        "covered": {
+          "name": "covered",
+          "type": "boolean",
+          "sql_type": "boolean"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "enabled": {
+          "name": "enabled",
+          "type": "boolean",
+          "sql_type": "boolean"
+        },
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "sql_type": "bigint"
+        },
+        "insurable_id": {
+          "name": "insurable_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "insurable"
+        },
+        "insurable_type_id": {
+          "name": "insurable_type_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "insurable_type"
+        },
+        "slug": {
+          "name": "slug",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "title": {
+          "name": "title",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        }
+      },
+      "associations": {
+        "account": {
+          "source_model": "Insurable",
+          "type": "belongs_to",
+          "polymorphic": false,
+          "foreign_key": "account_id",
+          "target": [
+            "Account"
+          ]
+        },
+        "addresses": {
+          "source_model": "Insurable",
+          "type": "has_many",
+          "target": [
+            "Address"
+          ],
+          "as": "addressable",
+          "autosave": true
+        },
+        "assignments": {
+          "source_model": "Insurable",
+          "type": "has_many",
+          "target": [
+            "Assignment"
+          ],
+          "as": "assignable"
+        },
+        "carrier_insurable_profiles": {
+          "source_model": "Insurable",
+          "type": "has_many",
+          "target": [
+            "CarrierInsurableProfile"
+          ]
+        },
+        "events": {
+          "source_model": "Insurable",
+          "type": "has_many",
+          "target": [
+            "Event"
+          ],
+          "as": "eventable"
+        },
+        "insurable": {
+          "source_model": "Insurable",
+          "type": "belongs_to",
+          "polymorphic": false,
+          "foreign_key": "insurable_id",
+          "target": [
+            "Insurable"
+          ],
+          "optional": true
+        },
+        "insurable_rates": {
+          "source_model": "Insurable",
+          "type": "has_many",
+          "target": [
+            "InsurableRate"
+          ]
+        },
+        "insurable_type": {
+          "source_model": "Insurable",
+          "type": "belongs_to",
+          "polymorphic": false,
+          "foreign_key": "insurable_type_id",
+          "target": [
+            "InsurableType"
+          ]
+        },
+        "insurables": {
+          "source_model": "Insurable",
+          "type": "has_many",
+          "target": [
+            "Insurable"
+          ]
+        },
+        "leases": {
+          "source_model": "Insurable",
+          "type": "has_many",
+          "target": [
+            "Lease"
+          ]
+        },
+        "policies": {
+          "source_model": "Insurable",
+          "type": "has_many",
+          "through": "policy_insurables",
+          "target": [
+            "Policy"
+          ]
+        },
+        "policy_applications": {
+          "source_model": "Insurable",
+          "type": "has_many",
+          "through": "policy_insurables",
+          "target": [
+            "PolicyApplication"
+          ]
+        },
+        "policy_insurables": {
+          "source_model": "Insurable",
+          "type": "has_many",
+          "target": [
+            "PolicyInsurable"
+          ]
+        },
+        "staffs": {
+          "source_model": "Insurable",
+          "type": "has_many",
+          "through": "assignments",
+          "target": [
+            "Staff"
+          ]
+        }
+      }
+    },
+    "InsurableRate": {
+      "fields": {
+        "activated": {
+          "name": "activated",
+          "type": "boolean",
+          "sql_type": "boolean"
+        },
+        "activated_on": {
+          "name": "activated_on",
+          "type": "date",
+          "sql_type": "date"
+        },
+        "agency_id": {
+          "name": "agency_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "agency"
+        },
+        "carrier_id": {
+          "name": "carrier_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "carrier"
+        },
+        "coverage_limits": {
+          "name": "coverage_limits",
+          "type": "jsonb",
+          "sql_type": "jsonb"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "deactivated_on": {
+          "name": "deactivated_on",
+          "type": "date",
+          "sql_type": "date"
+        },
+        "deductibles": {
+          "name": "deductibles",
+          "type": "jsonb",
+          "sql_type": "jsonb"
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "sql_type": "text"
+        },
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "sql_type": "bigint"
+        },
+        "insurable_id": {
+          "name": "insurable_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "insurable"
+        },
+        "interval": {
+          "name": "interval",
+          "type": "enum",
+          "sql_type": "integer",
+          "enum_values": {
+            "month": 0,
+            "quarter_year": 1,
+            "half_year": 2,
+            "year": 3
+          }
+        },
+        "liability_only": {
+          "name": "liability_only",
+          "type": "boolean",
+          "sql_type": "boolean"
+        },
+        "number_insured": {
+          "name": "number_insured",
+          "type": "integer",
+          "sql_type": "integer"
+        },
+        "paid_in_full": {
+          "name": "paid_in_full",
+          "type": "boolean",
+          "sql_type": "boolean"
+        },
+        "premium": {
+          "name": "premium",
+          "type": "integer",
+          "sql_type": "integer"
+        },
+        "schedule": {
+          "name": "schedule",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "sub_schedule": {
+          "name": "sub_schedule",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "title": {
+          "name": "title",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        }
+      },
+      "associations": {
+        "agency": {
+          "source_model": "InsurableRate",
+          "type": "belongs_to",
+          "polymorphic": false,
+          "foreign_key": "agency_id",
+          "target": [
+            "Agency"
+          ]
+        },
+        "carrier": {
+          "source_model": "InsurableRate",
+          "type": "belongs_to",
+          "polymorphic": false,
+          "foreign_key": "carrier_id",
+          "target": [
+            "Carrier"
+          ]
+        },
+        "insurable": {
+          "source_model": "InsurableRate",
+          "type": "belongs_to",
+          "polymorphic": false,
+          "foreign_key": "insurable_id",
+          "target": [
+            "Insurable"
+          ]
+        }
+      }
+    },
+    "InsurableType": {
+      "fields": {
+        "category": {
+          "name": "category",
+          "type": "enum",
+          "sql_type": "integer",
+          "enum_values": {
+            "property": 0,
+            "entity": 1
+          }
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "enabled": {
+          "name": "enabled",
+          "type": "boolean",
+          "sql_type": "boolean"
+        },
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "sql_type": "bigint"
+        },
+        "slug": {
+          "name": "slug",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "title": {
+          "name": "title",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        }
+      },
+      "associations": {
+        "carrier_insurable_types": {
+          "source_model": "InsurableType",
+          "type": "has_many",
+          "target": [
+            "CarrierInsurableType"
+          ]
+        },
+        "insurables": {
+          "source_model": "InsurableType",
+          "type": "has_many",
+          "target": [
+            "Insurable"
+          ]
+        }
+      }
+    },
+    "Invoice": {
+      "fields": {
+        "amount_refunded": {
+          "name": "amount_refunded",
+          "type": "integer",
+          "sql_type": "integer"
+        },
+        "amount_to_refund_on_completion": {
+          "name": "amount_to_refund_on_completion",
+          "type": "integer",
+          "sql_type": "integer"
+        },
+        "available_date": {
+          "name": "available_date",
+          "type": "date",
+          "sql_type": "date"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "sql_type": "text"
+        },
+        "due_date": {
+          "name": "due_date",
+          "type": "date",
+          "sql_type": "date"
+        },
+        "has_pending_refund": {
+          "name": "has_pending_refund",
+          "type": "boolean",
+          "sql_type": "boolean"
+        },
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "sql_type": "bigint"
+        },
+        "number": {
+          "name": "number",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "pending_refund_data": {
+          "name": "pending_refund_data",
+          "type": "jsonb",
+          "sql_type": "jsonb"
+        },
+        "policy_id": {
+          "name": "policy_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "policy"
+        },
+        "renewal_cycle": {
+          "name": "renewal_cycle",
+          "type": "integer",
+          "sql_type": "integer"
+        },
+        "status": {
+          "name": "status",
+          "type": "enum",
+          "sql_type": "integer",
+          "enum_values": {
+            "upcoming": 0,
+            "available": 1,
+            "processing": 2,
+            "complete": 3,
+            "missed": 4,
+            "canceled": 5
+          }
+        },
+        "status_changed": {
+          "name": "status_changed",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "subtotal": {
+          "name": "subtotal",
+          "type": "integer",
+          "sql_type": "integer"
+        },
+        "system_data": {
+          "name": "system_data",
+          "type": "jsonb",
+          "sql_type": "jsonb"
+        },
+        "tax": {
+          "name": "tax",
+          "type": "integer",
+          "sql_type": "integer"
+        },
+        "tax_percent": {
+          "name": "tax_percent",
+          "type": "decimal",
+          "sql_type": "numeric(5,2)"
+        },
+        "term_first_date": {
+          "name": "term_first_date",
+          "type": "date",
+          "sql_type": "date"
+        },
+        "term_last_date": {
+          "name": "term_last_date",
+          "type": "date",
+          "sql_type": "date"
+        },
+        "total": {
+          "name": "total",
+          "type": "integer",
+          "sql_type": "integer"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "user"
+        }
+      },
+      "associations": {
+        "charges": {
+          "source_model": "Invoice",
+          "type": "has_many",
+          "target": [
+            "Charge"
+          ]
+        },
+        "disputes": {
+          "source_model": "Invoice",
+          "type": "has_many",
+          "through": "charges",
+          "target": [
+            "Dispute"
+          ]
+        },
+        "histories": {
+          "source_model": "Invoice",
+          "type": "has_many",
+          "target": [
+            "History"
+          ],
+          "as": "recordable"
+        },
+        "line_items": {
+          "source_model": "Invoice",
+          "type": "has_many",
+          "target": [
+            "LineItem"
+          ],
+          "autosave": true
+        },
+        "modifiers": {
+          "source_model": "Invoice",
+          "type": "has_many",
+          "target": [
+            "Modifier"
+          ]
+        },
+        "notifications": {
+          "source_model": "Invoice",
+          "type": "has_many",
+          "target": [
+            "Notification"
+          ],
+          "as": "notifiable"
+        },
+        "payments": {
+          "source_model": "Invoice",
+          "type": "has_many",
+          "target": [
+            "Payment"
+          ]
+        },
+        "policy": {
+          "source_model": "Invoice",
+          "type": "belongs_to",
+          "polymorphic": false,
+          "foreign_key": "policy_id",
+          "target": [
+            "Policy"
+          ]
+        },
+        "refunds": {
+          "source_model": "Invoice",
+          "type": "has_many",
+          "through": "charges",
+          "target": [
+            "Refund"
+          ]
+        },
+        "user": {
+          "source_model": "Invoice",
+          "type": "belongs_to",
+          "polymorphic": false,
+          "foreign_key": "user_id",
+          "target": [
+            "User"
+          ]
+        }
+      }
+    },
+    "Lease": {
+      "fields": {
+        "account_id": {
+          "name": "account_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "account"
+        },
+        "covered": {
+          "name": "covered",
+          "type": "boolean",
+          "sql_type": "boolean"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "end_date": {
+          "name": "end_date",
+          "type": "date",
+          "sql_type": "date"
+        },
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "sql_type": "bigint"
+        },
+        "insurable_id": {
+          "name": "insurable_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "insurable"
+        },
+        "lease_type_id": {
+          "name": "lease_type_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "lease_type"
+        },
+        "reference": {
+          "name": "reference",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "start_date": {
+          "name": "start_date",
+          "type": "date",
+          "sql_type": "date"
+        },
+        "status": {
+          "name": "status",
+          "type": "enum",
+          "sql_type": "integer",
+          "enum_values": {
+            "pending": 0,
+            "approved": 1,
+            "current": 2,
+            "expired": 3,
+            "rejected": 4
+          }
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        }
+      },
+      "associations": {
+        "account": {
+          "source_model": "Lease",
+          "type": "belongs_to",
+          "polymorphic": false,
+          "foreign_key": "account_id",
+          "target": [
+            "Account"
+          ]
+        },
+        "histories": {
+          "source_model": "Lease",
+          "type": "has_many",
+          "target": [
+            "History"
+          ],
+          "as": "recordable"
+        },
+        "insurable": {
+          "source_model": "Lease",
+          "type": "belongs_to",
+          "polymorphic": false,
+          "foreign_key": "insurable_id",
+          "target": [
+            "Insurable"
+          ]
+        },
+        "lease_type": {
+          "source_model": "Lease",
+          "type": "belongs_to",
+          "polymorphic": false,
+          "foreign_key": "lease_type_id",
+          "target": [
+            "LeaseType"
+          ]
+        },
+        "lease_users": {
+          "source_model": "Lease",
+          "type": "has_many",
+          "target": [
+            "LeaseUser"
+          ]
+        },
+        "users": {
+          "source_model": "Lease",
+          "type": "has_many",
+          "through": "lease_users",
+          "target": [
+            "User"
+          ]
+        }
+      }
+    },
+    "LeaseType": {
+      "fields": {
+        "created_at": {
+          "name": "created_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "enabled": {
+          "name": "enabled",
+          "type": "boolean",
+          "sql_type": "boolean"
+        },
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "sql_type": "bigint"
+        },
+        "title": {
+          "name": "title",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        }
+      },
+      "associations": {
+        "insurable_types": {
+          "source_model": "LeaseType",
+          "type": "has_many",
+          "through": "lease_type_insurable_types",
+          "target": [
+            "InsurableType"
+          ]
+        },
+        "lease_type_insurable_types": {
+          "source_model": "LeaseType",
+          "type": "has_many",
+          "target": [
+            "LeaseTypeInsurableType"
+          ]
+        },
+        "lease_type_policy_types": {
+          "source_model": "LeaseType",
+          "type": "has_many",
+          "target": [
+            "LeaseTypePolicyType"
+          ]
+        },
+        "leases": {
+          "source_model": "LeaseType",
+          "type": "has_many",
+          "target": [
+            "Lease"
+          ]
+        },
+        "policy_types": {
+          "source_model": "LeaseType",
+          "type": "has_many",
+          "through": "lease_type_policy_types",
+          "target": [
+            "PolicyType"
+          ]
+        }
+      }
+    },
+    "LeaseTypeInsurableType": {
+      "fields": {
+        "created_at": {
+          "name": "created_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "enabled": {
+          "name": "enabled",
+          "type": "boolean",
+          "sql_type": "boolean"
+        },
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "sql_type": "bigint"
+        },
+        "insurable_type_id": {
+          "name": "insurable_type_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "insurable_type"
+        },
+        "lease_type_id": {
+          "name": "lease_type_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "lease_type"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        }
+      },
+      "associations": {
+        "insurable_type": {
+          "source_model": "LeaseTypeInsurableType",
+          "type": "belongs_to",
+          "polymorphic": false,
+          "foreign_key": "insurable_type_id",
+          "target": [
+            "InsurableType"
+          ]
+        },
+        "lease_type": {
+          "source_model": "LeaseTypeInsurableType",
+          "type": "belongs_to",
+          "polymorphic": false,
+          "foreign_key": "lease_type_id",
+          "target": [
+            "LeaseType"
+          ]
+        }
+      }
+    },
+    "LeaseTypePolicyType": {
+      "fields": {
+        "created_at": {
+          "name": "created_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "enabled": {
+          "name": "enabled",
+          "type": "boolean",
+          "sql_type": "boolean"
+        },
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "sql_type": "bigint"
+        },
+        "lease_type_id": {
+          "name": "lease_type_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "lease_type"
+        },
+        "policy_type_id": {
+          "name": "policy_type_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "policy_type"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        }
+      },
+      "associations": {
+        "lease_type": {
+          "source_model": "LeaseTypePolicyType",
+          "type": "belongs_to",
+          "polymorphic": false,
+          "foreign_key": "lease_type_id",
+          "target": [
+            "LeaseType"
+          ]
+        },
+        "policy_type": {
+          "source_model": "LeaseTypePolicyType",
+          "type": "belongs_to",
+          "polymorphic": false,
+          "foreign_key": "policy_type_id",
+          "target": [
+            "PolicyType"
+          ]
+        }
+      }
+    },
+    "LeaseUser": {
+      "fields": {
+        "created_at": {
+          "name": "created_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "sql_type": "bigint"
+        },
+        "lease_id": {
+          "name": "lease_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "lease"
+        },
+        "primary": {
+          "name": "primary",
+          "type": "boolean",
+          "sql_type": "boolean"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "user"
+        }
+      },
+      "associations": {
+        "lease": {
+          "source_model": "LeaseUser",
+          "type": "belongs_to",
+          "polymorphic": false,
+          "foreign_key": "lease_id",
+          "target": [
+            "Lease"
+          ]
+        },
+        "user": {
+          "source_model": "LeaseUser",
+          "type": "belongs_to",
+          "polymorphic": false,
+          "foreign_key": "user_id",
+          "target": [
+            "User"
+          ]
+        }
+      }
+    },
+    "LineItem": {
+      "fields": {
+        "created_at": {
+          "name": "created_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "sql_type": "bigint"
+        },
+        "invoice_id": {
+          "name": "invoice_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "invoice"
+        },
+        "price": {
+          "name": "price",
+          "type": "integer",
+          "sql_type": "integer"
+        },
+        "title": {
+          "name": "title",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        }
+      },
+      "associations": {
+        "invoice": {
+          "source_model": "LineItem",
+          "type": "belongs_to",
+          "polymorphic": false,
+          "foreign_key": "invoice_id",
+          "target": [
+            "Invoice"
+          ]
+        }
+      }
+    },
+    "Modifier": {
+      "fields": {
+        "amount": {
+          "name": "amount",
+          "type": "float",
+          "sql_type": "double precision"
+        },
+        "condition": {
+          "name": "condition",
+          "type": "enum",
+          "sql_type": "integer",
+          "enum_values": {
+            "no_condition": 0,
+            "card_payment": 1,
+            "bank_account_payment": 2
+          }
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "sql_type": "bigint"
+        },
+        "invoice_id": {
+          "name": "invoice_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "invoice"
+        },
+        "strategy": {
+          "name": "strategy",
+          "type": "enum",
+          "sql_type": "integer",
+          "enum_values": {
+            "flat": 0,
+            "percentage": 1
+          }
+        },
+        "tier": {
+          "name": "tier",
+          "type": "enum",
+          "sql_type": "integer",
+          "enum_values": {
+            "apply_first": 0,
+            "apply_second": 1
+          }
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        }
+      },
+      "associations": {
+        "invoice": {
+          "source_model": "Modifier",
+          "type": "belongs_to",
+          "polymorphic": false,
+          "foreign_key": "invoice_id",
+          "target": [
+            "Invoice"
+          ]
+        }
+      }
+    },
+    "ModulePermission": {
+      "fields": {
+        "application_module_id": {
+          "name": "application_module_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "application_module"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "sql_type": "bigint"
+        },
+        "permissable_id": {
+          "name": "permissable_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "permissable"
+        },
+        "permissable_type": {
+          "name": "permissable_type",
+          "type": "belongs_to_type",
+          "sql_type": "character varying",
+          "association_name": "permissable"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        }
+      },
+      "associations": {
+        "application_module": {
+          "source_model": "ModulePermission",
+          "type": "belongs_to",
+          "polymorphic": false,
+          "foreign_key": "application_module_id",
+          "target": [
+            "ApplicationModule"
+          ]
+        },
+        "permissable": {
+          "source_model": "ModulePermission",
+          "type": "belongs_to",
+          "polymorphic": true,
+          "foreign_key": "permissable_id",
+          "foreign_type": "permissable_type",
+          "target": [
+
+          ]
+        }
+      }
+    },
+    "Note": {
+      "fields": {
+        "content": {
+          "name": "content",
+          "type": "text",
+          "sql_type": "text"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "excerpt": {
+          "name": "excerpt",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "sql_type": "bigint"
+        },
+        "noteable_id": {
+          "name": "noteable_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "noteable"
+        },
+        "noteable_type": {
+          "name": "noteable_type",
+          "type": "belongs_to_type",
+          "sql_type": "character varying",
+          "association_name": "noteable"
+        },
+        "staff_id": {
+          "name": "staff_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "staff"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "visibility": {
+          "name": "visibility",
+          "type": "integer",
+          "sql_type": "integer"
+        }
+      },
+      "associations": {
+        "noteable": {
+          "source_model": "Note",
+          "type": "belongs_to",
+          "polymorphic": true,
+          "foreign_key": "noteable_id",
+          "foreign_type": "noteable_type",
+          "target": [
+
+          ]
+        },
+        "staff": {
+          "source_model": "Note",
+          "type": "belongs_to",
+          "polymorphic": false,
+          "foreign_key": "staff_id",
+          "target": [
+            "Staff"
+          ]
+        }
+      }
+    },
+    "Notification": {
+      "fields": {
+        "action": {
+          "name": "action",
+          "type": "enum",
+          "sql_type": "integer",
+          "enum_values": {
+            "community_rates_sync": 0,
+            "import_success": 1,
+            "import_failure": 2,
+            "export_success": 3,
+            "export_failure": 4,
+            "policy_billing_failed": 5,
+            "policy_cancelled": 6,
+            "policy_30_days_remaining": 7,
+            "policy_renewed": 8,
+            "policy_accepted": 9,
+            "invoice_available": 10,
+            "invoice_payment_failed": 11,
+            "refund_failed": 12,
+            "invoice_payment_failed_after_proration": 13,
+            "new_policy_application": 14,
+            "customer_accepted_policy_application": 15
+          }
+        },
+        "code": {
+          "name": "code",
+          "type": "enum",
+          "sql_type": "integer",
+          "enum_values": {
+            "success": 0,
+            "warning": 1,
+            "error": 2
+          }
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "delivery_method": {
+          "name": "delivery_method",
+          "type": "enum",
+          "sql_type": "integer",
+          "enum_values": {
+            "push": 0,
+            "mail": 1
+          }
+        },
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "sql_type": "bigint"
+        },
+        "message": {
+          "name": "message",
+          "type": "text",
+          "sql_type": "text"
+        },
+        "notifiable_id": {
+          "name": "notifiable_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "notifiable"
+        },
+        "notifiable_type": {
+          "name": "notifiable_type",
+          "type": "belongs_to_type",
+          "sql_type": "character varying",
+          "association_name": "notifiable"
+        },
+        "status": {
+          "name": "status",
+          "type": "enum",
+          "sql_type": "integer",
+          "enum_values": {
+            "undelivered": 0,
+            "delivered": 1,
+            "read": 2,
+            "archived": 3
+          }
+        },
+        "subject": {
+          "name": "subject",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "template": {
+          "name": "template",
+          "type": "enum",
+          "sql_type": "integer",
+          "enum_values": {
+            "default": 0,
+            "invoice": 1
+          }
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        }
+      },
+      "associations": {
+        "eventable": {
+          "source_model": "Notification",
+          "type": "belongs_to",
+          "polymorphic": true,
+          "foreign_key": "eventable_id",
+          "foreign_type": "eventable_type",
+          "target": [
+
+          ]
+        },
+        "notifiable": {
+          "source_model": "Notification",
+          "type": "belongs_to",
+          "polymorphic": true,
+          "foreign_key": "notifiable_id",
+          "foreign_type": "notifiable_type",
+          "target": [
+
+          ]
+        }
+      }
+    },
+    "Payment": {
+      "fields": {
+        "active": {
+          "name": "active",
+          "type": "boolean",
+          "sql_type": "boolean"
+        },
+        "amount": {
+          "name": "amount",
+          "type": "integer",
+          "sql_type": "integer"
+        },
+        "charge_id": {
+          "name": "charge_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "charge"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "sql_type": "bigint"
+        },
+        "reason": {
+          "name": "reason",
+          "type": "enum",
+          "sql_type": "integer",
+          "enum_values": {
+          }
+        },
+        "status": {
+          "name": "status",
+          "type": "enum",
+          "sql_type": "integer",
+          "enum_values": {
+            "incomplete": 0,
+            "processing": 1,
+            "complete": 2,
+            "rejected": 3,
+            "refunded": 4,
+            "partially-refunded": 5
+          }
+        },
+        "stripe_id": {
+          "name": "stripe_id",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        }
+      },
+      "associations": {
+        "agency": {
+          "source_model": "Payment",
+          "type": "has_one",
+          "through": "policy",
+          "target": [
+            "Agency"
+          ]
+        },
+        "charge": {
+          "source_model": "Payment",
+          "type": "belongs_to",
+          "polymorphic": false,
+          "foreign_key": "charge_id",
+          "target": [
+            "Charge"
+          ]
+        },
+        "histories": {
+          "source_model": "Payment",
+          "type": "has_many",
+          "target": [
+            "History"
+          ],
+          "as": "recordable"
+        },
+        "invoice": {
+          "source_model": "Payment",
+          "type": "belongs_to",
+          "polymorphic": false,
+          "foreign_key": "invoice_id",
+          "target": [
+            "Invoice"
+          ]
+        },
+        "policy": {
+          "source_model": "Payment",
+          "type": "has_one",
+          "through": "invoice",
+          "target": [
+            "Policy"
+          ]
+        },
+        "user": {
+          "source_model": "Payment",
+          "type": "has_one",
+          "through": "invoice",
+          "target": [
+            "User"
+          ]
+        }
+      }
+    },
+    "Policy": {
+      "fields": {
+        "account_id": {
+          "name": "account_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "account"
+        },
+        "agency_id": {
+          "name": "agency_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "agency"
+        },
+        "auto_pay": {
+          "name": "auto_pay",
+          "type": "boolean",
+          "sql_type": "boolean"
+        },
+        "auto_renew": {
+          "name": "auto_renew",
+          "type": "boolean",
+          "sql_type": "boolean"
+        },
+        "billing_behind_since": {
+          "name": "billing_behind_since",
+          "type": "date",
+          "sql_type": "date"
+        },
+        "billing_dispute_count": {
+          "name": "billing_dispute_count",
+          "type": "integer",
+          "sql_type": "integer"
+        },
+        "billing_dispute_status": {
+          "name": "billing_dispute_status",
+          "type": "enum",
+          "sql_type": "integer",
+          "enum_values": {
+            "UNDISPUTED": 0,
+            "DISPUTED": 1,
+            "AWATING_POSTDISPUTE_PROCESSING": 2,
+            "NOT_REQUIRED": 3
+          }
+        },
+        "billing_enabled": {
+          "name": "billing_enabled",
+          "type": "boolean",
+          "sql_type": "boolean"
+        },
+        "billing_status": {
+          "name": "billing_status",
+          "type": "integer",
+          "sql_type": "integer"
+        },
+        "cancellation_code": {
+          "name": "cancellation_code",
+          "type": "integer",
+          "sql_type": "integer"
+        },
+        "cancellation_date_date": {
+          "name": "cancellation_date_date",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "carrier_id": {
+          "name": "carrier_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "carrier"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "effective_date": {
+          "name": "effective_date",
+          "type": "date",
+          "sql_type": "date"
+        },
+        "expiration_date": {
+          "name": "expiration_date",
+          "type": "date",
+          "sql_type": "date"
+        },
+        "has_outstanding_refund": {
+          "name": "has_outstanding_refund",
+          "type": "boolean",
+          "sql_type": "boolean"
+        },
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "sql_type": "bigint"
+        },
+        "last_renewed_on": {
+          "name": "last_renewed_on",
+          "type": "date",
+          "sql_type": "date"
+        },
+        "number": {
+          "name": "number",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "policy_in_system": {
+          "name": "policy_in_system",
+          "type": "boolean",
+          "sql_type": "boolean"
+        },
+        "policy_type_id": {
+          "name": "policy_type_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "policy_type"
+        },
+        "renew_count": {
+          "name": "renew_count",
+          "type": "integer",
+          "sql_type": "integer"
+        },
+        "serviceable": {
+          "name": "serviceable",
+          "type": "boolean",
+          "sql_type": "boolean"
+        },
+        "status": {
+          "name": "status",
+          "type": "enum",
+          "sql_type": "integer",
+          "enum_values": {
+            "AWAITING_PAYMENT": 0,
+            "AWAITING_ACH": 1,
+            "PAID": 2,
+            "BOUND": 3,
+            "BOUND_WITH_WARNING": 4,
+            "BIND_ERROR": 5,
+            "BIND_REJECTED": 6,
+            "RENEWING": 7,
+            "RENEWED": 8,
+            "EXPIRED": 9,
+            "CANCELLED": 10,
+            "REINSTATED": 11,
+            "EXTERNAL_UNVERIFIED": 12,
+            "EXTERNAL_VERIFIED": 13
+          }
+        },
+        "status_changed_on": {
+          "name": "status_changed_on",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "system_data": {
+          "name": "system_data",
+          "type": "jsonb",
+          "sql_type": "jsonb"
+        },
+        "system_purchased": {
+          "name": "system_purchased",
+          "type": "boolean",
+          "sql_type": "boolean"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        }
+      },
+      "associations": {
+        "account": {
+          "source_model": "Policy",
+          "type": "belongs_to",
+          "polymorphic": false,
+          "foreign_key": "account_id",
+          "target": [
+            "Account"
+          ]
+        },
+        "agency": {
+          "source_model": "Policy",
+          "type": "belongs_to",
+          "polymorphic": false,
+          "foreign_key": "agency_id",
+          "target": [
+            "Agency"
+          ]
+        },
+        "carrier": {
+          "source_model": "Policy",
+          "type": "belongs_to",
+          "polymorphic": false,
+          "foreign_key": "carrier_id",
+          "target": [
+            "Carrier"
+          ]
+        },
+        "charges": {
+          "source_model": "Policy",
+          "type": "has_many",
+          "through": "invoices",
+          "target": [
+            "Charge"
+          ]
+        },
+        "coverages": {
+          "source_model": "Policy",
+          "type": "has_many",
+          "target": [
+            "PolicyCoverage"
+          ]
+        },
+        "insurables": {
+          "source_model": "Policy",
+          "type": "has_many",
+          "through": "policy_insurables",
+          "target": [
+            "Insurable"
+          ]
+        },
+        "invoices": {
+          "source_model": "Policy",
+          "type": "has_many",
+          "target": [
+            "Invoice"
+          ]
+        },
+        "policy_application": {
+          "source_model": "Policy",
+          "type": "has_one",
+          "target": [
+            "PolicyApplication"
+          ]
+        },
+        "policy_coverages": {
+          "source_model": "Policy",
+          "type": "has_many",
+          "target": [
+            "PolicyCoverage"
+          ],
+          "autosave": true
+        },
+        "policy_insurables": {
+          "source_model": "Policy",
+          "type": "has_many",
+          "target": [
+            "PolicyInsurable"
+          ]
+        },
+        "policy_premiums": {
+          "source_model": "Policy",
+          "type": "has_many",
+          "target": [
+            "PolicyPremium"
+          ],
+          "autosave": true
+        },
+        "policy_quotes": {
+          "source_model": "Policy",
+          "type": "has_many",
+          "target": [
+            "PolicyQuote"
+          ]
+        },
+        "policy_type": {
+          "source_model": "Policy",
+          "type": "belongs_to",
+          "polymorphic": false,
+          "foreign_key": "policy_type_id",
+          "target": [
+            "PolicyType"
+          ]
+        },
+        "policy_users": {
+          "source_model": "Policy",
+          "type": "has_many",
+          "target": [
+            "PolicyUser"
+          ]
+        },
+        "premium": {
+          "source_model": "Policy",
+          "type": "has_one",
+          "target": [
+            "PolicyPremium"
+          ]
+        },
+        "primary_policy_user": {
+          "source_model": "Policy",
+          "type": "has_one",
+          "target": [
+            "PolicyUser"
+          ]
+        },
+        "primary_user": {
+          "source_model": "Policy",
+          "type": "has_one",
+          "through": "primary_policy_user",
+          "target": [
+            "User"
+          ]
+        },
+        "refunds": {
+          "source_model": "Policy",
+          "type": "has_many",
+          "through": "charges",
+          "target": [
+            "Refund"
+          ]
+        },
+        "users": {
+          "source_model": "Policy",
+          "type": "has_many",
+          "through": "policy_users",
+          "target": [
+            "User"
+          ]
+        }
+      }
+    },
+    "PolicyApplication": {
+      "fields": {
+        "account_id": {
+          "name": "account_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "account"
+        },
+        "agency_id": {
+          "name": "agency_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "agency"
+        },
+        "billing_strategy_id": {
+          "name": "billing_strategy_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "billing_strategy"
+        },
+        "carrier_id": {
+          "name": "carrier_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "carrier"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "effective_date": {
+          "name": "effective_date",
+          "type": "date",
+          "sql_type": "date"
+        },
+        "expiration_date": {
+          "name": "expiration_date",
+          "type": "date",
+          "sql_type": "date"
+        },
+        "external_reference": {
+          "name": "external_reference",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "fields": {
+          "name": "fields",
+          "type": "jsonb",
+          "sql_type": "jsonb"
+        },
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "sql_type": "bigint"
+        },
+        "policy_id": {
+          "name": "policy_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "policy"
+        },
+        "policy_type_id": {
+          "name": "policy_type_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "policy_type"
+        },
+        "questions": {
+          "name": "questions",
+          "type": "jsonb",
+          "sql_type": "jsonb"
+        },
+        "reference": {
+          "name": "reference",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "status": {
+          "name": "status",
+          "type": "enum",
+          "sql_type": "integer",
+          "enum_values": {
+            "started": 0,
+            "in_progress": 1,
+            "complete": 2,
+            "abandoned": 3,
+            "quote_in_progress": 4,
+            "quote_failed": 5,
+            "quoted": 6,
+            "more_required": 7,
+            "rejected": 8
+          }
+        },
+        "status_updated_on": {
+          "name": "status_updated_on",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        }
+      },
+      "associations": {
+        "account": {
+          "source_model": "PolicyApplication",
+          "type": "belongs_to",
+          "polymorphic": false,
+          "foreign_key": "account_id",
+          "target": [
+            "Account"
+          ]
+        },
+        "addresses": {
+          "source_model": "PolicyApplication",
+          "type": "has_many",
+          "target": [
+            "Address"
+          ],
+          "as": "addressable",
+          "autosave": true
+        },
+        "agency": {
+          "source_model": "PolicyApplication",
+          "type": "belongs_to",
+          "polymorphic": false,
+          "foreign_key": "agency_id",
+          "target": [
+            "Agency"
+          ]
+        },
+        "billing_strategy": {
+          "source_model": "PolicyApplication",
+          "type": "belongs_to",
+          "polymorphic": false,
+          "foreign_key": "billing_strategy_id",
+          "target": [
+            "BillingStrategy"
+          ]
+        },
+        "carrier": {
+          "source_model": "PolicyApplication",
+          "type": "belongs_to",
+          "polymorphic": false,
+          "foreign_key": "carrier_id",
+          "target": [
+            "Carrier"
+          ]
+        },
+        "events": {
+          "source_model": "PolicyApplication",
+          "type": "has_many",
+          "target": [
+            "Event"
+          ],
+          "as": "eventable"
+        },
+        "insurable_rates": {
+          "source_model": "PolicyApplication",
+          "type": "has_many",
+          "through": "policy_rates",
+          "target": [
+            "InsurableRate"
+          ]
+        },
+        "insurables": {
+          "source_model": "PolicyApplication",
+          "type": "has_many",
+          "through": "policy_insurables",
+          "target": [
+            "Insurable"
+          ]
+        },
+        "policy": {
+          "source_model": "PolicyApplication",
+          "type": "belongs_to",
+          "polymorphic": false,
+          "foreign_key": "policy_id",
+          "target": [
+            "Policy"
+          ],
+          "optional": true
+        },
+        "policy_application_answers": {
+          "source_model": "PolicyApplication",
+          "type": "has_many",
+          "target": [
+            "PolicyApplicationAnswer"
+          ]
+        },
+        "policy_application_fields": {
+          "source_model": "PolicyApplication",
+          "type": "has_many",
+          "through": "policy_application_answers",
+          "target": [
+            "PolicyApplicationField"
+          ]
+        },
+        "policy_insurables": {
+          "source_model": "PolicyApplication",
+          "type": "has_many",
+          "target": [
+            "PolicyInsurable"
+          ]
+        },
+        "policy_premiums": {
+          "source_model": "PolicyApplication",
+          "type": "has_many",
+          "through": "policy_quotes",
+          "target": [
+            "PolicyPremium"
+          ]
+        },
+        "policy_quotes": {
+          "source_model": "PolicyApplication",
+          "type": "has_many",
+          "target": [
+            "PolicyQuote"
+          ]
+        },
+        "policy_rates": {
+          "source_model": "PolicyApplication",
+          "type": "has_many",
+          "target": [
+            "PolicyRate"
+          ]
+        },
+        "policy_type": {
+          "source_model": "PolicyApplication",
+          "type": "belongs_to",
+          "polymorphic": false,
+          "foreign_key": "policy_type_id",
+          "target": [
+            "PolicyType"
+          ]
+        },
+        "policy_users": {
+          "source_model": "PolicyApplication",
+          "type": "has_many",
+          "target": [
+            "PolicyUser"
+          ]
+        },
+        "primary_policy_user": {
+          "source_model": "PolicyApplication",
+          "type": "has_one",
+          "target": [
+            "PolicyUser"
+          ]
+        },
+        "primary_user": {
+          "source_model": "PolicyApplication",
+          "type": "has_one",
+          "through": "primary_policy_user",
+          "target": [
+            "User"
+          ]
+        },
+        "users": {
+          "source_model": "PolicyApplication",
+          "type": "has_many",
+          "through": "policy_users",
+          "target": [
+            "User"
+          ]
+        }
+      }
+    },
+    "PolicyApplicationAnswer": {
+      "fields": {
+        "created_at": {
+          "name": "created_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "data": {
+          "name": "data",
+          "type": "jsonb",
+          "sql_type": "jsonb"
+        },
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "sql_type": "bigint"
+        },
+        "policy_application_field_id": {
+          "name": "policy_application_field_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "policy_application_field"
+        },
+        "policy_application_id": {
+          "name": "policy_application_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "policy_application"
+        },
+        "section": {
+          "name": "section",
+          "type": "enum",
+          "sql_type": "integer",
+          "enum_values": {
+            "fields": 0,
+            "questions": 1
+          }
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        }
+      },
+      "associations": {
+        "policy_application": {
+          "source_model": "PolicyApplicationAnswer",
+          "type": "belongs_to",
+          "polymorphic": false,
+          "foreign_key": "policy_application_id",
+          "target": [
+            "PolicyApplication"
+          ]
+        },
+        "policy_application_field": {
+          "source_model": "PolicyApplicationAnswer",
+          "type": "belongs_to",
+          "polymorphic": false,
+          "foreign_key": "policy_application_field_id",
+          "target": [
+            "PolicyApplicationField"
+          ]
+        }
+      }
+    },
+    "PolicyApplicationField": {
+      "fields": {
+        "answer_options": {
+          "name": "answer_options",
+          "type": "jsonb",
+          "sql_type": "jsonb"
+        },
+        "answer_type": {
+          "name": "answer_type",
+          "type": "enum",
+          "sql_type": "integer",
+          "enum_values": {
+            "BOOLEAN": 0,
+            "STRING": 1,
+            "NUMBER": 2,
+            "DATE": 3,
+            "OPTION_SELECT": 4
+          }
+        },
+        "carrier_id": {
+          "name": "carrier_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "carrier"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "default_answer": {
+          "name": "default_answer",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "desired_answer": {
+          "name": "desired_answer",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "enabled": {
+          "name": "enabled",
+          "type": "boolean",
+          "sql_type": "boolean"
+        },
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "sql_type": "bigint"
+        },
+        "order_position": {
+          "name": "order_position",
+          "type": "integer",
+          "sql_type": "integer"
+        },
+        "policy_application_field_id": {
+          "name": "policy_application_field_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "policy_application_field"
+        },
+        "policy_type_id": {
+          "name": "policy_type_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "policy_type"
+        },
+        "section": {
+          "name": "section",
+          "type": "enum",
+          "sql_type": "integer",
+          "enum_values": {
+            "fields": 0,
+            "questions": 1
+          }
+        },
+        "title": {
+          "name": "title",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        }
+      },
+      "associations": {
+        "carrier": {
+          "source_model": "PolicyApplicationField",
+          "type": "belongs_to",
+          "polymorphic": false,
+          "foreign_key": "carrier_id",
+          "target": [
+            "Carrier"
+          ]
+        },
+        "policy_application_answers": {
+          "source_model": "PolicyApplicationField",
+          "type": "has_many",
+          "target": [
+            "PolicyApplicationAnswer"
+          ]
+        },
+        "policy_application_field": {
+          "source_model": "PolicyApplicationField",
+          "type": "belongs_to",
+          "polymorphic": false,
+          "foreign_key": "policy_application_field_id",
+          "target": [
+            "PolicyApplicationField"
+          ],
+          "optional": true
+        },
+        "policy_application_fields": {
+          "source_model": "PolicyApplicationField",
+          "type": "has_many",
+          "target": [
+            "PolicyApplicationField"
+          ],
+          "autosave": true
+        },
+        "policy_type": {
+          "source_model": "PolicyApplicationField",
+          "type": "belongs_to",
+          "polymorphic": false,
+          "foreign_key": "policy_type_id",
+          "target": [
+            "PolicyType"
+          ]
+        }
+      }
+    },
+    "PolicyCoverage": {
+      "fields": {
+        "created_at": {
+          "name": "created_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "deductible": {
+          "name": "deductible",
+          "type": "integer",
+          "sql_type": "integer"
+        },
+        "designation": {
+          "name": "designation",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "sql_type": "bigint"
+        },
+        "limit": {
+          "name": "limit",
+          "type": "integer",
+          "sql_type": "integer"
+        },
+        "policy_application_id": {
+          "name": "policy_application_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "policy_application"
+        },
+        "policy_id": {
+          "name": "policy_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "policy"
+        },
+        "title": {
+          "name": "title",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        }
+      },
+      "associations": {
+        "policy": {
+          "source_model": "PolicyCoverage",
+          "type": "belongs_to",
+          "polymorphic": false,
+          "foreign_key": "policy_id",
+          "target": [
+            "Policy"
+          ],
+          "optional": true
+        },
+        "policy_application": {
+          "source_model": "PolicyCoverage",
+          "type": "belongs_to",
+          "polymorphic": false,
+          "foreign_key": "policy_application_id",
+          "target": [
+            "PolicyApplication"
+          ],
+          "optional": true
+        }
+      }
+    },
+    "PolicyInsurable": {
+      "fields": {
+        "created_at": {
+          "name": "created_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "current": {
+          "name": "current",
+          "type": "boolean",
+          "sql_type": "boolean"
+        },
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "sql_type": "bigint"
+        },
+        "insurable_id": {
+          "name": "insurable_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "insurable"
+        },
+        "policy_application_id": {
+          "name": "policy_application_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "policy_application"
+        },
+        "policy_id": {
+          "name": "policy_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "policy"
+        },
+        "primary": {
+          "name": "primary",
+          "type": "boolean",
+          "sql_type": "boolean"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "value": {
+          "name": "value",
+          "type": "integer",
+          "sql_type": "integer"
+        }
+      },
+      "associations": {
+        "insurable": {
+          "source_model": "PolicyInsurable",
+          "type": "belongs_to",
+          "polymorphic": false,
+          "foreign_key": "insurable_id",
+          "target": [
+            "Insurable"
+          ]
+        },
+        "policy": {
+          "source_model": "PolicyInsurable",
+          "type": "belongs_to",
+          "polymorphic": false,
+          "foreign_key": "policy_id",
+          "target": [
+            "Policy"
+          ],
+          "optional": true
+        },
+        "policy_application": {
+          "source_model": "PolicyInsurable",
+          "type": "belongs_to",
+          "polymorphic": false,
+          "foreign_key": "policy_application_id",
+          "target": [
+            "PolicyApplication"
+          ]
+        }
+      }
+    },
+    "PolicyPremium": {
+      "fields": {
+        "base": {
+          "name": "base",
+          "type": "integer",
+          "sql_type": "integer"
+        },
+        "billing_strategy_id": {
+          "name": "billing_strategy_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "billing_strategy"
+        },
+        "commission_strategy_id": {
+          "name": "commission_strategy_id",
+          "type": "integer",
+          "sql_type": "bigint"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "enabled": {
+          "name": "enabled",
+          "type": "boolean",
+          "sql_type": "boolean"
+        },
+        "enabled_changed": {
+          "name": "enabled_changed",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "estimate": {
+          "name": "estimate",
+          "type": "integer",
+          "sql_type": "integer"
+        },
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "sql_type": "bigint"
+        },
+        "policy_id": {
+          "name": "policy_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "policy"
+        },
+        "policy_quote_id": {
+          "name": "policy_quote_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "policy_quote"
+        },
+        "taxes": {
+          "name": "taxes",
+          "type": "integer",
+          "sql_type": "integer"
+        },
+        "total": {
+          "name": "total",
+          "type": "integer",
+          "sql_type": "integer"
+        },
+        "total_fees": {
+          "name": "total_fees",
+          "type": "integer",
+          "sql_type": "integer"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        }
+      },
+      "associations": {
+        "billing_strategy": {
+          "source_model": "PolicyPremium",
+          "type": "belongs_to",
+          "polymorphic": false,
+          "foreign_key": "billing_strategy_id",
+          "target": [
+            "BillingStrategy"
+          ]
+        },
+        "fees": {
+          "source_model": "PolicyPremium",
+          "type": "has_many",
+          "through": "policy_premium_fees",
+          "target": [
+            "Fee"
+          ]
+        },
+        "policy": {
+          "source_model": "PolicyPremium",
+          "type": "belongs_to",
+          "polymorphic": false,
+          "foreign_key": "policy_id",
+          "target": [
+            "Policy"
+          ],
+          "optional": true
+        },
+        "policy_premium_fees": {
+          "source_model": "PolicyPremium",
+          "type": "has_many",
+          "target": [
+            "PolicyPremiumFee"
+          ]
+        },
+        "policy_quote": {
+          "source_model": "PolicyPremium",
+          "type": "belongs_to",
+          "polymorphic": false,
+          "foreign_key": "policy_quote_id",
+          "target": [
+            "PolicyQuote"
+          ]
+        }
+      }
+    },
+    "PolicyPremiumFee": {
+      "fields": {
+        "created_at": {
+          "name": "created_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "fee_id": {
+          "name": "fee_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "fee"
+        },
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "sql_type": "bigint"
+        },
+        "policy_premium_id": {
+          "name": "policy_premium_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "policy_premium"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        }
+      },
+      "associations": {
+        "fee": {
+          "source_model": "PolicyPremiumFee",
+          "type": "belongs_to",
+          "polymorphic": false,
+          "foreign_key": "fee_id",
+          "target": [
+            "Fee"
+          ]
+        },
+        "policy_premium": {
+          "source_model": "PolicyPremiumFee",
+          "type": "belongs_to",
+          "polymorphic": false,
+          "foreign_key": "policy_premium_id",
+          "target": [
+            "PolicyPremium"
+          ]
+        }
+      }
+    },
+    "PolicyQuote": {
+      "fields": {
+        "account_id": {
+          "name": "account_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "account"
+        },
+        "agency_id": {
+          "name": "agency_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "agency"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "est_premium": {
+          "name": "est_premium",
+          "type": "integer",
+          "sql_type": "integer"
+        },
+        "external_reference": {
+          "name": "external_reference",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "sql_type": "bigint"
+        },
+        "policy_application_id": {
+          "name": "policy_application_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "policy_application"
+        },
+        "policy_id": {
+          "name": "policy_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "policy"
+        },
+        "reference": {
+          "name": "reference",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "status": {
+          "name": "status",
+          "type": "enum",
+          "sql_type": "integer",
+          "enum_values": {
+            "available": 0,
+            "expired": 1,
+            "accepted": 2,
+            "declined": 3,
+            "abandoned": 4
+          }
+        },
+        "status_updated_on": {
+          "name": "status_updated_on",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        }
+      },
+      "associations": {
+        "account": {
+          "source_model": "PolicyQuote",
+          "type": "belongs_to",
+          "polymorphic": false,
+          "foreign_key": "account_id",
+          "target": [
+            "Account"
+          ],
+          "optional": true
+        },
+        "agency": {
+          "source_model": "PolicyQuote",
+          "type": "belongs_to",
+          "polymorphic": false,
+          "foreign_key": "agency_id",
+          "target": [
+            "Agency"
+          ],
+          "optional": true
+        },
+        "events": {
+          "source_model": "PolicyQuote",
+          "type": "has_many",
+          "target": [
+            "Event"
+          ],
+          "as": "eventable"
+        },
+        "insurable_rates": {
+          "source_model": "PolicyQuote",
+          "type": "has_many",
+          "through": "policy_rates",
+          "target": [
+            "InsurableRate"
+          ]
+        },
+        "policy": {
+          "source_model": "PolicyQuote",
+          "type": "belongs_to",
+          "polymorphic": false,
+          "foreign_key": "policy_id",
+          "target": [
+            "Policy"
+          ],
+          "optional": true
+        },
+        "policy_application": {
+          "source_model": "PolicyQuote",
+          "type": "belongs_to",
+          "polymorphic": false,
+          "foreign_key": "policy_application_id",
+          "target": [
+            "PolicyApplication"
+          ],
+          "optional": true
+        },
+        "policy_premium": {
+          "source_model": "PolicyQuote",
+          "type": "has_one",
+          "target": [
+            "PolicyPremium"
+          ],
+          "autosave": true
+        },
+        "policy_rates": {
+          "source_model": "PolicyQuote",
+          "type": "has_many",
+          "target": [
+            "PolicyRate"
+          ]
+        }
+      }
+    },
+    "PolicyRate": {
+      "fields": {
+        "created_at": {
+          "name": "created_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "sql_type": "bigint"
+        },
+        "insurable_rate_id": {
+          "name": "insurable_rate_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "insurable_rate"
+        },
+        "policy_application_id": {
+          "name": "policy_application_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "policy_application"
+        },
+        "policy_id": {
+          "name": "policy_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "policy"
+        },
+        "policy_quote_id": {
+          "name": "policy_quote_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "policy_quote"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        }
+      },
+      "associations": {
+        "insurable_rate": {
+          "source_model": "PolicyRate",
+          "type": "belongs_to",
+          "polymorphic": false,
+          "foreign_key": "insurable_rate_id",
+          "target": [
+            "InsurableRate"
+          ]
+        },
+        "policy": {
+          "source_model": "PolicyRate",
+          "type": "belongs_to",
+          "polymorphic": false,
+          "foreign_key": "policy_id",
+          "target": [
+            "Policy"
+          ],
+          "optional": true
+        },
+        "policy_application": {
+          "source_model": "PolicyRate",
+          "type": "belongs_to",
+          "polymorphic": false,
+          "foreign_key": "policy_application_id",
+          "target": [
+            "PolicyApplication"
+          ]
+        },
+        "policy_quote": {
+          "source_model": "PolicyRate",
+          "type": "belongs_to",
+          "polymorphic": false,
+          "foreign_key": "policy_quote_id",
+          "target": [
+            "PolicyQuote"
+          ],
+          "optional": true
+        }
+      }
+    },
+    "PolicyType": {
+      "fields": {
+        "created_at": {
+          "name": "created_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "designation": {
+          "name": "designation",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "enabled": {
+          "name": "enabled",
+          "type": "boolean",
+          "sql_type": "boolean"
+        },
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "sql_type": "bigint"
+        },
+        "slug": {
+          "name": "slug",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "title": {
+          "name": "title",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        }
+      },
+      "associations": {
+        "carrier_policy_types": {
+          "source_model": "PolicyType",
+          "type": "has_many",
+          "target": [
+            "CarrierPolicyType"
+          ]
+        },
+        "carriers": {
+          "source_model": "PolicyType",
+          "type": "has_many",
+          "through": "carrier_policy_types",
+          "target": [
+            "Carrier"
+          ]
+        },
+        "commission_strategies": {
+          "source_model": "PolicyType",
+          "type": "has_many",
+          "target": [
+            "CommissionStrategy"
+          ]
+        }
+      }
+    },
+    "PolicyUser": {
+      "fields": {
+        "created_at": {
+          "name": "created_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "sql_type": "bigint"
+        },
+        "policy_application_id": {
+          "name": "policy_application_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "policy_application"
+        },
+        "policy_id": {
+          "name": "policy_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "policy"
+        },
+        "primary": {
+          "name": "primary",
+          "type": "boolean",
+          "sql_type": "boolean"
+        },
+        "spouse": {
+          "name": "spouse",
+          "type": "boolean",
+          "sql_type": "boolean"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "user"
+        }
+      },
+      "associations": {
+        "policy": {
+          "source_model": "PolicyUser",
+          "type": "belongs_to",
+          "polymorphic": false,
+          "foreign_key": "policy_id",
+          "target": [
+            "Policy"
+          ],
+          "optional": true
+        },
+        "policy_application": {
+          "source_model": "PolicyUser",
+          "type": "belongs_to",
+          "polymorphic": false,
+          "foreign_key": "policy_application_id",
+          "target": [
+            "PolicyApplication"
+          ],
+          "optional": true
+        },
+        "user": {
+          "source_model": "PolicyUser",
+          "type": "belongs_to",
+          "polymorphic": false,
+          "foreign_key": "user_id",
+          "target": [
+            "User"
+          ],
+          "optional": true
+        }
+      }
+    },
+    "Profile": {
+      "fields": {
+        "birth_date": {
+          "name": "birth_date",
+          "type": "date",
+          "sql_type": "date"
+        },
+        "contact_email": {
+          "name": "contact_email",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "contact_phone": {
+          "name": "contact_phone",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "first_name": {
+          "name": "first_name",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "full_name": {
+          "name": "full_name",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "sql_type": "bigint"
+        },
+        "job_title": {
+          "name": "job_title",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "last_name": {
+          "name": "last_name",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "middle_name": {
+          "name": "middle_name",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "profileable_id": {
+          "name": "profileable_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "profileable"
+        },
+        "profileable_type": {
+          "name": "profileable_type",
+          "type": "belongs_to_type",
+          "sql_type": "character varying",
+          "association_name": "profileable"
+        },
+        "suffix": {
+          "name": "suffix",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "title": {
+          "name": "title",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        }
+      },
+      "associations": {
+        "profileable": {
+          "source_model": "Profile",
+          "type": "belongs_to",
+          "polymorphic": true,
+          "foreign_key": "profileable_id",
+          "foreign_type": "profileable_type",
+          "target": [
+
+          ],
+          "optional": true
+        }
+      }
+    },
+    "Refund": {
+      "fields": {
+        "amount": {
+          "name": "amount",
+          "type": "integer",
+          "sql_type": "integer"
+        },
+        "amount_returned_via_dispute": {
+          "name": "amount_returned_via_dispute",
+          "type": "integer",
+          "sql_type": "integer"
+        },
+        "charge_id": {
+          "name": "charge_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "charge"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "currency": {
+          "name": "currency",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "error_message": {
+          "name": "error_message",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "failure_reason": {
+          "name": "failure_reason",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "full_reason": {
+          "name": "full_reason",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "sql_type": "bigint"
+        },
+        "receipt_number": {
+          "name": "receipt_number",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "status": {
+          "name": "status",
+          "type": "enum",
+          "sql_type": "integer",
+          "enum_values": {
+            "processing": 0,
+            "queued": 1,
+            "pending": 2,
+            "succeeded": 3,
+            "succeeded_via_dispute_payout": 4,
+            "failed": 5,
+            "errored": 6,
+            "failed_and_handled": 7
+          }
+        },
+        "stripe_id": {
+          "name": "stripe_id",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "stripe_reason": {
+          "name": "stripe_reason",
+          "type": "enum",
+          "sql_type": "integer",
+          "enum_values": {
+            "duplicate": 0,
+            "fraudulent": 1,
+            "requested_by_customer": 2
+          }
+        },
+        "stripe_status": {
+          "name": "stripe_status",
+          "type": "enum",
+          "sql_type": "integer",
+          "enum_values": {
+            "pending": 0,
+            "succeeded": 1,
+            "failed": 2,
+            "canceled": 3
+          }
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        }
+      },
+      "associations": {
+        "charge": {
+          "source_model": "Refund",
+          "type": "belongs_to",
+          "polymorphic": false,
+          "foreign_key": "charge_id",
+          "target": [
+            "Charge"
+          ]
+        },
+        "invoice": {
+          "source_model": "Refund",
+          "type": "has_one",
+          "through": "charge",
+          "target": [
+            "Invoice"
+          ]
+        },
+        "notifications": {
+          "source_model": "Refund",
+          "type": "has_many",
+          "target": [
+            "Notification"
+          ],
+          "as": "eventable"
+        },
+        "policy": {
+          "source_model": "Refund",
+          "type": "has_one",
+          "through": "invoice",
+          "target": [
+            "Policy"
+          ]
+        },
+        "user": {
+          "source_model": "Refund",
+          "type": "has_one",
+          "through": "invoice",
+          "target": [
+            "User"
+          ]
+        }
+      }
+    }
+  }
+}
