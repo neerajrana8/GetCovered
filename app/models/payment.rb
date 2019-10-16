@@ -21,6 +21,9 @@ class Payment < ApplicationRecord
   after_update :record_status_changes
  
   # Relationships
+  belongs_to :invoice,
+    required: true
+
   belongs_to :charge,
     required: true
 
