@@ -5,8 +5,10 @@ module SetReference
   extend ActiveSupport::Concern
   
   # Active Record Callbacks
-  before_validation :set_reference,
-  	if: Proc.new { |model| model.reference.nil? }
+  included do
+    before_validation :set_reference,
+      if: Proc.new { |model| model.reference.nil? }
+  end
   
   private
   
