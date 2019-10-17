@@ -3901,6 +3901,12 @@
           "type": "integer",
           "sql_type": "bigint"
         },
+        "invoice_id": {
+          "name": "invoice_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "invoice"
+        },
         "reason": {
           "name": "reason",
           "type": "enum",
@@ -5709,6 +5715,491 @@
           "target": [
             "User"
           ]
+        }
+      }
+    },
+    "Staff": {
+      "fields": {
+        "allow_password_change": {
+          "name": "allow_password_change",
+          "type": "boolean",
+          "sql_type": "boolean"
+        },
+        "confirmation_sent_at": {
+          "name": "confirmation_sent_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "confirmation_token": {
+          "name": "confirmation_token",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "confirmed_at": {
+          "name": "confirmed_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "current_sign_in_at": {
+          "name": "current_sign_in_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "current_sign_in_ip": {
+          "name": "current_sign_in_ip",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "email": {
+          "name": "email",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "enabled": {
+          "name": "enabled",
+          "type": "boolean",
+          "sql_type": "boolean"
+        },
+        "encrypted_password": {
+          "name": "encrypted_password",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "sql_type": "bigint"
+        },
+        "invitation_accepted_at": {
+          "name": "invitation_accepted_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "invitation_created_at": {
+          "name": "invitation_created_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "invitation_limit": {
+          "name": "invitation_limit",
+          "type": "integer",
+          "sql_type": "integer"
+        },
+        "invitation_sent_at": {
+          "name": "invitation_sent_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "invitation_token": {
+          "name": "invitation_token",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "invitations_count": {
+          "name": "invitations_count",
+          "type": "integer",
+          "sql_type": "integer"
+        },
+        "invited_by_id": {
+          "name": "invited_by_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "invited_by"
+        },
+        "invited_by_type": {
+          "name": "invited_by_type",
+          "type": "belongs_to_type",
+          "sql_type": "character varying",
+          "association_name": "invited_by"
+        },
+        "last_sign_in_at": {
+          "name": "last_sign_in_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "last_sign_in_ip": {
+          "name": "last_sign_in_ip",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "notification_options": {
+          "name": "notification_options",
+          "type": "jsonb",
+          "sql_type": "jsonb"
+        },
+        "organizable_id": {
+          "name": "organizable_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "organizable"
+        },
+        "organizable_type": {
+          "name": "organizable_type",
+          "type": "belongs_to_type",
+          "sql_type": "character varying",
+          "association_name": "organizable"
+        },
+        "owner": {
+          "name": "owner",
+          "type": "boolean",
+          "sql_type": "boolean"
+        },
+        "provider": {
+          "name": "provider",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "remember_created_at": {
+          "name": "remember_created_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "reset_password_sent_at": {
+          "name": "reset_password_sent_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "reset_password_token": {
+          "name": "reset_password_token",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "role": {
+          "name": "role",
+          "type": "enum",
+          "sql_type": "integer",
+          "enum_values": {
+            "staff": 0,
+            "agent": 1,
+            "owner": 2,
+            "super_admin": 3
+          }
+        },
+        "settings": {
+          "name": "settings",
+          "type": "jsonb",
+          "sql_type": "jsonb"
+        },
+        "sign_in_count": {
+          "name": "sign_in_count",
+          "type": "integer",
+          "sql_type": "integer"
+        },
+        "tokens": {
+          "name": "tokens",
+          "type": "json",
+          "sql_type": "json"
+        },
+        "uid": {
+          "name": "uid",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "unconfirmed_email": {
+          "name": "unconfirmed_email",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        }
+      },
+      "associations": {
+        "assignments": {
+          "source_model": "Staff",
+          "type": "has_many",
+          "target": [
+            "Assignment"
+          ]
+        },
+        "histories": {
+          "source_model": "Staff",
+          "type": "has_many",
+          "target": [
+            "History"
+          ],
+          "as": "recordable"
+        },
+        "invited_by": {
+          "source_model": "Staff",
+          "type": "belongs_to",
+          "polymorphic": true,
+          "foreign_key": "invited_by_id",
+          "foreign_type": "invited_by_type",
+          "target": [
+
+          ],
+          "optional": true
+        },
+        "organizable": {
+          "source_model": "Staff",
+          "type": "belongs_to",
+          "polymorphic": true,
+          "foreign_key": "organizable_id",
+          "foreign_type": "organizable_type",
+          "target": [
+
+          ],
+          "optional": true
+        },
+        "profile": {
+          "source_model": "Staff",
+          "type": "has_one",
+          "target": [
+            "Profile"
+          ],
+          "as": "profileable",
+          "autosave": true
+        }
+      }
+    },
+    "User": {
+      "fields": {
+        "allow_password_change": {
+          "name": "allow_password_change",
+          "type": "boolean",
+          "sql_type": "boolean"
+        },
+        "confirmation_sent_at": {
+          "name": "confirmation_sent_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "confirmation_token": {
+          "name": "confirmation_token",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "confirmed_at": {
+          "name": "confirmed_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "current_payment_method": {
+          "name": "current_payment_method",
+          "type": "enum",
+          "sql_type": "integer",
+          "enum_values": {
+            "none": 0,
+            "ach_unverified": 1,
+            "ach_verified": 2,
+            "card": 3,
+            "other": 4
+          }
+        },
+        "current_sign_in_at": {
+          "name": "current_sign_in_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "current_sign_in_ip": {
+          "name": "current_sign_in_ip",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "email": {
+          "name": "email",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "enabled": {
+          "name": "enabled",
+          "type": "boolean",
+          "sql_type": "boolean"
+        },
+        "encrypted_password": {
+          "name": "encrypted_password",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "sql_type": "bigint"
+        },
+        "invitation_accepted_at": {
+          "name": "invitation_accepted_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "invitation_created_at": {
+          "name": "invitation_created_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "invitation_limit": {
+          "name": "invitation_limit",
+          "type": "integer",
+          "sql_type": "integer"
+        },
+        "invitation_sent_at": {
+          "name": "invitation_sent_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "invitation_token": {
+          "name": "invitation_token",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "invitations_count": {
+          "name": "invitations_count",
+          "type": "integer",
+          "sql_type": "integer"
+        },
+        "invited_by_id": {
+          "name": "invited_by_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "invited_by"
+        },
+        "invited_by_type": {
+          "name": "invited_by_type",
+          "type": "belongs_to_type",
+          "sql_type": "character varying",
+          "association_name": "invited_by"
+        },
+        "last_sign_in_at": {
+          "name": "last_sign_in_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "last_sign_in_ip": {
+          "name": "last_sign_in_ip",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "notification_options": {
+          "name": "notification_options",
+          "type": "jsonb",
+          "sql_type": "jsonb"
+        },
+        "owner": {
+          "name": "owner",
+          "type": "boolean",
+          "sql_type": "boolean"
+        },
+        "payment_methods": {
+          "name": "payment_methods",
+          "type": "jsonb",
+          "sql_type": "jsonb"
+        },
+        "provider": {
+          "name": "provider",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "remember_created_at": {
+          "name": "remember_created_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "reset_password_sent_at": {
+          "name": "reset_password_sent_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "reset_password_token": {
+          "name": "reset_password_token",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "settings": {
+          "name": "settings",
+          "type": "jsonb",
+          "sql_type": "jsonb"
+        },
+        "sign_in_count": {
+          "name": "sign_in_count",
+          "type": "integer",
+          "sql_type": "integer"
+        },
+        "stripe_id": {
+          "name": "stripe_id",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "tokens": {
+          "name": "tokens",
+          "type": "json",
+          "sql_type": "json"
+        },
+        "uid": {
+          "name": "uid",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "unconfirmed_email": {
+          "name": "unconfirmed_email",
+          "type": "string",
+          "sql_type": "character varying"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone"
+        },
+        "user_in_system": {
+          "name": "user_in_system",
+          "type": "boolean",
+          "sql_type": "boolean"
+        }
+      },
+      "associations": {
+        "authored_histories": {
+          "source_model": "User",
+          "type": "has_many",
+          "target": [
+            "History"
+          ],
+          "as": "authorable"
+        },
+        "histories": {
+          "source_model": "User",
+          "type": "has_many",
+          "target": [
+            "History"
+          ],
+          "as": "recordable"
+        },
+        "invited_by": {
+          "source_model": "User",
+          "type": "belongs_to",
+          "polymorphic": true,
+          "foreign_key": "invited_by_id",
+          "foreign_type": "invited_by_type",
+          "target": [
+
+          ],
+          "optional": true
+        },
+        "invoices": {
+          "source_model": "User",
+          "type": "has_many",
+          "target": [
+            "Invoice"
+          ]
+        },
+        "profile": {
+          "source_model": "User",
+          "type": "has_one",
+          "target": [
+            "Profile"
+          ],
+          "as": "profileable",
+          "autosave": true
         }
       }
     }

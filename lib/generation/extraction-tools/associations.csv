@@ -226,3 +226,13 @@ Refund,"Invoice",charge,has_one,invoice
 Refund,"Notification",,has_many,notifications
 Refund,"Policy",invoice,has_one,policy
 Refund,"User",invoice,has_one,user
+Staff,"Assignment",,has_many,assignments
+Staff,"History",,has_many,histories
+Staff,"",,belongs_to,invited_by
+Staff,"",,belongs_to,organizable
+Staff,"Profile",,has_one,profile
+User,"History",,has_many,authored_histories
+User,"History",,has_many,histories
+User,"",,belongs_to,invited_by
+User,"Invoice",,has_many,invoices
+User,"Profile",,has_one,profile
