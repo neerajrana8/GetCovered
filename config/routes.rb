@@ -1,7 +1,7 @@
 Rails.application.routes.draw do
             
   mount_devise_token_auth_for 'Staff', 
-    at: 'v1/account/auth', 
+    at: 'v2/account/auth', 
     skip: [:invitations],
     controllers: {
       sessions: 'staffs/sessions',
@@ -9,14 +9,14 @@ Rails.application.routes.draw do
       passwords: 'staffs/passwords'
     }
 
-  devise_for :staffs, path: "v1/account/auth", 
+  devise_for :staffs, path: "v2/account/auth", 
     only: [:invitations],
     controllers: { 
       invitations: 'staffs/invitations' 
     }
   
   mount_devise_token_auth_for 'User', 
-    at: 'v1/user/auth', 
+    at: 'v2/user/auth', 
     skip: [:invitations],
     controllers: { 
       registrations: "users/registrations",
@@ -25,11 +25,13 @@ Rails.application.routes.draw do
       passwords: 'users/passwords'
     }
 
-  devise_for :users, path: "v1/user/auth", 
+  devise_for :users, path: "v2/user/auth", 
     only: [:invitations],
     controllers: { 
       invitations: 'users/invitations' 
     }
+  
+  get 'v2/health-check', to: 'v2#health_check', as: :health_check
   
   namespace :v2 do
     draw :public
