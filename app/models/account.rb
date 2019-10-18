@@ -29,7 +29,20 @@ class Account < ApplicationRecord
   has_many :branding_profiles,
     as: :profileable
 	
-	has_many :insurables
+	has_many :insurables 
+	
+	has_many :account_users
+  
+  has_many :users,
+    through: :account_users
+  
+  has_many :active_account_users,
+    -> { where status: 'enabled' }, 
+    class_name: "AccountUser"
+  
+  has_many :active_users,
+    through: :active_account_users,
+    class_name: "User"
 	
 	has_many :events,
 	    as: :eventable
@@ -38,10 +51,10 @@ class Account < ApplicationRecord
        as: :addressable,
        autosave: true
 
-  accepts_nested_attributes_for :addresses
-
   has_many :histories,
     as: :recordable
+
+  accepts_nested_attributes_for :addresses
 
   validates_presence_of :title
   
