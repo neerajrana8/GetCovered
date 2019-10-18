@@ -18,7 +18,7 @@ module CarrierQbePolicyApplication
 				rates.each { |rate| policy_rates.create!(insurable_rate: rate) }
 				quote_rate_premiums = insurable_rates.map { |r| r.premium.to_f }
 				quote.update est_premium: quote_rate_premiums.inject { |sum, rate| sum + rate },
-				             status: "ESTIMATED"
+				             status: "estimated"
 			end
 		end
 		
@@ -118,7 +118,7 @@ module CarrierQbePolicyApplication
 	 					    quote_method = premium.save ? "mark_successful" : "mark_failure"                           
 	 					    quote.send(quote_method)
 	 							
-  	 						if quote.status == 'QUOTED'
+  	 						if quote.status == 'quoted'
       						premium.set_fees
       						premium.calculate_fees
       						premium.calculate_total
