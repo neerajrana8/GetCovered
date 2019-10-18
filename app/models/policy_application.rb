@@ -104,7 +104,7 @@ class PolicyApplication < ApplicationRecord
 	end
 	
 	def check_address(insurable)
-		throw :no_address if insurable.addresses.empty?
+		throw :no_address if insurable.primary_address().nil?
 	end
   
   private 
