@@ -416,6 +416,13 @@
         }
       },
       "associations": {
+        "accounts": {
+          "source_model": "Agency",
+          "type": "has_many",
+          "target": [
+            "Account"
+          ]
+        },
         "account_staff": {
           "source_model": "Agency",
           "type": "has_many",
@@ -425,11 +432,12 @@
           ],
           "as": "organizable"
         },
-        "accounts": {
+        "insurables": {
           "source_model": "Agency",
           "type": "has_many",
+          "through": "accounts",
           "target": [
-            "Account"
+            "Insurable"
           ]
         },
         "addresses": {
@@ -519,14 +527,6 @@
             "Fee"
           ],
           "as": "ownerable"
-        },
-        "insurables": {
-          "source_model": "Agency",
-          "type": "has_many",
-          "through": "accounts",
-          "target": [
-            "Insurable"
-          ]
         },
         "staff": {
           "source_model": "Agency",
@@ -884,19 +884,19 @@
         }
       },
       "associations": {
+        "carrier_agencies": {
+          "source_model": "Carrier",
+          "type": "has_many",
+          "target": [
+            "CarrierAgency"
+          ]
+        },
         "agencies": {
           "source_model": "Carrier",
           "type": "has_many",
           "through": "carrier_agencies",
           "target": [
             "Agency"
-          ]
-        },
-        "carrier_agencies": {
-          "source_model": "Carrier",
-          "type": "has_many",
-          "target": [
-            "CarrierAgency"
           ]
         },
         "carrier_agency_authorizations": {
@@ -928,6 +928,13 @@
             "CarrierInsurableType"
           ]
         },
+        "carrier_policy_types": {
+          "source_model": "Carrier",
+          "type": "has_many",
+          "target": [
+            "CarrierPolicyType"
+          ]
+        },
         "carrier_policy_type_availabilities": {
           "source_model": "Carrier",
           "type": "has_many",
@@ -936,11 +943,12 @@
             "CarrierPolicyTypeAvailability"
           ]
         },
-        "carrier_policy_types": {
+        "policy_types": {
           "source_model": "Carrier",
           "type": "has_many",
+          "through": "carrier_policy_types",
           "target": [
-            "CarrierPolicyType"
+            "PolicyType"
           ]
         },
         "commission_strategies": {
@@ -963,14 +971,6 @@
           "type": "has_many",
           "target": [
             "PolicyApplicationField"
-          ]
-        },
-        "policy_types": {
-          "source_model": "Carrier",
-          "type": "has_many",
-          "through": "carrier_policy_types",
-          "target": [
-            "PolicyType"
           ]
         }
       }
@@ -1726,13 +1726,6 @@
             "Invoice"
           ]
         },
-        "payments": {
-          "source_model": "Charge",
-          "type": "has_many",
-          "target": [
-            "Payment"
-          ]
-        },
         "policy": {
           "source_model": "Charge",
           "type": "has_one",
@@ -1741,19 +1734,26 @@
             "Policy"
           ]
         },
-        "refunds": {
-          "source_model": "Charge",
-          "type": "has_many",
-          "target": [
-            "Refund"
-          ]
-        },
         "user": {
           "source_model": "Charge",
           "type": "has_one",
           "through": "invoice",
           "target": [
             "User"
+          ]
+        },
+        "payments": {
+          "source_model": "Charge",
+          "type": "has_many",
+          "target": [
+            "Payment"
+          ]
+        },
+        "refunds": {
+          "source_model": "Charge",
+          "type": "has_many",
+          "target": [
+            "Refund"
           ]
         }
       }
@@ -2646,6 +2646,14 @@
           ],
           "as": "assignable"
         },
+        "staffs": {
+          "source_model": "Insurable",
+          "type": "has_many",
+          "through": "assignments",
+          "target": [
+            "Staff"
+          ]
+        },
         "carrier_insurable_profiles": {
           "source_model": "Insurable",
           "type": "has_many",
@@ -2701,6 +2709,13 @@
             "Lease"
           ]
         },
+        "policy_insurables": {
+          "source_model": "Insurable",
+          "type": "has_many",
+          "target": [
+            "PolicyInsurable"
+          ]
+        },
         "policies": {
           "source_model": "Insurable",
           "type": "has_many",
@@ -2715,21 +2730,6 @@
           "through": "policy_insurables",
           "target": [
             "PolicyApplication"
-          ]
-        },
-        "policy_insurables": {
-          "source_model": "Insurable",
-          "type": "has_many",
-          "target": [
-            "PolicyInsurable"
-          ]
-        },
-        "staffs": {
-          "source_model": "Insurable",
-          "type": "has_many",
-          "through": "assignments",
-          "target": [
-            "Staff"
           ]
         }
       }
@@ -3079,6 +3079,14 @@
             "Dispute"
           ]
         },
+        "refunds": {
+          "source_model": "Invoice",
+          "type": "has_many",
+          "through": "charges",
+          "target": [
+            "Refund"
+          ]
+        },
         "histories": {
           "source_model": "Invoice",
           "type": "has_many",
@@ -3124,14 +3132,6 @@
           "foreign_key": "policy_id",
           "target": [
             "Policy"
-          ]
-        },
-        "refunds": {
-          "source_model": "Invoice",
-          "type": "has_many",
-          "through": "charges",
-          "target": [
-            "Refund"
           ]
         },
         "user": {
@@ -3295,19 +3295,19 @@
         }
       },
       "associations": {
+        "lease_type_insurable_types": {
+          "source_model": "LeaseType",
+          "type": "has_many",
+          "target": [
+            "LeaseTypeInsurableType"
+          ]
+        },
         "insurable_types": {
           "source_model": "LeaseType",
           "type": "has_many",
           "through": "lease_type_insurable_types",
           "target": [
             "InsurableType"
-          ]
-        },
-        "lease_type_insurable_types": {
-          "source_model": "LeaseType",
-          "type": "has_many",
-          "target": [
-            "LeaseTypeInsurableType"
           ]
         },
         "lease_type_policy_types": {
@@ -3317,19 +3317,19 @@
             "LeaseTypePolicyType"
           ]
         },
-        "leases": {
-          "source_model": "LeaseType",
-          "type": "has_many",
-          "target": [
-            "Lease"
-          ]
-        },
         "policy_types": {
           "source_model": "LeaseType",
           "type": "has_many",
           "through": "lease_type_policy_types",
           "target": [
             "PolicyType"
+          ]
+        },
+        "leases": {
+          "source_model": "LeaseType",
+          "type": "has_many",
+          "target": [
+            "Lease"
           ]
         }
       }
@@ -3939,14 +3939,6 @@
         }
       },
       "associations": {
-        "agency": {
-          "source_model": "Payment",
-          "type": "has_one",
-          "through": "policy",
-          "target": [
-            "Agency"
-          ]
-        },
         "charge": {
           "source_model": "Payment",
           "type": "belongs_to",
@@ -3979,6 +3971,14 @@
           "through": "invoice",
           "target": [
             "Policy"
+          ]
+        },
+        "agency": {
+          "source_model": "Payment",
+          "type": "has_one",
+          "through": "policy",
+          "target": [
+            "Agency"
           ]
         },
         "user": {
@@ -4188,6 +4188,20 @@
             "Carrier"
           ]
         },
+        "coverages": {
+          "source_model": "Policy",
+          "type": "has_many",
+          "target": [
+            "PolicyCoverage"
+          ]
+        },
+        "invoices": {
+          "source_model": "Policy",
+          "type": "has_many",
+          "target": [
+            "Invoice"
+          ]
+        },
         "charges": {
           "source_model": "Policy",
           "type": "has_many",
@@ -4196,26 +4210,12 @@
             "Charge"
           ]
         },
-        "coverages": {
+        "refunds": {
           "source_model": "Policy",
           "type": "has_many",
+          "through": "charges",
           "target": [
-            "PolicyCoverage"
-          ]
-        },
-        "insurables": {
-          "source_model": "Policy",
-          "type": "has_many",
-          "through": "policy_insurables",
-          "target": [
-            "Insurable"
-          ]
-        },
-        "invoices": {
-          "source_model": "Policy",
-          "type": "has_many",
-          "target": [
-            "Invoice"
+            "Refund"
           ]
         },
         "policy_application": {
@@ -4238,6 +4238,14 @@
           "type": "has_many",
           "target": [
             "PolicyInsurable"
+          ]
+        },
+        "insurables": {
+          "source_model": "Policy",
+          "type": "has_many",
+          "through": "policy_insurables",
+          "target": [
+            "Insurable"
           ]
         },
         "policy_premiums": {
@@ -4271,6 +4279,14 @@
             "PolicyUser"
           ]
         },
+        "users": {
+          "source_model": "Policy",
+          "type": "has_many",
+          "through": "policy_users",
+          "target": [
+            "User"
+          ]
+        },
         "premium": {
           "source_model": "Policy",
           "type": "has_one",
@@ -4289,22 +4305,6 @@
           "source_model": "Policy",
           "type": "has_one",
           "through": "primary_policy_user",
-          "target": [
-            "User"
-          ]
-        },
-        "refunds": {
-          "source_model": "Policy",
-          "type": "has_many",
-          "through": "charges",
-          "target": [
-            "Refund"
-          ]
-        },
-        "users": {
-          "source_model": "Policy",
-          "type": "has_many",
-          "through": "policy_users",
           "target": [
             "User"
           ]
@@ -4470,22 +4470,6 @@
           ],
           "as": "eventable"
         },
-        "insurable_rates": {
-          "source_model": "PolicyApplication",
-          "type": "has_many",
-          "through": "policy_rates",
-          "target": [
-            "InsurableRate"
-          ]
-        },
-        "insurables": {
-          "source_model": "PolicyApplication",
-          "type": "has_many",
-          "through": "policy_insurables",
-          "target": [
-            "Insurable"
-          ]
-        },
         "policy": {
           "source_model": "PolicyApplication",
           "type": "belongs_to",
@@ -4518,12 +4502,12 @@
             "PolicyInsurable"
           ]
         },
-        "policy_premiums": {
+        "insurables": {
           "source_model": "PolicyApplication",
           "type": "has_many",
-          "through": "policy_quotes",
+          "through": "policy_insurables",
           "target": [
-            "PolicyPremium"
+            "Insurable"
           ]
         },
         "policy_quotes": {
@@ -4533,11 +4517,27 @@
             "PolicyQuote"
           ]
         },
+        "policy_premiums": {
+          "source_model": "PolicyApplication",
+          "type": "has_many",
+          "through": "policy_quotes",
+          "target": [
+            "PolicyPremium"
+          ]
+        },
         "policy_rates": {
           "source_model": "PolicyApplication",
           "type": "has_many",
           "target": [
             "PolicyRate"
+          ]
+        },
+        "insurable_rates": {
+          "source_model": "PolicyApplication",
+          "type": "has_many",
+          "through": "policy_rates",
+          "target": [
+            "InsurableRate"
           ]
         },
         "policy_type": {
@@ -4556,6 +4556,14 @@
             "PolicyUser"
           ]
         },
+        "users": {
+          "source_model": "PolicyApplication",
+          "type": "has_many",
+          "through": "policy_users",
+          "target": [
+            "User"
+          ]
+        },
         "primary_policy_user": {
           "source_model": "PolicyApplication",
           "type": "has_one",
@@ -4567,14 +4575,6 @@
           "source_model": "PolicyApplication",
           "type": "has_one",
           "through": "primary_policy_user",
-          "target": [
-            "User"
-          ]
-        },
-        "users": {
-          "source_model": "PolicyApplication",
-          "type": "has_many",
-          "through": "policy_users",
           "target": [
             "User"
           ]
@@ -5020,14 +5020,6 @@
             "BillingStrategy"
           ]
         },
-        "fees": {
-          "source_model": "PolicyPremium",
-          "type": "has_many",
-          "through": "policy_premium_fees",
-          "target": [
-            "Fee"
-          ]
-        },
         "policy": {
           "source_model": "PolicyPremium",
           "type": "belongs_to",
@@ -5043,6 +5035,14 @@
           "type": "has_many",
           "target": [
             "PolicyPremiumFee"
+          ]
+        },
+        "fees": {
+          "source_model": "PolicyPremium",
+          "type": "has_many",
+          "through": "policy_premium_fees",
+          "target": [
+            "Fee"
           ]
         },
         "policy_quote": {
@@ -5210,14 +5210,6 @@
           ],
           "as": "eventable"
         },
-        "insurable_rates": {
-          "source_model": "PolicyQuote",
-          "type": "has_many",
-          "through": "policy_rates",
-          "target": [
-            "InsurableRate"
-          ]
-        },
         "policy": {
           "source_model": "PolicyQuote",
           "type": "belongs_to",
@@ -5251,6 +5243,14 @@
           "type": "has_many",
           "target": [
             "PolicyRate"
+          ]
+        },
+        "insurable_rates": {
+          "source_model": "PolicyQuote",
+          "type": "has_many",
+          "through": "policy_rates",
+          "target": [
+            "InsurableRate"
           ]
         }
       }
@@ -5692,14 +5692,6 @@
             "Invoice"
           ]
         },
-        "notifications": {
-          "source_model": "Refund",
-          "type": "has_many",
-          "target": [
-            "Notification"
-          ],
-          "as": "eventable"
-        },
         "policy": {
           "source_model": "Refund",
           "type": "has_one",
@@ -5715,6 +5707,14 @@
           "target": [
             "User"
           ]
+        },
+        "notifications": {
+          "source_model": "Refund",
+          "type": "has_many",
+          "target": [
+            "Notification"
+          ],
+          "as": "eventable"
         }
       }
     },

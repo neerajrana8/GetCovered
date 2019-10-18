@@ -26,13 +26,13 @@ models_csv = scheme['models'].keys.join("\n")
 fields_csv = scheme['models'].map{|mk, mv| mv['fields'].map{|fk,fv| [mk, fv['name'], fv['type']].join(',') } }.flatten.join("\n")
 
 # build associations csv
-associations_csv = scheme['models'].map{|mk, mv| mv['associations'].map{|ak,av| [mk, "\"#{av['target'].join(',')}\"", av['through'] || '', av['type'], ak].join(',') } }.flatten.join("\n")
+associations_csv = scheme['models'].map{|mk, mv| mv['associations'].map{|ak,av| [mk, av['type'], "\"#{av['target'].join(',')}\"", av['through'] || '', ak].join(',') } }.flatten.join("\n")
 
 
 
 # spit out csvs
 ['models', 'fields', 'associations'].each do |csv_thang|
-  File.open(File.join(__dir__, "#{csv_thang}.csv"), "w") do |f|
+  File.open(File.join(__dir__, "app-data/#{csv_thang}.csv"), "w") do |f|
     f.write(eval("#{csv_thang}_csv"))
   end
 end

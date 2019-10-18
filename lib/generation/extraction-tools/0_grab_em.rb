@@ -15,6 +15,19 @@ def log_warning(summary, description = nil, longform_data = nil)
   puts "WARNING(#{$logged_warnings.size - 1}): #{summary}#{description.nil? ? "" : "; #{description}"}#{longform_data.nil? ? "" : " (extra data available)"}"
 end
 
+# sort string grabber
+def get_sort_string(a_name, a_data)
+  to_return = ""
+  ref = eval("::#{a_data[:source_model]}").reflections[a_name.to_s]
+  case ref
+    when ActiveRecord::Reflection::ThroughReflection
+      to_return = ref.chain.reverse.map{|r| r.name.to_s }.join("_")
+    else
+      to_return = a_name.to_s
+  end
+  return to_return
+end
+
 # association data extractor
 def extract_association_data(a_name, a_data)
   puts "      Extracting..." if $show_debug_stuff
@@ -136,7 +149,9 @@ models.each do |model|
   end
   # alphabetize stuff
   data[m_name][:fields] = data[m_name][:fields].sort.to_h
-  data[m_name][:associations] = data[m_name][:associations].sort.to_h
+  data[m_name][:associations] = data[m_name][:associations].sort_by do |k,v|
+    get_sort_string(k, v)
+  end.to_h
 end
 
 # alphabetize stuff & put all our model data under a "models" key
@@ -144,6 +159,6 @@ data = { models: data.sort.to_h }
 
 
 # SPIT OUT THE HASH
-File.open(File.join(__dir__, "scheme.json"), "w") do |f|
+File.open(File.join(__dir__, "app-data/scheme.json"), "w") do |f|
   f.write(JSON.pretty_generate(data))
 end
