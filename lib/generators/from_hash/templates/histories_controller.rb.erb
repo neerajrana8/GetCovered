@@ -1,0 +1,58 @@
+##
+# V2 <%= get_human_readable_context_name(@ctx) %> <%= @m_name.pluralize %> Controller
+# File: <%= @full_controller_path %>
+
+module V2
+  <%= @ctx_data['module_sequence'].join("\n  module ") %>
+    class <%= @model_name.pluralize %>Controller < <%= @ctx.camelize %>Controller
+      
+      def index_recordable
+          @using_recordable_index = true
+          params[:sort] = { column: 'created_at', direction: 'desc' }
+          <% if ((@scheme["contexts"] || {})[@ctx] || {})["owner_through"] %>index(:@histories,  @owner.respond_to?(params[:recordable_type].pluralize.underscore) ? @owner.send(params[:recordable_type].pluralize.underscore).find(params[:id]).histories : @owner.respond_to?(params[:recordable_type].underscore) ? @owner.send(params[:recordable_type].underscore).find(params[:id]).histories : params[:recordable_type] == @owner.class.name ? @owner.histories : nil)<%
+          else %>index(:@histories, params[:recordable_type].constantize.find(params[:id]).histories)<% end %>
+          remove_instance_variable(:@using_recordable_index)
+          render template: view_path + "/index#{params[:short] ? "_short" : ""}.json.jbuilder"
+      end
+
+      def index_authorable
+          @using_authorable_index = true
+          params[:sort] = { column: 'created_at', direction: 'desc' }
+          <% if ((@scheme["contexts"] || {})[@ctx] || {})["owner_through"] %>index(:@histories,  @owner.respond_to?(params[:authorable_type].pluralize.underscore) ? @owner.send(params[:authorable_type].pluralize.underscore).find(params[:id]).histories : @owner.respond_to?(params[:authorable_type].underscore) ? @owner.send(params[:authorable_type].underscore).find(params[:id]).histories : params[:authorable_type] == @owner.class.name ? @owner.histories : nil)<%
+          else %>index(:@histories, params[:authorable_type].constantize.find(params[:id]).authored_histories)<% end %>
+          remove_instance_variable(:@using_authorable_index)
+          render template: view_path + "/index#{params[:short] ? "_short" : ""}.json.jbuilder"
+      end
+      
+      private
+
+        def view_path
+          super + "/histories"
+        end
+        
+        def supported_filters
+          if @using_recordable_index
+            return({
+              created_at: [:scalar, :array, :interval],
+              action: [:scalar, :array],
+              authorable_id: [:scalar, :array],
+              authorable_type: [:scalar, :array]
+            })
+          elsif @using_authorable_index
+            return({
+              created_at: [:scalar, :array, :interval],
+              action: [:scalar, :array],
+              recordable_id: [:scalar, :array],
+              recordable_type: [:scalar, :array]
+            })
+          end
+          return({})
+        end
+
+        def supported_orders
+          supported_filters
+        end
+        
+    end
+  <%= @ctx_data['module_sequence'].map{|m| "end # module #{m}" }.join("\n  ") %>
+end

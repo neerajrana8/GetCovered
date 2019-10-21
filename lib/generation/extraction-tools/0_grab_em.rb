@@ -1,7 +1,4 @@
-
-
-# call load './../../gc/gen/spreadsheet/grab_em.rb'
-
+require File.join(__dir__, '/hash_manipulation_tools.rb')
 
 
 # DEFINE UTILITIES
@@ -102,15 +99,26 @@ models.each do |model|
   m_name = model.name.to_sym
   puts "MODEL: #{m_name}" if $show_debug_stuff
   data[m_name] = { fields: {}, associations: {} }
+  # get specials data for history
+  if defined?(RecordChange) && model.included_modules.include?(RecordChange)
+      data[m_name]['specials'] = {} unless data[m_name].has_key?('specials')
+      data[m_name]['specials']['history'] = { record_change: true }
+  end
+  # get specials data for devise
+  if defined?(DeviseTokenAuth) && defined?(DeviseTokenAuth::Concerns) && defined?(DeviseTokenAuth::Concerns::User) && model.included_modules.include?(DeviseTokenAuth::Concerns::User)
+    data[m_name]['specials'] = {} unless data[m_name].has_key?('specials')
+    data[m_name]['specials']['devise'] = {}
+  end
   # get field info
   puts "  FIELDS:" if $show_debug_stuff
   model.columns_hash.each do |c_name, c_data|
-  puts "    COLUMN: #{c_name}" if $show_debug_stuff
+    puts "    COLUMN: #{c_name}" if $show_debug_stuff
     data[m_name][:fields][c_data.name.to_sym] = {
       name: c_data.name.to_sym,
       type: c_data.type.to_sym,
       sql_type: c_data.sql_type.to_sym
     }
+    data[m_name][:fields][c_data.name.to_sym][:type] = :array if c_data.type == :jsonb && (c_data.default || "").strip == "[]"
   end
   # fix enum fields
   puts "  ENUM FIXES:" if $show_debug_stuff
@@ -146,6 +154,15 @@ models.each do |model|
       end
     end
     data[m_name][:associations][a_name.to_sym] = extract_association_data(a_name, a_data)
+  end
+  # get accepts_nested_attributes_for data
+  model.nested_attributes_options.each do |na_name, na_options|
+    if data[m_name][:associations].has_key?(na_name.to_sym)
+      data[m_name][:associations][na_name.to_sym]['accepts_nested_attributes'] = true
+      data[m_name][:associations][na_name.to_sym]['nested_attributes_options'] = na_options
+    else
+      log_warning("Nested attributes options exist for #{m_name.to_s}##{na_name}, an association which does not exist!")
+    end
   end
   # alphabetize stuff
   data[m_name][:fields] = data[m_name][:fields].sort.to_h

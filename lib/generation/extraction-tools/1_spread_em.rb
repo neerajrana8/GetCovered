@@ -1,3 +1,6 @@
+require File.join(__dir__, '/hash_manipulation_tools.rb')
+
+
 # utilities
 def get_field_type_string(f_data)
   to_return = f_data['type'] # for now we just directly return the type, no special markup like including enum options etc... but this is here in case we want to add that later
@@ -30,7 +33,7 @@ associations_csv = scheme['models'].map{|mk, mv| mv['associations'].map{|ak,av| 
 
 
 
-# spit out csvs
+# spit out csvs MOOSE WARNING: change this to use Roo to spit out an xlsx
 ['models', 'fields', 'associations'].each do |csv_thang|
   File.open(File.join(__dir__, "app-data/#{csv_thang}.csv"), "w") do |f|
     f.write(eval("#{csv_thang}_csv"))

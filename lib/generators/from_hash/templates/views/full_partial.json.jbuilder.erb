@@ -1,0 +1,88 @@
+<%
+  # Setup
+  @current_views = (@view_levels.include?(@view) ? @view_levels.take_while{|v| v != @view } : []) + [@view]
+
+  # MOOSE WARNING: requires nested association structure
+  def get_partials(associations = @m_data['associations'] || {}, parent = @m_name.underscore)
+    to_return = {}
+    associations.each do |a_name, a_data|
+      permissions = (a_data['permissions'] || {})[@ctx] || []
+      vti = @current_views.length - 1
+      aview_type = nil
+      while vti >= 0 && aview_type.nil? # we find the permission which tells us to send the most-derived @current_views element to some other view
+        aview_type = permissions.detect{|p| (@available_views + @view_levels.map{|vl| "#{vl}_fields" }).select{|av| p.end_with?("_#{av}") }.map{|av| p.chomp("_#{av}") }.include?(@current_views[vti]) }
+        vti = vti - 1
+      end
+      unless aview_type.nil?
+        aview_type = aview_type[(@current_views[vti + 1].length + 1)..-1] # remove "#{@current_views[vti+1]}_" from the start of aview_type, leaving the view we should display
+        
+        if a_data["target"].length == 1
+          model_name = a_data["target"][0]
+          a_name_key = "#{a_name}#{(@attributes_view_extension == true || (@attributes_view_extension.nil? && a_data["accepts_nested_attributes"])) ? '_attributes' : ''}"
+          to_return[a_name_key] = {
+            plurality: (a_data['type'] == 'has_many' ? 'plural' : 'singular'),
+            view_type: aview_type,
+            model_name: model_name,
+            path: get_view_path(model_name, @ctx),
+            parent: "#{parent}",
+            wherethrough: get_partials(a_data["wherethrough"] || {}, "#{parent}.#{a_name}".send(*(a_data["type"] == "has_many" ? [:gsub, ".", "_"] : [:itself])))
+            association_name: a_name,
+            sort_block: a_data["sort"] || nil
+          }
+        elsif a_data["target"].length > 1 && a_data["polymorphic"]
+          a_name_key = "#{a_name}#{@attributes_view_extension == true ? '_attributes' : ''}"
+          to_return[a_name_key] = {
+            plurality: 'polysingular',
+            foreign_type: extract_foreign_type(a_name, a_data),
+            view_type: aview_type,
+            model_name: Marshal.load(Marshal.dump(a_data["target"])),
+            path: a_data["target"].map{|model_name| [model_name, get_view_path(model_name, @ctx)] }.to_h,
+            parent: "#{parent}",
+            wherethrough: {}, # MOOSE WARNING: not supported right now
+            association_name: a_name
+          }
+        else # a_data["target"].length == 0 or there are multiple targets on a non-polymorphic association
+          # MOOSE WARNING: not supported right now; silently ignored
+        end
+      end
+    end
+    return(to_return)
+  end
+
+  def print_partials(partials, prefix)
+    toPrint = []
+    partials.each do |pname, pdata|
+      toPrint.push("")
+      toPrint.push("#{prefix}json.#{pname} do")
+      toPrint.push("#{prefix}  unless #{pdata[:parent]}.#{pdata[:association_name]}.nil?")
+      if pdata[:plurality] == "singular"
+        toPrint.push("#{prefix}    json.partial! \"#{pdata[:path]}/#{get_partial_filename(pdata[:model_name], @ctx, pdata[:view_type], false)}\",")
+        toPrint.push("#{prefix}      #{pdata[:model_name].underscore}: #{pdata[:parent]}.#{pdata[:association_name]}")
+        toPrint.concat(print_partials(pdata[:wherethrough], "#{prefix}    "))
+      elsif pdata[:plurality] == "polysingular"
+        toPrint.push("#{prefix}    case #{pdata[:parent]}.#{pdata[:foreign_type]}")
+        pdata[:model_name].each do |polymodel|
+          toPrint.push("#{prefix}      when \"#{polymodel.camelize}\"")
+          toPrint.push("#{prefix}        json.partial! \"#{pdata[:path][polymodel]}/#{get_partial_filename(pdata[:model_name], @ctx, pdata[:view_type], false)}\",")
+          toPrint.push("#{prefix}          #{polymodel.underscore}: #{pdata[:parent]}.#{pdata[:association_name]}")
+          toPrint.concat(print_partials(pdata[:wherethrough], "#{prefix}    ")) # this ain't never gonna do no happenin'
+        end
+        toPrint.push("#{prefix}    end")
+      else
+        iterator_name = "#{pdata[:parent]}.#{pdata[:association_name]}".gsub(".", "_")
+        toPrint.push("#{prefix}    json.array! #{pdata[:parent]}.#{pdata[:association_name]}#{pdata[:sort_block] ? ".sort#{pdata[:sort_block]}" : ''} do |#{iterator_name}|")
+        toPrint.push("#{prefix}      json.partial! \"#{pdata[:path]}/#{get_partial_filename(pdata[:model_name], @ctx, pdata[:view_type], false)}\",")
+        toPrint.push("#{prefix}        #{pdata[:model_name].underscore}: #{iterator_name}")
+        toPrint.concat(print_partials(pdata[:wherethrough], "#{prefix}      "))
+        toPrint.push("#{prefix}    end")
+      end
+      toPrint.push("#{prefix}  end")
+      toPrint.push("#{prefix}end")
+    end
+    return(toPrint)
+  end
+
+%>json.partial! "<%= @view_path %>/<%= get_fields_partial_filename(@m_name, @ctx, @view, false) %>",
+  <%= @m_name.underscore %>: <%= @m_name.underscore %>
+
+<%= print_partials(get_partials, "").join("\n") %>
