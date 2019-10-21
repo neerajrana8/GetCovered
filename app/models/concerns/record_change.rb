@@ -65,11 +65,8 @@ module RecordChange
         end
       end
     end
-      
-    unless changes.empty?  
-	    self.histories.create(authorable: author, data: changes, action: 'update')
-	    author.histories.create(authorable: author, data: changes, action: 'update') unless author.nil?
-		end
+
+    self.histories.create(authorable: author, data: changes, action: 'update') unless changes.empty?
     remove_instance_variable(:@author) if instance_variable_defined?(:@author)
 
   end
@@ -78,11 +75,7 @@ module RecordChange
   def record_create
     author = instance_variable_defined?(:@author) ? @author : nil
     
-	  unless self.respond_to?(:create_ahistorically, true) && create_ahistorically
-	  	self.histories.create(authorable: author, action: 'create')
-	  	author.histories.create(authorable: author, data: related_create_hash(self.class.name.downcase.to_sym, self), action: 'create_related') unless author.nil? 
-	  end
-	  
+    self.histories.create(authorable: author, action: 'create') unless self.respond_to?(:create_ahistorically, true) && create_ahistorically
     (self.respond_to?(:related_classes_through, true) ? related_classes_through : []).each do |related|
       ([:has_many, :has_and_belongs_to_many].include?(self.class.reflect_on_association(related).macro) ? self.send(related) : [ self.send(related) ]).each do |related_model|
         related_model
