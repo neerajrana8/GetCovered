@@ -92,6 +92,8 @@ class Policy < ApplicationRecord
 
   accepts_nested_attributes_for :policy_coverages, :policy_premiums
   
+  after_save :update_leases, if: :saved_changes_to_status?
+
   validate :same_agency_as_account
   validate :status_allowed
   validate :carrier_agency
@@ -106,6 +108,9 @@ class Policy < ApplicationRecord
 	enum billing_dispute_status: { UNDISPUTED: 0, DISPUTED: 1, AWATING_POSTDISPUTE_PROCESSING: 2, NOT_REQUIRED: 3 }
   
 
+  def in_system?
+    policy_in_system == true
+  end
   # Perform Postdispute Processing
   #
   # Performs all queued refunds after payment disputes have been resolved.
@@ -115,7 +120,7 @@ class Policy < ApplicationRecord
   #   @policy.perform_postdispute_processing
   #   => nil
   def perform_postdispute_processing
-    if self.policy_in_system?
+    if self.in_system?
       refunds.queued.each { |rfnd| rfnd.process(true) }
       self.with_lock do
         update(billing_dispute_status: 'undisputed') if billing_dispute_status == 'awaiting_postdispute_processing'
@@ -138,9 +143,30 @@ class Policy < ApplicationRecord
   end
 
   def status_allowed
-    if policy_in_system?(true)
+    if in_system?
       if (status.AWAITING_PAYMENT? || status.AWAITING_ACH?) && invoices.paid.count.zero?
         errors.add(:status, 'must have at least one paid invoice to change status')
+      end
+    end
+  end
+
+  def update_leases
+    if BOUND? || RENEWED? || REINSTATED?
+      insurables.each do |insurable|
+        insurable.leases.each do |lease|
+          if lease.current?
+            lease.update_attribute(:covered, true)
+          end
+        end
+      end
+    elsif EXPIRED? || CANCELLED?
+      insurables.each do |insurable|
+        insurable.leases.each do |lease|
+          lease.insurable.policies.each do |policy|
+            return if policy.PAID? || policy.BOUND? || policy.RENEWED? || policy.REINSTATED?
+          end
+          lease.update_attribute(:covered, false)
+        end
       end
     end
   end

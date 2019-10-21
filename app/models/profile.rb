@@ -10,10 +10,11 @@ class Profile < ApplicationRecord
     required: false
     
   before_validation :format_contact_phone
-  before_save :set_full_name  
+  before_save :set_full_name
 
   # Validations
   validates_presence_of :first_name, :last_name
+  validate :user_age
 
   settings index: { number_of_shards: 1 } do
     mappings dynamic: 'false' do
@@ -21,6 +22,10 @@ class Profile < ApplicationRecord
       indexes :last_name, type: :text, analyzer: 'english'
       indexes :full_name, type: :text, analyzer: 'english'
     end
+  end
+
+  def user_age
+    errors.add(:birth_date, 'User should be over 18 years old.') if profileable && profileable_type == "User" && birth_date > 18.years.ago
   end
 
   private  
