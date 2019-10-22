@@ -447,6 +447,8 @@ module CarrierQbeInsurable
 	              @carrier_profile.data["get_rates_resolved_on"] = Time.current.strftime("%m/%d/%Y %I:%M %p")
 	            end
 	            
+	            @carrier_profile.save()
+	            
 	            insurable_rates.activated
 	                 					 .where("created_at < ? and number_insured = ?", start_time, number_insured)
 									 					 .update_all(:activated => false)            

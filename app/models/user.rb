@@ -35,6 +35,16 @@ class User < ActiveRecord::Base
   has_many :active_account_users,
     -> { where status: 'enabled' }, 
     class_name: "AccountUser"
+    
+  has_many :policy_users
+  has_many :policies,
+  	through: :policy_users
+  has_many :policy_applications,
+  	through: :policy_users
+  	
+  has_many :lease_users
+  has_many :leases,
+  	through: :lease_users
   
   has_many :accounts,
     through: :active_account_users
@@ -50,13 +60,13 @@ class User < ActiveRecord::Base
   
   # Override payment_method attribute getters and setters to store data
   # as encrypted
-  def payment_methods=(methods)
-    super(EncryptionService.encrypt(methods))
-  end
-
-  def payment_methods
-    super.nil? ? super : EncryptionService.decrypt(super)
-  end
+#   def payment_methods=(methods)
+#     super(EncryptionService.encrypt(methods))
+#   end
+# 
+#   def payment_methods
+#     super.nil? ? super : EncryptionService.decrypt(super)
+#   end
 
 
   # Set Stripe ID
@@ -73,6 +83,8 @@ class User < ActiveRecord::Base
           :last_name  => profile.last_name
         }
       )
+      
+      pp stripe_customer
       
       if update stripe_id: stripe_customer['id']
         return attach_payment_source(token, default) unless token.nil?       
@@ -105,9 +117,10 @@ class User < ActiveRecord::Base
         return false unless update_columns(stripe_id: customer.id)
       end
       unless token.nil?
-        # common setup for both new and reused payment methods
+	      # common setup for both new and reused payment methods
         customer = Stripe::Customer.retrieve(stripe_id) if customer.nil?
         token_data = Stripe::Token.retrieve(token)
+        
         stored_method = nil
         case token_data.type
           when 'bank_account'
@@ -119,6 +132,7 @@ class User < ActiveRecord::Base
           else
             return false # flee in horror
         end
+        
         # branch based on payment method's previous use
         if stored_method.nil? # payment method was not previously used
           case token_data.type
@@ -141,12 +155,26 @@ class User < ActiveRecord::Base
               customer.sources.create(source: token_data.id)
               customer.default_source = token_data.card.id if make_default
               customer.save
-              self.payment_methods['by_id'][token_data.card.id] = {
+              
+              tmp_id = token_data.card.id
+              self.payment_methods['by_id'][tmp_id] = {}
+              
+              pp self.payment_methods['by_id']
+              
+              self.payment_methods['by_id'][tmp_id] = {
                 'type' => 'card',
                 'id' => token_data.card.id,
                 'fingerprint' => token_data.card.fingerprint
               }
+              
+              pp self.payment_methods['by_id']
+              puts "\n"
+              
               self.payment_methods['fingerprint_index']['card'][token_data.card.fingerprint] = token_data.card.id
+              
+              pp self.payment_methods
+              puts "\n"
+              
               if make_default
                 self.current_payment_method = 'card'
                 self.payment_methods['default'] = token_data.card.id
