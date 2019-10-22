@@ -1,10 +1,10 @@
 ##
-# V2 <%= get_human_readable_context_name(@ctx) %> <%= @m_name.pluralize %> Controller
-# File: <%= @full_controller_path %>
+# V2 StaffSuperAdmin Histories Controller
+# File: app/controllers/v2/staff_super_admin/histories_controller.rb
 
 module V2
-  module <%= @ctx_data['module_sequence'].join("\n  module ") %>
-    class <%= @m_name.pluralize %>Controller < <%= @ctx.camelize %>Controller
+  module StaffSuperAdmin
+    class HistoriesController < StaffSuperAdminController
       
       def index_recordable
           @using_recordable_index = true
@@ -52,5 +52,5 @@ module V2
         end
         
     end
-  <%= @ctx_data['module_sequence'].map{|m| "end # module #{m}" }.join("\n  ") %>
+  end # module StaffSuperAdmin
 end

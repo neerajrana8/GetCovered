@@ -163,6 +163,22 @@ class FromHashGenerator < Rails::Generators::Base
     puts "  Success!"
   end
 
+  def actualize_history_controller
+    # MOOSE WARNING: add permissions stuff    
+    @m_name = ((@scheme['specials'] || {})['history'] || {})['model']
+    unless @m_name.blank?
+      gputs "Generating history controllers..."
+      (((@scheme['specials'] || {})['history'] || {})['contexts'] || []).each do |ctx|
+        @ctx = ctx
+        @ctx_data = @scheme['contexts'][@ctx]
+        @controller_path = get_controller_path(@m_name, ctx)
+        @controller_filename = get_controller_filename(@m_name, ctx)
+        @full_controller_path = "app/controllers/#{@controller_path}/#{@controller_filename}"
+        gputs "Building #{@full_controller_path}"
+        template "histories_controller.rb.erb", "#{@output_root}#{@full_controller_path}", force: should_force_controller(@m_name, ctx)
+      end
+    end
+  end
   
   def actualize_model_controllers
     gputs "Generating model controllers..."
@@ -172,13 +188,13 @@ class FromHashGenerator < Rails::Generators::Base
       @m_name = m_name
       @m_data = m_data
       if m_name == @special_history_model # MOOSE WARNING: implement this
-        # build special history controllers
+        # do nothing
       elsif !m_data['verbs'].blank?
         # build standard model controllers
         m_data['verbs'].select{|ctx, verbs| !verbs.blank? && controller_actualization_allowed(m_name, ctx) }.each do |ctx, verbs|
           @available_views = m_data['viewable_contexts'][ctx] || []
           @ctx = ctx
-          @ctx_data = @scheme['contexts'][@ctx] # MOOSE WARNING: right now this shizzle can be nested
+          @ctx_data = @scheme['contexts'][@ctx]
           @verbs = verbs
           @controller_path = get_controller_path(m_name, ctx)
           @controller_filename = get_controller_filename(m_name, ctx)
