@@ -11,9 +11,15 @@ class PolicyPremium < ApplicationRecord
   has_many :fees, 
     through: :policy_premium_fees
   
+  validate :correct_total
+
   def application
 		return policy_quote.policy_application  
-	end
+  end
+  
+  def correct_total
+    errors.add(:total, 'incorrect total') if total != base + taxes + total_fees
+  end
   
   def set_fees
 	  # Get CarrierPolicyTypeAvailability Fee for Region

@@ -91,7 +91,12 @@ class Policy < ApplicationRecord
     through: :charges
 
   accepts_nested_attributes_for :policy_coverages, :policy_premiums
-	
+  
+  after_save :update_leases, if: :saved_changes_to_status?
+
+  validate :same_agency_as_account
+  validate :status_allowed
+  validate :carrier_agency
 	validates_presence_of :expiration_date, :effective_date
   validate :date_order, 
     unless: Proc.new { |pol| pol.effective_date.nil? or pol.expiration_date.nil? }	
@@ -103,6 +108,9 @@ class Policy < ApplicationRecord
 	enum billing_dispute_status: { UNDISPUTED: 0, DISPUTED: 1, AWATING_POSTDISPUTE_PROCESSING: 2, NOT_REQUIRED: 3 }
   
 
+  def in_system?
+    policy_in_system == true
+  end
   # Perform Postdispute Processing
   #
   # Performs all queued refunds after payment disputes have been resolved.
@@ -112,7 +120,7 @@ class Policy < ApplicationRecord
   #   @policy.perform_postdispute_processing
   #   => nil
   def perform_postdispute_processing
-    if self.policy_in_system?
+    if self.in_system?
       refunds.queued.each { |rfnd| rfnd.process(true) }
       self.with_lock do
         update(billing_dispute_status: 'undisputed') if billing_dispute_status == 'awaiting_postdispute_processing'
@@ -122,6 +130,46 @@ class Policy < ApplicationRecord
     end
   end
 
+  def same_agency_as_account
+		if agency != account.agency
+			errors.add(:account, 'policy must belong to the same agency as account')
+		end
+  end
+  
+  def carrier_agency
+    if agency.carrier_agency != carrier.carrier_agency
+			errors.add(:agency, 'carrier agency must exist')
+		end
+  end
+
+  def status_allowed
+    if in_system?
+      if (status.AWAITING_PAYMENT? || status.AWAITING_ACH?) && invoices.paid.count.zero?
+        errors.add(:status, 'must have at least one paid invoice to change status')
+      end
+    end
+  end
+
+  def update_leases
+    if BOUND? || RENEWED? || REINSTATED?
+      insurables.each do |insurable|
+        insurable.leases.each do |lease|
+          if lease.current?
+            lease.update_attribute(:covered, true)
+          end
+        end
+      end
+    elsif EXPIRED? || CANCELLED?
+      insurables.each do |insurable|
+        insurable.leases.each do |lease|
+          lease.insurable.policies.each do |policy|
+            return if policy.PAID? || policy.BOUND? || policy.RENEWED? || policy.REINSTATED?
+          end
+          lease.update_attribute(:covered, false)
+        end
+      end
+    end
+  end
 
   settings index: { number_of_shards: 1 } do
     mappings dynamic: 'false' do

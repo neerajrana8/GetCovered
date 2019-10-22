@@ -19,6 +19,10 @@ class PolicyInsurable < ApplicationRecord
 		if insurable.account != policy_application.account
 			errors.add(:insurable, 'insurable must belong to same account as policy application')
 		end
+
+		if policy && policy.account != insurable.account
+			errors.add(:insurable, 'insurable must belong to same account as policy')
+		end
 	end
   
   private

@@ -44,12 +44,15 @@ class PolicyApplication < ApplicationRecord
 	    
 	has_many :policy_rates
 	has_many :insurable_rates,
-		through: :policy_rates
+		through: :policy_rates, before_add: :check_if_active
     
   has_many :policy_application_answers
   has_many :policy_application_fields,
   	through: :policy_application_answers
 	
+	validate :same_agency_as_account
+	validate :billing_strategy_must_be_enabled
+	validate :carrier_agency
 	validates_presence_of :expiration_date, :effective_date
   validate :date_order, 
     unless: Proc.new { |pol| pol.effective_date.nil? or pol.expiration_date.nil? }	
@@ -106,6 +109,31 @@ class PolicyApplication < ApplicationRecord
 	def check_address(insurable)
 		throw :no_address if insurable.primary_address().nil?
 	end
+
+	def check_if_active(insurable_rate)
+		throw :must_be_active if insurable_rate.activated != true
+	end
+
+	def same_agency_as_account
+		if agency != account.agency
+			errors.add(:account, 'policy application must belong to the same agency as account')
+		end
+
+		if agency != billing_strategy.agency
+			errors.add(:billing_strategy, 'billing strategy must belong to the same agency as account')
+		end
+	end
+
+	def billing_strategy_must_be_enabled
+		errors.add(:billing_strategy, 'billing strategy must be enabled') unless billing_strategy.enabled == true 
+	end
+
+	def carrier_agency
+    if agency.carrier_agency != carrier.carrier_agency
+			errors.add(:carrier, 'carrier agency must exist')
+		end
+  end
+
   
   private 
   
