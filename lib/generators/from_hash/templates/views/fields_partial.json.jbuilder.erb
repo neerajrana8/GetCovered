@@ -5,7 +5,7 @@
   def get_fields
     to_return = []
     # fields
-    (@model_data["fields"] || {}).each do |f_name, f_data|
+    (@m_data["fields"] || {}).each do |f_name, f_data|
       perms = (f_data["permissions"] || {})[@ctx] || []
       to_return.push(f_name) if (@current_views & perms).length > 0
     end

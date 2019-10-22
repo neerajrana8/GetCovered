@@ -1,0 +1,24 @@
+
+  <% r_data.each do |resource, data|%>
+  resources :<%= resource %>,<% if data.has_key?("path") %>
+    path: "<%= data["path"] %>",<% end %><% if data.has_key?("concerns") %>
+    concerns: [ <%= data["concerns"].map{|c| ":#{c}" }.join(", ") %> ],<% end %>
+    only: [ <%= data["verbs"].map{|a| ":#{a}" }.join(", ") %> ]<% if data.has_key?("block")
+      dblock = data["block"]
+    %> do
+      <% if dblock.has_key?("member") %>member do<% dblock["member"].each do |member_data| %>
+        <%= member_data["verb"] %> "<%= member_data["path"] %>",
+          to: "<%= member_data["to"] %>",
+          via: :<%= member_data["verb"] %><% if member_data.has_key?("as") %>,
+          as: :<%= member_data["as"] %><% end %><% if member_data.has_key?("defaults") %>,
+          defaults: <%= member_data["defaults"].to_s %><% end %>
+      <% end %>end<% end %><% if dblock.has_key?("collection") %>
+      collection do<% dblock["collection"].each do |member_data| %>
+        <%= member_data["verb"] %> "<%= member_data["path"] %>",
+          to: "<%= member_data["to"] %>",
+          via: :<%= member_data["verb"] %><% if member_data.has_key?("as") %>,
+          as: :<%= member_data["as"] %><% end %><% if member_data.has_key?("defaults") %>,
+          defaults: <%= member_data["defaults"].to_s %><% end %>
+      <% end %>end<% end %>
+    end<% end %>
+  <% end %>

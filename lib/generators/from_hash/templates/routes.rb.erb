@@ -9,7 +9,7 @@
 
 Rails.application.routes.draw do
   
-  <% ((@scheme['specials'] || {})['devise'] || {})['user_auths'].each |u_name, u_data| do %>
+  <% ((@scheme['specials'] || {})['devise'] || {})['user_auths'].each do |u_name, u_data| %>
   mount_devise_token_auth_for '<%= u_name.camelize %>',
     at: '<%= u_data['route'] %>',
     skip: [:invitations],
@@ -19,8 +19,7 @@ Rails.application.routes.draw do
       passwords: '<%= u_data['controller_path'] %>/passwords'
     }<% unless u_data['uninvitable'] %>
   
-  devise_for: <%= u_name.pluralize.underscore %>,
-    path: '<%= u_data['route'] %>',
+  devise_for :<%= u_name.pluralize.underscore %>, path: '<%= u_data['route'] %>',
     defaults: { format: :json },
     only: [:invitations],
     controllers: {
@@ -28,8 +27,8 @@ Rails.application.routes.draw do
     }
   <% end %><% end %>
   
-  namespace :v2, defaults: { format: 'json' } do<% (@scheme['contexts'] || {}).each |ctx, ctx_data| do %>
-    draw :<%= ctx.underscore %>
+  namespace :v2, defaults: { format: 'json' } do<% (@scheme['contexts'] || {}).each do |ctx, ctx_data| %>
+    draw :<%= ctx.underscore %><% end %>
   end
   
 end

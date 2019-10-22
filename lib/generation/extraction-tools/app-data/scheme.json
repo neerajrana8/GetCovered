@@ -603,6 +603,11 @@
         ]
       },
       "access_model": {
+      },
+      "specials": {
+        "history": {
+          "history_verbs": true
+        }
       }
     },
     "Address": {
@@ -2032,6 +2037,11 @@
         ]
       },
       "access_model": {
+      },
+      "specials": {
+        "history": {
+          "history_verbs": true
+        }
       }
     },
     "ApplicationModule": {
@@ -3790,6 +3800,11 @@
         ]
       },
       "access_model": {
+      },
+      "specials": {
+        "history": {
+          "history_verbs": true
+        }
       }
     },
     "CarrierAgency": {
@@ -6907,7 +6922,8 @@
       },
       "specials": {
         "history": {
-          "record_change": true
+          "record_change": true,
+          "history_verbs": true
         }
       },
       "verbs": {
@@ -10104,6 +10120,11 @@
         ]
       },
       "access_model": {
+      },
+      "specials": {
+        "history": {
+          "history_verbs": true
+        }
       }
     },
     "InsurableRate": {
@@ -10660,7 +10681,19 @@
         ]
       },
       "access_model": {
-      }
+        "user": "model_class",
+        "staff_account": "model_class",
+        "staff_agency": "model_class",
+        "staff_super_admin": "model_class",
+        "public": "model_class"
+      },
+      "route_mounts": [
+        {
+          "mount_path": [
+            "Insurable"
+          ]
+        }
+      ]
     },
     "InsurableType": {
       "fields": {
@@ -10894,7 +10927,19 @@
         ]
       },
       "access_model": {
-      }
+        "user": "model_class",
+        "staff_account": "model_class",
+        "staff_agency": "model_class",
+        "staff_super_admin": "model_class",
+        "public": "model_class"
+      },
+      "route_mounts": [
+        {
+          "mount_path": [
+            "Insurable"
+          ]
+        }
+      ]
     },
     "Invoice": {
       "fields": {
@@ -12145,6 +12190,11 @@
         ]
       },
       "access_model": {
+      },
+      "specials": {
+        "history": {
+          "history_verbs": true
+        }
       }
     },
     "LeaseType": {
@@ -12626,6 +12676,11 @@
         ]
       },
       "access_model": {
+        "user": "model_class",
+        "staff_account": "model_class",
+        "staff_agency": "model_class",
+        "staff_super_admin": "model_class",
+        "public": "model_class"
       }
     },
     "LeaseTypePolicyType": {
@@ -12843,6 +12898,11 @@
         ]
       },
       "access_model": {
+        "user": "model_class",
+        "staff_account": "model_class",
+        "staff_agency": "model_class",
+        "staff_super_admin": "model_class",
+        "public": "model_class"
       }
     },
     "LeaseUser": {
@@ -15960,6 +16020,11 @@
         ]
       },
       "access_model": {
+      },
+      "specials": {
+        "history": {
+          "history_verbs": true
+        }
       }
     },
     "PolicyApplication": {
@@ -22131,7 +22196,9 @@
       },
       "specials": {
         "history": {
-          "record_change": true
+          "record_change": true,
+          "history_verbs": true,
+          "author_verbs": true
         },
         "devise": {
         }
@@ -23157,7 +23224,9 @@
       },
       "specials": {
         "history": {
-          "record_change": true
+          "record_change": true,
+          "history_verbs": true,
+          "author_verbs": true
         },
         "devise": {
         }

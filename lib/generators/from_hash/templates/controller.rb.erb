@@ -1,6 +1,6 @@
 <%
   # TODO:
-  # maybe improve the output from create? i.e. render <%= @verbs.include?("show") ? ":show" : "json: { success: true }" %>, status: :created
+  # maybe improve the output from create?
 
   # Setup
   
@@ -8,6 +8,7 @@
   current_user = @ctx_data["user_type"] ? "current_#{ @ctx_data["user_type"].underscore }" : nil
   # methods stuff
   verbs_needing_set = @verbs & get_verbs_needing_set(@m_data)
+  
   verbs_needing_substrate = @verbs & get_verbs_needing_substrate(@m_data)
   creation_method = (@m_data['specials'] || {})['devise'] ?
                       ( current_user && ((@m_data['specials'] || {})['history'] || {})['record_change'] ? "invite_as!(#{current_user}, create_params)" : "invite!(create_params)" ) :
@@ -29,7 +30,7 @@
       next if a_data["polymorphic"] || a_data['target'].length != 1 # hack to prevent polymorphic belongs_to relations from showing up in joins. prevents wherethroughs from them.
       # get the joined_view for this association (e.g. if level is 'index' and this assoc has perm 'index_short', the joined_view is 'short')
       permissions = (a_data["permissions"] || {})[@ctx] || []
-      current_views = (@view_levels.include?(level) ? @view_levels.take_while_{|v| v != level } : []) + [level]
+      current_views = (@view_levels.include?(level) ? @view_levels.take_while{|v| v != level } : []) + [level]
       vti = current_views.length - 1
       joined_view = nil
       while vti >= 0 && joined_view.nil?
@@ -182,12 +183,12 @@
       end
     end
     # handle associations deeply
-    to_return.push(*get_assoc_params(mutability, m_data["associations"] || {}), protector_of_that_dread_spark_known_as_mortality)
+    to_return.push(*get_assoc_params(mutability, m_data["associations"] || {}, protector_of_that_dread_spark_known_as_mortality))
     # done
     return(to_return)
   end
   
-  def get_assoc_params(mutability, associations)
+  def get_assoc_params(mutability, associations, protector_of_that_dread_spark_known_as_mortality)
     to_return = []
     gift_from_the_children = []
     associations.each do |a_name, a_data|
@@ -197,30 +198,45 @@
       unless nested_mutability.blank? || protector_of_that_dread_spark_known_as_mortality["#{a_data['target'][0]}:#{nested_mutability}"].to_i >= 2
         protector_of_that_dread_spark_known_as_mortality["#{a_data['target'][0]}:#{nested_mutability}"] = protector_of_that_dread_spark_known_as_mortality["#{a_data['target'][0]}:#{nested_mutability}"].to_i + 1
         to_return.push(["#{a_name}_attributes", get_params(nested_mutability, a_data['target'][0], protector_of_that_dread_spark_known_as_mortality)])
+if @DEBUG && a_name == "policy_users"
+  puts "Big got: #{to_return}"
+end
         to_return.pop if to_return.last[1].blank?
         protector_of_that_dread_spark_known_as_mortality["#{a_data['target'][0]}:#{nested_mutability}"] -= 1
       end
       # get strong params from nested associations
-      gift_from_the_children.push(["#{a_name}_attributes", get_assoc_params(mutability, a_data['wherethrough'], protector_of_that_dread_spark_known_as_mortality)]) unless a_data['wherethrough'].blank?
-      gift_from_the_children.pop if to_return.last[1].blank?
+      unless a_data['wherethrough'].blank?
+        gift_from_the_children.push(["#{a_name}_attributes", get_assoc_params(mutability, a_data['wherethrough'], protector_of_that_dread_spark_known_as_mortality)])
+if @DEBUG && a_name == "policy_users"
+  puts "Gift got: #{to_return}"
+  @GRUMBLE = true
+  #merge_latter_params_into_former(to_return, gift_from_the_children)
+  puts "OUT: #{to_return}"
+  @GRUMBLE = false
+end
+        gift_from_the_children.pop if gift_from_the_children.last[1].blank?
+      end
     end
+
     merge_latter_params_into_former(to_return, gift_from_the_children)
     return(to_return)
   end
   
   def merge_latter_params_into_former(former, latter)
+  puts "IN" if @GRUMBLE
     (latter - former).each do |v|
       case v
         when ::String
           former.push(v)
         when ::Array
-          if found.length <= 1 # not possible at present, but just in case this is added for some weird edge case...
+          if v.length <= 1 # not possible at present, but just in case this is added for some weird edge case...
             former.push(v)
-          elsif found.length == 2
+          elsif v.length == 2
             detected = former.detect{|fv| fv.class == ::Array && fv.length == 2 && fv[0] == v[0] }
             if detected.nil?
               former.push(v)
             else
+            puts "WEESA MERGIN" if @GRUMBLE
               merge_latter_params_into_former(detected[1], v[1])
             end
           else
@@ -229,6 +245,16 @@
       end 
     end
   end
+  
+  # MOOSE WARNING: debug!!!
+  if @m_name == "PolicyApplication" && @ctx == "public"
+  #puts "YEAH"
+  #@DEBUG = true
+  #@PREF = ""
+  #puts "ANS: #{get_params('create')}"
+  #raise "MOOSE"
+  end
+  ###
   
   def print_params(params, prefix, width_limit = 72, prefix_push_power = 20)
     width_limit += (prefix.length / prefix_push_power).floor * prefix_push_power
@@ -272,7 +298,7 @@
 
 module V2
   module <%= @ctx_data['module_sequence'].join("\n  module ") %>
-    class <%= @m_name.pluralize %>Controller <%= get_context_controller_name(@ctx) %>Controller
+    class <%= @m_name.pluralize %>Controller < <%= get_context_controller_name(@ctx) %>Controller
       <% unless verbs_needing_set.blank? %>
       before_action :set_<%= @m_name.underscore %>,
         only: [<%= verbs_needing_set.map{|a| ":#{a}" }.join(', ') %>]
@@ -282,9 +308,9 @@ module V2
       <% end %><% if @verbs.include?('index') %>
       def index
         if params[:short]
-          super(<%= ":@#{@m_name.pluralize.underscore}", (@m_data['index_source_override'] || {}).has_key?(@ctx) ? @m_data['index_source_override'][@ctx] : @substrate, print_joins(get_joins('short')) ].reject{|e| e.blank? }.join(', ') %>)
+          super(<%= [ ":@#{@m_name.pluralize.underscore}", (@m_data['index_source_override'] || {}).has_key?(@ctx) ? @m_data['index_source_override'][@ctx] : @substrate, print_joins(get_joins('short')) ].reject{|e| e.blank? }.join(', ') %>)
         else
-          super(<%= ":@#{@m_name.pluralize.underscore}", (@m_data['index_source_override'] || {}).has_key?(@ctx) ? @m_data['index_source_override'][@ctx] : @substrate, print_joins(get_joins('index')) ].reject{|e| e.blank? }.join(', ') %>)
+          super(<%= [ ":@#{@m_name.pluralize.underscore}", (@m_data['index_source_override'] || {}).has_key?(@ctx) ? @m_data['index_source_override'][@ctx] : @substrate, print_joins(get_joins('index')) ].reject{|e| e.blank? }.join(', ') %>)
         end
       end
       <% end %><% if @verbs.include?('show') %>

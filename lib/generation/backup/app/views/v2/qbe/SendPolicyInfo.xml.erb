@@ -1,0 +1,360 @@
+<soapenv:Envelope 
+  xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
+  xmlns:proc="<%= Rails.application.credentials.qbe[:uri][Rails.application.credentials.rails_env.to_sym] %>">
+  <soapenv:Header/>
+  <soapenv:Body>
+    <proc:processRenterRequest>
+      <xmldata>
+        <![CDATA[
+          <?xml version="1.0" encoding="UTF-8"?>
+          <ACORD>
+            <SignonRq>
+              <ClientDt><%= Time.current.strftime("%Y-%m-%dT%H:%M:%S") %></ClientDt>
+              <ClientApp>
+                <Org>Get Covered, LLC.</Org>
+                <Name>GETCVR</Name>
+                <Version>1.1</Version>
+              </ClientApp>
+              <ProxyClient>
+                <Name><%= request[:heading][:program][:ClientName] %></Name>
+              </ProxyClient>
+            </SignonRq>
+            <InsuranceSvcRq>
+              <RenterPolicyQuoteInqRq>
+                <TransactionType>Add</TransactionType>
+                <Producer>
+                  <ProducerInfo>
+                    <ContractNumber><%= request[:heading][:program][:ClientName] %></ContractNumber>
+                  </ProducerInfo>
+                </Producer>
+                <PersPolicy>
+                  <PolicyNumber />
+                  <CompanyProductCd>RENT</CompanyProductCd>
+                  <LOBCd>TENAN</LOBCd>
+                  <NAICCd>37257</NAICCd>
+                  <ControllingStateProvCd><%= request[:data][:address].region %></ControllingStateProvCd>
+                  
+                  <ContractTerm>
+                    <EffectiveDt><%= request[:data][:policy].effective_date.strftime('%m/%d/%Y') %></EffectiveDt>
+                    <ExpirationDt><%= request[:data][:policy].expiration_date.strftime('%m/%d/%Y') %></ExpirationDt>
+                    <DurationPeriod>
+                      <NumUnits>12</NumUnits>
+                      <UnitMeasurementCd>MON</UnitMeasurementCd>
+                    </DurationPeriod>
+                  </ContractTerm>
+                  
+                  <QBE_BillingSystem>Q</QBE_BillingSystem>
+                  
+                  <CurrentTermAmt>
+                    <Amt><%= '%.2f' % (request[:data][:policy].total_premium.to_f / 100) %></Amt>
+                  </CurrentTermAmt>
+                  
+                  <PayorCd>PD</PayorCd>
+                  
+                  <PaymentOption id="0">
+                  
+                    <% if request[:data][:policy].billing_interval == "month" %>
+                    <PaymentPlanCd>QBE_MoRe</PaymentPlanCd>
+                    <% elsif request[:data][:policy].billing_interval == "quarter_year" %>
+                    <PaymentPlanCd>QT</PaymentPlanCd>
+                    <% elsif request[:data][:policy].billing_interval == "half_year" %>
+                    <PaymentPlanCd>SA</PaymentPlanCd>
+                    <% elsif request[:data][:policy].billing_interval == "year" %>
+                    <PaymentPlanCd>FL</PaymentPlanCd>
+                    <% end %>
+                    
+                    <DayMonthDue><%= request[:data][:policy].effective_date.strftime('%d') %></DayMonthDue>
+                    
+                    <CollectedByAgentAmt>
+                      <Amt>0.00</Amt>
+                    </CollectedByAgentAmt>
+                    
+                    <MethodPaymentCd>IN</MethodPaymentCd>
+
+                    <ElectronicFundsTransfer>
+                      <FromAcct>
+                        <PayrollDeductionInfo>
+                          <EmployeeId><%= request[:data][:policy].qbe_employee_id %></EmployeeId>
+                        </PayrollDeductionInfo>
+                      </FromAcct>
+                    </ElectronicFundsTransfer> 
+                  </PaymentOption>
+                  
+                  <AdditionalInterest>
+                    <GeneralPartyInfo>
+                      <NameInfo>
+                        <CommlName>
+                          <CommercialName><%= request[:data][:account].title %></CommercialName>
+                        </CommlName>
+                      </NameInfo>
+                      <Addr>
+                        <Addr1><%= request[:data][:account].address.combined_street_address() %></Addr1>
+                        <% if request[:data][:account].address.street_two.nil? %>
+                        <Addr2 />
+                        <% else %>
+                        <Addr2><%= request[:data][:account].address.street_two %></Addr2>
+                        <% end %>
+                        <City><%= request[:data][:account].address.locality %></City>
+                        <StateProvCd><%= request[:data][:account].address.region %></StateProvCd>
+                        <PostalCode><%= request[:data][:account].address.combined_postal_code() %></PostalCode>
+                      </Addr>
+                    </GeneralPartyInfo>
+                    <AdditionalInterestInfo>
+                      <NatureInterestCd>PM</NatureInterestCd>
+                    </AdditionalInterestInfo>
+                  </AdditionalInterest>
+                  
+                  <% unless request[:data][:users].nil? %>
+                  <% request[:data][:users].each do |user| %>
+                  <% if user.spouse == false %>                  
+                  <AdditionalInterest>
+                    <GeneralPartyInfo>
+                      <NameInfo>
+                        <CommlName>
+                          <CommercialName><%= user.profile.full_name %></CommercialName>
+                        </CommlName>
+                      </NameInfo>
+                      <Addr>
+                        <Addr1><%= request[:data][:address].combined_street_address() %></Addr1>
+                        <Addr2><%= request[:data][:unit].mailing_id %></Addr2>
+                        <City><%= request[:data][:address].locality %></City>
+                        <StateProvCd><%= request[:data][:address].region %></StateProvCd>
+                        <PostalCode><%= request[:data][:address].postal_code %></PostalCode>
+                      </Addr>                      
+                    </GeneralPartyInfo>
+                    <AdditionalInterestInfo>
+                      <NatureInterestCd>ADDIN</NatureInterestCd>
+                    </AdditionalInterestInfo>
+                  </AdditionalInterest>                 
+                  <% end %>
+                  <% end %>
+                  <% end %>
+                  
+                  <QBE_BusinessSource>NP</QBE_BusinessSource>
+                  <QBE_BusinessType><%= request[:data][:community].carrier_settings["qbe"]["pref_facility"] %></QBE_BusinessType>
+                  <QBE_MDU_CommName><%= request[:data][:community].name %></QBE_MDU_CommName>
+                  <QBE_MDU_CommID><%= request[:data][:community].qbe_id %></QBE_MDU_CommID>
+                  <% if request[:data][:community].professionally_managed? %>
+                  <QBE_MDU_ProfManagedDt><%= request[:data][:community].professionally_managed_year %></QBE_MDU_ProfManagedDt>
+                  <% end %>
+                </PersPolicy>
+                
+                <InsuredOrPrincipal>
+                  <ItemIdInfo>
+                    <OtherIdentifier>
+                      <OtherIdTypeCd>CustProfileId</OtherIdTypeCd>
+                      <OtherId><%= request[:data][:user].qbe_customer_profile_id %></OtherId>
+                    </OtherIdentifier>
+                  </ItemIdInfo>
+                  <GeneralPartyInfo>
+                    <NameInfo>
+                      <PersonName>
+                        <Surname><%= request[:data][:user].profile.last_name %></Surname>
+                        <GivenName><%= request[:data][:user].profile.first_name %></GivenName>
+                        <% unless request[:data][:user].profile.middle_name.nil? %>
+                        <OtherGivenName><%= request[:data][:user].profile.middle_name %></OtherGivenName>
+                        <% end %>
+                      </PersonName>
+                      <LegalEntityCd>IN</LegalEntityCd>
+                    </NameInfo>
+                    <Addr>
+                      <AddrTypeCd>InsuredsAddress</AddrTypeCd>
+                      <Addr1><%= request[:data][:address].combined_street_address() %></Addr1>
+                      <Addr2><%= request[:data][:unit].mailing_id %></Addr2>
+                      <City><%= request[:data][:address].locality %></City>
+                      <StateProvCd><%= request[:data][:address].region %></StateProvCd>
+                      <PostalCode><%= request[:data][:address].postal_code %></PostalCode>
+                    </Addr>
+                    <Communications>
+                      <PhoneInfo>
+                        <PhoneNumber><%= request[:data][:user].profile.contact_phone %></PhoneNumber>
+                      </PhoneInfo>
+                      <EmailInfo>
+                        <EmailAddr><%= request[:data][:user].email %></EmailAddr>
+                      </EmailInfo>
+                    </Communications>
+                  </GeneralPartyInfo>
+                  <InsuredOrPrincipalInfo>
+                    <InsuredOrPrincipalRoleCd>Insured</InsuredOrPrincipalRoleCd>
+                    <% if request[:data][:user].marital_status == 'married' %>
+                    <PersonInfo>
+                      <MaritalStatusCd>M</MaritalStatusCd>
+                    </PersonInfo>
+                    <% end %>
+                  </InsuredOrPrincipalInfo>
+                </InsuredOrPrincipal>
+                  
+                <% unless request[:data][:users].nil? %>
+                <% request[:data][:users].each do |user| %>
+                <% if user.spouse == true %>
+                <InsuredOrPrincipal>
+                  <GeneralPartyInfo>
+                    <NameInfo>
+                      <PersonName>
+                        <Surname><%= user.profile.last_name %></Surname>
+                        <GivenName><%= user.profile.first_name %></GivenName>
+                        <% unless user.profile.middle_name.nil? %>
+                        <OtherGivenName><%= user.profile.middle_name %></OtherGivenName>
+                        <% end %>
+                      </PersonName>
+                    </NameInfo>
+                  </GeneralPartyInfo>
+                  <InsuredOrPrincipalInfo>
+                    <InsuredOrPrincipalRoleCd>Coinsured</InsuredOrPrincipalRoleCd>
+                    <PersonInfo>
+                      <TitleRelationshipCd>SP</TitleRelationshipCd>
+                    </PersonInfo> 
+                  </InsuredOrPrincipalInfo>
+                </InsuredOrPrincipal>                   
+                <% end %>
+                <% end %>
+                <% end %>
+                
+                <Location id="0">
+                  <Addr>
+                    <AddrTypeCd>InsuredsAddress</AddrTypeCd>
+                    <Addr1><%= request[:data][:address].combined_street_address() %></Addr1>
+                    <Addr2><%= request[:data][:unit].mailing_id %></Addr2>
+                    <City><%= request[:data][:address].locality %></City>
+                    <StateProvCd><%= request[:data][:address].region %></StateProvCd>
+                    <PostalCode><%= request[:data][:address].postal_code %></PostalCode>
+                    <QBE_UnitID><%= request[:data][:unit].qbe_id %></QBE_UnitID>
+                    <QBE_InsideCityLimitInd>N</QBE_InsideCityLimitInd>
+                  </Addr>
+                  <TaxCodeInfo>
+                    <TaxCd><%= request[:data][:address].county %></TaxCd>
+                    <TaxTypeCd>CountyProp</TaxTypeCd>
+                  </TaxCodeInfo>
+                </Location>
+                
+                <HomeLineBusiness>
+                  <Dwell LocationRef="0">
+                    <PolicyTypeCd>04</PolicyTypeCd>
+                    <Construction>
+                      <% if request[:data][:address].region == 'FL' %>
+                      <ConstructionCd><%= request[:data][:community].construction_type %></ConstructionCd>
+                      <BldgCodeEffectivenessGradeCd>03</BldgCodeEffectivenessGradeCd>
+                      <% end %>                   
+                      <YearBuilt><%= request[:data][:community].construction_year %></YearBuilt>
+                    </Construction>
+                    <DwellOccupancy>
+                      <OccupancyTypeCd><%= request[:data][:community].carrier_settings["qbe"]["occupancy_type"] %></OccupancyTypeCd>
+                    </DwellOccupancy>
+                    <BldgProtection>
+                      <NumFireDivisions><%= request[:data][:community].units.count %></NumFireDivisions>
+                      <% if request[:data][:address].region == 'FL' %>
+                      <FireProtectionClassCd><%= request[:data][:community].ppc %></FireProtectionClassCd>
+                      <OtherProtectionDesc><%= request[:data][:community].carrier_settings['qbe']['protection_device_cd'] %></OtherProtectionDesc>
+                      <% end %>    
+                    </BldgProtection>
+                    
+                    <Coverage>
+                      <CoverageCd>DED</CoverageCd>
+                      <Deductible>
+                        <FormatInteger><%= request[:data][:policy].deductibles["coverage_c"].to_i / 100 %></FormatInteger>
+                      </Deductible>
+                    </Coverage>
+                    
+                    <Coverage>
+                      <CoverageCd>PP</CoverageCd>
+                      <Limit>
+                        <FormatInteger><%= request[:data][:policy].coverage_limits["coverage_c"].to_i / 100 %></FormatInteger>
+                      </Limit>
+                    </Coverage>
+                    
+                    <Coverage>
+                      <CoverageCd>LOU</CoverageCd>
+                      <Limit>
+                        <FormatInteger><%= request[:data][:policy].coverage_limits["coverage_d"].to_i / 100 %></FormatInteger>
+                      </Limit>
+                    </Coverage>
+                    
+                    <% if request[:data][:optional_rates] %>
+                    <% request[:data][:optional_rates].each do |rate| %>
+                    
+                    <% if rate.sub_schedule == 'pet_damage' %>
+                    <Coverage>
+                      <CoverageCd>QBE_PetDam</CoverageCd>
+                      <Limit>
+                        <FormatInteger>0</FormatInteger>
+                      </Limit>
+                    </Coverage>
+                    <% end %>
+                    
+                    <% if rate.sub_schedule == 'water_backup' %>
+                    <Coverage>
+                      <CoverageCd>SEWER_Sump</CoverageCd>
+                      <Limit>
+                        <FormatInteger>0</FormatInteger>
+                      </Limit>
+                    </Coverage>
+                    <% end %>
+                    
+                    <% if rate.sub_schedule == 'bedbug' %>
+                    <Coverage>
+                      <CoverageCd>BEDBUG</CoverageCd>
+                      <Limit>
+                        <FormatInteger>0</FormatInteger>
+                      </Limit>
+                    </Coverage>
+                    <% end %>
+                    
+                    <% if rate.sub_schedule == 'equip' %>
+                    <Coverage>
+                      <CoverageCd>EQUIP</CoverageCd>
+                      <Limit>
+                        <FormatInteger>0</FormatInteger>
+                      </Limit>
+                    </Coverage>
+                    <% end %>
+                    
+                    <% if rate.sub_schedule == 'earthquake_coverage' %>
+                    <Coverage>
+                      <CoverageCd>ERQK</CoverageCd>
+                      <Limit>
+                        <FormatInteger><%= rate.coverage_limits['cov_c'].to_i / 100 %></FormatInteger>
+                      </Limit>
+                    </Coverage>
+                    <% end %>
+                    
+                    <% end %>
+                    <% end %>
+                    
+                    <% if request[:data][:address].region == 'FL' %>
+                    <Coverage>
+                      <CoverageCd>QBE_HURRD</CoverageCd>
+                      <Deductible>
+                        <FormatInteger><%= request[:data][:policy].deductibles["hurricane"].to_i / 100 %></FormatInteger>
+                      </Deductible>
+                    </Coverage>                    
+                    <% end %>
+                    
+                    <QuestionAnswer>
+                      <QuestionCd>QBEPL00040</QuestionCd>
+                      <YesNoCd>Y</YesNoCd>
+                    </QuestionAnswer>
+                    
+                    <QBE_WH_Ded>1000</QBE_WH_Ded>
+                    
+                  </Dwell>
+                  <Coverage>
+                    <CoverageCd>PL</CoverageCd>
+                    <Limit>
+                      <FormatInteger><%= request[:data][:policy].coverage_limits["coverage_e"].to_i / 100 %></FormatInteger>
+                    </Limit>
+                  </Coverage>
+                  <Coverage>
+                    <CoverageCd>MEDPM</CoverageCd>
+                    <Limit>
+                      <FormatInteger><%= request[:data][:policy].coverage_limits["coverage_f"].to_i / 100 %></FormatInteger>
+                    </Limit>
+                  </Coverage>
+                </HomeLineBusiness>
+              </RenterPolicyQuoteInqRq>
+            </InsuranceSvcRq>
+          </ACORD>
+        ]]>
+      </xmldata>
+    </proc:processRenterRequest>
+  </soapenv:Body>
+</soapenv:Envelope>

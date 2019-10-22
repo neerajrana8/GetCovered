@@ -1,5 +1,8 @@
 <%
 
+  # Setup
+  extra_prefix = (@ctx_data['authenticated_route_constraint'] ? "  " : "")
+
   # Utilities
   
   def spit_dat_route_oute!(resource, data, prefix = "  ", parents = [])
@@ -11,9 +14,9 @@
       to_return.push("#{prefix}defaults: {")
       to_return.push("#{prefix}  access_pathway: [#{parents.map{|p| p[0] }.join(', ')}],")
       to_return.push("#{prefix}  access_ids:     [#{parents.map{|p| p[1] }.join(', ')}]")
-      to_return.push("#{prefix}}")
+      to_return.push("#{prefix}},")
     end
-    to_return.push("#{prefix}only: [ #{data['verbs'].map{|a| ":#{a}" }.join(", ")}"]
+    to_return.push("#{prefix}only: [ #{data['verbs'].map{|a| ":#{a}" }.join(", ")} ]")
     if data.has_key?('block')
       prefix = "#{prefix}  "
       dblock = data['block']
@@ -30,10 +33,10 @@
           end
           if stuff.has_key?("defaults")
             to_return[to_return.length - 1] = "#{to_return.last},"
-            to_return.push("    #{prefix}defaults: \"#{stuff['defaults'].transform_keys{|k| k.to_s}.transform_keys{|k| k.start_with?(':') ? k : ":#{k}" }}\"")
+            to_return.push("    #{prefix}defaults: { #{stuff['defaults'].map{|k,v| "#{k.to_s.chomp(':')}: #{v}"}.join(', ') } }")
           end
-          to_return.push("  end")
         end
+        to_return.push("#{prefix}end")
       end
       if dblock.has_key?('collection')
         to_return.push("#{prefix}collection do")
@@ -49,8 +52,8 @@
             to_return[to_return.length - 1] = "#{to_return.last},"
             to_return.push("    #{prefix}defaults: \"#{stuff['defaults'].transform_keys{|k| k.to_s}.transform_keys{|k| k.start_with?(':') ? k : ":#{k}" }}\"")
           end
-          to_return.push("  end")
         end
+        to_return.push("#{prefix}end")
       end
       if dblock.has_key?('subroutes')
         dblock['subroutes'].each do |subresource, subdata|
@@ -61,45 +64,19 @@
         end
       end
       prefix.chomp!("  ")
-      to_return.push("end")
+      to_return.push("#{prefix}end")
     end
     return(to_return)
   end
-  
-=begin OLD ERB CODE (erb's lack of php-like function-definition recursion is HORRIBLE, so I had to discard this, but it's here in case needed later:)
-  <% r_data.each do |resource, data|%>
-  resources :<%= resource %>,<% if data.has_key?("path") %>
-    path: "<%= data["path"] %>",<% end %><% if data.has_key?("concerns") %>
-    concerns: [ <%= data["concerns"].map{|c| ":#{c}" }.join(", ") %> ],<% end %>
-    only: [ <%= data["verbs"].map{|a| ":#{a}" }.join(", ") %> ]<% if data.has_key?("block")
-      dblock = data["block"]
-    %> do
-      <% if dblock.has_key?("member") %>member do<% dblock["member"].each do |member_data| %>
-        <%= member_data["verb"] %> "<%= member_data["path"] %>",
-          to: "<%= member_data["to"] %>",
-          via: :<%= member_data["verb"] %><% if member_data.has_key?("as") %>,
-          as: :<%= member_data["as"] %><% end %><% if member_data.has_key?("defaults") %>,
-          defaults: <%= member_data["defaults"].to_s %><% end %>
-      <% end %>end<% end %><% if dblock.has_key?("collection") %>
-      collection do<% dblock["collection"].each do |member_data| %>
-        <%= member_data["verb"] %> "<%= member_data["path"] %>",
-          to: "<%= member_data["to"] %>",
-          via: :<%= member_data["verb"] %><% if member_data.has_key?("as") %>,
-          as: :<%= member_data["as"] %><% end %><% if member_data.has_key?("defaults") %>,
-          defaults: <%= member_data["defaults"].to_s %><% end %>
-      <% end %>end<% end %>
-    end<% end %>
-  <% end %>
-=end
 
 %><% if @ctx_data['authenticated_route_constraint'] %>authenticated :<%= @ctx_data['user_type'].underscore %>, lambda{|current_<%= @ctx_data['user_type'].underscore %>| <%= @ctx_data['authenticated_route_constraint'].strip.split("\n").join('; ') %> } do
 <% end %>
-# <%= get_human_readable_context_name(@ctx) %>
-scope module: <%= @ctx_data['module'] %><% unless @ctx_data['route'].nil? %>, path: <%= @ctx_data['route'] %><% end %> do
-  <% r_data.each do |resource, data|%>
-<%= spit_dat_route_oute!(resource, data, "  ").join("\n") %>
+<%= extra_prefix %># <%= get_human_readable_context_name(@ctx) %>
+<%= extra_prefix %>scope module: :<%= @ctx_data['module'].underscore %><% unless @ctx_data['route'].nil? %>, path: "<%= @ctx_data['route'] %>"<% end %> do
+  <% @r_data.each do |resource, data|%>
+<%= spit_dat_route_oute!(resource, data, "  #{extra_prefix}").join("\n") %>
   <% end %>
-end<% if @ctx_data['authenticated_route_constraint'] %>
+<%= extra_prefix %>end<% if @ctx_data['authenticated_route_constraint'] %>
 end<% end %>
 
 

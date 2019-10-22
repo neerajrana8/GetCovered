@@ -12,7 +12,7 @@ class FromHashGenerator < Rails::Generators::Base
     @scheme = {}
     # logging variables
     @errors = []
-    @gputs_indentation = 0
+    @gputs_indentation = ""
     # command-line options & other config stuff
     @output_root = options['output_root'].blank? ? "" : "#{options['output_root'].chomp('/')}/"
     @generate_views_for = nil
@@ -42,12 +42,12 @@ class FromHashGenerator < Rails::Generators::Base
   end
 
   def extract_scheme
-    if options['filename'].ends_with?(".json")
+    if options['filename'].to_s.ends_with?(".json")
       gputs "Extracting JSON..."
       file = File.read(options['filename'])
       @scheme = JSON.parse(file)
       gputs "  Success!"
-    elsif options['filename'].ends_with?(".rb") # MOOSE WARNING: has the possibility to introduce all kinds of garbage (e.g. symbol keys)... should not be used until expand_scheme can fix it all
+    elsif options['filename'].to_s.ends_with?(".rb") # MOOSE WARNING: has the possibility to introduce all kinds of garbage (e.g. symbol keys)... should not be used until expand_scheme can fix it all
       gputs "Extracting ruby hash..."
       @scheme = "snoot snoot I'm a fluffy hound, snortin' around, woof woof woof, and I wag my tail oh yeah, snoot snoot!".instance_eval(File.read(options['filename']))
       if @scheme.class == ::String # try to parse it as JSON if we go ta string instead of a native hash
@@ -128,7 +128,7 @@ class FromHashGenerator < Rails::Generators::Base
           template "views/fields_partial.json.jbuilder.erb", "#{@output_root}app/views/#{@view_path}/#{get_fields_partial_filename(m_name, ctx, view)}", force: should_force_view(m_name, ctx, view)
           template "views/full_partial.json.jbuilder.erb", "#{@output_root}app/views/#{@view_path}/#{get_full_partial_filename(m_name, ctx, view)}", force: should_force_view(m_name, ctx, view)
           if @view_levels.include?(view) # MOOSE WARNING: we only build built-in views here, even though we build custom partials as well
-            template "views/#{view}.json.jbuilder.erb", "#{@output_root}app/views/#{@view_path}/#{vn}.json.jbuilder", force: should_force_view(m_name, ctx, view)
+            template "views/#{view}.json.jbuilder.erb", "#{@output_root}app/views/#{@view_path}/#{view}.json.jbuilder", force: should_force_view(m_name, ctx, view)
           end
         end
       end
@@ -173,9 +173,9 @@ class FromHashGenerator < Rails::Generators::Base
       @m_data = m_data
       if m_name == @special_history_model # MOOSE WARNING: implement this
         # build special history controllers
-      elsif m_data.has_key?('verbs')
+      elsif !m_data['verbs'].blank?
         # build standard model controllers
-        m_data['verbs'].select{|ctx, verbs| controller_actualization_allowed(m_name, ctx) }.each do |ctx, verbs|
+        m_data['verbs'].select{|ctx, verbs| !verbs.blank? && controller_actualization_allowed(m_name, ctx) }.each do |ctx, verbs|
           @available_views = m_data['viewable_contexts'][ctx] || []
           @ctx = ctx
           @ctx_data = @scheme['contexts'][@ctx] # MOOSE WARNING: right now this shizzle can be nested
@@ -215,11 +215,11 @@ private
   end
   
   def gputs_in
-    @gputs_indentation += 1
+    @gputs_indentation = "#{@gputs_indentation}  "
   end
   
   def gputs_out
-    @gputs_indentation -= 1 unless @gputs_indentation == 0
+    @gputs_indentation.chomp!("  ")
   end
   
   # allowability checkers
@@ -341,7 +341,7 @@ private
 
   def get_viewable_contexts(m_data)
     to_return = {}
-    custom_views = m_data['custom_partials'] || []
+    custom_partials = m_data['custom_partials'] || []
     # add field views
     (m_data['fields'] || {}).each do |f_name, f_data|
       (f_data['permissions'] || {}).each do |ctx, perms|
@@ -367,7 +367,8 @@ private
     end
     # clean up
     to_return.each do |ctx, views|
-      views.uniq!.sort.sort_by{|v| @view_levels.index(v) || @view_levels.length } # sort with built-in views in order at the beginning, followed by any custom views alphabetically
+      views.uniq!
+      views.sort_by!{|v| @view_levels.index(v) || @view_levels.length } # sort with built-in views in order at the beginning, followed by any custom views alphabetically
     end
     to_return.delete_if{|ctx, views| views.blank? }
     # done
@@ -389,7 +390,7 @@ private
           to_return[ctx][c_name] = (built_in_verbs.blank? ? {} : { "verbs" => built_in_verbs })
           to_return[ctx][c_name]['path'] = c_name.gsub('_', '-') if c_name.include?('_')
           # custom verbs
-          (m_data['custom_verbs' || {}).select{|can, cad| verbs.include?(can) }.each do |v_name, v_data|
+          (m_data['custom_verbs'] || {}).select{|can, cad| verbs.include?(can) }.each do |v_name, v_data|
             to_return[ctx][c_name]['block'] = {} unless to_return[ctx][c_name].has_key?('block')
             klondike = (case v_data['type']; when 'member'; 'member'; when 'collection'; 'collection'; else; nil; end)
             unless klondike.nil?
@@ -402,17 +403,17 @@ private
             end
           end
           # route mounts
-          route_mounts = m_name['route_mounts'].select{|rm| !rm.has_key?('contexts') || rm['contexts'] == true || (rm['contexts'].class == ::Array && rm['contexts'].has_key?(ctx)) }
-          to_return[ctx]['route_mounts'] = route_mounts unless route_mounts.blank?
+          route_mounts = (m_data['route_mounts'] || []).select{|rm| !rm.has_key?('contexts') || rm['contexts'] == true || (rm['contexts'].class == ::Array && rm['contexts'].include?(ctx)) }
+          to_return[ctx][c_name]['route_mounts'] = route_mounts unless route_mounts.blank?
           # history
           if (((@scheme["specials"] || {})["history"] || {})["contexts"] || []).include?(ctx) && ((m_data["specials"] || {})["history"] || {})["history_verbs"]
             to_return[ctx][c_name]["block"] = {} unless to_return[ctx][c_name].has_key?("block")
             to_return[ctx][c_name]["block"]["member"] = [] unless to_return[ctx][c_name]["block"].has_key?("member")
             to_return[ctx][c_name]["block"]["member"].push({
-              "action" => "get",
+              "verb" => "get",
               "path" => "histories",
               "to" => "histories#index_recordable",
-              "as" => "#{c_name}_histories_index_recordable",
+              #"as" => "#{c_name}_histories_index_recordable",
               "defaults" => {
                 'recordable_type' => m_name
               }
@@ -420,10 +421,10 @@ private
           end
           if (((@scheme["specials"] || {})["history"] || {})["contexts"] || []).include?(ctx) && ((m_data["specials"] || {})["history"] || {})["author_verbs"]
             to_return[ctx][c_name]["block"]["member"].push({
-              "action" => "get",
+              "verb" => "get",
               "path" => "authored-histories",
               "to" => "histories#index_authorable",
-              "as" => "#{c_name}_histories_index_authorable",
+              #"as" => "#{c_name}_histories_index_authorable",
               "defaults" => {
                 'authorable_type' => m_name
               }
@@ -437,12 +438,17 @@ private
     to_return.each do |ctx, route_data|
       mount_paths[ctx] = {}
       route_data.each do |resource, data|
-        mount_paths[ctx][resource] = {} unless mount_paths[ctx].has_key?(resource) || !data['route_mounts'].blank?
+        mount_paths[ctx][resource] = {} unless mount_paths[ctx].has_key?(resource) || !data['route_mounts'].blank? # MOOSE WARNING: shouldn't this NOT be NOT data[...]?
         (data['route_mounts'] || []).each do |rm_data|
           next if rm_data['mount_path'].length == 1 && rm_data['mount_path'][0].nil?
           last = resource
-          ([nil] + rm_data['mount_path'].map{|model_name| [mounted_upon, model_name.pluralize.underscore] }.reverse).each do |mounted_upon|
-            raise "ERROR: #{resource.singularize.camelize} has route mounted on #{rm_data['mount_path'].join('->')}, but these intermediate mountings do not all exist!" unless route_data.any? do |r,d|
+          (rm_data['mount_path'].map{|model_name| [model_name, model_name.pluralize.underscore] }.reverse + [nil]).each do |mounted_upon|
+            raise "ERROR: #{resource.singularize.camelize} has route mounted on #{rm_data['mount_path'].join('->')}, but these intermediate mountings do not all exist!" unless route_data.has_key?(last) && (
+              (mounted_upon.nil? && (!route_data[last].has_key?('route_mounts') || route_data[last]['route_mounts'].any?{|gurgle| gurgle['mount_path'].length == 1 && gurgle['mount_path'][0].nil? })) ||
+              (!mounted_upon.nil? && (route_data[last].has_key?('route_mounts') && route_data[last]['route_mounts'].any?{|gurgle| gurgle['mount_path'].last == mounted_upon[0] }))
+            )
+=begin
+            unless route_data.any? do |r,d|
               next false unless d.has_key?(last)
               if mounted_upon.nil?
                 next (!d[last].has_key?('route_mounts') || d[last]['route_mounts'].any?{|gurgle| gurgle['mount_path'].length == 1 && gurgle['mount_path'][0].nil? })
@@ -450,6 +456,7 @@ private
                 next (d[last].has_key?('route_mounts') && d[last]['route_mounts'].any?{|gurgle| gurgle['mount_path'].last == mounted_upon[0] })
               end
             end
+=end
             last = mounted_upon[1] unless mounted_upon.nil?
           end
           # mount_paths time
@@ -460,7 +467,7 @@ private
             cur[mp] = {} unless cur.has_key?(mp)
             cur = cur[mp]
           end
-          cur[resource] = {} unless cur.has_key?(mp)
+          cur[resource] = {} unless cur.has_key?(resource)
         end
       end
     end
@@ -472,7 +479,7 @@ private
         unless subresource_hash.blank?
           to_return_pos[resource]['block'] = {} unless to_return_pos[resource].has_key?('block')
           to_return_pos[resource]['block']['subroutes'] = {}
-          construct_stuff(subresource_hash, to_return_pos[resource]['block']['subroutes'], ctx)
+          construct_stuff.call(subresource_hash, to_return_pos[resource]['block']['subroutes'], ctx)
         end
       end
     end

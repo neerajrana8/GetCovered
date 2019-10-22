@@ -157,8 +157,8 @@ def handle_models_sheet(sheet)
     col = 2 + $contexts.length * ($ctx_verbs.length + 1)
     val = sheet.cell(row, col).to_s.special_strip
     unless val.blank?
-      mount_points = val.split(',').map{|v| v.strip }.select do |mount_point|
-        unless mount_point == 'nil' || @scheme['models'].has_key?(mount_point)
+      mount_points = val.split(',').map{|v| v.strip.camelize }.select do |mount_point|
+        unless mount_point == 'nil' || $scheme['models'].has_key?(mount_point)
           log_warning("Invalid mount point '#{mount_point}' encountered for model '#{m_name}'; ignoring")
           next
         end

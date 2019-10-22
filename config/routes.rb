@@ -1,40 +1,47 @@
+require 'sidekiq/web'
+
 Rails.application.routes.draw do
-            
-  mount_devise_token_auth_for 'Staff', 
-    at: 'v1/account/auth', 
+  
+  
+  mount_devise_token_auth_for 'User',
+    at: 'v2/user/auth',
     skip: [:invitations],
     controllers: {
-      sessions: 'staffs/sessions',
-      token_validations:  'staffs/token_validations',
-      passwords: 'staffs/passwords'
-    }
-
-  devise_for :staffs, path: "v1/account/auth", 
-    only: [:invitations],
-    controllers: { 
-      invitations: 'staffs/invitations' 
+      sessions: 'devise/user/sessions',
+      token_validations: 'devise/user/token_validations',
+      passwords: 'devise/user/passwords'
     }
   
-  mount_devise_token_auth_for 'User', 
-    at: 'v1/user/auth', 
+  devise_for :users, path: 'v2/user/auth',
+    defaults: { format: :json },
+    only: [:invitations],
+    controllers: {
+      invitations: 'devise/user/invitations'
+    }
+  
+  mount_devise_token_auth_for 'Staff',
+    at: 'v2/staff/auth',
     skip: [:invitations],
-    controllers: { 
-      registrations: "users/registrations",
-      sessions: 'users/sessions',
-      token_validations:  'users/token_validations',
-      passwords: 'users/passwords'
-    }
-
-  devise_for :users, path: "v1/user/auth", 
-    only: [:invitations],
-    controllers: { 
-      invitations: 'users/invitations' 
+    controllers: {
+      sessions: 'devise/staff/sessions',
+      token_validations: 'devise/staff/token_validations',
+      passwords: 'devise/staff/passwords'
     }
   
-  namespace :v2 do
-    draw :public
-    draw :staff
+  devise_for :staffs, path: 'v2/staff/auth',
+    defaults: { format: :json },
+    only: [:invitations],
+    controllers: {
+      invitations: 'devise/staff/invitations'
+    }
+  
+  
+  namespace :v2, defaults: { format: 'json' } do
     draw :user
+    draw :staff_account
+    draw :staff_agency
+    draw :staff_super_admin
+    draw :public
   end
   
 end

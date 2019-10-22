@@ -1,0 +1,13 @@
+development: &default
+  host: http://localhost:9200
+  log: true
+test:
+  host: http://elasticsearch:9200
+staging:
+  host: http://elasticsearch:9200
+aws_dev:
+  host: http://elasticsearch:9200
+aws_staging:
+  host: http://elasticsearch:9200
+production:
+  host: Rails.application.secrets.elastic_url

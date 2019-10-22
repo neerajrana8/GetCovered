@@ -9,7 +9,7 @@ module V2
       def index_recordable
           @using_recordable_index = true
           params[:sort] = { column: 'created_at', direction: 'desc' }
-          index(:@histories, access_model(params[:recordable_type].constantize, params[:id]).histories)
+          index(:@histories, access_model(params[:recordable_type], params[:id]).histories)
           remove_instance_variable(:@using_recordable_index)
           render template: view_path + "/#{params[:short] ? "short" : "index"}.json.jbuilder"
       end
@@ -17,7 +17,7 @@ module V2
       def index_authorable
           @using_authorable_index = true
           params[:sort] = { column: 'created_at', direction: 'desc' }
-          index(:@histories, access_model(params[:authorable_type].constantize, params[:id]).authored_histories)
+          index(:@histories, access_model(params[:authorable_type], params[:id]).authored_histories)
           remove_instance_variable(:@using_authorable_index)
           render template: view_path + "/#{params[:short] ? "short" : "index"}.json.jbuilder"
       end
