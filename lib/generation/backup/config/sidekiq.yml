@@ -1,0 +1,13 @@
+:concurrency: 10
+staging:
+  :concurrency: 20
+production:
+  :concurrency: 30
+
+:queues:
+  - default
+  - stripe
+  - elasticsearch
+
+# :schedule:
+# 

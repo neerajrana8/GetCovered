@@ -1,0 +1,86 @@
+<%
+
+  # Setup
+  extra_prefix = (@ctx_data['authenticated_route_constraint'] ? "  " : "")
+
+  # Utilities
+  
+  def spit_dat_route_oute!(resource, data, prefix = "  ", parents = [])
+    to_return = ["#{prefix}resources :#{resource},"]
+    prefix = "#{prefix}  "
+    to_return.push("#{prefix}path: \"#{data['path']}\",") if data.has_key?('path')
+    to_return.push("#{prefix}concerns: [ #{data['concerns'].map{|c| ":#{c}" }.join(", ")} ],") if data.has_key?('concerns')
+    unless parents.blank?
+      to_return.push("#{prefix}defaults: {")
+      to_return.push("#{prefix}  access_pathway: [#{parents.map{|p| p[0] }.join(', ')}],")
+      to_return.push("#{prefix}  access_ids:     [#{parents.map{|p| p[1] }.join(', ')}]")
+      to_return.push("#{prefix}},")
+    end
+    to_return.push("#{prefix}only: [ #{data['verbs'].map{|a| ":#{a}" }.join(", ")} ]")
+    if data.has_key?('block')
+      prefix = "#{prefix}  "
+      dblock = data['block']
+      to_return[to_return.length - 1] = "#{to_return.last} do"
+      if dblock.has_key?('member')
+        to_return.push("#{prefix}member do")
+        (dblock['member'] || []).each do |stuff|
+          to_return.push("  #{prefix}#{stuff['verb']} \"#{stuff['path']}\",")
+          to_return.push("    #{prefix}to: \"#{stuff['to']}\",")
+          to_return.push("    #{prefix}via: \"#{stuff['verb']}\"")
+          if stuff.has_key?("as")
+            to_return[to_return.length - 1] = "#{to_return.last},"
+            to_return.push("    #{prefix}as: \"#{stuff['as']}\"")
+          end
+          if stuff.has_key?("defaults")
+            to_return[to_return.length - 1] = "#{to_return.last},"
+            to_return.push("    #{prefix}defaults: { #{stuff['defaults'].map{|k,v| "#{k.to_s.chomp(':')}: #{v}"}.join(', ') } }")
+          end
+        end
+        to_return.push("#{prefix}end")
+      end
+      if dblock.has_key?('collection')
+        to_return.push("#{prefix}collection do")
+        (dblock['collection'] || []).each do |stuff|
+          to_return.push("  #{prefix}#{stuff['verb']} \"#{stuff['path']}\",")
+          to_return.push("    #{prefix}to: \"#{stuff['to']}\",")
+          to_return.push("    #{prefix}via: \"#{stuff['verb']}\"")
+          if stuff.has_key?("as")
+            to_return[to_return.length - 1] = "#{to_return.last},"
+            to_return.push("    #{prefix}as: \"#{stuff['as']}\"")
+          end
+          if stuff.has_key?("defaults")
+            to_return[to_return.length - 1] = "#{to_return.last},"
+            to_return.push("    #{prefix}defaults: \"#{stuff['defaults'].transform_keys{|k| k.to_s}.transform_keys{|k| k.start_with?(':') ? k : ":#{k}" }}\"")
+          end
+        end
+        to_return.push("#{prefix}end")
+      end
+      if dblock.has_key?('subroutes')
+        dblock['subroutes'].each do |subresource, subdata|
+          parent_model_name = resource.singularize.camelize
+          parents.push(["::#{parent_model_name}", ":#{parent_model_name.singularize.underscore}_id"])
+          to_return.push(*spit_dat_route_oute!(subresource, subdata, prefix, parents))
+          parents.pop
+        end
+      end
+      prefix.chomp!("  ")
+      to_return.push("#{prefix}end")
+    end
+    return(to_return)
+  end
+
+%><% if @ctx_data['authenticated_route_constraint'] %>authenticated :<%= @ctx_data['user_type'].underscore %>, lambda{|current_<%= @ctx_data['user_type'].underscore %>| <%= @ctx_data['authenticated_route_constraint'].strip.split("\n").join('; ') %> } do
+<% end %>
+<%= extra_prefix %># <%= get_human_readable_context_name(@ctx) %>
+<%= extra_prefix %>scope module: :<%= @ctx_data['module'].underscore %><% unless @ctx_data['route'].nil? %>, path: "<%= @ctx_data['route'] %>"<% end %> do
+  <% @r_data.each do |resource, data|%>
+<%= spit_dat_route_oute!(resource, data, "  #{extra_prefix}").join("\n") %>
+  <% end %>
+<%= extra_prefix %>end<% if @ctx_data['authenticated_route_constraint'] %>
+end<% end %>
+
+
+
+
+
+

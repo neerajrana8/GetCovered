@@ -1,4 +1,26 @@
-scope '/public' do
-  resources :branding_profiles, only: :show, param: :url
-  resources :policy_applications, only: [:show, :create, :update]
+
+# Public
+scope module: :public do
+  
+  resources :billing_strategies,
+    path: "billing-strategies",
+    only: [ :index ]
+  
+  resources :insurables,
+    only: [ :index, :show ]
+  
+  resources :policy_applications,
+    path: "policy-applications",
+    only: [ :create, :update, :show ]
+  
+  resources :policy_quotes,
+    path: "policy-quotes",
+    only: [ :update, :show ]
+  
 end
+
+
+
+
+
+

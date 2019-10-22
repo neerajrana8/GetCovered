@@ -36,6 +36,7 @@ class Lease < ApplicationRecord
   validate :start_date_precedes_end_date,
     unless: Proc.new { |lease| lease.end_date.nil? || lease.start_date.nil? }
 
+  validate :lease_type_insurable_type
   #validates :type, presence: true,
   #  format: { with: /Residential|Commercial/, message: "must be Residential or Commercial" }
 
@@ -140,6 +141,10 @@ class Lease < ApplicationRecord
       if start_date >= end_date
         errors.add(:end_date, "must come after start date")
       end
+    end
+
+    def lease_type_insurable_type
+      errors.add(:lease_type, 'LeaseType must be available for InsurableType') unless lease_type.insurable_types.include?(insurable.insurable_type)
     end
 
     def lease_type_matches_unit_type_if_present

@@ -1,0 +1,454 @@
+<%
+  # TODO:
+  # maybe improve the output from create?
+
+  # Setup
+  
+  # user stuff
+  current_user = @ctx_data["user_type"] ? "current_#{ @ctx_data["user_type"].underscore }" : nil
+  # methods stuff
+  verbs_needing_set = @verbs & get_verbs_needing_set(@m_data)
+  
+  verbs_needing_substrate = @verbs & get_verbs_needing_substrate(@m_data)
+  creation_method = (@m_data['specials'] || {})['devise'] ?
+                      ( current_user && ((@m_data['specials'] || {})['history'] || {})['record_change'] ? "invite_as!(#{current_user}, create_params)" : "invite!(create_params)" ) :
+                      ( current_user && ((@m_data['specials'] || {})['history'] || {})['record_change'] ? "create_as(#{current_user}, create_params)" : "create(create_params)" )
+  salvation_method = (@m_data['specials'] || {})['devise'] ?
+                      ( current_user && ((@m_data['specials'] || {})['history'] || {})['record_change'] ? "invite_as!(#{current_user})" : "invite!" ) :
+                      ( current_user && ((@m_data['specials'] || {})['history'] || {})['record_change'] ? "save_as(#{current_user})" : "save" )
+  update_method = ( current_user && ((@m_data['specials'] || {})['history'] || {})['record_change'] ? "update_as(#{current_user}, update_params)" : "update(update_params)" )
+  destroy_method = "destroy"
+  # query stuff
+  directory = get_view_path(@m_name, @ctx).split("/").last
+  pseudodistinct = (@m_data['pseudodistinct'] == true || (@m_data['pseudodistinct'].class == ::Array && @m_data['pseudodistinct'].include?(@ctx)))
+
+  # Utilities
+  
+  def get_joins(level, associations = @m_data["associations"] || {}, defender_of_the_pride_of_finitude = { "#{@m_name}:#{level}" => 1 }, perish_if_empty = false)
+    to_return = {}
+    associations.each do |a_name, a_data|
+      next if a_data["polymorphic"] || a_data['target'].length != 1 # hack to prevent polymorphic belongs_to relations from showing up in joins. prevents wherethroughs from them.
+      # get the joined_view for this association (e.g. if level is 'index' and this assoc has perm 'index_short', the joined_view is 'short')
+      permissions = (a_data["permissions"] || {})[@ctx] || []
+      current_views = (@view_levels.include?(level) ? @view_levels.take_while{|v| v != level } : []) + [level]
+      vti = current_views.length - 1
+      joined_view = nil
+      while vti >= 0 && joined_view.nil?
+        joined_view = permissions.detect{|p| (@available_views + @view_levels.map{|vl| "#{vl}_fields" }).select{|av| p.end_with?("_#{av}") }.map{|av| p.chomp("_#{av}") }.include?(current_views[vti]) }
+        vti = vti - 1
+      end
+      if joined_view.nil?
+        # tell get_joins to return nil instead of {} if no more permitted joins are found, and add the result to to_return only if more permitted joins ARE found
+        got_joins = get_joins(level, a_data["wherethrough"] || {}, defender_of_the_pride_of_finitude, true)
+        to_return[a_name] = got_joins unless got_joins.nil?
+      else
+        to_return[a_name] = get_joins(level, a_data["wherethrough"] || {}, defender_of_the_pride_of_finitude)
+        # handle the joins required by the joined_view
+        submodel_name = a_data['target'][0]
+        if @scheme['models'][submodel_name].nil?
+         puts "There ain't no model called #{submodel_name}, tho' it be needed for join extensions through relationship #{a_name} with data #{a_data}; dang!"
+         STDOUT.flush
+         throw "There ain't no model called #{submodel_name}, tho' it be needed for join extensions through relationship #{a_name} with data #{a_data}; dang!"
+        end
+        newer_level = joined_view[(current_views[vti + 1].length + 1)..-1] # remove "#{current_views[vti+1]}_" from the start of joined_view, leaving the joined_view type
+        unless newer_level.blank? || defender_of_the_pride_of_finitude["#{submodel_name}:#{newer_level}"].to_i >= 2
+          defender_of_the_pride_of_finitude["#{submodel_name}:#{newer_level}"] = defender_of_the_pride_of_finitude["#{submodel_name}:#{newer_level}"].to_i + 1 # prevents infinite loops even if the user has been foolish enough to have them in the scheme
+          gotten_joins = newer_level.blank? ? {} : get_joins(newer_level, @scheme['models'][submodel_name]['associations'] || {}, defender_of_the_pride_of_finitude)
+          to_return[a_name] = gotten_joins.deep_merge(to_return[a_name] || {}) unless gotten_joins.blank?
+          defender_of_the_pride_of_finitude["#{submodel_name}:#{newer_level}"] -= 1
+        end
+      end
+    end
+    return(perish_if_empty && to_return.blank? ? nil : to_return)
+  end
+
+  def print_joins(joins)
+    to_return = []
+    end_hash = false
+    joins.each do |jname, jdata|
+      if jdata.blank?
+        to_return.push(":#{jname}")
+      else
+        end_hash = true
+      end
+    end
+    if end_hash
+      joins.each do |jname, jdata|
+        unless jdata.blank?
+          to_return.push("#{jname}: [#{print_joins(jdata)}]")
+        end
+      end
+    end
+    return(to_return.join(", "))
+  end
+
+  def get_filters(for_sort, m_data = @m_data, guardian_of_blessed_ephemerality = { m_data => 1 })
+    allowed = for_sort ? @order_types : @filter_types
+    to_return = {}
+    # handle fields
+    (m_data["fields"] || {}).each do |f_name, f_data|
+      permissions = (f_data["permissions"] || {})[@ctx] || []
+      # check for custom nonsense
+      custom_nonsense_string = for_sort ? 'order_method_' : 'filter_method_'
+      char_cutoff = custom_nonsense_string.length
+      custom_nonsense = permissions.select{|p| p.to_s[0...char_cutoff] == custom_nonsense_string }
+      if custom_nonsense.blank?
+        permissions = permissions & allowed
+        to_return[f_name] = permissions if permissions.length > 0
+      else
+        to_return[f_name] = custom_nonsense.first.to_s[char_cutoff..-1]
+      end
+    end
+    # handle associations shallowly WARNING: disabled since there is now NO NEED TO DO THIS! The generator expands shallow associations as fields as a preprocessing step now.
+    #(m_data["associations"] || {}).each do |a_name, a_data|
+    #  permissions = ( (a_data["permissions"] || {})[@ctx] || [] ) & allowed
+    #  if a_data["type"] == "belongs_to" && permissions.length > 0
+    #    to_return[extract_foreign_key(a_name, a_data)] = permissions
+    #    to_return[extract_foreign_type(a_name, a_data)] = permissions if a_data["polymorphic"]
+    #  end
+    #end
+    # handle associations deeply
+    (m_data["associations"] || {}).each do |a_name, a_data|
+      queriable = ( (a_data["permissions"] || {})[@ctx] || [] ).include?("queriable") && !a_data['polymorphic'] && a_data['target'].length == 1 # WARNING: polymorphic associations cannot be queriable
+      if queriable
+        submodel_name = a_data['target'][0]
+        if @scheme['models'][submodel_name].nil?
+         puts "There ain't no model called #{submodel_name}, tho' it be needed for relationship #{a_name} with data #{a_data}; dang!"
+         STDOUT.flush
+         throw "There ain't no model called #{submodel_name}, tho' it be needed for relationship #{a_name} with data #{a_data}; dang!"
+        end
+        unless guardian_of_blessed_ephemerality[submodel_name].to_i >= 2
+          guardian_of_blessed_ephemerality[submodel_name] = guardian_of_blessed_ephemerality[submodel_name].to_i + 1
+          to_return[a_name.to_s] = get_filters(for_sort, @scheme['models'][submodel_name], guardian_of_blessed_ephemerality)
+          guardian_of_blessed_ephemerality[submodel_name] -= 1
+        end
+      end
+    end
+    # done
+    return(to_return)
+  end
+  
+  def print_filters(filters, prefix, with_braces = true)
+    toPrint = []
+    toPrint.push("#{prefix}{") if with_braces
+    filters.each do |f_name, f_data|
+      if f_data.class == ::Array
+        toPrint.push("#{prefix}  #{f_name}: [#{f_data.map{|fd| ":#{fd}" }.join(", ")}],")
+      elsif f_data.class == ::String
+        toPrint.push("#{prefix}  #{f_name}: #{f_data},")
+      else
+        toPrint.push("#{prefix}  #{f_name}: {")
+        toPrint.concat(print_filters(f_data, prefix + "  ", false))
+        toPrint.push("#{prefix}  },")
+      end
+    end
+    toPrint[toPrint.length - 1].chomp!(",") unless toPrint.blank?
+    toPrint.push("#{prefix}}") if with_braces
+    return(toPrint)
+  end
+
+  def get_params(mutability, m_name = @m_name, protector_of_that_dread_spark_known_as_mortality = { "#{m_name}:#{mutability}" => 1 })
+    m_data = @scheme['models'][m_name]
+    return [] if m_data.nil?
+    to_return = []
+    accepted_mutations = @mutability_levels[mutability] || [mutability]
+    # handle fields that do not accept arbitrary hash or array input
+    (m_data["fields"] || {}).each do |f_name, f_data|
+      next if @array_field_types.include?(f_data["type"]) || @hash_field_types.include?(f_data["type"])
+      permissions = (f_data["permissions"] || {})[@ctx] || []
+      to_return.push("#{f_name}") if (permissions & accepted_mutations).length > 0
+    end
+    # handle associations shallowly WARNING: no longer necessary! The generator expands shallow relationship data into fields in a preprocessing step.
+    #(m_data["associations"] || {}).each do |a_name, a_data|
+    #  permissions = (a_data["permissions"] || {})[@ctx] || []
+    #  if a_data["type"] == "belongs_to" && (permissions & accepted_mutations).length > 0
+    #    to_return.push(extract_foreign_key(a_name, a_data))
+    #    to_return.push(extract_type_key(a_name, a_data)) if (a_data["belongs_to"] || {})["polymorphic"]
+    #  end
+    #end
+    # handle fields that do accept arbitrary hash or array input
+    (m_data["fields"] || {}).each do |f_name, f_data|
+      if @array_field_types.include?(f_data["type"])
+        permissions = (f_data["permissions"] || {})[@ctx] || []
+        if (permissions & accepted_mutations).length > 0
+          if f_data["array"] && f_data["strong_params"]
+            to_return.push(["#{f_name}", Marshal.load(Marshal.dump(f_data["strong_params"]))])
+          else
+            to_return.push("#{f_name}: []")
+          end
+        end
+      elsif @hash_field_types.include?(f_data["type"])
+        permissions = (f_data["permissions"] || {})[@ctx] || []
+        to_return.push("#{f_name}: {}") if (permissions & accepted_mutations).length > 0
+      end
+    end
+    # handle associations deeply
+    to_return.push(*get_assoc_params(mutability, m_data["associations"] || {}, protector_of_that_dread_spark_known_as_mortality))
+    # done
+    return(to_return)
+  end
+  
+  def get_assoc_params(mutability, associations, protector_of_that_dread_spark_known_as_mortality)
+    to_return = []
+    gift_from_the_children = []
+    associations.each do |a_name, a_data|
+      next if a_data["polymorphic"] || a_data["target"].length != 1
+      # get nested strong params from association
+      nested_mutability = (((a_data["permissions"] || {})[@ctx] || []).detect{|p| p.start_with?("#{mutability}_")  } || "")[(mutability.length + 1)..-1]
+      unless nested_mutability.blank? || protector_of_that_dread_spark_known_as_mortality["#{a_data['target'][0]}:#{nested_mutability}"].to_i >= 2
+        protector_of_that_dread_spark_known_as_mortality["#{a_data['target'][0]}:#{nested_mutability}"] = protector_of_that_dread_spark_known_as_mortality["#{a_data['target'][0]}:#{nested_mutability}"].to_i + 1
+        to_return.push(["#{a_name}_attributes", get_params(nested_mutability, a_data['target'][0], protector_of_that_dread_spark_known_as_mortality)])
+if @DEBUG && a_name == "policy_users"
+  puts "Big got: #{to_return}"
+end
+        to_return.pop if to_return.last[1].blank?
+        protector_of_that_dread_spark_known_as_mortality["#{a_data['target'][0]}:#{nested_mutability}"] -= 1
+      end
+      # get strong params from nested associations
+      unless a_data['wherethrough'].blank?
+        gift_from_the_children.push(["#{a_name}_attributes", get_assoc_params(mutability, a_data['wherethrough'], protector_of_that_dread_spark_known_as_mortality)])
+if @DEBUG && a_name == "policy_users"
+  puts "Gift got: #{to_return}"
+  @GRUMBLE = true
+  #merge_latter_params_into_former(to_return, gift_from_the_children)
+  puts "OUT: #{to_return}"
+  @GRUMBLE = false
+end
+        gift_from_the_children.pop if gift_from_the_children.last[1].blank?
+      end
+    end
+
+    merge_latter_params_into_former(to_return, gift_from_the_children)
+    return(to_return)
+  end
+  
+  def merge_latter_params_into_former(former, latter)
+  puts "IN" if @GRUMBLE
+    (latter - former).each do |v|
+      case v
+        when ::String
+          former.push(v)
+        when ::Array
+          if v.length <= 1 # not possible at present, but just in case this is added for some weird edge case...
+            former.push(v)
+          elsif v.length == 2
+            detected = former.detect{|fv| fv.class == ::Array && fv.length == 2 && fv[0] == v[0] }
+            if detected.nil?
+              former.push(v)
+            else
+            puts "WEESA MERGIN" if @GRUMBLE
+              merge_latter_params_into_former(detected[1], v[1])
+            end
+          else
+            # who knows? arrays should only be 2 long...
+          end
+      end 
+    end
+  end
+  
+  # MOOSE WARNING: debug!!!
+  if @m_name == "PolicyApplication" && @ctx == "public"
+  #puts "YEAH"
+  #@DEBUG = true
+  #@PREF = ""
+  #puts "ANS: #{get_params('create')}"
+  #raise "MOOSE"
+  end
+  ###
+  
+  def print_params(params, prefix, width_limit = 72, prefix_push_power = 20)
+    width_limit += (prefix.length / prefix_push_power).floor * prefix_push_power
+    toPrint = []
+    curLine = "#{prefix}"
+    params.each do |param|
+      if param.class == ::Array #MOOSE WARNING: might fail if a nested class has another nested class inside it, because it will give something like ":prop1, :prop2, nested1: [ :nprop1, :nprop2, nested2: [ :nnprop1 ] ]"... is this syntax valid?
+        # insert line break if needed
+        toAdd = "#{param[0]}: ["
+        if curLine.length > prefix.length && curLine.length + toAdd.length + (curLine.length == prefix.length ? 0 : 1) > width_limit
+          toPrint.push("#{curLine}")
+          curLine = "#{prefix}#{toAdd}"
+        else
+          toAdd = "#{curLine.length == prefix.length ? "" : " "}#{toAdd}"
+          curLine += toAdd
+        end
+        # insert param
+        toPrint.push(curLine)
+        subparams = print_params(param[1], prefix + "  ", width_limit)
+        toPrint.concat(subparams)
+        toPrint.push("#{prefix}],")
+        curLine = "#{prefix}"
+      else
+        toAdd = "#{param[-2..-1] == "{}" || param[-2..-1] == "[]" ? "" : ":"}#{param},"
+        if curLine.length > prefix.length && curLine.length + toAdd.length + (curLine.length == prefix.length ? 0 : 1) > width_limit
+          toPrint.push("#{curLine}")
+          curLine = "#{prefix}#{toAdd}"
+        else
+          curLine = "#{curLine}#{curLine.length == prefix.length ? "" : " "}#{toAdd}"
+        end
+      end
+    end
+    toPrint.push(curLine) if curLine.length > prefix.length
+    toPrint[toPrint.length - 1].chomp!(",") if toPrint.length > 0
+    return(toPrint)
+  end
+  
+%>##
+# V2 <%= get_human_readable_context_name(@ctx) %> <%= @m_name.pluralize %> Controller
+# File: <%= @full_controller_path %>
+
+module V2
+  module <%= @ctx_data['module_sequence'].join("\n  module ") %>
+    class <%= @m_name.pluralize %>Controller < <%= get_context_controller_name(@ctx) %>Controller
+      <% unless verbs_needing_set.blank? %>
+      before_action :set_<%= @m_name.underscore %>,
+        only: [<%= verbs_needing_set.map{|a| ":#{a}" }.join(', ') %>]
+      <% end %>      <% unless verbs_needing_set.blank? %>
+      before_action :set_substrate,
+        only: [<%= verbs_needing_substrate.map{|a| ":#{a}" }.join(', ') %>]
+      <% end %><% if @verbs.include?('index') %>
+      def index
+        if params[:short]
+          super(<%= [ ":@#{@m_name.pluralize.underscore}", (@m_data['index_source_override'] || {}).has_key?(@ctx) ? @m_data['index_source_override'][@ctx] : @substrate, print_joins(get_joins('short')) ].reject{|e| e.blank? }.join(', ') %>)
+        else
+          super(<%= [ ":@#{@m_name.pluralize.underscore}", (@m_data['index_source_override'] || {}).has_key?(@ctx) ? @m_data['index_source_override'][@ctx] : @substrate, print_joins(get_joins('index')) ].reject{|e| e.blank? }.join(', ') %>)
+        end
+      end
+      <% end %><% if @verbs.include?('show') %>
+      def show
+      end
+      <% end %><% if @verbs.include?('create') %>
+      def create<% if ((@m_data['verb_customizations'] || {})['override_create'] || {})[@ctx] %>
+        <%= @m_data['verb_customizations']['override_create'][@ctx].join("\n        ") %><% else %>
+        if create_allowed?
+          @<%= @m_name.underscore %> = @substrate.new(create_params)<% if (@m_data["specials"] || []).include?("devise") %>
+          # remove password issues from errors since this is a Devise model
+          @<%= @m_name.underscore %>.valid? if @<%= @m_name.underscore %>.errors.blank?
+          @<%= @m_name.underscore %>.errors.messages.except!(:password)<% end %>
+          if !@<%= @m_name.underscore %>.errors.any? && @<%= @m_name.underscore %>.<%= salvation_method %>
+            render <%= @verbs.include?("show") ? ":show" : "json: { success: true }" %>,
+              status: :created
+          else
+            render json: @<%= @m_name.underscore %>.errors,
+              status: :unprocessable_entity
+          end<% end %>
+        else
+          render json: { success: false, errors: ['Unauthorized Access'] },
+            status: :unauthorized
+        end
+      end
+      <% end %><% if @verbs.include?("update") %>
+      def update<% if ((@m_data["verb_customizations"] || {})["override_update"] || {})[@ctx] %>
+        <%= @m_data["verb_customizations"]["override_update"][@ctx].join("\n        ") %><% else %>
+        if update_allowed?
+          if @<%= @m_name.underscore %>.<%= update_method %>
+            render <%= @verbs.include?("show") ? ":show" : "json: { success: true }" %>,
+              status: :ok
+          else
+            render json: @<%= @m_name.underscore %>.errors,
+              status: :unprocessable_entity
+          end<% end %>
+        else
+          render json: { success: false, errors: ['Unauthorized Access'] },
+            status: :unauthorized
+        end
+      end
+      <% end %><% if @verbs.include?("destroy") %>
+      def destroy<% if ((@m_data["verb_customizations"] || {})["override_destroy"] || {})[@ctx] %>
+        <%= @m_data["verb_customizations"]["override_destroy"][@ctx].join("\n        ") %><% else %>
+        if destroy_allowed?
+          if @<%= @m_name.underscore %>.<%= destroy_method %>
+            render json: { success: true },
+              status: :ok
+          else
+            render json: { success: false },
+              status: :unprocessable_entity
+          end<% end %>
+        else
+          render json: { success: false, errors: ['Unauthorized Access'] },
+            status: :unauthorized
+        end
+      end
+      <% end %><% (@m_data['controller_public_methods'] || {}).select{|cpmn, cpmd| (cpmd['contexts'] || []).include?(@ctx) }.each do |cpm_name, cpm_data| %>
+      def <%= cpm_name %>
+        <%= cpm_data['source'].join("\n        ") %>
+      end
+      <% end %><% if pseudodistinct %>
+      def pseudodistinct
+        true
+      end
+      <% end %><% if (@m_data['access_model'] || {})[@ctx] %>
+      def access_model
+        <%= @m_data['access_model'][@ctx].split("\n").join("\n        ") %>
+      end
+      <% end %>
+      
+      private
+      
+        def view_path
+          super + "/<%= directory %>"
+        end
+        <% if @verbs.include?("create") %>
+        def create_allowed?
+          <%= (case (@m_data['verb_conditions'] || {})['create']; when ::Hash; @m_data['verb_conditions']['create'][@ctx] || ['true']; when ::Array; @m_data['verb_conditions']['create']; else; ['true']; end).join("\n          ") %>
+        end
+        <% end %><% if @verbs.include?("update") %>
+        def update_allowed?
+          <%= (case (@m_data['verb_conditions'] || {})['update']; when ::Hash; @m_data['verb_conditions']['update'][@ctx] || ['true']; when ::Array; @m_data['verb_conditions']['update']; else; ['true']; end).join("\n          ") %>
+        end
+        <% end %><% if @verbs.include?("destroy") %>
+        def destroy_allowed?
+          <%= (case (@m_data['verb_conditions'] || {})['destroy']; when ::Hash; @m_data['verb_conditions']['destroy'][@ctx] || ['true']; when ::Array; @m_data['verb_conditions']['destroy']; else; ['true']; end).join("\n          ") %>
+        end
+        <% end %><% unless verbs_needing_set.blank? %>
+        def set_<%= @m_name.underscore %>
+          @<%= @m_name.underscore %> = access_model(::<%= @m_name %>, params[:id])
+        end
+        <% end %><% unless verbs_needing_substrate.blank? %>
+        def set_substrate
+          super
+          if @substrate.nil?
+            @substrate = access_model(::<%= @m_name %>)
+          elsif !params[:substrate_association_provided]
+            @substrate = @substrate.<%= @m_name.pluralize.underscore %>
+          end
+        end<% end %><% if @verbs.include?("create") %>
+        def create_params
+          return({}) if params[:<%= @m_name.underscore %>].blank?<% params_to_print = get_params("create") %><% if params_to_print.blank? %>
+          to_return = {}<% else %>
+          to_return = params.require(:<%= @m_name.underscore %>).permit(
+<%= print_params(params_to_print, "            ").join("\n") %>
+          )<% end %><% (@m_data["associations"] || {}).select{|a_name, a_data| a_data.has_key?("controller_defaults") && a_data["controller_defaults"].has_key?(@ctx) }.each do |a_name, a_data| %>
+          to_return[:<%= a_name %>] = <%= a_data["controller_defaults"][@ctx] %> unless to_return.has_key?(:<%= a_name %>) || to_return.has_key?(:<%= a_name %>_id)<% end %>
+          return(to_return)
+        end
+        <% end %><% if @verbs.include?("update") %>
+        def update_params
+          return({}) if params[:<%= @m_name.underscore %>].blank?<% params_to_print = get_params("update") %><% if params_to_print.blank? %>
+          to_return = {}<% else %>
+          params.require(:<%= @m_name.underscore %>).permit(
+<%= print_params(params_to_print, "            ").join("\n") %>
+          )<% end %>
+        end
+        <% end %><% if @verbs.include?("index") %>
+        def supported_filters<% unless @strict_order_permissions %>(called_from_orders = false)
+          @calling_supported_orders = called_from_orders<% end %>
+<%= print_filters(get_filters(false), "          ").join("\n") %>
+        end
+
+        def supported_orders
+          <% unless @strict_order_permissions %>supported_filters(true)<% else %>
+<%= print_filters(get_filters(true), "          ").join("\n") %>
+          <% end %>
+        end
+        <% end %><% if (@m_data["fixed_filters"] || {})[@ctx] %>
+        def fixed_filters
+          <%= @m_data["fixed_filters"][@ctx].to_s.split("\n").join("\n          ") %>
+        end
+        <% end %><% (@m_data["controller_private_methods"] || {}).select{|cpmn, cpmd| (cpmd["contexts"] || []).include?(@ctx) }.each do |cpm_name, cpm_data| %>
+        def <%= cpm_name %>
+          <%= cpm_data["source"].join("\n          ") %>
+        end
+        <% end %>
+    end
+  <%= @ctx_data['module_sequence'].map{|m| "end # module #{m}" }.join("\n  ") %>
+end

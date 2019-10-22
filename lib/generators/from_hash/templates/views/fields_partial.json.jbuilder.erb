@@ -1,0 +1,36 @@
+<%
+  # Setup
+  @current_views = (@view_levels.include?(@view) ? @view_levels.take_while{|v| v != @view } : []) + [@view]
+
+  def get_fields
+    to_return = []
+    # fields
+    (@m_data["fields"] || {}).each do |f_name, f_data|
+      perms = (f_data["permissions"] || {})[@ctx] || []
+      to_return.push(f_name) if (@current_views & perms).length > 0
+    end
+    # done
+    to_return.uniq!
+    return(to_return)
+  end
+  
+  def print_fields(fields, start_length, width_limit = 72)
+    toPrint = [","]
+    just_begun = true
+    fields.each do |field|
+      if start_length + toPrint.last.length + 3 + field.length > width_limit && !just_begun
+        toPrint.push(" ")
+        start_length = 0
+      end
+      just_begun = false
+      toPrint[toPrint.length - 1] += " :#{field},"
+    end
+    toPrint[toPrint.length - 1].chomp!(",")
+    return(toPrint.join("\n"))
+  end
+
+  @fields_to_print = get_fields
+  
+  unless @fields_to_print.blank?
+%>json.extract! <%= @m_name.underscore %><%= print_fields(get_fields, "json.extract! #{@m_name.underscore}".length) %>
+<% end %>
