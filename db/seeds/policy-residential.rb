@@ -18,6 +18,8 @@
 			account: lease.account
 		)
 		
+		application.insurables << lease.insurable
+		
 		if application.save()
 			community = lease.insurable.insurable
 			application.insurables << lease.insurable

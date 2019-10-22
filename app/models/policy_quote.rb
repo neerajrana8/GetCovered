@@ -30,14 +30,23 @@ class PolicyQuote < ApplicationRecord
 
 	accepts_nested_attributes_for :policy_premium
 
-  enum status: { available: 0, expired: 1, accepted: 2,
-	  						 declined: 3, abandoned: 4 }
+  enum status: { awaiting_estimate: 0, estimated: 1, quoted: 2, 
+                 quote_failed: 3, accepted: 4, declined: 5, 
+                 abandoned: 6, expired: 7 }
 
   settings index: { number_of_shards: 1 } do
     mappings dynamic: 'false' do
       indexes :reference, type: :text, analyzer: 'english'
       indexes :external_reference, type: :text, analyzer: 'english'
     end
+  end
+
+	def mark_successful
+  	policy_application.update status: 'quoted' if update status: 'quoted'
+  end
+  
+  def mark_failure
+  	policy_application.update status: 'quote_failed' if update status: 'quote_failed'
   end
 
   def available_period

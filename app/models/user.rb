@@ -1,3 +1,5 @@
+# User model
+# file: app/models/user.rb
 # frozen_string_literal: true
 
 class User < ApplicationRecord
@@ -26,7 +28,16 @@ class User < ApplicationRecord
 
   has_one :profile,
           as: :profileable,
-          autosave: true
+          autosave: true  
+          
+  has_many :account_users
+  
+  has_many :active_account_users,
+    -> { where status: 'enabled' }, 
+    class_name: "AccountUser"
+  
+  has_many :accounts,
+    through: :active_account_users
 
   accepts_nested_attributes_for :profile
 
