@@ -156,24 +156,13 @@ class User < ActiveRecord::Base
               customer.default_source = token_data.card.id if make_default
               customer.save
               
-              tmp_id = token_data.card.id
-              self.payment_methods['by_id'][tmp_id] = {}
-              
-              pp self.payment_methods['by_id']
-              
-              self.payment_methods['by_id'][tmp_id] = {
+              self.payment_methods['by_id'][token_data.card.id] = {
                 'type' => 'card',
                 'id' => token_data.card.id,
                 'fingerprint' => token_data.card.fingerprint
               }
               
-              pp self.payment_methods['by_id']
-              puts "\n"
-              
               self.payment_methods['fingerprint_index']['card'][token_data.card.fingerprint] = token_data.card.id
-              
-              pp self.payment_methods
-              puts "\n"
               
               if make_default
                 self.current_payment_method = 'card'
