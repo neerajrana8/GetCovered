@@ -1,0 +1,35 @@
+<%
+  # MOOSE WARNING: mount Sidekiq::Web => '/sidekiq' used to be at the start of the Rails.application.routes.draw block... why?
+  
+  # see get_routes_hash in app_generator for details:
+  #   routes[namespace] = { resource, actions, path, concerns, block: { member: [ { action, path, to, as, defaults } ] }, subroutes: ##repeat of same format### }
+
+
+%>require 'sidekiq/web'
+
+Rails.application.routes.draw do
+  
+  <% ((@scheme['specials'] || {})['devise'] || {})['user_auths'].each |u_name, u_data| do %>
+  mount_devise_token_auth_for '<%= u_name.camelize %>',
+    at: '<%= u_data['route'] %>',
+    skip: [:invitations],
+    controllers: {
+      sessions: '<%= u_data['controller_path'] %>/sessions',
+      token_validations: '<%= u_data['controller_path'] %>/token_validations',
+      passwords: '<%= u_data['controller_path'] %>/passwords'
+    }<% unless u_data['uninvitable'] %>
+  
+  devise_for: <%= u_name.pluralize.underscore %>,
+    path: '<%= u_data['route'] %>',
+    defaults: { format: :json },
+    only: [:invitations],
+    controllers: {
+      invitations: '<%= u_data['controller_path'] %>/invitations'
+    }
+  <% end %><% end %>
+  
+  namespace :v2, defaults: { format: 'json' } do<% (@scheme['contexts'] || {}).each |ctx, ctx_data| do %>
+    draw :<%= ctx.underscore %>
+  end
+  
+end

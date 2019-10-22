@@ -91,6 +91,17 @@ exit
   def pseudodistinct
     false
   end
+  
+  # Set substrate (useful controller method for generalized nested routes)
+  def set_substrate
+    unless params[:access_pathway].nil?
+      @substrate = access_model(params[:access_pathway][0], params[params[:access_ids][0]])
+      (1...params[:access_pathway].length).each do |n|
+        @substrate = @substrate.send(params[:access_pathway][n].class == Class ? params[:access_pathway][n].name.pluralize.underscore : params[:access_pathway][n])
+                               .send(*(params[params[:access_ids][n]].nil? ? [:itself] : [:find, params[params[:access_ids][n]]]))
+      end
+    end
+  end
 
   def build_query(queriable, prequery)
     if queriable.class == ::Class

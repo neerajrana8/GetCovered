@@ -89,7 +89,7 @@ end
 # check if a filtration is validly applicable to a type
 def validate_filtration(field_type, filtration)
   allowed_filtrations = {
-    'array' => [], # not used in the new generators atm
+    'array' => [],
     'boolean' => [ 'scalar', 'array' ],
     'date' => [ 'scalar', 'array', 'interval' ],
     'datetime' => [ 'scalar', 'array', 'interval' ],
@@ -152,6 +152,35 @@ def handle_models_sheet(sheet)
         m_data['access_model'][ctx] = "model_class"
         puts "    model is scopeless for #{ctx}" if $show_debug_stuff
       end
+    end
+    # get route mounts
+    col = 2 + $contexts.length * ($ctx_verbs.length + 1)
+    val = sheet.cell(row, col).to_s.special_strip
+    unless val.blank?
+      mount_points = val.split(',').map{|v| v.strip }.select do |mount_point|
+        unless mount_point == 'nil' || @scheme['models'].has_key?(mount_point)
+          log_warning("Invalid mount point '#{mount_point}' encountered for model '#{m_name}'; ignoring")
+          next
+        end
+        m_data['route_mounts'] = [] unless m_data.has_key?('route_mounts')
+        m_data['route_mounts'].push({
+          'mount_path' => [mount_point == 'nil' ? nil : mount_point]
+          #'contexts': [], but we don't differentiate between contexts right now
+        })
+      end
+    end
+    # get history
+    col = 3 + $contexts.length * ($ctx_verbs.length + 1)
+    val = sheet.cell(row, col).to_s.special_strip.split(',').map{|v| v.strip }
+    if val.include?('verbs')
+      m_data['specials'] = {} unless m_data.has_key?('specials')
+      m_data['specials']['history'] = {} unless m_data['specials'].has_key?('history')
+      m_data['specials']['history']['history_verbs'] = true
+    end
+    if val.include?('author_verbs')
+      m_data['specials'] = {} unless m_data.has_key?('specials')
+      m_data['specials']['history'] = {} unless m_data['specials'].has_key?('history')
+      m_data['specials']['history']['author_verbs'] = true
     end
   end
 end
@@ -379,7 +408,7 @@ end
 end
 
 # expand through associations
-#expand_through_associations($scheme){|model, assoc, through_assoc| log_warning("Hideously botched through association #{model}##{assoc} (through '#{through_assoc}') encountered in scheme") }
+expand_through_associations($scheme){|model, assoc, through_assoc| log_warning("Hideously botched through association #{model}##{assoc} (through '#{through_assoc}') encountered in scheme") }
 
 # spit out the hash
 File.open(File.join(__dir__, "app-data/scheme.json"), "w") do |f|

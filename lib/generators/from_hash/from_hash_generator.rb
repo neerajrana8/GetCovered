@@ -5,6 +5,7 @@ class FromHashGenerator < Rails::Generators::Base
   class_option :filename, type: :string
   class_option :views, type: :string
   class_option :controllers, type: :string
+  class_option :output_root, type: :string
   source_root File.expand_path("../templates", __FILE__)
 
   def init
@@ -12,7 +13,8 @@ class FromHashGenerator < Rails::Generators::Base
     # logging variables
     @errors = []
     @gputs_indentation = 0
-    # command-line options
+    # command-line options & other config stuff
+    @output_root = options['output_root'].blank? ? "" : "#{options['output_root'].chomp('/')}/"
     @generate_views_for = nil
     @generate_controllers_for = nil
     @force = true
@@ -32,6 +34,7 @@ class FromHashGenerator < Rails::Generators::Base
     @array_field_types = ["array", "file_set"]
     @filter_types = ["scalar", "array", "like", "interval"]
     @order_types = ["sort"]
+    @verb_types = ['index', 'show', 'create', 'update', 'destroy']
     unless @strict_order_permissions
       @order_types.concat(@filter_types)
       @filter_types = @order_types
@@ -61,7 +64,12 @@ class FromHashGenerator < Rails::Generators::Base
   
   def expand_scheme
     gputs "Expanding scheme..."
-    # MOOSE WARNING: copy context data to subcontexts...
+    # expand context data
+    (@scheme['contexts'] || {}).each do |ctx, ctx_data|
+      ctx_data['module'] = ctx.camelize unless ctx_data.has_key?('module')
+      ctx_data['path'] = ctx.underscore unless ctx_data.has_key?('path')
+      ctx_data['module_sequence'] = [ ctx_data['module'] ] # routes only support module depth 1 right now, but the controller erb supports arbitrary depth using this field
+    end
     # expand shallow associations as fields
     gputs "  Expanding shallow associations..."
     (@scheme['models'] || {}).each do |m_name, m_data|
@@ -117,10 +125,10 @@ class FromHashGenerator < Rails::Generators::Base
         views.each do |view|
           next unless view_actualization_allowed(m_name, ctx, view)
           @view = view
-          template "views/fields_partial.json.jbuilder.erb", "app/views/#{@view_path}/#{get_fields_partial_filename(m_name, ctx, view)}", force: should_force_view(m_name, ctx, view)
-          template "views/full_partial.json.jbuilder.erb", "app/views/#{@view_path}/#{get_full_partial_filename(m_name, ctx, view)}", force: should_force_view(m_name, ctx, view)
+          template "views/fields_partial.json.jbuilder.erb", "#{@output_root}app/views/#{@view_path}/#{get_fields_partial_filename(m_name, ctx, view)}", force: should_force_view(m_name, ctx, view)
+          template "views/full_partial.json.jbuilder.erb", "#{@output_root}app/views/#{@view_path}/#{get_full_partial_filename(m_name, ctx, view)}", force: should_force_view(m_name, ctx, view)
           if @view_levels.include?(view) # MOOSE WARNING: we only build built-in views here, even though we build custom partials as well
-            template "views/#{view}.json.jbuilder.erb", "app/views/#{@view_path}/#{vn}.json.jbuilder", force: should_force_view(m_name, ctx, view)
+            template "views/#{view}.json.jbuilder.erb", "#{@output_root}app/views/#{@view_path}/#{vn}.json.jbuilder", force: should_force_view(m_name, ctx, view)
           end
         end
       end
@@ -128,8 +136,33 @@ class FromHashGenerator < Rails::Generators::Base
     gputs_out
   end
   
-  def actualize_namespace_controllers
+  def actualize_application_controller
+    if application_controller_actualization_allowed
+      gputs "Generating application controller..."
+      copy_file "application_controller.rb", "#{@output_root}app/controllers/application_controller.rb", force: should_force_application_controller
+      gputs "  Success!"
+    end
   end
+
+  def actualize_v1_controller
+    if v1_controller_actualization_allowed
+      gputs "Generating v1 controller..."
+      copy_file "v1_controller.rb", "#{@output_root}app/controllers/v1_controller.rb", force: should_force_v1_controller
+      gputs "  Success!"
+    end
+  end
+
+  def actualize_context_controllers
+    puts "Generating context controllers..."
+    (@scheme["contexts"] || {}).select{|ctx, ctx_data| context_controller_actualization_allowed(ctx) }.each do |ctx, ctx_data|
+      @ctx = ctx
+      @ctx_data = ctx_data
+      @full_controller_path = "app/controllers/#{get_context_controller_path(ctx)}/#{get_context_controller_filename(ctx)}_controller.rb"
+      template "context_controller.rb.erb", "#{@output_root}#{@full_controller_path}", force: should_force_context_controller(ctx)
+    end
+    puts "  Success!"
+  end
+
   
   def actualize_model_controllers
     gputs "Generating model controllers..."
@@ -151,11 +184,27 @@ class FromHashGenerator < Rails::Generators::Base
           @controller_filename = get_controller_filename(m_name, ctx)
           @full_controller_path = "app/controllers/#{@controller_path}/#{@controller_filename}"
           gputs "Building #{@full_controller_path}"
-          template "controller.rb.erb", @full_controller_path, force: should_force_controller(m_name, ctx)
+          template "controller.rb.erb", "#{@output_root}#{@full_controller_path}", force: should_force_controller(m_name, ctx)
         end
       end
     end
     gputs_out
+  end
+  
+  def actualize_routes
+    if route_actualization_allowed
+      gputs "Generating routes..."
+      gputs_in
+      routes_hash = get_routes_hash
+      template "routes.rb.erb", "#{@output_root}config/routes.rb", force: should_force_routes
+      (@scheme['contexts'] || {}).each do |ctx, ctx_data|
+        @ctx = ctx
+        @ctx_data = ctx_data
+        @r_data = routes_hash[ctx] || {}
+        template "context_routes.rb.erb", "#{@output_root}config/routes/#{ctx.underscore}.rb", force: should_force_routes
+      end
+      gputs_out
+    end
   end
   
 private
@@ -175,18 +224,50 @@ private
   
   # allowability checkers
   def view_actualization_allowed(m_name, ctx, view)
-    # MOOSE WARNING: do this
+    true # MOOSE WARNING: do this
+  end
+  
+  def application_controller_actualization_allowed
+    true # MOOSE WARNING: do this
+  end
+  
+  def v1_controller_actualization_allowed
+    true # MOOSE WARNING: do this
+  end
+  
+  def context_controller_actualization_allowed(ctx)
+    true # MOOSE WARNING: do this
   end
   
   def controller_actualization_allowed(m_name, ctx)
-    # MOOSE WARNING: do this
+    true # MOOSE WARNING: do this
+  end
+  
+  def route_actualization_allowed
+    true # MOOSE WARNING: do this
   end
   
   def should_force_view(m_name, ctx, view)
     @force
   end
   
+  def should_force_application_controller
+    @force
+  end
+  
+  def should_force_v1_controller
+    @force
+  end
+  
+  def should_force_context_controller(ctx)
+    @force
+  end
+  
   def should_force_controller(m_name, ctx)
+    @force
+  end
+  
+  def should_force_routes
     @force
   end
   
@@ -202,14 +283,30 @@ private
   
   # GENERAL: helpful getters
   
-  def get_ctx_folder_name(ctx)
-    ctx # MOOSE WARNING: nah man... nest dem roles!
+  def get_ctx_folder(ctx)
+    ctx.underscore # MOOSE WARNING: nah man... nest dem roles!
+  end
+  
+  def get_human_readable_context_name(ctx)
+    ctx.camelize
   end
   
   # CONTROLLERS: helpful getters
   
+  def get_context_controller_name(ctx)
+    ctx.camelize
+  end
+  
+  def get_context_controller_path(ctx)
+    "v2"
+  end
+  
   def get_controller_path(m_name, ctx)
     "v2/#{get_ctx_folder(ctx)}"
+  end
+  
+  def get_context_controller_filename(ctx)
+    "#{ctx.underscore}_controller.rb"
   end
   
   def get_controller_filename(m_name, ctx)
@@ -218,6 +315,10 @@ private
   
   def get_verbs_needing_set(m_data)
     ["show", "update", "destroy"] + (m_data["custom_verbs"] || {}).select{|can,cad| cad["type"] == "member" }.map{|can, cad| cad["to"] }
+  end
+  
+  def get_verbs_needing_substrate(m_data)
+    ["index", "create"] + (m_data["custom_verbs"] || {}).select{|can,cad| cad["type"] == "collection" }.map{|can, cad| cad["to"] }
   end
   
   # VIEWS: helpful getters
@@ -269,6 +370,117 @@ private
       views.uniq!.sort.sort_by{|v| @view_levels.index(v) || @view_levels.length } # sort with built-in views in order at the beginning, followed by any custom views alphabetically
     end
     to_return.delete_if{|ctx, views| views.blank? }
+    # done
+    return(to_return)
+  end
+  
+  # ROUTES: helpful getters
+  def get_routes_hash
+    # format: to_return[context] = { resource: { verbs, path, concerns, block: { member: [ {verb, path, to, as, defaults} ] }, mounted_routes: ##copy of same format## } }
+    to_return = {}
+    # grab routes
+    @scheme['models'].each do |m_name, m_data|
+      c_name = m_name.pluralize.underscore
+      (m_data["verbs"] || {}).each do |ctx, verbs|
+        unless verbs.blank?
+          to_return[ctx] = {} unless to_return.has_key?(ctx)
+          # built-in verbs
+          built_in_verbs = verbs & @verb_types
+          to_return[ctx][c_name] = (built_in_verbs.blank? ? {} : { "verbs" => built_in_verbs })
+          to_return[ctx][c_name]['path'] = c_name.gsub('_', '-') if c_name.include?('_')
+          # custom verbs
+          (m_data['custom_verbs' || {}).select{|can, cad| verbs.include?(can) }.each do |v_name, v_data|
+            to_return[ctx][c_name]['block'] = {} unless to_return[ctx][c_name].has_key?('block')
+            klondike = (case v_data['type']; when 'member'; 'member'; when 'collection'; 'collection'; else; nil; end)
+            unless klondike.nil?
+              (to_return[ctx][c_name]['block'][klondike] = to_return[ctx][c_name]['block'][klondike] || []).push({
+                'verb' => v_data['via'],
+                'path' => v_data['path'],
+                'to' => "#{m_name.pluralize.underscore}##{v_data['to']}",
+                'as' => v_data['as'] || "#{m_name.pluralize.underscore}_#{v_name}"
+              })
+            end
+          end
+          # route mounts
+          route_mounts = m_name['route_mounts'].select{|rm| !rm.has_key?('contexts') || rm['contexts'] == true || (rm['contexts'].class == ::Array && rm['contexts'].has_key?(ctx)) }
+          to_return[ctx]['route_mounts'] = route_mounts unless route_mounts.blank?
+          # history
+          if (((@scheme["specials"] || {})["history"] || {})["contexts"] || []).include?(ctx) && ((m_data["specials"] || {})["history"] || {})["history_verbs"]
+            to_return[ctx][c_name]["block"] = {} unless to_return[ctx][c_name].has_key?("block")
+            to_return[ctx][c_name]["block"]["member"] = [] unless to_return[ctx][c_name]["block"].has_key?("member")
+            to_return[ctx][c_name]["block"]["member"].push({
+              "action" => "get",
+              "path" => "histories",
+              "to" => "histories#index_recordable",
+              "as" => "#{c_name}_histories_index_recordable",
+              "defaults" => {
+                'recordable_type' => m_name
+              }
+            })
+          end
+          if (((@scheme["specials"] || {})["history"] || {})["contexts"] || []).include?(ctx) && ((m_data["specials"] || {})["history"] || {})["author_verbs"]
+            to_return[ctx][c_name]["block"]["member"].push({
+              "action" => "get",
+              "path" => "authored-histories",
+              "to" => "histories#index_authorable",
+              "as" => "#{c_name}_histories_index_authorable",
+              "defaults" => {
+                'authorable_type' => m_name
+              }
+            })
+          end
+        end
+      end
+    end
+    # check for invalid route mounts & build mount_paths hash
+    mount_paths = {}
+    to_return.each do |ctx, route_data|
+      mount_paths[ctx] = {}
+      route_data.each do |resource, data|
+        mount_paths[ctx][resource] = {} unless mount_paths[ctx].has_key?(resource) || !data['route_mounts'].blank?
+        (data['route_mounts'] || []).each do |rm_data|
+          next if rm_data['mount_path'].length == 1 && rm_data['mount_path'][0].nil?
+          last = resource
+          ([nil] + rm_data['mount_path'].map{|model_name| [mounted_upon, model_name.pluralize.underscore] }.reverse).each do |mounted_upon|
+            raise "ERROR: #{resource.singularize.camelize} has route mounted on #{rm_data['mount_path'].join('->')}, but these intermediate mountings do not all exist!" unless route_data.any? do |r,d|
+              next false unless d.has_key?(last)
+              if mounted_upon.nil?
+                next (!d[last].has_key?('route_mounts') || d[last]['route_mounts'].any?{|gurgle| gurgle['mount_path'].length == 1 && gurgle['mount_path'][0].nil? })
+              else
+                next (d[last].has_key?('route_mounts') && d[last]['route_mounts'].any?{|gurgle| gurgle['mount_path'].last == mounted_upon[0] })
+              end
+            end
+            last = mounted_upon[1] unless mounted_upon.nil?
+          end
+          # mount_paths time
+          cur = mount_paths[ctx]
+          rm_data['mount_path'].each do |mp_c|
+            next if mp_c.nil?
+            mp = mp_c.pluralize.underscore
+            cur[mp] = {} unless cur.has_key?(mp)
+            cur = cur[mp]
+          end
+          cur[resource] = {} unless cur.has_key?(mp)
+        end
+      end
+    end
+    # fix route mounts
+    new_to_return = to_return.map{|ctx,v| [ctx,{}] }.to_h
+    construct_stuff = Proc.new do |mount_path_pos, to_return_pos, ctx|
+      mount_path_pos.each do |resource, subresource_hash|
+        to_return_pos[resource] = Marshal.load(Marshal.dump(to_return[ctx][resource].select{|k,v| k != 'route_mounts'}))
+        unless subresource_hash.blank?
+          to_return_pos[resource]['block'] = {} unless to_return_pos[resource].has_key?('block')
+          to_return_pos[resource]['block']['subroutes'] = {}
+          construct_stuff(subresource_hash, to_return_pos[resource]['block']['subroutes'], ctx)
+        end
+      end
+    end
+    to_return.keys.each do |ctx|
+      new_to_return[ctx] = {}
+      construct_stuff.call(mount_paths[ctx], new_to_return[ctx], ctx)
+    end
+    to_return = new_to_return
     # done
     return(to_return)
   end

@@ -3,25 +3,23 @@
 # File: <%= @full_controller_path %>
 
 module V2
-  <%= @ctx_data['module_sequence'].join("\n  module ") %>
+  module <%= @ctx_data['module_sequence'].join("\n  module ") %>
     class <%= @model_name.pluralize %>Controller < <%= @ctx.camelize %>Controller
       
       def index_recordable
           @using_recordable_index = true
           params[:sort] = { column: 'created_at', direction: 'desc' }
-          <% if ((@scheme["contexts"] || {})[@ctx] || {})["owner_through"] %>index(:@histories,  @owner.respond_to?(params[:recordable_type].pluralize.underscore) ? @owner.send(params[:recordable_type].pluralize.underscore).find(params[:id]).histories : @owner.respond_to?(params[:recordable_type].underscore) ? @owner.send(params[:recordable_type].underscore).find(params[:id]).histories : params[:recordable_type] == @owner.class.name ? @owner.histories : nil)<%
-          else %>index(:@histories, params[:recordable_type].constantize.find(params[:id]).histories)<% end %>
+          index(:@histories, access_model(params[:recordable_type].constantize, params[:id]).histories)
           remove_instance_variable(:@using_recordable_index)
-          render template: view_path + "/index#{params[:short] ? "_short" : ""}.json.jbuilder"
+          render template: view_path + "/#{params[:short] ? "short" : "index"}.json.jbuilder"
       end
 
       def index_authorable
           @using_authorable_index = true
           params[:sort] = { column: 'created_at', direction: 'desc' }
-          <% if ((@scheme["contexts"] || {})[@ctx] || {})["owner_through"] %>index(:@histories,  @owner.respond_to?(params[:authorable_type].pluralize.underscore) ? @owner.send(params[:authorable_type].pluralize.underscore).find(params[:id]).histories : @owner.respond_to?(params[:authorable_type].underscore) ? @owner.send(params[:authorable_type].underscore).find(params[:id]).histories : params[:authorable_type] == @owner.class.name ? @owner.histories : nil)<%
-          else %>index(:@histories, params[:authorable_type].constantize.find(params[:id]).authored_histories)<% end %>
+          index(:@histories, access_model(params[:authorable_type].constantize, params[:id]).authored_histories)
           remove_instance_variable(:@using_authorable_index)
-          render template: view_path + "/index#{params[:short] ? "_short" : ""}.json.jbuilder"
+          render template: view_path + "/#{params[:short] ? "short" : "index"}.json.jbuilder"
       end
       
       private

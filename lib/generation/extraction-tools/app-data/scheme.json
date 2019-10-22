@@ -397,6 +397,11 @@
           ],
           "as": "addressable",
           "autosave": true,
+          "accepts_nested_attributes": true,
+          "nested_attributes_options": {
+            "allow_destroy": false,
+            "update_only": false
+          },
           "permissions": {
             "user": [
 
@@ -597,7 +602,7 @@
 
         ]
       },
-      "scopeless": {
+      "access_model": {
       }
     },
     "Address": {
@@ -1197,7 +1202,7 @@
 
         ]
       },
-      "scopeless": {
+      "access_model": {
       }
     },
     "Agency": {
@@ -1637,57 +1642,57 @@
             "public": [
 
             ]
-          }
-        },
-        "account_staff": {
-          "source_model": "Agency",
-          "type": "has_many",
-          "through": "accounts",
-          "target": [
-            "Staff"
-          ],
-          "as": "organizable",
-          "permissions": {
-            "user": [
+          },
+          "wherethrough": {
+            "account_staff": {
+              "source_model": "Agency",
+              "type": "has_many",
+              "target": [
+                "Staff"
+              ],
+              "as": "organizable",
+              "permissions": {
+                "user": [
 
-            ],
-            "staff_account": [
+                ],
+                "staff_account": [
 
-            ],
-            "staff_agency": [
+                ],
+                "staff_agency": [
 
-            ],
-            "staff_super_admin": [
+                ],
+                "staff_super_admin": [
 
-            ],
-            "public": [
+                ],
+                "public": [
 
-            ]
-          }
-        },
-        "insurables": {
-          "source_model": "Agency",
-          "type": "has_many",
-          "through": "accounts",
-          "target": [
-            "Insurable"
-          ],
-          "permissions": {
-            "user": [
+                ]
+              }
+            },
+            "insurables": {
+              "source_model": "Agency",
+              "type": "has_many",
+              "target": [
+                "Insurable"
+              ],
+              "permissions": {
+                "user": [
 
-            ],
-            "staff_account": [
+                ],
+                "staff_account": [
 
-            ],
-            "staff_agency": [
+                ],
+                "staff_agency": [
 
-            ],
-            "staff_super_admin": [
+                ],
+                "staff_super_admin": [
 
-            ],
-            "public": [
+                ],
+                "public": [
 
-            ]
+                ]
+              }
+            }
           }
         },
         "addresses": {
@@ -1698,6 +1703,11 @@
           ],
           "as": "addressable",
           "autosave": true,
+          "accepts_nested_attributes": true,
+          "nested_attributes_options": {
+            "allow_destroy": false,
+            "update_only": false
+          },
           "permissions": {
             "user": [
 
@@ -1845,56 +1855,56 @@
             "public": [
 
             ]
-          }
-        },
-        "carrier_agency_authorizations": {
-          "source_model": "Agency",
-          "type": "has_many",
-          "through": "carrier_agencies",
-          "target": [
-            "CarrierAgencyAuthorization"
-          ],
-          "permissions": {
-            "user": [
+          },
+          "wherethrough": {
+            "carrier_agency_authorizations": {
+              "source_model": "Agency",
+              "type": "has_many",
+              "target": [
+                "CarrierAgencyAuthorization"
+              ],
+              "permissions": {
+                "user": [
 
-            ],
-            "staff_account": [
+                ],
+                "staff_account": [
 
-            ],
-            "staff_agency": [
+                ],
+                "staff_agency": [
 
-            ],
-            "staff_super_admin": [
+                ],
+                "staff_super_admin": [
 
-            ],
-            "public": [
+                ],
+                "public": [
 
-            ]
-          }
-        },
-        "carriers": {
-          "source_model": "Agency",
-          "type": "has_many",
-          "through": "carrier_agencies",
-          "target": [
-            "Carrier"
-          ],
-          "permissions": {
-            "user": [
+                ]
+              }
+            },
+            "carriers": {
+              "source_model": "Agency",
+              "type": "has_many",
+              "target": [
+                "Carrier"
+              ],
+              "permissions": {
+                "user": [
 
-            ],
-            "staff_account": [
+                ],
+                "staff_account": [
 
-            ],
-            "staff_agency": [
+                ],
+                "staff_agency": [
 
-            ],
-            "staff_super_admin": [
+                ],
+                "staff_super_admin": [
 
-            ],
-            "public": [
+                ],
+                "public": [
 
-            ]
+                ]
+              }
+            }
           }
         },
         "commission_strategies": {
@@ -2021,7 +2031,7 @@
 
         ]
       },
-      "scopeless": {
+      "access_model": {
       }
     },
     "ApplicationModule": {
@@ -2203,7 +2213,7 @@
 
         ]
       },
-      "scopeless": {
+      "access_model": {
       }
     },
     "Assignment": {
@@ -2454,7 +2464,7 @@
 
         ]
       },
-      "scopeless": {
+      "access_model": {
       }
     },
     "BillingStrategy": {
@@ -2799,6 +2809,11 @@
           ],
           "as": "assignable",
           "autosave": true,
+          "accepts_nested_attributes": true,
+          "nested_attributes_options": {
+            "allow_destroy": false,
+            "update_only": false
+          },
           "permissions": {
             "user": [
 
@@ -2864,7 +2879,7 @@
           "index"
         ]
       },
-      "scopeless": {
+      "access_model": {
       }
     },
     "BrandingProfile": {
@@ -3133,7 +3148,7 @@
 
         ]
       },
-      "scopeless": {
+      "access_model": {
       }
     },
     "Carrier": {
@@ -3481,56 +3496,56 @@
             "public": [
 
             ]
-          }
-        },
-        "agencies": {
-          "source_model": "Carrier",
-          "type": "has_many",
-          "through": "carrier_agencies",
-          "target": [
-            "Agency"
-          ],
-          "permissions": {
-            "user": [
+          },
+          "wherethrough": {
+            "agencies": {
+              "source_model": "Carrier",
+              "type": "has_many",
+              "target": [
+                "Agency"
+              ],
+              "permissions": {
+                "user": [
 
-            ],
-            "staff_account": [
+                ],
+                "staff_account": [
 
-            ],
-            "staff_agency": [
+                ],
+                "staff_agency": [
 
-            ],
-            "staff_super_admin": [
+                ],
+                "staff_super_admin": [
 
-            ],
-            "public": [
+                ],
+                "public": [
 
-            ]
-          }
-        },
-        "carrier_agency_authorizations": {
-          "source_model": "Carrier",
-          "type": "has_many",
-          "through": "carrier_agencies",
-          "target": [
-            "CarrierAgencyAuthorization"
-          ],
-          "permissions": {
-            "user": [
+                ]
+              }
+            },
+            "carrier_agency_authorizations": {
+              "source_model": "Carrier",
+              "type": "has_many",
+              "target": [
+                "CarrierAgencyAuthorization"
+              ],
+              "permissions": {
+                "user": [
 
-            ],
-            "staff_account": [
+                ],
+                "staff_account": [
 
-            ],
-            "staff_agency": [
+                ],
+                "staff_agency": [
 
-            ],
-            "staff_super_admin": [
+                ],
+                "staff_super_admin": [
 
-            ],
-            "public": [
+                ],
+                "public": [
 
-            ]
+                ]
+              }
+            }
           }
         },
         "carrier_class_codes": {
@@ -3627,56 +3642,56 @@
             "public": [
 
             ]
-          }
-        },
-        "carrier_policy_type_availabilities": {
-          "source_model": "Carrier",
-          "type": "has_many",
-          "through": "carrier_policy_types",
-          "target": [
-            "CarrierPolicyTypeAvailability"
-          ],
-          "permissions": {
-            "user": [
+          },
+          "wherethrough": {
+            "carrier_policy_type_availabilities": {
+              "source_model": "Carrier",
+              "type": "has_many",
+              "target": [
+                "CarrierPolicyTypeAvailability"
+              ],
+              "permissions": {
+                "user": [
 
-            ],
-            "staff_account": [
+                ],
+                "staff_account": [
 
-            ],
-            "staff_agency": [
+                ],
+                "staff_agency": [
 
-            ],
-            "staff_super_admin": [
+                ],
+                "staff_super_admin": [
 
-            ],
-            "public": [
+                ],
+                "public": [
 
-            ]
-          }
-        },
-        "policy_types": {
-          "source_model": "Carrier",
-          "type": "has_many",
-          "through": "carrier_policy_types",
-          "target": [
-            "PolicyType"
-          ],
-          "permissions": {
-            "user": [
+                ]
+              }
+            },
+            "policy_types": {
+              "source_model": "Carrier",
+              "type": "has_many",
+              "target": [
+                "PolicyType"
+              ],
+              "permissions": {
+                "user": [
 
-            ],
-            "staff_account": [
+                ],
+                "staff_account": [
 
-            ],
-            "staff_agency": [
+                ],
+                "staff_agency": [
 
-            ],
-            "staff_super_admin": [
+                ],
+                "staff_super_admin": [
 
-            ],
-            "public": [
+                ],
+                "public": [
 
-            ]
+                ]
+              }
+            }
           }
         },
         "commission_strategies": {
@@ -3774,7 +3789,7 @@
 
         ]
       },
-      "scopeless": {
+      "access_model": {
       }
     },
     "CarrierAgency": {
@@ -4014,7 +4029,7 @@
 
         ]
       },
-      "scopeless": {
+      "access_model": {
       }
     },
     "CarrierAgencyAuthorization": {
@@ -4400,7 +4415,7 @@
 
         ]
       },
-      "scopeless": {
+      "access_model": {
       }
     },
     "CarrierClassCode": {
@@ -4875,7 +4890,7 @@
 
         ]
       },
-      "scopeless": {
+      "access_model": {
       }
     },
     "CarrierInsurableProfile": {
@@ -5111,7 +5126,7 @@
 
         ]
       },
-      "scopeless": {
+      "access_model": {
       }
     },
     "CarrierInsurableType": {
@@ -5374,14 +5389,14 @@
 
         ]
       },
-      "scopeless": {
+      "access_model": {
       }
     },
     "CarrierPolicyType": {
       "fields": {
         "application_fields": {
           "name": "application_fields",
-          "type": "jsonb",
+          "type": "array",
           "sql_type": "jsonb",
           "permissions": {
             "user": [
@@ -5404,7 +5419,7 @@
         },
         "application_questions": {
           "name": "application_questions",
-          "type": "jsonb",
+          "type": "array",
           "sql_type": "jsonb",
           "permissions": {
             "user": [
@@ -5684,7 +5699,7 @@
 
         ]
       },
-      "scopeless": {
+      "access_model": {
       }
     },
     "CarrierPolicyTypeAvailability": {
@@ -5975,7 +5990,7 @@
 
         ]
       },
-      "scopeless": {
+      "access_model": {
       }
     },
     "Charge": {
@@ -6378,56 +6393,56 @@
             "public": [
 
             ]
-          }
-        },
-        "policy": {
-          "source_model": "Charge",
-          "type": "has_one",
-          "through": "invoice",
-          "target": [
-            "Policy"
-          ],
-          "permissions": {
-            "user": [
+          },
+          "wherethrough": {
+            "policy": {
+              "source_model": "Charge",
+              "type": "has_one",
+              "target": [
+                "Policy"
+              ],
+              "permissions": {
+                "user": [
 
-            ],
-            "staff_account": [
+                ],
+                "staff_account": [
 
-            ],
-            "staff_agency": [
+                ],
+                "staff_agency": [
 
-            ],
-            "staff_super_admin": [
+                ],
+                "staff_super_admin": [
 
-            ],
-            "public": [
+                ],
+                "public": [
 
-            ]
-          }
-        },
-        "user": {
-          "source_model": "Charge",
-          "type": "has_one",
-          "through": "invoice",
-          "target": [
-            "User"
-          ],
-          "permissions": {
-            "user": [
+                ]
+              }
+            },
+            "user": {
+              "source_model": "Charge",
+              "type": "has_one",
+              "target": [
+                "User"
+              ],
+              "permissions": {
+                "user": [
 
-            ],
-            "staff_account": [
+                ],
+                "staff_account": [
 
-            ],
-            "staff_agency": [
+                ],
+                "staff_agency": [
 
-            ],
-            "staff_super_admin": [
+                ],
+                "staff_super_admin": [
 
-            ],
-            "public": [
+                ],
+                "public": [
 
-            ]
+                ]
+              }
+            }
           }
         },
         "payments": {
@@ -6496,7 +6511,7 @@
 
         ]
       },
-      "scopeless": {
+      "access_model": {
       }
     },
     "Claim": {
@@ -6890,6 +6905,11 @@
           }
         }
       },
+      "specials": {
+        "history": {
+          "record_change": true
+        }
+      },
       "verbs": {
         "user": [
           "create",
@@ -6914,7 +6934,7 @@
 
         ]
       },
-      "scopeless": {
+      "access_model": {
       }
     },
     "Commission": {
@@ -7343,7 +7363,7 @@
 
         ]
       },
-      "scopeless": {
+      "access_model": {
       }
     },
     "CommissionStrategy": {
@@ -7907,7 +7927,7 @@
 
         ]
       },
-      "scopeless": {
+      "access_model": {
       }
     },
     "Dispute": {
@@ -8162,81 +8182,82 @@
             "public": [
 
             ]
-          }
-        },
-        "invoice": {
-          "source_model": "Dispute",
-          "type": "has_one",
-          "through": "charge",
-          "target": [
-            "Invoice"
-          ],
-          "permissions": {
-            "user": [
+          },
+          "wherethrough": {
+            "invoice": {
+              "source_model": "Dispute",
+              "type": "has_one",
+              "target": [
+                "Invoice"
+              ],
+              "permissions": {
+                "user": [
 
-            ],
-            "staff_account": [
+                ],
+                "staff_account": [
 
-            ],
-            "staff_agency": [
+                ],
+                "staff_agency": [
 
-            ],
-            "staff_super_admin": [
+                ],
+                "staff_super_admin": [
 
-            ],
-            "public": [
+                ],
+                "public": [
 
-            ]
-          }
-        },
-        "policy": {
-          "source_model": "Dispute",
-          "type": "has_one",
-          "through": "invoice",
-          "target": [
-            "Policy"
-          ],
-          "permissions": {
-            "user": [
+                ]
+              },
+              "wherethrough": {
+                "policy": {
+                  "source_model": "Dispute",
+                  "type": "has_one",
+                  "target": [
+                    "Policy"
+                  ],
+                  "permissions": {
+                    "user": [
 
-            ],
-            "staff_account": [
+                    ],
+                    "staff_account": [
 
-            ],
-            "staff_agency": [
+                    ],
+                    "staff_agency": [
 
-            ],
-            "staff_super_admin": [
+                    ],
+                    "staff_super_admin": [
 
-            ],
-            "public": [
+                    ],
+                    "public": [
 
-            ]
-          }
-        },
-        "user": {
-          "source_model": "Dispute",
-          "type": "has_one",
-          "through": "invoice",
-          "target": [
-            "User"
-          ],
-          "permissions": {
-            "user": [
+                    ]
+                  }
+                },
+                "user": {
+                  "source_model": "Dispute",
+                  "type": "has_one",
+                  "target": [
+                    "User"
+                  ],
+                  "permissions": {
+                    "user": [
 
-            ],
-            "staff_account": [
+                    ],
+                    "staff_account": [
 
-            ],
-            "staff_agency": [
+                    ],
+                    "staff_agency": [
 
-            ],
-            "staff_super_admin": [
+                    ],
+                    "staff_super_admin": [
 
-            ],
-            "public": [
+                    ],
+                    "public": [
 
-            ]
+                    ]
+                  }
+                }
+              }
+            }
           }
         }
       },
@@ -8257,7 +8278,7 @@
 
         ]
       },
-      "scopeless": {
+      "access_model": {
       }
     },
     "Event": {
@@ -8662,7 +8683,7 @@
 
         ]
       },
-      "scopeless": {
+      "access_model": {
       }
     },
     "Fee": {
@@ -9129,7 +9150,7 @@
 
         ]
       },
-      "scopeless": {
+      "access_model": {
       }
     },
     "History": {
@@ -9419,7 +9440,7 @@
 
         ]
       },
-      "scopeless": {
+      "access_model": {
       }
     },
     "Insurable": {
@@ -9724,6 +9745,11 @@
           ],
           "as": "addressable",
           "autosave": true,
+          "accepts_nested_attributes": true,
+          "nested_attributes_options": {
+            "allow_destroy": false,
+            "update_only": false
+          },
           "permissions": {
             "user": [
               "show_show_fields"
@@ -9771,31 +9797,32 @@
             "public": [
 
             ]
-          }
-        },
-        "staffs": {
-          "source_model": "Insurable",
-          "type": "has_many",
-          "through": "assignments",
-          "target": [
-            "Staff"
-          ],
-          "permissions": {
-            "user": [
+          },
+          "wherethrough": {
+            "staffs": {
+              "source_model": "Insurable",
+              "type": "has_many",
+              "target": [
+                "Staff"
+              ],
+              "permissions": {
+                "user": [
 
-            ],
-            "staff_account": [
+                ],
+                "staff_account": [
 
-            ],
-            "staff_agency": [
+                ],
+                "staff_agency": [
 
-            ],
-            "staff_super_admin": [
+                ],
+                "staff_super_admin": [
 
-            ],
-            "public": [
+                ],
+                "public": [
 
-            ]
+                ]
+              }
+            }
           }
         },
         "carrier_insurable_profiles": {
@@ -9997,56 +10024,56 @@
             "public": [
 
             ]
-          }
-        },
-        "policies": {
-          "source_model": "Insurable",
-          "type": "has_many",
-          "through": "policy_insurables",
-          "target": [
-            "Policy"
-          ],
-          "permissions": {
-            "user": [
+          },
+          "wherethrough": {
+            "policies": {
+              "source_model": "Insurable",
+              "type": "has_many",
+              "target": [
+                "Policy"
+              ],
+              "permissions": {
+                "user": [
 
-            ],
-            "staff_account": [
+                ],
+                "staff_account": [
 
-            ],
-            "staff_agency": [
+                ],
+                "staff_agency": [
 
-            ],
-            "staff_super_admin": [
+                ],
+                "staff_super_admin": [
 
-            ],
-            "public": [
+                ],
+                "public": [
 
-            ]
-          }
-        },
-        "policy_applications": {
-          "source_model": "Insurable",
-          "type": "has_many",
-          "through": "policy_insurables",
-          "target": [
-            "PolicyApplication"
-          ],
-          "permissions": {
-            "user": [
+                ]
+              }
+            },
+            "policy_applications": {
+              "source_model": "Insurable",
+              "type": "has_many",
+              "target": [
+                "PolicyApplication"
+              ],
+              "permissions": {
+                "user": [
 
-            ],
-            "staff_account": [
+                ],
+                "staff_account": [
 
-            ],
-            "staff_agency": [
+                ],
+                "staff_agency": [
 
-            ],
-            "staff_super_admin": [
+                ],
+                "staff_super_admin": [
 
-            ],
-            "public": [
+                ],
+                "public": [
 
-            ]
+                ]
+              }
+            }
           }
         }
       },
@@ -10076,7 +10103,7 @@
           "show"
         ]
       },
-      "scopeless": {
+      "access_model": {
       }
     },
     "InsurableRate": {
@@ -10632,7 +10659,7 @@
 
         ]
       },
-      "scopeless": {
+      "access_model": {
       }
     },
     "InsurableType": {
@@ -10866,7 +10893,7 @@
 
         ]
       },
-      "scopeless": {
+      "access_model": {
       }
     },
     "Invoice": {
@@ -11411,56 +11438,56 @@
             "public": [
 
             ]
-          }
-        },
-        "disputes": {
-          "source_model": "Invoice",
-          "type": "has_many",
-          "through": "charges",
-          "target": [
-            "Dispute"
-          ],
-          "permissions": {
-            "user": [
+          },
+          "wherethrough": {
+            "disputes": {
+              "source_model": "Invoice",
+              "type": "has_many",
+              "target": [
+                "Dispute"
+              ],
+              "permissions": {
+                "user": [
 
-            ],
-            "staff_account": [
+                ],
+                "staff_account": [
 
-            ],
-            "staff_agency": [
+                ],
+                "staff_agency": [
 
-            ],
-            "staff_super_admin": [
+                ],
+                "staff_super_admin": [
 
-            ],
-            "public": [
+                ],
+                "public": [
 
-            ]
-          }
-        },
-        "refunds": {
-          "source_model": "Invoice",
-          "type": "has_many",
-          "through": "charges",
-          "target": [
-            "Refund"
-          ],
-          "permissions": {
-            "user": [
+                ]
+              }
+            },
+            "refunds": {
+              "source_model": "Invoice",
+              "type": "has_many",
+              "target": [
+                "Refund"
+              ],
+              "permissions": {
+                "user": [
 
-            ],
-            "staff_account": [
+                ],
+                "staff_account": [
 
-            ],
-            "staff_agency": [
+                ],
+                "staff_agency": [
 
-            ],
-            "staff_super_admin": [
+                ],
+                "staff_super_admin": [
 
-            ],
-            "public": [
+                ],
+                "public": [
 
-            ]
+                ]
+              }
+            }
           }
         },
         "histories": {
@@ -11495,6 +11522,11 @@
             "LineItem"
           ],
           "autosave": true,
+          "accepts_nested_attributes": true,
+          "nested_attributes_options": {
+            "allow_destroy": false,
+            "update_only": false
+          },
           "permissions": {
             "user": [
               "show_show"
@@ -11659,7 +11691,7 @@
 
         ]
       },
-      "scopeless": {
+      "access_model": {
       }
     },
     "Lease": {
@@ -12058,31 +12090,32 @@
             "public": [
 
             ]
-          }
-        },
-        "users": {
-          "source_model": "Lease",
-          "type": "has_many",
-          "through": "lease_users",
-          "target": [
-            "User"
-          ],
-          "permissions": {
-            "user": [
+          },
+          "wherethrough": {
+            "users": {
+              "source_model": "Lease",
+              "type": "has_many",
+              "target": [
+                "User"
+              ],
+              "permissions": {
+                "user": [
 
-            ],
-            "staff_account": [
+                ],
+                "staff_account": [
 
-            ],
-            "staff_agency": [
+                ],
+                "staff_agency": [
 
-            ],
-            "staff_super_admin": [
+                ],
+                "staff_super_admin": [
 
-            ],
-            "public": [
+                ],
+                "public": [
 
-            ]
+                ]
+              }
+            }
           }
         }
       },
@@ -12111,7 +12144,7 @@
 
         ]
       },
-      "scopeless": {
+      "access_model": {
       }
     },
     "LeaseType": {
@@ -12252,31 +12285,32 @@
             "public": [
 
             ]
-          }
-        },
-        "insurable_types": {
-          "source_model": "LeaseType",
-          "type": "has_many",
-          "through": "lease_type_insurable_types",
-          "target": [
-            "InsurableType"
-          ],
-          "permissions": {
-            "user": [
+          },
+          "wherethrough": {
+            "insurable_types": {
+              "source_model": "LeaseType",
+              "type": "has_many",
+              "target": [
+                "InsurableType"
+              ],
+              "permissions": {
+                "user": [
 
-            ],
-            "staff_account": [
+                ],
+                "staff_account": [
 
-            ],
-            "staff_agency": [
+                ],
+                "staff_agency": [
 
-            ],
-            "staff_super_admin": [
+                ],
+                "staff_super_admin": [
 
-            ],
-            "public": [
+                ],
+                "public": [
 
-            ]
+                ]
+              }
+            }
           }
         },
         "lease_type_policy_types": {
@@ -12301,31 +12335,32 @@
             "public": [
 
             ]
-          }
-        },
-        "policy_types": {
-          "source_model": "LeaseType",
-          "type": "has_many",
-          "through": "lease_type_policy_types",
-          "target": [
-            "PolicyType"
-          ],
-          "permissions": {
-            "user": [
+          },
+          "wherethrough": {
+            "policy_types": {
+              "source_model": "LeaseType",
+              "type": "has_many",
+              "target": [
+                "PolicyType"
+              ],
+              "permissions": {
+                "user": [
 
-            ],
-            "staff_account": [
+                ],
+                "staff_account": [
 
-            ],
-            "staff_agency": [
+                ],
+                "staff_agency": [
 
-            ],
-            "staff_super_admin": [
+                ],
+                "staff_super_admin": [
 
-            ],
-            "public": [
+                ],
+                "public": [
 
-            ]
+                ]
+              }
+            }
           }
         },
         "leases": {
@@ -12373,7 +12408,7 @@
 
         ]
       },
-      "scopeless": {
+      "access_model": {
       }
     },
     "LeaseTypeInsurableType": {
@@ -12590,7 +12625,7 @@
 
         ]
       },
-      "scopeless": {
+      "access_model": {
       }
     },
     "LeaseTypePolicyType": {
@@ -12807,7 +12842,7 @@
 
         ]
       },
-      "scopeless": {
+      "access_model": {
       }
     },
     "LeaseUser": {
@@ -13018,7 +13053,7 @@
 
         ]
       },
-      "scopeless": {
+      "access_model": {
       }
     },
     "LineItem": {
@@ -13202,7 +13237,7 @@
 
         ]
       },
-      "scopeless": {
+      "access_model": {
       }
     },
     "Modifier": {
@@ -13443,7 +13478,7 @@
 
         ]
       },
-      "scopeless": {
+      "access_model": {
       }
     },
     "ModulePermission": {
@@ -13659,7 +13694,7 @@
 
         ]
       },
-      "scopeless": {
+      "access_model": {
       }
     },
     "Note": {
@@ -13946,7 +13981,7 @@
 
         ]
       },
-      "scopeless": {
+      "access_model": {
       }
     },
     "Notification": {
@@ -14338,7 +14373,7 @@
 
         ]
       },
-      "scopeless": {
+      "access_model": {
       }
     },
     "Payment": {
@@ -14635,82 +14670,88 @@
             "public": [
 
             ]
+          },
+          "wherethrough": {
+            "user": {
+              "source_model": "Payment",
+              "type": "has_one",
+              "target": [
+                "User"
+              ],
+              "permissions": {
+                "user": [
+
+                ],
+                "staff_account": [
+
+                ],
+                "staff_agency": [
+
+                ],
+                "staff_super_admin": [
+
+                ],
+                "public": [
+
+                ]
+              }
+            },
+            "policy": {
+              "source_model": "Payment",
+              "type": "has_one",
+              "target": [
+                "Policy"
+              ],
+              "permissions": {
+                "user": [
+
+                ],
+                "staff_account": [
+
+                ],
+                "staff_agency": [
+
+                ],
+                "staff_super_admin": [
+
+                ],
+                "public": [
+
+                ]
+              },
+              "wherethrough": {
+                "agency": {
+                  "source_model": "Payment",
+                  "type": "has_one",
+                  "target": [
+                    "Agency"
+                  ],
+                  "permissions": {
+                    "user": [
+
+                    ],
+                    "staff_account": [
+
+                    ],
+                    "staff_agency": [
+
+                    ],
+                    "staff_super_admin": [
+
+                    ],
+                    "public": [
+
+                    ]
+                  }
+                }
+              }
+            }
           }
-        },
-        "policy": {
-          "source_model": "Payment",
-          "type": "has_one",
-          "through": "invoice",
-          "target": [
-            "Policy"
-          ],
-          "permissions": {
-            "user": [
-
-            ],
-            "staff_account": [
-
-            ],
-            "staff_agency": [
-
-            ],
-            "staff_super_admin": [
-
-            ],
-            "public": [
-
-            ]
-          }
-        },
-        "agency": {
-          "source_model": "Payment",
-          "type": "has_one",
-          "through": "policy",
-          "target": [
-            "Agency"
-          ],
-          "permissions": {
-            "user": [
-
-            ],
-            "staff_account": [
-
-            ],
-            "staff_agency": [
-
-            ],
-            "staff_super_admin": [
-
-            ],
-            "public": [
-
-            ]
-          }
-        },
-        "user": {
-          "source_model": "Payment",
-          "type": "has_one",
-          "through": "invoice",
-          "target": [
-            "User"
-          ],
-          "permissions": {
-            "user": [
-
-            ],
-            "staff_account": [
-
-            ],
-            "staff_agency": [
-
-            ],
-            "staff_super_admin": [
-
-            ],
-            "public": [
-
-            ]
-          }
+        }
+      },
+      "specials": {
+        "history": {
+          "record_change": true
         }
       },
       "verbs": {
@@ -14735,7 +14776,7 @@
 
         ]
       },
-      "scopeless": {
+      "access_model": {
       }
     },
     "Policy": {
@@ -15530,56 +15571,58 @@
             "public": [
 
             ]
-          }
-        },
-        "charges": {
-          "source_model": "Policy",
-          "type": "has_many",
-          "through": "invoices",
-          "target": [
-            "Charge"
-          ],
-          "permissions": {
-            "user": [
+          },
+          "wherethrough": {
+            "charges": {
+              "source_model": "Policy",
+              "type": "has_many",
+              "target": [
+                "Charge"
+              ],
+              "permissions": {
+                "user": [
 
-            ],
-            "staff_account": [
+                ],
+                "staff_account": [
 
-            ],
-            "staff_agency": [
+                ],
+                "staff_agency": [
 
-            ],
-            "staff_super_admin": [
+                ],
+                "staff_super_admin": [
 
-            ],
-            "public": [
+                ],
+                "public": [
 
-            ]
-          }
-        },
-        "refunds": {
-          "source_model": "Policy",
-          "type": "has_many",
-          "through": "charges",
-          "target": [
-            "Refund"
-          ],
-          "permissions": {
-            "user": [
+                ]
+              },
+              "wherethrough": {
+                "refunds": {
+                  "source_model": "Policy",
+                  "type": "has_many",
+                  "target": [
+                    "Refund"
+                  ],
+                  "permissions": {
+                    "user": [
 
-            ],
-            "staff_account": [
+                    ],
+                    "staff_account": [
 
-            ],
-            "staff_agency": [
+                    ],
+                    "staff_agency": [
 
-            ],
-            "staff_super_admin": [
+                    ],
+                    "staff_super_admin": [
 
-            ],
-            "public": [
+                    ],
+                    "public": [
 
-            ]
+                    ]
+                  }
+                }
+              }
+            }
           }
         },
         "policy_application": {
@@ -15613,6 +15656,11 @@
             "PolicyCoverage"
           ],
           "autosave": true,
+          "accepts_nested_attributes": true,
+          "nested_attributes_options": {
+            "allow_destroy": false,
+            "update_only": false
+          },
           "permissions": {
             "user": [
 
@@ -15653,31 +15701,32 @@
             "public": [
 
             ]
-          }
-        },
-        "insurables": {
-          "source_model": "Policy",
-          "type": "has_many",
-          "through": "policy_insurables",
-          "target": [
-            "Insurable"
-          ],
-          "permissions": {
-            "user": [
-              "show_short_fields"
-            ],
-            "staff_account": [
+          },
+          "wherethrough": {
+            "insurables": {
+              "source_model": "Policy",
+              "type": "has_many",
+              "target": [
+                "Insurable"
+              ],
+              "permissions": {
+                "user": [
+                  "show_short_fields"
+                ],
+                "staff_account": [
 
-            ],
-            "staff_agency": [
+                ],
+                "staff_agency": [
 
-            ],
-            "staff_super_admin": [
+                ],
+                "staff_super_admin": [
 
-            ],
-            "public": [
+                ],
+                "public": [
 
-            ]
+                ]
+              }
+            }
           }
         },
         "policy_premiums": {
@@ -15687,6 +15736,11 @@
             "PolicyPremium"
           ],
           "autosave": true,
+          "accepts_nested_attributes": true,
+          "nested_attributes_options": {
+            "allow_destroy": false,
+            "update_only": false
+          },
           "permissions": {
             "user": [
               "show_short_fields"
@@ -15777,31 +15831,32 @@
             "public": [
 
             ]
-          }
-        },
-        "users": {
-          "source_model": "Policy",
-          "type": "has_many",
-          "through": "policy_users",
-          "target": [
-            "User"
-          ],
-          "permissions": {
-            "user": [
+          },
+          "wherethrough": {
+            "users": {
+              "source_model": "Policy",
+              "type": "has_many",
+              "target": [
+                "User"
+              ],
+              "permissions": {
+                "user": [
 
-            ],
-            "staff_account": [
+                ],
+                "staff_account": [
 
-            ],
-            "staff_agency": [
+                ],
+                "staff_agency": [
 
-            ],
-            "staff_super_admin": [
+                ],
+                "staff_super_admin": [
 
-            ],
-            "public": [
+                ],
+                "public": [
 
-            ]
+                ]
+              }
+            }
           }
         },
         "premium": {
@@ -15850,31 +15905,32 @@
             "public": [
 
             ]
-          }
-        },
-        "primary_user": {
-          "source_model": "Policy",
-          "type": "has_one",
-          "through": "primary_policy_user",
-          "target": [
-            "User"
-          ],
-          "permissions": {
-            "user": [
+          },
+          "wherethrough": {
+            "primary_user": {
+              "source_model": "Policy",
+              "type": "has_one",
+              "target": [
+                "User"
+              ],
+              "permissions": {
+                "user": [
 
-            ],
-            "staff_account": [
+                ],
+                "staff_account": [
 
-            ],
-            "staff_agency": [
+                ],
+                "staff_agency": [
 
-            ],
-            "staff_super_admin": [
+                ],
+                "staff_super_admin": [
 
-            ],
-            "public": [
+                ],
+                "public": [
 
-            ]
+                ]
+              }
+            }
           }
         }
       },
@@ -15903,7 +15959,7 @@
 
         ]
       },
-      "scopeless": {
+      "access_model": {
       }
     },
     "PolicyApplication": {
@@ -16090,7 +16146,7 @@
         },
         "fields": {
           "name": "fields",
-          "type": "jsonb",
+          "type": "array",
           "sql_type": "jsonb",
           "permissions": {
             "user": [
@@ -16180,7 +16236,7 @@
         },
         "questions": {
           "name": "questions",
-          "type": "jsonb",
+          "type": "array",
           "sql_type": "jsonb",
           "permissions": {
             "user": [
@@ -16505,31 +16561,32 @@
             "public": [
 
             ]
-          }
-        },
-        "policy_application_fields": {
-          "source_model": "PolicyApplication",
-          "type": "has_many",
-          "through": "policy_application_answers",
-          "target": [
-            "PolicyApplicationField"
-          ],
-          "permissions": {
-            "user": [
+          },
+          "wherethrough": {
+            "policy_application_fields": {
+              "source_model": "PolicyApplication",
+              "type": "has_many",
+              "target": [
+                "PolicyApplicationField"
+              ],
+              "permissions": {
+                "user": [
 
-            ],
-            "staff_account": [
+                ],
+                "staff_account": [
 
-            ],
-            "staff_agency": [
+                ],
+                "staff_agency": [
 
-            ],
-            "staff_super_admin": [
+                ],
+                "staff_super_admin": [
 
-            ],
-            "public": [
+                ],
+                "public": [
 
-            ]
+                ]
+              }
+            }
           }
         },
         "policy_insurables": {
@@ -16554,31 +16611,32 @@
             "public": [
 
             ]
-          }
-        },
-        "insurables": {
-          "source_model": "PolicyApplication",
-          "type": "has_many",
-          "through": "policy_insurables",
-          "target": [
-            "Insurable"
-          ],
-          "permissions": {
-            "user": [
+          },
+          "wherethrough": {
+            "insurables": {
+              "source_model": "PolicyApplication",
+              "type": "has_many",
+              "target": [
+                "Insurable"
+              ],
+              "permissions": {
+                "user": [
 
-            ],
-            "staff_account": [
+                ],
+                "staff_account": [
 
-            ],
-            "staff_agency": [
+                ],
+                "staff_agency": [
 
-            ],
-            "staff_super_admin": [
+                ],
+                "staff_super_admin": [
 
-            ],
-            "public": [
+                ],
+                "public": [
 
-            ]
+                ]
+              }
+            }
           }
         },
         "policy_quotes": {
@@ -16603,31 +16661,32 @@
             "public": [
 
             ]
-          }
-        },
-        "policy_premiums": {
-          "source_model": "PolicyApplication",
-          "type": "has_many",
-          "through": "policy_quotes",
-          "target": [
-            "PolicyPremium"
-          ],
-          "permissions": {
-            "user": [
+          },
+          "wherethrough": {
+            "policy_premiums": {
+              "source_model": "PolicyApplication",
+              "type": "has_many",
+              "target": [
+                "PolicyPremium"
+              ],
+              "permissions": {
+                "user": [
 
-            ],
-            "staff_account": [
+                ],
+                "staff_account": [
 
-            ],
-            "staff_agency": [
+                ],
+                "staff_agency": [
 
-            ],
-            "staff_super_admin": [
+                ],
+                "staff_super_admin": [
 
-            ],
-            "public": [
+                ],
+                "public": [
 
-            ]
+                ]
+              }
+            }
           }
         },
         "policy_rates": {
@@ -16652,31 +16711,32 @@
             "public": [
 
             ]
-          }
-        },
-        "insurable_rates": {
-          "source_model": "PolicyApplication",
-          "type": "has_many",
-          "through": "policy_rates",
-          "target": [
-            "InsurableRate"
-          ],
-          "permissions": {
-            "user": [
+          },
+          "wherethrough": {
+            "insurable_rates": {
+              "source_model": "PolicyApplication",
+              "type": "has_many",
+              "target": [
+                "InsurableRate"
+              ],
+              "permissions": {
+                "user": [
 
-            ],
-            "staff_account": [
+                ],
+                "staff_account": [
 
-            ],
-            "staff_agency": [
+                ],
+                "staff_agency": [
 
-            ],
-            "staff_super_admin": [
+                ],
+                "staff_super_admin": [
 
-            ],
-            "public": [
+                ],
+                "public": [
 
-            ]
+                ]
+              }
+            }
           }
         },
         "policy_type": {
@@ -16728,32 +16788,33 @@
               "create_create",
               "update_update"
             ]
-          }
-        },
-        "users": {
-          "source_model": "PolicyApplication",
-          "type": "has_many",
-          "through": "policy_users",
-          "target": [
-            "User"
-          ],
-          "permissions": {
-            "user": [
+          },
+          "wherethrough": {
+            "users": {
+              "source_model": "PolicyApplication",
+              "type": "has_many",
+              "target": [
+                "User"
+              ],
+              "permissions": {
+                "user": [
 
-            ],
-            "staff_account": [
+                ],
+                "staff_account": [
 
-            ],
-            "staff_agency": [
+                ],
+                "staff_agency": [
 
-            ],
-            "staff_super_admin": [
+                ],
+                "staff_super_admin": [
 
-            ],
-            "public": [
-              "create_create",
-              "update_update"
-            ]
+                ],
+                "public": [
+                  "create_create",
+                  "update_update"
+                ]
+              }
+            }
           }
         },
         "primary_policy_user": {
@@ -16778,31 +16839,32 @@
             "public": [
 
             ]
-          }
-        },
-        "primary_user": {
-          "source_model": "PolicyApplication",
-          "type": "has_one",
-          "through": "primary_policy_user",
-          "target": [
-            "User"
-          ],
-          "permissions": {
-            "user": [
+          },
+          "wherethrough": {
+            "primary_user": {
+              "source_model": "PolicyApplication",
+              "type": "has_one",
+              "target": [
+                "User"
+              ],
+              "permissions": {
+                "user": [
 
-            ],
-            "staff_account": [
+                ],
+                "staff_account": [
 
-            ],
-            "staff_agency": [
+                ],
+                "staff_agency": [
 
-            ],
-            "staff_super_admin": [
+                ],
+                "staff_super_admin": [
 
-            ],
-            "public": [
+                ],
+                "public": [
 
-            ]
+                ]
+              }
+            }
           }
         }
       },
@@ -16830,7 +16892,7 @@
           "show"
         ]
       },
-      "scopeless": {
+      "access_model": {
       }
     },
     "PolicyApplicationAnswer": {
@@ -17067,7 +17129,7 @@
 
         ]
       },
-      "scopeless": {
+      "access_model": {
       }
     },
     "PolicyApplicationField": {
@@ -17480,6 +17542,11 @@
             "PolicyApplicationField"
           ],
           "autosave": true,
+          "accepts_nested_attributes": true,
+          "nested_attributes_options": {
+            "allow_destroy": false,
+            "update_only": false
+          },
           "permissions": {
             "user": [
 
@@ -17542,7 +17609,7 @@
 
         ]
       },
-      "scopeless": {
+      "access_model": {
       }
     },
     "PolicyCoverage": {
@@ -17831,7 +17898,7 @@
 
         ]
       },
-      "scopeless": {
+      "access_model": {
       }
     },
     "PolicyInsurable": {
@@ -18144,7 +18211,7 @@
 
         ]
       },
-      "scopeless": {
+      "access_model": {
       }
     },
     "PolicyPremium": {
@@ -18537,31 +18604,32 @@
             "public": [
 
             ]
-          }
-        },
-        "fees": {
-          "source_model": "PolicyPremium",
-          "type": "has_many",
-          "through": "policy_premium_fees",
-          "target": [
-            "Fee"
-          ],
-          "permissions": {
-            "user": [
+          },
+          "wherethrough": {
+            "fees": {
+              "source_model": "PolicyPremium",
+              "type": "has_many",
+              "target": [
+                "Fee"
+              ],
+              "permissions": {
+                "user": [
 
-            ],
-            "staff_account": [
+                ],
+                "staff_account": [
 
-            ],
-            "staff_agency": [
+                ],
+                "staff_agency": [
 
-            ],
-            "staff_super_admin": [
+                ],
+                "staff_super_admin": [
 
-            ],
-            "public": [
+                ],
+                "public": [
 
-            ]
+                ]
+              }
+            }
           }
         },
         "policy_quote": {
@@ -18608,7 +18676,7 @@
 
         ]
       },
-      "scopeless": {
+      "access_model": {
       }
     },
     "PolicyPremiumFee": {
@@ -18797,7 +18865,7 @@
 
         ]
       },
-      "scopeless": {
+      "access_model": {
       }
     },
     "PolicyQuote": {
@@ -19219,6 +19287,11 @@
             "PolicyPremium"
           ],
           "autosave": true,
+          "accepts_nested_attributes": true,
+          "nested_attributes_options": {
+            "allow_destroy": false,
+            "update_only": false
+          },
           "permissions": {
             "user": [
 
@@ -19259,31 +19332,32 @@
             "public": [
 
             ]
-          }
-        },
-        "insurable_rates": {
-          "source_model": "PolicyQuote",
-          "type": "has_many",
-          "through": "policy_rates",
-          "target": [
-            "InsurableRate"
-          ],
-          "permissions": {
-            "user": [
+          },
+          "wherethrough": {
+            "insurable_rates": {
+              "source_model": "PolicyQuote",
+              "type": "has_many",
+              "target": [
+                "InsurableRate"
+              ],
+              "permissions": {
+                "user": [
 
-            ],
-            "staff_account": [
+                ],
+                "staff_account": [
 
-            ],
-            "staff_agency": [
+                ],
+                "staff_agency": [
 
-            ],
-            "staff_super_admin": [
+                ],
+                "staff_super_admin": [
 
-            ],
-            "public": [
+                ],
+                "public": [
 
-            ]
+                ]
+              }
+            }
           }
         }
       },
@@ -19309,7 +19383,7 @@
           "show"
         ]
       },
-      "scopeless": {
+      "access_model": {
       }
     },
     "PolicyRate": {
@@ -19598,7 +19672,7 @@
 
         ]
       },
-      "scopeless": {
+      "access_model": {
       }
     },
     "PolicyType": {
@@ -19784,31 +19858,32 @@
             "public": [
 
             ]
-          }
-        },
-        "carriers": {
-          "source_model": "PolicyType",
-          "type": "has_many",
-          "through": "carrier_policy_types",
-          "target": [
-            "Carrier"
-          ],
-          "permissions": {
-            "user": [
+          },
+          "wherethrough": {
+            "carriers": {
+              "source_model": "PolicyType",
+              "type": "has_many",
+              "target": [
+                "Carrier"
+              ],
+              "permissions": {
+                "user": [
 
-            ],
-            "staff_account": [
+                ],
+                "staff_account": [
 
-            ],
-            "staff_agency": [
+                ],
+                "staff_agency": [
 
-            ],
-            "staff_super_admin": [
+                ],
+                "staff_super_admin": [
 
-            ],
-            "public": [
+                ],
+                "public": [
 
-            ]
+                ]
+              }
+            }
           }
         },
         "commission_strategies": {
@@ -19853,7 +19928,7 @@
 
         ]
       },
-      "scopeless": {
+      "access_model": {
       }
     },
     "PolicyUser": {
@@ -20150,7 +20225,7 @@
 
         ]
       },
-      "scopeless": {
+      "access_model": {
       }
     },
     "Profile": {
@@ -20571,7 +20646,7 @@
 
         ]
       },
-      "scopeless": {
+      "access_model": {
       }
     },
     "Refund": {
@@ -20954,81 +21029,82 @@
             "public": [
 
             ]
-          }
-        },
-        "invoice": {
-          "source_model": "Refund",
-          "type": "has_one",
-          "through": "charge",
-          "target": [
-            "Invoice"
-          ],
-          "permissions": {
-            "user": [
+          },
+          "wherethrough": {
+            "invoice": {
+              "source_model": "Refund",
+              "type": "has_one",
+              "target": [
+                "Invoice"
+              ],
+              "permissions": {
+                "user": [
 
-            ],
-            "staff_account": [
+                ],
+                "staff_account": [
 
-            ],
-            "staff_agency": [
+                ],
+                "staff_agency": [
 
-            ],
-            "staff_super_admin": [
+                ],
+                "staff_super_admin": [
 
-            ],
-            "public": [
+                ],
+                "public": [
 
-            ]
-          }
-        },
-        "policy": {
-          "source_model": "Refund",
-          "type": "has_one",
-          "through": "invoice",
-          "target": [
-            "Policy"
-          ],
-          "permissions": {
-            "user": [
+                ]
+              },
+              "wherethrough": {
+                "policy": {
+                  "source_model": "Refund",
+                  "type": "has_one",
+                  "target": [
+                    "Policy"
+                  ],
+                  "permissions": {
+                    "user": [
 
-            ],
-            "staff_account": [
+                    ],
+                    "staff_account": [
 
-            ],
-            "staff_agency": [
+                    ],
+                    "staff_agency": [
 
-            ],
-            "staff_super_admin": [
+                    ],
+                    "staff_super_admin": [
 
-            ],
-            "public": [
+                    ],
+                    "public": [
 
-            ]
-          }
-        },
-        "user": {
-          "source_model": "Refund",
-          "type": "has_one",
-          "through": "invoice",
-          "target": [
-            "User"
-          ],
-          "permissions": {
-            "user": [
+                    ]
+                  }
+                },
+                "user": {
+                  "source_model": "Refund",
+                  "type": "has_one",
+                  "target": [
+                    "User"
+                  ],
+                  "permissions": {
+                    "user": [
 
-            ],
-            "staff_account": [
+                    ],
+                    "staff_account": [
 
-            ],
-            "staff_agency": [
+                    ],
+                    "staff_agency": [
 
-            ],
-            "staff_super_admin": [
+                    ],
+                    "staff_super_admin": [
 
-            ],
-            "public": [
+                    ],
+                    "public": [
 
-            ]
+                    ]
+                  }
+                }
+              }
+            }
           }
         },
         "notifications": {
@@ -21074,7 +21150,7 @@
 
         ]
       },
-      "scopeless": {
+      "access_model": {
       }
     },
     "Staff": {
@@ -22017,6 +22093,11 @@
           ],
           "as": "profileable",
           "autosave": true,
+          "accepts_nested_attributes": true,
+          "nested_attributes_options": {
+            "allow_destroy": false,
+            "update_only": false
+          },
           "permissions": {
             "user": [
 
@@ -22048,6 +22129,13 @@
           }
         }
       },
+      "specials": {
+        "history": {
+          "record_change": true
+        },
+        "devise": {
+        }
+      },
       "verbs": {
         "user": [
 
@@ -22073,7 +22161,7 @@
 
         ]
       },
-      "scopeless": {
+      "access_model": {
       }
     },
     "User": {
@@ -23027,6 +23115,11 @@
           ],
           "as": "profileable",
           "autosave": true,
+          "accepts_nested_attributes": true,
+          "nested_attributes_options": {
+            "allow_destroy": false,
+            "update_only": false
+          },
           "permissions": {
             "user": [
               "short_short_fields",
@@ -23062,6 +23155,13 @@
           }
         }
       },
+      "specials": {
+        "history": {
+          "record_change": true
+        },
+        "devise": {
+        }
+      },
       "verbs": {
         "user": [
           "update",
@@ -23087,8 +23187,61 @@
 
         ]
       },
-      "scopeless": {
+      "access_model": {
       }
+    }
+  },
+  "contexts": {
+    "user": {
+      "user_type": "User",
+      "access_model": "model_class == ::User && model_id == current_user.id ? current_user : current_user.send(model_class.name.underscore.pluralize).send(*(model_id.nil? ? [:itself] : [:find, model_id]))"
+    },
+    "staff_account": {
+      "user_type": "Staff",
+      "route": "staff",
+      "authenticated_route_constraint": "current_staff.role == 'staff'",
+      "access_model": "return current_staff.organizable if model_class == ::Account && model_id == current_staff.organizable_id\nreturn current_staff.organizable.send(model_class.name.underscore.pluralize).send(*(model_id.nil? ? [:itself] : [:find, model_id])) rescue nil\n"
+    },
+    "staff_agency": {
+      "user_type": "Staff",
+      "route": "staff",
+      "authenticated_route_constraint": "current_staff.role == 'agent'",
+      "access_model": "return current_staff.organizable if model_class == ::Agency && model_id == current_staff.organizable_id\nreturn current_staff.organizable.send(model_class.name.underscore.pluralize).send(*(model_id.nil? ? [:itself] : [:find, model_id])) rescue nil\n"
+    },
+    "staff_super_admin": {
+      "user_type": "Staff",
+      "route": "staff",
+      "authenticated_route_constraint": "current_staff.role == 'super_admin'",
+      "access_model": "model_class.send(*(model_id.nil? ? [:itself] : [:find, model_id]))"
+    },
+    "public": {
+      "user_type": null,
+      "route": null,
+      "access_model": "model_class.send(*(model_id.nil? ? [:itself] : [:find, model_id]))"
+    }
+  },
+  "specials": {
+    "devise": {
+      "auth_controller_directory_root": "",
+      "user_auths": {
+        "User": {
+          "route": "v2/user/auth",
+          "controller_path": "devise/user"
+        },
+        "Staff": {
+          "route": "v2/staff/auth",
+          "controller_path": "devise/staff"
+        }
+      }
+    },
+    "history": {
+      "model": "History",
+      "concern": "RecordChange",
+      "contexts": [
+        "staff_account",
+        "staff_agency",
+        "staff_super_admin"
+      ]
     }
   }
 }

@@ -1,8 +1,0 @@
-<%=
-  @custom_view_source.join("\n")
-                     .gsub('$ns_name', "'#{@ns_name.underscore}'")
-                     .gsub('$m_name', "'#{@model_name.titlecase}'")
-                     .gsub('$m_data', "'#{@model_data}'")
-                     .gsub('$ns_view_path', "'v1/#{@ns_name.underscore}'")
-                     .gsub('$view_name', "'#{@view_name}'")
-%>

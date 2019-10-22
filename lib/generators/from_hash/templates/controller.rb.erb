@@ -1,24 +1,14 @@
 <%
   # TODO:
-  # get_creation_substrate(m_name, ctx)
-  # ctx_data['user_type']
-  # get_human_readable_context_name(ctx)
-  # ctx_data['module_sequence'] (not to include V2 at the beginning)
-  # get_context_controller_name(@ctx)
   # maybe improve the output from create? i.e. render <%= @verbs.include?("show") ? ":show" : "json: { success: true }" %>, status: :created
-  # figure out wtf is happening with histories controller's index madness
 
   # Setup
   
   # user stuff
   current_user = @ctx_data["user_type"] ? "current_#{ @ctx_data["user_type"].underscore }" : nil
-  # creation substrate stuff
-  creation_substrate_data = get_creation_substrate(@m_name, @ctx) # MOOSE WARNING: define this
-  creation_substrate = creation_substrate_data[:model]
-  creation_substrate_association = creation_substrate_data[:association]
-  creation_substrate_prefixed_model = creation_substrate.nil? ? 'access_model(::#{@m_name})' : "creation_substrate.#{creation_substrate_association}"
   # methods stuff
   verbs_needing_set = @verbs & get_verbs_needing_set(@m_data)
+  verbs_needing_substrate = @verbs & get_verbs_needing_substrate(@m_data)
   creation_method = (@m_data['specials'] || {})['devise'] ?
                       ( current_user && ((@m_data['specials'] || {})['history'] || {})['record_change'] ? "invite_as!(#{current_user}, create_params)" : "invite!(create_params)" ) :
                       ( current_user && ((@m_data['specials'] || {})['history'] || {})['record_change'] ? "create_as(#{current_user}, create_params)" : "create(create_params)" )
@@ -281,17 +271,20 @@
 # File: <%= @full_controller_path %>
 
 module V2
-  <%= @ctx_data['module_sequence'].join("\n  module ") %>
-    class <%= @m_name.pluralize %>Controller
+  module <%= @ctx_data['module_sequence'].join("\n  module ") %>
+    class <%= @m_name.pluralize %>Controller <%= get_context_controller_name(@ctx) %>Controller
       <% unless verbs_needing_set.blank? %>
       before_action :set_<%= @m_name.underscore %>,
         only: [<%= verbs_needing_set.map{|a| ":#{a}" }.join(', ') %>]
+      <% end %>      <% unless verbs_needing_set.blank? %>
+      before_action :set_substrate,
+        only: [<%= verbs_needing_substrate.map{|a| ":#{a}" }.join(', ') %>]
       <% end %><% if @verbs.include?('index') %>
       def index
         if params[:short]
-          super(<%= ":@#{@m_name.pluralize.underscore}", (@m_data['index_source_override'] || {}).has_key?(@ctx) ? @m_data['index_source_override'][@ctx] : access_model(::<%= @m_name %>), print_joins(get_joins('short')) ].reject{|e| e.blank? }.join(', ') %>)
+          super(<%= ":@#{@m_name.pluralize.underscore}", (@m_data['index_source_override'] || {}).has_key?(@ctx) ? @m_data['index_source_override'][@ctx] : @substrate, print_joins(get_joins('short')) ].reject{|e| e.blank? }.join(', ') %>)
         else
-          super(<%= ":@#{@m_name.pluralize.underscore}", (@m_data['index_source_override'] || {}).has_key?(@ctx) ? @m_data['index_source_override'][@ctx] : access_model(::<%= @m_name %>), print_joins(get_joins('index')) ].reject{|e| e.blank? }.join(', ') %>)
+          super(<%= ":@#{@m_name.pluralize.underscore}", (@m_data['index_source_override'] || {}).has_key?(@ctx) ? @m_data['index_source_override'][@ctx] : @substrate, print_joins(get_joins('index')) ].reject{|e| e.blank? }.join(', ') %>)
         end
       end
       <% end %><% if @verbs.include?('show') %>
@@ -300,16 +293,8 @@ module V2
       <% end %><% if @verbs.include?('create') %>
       def create<% if ((@m_data['verb_customizations'] || {})['override_create'] || {})[@ctx] %>
         <%= @m_data['verb_customizations']['override_create'][@ctx].join("\n        ") %><% else %>
-        if create_allowed?<% unless creation_substrate.nil? %>
-          creation_substrate = get_creation_substrate
-          if creation_substrate.nil?
-            @<%= @m_name.underscore %> = ::<%= @m_name %>.new(create_params)
-            @<%= @m_name.underscore %>.errors[:<%= creation_substrate.underscore %>] << "cannot be blank" if @<%= @m_name.underscore %>.valid?
-            render json: @<%= @m_name.underscore %>.errors,
-              status: :unprocessable_entity
-            return
-          end<% end %>
-          @<%= @m_name.underscore %> = <%= creation_substrate_prefixed_model %>.new(create_params)<% if (@m_data["specials"] || []).include?("devise") %>
+        if create_allowed?
+          @<%= @m_name.underscore %> = @substrate.new(create_params)<% if (@m_data["specials"] || []).include?("devise") %>
           # remove password issues from errors since this is a Devise model
           @<%= @m_name.underscore %>.valid? if @<%= @m_name.underscore %>.errors.blank?
           @<%= @m_name.underscore %>.errors.messages.except!(:password)<% end %>
@@ -392,12 +377,15 @@ module V2
         def set_<%= @m_name.underscore %>
           @<%= @m_name.underscore %> = access_model(::<%= @m_name %>, params[:id])
         end
-        <% end %><% unless creation_substrate.nil? %>
-        def get_creation_substrate
-          return(nil) if params[:<%= @m_name.underscore %>].blank?
-          access_model(::<%= creation_substrate %>, params.require(:<%= @m_name.underscore %>).permit(:<%= creation_substrate.underscore %>_id)[:<%= creation_substrate.underscore %>_id].to_i)
-        end
-        < % end %><% if @verbs.include?("create") %>
+        <% end %><% unless verbs_needing_substrate.blank? %>
+        def set_substrate
+          super
+          if @substrate.nil?
+            @substrate = access_model(::<%= @m_name %>)
+          elsif !params[:substrate_association_provided]
+            @substrate = @substrate.<%= @m_name.pluralize.underscore %>
+          end
+        end<% end %><% if @verbs.include?("create") %>
         def create_params
           return({}) if params[:<%= @m_name.underscore %>].blank?<% params_to_print = get_params("create") %><% if params_to_print.blank? %>
           to_return = {}<% else %>
