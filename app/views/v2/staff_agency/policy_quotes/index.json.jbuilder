@@ -1,0 +1,3 @@
+json.array! @policy_quotes,
+  partial: 'v2/staff_agency/policy_quotes/policy_quote_index_full.json.jbuilder',
+  as: :policy_quote

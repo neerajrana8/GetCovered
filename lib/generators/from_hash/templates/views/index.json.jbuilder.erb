@@ -1,0 +1,3 @@
+json.array! @<%= @m_name.pluralize.underscore %>,
+  partial: '<%= @view_path %>/<%= get_full_partial_filename(@m_name, @ctx, 'index', false) %>',
+  as: :<%= @m_name.underscore %>

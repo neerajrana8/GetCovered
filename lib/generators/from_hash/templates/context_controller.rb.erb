@@ -1,0 +1,28 @@
+##
+# V2 <%= get_human_readable_context_name(@ctx) %> Controller
+# File: <%= @full_controller_path %>
+
+module V2
+  class <%= get_context_controller_name(@ctx).camelize %>Controller < V1Controller
+    <% if @ctx_data["user_type"] %>
+    before_action :authenticate_<%= @ctx_data["user_type"].underscore %>!
+    <% end %><% if @ctx_data["access_filter"] %>
+    before_action :verify_access_permissions
+    <% end %>
+    private
+
+      def view_path
+        super + "/<%= get_ctx_folder(@ctx) %>"
+      end
+      <% if @ctx_data["access_model"] %>
+      def access_model(model_class, model_id = nil)
+        <%= @ctx_data["access_model"].split("\n").join("\n        ") %>
+      end
+      <% end %><% if @ctx_data["access_filter"] %>
+      def verify_access_permissions
+        context = "<%= @ctx.gsub(/\/|::/, '_').underscore %>"
+        <%= @ctx_data["access_filter"].join("\n        ") %>
+      end
+      <% end %>
+  end
+end

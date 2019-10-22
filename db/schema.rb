@@ -596,7 +596,9 @@ ActiveRecord::Schema.define(version: 2019_10_18_182637) do
     t.bigint "charge_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "invoice_id"
     t.index ["charge_id"], name: "index_payments_on_charge_id"
+    t.index ["invoice_id"], name: "index_payments_on_invoice_id"
     t.index ["stripe_id"], name: "stripe_payment", unique: true
   end
 
@@ -932,6 +934,7 @@ ActiveRecord::Schema.define(version: 2019_10_18_182637) do
     t.index ["uid", "provider"], name: "index_users_on_uid_and_provider", unique: true
   end
 
+  add_foreign_key "payments", "invoices"
   add_foreign_key "policy_coverages", "policies"
   add_foreign_key "policy_coverages", "policy_applications"
 end

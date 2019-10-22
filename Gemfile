@@ -91,7 +91,9 @@ group :development, :test do
   gem 'database_cleaner'
   gem 'rubocop', '~> 0.63.1', require: false
   # RDoc for Documentation
-  gem 'rdoc'  
+  gem 'rdoc'
+  # Roo for spreadsheet interaction
+  gem "roo", "~> 2.8.0"
 end
 
 group :development do
