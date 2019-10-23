@@ -13,7 +13,6 @@ class Account < ApplicationRecord
           # RecordChange, 
           SetCallSign, 
           SetSlug,
-          StripeConnect,
           ElasticsearchSearchable
   
   # Active Record Callbacks

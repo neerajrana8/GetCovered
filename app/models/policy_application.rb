@@ -86,6 +86,13 @@ class PolicyApplication < ApplicationRecord
 		policy_insurable = policy_insurables.where(primary: true).take
 		return policy_insurable.insurable.nil? ? nil : policy_insurable.insurable	
 	end
+	
+	# PolicyApplication.primary_insurable
+	
+	def primary_user
+		policy_user = policy_users.where(primary: true).take
+		return policy_user.user.nil? ? nil : policy_user.user	
+	end
   
   # PolicyApplication.available_rates
   

@@ -92,7 +92,7 @@ class Policy < ApplicationRecord
 
   accepts_nested_attributes_for :policy_coverages, :policy_premiums
   
-  after_save :update_leases, if: :saved_changes_to_status?
+#  after_save :update_leases, if: :saved_changes_to_status?
 
   validate :same_agency_as_account
   validate :status_allowed
@@ -137,14 +137,14 @@ class Policy < ApplicationRecord
   end
   
   def carrier_agency
-    if agency.carrier_agency != carrier.carrier_agency
-			errors.add(:agency, 'carrier agency must exist')
+    unless agency.carriers.include?(carrier)
+			errors.add(:carrier, 'carrier agency must exist')
 		end
   end
 
   def status_allowed
     if in_system?
-      if (status.AWAITING_PAYMENT? || status.AWAITING_ACH?) && invoices.paid.count.zero?
+      if (AWAITING_PAYMENT? || AWAITING_ACH?) && invoices.paid.count.zero?
         errors.add(:status, 'must have at least one paid invoice to change status')
       end
     end

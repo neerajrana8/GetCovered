@@ -11,7 +11,6 @@ class Agency < ApplicationRecord
 					# RecordChange, 
 					SetCallSign, 
 					SetSlug,
-          StripeConnect,
           ElasticsearchSearchable
 
   # Active Record Callbacks
