@@ -89,5 +89,5 @@ Rails.application.configure do
   config.action_mailer.mailgun_settings = {
     api_key: 'key-05bd714e309dbddc7ad7388c20c71f6e',
     domain: 'mg.getcoveredllc.com',
-  }  
+  }
 end

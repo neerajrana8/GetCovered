@@ -4,6 +4,7 @@
 class PolicyUser < ApplicationRecord
   
   # Callbacks
+  before_create :set_first_as_primary
   after_create :set_account_user, 
     if: Proc.new { |pol_usr| !pol_usr.user.nil? }
   
@@ -12,7 +13,14 @@ class PolicyUser < ApplicationRecord
   belongs_to :user, optional: true
   
   private
-   
+    
+    def set_first_as_primary
+      ref_model = policy.nil? ? policy_application : policy
+      if ref_model.policy_users.count == 0
+        self.primary = true  
+      end  
+    end
+     
     def set_account_user
       ref_model = policy.nil? ? policy_application : policy
       acct = AccountUser.where(user_id: user.id, account_id: ref_model.account_id).take

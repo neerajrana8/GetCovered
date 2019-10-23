@@ -52,6 +52,22 @@ class PolicyQuote < ApplicationRecord
   def available_period
     7.days
   end
+  
+  def accept
+		success = false
+		method = "#{ policy_application.carrier.integration_designation }_bind"
+		
+		if start_billing()
+			success = true if self.send(method)
+		end
+		
+		return success
+	end
+	
+	def decline
+		success = self.update status: 'declined' ? true : false
+		return success	
+	end
 
   def start_billing
     return false unless policy.in_system?
