@@ -46,7 +46,7 @@ ENTRYPOINT ["entrypoint.sh"]
 # from the outside.
 EXPOSE 3000
 
-LABEL maintainer="Dylan Gaines <dylan@dylangaines.com>"
+LABEL maintainer="Dylan Gaines <dylan@getcoveredllc.com>"
 
 # Start the main process.
 CMD ["rails", "server", "-e", "development", "-b", "0.0.0.0"]
