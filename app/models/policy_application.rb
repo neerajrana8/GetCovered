@@ -129,7 +129,8 @@ class PolicyApplication < ApplicationRecord
 	end
 
 	def carrier_agency
-    if agency.carrier_agency != carrier.carrier_agency
+#    if agency.carrier_agency != carrier.carrier_agency
+    unless agency.carriers.include?(carrier)
 			errors.add(:carrier, 'carrier agency must exist')
 		end
   end

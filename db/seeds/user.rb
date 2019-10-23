@@ -33,7 +33,7 @@ require './db/seeds/functions'
 				  	user = User.new(email: email, password: 'TestingPassword1234', password_confirmation: 'TestingPassword1234',
 				  													     profile_attributes: { first_name: name[:first], 
 					  													     										 last_name: name[:last], 
-					  													     										 birth_date: '04-01-1989'.to_date })		
+					  													     										 birth_date: SeedFunctions.time_rand(Time.local(1955, 1, 1), Time.local(1991, 1, 1)) })		
 						if user.save
 							@lease.users << user
 							user.attach_payment_source("tok_visa", true) if @lease.users.count == 1

@@ -198,7 +198,7 @@ class User < ApplicationRecord
     return false
   end
   
-  settings index: { number_of_shards: 1 } do
+  settings index: { number_of_shards: 1, limit: 10000 } do
     mappings dynamic: 'false' do
       indexes :email, type: :string
     end
