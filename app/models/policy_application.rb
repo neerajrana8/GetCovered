@@ -86,6 +86,13 @@ class PolicyApplication < ApplicationRecord
 		policy_insurable = policy_insurables.where(primary: true).take
 		return policy_insurable.insurable.nil? ? nil : policy_insurable.insurable	
 	end
+	
+	# PolicyApplication.primary_insurable
+	
+	def primary_user
+		policy_user = policy_users.where(primary: true).take
+		return policy_user.user.nil? ? nil : policy_user.user	
+	end
   
   # PolicyApplication.available_rates
   
@@ -129,7 +136,8 @@ class PolicyApplication < ApplicationRecord
 	end
 
 	def carrier_agency
-    if agency.carrier_agency != carrier.carrier_agency
+#    if agency.carrier_agency != carrier.carrier_agency
+    unless agency.carriers.include?(carrier)
 			errors.add(:carrier, 'carrier agency must exist')
 		end
   end

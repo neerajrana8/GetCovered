@@ -18,7 +18,15 @@ class PolicyPremium < ApplicationRecord
   end
   
   def correct_total
-    errors.add(:total, 'incorrect total') if total != base + taxes + total_fees
+#    errors.add(:total, 'incorrect total') if total != base + taxes + total_fees
+    if total != base + taxes + total_fees
+      puts "TOTAL: #{ total }"
+      puts "TAXES: #{ taxes }"
+      puts "BASE:  #{ base }"
+      puts "FEES:  #{ total_fees }"
+      puts "RECALC: #{ base + taxes + total_fees }"
+      errors.add(:total, 'incorrect total')
+    end
   end
   
   def set_fees
@@ -41,7 +49,7 @@ class PolicyPremium < ApplicationRecord
 		
 	end
 	
-	def calculate_fees
+	def calculate_fees(persist: false)
   	
     self.fees.each do |fee|
       if fee.amount_type == "FLAT"
@@ -55,11 +63,11 @@ class PolicyPremium < ApplicationRecord
       end
     end
     
-    save()
+    save() if persist
   end
   
-  def calculate_total
+  def calculate_total(persist: false)
     self.total = self.base + self.taxes + self.total_fees
-    save() if self.total > 0
+    save() if self.total > 0 && persist
   end
 end

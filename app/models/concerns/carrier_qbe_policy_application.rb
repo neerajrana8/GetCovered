@@ -114,14 +114,13 @@ module CarrierQbePolicyApplication
 	 					                                taxes: tax,
 	 					                                billing_strategy: quote.policy_application.billing_strategy,
 	 					                                policy_quote: quote
-	 					    
+    						premium.set_fees
+    						premium.calculate_fees
+    						premium.calculate_total	 					    
 	 					    quote_method = premium.save ? "mark_successful" : "mark_failure"                           
 	 					    quote.send(quote_method)
 	 							
   	 						if quote.status == 'quoted'
-      						premium.set_fees
-      						premium.calculate_fees
-      						premium.calculate_total
 		 							return true
 		 						else
 		 							puts "\nQuote Save Error\n"
