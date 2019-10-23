@@ -30,6 +30,19 @@ namespace :gc do
     	end
     end
     
+    namespace :aws do
+      desc "total Get Covered AWS Dev Reset"
+      task :dev do
+        Rake::Task['db:migrate'].invoke
+        
+      	['setup', 'agency', 'account', 'insurable-residential', 
+  	  	 'insurable-commercial', 'user', 'policy-residential', 
+  			 'policy-commercial'].each do |section|
+      		system("rails db:seed section=#{ section }")
+      	end        
+      end
+    end
+    
   end
   
   namespace :flush do
