@@ -97,9 +97,8 @@ end
 			    SeedFunctions.adduser(Staff, staff)
 			  end
 
-			  account.create_stripe_connect_account
-	
-# 				Working on a fix for stipe connect integration 8/1/19 - Dylan
+# 		  Working on a fix for stipe connect integration 8/1/19 - Dylan
+#			  account.create_stripe_connect_account	
 # 			  
 # 			  account.validate_stripe_connect_account({ 
 # 			  	:business_tax_id => "82-3427840", 

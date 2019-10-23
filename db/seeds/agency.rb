@@ -114,9 +114,10 @@ Faker::Config.random = Random.new(rand(1..42))
 	    SeedFunctions.adduser(Staff, staff)
 	  end		
 	  
-		unless agency.master_agency?
-		  agency.create_stripe_connect_account
-# Working on a fix for stipe connect integration 8/1/19 - Dylan
+#		unless agency.master_agency?
+#     Working on a fix for stipe connect integration 8/1/19 - Dylan
+#		  agency.create_stripe_connect_account
+# 
 #		  
 # 		  agency.validate_stripe_connect_account({ 
 # 		  	:business_tax_id => "82-3427840", 
@@ -135,7 +136,7 @@ Faker::Config.random = Random.new(rand(1..42))
 # 			})
 # 		
 # 		  agency.stripe_account_verification_status() 			
-		end
+#		end
 		
 	end	
 end
