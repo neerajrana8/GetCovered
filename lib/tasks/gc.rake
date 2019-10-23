@@ -83,7 +83,7 @@ namespace :gc do
       
       desc "Push development API Image"
       task :dev do
-        system("$(aws ecr get-login --no-include-email --region us-west-2 --profile dylanmbda) && docker build -f Dockerfile -t get-covered-api-dev . && docker tag get-covered-api-dev:v2dev 633634809203.dkr.ecr.us-west-2.amazonaws.com/get-covered-api-dev:v2dev && docker push 633634809203.dkr.ecr.us-west-2.amazonaws.com/get-covered-api-dev:v2dev")
+        system("$(aws ecr get-login --no-include-email --region us-west-2 --profile dylanmbda) && docker build -f Dockerfile -t get-covered-api-dev:v2dev . && docker tag get-covered-api-dev:v2dev 633634809203.dkr.ecr.us-west-2.amazonaws.com/get-covered-api-dev:v2dev && docker push 633634809203.dkr.ecr.us-west-2.amazonaws.com/get-covered-api-dev:v2dev")
       end
       
     end
