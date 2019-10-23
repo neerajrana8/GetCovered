@@ -42,10 +42,10 @@ gem 'rack-cors', :require => 'rack/cors'
 gem "attr_encrypted", "~> 3.0.0"
 
 # Devise for authentication
-gem 'devise'
-gem 'devise_token_auth'
+gem 'devise', ">= 4.7.1"
+gem 'devise_token_auth', ">= 1.1.3"
 gem 'omniauth'
-gem 'devise_invitable', '~> 2.0.0'
+gem 'devise_invitable', '>= 2.0.1'
 
 # Getting some knowledge
 gem 'newrelic_rpm'
