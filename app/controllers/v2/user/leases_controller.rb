@@ -5,12 +5,15 @@
 module V2
   module User
     class LeasesController < UserController
-            
+      
+      before_action :set_substrate,
+        only: [:index]
+      
       def index
         if params[:short]
-          super(:@leases)
+          super(:@leases, @substrate)
         else
-          super(:@leases)
+          super(:@leases, @substrate)
         end
       end
       
@@ -29,6 +32,7 @@ module V2
             @substrate = @substrate.leases
           end
         end
+        
         def supported_filters(called_from_orders = false)
           @calling_supported_orders = called_from_orders
           {

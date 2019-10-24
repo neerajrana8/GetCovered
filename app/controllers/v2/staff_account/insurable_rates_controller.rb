@@ -8,15 +8,15 @@ module V2
       
       before_action :set_insurable_rate,
         only: [:update]
-            
+      
       before_action :set_substrate,
         only: [:index]
       
       def index
         if params[:short]
-          super(:@insurable_rates)
+          super(:@insurable_rates, @substrate)
         else
-          super(:@insurable_rates)
+          super(:@insurable_rates, @substrate)
         end
       end
       
@@ -62,6 +62,7 @@ module V2
             @substrate = @substrate.insurable_rates
           end
         end
+        
         def update_params
           return({}) if params[:insurable_rate].blank?
           params.require(:insurable_rate).permit(

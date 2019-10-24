@@ -8,15 +8,15 @@ module V2
       
       before_action :set_staff,
         only: [:update, :show]
-            
+      
       before_action :set_substrate,
         only: [:create, :index]
       
       def index
         if params[:short]
-          super(:@staffs, :profile)
+          super(:@staffs, @substrate, :profile)
         else
-          super(:@staffs, :profile)
+          super(:@staffs, @substrate, :profile)
         end
       end
       
@@ -84,6 +84,7 @@ module V2
             @substrate = @substrate.staffs
           end
         end
+        
         def create_params
           return({}) if params[:staff].blank?
           to_return = params.require(:staff).permit(

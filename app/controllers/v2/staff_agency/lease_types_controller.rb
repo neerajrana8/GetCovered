@@ -5,12 +5,15 @@
 module V2
   module StaffAgency
     class LeaseTypesController < StaffAgencyController
-            
+      
+      before_action :set_substrate,
+        only: [:index]
+      
       def index
         if params[:short]
-          super(:@lease_types)
+          super(:@lease_types, @substrate)
         else
-          super(:@lease_types)
+          super(:@lease_types, @substrate)
         end
       end
       
@@ -29,6 +32,7 @@ module V2
             @substrate = @substrate.lease_types
           end
         end
+        
         def supported_filters(called_from_orders = false)
           @calling_supported_orders = called_from_orders
           {

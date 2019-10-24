@@ -8,15 +8,15 @@ module V2
       
       before_action :set_branding_profile,
         only: [:update, :show]
-            
+      
       before_action :set_substrate,
         only: [:index]
       
       def index
         if params[:short]
-          super(:@branding_profiles)
+          super(:@branding_profiles, @substrate)
         else
-          super(:@branding_profiles)
+          super(:@branding_profiles, @substrate)
         end
       end
       
@@ -61,6 +61,7 @@ module V2
             @substrate = @substrate.branding_profiles
           end
         end
+        
         def update_params
           return({}) if params[:branding_profile].blank?
           params.require(:branding_profile).permit(

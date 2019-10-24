@@ -8,15 +8,15 @@ module V2
       
       before_action :set_carrier,
         only: [:update, :show]
-            
+      
       before_action :set_substrate,
         only: [:create, :index]
       
       def index
         if params[:short]
-          super(:@carriers)
+          super(:@carriers, @substrate)
         else
-          super(:@carriers)
+          super(:@carriers, @substrate)
         end
       end
       
@@ -81,6 +81,7 @@ module V2
             @substrate = @substrate.carriers
           end
         end
+        
         def create_params
           return({}) if params[:carrier].blank?
           to_return = params.require(:carrier).permit(

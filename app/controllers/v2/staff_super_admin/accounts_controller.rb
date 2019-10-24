@@ -8,15 +8,15 @@ module V2
       
       before_action :set_account,
         only: [:show]
-            
+      
       before_action :set_substrate,
         only: [:index]
       
       def index
         if params[:short]
-          super(:@accounts)
+          super(:@accounts, @substrate)
         else
-          super(:@accounts, :agency)
+          super(:@accounts, @substrate, :agency)
         end
       end
       
@@ -42,6 +42,7 @@ module V2
             @substrate = @substrate.accounts
           end
         end
+        
         def supported_filters(called_from_orders = false)
           @calling_supported_orders = called_from_orders
           {

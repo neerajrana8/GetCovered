@@ -8,15 +8,15 @@ module V2
       
       before_action :set_module_permission,
         only: [:update, :show]
-            
+      
       before_action :set_substrate,
         only: [:create, :index]
       
       def index
         if params[:short]
-          super(:@module_permissions)
+          super(:@module_permissions, @substrate)
         else
-          super(:@module_permissions)
+          super(:@module_permissions, @substrate)
         end
       end
       
@@ -81,6 +81,7 @@ module V2
             @substrate = @substrate.module_permissions
           end
         end
+        
         def create_params
           return({}) if params[:module_permission].blank?
           to_return = {}

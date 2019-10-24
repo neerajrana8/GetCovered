@@ -8,7 +8,7 @@ module V2
       
       before_action :set_policy_application,
         only: [:update, :show]
-            
+      
       before_action :set_substrate,
         only: [:create]
       
@@ -73,6 +73,7 @@ module V2
             @substrate = @substrate.policy_applications
           end
         end
+        
         def create_params
           return({}) if params[:policy_application].blank?
           to_return = {}

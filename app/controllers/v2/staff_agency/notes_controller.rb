@@ -8,15 +8,15 @@ module V2
       
       before_action :set_note,
         only: [:update, :destroy, :show]
-            
+      
       before_action :set_substrate,
         only: [:create, :index]
       
       def index
         if params[:short]
-          super(:@notes)
+          super(:@notes, @substrate)
         else
-          super(:@notes)
+          super(:@notes, @substrate)
         end
       end
       
@@ -100,6 +100,7 @@ module V2
             @substrate = @substrate.notes
           end
         end
+        
         def create_params
           return({}) if params[:note].blank?
           to_return = {}

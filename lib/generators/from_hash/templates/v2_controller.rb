@@ -16,7 +16,7 @@
 # (1) Implement support for "distinct" has_many relationships and for "where" scopes... maybe.
 
 
-class V1Controller < ApplicationController
+class V2Controller < ApplicationController
 
   def index(instance_symbol, data_source, *includes)
 #puts data_source.to_sql

@@ -146,8 +146,8 @@ class FromHashGenerator < Rails::Generators::Base
 
   def actualize_v1_controller
     if v1_controller_actualization_allowed
-      gputs "Generating v1 controller..."
-      copy_file "v1_controller.rb", "#{@output_root}app/controllers/v1_controller.rb", force: should_force_v1_controller
+      gputs "Generating v2 controller..."
+      copy_file "v2_controller.rb", "#{@output_root}app/controllers/v2_controller.rb", force: should_force_v1_controller
       gputs "  Success!"
     end
   end
@@ -157,7 +157,7 @@ class FromHashGenerator < Rails::Generators::Base
     (@scheme["contexts"] || {}).select{|ctx, ctx_data| context_controller_actualization_allowed(ctx) }.each do |ctx, ctx_data|
       @ctx = ctx
       @ctx_data = ctx_data
-      @full_controller_path = "app/controllers/#{get_context_controller_path(ctx)}/#{get_context_controller_filename(ctx)}_controller.rb"
+      @full_controller_path = "app/controllers/#{get_context_controller_path(ctx)}/#{get_context_controller_filename(ctx)}"
       template "context_controller.rb.erb", "#{@output_root}#{@full_controller_path}", force: should_force_context_controller(ctx)
     end
     puts "  Success!"
