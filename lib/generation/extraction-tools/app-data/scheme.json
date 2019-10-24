@@ -23295,11 +23295,11 @@
       "user_auths": {
         "User": {
           "route": "v2/user/auth",
-          "controller_path": "devise/user"
+          "controller_path": "devise/users"
         },
         "Staff": {
           "route": "v2/staff/auth",
-          "controller_path": "devise/staff"
+          "controller_path": "devise/staffs"
         }
       }
     },

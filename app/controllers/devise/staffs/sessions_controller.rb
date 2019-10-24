@@ -1,3 +1,3 @@
-class Staffs::SessionsController < DeviseTokenAuth::SessionsController
+class Devise::Staffs::SessionsController < DeviseTokenAuth::SessionsController
   include SessionsMethods
 end

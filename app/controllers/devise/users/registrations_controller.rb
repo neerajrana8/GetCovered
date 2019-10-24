@@ -1,4 +1,4 @@
-class Users::RegistrationsController < DeviseTokenAuth::RegistrationsController
+class Devise::Users::RegistrationsController < DeviseTokenAuth::RegistrationsController
   before_action :configure_sign_up_params, only: [:create]
   # before_action :configure_account_update_params, only: [:update]
 

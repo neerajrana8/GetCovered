@@ -1,3 +1,3 @@
-class Users::TokenValidationsController < DeviseTokenAuth::TokenValidationsController
+class Devise::Users::TokenValidationsController < DeviseTokenAuth::TokenValidationsController
   include TokenValidationMethods
 end
