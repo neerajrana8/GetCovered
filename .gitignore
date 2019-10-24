@@ -17,6 +17,9 @@
 /storage/*
 !/storage/.keep
 
+# Ignore AWS keys
+/lib/keys/*.pem
+
 .byebug_history
 
 # Ignore master key for decrypting credentials and more.
