@@ -8,7 +8,7 @@ module V2
       
       before_action :set_policy_quote,
         only: [:show]
-            
+      
       before_action :set_substrate,
         only: [:index]
       

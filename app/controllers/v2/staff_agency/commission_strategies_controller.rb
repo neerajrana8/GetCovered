@@ -8,7 +8,7 @@ module V2
       
       before_action :set_commission_strategy,
         only: [:update, :show]
-            
+      
       before_action :set_substrate,
         only: [:create, :index]
       

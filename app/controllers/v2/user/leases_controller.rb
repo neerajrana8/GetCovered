@@ -5,7 +5,10 @@
 module V2
   module User
     class LeasesController < UserController
-            
+      
+      before_action :set_substrate,
+        only: [:index]
+      
       def index
         if params[:short]
           super(:@leases, @substrate)

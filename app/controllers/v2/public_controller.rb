@@ -3,7 +3,7 @@
 # File: app/controllers/v2/public_controller.rb
 
 module V2
-  class PublicController < V1Controller
+  class PublicController < V2Controller
     
     private
 

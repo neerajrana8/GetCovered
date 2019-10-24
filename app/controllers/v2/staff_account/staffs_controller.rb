@@ -8,7 +8,7 @@ module V2
       
       before_action :set_staff,
         only: [:update, :show]
-            
+      
       before_action :set_substrate,
         only: [:create, :index]
       

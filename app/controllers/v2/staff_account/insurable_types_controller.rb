@@ -5,7 +5,10 @@
 module V2
   module StaffAccount
     class InsurableTypesController < StaffAccountController
-            
+      
+      before_action :set_substrate,
+        only: [:index]
+      
       def index
         if params[:short]
           super(:@insurable_types, @substrate)

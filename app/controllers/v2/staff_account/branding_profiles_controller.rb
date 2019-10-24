@@ -8,7 +8,7 @@ module V2
       
       before_action :set_branding_profile,
         only: [:update, :show]
-            
+      
       before_action :set_substrate,
         only: [:index]
       

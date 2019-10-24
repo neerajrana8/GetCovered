@@ -8,7 +8,7 @@ module V2
       
       before_action :set_payment,
         only: [:show]
-            
+      
       before_action :set_substrate,
         only: [:create, :index]
       

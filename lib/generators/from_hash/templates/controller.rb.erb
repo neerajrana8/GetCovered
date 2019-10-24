@@ -302,7 +302,7 @@ module V2
       <% unless verbs_needing_set.blank? %>
       before_action :set_<%= @m_name.underscore %>,
         only: [<%= verbs_needing_set.map{|a| ":#{a}" }.join(', ') %>]
-      <% end %>      <% unless verbs_needing_set.blank? %>
+      <% end %><% unless verbs_needing_substrate.blank? %>
       before_action :set_substrate,
         only: [<%= verbs_needing_substrate.map{|a| ":#{a}" }.join(', ') %>]
       <% end %><% if @verbs.include?('index') %>

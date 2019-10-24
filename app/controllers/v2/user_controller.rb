@@ -3,7 +3,7 @@
 # File: app/controllers/v2/user_controller.rb
 
 module V2
-  class UserController < V1Controller
+  class UserController < V2Controller
     
     before_action :authenticate_user!
     

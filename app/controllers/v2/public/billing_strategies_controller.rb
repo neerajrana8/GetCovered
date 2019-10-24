@@ -5,7 +5,10 @@
 module V2
   module Public
     class BillingStrategiesController < PublicController
-            
+      
+      before_action :set_substrate,
+        only: [:index]
+      
       def index
         if params[:short]
           super(:@billing_strategies, @substrate)

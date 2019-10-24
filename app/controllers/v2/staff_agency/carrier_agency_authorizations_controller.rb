@@ -8,7 +8,7 @@ module V2
       
       before_action :set_carrier_agency_authorization,
         only: [:update, :show]
-            
+      
       before_action :set_substrate,
         only: [:index]
       

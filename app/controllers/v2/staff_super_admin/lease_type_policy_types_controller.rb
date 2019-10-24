@@ -8,7 +8,7 @@ module V2
       
       before_action :set_lease_type_policy_type,
         only: [:update, :show]
-            
+      
       before_action :set_substrate,
         only: [:create, :index]
       

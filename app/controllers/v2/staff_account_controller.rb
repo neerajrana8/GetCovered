@@ -3,7 +3,7 @@
 # File: app/controllers/v2/staff_account_controller.rb
 
 module V2
-  class StaffAccountController < V1Controller
+  class StaffAccountController < V2Controller
     
     before_action :authenticate_staff!
     

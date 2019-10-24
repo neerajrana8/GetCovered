@@ -5,7 +5,10 @@
 module V2
   module StaffAgency
     class HistoriesController < StaffAgencyController
-            
+      
+      before_action :set_substrate,
+        only: [:index]
+      
       def index
         if params[:short]
           super(:@histories, @substrate)
