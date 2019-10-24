@@ -1,4 +1,4 @@
-class Users::InvitationsController < Devise::InvitationsController
+class Devise::Users::InvitationsController < Devise::InvitationsController
   before_action :resource_from_invitation_token, only: [:edit, :update]
 
   def create

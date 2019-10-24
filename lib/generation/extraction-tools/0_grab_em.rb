@@ -18,7 +18,16 @@ def get_sort_string(a_name, a_data)
   ref = eval("::#{a_data[:source_model]}").reflections[a_name.to_s]
   case ref
     when ActiveRecord::Reflection::ThroughReflection
+begin
       to_return = ref.chain.reverse.map{|r| r.name.to_s }.join("_")
+rescue
+  puts "!!!! HORROR ENCOUNTERED !!!!"
+  puts "INFO: #{a_data[:source_model]}##{a_name}"
+  puts "REF: #{ref}"
+  puts "REF.chain: #{ref.chain}"
+  puts "REF.chain.reverse: #{ref.chain.reverse}"
+  puts "REF.chain.reverse.map{|r| r.name.to_s }: #{ref.chain.reverse.map{|r| r.name.to_s } }"
+end
     else
       to_return = a_name.to_s
   end

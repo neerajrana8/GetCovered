@@ -23,16 +23,16 @@ Rails.application.routes.draw do
     at: 'v2/staff/auth',
     skip: [:invitations],
     controllers: {
-      sessions: 'devise/staff/sessions',
-      token_validations: 'devise/staff/token_validations',
-      passwords: 'devise/staff/passwords'
+      sessions: 'devise/staffs/sessions',
+      token_validations: 'devise/staffs/token_validations',
+      passwords: 'devise/staffs/passwords'
     }
   
   devise_for :staffs, path: 'v2/staff/auth',
     defaults: { format: :json },
     only: [:invitations],
     controllers: {
-      invitations: 'devise/staff/invitations'
+      invitations: 'devise/staffs/invitations'
     }
   
   

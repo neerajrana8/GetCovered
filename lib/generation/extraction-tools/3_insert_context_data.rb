@@ -47,11 +47,11 @@ $scheme['specials'] = {
     'user_auths' => {
       'User' => {
         'route' => 'v2/user/auth',
-        'controller_path' => 'devise/user' # MOOSE WARNING: this is at odds with the current directory structure
+        'controller_path' => 'devise/users' # MOOSE WARNING: this is at odds with the current directory structure
       },
       'Staff' => {
         'route' => 'v2/staff/auth',
-        'controller_path' => 'devise/staff' # 'uninvitable' => true can be added to disable invite routes
+        'controller_path' => 'devise/staffs' # 'uninvitable' => true can be added to disable invite routes
       }
     }
   },
