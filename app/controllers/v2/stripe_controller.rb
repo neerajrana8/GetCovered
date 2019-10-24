@@ -2,7 +2,7 @@
 # file: app/controllers/v1/stripe_controller.rb
 
 module V2
-  class StripeController < V1Controller
+  class StripeController < V2Controller
   
     # Blank for now...
     
