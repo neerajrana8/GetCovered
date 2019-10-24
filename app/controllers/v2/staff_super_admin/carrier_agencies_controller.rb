@@ -8,7 +8,7 @@ module V2
       
       before_action :set_carrier_agency,
         only: [:update, :destroy]
-            
+      
       before_action :set_substrate,
         only: [:create]
       
@@ -89,6 +89,7 @@ module V2
             @substrate = @substrate.carrier_agencies
           end
         end
+        
         def create_params
           return({}) if params[:carrier_agency].blank?
           to_return = params.require(:carrier_agency).permit(

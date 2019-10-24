@@ -8,15 +8,15 @@ module V2
       
       before_action :set_claim,
         only: [:update, :show]
-            
+      
       before_action :set_substrate,
         only: [:create, :index]
       
       def index
         if params[:short]
-          super(:@claims)
+          super(:@claims, @substrate)
         else
-          super(:@claims, :insurable, :policy)
+          super(:@claims, @substrate, :insurable, :policy)
         end
       end
       
@@ -81,6 +81,7 @@ module V2
             @substrate = @substrate.claims
           end
         end
+        
         def create_params
           return({}) if params[:claim].blank?
           to_return = params.require(:claim).permit(

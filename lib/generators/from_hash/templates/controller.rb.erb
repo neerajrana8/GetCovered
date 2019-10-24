@@ -302,15 +302,15 @@ module V2
       <% unless verbs_needing_set.blank? %>
       before_action :set_<%= @m_name.underscore %>,
         only: [<%= verbs_needing_set.map{|a| ":#{a}" }.join(', ') %>]
-      <% end %>      <% unless verbs_needing_set.blank? %>
+      <% end %><% unless verbs_needing_substrate.blank? %>
       before_action :set_substrate,
         only: [<%= verbs_needing_substrate.map{|a| ":#{a}" }.join(', ') %>]
       <% end %><% if @verbs.include?('index') %>
       def index
         if params[:short]
-          super(<%= [ ":@#{@m_name.pluralize.underscore}", (@m_data['index_source_override'] || {}).has_key?(@ctx) ? @m_data['index_source_override'][@ctx] : @substrate, print_joins(get_joins('short')) ].reject{|e| e.blank? }.join(', ') %>)
+          super(<%= [ ":@#{@m_name.pluralize.underscore}", (@m_data['index_source_override'] || {}).has_key?(@ctx) ? @m_data['index_source_override'][@ctx] : '@substrate', print_joins(get_joins('short')) ].reject{|e| e.blank? }.join(', ') %>)
         else
-          super(<%= [ ":@#{@m_name.pluralize.underscore}", (@m_data['index_source_override'] || {}).has_key?(@ctx) ? @m_data['index_source_override'][@ctx] : @substrate, print_joins(get_joins('index')) ].reject{|e| e.blank? }.join(', ') %>)
+          super(<%= [ ":@#{@m_name.pluralize.underscore}", (@m_data['index_source_override'] || {}).has_key?(@ctx) ? @m_data['index_source_override'][@ctx] : '@substrate', print_joins(get_joins('index')) ].reject{|e| e.blank? }.join(', ') %>)
         end
       end
       <% end %><% if @verbs.include?('show') %>
@@ -411,7 +411,8 @@ module V2
           elsif !params[:substrate_association_provided]
             @substrate = @substrate.<%= @m_name.pluralize.underscore %>
           end
-        end<% end %><% if @verbs.include?("create") %>
+        end
+        <% end %><% if @verbs.include?("create") %>
         def create_params
           return({}) if params[:<%= @m_name.underscore %>].blank?<% params_to_print = get_params("create") %><% if params_to_print.blank? %>
           to_return = {}<% else %>

@@ -1,7 +1,8 @@
 require 'sidekiq/web'
 
 Rails.application.routes.draw do
-
+  
+  
   mount_devise_token_auth_for 'User',
     at: 'v2/user/auth',
     skip: [:invitations],
@@ -34,7 +35,6 @@ Rails.application.routes.draw do
       invitations: 'devise/staff/invitations'
     }
   
-  get 'v2/health-check', to: 'v2#health_check', as: :health_check
   
   namespace :v2, defaults: { format: 'json' } do
     draw :user
@@ -42,5 +42,6 @@ Rails.application.routes.draw do
     draw :staff_agency
     draw :staff_super_admin
     draw :public
-  end  
+  end
+  
 end

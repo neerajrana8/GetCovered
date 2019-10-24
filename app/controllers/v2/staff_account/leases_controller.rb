@@ -8,15 +8,15 @@ module V2
       
       before_action :set_lease,
         only: [:update, :destroy, :show]
-            
+      
       before_action :set_substrate,
         only: [:create, :index]
       
       def index
         if params[:short]
-          super(:@leases)
+          super(:@leases, @substrate)
         else
-          super(:@leases, :account, :insurable, :lease_type)
+          super(:@leases, @substrate, :account, :insurable, :lease_type)
         end
       end
       
@@ -100,6 +100,7 @@ module V2
             @substrate = @substrate.leases
           end
         end
+        
         def create_params
           return({}) if params[:lease].blank?
           to_return = params.require(:lease).permit(

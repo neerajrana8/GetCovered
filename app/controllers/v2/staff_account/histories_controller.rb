@@ -5,12 +5,15 @@
 module V2
   module StaffAccount
     class HistoriesController < StaffAccountController
-            
+      
+      before_action :set_substrate,
+        only: [:index]
+      
       def index
         if params[:short]
-          super(:@histories)
+          super(:@histories, @substrate)
         else
-          super(:@histories)
+          super(:@histories, @substrate)
         end
       end
       
@@ -29,6 +32,7 @@ module V2
             @substrate = @substrate.histories
           end
         end
+        
         def supported_filters(called_from_orders = false)
           @calling_supported_orders = called_from_orders
           {

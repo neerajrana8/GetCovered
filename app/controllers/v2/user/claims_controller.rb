@@ -8,7 +8,7 @@ module V2
       
       before_action :set_claim,
         only: [:show]
-            
+      
       before_action :set_substrate,
         only: [:create]
       
@@ -54,6 +54,7 @@ module V2
             @substrate = @substrate.claims
           end
         end
+        
         def create_params
           return({}) if params[:claim].blank?
           to_return = params.require(:claim).permit(

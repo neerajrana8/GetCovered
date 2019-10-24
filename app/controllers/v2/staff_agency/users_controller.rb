@@ -8,15 +8,15 @@ module V2
       
       before_action :set_user,
         only: [:update, :show]
-            
+      
       before_action :set_substrate,
         only: [:create, :index]
       
       def index
         if params[:short]
-          super(:@users, :profile)
+          super(:@users, @substrate, :profile)
         else
-          super(:@users, :profile)
+          super(:@users, @substrate, :profile)
         end
       end
       
@@ -84,6 +84,7 @@ module V2
             @substrate = @substrate.users
           end
         end
+        
         def create_params
           return({}) if params[:user].blank?
           to_return = params.require(:user).permit(

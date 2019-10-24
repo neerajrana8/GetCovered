@@ -8,15 +8,15 @@ module V2
       
       before_action :set_invoice,
         only: [:update, :show]
-            
+      
       before_action :set_substrate,
         only: [:index]
       
       def index
         if params[:short]
-          super(:@invoices)
+          super(:@invoices, @substrate)
         else
-          super(:@invoices)
+          super(:@invoices, @substrate)
         end
       end
       
@@ -61,6 +61,7 @@ module V2
             @substrate = @substrate.invoices
           end
         end
+        
         def update_params
           return({}) if params[:invoice].blank?
           to_return = {}

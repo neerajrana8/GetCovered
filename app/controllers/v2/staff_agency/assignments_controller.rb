@@ -8,15 +8,15 @@ module V2
       
       before_action :set_assignment,
         only: [:update, :destroy, :show]
-            
+      
       before_action :set_substrate,
         only: [:create, :index]
       
       def index
         if params[:short]
-          super(:@assignments)
+          super(:@assignments, @substrate)
         else
-          super(:@assignments)
+          super(:@assignments, @substrate)
         end
       end
       
@@ -100,6 +100,7 @@ module V2
             @substrate = @substrate.assignments
           end
         end
+        
         def create_params
           return({}) if params[:assignment].blank?
           to_return = params.require(:assignment).permit(

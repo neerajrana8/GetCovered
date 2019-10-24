@@ -3,7 +3,7 @@
 # File: <%= @full_controller_path %>
 
 module V2
-  class <%= get_context_controller_name(@ctx).camelize %>Controller < V1Controller
+  class <%= get_context_controller_name(@ctx).camelize %>Controller < V2Controller
     <% if @ctx_data["user_type"] %>
     before_action :authenticate_<%= @ctx_data["user_type"].underscore %>!
     <% end %><% if @ctx_data["access_filter"] %>

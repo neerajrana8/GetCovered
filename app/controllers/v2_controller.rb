@@ -1,5 +1,5 @@
 ##
-# V2 Controller
+# V1 Controller
 # file: app/controllers/v1_controller.rb
 
 

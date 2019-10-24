@@ -8,15 +8,15 @@ module V2
       
       before_action :set_account,
         only: [:update, :show]
-            
+      
       before_action :set_substrate,
         only: [:create, :index]
       
       def index
         if params[:short]
-          super(:@accounts)
+          super(:@accounts, @substrate)
         else
-          super(:@accounts, :agency)
+          super(:@accounts, @substrate, :agency)
         end
       end
       
@@ -81,6 +81,7 @@ module V2
             @substrate = @substrate.accounts
           end
         end
+        
         def create_params
           return({}) if params[:account].blank?
           to_return = params.require(:account).permit(
