@@ -41,7 +41,7 @@ class Account < ApplicationRecord
   
   has_many :active_users,
     through: :active_account_users,
-    class_name: "User"
+    source: :user
 	
 	has_many :events,
 	    as: :eventable
