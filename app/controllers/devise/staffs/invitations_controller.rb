@@ -1,4 +1,4 @@
-class Staffs::InvitationsController < Devise::InvitationsController
+class Devise::Staffs::InvitationsController < Devise::InvitationsController
   # include InvitableMethods
   before_action :authenticate_staff!, only: :create
   before_action :resource_from_invitation_token, only: [:edit, :update]
