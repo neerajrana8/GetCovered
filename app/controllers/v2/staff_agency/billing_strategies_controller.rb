@@ -14,9 +14,9 @@ module V2
       
       def index
         if params[:short]
-          super(:@billing_strategies)
+          super(:@billing_strategies, @substrate)
         else
-          super(:@billing_strategies, :agency, :carrier)
+          super(:@billing_strategies, @substrate, :agency, :carrier)
         end
       end
       
@@ -81,6 +81,7 @@ module V2
             @substrate = @substrate.billing_strategies
           end
         end
+        
         def create_params
           return({}) if params[:billing_strategy].blank?
           to_return = params.require(:billing_strategy).permit(

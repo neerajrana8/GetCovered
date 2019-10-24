@@ -14,9 +14,9 @@ module V2
       
       def index
         if params[:short]
-          super(:@users, :profile)
+          super(:@users, @substrate, :profile)
         else
-          super(:@users, :profile)
+          super(:@users, @substrate, :profile)
         end
       end
       
@@ -42,6 +42,7 @@ module V2
             @substrate = @substrate.users
           end
         end
+        
         def supported_filters(called_from_orders = false)
           @calling_supported_orders = called_from_orders
           {

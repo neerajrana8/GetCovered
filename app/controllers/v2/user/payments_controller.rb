@@ -14,9 +14,9 @@ module V2
       
       def index
         if params[:short]
-          super(:@payments)
+          super(:@payments, @substrate)
         else
-          super(:@payments)
+          super(:@payments, @substrate)
         end
       end
       
@@ -62,6 +62,7 @@ module V2
             @substrate = @substrate.payments
           end
         end
+        
         def create_params
           return({}) if params[:payment].blank?
           to_return = {}

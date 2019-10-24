@@ -14,9 +14,9 @@ module V2
       
       def index
         if params[:short]
-          super(:@insurables)
+          super(:@insurables, @substrate)
         else
-          super(:@insurables)
+          super(:@insurables, @substrate)
         end
       end
       
@@ -100,6 +100,7 @@ module V2
             @substrate = @substrate.insurables
           end
         end
+        
         def create_params
           return({}) if params[:insurable].blank?
           to_return = params.require(:insurable).permit(

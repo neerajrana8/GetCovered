@@ -14,9 +14,9 @@ module V2
       
       def index
         if params[:short]
-          super(:@application_modules)
+          super(:@application_modules, @substrate)
         else
-          super(:@application_modules)
+          super(:@application_modules, @substrate)
         end
       end
       
@@ -81,6 +81,7 @@ module V2
             @substrate = @substrate.application_modules
           end
         end
+        
         def create_params
           return({}) if params[:application_module].blank?
           to_return = {}

@@ -14,9 +14,9 @@ module V2
       
       def index
         if params[:short]
-          super(:@commission_strategies)
+          super(:@commission_strategies, @substrate)
         else
-          super(:@commission_strategies)
+          super(:@commission_strategies, @substrate)
         end
       end
       
@@ -81,6 +81,7 @@ module V2
             @substrate = @substrate.commission_strategies
           end
         end
+        
         def create_params
           return({}) if params[:commission_strategy].blank?
           to_return = {}

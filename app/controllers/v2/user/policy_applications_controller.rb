@@ -14,9 +14,9 @@ module V2
       
       def index
         if params[:short]
-          super(:@policy_applications)
+          super(:@policy_applications, @substrate)
         else
-          super(:@policy_applications)
+          super(:@policy_applications, @substrate)
         end
       end
       
@@ -62,6 +62,7 @@ module V2
             @substrate = @substrate.policy_applications
           end
         end
+        
         def create_params
           return({}) if params[:policy_application].blank?
           to_return = {}

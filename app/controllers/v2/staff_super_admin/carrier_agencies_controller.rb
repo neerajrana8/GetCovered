@@ -89,6 +89,7 @@ module V2
             @substrate = @substrate.carrier_agencies
           end
         end
+        
         def create_params
           return({}) if params[:carrier_agency].blank?
           to_return = params.require(:carrier_agency).permit(

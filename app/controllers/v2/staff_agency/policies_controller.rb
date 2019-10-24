@@ -14,9 +14,9 @@ module V2
       
       def index
         if params[:short]
-          super(:@policies)
+          super(:@policies, @substrate)
         else
-          super(:@policies)
+          super(:@policies, @substrate)
         end
       end
       
@@ -81,6 +81,7 @@ module V2
             @substrate = @substrate.policies
           end
         end
+        
         def create_params
           return({}) if params[:policy].blank?
           to_return = params.require(:policy).permit(

@@ -14,9 +14,9 @@ module V2
       
       def index
         if params[:short]
-          super(:@policy_quotes)
+          super(:@policy_quotes, @substrate)
         else
-          super(:@policy_quotes)
+          super(:@policy_quotes, @substrate)
         end
       end
       
@@ -42,6 +42,7 @@ module V2
             @substrate = @substrate.policy_quotes
           end
         end
+        
         def supported_filters(called_from_orders = false)
           @calling_supported_orders = called_from_orders
           {

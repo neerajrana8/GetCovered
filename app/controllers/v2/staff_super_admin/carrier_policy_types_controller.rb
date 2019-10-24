@@ -14,9 +14,9 @@ module V2
       
       def index
         if params[:short]
-          super(:@carrier_policy_types)
+          super(:@carrier_policy_types, @substrate)
         else
-          super(:@carrier_policy_types)
+          super(:@carrier_policy_types, @substrate)
         end
       end
       
@@ -81,6 +81,7 @@ module V2
             @substrate = @substrate.carrier_policy_types
           end
         end
+        
         def create_params
           return({}) if params[:carrier_policy_type].blank?
           to_return = params.require(:carrier_policy_type).permit(

@@ -73,6 +73,7 @@ module V2
             @substrate = @substrate.policy_applications
           end
         end
+        
         def create_params
           return({}) if params[:policy_application].blank?
           to_return = {}

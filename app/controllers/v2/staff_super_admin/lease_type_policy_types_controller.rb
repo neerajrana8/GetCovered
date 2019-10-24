@@ -14,9 +14,9 @@ module V2
       
       def index
         if params[:short]
-          super(:@lease_type_policy_types)
+          super(:@lease_type_policy_types, @substrate)
         else
-          super(:@lease_type_policy_types)
+          super(:@lease_type_policy_types, @substrate)
         end
       end
       
@@ -85,6 +85,7 @@ module V2
             @substrate = @substrate.lease_type_policy_types
           end
         end
+        
         def create_params
           return({}) if params[:lease_type_policy_type].blank?
           to_return = params.require(:lease_type_policy_type).permit(

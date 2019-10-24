@@ -14,9 +14,9 @@ module V2
       
       def index
         if params[:short]
-          super(:@notifications)
+          super(:@notifications, @substrate)
         else
-          super(:@notifications)
+          super(:@notifications, @substrate)
         end
       end
       
@@ -61,6 +61,7 @@ module V2
             @substrate = @substrate.notifications
           end
         end
+        
         def update_params
           return({}) if params[:notification].blank?
           params.require(:notification).permit(

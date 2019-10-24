@@ -14,9 +14,9 @@ module V2
       
       def index
         if params[:short]
-          super(:@carrier_agency_authorizations)
+          super(:@carrier_agency_authorizations, @substrate)
         else
-          super(:@carrier_agency_authorizations)
+          super(:@carrier_agency_authorizations, @substrate)
         end
       end
       
@@ -61,6 +61,7 @@ module V2
             @substrate = @substrate.carrier_agency_authorizations
           end
         end
+        
         def update_params
           return({}) if params[:carrier_agency_authorization].blank?
           params.require(:carrier_agency_authorization).permit(
