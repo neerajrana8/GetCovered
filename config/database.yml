@@ -50,6 +50,4 @@ awsdev:
   
 production:
   <<: *default
-  database: GetCovered_production
-  username: GetCovered
-  password: <%= ENV['GETCOVERED_DATABASE_PASSWORD'] %>
+  database: gc_v2_production
