@@ -389,6 +389,38 @@
         }
       },
       "associations": {
+        "account_users": {
+          "source_model": "Account",
+          "type": "has_many",
+          "target": [
+            "AccountUser"
+          ],
+          "wherethrough": {
+            "users": {
+              "source_model": "Account",
+              "type": "has_many",
+              "target": [
+                "User"
+              ]
+            }
+          }
+        },
+        "active_account_users": {
+          "source_model": "Account",
+          "type": "has_many",
+          "target": [
+            "AccountUser"
+          ],
+          "wherethrough": {
+            "active_users": {
+              "source_model": "Account",
+              "type": "has_many",
+              "target": [
+                "User"
+              ]
+            }
+          }
+        },
         "addresses": {
           "source_model": "Account",
           "type": "has_many",
@@ -607,6 +639,152 @@
       "specials": {
         "history": {
           "history_verbs": true
+        }
+      }
+    },
+    "AccountUser": {
+      "fields": {
+        "account_id": {
+          "name": "account_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "account",
+          "permissions": {
+            "user": [
+
+            ],
+            "staff_account": [
+
+            ],
+            "staff_agency": [
+
+            ],
+            "staff_super_admin": [
+
+            ],
+            "public": [
+
+            ]
+          }
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone",
+          "permissions": {
+            "user": [
+
+            ],
+            "staff_account": [
+
+            ],
+            "staff_agency": [
+
+            ],
+            "staff_super_admin": [
+
+            ],
+            "public": [
+
+            ]
+          }
+        },
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "sql_type": "bigint"
+        },
+        "status": {
+          "name": "status",
+          "type": "enum",
+          "sql_type": "integer",
+          "enum_values": {
+            "pending": 0,
+            "enabled": 1,
+            "disabled": 2
+          },
+          "permissions": {
+            "user": [
+
+            ],
+            "staff_account": [
+
+            ],
+            "staff_agency": [
+
+            ],
+            "staff_super_admin": [
+
+            ],
+            "public": [
+
+            ]
+          }
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "datetime",
+          "sql_type": "timestamp without time zone",
+          "permissions": {
+            "user": [
+
+            ],
+            "staff_account": [
+
+            ],
+            "staff_agency": [
+
+            ],
+            "staff_super_admin": [
+
+            ],
+            "public": [
+
+            ]
+          }
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "belongs_to_key",
+          "sql_type": "bigint",
+          "association_name": "user",
+          "permissions": {
+            "user": [
+
+            ],
+            "staff_account": [
+
+            ],
+            "staff_agency": [
+
+            ],
+            "staff_super_admin": [
+
+            ],
+            "public": [
+
+            ]
+          }
+        }
+      },
+      "associations": {
+        "account": {
+          "source_model": "AccountUser",
+          "type": "belongs_to",
+          "polymorphic": false,
+          "foreign_key": "account_id",
+          "target": [
+            "Account"
+          ]
+        },
+        "user": {
+          "source_model": "AccountUser",
+          "type": "belongs_to",
+          "polymorphic": false,
+          "foreign_key": "user_id",
+          "target": [
+            "User"
+          ]
         }
       }
     },
@@ -9201,6 +9379,11 @@
             ]
           }
         },
+        "author": {
+          "name": "author",
+          "type": "string",
+          "sql_type": "character varying"
+        },
         "authorable_id": {
           "name": "authorable_id",
           "type": "belongs_to_key",
@@ -10907,6 +11090,13 @@
 
             ]
           }
+        },
+        "least_type_insurable_types": {
+          "source_model": "InsurableType",
+          "type": "has_many",
+          "target": [
+            "LeastTypeInsurableType"
+          ]
         }
       },
       "verbs": {
@@ -19142,11 +19332,15 @@
           "type": "enum",
           "sql_type": "integer",
           "enum_values": {
-            "available": 0,
-            "expired": 1,
-            "accepted": 2,
-            "declined": 3,
-            "abandoned": 4
+            "awaiting_estimate": 0,
+            "estimated": 1,
+            "quoted": 2,
+            "quote_failed": 3,
+            "accepted": 4,
+            "declined": 5,
+            "abandoned": 6,
+            "expired": 7,
+            "error": 8
           },
           "permissions": {
             "user": [
@@ -23072,6 +23266,29 @@
         }
       },
       "associations": {
+        "account_users": {
+          "source_model": "User",
+          "type": "has_many",
+          "target": [
+            "AccountUser"
+          ]
+        },
+        "active_account_users": {
+          "source_model": "User",
+          "type": "has_many",
+          "target": [
+            "AccountUser"
+          ],
+          "wherethrough": {
+            "accounts": {
+              "source_model": "User",
+              "type": "has_many",
+              "target": [
+                "Account"
+              ]
+            }
+          }
+        },
         "authored_histories": {
           "source_model": "User",
           "type": "has_many",
@@ -23172,6 +23389,45 @@
             "public": [
 
             ]
+          }
+        },
+        "lease_users": {
+          "source_model": "User",
+          "type": "has_many",
+          "target": [
+            "LeaseUser"
+          ],
+          "wherethrough": {
+            "leases": {
+              "source_model": "User",
+              "type": "has_many",
+              "target": [
+                "Lease"
+              ]
+            }
+          }
+        },
+        "policy_users": {
+          "source_model": "User",
+          "type": "has_many",
+          "target": [
+            "PolicyUser"
+          ],
+          "wherethrough": {
+            "policies": {
+              "source_model": "User",
+              "type": "has_many",
+              "target": [
+                "Policy"
+              ]
+            },
+            "policy_applications": {
+              "source_model": "User",
+              "type": "has_many",
+              "target": [
+                "PolicyApplication"
+              ]
+            }
           }
         },
         "profile": {
