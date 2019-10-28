@@ -35,6 +35,7 @@ Rails.application.routes.draw do
       invitations: 'devise/staffs/invitations'
     }
   
+  get 'v2/health-check', to: 'v2#health_check', as: :health_check
   
   namespace :v2, defaults: { format: 'json' } do
     draw :user

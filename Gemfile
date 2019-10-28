@@ -80,6 +80,9 @@ gem 'elasticsearch-rails', github: 'elastic/elasticsearch-rails', branch: '5.x'
 # Colorizing console output to highlight stuffs
 gem 'colorize'
 
+# AWS SDK
+gem 'aws-sdk', '~> 3'
+
 group :development, :test do
   # Call 'byebug' anywhere in the code to stop execution and get a debugger console
   gem 'byebug', platforms: [:mri, :mingw, :x64_mingw]
