@@ -1,5 +1,5 @@
 config = {
-  host: "#{ ENV['ELASTICSEARCH_URL'] }",
+  host: "#{ Rails.application.credentials.elasticsearch[:awsdev][:url] }",
   transport_options: {
     request: { timeout: 5 }
   }
