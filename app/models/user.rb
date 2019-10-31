@@ -31,6 +31,7 @@ class User < ApplicationRecord
           autosave: true  
           
   has_many :account_users
+  has_many :claims, as: :claimant
   
   has_many :active_account_users,
     -> { where status: 'enabled' }, 

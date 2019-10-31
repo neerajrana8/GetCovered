@@ -1,4 +1,4 @@
-authenticated :staff, lambda{|current_staff| current_staff.role == 'staff' } do
+# authenticated :staff, lambda{|current_staff| current_staff.role == 'staff' } do
 
   # StaffAccount
   scope module: :staff_account, path: "staff" do
@@ -130,7 +130,7 @@ authenticated :staff, lambda{|current_staff| current_staff.role == 'staff' } do
       end
   
   end
-end
+# end
 
 
 

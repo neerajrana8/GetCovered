@@ -7,63 +7,55 @@ module V2
     class ClaimsController < UserController
       
       before_action :set_claim,
-        only: [:show]
+      only: [:show]
       
       before_action :set_substrate,
-        only: [:create]
+      only: [:create]
       
       def show
+        render json: @claim
       end
       
       def create
-        if create_allowed?
-          @claim = @substrate.new(create_params)
-          if !@claim.errors.any? && @claim.save_as(current_user)
-            render :show,
-              status: :created
-          else
-            render json: @claim.errors,
-              status: :unprocessable_entity
-          end
+        @claim = @substrate.new(claim_params)
+        if !@claim.errors.any? && @claim.save_as(current_user)
+          render json: @claim,
+          status: :created
         else
-          render json: { success: false, errors: ['Unauthorized Access'] },
-            status: :unauthorized
+          render json: @claim.errors,
+          status: :unprocessable_entity
         end
       end
       
       
       private
       
-        def view_path
-          super + "/claims"
+      def view_path
+        super + "/claims"
+      end
+      
+      def set_claim
+        @claim = access_model(::Claim, params[:id])
+      end
+      
+      def set_substrate
+        super
+        if @substrate.nil?
+          @substrate = access_model(::Claim)
+        elsif !params[:substrate_association_provided]
+          @substrate = @substrate.claims
         end
-        
-        def create_allowed?
-          true
-        end
-        
-        def set_claim
-          @claim = access_model(::Claim, params[:id])
-        end
-        
-        def set_substrate
-          super
-          if @substrate.nil?
-            @substrate = access_model(::Claim)
-          elsif !params[:substrate_association_provided]
-            @substrate = @substrate.claims
-          end
-        end
-        
-        def create_params
-          return({}) if params[:claim].blank?
-          to_return = params.require(:claim).permit(
-            :description, :insurable_id, :policy_id, :subject,
-            :time_of_loss
-          )
-          return(to_return)
-        end
-        
+      end
+      
+      def claim_params
+        return({}) if params[:claim].blank?
+        to_return = params.require(:claim).permit(
+          :description, :insurable_id, :policy_id, :subject,
+          :time_of_loss
+        )
+        return(to_return)
+      end
+      
     end
-  end # module User
+  end
 end

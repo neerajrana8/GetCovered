@@ -131,13 +131,13 @@ class Policy < ApplicationRecord
   end
 
   def same_agency_as_account
-		if agency != account.agency
+		if agency != account&.agency
 			errors.add(:account, 'policy must belong to the same agency as account')
 		end
   end
   
   def carrier_agency
-    unless agency.carriers.include?(carrier)
+    unless agency&.carriers&.include?(carrier)
 			errors.add(:carrier, 'carrier agency must exist')
 		end
   end

@@ -6,10 +6,10 @@ module V2
   module StaffAccount
     class AccountsController < StaffAccountController
       
-      before_action :set_account,
-        only: [:update, :show]
+      before_action :set_account, only: [:update, :show]
       
       def show
+        render json: @account
       end
       
       def update
@@ -39,7 +39,7 @@ module V2
         end
         
         def set_account
-          @account = access_model(::Account, params[:id])
+          @account = current_staff.organizable
         end
         
         def update_params
@@ -55,5 +55,5 @@ module V2
         end
         
     end
-  end # module StaffAccount
+  end
 end

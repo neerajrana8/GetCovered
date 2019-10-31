@@ -7,9 +7,9 @@ Rails.application.routes.draw do
     at: 'v2/user/auth',
     skip: [:invitations],
     controllers: {
-      sessions: 'devise/user/sessions',
-      token_validations: 'devise/user/token_validations',
-      passwords: 'devise/user/passwords'
+      sessions: 'devise/users/sessions',
+      token_validations: 'devise/users/token_validations',
+      passwords: 'devise/users/passwords'
     }
   
   devise_for :users, path: 'v2/user/auth',
