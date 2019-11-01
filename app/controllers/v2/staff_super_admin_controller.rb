@@ -6,8 +6,12 @@ module V2
   class StaffSuperAdminController < V2Controller
     
     before_action :authenticate_staff!
-    
+    before_action :is_super_admin?
+
     private
+      def is_super_admin?
+        render json: { error: "Unauthorized access"}, status: :unauthorized unless current_staff.super_admin?
+      end
 
       def view_path
         super + "/staff_super_admin"

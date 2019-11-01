@@ -1,7 +1,7 @@
 # authenticated :staff, lambda{|current_staff| current_staff.role == 'staff' } do
 
   # StaffAccount
-  scope module: :staff_account, path: "staff" do
+  scope module: :staff_account, path: "staff_account" do
   
     resources :accounts,
       only: [ :update, :show ] do

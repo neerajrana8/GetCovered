@@ -6,8 +6,13 @@ module V2
   class StaffAccountController < V2Controller
     
     before_action :authenticate_staff!
-    
+    before_action :is_staff?
+
     private
+
+      def is_staff?
+        render json: { error: "Unauthorized access"}, status: :unauthorized unless current_staff.staff?
+      end
 
       def view_path
         super + "/staff_account"

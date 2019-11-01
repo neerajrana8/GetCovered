@@ -6,8 +6,13 @@ module V2
   class StaffAgencyController < V2Controller
     
     before_action :authenticate_staff!
-    
+    before_action :is_agent?
+
     private
+
+      def is_agent?
+        render json: { error: "Unauthorized access"}, status: :unauthorized unless current_staff.agent?
+      end
 
       def view_path
         super + "/staff_agency"

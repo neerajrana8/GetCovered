@@ -14,13 +14,14 @@ module V2
       
       def index
         if params[:short]
-          super(:@accounts, @substrate)
+          super(:@accounts, Account)
         else
-          super(:@accounts, @substrate, :agency)
+          super(:@accounts, Account, :agency)
         end
       end
       
       def show
+        render json: @account
       end
       
       
@@ -31,7 +32,7 @@ module V2
         end
         
         def set_account
-          @account = access_model(::Account, params[:id])
+          @account = Account.find_by(id: params[:id])
         end
         
         def set_substrate

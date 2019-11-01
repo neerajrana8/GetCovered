@@ -14,24 +14,23 @@ module V2
       
       def index
         if params[:short]
-          super(:@accounts, @substrate)
+          super(:@accounts, current_staff.organizable.agency.accounts)
         else
-          super(:@accounts, @substrate, :agency)
+          super(:@accounts, current_staff.organizable.agency.accounts, :agency)
         end
       end
       
       def show
+        render json: @account
       end
       
       def create
         if create_allowed?
-          @account = @substrate.new(create_params)
+          @account = current_staff.organizable.agency.accounts.new(account_params)
           if !@account.errors.any? && @account.save
-            render :show,
-              status: :created
+            render json: @account, status: :created
           else
-            render json: @account.errors,
-              status: :unprocessable_entity
+            render json: @account.errors, status: :unprocessable_entity
           end
         else
           render json: { success: false, errors: ['Unauthorized Access'] },
@@ -41,12 +40,10 @@ module V2
       
       def update
         if update_allowed?
-          if @account.update(update_params)
-            render :show,
-              status: :ok
+          if @account.update(account_params)
+            render json: @account, status: :ok
           else
-            render json: @account.errors,
-              status: :unprocessable_entity
+            render json: @account.errors, status: :unprocessable_entity
           end
         else
           render json: { success: false, errors: ['Unauthorized Access'] },
@@ -70,33 +67,19 @@ module V2
         end
         
         def set_account
-          @account = access_model(::Account, params[:id])
+          @account = current_staff.organizable.agency.accounts.find_by(id: params[:id])
         end
         
         def set_substrate
           super
           if @substrate.nil?
-            @substrate = access_model(::Account)
+            @substrate = current_staff.organizable
           elsif !params[:substrate_association_provided]
             @substrate = @substrate.accounts
           end
         end
-        
-        def create_params
-          return({}) if params[:account].blank?
-          to_return = params.require(:account).permit(
-            :enabled, :staff_id, :title, :whitelabel, contact_info: {},
-            settings: {}, addresses_attributes: [
-              :city, :country, :county, :id, :latitude, :longitude,
-              :plus_four, :state, :street_name, :street_number,
-              :street_two, :timezone, :zip_code
-            ]
-          )
-          return(to_return)
-        end
-        
-        def update_params
-          return({}) if params[:account].blank?
+                
+        def account_params
           params.require(:account).permit(
             :enabled, :staff_id, :title, :whitelabel, contact_info: {},
             settings: {}, addresses_attributes: [

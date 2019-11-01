@@ -1,7 +1,7 @@
-authenticated :staff, lambda{|current_staff| current_staff.role == 'agent' } do
+# authenticated :staff, lambda{|current_staff| current_staff.role == 'agent' } do
 
   # StaffAgency
-  scope module: :staff_agency, path: "staff" do
+  scope module: :staff_agency, path: "staff_agency" do
   
     resources :accounts,
       only: [ :create, :update, :index, :show ] do
@@ -165,7 +165,7 @@ authenticated :staff, lambda{|current_staff| current_staff.role == 'agent' } do
       end
   
   end
-end
+# end
 
 
 

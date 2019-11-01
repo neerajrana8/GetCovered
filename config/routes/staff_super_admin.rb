@@ -1,7 +1,7 @@
-authenticated :staff, lambda{|current_staff| current_staff.role == 'super_admin' } do
+# authenticated :staff, lambda{|current_staff| current_staff.role == 'super_admin' } do
 
   # StaffSuperAdmin
-  scope module: :staff_super_admin, path: "staff" do
+  scope module: :staff_super_admin, path: "staff_super_admin" do
   
     resources :accounts,
       only: [ :index, :show ] do
@@ -119,7 +119,7 @@ authenticated :staff, lambda{|current_staff| current_staff.role == 'super_admin'
       end
   
   end
-end
+# end
 
 
 
