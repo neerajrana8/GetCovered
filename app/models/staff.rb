@@ -45,6 +45,13 @@ class Staff < ApplicationRecord
     end
   end
 
+  # Override as_json to always include profile information
+  def as_json(options = {})
+    json = super(options.reverse_merge(include: :profile))
+    json
+  end
+
+
   private
 
 	  def initialize_staff

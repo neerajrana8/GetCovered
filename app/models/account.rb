@@ -63,7 +63,14 @@ class Account < ApplicationRecord
   
   def primary_address
 		return addresses.where(primary: true).take 
-	end
+  end
+  
+  # Override as_json to always include agency and addresses information
+  def as_json(options = {})
+    json = super(options.reverse_merge(include: [:agency, :addresses]))
+    json
+  end
+
 
   settings index: { number_of_shards: 1 } do
     mappings dynamic: 'false' do
