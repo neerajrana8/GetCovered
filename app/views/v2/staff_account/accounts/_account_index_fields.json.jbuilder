@@ -1,2 +1,2 @@
-json.extract! account, :id, :title
+json.extract! account, :id, :title, :updated_at
 

@@ -1,2 +1,2 @@
-json.extract! account, :agency_id, :id
+json.extract! account, :agency_id, :id, :updated_at
 

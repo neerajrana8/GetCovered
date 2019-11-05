@@ -67,7 +67,7 @@ class Account < ApplicationRecord
   
   # Override as_json to always include agency and addresses information
   def as_json(options = {})
-    json = super(options.reverse_merge(include: [:agency, :addresses]))
+    json = super(options.reverse_merge(include: [:agency, :primary_address, :owner]))
     json
   end
 
