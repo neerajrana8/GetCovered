@@ -6,17 +6,13 @@ module V2
   module StaffSuperAdmin
     class AgenciesController < StaffSuperAdminController
       
-      before_action :set_agency,
-        only: [:update, :show]
-      
-      before_action :set_substrate,
-        only: [:create, :index]
-      
+      before_action :set_agency, only: [:update, :show]
+            
       def index
         if params[:short]
-          super(:@agencies, @substrate)
+          super(:@agencies, Agency)
         else
-          super(:@agencies, @substrate, :agency)
+          super(:@agencies, Agency, :agency)
         end
       end
       
@@ -25,7 +21,7 @@ module V2
       
       def create
         if create_allowed?
-          @agency = @substrate.new(create_params)
+          @agency = Agency.new(create_params)
           if !@agency.errors.any? && @agency.save
             render :show,
               status: :created
@@ -70,18 +66,9 @@ module V2
         end
         
         def set_agency
-          @agency = access_model(::Agency, params[:id])
+          @agency = Agency.find_by(id: params[:id])
         end
-        
-        def set_substrate
-          super
-          if @substrate.nil?
-            @substrate = access_model(::Agency)
-          elsif !params[:substrate_association_provided]
-            @substrate = @substrate.agencies
-          end
-        end
-        
+                
         def create_params
           return({}) if params[:agency].blank?
           to_return = params.require(:agency).permit(
