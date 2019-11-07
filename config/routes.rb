@@ -44,5 +44,7 @@ Rails.application.routes.draw do
     draw :staff_super_admin
     draw :public
   end
+
+  root to: "application#redirect_home"
   
 end
