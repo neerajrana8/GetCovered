@@ -35,10 +35,10 @@ class BrandingProfile < ApplicationRecord
     end
     
     def check_default
-      if profileabe.branding_profiles.count > 1 && 
+      if profileable.branding_profiles.count > 1 && 
          default?
         
-        profileabe.branding_profiles
+        profileable.branding_profiles
                   .where(default: true)
                   .where()
                   .not(id: id)
