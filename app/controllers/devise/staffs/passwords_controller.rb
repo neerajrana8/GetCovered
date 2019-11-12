@@ -1,3 +1,3 @@
 class Devise::Staffs::PasswordsController < DeviseTokenAuth::PasswordsController
-  include PasswordMethods
+  # include PasswordMethods
 end
