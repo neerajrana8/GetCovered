@@ -28,7 +28,10 @@ class Account < ApplicationRecord
   has_many :branding_profiles,
     as: :profileable
 	
-	has_many :insurables 
+  has_many :insurables 
+  
+  has_many :policies
+  has_many :claims, through: :policies
 	
 	has_many :account_users
   

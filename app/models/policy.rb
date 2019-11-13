@@ -56,7 +56,9 @@ class Policy < ApplicationRecord
   
   has_many :policy_insurables
   has_many :insurables,
-  	through: :policy_insurables
+    through: :policy_insurables
+  
+  has_many :claims
   
   has_many :policy_quotes
   has_one :policy_application

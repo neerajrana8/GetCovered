@@ -41,7 +41,10 @@ class Agency < ApplicationRecord
 		as: :organizable,
 		source: :staff,
 		class_name: 'Staff'
-  		
+			
+  has_many :policies
+  has_many :claims, through: :policies
+		
   has_many :branding_profiles,
     as: :profileable
 
