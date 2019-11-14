@@ -6,9 +6,29 @@
 # Note that changes in the inspected code, or installation of new
 # versions of RuboCop, may require this file to be generated again.
 
+AllCops:
+  Exclude:
+    - 'db/**/*'
+    - 'config/**/*'
+    - 'bin/**/*'
+    - 'lib/generation/*/**'
 
+Style/FrozenStringLiteralComment:
+  Enabled: false
+Metrics/LineLength:
+  Max: 120
+Metrics/MethodLength:
+  Max: 20
 Layout:
   TrailingBlankLines:
     Enabled: false
   TrailingWhitespace:
     Enabled: false
+Layout/AlignParameters:
+  EnforcedStyle: with_fixed_indentation
+
+Layout/MultilineMethodCallIndentation:
+  EnforcedStyle: indented
+
+Layout/EndAlignment:
+  EnforcedStyleAlignWith: variable
