@@ -8,15 +8,12 @@ module V2
       
       before_action :set_staff,
         only: [:show]
-      
-      before_action :set_substrate,
-        only: [:create, :index]
-      
+            
       def index
         if params[:short]
-          super(:@staffs, @substrate, :profile)
+          super(:@staffs, Staff, :profile)
         else
-          super(:@staffs, @substrate, :profile)
+          super(:@staffs, Staff, :profile)
         end
       end
       
@@ -25,7 +22,7 @@ module V2
       
       def create
         if create_allowed?
-          @staff = @substrate.new(create_params)
+          @staff = Staff.new(create_params)
           # remove password issues from errors since this is a Devise model
           @staff.valid? if @staff.errors.blank?
           @staff.errors.messages.except!(:password)
@@ -56,16 +53,7 @@ module V2
         def set_staff
           @staff = access_model(::Staff, params[:id])
         end
-        
-        def set_substrate
-          super
-          if @substrate.nil?
-            @substrate = access_model(::Staff)
-          elsif !params[:substrate_association_provided]
-            @substrate = @substrate.staffs
-          end
-        end
-        
+                
         def create_params
           return({}) if params[:staff].blank?
           to_return = params.require(:staff).permit(
