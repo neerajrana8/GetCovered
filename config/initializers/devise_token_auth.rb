@@ -47,4 +47,11 @@ DeviseTokenAuth.setup do |config|
   # If, however, you wish to integrate with legacy Devise authentication, you can
   # do so by enabling this flag. NOTE: This feature is highly experimental!
   # config.enable_standard_devise_support = false
+
+  # With this option enabled, the redirect will NOT include the valid 
+  # session credentials. Instead the redirect will include a 
+  # password_reset_token querystring param that can be used to 
+  # reset the users password. Once the user has reset their password, 
+  # the password-reset success response headers will contain valid session credentials.
+  config.require_client_password_reset_token = true
 end
