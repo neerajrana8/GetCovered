@@ -8,16 +8,9 @@ module V2
       
       before_action :set_assignment,
         only: [:update, :destroy, :show]
-      
-      before_action :set_substrate,
-        only: [:create, :index]
-      
+            
       def index
-        if params[:short]
-          super(:@assignments, @substrate)
-        else
-          super(:@assignments, @substrate)
-        end
+        super(:@assignments, current_staff.assignments)
       end
       
       def show
@@ -25,7 +18,7 @@ module V2
       
       def create
         if create_allowed?
-          @assignment = @substrate.new(create_params)
+          @assignment = current_staff.assignments.new(create_params)
           if !@assignment.errors.any? && @assignment.save
             render :show,
               status: :created
@@ -89,18 +82,9 @@ module V2
         end
         
         def set_assignment
-          @assignment = access_model(::Assignment, params[:id])
+          @assignment = current_staff.assignments.find_by(id: params[:id])
         end
-        
-        def set_substrate
-          super
-          if @substrate.nil?
-            @substrate = access_model(::Assignment)
-          elsif !params[:substrate_association_provided]
-            @substrate = @substrate.assignments
-          end
-        end
-        
+                
         def create_params
           return({}) if params[:assignment].blank?
           to_return = params.require(:assignment).permit(

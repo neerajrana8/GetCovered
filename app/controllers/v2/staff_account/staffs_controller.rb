@@ -10,11 +10,7 @@ module V2
         only: [:update, :show]
             
       def index
-        if params[:short]
-          super(:@staffs, current_staff.organizable.staff, :profile)
-        else
-          super(:@staffs, current_staff.organizable.staff, :profile)
-        end
+        super(:@staffs, current_staff.organizable.staff, :profile)
       end
       
       def show
@@ -99,6 +95,16 @@ module V2
         def supported_filters(called_from_orders = false)
           @calling_supported_orders = called_from_orders
           {
+            id: [ :scalar, :array ],
+            email: [ :scalar, :array, :like ],
+            permissions: [ :scalar, :array ],
+            organizable_id: [ :scalar, :array ],
+            organizable_type: [ :scalar, :array ],
+            profile: {
+              first_name: [ :scalar, :like ],
+              last_name: [ :scalar, :like ],
+              full_name: [ :scalar, :like ]
+            }
           }
         end
 

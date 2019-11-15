@@ -47,6 +47,22 @@ module V2
         def supported_filters(called_from_orders = false)
           @calling_supported_orders = called_from_orders
           {
+            id: [ :scalar, :array ],
+            agency: {
+              title: [ :scalar, :like ],
+            },
+            owner: {
+              profile: {
+                contact_phone: [:scalar, :like],
+                contact_email: [:scalar, :like]
+              }
+            },
+            enabled: [ :scalar ],
+            addresses: {
+              state: [ :scalar, :array, :like ],
+              city: [ :scalar, :array, :like ],
+              zip_code: [ :scalar, :array ]
+            }
           }
         end
 
