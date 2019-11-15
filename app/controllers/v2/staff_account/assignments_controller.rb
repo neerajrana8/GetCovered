@@ -10,11 +10,7 @@ module V2
         only: [:update, :destroy, :show]
             
       def index
-        if params[:short]
-          super(:@assignments, current_staff.assignments)
-        else
-          super(:@assignments, current_staff.assignments)
-        end
+        super(:@assignments, current_staff.assignments)
       end
       
       def show

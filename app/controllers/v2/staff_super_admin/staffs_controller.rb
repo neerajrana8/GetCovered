@@ -10,11 +10,7 @@ module V2
         only: [:show]
             
       def index
-        if params[:short]
-          super(:@staffs, Staff, :profile)
-        else
-          super(:@staffs, Staff, :profile)
-        end
+        super(:@staffs, Staff, :profile)
       end
       
       def show
