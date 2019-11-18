@@ -1,0 +1,142 @@
+/*====================================== reset.css is here ========================================*/
+*{margin:0; padding:0; box-sizing:border-box; }
+table {	border-collapse:collapse; border-spacing:0;}
+fieldset,img{border:0;}
+address,caption,cite,code,dfn,em,strong,th,var {font-style:normal; font-weight:normal; }
+ol,ul { list-style:none;}
+caption,th {text-align:left;}
+h1,h2,h3,h4,h5,h6 {	font-size:100%;	font-weight:bold;}
+q:before,q:after {content:'';}
+abbr,acronym { border:0;}
+.clear{clear:both; font-size:1px;line-height:1px; display:block; height:0;}
+.clearfix:after{content:"";display:block;clear:both;}
+.last	{margin:0 !important;}
+.pad_last{padding:0 !important;}
+.no_bg {background:none !important;}
+.no_bor{border:0 none !important; }
+header,nav,section,article,aside,footer,hgroup,figure {display: block; }
+/**************************************************************************************/
+a {color:#000; text-decoration:none; outline:0 none !important; }
+h1 {font-size:24px;color: #000}
+h2 {font-size:8.04px;color: #000;font-weight: 700}
+h3 {font-size:7.91px;color: #000;font-weight: 700;}
+h4 {font-size:6px;color: #000;font-weight: 700}
+h5 {font-size:5.88px;color: #000;font-weight: 700}
+h6 {font-size:14px;color: #000;font-weight: 700}
+p {font-size: 12px;color: #000}
+/*---------------------------------------------------*/
+html {}
+body {color:#b1b1b1; font-family:"Arial", Verdana, Tahoma; font-size:12px;}
+.flt_lt {float:left; display:inline;}
+.flt_rt {float:right; display:inline;}
+
+/*-----------LayOut Start here-----------------------*/
+.wrapper									{width: 612px; margin:0 auto;}
+.container									{width:552px; margin:0 auto;}
+
+.head_section {padding: 10px 0 0 0}
+.logo {width: 453px;float: left}
+.logo a {float: left}
+.logo h1 {font-size: 14.04px;line-height: 16.04px;font-weight: 700;text-align: center;padding: 12px 0 0 0;}
+.date_sec {width: 99px;border: 1px solid #000;float: left;text-align: center;padding: 10px 0 8px 0}
+.date_sec h4 {font-weight: 700;}
+.date_sec h3 {font-weight: 400}
+.evid_main_blk {border: 1px solid #000;margin: 0 0 10px 0}
+.para_1 p {font-size: 7.91px;line-height: 9.91px;font-weight: 700;padding: 1px 3px}
+.para_1 {border-bottom: 1px solid #000;}
+.agency_main {width: 50%}
+.agency_left {width: 93px;padding: 2px 3px 2px 3px;}
+.agency_right {width: 182px;border: 1px solid
+#000;border-top: none;border-right: none;padding: 1px 0 0 3px;}
+.agency_right h4 {font-weight: 700;}
+.agency_right h4 span {font-size: 5.11px;font-weight: 700}
+.agency_right h2 {font-weight: normal;}
+.agency_left h4 {font-weight: 700;padding: 0 0 10px 0}
+.agency_left h2 {font-weight: normal;padding: 0 0 0 5px;}
+.agency_left address {font-size: 8.04px;color: #000;padding: 0 0 0 5px}
+.fax_in h4 {font-weight: 700;}
+.fax_in h4 span {font-size: 8.01px;font-weight: normal;padding: 0 0 0 3px;}
+.fax_in {border-bottom: 1px solid #000;border-top: 1px solid #000;padding: 1px 3px;}
+.code_in .code {width: 35%;padding: 1px 0 1px 3px;}
+.code_in .sub_code {width: 65%}
+.code h4 {font-weight: 700}
+.code h2 {font-weight: normal}
+.sub_code h4 {font-weight: 700}
+.code_in {border-bottom: 1px solid #000}
+.cust_id h4 {font-weight: 700;}
+.cust_id span {font-size: 8.04px;font-weight: normal;padding: 0 0 0 3px;}
+.cust_id {padding: 1px 0 1px 3px;border-bottom: 1px solid #000;}
+.insured_in h4 {font-weight: 700; padding: 0 0 10px 0}
+.insured_in address {color: #000;font-size: 8.04px;font-weight: normal;padding: 0 0 0 5px}
+.insured_in h2 {font-weight: normal;padding: 0 0 0 5px;}
+.insured_in {padding: 0 0 15px 3px;}
+.company_main {width: 50%;border-left: 1px solid #000}
+.comp_in {padding: 0 0 0px 3px;border-bottom: 1px solid #000;}
+.comp_in h4 {font-weight: 700;padding: 0 0 6px 0;}
+.comp_in address {font-weight: normal;font-size: 8.04px;color: #000;padding: 0 0 8px 20px;}
+.comp_in h2 {padding: 0 0 8px 0;font-weight: normal;}
+.loan_left {width: 50%;padding: 1px 0 0 3px;}
+.loan_right {width: 50%;padding: 1px 0 0 0}
+.loan_right span {font-size: 8.04px;color: #000;font-weight: normal}
+.loan_in {border-bottom: 1px solid #000}
+.effect_in {padding: 0px 0 0 3px;border-bottom: 1px solid #000}
+.eff_date {width: 25%}
+.exp_date {width: 25%}
+.cross {width: 6%;border-left: 1px solid #000;border-right: 1px solid #000;padding: 6px 0 6.5px 5px}
+.conti_in {width: 44%}
+.conti_in h4 {margin: 0px 0 0 5px}
+.effect_in h4 {padding: 1px 0 0 0}
+.exp_date span {font-size: 8.04px;color: #000}
+.eff_date span {font-size: 8.04px;color: #000}
+.prior {border-bottom: 1px solid #000;padding: 1px 0 0 3px;}
+.empty {border-left: 0.5px solid #000;font-size: 10px;line-height: 12px}
+.property_main_blk {border: 1px solid #000;margin: 0 0 10px 0}
+.prop_loca address {font-size: 8.04px;color: #000;padding: 0 0 0 5px}
+.prop_loca h4 {padding: 0 0 10px 0}
+.prop_loca {padding: 1px 0 8px 3px;border-bottom: 1px solid #000;}
+.prop_cont h2 {font-weight: normal}
+.prop_cont {padding: 1px 4px 0 3px;}
+
+.coverage_main_blk {border: 1px solid #000;margin: 0 0 10px 0}
+.coverage_in {width: 60%}
+.amount_in {width: 20%}
+.deduct_in {width: 20%}
+.coverage_in h4 {text-align: center;border-right: 1px solid #000;padding: 0 0 3px 0;border-bottom: 1px solid #000}
+.amount_in h4 {text-align: center;border-right: 1px solid #000;padding: 0 0 3px 0;border-bottom: 1px solid #000;}
+.deduct_in h4 {text-align: center;padding: 0 0 3px 0;border-bottom: 1px solid #000}
+.coverage_in h2 {border-bottom: 1px solid #000;border-right: 1px solid #000; padding: 0 0 2px 10px;font-weight: normal}
+.last_br_btm {border-bottom: none !important}
+.last_br_rt {border-right: none !important}
+.amount_in h2 {border-bottom: 1px solid #000;border-right: 1px solid #000;font-weight: normal;padding: 0 5px 2px 0;text-align: right}
+.deduct_in h2 {border-bottom: 1px solid #000;border-right: 1px solid #000;font-weight: normal;padding: 0 5px 2px 0;text-align: right}
+
+.remarks_head span {}
+.premium_in {border: 1px solid #000;padding: 1px 0 5px 3px;margin: 0 0 3px 0;}
+.premium_in h2 {font-weight: normal}
+.cancel_in {border: 1px solid #000;padding: 1px 0 0 3px;margin: 0 0 3px 0}
+.add_main_blk {border: 1px solid #000;margin: 0 0 96px 0}
+.name_left {width: 50%;padding: 0 0 0 3px;}
+.sign_blk {width: 50%;border-left: 1px solid #000}
+.close h2 {font-weight: normal;padding: 2px 0 3px 4px;}
+.pm_in h3 {font-weight: normal;padding: 1px 0 0px 3px;}
+.close {border-right: 1px solid #000;width: 6%;}
+.pm_in {width: 44%}
+.emp1 {width: 6%;border-left: 1px solid #000;border-right: 1px solid #000}
+.emp2 {width: 44%}
+.last_loan {border-bottom: 1px solid #000;padding: 0 0 3px 2px;border-top: 1px solid #000 }
+.auth figure img {margin: 2px 69px}
+.auth h4 {padding: 0 0 0 3px}
+.acord_text p {display: inline-block;font-size: 8.04px;font-weight: 700;width: 50%;float: left}
+.copy_right p {display: inline-block;font-size: 8.04px;font-weight: 700;width: 50%;float: left;text-align: right}
+.footer_cont p {font-size: 8.04px;text-align: center;font-weight: 700}
+footer {padding: 0 0 36px 0}
+
+/* -------Don't Remove this---------------*/
+input[type="text"], input[type="password"], input[type="datetime"], input[type="datetime-local"], input[type="date"], input[type="month"], input[type="time"], input[type="week"], input[type="number"], input[type="email"], input[type="url"], input[type="search"], input[type="tel"], input[type="color"], textarea, button, select {
+    -webkit-appearance: none; /*Safari/Chrome*/
+    -moz-appearance: none; /*Firefox*/
+    -ms-appearance: none; /*IE*/
+    -o-appearance: none; /*Opera*/
+    appearance: none;
+    -webkit-border-radius: 0; 
+}
