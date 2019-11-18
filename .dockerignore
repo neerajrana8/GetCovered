@@ -4,3 +4,4 @@ tmp/*
 keys/*
 
 ngrok
+.idea
