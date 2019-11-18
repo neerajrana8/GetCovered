@@ -42,7 +42,8 @@ class User < ApplicationRecord
   	through: :policy_users
   has_many :policy_applications,
   	through: :policy_users
-  	
+  has_many :policy_quotes,
+    through: :policies
   has_many :lease_users
   has_many :leases,
   	through: :lease_users
