@@ -16,6 +16,11 @@ namespace :docker do
   task up: :environment do
     system("docker-compose up -d --force-recreate")
   end
+
+  desc "Rails console"
+  task console: :environment do
+    system("docker-compose run web rails c")
+  end
   
   namespace :db do
   
@@ -51,5 +56,4 @@ namespace :docker do
 		Rake::Task['docker:build'].invoke
 		Rake::Task['docker:up'].invoke
   end
-  
 end
