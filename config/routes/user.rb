@@ -3,7 +3,7 @@
 scope module: :user do
   
   resources :claims,
-    only: [ :create, :show ]
+    only: [ :index, :create, :show ]
   
   resources :invoices,
     only: [ :index, :show ]
