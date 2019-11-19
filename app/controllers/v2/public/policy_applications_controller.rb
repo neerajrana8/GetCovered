@@ -23,7 +23,7 @@ module V2
 					
 					@application = PolicyApplication.new(policy_type: policy_type, carrier: carrier)
 					@application.build_from_carrier_policy_type()
-					@primary_user = User.new
+					@primary_user = ::User.new
 					@application.users << @primary_user
 					
 	      else
