@@ -11,7 +11,7 @@ scope module: :public do
   
   resources :policy_applications,
     path: "policy-applications",
-    only: [ :create, :update, :show ]
+    only: [ :create, :update, :show, :new ]
   
   resources :policy_quotes,
     path: "policy-quotes",
