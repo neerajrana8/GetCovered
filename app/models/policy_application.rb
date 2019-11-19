@@ -141,7 +141,16 @@ class PolicyApplication < ApplicationRecord
 			errors.add(:carrier, 'carrier agency must exist')
 		end
   end
-
+	
+	def build_from_carrier_policy_type
+		unless carrier.nil? || policy_type.nil?
+			carrier_policy_type = CarrierPolicyType.where(carrier: carrier, policy_type: policy_type).take
+			unless carrier_policy_type.nil?
+				self.fields = carrier_policy_type.application_fields
+				self.questions = carrier_policy_type.application_questions
+			end
+		end	
+	end
   
   private 
   

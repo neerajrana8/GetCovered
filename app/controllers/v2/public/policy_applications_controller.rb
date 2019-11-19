@@ -15,6 +15,23 @@ module V2
       def show
       end
       
+      def new
+	      selected_policy_type = params[:policy_type].blank? ? "residential" : params[:policy_type]
+	      if valid_policy_types.include?(selected_policy_type)
+		      policy_type = PolicyType.find_by_slug(selected_policy_type)
+		      carrier = selected_policy_type == "residential" ? Carrier.find(1) : Carrier.find(3)
+					
+					@application = PolicyApplication.new(policy_type: policy_type, carrier: carrier)
+					@application.build_from_carrier_policy_type()
+					@primary_user = User.new
+					@application.users << @primary_user
+					
+	      else
+          render json: { error: "Invalid policy type" },
+            		 status: :unprocessable_entity
+	      end
+	    end
+      
       def create
         if create_allowed?
           @policy_application = @substrate.new(create_params)
@@ -83,6 +100,10 @@ module V2
         def update_params
           return({}) if params[:policy_application].blank?
           to_return = {}
+        end
+        
+        def valid_policy_types
+	        return ["residential", "commercial"]
         end
         
     end

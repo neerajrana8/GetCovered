@@ -1,6 +1,6 @@
 
 # User
-scope module: :user do
+scope module: :user, path: "user" do
   
   resources :claims,
     only: [ :create, :show ]
