@@ -37,53 +37,52 @@
 # +updated_at+:: (DateTime) The last date time model was successfuly edited
 
 class Policy < ApplicationRecord
-
-  scope :in_system?, -> (in_system) { where(policy_in_system: in_system) }
-  scope :with_missed_invoices, -> {
+  scope :in_system?, ->(in_system) { where(policy_in_system: in_system) }
+  scope :with_missed_invoices, lambda {
     joins(:invoices).merge(Invoice.unpaid_past_due)
   }
 
   # Concerns
-  include CarrierQbePolicy,
-          CarrierCrumPolicy,
-          ElasticsearchSearchable
+  include ElasticsearchSearchable
+  include CarrierCrumPolicy
+  include CarrierQbePolicy
 
   belongs_to :agency
   belongs_to :account
   belongs_to :carrier
   belongs_to :policy_type
   # belongs_to :billing_profie
-  
+
   has_many :policy_insurables
   has_many :insurables,
     through: :policy_insurables
-  
+
   has_many :claims
-  
+
   has_many :policy_quotes
   has_one :policy_application
-  
+
   has_many :policy_users
   has_many :users, through: :policy_users
-    
-  has_one :primary_policy_user, -> { where(primary: true) }, 
+
+  has_one :primary_policy_user, -> { where(primary: true) },
     class_name: 'PolicyUser'
-  
+
   has_one :primary_user,
     class_name: 'User',
     through: :primary_policy_user,
     source: :user
-  
+
   has_many :policy_coverages, autosave: true
-  has_many :coverages, -> { where(enabled: true) }, 
-  	class_name: 'PolicyCoverage'
-  	
+  has_many :coverages, -> { where(enabled: true) },
+    class_name: 'PolicyCoverage'
+
   has_many :policy_premiums, autosave: true
-  has_one :premium, -> { where(enabled: true).take }, 
-  	class_name: 'PolicyPremium'
+  has_one :premium, -> { where(enabled: true).take },
+    class_name: 'PolicyPremium'
 
   has_one :premium, -> { where(enabled: true).take }, class_name: 'PolicyPremium'
- 
+
   has_many :invoices
 
   has_many :charges,
@@ -93,26 +92,26 @@ class Policy < ApplicationRecord
     through: :charges
 
   accepts_nested_attributes_for :policy_coverages, :policy_premiums
-  
-#  after_save :update_leases, if: :saved_changes_to_status?
+
+  #  after_save :update_leases, if: :saved_changes_to_status?
 
   validate :same_agency_as_account
   validate :status_allowed
   validate :carrier_agency
-	validates_presence_of :expiration_date, :effective_date
-  validate :date_order, 
-    unless: Proc.new { |pol| pol.effective_date.nil? or pol.expiration_date.nil? }	
-	
-  enum status: { AWAITING_PAYMENT: 0, AWAITING_ACH: 1, PAID: 2, BOUND: 3, BOUND_WITH_WARNING: 4, 
-                 BIND_ERROR: 5, BIND_REJECTED: 6, RENEWING: 7, RENEWED: 8, EXPIRED: 9, CANCELLED: 10, 
+  validates_presence_of :expiration_date, :effective_date
+  validate :date_order,
+    unless: proc { |pol| pol.effective_date.nil? || pol.expiration_date.nil? }
+
+  enum status: { AWAITING_PAYMENT: 0, AWAITING_ACH: 1, PAID: 2, BOUND: 3, BOUND_WITH_WARNING: 4,
+                 BIND_ERROR: 5, BIND_REJECTED: 6, RENEWING: 7, RENEWED: 8, EXPIRED: 9, CANCELLED: 10,
                  REINSTATED: 11, EXTERNAL_UNVERIFIED: 12, EXTERNAL_VERIFIED: 13 }
-	
-	enum billing_dispute_status: { UNDISPUTED: 0, DISPUTED: 1, AWATING_POSTDISPUTE_PROCESSING: 2, NOT_REQUIRED: 3 }
-  
+
+  enum billing_dispute_status: { UNDISPUTED: 0, DISPUTED: 1, AWATING_POSTDISPUTE_PROCESSING: 2, NOT_REQUIRED: 3 }
 
   def in_system?
     policy_in_system == true
   end
+
   # Perform Postdispute Processing
   #
   # Performs all queued refunds after payment disputes have been resolved.
@@ -122,26 +121,20 @@ class Policy < ApplicationRecord
   #   @policy.perform_postdispute_processing
   #   => nil
   def perform_postdispute_processing
-    if self.in_system?
+    if in_system?
       refunds.queued.each { |rfnd| rfnd.process(true) }
-      self.with_lock do
+      with_lock do
         update(billing_dispute_status: 'undisputed') if billing_dispute_status == 'awaiting_postdispute_processing'
       end
-    else
-      return nil
     end
   end
 
   def same_agency_as_account
-		if agency != account&.agency
-			errors.add(:account, 'policy must belong to the same agency as account')
-		end
+    errors.add(:account, 'policy must belong to the same agency as account') if agency != account&.agency
   end
-  
+
   def carrier_agency
-    unless agency&.carriers&.include?(carrier)
-			errors.add(:carrier, 'carrier agency must exist')
-		end
+    errors.add(:carrier, 'carrier agency must exist') unless agency&.carriers&.include?(carrier)
   end
 
   def status_allowed
@@ -156,9 +149,7 @@ class Policy < ApplicationRecord
     if BOUND? || RENEWED? || REINSTATED?
       insurables.each do |insurable|
         insurable.leases.each do |lease|
-          if lease.current?
-            lease.update_attribute(:covered, true)
-          end
+          lease.update_attribute(:covered, true) if lease.current?
         end
       end
     elsif EXPIRED? || CANCELLED?
@@ -179,12 +170,9 @@ class Policy < ApplicationRecord
     end
   end
 
-	private
-	
-    def date_order
-      if expiration_date < effective_date
-        errors.add(:expiration_date, "expiration date cannot be before effective date.")  
-      end  
-    end	
-  
+  private
+
+  def date_order
+    errors.add(:expiration_date, 'expiration date cannot be before effective date.') if expiration_date < effective_date
+  end
 end

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_10_21_213256) do
+ActiveRecord::Schema.define(version: 2019_11_19_170154) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -702,6 +702,7 @@ ActiveRecord::Schema.define(version: 2019_10_21_213256) do
     t.bigint "policy_application_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "enabled", default: false, null: false
     t.index ["policy_application_id"], name: "index_policy_coverages_on_policy_application_id"
     t.index ["policy_id"], name: "index_policy_coverages_on_policy_id"
   end
