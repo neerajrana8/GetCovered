@@ -51,6 +51,7 @@ module V2
             agency: {
               title: [ :scalar, :like ],
             },
+            agency_id: [ :scalar, :array ],
             owner: {
               profile: {
                 contact_phone: [:scalar, :like],
