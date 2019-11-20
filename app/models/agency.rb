@@ -48,9 +48,10 @@ class Agency < ApplicationRecord
   has_many :branding_profiles,
     as: :profileable
 
-  has_many :commission_strategies,
-    as: :commissionable
-  
+  has_many :commission_strategies, as: :commissionable
+	
+	has_many :commissions, as: :commissionable
+
   has_many :billing_strategies
   		
   has_many :fees,

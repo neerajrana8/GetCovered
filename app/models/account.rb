@@ -45,7 +45,11 @@ class Account < ApplicationRecord
   has_many :active_users,
     through: :active_account_users,
     source: :user
+  
+  has_many :commission_strategies, as: :commissionable
 	
+	has_many :commissions, as: :commissionable
+
 	has_many :events,
 	    as: :eventable
 	
