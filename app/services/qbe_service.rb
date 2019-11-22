@@ -259,7 +259,7 @@ class QbeService
 
       begin
         
-        call_data[:response] = HTTParty.post(Rails.application.credentials.qbe[:uri][Rails.application.credentials.rails_env.to_sym],
+        call_data[:response] = HTTParty.post(Rails.application.credentials.qbe[:uri][ENV["RAILS_ENV"].to_sym],
                                      				 body: self.compiled_rxml,
 																		 				 headers: {
 																		 				   "PreAuthenticate" => "TRUE",
@@ -280,7 +280,7 @@ class QbeService
       
       end
       
-      unless call_data[:error]	
+      unless call_data[:error]
       	
       	call_data[:data] = call_data[:response].parsed_response["Envelope"]["Body"]["processRenterRequestResponse"]["xmlOutput"]
       	xml_doc = Nokogiri::XML(call_data[:data])

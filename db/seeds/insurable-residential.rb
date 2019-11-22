@@ -130,10 +130,11 @@ require 'faker'
 @residential_community_insurable_type = InsurableType.find(1)
 @residential_unit_insurable_type = InsurableType.find(4)
 
-@accounts = Account.first(4)
+@count = ["awsdev", "production"].include?(ENV["RAILS_ENV"]) ? 4 : 1
+@accounts = Account.first(@count)
 
 @accounts.each do |account|
-	3.times do |i|
+	@count.times do |i|
 		
 		addr = @addresses[Insurable.residential_communities.count]
 		

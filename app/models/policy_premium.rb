@@ -18,15 +18,8 @@ class PolicyPremium < ApplicationRecord
   end
   
   def correct_total
-#    errors.add(:total, 'incorrect total') if total != base + taxes + total_fees
-    if total != base + taxes + total_fees
-      puts "TOTAL: #{ total }"
-      puts "TAXES: #{ taxes }"
-      puts "BASE:  #{ base }"
-      puts "FEES:  #{ total_fees }"
-      puts "RECALC: #{ base + taxes + total_fees }"
-      errors.add(:total, 'incorrect total')
-    end
+		errors.add(:total, 'incorrect total') if total != base + taxes + total_fees
+		errors.add(:calculation_base, 'incorrect calculation base') if calculation_base != base + taxes + amortized_fees
   end
   
   def set_fees
@@ -49,25 +42,41 @@ class PolicyPremium < ApplicationRecord
 		
 	end
 	
-	def calculate_fees(persist: false)
-  	
-    self.fees.each do |fee|
-      if fee.amount_type == "FLAT"
-        if fee.per_payment
-          self.total_fees += fee.amount * billing_strategy.new_business["payments"].count { |x| x > 0 }      
-        else
-          self.total_fees += fee.amount
-        end  
-      else
-        self.total_fees += (fee.amount.to_f / 100) * self.base
-      end
-    end
+	def calculate_fees(persist = false)
+		payments_count = billing_strategy.new_business["payments"]
+																		 .count { |x| x > 0 }
+		self.fees.each do |fee|
+			case fee.amount_type
+			when "FLAT"
+				if fee.per_payment
+					self.amortized_fees += fee.amount * payments_count	
+				elsif fee.amortize
+					self.amortized_fees += fee.amount.to_f / payments_count
+				elsif !fee.per_payment && 
+							!fee.amortize
+					self.deposit_fees += fee.amount 
+				end
+			when "PERCENTAGE"
+				percentage_amount = (fee.amount.to_f / 100) * self.base
+				if fee.per_payment
+					self.amortized_fees += percentage_amount * payments_count	
+				elsif fee.amortize
+					self.amortized_fees += percentage_amount.to_f / payments_count
+				elsif !fee.per_payment &&
+					 		!fee.amortize
+					self.deposit_fees += percentage_amount
+				end
+			end	
+		end 
+	  
+	  self.total_fees = self.amortized_fees + self.deposit_fees
     
     save() if persist
   end
   
-  def calculate_total(persist: false)
+  def calculate_total(persist = false)
     self.total = self.base + self.taxes + self.total_fees
+    self.calculation_base = self.base + self.taxes + self.amortized_fees
     save() if self.total > 0 && persist
   end
 end
