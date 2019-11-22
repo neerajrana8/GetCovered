@@ -702,6 +702,7 @@ ActiveRecord::Schema.define(version: 2019_11_21_195911) do
     t.bigint "policy_application_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "enabled", default: false, null: false
     t.index ["policy_application_id"], name: "index_policy_coverages_on_policy_application_id"
     t.index ["policy_id"], name: "index_policy_coverages_on_policy_id"
   end
