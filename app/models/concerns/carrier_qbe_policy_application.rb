@@ -115,8 +115,8 @@ module CarrierQbePolicyApplication
 	 					                                billing_strategy: quote.policy_application.billing_strategy,
 	 					                                policy_quote: quote
     						premium.set_fees
-    						premium.calculate_fees
-    						premium.calculate_total	 					    
+    						premium.calculate_fees(true)
+    						premium.calculate_total(true)			    
 	 					    quote_method = premium.save ? "mark_successful" : "mark_failure"                           
 	 					    quote.send(quote_method)
 	 							
