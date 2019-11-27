@@ -3,7 +3,12 @@
 scope module: :user, path: "user" do
   
   resources :claims,
-    only: [ :index, :create, :show ]
+    only: [ :index, :show, :create ] do
+      member do
+        post :attach_documents
+        delete :delete_documents
+      end
+    end
   
   resources :invoices,
     only: [ :index, :show ]
@@ -30,11 +35,5 @@ scope module: :user, path: "user" do
   
   resources :users,
     only: [ :update, :show ]
-  
+
 end
-
-
-
-
-
-

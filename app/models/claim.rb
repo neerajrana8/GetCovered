@@ -3,12 +3,13 @@
 
 class Claim < ApplicationRecord
   # Concerns
-  include RecordChange, ElasticsearchSearchable
+  include ElasticsearchSearchable
+  include RecordChange
   
   # Active Record Callbacks
-  after_initialize  :initialize_claim
+  after_initialize :initialize_claim
   
-      # Relationships
+  # Relationships
   belongs_to :claimant, 
     polymorphic: true,
     required: true
@@ -20,17 +21,19 @@ class Claim < ApplicationRecord
   has_many :histories,
     as: :recordable
 
-    # Validations
+  has_many_attached :documents
+
+  # Validations
   validates_presence_of :subject, :description, :time_of_loss, :claimant
   
   validate :time_of_loss_cannot_be_in_future,
-    unless: Proc.new { |clm| clm.time_of_loss.nil? }
+    unless: proc { |clm| clm.time_of_loss.nil? }
 
   validate :ownership_matches_up,
-    unless: Proc.new { |clm| clm.claimant.nil? }
+    unless: proc { |clm| clm.claimant.nil? }
 
   # Enum Options
-  enum status: [:submitted, :read, :completed, :rejected]
+  enum status: %i[submitted read completed rejected]
   
   settings index: { number_of_shards: 1 } do
     mappings dynamic: 'false' do
@@ -43,18 +46,15 @@ class Claim < ApplicationRecord
 
   private
   
-    def initialize_claim
-      self.time_of_loss ||= Time.zone.today
-    end
+  def initialize_claim
+    self.time_of_loss ||= Time.zone.today
+  end
 
-    def time_of_loss_cannot_be_in_future
-      if time_of_loss > Time.current
-        errors.add(:time_of_loss, "cannot be in future")  
-      end
-    end
+  def time_of_loss_cannot_be_in_future
+    errors.add(:time_of_loss, 'cannot be in future') if time_of_loss > Time.current
+  end
 
-    def ownership_matches_up
-      # TODO need to refactor
-    end
+  def ownership_matches_up
+    # TODO: need to refactor
+  end
 end
-

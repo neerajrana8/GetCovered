@@ -8,7 +8,8 @@ MAINTAINER dylan@getcoveredllc.com
 RUN apt-get update && apt-get install -y \ 
   build-essential \ 
   locales \ 
-  nodejs
+  nodejs \
+  imagemagick
 
 # Use en_US.UTF8 as our locale
 RUN locale-gen en_US.UTF8 

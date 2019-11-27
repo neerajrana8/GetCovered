@@ -6,28 +6,37 @@ module V2
   module User
     class ClaimsController < UserController
       before_action :set_claim,
-        only: [:show]
+        only: %i[show attach_documents delete_documents]
 
       before_action :set_substrate,
-        only: [:create, :index]
+        only: %i[create index]
 
       def index
         super(:@claims, @substrate)
       end
 
-      def show
-        render json: @claim
-      end
+      def show; end
 
       def create
         @claim = @substrate.new(claim_params)
         if @claim.errors.none? && @claim.save_as(current_user)
-          render json: @claim,
-                 status: :created
+          render :show, status: :created
         else
           render json: @claim.errors,
                  status: :unprocessable_entity
         end
+      end
+
+      def attach_documents
+        params.permit(documents: [])[:documents].each do |file|
+          @claim.documents.attach(file)
+        end
+
+        render :show, status: :created
+      end
+
+      def delete_documents
+        @claim.documents.where(id: params.permit(documents_ids: [])[:documents_ids]).purge
       end
 
       private
