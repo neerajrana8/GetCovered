@@ -63,7 +63,7 @@ module V2
 
         to_return = params.require(:claim).permit(
           :description, :insurable_id, :policy_id, :subject,
-          :time_of_loss
+          :time_of_loss, :type_of_loss
         )
         to_return
       end

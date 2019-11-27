@@ -24,7 +24,7 @@ class Claim < ApplicationRecord
   has_many_attached :documents
 
   # Validations
-  validates_presence_of :subject, :description, :time_of_loss, :claimant
+  validates_presence_of :subject, :description, :time_of_loss, :type_of_loss, :claimant
   
   validate :time_of_loss_cannot_be_in_future,
     unless: proc { |clm| clm.time_of_loss.nil? }
@@ -34,7 +34,9 @@ class Claim < ApplicationRecord
 
   # Enum Options
   enum status: %i[submitted read completed rejected]
-  
+
+  enum type_of_loss: { OTHER: 0, FIRE: 1, WATER: 2, THEFT: 3 }
+
   settings index: { number_of_shards: 1 } do
     mappings dynamic: 'false' do
       indexes :subject, type: :text, analyzer: 'english'
