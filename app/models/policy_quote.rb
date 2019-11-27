@@ -129,17 +129,18 @@ class PolicyQuote < ApplicationRecord
     billing_started = false
     
     puts !policy.nil?
-    puts policy_premium.total > 0
+    puts policy_premium.calculation_base > 0
     puts accepted?
     
-    if !policy.nil? && policy_premium.total > 0 && status == "accepted"
+    if !policy.nil? && policy_premium.calculation_base > 0 && status == "accepted"
       policy_application.billing_strategy.new_business['payments'].each_with_index do |payment, index|
-        amount = policy_premium.total * (payment.to_f / 100)
+        amount = policy_premium.calculation_base * (payment.to_f / 100)
         next if amount == 0
 
         # Due date is today for the first invoice. After that it is due date
         # after effective date of the policy
         due_date = index == 0 ? status_updated_on : policy.effective_date + index.months
+        amount = index == 0 ? (amount + policy_premium.deposit_fees) : amount
         invoice = policy.invoices.new do |inv|
           inv.due_date        = due_date
           inv.available_date  = due_date + available_period
