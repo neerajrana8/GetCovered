@@ -42,7 +42,8 @@ class Address < ApplicationRecord
       indexes :plus_four, type: :text, analyzer: 'english'
       indexes :full, type: :text, analyzer: 'english'
       indexes :full_searchable, type: :text, analyzer: 'english'
-      indexes :location, type: 'geo_point'
+      indexes :addressable_type, type: :text, analyzer: 'english'
+#       indexes :location, type: 'geo_point'
       indexes :timezone, type: :text, analyzer: 'english'
       indexes :primary, type: :boolean
       indexes :created_at, type: :date
@@ -143,6 +144,27 @@ class Address < ApplicationRecord
 		unless addressable.nil?
 			self.primary = true if addressable.addresses.count == 0
 		end  
+	end
+
+	def self.search_insurables(query)
+	  self.search({
+	    query: {
+	      bool: {
+	        must: [
+	        {
+	          multi_match: {
+	            query: query,
+	            fields: [:full, :full_searchable]
+	          }
+	        },
+	        {
+	          match: {
+	            addressable_type: "Insurable"
+	          }
+	        }]
+	      }
+	    }
+	  })
 	end
       
 end
