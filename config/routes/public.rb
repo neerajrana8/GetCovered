@@ -2,6 +2,9 @@
 # Public
 scope module: :public do
   
+  resources :addresses,
+  	only: [:index]
+  
   resources :billing_strategies,
     path: "billing-strategies",
     only: [ :index ]
