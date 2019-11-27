@@ -78,10 +78,7 @@ class Policy < ApplicationRecord
     class_name: 'PolicyCoverage'
 
   has_many :policy_premiums, autosave: true
-  has_one :premium, -> { where(enabled: true).take },
-    class_name: 'PolicyPremium'
-
-  has_one :premium, -> { where(enabled: true).take }, class_name: 'PolicyPremium'
+  has_one :premium, -> { find_by(enabled: true) }, class_name: 'PolicyPremium'
 
   has_many :invoices
 
@@ -162,6 +159,10 @@ class Policy < ApplicationRecord
         end
       end
     end
+  end
+
+  def residential?
+    policy_type == PolicyType.residential
   end
 
   settings index: { number_of_shards: 1 } do

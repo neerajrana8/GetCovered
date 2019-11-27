@@ -3,8 +3,7 @@
 
 class Claim < ApplicationRecord
   # Concerns
-  include ElasticsearchSearchable
-  include RecordChange
+  include RecordChange, ElasticsearchSearchable
   
   # Active Record Callbacks
   after_initialize :initialize_claim
@@ -50,6 +49,7 @@ class Claim < ApplicationRecord
   
   def initialize_claim
     self.time_of_loss ||= Time.zone.today
+    self.insurable = policy.insurables.take if policy.residential?
   end
 
   def time_of_loss_cannot_be_in_future

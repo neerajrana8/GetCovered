@@ -3,7 +3,8 @@
 
 class Insurable < ApplicationRecord
   # Concerns
-  include CarrierQbeInsurable, ElasticsearchSearchable#, EarningsReport, RecordChange
+  include ElasticsearchSearchable
+  include CarrierQbeInsurable # , EarningsReport, RecordChange
   
   belongs_to :account
   belongs_to :insurable, optional: true
@@ -28,14 +29,14 @@ class Insurable < ApplicationRecord
   
   accepts_nested_attributes_for :addresses
   
-  enum category: ['property', 'entity']
+  enum category: %w[property entity]
   
   validate :must_belong_to_same_account_if_parent_insurable
   
   
-  ['Residential', 'Commercial'].each do |major_type|
-    ['Community', 'Unit'].each do |minor_type|
-      scope "#{ major_type.downcase }_#{ minor_type.downcase.pluralize }".to_sym, -> { joins(:insurable_type).where("insurable_types.title = '#{ major_type } #{ minor_type }'") }
+  %w[Residential Commercial].each do |major_type|
+    %w[Community Unit].each do |minor_type|
+      scope "#{major_type.downcase}_#{minor_type.downcase.pluralize}".to_sym, -> { joins(:insurable_type).where("insurable_types.title = '#{major_type} #{minor_type}'") }
     end
   end
   
@@ -48,11 +49,10 @@ class Insurable < ApplicationRecord
   #
   
   def primary_address
-    if addresses.count == 0
-      return !insurable.nil? ? insurable.primary_address() : 
-      addresses.where(primary: true).take
+    if addresses.count.zero?
+      return insurable.primary_address unless insurable.nil?
     else
-      return addresses.where(primary: true).take
+      addresses.find_by(primary: true)
     end
   end
   
@@ -60,8 +60,8 @@ class Insurable < ApplicationRecord
   #
   
   def primary_staff
-    assignment = assignments.where(primary: true).take
-    return assignment.staff.nil? ? nil : assignment.staff
+    assignment = assignments.find_by(primary: true)
+    assignment.staff.nil? ? nil : assignment.staff
   end
   
   # Insurable.create_carrier_profile(carrier_id)
@@ -70,28 +70,26 @@ class Insurable < ApplicationRecord
   def create_carrier_profile(carrier_id)
     carrier = Carrier.find(carrier_id)
     if !carrier.nil? && carrier.carrier_insurable_types
-      .exists?(insurable_type: insurable_type)
+        .exists?(insurable_type: insurable_type)
       carrier_insurable_type = carrier.carrier_insurable_types
-      .where(insurable_type: insurable_type).take
-      self.carrier_insurable_profiles.create!(traits: carrier_insurable_type.profile_traits, 
-      data: carrier_insurable_type.profile_data,
-      carrier: carrier)
-    end  	
+        .find_by(insurable_type: insurable_type)
+      carrier_insurable_profiles.create!(traits: carrier_insurable_type.profile_traits, 
+                                         data: carrier_insurable_type.profile_data,
+                                         carrier: carrier)
+    end    
   end
   
   # Insurable.carrier_profile(carrier_id)
   #
   
   def carrier_profile(carrier_id)
-    unless carrier_id.nil?
-      return carrier_insurable_profiles.where(carrier_id: carrier_id).take 
-    end
+    return carrier_insurable_profiles.where(carrier_id: carrier_id).take unless carrier_id.nil?
   end
   
   def must_belong_to_same_account_if_parent_insurable
     return if insurable.nil?
     
-    errors.add(:account, "must belong to same account as parent") if insurable.account != self.account
+    errors.add(:account, 'must belong to same account as parent') if insurable.account != account
   end
   
   def authorized_to_provide_for_address?(carrier_id, policy_type_id)
@@ -106,9 +104,8 @@ class Insurable < ApplicationRecord
         zip_code: address.zip_code,
         plus_four: address.plus_four
       }
-      authorized = self.account.agency.offers_policy_type_in_region(args)
+      authorized = account.agency.offers_policy_type_in_region(args)
     end
     authorized
   end
-
 end
