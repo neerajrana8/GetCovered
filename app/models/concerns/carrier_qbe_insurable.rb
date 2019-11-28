@@ -584,7 +584,7 @@ module CarrierQbeInsurable
 	                if raw_schedule =~ /cov_base_premium|cov_base_premium_pay_in_full/
 	                  schedule = "coverage_c"
 	                  paid_in_full = raw_schedule == "cov_base_premium_pay_in_full" ? true : false
-	                  interval = "year" if paid_in_full == true
+	                  interval = "annual" if paid_in_full == true
 	                  
 	                elsif raw_schedule == "liability_premium"
 	                  schedule = "liability"
@@ -593,7 +593,7 @@ module CarrierQbeInsurable
 	                elsif raw_schedule =~ /liabilityonly_premium|liabilityonly_premium_pay_in_full/
 	                  schedule = "liability_only"
 	                  paid_in_full = raw_schedule == "liabilityonly_premium_pay_in_full" ? true : false
-	                  interval = "year" if paid_in_full == true
+	                  interval = "annual" if paid_in_full == true
 	                  liability_only = true
 	                  
 	                elsif raw_schedule =~ /water_backup|pet_damage|policy_fee|earthquake_coverage|bedbug|equip/
@@ -641,15 +641,15 @@ module CarrierQbeInsurable
 	                  end
 	                  
 	                else
-	                  interval_options = ["month", "quarter_year", "half_year"]
-	                  interval_options.push('year') if same_price_across_the_board || split_deductible == true
+	                  interval_options = ["month", "quarter", "bi_annual"]
+	                  interval_options.push('annual') if same_price_across_the_board || split_deductible == true
 	                  
 	                  interval_options.each do |cur_interval|
 	                    
 	                    rate = self.insurable_rates.new(
 	                      :schedule => schedule,
 	                      :sub_schedule => sub_schedule,
-	                      :paid_in_full => cur_interval == "year" ? true : false,
+	                      :paid_in_full => cur_interval == "annual" ? true : false,
 	                      :liability_only => liability_only,
 	                      :interval => cur_interval,
 	                      :premium => (qbe_rate.attributes["v"].value.to_i * 100),
