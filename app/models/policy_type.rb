@@ -13,6 +13,7 @@ class PolicyType < ApplicationRecord
     through: :carrier_policy_types
   
   has_many :commission_strategies
+  has_many :billing_strategies
   
   # Validations
   validates :title, presence: true, uniqueness: true

@@ -47,7 +47,7 @@ class InsurableRate < ApplicationRecord
 #       
 #   end
   
-  enum interval: ["month", "quarter_year", "half_year", "year"]
+  enum interval: ["month", "quarter", "bi_annual", "annual"]
 
   private
   

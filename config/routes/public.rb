@@ -10,7 +10,13 @@ scope module: :public do
     only: [ :index ]
   
   resources :insurables,
-    only: [ :index, :show ]
+    only: [ :index, :show ] do
+    member do
+			resources :insurable_rates,
+				path: 'rates',
+				only: [:index]	    
+	  end
+	end
   
   resources :policy_applications,
     path: "policy-applications",
@@ -21,9 +27,3 @@ scope module: :public do
     only: [ :update, :show ]
   
 end
-
-
-
-
-
-

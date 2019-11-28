@@ -6,15 +6,19 @@ module V2
   module Public
     class BillingStrategiesController < PublicController
       
-      before_action :set_substrate,
-        only: [:index]
+#       before_action :set_substrate,
+#         only: [:index]
       
       def index
-        if params[:short]
-          super(:@billing_strategies, @substrate)
-        else
-          super(:@billing_strategies, @substrate)
-        end
+	      policy_type = params[:policy_type].presence ? params[:policy_type] : "residential"
+	      agency_id = params[:agency_id].presence ? params[:agency_id] : 1
+	      
+	      billing_strategy_policy_type = PolicyType.find_by_slug(policy_type)
+	      @billing_strategies = billing_strategy_policy_type.billing_strategies.where(agency_id: agency_id)
+		    
+		    pp @billing_strategies
+		    
+# 		    super(:@billing_strategies, @substrate)
       end
       
       
