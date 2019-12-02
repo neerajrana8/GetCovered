@@ -11,7 +11,7 @@ awsdev:
   access_key_id: <%= Rails.application.credentials.dig(:aws, :awsdev, :access_key_id) %>
   secret_access_key: <%= Rails.application.credentials.dig(:aws, :awsdev, :secret_access_key) %>
   region: us-west-2
-  bucket: get-covered-dev
+  bucket: get-covered-v2-awsdev
 
 # Remember not to checkin your GCS keyfile to a repository
 # google:

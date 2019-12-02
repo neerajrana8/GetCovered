@@ -7,6 +7,6 @@ development: &default
 test:
   host: http://elasticsearch:9200
 awsdev:
-  host: https://search-gc-nonprod-esd-sv27jbj3vohqctw5o5672xg3a4.us-west-2.es.amazonaws.com:80
+  host: https://search-gc-nonprod-esd-sv27jbj3vohqctw5o5672xg3a4.us-west-2.es.amazonaws.com
 production:
   host: Rails.application.secrets.elastic_url
