@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_11_26_114312) do
+ActiveRecord::Schema.define(version: 2019_12_03_190739) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -951,12 +951,15 @@ ActiveRecord::Schema.define(version: 2019_11_26_114312) do
     t.string "stripe_id"
     t.jsonb "payment_methods"
     t.integer "current_payment_method"
+    t.string "mailchimp_id"
+    t.integer "mailchimp_category", default: 0
     t.index ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["invitation_token"], name: "index_users_on_invitation_token", unique: true
     t.index ["invitations_count"], name: "index_users_on_invitations_count"
     t.index ["invited_by_id"], name: "index_users_on_invited_by_id"
     t.index ["invited_by_type", "invited_by_id"], name: "index_users_on_invited_by_type_and_invited_by_id"
+    t.index ["mailchimp_id"], name: "index_users_on_mailchimp_id", unique: true
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
     t.index ["uid", "provider"], name: "index_users_on_uid_and_provider", unique: true
   end
