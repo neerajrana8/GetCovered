@@ -6,17 +6,13 @@ module V2
   module StaffAgency
     class AccountsController < StaffAgencyController
       
-      before_action :set_account,
-        only: [:update, :show]
-      
-      before_action :set_substrate,
-        only: [:create, :index]
-      
+      before_action :set_account, only: [:update, :show]
+            
       def index
         if params[:short]
-          super(:@accounts, current_staff.organizable.agency.accounts)
+          super(:@accounts, current_staff.organizable.accounts)
         else
-          super(:@accounts, current_staff.organizable.agency.accounts, :agency)
+          super(:@accounts, current_staff.organizable.accounts, :agency)
         end
       end
       
@@ -26,7 +22,7 @@ module V2
       
       def create
         if create_allowed?
-          @account = current_staff.organizable.agency.accounts.new(account_params)
+          @account = current_staff.organizable.accounts.new(account_params)
           if !@account.errors.any? && @account.save
             render json: @account, status: :created
           else
@@ -67,18 +63,9 @@ module V2
         end
         
         def set_account
-          @account = current_staff.organizable.agency.accounts.find_by(id: params[:id])
+          @account = current_staff.organizable.accounts.find_by(id: params[:id])
         end
-        
-        def set_substrate
-          super
-          if @substrate.nil?
-            @substrate = current_staff.organizable
-          elsif !params[:substrate_association_provided]
-            @substrate = @substrate.accounts
-          end
-        end
-                
+                        
         def account_params
           params.require(:account).permit(
             :enabled, :staff_id, :title, :whitelabel, contact_info: {},
