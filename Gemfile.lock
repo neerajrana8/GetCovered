@@ -60,6 +60,7 @@ GEM
     ast (2.4.0)
     attr_encrypted (3.0.3)
       encryptor (~> 3.0.0)
+    awesome_print (1.8.0)
     aws-eventstream (1.0.3)
     aws-partitions (1.228.0)
     aws-sdk (3.0.1)
@@ -1147,6 +1148,7 @@ PLATFORMS
 DEPENDENCIES
   StreetAddress
   attr_encrypted (~> 3.0.0)
+  awesome_print
   aws-sdk (~> 3)
   bootsnap (>= 1.1.0)
   byebug

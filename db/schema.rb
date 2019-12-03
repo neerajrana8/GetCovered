@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_11_26_114312) do
+ActiveRecord::Schema.define(version: 2019_12_03_155920) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -610,6 +610,18 @@ ActiveRecord::Schema.define(version: 2019_11_26_114312) do
     t.index ["notifiable_type", "notifiable_id"], name: "index_notifications_on_notifiable_type_and_notifiable_id"
   end
 
+  create_table "payment_profiles", force: :cascade do |t|
+    t.string "source_id"
+    t.integer "source_type"
+    t.string "fingerprint"
+    t.boolean "default_profile", default: false
+    t.boolean "active"
+    t.bigint "user_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id"], name: "index_payment_profiles_on_user_id"
+  end
+
   create_table "payments", force: :cascade do |t|
     t.boolean "active"
     t.integer "status"
@@ -962,6 +974,7 @@ ActiveRecord::Schema.define(version: 2019_11_26_114312) do
   end
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "payment_profiles", "users"
   add_foreign_key "payments", "invoices"
   add_foreign_key "policy_coverages", "policies"
   add_foreign_key "policy_coverages", "policy_applications"

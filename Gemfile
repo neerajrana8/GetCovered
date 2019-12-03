@@ -16,7 +16,6 @@ gem 'redis', '~> 4.0'
 # Use ActiveModel has_secure_password
 # gem 'bcrypt', '~> 3.1.7'
 
-
 # Use ActiveStorage variant
 # gem 'mini_magick', '~> 4.8'
 
@@ -36,23 +35,23 @@ gem 'httparty'
 gem 'pry'
 
 # rack cors for api access to application
-gem 'rack-cors', :require => 'rack/cors'
+gem 'rack-cors', require: 'rack/cors'
 
 # attr-encrypted for securing data
-gem "attr_encrypted", "~> 3.0.0"
+gem 'attr_encrypted', '~> 3.0.0'
 
 # Devise for authentication
-gem 'devise', ">= 4.7.1"
-gem 'devise_token_auth', ">= 1.1.3"
-gem 'omniauth'
+gem 'devise', '>= 4.7.1'
 gem 'devise_invitable', '>= 2.0.1'
+gem 'devise_token_auth', '>= 1.1.3'
+gem 'omniauth'
 
 # Getting some knowledge
 gem 'newrelic_rpm'
 
 # Stripe Gem For Payments
-gem 'stripe'
 gem 'money'
+gem 'stripe'
 
 # Sidekiq for background job processing
 gem 'sidekiq'
@@ -72,7 +71,7 @@ gem 'mailgun-ruby', '~>1.1.6'
 gem 'premailer-rails'
 
 gem 'geocoder'
-gem 'StreetAddress', :require => "street_address"
+gem 'StreetAddress', require: 'street_address'
 
 gem 'elasticsearch-model', github: 'elastic/elasticsearch-rails', branch: '5.x'
 gem 'elasticsearch-rails', github: 'elastic/elasticsearch-rails', branch: '5.x'
@@ -87,27 +86,29 @@ gem 'mini_magick'
 
 group :development, :test do
   # Call 'byebug' anywhere in the code to stop execution and get a debugger console
-  gem 'byebug', platforms: [:mri, :mingw, :x64_mingw]
-  gem 'faker'
-  gem "factory_bot_rails"
-  gem 'rspec-rails'
-  gem 'rails-controller-testing'
-  gem 'guard-rspec'
+  gem 'byebug', platforms: %i[mri mingw x64_mingw]
   gem 'database_cleaner'
+  gem 'factory_bot_rails'
+  gem 'faker'
+  gem 'guard-rspec'
+  gem 'rails-controller-testing'
+  gem 'rspec-rails'
   gem 'rubocop', '~> 0.63.1', require: false
   # RDoc for Documentation
   gem 'rdoc'
   # Roo for spreadsheet interaction
-  gem "roo", "~> 2.8.0"
+  gem 'roo', '~> 2.8.0'
+
+  gem 'awesome_print'
 end
 
 group :development do
   gem 'listen', '>= 3.0.5', '< 3.2'
   # Spring speeds up development by keeping your application running in the background. Read more: https://github.com/rails/spring
+  gem 'rails-erd'
   gem 'spring'
   gem 'spring-watcher-listen', '~> 2.0.0'
-  gem 'rails-erd'
 end
 
 # Windows does not include zoneinfo files, so bundle the tzinfo-data gem
-gem 'tzinfo-data', platforms: [:mingw, :mswin, :x64_mingw, :jruby]
+gem 'tzinfo-data', platforms: %i[mingw mswin x64_mingw jruby]
