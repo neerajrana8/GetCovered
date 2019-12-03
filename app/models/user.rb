@@ -1,6 +1,7 @@
 # User model
 # file: app/models/user.rb
 # frozen_string_literal: true
+require 'digest'
 
 class User < ApplicationRecord
   # Include default devise modules. Others available are:
@@ -213,10 +214,68 @@ class User < ApplicationRecord
   def convert_prospect_to_customer
     if !mailchimp_id.nil? &&
        mailchimp_category == "prospect"
+
+      data_center = Rails.application.credentials.mailchimp[:api_key].partition('-').last
+      prospect_url = "https://#{ data_center }.api.mailchimp.com/3.0/lists/#{ Rails.application.credentials.mailchimp[:list_id][ENV["RAILS_ENV"].to_sym] }/segments/#{ Rails.application.credentials.mailchimp[:tags][:prospect][ENV["RAILS_ENV"].to_sym] }/members/#{ Digest::MD5.hexdigest self.email }"
+      customer_url = "https://#{ data_center }.api.mailchimp.com/3.0/lists/#{ Rails.application.credentials.mailchimp[:list_id][ENV["RAILS_ENV"].to_sym] }/segments/#{ Rails.application.credentials.mailchimp[:tags][:customer][ENV["RAILS_ENV"].to_sym] }/members"       
+      customer_post_data = {
+        "email_address": self.email
+      }
+
+      event = events.create(
+        verb: 'post', 
+        format: 'json', 
+        interface: 'REST',
+        process: 'mailchimp_remove_prospect_tag', 
+        endpoint: prospect_url,
+        request: {}.to_json,
+        started: Time.now
+      )
+
+      prospect_request = HTTParty.delete(prospect_url,
+  										 				           headers: {
+            										 				   "Authorization" => "apikey #{ Rails.application.credentials.mailchimp[:api_key] }",
+            										 				   "Content-Type" => "application/json"
+                                 				 })    
       
-      # Blank For Now... 
-         
+      if prospect_request.code == 204
+        event.update response: prospect_request.to_json, status: 'success', completed: Time.now
+        
+        customer_event = events.create(
+          verb: 'post', 
+          format: 'json', 
+          interface: 'REST',
+          process: 'mailchimp_add_customer_tag', 
+          endpoint: customer_url,
+          request: customer_post_data.to_json,
+          started: Time.now
+        )        
+
+        customer_request = HTTParty.post(customer_url,
+        											 				   headers: {
+        											 				     "Authorization" => "apikey #{ Rails.application.credentials.mailchimp[:api_key] }",
+        											 				     "Content-Type" => "application/json"
+                               				   },
+                                				 body: customer_post_data.to_json)
+                                				 
+        if customer_request.code == 200
+          customer_event.update response: customer_request.to_json, status: 'success', completed: Time.now
+          self.update mailchimp_category: "customer"
+        else
+          customer_event.update response: customer_request.to_json, status: 'error', completed: Time.now
+        end
+      else
+        event.update response: prospect_request.to_json, status: 'error', completed: Time.now
+      end
     end  
+  end
+  
+  def hack_method(method=nil)
+    if ["local", "development"].include?(ENV["RAILS_ENV"])
+      self.send(method) unless method.nil?
+    else
+      return "ONLY WORKS IN LOCAL AND DEVELOPMENT ENVIRONMENTS"  
+    end
   end
     
   private
@@ -246,8 +305,7 @@ class User < ApplicationRecord
         post_data[:merge_fields][:FNAME] = profile.first_name unless profile.first_name.nil?
         post_data[:merge_fields][:LNAME] = profile.last_name unless profile.last_name.nil?
         post_data[:merge_fields][:PHONE] = profile.contact_phone unless profile.contact_phone.nil?
-        
-        tags = ["local", "development"].include?(ENV["RAILS_ENV"]) ? post_data[:tags].push("Rage With Dev") : post_data[:tags].push(self.mailchimp_category)
+        post_data[:tags].push(self.mailchimp_category)
         
         data_center = Rails.application.credentials.mailchimp[:api_key].partition('-').last
         url = "https://#{ data_center }.api.mailchimp.com/3.0/lists/#{ Rails.application.credentials.mailchimp[:list_id][ENV["RAILS_ENV"].to_sym] }/members"
@@ -268,8 +326,6 @@ class User < ApplicationRecord
 											 				    "Content-Type" => "application/json"
                        				  },
                         				body: post_data.to_json)
-                        				 
-        pp request
         
         if request.has_key?("unique_email_id")
           self.update mailchimp_id: request["unique_email_id"]  
