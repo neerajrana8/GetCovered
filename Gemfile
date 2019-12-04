@@ -50,8 +50,8 @@ gem 'omniauth'
 gem 'newrelic_rpm'
 
 # Stripe Gem For Payments
-gem 'money'
 gem 'stripe'
+gem 'money'
 
 # Sidekiq for background job processing
 gem 'sidekiq'
