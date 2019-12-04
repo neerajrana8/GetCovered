@@ -177,16 +177,23 @@ class QbeService
     elsif self.action == "SendPolicyInfo"
      
       unless obj.nil?
+	      
+	      application = obj.policy_application
+	      premium = obj.policy_premium
+	      
         options[:data] = {
-          policy: obj,
-          optional_rates: obj.rates.optional,
-          community: obj.community,
-          address: obj.community.address,
-          user: obj.user,
-          users: users,
-          unit: obj.unit,
-          invoice: obj.invoices.complete.first,
-          account: obj.account
+	        quote: obj,
+	        application: application,
+	        premium: premium,
+	        billing_strategy: application.billing_strategy,
+          optional_rates: application.insurable_rates.optional,
+          community: application.insurable.insurable,
+          address: application.insurable.insurable.primary_address(),
+          user: application.primary_user(),
+          users: application.users.where.not(email: application.primary_user().email),
+          unit: application.insurable,
+          account: application.account,
+          agency: application.agency
         }
       else
         return false

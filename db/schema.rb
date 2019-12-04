@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_12_03_190739) do
+ActiveRecord::Schema.define(version: 2019_12_04_033148) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -707,6 +707,8 @@ ActiveRecord::Schema.define(version: 2019_12_03_190739) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.bigint "billing_strategy_id"
+    t.boolean "auto_renew", default: true
+    t.boolean "auto_pay", default: true
     t.index ["account_id"], name: "index_policy_applications_on_account_id"
     t.index ["agency_id"], name: "index_policy_applications_on_agency_id"
     t.index ["billing_strategy_id"], name: "index_policy_applications_on_billing_strategy_id"
@@ -760,6 +762,7 @@ ActiveRecord::Schema.define(version: 2019_12_03_190739) do
     t.integer "calculation_base", default: 0
     t.integer "deposit_fees", default: 0
     t.integer "amortized_fees", default: 0
+    t.integer "carrier_base", default: 0
     t.index ["billing_strategy_id"], name: "index_policy_premia_on_billing_strategy_id"
     t.index ["commission_strategy_id"], name: "index_policy_premia_on_commission_strategy_id"
     t.index ["policy_id"], name: "index_policy_premia_on_policy_id"

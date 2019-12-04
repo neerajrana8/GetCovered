@@ -18,6 +18,7 @@
 			account: lease.account
 		)
 		
+		application.build_from_carrier_policy_type()
 		application.insurables << lease.insurable
 		
 		if application.save()
@@ -25,16 +26,16 @@
 			application.insurables << lease.insurable
 			lease.users.each { |u| application.users << u }
 			
-			application.policy_application_answers.each do |answer|
-				
-				# Set Number of Insured on applicable
-				# Policy Application Answer
-				if answer.policy_application_field_id == 1
-					answer.data['answer'] = application.users.count 
-					answer.save()
-				end
-				
-			end
+# 			application.policy_application_answers.each do |answer|
+# 				
+# 				# Set Number of Insured on applicable
+# 				# Policy Application Answer
+# 				if answer.policy_application_field_id == 1
+# 					answer.data['answer'] = application.users.count 
+# 					answer.save()
+# 				end
+# 				
+# 			end
 		  
 		  # If application is set as complete
       if application.update status: 'complete'
@@ -74,7 +75,9 @@
 	        coverage_c_rate = coverage_c_rates[rand(0..(coverage_c_rates.count - 1))]
 	        liability_rate = liability_rates[rand(0..(liability_rates.count - 1))]		      					
 
-					application.qbe_estimate([coverage_c_rate, liability_rate])
+					application.insurable_rates << coverage_c_rate
+					application.insurable_rates << liability_rate
+					application.qbe_estimate()
 					quote = application.policy_quotes.first
 					
 					# Quoting Policy Application
