@@ -58,65 +58,69 @@ class PolicyQuote < ApplicationRecord
 		method = "#{ policy_application.carrier.integration_designation }_bind"
 		
 		if quoted? || error?
-			self.set_qbe_external_reference if policy_application.carrier.integration_designation == "QBE" 
-			self.send(method)
-#     			
-#   		policy = build_policy(
-#     		effective_date: policy_application.effective_date,
-#     		expiration_date: policy_application.expiration_date,
-#     		auto_renew: policy_application.auto_renew,
-#     		auto_pay: policy_application.auto_pay,
-#     		policy_in_system: true,
-#     		system_purchased: true,
-#     		billing_enabled: true,
-#     		serviceable: policy_application.carrier.syncable,
-#     		policy_type: policy_application.policy_type,
-#     		agency: policy_application.agency,
-#     		account: policy_application.account,
-#     		carrier: policy_application.carrier
-#   		)
-#   		
-#   		if policy.save
-#     		policy.reload()
-#     		
-#     		# Add users to policy
-#     		policy_application.policy_users
-#     		                  .each do |pu|
-#       	  pu.update policy: policy	
-#         end
-#         
-#         # Add insurables to policy
-#         policy_application.policy_insurables
-#                           .each do |pi|
-#           pi.update policy: policy
-#         end
-#         
-#         # Add rates to policy
-#         policy_rates.each do |pr|
-#           pr.update policy: policy  
-#         end
-# 
-# 				
-#     		
-#         if update(policy: policy, status: "accepted") && 
-#       		 policy_application.update(policy: policy) && 
-#       		 policy_premium.update(policy: policy)
-#            
-#       		if start_billing()
-#       			success = true # if self.send(method)
-#       		end       
-#         
-#         else
-#           # If self.policy, policy_application.policy or 
-#           # policy_premium.policy cannot be set correctly
-#           update status: 'error'
-#         end
-#       else
-#         # If policy cannot be created      
-#         update status: 'error'
-#         pp policy.errors
-#       end
-# 		
+			self.set_qbe_external_reference if policy_application.carrier.id == 1 
+			bind_request = self.send(method)
+      
+      unless bind_request[:error]
+    		policy = build_policy(
+      		number: bind_request[:data][:policy_number],
+      		status: bind_request[:data][:status] == "WARNING" ? "BOUND_WITH_WARNING" : "BOUND",
+      		effective_date: policy_application.effective_date,
+      		expiration_date: policy_application.expiration_date,
+      		auto_renew: policy_application.auto_renew,
+      		auto_pay: policy_application.auto_pay,
+      		policy_in_system: true,
+      		system_purchased: true,
+      		billing_enabled: true,
+      		serviceable: policy_application.carrier.syncable,
+      		policy_type: policy_application.policy_type,
+      		agency: policy_application.agency,
+      		account: policy_application.account,
+      		carrier: policy_application.carrier
+    		)      
+
+    		if policy.save
+      		policy.reload()
+      		
+      		# Add users to policy
+      		policy_application.policy_users
+      		                  .each do |pu|
+        	  pu.update policy: policy
+        	  pu.user.convert_prospect_to_customer()
+          end
+          
+          # Add insurables to policy
+          policy_application.policy_insurables
+                            .each do |pi|
+            pi.update policy: policy
+          end
+          
+          # Add rates to policy
+          policy_application.policy_rates.each do |pr|
+            pr.update policy: policy  
+          end
+  
+          if update(policy: policy, status: "accepted") && 
+        		 policy_application.update(policy: policy) && 
+        		 policy_premium.update(policy: policy)
+             
+        		if start_billing()
+        			success = true # if self.send(method)
+        		end       
+          
+          else
+            # If self.policy, policy_application.policy or 
+            # policy_premium.policy cannot be set correctly
+            update status: 'error'
+          end
+        else
+          # If policy cannot be created      
+          update status: 'error'
+          pp policy.errors
+        end
+      else
+      
+      end
 		end
 		
 		return success
@@ -131,10 +135,6 @@ class PolicyQuote < ApplicationRecord
 #    return false unless policy.in_system?
 
     billing_started = false
-    
-    puts !policy.nil?
-    puts policy_premium.calculation_base > 0
-    puts accepted?
     
     if !policy.nil? && policy_premium.calculation_base > 0 && status == "accepted"
       policy_application.billing_strategy.new_business['payments'].each_with_index do |payment, index|

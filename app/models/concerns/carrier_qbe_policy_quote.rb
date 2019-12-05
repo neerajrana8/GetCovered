@@ -30,6 +30,12 @@ module CarrierQbePolicyQuote
     # QBE Bind
   
     def qbe_bind
+      @bind_response = {
+        :error => true,
+        :message => nil,
+        :data => {}  
+      }
+      
 	 		if quoted? || error?
 		 		if policy_application.carrier.id == 1
 
@@ -43,25 +49,42 @@ module CarrierQbePolicyQuote
 
 	        qbe_service = QbeService.new(:action => 'SendPolicyInfo')
 	        qbe_service.build_request({}, true, true, self, self.policy_application.users)
-
-					pp qbe_service.compiled_rxml
 	  
-# 	        event.request_xml = qbe_service.compiled_rxml
-# 			 		event.started = Time.now
-# 			 		
-# 			 		qbe_data = qbe_service.call()
-# 			 		
-# 			 		event.completed = Time.now
-# 			 		event.response = qbe_data[:data]
-# 			 		event.status = qbe_data[:error] ? 'error' : 'success'
-# 			 		
-# 			 		event.save
+ 	        event.request = qbe_service.compiled_rxml
+ 			 		event.started = Time.now
+			 		
+			 		qbe_data = qbe_service.call()
+			 		
+			 		event.completed = Time.now
+			 		event.response = qbe_data[:data]
+ 			 		event.status = qbe_data[:error] ? 'error' : 'success'
+			 		
+			 		event.save
+			 		
+          unless qbe_data[:error] # QBE Response success
+                    
+ 	          xml_doc = Nokogiri::XML(qbe_data[:data])
+ 	          bind_status = xml_doc.css('MsgStatusCd').children.to_s
+            policy_number = xml_doc.css('PolicyNumber').children.to_s
+            
+            if bind_status != "FAILURE"
+              @bind_response[:error] = false
+              @bind_response[:data][:status] = bind_status
+              @bind_response[:data][:policy_number] = policy_number
+            else
+              @bind_response[:data][:status]
+            end
+          else # QBE Response failure
+            @bind_response[:message] = "QBE Bind Failure"
+          end
 			 	else
-			 		raise ArgumentError, 'Carrier must be QBE to bind residential quote'
+			 		@bind_response[:message] = "Carrier must be QBE to bind residential quote"
 			 	end
 		 	else
-		 		raise ArgumentError, 'Status must be quoted or error to bind quote'
-		 	end   
+		 		@bind_response[:message] = "Status must be quoted or error to bind quote"
+		 	end 
+		 	
+		 	return @bind_response  
 # 	    if self.policy_in_system? && 
 # 		     self.carrier == Carrier.find_by_call_sign('QBE')
 # 		     

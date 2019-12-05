@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_12_04_033148) do
+ActiveRecord::Schema.define(version: 2019_12_04_194224) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -221,7 +221,9 @@ ActiveRecord::Schema.define(version: 2019_12_04_033148) do
     t.bigint "insurable_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "external_carrier_id"
     t.index ["carrier_id"], name: "index_carrier_insurable_profiles_on_carrier_id"
+    t.index ["external_carrier_id"], name: "index_carrier_insurable_profiles_on_external_carrier_id", unique: true
     t.index ["insurable_id"], name: "index_carrier_insurable_profiles_on_insurable_id"
   end
 
@@ -956,6 +958,8 @@ ActiveRecord::Schema.define(version: 2019_12_04_033148) do
     t.integer "current_payment_method"
     t.string "mailchimp_id"
     t.integer "mailchimp_category", default: 0
+    t.string "qbe_id"
+    t.integer "marital_status", default: 0
     t.index ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["invitation_token"], name: "index_users_on_invitation_token", unique: true
@@ -963,6 +967,7 @@ ActiveRecord::Schema.define(version: 2019_12_04_033148) do
     t.index ["invited_by_id"], name: "index_users_on_invited_by_id"
     t.index ["invited_by_type", "invited_by_id"], name: "index_users_on_invited_by_type_and_invited_by_id"
     t.index ["mailchimp_id"], name: "index_users_on_mailchimp_id", unique: true
+    t.index ["qbe_id"], name: "index_users_on_qbe_id", unique: true
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
     t.index ["uid", "provider"], name: "index_users_on_uid_and_provider", unique: true
   end
