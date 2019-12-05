@@ -616,6 +616,7 @@ ActiveRecord::Schema.define(version: 2019_12_03_190739) do
     t.string "fingerprint"
     t.boolean "default_profile", default: false
     t.boolean "active"
+    t.boolean "verified"
     t.bigint "user_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false

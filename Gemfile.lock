@@ -36,6 +36,8 @@ GEM
       erubi (~> 1.4)
       rails-dom-testing (~> 2.0)
       rails-html-sanitizer (~> 1.0, >= 1.0.3)
+    active_interaction (3.7.1)
+      activemodel (>= 4, < 7)
     activejob (5.2.2.1)
       activesupport (= 5.2.2.1)
       globalid (>= 0.3.6)
@@ -1147,6 +1149,7 @@ PLATFORMS
 
 DEPENDENCIES
   StreetAddress
+  active_interaction (~> 3.7)
   attr_encrypted (~> 3.0.0)
   awesome_print
   aws-sdk (~> 3)

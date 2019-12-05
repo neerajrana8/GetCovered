@@ -82,6 +82,7 @@ gem 'colorize'
 # AWS SDK
 gem 'aws-sdk', '~> 3'
 
+gem 'active_interaction', '~> 3.7'
 gem 'mini_magick'
 
 group :development, :test do

@@ -6,6 +6,7 @@ class CreatePaymentProfiles < ActiveRecord::Migration[5.2]
       t.string :fingerprint
       t.boolean :default_profile, default: false
       t.boolean :active
+      t.boolean :verified
       t.references :user, index: true, foreign_key: true
 
       t.timestamps
