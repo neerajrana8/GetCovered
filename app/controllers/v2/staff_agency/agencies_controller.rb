@@ -6,14 +6,13 @@ module V2
   module StaffAgency
     class AgenciesController < StaffAgencyController
       
-      before_action :set_agency,
-        only: [:update, :show]
+      before_action :set_agency, only: [:update, :show]
             
       def index
         if params[:short]
-          super(:@agencies, current_staff.organizable.agency.agencies)
+          super(:@agencies, current_staff.organizable.agencies)
         else
-          super(:@agencies, current_staff.organizable.agency.agencies, :agency)
+          super(:@agencies, current_staff.organizable.agencies, :agency)
         end
       end
       
@@ -22,7 +21,7 @@ module V2
       
       def create
         if create_allowed?
-          @agency = current_staff.organizable.agency.agencies.new(create_params)
+          @agency = current_staff.organizable.agencies.new(create_params)
           if !@agency.errors.any? && @agency.save
             render :show,
               status: :created
@@ -67,7 +66,7 @@ module V2
         end
         
         def set_agency
-          @agency = current_staff.organizable.agency.agencies.find_by(id: params[:id])
+          @agency = current_staff.organizable.agencies.find_by(id: params[:id])
         end
                 
         def create_params

@@ -5,23 +5,11 @@
 module V2
   module StaffAgency
     class InsurableTypesController < StaffAgencyController
-      
-      before_action :set_substrate,
-        only: [:index]
-      
+            
       def index
-        if params[:short]
-          super(:@insurable_types, @substrate)
-        else
-          super(:@insurable_types, @substrate)
-        end
+        super(:@insurable_types, InsurableType)
       end
-      
-      def access_model
-        model_class
-      end
-      
-      
+            
       private
       
         def view_path
@@ -31,7 +19,7 @@ module V2
         def set_substrate
           super
           if @substrate.nil?
-            @substrate = access_model(::InsurableType)
+            @substrate = InsurableType
           elsif !params[:substrate_association_provided]
             @substrate = @substrate.insurable_types
           end
