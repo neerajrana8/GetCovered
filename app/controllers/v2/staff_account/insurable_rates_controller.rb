@@ -6,39 +6,29 @@ module V2
   module StaffAccount
     class InsurableRatesController < StaffAccountController
       
-      before_action :set_insurable_rate,
-        only: [:update]
-      
-      before_action :set_substrate,
-        only: [:index]
-      
+      before_action :set_insurable
+      before_action :set_insurable_rate, only: [:update]
+            
       def index
-        if params[:short]
-          super(:@insurable_rates, @substrate)
-        else
-          super(:@insurable_rates, @substrate)
-        end
+        super(:@insurable_rates, @insurable.insurable_rates)
       end
       
       def update
         if update_allowed?
           if @insurable_rate.update(update_params)
-            render json: { success: true },
-              status: :ok
+            render json: { success: true }, status: :ok
           else
-            render json: @insurable_rate.errors,
-              status: :unprocessable_entity
+            render json: @insurable_rate.errors, status: :unprocessable_entity
           end
         else
           render json: { success: false, errors: ['Unauthorized Access'] },
-            status: :unauthorized
+                 status: :unauthorized
         end
       end
       
-      def access_model
-        model_class
+      def refresh_rates
+        @insurable.reset_qbe_rates(params[:inline], params[:fix_all])
       end
-      
       
       private
       
@@ -50,19 +40,14 @@ module V2
           true
         end
         
+        def set_insurable
+          @insurable = current_staff.organizable.insurables.find(params[:insurable_id])
+        end
+
         def set_insurable_rate
-          @insurable_rate = access_model(::InsurableRate, params[:id])
+          @insurable_rate = @insurable.insurable_rates.find(params[:id])
         end
-        
-        def set_substrate
-          super
-          if @substrate.nil?
-            @substrate = access_model(::InsurableRate)
-          elsif !params[:substrate_association_provided]
-            @substrate = @substrate.insurable_rates
-          end
-        end
-        
+                
         def update_params
           return({}) if params[:insurable_rate].blank?
           params.require(:insurable_rate).permit(

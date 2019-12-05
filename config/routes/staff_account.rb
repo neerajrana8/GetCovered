@@ -50,16 +50,13 @@
             access_pathway: [::Insurable],
             access_ids:     [:insurable_id]
           },
-          only: [ :update, :index ]
-        resources :insurable_types,
-          path: "insurable-types",
-          defaults: {
-            access_pathway: [::Insurable],
-            access_ids:     [:insurable_id]
-          },
-          only: [ :index ]
+          only: [ :update, :index ] do
+            get 'refresh-rates', to: 'insurable_rates#refresh_rates', on: :collection
+          end
       end
   
+    resources :insurable_types, path: "insurable-types", only: [ :index ]
+    
     resources :leases,
       only: [ :create, :update, :destroy, :index, :show ] do
         member do

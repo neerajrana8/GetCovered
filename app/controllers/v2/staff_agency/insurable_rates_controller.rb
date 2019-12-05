@@ -6,18 +6,11 @@ module V2
   module StaffAgency
     class InsurableRatesController < StaffAgencyController
       
-      before_action :set_insurable_rate,
-        only: [:update]
-      
-      before_action :set_substrate,
-        only: [:index]
+      before_action :set_insurable
+      before_action :set_insurable_rate, only: [:update]
       
       def index
-        if params[:short]
-          super(:@insurable_rates, @substrate)
-        else
-          super(:@insurable_rates, @substrate)
-        end
+        super(:@insurable_rates, @insurable.insurable_rates)
       end
       
       def update
@@ -33,13 +26,12 @@ module V2
           render json: { success: false, errors: ['Unauthorized Access'] },
             status: :unauthorized
         end
+      end  
+      
+      def refresh_rates
+        @insurable.reset_qbe_rates(params[:inline], params[:fix_all])
       end
-      
-      def access_model
-        model_class
-      end
-      
-      
+
       private
       
         def view_path
@@ -49,20 +41,15 @@ module V2
         def update_allowed?
           true
         end
+
+        def set_insurable
+          @insurable = current_staff.organizable.insurables.find(params[:insurable_id])
+        end
         
         def set_insurable_rate
-          @insurable_rate = access_model(::InsurableRate, params[:id])
+          @insurable_rate = @insurable.insurable_rates.find(params[:id])
         end
-        
-        def set_substrate
-          super
-          if @substrate.nil?
-            @substrate = access_model(::InsurableRate)
-          elsif !params[:substrate_association_provided]
-            @substrate = @substrate.insurable_rates
-          end
-        end
-        
+                
         def update_params
           return({}) if params[:insurable_rate].blank?
           params.require(:insurable_rate).permit(

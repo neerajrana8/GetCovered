@@ -9,14 +9,11 @@ module V2
       before_action :set_insurable,
         only: [:update, :destroy, :show]
       
-      before_action :set_substrate,
-        only: [:create, :index]
-      
       def index
         if params[:short]
-          super(:@insurables, @substrate)
+          super(:@insurables, current_staff.organizable.insurables)
         else
-          super(:@insurables, @substrate, :account, :carrier_insurable_profiles)
+          super(:@insurables, current_staff.organizable.insurables, :account, :carrier_insurable_profiles)
         end
       end
       
@@ -25,7 +22,7 @@ module V2
       
       def create
         if create_allowed?
-          @insurable = @substrate.new(create_params)
+          @insurable = current_staff.organizable.insurables.new(create_params)
           if !@insurable.errors.any? && @insurable.save
             render :show,
               status: :created
@@ -89,18 +86,9 @@ module V2
         end
         
         def set_insurable
-          @insurable = access_model(::Insurable, params[:id])
+          @insurable = current_staff.organizable.insurables.find(params[:id])
         end
-        
-        def set_substrate
-          super
-          if @substrate.nil?
-            @substrate = access_model(::Insurable)
-          elsif !params[:substrate_association_provided]
-            @substrate = @substrate.insurables
-          end
-        end
-        
+                
         def create_params
           return({}) if params[:insurable].blank?
           to_return = params.require(:insurable).permit(

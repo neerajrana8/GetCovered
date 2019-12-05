@@ -35,6 +35,8 @@ services:
       - elasticsearch
     env_file:
       - .env
+    stdin_open: true
+    tty: true
   worker:
     build:
       context: .    
