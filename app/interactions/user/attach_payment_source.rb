@@ -4,7 +4,7 @@ class User
     string :token, default: nil
     boolean :make_default, default: true
 
-    delegate :email, :profile, :stripe_id, :payment_methods, :invoices, to: :user
+    delegate :email, :profile, :stripe_id, :payment_profiles, :invoices, to: :user
 
     def execute
       begin
@@ -53,7 +53,8 @@ class User
           if user.save
             if make_default
               invoices.upcoming.each do |nvc|
-                nvc.calculate_total(user.current_payment_method == 'card' ? 'card' : 'bank_account')
+                payment_method = user.current_payment_method == 'card' ? 'card' : 'bank_account'
+                nvc.calculate_total(payment_method)
               end
             end
             return true
