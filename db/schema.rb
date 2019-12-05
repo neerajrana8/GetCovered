@@ -610,6 +610,19 @@ ActiveRecord::Schema.define(version: 2019_12_03_190739) do
     t.index ["notifiable_type", "notifiable_id"], name: "index_notifications_on_notifiable_type_and_notifiable_id"
   end
 
+  create_table "payment_profiles", force: :cascade do |t|
+    t.string "source_id"
+    t.integer "source_type"
+    t.string "fingerprint"
+    t.boolean "default_profile", default: false
+    t.boolean "active"
+    t.boolean "verified"
+    t.bigint "user_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id"], name: "index_payment_profiles_on_user_id"
+  end
+
   create_table "payments", force: :cascade do |t|
     t.boolean "active"
     t.integer "status"
@@ -965,6 +978,7 @@ ActiveRecord::Schema.define(version: 2019_12_03_190739) do
   end
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "payment_profiles", "users"
   add_foreign_key "payments", "invoices"
   add_foreign_key "policy_coverages", "policies"
   add_foreign_key "policy_coverages", "policy_applications"
