@@ -10,12 +10,16 @@ module CarrierQbePolicyApplication
 	  # 
 	  
 	  def qbe_estimate(rates = nil, quote_id = nil)
-			raise ArgumentError, 'Argument "rates" cannot be nil' if rates.nil?
-			raise ArgumentError, 'Argument "rates" must be an array' if !rates.is_a?(Array)
-		  quote = quote_id.nil? ? policy_quotes.new(agency: agency, account: account) : 
+			raise ArgumentError, 'Argument "rates" cannot be nil' if policy_rates.count == 0  && rates.nil?
+			raise ArgumentError, 'Argument "rates" must be an array' if policy_rates.count == 0  && !rates.is_a?(Array)
+			
+		  quote = quote_id.nil? ? policy_quotes.create!(agency: agency, account: account) : 
 		                          policy_quotes.find(quote_id)
-		  if quote.save
-				rates.each { |rate| policy_rates.create!(insurable_rate: rate) }
+
+		  if quote.persisted?
+			  unless rates.nil?
+					rates.each { |rate| policy_rates.create!(insurable_rate: rate) unless insurable_rates.include?(rate) }
+				end
 				quote_rate_premiums = insurable_rates.map { |r| r.premium.to_f }
 				quote.update est_premium: quote_rate_premiums.inject { |sum, rate| sum + rate },
 				             status: "estimated"
@@ -66,7 +70,7 @@ module CarrierQbePolicyApplication
 	          verb: 'post', 
 	          format: 'xml', 
 	          interface: 'SOAP',
-	          process: 'get_min_prem', 
+	          process: 'get_qbe_min_prem', 
 	          endpoint: Rails.application.credentials.qbe[:uri]
 	        )	
 					

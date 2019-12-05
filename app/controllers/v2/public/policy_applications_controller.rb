@@ -13,6 +13,13 @@ module V2
         only: [:create]
       
       def show
+	      if ["started", "in_progress", 
+		      	"abandoned", "more_required"].include?(@policy_application.status)
+		      	
+		    else
+		    	render { error: "Policy Application is not found or no longer available" }.to_json,
+		    				 status: 404
+		    end
       end
       
       def new

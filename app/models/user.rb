@@ -14,8 +14,10 @@ class User < ApplicationRecord
 
   # Active Record Callbacks
   after_initialize :initialize_user
-  after_create_commit :add_to_mailchimp
-
+  
+  after_create_commit :add_to_mailchimp,
+                      :set_qbe_id
+  
 	has_many :invoices
 
   has_many :authored_histories,
@@ -62,6 +64,7 @@ class User < ApplicationRecord
     _prefix: true
 
   enum mailchimp_category: ['prospect', 'customer']
+  enum marital_status: ['single', 'married']
 
   # VALIDATIONS
   validates :email, uniqueness: true
@@ -203,6 +206,26 @@ class User < ApplicationRecord
       self.tokens ||= {}
   	end
 
+    def set_qbe_id
+      
+      return_status = false
+      
+      if qbe_id.nil?
+        
+        loop do
+          self.qbe_id = Rails.application.credentials.qbe[:employee_id] + rand(36**7).to_s(36).upcase
+          return_status = true
+          
+          break unless User.exists?(:qbe_id => self.qbe_id)
+        end
+      end
+      
+      update_column(:qbe_id, self.qbe_id) if return_status == true
+      
+      return return_status
+      
+    end
+  
   	def add_to_mailchimp
       unless Rails.application.credentials.mailchimp[:list_id][ENV["RAILS_ENV"].to_sym] == "nil"
         post_data = {

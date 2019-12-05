@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_12_03_190739) do
+ActiveRecord::Schema.define(version: 2019_12_04_194224) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -221,7 +221,9 @@ ActiveRecord::Schema.define(version: 2019_12_03_190739) do
     t.bigint "insurable_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "external_carrier_id"
     t.index ["carrier_id"], name: "index_carrier_insurable_profiles_on_carrier_id"
+    t.index ["external_carrier_id"], name: "index_carrier_insurable_profiles_on_external_carrier_id", unique: true
     t.index ["insurable_id"], name: "index_carrier_insurable_profiles_on_insurable_id"
   end
 
@@ -720,6 +722,8 @@ ActiveRecord::Schema.define(version: 2019_12_03_190739) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.bigint "billing_strategy_id"
+    t.boolean "auto_renew", default: true
+    t.boolean "auto_pay", default: true
     t.index ["account_id"], name: "index_policy_applications_on_account_id"
     t.index ["agency_id"], name: "index_policy_applications_on_agency_id"
     t.index ["billing_strategy_id"], name: "index_policy_applications_on_billing_strategy_id"
@@ -773,6 +777,7 @@ ActiveRecord::Schema.define(version: 2019_12_03_190739) do
     t.integer "calculation_base", default: 0
     t.integer "deposit_fees", default: 0
     t.integer "amortized_fees", default: 0
+    t.integer "carrier_base", default: 0
     t.index ["billing_strategy_id"], name: "index_policy_premia_on_billing_strategy_id"
     t.index ["commission_strategy_id"], name: "index_policy_premia_on_commission_strategy_id"
     t.index ["policy_id"], name: "index_policy_premia_on_policy_id"
@@ -966,6 +971,8 @@ ActiveRecord::Schema.define(version: 2019_12_03_190739) do
     t.integer "current_payment_method"
     t.string "mailchimp_id"
     t.integer "mailchimp_category", default: 0
+    t.string "qbe_id"
+    t.integer "marital_status", default: 0
     t.index ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["invitation_token"], name: "index_users_on_invitation_token", unique: true
@@ -973,6 +980,7 @@ ActiveRecord::Schema.define(version: 2019_12_03_190739) do
     t.index ["invited_by_id"], name: "index_users_on_invited_by_id"
     t.index ["invited_by_type", "invited_by_id"], name: "index_users_on_invited_by_type_and_invited_by_id"
     t.index ["mailchimp_id"], name: "index_users_on_mailchimp_id", unique: true
+    t.index ["qbe_id"], name: "index_users_on_qbe_id", unique: true
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
     t.index ["uid", "provider"], name: "index_users_on_uid_and_provider", unique: true
   end
