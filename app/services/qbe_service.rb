@@ -177,17 +177,32 @@ class QbeService
     elsif self.action == "SendPolicyInfo"
      
       unless obj.nil?
+	      
+	      application = obj.policy_application
+	      premium = obj.policy_premium
+	      address = application.primary_insurable().insurable.primary_address()
+	      cov_c = application.insurable_rates.coverage_c.take
+	      
         options[:data] = {
-          policy: obj,
-          optional_rates: obj.rates.optional,
-          community: obj.community,
-          address: obj.community.address,
-          user: obj.user,
-          users: users,
-          unit: obj.unit,
-          invoice: obj.invoices.complete.first,
-          account: obj.account
+	        quote: obj,
+	        application: application,
+	        premium: premium,
+	        billing_strategy: application.billing_strategy,
+          optional_rates: application.insurable_rates.optional,
+          coverage_c: cov_c,
+          coverage_d: address.state == "CT" ? (cov_c.coverage_limits["coverage_c"] * 0.3) : 
+                                              (cov_c.coverage_limits["coverage_c"] * 0.2),
+          liability: application.insurable_rates.liability.take,
+          community: application.primary_insurable().insurable,
+          carrier_profile: application.primary_insurable().insurable.carrier_profile(1),
+          address: address,
+          user: application.policy_users.where(primary: true).take,
+          users: application.policy_users.where.not(primary: true),
+          unit: application.primary_insurable(),
+          account: application.account,
+          agency: application.agency
         }
+        
       else
         return false
       end
@@ -306,13 +321,14 @@ class QbeService
 				
       else
       	
+      	puts "ERROR ERROR ERROR".red
       	pp call_data
       	
       end
       
       display_status = call_data[:error] ? "ERROR" : "SUCCESS"
       display_status_color = call_data[:error] ? :red : :green
-      # puts "#{ "[".yellow } #{ "QBE Service".blue } #{ "]".yellow }#{ "[".yellow } #{display_status.colorize(display_status_color)} #{ "]".yellow }: #{ action.to_s.blue }"
+      puts "#{ "[".yellow } #{ "QBE Service".blue } #{ "]".yellow }#{ "[".yellow } #{display_status.colorize(display_status_color)} #{ "]".yellow }: #{ action.to_s.blue }"
       
       return call_data
       

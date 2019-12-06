@@ -64,6 +64,10 @@ class Policy < ApplicationRecord
 
   has_many :policy_users
   has_many :users, through: :policy_users
+	    
+	has_many :policy_rates
+	has_many :insurable_rates,
+		through: :policy_rates, before_add: :check_if_active
 
   has_one :primary_policy_user, -> { where(primary: true) },
     class_name: 'PolicyUser'

@@ -20,9 +20,7 @@ class Staff < ApplicationRecord
   # belongs_to relationships
   # belongs_to :account, required: true
 
-  belongs_to :organizable,
-             polymorphic: true,
-             required: false
+  belongs_to :organizable, polymorphic: true, required: false
 
   # has_many relationships
   has_many :histories,
