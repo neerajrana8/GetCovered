@@ -110,6 +110,9 @@
             via: "get",
             defaults: { authorable_type: Staff }
         end
+        collection do
+          get :check_email, to: 'check_email#staff'
+        end
       end
   
     resources :users,
