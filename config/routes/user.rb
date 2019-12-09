@@ -36,7 +36,7 @@ scope module: :user, path: "user" do
   resources :users,
     only: [ :update, :show ] do
     collection do
-      get :check_email, to: 'check_email#user'
+      get :check_email, to: '/v2/check_email#user'
     end
   end
 
