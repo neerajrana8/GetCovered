@@ -4,7 +4,8 @@
 class Insurable < ApplicationRecord
   # Concerns
   include ElasticsearchSearchable
-  include CarrierQbeInsurable # , EarningsReport, RecordChange
+  include CarrierQbeInsurable
+  include CoverageReport # , EarningsReport, RecordChange
   
   belongs_to :account
   belongs_to :insurable, optional: true
@@ -26,13 +27,16 @@ class Insurable < ApplicationRecord
   has_many :leases
   
   has_many :addresses, as: :addressable, autosave: true
+
+  has_many :reports, as: :reportable
   
   accepts_nested_attributes_for :addresses
   
   enum category: %w[property entity]
   
   validate :must_belong_to_same_account_if_parent_insurable
-  
+
+  scope :covered, -> { where(covered: true) }
   
   %w[Residential Commercial].each do |major_type|
     %w[Community Unit].each do |minor_type|

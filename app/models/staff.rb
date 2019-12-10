@@ -35,6 +35,8 @@ class Staff < ApplicationRecord
           as: :profileable,
           autosave: true
 
+  has_many :reports, as: :reportable
+
   accepts_nested_attributes_for :profile
 
   settings index: { number_of_shards: 1 } do
