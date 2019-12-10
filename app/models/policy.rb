@@ -64,10 +64,10 @@ class Policy < ApplicationRecord
 
   has_many :policy_users
   has_many :users, through: :policy_users
-	    
-	has_many :policy_rates
-	has_many :insurable_rates,
-		through: :policy_rates, before_add: :check_if_active
+      
+  has_many :policy_rates
+  has_many :insurable_rates,
+    through: :policy_rates, before_add: :check_if_active
 
   has_one :primary_policy_user, -> { where(primary: true) },
     class_name: 'PolicyUser'
@@ -91,6 +91,9 @@ class Policy < ApplicationRecord
 
   has_many :refunds,
     through: :charges
+
+  scope :current, -> { where(status: %i[BOUND BOUND_WITH_WARNING]) }
+  scope :policy_in_system, ->(policy_in_system) { where(policy_in_system: policy_in_system) }
 
   accepts_nested_attributes_for :policy_coverages, :policy_premiums
 

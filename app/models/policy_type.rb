@@ -18,7 +18,9 @@ class PolicyType < ApplicationRecord
   # Validations
   validates :title, presence: true, uniqueness: true
   # validates :designation, presence: true,
-  #                         uniqueness: true      
+  #                         uniqueness: true
+  #
+  scope :master_policies, -> { where("title LIKE 'Master%'") }
 
   class << self
     def residential

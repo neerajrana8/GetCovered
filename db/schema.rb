@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_12_04_194224) do
+ActiveRecord::Schema.define(version: 2019_12_09_102011) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -882,6 +882,20 @@ ActiveRecord::Schema.define(version: 2019_12_04_194224) do
     t.index ["charge_id"], name: "index_refunds_on_charge_id"
     t.index ["status"], name: "refund_status"
     t.index ["stripe_id"], name: "refund_stripe_id"
+  end
+
+  create_table "reports", force: :cascade do |t|
+    t.integer "format"
+    t.integer "duration"
+    t.datetime "range_start"
+    t.datetime "range_end"
+    t.jsonb "data"
+    t.string "reportable_type"
+    t.bigint "reportable_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["reportable_type", "reportable_id", "created_at"], name: "reports_index"
+    t.index ["reportable_type", "reportable_id"], name: "index_reports_on_reportable_type_and_reportable_id"
   end
 
   create_table "staffs", force: :cascade do |t|
