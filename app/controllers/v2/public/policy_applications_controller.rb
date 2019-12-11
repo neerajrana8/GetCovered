@@ -41,19 +41,31 @@ module V2
       end
       
       def create
-        if create_allowed?
-          @policy_application = @substrate.new(create_params)
-          if @policy_application.errors.none? && @policy_application.save
-            render :show,
-              status: :created
-          else
-            render json: @policy_application.errors,
-                   status: :unprocessable_entity
-          end
+        @application = PolicyApplication.new(params[:policy_application])
+        
+        pp @application
+        pp @application.users
+        
+        if @application.save
+          render json: @application.to_json,
+                 status: 200
         else
-          render json: { success: false, errors: ['Unauthorized Access'] },
-                 status: :unauthorized
+          render json: @application.errors.to_json,
+                 status: 400
         end
+#         if create_allowed?
+#           @policy_application = @substrate.new(create_params)
+#           if @policy_application.errors.none? && @policy_application.save
+#             render :show,
+#               status: :created
+#           else
+#             render json: @policy_application.errors,
+#                    status: :unprocessable_entity
+#           end
+#         else
+#           render json: { success: false, errors: ['Unauthorized Access'] },
+#                  status: :unauthorized
+#         end
       end
       
       def update
@@ -100,10 +112,19 @@ module V2
       end
         
       def create_params
-        return({}) if params[:policy_application].blank?
-
-        to_return = {}
-        to_return
+        params.require(:policy_application).permit(
+                      :effective_date, :expiration_date, :auto_renew, :auto_pay,
+                      :policy_type_id, :billing_strategy_id, :carrier_id, :agency_id,
+                      :account_id,
+                      policy_rates_attributes: [:insurable_rate_id],
+                      policy_insurables_attributes: [:insurable_id],
+                      policy_users_attributes: [
+                        :primary, :spouse, user_attributes: [
+                          :email, profile_attributes: [
+                            :first_name, :last_name, :contact_phone, :birth_date
+                          ]
+                        ]
+                      ]).permit(:fields, :questions)
       end
         
       def update_params

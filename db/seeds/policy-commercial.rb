@@ -148,15 +148,6 @@ require 'faker'
 	fake_user_email = "#{fake_user[:first_name]}#{fake_user[:last_name]}@gmail.com".downcase
 	
   @company = "#{ Faker::Company.name } #{ rand(0..1000) }"
-
-#   loop do
-#     @company = "#{ Faker::Company.name } #{ rand(0..1000) }"
-#     break unless @used_company_names.include?(@company)
-#   end
-# 
-# 	open(@used_company_file, 'a') do |f|
-# 	  f.puts "#{ @company }\n"
-# 	end
 	
 	policy_start_date = Time.now + rand(1..30).days
 	expense_limit = @expense_limits[rand(0..3)]
