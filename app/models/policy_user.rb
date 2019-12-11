@@ -12,6 +12,8 @@ class PolicyUser < ApplicationRecord
   belongs_to :policy, optional: true
   belongs_to :user, optional: true
   
+  accepts_nested_attributes_for :user
+  
   private
     
     def set_first_as_primary
@@ -23,13 +25,16 @@ class PolicyUser < ApplicationRecord
      
     def set_account_user
       ref_model = policy.nil? ? policy_application : policy
-      acct = AccountUser.where(user_id: user.id, account_id: ref_model.account_id).take
-      if acct.nil?
-        AccountUser.create!(user: user, account: ref_model.account)
-      elsif acct.status != 'enabled'
-        acct.update(status: 'enabled')
-      else
-        # do nothing
+      unless ref_model.policy_type == PolicyType.find(4) && 
+             ref_model.account.nil?
+        acct = AccountUser.where(user_id: user.id, account_id: ref_model.account_id).take
+        if acct.nil?
+          AccountUser.create!(user: user, account: ref_model.account)
+        elsif acct.status != 'enabled'
+          acct.update(status: 'enabled')
+        else
+          # do nothing
+        end
       end
     end
 

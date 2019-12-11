@@ -9,6 +9,10 @@ scope module: :public do
     path: "billing-strategies",
     only: [ :index ]
   
+  resources :carrier_class_codes,
+    path: "class-codes",
+    only: [:index]
+  
   resources :insurables,
     only: [ :index, :show ] do
     member do

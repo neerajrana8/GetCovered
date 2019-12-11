@@ -31,9 +31,11 @@ class PolicyPremium < ApplicationRecord
 	  																	 .where(:policy_type => policy_quote.policy_application.policy_type)
 	  																	 .take
 	  
+	  state = application().insurables.empty? ? application().fields["premise"][0]["address"]["state"] : 
+	                                            application().primary_insurable().primary_address().state
+	  
 	  regional_availability = CarrierPolicyTypeAvailability.where(
-		  :state => application().primary_insurable()
-		  											 .primary_address().state,
+		  :state => state,
 		  :carrier_policy_type => carrier_policy_type
 	  ).take
 		
