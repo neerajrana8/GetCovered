@@ -9,7 +9,7 @@ module V2
       before_action :set_account, only: [:update, :show]
       
       def show
-        render json: @account
+        render :show, status: :ok
       end
       
       def update

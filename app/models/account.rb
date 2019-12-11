@@ -13,7 +13,8 @@ class Account < ApplicationRecord
   include SetSlug
   include SetCallSign
   include EarningsReport
-  
+  include CoverageReport
+
   # Active Record Callbacks
   after_initialize :initialize_agency
   

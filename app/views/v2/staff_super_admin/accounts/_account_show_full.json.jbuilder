@@ -1,6 +1,7 @@
 json.partial! "v2/staff_super_admin/accounts/account_show_fields.json.jbuilder",
   account: account
 
+json.coverage_report account.coverage_report
 
 json.addresses_attributes do
   unless account.addresses.nil?
