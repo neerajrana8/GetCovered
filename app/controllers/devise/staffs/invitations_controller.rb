@@ -1,7 +1,7 @@
 class Devise::Staffs::InvitationsController < Devise::InvitationsController
-  # include InvitableMethods
+  include InvitableMethods
   before_action :authenticate_staff!, only: :create
-  before_action :resource_from_invitation_token, only: [:edit, :update]
+  before_action :resource_from_invitation_token, only: [:update]
 
   def create
     Staff.invite!(invite_params, current_staff)
@@ -9,15 +9,14 @@ class Devise::Staffs::InvitationsController < Devise::InvitationsController
            status: :created
   end
 
-  def edit
-    # redirect_to "#{client_api_url}?invitation_token=#{params[:invitation_token]}"
-  end
-
   def update
-    @staff.update(password: accept_invitation_params[:password], password_confirmation: accept_invitation_params[:password_confirmation])
+    @staff.update(accept_invitation_params)
     @staff.accept_invitation!
     if @staff.errors.empty?
-      @staff.confirm
+      @resource = @staff
+      @token = @resource.create_token
+      @resource.save!
+      update_auth_header
       render json: { success: ['Staff updated.'] }, 
              status: :accepted
     else
@@ -29,7 +28,7 @@ class Devise::Staffs::InvitationsController < Devise::InvitationsController
   private  
 
     def invite_params
-      params.permit(staff: [:email, :invitation_token, :provider, :skip_invitation ])
+      params.permit(:email, :invitation_token, :provider, :skip_invitation)
     end
 
     def accept_invitation_params

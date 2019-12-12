@@ -9,12 +9,12 @@
 
 class Account < ApplicationRecord
   # Concerns
-  include EarningsReport, 
-          # RecordChange, 
-          SetCallSign, 
-          SetSlug,
-          ElasticsearchSearchable
-  
+  include ElasticsearchSearchable
+  include SetSlug
+  include SetCallSign
+  include EarningsReport
+  include CoverageReport
+
   # Active Record Callbacks
   after_initialize :initialize_agency
   
@@ -23,61 +23,63 @@ class Account < ApplicationRecord
   
   # has_many relationships
   has_many :staff,
-  		as: :organizable
-  		
+    as: :organizable
+      
   has_many :branding_profiles,
     as: :profileable
-	
+  
   has_many :insurables 
   
   has_many :policies
   has_many :claims, through: :policies
-	
-	has_many :account_users
+  
+  has_many :account_users
   
   has_many :users,
     through: :account_users
   
   has_many :active_account_users,
     -> { where status: 'enabled' }, 
-    class_name: "AccountUser"
+    class_name: 'AccountUser'
   
   has_many :active_users,
     through: :active_account_users,
     source: :user
   
   has_many :commission_strategies, as: :commissionable
-	
-	has_many :commissions, as: :commissionable
+  
+  has_many :commissions, as: :commissionable
 
-	has_many :events,
-	    as: :eventable
-	
-	has_many :addresses,
-       as: :addressable,
-       autosave: true
+  has_many :events,
+    as: :eventable
+  
+  has_many :addresses,
+    as: :addressable,
+    autosave: true
 
   has_many :histories,
     as: :recordable
+
+  has_many :reports,
+    as: :reportable
 
   accepts_nested_attributes_for :addresses
 
   validates_presence_of :title
   
   def owner
-	  return staff.where(id: staff_id).take
-	end
+    staff.where(id: staff_id).take
+  end
   
   def primary_address
-		return addresses.where(primary: true).take 
+    addresses.where(primary: true).take 
   end
   
   # Override as_json to always include agency and addresses information
   def as_json(options = {})
-    json = super(options.reverse_merge(include: [:agency, :primary_address, :owner]))
+    json = super(options.reverse_merge(include: %i[agency primary_address owner]))
     json
   end
-
 
   settings index: { number_of_shards: 1 } do
     mappings dynamic: 'false' do
@@ -86,10 +88,9 @@ class Account < ApplicationRecord
     end
   end  
   
-	private
-		
-		def initialize_agency
-  		# Blank for now...
-  	end
-
+  private
+    
+  def initialize_agency
+    # Blank for now...
+  end
 end

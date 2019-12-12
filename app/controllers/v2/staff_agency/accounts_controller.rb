@@ -17,7 +17,7 @@ module V2
       end
       
       def show
-        render json: @account
+        render :show, status: :ok
       end
       
       def create

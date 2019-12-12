@@ -7,8 +7,8 @@
 
 class Agency < ApplicationRecord
 	# Concerns
-	include EarningsReport, 
-					# RecordChange, 
+	include EarningsReport,
+					CoverageReport,
 					SetCallSign, 
 					SetSlug,
           ElasticsearchSearchable
@@ -63,6 +63,9 @@ class Agency < ApplicationRecord
 	has_many :addresses,
        as: :addressable,
        autosave: true
+
+	has_many :reports,
+					 as: :reportable
 
   accepts_nested_attributes_for :addresses
   

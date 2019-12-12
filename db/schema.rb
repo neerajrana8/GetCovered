@@ -886,6 +886,20 @@ ActiveRecord::Schema.define(version: 2019_12_10_175933) do
     t.index ["stripe_id"], name: "refund_stripe_id"
   end
 
+  create_table "reports", force: :cascade do |t|
+    t.integer "format"
+    t.integer "duration"
+    t.datetime "range_start"
+    t.datetime "range_end"
+    t.jsonb "data"
+    t.string "reportable_type"
+    t.bigint "reportable_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["reportable_type", "reportable_id", "created_at"], name: "reports_index"
+    t.index ["reportable_type", "reportable_id"], name: "index_reports_on_reportable_type_and_reportable_id"
+  end
+
   create_table "staffs", force: :cascade do |t|
     t.string "provider", default: "email", null: false
     t.string "uid", default: "", null: false
