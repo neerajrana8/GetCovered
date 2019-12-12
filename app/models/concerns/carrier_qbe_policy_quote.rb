@@ -20,7 +20,6 @@ module CarrierQbePolicyQuote
         end
       end
       
-#       user.set_qbe_customer_profile_id if return_status == true
       update_column(:external_reference, self.external_reference) if return_status == true
       
       return return_status

@@ -216,6 +216,7 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
 				  	title: "Number of Insured",
 				  	answer_type: "INTEGER",
 				  	default_answer: 1,
+				  	value: 1,
 				    options: [1, 2, 3, 4, 5]
 			    }	      																											
 				],

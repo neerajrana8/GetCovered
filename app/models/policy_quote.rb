@@ -5,7 +5,7 @@
 
 class PolicyQuote < ApplicationRecord
   # Concerns
-  include CarrierQbePolicyQuote, ElasticsearchSearchable
+  include CarrierQbePolicyQuote, CarrierCrumPolicyQuote, ElasticsearchSearchable
   # include ElasticsearchSearchable
 
   before_save :set_status_updated_on,
@@ -174,18 +174,19 @@ class PolicyQuote < ApplicationRecord
 
     def set_reference
 	    return_status = false
-
+	    
 	    if reference.nil?
-
+	      
 	      loop do
-	        self.reference = "#{account.call_sign}-#{rand(36**12).to_s(36).upcase}"
+  	      parent_entity = account.nil? ? agency : account
+	        self.reference = "#{parent_entity.call_sign}-#{rand(36**12).to_s(36).upcase}"
 	        return_status = true
-
+	        
 	        break unless PolicyQuote.exists?(:reference => self.reference)
 	      end
 	    end
-
-	    return return_status
+	    
+	    return return_status	  	  
 	  end
 
 end

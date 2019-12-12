@@ -19,6 +19,7 @@
 		)
 		
 		application.build_from_carrier_policy_type()
+		application.fields[0]["value"] = lease.users.count
 		application.insurables << lease.insurable
 		
 		if application.save()

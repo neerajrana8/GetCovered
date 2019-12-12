@@ -20,6 +20,15 @@ module CarrierQbePolicyApplication
 			  unless rates.nil?
 					rates.each { |rate| policy_rates.create!(insurable_rate: rate) unless insurable_rates.include?(rate) }
 				end
+				
+				policy_fee = self.primary_insurable().insurable.insurable_rates
+				                 .where(number_insured: self.users.count, 
+				                        interval: self.billing_strategy.title.downcase.sub(/ly/, '').gsub('-', '_'), 
+				                        insurable: self.primary_insurable().insurable, 
+				                        sub_schedule: "policy_fee").take
+				
+				policy_rates.create!(insurable_rate: policy_fee)
+				
 				quote_rate_premiums = insurable_rates.map { |r| r.premium.to_f }
 				quote.update est_premium: quote_rate_premiums.inject { |sum, rate| sum + rate },
 				             status: "estimated"

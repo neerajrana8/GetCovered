@@ -5,7 +5,7 @@
 class PolicyApplication < ApplicationRecord  
   
   # Concerns
-  include CarrierQbePolicyApplication, ElasticsearchSearchable
+  include CarrierQbePolicyApplication, CarrierCrumPolicyApplication, ElasticsearchSearchable
   
   # Active Record Callbacks
   after_initialize :initialize_policy_application
@@ -17,7 +17,7 @@ class PolicyApplication < ApplicationRecord
   belongs_to :carrier
   belongs_to :policy_type
   belongs_to :agency
-  belongs_to :account
+  belongs_to :account, optional: true
   belongs_to :billing_strategy
   belongs_to :policy, optional: true
   
@@ -50,10 +50,14 @@ class PolicyApplication < ApplicationRecord
   has_many :policy_application_fields,
   	through: :policy_application_answers
 	
-	validate :same_agency_as_account
+	accepts_nested_attributes_for :policy_users, :policy_rates, :policy_insurables
+	
+	validate :same_agency_as_account,
+	  unless: Proc.new { |pol| pol.account.nil? }
 	validate :billing_strategy_must_be_enabled
 	validate :carrier_agency
 	validates_presence_of :expiration_date, :effective_date
+	
   validate :date_order, 
     unless: Proc.new { |pol| pol.effective_date.nil? or pol.expiration_date.nil? }	
 	
@@ -169,7 +173,8 @@ class PolicyApplication < ApplicationRecord
 	    if reference.nil?
 	      
 	      loop do
-	        self.reference = "#{account.call_sign}-#{rand(36**12).to_s(36).upcase}"
+  	      parent_entity = account.nil? ? agency : account
+	        self.reference = "#{parent_entity.call_sign}-#{rand(36**12).to_s(36).upcase}"
 	        return_status = true
 	        
 	        break unless PolicyApplication.exists?(:reference => self.reference)
