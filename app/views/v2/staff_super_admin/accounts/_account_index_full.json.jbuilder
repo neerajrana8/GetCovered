@@ -8,5 +8,4 @@ json.agency do
       agency: account.agency
   end
 end
-json.owner account.owner
 json.primary_address account.primary_address
