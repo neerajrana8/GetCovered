@@ -6,8 +6,7 @@ module V2
   module StaffSuperAdmin
     class StaffsController < StaffSuperAdminController
       
-      before_action :set_staff,
-        only: [:show]
+      before_action :set_staff, only: [:show]
             
       def index
         super(:@staffs, Staff, :profile)
@@ -34,7 +33,11 @@ module V2
             status: :unauthorized
         end
       end
-      
+
+      def search
+        @staff = Staff.search(params[:query]).records
+        render json: @staff.to_json, status: 200
+      end
       
       private
       

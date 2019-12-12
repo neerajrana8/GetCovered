@@ -102,6 +102,7 @@
             via: "get",
             defaults: { authorable_type: Staff }
         end
+        get "search", to: 'staffs#search', on: :collection
       end
   
     resources :users,

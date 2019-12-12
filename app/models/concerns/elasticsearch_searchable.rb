@@ -5,8 +5,8 @@ module ElasticsearchSearchable
   extend ActiveSupport::Concern
   included do
     include Elasticsearch::Model
-    # include Elasticsearch::Model::Callbacks
-    # include Elasticsearch::Model::Indexing
+    include Elasticsearch::Model::Callbacks
+    include Elasticsearch::Model::Indexing
 
     name = self.name.downcase.pluralize
     index_name = "get-covered-#{name}-#{Rails.env}"

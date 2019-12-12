@@ -1,8 +1,8 @@
 local:
-  host: http://localhost:9200
+  host: http://elasticsearch:9200
   log: true
 development: &default
-  host: http://localhost:9200
+  host: http://elasticsearch:9200
   log: true  
 test:
   host: http://elasticsearch:9200

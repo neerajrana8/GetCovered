@@ -11,6 +11,7 @@ class Profile < ApplicationRecord
     
   before_validation :format_contact_phone
   before_save :set_full_name
+  after_commit :update_relations
 
   # Validations
   validates_presence_of :first_name, :last_name
@@ -29,6 +30,11 @@ class Profile < ApplicationRecord
   end
 
   private  
+
+    def update_relations
+      Staff.update_profile(self)
+    end
+
 
     # Profile.format_contact_phone
     def format_contact_phone
