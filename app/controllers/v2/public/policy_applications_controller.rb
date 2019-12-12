@@ -41,31 +41,60 @@ module V2
       end
       
       def create
-        @application = PolicyApplication.new(params[:policy_application])
+        @application = PolicyApplication.new(create_params)
         
-        pp @application
-        pp @application.users
+        @application.policy_users.each do |pu|
+	        pu.user.password = "TempPass"
+	        pu.user.password_confirmation = "TempPass"
+	      end
         
         if @application.save
-          render json: @application.to_json,
-                 status: 200
+	        if @application.policy_type.title == "Residential"
+		        # if residential application
+	        	if @application.update status: "complete"
+		        	# if application.status updated to complete
+		        	@application.qbe_estimate()
+		        	@quote = @application.policy_quotes.last
+							if @application.status != "quote_failed" || application.status != "quoted"
+								# if application quote success or failure
+								@application.qbe_quote(@quote.id) 
+								@application.reload()
+								@quote.reload()
+								
+								if @quote.status == "quoted"		 
+									render json: { quote: { id: @quote.id, status: @quote.status, premium: @quote.policy_premium },
+												   			 user: { id: @application.primary_user().id, stripe_id: @application.primary_user().stripe_id }
+												 			 }.to_json,
+												 status: 200
+								else
+									render json: { error: "Quote Failed", message: "Quote could not be processed at this time" },
+												 status: 500	
+								end
+							else
+								render json: { error: "Application Unavailable", message: "Application cannot be quoted at this time" },
+											 status: 400							
+							end       	
+		        else
+							render json: { error: "Application Incomplete", message: "Application is incomplete and must be finished to proceed" },
+										 status: 400		        
+		        end
+	        elsif @application.policy_type.title == "Commercial"
+						quote_attempt = @application.crum_quote()
+						if quote_attempt[:success] == true
+							@quote = @application.policy_quotes.last
+							render json: { quote: { id: @quote.id, status: @quote.status, premium: @quote.policy_premium },
+										   			 user: { id: @application.primary_user().id, stripe_id: @application.primary_user().stripe_id }
+										 			 }.to_json,
+										 status: 200								
+						else
+							render json: { error: "Quote Failed", message: "Quote could not be processed at this time" },
+										 status: 500							
+						end	        
+	        end
         else
           render json: @application.errors.to_json,
                  status: 400
         end
-#         if create_allowed?
-#           @policy_application = @substrate.new(create_params)
-#           if @policy_application.errors.none? && @policy_application.save
-#             render :show,
-#               status: :created
-#           else
-#             render json: @policy_application.errors,
-#                    status: :unprocessable_entity
-#           end
-#         else
-#           render json: { success: false, errors: ['Unauthorized Access'] },
-#                  status: :unauthorized
-#         end
       end
       
       def update
@@ -112,19 +141,19 @@ module V2
       end
         
       def create_params
-        params.require(:policy_application).permit(
-                      :effective_date, :expiration_date, :auto_renew, :auto_pay,
-                      :policy_type_id, :billing_strategy_id, :carrier_id, :agency_id,
-                      :account_id,
-                      policy_rates_attributes: [:insurable_rate_id],
-                      policy_insurables_attributes: [:insurable_id],
-                      policy_users_attributes: [
-                        :primary, :spouse, user_attributes: [
-                          :email, profile_attributes: [
-                            :first_name, :last_name, :contact_phone, :birth_date
-                          ]
-                        ]
-                      ]).permit(:fields, :questions)
+	      params.require(:policy_application).permit!
+# 	      			.permit(:effective_date, :expiration_date, :fields, :auto_pay, 
+# 	      							:auto_renew, :billing_strategy_id, :account_id, 
+# 	      							:carrier_id, :agency_id, fields: {}, questions: [], 
+#                       policy_rates_attributes: [:insurable_rate_id],
+#                       policy_insurables_attributes: [:insurable_id],
+#                       policy_users_attributes: [
+# 		      							:spouse, user_attributes: [
+# 			      							:email, profile_attributes: [
+# 				      							:first_name, :last_name, :contact_phone, :birth_date	
+# 			      							]
+# 		      							]
+# 	      							])
       end
         
       def update_params
