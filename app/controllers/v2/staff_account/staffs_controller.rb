@@ -6,8 +6,7 @@ module V2
   module StaffAccount
     class StaffsController < StaffAccountController
       
-      before_action :set_staff,
-        only: [:update, :show]
+      before_action :set_staff, only: [:update, :show]
             
       def index
         super(:@staffs, current_staff.organizable.staff, :profile)
@@ -49,7 +48,11 @@ module V2
             status: :unauthorized
         end
       end
-      
+
+      def search
+        @staff = Staff.search(params[:query]).records.where(organizable_id: current_staff.organizable_id)
+        render json: @staff.to_json, status: 200
+      end
       
       private
       
