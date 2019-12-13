@@ -16,8 +16,7 @@ class Lease < ApplicationRecord
 
   # after_commit :update_unit_occupation
 
-  belongs_to :account, 
-    required: true
+  belongs_to :account
     
   belongs_to :insurable
   belongs_to :lease_type

@@ -6,11 +6,9 @@ module V2
   module StaffAccount
     class LeasesController < StaffAccountController
       
-      before_action :set_lease,
-        only: [:update, :destroy, :show]
+      before_action :set_lease, only: [:update, :destroy, :show]
       
-      before_action :set_substrate,
-        only: [:create, :index]
+      before_action :set_substrate, only: [:create, :index]
       
       def index
         if params[:short]
@@ -103,15 +101,16 @@ module V2
         
         def create_params
           return({}) if params[:lease].blank?
-          to_return = params.require(:lease).permit(
+
+          params.require(:lease).permit(
             :covered, :end_date, :insurable_id, :lease_type_id,
             :start_date, :status
           )
-          return(to_return)
         end
         
         def update_params
           return({}) if params[:lease].blank?
+          
           params.require(:lease).permit(
             :covered, :end_date, :start_date, :status
           )

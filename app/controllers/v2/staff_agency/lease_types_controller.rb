@@ -6,8 +6,7 @@ module V2
   module StaffAgency
     class LeaseTypesController < StaffAgencyController
       
-      before_action :set_substrate,
-        only: [:index]
+      before_action :set_substrate, only: [:index]
       
       def index
         if params[:short]
