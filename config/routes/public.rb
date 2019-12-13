@@ -1,5 +1,14 @@
 
 # Public
+
+post 'qbe/communities/list', 
+	to: 'qbe#list', 
+	as: 'get_qbe_communities_list'
+
+post 'qbe/communities/show', 
+	to: 'qbe#show', 
+	as: 'get_qbe_community'
+
 scope module: :public do
   
   resources :addresses,
