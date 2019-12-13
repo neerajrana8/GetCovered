@@ -103,7 +103,8 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
   if carrier.save!
     
     carrier_policy_type = carrier.carrier_policy_types.new(application_required: carrier.id == 2 ? false : true)
-
+    carrier.access_tokens.create!
+    
     # Add Residential to Queensland Business Insurance
     if carrier.id == 1
 	    
@@ -557,6 +558,8 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
     else
       pp carrier_policy_type.errors
     end
-    
+  
+  else
+    pp carrier.errors
   end
 end

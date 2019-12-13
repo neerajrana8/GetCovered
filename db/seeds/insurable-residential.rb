@@ -130,8 +130,8 @@ require 'faker'
 @residential_community_insurable_type = InsurableType.find(1)
 @residential_unit_insurable_type = InsurableType.find(4)
 
-@count = ["awsdev", "production"].include?(ENV["RAILS_ENV"]) ? 4 : 1
-@accounts = Account.first(@count)
+@count = 2
+@accounts = Account.all
 
 @accounts.each do |account|
 	@count.times do |i|
@@ -175,7 +175,7 @@ require 'faker'
 		  	# puts "[#{ @community.title }] Accessing QBE Property Info"
 		  	@community.get_qbe_property_info()
 		  	
-		    units_per_floor = rand(15..30)
+		    units_per_floor = rand(5..10)
 		    floors = rand(1..4).to_i
 		    
 		    floors.times do |floor|
