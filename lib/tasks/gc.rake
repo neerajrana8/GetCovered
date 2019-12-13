@@ -30,12 +30,23 @@ namespace :gc do
     	end
     end
     
+    desc "data Get Covered local reset"
+    task test: :environment do
+    	Rake::Task['gc:flush:all'].invoke
+    	Rake::Task['gc:flush:elasticsearch'].invoke
+    	Rake::Task['gc:flush:redis'].invoke
+    	
+    	['setup', 'agency', 'account'].each do |section|
+    		system("rails db:seed section=#{ section }")
+    	end
+    end
+    
     namespace :aws do
       desc "total Get Covered AWS Dev Reset"
       task :dev do
-      	system("rails db:seed section=reset")
-        Rake::Task['db:migrate'].invoke
-        
+        system("curl -XDELETE https://search-gc-nonprod-esd-sv27jbj3vohqctw5o5672xg3a4.us-west-2.es.amazonaws.com/_all")
+  		  puts "\n"
+  		        
       	['setup', 'agency', 'account', 'insurable-residential', 
 				 'insurable-commercial', 'user', 'policy-residential', 
 				 'policy-commercial'].each do |section|

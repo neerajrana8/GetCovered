@@ -58,23 +58,27 @@ module V2
 			render json: { statusCd: "Error", statusMessage: "Community not available, Zip Code improperly formated or invalid / missing Agent Number" }.to_json,
 					 status: :unprocessable_entity if	return_unprocessable			
 		end
-		
-		def details
 			
-			return_unprocessable = true
-			
-			unless params["ZipCodeRQ"].blank? || 
-						 params["ZipCodeRQ"]["Community_ID"].blank?
-				@community = Community.includes(:address, buildings: [:units])
-															.find_by_qbe_id(Integer(params["ZipCodeRQ"]["Community_ID"]))
-				return_unprocessable = true unless @community.nil?
+		private
+			def check_api_access
+				key = request.headers["security-key"]
+				secret = request.headers["security-secret"]
+				pass = false
+				
+				unless key.nil? || 
+							 secret.nil?
+				 
+					access_token = AccessToken.find_by_key(key)
+				  
+					if !access_token.nil? && 
+						 access_token.check_secret(secret)
+						pass = true
+					end
+				end
+				
+				render json: { statusCd: "Error", statusMessage: "Authenticaion Headers Not Accepted" }.to_json,
+						 status: 401 unless pass
 			end
-
-			render json: { statusCd: "Error", statusMessage: "Community not available or Zip Code improperly formated" }.to_json,
-					 status: :unprocessable_entity if	return_unprocessable	
-		end
-			
-    private
       
   end
 end
