@@ -38,7 +38,7 @@ module V2
 			return_unprocessable = true
 			
 			agency_qbe_id = params["agent_number"]
-			community_qbe_id = params["ZipCodeRQ"]["Community_ID"].to_i
+			community_qbe_id = params["ZipCodeRQ"]["Community_ID"]
 			
 			unless community_qbe_id.nil? || agency_qbe_id.nil?
   			carrier_agency = CarrierAgency.where(external_carrier_id: params["agent_number"]).take
@@ -47,8 +47,11 @@ module V2
   				
   				carrier_insurable_profile = CarrierInsurableProfile.where(external_carrier_id: params["ZipCodeRQ"]["Community_ID"]).take
 				  @community = @agency.insurables.find(carrier_insurable_profile.insurable_id)
-        
+          
 				  return_unprocessable = false unless @community.nil?
+				else
+    			render json: { statusCd: "Error", statusMessage: "Community not available, Zip Code improperly formated or invalid / missing Agent Number" }.to_json,
+    					 status: :unprocessable_entity if	return_unprocessable					
         end
 			end
 
