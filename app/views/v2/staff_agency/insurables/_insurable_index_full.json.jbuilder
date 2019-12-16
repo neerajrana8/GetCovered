@@ -8,12 +8,3 @@ json.account do
       account: insurable.account
   end
 end
-
-json.carrier_insurable_profiles do
-  unless insurable.carrier_insurable_profiles.nil?
-    json.array! insurable.carrier_insurable_profiles do |insurable_carrier_insurable_profiles|
-      json.partial! "v2/staff_agency/carrier_insurable_profiles/carrier_insurable_profile_show_fields.json.jbuilder",
-        carrier_insurable_profile: insurable_carrier_insurable_profiles
-    end
-  end
-end

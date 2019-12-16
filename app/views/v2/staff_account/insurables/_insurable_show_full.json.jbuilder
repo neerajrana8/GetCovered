@@ -11,6 +11,14 @@ json.addresses_attributes do
   end
 end
 
+json.policies do
+  unless insurable.policies.nil?
+    json.array! insurable.policies do |policy|
+      json.partial! "v2/staff_account/policies/policy_short_fields.json.jbuilder", policy: policy
+    end
+  end
+end
+
 json.carrier_insurable_profiles do
   unless insurable.carrier_insurable_profiles.nil?
     json.array! insurable.carrier_insurable_profiles do |insurable_carrier_insurable_profiles|
