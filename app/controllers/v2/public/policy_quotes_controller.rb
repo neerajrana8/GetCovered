@@ -6,46 +6,52 @@ module V2
   module Public
     class PolicyQuotesController < PublicController
       
-      before_action :set_policy_quote,
-        only: [:update, :show]
+      before_action :set_policy_quote
       
-      def show
-      end
-      
-      def update
-        if update_allowed?
-          if @policy_quote.update(update_params)
-            render :show,
-              status: :ok
-          else
-            render json: @policy_quote.errors,
-              status: :unprocessable_entity
-          end
-        else
-          render json: { success: false, errors: ['Unauthorized Access'] },
-            status: :unauthorized
-        end
-      end
-      
+      def accept
+	    	unless @policy_quote.nil?
+		    	@user = User.find(accept_policy_quote_params[:id])
+		    	unless @user.nil?
+			    	
+			    	if @user.update accept_policy_quote_params
+				    	if @policy_quote.accept
+					    	render json: {
+						    	:title => "Policy Accepted",
+						    	:message => "Policy #{ @policy_quote.policy.number }, has been accepted.  Please check your email for more information."
+					    	}, status: 200
+							else
+					    	render json: {
+						    	:error => "Policy Could Not Be Accepted",
+						    	:message => "An Error has occured issuing your policy.  Please contact support@getcoveredinsurance.com."
+					    	}, status: 200
+							end
+				    else
+			    		logger.degug @user.errors
+			    	end
+			    else
+			    	render json: {
+				    	:error => "Not Found",
+				    	:message => "User #{ params[:id] } counld not be found."
+			    	}, status: 400			    
+			    end
+		    else
+		    	render json: {
+			    	:error => "Not Found",
+			    	:message => "Policy Quote #{ params[:id] } counld not be found."
+		    	}, status: 400
+		    end  
+	    end
       
       private
-      
-        def view_path
-          super + "/policy_quotes"
-        end
-        
-        def update_allowed?
-          true
-        end
         
         def set_policy_quote
-          @policy_quote = access_model(::PolicyQuote, params[:id])
+          @policy_quote = PolicyQuote.find(params[:id])
         end
-        
-        def update_params
-          return({}) if params[:policy_quote].blank?
-          to_return = {}
-        end
+      
+				def accept_policy_quote_params
+					params.require(:user).permit( :id, 
+													payment_profiles_attributes: [ :id, :source_id ])
+				end
         
     end
   end # module Public

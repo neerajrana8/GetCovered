@@ -57,7 +57,7 @@ class User < ApplicationRecord
   has_many :accounts,
     through: :active_account_users
 
-  accepts_nested_attributes_for :profile
+  accepts_nested_attributes_for :profile, :payment_profiles
 
 
   enum current_payment_method: ['none', 'ach_unverified', 'ach_verified', 'card', 'other'],
