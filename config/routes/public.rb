@@ -35,8 +35,9 @@ scope module: :public do
     path: "policy-applications",
     only: [ :create, :update, :show, :new ]
   
-  resources :policy_quotes,
-    path: "policy-quotes",
-    only: [ :update, :show ]
+  
+  post 'policy-quotes/:id/accept', 
+  	to: 'policy_quotes#accept', 
+  	as: :accept_policy_quote
   
 end
