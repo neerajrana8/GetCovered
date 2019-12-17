@@ -99,3 +99,9 @@ end
 	end
 
 end
+
+static_staff = { email: 'staff@getcovered.com', password: 'Test1234', password_confirmation: 'Test1234', role: 'staff', enabled: true,
+                 organizable: Agency.first.accounts.first,
+                 profile_attributes: { first_name: 'Staff', last_name: 'Staff', job_title: 'Staff'} }
+
+SeedFunctions.adduser(Staff, static_staff)
