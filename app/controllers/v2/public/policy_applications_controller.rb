@@ -42,6 +42,9 @@ module V2
       
       def create
         @application = PolicyApplication.new(create_params)
+        if @application.agency.nil?
+          @application.agency = @application.account.agency  
+        end
         
         @application.policy_users.each do |pu|
 	        pu.user.password = "TempPass"
