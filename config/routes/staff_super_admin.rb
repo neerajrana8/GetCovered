@@ -52,6 +52,8 @@
     resources :carrier_policy_type_availabilities,
       path: "carrier-policy-type-availabilities",
       only: [ :create, :update, :index, :show ]
+
+    resources :insurables, only: [:index, :show ]
   
     resources :lease_types,
       path: "lease-types",
@@ -118,12 +120,5 @@
             defaults: { authorable_type: User }
         end
       end
-  
   end
 # end
-
-
-
-
-
-

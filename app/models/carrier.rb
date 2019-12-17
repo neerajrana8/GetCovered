@@ -32,7 +32,10 @@ class Carrier < ApplicationRecord
   has_many :carrier_class_codes
   
   has_many :policy_application_fields
-  
+
+  has_many :access_tokens,
+  	as: :bearer  
+
   # Validations
   validates :title, presence: true,
                     uniqueness: true  

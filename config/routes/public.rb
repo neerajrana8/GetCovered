@@ -1,5 +1,14 @@
 
 # Public
+
+post 'qbe/communities/list', 
+	to: 'qbe#list', 
+	as: 'get_qbe_communities_list'
+
+post 'qbe/communities/show', 
+	to: 'qbe#show', 
+	as: 'get_qbe_community'
+
 scope module: :public do
   
   resources :addresses,
@@ -26,8 +35,9 @@ scope module: :public do
     path: "policy-applications",
     only: [ :create, :update, :show, :new ]
   
-  resources :policy_quotes,
-    path: "policy-quotes",
-    only: [ :update, :show ]
+  
+  post 'policy-quotes/:id/accept', 
+  	to: 'policy_quotes#accept', 
+  	as: :accept_policy_quote
   
 end

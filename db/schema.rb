@@ -10,10 +10,23 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_12_10_175933) do
+ActiveRecord::Schema.define(version: 2019_12_13_165508) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
+
+  create_table "access_tokens", force: :cascade do |t|
+    t.string "key"
+    t.string "secret"
+    t.string "secret_hash"
+    t.string "secret_salt"
+    t.boolean "enabled"
+    t.string "bearer_type"
+    t.bigint "bearer_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["bearer_type", "bearer_id"], name: "index_access_tokens_on_bearer_type_and_bearer_id"
+  end
 
   create_table "account_users", force: :cascade do |t|
     t.integer "status", default: 0

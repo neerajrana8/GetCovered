@@ -17,7 +17,7 @@ class Devise::Staffs::InvitationsController < Devise::InvitationsController
       @token = @resource.create_token
       @resource.save!
       update_auth_header
-      render json: { success: ['Staff updated.'] }, 
+      render json: { success: true },
              status: :accepted
     else
       render json: { errors: @staff.errors.full_messages },
@@ -28,13 +28,12 @@ class Devise::Staffs::InvitationsController < Devise::InvitationsController
   private  
 
     def invite_params
-      params.permit(:email, :invitation_token, :provider, :skip_invitation)
+      params.permit(:email, :provider, :skip_invitation)
     end
 
     def accept_invitation_params
       params.permit(:email, :password, 
-                    :password_confirmation, 
-                    :invitation_token, 
+                    :password_confirmation,
                     profile_attributes: [:first_name, :last_name, :contact_phone])
     end
 end

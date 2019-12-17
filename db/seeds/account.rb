@@ -74,51 +74,28 @@ end
 
 @agencies = Agency.all
 @agencies.each_with_index do |agency, index|
-		
-	2.times do
-		account_count = Account.count
-		account = agency.accounts.new(title: @random_company_names[account_count], 
-																	enabled: true, 
-																	whitelabel: true, 
-																	tos_accepted: true, 
-																	tos_accepted_at: Time.current, 
-																	tos_acceptance_ip: Socket.ip_address_list.select{ |intf| intf.ipv4_loopback? }, 
-																	verified: true, 
-																	stripe_id: nil,
-																	addresses_attributes: [@addresses[account_count]])
-																				
-			if account.save
-			  site_staff = [
-			    { email: "dylan@#{ account.slug }.com", password: 'TestingPassword1234', password_confirmation: 'TestingPassword1234', role: 'agent', enabled: true, organizable: account, profile_attributes: { first_name: 'Dylan', last_name: 'Gaines', job_title: 'Chief Technical Officer', birth_date: '04-01-1989'.to_date }},
-			    { email: "brandon@#{ account.slug }.com", password: 'TestingPassword1234', password_confirmation: 'TestingPassword1234', role: 'agent', enabled: true, organizable: account, profile_attributes: { first_name: 'Brandon', last_name: 'Tobman', job_title: 'Chief Executive Officer', birth_date: '18-11-1983'.to_date }}
-			  ]
-			  
-			  site_staff.each do |staff|
-			    SeedFunctions.adduser(Staff, staff)
-			  end
+  account_count = Account.count
+  demo_account = agency.accounts.new(title: @random_company_names[account_count], 
+    																 enabled: true, 
+    																 whitelabel: true, 
+    																 tos_accepted: true, 
+    																 tos_accepted_at: Time.current, 
+    																 tos_acceptance_ip: Socket.ip_address_list.select{ |intf| intf.ipv4_loopback? }, 
+    																 verified: true, 
+    																 stripe_id: nil,
+    																 addresses_attributes: [@addresses[account_count]]) 
 
-# 		  Working on a fix for stipe connect integration 8/1/19 - Dylan
-#			  account.create_stripe_connect_account	
-# 			  
-# 			  account.validate_stripe_connect_account({ 
-# 			  	:business_tax_id => "82-3427840", 
-# 			  	:business_name => account.title, 
-# 			  	:personal_id_number => "406847092", 
-# 			  	:file => "/db/seeds/assets/demo-card.jpg",
-# 			  	:ip_address => '127.0.0.1'
-# 				 })
-# 				 
-# 			  account.add_external_account({ 
-# 				  :object => 'bank_account', 
-# 				  :country => 'US', 
-# 				  :currency => 'usd', 
-# 				  :routing_number => '110000000', 
-# 				  :account_number => '000123456789' 
-# 				})
-# 			
-# 			  account.stripe_account_verification_status()		  
-			  
-			end
-		end
-	
+	if demo_account.save
+	  site_staff = [
+	    { email: "dylan@#{ demo_account.slug }.com", password: 'TestingPassword1234', password_confirmation: 'TestingPassword1234', role: 'agent', enabled: true, organizable: demo_account, 
+  	    profile_attributes: { first_name: 'Dylan', last_name: 'Gaines', job_title: 'Chief Technical Officer', birth_date: '04-01-1989'.to_date }},
+	    { email: "brandon@#{ demo_account.slug }.com", password: 'TestingPassword1234', password_confirmation: 'TestingPassword1234', role: 'agent', enabled: true, organizable: demo_account, 
+  	    profile_attributes: { first_name: 'Brandon', last_name: 'Tobman', job_title: 'Chief Executive Officer', birth_date: '18-11-1983'.to_date }}
+	  ]
+	  
+	  site_staff.each do |staff|
+	    SeedFunctions.adduser(Staff, staff)
+	  end
+	end
+
 end
