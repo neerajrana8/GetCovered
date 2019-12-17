@@ -6,11 +6,9 @@ module V2
   module StaffAgency
     class LeasesController < StaffAgencyController
       
-      before_action :set_lease,
-        only: [:update, :destroy, :show]
+      before_action :set_lease, only: [:update, :destroy, :show]
       
-      before_action :set_substrate,
-        only: [:create, :index]
+      before_action :set_substrate, only: [:create, :index]
       
       def index
         if params[:short]
@@ -103,13 +101,17 @@ module V2
         
         def create_params
           return({}) if params[:lease].blank?
-          to_return = {}
-          return(to_return)
+          params.require(:lease).permit(
+            :account_id, :covered, :start_date, :end_date, :insurable_id,
+            :lease_type_id, :status
+          )
         end
         
         def update_params
           return({}) if params[:lease].blank?
-          to_return = {}
+          params.require(:lease).permit(
+            :covered, :end_date, :start_date, :status
+          )
         end
         
         def supported_filters(called_from_orders = false)

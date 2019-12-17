@@ -32,6 +32,8 @@ class Account < ApplicationRecord
   
   has_many :policies
   has_many :claims, through: :policies
+
+  has_many :leases
   
   has_many :account_users
   
