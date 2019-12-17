@@ -47,8 +47,12 @@ if @get_covered.save
     { email: "brandon@getcoveredllc.com", password: 'TestingPassword1234', password_confirmation: 'TestingPassword1234', role: 'agent', enabled: true, organizable: @get_covered, 
       profile_attributes: { first_name: 'Brandon', last_name: 'Tobman', job_title: 'Chief Executive Officer', birth_date: '18-11-1983'.to_date }},
     { email: "baha@getcoveredllc.com", password: 'TestingPassword1234', password_confirmation: 'TestingPassword1234', role: 'agent', enabled: true, organizable: @get_covered, 
-      profile_attributes: { first_name: 'Baha', last_name: 'Sagadiev'}}
-  ]
+      profile_attributes: { first_name: 'Baha', last_name: 'Sagadiev'}},
+    { email: 'super_admin@getcovered.com', password: 'Test1234', password_confirmation: 'Test1234', role: 'super_admin', enabled: true,
+			profile_attributes: { first_name: 'Super', last_name: 'Admin', job_title: 'Super Admin', birth_date: '01-01-0001'.to_date }},
+		{ email: 'agent@getcovered.com', password: 'Test1234', password_confirmation: 'Test1234', role: 'agent', enabled: true, organizable: @get_covered,
+			profile_attributes: { first_name: 'Agent', last_name: 'Agent', job_title: 'Agent' }}
+	]
   
   site_staff.each do |staff|
     SeedFunctions.adduser(Staff, staff)
