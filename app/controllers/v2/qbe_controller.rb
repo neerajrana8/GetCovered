@@ -38,11 +38,11 @@ module V2
 			
 			return_unprocessable = true
 			
-			agency_qbe_id = params["sourceInfo"].blank? ? nil : params["sourceInfo"]["agent_number"]
+			agency_qbe_id = params["SourceInfo"].blank? ? nil : params["SourceInfo"]["agent_number"]
 			community_qbe_id = params["ZipCodeRQ"]["Community_ID"]
 			
 			unless community_qbe_id.nil? || agency_qbe_id.nil?
-  			carrier_agency = CarrierAgency.where(external_carrier_id: params["agent_number"]).take
+  			carrier_agency = CarrierAgency.where(external_carrier_id: agency_qbe_id).take
 				unless carrier_agency.nil?
   				@agency = carrier_agency.agency
   				
