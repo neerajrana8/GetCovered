@@ -38,7 +38,7 @@ module V2
 			
 			return_unprocessable = true
 			
-			agency_qbe_id = params["agent_number"]
+			agency_qbe_id = params["sourceInfo"].blank? ? nil : params["sourceInfo"]["agent_number"]
 			community_qbe_id = params["ZipCodeRQ"]["Community_ID"]
 			
 			unless community_qbe_id.nil? || agency_qbe_id.nil?
