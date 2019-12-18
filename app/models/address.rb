@@ -142,7 +142,7 @@ class Address < ApplicationRecord
   
   def set_first_as_primary
 		unless addressable.nil?
-			self.primary = true if addressable.addresses.count == 0
+			self.primary = true if self.addressable.respond_to?("addresses") && self.addressable.addresses.count == 0
 		end  
 	end
 

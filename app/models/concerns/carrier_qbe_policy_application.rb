@@ -22,7 +22,7 @@ module CarrierQbePolicyApplication
 				end
 				
 				policy_fee = self.primary_insurable().insurable.insurable_rates
-				                 .where(number_insured: self.users.count, 
+				                 .where(number_insured: self.fields[0]["value"], 
 				                        interval: self.billing_strategy.title.downcase.sub(/ly/, '').gsub('-', '_'), 
 				                        insurable: self.primary_insurable().insurable, 
 				                        sub_schedule: "policy_fee").take
