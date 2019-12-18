@@ -95,7 +95,8 @@ class Policy < ApplicationRecord
   scope :current, -> { where(status: %i[BOUND BOUND_WITH_WARNING]) }
   scope :policy_in_system, ->(policy_in_system) { where(policy_in_system: policy_in_system) }
 
-  accepts_nested_attributes_for :policy_coverages, :policy_premiums
+  accepts_nested_attributes_for :policy_coverages, :policy_premiums,
+                                :insurables, :policy_users
 
   #  after_save :update_leases, if: :saved_changes_to_status?
 

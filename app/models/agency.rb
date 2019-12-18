@@ -45,6 +45,9 @@ class Agency < ApplicationRecord
       
   has_many :policies
   has_many :claims, through: :policies
+
+  has_many :policy_applications
+  has_many :policy_quotes
     
   has_many :branding_profiles,
     as: :profileable
