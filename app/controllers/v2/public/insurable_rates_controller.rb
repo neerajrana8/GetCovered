@@ -37,6 +37,7 @@ module V2
  	  							  									 .optional
   								  									 .activated
 								  										 .where(number_insured: insured_count, interval: billing_period)
+								  										 .where.not(sub_schedule: "policy_fee")
 		  										 		  		      
 	      render json: @rates.to_json,
 	             status: :ok
