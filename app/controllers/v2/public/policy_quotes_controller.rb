@@ -23,7 +23,7 @@ module V2
 					    	render json: {
 						    	:error => "Policy Could Not Be Accepted",
 						    	:message => "An Error has occured issuing your policy.  Please contact support@getcoveredinsurance.com."
-					    	}, status: 200
+					    	}, status: 500
 							end
 				    else
 			    		logger.degug @user.errors

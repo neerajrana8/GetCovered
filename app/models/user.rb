@@ -33,6 +33,10 @@ class User < ApplicationRecord
   has_one :profile,
           as: :profileable,
           autosave: true
+  
+  has_one :address,
+  				as: :addressable,
+  				autosave: true
           
   has_many :account_users
   has_many :claims, as: :claimant
@@ -57,7 +61,7 @@ class User < ApplicationRecord
   has_many :accounts,
     through: :active_account_users
 
-  accepts_nested_attributes_for :profile, :payment_profiles
+  accepts_nested_attributes_for :profile, :payment_profiles, :address
 
 
   enum current_payment_method: ['none', 'ach_unverified', 'ach_verified', 'card', 'other'],
@@ -94,8 +98,6 @@ class User < ApplicationRecord
           :last_name  => profile.last_name
         }
       )
-      
-      pp stripe_customer
       
       if update stripe_id: stripe_customer['id']
         return attach_payment_source(token, default) unless token.nil?
