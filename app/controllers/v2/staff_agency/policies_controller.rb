@@ -6,18 +6,12 @@ module V2
   module StaffAgency
     class PoliciesController < StaffAgencyController
       
-      before_action :set_policy,
-        only: [:update, :show]
+      before_action :set_policy, only: [:update, :show]
       
-      before_action :set_substrate,
-        only: [:create, :index]
+      before_action :set_substrate, only: [:create, :index]
       
       def index
-        if params[:short]
-          super(:@policies, @substrate)
-        else
-          super(:@policies, @substrate)
-        end
+        super(:@policies, @substrate)
       end
       
       def show
@@ -26,31 +20,27 @@ module V2
       def create
         if create_allowed?
           @policy = @substrate.new(create_params)
-          if !@policy.errors.any? && @policy.save
-            render :show,
-              status: :created
+          if @policy.errors.none? && @policy.save
+            render :show, status: :created
           else
-            render json: @policy.errors,
-              status: :unprocessable_entity
+            render json: @policy.errors, status: :unprocessable_entity
           end
         else
           render json: { success: false, errors: ['Unauthorized Access'] },
-            status: :unauthorized
+                 status: :unauthorized
         end
       end
       
       def update
         if update_allowed?
           if @policy.update(update_params)
-            render :show,
-              status: :ok
+            render :show, status: :ok
           else
-            render json: @policy.errors,
-              status: :unprocessable_entity
+            render json: @policy.errors, status: :unprocessable_entity
           end
         else
           render json: { success: false, errors: ['Unauthorized Access'] },
-            status: :unauthorized
+                 status: :unauthorized
         end
       end
       
@@ -87,7 +77,9 @@ module V2
           to_return = params.require(:policy).permit(
             :account_id, :agency_id, :auto_renew, :cancellation_code,
             :cancellation_date_date, :carrier_id, :effective_date,
-            :expiration_date, :number, :policy_type_id, :status
+            :expiration_date, :number, :policy_type_id, :status,
+            insurables_attributes: [ :insurable_id ],
+            policy_users_attributes: [ :user_id ]
           )
           return(to_return)
         end
@@ -97,7 +89,8 @@ module V2
           params.require(:policy).permit(
             :cancellation_code, :cancellation_date_date,
             :effective_date, :expiration_date, :number, :policy_type_id,
-            :status
+            :status, insurables_attributes: [ :insurable_id ],
+            policy_users_attributes: [ :user_id ]
           )
         end
         
