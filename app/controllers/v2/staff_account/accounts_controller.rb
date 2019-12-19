@@ -5,8 +5,7 @@
 module V2
   module StaffAccount
     class AccountsController < StaffAccountController
-
-      before_action :set_account, only: [:update, :show]
+      before_action :set_account, only: %i[update show]
 
       def show
         render :show, status: :ok
@@ -15,8 +14,7 @@ module V2
       def update
         if update_allowed?
           if @account.update(update_params)
-            render :show,
-                   status: :ok
+            render :show, status: :ok
           else
             render json: @account.errors,
                    status: :unprocessable_entity
@@ -30,7 +28,7 @@ module V2
       private
 
       def view_path
-        super + "/accounts"
+        super + '/accounts'
       end
 
       def update_allowed?
@@ -43,16 +41,28 @@ module V2
 
       def update_params
         return({}) if params[:account].blank?
-        params.require(:account).permit(
-          :title, :tos_accepted, contact_info: {}, settings: {},
-          addresses_attributes: [
-            :city, :country, :county, :id, :latitude, :longitude,
-            :plus_four, :state, :street_name, :street_number,
-            :street_two, :timezone, :zip_code
-          ]
-        )
-      end
 
+        permitted_params =
+          params.require(:account).permit(
+            :title, :tos_accepted, contact_info: {}, settings: {},
+                                   addresses_attributes: %i[
+                                     city country county id latitude longitude
+                                     plus_four state street_name street_number
+                                     street_two timezone zip_code
+                                   ]
+          )
+
+        existed_ids = permitted_params[:addresses_attributes]&.map { |addr| addr[:id] }
+
+        unless existed_ids.nil?
+          (@account.addresses.pluck(:id) - existed_ids).each do |id|
+            permitted_params[:addresses_attributes] <<
+              ActionController::Parameters.new(id: id, _destroy: true).permit(:id, :_destroy)
+          end
+        end
+
+        permitted_params
+      end
     end
   end
 end

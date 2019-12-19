@@ -68,7 +68,7 @@ class Account < ApplicationRecord
   has_many :reports,
     as: :reportable
 
-  accepts_nested_attributes_for :addresses
+  accepts_nested_attributes_for :addresses, allow_destroy: true
 
   validates_presence_of :title
   
