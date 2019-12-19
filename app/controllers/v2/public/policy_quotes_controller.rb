@@ -13,7 +13,7 @@ module V2
 		    	@user = ::User.find(accept_policy_quote_params[:id])
 		    	unless @user.nil?
 			    	
-			    	if @user.update accept_policy_quote_params
+			    	if @user.payment_profiles.create! accept_policy_quote_params[:payment_profiles_attributes]
 				    	if @policy_quote.accept
 					    	render json: {
 						    	:title => "Policy Accepted",
@@ -50,7 +50,7 @@ module V2
       
 				def accept_policy_quote_params
 					params.require(:user).permit( :id, 
-													payment_profiles_attributes: [ :id, :source_id ])
+													payment_profiles_attributes: [ :id, :source_id, :source_type ])
 				end
         
     end
