@@ -11,10 +11,11 @@ json.communityList do
 			json.communityName community.title
 			json.unitNumber nil
 			json.addressLine1 community.primary_address().combined_street_address
-			json.addressline2 community.primary_address().street_two
+			json.addressLine2 community.primary_address().street_two
 			json.city community.primary_address().city
-			json.status community.primary_address().state
+			json.state community.primary_address().state
 			json.county community.primary_address().county
+			json.Zip_Code community.primary_address().zip_code
 			json.cityLimit community.carrier_profile(1).traits['in_city_limits']
 			json.propertyMgmtCompany community.account.title
 			json.propertyManager community.primary_staff.profile.full_name
