@@ -10,7 +10,7 @@ module V2
       
       def accept
 	    	unless @policy_quote.nil?
-		    	@user = User.find(accept_policy_quote_params[:id])
+		    	@user = ::User.find(accept_policy_quote_params[:id])
 		    	unless @user.nil?
 			    	
 			    	if @user.update accept_policy_quote_params
