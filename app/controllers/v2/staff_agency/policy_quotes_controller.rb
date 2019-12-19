@@ -6,18 +6,12 @@ module V2
   module StaffAgency
     class PolicyQuotesController < StaffAgencyController
       
-      before_action :set_policy_quote,
-        only: [:show]
+      before_action :set_policy_quote, only: [:show]
       
-      before_action :set_substrate,
-        only: [:index]
+      before_action :set_substrate, only: [:index]
       
       def index
-        if params[:short]
-          super(:@policy_quotes, @substrate)
-        else
-          super(:@policy_quotes, @substrate)
-        end
+        super(:@policy_quotes, @substrate)
       end
       
       def show

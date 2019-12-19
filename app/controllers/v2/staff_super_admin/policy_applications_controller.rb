@@ -6,18 +6,10 @@ module V2
   module StaffSuperAdmin
     class PolicyApplicationsController < StaffSuperAdminController
       
-      before_action :set_policy_application,
-        only: [:show]
-      
-      before_action :set_substrate,
-        only: [:index]
-      
+      before_action :set_policy_application, only: [:show]
+            
       def index
-        if params[:short]
-          super(:@policy_applications, @substrate)
-        else
-          super(:@policy_applications, @substrate)
-        end
+        super(:@policy_applications, PolicyApplication)
       end
       
       def show
@@ -31,16 +23,7 @@ module V2
         end
         
         def set_policy_application
-          @policy_application = access_model(::PolicyApplication, params[:id])
-        end
-        
-        def set_substrate
-          super
-          if @substrate.nil?
-            @substrate = access_model(::PolicyApplication)
-          elsif !params[:substrate_association_provided]
-            @substrate = @substrate.policy_applications
-          end
+          @policy_application = PolicyApplication.find(params[:id])
         end
         
         def supported_filters(called_from_orders = false)

@@ -6,18 +6,12 @@ module V2
   module StaffAgency
     class PolicyApplicationsController < StaffAgencyController
       
-      before_action :set_policy_application,
-        only: [:show]
+      before_action :set_policy_application, only: [:show]
       
-      before_action :set_substrate,
-        only: [:index]
+      before_action :set_substrate, only: [:index]
       
       def index
-        if params[:short]
-          super(:@policy_applications, @substrate)
-        else
-          super(:@policy_applications, @substrate)
-        end
+        super(:@policy_applications, @substrate)
       end
       
       def show

@@ -6,18 +6,12 @@ module V2
   module StaffSuperAdmin
     class PoliciesController < StaffSuperAdminController
       
-      before_action :set_policy,
-        only: [:show]
+      before_action :set_policy, only: [:show]
       
-      before_action :set_substrate,
-        only: [:index]
+      before_action :set_substrate, only: [:index]
       
       def index
-        if params[:short]
-          super(:@policies, @substrate)
-        else
-          super(:@policies, @substrate)
-        end
+        super(:@policies, @substrate)
       end
       
       def show
