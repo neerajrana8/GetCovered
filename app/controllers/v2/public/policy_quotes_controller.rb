@@ -26,7 +26,11 @@ module V2
 					    	}, status: 500
 							end
 				    else
-			    		logger.degug @user.errors
+				      logger.debug @user.errors
+				    	render json: {
+					    	:error => "Payment Source Could not Be Attached",
+					    	:message => "An Error has occured with the provided payment method.  Please try again."
+				    	}, status: 500
 			    	end
 			    else
 			    	render json: {
