@@ -15,7 +15,7 @@ json.communityList do
 			json.city community.primary_address().city
 			json.state community.primary_address().state
 			json.county community.primary_address().county
-			json.Zip_Code community.primary_address().zip_code
+			json.zipCode community.primary_address().zip_code
 			json.cityLimit community.carrier_profile(1).traits['in_city_limits']
 			json.propertyMgmtCompany community.account.title
 			json.propertyManager community.primary_staff.profile.full_name

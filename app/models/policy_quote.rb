@@ -160,7 +160,10 @@ class PolicyQuote < ApplicationRecord
       charge_invoice = policy.invoices.first.pay(allow_upcoming: true)
 
       if charge_invoice[:success] == true
+        policy.update billing_status: "CURRENT"
         return true
+      else
+        policy.update billing_status: "ERROR"
       end
 
     end
