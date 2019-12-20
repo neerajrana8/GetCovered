@@ -157,11 +157,11 @@ class PolicyQuote < ApplicationRecord
         end
       end
 
-#       charge_invoice = policy.invoices.first.pay(allow_upcoming: true)
-# 
-#       if charge_invoice[:success] == true
-#         return true
-#       end
+      charge_invoice = policy.invoices.first.pay(allow_upcoming: true)
+
+      if charge_invoice[:success] == true
+        return true
+      end
 
     end
     billing_started
