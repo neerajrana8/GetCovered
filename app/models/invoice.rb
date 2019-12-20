@@ -343,14 +343,14 @@ class Invoice < ApplicationRecord
       end
     end
 
-    if policy.behind_billing_status? || policy.rejected_billing_status?
+    if policy.BEHIND? || policy.REJECTED?
       invoices = policy.invoices
       invoices_statuses = []
       invoices.each { |i| invoices_statuses << i.status }
 
-      policy.billing_status = 'rescinded' unless invoices_statuses.include? 'missed'
+      policy.billing_status = 'RESCINDED' unless invoices_statuses.include? 'missed'
     else
-      policy.billing_status = 'current'
+      policy.billing_status = 'CURRENT'
     end
 
     policy.last_payment_date = updated_at.to_date
