@@ -25,7 +25,7 @@ module V2
           # remove password issues from errors since this is a Devise model
           @user.valid? if @user.errors.blank?
           @user.errors.messages.except!(:password)
-          if @user.errors.none? && @user.invite_as!(current_staff)
+          if @user.errors.none? && @user.invite_as(current_staff)
             render :show,
               status: :created
           else

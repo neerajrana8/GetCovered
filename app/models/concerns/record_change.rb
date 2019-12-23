@@ -38,7 +38,8 @@ module RecordChange
       invite_as_params: invite_as_params,
       send_invite: send_invite
     }
-    RecordChangeInviteAs.perform_later(self, params)
+    performed_object = new_record? ? Marshal.dump(self) : self
+    RecordChangeInviteAs.perform_later(performed_object, params)
   end
 
   def invite_as!(inviter, invite_as_params = nil, send_invite: true)
