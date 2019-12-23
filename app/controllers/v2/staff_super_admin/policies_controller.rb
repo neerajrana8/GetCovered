@@ -17,7 +17,11 @@ module V2
       def show
       end
       
-      
+      def search
+        @policies = Policy.search(params[:query]).records
+        render json: @policies.to_json, status: 200
+      end
+
       private
       
         def view_path

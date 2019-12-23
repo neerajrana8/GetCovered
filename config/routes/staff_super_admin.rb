@@ -82,6 +82,7 @@
             via: "get",
             defaults: { recordable_type: Policy }
         end
+        get "search", to: 'policies#search', on: :collection
       end
   
     resources :policy_applications,
