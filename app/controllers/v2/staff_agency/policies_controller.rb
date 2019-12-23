@@ -13,6 +13,12 @@ module V2
       def index
         super(:@policies, @substrate)
       end
+
+      def search
+        @policies = Policy.search(params[:query]).records.where(agency_id: current_staff.organizable_id)
+        render json: @policies.to_json, status: 200
+      end
+
       
       def show
       end
@@ -97,6 +103,14 @@ module V2
         def supported_filters(called_from_orders = false)
           @calling_supported_orders = called_from_orders
           {
+            id: %i[scalar array],
+            carrier: {
+              title: %i[scalar like]
+            },
+            status: %i[scalar like],
+            policy_in_system: %i[scalar like],
+            effective_date: %i[scalar like],
+            expiration_date: %i[scalar like]
           }
         end
 
