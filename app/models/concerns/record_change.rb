@@ -30,7 +30,17 @@ module RecordChange
     @author = saver
     save  
   end
-  
+
+  # Async version of the +invite_as!+ method
+  def invite_as(inviter, invite_as_params = nil, send_invite: true)
+    params = {
+      inviter: inviter,
+      invite_as_params: invite_as_params,
+      send_invite: send_invite
+    }
+    RecordChangeInviteAs.perform_later(self, params)
+  end
+
   def invite_as!(inviter, invite_as_params = nil, send_invite: true)
     @author = inviter
     tr = nil

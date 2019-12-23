@@ -20,7 +20,7 @@ module V2
           # remove password issues from errors since this is a Devise model
           @staff.valid? if @staff.errors.blank?
           @staff.errors.messages.except!(:password)
-          if @staff.errors.none? && @staff.invite_as!(current_staff)
+          if @staff.errors.none? && @staff.invite_as(current_staff)
             render :show,
               status: :created
           else
@@ -58,7 +58,7 @@ module V2
           render json: { success: false, errors: { staff: 'Already activated' } },
                  status: :unprocessable_entity
         else
-          if @staff.invite_as!(current_staff)
+          if @staff.invite_as(current_staff)
             render json: { success: true }, status: :ok
           else
             render json: { success: false,
