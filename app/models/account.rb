@@ -24,6 +24,9 @@ class Account < ApplicationRecord
   # has_many relationships
   has_many :staff,
     as: :organizable
+
+  # ActiveSupport +pluralize+ method doesn't work correctly for this word(returns staffs). So I added alias for it
+  alias staffs staff
       
   has_many :branding_profiles,
     as: :profileable

@@ -79,7 +79,7 @@ exit
 
   # Used to construct the path to a model's short view.
   def view_path
-    'v1'
+    'v2'
   end
 
   # Override this to return a hash of filters which should always be in place

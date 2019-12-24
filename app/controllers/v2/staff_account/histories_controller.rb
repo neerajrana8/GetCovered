@@ -8,13 +8,27 @@ module V2
       
       before_action :set_substrate,
         only: [:index]
-      
-      def index
-        if params[:short]
-          super(:@histories, @substrate)
-        else
-          super(:@histories, @substrate)
-        end
+
+      def index(objects = @substrate)
+        super(:@histories, objects)
+      end
+
+      def index_recordable
+        @using_recordable_index = true
+        params[:sort] = { column: 'created_at', direction: 'desc' }
+        objects = access_model(params[:recordable_type], params[:id]).histories
+        index(objects)
+        remove_instance_variable(:@using_recordable_index)
+        render template: view_path + "/#{params[:short] ? 'short' : 'index'}.json.jbuilder"
+      end
+
+      def index_authorable
+        @using_authorable_index = true
+        params[:sort] = { column: 'created_at', direction: 'desc' }
+        objects = access_model(params[:authorable_type], params[:id]).authored_histories
+        index(objects)
+        remove_instance_variable(:@using_authorable_index)
+        render template: view_path + "/#{params[:short] ? 'short' : 'index'}.json.jbuilder"
       end
       
       

@@ -31,8 +31,8 @@ class Agency < ApplicationRecord
     
   has_many :accounts
   has_many :insurables, through: :accounts
-	has_many :insurable_rates
-	has_many :leases, through: :accounts
+  has_many :insurable_rates
+  has_many :leases, through: :accounts
   has_many :insurable_rates
   has_many :staff,
     as: :organizable
@@ -79,6 +79,9 @@ class Agency < ApplicationRecord
     source: :user
 
   accepts_nested_attributes_for :addresses
+
+  # ActiveSupport +pluralize+ method doesn't work correctly for this word(returns staffs). So I added alias for it
+  alias staffs staff
   
   def owner
     staff.where(id: staff_id).take
