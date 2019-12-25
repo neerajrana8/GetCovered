@@ -37,11 +37,11 @@ module V2
       end
 
       def set_substrate
-        super
-        if @substrate.nil?
-          @substrate = access_model(::History)
-        elsif !params[:substrate_association_provided]
-          @substrate = @substrate.histories
+        organizable = current_staff.organizable
+        if organizable.present?
+          @substrate = organizable.histories
+        else
+          render json: { success: false, errors: ["Staff doesn't have agency/account"] }, status: :unprocessable_entity
         end
       end
 

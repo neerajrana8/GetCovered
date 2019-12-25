@@ -34,28 +34,28 @@ module V2
       
       private
       
-        def view_path
-          super + "/histories"
-        end
+      def view_path
+        super + '/histories'
+      end
         
-        def set_substrate
-          super
-          if @substrate.nil?
-            @substrate = access_model(::History)
-          elsif !params[:substrate_association_provided]
-            @substrate = @substrate.histories
-          end
+      def set_substrate
+        organizable = current_staff.organizable
+        if organizable.present?
+          @substrate = organizable.histories
+        else
+          render json: { success: false, errors: ["Staff doesn't have agency/account"] }, status: :unprocessable_entity
         end
+      end
         
-        def supported_filters(called_from_orders = false)
-          @calling_supported_orders = called_from_orders
-          {
-          }
-        end
+      def supported_filters(called_from_orders = false)
+        @calling_supported_orders = called_from_orders
+        {
+        }
+      end
 
-        def supported_orders
-          supported_filters(true)
-        end
+      def supported_orders
+        supported_filters(true)
+      end
         
     end
   end # module StaffAccount
