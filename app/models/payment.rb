@@ -104,7 +104,7 @@ class Payment < ApplicationRecord
 
     def initialize_payment
       # self.amount_refunded ||= '0.00' # Can we delete this? We have no amount_refunded!
-      self.user_in_system = true if self.user_in_system.nil?
+      # self.user_in_system = true if self.user_in_system.nil?
     end
 
     def record_status_changes
@@ -153,7 +153,7 @@ class Payment < ApplicationRecord
         self.class.name.to_s.downcase.pluralize => {
           "model" => self.class.name.to_s,
           "id" => self.id,
-          "message" => "New payment#{ relation == :user ? "" : " from #{user.profile.full_name}" }#{ relation == :policy || policy.policy_number.nil? ? "" : " for policy #{policy.policy_number}" }"
+          "message" => "New payment#{ relation == :user ? "" : " from #{user.profile.full_name}" }#{ relation == :policy || policy.number.nil? ? "" : " for policy #{policy.number}" }"
         }
       }
     end

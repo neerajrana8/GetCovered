@@ -105,6 +105,7 @@ module V2
           {
             id: %i[scalar array],
             carrier: {
+              id: %i[scalar array],
               title: %i[scalar like]
             },
             status: %i[scalar like],
