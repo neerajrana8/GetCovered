@@ -19,5 +19,5 @@ json.documents claim.documents do |document|
   json.id document.id
   json.filename document.filename
   json.url link_to_document(document)
-  json.preview_url link_to_preview(document) if document.variable?
+  json.preview_url link_to_document_preview(document) if document.variable?
 end

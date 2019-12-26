@@ -53,6 +53,8 @@
       path: "carrier-policy-type-availabilities",
       only: [ :create, :update, :index, :show ]
 
+    resources :claims, only: [:index, :show]
+
     resources :insurables, only: [:index, :show ]
   
     resources :lease_types,
