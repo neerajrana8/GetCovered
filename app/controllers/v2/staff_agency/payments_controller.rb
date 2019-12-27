@@ -6,18 +6,10 @@ module V2
   module StaffAgency
     class PaymentsController < StaffAgencyController
       
-      before_action :set_payment,
-        only: [:show]
-      
-      before_action :set_substrate,
-        only: [:index]
-      
+      before_action :set_payment, only: [:show]
+            
       def index
-        if params[:short]
-          super(:@payments, @substrate)
-        else
-          super(:@payments, @substrate)
-        end
+        super(:@payments, current_staff.organizable.payments)
       end
       
       def show
@@ -46,6 +38,31 @@ module V2
         def supported_filters(called_from_orders = false)
           @calling_supported_orders = called_from_orders
           {
+            id: [ :scalar, :array ],
+            status: [:scalar, :array],
+            amount:  [:scalar, :array, :interval],
+            created_at: [:scalar, :array, :interval],
+            updated_at: [:scalar, :array, :interval],
+            invoice_id: [:scalar, :array],
+            invoice: {
+              id: [:scalar, :array],
+              due_date: [:scalar, :array, :interval],
+              policy_id: [:scalar, :array],
+              user_id: [:scalar, :array],
+              policy: {
+                id: [:scalar, :array],
+                number: [:scalar, :array],
+                account_id: [:scalar, :array]
+              },
+              user: {
+                id: [:scalar, :array],
+                profile: {
+                  first_name: [:scalar],
+                  last_name: [:scalar],
+                  full_name: [:scalar]
+                }
+              }
+            }
           }
         end
 

@@ -1,35 +1,19 @@
 ##
-# V2 StaffAgency Invoices Controller
-# File: app/controllers/v2/staff_agency/invoices_controller.rb
+# V2 StaffSuperAdmin Invoices Controller
+# File: app/controllers/v2/staff_super_admin/invoices_controller.rb
 
 module V2
-  module StaffAgency
-    class InvoicesController < StaffAgencyController
+  module StaffSuperAdmin
+    class InvoicesController < StaffSuperAdminController
       
-      before_action :set_invoice, only: [:update, :show]
-      
-      before_action :set_substrate, only: [:index]
-      
+      before_action :set_invoice, only: [:show]
+            
       def index
-        super(:@invoices, @substrate)
+        super(:@invoices, Invoice)
       end
       
       def show
-      end
-      
-      def update
-        if update_allowed?
-          if @invoice.update(update_params)
-            render :show, status: :ok
-          else
-            render json: @invoice.errors, status: :unprocessable_entity
-          end
-        else
-          render json: { success: false, errors: ['Unauthorized Access'] },
-                 status: :unauthorized
-        end
-      end
-      
+      end      
       
       private
       
@@ -95,5 +79,5 @@ module V2
         end
         
     end
-  end # module StaffAgency
+  end # module StaffSuperAdmin
 end

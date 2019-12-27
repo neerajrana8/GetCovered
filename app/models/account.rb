@@ -35,6 +35,8 @@ class Account < ApplicationRecord
   
   has_many :policies
   has_many :claims, through: :policies
+  has_many :invoices, through: :policies
+  has_many :payments, through: :invoices
 
   has_many :policy_applications
   has_many :policy_quotes

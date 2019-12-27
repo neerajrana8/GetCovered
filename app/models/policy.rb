@@ -86,11 +86,11 @@ class Policy < ApplicationRecord
 
   has_many :invoices
 
-  has_many :charges,
-    through: :invoices
+  has_many :charges, through: :invoices
 
-  has_many :refunds,
-    through: :charges
+  has_many :refunds, through: :charges
+
+  has_many :histories, as: :recordable
 
   scope :current, -> { where(status: %i[BOUND BOUND_WITH_WARNING]) }
   scope :policy_in_system, ->(policy_in_system) { where(policy_in_system: policy_in_system) }

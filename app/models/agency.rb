@@ -45,6 +45,8 @@ class Agency < ApplicationRecord
       
   has_many :policies
   has_many :claims, through: :policies
+  has_many :invoices, through: :policies
+  has_many :payments, through: :invoices
 
   has_many :policy_applications
   has_many :policy_quotes
@@ -77,6 +79,8 @@ class Agency < ApplicationRecord
   has_many :active_users,
     through: :active_account_users,
     source: :user
+  
+  has_many :histories, as: :recordable
 
   accepts_nested_attributes_for :addresses
 
