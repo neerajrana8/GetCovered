@@ -29,6 +29,8 @@ class Insurable < ApplicationRecord
   has_many :addresses, as: :addressable, autosave: true
 
   has_many :reports, as: :reportable
+
+  has_many :histories, as: :recordable
   
   accepts_nested_attributes_for :addresses
   
