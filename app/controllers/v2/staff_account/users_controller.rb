@@ -22,7 +22,7 @@ module V2
 
       def create
         if create_allowed?
-          @user = User.new(create_params)
+          @user = ::User.new(create_params)
           # remove password issues from errors since this is a Devise model
           @user.valid? if @user.errors.blank?
           @user.errors.messages.except!(:password)
