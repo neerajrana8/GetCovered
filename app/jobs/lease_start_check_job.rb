@@ -13,15 +13,13 @@ class LeaseStartCheckJob < ApplicationJob
   #
   # Checks for leases starting today and
   # activates them
-  def perform(*args)
-    @leases.each do |lease|
-      lease.activate  
-    end
+  def perform(*_args)
+    @leases.each(&:activate)
   end
   
   private
     
-    def set_leases
-      @leases = Lease.approved.where(start_date: Time.current.to_date)
-    end
+  def set_leases
+    @leases = Lease.approved.where(start_date: Time.current.to_date)
+  end
 end

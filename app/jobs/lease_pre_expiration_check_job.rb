@@ -13,7 +13,8 @@ class LeasePreExpirationCheckJob < ApplicationJob
   #
   # Checks for leases ending 30 days from now
   # and sends notifications
-  def perform(*args)
+  # @todo blocked by https://app.asana.com/0/483084812253981/1155162983197689
+  def perform(*_args)
     @leases.each do |lease|
       LeaseNoticeMailer.with(lease: lease).pre_expiration_notice
       LeaseNoticeMailer.with(lease: lease).pre_expiration_report
@@ -22,7 +23,7 @@ class LeasePreExpirationCheckJob < ApplicationJob
 
   private
     
-    def set_leases
-      @leases = Lease.current.where(end_date: Time.current.to_date + 30.days)
-    end
+  def set_leases
+    @leases = Lease.current.where(end_date: Time.current.to_date + 30.days)
+  end
 end
