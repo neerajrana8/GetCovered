@@ -34,21 +34,6 @@ module V2
                  status: :unauthorized
         end
       end
-      
-      def update
-        if update_allowed?
-          if @claim.update_as(current_staff, update_params)
-            render :show,
-              status: :ok
-          else
-            render json: @claim.errors,
-                   status: :unprocessable_entity
-          end
-        else
-          render json: { success: false, errors: ['Unauthorized Access'] },
-                 status: :unauthorized
-        end
-      end
 
       def attach_documents
         params.permit(documents: [])[:documents].each do |file|

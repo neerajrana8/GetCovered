@@ -21,7 +21,7 @@
       only: [ :update, :index, :show ]
   
     resources :claims,
-      only: [ :create, :update, :index, :show ] do
+      only: [ :create, :index, :show ] do
         member do
           get "histories",
             to: "histories#index_recordable",
