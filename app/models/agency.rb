@@ -80,6 +80,8 @@ class Agency < ApplicationRecord
 
   accepts_nested_attributes_for :addresses
 
+  scope :enabled, -> { where(enabled: true) }
+
   # ActiveSupport +pluralize+ method doesn't work correctly for this word(returns staffs). So I added alias for it
   alias staffs staff
   
