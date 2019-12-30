@@ -501,9 +501,10 @@ class QbeService
   
   def download_from_ftp
     if self.action == "downloadAcordFile"
-    
-      net_service = NetService.new()
-    
+      net_service = NetService.new
+      acord_file_path = '/path/to/file'
+      local_file_path = '/path/to/file'
+      net_service.download(acord_file_path, local_file_path)
     end
   end
   

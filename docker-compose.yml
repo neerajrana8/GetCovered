@@ -33,6 +33,7 @@ services:
       - db
       - redis
       - elasticsearch
+      - sftp
     env_file:
       - .env
     stdin_open: true
@@ -52,3 +53,8 @@ services:
       - .env
     environment:
       - PRODUCTION_VERSION=Worker Dev
+  sftp:
+    image: atmoz/sftp
+    volumes:
+      - ./tmp/upload:/home/sftpuser/upload
+    command: sftpuser:42:1111
