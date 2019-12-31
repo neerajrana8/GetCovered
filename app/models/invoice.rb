@@ -65,7 +65,7 @@ class Invoice < ApplicationRecord
 
   # Enums
 
-  enum status: %w[upcoming available processing complete missed canceled]
+  enum status: %w[quoted upcoming available processing complete missed canceled]
 
   scope :paid, -> { where(status: %w[complete]) }
   scope :unpaid, -> { where(status: %w[available missed]) }

@@ -71,7 +71,7 @@
 				                           .where(number_insured: lease.users.count, interval: interval.to_s)
 	      
 	      # Checking necessary rates have been found
-	      unless coverage_c_rates.blank? || liability_rates.blank?
+	      unless coverage_c_rates.blank? || liability_rates.blank? || application.insurables.count == 0
 		      		 
 	        coverage_c_rate = coverage_c_rates[rand(0..(coverage_c_rates.count - 1))]
 	        liability_rate = liability_rates[rand(0..(liability_rates.count - 1))]		      					

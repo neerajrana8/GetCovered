@@ -43,8 +43,10 @@ module CarrierQbeInsurable
 	        end: nil
 	      }
 	      
+	      carrier_agency = CarrierAgency.where(agency: account.agency, carrier: @carrier).take
+	      
 	      qbe_service = QbeService.new(:action => 'getZipCode')
-	      qbe_service.build_request({ prop_zipcode: @address.zip_code })
+	      qbe_service.build_request({ prop_zipcode: @address.zip_code, agent_code: carrier_agency.external_carrier_id })
 	      event.request = qbe_service.compiled_rxml  
 	      
 	      if event.save  
@@ -192,12 +194,14 @@ module CarrierQbeInsurable
 	      }
 	      
 	      qbe_service = QbeService.new(:action => 'PropertyInfo')
+	      carrier_agency = CarrierAgency.where(agency: account.agency, carrier: @carrier).take
 	      
 	      qbe_service.build_request({ prop_number: @address.street_number,
 	                                  prop_street: @address.street_name,
 	                                  prop_city: @address.city,
 	                                  prop_state: @address.state,
-	                                  prop_zipcode: @address.zip_code })
+	                                  prop_zipcode: @address.zip_code, 
+	                                  agent_code: carrier_agency.external_carrier_id })
 	
 	      event.request = qbe_service.compiled_rxml
         
@@ -382,6 +386,8 @@ module CarrierQbeInsurable
 	        end: nil
 	      }
 	      
+	      carrier_agency = CarrierAgency.where(agency: account.agency, carrier: @carrier).take
+	      
 	      qbe_request_options = {
 	        num_insured: number_insured,
 	        prop_city: @address.city,
@@ -396,7 +402,8 @@ module CarrierQbeInsurable
 	        constr_type: @carrier_profile.traits['construction_type'],
 	        gated_community: @carrier_profile.traits['gated_access'] == true ? 1 : 0,
 	        prof_managed: @carrier_profile.traits['professionally_managed'] == true ? 1 : 0,
-	        prof_managed_year: @carrier_profile.traits['professionally_managed_year'].nil? ? "" : @carrier_profile.traits['professionally_managed_year']
+	        prof_managed_year: @carrier_profile.traits['professionally_managed_year'].nil? ? "" : @carrier_profile.traits['professionally_managed_year'], 
+	        agent_code: carrier_agency.external_carrier_id
 	      }
 	      
 	      qbe_service.build_request(qbe_request_options)

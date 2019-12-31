@@ -71,7 +71,8 @@ module CarrierQbePolicyApplication
         community = unit.insurable
         community_profile = community.carrier_profile(carrier.id)
         address = unit.primary_address()
-
+        carrier_agency = CarrierAgency.where(agency: account.agency, carrier: self.carrier).take
+        
 				if community_profile.data['ho4_enabled'] == true # If community profile is ho4_enabled
 					
 					update status: 'quote_in_progress'
@@ -100,7 +101,8 @@ module CarrierQbePolicyApplication
 	          premium: quote.est_premium.to_f / 100,
 	          premium_pif: quote.est_premium.to_f / 100,
 	          num_insured: users.count,
-	          lia_amount: insurable_rates.liability.first.coverage_limits["liability"].to_f / 100
+	          lia_amount: insurable_rates.liability.first.coverage_limits["liability"].to_f / 100,
+	          agent_code: carrier_agency.external_carrier_id
 	        }
 	  
 	        qbe_service.build_request(qbe_request_options)
