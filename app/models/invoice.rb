@@ -436,7 +436,7 @@ class Invoice < ApplicationRecord
           notifiable: user,
           action: 'invoice_available',
           template: 'invoice',
-          subject: "Policy #{policy.policy_number} #{number}.",
+          subject: "Policy #{policy.number} #{number}.",
           message: 'A new invoice is available for payment.'
         )
 

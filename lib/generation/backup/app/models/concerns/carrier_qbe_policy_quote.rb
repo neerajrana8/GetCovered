@@ -70,7 +70,7 @@ module CarrierQbePolicyQuote
 	            if xml_status =~ /SUCCESS|WARNING/s
 	  
 	              self.status = xml_status == "SUCCESS" ? "synced" : "synced_with_warning"
-	              self.policy_number = xml_doc.css('PolicyNumber').children.to_s
+	              self.number = xml_doc.css('PolicyNumber').children.to_s
 	              self.carrier_data['send_policy_info_resolved_on'] = Time.current
 	              self.carrier_data['send_policy_info_resolved'] = true
 	  

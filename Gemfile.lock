@@ -977,6 +977,9 @@ GEM
     nenv (0.3.0)
     net-http-persistent (3.0.0)
       connection_pool (~> 2.2)
+    net-sftp (2.1.2)
+      net-ssh (>= 2.6.5)
+    net-ssh (5.2.0)
     netrc (0.11.0)
     newrelic_rpm (6.2.0.354)
     nio4r (2.5.2)
@@ -1173,6 +1176,7 @@ DEPENDENCIES
   mailgun-ruby (~> 1.1.6)
   mini_magick
   money
+  net-sftp (~> 2.1, >= 2.1.2)
   newrelic_rpm
   nokogiri
   omniauth
