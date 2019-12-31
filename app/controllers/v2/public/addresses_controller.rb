@@ -12,8 +12,29 @@ module V2
 			  	@ids = @addresses.map { |a| a["_source"]["addressable_id"] }
 			  	
 			  	@insurables = Insurable.find(@ids)
-			  
-					render json: @insurables.to_json({ :include => [:addresses, :insurables] }),
+					
+					@response = []
+					
+					unless @insurables.nil?
+						@insurables.each do |i|
+							@response.push({
+								id: i.id,
+								title: i.title,
+								enabled: i.enabled,
+								account_id: i.account_id,
+								agency_id: i.account.agency_id,
+								insurable_type_id: i.insurable_type_id,
+								category: i.category,
+								covered: i.covered,
+								created_at: i.created_at,
+								updated_at: i.updated_at,
+								addresses: i.addresses,
+								insurables: i.insurables
+							})							
+						end
+					end
+					
+					render json: @response.to_json,
                	 status: :ok 
 			  else
 			  	render json: [].to_json,
