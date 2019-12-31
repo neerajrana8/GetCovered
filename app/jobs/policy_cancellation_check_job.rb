@@ -21,8 +21,7 @@ class PolicyCancellationCheckJob < ApplicationJob
       grace_period = Integer(policy.carrier.settings["late_payment_grace_period"])
       
       if days_elapsed > grace_period
-        policy.cancel 
-        UserCoverageMailer.with(user: policy.user, 
+        UserCoverageMailer.with(user: policy.primary_user, 
                                 policy: policy).late_payment_cancellation
       end
       
