@@ -156,7 +156,7 @@ class Refund < ApplicationRecord
             notifiable: notifiable,
             action:     "refund_failed",
             subject:    "Get Covered: Refund Failed",
-            message:    "A refund (id #{id}) for renters insurance policy ##{ charge.invoice.policy.policy_number }, invoice #{ charge.invoice.number } has failed.#{failure_reason.blank? || failure_reason == 'unknown' ? "" : " The payment processor provided the following reason: #{failure_reason}"}"
+            message:    "A refund (id #{id}) for renters insurance policy ##{ charge.invoice.policy.number }, invoice #{ charge.invoice.number } has failed.#{failure_reason.blank? || failure_reason == 'unknown' ? "" : " The payment processor provided the following reason: #{failure_reason}"}"
           )
         end
       elsif status == 'errored'
@@ -165,7 +165,7 @@ class Refund < ApplicationRecord
             notifiable: notifiable,
             action:     "refund_failed",
             subject:    "Get Covered: Refund Failed",
-            message:    "A refund (id #{id}) for renters insurance policy ##{ charge.invoice.policy.policy_number }, invoice #{ charge.invoice.number } has failed.#{error_message.blank? ? "" : " The payment processor provided the following error message: #{error_message}"}"
+            message:    "A refund (id #{id}) for renters insurance policy ##{ charge.invoice.policy.number }, invoice #{ charge.invoice.number } has failed.#{error_message.blank? ? "" : " The payment processor provided the following error message: #{error_message}"}"
           )
         end
       end
