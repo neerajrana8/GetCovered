@@ -435,7 +435,7 @@ class QbeService
         file_type: 'policy_cancellation_file'
       )
       
-      if true
+      if document.save
         file_name = "GETCVR#{Time.current.strftime('%Y%m%d')}.xml"
         
         # If Document did save
