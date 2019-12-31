@@ -12,8 +12,8 @@
               <ClientDt><%= Time.current.strftime("%Y-%m-%dT%H:%M:%S") %></ClientDt>
               <ClientApp>
                 <Org>Get Covered, LLC.</Org>
-                <Name>GETCVR</Name>
-                <Version>1.1</Version>
+                <Name><%= request[:heading][:program][:ClientName] %></Name>
+                <Version><%= Rails.application.credentials.version %></Version>
               </ClientApp>
               <ProxyClient>
                 <Name><%= request[:heading][:program][:ClientName] %></Name>

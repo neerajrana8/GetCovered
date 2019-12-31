@@ -103,6 +103,8 @@ class QbeService
         receiverID: 32917, 
         prop_zipcode: 90034
       }.merge!(args)
+      
+      options[:heading][:program][:ClientName] = args[:agent_code]
        
       # / getZipCode
     elsif self.action == "PropertyInfo"
@@ -117,6 +119,8 @@ class QbeService
         prop_state: "FL",
         prop_zipcode: "32301"
       }.merge!(args)
+      
+      options[:heading][:program][:ClientName] = args[:agent_code]
       
       # / PropertyInfo
     elsif self.action == "getRates"
@@ -145,6 +149,8 @@ class QbeService
         effective_date: Time.current.strftime("%m/%d/%Y")
       }.merge!(args)
       
+      options[:heading][:program][:ClientName] = args[:agent_code]
+      
       # / getRates  
     elsif self.action == "getMinPrem"
     
@@ -172,6 +178,8 @@ class QbeService
         num_insured: 1,
         lia_amount: 10000
       }.merge!(args)
+      
+      options[:heading][:program][:ClientName] = args[:agent_code]
       
       # / getMinPrem      
     elsif self.action == "SendPolicyInfo"
@@ -202,6 +210,8 @@ class QbeService
           account: application.account,
           agency: application.agency
         }
+      
+        options[:heading][:program][:ClientName] = args[:agent_code]
         
       else
         return false

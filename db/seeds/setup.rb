@@ -419,46 +419,99 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
 	      policy_type: policy_type,
 				application_required: true,
 				application_fields: {
-					"business": {
-						"number_of_insured": 1,
-						"business_name": nil,
-						"business_type": nil,
-						"phone": nil,
-						"website": nil,
-						"contact_name": nil,
-						"contact_title": nil,
-						"contact_phone": nil,
-						"contact_email": nil,
-						"business_started": nil,
-						"business_description": nil,
-						"full_time_employees": nil,
-						"part_time_employees": nil,
-						"major_class": nil,
-						"sub_class": nil,
-						"class_code": nil,	
-						"annual_sales": nil	
-					},
-					"premise": [
-						{
-							"address": {
-								"street_number": "265",
-								"street_name": "Canal St",
-								"street_two": "#205",
-								"city": "New York",
-								"state": "NY",
-								"county": "NEW YORK",
-								"zip_code": "10013"
-							},
-							"owned": false,	
-							"sqr_footage": nil,
-						}
-					],
-					"policy_limits": {
-						"liability": nil,
-						"aggregate_limit": nil,
-						"building_limit": nil,
-						"business_personal_property": nil			
-					}	      																											
+          "business": {
+          	"number_of_insured": 1,
+          	"business_name": nil,
+          	"business_type": nil,
+          	"phone": nil,
+          	"website": nil,
+          	"contact_name": nil,
+          	"contact_title": nil,
+          	"contact_phone": nil,
+          	"contact_email": nil,
+          	"business_started": nil,
+          	"business_description": nil,
+            "other_business_description": nil,
+          	"address": {
+          		"street_number": nil,
+          		"street_name": nil,
+          		"street_two": nil,
+          		"city": nil,
+          		"state": nil,
+          		"county": nil,
+          		"zip_code": nil
+          	}
+          },
+          "premise": [
+          	{
+          		"address": {
+          			"street_number": nil,
+          			"street_name": nil,
+          			"street_two": nil,
+          			"city": nil,
+          			"state": nil,
+          			"county": nil,
+          			"zip_code": nil
+          		},
+          		"owned": false,	
+          		"sqr_footage": 0,
+              "annual_sales": 0,
+              "building_limit": 0,
+              "business_personal_property_limit": 0,
+          		"full_time_employees": 0,
+          		"part_time_employees": 0,
+          		"major_class": nil,
+          		"sub_class": nil,
+          		"class_code": nil
+          	}
+          ],
+          "policy_limits": {
+          	"occurence_limit": 0,
+          	"aggregate_limit": 0,
+          	"building_limit": 0,
+          	"business_personal_property": 0			
+          }	  				
+# 					"business": {
+# 						"number_of_insured": 1,
+# 						"business_name": nil,
+# 						"business_type": nil,
+# 						"phone": nil,
+# 						"website": nil,
+# 						"contact_name": nil,
+# 						"contact_title": nil,
+# 						"contact_phone": nil,
+# 						"contact_email": nil,
+# 						"business_started": nil,
+# 						"business_description": nil,
+#             "other_business_description": nil,
+# 						"annual_sales": nil	
+# 					},
+# 					"premise": [
+# 						{
+# 							"address": {
+# 								"street_number": "265",
+# 								"street_name": "Canal St",
+# 								"street_two": "#205",
+# 								"city": "New York",
+# 								"state": "NY",
+# 								"county": "NEW YORK",
+# 								"zip_code": "10013"
+# 							},
+# 							"owned": false,	
+# 							"sqr_footage": nil,
+#   						"full_time_employees": nil,
+#   						"part_time_employees": nil,
+#   						"major_class": nil,
+#   						"sub_class": nil,
+#   						"class_code": nil	
+# 						}
+# 					],
+# 					"policy_limits": {
+# 						"liability": nil,
+# 						"aggregate_limit": nil,
+# 						"building_limit": nil,
+# 						"business_personal_property": nil			
+# 					}	      																											
 				},
 				application_questions: [
 					{
