@@ -1,6 +1,5 @@
-# @leases = Lease.where(lease_type_id: 1)
-
-@leases = Lease.where(account_id: [2, 3])
+# @leases = Lease.where(account_id: [2, 3])
+@leases = Lease.last(20)
 
 @leases.each do |lease|
 # 	if rand(0..100) > 33 # Create a 66% Coverage Rate
@@ -50,6 +49,7 @@
 	      deductible = deductibles[rand(0..(deductibles.length - 1))]
 	      
 	      interval = nil
+	      puts "#{ application.billing_strategy.title.downcase.sub(/ly/, '').gsub('-', '_') }\n"
 	      case application.billing_strategy.title.downcase.sub(/ly/, '').gsub('-', '_')
   	    when "annual"
   	      interval = 0
@@ -70,18 +70,20 @@
 	        hurricane_deductible = nil
 	      end
 
-				query = florida_check ? "(deductibles ->> 'all_peril')::integer = #{ deductible } AND (deductibles ->> 'hurricane')::integer = #{ hurricane_deductible } AND number_insured = #{ lease.users.count } AND interval = #{ interval }" : 
-				                        "(deductibles ->> 'all_peril')::integer = #{ deductible } AND number_insured = #{ lease.users.count } AND interval = #{ interval }"      
+				query = florida_check ? "(deductibles ->> 'all_peril')::integer = #{ deductible } AND (deductibles ->> 'hurricane')::integer = #{ hurricane_deductible } AND number_insured = #{ lease.users.count }" : 
+				                        "(deductibles ->> 'all_peril')::integer = #{ deductible } AND number_insured = #{ lease.users.count }"      
 
 				coverage_c_rates = community.insurable_rates
 				                            .activated
 				                            .coverage_c
+				                            .where(interval: application.billing_strategy.title.downcase.sub(/ly/, '').gsub('-', '_'))
 				                            .where(query)
 				
 				liability_rates = community.insurable_rates
 				                           .activated
 				                           .liability
-				                           .where(number_insured: lease.users.count, interval: interval.to_s)
+				                           .where(number_insured: lease.users.count, 
+				                           				interval: application.billing_strategy.title.downcase.sub(/ly/, '').gsub('-', '_'))
 	      
 	      # Checking necessary rates have been found
 	      unless coverage_c_rates.blank? || liability_rates.blank? || application.insurables.count == 0
