@@ -1,7 +1,9 @@
-@leases = Lease.where(lease_type_id: 1)
+# @leases = Lease.where(lease_type_id: 1)
+
+@leases = Lease.where(account_id: [2, 3])
 
 @leases.each do |lease|
-	if rand(0..100) > 33 # Create a 66% Coverage Rate
+# 	if rand(0..100) > 33 # Create a 66% Coverage Rate
 		
 		policy_type = PolicyType.find(1)
 		billing_strategy = BillingStrategy.where(agency: lease.account.agency, policy_type: policy_type)
@@ -47,7 +49,17 @@
 	      
 	      deductible = deductibles[rand(0..(deductibles.length - 1))]
 	      
-	      interval = rand(0..3)
+	      interval = nil
+	      case application.billing_strategy.title.downcase.sub(/ly/, '').gsub('-', '_')
+  	    when "annual"
+  	      interval = 0
+        when "bi_annual"
+          interval = 2
+        when "quarter"
+          interval = 1
+        when "month"
+          interval = 3
+        end
 	      
 	      if florida_check == true
 	        hurricane_deductible = 0
@@ -58,7 +70,8 @@
 	        hurricane_deductible = nil
 	      end
 
-				query = florida_check ? "(deductibles ->> 'all_peril')::integer = #{ deductible } AND (deductibles ->> 'hurricane')::integer = #{ hurricane_deductible } AND number_insured = #{ lease.users.count } AND interval = #{ interval }" :	"(deductibles ->> 'all_peril')::integer = #{ deductible } AND number_insured = #{ lease.users.count } AND interval = #{ interval }"      
+				query = florida_check ? "(deductibles ->> 'all_peril')::integer = #{ deductible } AND (deductibles ->> 'hurricane')::integer = #{ hurricane_deductible } AND number_insured = #{ lease.users.count } AND interval = #{ interval }" : 
+				                        "(deductibles ->> 'all_peril')::integer = #{ deductible } AND number_insured = #{ lease.users.count } AND interval = #{ interval }"      
 
 				coverage_c_rates = community.insurable_rates
 				                            .activated
@@ -107,5 +120,5 @@
 			pp application.errors	
 		end
 			
-	end	
+# 	end	
 end
