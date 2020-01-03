@@ -94,7 +94,7 @@ module CarrierQbePolicyApplication
 	          city_limit: community_profile.traits['city_limit'] == true ? 1 : 0,
 	          units_on_site: community.insurables.count,
 	          age_of_facility: community_profile.traits['construction_year'],
-	          gated_community: community_profile.traits['gated_access'] == true ? 1 : 0,
+	          gated_community: community_profile.traits['gated'] == true ? 1 : 0,
 	          prof_managed: community_profile.traits['professionally_managed'] == true ? 1 : 0,
 	          prof_managed_year: community_profile.traits['professionally_managed_year'] == true ? "" : community_profile.traits['professionally_managed_year'],
 	          effective_date: effective_date.strftime("%m/%d/%Y"),

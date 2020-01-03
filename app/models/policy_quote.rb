@@ -130,6 +130,14 @@ class PolicyQuote < ApplicationRecord
 		success = self.update status: 'declined' ? true : false
 		return success	
 	end
+	
+	def generate_invoices_for_term(renewal = false)
+    
+    invoices_generated = false
+    
+    return invoices_generated
+    
+  end
 
   def start_billing
 #    return false unless policy.in_system?

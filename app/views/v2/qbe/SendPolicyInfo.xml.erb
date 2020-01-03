@@ -53,13 +53,13 @@
                   
                   <PaymentOption id="0">
                   
-                    <% if request[:data][:billing_strategy].new_business["payments"].select { |e| e > 0 }.size == "12" %>
+                    <% if request[:data][:billing_strategy].new_business["payments"].select { |e| e > 0 }.size > 4 %>
                     <PaymentPlanCd>QBE_MoRe</PaymentPlanCd>
-                    <% elsif request[:data][:billing_strategy].new_business["payments"].select { |e| e > 0 }.size == "4" %>
+                    <% elsif request[:data][:billing_strategy].new_business["payments"].select { |e| e > 0 }.size == 4 %>
                     <PaymentPlanCd>QT</PaymentPlanCd>
-                    <% elsif request[:data][:billing_strategy].new_business["payments"].select { |e| e > 0 }.size == "2" %>
+                    <% elsif request[:data][:billing_strategy].new_business["payments"].select { |e| e > 0 }.size == 2 %>
                     <PaymentPlanCd>SA</PaymentPlanCd>
-                    <% elsif request[:data][:billing_strategy].new_business["payments"].select { |e| e > 0 }.size == "1" %>
+                    <% elsif request[:data][:billing_strategy].new_business["payments"].select { |e| e > 0 }.size == 1 %>
                     <PaymentPlanCd>FL</PaymentPlanCd>
                     <% end %>
                     
@@ -331,7 +331,7 @@
                     
                     <QuestionAnswer>
                       <QuestionCd>QBEPL00040</QuestionCd>
-                      <YesNoCd>Y</YesNoCd>
+                      <YesNoCd><%= request[:data][:carrier_profile].traits["gated"] == true ? "Y" : "N" %></YesNoCd>
                     </QuestionAnswer>
                     
                     <QBE_WH_Ded>1000</QBE_WH_Ded>
