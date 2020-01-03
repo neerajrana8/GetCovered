@@ -15,13 +15,13 @@ class PolicyPreExpirationCheckJob < ApplicationJob
   # with daily notifications enabled
   def perform
     @policies.each do |policy|
-      UserCoverageMailer.with(user: policy.user).policy_expiring
+      UserCoverageMailer.with(user: policy.primary_user).policy_expiring
     end
   end
   
   private
     
     def set_policies
-      @policies = Policy.in_system?(true).accepted.where(expiration_date: Time.current.to_date + 30.days)
+      @policies = Policy.in_system?(true).accepted_quote.where(expiration_date: Time.current.to_date + 30.days)
     end
 end

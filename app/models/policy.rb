@@ -42,6 +42,10 @@ class Policy < ApplicationRecord
     joins(:invoices).merge(Invoice.unpaid_past_due)
   }
 
+  scope :accepted_quote, lambda {
+    joins(:policy_quotes).where(policy_quotes: { status: 'accepted'})
+  }
+
   # Concerns
   include ElasticsearchSearchable
   include CarrierCrumPolicy

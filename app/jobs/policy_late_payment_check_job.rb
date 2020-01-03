@@ -16,10 +16,10 @@ class PolicyLatePaymentCheckJob < ApplicationJob
   # grace period
   def perform      
     @policies.each do |policy|
-      policy.update billing_status: 'behind',
+      policy.update billing_dispute_status: 'BEHIND',
                     billing_behind_since: Time.current.to_date
       
-      UserCoverageMailer.with(user: policy.user, policy: policy).late_payment 
+      UserCoverageMailer.with(user: policy.primary_user, policy: policy).late_payment 
     end
   end
 
