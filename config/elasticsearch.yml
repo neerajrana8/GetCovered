@@ -9,5 +9,8 @@ test:
 awsdev:
   host: https://search-gc-nonprod-esd-sv27jbj3vohqctw5o5672xg3a4.us-west-2.es.amazonaws.com
   log: true
+aws_staging:
+  host: https://search-gc-prod-esd-kv6es7qb5gn5zdoie2nng6nsaa.us-west-2.es.amazonaws.com
+  log: true
 production:
   host: Rails.application.secrets.elastic_url

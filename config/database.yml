@@ -48,6 +48,14 @@ awsdev:
   host: <%= Rails.application.credentials.postgres[:awsdev][:host] %>
   port: <%= Rails.application.credentials.postgres[:awsdev][:port] %>
   
+aws_staging:
+  <<: *production_default
+  database: <%= Rails.application.credentials.postgres[:aws_staging][:database] %>
+  username: <%= Rails.application.credentials.postgres[:aws_staging][:username] %>
+  password: <%= Rails.application.credentials.postgres[:aws_staging][:password] %>
+  host: <%= Rails.application.credentials.postgres[:aws_staging][:host] %>
+  port: <%= Rails.application.credentials.postgres[:aws_staging][:port] %>
+  
 production:
   <<: *default
   database: gc_v2_production
