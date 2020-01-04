@@ -121,12 +121,12 @@ module CarrierQbePolicyApplication
 		            xml_doc = Nokogiri::XML(qbe_data[:data])  
 		            xml_min_prem = xml_doc.css('//Additional_Premium')
                 
-	 					    response_premium = (xml_min_prem.attribute('total_premium').value.to_f * 100).to_i
-	 					    tax = (xml_min_prem.attribute('tax').value.to_f * 100).to_i
-	 					    base_premium = response_premium - tax
+	 					    response_premium = xml_min_prem.attribute('total_premium').value.delete(".")
+	 					    tax = xml_min_prem.attribute('tax').value.delete(".")
+	 					    base_premium = response_premium.to_i - tax.to_i
 	 					    
-	 					    premium = PolicyPremium.new base: base_premium,
-	 					                                taxes: tax,
+	 					    premium = PolicyPremium.new base: base_premium.to_i,
+	 					                                taxes: tax.to_i,
 	 					                                billing_strategy: quote.policy_application.billing_strategy,
 	 					                                policy_quote: quote
     						premium.set_fees
@@ -136,6 +136,7 @@ module CarrierQbePolicyApplication
 	 					    quote.send(quote_method)
 	 							
   	 						if quote.status == 'quoted'
+	  	 						quote.generate_invoices_for_term
 		 							return true
 		 						else
 		 							puts "\nQuote Save Error\n"

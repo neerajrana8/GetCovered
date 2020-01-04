@@ -69,21 +69,13 @@ module V2
 									
 									@application.primary_user().set_stripe_id()
 								  
-								  invoices = []
-								  @application.billing_strategy.new_business["payments"].select { |p| p > 0 }.count.times do |i|
-								    invoices.push << {
-  								    total: 17510,
-  								    due_date: Date.today + (i * @application.billing_strategy.new_business["payments"].select { |p| p > 0 }.count).months
-								    }
-								  end
-								  
 									render json: { 
 										quote: { 
 											id: @quote.id, 
 											status: @quote.status, 
 											premium: @quote.policy_premium 
 										},
-										invoices: invoices,
+										invoices: @quote.invoices,
 										user: { 
 											id: @application.primary_user().id,
 											stripe_id: @application.primary_user().stripe_id
