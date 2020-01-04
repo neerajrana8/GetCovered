@@ -19,47 +19,32 @@ class Invoice < ApplicationRecord
 
   # ActiveRecord Associations
 
-  belongs_to :policy
-
+	belongs_to :policy_quote
+  belongs_to :policy, optional: true
   belongs_to :user
-  
   has_many :payments
-
   has_many :charges
-
   has_many :refunds, through: :charges
-
   has_many :disputes, through: :charges
-
   has_many :line_items, autosave: true
-
   has_many :modifiers
-
   has_many :histories, as: :recordable
-
   has_many :notifications, as: :notifiable
 
   # Validations
 
   validates :number, presence: true, uniqueness: true
-
   validates :subtotal, presence: true
-
   validates :total, presence: true
-
   validates :status, presence: true
-
   validates :due_date, presence: true
-
   validates :available_date, presence: true
-
   validates :tax, presence: true
-
   validates :tax_percent, presence: true
-
-  validates :policy, presence: true
-
+#   validates :policy, presence: true
   validates :user, presence: true
+
+	validate :policy_unless_quoted
 
   accepts_nested_attributes_for :line_items
 
@@ -452,8 +437,14 @@ class Invoice < ApplicationRecord
 
   private
 
+	def policy_unless_quoted
+		if policy.nil? && status != "quoted"
+			errors.add(:policy_id, "must exist if status is anything but quoted")	
+		end
+	end
+
   def initialize_invoice
-    self.user ||= policy&.user
+    self.user ||= policy&.user unless policy.nil?
   end
 
   # Calculation Methods

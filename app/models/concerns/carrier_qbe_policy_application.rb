@@ -136,6 +136,7 @@ module CarrierQbePolicyApplication
 	 					    quote.send(quote_method)
 	 							
   	 						if quote.status == 'quoted'
+	  	 						quote.generate_invoices_for_term
 		 							return true
 		 						else
 		 							puts "\nQuote Save Error\n"

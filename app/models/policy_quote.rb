@@ -25,8 +25,10 @@ class PolicyQuote < ApplicationRecord
 	has_many :policy_rates
 	has_many :insurable_rates,
 		through: :policy_rates
-
+		
 	has_one :policy_premium
+
+	has_many :invoices
 
 	accepts_nested_attributes_for :policy_premium
 
@@ -62,6 +64,7 @@ class PolicyQuote < ApplicationRecord
 			bind_request = self.send(method)
       
       unless bind_request[:error]
+	      
     		policy = build_policy(
       		number: bind_request[:data][:policy_number],
       		status: bind_request[:data][:status] == "WARNING" ? "BOUND_WITH_WARNING" : "BOUND",
@@ -116,7 +119,7 @@ class PolicyQuote < ApplicationRecord
         else
           # If policy cannot be created      
           update status: 'error'
-          pp policy.errors
+          logger.debug policy.errors
         end
       else
       
@@ -135,45 +138,109 @@ class PolicyQuote < ApplicationRecord
     
     invoices_generated = false
     
+    unless renewal
+	  	if policy_premium.calculation_base > 0 && 
+		  	 status == "quoted" && 
+		  	 invoices.count == 0
+		  	
+		  	payment_count = policy_application.billing_strategy.new_business['payments'].select { |p| p > 0 }.count
+		  	amortized_fees_per_payment = policy_premium.amortized_fees / payment_count
+		  	
+		  	policy_application.billing_strategy.new_business['payments'].each_with_index do |payment, index|
+					next if payment == 0
+					
+			  	amount = policy_premium.calculation_base * (payment.to_f / 100)
+					fees = index == 0 ? amortized_fees_per_payment + policy_premium.deposit_fees : amortized_fees_per_payment
+					due_date = index == 0 ? status_updated_on : policy_application.effective_date + index.months
+
+	        invoice = invoices.new do |inv|
+	          inv.due_date        = due_date
+	          inv.available_date  = due_date + available_period
+	          inv.user            = policy_application.primary_user
+	          inv.subtotal        = amount
+	          inv.total           = amount + fees
+	          inv.status          = "quoted"
+	        end	
+	        
+	        unless invoice.save
+	          pp invoice.errors
+	        end
+	        				
+				end
+				
+				invoices_generated = true if invoices.count == payment_count
+				totals = invoices.map(&:total)
+				total = totals.inject { |r, t| r + t }
+				difference = policy_premium.total - total
+				
+				if total > 0
+					invoices.last.update total: invoices.last.total + difference	
+				end 
+				
+		  end
+	  else
+	  	# Set up Renewal Invoice Generation
+	  end
+    
     return invoices_generated
     
   end
 
   def start_billing
-#    return false unless policy.in_system?
 
     billing_started = false
     
-    if !policy.nil? && policy_premium.calculation_base > 0 && status == "accepted"
-      policy_application.billing_strategy.new_business['payments'].each_with_index do |payment, index|
-        amount = policy_premium.calculation_base * (payment.to_f / 100)
-        next if amount == 0
-
-        # Due date is today for the first invoice. After that it is due date
-        # after effective date of the policy
-        due_date = index == 0 ? status_updated_on : policy.effective_date + index.months
-        amount = index == 0 ? (amount + policy_premium.deposit_fees) : amount
-        invoice = policy.invoices.new do |inv|
-          inv.due_date        = due_date
-          inv.available_date  = due_date + available_period
-          inv.user            = policy_application.primary_user
-          inv.subtotal        = amount
-          inv.total           = amount
-        end
-        unless invoice.save
-          pp invoice.errors
-        end
-      end
-
-      charge_invoice = policy.invoices.first.pay(allow_upcoming: true)
-
+    if !policy.nil? && 
+	     policy_premium.calculation_base > 0 && 
+	     status == "accepted"
+	     
+	    invoices.each_with_index do |invoice, index|
+		  	invoice.update status: index == 0 ? "available" : "upcoming",
+		  								 policy: policy
+		  end
+		  
+		  charge_invoice = invoices.first.pay(stripe_source: policy_application.primary_user().payment_profiles.first.source_id)
+		  
+		  pp charge_invoice
+		  
       if charge_invoice[:success] == true
         policy.update billing_status: "CURRENT"
         return true
       else
         policy.update billing_status: "ERROR"
       end
-
+		  
+#       policy_application.billing_strategy.new_business['payments'].each_with_index do |payment, index|
+#         amount = policy_premium.calculation_base * (payment.to_f / 100)
+#         next if amount == 0
+# 
+#         # Due date is today for the first invoice. After that it is due date
+#         # after effective date of the policy
+#         due_date = index == 0 ? status_updated_on : policy.effective_date + index.months
+#         amount = index == 0 ? (amount + policy_premium.deposit_fees) : amount
+#         invoice = policy.invoices.new do |inv|
+#           inv.due_date        = due_date
+#           inv.available_date  = due_date + available_period
+#           inv.user            = policy_application.primary_user
+#           inv.subtotal        = amount
+#           inv.total           = amount
+#           inv.status          = index == 0 ? "available" : "upcoming"
+#         end
+#         unless invoice.save
+#           pp invoice.errors
+#         end
+#       end
+# 
+#       charge_invoice = policy.invoices.first.pay(allow_upcoming: true)
+# 			
+# 			pp charge_invoice
+# 			
+#       if charge_invoice[:success] == true
+#         policy.update billing_status: "CURRENT"
+#         return true
+#       else
+#         policy.update billing_status: "ERROR"
+#       end
     end
     billing_started
   end

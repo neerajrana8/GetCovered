@@ -1,5 +1,4 @@
-# @leases = Lease.where(account_id: [2, 3])
-@leases = Lease.last(20)
+@leases = Lease.all
 
 @leases.each do |lease|
 # 	if rand(0..100) > 33 # Create a 66% Coverage Rate
@@ -48,19 +47,6 @@
 	      
 	      deductible = deductibles[rand(0..(deductibles.length - 1))]
 	      
-	      interval = nil
-	      puts "#{ application.billing_strategy.title.downcase.sub(/ly/, '').gsub('-', '_') }\n"
-	      case application.billing_strategy.title.downcase.sub(/ly/, '').gsub('-', '_')
-  	    when "annual"
-  	      interval = 0
-        when "bi_annual"
-          interval = 2
-        when "quarter"
-          interval = 1
-        when "month"
-          interval = 3
-        end
-	      
 	      if florida_check == true
 	        hurricane_deductible = 0
 	        while hurricane_deductible < deductible
@@ -103,7 +89,8 @@
 						quote.reload()
 						
 						if quote.status == "quoted"
-  						quote.accept()
+  						acceptance = quote.accept()
+  						puts "QUOTE ACCEPTED: #{ acceptance }"
   						premium = quote.policy_premium
   						puts "Application ID: #{ application.id } | Application Status: #{ application.status } | Quote Status: #{ quote.status } | Base: $#{ '%.2f' % (premium.base.to_f / 100) } | Taxes: $#{ '%.2f' % (premium.taxes.to_f / 100) } | Fees: $#{ '%.2f' % (premium.total_fees.to_f / 100) } | Total: $#{ '%.2f' % (premium.total.to_f / 100) }"
 						else

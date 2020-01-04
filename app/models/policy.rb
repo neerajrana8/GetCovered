@@ -116,9 +116,11 @@ class Policy < ApplicationRecord
                  BIND_ERROR: 5, BIND_REJECTED: 6, RENEWING: 7, RENEWED: 8, EXPIRED: 9, CANCELLED: 10,
                  REINSTATED: 11, EXTERNAL_UNVERIFIED: 12, EXTERNAL_VERIFIED: 13 }
 
-  enum billing_dispute_status: { CURRENT: 0, UNDISPUTED: 1, DISPUTED: 2, AWATING_POSTDISPUTE_PROCESSING: 3, 
-                                 NOT_REQUIRED: 4, BEHIND: 5, REJECTED: 6, RESCINDED: 7, ERROR: 8 }
-
+  enum billing_status: { CURRENT: 0, BEHIND: 1, REJECTED: 2, RESCINDED: 3, ERROR: 4, EXTERNAL: 5 }
+	
+	enum billing_dispute_status: { UNDISPUTED: 0, DISPUTED: 1, AWAITING_POSTDISPUTE_PROCESSING: 2,
+		                             NOT_REQUIRED: 3 }
+	
   def in_system?
     policy_in_system == true
   end
