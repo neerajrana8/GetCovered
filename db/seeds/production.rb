@@ -677,3 +677,106 @@ if @cambridge.save
 else
 	logger.debug @cambridge.errors
 end
+
+@cambridge_qbe = Agency.new(
+	title: "Cambridge", 
+	enabled: true, 
+	whitelabel: true, 
+	tos_accepted: true, 
+	tos_accepted_at: Time.current, 
+	tos_acceptance_ip: nil, 
+	verified: false, 
+	stripe_id: nil, 
+	master_agency: false,
+	addresses_attributes: [
+		{
+			street_number: "100",
+			street_name: "Pearl Street",
+			street_two: "14th Floor",
+			city: "Hartford",
+			state: "CT",
+			county: "HARTFORD COUNTY",
+			zip_code: "06103",
+			primary: true
+		}
+	]	
+)
+
+if @cambridge_qbe.save    
+  site_staff = [
+    { email: "erickawood@yahoo.com", password: 'TestingPassword1234', password_confirmation: 'TestingPassword1234', role: 'agent', enabled: true, organizable: @cambridge_qbe, profile_attributes: { first_name: 'Ericka', last_name: 'Wood', job_title: 'Operations Manager', birth_date: '04-01-1989'.to_date }}
+  ]
+  
+  site_staff.each do |staff|
+    SeedFunctions.adduser(Staff, staff)
+  end	
+  
+  @cambridge_qbe.carriers << @qbe 
+  @cambridge_qbe.carriers << @qbe_specialty
+  
+  qbe_agency_id = "CAMBQBE"
+  
+  CarrierAgency.where(agency_id: @cambridge_qbe.id, carrier_id: @qbe.id).take
+               .update(external_carrier_id: qbe_agency_id)  
+
+  @cambridge_qbe.carriers.each do |carrier|
+  	51.times do |state|
+  		
+  		@policy_type = nil
+  		@fee_amount = nil
+  		
+  		if carrier.id == 1
+  			@policy_type = PolicyType.find(1)
+  			@fee_amount = 4500
+  		elsif carrier.id == 2
+  			@policy_type = PolicyType.find(2)
+  		end
+  		
+  	  available = state == 0 || state == 11 ? false : true # we dont do business in Alaska (0) and Hawaii (11)
+  	  authorization = CarrierAgencyAuthorization.create(state: state, 
+  	  																									available: available, 
+  	  																									carrier_agency: CarrierAgency.where(carrier: carrier, agency: @cambridge_qbe).take, 
+  	  																									policy_type: @policy_type,
+  	  																									agency: @cambridge_qbe)
+  	  Fee.create(title: "Service Fee", 
+  	  					 type: :MISC, 
+  	  					 per_payment: false,
+  	  					 amortize: false, 
+  	  					 amount: @fee_amount, 
+  	  					 amount_type: :FLAT, 
+  	  					 enabled: true, 
+  	  					 assignable: authorization, 
+  	  					 ownerable: @cambridge_qbe) unless @fee_amount.nil?
+  	end	
+  end 
+  
+  @cambridge_qbe.billing_strategies.create!(title: 'Annually', enabled: true, carrier: @qbe, 
+                                    				  policy_type: PolicyType.find(1))
+                                    
+  @cambridge_qbe.billing_strategies.create!(title: 'Bi-Annually', enabled: true, 
+    		                                      new_business: { payments: [50, 0, 0, 0, 0, 0, 50, 0, 0, 0, 0, 0], 
+    		                                                      payments_per_term: 2, remainder_added_to_deposit: true },
+    		                                      carrier: @qbe, policy_type: PolicyType.find(1))
+                                    
+  @cambridge_qbe.billing_strategies.create!(title: 'Quarterly', enabled: true, 
+    		                                      new_business: { payments: [25, 0, 0, 25, 0, 0, 25, 0, 0, 25, 0, 0], 
+    		                                                      payments_per_term: 4, remainder_added_to_deposit: true },
+    		                                      carrier: @qbe, policy_type: PolicyType.find(1))
+                                    
+  @cambridge_qbe.billing_strategies.create!(title: 'Monthly', enabled: true, 
+    		                                      new_business: { payments: [22.01, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09], 
+    		                                                      payments_per_term: 12, remainder_added_to_deposit: true },
+    		                                      renewal: { payments: [8.37, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33], 
+    		                                                      payments_per_term: 12, remainder_added_to_deposit: true },
+    		                                      carrier: @qbe, policy_type: PolicyType.find(1))    
+
+  @cambridge_qbe.commission_strategies.create!(title: "#{ @cambridge_qbe.title } / QBE Residential Commission", 
+    																						 carrier: @qbe, 
+    																						 policy_type: PolicyType.find(1), 
+    																						 amount: 25, 
+    																						 type: 0, 
+    																						 commission_strategy_id: 2)	
+
+else
+	logger.debug @cambridge_qbe.errors
+end
