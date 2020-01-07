@@ -58,4 +58,8 @@ aws_staging:
   
 production:
   <<: *default
-  database: gc_v2_production
+  database: <%= Rails.application.credentials.postgres[:production][:database] %>
+  username: <%= Rails.application.credentials.postgres[:production][:username] %>
+  password: <%= Rails.application.credentials.postgres[:production][:password] %>
+  host: <%= Rails.application.credentials.postgres[:production][:host] %>
+  port: <%= Rails.application.credentials.postgres[:production][:port] %>
