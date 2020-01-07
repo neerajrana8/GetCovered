@@ -98,6 +98,11 @@ namespace :gc do
         system("$(aws ecr get-login --no-include-email --region us-west-2 --profile dylanmbda) && docker build -f Dockerfile -t get-covered-api-dev:v2dev . && docker tag get-covered-api-dev:v2dev 633634809203.dkr.ecr.us-west-2.amazonaws.com/get-covered-api-dev:v2dev && docker push 633634809203.dkr.ecr.us-west-2.amazonaws.com/get-covered-api-dev:v2dev")
       end
       
+      desc "Push staging API Image"
+      task :staging do
+        system("$(aws ecr get-login --no-include-email --region us-west-2 --profile dylanmbda) && docker build -f Dockerfile -t get-covered-api-dev:staging . && docker tag get-covered-api-dev:staging 633634809203.dkr.ecr.us-west-2.amazonaws.com/get-covered-api-dev:staging && docker push 633634809203.dkr.ecr.us-west-2.amazonaws.com/get-covered-api-dev:staging")
+      end
+      
     end
     
     namespace :worker do
@@ -105,6 +110,11 @@ namespace :gc do
       desc "Push development Worker Image"
       task :dev do
         system("$(aws ecr get-login --no-include-email --region us-west-2 --profile dylanmbda) && docker build -f Dockerfile-worker -t get-covered-worker-dev:v2dev . && docker tag get-covered-worker-dev:v2dev 633634809203.dkr.ecr.us-west-2.amazonaws.com/get-covered-worker-dev:v2dev && docker push 633634809203.dkr.ecr.us-west-2.amazonaws.com/get-covered-worker-dev:v2dev")
+      end
+      
+      desc "Push staging Worker Image"
+      task :staging do
+        system("$(aws ecr get-login --no-include-email --region us-west-2 --profile dylanmbda) && docker build -f Dockerfile-worker -t get-covered-worker-dev:staging . && docker tag get-covered-worker-dev:staging 633634809203.dkr.ecr.us-west-2.amazonaws.com/get-covered-worker-dev:staging && docker push 633634809203.dkr.ecr.us-west-2.amazonaws.com/get-covered-worker-dev:staging")
       end
     
     end
