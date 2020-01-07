@@ -55,6 +55,13 @@ namespace :gc do
       end
     end
     
+		desc "Reset Production Environment and Database"
+		task production: :environment do
+			Rake::Task['db:migrate'].invoke
+			
+			system("rails db:seed section=production")
+		end  
+		  
   end
   
   namespace :flush do
