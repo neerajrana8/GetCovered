@@ -29,6 +29,10 @@ class InsurableRate < ApplicationRecord
   
   # Scopes for Rate Schedule
   scope :coverage_c, -> { where(schedule: "coverage_c") }
+  scope :coverage_d, -> { where(schedule: "coverage_d") }
+  scope :coverage_e, -> { where(schedule: "coverage_e") }
+  scope :coverage_f, -> { where(schedule: "coverage_f") }
+
   scope :optional, -> { where(schedule: "optional") }
   scope :liability, -> { where(schedule: "liability") }
   scope :liability_only, -> { where(schedule: "liability_only") }
