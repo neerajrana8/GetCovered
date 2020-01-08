@@ -1146,6 +1146,9 @@ GEM
     websocket-driver (0.7.1)
       websocket-extensions (>= 0.1.0)
     websocket-extensions (0.1.4)
+    wicked_pdf (1.2.1)
+      activesupport
+    wkhtmltopdf-binary (0.12.4)
 
 PLATFORMS
   ruby
@@ -1201,6 +1204,8 @@ DEPENDENCIES
   timezone (~> 1.0)
   twilio-ruby (~> 4.11.1)
   tzinfo-data
+  wicked_pdf
+  wkhtmltopdf-binary
 
 RUBY VERSION
    ruby 2.5.1p57

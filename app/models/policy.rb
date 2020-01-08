@@ -125,6 +125,14 @@ class Policy < ApplicationRecord
     policy_in_system == true
   end
 
+  	# PolicyApplication.primary_insurable
+	
+	def primary_insurable
+		policy_insurable = policy_insurables.where(primary: true).take
+		policy_insurable.insurable	
+	end
+
+
   # Perform Postdispute Processing
   #
   # Performs all queued refunds after payment disputes have been resolved.

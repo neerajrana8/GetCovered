@@ -83,7 +83,7 @@ class PolicyQuote < ApplicationRecord
     		)      
 
     		if policy.save
-      		policy.reload()
+					policy.reload()
       		
       		# Add users to policy
       		policy_application.policy_users
@@ -100,8 +100,10 @@ class PolicyQuote < ApplicationRecord
           
           # Add rates to policy
           policy_application.policy_rates.each do |pr|
-            pr.update policy: policy  
-          end
+            pr.update policy: policy
+					end
+					
+					build_coverage()
   
           if update(policy: policy, status: "accepted") && 
         		 policy_application.update(policy: policy) && 
@@ -132,6 +134,37 @@ class PolicyQuote < ApplicationRecord
 	def decline
 		success = self.update status: 'declined' ? true : false
 		return success	
+	end
+
+	def build_coverages()
+		insurable_rates.each do |rate|
+			if insurable_rates.schedule = 'liability'
+				liability_coverage = self.policy.policy_coverages.new
+				liability_coverage.policy_application = self.policy_application
+				liability_coverage.designation = rate.schedule
+				liability_coverage.limit = rate.coverage_limits[rate.schedule]
+				liability_coverage.deductible = rate.values.first # This needs Dylan's review
+				liability_coverage.enabled = false
+				
+				medical_coverage = self.policy.policy_coverages.new
+				medical_coverage.policy_application = self.policy_application
+				medical_coverage.designation = rate.schedule
+				medical_coverage.limit = rate.coverage_limits[rate.schedule]
+				medical_coverage.deductible = rate.values.first # This needs Dylan's review
+				medical_coverage.enabled = false
+
+				liability_coverage.save
+				medical_coverage.save
+			else
+				coverage = self.policy.policy_coverages.new
+				coverage.policy_application = self.policy_application
+				coverage.designation = rate.schedule
+				coverage.limit = rate.coverage_limits[rate.schedule]
+				coverage.deductible = rate.values.first # This needs Dylan's review
+				coverage.enabled = false
+				coverage.save
+			end
+		end
 	end
 	
 	def generate_invoices_for_term(renewal = false)

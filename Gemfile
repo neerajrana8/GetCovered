@@ -87,6 +87,10 @@ gem 'mini_magick'
 
 gem 'net-sftp', '~> 2.1', '>= 2.1.2'
 
+# PDF gems
+gem 'wkhtmltopdf-binary'
+gem 'wicked_pdf'
+
 group :development, :test do
   # Call 'byebug' anywhere in the code to stop execution and get a debugger console
   gem 'byebug', platforms: %i[mri mingw x64_mingw]

@@ -200,14 +200,14 @@
               </div>
             </div>
             <div class="cust_id">
-              <h4>AGENCY CUSTOMER ID #:<span><%= @policy.user.qbe_customer_profile_id %></span></h4>
+              <h4>AGENCY CUSTOMER ID #:<span><%= @policy.primary_user.qbe_id %></span></h4>
             </div>
             <div class="insured_in">
               <h4>INSURED</h4>
-              <h2><%= @policy.user.profile.full_name %></h2>
+              <h2><%= @policy.primary_user.profile.full_name %></h2>
               <address>
-                <%= @policy.unit.building.address.combined_street_address %> Apt. <%= @policy.unit.mailing_id %><br>
-                <%= @policy.unit.building.address.locality %>, <%= @policy.unit.building.address.region %>, <%= @policy.unit.building.address.combined_postal_code() %>
+                <%= @policy.primary_insurable.primary_address.combined_street_address %> Apt. <br>
+                <%= @policy.primary_insurable.primary_address.city %>, <%= @policy.primary_insurable.primary_address.state %>, <%= @policy.primary_insurable.primary_address.combined_zip_code() %>
               </address>
               <% unless @policy.users.nil? %>
               <h2>
@@ -250,7 +250,7 @@
                 <h4>EXPIRATION DATE</h4><span><%= @policy.expiration_date.strftime("%m/%d/%Y") %></span>
               </div>
               <div class="cross flt_lt">
-                <h2><%= @policy.auto_renewal == true ? "X" : raw("&nbsp;") %></h2>
+                <h2><%= @policy.auto_renew == true ? "X" : raw("&nbsp;") %></h2>
               </div>
               <div class="conti_in flt_lt">
                 <h4>CONTINUED UNTIL<br>
@@ -273,8 +273,8 @@
           <div class="prop_loca">
             <h4>LOCATION/DESCRIPTION</h4>
             <address>
-              <%= @policy.unit.building.address.combined_street_address %> Apt. <%= @policy.unit.mailing_id %><br>
-              <%= @policy.unit.building.address.locality %>, <%= @policy.unit.building.address.region %>, <%= @policy.unit.building.address.combined_postal_code() %>
+              <%= @policy.primary_insurable.primary_address.combined_street_address %> Apt. <br>
+              <%= @policy.primary_insurable.primary_address.city %>, <%= @policy.primary_insurable.primary_address.state %>, <%= @policy.primary_insurable.primary_address.combined_zip_code() %>
             </address>
           </div>
           <div class="prop_cont">
@@ -292,27 +292,27 @@
             <h2>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Wind/Hail Deductible</h2>
             <h2>D - Loss of Use</h2>
             <h2>E - Personal Liability (Limit)</h2>
-            <h2 <% if @policy.rates.optional.nil? %>class="last_br_btm"<% end %>>F - Medical Payments (Limit)</h2>
-            <% unless @policy.rates.optional.nil? %>
-            <% @policy.rates.optional.each do |rate, index| %>
+            <h2 <% if @policy.insurable_rates.optional.nil? %>class="last_br_btm"<% end %>>F - Medical Payments (Limit)</h2>
+            <% unless @policy.insurable_rates.optional.nil? %>
+            <% @policy.insurable_rates.optional.each do |rate, index| %>
             <% unless rate.sub_schedule == 'policy_fee' %>
-            <h2 <% if index == (@policy.rates.optional.count - 2) %>class="last_br_btm"<% end %>><%= rate.sub_schedule.humanize %></h2>
+            <h2 <% if index == (@policy.insurable_rates.optional.count - 2) %>class="last_br_btm"<% end %>><%= rate.sub_schedule.humanize %></h2>
             <% end %>
             <% end %>
             <% end %>
           </div>
           <div class="amount_in flt_lt">
-            <h4>AMOUNT OFINSURANCE</h4>
+            <h4>AMOUNT OF INSURANCE</h4>
             <h2>&nbsp;</h2>
-            <h2><%= ActionController::Base.helpers.number_to_currency(@policy.coverage_limits["coverage_c"]) %></h2>
+            <h2><%= ActionController::Base.helpers.number_to_currency(@policy.coverages.find_by(designation: "coverage_c")&.limit&.to_f / 100) %></h2>
             <h2>&nbsp;</h2>
-            <h2><%= ActionController::Base.helpers.number_to_currency(@policy.coverage_limits["coverage_d"]) %></h2>
-            <h2><%= ActionController::Base.helpers.number_to_currency(@policy.coverage_limits["coverage_e"]) %></h2>
-            <h2 <% if @policy.rates.optional.nil? %>class="last_br_btm"<% end %>><%= ActionController::Base.helpers.number_to_currency(@policy.coverage_limits["coverage_f"]) %></h2>
-            <% unless @policy.rates.optional.nil? %>
-            <% @policy.rates.optional.each do |rate, index| %>
+            <h2><%= ActionController::Base.helpers.number_to_currency(@policy.coverages.find_by(designation: "coverage_d")&.limit&.to_f / 100) %></h2>
+            <h2><%= ActionController::Base.helpers.number_to_currency(@policy.coverages.find_by(designation: "coverage_e")&.limit&.to_f / 100) %></h2>
+            <h2 <% if @policy.insurable_rates.optional.nil? %>class="last_br_btm"<% end %>><%= ActionController::Base.helpers.number_to_currency(@policy.coverages.find_by(designation: "coverage_f")&.limit&.to_f / 100) %></h2>
+            <% unless @policy.insurable_rates.optional.nil? %>
+            <% @policy.insurable_rates.optional.each do |rate, index| %>
             <% unless rate.sub_schedule == 'policy_fee' %>
-            <h2 <% if index == (@policy.rates.optional.count - 2) %>class="last_br_btm"<% end %>>Included</h2>
+            <h2 <% if index == (@policy.insurable_rates.optional.count - 2) %>class="last_br_btm"<% end %>>Included</h2>
             <% end %>
             <% end %>
             <% end %>            
@@ -320,15 +320,15 @@
           <div class="deduct_in flt_lt">
             <h4>DEDUCTIBLE</h4>
             <h2 class="last_br_rt">&nbsp;</h2>
-            <h2 class="last_br_rt"><%= ActionController::Base.helpers.number_to_currency(@policy.deductibles["coverage_c"]) %></h2>
+            <h2 class="last_br_rt"><%= ActionController::Base.helpers.number_to_currency(@policy.coverages.find_by(designation: "coverage_c").deductible.to_f / 100) %></h2>
             <h2 class="last_br_rt">$1,000</h2>
             <h2 class="last_br_rt">&nbsp;</h2>
             <h2 class="last_br_rt">&nbsp;</h2>
-            <h2 class="<% if @policy.rates.optional.nil? %>last_br_btm <% end %>last_br_rt">&nbsp;</h2>
-            <% unless @policy.rates.optional.nil? %>
-            <% @policy.rates.optional.each do |rate, index| %>
+            <h2 class="<% if @policy.insurable_rates.optional.nil? %>last_br_btm <% end %>last_br_rt">&nbsp;</h2>
+            <% unless @policy.insurable_rates.optional.nil? %>
+            <% @policy.insurable_rates.optional.each do |rate, index| %>
             <% unless rate.sub_schedule == 'policy_fee' %>
-            <h2 <% if index == (@policy.rates.optional.count - 2) %>class="last_br_btm last_br_rt"<% end %>>&nbsp;</h2>
+            <h2 <% if index == (@policy.insurable_rates.optional.count - 2) %>class="last_br_btm last_br_rt"<% end %>>&nbsp;</h2>
             <% end %>
             <% end %>
             <% end %>
@@ -338,7 +338,7 @@
           <h2>REMARKS(Including SpecialConditions)</h2>
         </div>
         <div class="premium_in">
-          <h2>TOTAL PREMIUM: <%= ActionController::Base.helpers.number_to_currency(@policy.total_premium.to_f) %></h2>
+          <h2>TOTAL PREMIUM: <%= ActionController::Base.helpers.number_to_currency(@policy.premium.total.to_f / 100) %></h2>
         </div>
         <div class="cancel_head">
           <h2>CANCELLATION</h2>
@@ -354,8 +354,8 @@
             <h4>NAME AND ADDRESS</h4>
             <h2><%= @policy.account.title %></h2>
             <address>
-              <%= @policy.account.address.combined_street_address %> Apt. <%= @policy.account.address.street_two %><br>
-              <%= @policy.account.address.locality %>, <%= @policy.account.address.region %>, <%= @policy.account.address.combined_postal_code() %>
+              <%= @policy.primary_insurable.primary_address.combined_street_address %> Apt. <%= @policy.primary_insurable.primary_address.street_two %><br>
+              <%= @policy.primary_insurable.primary_address.city %>, <%= @policy.primary_insurable.primary_address.state %>, <%= @policy.primary_insurable.primary_address.combined_zip_code() %>
             </address>
           </div>
           <div class="sign_blk flt_lt clearfix">
