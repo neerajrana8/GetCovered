@@ -103,7 +103,7 @@ class PolicyQuote < ApplicationRecord
             pr.update policy: policy
 					end
 					
-					build_coverage()
+					build_coverages()
   
           if update(policy: policy, status: "accepted") && 
         		 policy_application.update(policy: policy) && 
