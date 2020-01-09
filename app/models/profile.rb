@@ -10,7 +10,7 @@ class Profile < ApplicationRecord
     required: false
     
   before_validation :format_contact_phone
-  before_save :set_full_name
+  before_save :set_full_name, :fix_phone_number
   after_commit :update_relations
 
   # Validations
@@ -53,5 +53,16 @@ class Profile < ApplicationRecord
                                                                        .strip
       self.full_name = name_string
     end
+    
+    def fix_phone_number
+	  	unless self.contact_phone.nil?
+		  	modified_number = self.contact_phone.gsub(/\s+/,'')
+		  	modified_number = modified_number.gsub(/[()-+.]/,'').tr('-', '')
+				modified_number = modified_number.start_with?('1') &&
+												  modified_number.length > 10 ? modified_number[1..-1] : 
+																												modified_number	
+				self.contact_phone = modified_number	  		
+		  end  
+	  end
       
 end
