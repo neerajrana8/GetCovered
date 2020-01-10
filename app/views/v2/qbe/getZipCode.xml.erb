@@ -1,6 +1,6 @@
 <soapenv:Envelope
 	xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
-	xmlns:proc="<%= Rails.application.credentials.qbe[:uri][Rails.application.credentials.rails_env.to_sym] %>">
+	xmlns:proc="<%= Rails.application.credentials.qbe[:uri][ENV['RAILS_ENV'].to_sym] %>">
 	<soapenv:Header/>
 	<soapenv:Body>
 		<proc:processRenterRequest>
