@@ -1,5 +1,5 @@
 # Get Covered Insurable Seed Setup File
-# file: db/seeds/insurable.rb
+# file: db/seeds/insurable-commercial.rb
 
 # require './db/seeds/functions'
 # require 'faker'
