@@ -107,7 +107,6 @@ class QbeService
        
       # / getZipCode
     elsif action == 'PropertyInfo'
-    
       options[:data] = {
         type: 'PropertyInfo', 
         senderID: Rails.application.credentials.qbe[:un], 
@@ -243,7 +242,6 @@ class QbeService
       # No known action    
     end
     # / case self.action
-    
     request.merge!(options)
     build_request_file(post_compile_request) unless build_request == false
   end
@@ -310,7 +308,6 @@ class QbeService
         pp call_data
         
       else
-        
         call_data[:data] = call_data[:response].parsed_response['Envelope']['Body']['processRenterRequestResponse']['xmlOutput']
         xml_doc = Nokogiri::XML(call_data[:data])
         result = nil

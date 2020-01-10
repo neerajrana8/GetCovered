@@ -205,7 +205,7 @@ module CarrierQbeInsurable
 	
 	      event.request = qbe_service.compiled_rxml
         
-#         if Rails.application.credentials.rails_env == "development"
+#         if ENV['RAILS_ENV'].to_sym == "development"
 #           puts"\nGet Property Info"
 #           puts event.request
 #           puts"\n"
