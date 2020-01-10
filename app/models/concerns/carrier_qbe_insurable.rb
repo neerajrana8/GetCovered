@@ -389,22 +389,40 @@ module CarrierQbeInsurable
 	      carrier_agency = CarrierAgency.where(agency: account.agency, carrier: @carrier).take
 	      
 	      qbe_request_options = {
-	        num_insured: number_insured,
 	        prop_city: @address.city,
 	        prop_county: @address.county,
 	        prop_state: @address.state,
 	        prop_zipcode: @address.combined_zip_code,
-	        units_on_site: insurables.residential_units.count,
+	        units_on_site: units.count,
 	        age_of_facility: @carrier_profile.traits['construction_year'],
-	        ppc: @carrier_profile.traits['ppc'],
-	        bceg: @carrier_profile.traits['bceg'],
-	        protection_device_code: @carrier_profile.traits['protection_device_cd'],
-	        constr_type: @carrier_profile.traits['construction_type'],
 	        gated_community: @carrier_profile.traits['gated_access'] == true ? 1 : 0,
 	        prof_managed: @carrier_profile.traits['professionally_managed'] == true ? 1 : 0,
-	        prof_managed_year: @carrier_profile.traits['professionally_managed_year'].nil? ? "" : @carrier_profile.traits['professionally_managed_year'], 
-	        agent_code: carrier_agency.external_carrier_id
+	        prof_managed_year: @carrier_profile.traits['professionally_managed_year'].nil? ? "" : @carrier_profile.traits['professionally_managed_year'],
+	        num_insured: number_insured,
+	        protection_device_code: @carrier_profile.traits['protection_device_cd'],
+	        constr_type: @carrier_profile.traits['construction_type'],
+	        ppc_code: @carrier_profile.traits['ppc'],
+	        bceg_code: @carrier_profile.traits['bceg'],
+	        agent_code: carrier_agency.external_carrier_id     
 	      }
+	      
+# 	      qbe_request_options = {
+# 	        num_insured: number_insured,
+# 	        prop_city: @address.city,
+# 	        prop_county: @address.county,
+# 	        prop_state: @address.state,
+# 	        prop_zipcode: @address.combined_zip_code,
+# 	        units_on_site: units.count,
+# 	        age_of_facility: @carrier_profile.traits['construction_year'],
+# 	        ppc_code: @carrier_profile.traits['ppc'],
+# 	        bceg: @carrier_profile.traits['bceg'],
+# 	        protection_device_code: @carrier_profile.traits['protection_device_cd'],
+# 	        constr_type: @carrier_profile.traits['construction_type'],
+# 	        gated_community: @carrier_profile.traits['gated_access'] == true ? 1 : 0,
+# 	        prof_managed: @carrier_profile.traits['professionally_managed'] == true ? 1 : 0,
+# 	        prof_managed_year: @carrier_profile.traits['professionally_managed_year'].nil? ? "" : @carrier_profile.traits['professionally_managed_year'], 
+# 	        agent_code: carrier_agency.external_carrier_id
+# 	      }
 	      
 	      qbe_service.build_request(qbe_request_options)
 	            

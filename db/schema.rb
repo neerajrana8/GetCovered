@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_01_03_221225) do
+ActiveRecord::Schema.define(version: 2020_01_10_183721) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -456,6 +456,8 @@ ActiveRecord::Schema.define(version: 2020_01_03_221225) do
     t.bigint "insurable_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "enabled", default: true
+    t.boolean "mandatory", default: false
     t.index ["agency_id"], name: "index_insurable_rates_on_agency_id"
     t.index ["carrier_id"], name: "index_insurable_rates_on_carrier_id"
     t.index ["insurable_id"], name: "index_insurable_rates_on_insurable_id"

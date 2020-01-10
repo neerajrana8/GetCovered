@@ -143,7 +143,8 @@ class QbeService
         num_insured: 1,
         protection_device_code: 'F',
         constr_type: 'M',
-        ppc_code: 1,
+        ppc_code: nil,
+        bceg_code: nil,
         effective_date: Time.current.strftime('%m/%d/%Y')
       }.merge!(args)
       

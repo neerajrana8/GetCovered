@@ -98,6 +98,23 @@ class Insurable < ApplicationRecord
     errors.add(:account, 'must belong to same account as parent') if insurable.account != account
   end
   
+  def units
+		to_return = nil
+		
+		unless insurable_type.title.include? "Unit"
+			if insurables.count > 0
+				if insurables.where(insurable_type_id: [4,5]).count > 0
+					to_return = insurables
+				elsif insurables.where(insurable_type_id: 7).count > 0
+					to_return = []
+					insurables.each { |i| to_return.push(*i.insurables) }
+				end
+			end
+		end  
+		
+		return to_return
+	end
+  
   def authorized_to_provide_for_address?(carrier_id, policy_type_id)
     authorized = false
     addresses.each do |address|
