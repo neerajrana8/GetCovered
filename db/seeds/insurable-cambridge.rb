@@ -251,7 +251,18 @@ if @cambridge_community.save
 	end
  
 	@cambridge_community.reset_qbe_rates(true, true)
- 
+  @cambridge_community.insurable_rates.optional.update_all mandatory: true
+  
+  enabled_cov_c_rates_ids = []
+  enabled_cov_c_rates_ids.concat @cambridge_community.insurable_rates.coverage_c.where("(coverage_limits ->> 'coverage_c')::integer = ?", 1000000).map(&:id)
+  enabled_cov_c_rates_ids.concat @cambridge_community.insurable_rates.coverage_c.where("(coverage_limits ->> 'coverage_c')::integer = ?", 1500000).map(&:id)
+  enabled_cov_c_rates_ids.concat @cambridge_community.insurable_rates.coverage_c.where("(coverage_limits ->> 'coverage_c')::integer = ?", 2000000).map(&:id)
+  
+  enabled_liability_rates_ids = @cambridge_community.insurable_rates.liability.where("(coverage_limits ->> 'liability')::integer = ?", 10000000).map(&:id)
+  
+  @cambridge_community.insurable_rates.coverage_c.where.not(id: enabled_cov_c_rates_ids).update_all enabled: false
+  @cambridge_community.insurable_rates.liability.where.not(id: enabled_liability_rates_ids).update_all enabled: false
+  
 else
 	pp @cambridge_community.errors
 end
