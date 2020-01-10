@@ -25,18 +25,18 @@ module V2
 		  	@rates["coverage_c"] = @insurable.insurable_rates
 		  										 							 .coverage_c
 													 							 .activated
-													 							 .where(number_insured: insured_count, interval: billing_period)
+													 							 .where(number_insured: insured_count, interval: billing_period, enabled: true)
 													 							 .where(query)
 		  	
 		  	@rates["liability"] = @insurable.insurable_rates
 									  										.liability
 									  									  .activated
-									  										.where(number_insured: insured_count, interval: billing_period)		
+									  										.where(number_insured: insured_count, interval: billing_period, enabled: true)		
 		  	
 		  	@rates["optional"] = @insurable.insurable_rates
  	  							  									 .optional
   								  									 .activated
-								  										 .where(number_insured: insured_count, interval: billing_period)
+								  										 .where(number_insured: insured_count, interval: billing_period, enabled: true)
 								  										 .where.not(sub_schedule: "policy_fee")
 		  										 		  		      
 	      render json: @rates.to_json,
