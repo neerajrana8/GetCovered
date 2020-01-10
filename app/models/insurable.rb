@@ -114,6 +114,20 @@ class Insurable < ApplicationRecord
 		
 		return to_return
 	end
+	
+	def community_with_buildings
+    to_return = false
+    
+    if insurable_type.title.include? "Community"
+      if insurables.count > 0
+        if insurables.where(insurable_type_id: 7).count > 0
+          to_return = true  
+        end  
+      end  
+    end
+    
+    return to_return
+  end
   
   def authorized_to_provide_for_address?(carrier_id, policy_type_id)
     authorized = false

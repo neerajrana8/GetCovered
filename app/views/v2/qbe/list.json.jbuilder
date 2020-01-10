@@ -19,7 +19,7 @@ json.communityList do
 			json.cityLimit community.carrier_profile(1).traits['in_city_limits']
 			json.propertyMgmtCompany community.account.title
 			json.propertyManager community.primary_staff.profile.full_name
-			json.units community.insurables.count
+			json.units community.units.count
 			json.ageOfFacility community.carrier_profile(1).traits['construction_year']
 			json.gatedCommunity community.carrier_profile(1).traits['gated']
 			json.yearProfManaged community.carrier_profile(1).traits['professionally_managed_year']
