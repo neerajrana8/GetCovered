@@ -29,8 +29,8 @@ module V2
 								created_at: i.created_at,
 								updated_at: i.updated_at,
 								addresses: i.addresses,
-								insurables: i.insurables
-							})							
+								insurables: i.units
+							}) if [1,2,3].include?(i.insurable_type_id)						
 						end
 					end
 					
