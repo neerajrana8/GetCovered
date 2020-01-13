@@ -37,5 +37,4 @@ class PolicyUser < ApplicationRecord
         end
       end
     end
-
 end

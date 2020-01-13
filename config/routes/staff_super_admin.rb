@@ -26,6 +26,8 @@
     resources :application_modules,
       path: "application-modules",
       only: [ :create, :update, :index, :show ]
+
+    resources :assignments, only: [ :index, :show ]
   
     resources :carriers,
       only: [ :create, :update, :index, :show ] do

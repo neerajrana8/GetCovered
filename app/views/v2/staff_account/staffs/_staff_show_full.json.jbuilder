@@ -8,3 +8,9 @@ json.profile_attributes do
       profile: staff.profile
   end
 end
+
+json.communities do
+  json.array! staff.assignments.communities do |community|
+    json.partial! 'v2/shared/assignments/community.json.jbuilder', community: community
+  end
+end
