@@ -4,7 +4,9 @@
 class Assignment < ApplicationRecord
   include PrimaryField
 
-  primary_field switch_others_primary: true
+  primary_field switch_others_primary: true,
+                field: :assignable,
+                relation_name: :assignments
 
   # after_create :record_related_history_create
   # before_destroy :record_related_history_destory
