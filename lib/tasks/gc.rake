@@ -10,9 +10,9 @@ namespace :gc do
     	Rake::Task['gc:flush:elasticsearch'].invoke
     	Rake::Task['gc:flush:redis'].invoke
     	
-    	['setup', 'agency', 'account', 'insurable-residential', 
-	  	 'insurable-commercial', 'user', 'policy-residential', 
-			 'policy-commercial'].each do |section|
+    	['setup', 'agency', 'account', 'insurable-residential',
+       'insurable-cambridge', 'insurable-commercial', 'user', 
+       'policy-residential'].each do |section|
     		system("rails db:seed section=#{ section }")
     	end
     end  
@@ -23,9 +23,9 @@ namespace :gc do
     	Rake::Task['gc:flush:elasticsearch'].invoke
     	Rake::Task['gc:flush:redis'].invoke
     	
-    	['setup', 'agency', 'account', 'insurable-residential', 
-	  	 'insurable-commercial', 'user', 'policy-residential', 
-			 'policy-commercial'].each do |section|
+    	['setup', 'agency', 'account', 'insurable-residential',
+       'insurable-cambridge', 'insurable-commercial', 'user', 
+       'policy-residential'].each do |section|
     		system("rails db:seed section=#{ section }")
     	end
     end
@@ -47,9 +47,9 @@ namespace :gc do
         system("curl -XDELETE https://search-gc-nonprod-esd-sv27jbj3vohqctw5o5672xg3a4.us-west-2.es.amazonaws.com/_all")
   		  puts "\n"
   		        
-      	['setup', 'agency', 'account', 'insurable-residential', 
-				 'insurable-commercial', 'user', 'policy-residential', 
-				 'policy-commercial'].each do |section|
+      	['setup', 'agency', 'account', 'insurable-residential',
+      	 'insurable-cambridge', 'insurable-commercial', 'user', 
+      	 'policy-residential', 'policy-commercial'].each do |section|
       		system("rails db:seed section=#{ section }")
       	end        
       end

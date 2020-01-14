@@ -8,7 +8,7 @@ InsurableType.create(title: "Residential Building",
                      category: "property", 
                      enabled: true) unless InsurableType.exists?(title: "Residential Building")
 
-@occupant_shield = Account.new(title: "Occupant Shielf", enabled: true, whitelabel: true, 
+@occupant_shield = Account.new(title: "Occupant Shield", enabled: true, whitelabel: true, 
 															 tos_accepted: true, tos_accepted_at: Time.current, 
 															 tos_acceptance_ip: Socket.ip_address_list.select{ |intf| intf.ipv4_loopback? }, 
 															 verified: true, stripe_id: nil, agency: Agency.where(title: "Cambridge GC").take,
@@ -258,7 +258,7 @@ if @cambridge_community.save
   enabled_cov_c_rates_ids.concat @cambridge_community.insurable_rates.coverage_c.where("(coverage_limits ->> 'coverage_c')::integer = ?", 1500000).map(&:id)
   enabled_cov_c_rates_ids.concat @cambridge_community.insurable_rates.coverage_c.where("(coverage_limits ->> 'coverage_c')::integer = ?", 2000000).map(&:id)
   
-  enabled_liability_rates_ids = @cambridge_community.insurable_rates.liability.where("(coverage_limits ->> 'liability')::integer = ?", 10000000).map(&:id)
+  enabled_liability_rates_ids = @cambridge_community.insurable_rates.liability.where("(coverage_limits ->> 'liability')::integer >= ?", 10000000).map(&:id)
   
   @cambridge_community.insurable_rates.coverage_c.where.not(id: enabled_cov_c_rates_ids).update_all enabled: false
   @cambridge_community.insurable_rates.liability.where.not(id: enabled_liability_rates_ids).update_all enabled: false

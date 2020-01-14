@@ -123,7 +123,14 @@ class Lease < ApplicationRecord
   def related_records_list
     %w[insurable account]
   end
-
+	
+	# Lease.primary_insurable
+	
+	def primary_user
+		lease_user = lease_users.where(primary: true).take
+		return lease_user.user.nil? ? nil : lease_user.user	
+	end
+	
   private
 
   ## Initialize Lease

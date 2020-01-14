@@ -25,18 +25,12 @@
 		if application.save()
 			community = lease.insurable.insurable
 			application.insurables << lease.insurable
-			lease.users.each { |u| application.users << u }
 			
-# 			application.policy_application_answers.each do |answer|
-# 				
-# 				# Set Number of Insured on applicable
-# 				# Policy Application Answer
-# 				if answer.policy_application_field_id == 1
-# 					answer.data['answer'] = application.users.count 
-# 					answer.save()
-# 				end
-# 				
-# 			end
+			primary_user = lease.primary_user()
+			lease_users = lease.users.where.not(id: primary_user.id)
+			
+			application.users << primary_user
+			lease_users.each { |u| application.users << u }
 		  
 		  # If application is set as complete
       if application.update status: 'complete'
@@ -72,7 +66,7 @@
 				                           				interval: application.billing_strategy.title.downcase.sub(/ly/, '').gsub('-', '_'))
 	      
 	      # Checking necessary rates have been found
-	      unless coverage_c_rates.blank? || liability_rates.blank? || application.insurables.count == 0
+	      unless coverage_c_rates.count == 0 || liability_rates.count == 0 || application.insurables.count == 0
 		      		 
 	        coverage_c_rate = coverage_c_rates[rand(0..(coverage_c_rates.count - 1))]
 	        liability_rate = liability_rates[rand(0..(liability_rates.count - 1))]		      					

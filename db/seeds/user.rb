@@ -18,6 +18,7 @@ require './db/seeds/functions'
     @lease = unit.leases.new(start_date: start_date, end_date: end_date, lease_type: LeaseType.find(1), account: unit.account)
     
     if @lease.save
+	  	
 	  	tenant_count.times do |tc|
 		  	
 	      loop do
@@ -36,14 +37,15 @@ require './db/seeds/functions'
 					  													     										 birth_date: SeedFunctions.time_rand(Time.local(1955, 1, 1), Time.local(1991, 1, 1)) })		
 						if user.save
 							@lease.users << user
-							user.attach_payment_source("tok_visa", true) if @lease.users.count == 1
 	        	end
+	        	
 	        	break        
 		      end
 
 	      end
 		  end
 		  
+		  @lease.primary_user().attach_payment_source("tok_visa", true)
 		else
 		
 			pp @lease.errors
