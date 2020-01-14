@@ -115,6 +115,22 @@ class Insurable < ApplicationRecord
 		return to_return
 	end
 	
+	def parent_community
+		to_return = nil
+		
+		unless insurable.nil?
+      if insurable_type.title.include? "Unit"
+        if insurable.insurable_type.title.include? "Building"
+          to_return = insurable.insurable
+        else
+          to_return = insurable
+        end
+      end	
+		end
+		
+		return to_return
+  end
+	
 	def community_with_buildings
     to_return = false
     

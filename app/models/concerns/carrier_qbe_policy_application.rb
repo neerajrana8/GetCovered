@@ -21,13 +21,12 @@ module CarrierQbePolicyApplication
 					rates.each { |rate| policy_rates.create!(insurable_rate: rate) unless insurable_rates.include?(rate) }
 				end
 				
-				policy_fee = self.primary_insurable().insurable.insurable_rates
+				policy_fee = self.primary_insurable().parent_community().insurable_rates
 				                 .where(number_insured: self.fields[0]["value"], 
 				                        interval: self.billing_strategy.title.downcase.sub(/ly/, '').gsub('-', '_'), 
-				                        insurable: self.primary_insurable().insurable, 
 				                        sub_schedule: "policy_fee").take
 				
-				policy_rates.create!(insurable_rate: policy_fee)
+				policy_rates.create!(insurable_rate: policy_fee) unless policy_fee.nil?
 				
 				quote_rate_premiums = insurable_rates.map { |r| r.premium.to_f }
 				quote.update est_premium: quote_rate_premiums.inject { |sum, rate| sum + rate },

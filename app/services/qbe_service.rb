@@ -299,6 +299,8 @@ class QbeService
           message: 'Request Timeout',
           response: e
         }
+        
+        pp e
       
       end
       
