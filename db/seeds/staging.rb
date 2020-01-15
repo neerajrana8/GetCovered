@@ -790,7 +790,7 @@ InsurableType.create(title: "Residential Building",
 @occupant_shield = Account.new(title: "Occupant Shield", enabled: true, whitelabel: true, 
 															 tos_accepted: true, tos_accepted_at: Time.current, 
 															 tos_acceptance_ip: Socket.ip_address_list.select{ |intf| intf.ipv4_loopback? }, 
-															 verified: true, stripe_id: nil, agency: Agency.where(title: "Cambridge GC").take,
+															 verified: true, stripe_id: nil, agency: Agency.find(2),
 														   addresses_attributes: [
 													  		{
 													  			street_number: "100",
@@ -805,6 +805,7 @@ InsurableType.create(title: "Residential Building",
 														   ])
 
 if @occupant_shield.save
+	puts "\n\n\n\n\nOccupand Shield Saved\n\n\n\n"
 	SeedFunctions.adduser(Staff, { 
 		email: "mel@getcoveredllc.com", 
 		password: 'TestingPassword1234', 
