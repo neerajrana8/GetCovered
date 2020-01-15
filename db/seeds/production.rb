@@ -30,16 +30,16 @@ InsurableType.create(title: "Residential Building",
 
 if @occupant_shield.save
 	SeedFunctions.adduser(Staff, { 
-		email: "mel@getcoveredllc.com", 
+		email: "tessl@cpmanagement.com", 
 		password: 'TestingPassword1234', 
 		password_confirmation: 'TestingPassword1234', 
 		role: 'staff', 
 		enabled: true, 
 		organizable: @occupant_shield, 
   	profile_attributes: { 
-	  	first_name: 'Melissa', 
-	  	last_name: 'Christman', 
-	  	job_title: 'Operations Manager', 
+	  	first_name: 'Tess', 
+	  	last_name: 'Lessard', 
+	  	job_title: 'Property Manager', 
 	  	birth_date: '04-01-1989'.to_date 
 	  }	
 	})	
