@@ -55,6 +55,13 @@ namespace :gc do
       end
     end
     
+		desc "Reset Dev / Staging Environment and Database"
+		task development: :environment do
+			Rake::Task['db:migrate'].invoke
+			
+			system("rails db:seed section=staging")
+		end 
+    
 		desc "Reset Production Environment and Database"
 		task production: :environment do
 			Rake::Task['db:migrate'].invoke
