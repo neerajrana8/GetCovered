@@ -67,7 +67,7 @@ module CarrierQbePolicyApplication
 				
         unit = primary_insurable()
         unit_profile = unit.carrier_profile(carrier.id)
-        community = unit.insurable
+        community = unit.parent_community()
         community_profile = community.carrier_profile(carrier.id)
         address = unit.primary_address()
         carrier_agency = CarrierAgency.where(agency: account.agency, carrier: self.carrier).take
