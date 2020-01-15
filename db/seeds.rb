@@ -1,7 +1,7 @@
 @opts = ['setup', 'agency', 'account', 'insurable-residential', 
 	  		 'insurable-commercial', 'insurable-cambridge', 'user', 
 	  		 'policy-residential', 'policy-master', 'policy-commercial', 
-	  		 'production', 'reset']
+	  		 'production', 'staging', 'reset']
 
 def display_options()
 	@string = ""
