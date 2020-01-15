@@ -30,7 +30,6 @@ Layout/AlignParameters:
 Layout/TrailingWhitespace:
   Enabled: false
 
-
 Layout/MultilineMethodCallIndentation:
   EnforcedStyle: indented
 

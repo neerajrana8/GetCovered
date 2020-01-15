@@ -34,6 +34,9 @@ gem 'httparty'
 # recommended by rottmanj
 gem 'pry'
 
+# library that prints Ruby objects in full color exposing their internal structure with proper indentation.
+gem 'awesome_print'
+
 # rack cors for api access to application
 gem 'rack-cors', require: 'rack/cors'
 
@@ -105,8 +108,6 @@ group :development, :test do
   gem 'rdoc'
   # Roo for spreadsheet interaction
   gem 'roo', '~> 2.8.0'
-
-  gem 'awesome_print'
 end
 
 group :development do

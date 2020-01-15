@@ -12,8 +12,10 @@ module CoverageReport
       master_policy_covered_count: insurables_covered_by_master_policy,
       policy_covered_count: nil,
       policy_internal_covered_count: insurable_units_policies.policy_in_system(true).count,
-      policy_external_covered_count: insurable_units_policies.policy_in_system(false).count
+      policy_external_covered_count: insurable_units_policies.policy_in_system(false).count,
+      cancelled_policy_count: cancelled_policy_count
     }
+
     report[:policy_covered_count] = report[:covered_count] - report[:master_policy_covered_count]
     report
   end
@@ -41,6 +43,15 @@ module CoverageReport
       .where(policies: { policy_type_id: PolicyType.master_policies.ids })
       .distinct
       .count
+  end
+
+  def cancelled_policy_count
+    Policy.joins(:insurables).
+      where(insurables: { id: insurables_units.ids }).
+      distinct.
+      where.not(policy_type_id: PolicyType.master_policies.ids).
+      where(status: 'CANCELLED').
+      count
   end
 
   def insurable_units_policies

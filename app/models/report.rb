@@ -11,7 +11,7 @@ class Report < ApplicationRecord
     required: true
 
   # Enum Options
-  enum format: %w[coverage]
+  enum format: %w[coverage activity]
 
   enum duration: %w[day range]
 
@@ -34,6 +34,7 @@ class Report < ApplicationRecord
       self.data['policy_covered_count']          ||= 0
       self.data['policy_internal_covered_count'] ||= 0
       self.data['policy_external_covered_count'] ||= 0
+      self.data['cancelled_policy_count']        ||= 0
     end
   end
 end
