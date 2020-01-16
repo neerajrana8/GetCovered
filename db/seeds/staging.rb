@@ -624,7 +624,7 @@ if @cambridge.save
   		
   		if carrier.id == 1
   			@policy_type = PolicyType.find(1)
-  			@fee_amount = 4500
+  			@fee_amount = 3995
   		elsif carrier.id == 2
   			@policy_type = PolicyType.find(2)
   		end
@@ -648,24 +648,72 @@ if @cambridge.save
   end 
   
   @cambridge.billing_strategies.create!(title: 'Annually', enabled: true, carrier: @qbe, 
-                                    				  policy_type: PolicyType.find(1))
+                                    				  policy_type: PolicyType.find(1), 
+                                      				fees_attributes: [
+    	                                  				{ 
+    		                                  				title: "Service Fee", 
+    		                                  				type: :MISC, 
+    		                                  				per_payment: false,
+    		                                  				amortize: true,
+    		                                  				amount_type: :PERCENTAGE,
+    		                                  				amount: 5, 
+    		                                  				enabled: true, 
+    		                                  				ownerable: @cambridge 
+    		                                  			}
+                                      				])
                                     
   @cambridge.billing_strategies.create!(title: 'Bi-Annually', enabled: true, 
     		                                      new_business: { payments: [50, 0, 0, 0, 0, 0, 50, 0, 0, 0, 0, 0], 
     		                                                      payments_per_term: 2, remainder_added_to_deposit: true },
-    		                                      carrier: @qbe, policy_type: PolicyType.find(1))
+    		                                      carrier: @qbe, policy_type: PolicyType.find(1), 
+                                      				fees_attributes: [
+    	                                  				{ 
+    		                                  				title: "Service Fee", 
+    		                                  				type: :MISC, 
+    		                                  				per_payment: false,
+    		                                  				amortize: true,
+    		                                  				amount_type: :PERCENTAGE,
+    		                                  				amount: 5, 
+    		                                  				enabled: true, 
+    		                                  				ownerable: @cambridge 
+    		                                  			}
+                                      				])
                                     
   @cambridge.billing_strategies.create!(title: 'Quarterly', enabled: true, 
     		                                      new_business: { payments: [25, 0, 0, 25, 0, 0, 25, 0, 0, 25, 0, 0], 
     		                                                      payments_per_term: 4, remainder_added_to_deposit: true },
-    		                                      carrier: @qbe, policy_type: PolicyType.find(1))
+    		                                      carrier: @qbe, policy_type: PolicyType.find(1), 
+                                      				fees_attributes: [
+    	                                  				{ 
+    		                                  				title: "Service Fee", 
+    		                                  				type: :MISC, 
+    		                                  				per_payment: false,
+    		                                  				amortize: true,
+    		                                  				amount_type: :PERCENTAGE,
+    		                                  				amount: 5, 
+    		                                  				enabled: true, 
+    		                                  				ownerable: @cambridge 
+    		                                  			}
+                                      				])
                                     
   @cambridge.billing_strategies.create!(title: 'Monthly', enabled: true, 
     		                                      new_business: { payments: [22.01, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09], 
     		                                                      payments_per_term: 12, remainder_added_to_deposit: true },
     		                                      renewal: { payments: [8.37, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33], 
     		                                                      payments_per_term: 12, remainder_added_to_deposit: true },
-    		                                      carrier: @qbe, policy_type: PolicyType.find(1))    
+    		                                      carrier: @qbe, policy_type: PolicyType.find(1), 
+                                      				fees_attributes: [
+    	                                  				{ 
+    		                                  				title: "Service Fee", 
+    		                                  				type: :MISC, 
+    		                                  				per_payment: false,
+    		                                  				amortize: true,
+    		                                  				amount_type: :PERCENTAGE,
+    		                                  				amount: 5, 
+    		                                  				enabled: true, 
+    		                                  				ownerable: @cambridge 
+    		                                  			}
+                                      				])    
 
   @cambridge.commission_strategies.create!(title: "#{ @cambridge.title } / QBE Residential Commission", 
     																						 carrier: @qbe, 
@@ -781,7 +829,9 @@ else
 	logger.debug @cambridge_qbe.errors
 end
 
-AccessToken.first.update enabled: true
+AccessToken.find_each do |token|
+  token.update enabled: true
+end
 
 InsurableType.create(title: "Residential Building", 
                      category: "property", 
@@ -807,16 +857,16 @@ InsurableType.create(title: "Residential Building",
 if @occupant_shield.save
 	puts "\n\n\n\n\nOccupand Shield Saved\n\n\n\n"
 	SeedFunctions.adduser(Staff, { 
-		email: "mel@getcoveredllc.com", 
+		email: "tessl@cpmanagement.com", 
 		password: 'TestingPassword1234', 
 		password_confirmation: 'TestingPassword1234', 
 		role: 'staff', 
 		enabled: true, 
 		organizable: @occupant_shield, 
   	profile_attributes: { 
-	  	first_name: 'Melissa', 
-	  	last_name: 'Christman', 
-	  	job_title: 'Operations Manager', 
+	  	first_name: 'Tess', 
+	  	last_name: 'Lessard', 
+	  	job_title: 'Property Manager', 
 	  	birth_date: '04-01-1989'.to_date 
 	  }	
 	})	
