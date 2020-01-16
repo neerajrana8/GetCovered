@@ -574,6 +574,6 @@ class QbeService
   private
     
   def auth_headers
-    Base64.encode64("#{Rails.application.credentials.qbe[:un]}:#{Rails.application.credentials.qbe[:pw]}")  
+    Base64.encode64("#{Rails.application.credentials.qbe[:un]}:#{Rails.application.credentials.qbe[:pw][ENV["RAILS_ENV"].to_sym]}")  
   end
 end

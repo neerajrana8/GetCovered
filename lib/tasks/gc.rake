@@ -57,6 +57,7 @@ namespace :gc do
     
 		desc "Reset Dev / Staging Environment and Database"
 		task development: :environment do
+		  system("rails db:seed section=reset")
 			Rake::Task['db:migrate'].invoke
 			
 			system("rails db:seed section=staging")
@@ -64,6 +65,9 @@ namespace :gc do
     
 		desc "Reset Production Environment and Database"
 		task production: :environment do
+		  system("rails db:seed section=reset")
+      system("curl -XDELETE https://search-gc-prod-esd-kv6es7qb5gn5zdoie2nng6nsaa.us-west-2.es.amazonaws.com/_all")
+		  puts "\n"
 			Rake::Task['db:migrate'].invoke
 			
 			system("rails db:seed section=production")
