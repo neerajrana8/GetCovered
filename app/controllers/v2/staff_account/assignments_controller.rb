@@ -6,8 +6,7 @@ module V2
   module StaffAccount
     class AssignmentsController < StaffAccountController
       
-      before_action :set_assignment,
-        only: %i[update destroy show]
+      before_action :set_assignment, only: %i[update destroy show]
             
       def index
         super(:@assignments, current_staff.assignments.communities)
@@ -17,7 +16,7 @@ module V2
       
       def create
         if create_allowed?
-          @assignment = current_staff.assignments.new(create_params)
+          @assignment = Assignment.new(create_params)
           if @assignment.errors.none? && @assignment.save
             render :show,
               status: :created
@@ -81,7 +80,7 @@ module V2
       end
         
       def set_assignment
-        @assignment = current_staff.assignments.communities.find_by(id: params[:id])
+        @assignment = Assignment.communities.find_by(id: params[:id])
       end
                 
       def create_params

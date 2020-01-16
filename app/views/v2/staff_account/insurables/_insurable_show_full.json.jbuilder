@@ -27,3 +27,7 @@ json.carrier_insurable_profiles do
     end
   end
 end
+
+json.assignments insurable.assignments do |assignment|
+  json.partial! "v2/staff_account/assignments/assignment_short_fields.json.jbuilder", assignment: assignment
+end
