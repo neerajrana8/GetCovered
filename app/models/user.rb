@@ -120,9 +120,9 @@ class User < ApplicationRecord
     AttachPaymentSource.run!(user: self, token: token, make_default: make_default)
   end
   
-  settings index: { number_of_shards: 1, limit: 10000 } do
+  settings index: { number_of_shards: 1 } do
     mappings dynamic: 'false' do
-      indexes :email, type: :string
+      indexes :email, type: :text, analyzer: 'english'
     end
   end
   
