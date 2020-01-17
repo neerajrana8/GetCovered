@@ -65,12 +65,12 @@ namespace :gc do
     
 		desc "Reset Production Environment and Database"
 		task production: :environment do
-#		  system("rails db:seed section=reset")
-#     system("curl -XDELETE https://search-gc-prod-esd-kv6es7qb5gn5zdoie2nng6nsaa.us-west-2.es.amazonaws.com/_all")#
-#		  puts "\n"
-#			Rake::Task['db:migrate'].invoke			
-#			system("rails db:seed section=production")
-			system("rails db:seed section=elasticsearch")
+		  system("rails db:seed section=reset")
+      system("curl -XDELETE https://search-gc-prod-esd-kv6es7qb5gn5zdoie2nng6nsaa.us-west-2.es.amazonaws.com/_all")
+		  puts "\n"
+			Rake::Task['db:migrate'].invoke		
+			system("rails db:seed section=elasticsearch")	
+			system("rails db:seed section=production")
 		end  
 		  
   end
