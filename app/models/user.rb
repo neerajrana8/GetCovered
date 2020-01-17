@@ -261,8 +261,9 @@ class User < ApplicationRecord
 											 				    "Content-Type" => "application/json"
                        				  },
                         				body: post_data.to_json)
-
-        if request.has_key?("unique_email_id")
+        parsed_response = JSON.parse(request.parsed_response)
+                                
+        if parsed_response.has_key?("unique_email_id")
           self.update mailchimp_id: request["unique_email_id"]
           event.update response: request.to_json, status: 'success', completed: Time.now
         else
