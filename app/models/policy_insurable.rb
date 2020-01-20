@@ -6,7 +6,7 @@
 class PolicyInsurable < ApplicationRecord
   before_create :set_first_as_primary
   
-  belongs_to :policy_application
+  belongs_to :policy_application, optional: true
   belongs_to :policy, optional: true
   belongs_to :insurable
   
@@ -15,7 +15,7 @@ class PolicyInsurable < ApplicationRecord
   validate :same_account
 
   def same_account
-    if insurable.account != policy_application.account
+    if policy_application && insurable.account != policy_application.account
       errors.add(:insurable, 'insurable must belong to same account as policy application')
     end
 

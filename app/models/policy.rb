@@ -57,9 +57,8 @@ class Policy < ApplicationRecord
   belongs_to :policy_type
   # belongs_to :billing_profie
 
-  has_many :policy_insurables
-  has_many :insurables,
-    through: :policy_insurables
+  has_many :policy_insurables, inverse_of: :policy
+  has_many :insurables, through: :policy_insurables
 
   has_many :claims
 
@@ -68,6 +67,10 @@ class Policy < ApplicationRecord
 
   has_many :policy_users
   has_many :users, through: :policy_users
+
+  has_many :not_primary_policy_users, -> { where.not(primary: true) }, class_name: 'PolicyUser'
+  has_many :not_primary_users, through: :not_primary_policy_users, class_name: 'User', source: :user
+
       
   has_many :policy_rates
   has_many :insurable_rates,
@@ -101,7 +104,7 @@ class Policy < ApplicationRecord
   scope :unpaid, -> { where(billing_dispute_status: ['BEHIND', 'REJECTED']) }
 
   accepts_nested_attributes_for :policy_coverages, :policy_premiums,
-                                :insurables, :policy_users
+                                :insurables, :policy_users, :policy_insurables
 
   #  after_save :update_leases, if: :saved_changes_to_status?
 
@@ -129,7 +132,7 @@ class Policy < ApplicationRecord
 	
 	def primary_insurable
 		policy_insurable = policy_insurables.where(primary: true).take
-		policy_insurable.insurable	
+		policy_insurable&.insurable	
 	end
 
 

@@ -85,9 +85,10 @@ module V2
             :account_id, :agency_id, :auto_renew, :cancellation_code,
             :cancellation_date_date, :carrier_id, :effective_date,
             :expiration_date, :number, :policy_type_id, :status,
-            insurables_attributes: [ :insurable_id ],
-            policy_users_attributes: [ :user_id ]
-
+            policy_insurables_attributes: [ :insurable_id ],
+            policy_users_attributes: [ :user_id ],
+            policy_coverages_attributes: [ :id, :policy_application_id, :policy_id,
+                                :limit, :deductible, :enabled ]
           )
           return(to_return)
         end
@@ -95,10 +96,13 @@ module V2
         def update_params
           return({}) if params[:policy].blank?
           params.require(:policy).permit(
-            :cancellation_code, :cancellation_date_date,
-            :effective_date, :expiration_date, :number, :policy_type_id,
-            :status, insurables_attributes: [ :insurable_id ],
-            policy_users_attributes: [ :user_id ]
+            :account_id, :agency_id, :auto_renew, :cancellation_code,
+            :cancellation_date_date, :carrier_id, :effective_date,
+            :expiration_date, :number, :policy_type_id, :status,
+            policy_insurables_attributes: [ :insurable_id ],
+            policy_users_attributes: [ :user_id ],
+            policy_coverages_attributes: [ :id, :policy_application_id, :policy_id,
+                                :limit, :deductible, :enabled ]
           )
         end
         
