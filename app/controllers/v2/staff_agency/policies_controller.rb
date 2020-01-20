@@ -87,7 +87,7 @@ module V2
             policy_insurables_attributes: [ :insurable_id ],
             policy_users_attributes: [ :user_id ],
             policy_coverages_attributes: [ :id, :policy_application_id, :policy_id,
-                                :limit, :deductible, :enabled ]
+                                :limit, :deductible, :enabled, :designation ]
           )
           return(to_return)
         end
@@ -101,7 +101,7 @@ module V2
             policy_insurables_attributes: [ :insurable_id ],
             policy_users_attributes: [ :user_id ],
             policy_coverages_attributes: [ :id, :policy_application_id, :policy_id,
-                                :limit, :deductible, :enabled ]
+                                :limit, :deductible, :enabled, :designation ]
           )
         end
   
