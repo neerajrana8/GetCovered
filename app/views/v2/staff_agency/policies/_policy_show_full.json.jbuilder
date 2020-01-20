@@ -3,16 +3,10 @@ json.partial! "v2/staff_agency/policies/policy_show_fields.json.jbuilder",
 
 json.carrier policy.carrier
 
-json.primary_user do
-  json.partial! "v2/staff_agency/users/user_show_full.json.jbuilder",
-        user: policy.primary_user
-end
-
-
-json.additional_users do
-  json.array! policy.not_primary_users do |user|
-      json.partial! "v2/staff_agency/users/user_show_full.json.jbuilder",
-        user: user
+json.users do
+  json.array! policy.policy_users do |policy_user|
+    json.primary policy_user.primary
+    json.partial! "v2/staff_agency/users/user_show_full.json.jbuilder", user: policy_user.user
   end
 end
 

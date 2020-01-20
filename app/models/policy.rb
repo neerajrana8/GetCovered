@@ -68,9 +68,6 @@ class Policy < ApplicationRecord
   has_many :policy_users
   has_many :users, through: :policy_users
 
-  has_many :not_primary_policy_users, -> { where.not(primary: true) }, class_name: 'PolicyUser'
-  has_many :not_primary_users, through: :not_primary_policy_users, class_name: 'User', source: :user
-
       
   has_many :policy_rates
   has_many :insurable_rates,
