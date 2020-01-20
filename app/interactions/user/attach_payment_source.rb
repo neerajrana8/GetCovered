@@ -62,7 +62,8 @@ class User
         end
       rescue Stripe::APIConnectionError => _
         errors.add(:payment_method, 'Network Error')
-      rescue Stripe::StripeError => _
+      rescue Stripe::StripeError => error
+        Rails.logger.error "AttachPaymentSource StripeError: #{error.to_s}. Token: #{token}"
         errors.add(:payment_method, 'Unable to process account')
       end
       false
