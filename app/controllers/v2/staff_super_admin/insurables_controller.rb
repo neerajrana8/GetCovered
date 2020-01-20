@@ -27,6 +27,10 @@ module V2
       def supported_filters(called_from_orders = false)
         @calling_supported_orders = called_from_orders
         {
+          id: [ :scalar, :array ],
+          title: [ :scalar, :like ],
+          permissions: [ :scalar, :array ],
+          insurable_type_id: [ :scalar, :array ]
         }
       end
 
