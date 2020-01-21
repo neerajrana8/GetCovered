@@ -257,7 +257,7 @@ class CrumService
   		                "subClass": opts[:business][:sub_class],
   		                "classCode": opts[:business][:class_code]
   		              },
-  		              "isBuildingOwned": opts[:premise][:owned],
+  		              "isBuildingOwned": opts[:premise][:owned] == true ? "Yes" : "No",
   		              "squareFootage": opts[:premise][:sqr_footage],
   		              "annualSales": opts[:business][:annual_sales],
   		              "buildingLimit": opts[:policy_limits][:building_limit],
