@@ -229,45 +229,45 @@ class User < ApplicationRecord
     end
   
   	def add_to_mailchimp
-      unless Rails.application.credentials.mailchimp[:list_id][ENV["RAILS_ENV"].to_sym] == "nil"
-        post_data = {
-          email_address: email,
-          status: "subscribed",
-          tags: [],
-          merge_fields: { }
-        }
-
-        post_data[:merge_fields][:FNAME] = profile.first_name unless profile.first_name.nil?
-        post_data[:merge_fields][:LNAME] = profile.last_name unless profile.last_name.nil?
-        post_data[:merge_fields][:PHONE] = profile.contact_phone unless profile.contact_phone.nil?
-        post_data[:tags].push(self.mailchimp_category)
-
-        data_center = Rails.application.credentials.mailchimp[:api_key].partition('-').last
-        url = "https://#{ data_center }.api.mailchimp.com/3.0/lists/#{ Rails.application.credentials.mailchimp[:list_id][ENV["RAILS_ENV"].to_sym] }/members"
-
-	      event = events.create(
-	        verb: 'post',
-	        format: 'json',
-	        interface: 'REST',
-	        process: 'mailchimp_add_subscriber',
-	        endpoint: url,
-	        request: post_data,
-	        started: Time.now
-	      )
-
-        request = HTTParty.post(url,
-											 				  headers: {
-											 				    "Authorization" => "apikey #{ Rails.application.credentials.mailchimp[:api_key] }",
-											 				    "Content-Type" => "application/json"
-                       				  },
-                        				body: post_data.to_json)
-                                
-        if request.parsed_response.has_key?("unique_email_id")
-          self.update mailchimp_id: request.parsed_response["unique_email_id"]
-          event.update response: request.to_json, status: 'success', completed: Time.now
-        else
-          event.update response: request.to_json, status: 'error', completed: Time.now
-        end
-      end
+#       unless Rails.application.credentials.mailchimp[:list_id][ENV["RAILS_ENV"].to_sym] == "nil"
+#         post_data = {
+#           email_address: email,
+#           status: "subscribed",
+#           tags: [],
+#           merge_fields: { }
+#         }
+# 
+#         post_data[:merge_fields][:FNAME] = profile.first_name unless profile.first_name.nil?
+#         post_data[:merge_fields][:LNAME] = profile.last_name unless profile.last_name.nil?
+#         post_data[:merge_fields][:PHONE] = profile.contact_phone unless profile.contact_phone.nil?
+#         post_data[:tags].push(self.mailchimp_category)
+# 
+#         data_center = Rails.application.credentials.mailchimp[:api_key].partition('-').last
+#         url = "https://#{ data_center }.api.mailchimp.com/3.0/lists/#{ Rails.application.credentials.mailchimp[:list_id][ENV["RAILS_ENV"].to_sym] }/members"
+# 
+# 	      event = events.create(
+# 	        verb: 'post',
+# 	        format: 'json',
+# 	        interface: 'REST',
+# 	        process: 'mailchimp_add_subscriber',
+# 	        endpoint: url,
+# 	        request: post_data,
+# 	        started: Time.now
+# 	      )
+# 
+#         request = HTTParty.post(url,
+# 											 				  headers: {
+# 											 				    "Authorization" => "apikey #{ Rails.application.credentials.mailchimp[:api_key] }",
+# 											 				    "Content-Type" => "application/json"
+#                        				  },
+#                         				body: post_data.to_json)
+#                                 
+#         if request.parsed_response.has_key?("unique_email_id")
+#           self.update mailchimp_id: request.parsed_response["unique_email_id"]
+#           event.update response: request.to_json, status: 'success', completed: Time.now
+#         else
+#           event.update response: request.to_json, status: 'error', completed: Time.now
+#         end
+#       end
     end
 end
