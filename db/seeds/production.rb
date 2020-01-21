@@ -105,7 +105,7 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
   if carrier.save!
     
     carrier_policy_type = carrier.carrier_policy_types.new(application_required: carrier.id == 2 ? false : true)
-    carrier.access_tokens.create!
+    carrier.access_tokens.create!(enabled: true)
     
     # Add Residential to Queensland Business Insurance
     if carrier.id == 1
@@ -366,7 +366,7 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
       51.times do |state|
         available = state == 0 || state == 11 ? false : true
         carrier_policy_availability = CarrierPolicyTypeAvailability.create(state: state, available: available, carrier_policy_type: carrier_policy_type)
-        carrier_policy_availability.fees.create(title: "Origination Fee", type: :ORIGINATION, amount: 2500, enabled: true, ownerable: carrier)
+#         carrier_policy_availability.fees.create(title: "Origination Fee", type: :ORIGINATION, amount: 2500, enabled: true, ownerable: carrier)
       end      
     else
       pp carrier_policy_type.errors
@@ -659,6 +659,16 @@ if @cambridge.save
     		                                  				amount: 5, 
     		                                  				enabled: true, 
     		                                  				ownerable: @cambridge 
+    		                                  			},
+    		                                  			{
+    		                                  				title: "Deposit", 
+    		                                  				type: :MISC, 
+    		                                  				per_payment: false,
+    		                                  				amortize: true,
+    		                                  				amount_type: :FLAT,
+    		                                  				amount: 3995, 
+    		                                  				enabled: true, 
+    		                                  				ownerable: @cambridge 
     		                                  			}
                                       				])
                                     
@@ -674,6 +684,16 @@ if @cambridge.save
     		                                  				amortize: true,
     		                                  				amount_type: :PERCENTAGE,
     		                                  				amount: 5, 
+    		                                  				enabled: true, 
+    		                                  				ownerable: @cambridge 
+    		                                  			},
+    		                                  			{
+    		                                  				title: "Deposit", 
+    		                                  				type: :MISC, 
+    		                                  				per_payment: false,
+    		                                  				amortize: true,
+    		                                  				amount_type: :FLAT,
+    		                                  				amount: 3995, 
     		                                  				enabled: true, 
     		                                  				ownerable: @cambridge 
     		                                  			}
@@ -693,6 +713,16 @@ if @cambridge.save
     		                                  				amount: 5, 
     		                                  				enabled: true, 
     		                                  				ownerable: @cambridge 
+    		                                  			},
+    		                                  			{
+    		                                  				title: "Deposit", 
+    		                                  				type: :MISC, 
+    		                                  				per_payment: false,
+    		                                  				amortize: true,
+    		                                  				amount_type: :FLAT,
+    		                                  				amount: 3995, 
+    		                                  				enabled: true, 
+    		                                  				ownerable: @cambridge 
     		                                  			}
                                       				])
                                     
@@ -710,6 +740,16 @@ if @cambridge.save
     		                                  				amortize: true,
     		                                  				amount_type: :PERCENTAGE,
     		                                  				amount: 5, 
+    		                                  				enabled: true, 
+    		                                  				ownerable: @cambridge 
+    		                                  			},
+    		                                  			{
+    		                                  				title: "Deposit", 
+    		                                  				type: :MISC, 
+    		                                  				per_payment: false,
+    		                                  				amortize: true,
+    		                                  				amount_type: :FLAT,
+    		                                  				amount: 3995, 
     		                                  				enabled: true, 
     		                                  				ownerable: @cambridge 
     		                                  			}
@@ -775,7 +815,7 @@ if @cambridge_qbe.save
   		
   		if carrier.id == 1
   			@policy_type = PolicyType.find(1)
-  			@fee_amount = 4500
+  			@fee_amount = 3995
   		elsif carrier.id == 2
   			@policy_type = PolicyType.find(2)
   		end
@@ -799,24 +839,112 @@ if @cambridge_qbe.save
   end 
   
   @cambridge_qbe.billing_strategies.create!(title: 'Annually', enabled: true, carrier: @qbe, 
-                                    				  policy_type: PolicyType.find(1))
+                                    				  policy_type: PolicyType.find(1), 
+                                      				fees_attributes: [
+    	                                  				{ 
+    		                                  				title: "Service Fee", 
+    		                                  				type: :MISC, 
+    		                                  				per_payment: false,
+    		                                  				amortize: true,
+    		                                  				amount_type: :PERCENTAGE,
+    		                                  				amount: 5, 
+    		                                  				enabled: true, 
+    		                                  				ownerable: @cambridge 
+    		                                  			},
+    		                                  			{
+    		                                  				title: "Deposit", 
+    		                                  				type: :MISC, 
+    		                                  				per_payment: false,
+    		                                  				amortize: true,
+    		                                  				amount_type: :FLAT,
+    		                                  				amount: 3995, 
+    		                                  				enabled: true, 
+    		                                  				ownerable: @cambridge 
+    		                                  			}
+                                      				])
                                     
   @cambridge_qbe.billing_strategies.create!(title: 'Bi-Annually', enabled: true, 
     		                                      new_business: { payments: [50, 0, 0, 0, 0, 0, 50, 0, 0, 0, 0, 0], 
     		                                                      payments_per_term: 2, remainder_added_to_deposit: true },
-    		                                      carrier: @qbe, policy_type: PolicyType.find(1))
+    		                                      carrier: @qbe, policy_type: PolicyType.find(1), 
+                                      				fees_attributes: [
+    	                                  				{ 
+    		                                  				title: "Service Fee", 
+    		                                  				type: :MISC, 
+    		                                  				per_payment: false,
+    		                                  				amortize: true,
+    		                                  				amount_type: :PERCENTAGE,
+    		                                  				amount: 5, 
+    		                                  				enabled: true, 
+    		                                  				ownerable: @cambridge 
+    		                                  			},
+    		                                  			{
+    		                                  				title: "Deposit", 
+    		                                  				type: :MISC, 
+    		                                  				per_payment: false,
+    		                                  				amortize: true,
+    		                                  				amount_type: :FLAT,
+    		                                  				amount: 3995, 
+    		                                  				enabled: true, 
+    		                                  				ownerable: @cambridge 
+    		                                  			}
+                                      				])
                                     
   @cambridge_qbe.billing_strategies.create!(title: 'Quarterly', enabled: true, 
     		                                      new_business: { payments: [25, 0, 0, 25, 0, 0, 25, 0, 0, 25, 0, 0], 
     		                                                      payments_per_term: 4, remainder_added_to_deposit: true },
-    		                                      carrier: @qbe, policy_type: PolicyType.find(1))
+    		                                      carrier: @qbe, policy_type: PolicyType.find(1), 
+                                      				fees_attributes: [
+    	                                  				{ 
+    		                                  				title: "Service Fee", 
+    		                                  				type: :MISC, 
+    		                                  				per_payment: false,
+    		                                  				amortize: true,
+    		                                  				amount_type: :PERCENTAGE,
+    		                                  				amount: 5, 
+    		                                  				enabled: true, 
+    		                                  				ownerable: @cambridge 
+    		                                  			},
+    		                                  			{
+    		                                  				title: "Deposit", 
+    		                                  				type: :MISC, 
+    		                                  				per_payment: false,
+    		                                  				amortize: true,
+    		                                  				amount_type: :FLAT,
+    		                                  				amount: 3995, 
+    		                                  				enabled: true, 
+    		                                  				ownerable: @cambridge 
+    		                                  			}
+                                      				])
                                     
   @cambridge_qbe.billing_strategies.create!(title: 'Monthly', enabled: true, 
     		                                      new_business: { payments: [22.01, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09], 
     		                                                      payments_per_term: 12, remainder_added_to_deposit: true },
     		                                      renewal: { payments: [8.37, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33], 
     		                                                      payments_per_term: 12, remainder_added_to_deposit: true },
-    		                                      carrier: @qbe, policy_type: PolicyType.find(1))    
+    		                                      carrier: @qbe, policy_type: PolicyType.find(1), 
+                                      				fees_attributes: [
+    	                                  				{ 
+    		                                  				title: "Service Fee", 
+    		                                  				type: :MISC, 
+    		                                  				per_payment: false,
+    		                                  				amortize: true,
+    		                                  				amount_type: :PERCENTAGE,
+    		                                  				amount: 5, 
+    		                                  				enabled: true, 
+    		                                  				ownerable: @cambridge 
+    		                                  			},
+    		                                  			{
+    		                                  				title: "Deposit", 
+    		                                  				type: :MISC, 
+    		                                  				per_payment: false,
+    		                                  				amortize: true,
+    		                                  				amount_type: :FLAT,
+    		                                  				amount: 3995, 
+    		                                  				enabled: true, 
+    		                                  				ownerable: @cambridge 
+    		                                  			}
+                                      				])    
 
   @cambridge_qbe.commission_strategies.create!(title: "#{ @cambridge_qbe.title } / QBE Residential Commission", 
     																						 carrier: @qbe, 
