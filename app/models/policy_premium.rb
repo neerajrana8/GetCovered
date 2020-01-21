@@ -53,7 +53,7 @@ class PolicyPremium < ApplicationRecord
 				if fee.per_payment
 					self.amortized_fees += fee.amount * payments_count	
 				elsif fee.amortize
-					self.amortized_fees += fee.amount.to_f / payments_count
+					self.amortized_fees += fee.amount
 				elsif !fee.per_payment && 
 							!fee.amortize
 					self.deposit_fees += fee.amount 
@@ -63,7 +63,7 @@ class PolicyPremium < ApplicationRecord
 				if fee.per_payment
 					self.amortized_fees += percentage_amount * payments_count	
 				elsif fee.amortize
-					self.amortized_fees += percentage_amount.to_f / payments_count
+					self.amortized_fees += percentage_amount
 				elsif !fee.per_payment &&
 					 		!fee.amortize
 					self.deposit_fees += percentage_amount
