@@ -5,7 +5,7 @@
 class PolicyApplication < ApplicationRecord  
   
   # Concerns
-  include ElasticsearchSearchable
+#   include ElasticsearchSearchable
   include CarrierCrumPolicyApplication
   include CarrierQbePolicyApplication
   
@@ -112,12 +112,12 @@ class PolicyApplication < ApplicationRecord
                                            primary_insurable.insurable.insurable_rates.where(query)
   end
 
-  settings index: { number_of_shards: 1 } do
-    mappings dynamic: 'false' do
-      indexes :reference, type: :text, analyzer: 'english'
-      indexes :external_reference, type: :text, analyzer: 'english'
-    end
-  end
+#   settings index: { number_of_shards: 1 } do
+#     mappings dynamic: 'true' do
+#       indexes :reference, type: :text, analyzer: 'english'
+#       indexes :external_reference, type: :text, analyzer: 'english'
+#     end
+#   end
   
   def check_address(insurable)
     throw :no_address if insurable.primary_address.nil?

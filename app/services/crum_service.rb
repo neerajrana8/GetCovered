@@ -116,7 +116,7 @@ class CrumService
 			  		major_category: class_code["MajorCategory"],
 			  		sub_category: class_code["SubCategory"],
 			  		class_code: class_code["ClassCode"],
-			  		appetite: class_code["CFDPAppetite"],
+			  		appetite: class_code["CFDPAppetite"] == "Yes" ? true : false,
 			  		search_value: class_code["SearchValueBOP"],
 			  		sic_code: class_code["SICCode"],
 			  		eq: class_code["EQ"],
@@ -291,7 +291,8 @@ class CrumService
   		          "isUWAppetiteEligible": "",
   		          "termPremium": "",
   		          "priorPremium": "",
-  		          "newPremium": ""
+  		          "newPremium": "",
+  		          "triaPremium": ""
   		        }
   		      },
   		      "Acceptabilityquestions": [

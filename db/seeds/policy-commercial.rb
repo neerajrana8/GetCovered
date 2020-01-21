@@ -14,107 +14,107 @@ require 'faker'
     zip_code: "89101",
     plus_four: "6409",
     primary: true
-  },
-  {
-    street_number: "2506",
-    street_name: "E 7th St",
-    city: "Austin",
-    county: "TRAVIS",
-    state: "TX",
-    zip_code: "78702",
-    plus_four: "3249",
-    primary: true
-  },
-  {
-    street_number: "1127",
-    street_name: "Kansas Ave",
-    city: "Kansas City",
-    county: "WYANDOTTE",
-    state: "KS",
-    zip_code: "66105",
-    plus_four: "1101",
-    primary: true
-  },
-  {
-    street_number: "1711",
-    street_name: "Snelling Ave N",
-    city: "St Paul",
-    county: "RAMSEY",
-    state: "MN",
-    zip_code: "55113",
-    plus_four: "1003",
-    primary: true
-  },
-  {
-    street_number: "1102",
-    street_name: "Autumn Creek Way",
-    city: "Manchester",
-    county: "SAINT LOUIS",
-    state: "MO",
-    zip_code: "63088",
-    plus_four: "1289",
-    primary: true
-  },
-  {
-    street_number: "240",
-    street_name: "Hickory Hedge Drive",
-    city: "Manchester",
-    county: "SAINT LOUIS",
-    state: "MO",
-    zip_code: "63021",
-    plus_four: "5707",
-    primary: true
-  },
-  {
-    street_number: "7111",
-    street_name: "Jefferson Run Dr",
-    city: "Louisville",
-    county: "JEFFERSON",
-    state: "KY",
-    zip_code: "40219",
-    plus_four: "3078",
-    primary: true
-  },
-  {
-    street_number: "13900",
-    street_name: "Steelecroft Farm Lane",
-    city: "Charlotte",
-    county: "MECKLENBURG",
-    state: "NC",
-    zip_code: "28278",
-    plus_four: "7493",
-    primary: true
-  },
-  {
-    street_number: "1340",
-    street_name: "Washington Blvd",
-    city: "Stamford",
-    county: "FAIRFIELD",
-    state: "CT",
-    zip_code: "06902",
-    plus_four: "2452",
-    primary: true
-  },
-  {
-    street_number: "70",
-    street_name: "Bonita Dr.",
-    city: "Depew",
-    county: "Erie",
-    state: "NY",
-    zip_code: "14043",
-    plus_four: "1508",
-    primary: true
-  },
-  {
-    street_number: "105",
-    street_name: "N Elm St",
-    city: "Mahomet",
-    county: "Champaign",
-    state: "IL",
-    zip_code: "61853",
-    plus_four: "9364",
-    primary: true
-  }  
+  }# ,
+#   {
+#     street_number: "2506",
+#     street_name: "E 7th St",
+#     city: "Austin",
+#     county: "TRAVIS",
+#     state: "TX",
+#     zip_code: "78702",
+#     plus_four: "3249",
+#     primary: true
+#   },
+#   {
+#     street_number: "1127",
+#     street_name: "Kansas Ave",
+#     city: "Kansas City",
+#     county: "WYANDOTTE",
+#     state: "KS",
+#     zip_code: "66105",
+#     plus_four: "1101",
+#     primary: true
+#   },
+#   {
+#     street_number: "1711",
+#     street_name: "Snelling Ave N",
+#     city: "St Paul",
+#     county: "RAMSEY",
+#     state: "MN",
+#     zip_code: "55113",
+#     plus_four: "1003",
+#     primary: true
+#   },
+#   {
+#     street_number: "1102",
+#     street_name: "Autumn Creek Way",
+#     city: "Manchester",
+#     county: "SAINT LOUIS",
+#     state: "MO",
+#     zip_code: "63088",
+#     plus_four: "1289",
+#     primary: true
+#   },
+#   {
+#     street_number: "240",
+#     street_name: "Hickory Hedge Drive",
+#     city: "Manchester",
+#     county: "SAINT LOUIS",
+#     state: "MO",
+#     zip_code: "63021",
+#     plus_four: "5707",
+#     primary: true
+#   },
+#   {
+#     street_number: "7111",
+#     street_name: "Jefferson Run Dr",
+#     city: "Louisville",
+#     county: "JEFFERSON",
+#     state: "KY",
+#     zip_code: "40219",
+#     plus_four: "3078",
+#     primary: true
+#   },
+#   {
+#     street_number: "13900",
+#     street_name: "Steelecroft Farm Lane",
+#     city: "Charlotte",
+#     county: "MECKLENBURG",
+#     state: "NC",
+#     zip_code: "28278",
+#     plus_four: "7493",
+#     primary: true
+#   },
+#   {
+#     street_number: "1340",
+#     street_name: "Washington Blvd",
+#     city: "Stamford",
+#     county: "FAIRFIELD",
+#     state: "CT",
+#     zip_code: "06902",
+#     plus_four: "2452",
+#     primary: true
+#   },
+#   {
+#     street_number: "70",
+#     street_name: "Bonita Dr.",
+#     city: "Depew",
+#     county: "Erie",
+#     state: "NY",
+#     zip_code: "14043",
+#     plus_four: "1508",
+#     primary: true
+#   },
+#   {
+#     street_number: "105",
+#     street_name: "N Elm St",
+#     city: "Mahomet",
+#     county: "Champaign",
+#     state: "IL",
+#     zip_code: "61853",
+#     plus_four: "9364",
+#     primary: true
+#   }  
 ]
 
 @business_types = ['AssociationLaborUnionReligiousOrganization', 'CommonOwnership', 
