@@ -368,24 +368,37 @@ class CrumService
       
       raise ArgumentError, 'Argument "args" must be a PolicyQuote' unless args.is_a?(PolicyQuote)
       
+#       request_template = {
+#         policyID: args.external_id,
+#         quoteID: args.external_id,
+#         historyId:"",
+#         term: "0",
+#         quoteNumber: "BP1950Q2019.01",
+#         policyNumber: args.external_reference,
+#         policyStatus: "Quote",
+#         productnumber: "",
+#         transactionDate: Time.now.strftime('%Y-%-m-%-d'),                
+#         transactionStatus:"",
+#         transactionType:"",
+#         termPremium: args.policy_premium.carrier_base / 100,
+#         changePremium:"",
+#         priorPremium: "",
+#         newPremium:  args.policy_premium.carrier_base / 100,
+#         effectiveDate: args.policy_application.effective_date.strftime('%Y-%-m-%-d'),
+#         expirationDate: args.policy_application.expiration_date.strftime('%Y-%-m-%-d')   
+#       }
+      
       request_template = {
-        policyID: args.external_id,
-        quoteID: args.external_id,
-        historyId:"",
-        term: "0",
-        quoteNumber: "BP1950Q2019.01",
-        policyNumber: args.external_reference,
-        policyStatus: "Quote",
-        productnumber: "",
-        transactionDate: Time.now.strftime('%Y-%-m-%-d'),                
-        transactionStatus:"",
-        transactionType:"",
-        termPremium: args.policy_premium.carrier_base / 100,
-        changePremium:"",
-        priorPremium: "",
-        newPremium:  args.policy_premium.carrier_base / 100,
+        quoteId: "#{ args.external_id }",
         effectiveDate: args.policy_application.effective_date.strftime('%Y-%-m-%-d'),
-        expirationDate: args.policy_application.expiration_date.strftime('%Y-%-m-%-d')   
+        expirationDate: args.policy_application.expiration_date.strftime('%Y-%-m-%-d'),
+        paymentMethod: "AgentBilling",
+        paymentTerm: "M09",
+        isTRIAIncluded: "No",
+        producerEmail: "brandon@getcoveredllc.com",
+        insuredName: args.policy_application.fields["business"]["contact_name"], 
+        notes: "",
+        notesRequestType:""      
       }
     
     end

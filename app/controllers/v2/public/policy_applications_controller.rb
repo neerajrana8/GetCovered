@@ -98,10 +98,26 @@ module V2
 						quote_attempt = @application.crum_quote()
 						if quote_attempt[:success] == true
 							@quote = @application.policy_quotes.last
-							render json: { quote: { id: @quote.id, status: @quote.status, premium: @quote.policy_premium },
-										   			 user: { id: @application.primary_user().id, stripe_id: @application.primary_user().stripe_id }
-										 			 }.to_json,
-										 status: 200								
+							@quote.generate_invoices_for_term()
+							
+# 							render json: { quote: { id: @quote.id, status: @quote.status, premium: @quote.policy_premium },
+# 										   			 user: { id: @application.primary_user().id, stripe_id: @application.primary_user().stripe_id }
+# 										 			 }.to_json,
+# 										 status: 200
+								  
+							render json: { 
+								quote: { 
+									id: @quote.id, 
+									status: @quote.status, 
+									premium: @quote.policy_premium 
+								},
+								invoices: @quote.invoices,
+								user: { 
+									id: @application.primary_user().id,
+									stripe_id: @application.primary_user().stripe_id
+								}
+							}.to_json, status: 200
+																	
 						else
 							render json: { error: "Quote Failed", message: "Quote could not be processed at this time" },
 										 status: 500							

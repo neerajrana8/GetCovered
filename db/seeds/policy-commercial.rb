@@ -215,7 +215,17 @@ require 'faker'
   }
   
   if @application.save!
- 		pp @application.crum_quote()
+ 		quote_attempt = @application.crum_quote()
+ 		
+ 		if quote_attempt[:error] == false &&  
+   		 quote_attempt[:success] == true
+    
+      @quote = @application.policy_quotes.last
+      @quote.crum_bind()    
+        
+ 		else
+ 		 pp quote_attempt
+ 		end
 	else
 	  puts @application.valid?
 	  
