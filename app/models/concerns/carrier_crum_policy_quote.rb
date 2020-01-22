@@ -21,7 +21,7 @@ module CarrierCrumPolicyQuote
   	    
   	      crum_service = CrumService.new
   	      request_template = crum_service.build_request_template("bind", self)
-  	      
+            	      
           event = self.events.new(request: request_template.to_json, 
                                   started: Time.now, status: "in_progress", 
                                   verb: 'post', process: 'crum_bind', 

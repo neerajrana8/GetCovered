@@ -25,6 +25,7 @@ module CarrierCrumPolicyApplication
         
         crum_service = CrumService.new()
         request_template = crum_service.build_request_template("add_new_quote", self)
+        
         event = self.events.new(request: request_template.to_json, 
                                 started: Time.now, status: "in_progress", 
                                 verb: 'post', process: 'new_crum_quote', 
@@ -55,7 +56,7 @@ module CarrierCrumPolicyApplication
               
               if quote.save
                 
-	 					    premium = PolicyPremium.new base: policy_details["termPremium"].to_i * 100,
+	 					    premium = PolicyPremium.new base: policy_details["termPremium"].include?(".") ?  policy_details["termPremium"].delete(".").to_i : policy_details["termPremium"].to_i * 100,
 	 					                                taxes: 0,
 	 					                                billing_strategy: quote.policy_application.billing_strategy,
 	 					                                policy_quote: quote
