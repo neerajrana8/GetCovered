@@ -25,6 +25,7 @@ module CarrierCrumPolicyApplication
         
         crum_service = CrumService.new()
         request_template = crum_service.build_request_template("add_new_quote", self)
+        
         event = self.events.new(request: request_template.to_json, 
                                 started: Time.now, status: "in_progress", 
                                 verb: 'post', process: 'new_crum_quote', 
