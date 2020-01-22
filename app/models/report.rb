@@ -11,7 +11,7 @@ class Report < ApplicationRecord
     required: true
 
   # Enum Options
-  enum format: %w[coverage activity]
+  enum format: %w[coverage activity detailed_renters_insurance#active_policies]
 
   enum duration: %w[day range]
 
