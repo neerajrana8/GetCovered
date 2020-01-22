@@ -7,7 +7,7 @@ module V2
     class InsurablesController < StaffAgencyController
       
       before_action :set_insurable,
-        only: [:update, :destroy, :show]
+        only: [:update, :destroy, :show, :coverage_report]
       
       def index
         if params[:short]
@@ -64,6 +64,10 @@ module V2
           render json: { success: false, errors: ['Unauthorized Access'] },
             status: :unauthorized
         end
+      end
+
+      def coverage_report
+        render json: @insurable.coverage_report
       end
       
       
@@ -127,7 +131,6 @@ module V2
         def supported_orders
           supported_filters(true)
         end
-        
     end
   end # module StaffAgency
 end
