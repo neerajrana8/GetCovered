@@ -57,7 +57,11 @@
 
     resources :claims, only: [:index, :show]
 
-    resources :insurables, only: [:index, :show ]
+    resources :insurables, only: [:index, :show ] do
+      member do
+        get :coverage_report
+      end
+    end
   
     resources :lease_types,
       path: "lease-types",
