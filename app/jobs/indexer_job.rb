@@ -24,7 +24,7 @@ class IndexerJob < ApplicationJob
         record.__elasticsearch__.client = Client
         record.__elasticsearch__.update_document
       when /delete/
-        Client.delete index: index_name, id: record_id, ignore: 404
+        Client.delete index: index_name, type: klass.__elasticsearch__.document_type, id: record_id, ignore: 404
       else raise ArgumentError, "Unknown operation '#{operation}'"
     end
   end 

@@ -46,6 +46,7 @@
             to: "histories#index_recordable",
             via: "get",
             defaults: { recordable_type: Insurable }
+          get :coverage_report
         end
         resources :insurable_rates,
           path: "insurable-rates",

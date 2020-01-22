@@ -6,13 +6,17 @@ module V2
   module StaffSuperAdmin
     class InsurablesController < StaffSuperAdminController
 
-      before_action :set_insurable, only: :show
+      before_action :set_insurable, only: [:show, :coverage_report]
 
       def index
         super(:@insurables, Insurable.all)
       end
 
       def show; end
+
+      def coverage_report
+        render json: @insurable.coverage_report
+      end
 
       private
 

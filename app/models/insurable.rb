@@ -39,7 +39,9 @@ class Insurable < ApplicationRecord
   validate :must_belong_to_same_account_if_parent_insurable
 
   scope :covered, -> { where(covered: true) }
-  
+  scope :units, -> { where(insurable_type_id: InsurableType::UNITS_IDS) }
+  scope :communities, -> { where(insurable_type_id: InsurableType::COMMUNITIES_IDS) }
+
   %w[Residential Commercial].each do |major_type|
     %w[Community Unit].each do |minor_type|
       scope "#{major_type.downcase}_#{minor_type.downcase.pluralize}".to_sym, -> { joins(:insurable_type).where("insurable_types.title = '#{major_type} #{minor_type}'") }

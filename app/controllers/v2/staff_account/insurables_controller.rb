@@ -6,7 +6,7 @@ module V2
   module StaffAccount
     class InsurablesController < StaffAccountController
 
-      before_action :set_insurable, only: [:update, :destroy, :show]
+      before_action :set_insurable, only: [:update, :destroy, :show, :coverage_report]
 
       def index
         super(:@insurables, current_staff.organizable.insurables)
@@ -58,6 +58,10 @@ module V2
           render json: { success: false, errors: ['Unauthorized Access'] },
                  status: :unauthorized
         end
+      end
+
+      def coverage_report
+        render json: @insurable.coverage_report
       end
 
       private
