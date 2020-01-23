@@ -218,6 +218,9 @@ require 'faker'
     }
   }
   
+  puts @application.to_json
+  return false
+  
   if @application.save!
  		quote_attempt = @application.crum_quote()
  		

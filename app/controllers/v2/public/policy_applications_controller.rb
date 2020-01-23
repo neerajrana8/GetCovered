@@ -53,7 +53,7 @@ module V2
         
         if @application.save
 	        
-	        @user.invite!
+	        @application.primary_user().invite!
 	        
   	      if @application.policy_type.title == "Residential"
 		        # if residential application
