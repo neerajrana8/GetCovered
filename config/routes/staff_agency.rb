@@ -4,7 +4,8 @@
   scope module: :staff_agency, path: "staff_agency" do
   
     resources :accounts,
-      only: [ :create, :update, :index, :show ] do
+      only: [ :create, :update, :index, :show ],
+      concerns: :reportable do
         member do
           get "histories",
             to: "histories#index_recordable",
@@ -14,7 +15,8 @@
       end
   
     resources :agencies,
-      only: [ :create, :update, :index, :show ] do
+      only: [ :create, :update, :index, :show ],
+      concerns: :reportable do
         member do
           get "histories",
             to: "histories#index_recordable",
@@ -72,7 +74,8 @@
       only: [ :index ]
   
     resources :insurables,
-      only: [ :create, :update, :destroy, :index, :show ] do
+      only: [ :create, :update, :destroy, :index, :show ],
+      concerns: :reportable do
         member do
           get 'refresh-rates', to: 'insurable_rates#refresh_rates'
           get "histories",

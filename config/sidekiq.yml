@@ -9,5 +9,7 @@ production:
   - stripe
   - elasticsearch
 
-# :schedule:
-# 
+:schedule:
+  build_coverage_reports_job:
+    cron: '0 0 2 * * *'   # Every day at 2:00 AM
+    class: BuildCoverageReportsJob

@@ -2,7 +2,6 @@ require 'sidekiq/web'
 
 Rails.application.routes.draw do
   
-  
   mount_devise_token_auth_for 'User',
     at: 'v2/user/auth',
     skip: [:invitations],
@@ -38,6 +37,10 @@ Rails.application.routes.draw do
   get 'v2/health-check', to: 'v2#health_check', as: :health_check
   
   namespace :v2, defaults: { format: 'json' } do
+    concern :reportable do
+      resources :reports, only: [:index, :show]
+    end
+
     draw :user
     draw :staff_account
     draw :staff_agency
@@ -46,5 +49,4 @@ Rails.application.routes.draw do
   end
 
   root to: "application#redirect_home"
-  
 end

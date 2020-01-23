@@ -4,7 +4,8 @@
   scope module: :staff_account, path: "staff_account" do
   
     resources :accounts,
-      only: [ :update, :show ] do
+      only: [ :update, :show ],
+      concerns: :reportable do
         member do
           get "histories",
             to: "histories#index_recordable",
@@ -40,7 +41,7 @@
       only: [ :index ]
   
     resources :insurables,
-      only: [ :create, :update, :destroy, :index, :show ] do
+      only: [ :create, :update, :destroy, :index, :show ], concerns: :reportable do
         member do
           get "histories",
             to: "histories#index_recordable",

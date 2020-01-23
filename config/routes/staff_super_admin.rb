@@ -4,7 +4,8 @@
   scope module: :staff_super_admin, path: "staff_super_admin" do
   
     resources :accounts,
-      only: [ :index, :show ] do
+      only: [ :index, :show ],
+      concerns: :reportable do
         member do
           get "histories",
             to: "histories#index_recordable",
@@ -14,7 +15,8 @@
       end
   
     resources :agencies,
-      only: [ :create, :update, :index, :show ] do
+      only: [ :create, :update, :index, :show ],
+      concerns: :reportable do
         member do
           get "histories",
             to: "histories#index_recordable",
@@ -57,7 +59,7 @@
 
     resources :claims, only: [:index, :show]
 
-    resources :insurables, only: [:index, :show ] do
+    resources :insurables, only: [:index, :show ], concerns: :reportable do
       member do
         get :coverage_report
       end
