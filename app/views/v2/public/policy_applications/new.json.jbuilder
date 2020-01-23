@@ -15,7 +15,8 @@ json.policy_users [
 				first_name: nil,
 				last_name: nil,
 				contact_phone: nil,
-				birth_date: nil
+				birth_date: nil,
+				job_title: nil
 			}
 		}
 	}
