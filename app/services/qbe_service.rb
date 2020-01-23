@@ -202,7 +202,7 @@ class QbeService
           coverage_d: address.state == 'CT' ? (cov_c.coverage_limits['coverage_c'] * 0.3) : (cov_c.coverage_limits['coverage_c'] * 0.2),
           liability: application.insurable_rates.liability.take,
           community: application.primary_insurable().parent_community(),
-          carrier_profile: application.primary_insurable().carrier_profile(1),
+          carrier_profile: application.primary_insurable().parent_community().carrier_profile(1),
           address: address,
           user: application.policy_users.where(primary: true).take,
           users: application.policy_users.where.not(primary: true),
