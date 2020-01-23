@@ -3,6 +3,7 @@ class InsurableType < ApplicationRecord
 
   COMMUNITIES_IDS = [1, 2, 3]
   UNITS_IDS = [4, 5, 6]
+  BUILDINGS_IDS = [7]
 
   has_many :insurables
   has_many :carrier_insurable_types

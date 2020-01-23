@@ -24,12 +24,11 @@ module CoverageReport
 
   # select only commercial and residential units in children and base insurables
   def insurables_units
-    insurable_units_ids = insurables.where(insurable_type_id: InsurableType.units.ids).ids
-    children_units_ids = insurables
-      .joins('LEFT JOIN insurables children ON insurables.id = children.insurable_id')
-      .where(children: { insurable_type_id: InsurableType.units.ids })
-      .distinct
-      .pluck('children.id')
+    insurable_units_ids = insurables.where(insurable_type_id: InsurableType::UNITS_IDS).ids
+    children_units_ids = []
+    insurables.where.not(insurable_type_id: InsurableType::UNITS_IDS).each do |insurable|
+      children_units_ids |= insurable.units.pluck(:id)
+    end
     Insurable.where(id: insurable_units_ids | children_units_ids) # prevent duplication
   end
 
