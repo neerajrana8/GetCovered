@@ -189,7 +189,7 @@ class QbeService
         
         application = obj.policy_application
         premium = obj.policy_premium
-        address = application.primary_insurable().parent_community().primary_address
+        address = application.primary_insurable().primary_address()
         cov_c = application.insurable_rates.coverage_c.take
         
         options[:data] = {

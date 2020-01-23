@@ -116,7 +116,7 @@
                       </NameInfo>
                       <Addr>
                         <Addr1><%= request[:data][:address].combined_street_address() %></Addr1>
-                        <Addr2><%= request[:data][:unit].title %></Addr2>
+                        <Addr2><%= request[:data][:unit].title.gsub(/[^0-9,.]/, "") %></Addr2>
                         <City><%= request[:data][:address].city %></City>
                         <StateProvCd><%= request[:data][:address].state %></StateProvCd>
                         <PostalCode><%= request[:data][:address].zip_code %></PostalCode>
@@ -160,7 +160,7 @@
                     <Addr>
                       <AddrTypeCd>InsuredsAddress</AddrTypeCd>
                       <Addr1><%= request[:data][:address].combined_street_address() %></Addr1>
-                      <Addr2><%= request[:data][:unit].title %></Addr2>
+                      <Addr2><%= request[:data][:unit].title.gsub(/[^0-9,.]/, "") %></Addr2>
                       <City><%= request[:data][:address].city %></City>
                       <StateProvCd><%= request[:data][:address].state %></StateProvCd>
                       <PostalCode><%= request[:data][:address].zip_code %></PostalCode>
@@ -214,7 +214,7 @@
                   <Addr>
                     <AddrTypeCd>InsuredsAddress</AddrTypeCd>
                     <Addr1><%= request[:data][:address].combined_street_address() %></Addr1>
-                    <Addr2><%= request[:data][:unit].title %></Addr2>
+                    <Addr2><%= request[:data][:unit].title.gsub(/[^0-9,.]/, "") %></Addr2>
                     <City><%= request[:data][:address].city %></City>
                     <StateProvCd><%= request[:data][:address].state %></StateProvCd>
                     <PostalCode><%= request[:data][:address].zip_code %></PostalCode>
