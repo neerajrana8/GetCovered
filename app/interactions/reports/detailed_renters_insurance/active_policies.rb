@@ -45,7 +45,8 @@ module Reports
               address: insurable.title,
               primary_user: policy.primary_user&.profile&.full_name,
               policy_type: 'H04',
-              policy: policy.insurable_rates.coverage_c.last&.description,
+              policy: policy.number,
+              contents: policy.insurable_rates.coverage_c.last&.description,
               liability: policy.insurable_rates.liability.last&.description
             }
           end
