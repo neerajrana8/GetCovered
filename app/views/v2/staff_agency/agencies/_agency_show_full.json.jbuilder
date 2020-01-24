@@ -1,6 +1,7 @@
 json.partial! "v2/staff_agency/agencies/agency_show_fields.json.jbuilder",
   agency: agency
 
+json.coverage_report agency.coverage_report
 
 json.addresses_attributes do
   unless agency.addresses.nil?
