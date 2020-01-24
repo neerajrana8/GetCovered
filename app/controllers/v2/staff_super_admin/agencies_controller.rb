@@ -86,7 +86,11 @@ module V2
           return({}) if params[:agency].blank?
           params.require(:agency).permit(
             :enabled, :staff_id, :title, :tos_accepted, :whitelabel,
-            contact_info: {}, settings: {}
+            contact_info: {}, settings: {}, addresses_attributes: [
+              :city, :country, :county, :id, :latitude, :longitude,
+              :plus_four, :state, :street_name, :street_number,
+              :street_two, :timezone, :zip_code
+            ]
           )
         end
         
