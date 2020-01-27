@@ -142,6 +142,16 @@ class Agency < ApplicationRecord
     end  
     result
   end
+
+  def first_agent
+    if staff.enabled.any?
+      'active'
+    elsif staff.any?
+      'inactive'
+    else
+      nil
+    end
+  end
   
   settings index: { number_of_shards: 1 } do
     mappings dynamic: 'false' do

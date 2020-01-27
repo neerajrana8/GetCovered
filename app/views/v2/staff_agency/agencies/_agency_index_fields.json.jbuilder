@@ -1,2 +1,2 @@
-json.extract! agency, :enabled, :id, :title, :contact_info, :updated_at
+json.extract! agency, :enabled, :id, :title, :contact_info, :updated_at, :first_agent
 

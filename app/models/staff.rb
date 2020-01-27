@@ -37,6 +37,8 @@ class Staff < ApplicationRecord
 
   has_many :reports, as: :reportable
 
+  scope :enabled, ->(){ where(enabled: true) }
+
   accepts_nested_attributes_for :profile
 
   settings index: { number_of_shards: 1 } do
