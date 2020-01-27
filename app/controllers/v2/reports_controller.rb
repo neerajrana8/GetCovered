@@ -49,7 +49,7 @@ module V2
       {
         id: [:scalar, :array],
         format: [:scalar, :like],
-        created_at: [:scalar, :like]
+        created_at: [:scalar, :array, :interval]
       }
     end
 
