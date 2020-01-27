@@ -23,9 +23,7 @@
                   <table border="0" cellpadding="0" cellspacing="0">
                     <tr>
                       <td>
-
-                      
-                        <p>Hi there <%= @resource&.profile&.full_name %>,</p>
+                        <p>Hi there <%= @resource.profile.full_name %>,</p>
                         <p><%= t("devise.mailer.invitation_instructions.someone_invited_you", url: Rails.application.credentials.uri[ENV["RAILS_ENV"].to_sym][:client]) %></p>
                         <table border="0" cellpadding="0" cellspacing="0" class="btn btn-primary">
                           <tbody>
@@ -46,9 +44,6 @@
                           <p><%= t("devise.mailer.invitation_instructions.accept_until", due_date: l(@resource.invitation_due_at, format: :'devise.mailer.invitation_instructions.accept_until_format')) %></p>
                         <% end %>
                         <p><%= t("devise.mailer.invitation_instructions.ignore").html_safe %></p>
-
-
-
                       </td>
                     </tr>
                   </table>
