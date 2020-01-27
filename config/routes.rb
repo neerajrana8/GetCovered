@@ -38,7 +38,11 @@ Rails.application.routes.draw do
   
   namespace :v2, defaults: { format: 'json' } do
     concern :reportable do
-      resources :reports, only: [:index, :show]
+      resources :reports, only: [:index, :show] do
+        collection do
+          get '/available-range', to: 'reports#available_range'
+        end
+      end
     end
 
     draw :user

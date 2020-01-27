@@ -11,7 +11,7 @@ class Report < ApplicationRecord
     required: true
 
   # Enum Options
-  enum format: %w[coverage activity detailed_renters_insurance#active_policies detailed_renters_insurance#pending_cancellation_policies]
+  enum format: %w[coverage activity detailed_renters_insurance::active_policies detailed_renters_insurance::pending_cancellation_policies]
 
   enum duration: %w[day range]
 

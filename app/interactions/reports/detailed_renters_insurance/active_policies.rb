@@ -30,7 +30,7 @@ module Reports
           data['rows'] += account_report.data['rows']
         end
 
-        Report.create(format: 'detailed_renters_insurance#active_policies',
+        Report.create(format: 'detailed_renters_insurance::active_policies',
                       data: data,
                       reportable: agency)
       end
@@ -52,7 +52,7 @@ module Reports
           end
         end
 
-        Report.create(format: 'detailed_renters_insurance#active_policies',
+        Report.create(format: 'detailed_renters_insurance::active_policies',
                       data: data,
                       reportable: reportable)
       end

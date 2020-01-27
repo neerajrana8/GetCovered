@@ -11,6 +11,16 @@ module V2
 
     def show; end
 
+    def available_range
+      render json: (params[:report_format] && params[:report_format] != 'all' ? {
+        report_start: @reportable.reports.where(format: params[:report_format]).minimum(:created_at),
+        report_end: @reportable.reports.where(format: params[:report_format]).maximum(:created_at)
+      } : {
+        report_start: @reportable.reports.minimum(:created_at),
+        report_end: @reportable.reports.maximum(:created_at)
+      }), status: :ok
+    end
+
     private
 
     def is_staff?
@@ -24,7 +34,7 @@ module V2
         end
       end
 
-      # Guard overs the case when params doesn't contain key like 'class_name_id'.
+      # Guard covers the case when params doesn't contain the key like 'class_name_id'.
       unless defined?(@reportable)
         render json: { success: false, message: 'Reportable id was not found in request url' }, status: :not_found
       end
