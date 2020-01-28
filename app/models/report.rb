@@ -7,11 +7,14 @@ class Report < ApplicationRecord
 
   # Relationships
   belongs_to :reportable,
-    polymorphic: true,
-    required: true
+             polymorphic: true,
+             required: true
 
   # Enum Options
-  enum format: %w[coverage activity detailed_renters_insurance::active_policies detailed_renters_insurance::pending_cancellation_policies]
+  enum format: %w[coverage activity
+                  detailed_renters_insurance::active_policies
+                  detailed_renters_insurance::pending_cancellation_policies
+                  detailed_renters_insurance::cancelled_policies]
 
   enum duration: %w[day range]
 
@@ -22,19 +25,19 @@ class Report < ApplicationRecord
 
   def initialize_report
     self.duration ||= 'day'
-    self.format   ||= 'coverage'
+    self.format ||= 'coverage'
 
     self.data ||= {}
     case self.format
     when 'coverage'
-      self.data['unit_count']                    ||= 0
-      self.data['occupied_count']                ||= 0
-      self.data['covered_count']                 ||= 0
-      self.data['master_policy_covered_count']   ||= 0
-      self.data['policy_covered_count']          ||= 0
+      self.data['unit_count'] ||= 0
+      self.data['occupied_count'] ||= 0
+      self.data['covered_count'] ||= 0
+      self.data['master_policy_covered_count'] ||= 0
+      self.data['policy_covered_count'] ||= 0
       self.data['policy_internal_covered_count'] ||= 0
       self.data['policy_external_covered_count'] ||= 0
-      self.data['cancelled_policy_count']        ||= 0
+      self.data['cancelled_policy_count'] ||= 0
     end
   end
 end
