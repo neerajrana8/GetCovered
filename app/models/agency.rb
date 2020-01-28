@@ -12,6 +12,7 @@ class Agency < ApplicationRecord
   include SetCallSign
   include CoverageReport
   include EarningsReport
+  include RecordChange
 
   # Active Record Callbacks
   after_initialize :initialize_agency

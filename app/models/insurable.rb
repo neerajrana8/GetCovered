@@ -6,6 +6,7 @@ class Insurable < ApplicationRecord
   include ElasticsearchSearchable
   include CarrierQbeInsurable
   include CoverageReport # , EarningsReport, RecordChange
+  include RecordChange
   
   belongs_to :account
   belongs_to :insurable, optional: true

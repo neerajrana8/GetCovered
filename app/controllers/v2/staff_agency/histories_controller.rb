@@ -5,8 +5,7 @@
 module V2
   module StaffAgency
     class HistoriesController < StaffAgencyController
-      before_action :set_substrate,
-        only: [:index]
+      before_action :set_substrate, only: [:index]
       
       def index(objects = @substrate)
         super(:@histories, objects)
@@ -47,8 +46,23 @@ module V2
 
       def supported_filters(called_from_orders = false)
         @calling_supported_orders = called_from_orders
-        {
-        }
+        if @using_recordable_index
+          return({
+            created_at: [:scalar, :array, :interval],
+            action: [:scalar, :array],
+            authorable_id: [:scalar, :array],
+            authorable_type: [:scalar, :array]
+          })
+        elsif @using_authorable_index
+          return({
+            created_at: [:scalar, :array, :interval],
+            action: [:scalar, :array],
+            recordable_id: [:scalar, :array],
+            recordable_type: [:scalar, :array]
+          })
+        else
+          return({})
+        end
       end
 
       def supported_orders

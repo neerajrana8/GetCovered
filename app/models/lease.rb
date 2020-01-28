@@ -4,6 +4,7 @@
 class Lease < ApplicationRecord
   # Concerns
   include ElasticsearchSearchable
+  include RecordChange
 
   # Active Record Callbacks
   after_initialize :initialize_lease
@@ -21,13 +22,13 @@ class Lease < ApplicationRecord
   belongs_to :insurable
   belongs_to :lease_type
 
-  has_many :lease_users
+  has_many :lease_users, inverse_of: :lease
 
-  has_many :users,
-    through: :lease_users
+  has_many :users, through: :lease_users
 
-  has_many :histories,
-    as: :recordable
+  has_many :histories, as: :recordable
+
+  accepts_nested_attributes_for :lease_users, :users
 
   # Validations
   validates_presence_of :start_date, :end_date

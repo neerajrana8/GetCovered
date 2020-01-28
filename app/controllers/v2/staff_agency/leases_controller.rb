@@ -103,20 +103,32 @@ module V2
           return({}) if params[:lease].blank?
           params.require(:lease).permit(
             :account_id, :covered, :start_date, :end_date, :insurable_id,
-            :lease_type_id, :status
+            :lease_type_id, :status,
+            lease_users_attributes: [ :user_id ],
+            users_attributes: [ :id, :email, :password ]
           )
         end
         
         def update_params
           return({}) if params[:lease].blank?
           params.require(:lease).permit(
-            :covered, :end_date, :start_date, :status
+            :covered, :end_date, :start_date, :status,
+            lease_users_attributes: [ :user_id ],
+            users_attributes: [ :id, :email, :password ]
           )
         end
         
         def supported_filters(called_from_orders = false)
           @calling_supported_orders = called_from_orders
           {
+            id: [ :scalar, :array ],
+            start_date: [ :scalar, :array, :interval ],
+            end_date: [ :scalar, :array, :interval ],
+            lease_type_id: [ :scalar, :array ],
+            status: [ :scalar, :array ],
+            covered: [ :scalar ],
+            insurable_id: [ :scalar, :array ],
+            account_id: [ :scalar, :array ]
           }
         end
 

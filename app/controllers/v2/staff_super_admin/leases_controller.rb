@@ -1,20 +1,18 @@
 ##
-# V2 StaffAccount Leases Controller
-# File: app/controllers/v2/staff_account/leases_controller.rb
+# V2 StaffAgency Leases Controller
+# File: app/controllers/v2/staff_agency/leases_controller.rb
 
 module V2
-  module StaffAccount
-    class LeasesController < StaffAccountController
+  module StaffSuperAdmin
+    class LeasesController < StaffSuperAdminController
       
       before_action :set_lease, only: [:update, :destroy, :show]
-      
-      before_action :set_substrate, only: [:create, :index]
-      
+            
       def index
         if params[:short]
-          super(:@leases, @substrate)
+          super(:@leases, Lease)
         else
-          super(:@leases, @substrate, :account, :insurable, :lease_type)
+          super(:@leases, Lease, :account, :insurable, :lease_type)
         end
       end
       
@@ -23,7 +21,7 @@ module V2
       
       def create
         if create_allowed?
-          @lease = @substrate.new(create_params)
+          @lease = Lease.new(create_params)
           if !@lease.errors.any? && @lease.save
             render :show,
               status: :created
@@ -87,7 +85,7 @@ module V2
         end
         
         def set_lease
-          @lease = access_model(::Lease, params[:id])
+          @lease = Lease.find(params[:id])
         end
         
         def set_substrate
@@ -101,10 +99,9 @@ module V2
         
         def create_params
           return({}) if params[:lease].blank?
-
           params.require(:lease).permit(
-            :covered, :end_date, :insurable_id, :lease_type_id,
-            :start_date, :status,
+            :account_id, :covered, :start_date, :end_date, :insurable_id,
+            :lease_type_id, :status,
             lease_users_attributes: [ :user_id ],
             users_attributes: [ :id, :email, :password ]
           )
@@ -112,7 +109,6 @@ module V2
         
         def update_params
           return({}) if params[:lease].blank?
-          
           params.require(:lease).permit(
             :covered, :end_date, :start_date, :status,
             lease_users_attributes: [ :user_id ],
@@ -139,5 +135,5 @@ module V2
         end
         
     end
-  end # module StaffAccount
+  end # module StaffAgency
 end

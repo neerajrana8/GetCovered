@@ -50,6 +50,7 @@ class Policy < ApplicationRecord
   include ElasticsearchSearchable
   include CarrierCrumPolicy
   include CarrierQbePolicy
+  include RecordChange
 
   belongs_to :agency
   belongs_to :account

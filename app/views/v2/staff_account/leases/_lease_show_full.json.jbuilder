@@ -22,3 +22,10 @@ json.lease_type do
       lease_type: lease.lease_type
   end
 end
+
+json.users do
+  json.array! lease.users do |user|
+    json.partial! "v2/staff_account/users/user_show_full.json.jbuilder", user: user
+  end
+end
+
