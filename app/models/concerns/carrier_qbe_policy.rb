@@ -31,6 +31,8 @@ module CarrierQbePolicy
         file << pdf
       end
       
+      documents.attach(io: File.open(save_path), filename: "#{ number }-evidence-of-insurance.pdf", content_type: 'application/pdf')
+      
       # document.file = Rails.root.join('tmp/eois', document_file_title).open
       
       # if document.save!
