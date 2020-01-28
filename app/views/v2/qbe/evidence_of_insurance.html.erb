@@ -289,7 +289,7 @@
             <h4>COVERAGE/PERIL/FORMS</h4>
             <h2>&nbsp;</h2>
             <h2>C - Personal Property</h2>
-            <h2>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Wind/Hail Deductible</h2>
+            <h2>Wind/Hail Deductible</h2>
             <h2>D - Loss of Use</h2>
             <h2>E - Personal Liability (Limit)</h2>
             <h2 <% if @policy.insurable_rates.optional.nil? %>class="last_br_btm"<% end %>>F - Medical Payments (Limit)</h2>
@@ -306,9 +306,9 @@
             <h2>&nbsp;</h2>
             <h2><%= ActionController::Base.helpers.number_to_currency(@policy.coverages.find_by(designation: "coverage_c")&.limit&.to_f / 100) %></h2>
             <h2>&nbsp;</h2>
-            <h2><%= ActionController::Base.helpers.number_to_currency(@policy.coverages.find_by(designation: "coverage_d")&.limit&.to_f / 100) %></h2>
-            <h2><%= ActionController::Base.helpers.number_to_currency(@policy.coverages.find_by(designation: "coverage_e")&.limit&.to_f / 100) %></h2>
-            <h2 <% if @policy.insurable_rates.optional.nil? %>class="last_br_btm"<% end %>><%= ActionController::Base.helpers.number_to_currency(@policy.coverages.find_by(designation: "coverage_f")&.limit&.to_f / 100) %></h2>
+            <h2><%= ActionController::Base.helpers.number_to_currency(@policy.coverages.find_by(designation: "loss_of_use")&.limit&.to_f / 100) %></h2>
+            <h2><%= ActionController::Base.helpers.number_to_currency(@policy.coverages.find_by(designation: "liability")&.limit&.to_f / 100) %></h2>
+            <h2 <% if @policy.insurable_rates.optional.nil? %>class="last_br_btm"<% end %>><%= ActionController::Base.helpers.number_to_currency(@policy.coverages.find_by(designation: "medical")&.limit&.to_f / 100) %></h2>
             <% unless @policy.insurable_rates.optional.nil? %>
             <% @policy.insurable_rates.optional.each do |rate, index| %>
             <% unless rate.sub_schedule == 'policy_fee' %>

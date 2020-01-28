@@ -96,6 +96,8 @@ class Policy < ApplicationRecord
 
   has_many :histories, as: :recordable
 
+  has_many_attached :documents
+
   scope :current, -> { where(status: %i[BOUND BOUND_WITH_WARNING]) }
   scope :policy_in_system, ->(policy_in_system) { where(policy_in_system: policy_in_system) }
   scope :unpaid, -> { where(billing_dispute_status: ['BEHIND', 'REJECTED']) }
