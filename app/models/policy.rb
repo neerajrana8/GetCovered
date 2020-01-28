@@ -87,7 +87,7 @@ class Policy < ApplicationRecord
     class_name: 'PolicyCoverage'
 
   has_many :policy_premiums, autosave: true
-  has_one :premium, -> { find_by(enabled: true) }, class_name: 'PolicyPremium'
+  # has_one :premium, -> { find_by(enabled: true) }, class_name: 'PolicyPremium'
 
   has_many :invoices
 
@@ -126,6 +126,10 @@ class Policy < ApplicationRecord
 	
   def in_system?
     policy_in_system == true
+  end
+
+  def premium
+    policy_premiums.where(enabled: true).take
   end
 
   	# PolicyApplication.primary_insurable
