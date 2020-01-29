@@ -12,6 +12,20 @@ awsdev:
   secret_access_key: <%= Rails.application.credentials.dig(:aws, :awsdev, :secret_access_key) %>
   region: us-west-2
   bucket: get-covered-v2-awsdev
+  
+aws_staging:
+  service: S3
+  access_key_id: <%= Rails.application.credentials.dig(:aws, :aws_staging, :access_key_id) %>
+  secret_access_key: <%= Rails.application.credentials.dig(:aws, :aws_staging, :secret_access_key) %>
+  region: us-west-2
+  bucket: get-covered-v2-awsdev
+  
+production:
+  service: S3
+  access_key_id: <%= Rails.application.credentials.dig(:aws, :production, :access_key_id) %>
+  secret_access_key: <%= Rails.application.credentials.dig(:aws, :production, :secret_access_key) %>
+  region: us-west-2
+  bucket: gc-private-prod
 
 # Remember not to checkin your GCS keyfile to a repository
 # google:
