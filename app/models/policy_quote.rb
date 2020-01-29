@@ -111,10 +111,7 @@ class PolicyQuote < ApplicationRecord
         		 policy_premium.update(policy: policy)
              
         		if start_billing()
-          		policy.send(issue)
-          		policy.policy_users.each do |pu|
-                SendPocMailJob.perform_later(policy: policy, user: pu.user) if pu.user
-              end    		
+							PolicyQuoteStartBillingJob.perform_later(policy: policy, issue: issue)
         			success = true # if self.send(method)
         		end       
           
