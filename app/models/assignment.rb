@@ -2,11 +2,14 @@
 # file: app/models/assignment.rb
 
 class Assignment < ApplicationRecord
+  include PrimaryField
+
+  primary_field switch_others_primary: true,
+                field: :assignable,
+                relation_name: :assignments
 
   # after_create :record_related_history_create
   # before_destroy :record_related_history_destory
-  before_create :set_first_as_primary
-  after_save :switch_others_primary
 
   # Relationship
   belongs_to :staff
@@ -68,16 +71,6 @@ class Assignment < ApplicationRecord
     related_records_list.each do |related|
       send(related)&.histories&.create(related_history)
     end
-  end
-
-  def set_first_as_primary
-    unless assignable.nil?
-      self.primary = true if assignable.assignments.count == 0
-    end
-  end
-
-  def switch_others_primary
-    assignable.assignments.where.not(id: id).update_all(primary: false) if primary
   end
 
   def one_primary_per_assignable
