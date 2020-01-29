@@ -14,7 +14,8 @@ class Report < ApplicationRecord
   enum format: %w[coverage activity
                   detailed_renters_insurance::active_policies
                   detailed_renters_insurance::pending_cancellation_policies
-                  detailed_renters_insurance::cancelled_policies]
+                  detailed_renters_insurance::cancelled_policies
+                  detailed_renters_insurance::uncovered_units]
 
   enum duration: %w[day range]
 
