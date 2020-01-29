@@ -113,10 +113,7 @@ class PolicyQuote < ApplicationRecord
         		if start_billing()
           		policy.send(issue)
           		policy.policy_users.each do |pu|
-                UserCoverageMailer.with(policy: policy,
-                                        user: pu.user)
-                                  .proof_of_coverage()
-                                  .deliver      
+                SendPocMailJob.perform_later(policy: policy, user: pu.user) if pu.user
               end    		
         			success = true # if self.send(method)
         		end       
