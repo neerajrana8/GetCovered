@@ -108,6 +108,16 @@ namespace :gc do
   end
   
   namespace :aws do
+  
+  	desc "Push to all aws instances"
+  	task :all do
+  		Rake::Task['gc:aws:api:dev'].invoke
+  		Rake::Task['gc:aws:api:staging'].invoke
+  		Rake::Task['gc:aws:api:production'].invoke
+  		Rake::Task['gc:aws:worker:dev'].invoke
+  		Rake::Task['gc:aws:worker:staging'].invoke
+  		Rake::Task['gc:aws:worker:production'].invoke
+  	end
     
     namespace :api do
       
