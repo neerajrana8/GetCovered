@@ -19,7 +19,11 @@ module CarrierQbePolicy
       pdf = WickedPdf.new.pdf_from_string(
         ActionController::Base.new.render_to_string(
           "v2/qbe/evidence_of_insurance", 
-          locals: { :@policy => self }
+          locals: { 
+            :@policy => self,
+            :@agency => self.agency,
+            :@address => self.agency.primary_address(),
+            :@carrier_agency => CarrierAgency.where(carrier_id: self.carrier_id, agency_id: self.agency_id).take }
         )
       )
       

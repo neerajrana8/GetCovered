@@ -172,6 +172,10 @@ class Policy < ApplicationRecord
       end
     end
   end
+  
+  def premium
+    return policy_premiums.order("created_at").last  
+  end
 
   def update_leases
     if BOUND? || RENEWED? || REINSTATED?
