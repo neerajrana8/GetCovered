@@ -19,9 +19,9 @@ class UserCoverageMailer < ApplicationMailer
   end
   
   def proof_of_coverage
-    mail(
-      :subject => "Your new Insurance Policy" 
-    )
+    file_url = "#{Rails.application.credentials.uri[ENV["RAILS_ENV"].to_sym][:api]}#{Rails.application.routes.url_helpers.rails_blob_path(@policy.documents.last, only_path: true)}"
+    attachments["policy-#{ @policy.number }.pdf"] = open(file_url).read
+    mail(:subject => "Your new Insurance Policy")
   end
   
   def policy_expiring

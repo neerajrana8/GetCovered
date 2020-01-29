@@ -58,6 +58,7 @@ class PolicyQuote < ApplicationRecord
   def accept
 		success = false
 		method = "#{ policy_application.carrier.integration_designation }_bind"
+		issue = "#{ policy_application.carrier.integration_designation }_issue_policy"
 		
 		if quoted? || error?
 			self.set_qbe_external_reference if policy_application.carrier.id == 1 
@@ -110,6 +111,13 @@ class PolicyQuote < ApplicationRecord
         		 policy_premium.update(policy: policy)
              
         		if start_billing()
+          		policy.send(issue)
+          		policy.policy_users.each do |pu|
+                UserCoverageMailer.with(policy: policy,
+                                        user: pu.user)
+                                  .proof_of_coverage()
+                                  .deliver      
+              end    		
         			success = true # if self.send(method)
         		end       
           

@@ -175,25 +175,25 @@
           <div class="agency_main flt_lt">
             <div class="agency_left flt_lt">
               <h4>AGENCY</h4>
-              <h2>Get Covered LLC</h2>
+              <h2><%= @agency.contact_info["legal_name"] %></h2>
               <address>
-                265 Canal St #303<br>
-                New York, NY, 10013
+                <%= @address.combined_street_address %> <%= @address.street_two %><br>
+                <%= @address.city %>, <%= @address.state %>, <%= @address.zip_code %>
               </address>
             </div>
             <div class="agency_right flt_lt">
               <h4>PHONE(<span>A/C, No, Ext</span>):</h4>
-              <h2>(917) 924-2019</h2>
+              <h2><%= @agency.contact_info["phone"] %></h2>
             </div>
             <div class="clearfix"></div>
             <div class="fax_in">
-              <h4>FAX (A/C No Ext):<span>(347) 696-7795</span></h4>
-              <h4>EMAIL ADDRESS:<span>info@getcovered.llc.com</span></h4>
+              <h4>FAX (A/C No Ext):<span><%= @agency.contact_info["fax"] %></span></h4>
+              <h4>EMAIL ADDRESS:<span><%= @agency.contact_info["email"] %></span></h4>
             </div>
             <div class="code_in clearfix">
               <div class="code flt_lt">
                 <h4>CODE:</h4>
-                <h2>GETCVR</h2>
+                <h2><%= @carrier_agency.external_carrier_id %></h2>
               </div>
               <div class="sub_code flt_lt">
                 <h4>SUBCODE:</h4>
@@ -338,13 +338,26 @@
           <h2>REMARKS(Including SpecialConditions)</h2>
         </div>
         <div class="premium_in">
-          <h2>TOTAL PREMIUM: <%= ActionController::Base.helpers.number_to_currency(@policy.premium.total.to_f / 100) %></h2>
+          <table cellpadding="5" cellspacing="0" style="border: none;">
+            <tr>
+              <td><h4>Premium:</h4></td>
+              <td><h4><%= ActionController::Base.helpers.number_to_currency(@policy.premium.carrier_base.to_f / 100) %></h4></td>
+            </tr>
+            <tr>
+              <td><h4>Admin Fees:</h4></td>
+              <td><h4><%= ActionController::Base.helpers.number_to_currency(@policy.premium.total_fees.to_f / 100) %></h4></td>
+            </tr>
+            <tr>
+              <td><h2>Total:</h2></td>
+              <td><h2><%= ActionController::Base.helpers.number_to_currency(@policy.premium.total.to_f / 100) %></h2></td>
+            </tr>
+          </table>
         </div>
         <div class="cancel_head">
           <h2>CANCELLATION</h2>
         </div>
         <div class="cancel_in">
-          <h2>SHOULD ANY OF THE ABOVE DESCRIBED POLICIES BE CANCELLED BEFORE THE EXPIRATION DATE THEREOF, NOTICE WILL BE DELIVERED IN ACCORDANCEWITH THE POLICY PROVISIONS.</h2>
+          <h2>SHOULD ANY OF THE ABOVE DESCRIBED POLICIES BE CANCELLED BEFORE THE EXPIRATION DATE THEREOF, NOTICE WILL BE DELIVERED IN ACCORDANCE WITH THE POLICY PROVISIONS.</h2>
         </div>
         <div class="cancel_head">
           <h2>ADDITIONAL INTEREST</h2>
@@ -378,7 +391,7 @@
             <div class="auth">
               <h4>AUTHORIZED REPRESENTATIVE</h4>
               <figure>
-                <img alt="sign" height="35" src="<%= Rails.root.join("public", "assets", "signature.png").to_s %>" width="136">
+                <img alt="sign" height="35" src="<%= Rails.root.join("public", "assets", "#{ @agency.slug }-signature.png").to_s %>" width="136">
               </figure>
             </div>
           </div>
