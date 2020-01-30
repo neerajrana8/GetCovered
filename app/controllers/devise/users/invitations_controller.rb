@@ -2,7 +2,7 @@ class Devise::Users::InvitationsController < Devise::InvitationsController
   before_action :resource_from_invitation_token, only: [:edit, :update]
 
   def create
-    User.invite!(invite_params)
+    ::User.invite!(invite_params)
     render json: { success: true }, 
            status: :created
   end
