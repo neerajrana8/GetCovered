@@ -324,12 +324,12 @@ class PolicyQuote < ApplicationRecord
     
     if !policy.nil? && policy_premium.calculation_base > 0 && status == "accepted"
 	     
-	    invoices.each_with_index do |invoice, index|
+	    invoices.order("due_date").each_with_index do |invoice, index|
 		  	invoice.update status: index == 0 ? "available" : "upcoming",
 		  								 policy: policy
 		  end
 		  
-		  charge_invoice = invoices.order("created_at").first.pay(stripe_source: policy_application.primary_user().payment_profiles.first.source_id)
+		  charge_invoice = invoices.order("due_date").first.pay(stripe_source: policy_application.primary_user().payment_profiles.first.source_id)
 		  
 		  pp charge_invoice
 		  
