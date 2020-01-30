@@ -5,8 +5,9 @@
 
 class PolicyQuote < ApplicationRecord
   # Concerns
-  include CarrierQbePolicyQuote, CarrierCrumPolicyQuote, ElasticsearchSearchable
-  # include ElasticsearchSearchable
+	include CarrierQbePolicyQuote
+	include CarrierCrumPolicyQuote
+	include ElasticsearchSearchable
 
   before_save :set_status_updated_on,
   	if: Proc.new { |quote| quote.status_changed? }
@@ -19,12 +20,10 @@ class PolicyQuote < ApplicationRecord
   belongs_to :account, optional: true
   belongs_to :policy, optional: true
 
-	has_many :events,
-	    as: :eventable
+	has_many :events, as: :eventable
 
 	has_many :policy_rates
-	has_many :insurable_rates,
-		through: :policy_rates
+	has_many :insurable_rates, through: :policy_rates
 		
 	has_one :policy_premium
 
@@ -54,84 +53,150 @@ class PolicyQuote < ApplicationRecord
   def available_period
     7.days
   end
+
+  def bind_policy
+    case policy_application&.carrier&.integration_designation
+    when 'qbe'
+      set_qbe_external_reference
+      qbe_bind
+    when 'qbe_specialty'
+      { error: 'No policy bind for QBE Specialty' }
+    when 'crum'
+      crum_bind
+    else
+      { error: 'Error happened with policy bind' }
+    end
+  end
+  
+  def build_new_policy
+    build_policy(
+      effective_date: policy_application.effective_date,
+      expiration_date: policy_application.expiration_date,
+      auto_renew: policy_application.auto_renew,
+      auto_pay: policy_application.auto_pay,
+      policy_in_system: true,
+      system_purchased: true,
+      billing_enabled: true,
+      serviceable: policy_application.carrier.syncable,
+      policy_type: policy_application.policy_type,
+      agency: policy_application.agency,
+      account: policy_application.account,
+      carrier: policy_application.carrier,
+      policy_users: policy_application.policy_users,
+      policy_insurables: policy_application.policy_insurables,
+      policy_rates: policy_application.policy_rates,
+      policy_application: policy_application,
+      policy_premiums: [policy_premium]
+    )
+  end
   
   def accept
-		success = false
-		method = "#{ policy_application.carrier.integration_designation }_bind"
-		issue = "#{ policy_application.carrier.integration_designation }_issue_policy"
-		
-		if quoted? || error?
-			self.set_qbe_external_reference if policy_application.carrier.id == 1 
-			bind_request = self.send(method)
-      
-      unless bind_request[:error]
-	      
-    		policy = build_policy(
-      		number: bind_request[:data][:policy_number],
-      		status: bind_request[:data][:status] == "WARNING" ? "BOUND_WITH_WARNING" : "BOUND",
-      		effective_date: policy_application.effective_date,
-      		expiration_date: policy_application.expiration_date,
-      		auto_renew: policy_application.auto_renew,
-      		auto_pay: policy_application.auto_pay,
-      		policy_in_system: true,
-      		system_purchased: true,
-      		billing_enabled: true,
-      		serviceable: policy_application.carrier.syncable,
-      		policy_type: policy_application.policy_type,
-      		agency: policy_application.agency,
-      		account: policy_application.account,
-      		carrier: policy_application.carrier
-    		)      
+    return false unless quoted?
 
-    		if policy.save
-					policy.reload()
-      		
-      		# Add users to policy
-      		policy_application.policy_users
-      		                  .each do |pu|
-        	  pu.update policy: policy
-        	  pu.user.convert_prospect_to_customer()
-          end
-          
-          # Add insurables to policy
-          policy_application.policy_insurables
-                            .each do |pi|
-            pi.update policy: policy
-          end
-          
-          # Add rates to policy
-          policy_application.policy_rates.each do |pr|
-            pr.update policy: policy
-					end
-					
-					build_coverages() if policy_application.policy_type.title == "Residential"
-  
-          if update(policy: policy, status: "accepted") && 
-        		 policy_application.update(policy: policy) && 
-        		 policy_premium.update(policy: policy)
-             
-        		if start_billing()
-							PolicyQuoteStartBillingJob.perform_later(policy: policy, issue: issue)
-        			success = true # if self.send(method)
-        		end       
-          
-          else
-            # If self.policy, policy_application.policy or 
-            # policy_premium.policy cannot be set correctly
-            update status: 'error'
-          end
+    policy = build_new_policy
+    if policy.save             
+      build_coverages if policy_application.policy_type.title == 'Residential'
+
+      if update(policy: policy, status: 'accepted') && start_billing
+        bind_request = bind_policy
+				if bind_request[:error]
+					update status: 'error'
+          return false
         else
-          # If policy cannot be created      
-          update status: 'error'
-          logger.debug policy.errors
+          policy.update(bind_request[:data][:policy_number], bind_request[:data][:status] == "WARNING" ? "BOUND_WITH_WARNING" : "BOUND")
+          policy.issue    
+
+          PolicyQuoteStartBillingJob.perform_later(policy: policy)
+          return true
         end
+        
       else
-      
+        update status: 'error'
       end
-		end
+    else
+      update status: 'error'
+    end
+    false
+  end
+
+  
+  # def accept
+	# 	success = false
+	# 	method = "#{ policy_application.carrier.integration_designation }_bind"
+	# 	issue = "#{ policy_application.carrier.integration_designation }_issue_policy"
 		
-		return success
-	end
+	# 	if quoted? || error?
+	# 		self.set_qbe_external_reference if policy_application.carrier.id == 1 
+	# 		bind_request = self.send(method)
+      
+  #     unless bind_request[:error]
+	      
+  #   		policy = build_policy(
+  #     		number: bind_request[:data][:policy_number],
+  #     		status: bind_request[:data][:status] == "WARNING" ? "BOUND_WITH_WARNING" : "BOUND",
+  #     		effective_date: policy_application.effective_date,
+  #     		expiration_date: policy_application.expiration_date,
+  #     		auto_renew: policy_application.auto_renew,
+  #     		auto_pay: policy_application.auto_pay,
+  #     		policy_in_system: true,
+  #     		system_purchased: true,
+  #     		billing_enabled: true,
+  #     		serviceable: policy_application.carrier.syncable,
+  #     		policy_type: policy_application.policy_type,
+  #     		agency: policy_application.agency,
+  #     		account: policy_application.account,
+  #     		carrier: policy_application.carrier
+  #   		)      
+
+  #   		if policy.save
+	# 				policy.reload()
+      		
+  #     		# Add users to policy
+  #     		policy_application.policy_users
+  #     		                  .each do |pu|
+  #       	  pu.update policy: policy
+  #       	  pu.user.convert_prospect_to_customer()
+  #         end
+          
+  #         # Add insurables to policy
+  #         policy_application.policy_insurables
+  #                           .each do |pi|
+  #           pi.update policy: policy
+  #         end
+          
+  #         # Add rates to policy
+  #         policy_application.policy_rates.each do |pr|
+  #           pr.update policy: policy
+	# 				end
+					
+	# 				build_coverages() if policy_application.policy_type.title == "Residential"
+  
+  #         if update(policy: policy, status: "accepted") && 
+  #       		 policy_application.update(policy: policy) && 
+  #       		 policy_premium.update(policy: policy)
+             
+  #       		if start_billing()
+	# 						PolicyQuoteStartBillingJob.perform_later(policy: policy, issue: issue)
+  #       			success = true # if self.send(method)
+  #       		end       
+          
+  #         else
+  #           # If self.policy, policy_application.policy or 
+  #           # policy_premium.policy cannot be set correctly
+  #           update status: 'error'
+  #         end
+  #       else
+  #         # If policy cannot be created      
+  #         update status: 'error'
+  #         logger.debug policy.errors
+  #       end
+  #     else
+      
+  #     end
+	# 	end
+		
+	# 	return success
+	# end
 	
 	def decline
 		success = self.update status: 'declined' ? true : false
@@ -257,9 +322,7 @@ class PolicyQuote < ApplicationRecord
 
     billing_started = false
     
-    if !policy.nil? && 
-	     policy_premium.calculation_base > 0 && 
-	     status == "accepted"
+    if !policy.nil? && policy_premium.calculation_base > 0 && status == "accepted"
 	     
 	    invoices.each_with_index do |invoice, index|
 		  	invoice.update status: index == 0 ? "available" : "upcoming",
@@ -277,37 +340,6 @@ class PolicyQuote < ApplicationRecord
         policy.update billing_status: "ERROR"
       end
 		  
-#       policy_application.billing_strategy.new_business['payments'].each_with_index do |payment, index|
-#         amount = policy_premium.calculation_base * (payment.to_f / 100)
-#         next if amount == 0
-# 
-#         # Due date is today for the first invoice. After that it is due date
-#         # after effective date of the policy
-#         due_date = index == 0 ? status_updated_on : policy.effective_date + index.months
-#         amount = index == 0 ? (amount + policy_premium.deposit_fees) : amount
-#         invoice = policy.invoices.new do |inv|
-#           inv.due_date        = due_date
-#           inv.available_date  = due_date + available_period
-#           inv.user            = policy_application.primary_user
-#           inv.subtotal        = amount
-#           inv.total           = amount
-#           inv.status          = index == 0 ? "available" : "upcoming"
-#         end
-#         unless invoice.save
-#           pp invoice.errors
-#         end
-#       end
-# 
-#       charge_invoice = policy.invoices.first.pay(allow_upcoming: true)
-# 			
-# 			pp charge_invoice
-# 			
-#       if charge_invoice[:success] == true
-#         policy.update billing_status: "CURRENT"
-#         return true
-#       else
-#         policy.update billing_status: "ERROR"
-#       end
     end
     billing_started
   end

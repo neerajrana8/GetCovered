@@ -196,6 +196,20 @@ class Policy < ApplicationRecord
     end
   end
 
+  def issue
+    case policy_application&.carrier&.integration_designation
+    when 'qbe'
+      qbe_issue_policy
+    when 'qbe_specialty'
+      { error: 'No policy issue for QBE Specialty' }
+    when 'crum'
+      crum_issue_policy
+    else
+      { error: 'Error happened with policy issue' }
+    end
+  end
+
+
   def residential?
     policy_type == PolicyType.residential
   end
