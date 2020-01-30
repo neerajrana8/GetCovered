@@ -15,7 +15,7 @@ Rails.application.routes.draw do
     defaults: { format: :json },
     only: [:invitations],
     controllers: {
-      invitations: 'devise/user/invitations'
+      invitations: 'devise/users/invitations'
     }
   
   mount_devise_token_auth_for 'Staff',

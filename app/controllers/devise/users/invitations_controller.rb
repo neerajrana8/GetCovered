@@ -1,4 +1,4 @@
-class Devise::User::InvitationsController < Devise::InvitationsController
+class Devise::Users::InvitationsController < Devise::InvitationsController
   before_action :resource_from_invitation_token, only: [:edit, :update]
 
   def create
@@ -15,6 +15,10 @@ class Devise::User::InvitationsController < Devise::InvitationsController
     @user.update(password: accept_invitation_params[:password], password_confirmation: accept_invitation_params[:password_confirmation])
     @user.accept_invitation!
     if @user.errors.empty?
+      @resource = @user
+      @token = @resource.create_token
+      @resource.save!
+      update_auth_header
       render json: { success: ['User updated.'] }, 
              status: :accepted
     else
