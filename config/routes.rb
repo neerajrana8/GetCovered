@@ -8,7 +8,8 @@ Rails.application.routes.draw do
     controllers: {
       sessions: 'devise/users/sessions',
       token_validations: 'devise/users/token_validations',
-      passwords: 'devise/users/passwords'
+      passwords: 'devise/users/passwords',
+      registrations: 'devise/users/registrations'
     }
   
   devise_for :users, path: 'v2/user/auth',
