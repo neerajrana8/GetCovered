@@ -1,7 +1,7 @@
 class PolicyQuoteStartBillingJob < ApplicationJob
   queue_as :default
 
-  def perform(policy)
+  def perform(policy: , issue: )
     return if policy.nil?
     
     policy.issue

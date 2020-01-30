@@ -55,7 +55,7 @@ class PolicyQuote < ApplicationRecord
   end
 
   def bind_policy
-    case policy_application&.carrier&.integration_designation
+    case policy_application.carrier.integration_designation
     when 'qbe'
       set_qbe_external_reference
       qbe_bind
@@ -104,9 +104,8 @@ class PolicyQuote < ApplicationRecord
           return false
         else
           policy.update(bind_request[:data][:policy_number], bind_request[:data][:status] == "WARNING" ? "BOUND_WITH_WARNING" : "BOUND")
-          policy.issue    
-
-          PolicyQuoteStartBillingJob.perform_later(policy: policy)
+					issue = "#{ policy_application.carrier.integration_designation }_issue_policy"
+          PolicyQuoteStartBillingJob.perform_later(policy: policy, issue: issue)
           return true
         end
         
@@ -306,7 +305,7 @@ class PolicyQuote < ApplicationRecord
 				difference = policy_premium.total - total
 				
 				if total > 0
-					invoices.last.update total: invoices.last.total + difference	
+					invoices.order("due_date").last.update total: invoices.last.total + difference	
 				end 
 				
 		  end
