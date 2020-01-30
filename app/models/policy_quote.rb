@@ -266,7 +266,7 @@ class PolicyQuote < ApplicationRecord
 		  								 policy: policy
 		  end
 		  
-		  charge_invoice = invoices.first.pay(stripe_source: policy_application.primary_user().payment_profiles.first.source_id)
+		  charge_invoice = invoices.order("created_at").first.pay(stripe_source: policy_application.primary_user().payment_profiles.first.source_id)
 		  
 		  pp charge_invoice
 		  
