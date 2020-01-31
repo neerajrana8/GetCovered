@@ -37,7 +37,8 @@ end
   { title: "Commercial Community", category: "property", enabled: true }, # ID: 3
   { title: "Residential Unit", category: "property", enabled: true }, # ID:4
   { title: "Commercial Unit", category: "property", enabled: true }, # ID: 5
-  { title: "Small Business", category: "entity", enabled: true } # ID: 6
+  { title: "Small Business", category: "entity", enabled: true }, # ID: 6
+  { title: "Residential Building", category: "property", enabled: true } # ID: 7
 ]
 
 @insurable_types.each do |it|
