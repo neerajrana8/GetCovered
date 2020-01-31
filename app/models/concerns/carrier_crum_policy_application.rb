@@ -38,7 +38,7 @@ module CarrierCrumPolicyApplication
           
           event.update completed: Time.now, response: request[:data], status: request[:error] ? "error" : "success"
           
-          unless request[:error]
+          unless request[:error] || request[:data].has_key?("responseMessages")
           
             data = request[:data]
             if data["quoteDetails"]["policyService"]["isEligible"] == "Yes"

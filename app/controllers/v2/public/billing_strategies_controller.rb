@@ -15,10 +15,6 @@ module V2
 	      
 	      billing_strategy_policy_type = PolicyType.find_by_slug(policy_type)
 	      @billing_strategies = billing_strategy_policy_type.billing_strategies.where(agency_id: agency_id)
-		    
-		    pp @billing_strategies
-		    
-# 		    super(:@billing_strategies, @substrate)
       end
       
       
