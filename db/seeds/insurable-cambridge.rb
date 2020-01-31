@@ -5,7 +5,7 @@ require './db/seeds/functions'
 require 'socket'
 
 if Account.exists?(title: "Occupant Shield")
-	@occupant_shild = Account.where(title: "Occupant Shield").take
+	@occupant_shield = Account.where(title: "Occupant Shield").take
 else
 	@occupant_shield = Account.new(title: "Occupant Shield", enabled: true, whitelabel: true, 
 																 tos_accepted: true, tos_accepted_at: Time.current, 
