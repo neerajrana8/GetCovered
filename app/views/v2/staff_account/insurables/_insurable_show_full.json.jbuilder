@@ -1,6 +1,12 @@
 json.partial! "v2/staff_account/insurables/insurable_show_fields.json.jbuilder",
   insurable: insurable
 
+json.account do
+  unless insurable.account.nil?
+    json.partial! "v2/staff_account/accounts/account_short_fields.json.jbuilder",
+                  account: insurable.account
+  end
+end
 
 json.addresses_attributes do
   unless insurable.addresses.nil?
@@ -30,4 +36,9 @@ end
 
 json.assignments insurable.assignments do |assignment|
   json.partial! "v2/staff_account/assignments/assignment_short_fields.json.jbuilder", assignment: assignment
+end
+
+json.insurable_type do
+  json.partial! 'v2/staff_account/insurable_types/insurable_type_short_fields.json.jbuilder',
+                insurable_type: insurable.insurable_type
 end

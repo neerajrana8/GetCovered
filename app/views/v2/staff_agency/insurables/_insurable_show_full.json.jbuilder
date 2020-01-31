@@ -38,3 +38,8 @@ end
 json.assignments insurable.assignments do |assignment|
   json.partial! "v2/staff_agency/assignments/assignment_short_fields.json.jbuilder", assignment: assignment
 end
+
+json.insurable_type do
+  json.partial! 'v2/staff_agency/insurable_types/insurable_type_short_fields.json.jbuilder',
+                insurable_type: insurable.insurable_type
+end
