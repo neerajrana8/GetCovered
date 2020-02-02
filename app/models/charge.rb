@@ -16,6 +16,8 @@ class Charge < ApplicationRecord
   # ActiveRecord Associations
 
   belongs_to :invoice
+  
+  has_one :policy_quote, through: :invoice
 
   has_one :policy, through: :invoice
 
@@ -260,10 +262,13 @@ class Charge < ApplicationRecord
       else
         # create charge
         begin
+	        descriptor = policy.nil? ? "Policy Quote #{ policy_quote.external_reference }" : 
+	        													 "Policy ##{invoice.policy.number}"
+	        													 
           stripe_charge = Stripe::Charge.create({
             amount: amount,
             currency: 'usd',
-            description: "Policy ##{invoice.policy.number}, Invoice ##{invoice.number}",
+            description: "#{ descriptor }, Invoice ##{invoice.number}",
             customer: invoice.user.stripe_id,
             source: stripe_source
           }.delete_if { |k,v| v.nil? })

@@ -44,7 +44,7 @@ class Invoice < ApplicationRecord
 #   validates :policy, presence: true
   validates :user, presence: true
 
-	validate :policy_unless_quoted
+# 	validate :policy_unless_quoted
 
   accepts_nested_attributes_for :line_items
 
@@ -327,22 +327,24 @@ class Invoice < ApplicationRecord
         update(has_pending_refund: false)
       end
     end
-
-    if policy.BEHIND? || policy.REJECTED?
-      invoices = policy.invoices
-      invoices_statuses = []
-      invoices.each { |i| invoices_statuses << i.status }
-
-      policy.billing_status = 'RESCINDED' unless invoices_statuses.include? 'missed'
-    else
-      policy.billing_status = 'CURRENT'
+		
+		unless policy.nil?
+	    if policy.BEHIND? || policy.REJECTED?
+	      invoices = policy.invoices
+	      invoices_statuses = []
+	      invoices.each { |i| invoices_statuses << i.status }
+	
+	      policy.billing_status = 'RESCINDED' unless invoices_statuses.include? 'missed'
+	    else
+	      policy.billing_status = 'CURRENT'
+	    end
+			
+	    policy.last_payment_date = updated_at.to_date
+	    next_invoice = policy.invoices.order('due_date ASC').where('due_date > ?', due_date).limit(1).take
+	    policy.next_payment_date = next_invoice.due_date unless next_invoice.nil?
+	
+	    policy.save
     end
-
-    policy.last_payment_date = updated_at.to_date
-    next_invoice = policy.invoices.order('due_date ASC').where('due_date > ?', due_date).limit(1).take
-    policy.next_payment_date = next_invoice.due_date unless next_invoice.nil?
-
-    policy.save
   end
 
   def payment_failed
@@ -437,11 +439,11 @@ class Invoice < ApplicationRecord
 
   private
 
-	def policy_unless_quoted
-		if policy.nil? && status != "quoted"
-			errors.add(:policy_id, "must exist if status is anything but quoted")	
-		end
-	end
+# 	def policy_unless_quoted
+# 		if policy.nil? && status != "quoted"
+# 			errors.add(:policy_id, "must exist if status is anything but quoted")	
+# 		end
+# 	end
 
   def initialize_invoice
     self.user ||= policy&.user unless policy.nil?
