@@ -381,7 +381,7 @@ class CrumService
 	        "squareFootage": premise["sqr_footage"],
 	        "annualSales": premise["annual_sales"],
 	        "buildingLimit": premise["building_limit"],
-	        "businessPropertyPersonallimit": premise["business_personal_property"],
+	        "businessPropertyPersonallimit": premise["business_personal_property_limit"],
 	        "eligible": ""
 	      }
 	   end
