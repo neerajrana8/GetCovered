@@ -15,7 +15,7 @@ module V2
 		  	@class_codes = @major_category.nil? ? CarrierClassCode.where(enabled: true, state_code: @state_code) : 
 		  	                                      CarrierClassCode.where(enabled: true, state_code: @state_code, major_category: @major_category.to_s)
                                                 
-        render json: @class_codes.to_json,
+        render json: @class_codes.order("major_category").to_json,
                status: :ok
 	      
 		  end

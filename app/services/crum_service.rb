@@ -269,7 +269,7 @@ class CrumService
   		          "effectiveDate": args.effective_date.to_date.strftime('%Y-%m-%d'),
   		          "expirationDate": args.expiration_date.to_date.strftime('%Y-%m-%d'),
   		          "liablityCoverages": {
-  		            "liablityOccurence": opts["policy_limits"]["liability"],
+  		            "liablityOccurence": opts["policy_limits"]["occurence_limit"],
   		            "liablityAggregate": opts["policy_limits"]["aggregate_limit"],
   		            "liablityBldgLimit": opts["policy_limits"]["building_limit"],
   		            "liablityPersonalPropertyLimit": opts["policy_limits"]["business_personal_property"]
@@ -381,7 +381,7 @@ class CrumService
 	        "squareFootage": premise["sqr_footage"],
 	        "annualSales": premise["annual_sales"],
 	        "buildingLimit": premise["building_limit"],
-	        "businessPropertyPersonallimit": premise["business_personal_property"],
+	        "businessPropertyPersonallimit": premise["business_personal_property_limit"],
 	        "eligible": ""
 	      }
 	   end
@@ -435,7 +435,6 @@ class CrumService
 																"Authorization": self.token["IdToken"]
 															})
     rescue => e
-    	puts "ERROR\n".red
       error = true
     end
     

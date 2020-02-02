@@ -41,90 +41,110 @@ module V2
       def create
         @application = PolicyApplication.new(create_params)
         
-        if @application.agency.nil?
+        logger.debug "Setting PolicyApplication Agency"
+        if @application.agency.nil? && 
+	         @application.account.nil?
+	        logger.debug "Setting PolicyApplication Agency as Master Agency"
+	        @application.agency = Agency.where(master_agency: true).take 
+	      elsif @application.agency.nil?
+	      	logger.debug "Setting PolicyApplication Agency as Account Agency"
           @application.agency = @application.account.agency  
         end
         
+        logger.debug "Setting PolicyApplication Users"
         @application.policy_users.each do |pu|
 	        secure_tmp_password = SecureRandom.base64(12)
 	        pu.user.password = secure_tmp_password
 	        pu.user.password_confirmation = secure_tmp_password
 	      end
+	      
+	      logger.debug "Setting PolicyApplication Billing Strategy"
+	      if @application.billing_strategy_id.nil? &&
+		       @application.policy_type.title == "Commercial"
+					@application.billing_strategy = BillingStrategy.where(agency: @application.agency, policy_type: @application.policy_type).take
+        end
         
         if @application.save
-	        
+	      	
+	      	logger.debug @application.users.to_json
+	      	
 	        @application.primary_user().invite!
-	        
-  	      if @application.policy_type.title == "Residential"
-		        # if residential application
-	        	if @application.update status: "complete"
-		        	# if application.status updated to complete
-		        	@application.qbe_estimate()
-		        	@quote = @application.policy_quotes.last
-							if @application.status != "quote_failed" || application.status != "quoted"
-								# if application quote success or failure
-								@application.qbe_quote(@quote.id) 
-								@application.reload()
-								@quote.reload()
-								
-								if @quote.status == "quoted"	
+	        if @application.update status: "complete"
+	  	      if @application.policy_type.title == "Residential"
+			        # if residential application
+		        	
+			        	# if application.status updated to complete
+			        	@application.qbe_estimate()
+			        	@quote = @application.policy_quotes.last
+								if @application.status != "quote_failed" || application.status != "quoted"
+									# if application quote success or failure
+									@application.qbe_quote(@quote.id) 
+									@application.reload()
+									@quote.reload()
 									
-									@application.primary_user().set_stripe_id()
-								  
-									render json: { 
-										quote: { 
-											id: @quote.id, 
-											status: @quote.status, 
-											premium: @quote.policy_premium 
-										},
-										invoices: @quote.invoices.order('due_date ASC'),
-										user: { 
-											id: @application.primary_user().id,
-											stripe_id: @application.primary_user().stripe_id
-										}
-									}.to_json, status: 200
-								
+									if @quote.status == "quoted"	
+										
+										@application.primary_user().set_stripe_id()
+									  
+										render json: { 
+											quote: { 
+												id: @quote.id, 
+												status: @quote.status, 
+												premium: @quote.policy_premium 
+											},
+											invoices: @quote.invoices.order('due_date ASC'),
+											user: { 
+												id: @application.primary_user().id,
+												stripe_id: @application.primary_user().stripe_id
+											}
+										}.to_json, status: 200
+									
+									else
+										render json: { error: "Quote Failed", message: "Quote could not be processed at this time" },
+													 status: 500	
+									end
 								else
-									render json: { error: "Quote Failed", message: "Quote could not be processed at this time" },
-												 status: 500	
+									render json: { error: "Application Unavailable", message: "Application cannot be quoted at this time" },
+												 status: 400							
 								end
+								
+		        elsif @application.policy_type.title == "Commercial"
+							quote_attempt = @application.crum_quote()
+							if quote_attempt[:success] == true
+								
+								@application.primary_user().set_stripe_id()
+								
+								@quote = @application.policy_quotes.last
+								@quote.generate_invoices_for_term()
+								
+	# 							render json: { quote: { id: @quote.id, status: @quote.status, premium: @quote.policy_premium },
+	# 										   			 user: { id: @application.primary_user().id, stripe_id: @application.primary_user().stripe_id }
+	# 										 			 }.to_json,
+	# 										 status: 200
+									  
+								render json: { 
+									quote: { 
+										id: @quote.id, 
+										status: @quote.status, 
+										premium: @quote.policy_premium 
+									},
+									invoices: @quote.invoices,
+									user: { 
+										id: @application.primary_user().id,
+										stripe_id: @application.primary_user().stripe_id
+									}
+								}.to_json, status: 200
+																		
 							else
-								render json: { error: "Application Unavailable", message: "Application cannot be quoted at this time" },
-											 status: 400							
-							end       	
-		        else
-							render json: { error: "Application Incomplete", message: "Application is incomplete and must be finished to proceed" },
-										 status: 400		        
-		        end
-	        elsif @application.policy_type.title == "Commercial"
-						quote_attempt = @application.crum_quote()
-						if quote_attempt[:success] == true
-							@quote = @application.policy_quotes.last
-							@quote.generate_invoices_for_term()
-							
-# 							render json: { quote: { id: @quote.id, status: @quote.status, premium: @quote.policy_premium },
-# 										   			 user: { id: @application.primary_user().id, stripe_id: @application.primary_user().stripe_id }
-# 										 			 }.to_json,
-# 										 status: 200
-								  
-							render json: { 
-								quote: { 
-									id: @quote.id, 
-									status: @quote.status, 
-									premium: @quote.policy_premium 
-								},
-								invoices: @quote.invoices,
-								user: { 
-									id: @application.primary_user().id,
-									stripe_id: @application.primary_user().stripe_id
-								}
-							}.to_json, status: 200
-																	
-						else
-							render json: { error: "Quote Failed", message: "Quote could not be processed at this time" },
-										 status: 500							
-						end	        
-	        end
+								render json: { error: "Quote Failed", message: "Quote could not be processed at this time" },
+											 status: 500							
+							end	        
+		        end		        
+		      else
+	          render json: @application.errors.to_json,
+	                 status: 400		      	
+		      end
+		      
         else
           render json: @application.errors.to_json,
                  status: 400
