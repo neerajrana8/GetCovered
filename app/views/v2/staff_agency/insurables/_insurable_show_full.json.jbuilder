@@ -43,3 +43,17 @@ json.insurable_type do
   json.partial! 'v2/staff_agency/insurable_types/insurable_type_short_fields.json.jbuilder',
                 insurable_type: insurable.insurable_type
 end
+
+json.parent_community do
+  if insurable.parent_community_for_all.present?
+    json.partial! 'v2/staff_agency/insurables/insurable_short_fields.json.jbuilder',
+                  insurable: insurable.parent_community_for_all
+  end
+end
+
+json.parent_building do
+  if insurable.parent_building.present?
+    json.partial! 'v2/staff_agency/insurables/insurable_short_fields.json.jbuilder',
+                  insurable: insurable.parent_building
+  end
+end

@@ -1,5 +1,5 @@
 json.partial! "v2/staff_account/insurables/insurable_show_fields.json.jbuilder",
-  insurable: insurable
+              insurable: insurable
 
 json.account do
   unless insurable.account.nil?
@@ -12,7 +12,7 @@ json.addresses_attributes do
   unless insurable.addresses.nil?
     json.array! insurable.addresses do |insurable_addresses|
       json.partial! "v2/staff_account/addresses/address_show_fields.json.jbuilder",
-        address: insurable_addresses
+                    address: insurable_addresses
     end
   end
 end
@@ -29,7 +29,7 @@ json.carrier_insurable_profiles do
   unless insurable.carrier_insurable_profiles.nil?
     json.array! insurable.carrier_insurable_profiles do |insurable_carrier_insurable_profiles|
       json.partial! "v2/staff_account/carrier_insurable_profiles/carrier_insurable_profile_short_fields.json.jbuilder",
-        carrier_insurable_profile: insurable_carrier_insurable_profiles
+                    carrier_insurable_profile: insurable_carrier_insurable_profiles
     end
   end
 end
@@ -41,4 +41,18 @@ end
 json.insurable_type do
   json.partial! 'v2/staff_account/insurable_types/insurable_type_short_fields.json.jbuilder',
                 insurable_type: insurable.insurable_type
+end
+
+json.parent_community do
+  if insurable.parent_community_for_all.present?
+    json.partial! 'v2/staff_account/insurables/insurable_short_fields.json.jbuilder',
+                  insurable: insurable.parent_community_for_all
+  end
+end
+
+json.parent_building do
+  if insurable.parent_building.present?
+    json.partial! 'v2/staff_account/insurables/insurable_short_fields.json.jbuilder',
+                  insurable: insurable.parent_building
+  end
 end
