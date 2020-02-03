@@ -27,7 +27,7 @@ module CoverageReport
     insurable_units_ids = insurables.where(insurable_type_id: InsurableType::UNITS_IDS).ids
     children_units_ids = []
     insurables.where.not(insurable_type_id: InsurableType::UNITS_IDS).each do |insurable|
-      children_units_ids |= insurable.units.pluck(:id)
+      children_units_ids |= insurable.units&.pluck(:id)
     end
     Insurable.where(id: insurable_units_ids | children_units_ids) # prevent duplication
   end
