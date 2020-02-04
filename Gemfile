@@ -81,6 +81,7 @@ gem 'elasticsearch-rails', github: 'elastic/elasticsearch-rails', branch: '5.x'
 
 # Colorizing console output to highlight stuffs
 gem 'colorize'
+gem 'faker'
 
 # AWS SDK
 gem 'aws-sdk', '~> 3'
@@ -99,7 +100,6 @@ group :development, :test do
   gem 'byebug', platforms: %i[mri mingw x64_mingw]
   gem 'database_cleaner'
   gem 'factory_bot_rails'
-  gem 'faker'
   gem 'guard-rspec'
   gem 'rails-controller-testing'
   gem 'rspec-rails'
