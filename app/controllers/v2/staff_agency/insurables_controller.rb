@@ -124,7 +124,9 @@ module V2
             id: [ :scalar, :array ],
             title: [ :scalar, :like ],
             permissions: [ :scalar, :array ],
-            insurable_type_id: [ :scalar, :array ]
+            insurable_type_id: [ :scalar, :array ],
+            insurable_id: [ :scalar, :array ],
+            account_id: [ :scalar, :array ]
           }
         end
 
