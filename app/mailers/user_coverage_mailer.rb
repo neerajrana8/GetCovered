@@ -1,6 +1,7 @@
 class UserCoverageMailer < ApplicationMailer
   before_action { @user = params[:user] }
   before_action { @policy = params[:policy] }
+  before_action { @quote = params[:quote] }
   before_action :check_user_preference
  
   default to:       -> { @user.email },
@@ -21,8 +22,14 @@ class UserCoverageMailer < ApplicationMailer
   def proof_of_coverage
     file_url = "#{Rails.application.credentials.uri[ENV["RAILS_ENV"].to_sym][:api]}#{Rails.application.routes.url_helpers.rails_blob_path(@policy.documents.last, only_path: true)}"
     attachments["policy-#{ @policy.number }.pdf"] = open(file_url).read
-    mail(:subject => "Your new Insurance Policy")
+    mail(:subject => "Your New Insurance Policy")
   end
+  
+  def commercial_quote
+    file_url = "#{Rails.application.credentials.uri[ENV["RAILS_ENV"].to_sym][:api]}#{Rails.application.routes.url_helpers.rails_blob_path(@quote.documents.last, only_path: true)}"
+    attachments["quote-#{ @quote.external_id }.pdf"] = open(file_url).read
+    mail(:subject => "Your New Insurance Quote")
+	end
   
   def policy_expiring
     mail(

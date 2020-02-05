@@ -29,6 +29,8 @@ class PolicyQuote < ApplicationRecord
 
 	has_many :invoices
 
+  has_many_attached :documents
+
 	accepts_nested_attributes_for :policy_premium
 
   enum status: { awaiting_estimate: 0, estimated: 1, quoted: 2, 

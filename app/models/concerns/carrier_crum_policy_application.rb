@@ -66,6 +66,8 @@ module CarrierCrumPolicyApplication
 	 					    quote_method = premium.save ? "mark_successful" : "mark_failure"                           
 	 					    quote.send(quote_method)
 	 					    
+	 					    PolicyQuoteGetDocumentsJob.set(wait: 2.minutes).perform_later(quote: quote)
+                
                 quote_success[:success] = true          
                 
               else  
