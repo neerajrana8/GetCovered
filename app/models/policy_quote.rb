@@ -70,60 +70,7 @@ class PolicyQuote < ApplicationRecord
     end
   end
   
-  def build_new_policy
-    build_policy(
-      effective_date: policy_application.effective_date,
-      expiration_date: policy_application.expiration_date,
-      auto_renew: policy_application.auto_renew,
-      auto_pay: policy_application.auto_pay,
-      policy_in_system: true,
-      system_purchased: true,
-      billing_enabled: true,
-      serviceable: policy_application.carrier.syncable,
-      policy_type: policy_application.policy_type,
-      agency: policy_application.agency,
-      account: policy_application.account,
-      carrier: policy_application.carrier,
-      policy_users: policy_application.policy_users,
-      policy_insurables: policy_application.policy_insurables,
-      policy_rates: policy_application.policy_rates,
-      policy_application: policy_application,
-      policy_premiums: [policy_premium]
-    )
-  end
-  
-#   def accept
-#     return false unless quoted?
-# 
-#     policy = build_new_policy
-#     if policy.save             
-#       build_coverages if policy_application.policy_type.title == 'Residential'
-# 
-#       if update(policy: policy, status: 'accepted') && start_billing
-#         bind_request = bind_policy
-# 				if bind_request[:error]
-# 					update status: 'error'
-#           return false
-#         else
-#           policy.update(bind_request[:data][:policy_number], bind_request[:data][:status] == "WARNING" ? "BOUND_WITH_WARNING" : "BOUND")
-# 					issue = "#{ policy_application.carrier.integration_designation }_issue_policy"
-#           PolicyQuoteStartBillingJob.perform_later(policy: policy, issue: issue)
-#           return true
-#         end
-#         
-#       else
-#         update status: 'error'
-#       end
-#     else
-#     	logger.debug policy.errors
-#       update status: 'error'
-#     end
-#     false
-#   end
-
-  
   def accept
-	  
 	  quote_attempt = {
 		  success: false,
 		  message: nil,
@@ -207,82 +154,6 @@ class PolicyQuote < ApplicationRecord
 		end
 		
 		return quote_attempt
-	  
-#     success = false
-#     method = "#{ policy_application.carrier.integration_designation }_bind"
-#     issue = "#{ policy_application.carrier.integration_designation }_issue_policy"
-# 		
-#     if quoted? || error?
-# 	  	self.set_qbe_external_reference if policy_application.carrier.id == 1 
-# 	  	bind_request = self.send(method)
-#       
-#       unless bind_request[:error]
-# 	      
-#     		policy = build_policy(
-#       		number: bind_request[:data][:policy_number],
-#       		status: bind_request[:data][:status] == "WARNING" ? "BOUND_WITH_WARNING" : "BOUND",
-#       		effective_date: policy_application.effective_date,
-#       		expiration_date: policy_application.expiration_date,
-#       		auto_renew: policy_application.auto_renew,
-#       		auto_pay: policy_application.auto_pay,
-#       		policy_in_system: true,
-#       		system_purchased: true,
-#       		billing_enabled: true,
-#       		serviceable: policy_application.carrier.syncable,
-#       		policy_type: policy_application.policy_type,
-#       		agency: policy_application.agency,
-#       		account: policy_application.account,
-#       		carrier: policy_application.carrier
-#     		)      
-# 
-#     		if policy.save
-# 	 				policy.reload()
-#       		
-#       		# Add users to policy
-#       		policy_application.policy_users
-#       		                  .each do |pu|
-#         	  pu.update policy: policy
-#         	  pu.user.convert_prospect_to_customer()
-#           end
-#           
-#           # Add insurables to policy
-#           policy_application.policy_insurables
-#                             .each do |pi|
-#             pi.update policy: policy
-#           end
-#           
-#           # Add rates to policy
-#           policy_application.policy_rates.each do |pr|
-#             pr.update policy: policy
-# 	 				end
-# 					
-# 	 				build_coverages() if policy_application.policy_type.title == "Residential"
-#   
-#           if update(policy: policy, status: "accepted") && 
-#         		 policy_application.update(policy: policy) && 
-#         		 policy_premium.update(policy: policy)
-#              
-#         		if start_billing()
-# 	 						PolicyQuoteStartBillingJob.perform_later(policy: policy, issue: issue)
-#         			success = true # if self.send(method)
-#         		end       
-#           
-#           else
-#             # If self.policy, policy_application.policy or 
-#             # policy_premium.policy cannot be set correctly
-#             update status: 'error'
-#           end
-#         else
-#           # If policy cannot be created      
-#           update status: 'error'
-#           logger.debug policy.errors
-#         end
-#       else
-#       
-#       end
-# 	 	end
-# 		
-# 	 	return success
   end
 	
 	def decline
