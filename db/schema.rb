@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_02_06_010937) do
+ActiveRecord::Schema.define(version: 2020_02_06_192603) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -799,6 +799,8 @@ ActiveRecord::Schema.define(version: 2020_02_06_010937) do
     t.integer "deposit_fees", default: 0
     t.integer "amortized_fees", default: 0
     t.integer "carrier_base", default: 0
+    t.integer "special_premium", default: 0
+    t.boolean "include_special_premium", default: false
     t.index ["billing_strategy_id"], name: "index_policy_premia_on_billing_strategy_id"
     t.index ["commission_strategy_id"], name: "index_policy_premia_on_commission_strategy_id"
     t.index ["policy_id"], name: "index_policy_premia_on_policy_id"
