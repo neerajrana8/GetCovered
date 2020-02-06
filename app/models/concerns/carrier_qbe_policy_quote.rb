@@ -76,7 +76,8 @@ module CarrierQbePolicyQuote
               if bind_status == "WARNING"
 	              message = "Get Covered Bind Warning.\n"
 	              message += "Application Environment: #{ ENV["RAILS_ENV"] }\n"
-	              message += "Policy: #{ policy_number }\n\n"
+	              message += "Policy: #{ policy_number }\n"
+	              message += "Timestamp: #{ DateTime.now.to_s(:db) }\n\n"
 	              message_components = []
 	              
               	xml_doc.css('ExtendedStatus').each do |status|
@@ -89,12 +90,12 @@ module CarrierQbePolicyQuote
 	              end
 
               	message_components.each_with_index do |mc, index|
-	              	spacer = index == message_components.count ? "" : "\n\n"
+	              	spacer = index == (message_components.count - 1) ? "" : "\n\n"
 	              	message += "#{ mc[:status_cd] }\n"
 	              	message += "#{ mc[:status_message] }#{ spacer }"	
 	              end
 	              
-	              puts message
+	              puts message if ENV["RAILS_ENV"] != "production"
 	              
 	              PolicyBindWarningNotificationJob.perform_later(message: message)
 	              
