@@ -41,7 +41,6 @@ module V2
       def create
         @application = PolicyApplication.new(create_params)
         
-        logger.debug "Setting PolicyApplication Agency"
         if @application.agency.nil? && 
 	         @application.account.nil?
 	        logger.debug "Setting PolicyApplication Agency as Master Agency"
@@ -51,17 +50,15 @@ module V2
           @application.agency = @application.account.agency  
         end
         
-        logger.debug "Setting PolicyApplication Users"
         @application.policy_users.each do |pu|
 	        secure_tmp_password = SecureRandom.base64(12)
 	        pu.user.password = secure_tmp_password
 	        pu.user.password_confirmation = secure_tmp_password
 	      end
 	      
-	      logger.debug "Setting PolicyApplication Billing Strategy"
 	      if @application.billing_strategy_id.nil? &&
 		       @application.policy_type.title == "Commercial"
-					@application.billing_strategy = BillingStrategy.where(agency: @application.agency, policy_type: @application.policy_type).take
+					@application.billing_strategy = BillingStrategy.find(7) # Tmp hack to set billing strategy
         end
         
         if @application.save
