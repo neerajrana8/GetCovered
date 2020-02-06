@@ -32,7 +32,7 @@ class Devise::Staffs::InvitationsController < Devise::InvitationsController
     end
 
     def accept_invitation_params
-      params.permit(:email, :password, 
+      params.permit(:password,
                     :password_confirmation,
                     profile_attributes: [:first_name, :last_name, :contact_phone])
     end
