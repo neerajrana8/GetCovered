@@ -36,7 +36,7 @@ module CarrierQbePolicy
       end
       
       if documents.attach(io: File.open(save_path), filename: "#{ number }-evidence-of-insurance.pdf", content_type: 'application/pdf')
-				File.delete(file_path) if File.exist?(file_path) 	
+				File.delete(save_path) if File.exist?(save_path) 	
 			end
       
       # document.file = Rails.root.join('tmp/eois', document_file_title).open
