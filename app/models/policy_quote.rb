@@ -224,7 +224,7 @@ class PolicyQuote < ApplicationRecord
 		end
 	end
 	
-	def generate_invoices_for_term(renewal = false)
+	def generate_invoices_for_term(renewal = false, refresh = false)
     
     invoices_generated = false
     

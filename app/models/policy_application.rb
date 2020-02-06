@@ -51,6 +51,8 @@ class PolicyApplication < ApplicationRecord
   has_many :policy_application_answers
   has_many :policy_application_fields,
     through: :policy_application_answers
+
+  has_many :policy_coverages, autosave: true
   
   accepts_nested_attributes_for :policy_users, :policy_rates, :policy_insurables
   

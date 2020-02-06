@@ -43,10 +43,10 @@ module V2
         
         if @application.agency.nil? && 
 	         @application.account.nil?
-	        logger.debug "Setting PolicyApplication Agency as Master Agency"
+	         
 	        @application.agency = Agency.where(master_agency: true).take 
 	      elsif @application.agency.nil?
-	      	logger.debug "Setting PolicyApplication Agency as Account Agency"
+	      
           @application.agency = @application.account.agency  
         end
         
@@ -62,8 +62,6 @@ module V2
         end
         
         if @application.save
-	      	
-	      	logger.debug @application.users.to_json
 	      	
 	        @application.primary_user().invite!
 	        if @application.update status: "complete"
@@ -113,24 +111,29 @@ module V2
 								
 								@quote = @application.policy_quotes.last
 								@quote.generate_invoices_for_term()
+								@premium = @quote.policy_premium
 								
-	# 							render json: { quote: { id: @quote.id, status: @quote.status, premium: @quote.policy_premium },
-	# 										   			 user: { id: @application.primary_user().id, stripe_id: @application.primary_user().stripe_id }
-	# 										 			 }.to_json,
-	# 										 status: 200
-									  
-								render json: { 
+								response = { 
 									quote: { 
 										id: @quote.id, 
 										status: @quote.status, 
-										premium: @quote.policy_premium 
+										premium: @premium
 									},
 									invoices: @quote.invoices,
 									user: { 
 										id: @application.primary_user().id,
 										stripe_id: @application.primary_user().stripe_id
-									}
-								}.to_json, status: 200
+									},
+									billing_strategies: []
+								}
+								
+								if @premium.base >= 500000
+  								BillingStrategy.where(agency: @application.agency_id, policy_type: @application.policy_type).each do |bs|
+    							  response[:billing_strategies]	<< { id: bs.id, title: bs.title }
+                  end
+								end
+									  
+								render json: response.to_json, status: 200
 																		
 							else
 								render json: { error: "Quote Failed", message: "Quote could not be processed at this time" },
