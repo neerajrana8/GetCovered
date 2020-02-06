@@ -72,6 +72,33 @@ module CarrierQbePolicyQuote
               @bind_response[:error] = false
               @bind_response[:data][:status] = bind_status
               @bind_response[:data][:policy_number] = policy_number
+              
+              if bind_status == "WARNING"
+	              message = "Get Covered Bind Warning.\n"
+	              message += "Application Environment: #{ ENV["RAILS_ENV"] }\n"
+	              message += "Policy: #{ policy_number }\n\n"
+	              message_components = []
+	              
+              	xml_doc.css('ExtendedStatus').each do |status|
+	              	unless message_components.any? { |mc| mc[:status_cd] == status.css('ExtendedStatusCd').children.to_s }
+		              	message_components << {
+			              	:status_cd => status.css('ExtendedStatusCd').children.to_s,
+			              	:status_message => status.css('ExtendedStatusDesc').children.to_s
+		              	}
+	              	end		              
+	              end
+
+              	message_components.each_with_index do |mc, index|
+	              	spacer = index == message_components.count ? "" : "\n\n"
+	              	message += "#{ mc[:status_cd] }\n"
+	              	message += "#{ mc[:status_message] }#{ spacer }"	
+	              end
+	              
+	              puts message
+	              
+	              PolicyBindWarningNotificationJob.perform_later(message: message)
+	              
+              end
             else
               @bind_response[:data][:status]
             end
