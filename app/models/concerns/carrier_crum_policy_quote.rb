@@ -35,7 +35,7 @@ module CarrierCrumPolicyQuote
 		 		
 		 		unless request[:error] 
 			 		if request[:data].has_key?("base64Content")
-				 		#FileUtils::mkdir_p "#{ Rails.root }/tmp/policy-quotes"
+            FileUtils::mkdir_p "#{ Rails.root }/tmp/policy-quotes"
 				 		file_path = Rails.root.join("tmp/policy-quotes/#{ request[:data]["fileName"] }")
 				 		File.open(file_path, 'wb') do |file|
 					 		file << Base64.decode64(request[:data]["base64Content"])	

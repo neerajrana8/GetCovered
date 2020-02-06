@@ -56,17 +56,26 @@ module CarrierCrumPolicyApplication
               
               if quote.save
                 
+                policy_details["liablityCoverages"].keys.each do |key|
+                  quote.policy_application.policy_coverages.create!(
+                    designation: key,
+                    limit: policy_details["liablityCoverages"][key].to_i * 100
+                  )  
+                end
+                
 	 					    premium = PolicyPremium.new base: policy_details["termPremium"].include?(".") ?  policy_details["termPremium"].delete(".").to_i : policy_details["termPremium"].to_i * 100,
+	 					                                special_premium: policy_details["triaPremium"].to_i * 100,
 	 					                                taxes: 0,
 	 					                                billing_strategy: quote.policy_application.billing_strategy,
 	 					                                policy_quote: quote
+	 					    
     						premium.set_fees
     						premium.calculate_fees(true)
     						premium.calculate_total(true)			    
 	 					    quote_method = premium.save ? "mark_successful" : "mark_failure"                           
 	 					    quote.send(quote_method)
 	 					    
-	 					    PolicyQuoteGetDocumentsJob.set(wait: 2.minutes).perform_later(quote: quote)
+	 					    PolicyQuoteGetDocumentsJob.set(wait: 1.minutes).perform_later(quote: quote)
                 
                 quote_success[:success] = true          
                 
