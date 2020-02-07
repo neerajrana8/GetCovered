@@ -155,7 +155,6 @@
             defaults: { authorable_type: Staff }
         end
         collection do
-          get :check_email, to: '/v2/check_email#staff'
           get "search", to: 'staffs#search'
         end
       end
