@@ -1,2 +1,2 @@
-json.extract! user, :email, :id, :enabled
+json.extract! user, :email, :id, :enabled, :invitation_accepted_at
 
