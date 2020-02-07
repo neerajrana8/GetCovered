@@ -2,7 +2,7 @@ module Reports
   # Active Policies Report for Cambridge
   # if reportable is nil generates reports for all agencies and accounts
   # in other cases it generate report for object that has two required methods or relations : reports and  insurables
-  class Activity < ActiveInteraction::Base
+  class ActivityCreate < ActiveInteraction::Base
     interface :reportable, methods: %i[reports insurables], default: nil
 
     def execute
@@ -33,7 +33,7 @@ module Reports
         data.keys.each { |key| data[key] += account_report.data[key] }
       end
 
-      Report.create(format: 'activity', data: data, reportable: agency)
+      Reports::Activity.create(data: data, reportable: agency)
     end
 
     def prepare_report(reportable)
@@ -50,7 +50,7 @@ module Reports
         data['total_canceled'] += coverage_report[:cancelled_policy_count]
       end
 
-      Report.create(format: 'activity', data: data, reportable: reportable)
+      Reports::Activity.create(data: data, reportable: reportable)
     end
   end
 end

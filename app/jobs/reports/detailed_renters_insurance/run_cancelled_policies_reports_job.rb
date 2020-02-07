@@ -1,11 +1,11 @@
 module Reports
   module DetailedRentersInsurance
-    class RunCancelledPoliciesJob < ApplicationJob
+    class RunCancelledPoliciesReportsJob < ApplicationJob
       # Queue: Default
       queue_as :default
 
       def perform
-        CancelledPolicies.run!
+        CancelledPoliciesCreate.run!
       end
     end
   end

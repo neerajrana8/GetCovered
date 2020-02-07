@@ -3,7 +3,7 @@ module Reports
     # Active Policies Report for Cambridge
     # if reportable is nil generates reports for all agencies and accounts
     # in other cases it generate report for object that has two required methods or relations : reports and  insurables
-    class CancelledPolicies < ActiveInteraction::Base
+    class ExpireSoonPoliciesCreate < ActiveInteraction::Base
       interface :reportable, methods: %i[reports insurables], default: nil
 
       def execute
@@ -30,9 +30,7 @@ module Reports
           data['rows'] += account_report.data['rows']
         end
 
-        Report.create(format: 'detailed_renters_insurance::cancelled_policies',
-                      data: data,
-                      reportable: agency)
+        Reports::DetailedRentersInsurance::ExpireSoonPolicies.create(data: data, reportable: agency)
       end
 
       def prepare_report(reportable)
@@ -43,30 +41,25 @@ module Reports
           data['rows'] += community_report_data['rows']
         end
 
-        Report.create(format: 'detailed_renters_insurance::cancelled_policies',
-                      data: data,
-                      reportable: reportable)
+        Reports::DetailedRentersInsurance::ExpireSoonPolicies.create(data: data, reportable: reportable)
       end
 
       def prepare_community_report(insurable_community)
-        insurable_report_data = { 'rows' => [] }
+        data = { 'rows' => [] }
         insurable_community.units.each do |unit|
           policy = unit.policies.take
-          if policy&.status == 'CANCELLED'
-            insurable_report_data['rows'] << {
+          if (policy&.auto_renew == false) && (policy&.expiration_date < Time.current + 30.days)
+            data['rows'] << {
               address: unit.title,
               primary_user: policy.primary_user&.profile&.full_name,
               policy_type: 'H04',
               policy: policy.number,
-              cancel_reason: 'Non Payment',
-              cancel_date: policy.cancellation_date_date
+              expiration_date: policy.expiration_date
             }
           end
         end
-        Report.create(format: 'detailed_renters_insurance::cancelled_policies',
-                      data: insurable_report_data,
-                      reportable: insurable_community)
-        insurable_report_data
+        Reports::DetailedRentersInsurance::ExpireSoonPolicies.create(data: data, reportable: insurable_community)
+        data
       end
     end
   end

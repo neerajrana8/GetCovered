@@ -3,7 +3,7 @@ module Reports
     # Active Policies Report for Cambridge
     # if reportable is nil generates reports for all agencies and accounts
     # in other cases it generate report for object that has two required methods or relations : reports and  insurables
-    class PendingCancellationPolicies < ActiveInteraction::Base
+    class UncoveredUnitsCreate < ActiveInteraction::Base
       interface :reportable, methods: %i[reports insurables], default: nil
 
       def execute
@@ -30,31 +30,31 @@ module Reports
           data['rows'] += account_report.data['rows']
         end
 
-        Report.create(format: 'detailed_renters_insurance::pending_cancellation_policies',
-                      data: data,
-                      reportable: agency)
+        Reports::DetailedRentersInsurance::UncoveredUnits.create(data: data, reportable: agency)
       end
 
       def prepare_report(reportable)
         data = { 'rows' => [] }
-        reportable.insurables.units.covered.each do |insurable|
-          policy = insurable.policies.take
 
-          if policy.present? && policy.billing_status == :BEHIND
+        reportable.insurables.communities.each do |insurable|
+          community_report_data = prepare_community_report(insurable)
+          data['rows'] += community_report_data['rows']
+        end
+
+        Reports::DetailedRentersInsurance::UncoveredUnits.create(data: data, reportable: reportable)
+      end
+
+      def prepare_community_report(insurable_community)
+        data = { 'rows' => [] }
+        insurable_community.units.each do |unit|
+          unless unit.covered
             data['rows'] << {
-              address: insurable.title,
-              primary_user: policy.primary_user&.profile&.full_name,
-              policy_type: 'H04',
-              policy: policy.number,
-              cancel_reason: 'Behind billing',
-              pending_cancel_date: policy
+              address: unit.title
             }
           end
         end
-
-        Report.create(format: 'detailed_renters_insurance::pending_cancellation_policies',
-                      data: data,
-                      reportable: reportable)
+        Reports::DetailedRentersInsurance::UncoveredUnits.create(data: data, reportable: insurable_community)
+        data
       end
     end
   end

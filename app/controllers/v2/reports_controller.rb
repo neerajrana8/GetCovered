@@ -9,7 +9,12 @@ module V2
       super(:@reports, @reportable.reports)
     end
 
-    def show; end
+    def show
+      respond_to do |format|
+        format.json
+        format.csv { send_data @report.to_csv, filename: "#{@report.format}-#{Date.today}.csv" }
+      end
+    end
 
     def available_range
       render json: (params[:report_format] && params[:report_format] != 'all' ? {
@@ -48,7 +53,7 @@ module V2
       @calling_supported_orders = called_from_orders
       {
         id: [:scalar, :array],
-        format: [:scalar, :like],
+        type: [:scalar, :like],
         created_at: [:scalar, :array, :interval]
       }
     end

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_01_10_183721) do
+ActiveRecord::Schema.define(version: 2020_02_04_130712) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -906,7 +906,6 @@ ActiveRecord::Schema.define(version: 2020_01_10_183721) do
   end
 
   create_table "reports", force: :cascade do |t|
-    t.integer "format"
     t.integer "duration"
     t.datetime "range_start"
     t.datetime "range_end"
@@ -915,6 +914,7 @@ ActiveRecord::Schema.define(version: 2020_01_10_183721) do
     t.bigint "reportable_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "type"
     t.index ["reportable_type", "reportable_id", "created_at"], name: "reports_index"
     t.index ["reportable_type", "reportable_id"], name: "index_reports_on_reportable_type_and_reportable_id"
   end

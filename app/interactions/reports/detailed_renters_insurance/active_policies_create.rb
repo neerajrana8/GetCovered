@@ -3,7 +3,7 @@ module Reports
     # Active Policies Report for Cambridge
     # if reportable is nil generates reports for all agencies and accounts
     # in other cases it generate report for object that has two required methods or relations : reports and  insurables
-    class UncoveredUnits < ActiveInteraction::Base
+    class ActivePoliciesCreate < ActiveInteraction::Base
       interface :reportable, methods: %i[reports insurables], default: nil
 
       def execute
@@ -30,37 +30,27 @@ module Reports
           data['rows'] += account_report.data['rows']
         end
 
-        Report.create(format: 'detailed_renters_insurance::uncovered_units',
-                      data: data,
-                      reportable: agency)
+        Reports::DetailedRentersInsurance::ActivePolicies.create(data: data, reportable: agency)
       end
 
       def prepare_report(reportable)
         data = { 'rows' => [] }
+        reportable.insurables.units.covered.each do |insurable|
+          policy = insurable.policies.take
 
-        reportable.insurables.communities.each do |insurable|
-          community_report_data = prepare_community_report(insurable)
-          data['rows'] += community_report_data['rows']
-        end
-
-        Report.create(format: 'detailed_renters_insurance::uncovered_units',
-                      data: data,
-                      reportable: reportable)
-      end
-
-      def prepare_community_report(insurable_community)
-        insurable_report_data = { 'rows' => [] }
-        insurable_community.units.each do |unit|
-          unless unit.covered
-            insurable_report_data['rows'] << {
-              address: unit.title
+          if policy.present?
+            data['rows'] << {
+              address: insurable.title,
+              primary_user: policy.primary_user&.profile&.full_name,
+              policy_type: 'H04',
+              policy: policy.number,
+              contents: policy.insurable_rates.coverage_c.last&.description,
+              liability: policy.insurable_rates.liability.last&.description
             }
           end
         end
-        Report.create(format: 'detailed_renters_insurance::uncovered_units',
-                      data: insurable_report_data,
-                      reportable: insurable_community)
-        insurable_report_data
+
+        Reports::DetailedRentersInsurance::ActivePolicies.create(data: data, reportable: reportable)
       end
     end
   end

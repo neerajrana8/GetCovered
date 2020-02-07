@@ -1,21 +1,21 @@
 module Reports
-  class PrepareCoverageReport < ActiveInteraction::Base
+  class CoverageCreate < ActiveInteraction::Base
     def execute
       agencies.each do |agency|
 
         # set up new coverage report for agency
-        agency_report = agency.reports.new(format: 'coverage')
+        agency_report = Reports::Coverage.new(reportable: agency)
 
         # loop through accounts from agency
         agency.accounts.each do |account|
 
           # set up new coverage report for account
-          account_report = account.reports.new(format: 'coverage')
+          account_report = Reports::Coverage.new(reportable: account)
 
           # loop through account insurables
           account.insurables.where(insurable_type_id: InsurableType.communities.ids).each do |insurable|
             # set up new coverage report for insurable
-            insurable_report = insurable.reports.new(format: 'coverage', data: insurable.coverage_report)
+            insurable_report = Reports::Coverage.new(reportable: insurable, data: insurable.coverage_report)
 
             # save Unit Report
             if insurable_report.save
