@@ -10,20 +10,57 @@ module V2
       
       def update
         @application = @policy_quote.policy_application
-        if ["estimated", "quoted"].include? @policy_quote.status && 
+        
+        if @policy_quote.quoted? && 
            @application.policy_type_id == 4
+          
+          logger.debug "\nAVAILABLE FOR UPDATE\n".green
           
           # Blank for now
           if update_policy_quote_params.has_key?(:tiaPremium)
-            @quote.policy_premium.update include_special_premium: true  
+            @policy_quote.policy_premium.update include_special_premium: update_policy_quote_params[:tiaPremium]  
           end
           
           if update_policy_quote_params.has_key?(:billing_strategy_id) && 
              update_policy_quote_params[:billing_strategy_id] != @application.billing_strategy_id
             @application.update billing_strategy: BillingStrategy.find(update_policy_quote_params[:billing_strategy_id])
-            @policy_quote.generate_invoices_for_term(false, true)
           end
           
+          if update_policy_quote_params.has_key?(:tiaPremium) ||
+             update_policy_quote_params.has_key?(:billing_strategy_id)
+            
+            puts "Updating for premium & invoices".green
+            
+            @policy_quote.policy_premium.reset_premium()
+            @policy_quote.generate_invoices_for_term(false, true)
+          else
+            
+            puts "No updates for premium & invoices".red
+          end
+
+					response = { 
+						quote: { 
+							id: @policy_quote.id, 
+							status: @policy_quote.status, 
+							premium: @policy_quote.policy_premium
+						},
+						invoices: @policy_quote.invoices,
+						user: { 
+							id: @policy_quote.policy_application.primary_user().id,
+							stripe_id: @policy_quote.policy_application.primary_user().stripe_id
+						},
+						billing_strategies: []
+					}
+								
+					if @policy_quote.policy_premium.base >= 500000
+						BillingStrategy.where(agency: @policy_quote.policy_application.agency_id, policy_type: @policy_quote.policy_application.policy_type).each do |bs|
+						  response[:billing_strategies]	<< { id: bs.id, title: bs.title }
+            end
+					end
+									  
+					render json: response.to_json, status: 200
+        else
+					render json: { error: "Quote Unavailable for Update", message: "We are unable to update this quote due to it already being accepted or not meeting the policy type requirements." }, status: 422          
         end
       end
       

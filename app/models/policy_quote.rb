@@ -225,15 +225,18 @@ class PolicyQuote < ApplicationRecord
 	end
 	
 	def generate_invoices_for_term(renewal = false, refresh = false)
-    
     invoices_generated = false
     
     unless renewal
+	    
+	    invoices.destroy_all if refresh
+	    
 	  	if policy_premium.calculation_base > 0 && 
 		  	 status == "quoted" && 
 		  	 invoices.count == 0
 		  	
 		  	payment_count = policy_application.billing_strategy.new_business['payments'].select { |p| p > 0 }.count
+		  	
 		  	amortized_fees_per_payment = policy_premium.amortized_fees / payment_count
 		  	
 		  	policy_application.billing_strategy.new_business['payments'].each_with_index do |payment, index|
