@@ -1,5 +1,7 @@
 module V2
   class ReportsController < V2Controller
+    include ActionController::MimeResponds
+
     before_action :authenticate_staff!
     before_action :is_staff?
     before_action :set_reportable
@@ -12,7 +14,7 @@ module V2
     def show
       respond_to do |format|
         format.json
-        format.csv { send_data @report.to_csv, filename: "#{@report.format}-#{Date.today}.csv" }
+        format.csv { send_data @report.to_csv, filename: "#{@report.type.underscore.split('/').last}-#{Date.today}.csv" }
       end
     end
 
