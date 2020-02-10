@@ -28,6 +28,11 @@ module V2
       }), status: :ok
     end
 
+
+    def generate
+      render json: params.to_unsafe_h
+    end
+
     private
 
     def is_staff?
