@@ -46,7 +46,7 @@ module Reports
 
       def prepare_community_report(insurable_community)
         data = { 'rows' => [] }
-        insurable_community.units.each do |unit|
+        insurable_community.units&.each do |unit|
           unless unit.covered
             data['rows'] << {
               address: unit.title

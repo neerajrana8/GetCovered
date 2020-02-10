@@ -46,7 +46,7 @@ module Reports
 
       def prepare_community_report(insurable_community)
         data = { 'rows' => [] }
-        insurable_community.units.each do |unit|
+        insurable_community.units&.each do |unit|
           policy = unit.policies.take
           if (policy&.auto_renew == false) && (policy&.expiration_date < Time.current + 30.days)
             data['rows'] << {
