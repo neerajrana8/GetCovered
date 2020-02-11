@@ -106,6 +106,7 @@
     resources :staffs,
       only: [ :create, :index, :show ] do
         member do
+          put :re_invite
           get "histories",
             to: "histories#index_recordable",
             via: "get",
@@ -115,7 +116,9 @@
             via: "get",
             defaults: { authorable_type: Staff }
         end
-        get "search", to: 'staffs#search', on: :collection
+        collection do
+          get "search", to: 'staffs#search'
+        end
       end
   
     resources :users,

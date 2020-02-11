@@ -3,43 +3,35 @@
 
 class Report < ApplicationRecord
   # Active Record Callbacks
-  after_initialize :initialize_report
+
+  after_initialize :set_defaults
 
   # Relationships
   belongs_to :reportable,
              polymorphic: true,
              required: true
 
-  # Enum Options
-  enum format: %w[coverage activity
-                  detailed_renters_insurance::active_policies
-                  detailed_renters_insurance::pending_cancellation_policies
-                  detailed_renters_insurance::cancelled_policies
-                  detailed_renters_insurance::uncovered_units
-                  detailed_renters_insurance::expire_soon_policies]
-
   enum duration: %w[day range]
 
   # Validations             
-  validates_presence_of :format, :data
+  validates_presence_of :data
+
+  # For classic table reports with rows and headers in other cases - redefine this method
+  def to_csv
+    CSV.generate(headers: true) do |csv|
+      csv << headers
+
+      data['rows'].each do |row|
+        table_row = []
+        headers.each do |attr|
+          table_row << row["#{attr}"]
+        end
+        csv << table_row
+      end
+    end
+  end
 
   private
 
-  def initialize_report
-    self.duration ||= 'day'
-    self.format ||= 'coverage'
-
-    self.data ||= {}
-    case self.format
-    when 'coverage'
-      self.data['unit_count'] ||= 0
-      self.data['occupied_count'] ||= 0
-      self.data['covered_count'] ||= 0
-      self.data['master_policy_covered_count'] ||= 0
-      self.data['policy_covered_count'] ||= 0
-      self.data['policy_internal_covered_count'] ||= 0
-      self.data['policy_external_covered_count'] ||= 0
-      self.data['cancelled_policy_count'] ||= 0
-    end
-  end
+  def set_defaults; end
 end

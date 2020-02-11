@@ -19,6 +19,10 @@ scope module: :user, path: "user" do
   resources :notifications,
     only: [ :update, :index, :show ]
   
+  resources :payment_profiles,
+  	path: "payment-profiles",
+  	only: [:index, :create, :update]
+  
   resources :payments,
     only: [ :create, :index, :show ]
   
@@ -35,9 +39,5 @@ scope module: :user, path: "user" do
   
   resources :users,
     only: [ :update, :show ] do
-    collection do
-      get :check_email, to: '/v2/check_email#user'
-    end
   end
-
 end

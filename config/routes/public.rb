@@ -44,5 +44,8 @@ scope module: :public do
 		  	as: :accept			
 		end  	
 	end
+
+  post 'users/check_email', to: '/v2/check_email#user'
+  post 'staffs/check_email', to: '/v2/check_email#staff'
   
 end

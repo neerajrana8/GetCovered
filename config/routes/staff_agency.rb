@@ -154,7 +154,9 @@
             via: "get",
             defaults: { authorable_type: Staff }
         end
-        get "search", to: 'staffs#search', on: :collection
+        collection do
+          get "search", to: 'staffs#search'
+        end
       end
   
     resources :users,
