@@ -16,7 +16,7 @@ module V2
       def update
         params_set = nil
         
-        switch @carrier_insurable_profile.carrier_id
+        case @carrier_insurable_profile.carrier_id
         when 1
           params_set = qbe_params
         when 3
