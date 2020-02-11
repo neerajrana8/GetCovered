@@ -46,7 +46,8 @@ module Reports
 
       def prepare_community_report(insurable_community)
         data = { 'rows' => [] }
-        insurable_community.units.each do |unit|
+
+        insurable_community.units&.each do |unit|
           policy = unit.policies.take
           if policy&.status == 'CANCELLED'
             data['rows'] << {
@@ -60,6 +61,7 @@ module Reports
           end
         end
         Reports::DetailedRentersInsurance::CancelledPolicies.create(data: data, reportable: insurable_community)
+
         data
       end
     end

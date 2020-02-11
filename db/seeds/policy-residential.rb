@@ -83,10 +83,20 @@
 						quote.reload()
 						
 						if quote.status == "quoted"
+  						
   						acceptance = quote.accept()
-  						puts "QUOTE ACCEPTED: #{ acceptance }"
+  						
+  						quote.reload()
+  						
   						premium = quote.policy_premium
-  						puts "Application ID: #{ application.id } | Application Status: #{ application.status } | Quote Status: #{ quote.status } | Base: $#{ '%.2f' % (premium.base.to_f / 100) } | Taxes: $#{ '%.2f' % (premium.taxes.to_f / 100) } | Fees: $#{ '%.2f' % (premium.total_fees.to_f / 100) } | Total: $#{ '%.2f' % (premium.total.to_f / 100) }"
+  						policy = quote.policy
+  						
+  						message = "POLICY #{ policy.number } has been #{ policy.status.humanize }\n"
+  						message += "Application ID: #{ application.id } | Application Status: #{ application.status } | Quote Status: #{ quote.status }\n" 
+  						message += "Premium Base: $#{ '%.2f' % (premium.base.to_f / 100) } | Taxes: $#{ '%.2f' % (premium.taxes.to_f / 100) } | Fees: $#{ '%.2f' % (premium.total_fees.to_f / 100) } | Total: $#{ '%.2f' % (premium.total.to_f / 100) }"
+  				
+              puts message
+              
 						else
 						  puts "Application ID: #{ application.id } | Application Status: #{ application.status } | Quote Status: #{ quote.status }"
 						end            

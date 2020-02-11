@@ -35,21 +35,23 @@ module Reports
 
       def prepare_report(reportable)
         data = { 'rows' => [] }
-        reportable.insurables.units.covered.each do |insurable|
-          policy = insurable.policies.take
+        units = reportable.insurables.units
+        if units.present?
+          units.covered.each do |insurable|
+            policy = insurable.policies.take
 
-          if policy.present? && policy.billing_status == :BEHIND
-            data['rows'] << {
-              address: insurable.title,
-              primary_user: policy.primary_user&.profile&.full_name,
-              policy_type: 'H04',
-              policy: policy.number,
-              cancel_reason: 'Behind billing',
-              pending_cancel_date: policy
-            }
+            if policy.present? && policy.billing_status == :BEHIND
+              data['rows'] << {
+                address: insurable.title,
+                primary_user: policy.primary_user&.profile&.full_name,
+                policy_type: 'H04',
+                policy: policy.number,
+                cancel_reason: 'Behind billing',
+                pending_cancel_date: policy
+              }
+            end
           end
         end
-
         Reports::DetailedRentersInsurance::PendingCancellationPolicies.create(data: data, reportable: reportable)
       end
     end

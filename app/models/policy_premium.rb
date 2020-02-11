@@ -17,10 +17,28 @@ class PolicyPremium < ApplicationRecord
 		return policy_quote.policy_application  
   end
   
+  def reset_premium
+	  
+	  logger.debug "\n\nRESETING PREMIUM\n\n".green
+	  
+		update amortized_fees: 0,
+					 deposit_fees: 0,
+					 calculation_base: 0,
+					 total_fees: 0,
+					 total: 0
+
+		calculate_fees(true)
+		calculate_total(true)			  
+	end
+  
   def correct_total
 		errors.add(:total, 'incorrect total') if total != base + taxes + total_fees
 		errors.add(:calculation_base, 'incorrect calculation base') if calculation_base != base + taxes + amortized_fees
   end
+  
+  def combined_premium
+		return include_special_premium? ? self.base + self.special_premium : self.base  
+	end
   
   def set_fees
 	  # Get CarrierPolicyTypeAvailability Fee for Region
@@ -59,7 +77,7 @@ class PolicyPremium < ApplicationRecord
 					self.deposit_fees += fee.amount 
 				end
 			when "PERCENTAGE"
-				percentage_amount = (fee.amount.to_f / 100) * self.base
+				percentage_amount = (fee.amount.to_f / 100) * self.combined_premium()
 				if fee.per_payment
 					self.amortized_fees += percentage_amount * payments_count	
 				elsif fee.amortize
@@ -77,9 +95,9 @@ class PolicyPremium < ApplicationRecord
   end
   
   def calculate_total(persist = false)
-    self.total = self.base + self.taxes + self.total_fees
-    self.carrier_base = self.base + self.taxes
-    self.calculation_base = self.base + self.taxes + self.amortized_fees
+    self.total = self.combined_premium() + self.taxes + self.total_fees
+    self.carrier_base = self.combined_premium() + self.taxes
+    self.calculation_base = self.combined_premium() + self.taxes + self.amortized_fees
     save() if self.total > 0 && persist
   end
 end

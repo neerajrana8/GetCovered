@@ -35,11 +35,17 @@ scope module: :public do
     path: "policy-applications",
     only: [ :create, :update, :show, :new ]
   
+  resources :policy_quotes,
+  	path: "policy-quotes",
+  	only: [:update] do
+		member do
+		  post '/accept', 
+		  	to: 'policy_quotes#accept', 
+		  	as: :accept			
+		end  	
+	end
+
   post 'users/check_email', to: '/v2/check_email#user'
   post 'staffs/check_email', to: '/v2/check_email#staff'
-
-  post 'policy-quotes/:id/accept',
-  	to: 'policy_quotes#accept', 
-  	as: :accept_policy_quote
   
 end

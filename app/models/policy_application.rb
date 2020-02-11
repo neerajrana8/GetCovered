@@ -51,6 +51,8 @@ class PolicyApplication < ApplicationRecord
   has_many :policy_application_answers
   has_many :policy_application_fields,
     through: :policy_application_answers
+
+  has_many :policy_coverages, autosave: true
   
   accepts_nested_attributes_for :policy_users, :policy_rates, :policy_insurables
   
@@ -58,6 +60,10 @@ class PolicyApplication < ApplicationRecord
     unless: proc { |pol| pol.account.nil? }
   validate :billing_strategy_must_be_enabled
   validate :carrier_agency
+  validate :check_residential_question_responses,
+    if: proc { |pol| pol.policy_type.title == "Residential" }
+  validate :check_commercial_question_responses,
+    if: proc { |pol| pol.policy_type.title == "Commercial" }
   validates_presence_of :expiration_date, :effective_date
   
   validate :date_order, 
@@ -129,10 +135,7 @@ class PolicyApplication < ApplicationRecord
 
   def same_agency_as_account
     errors.add(:account, 'policy application must belong to the same agency as account') if agency != account.agency
-
-    if agency != billing_strategy.agency
-      errors.add(:billing_strategy, 'billing strategy must belong to the same agency as account')
-    end
+		errors.add(:billing_strategy, 'billing strategy must belong to the same agency as account') if agency != billing_strategy.agency
   end
 
   def billing_strategy_must_be_enabled
@@ -140,9 +143,36 @@ class PolicyApplication < ApplicationRecord
   end
 
   def carrier_agency
-    #    if agency.carrier_agency != carrier.carrier_agency
     errors.add(:carrier, 'carrier agency must exist') unless agency.carriers.include?(carrier)
   end
+  
+  def check_residential_question_responses
+	  liability_limit = insurable_rates.liability.take
+		questions.each do |question|
+			if question["value"] == "true" && liability_limit.coverage_limits["liability"] == 30000000
+				errors.add(:questions, "#{ question["title"] } cannot be true with a liability limit of $300,000") 	
+			end
+		end	  
+	end
+  
+  def check_commercial_question_responses
+	  
+		questions.each do |question|
+			if question.has_key?("questions")
+				question["questions"].each do |sub_question|
+					question_text = "#{ question["text"] } #{ sub_question["text"] }"
+					if sub_question["options"][0].is_a? Integer
+						errors.add(:questions, "#{ question_text } cannot be greater than 0 to recieve coverage") if sub_question["value"] > 0	
+					else
+						errors.add(:questions, "#{ question_text } cannot be 'true' to recieve coverage") if sub_question["value"] == true
+					end
+				end	
+			else
+  			errors.add(:questions, "#{ question["text"] } cannot be 'true' to recieve coverage") if question["value"] == true
+			end	
+		end  
+		
+	end
   
   def build_from_carrier_policy_type
     unless carrier.nil? || policy_type.nil?
@@ -187,5 +217,5 @@ class PolicyApplication < ApplicationRecord
         policy_application_field: field
       )
     end  
-   end
+  end
 end
