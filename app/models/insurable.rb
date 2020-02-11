@@ -8,6 +8,9 @@ class Insurable < ApplicationRecord
   include CoverageReport # , EarningsReport, RecordChange
   include RecordChange
   
+  after_commit :create_profile_by_carrier,
+    on: :create
+  
   belongs_to :account
   belongs_to :insurable, optional: true
   belongs_to :insurable_type
@@ -188,4 +191,15 @@ class Insurable < ApplicationRecord
     end
     authorized
   end
+  
+  private
+    
+    def create_profile_by_carrier
+      if insurable_type.title.include? "Residential"
+        carrier_profile(1)
+      else
+        carrier_profile(3)
+      end  
+    end
+    
 end
