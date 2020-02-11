@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_02_04_130712) do
+ActiveRecord::Schema.define(version: 2020_02_06_192603) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -161,6 +161,7 @@ ActiveRecord::Schema.define(version: 2020_02_04_130712) do
     t.bigint "policy_type_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "carrier_code"
     t.index ["agency_id"], name: "index_billing_strategies_on_agency_id"
     t.index ["carrier_id"], name: "index_billing_strategies_on_carrier_id"
     t.index ["policy_type_id"], name: "index_billing_strategies_on_policy_type_id"
@@ -761,6 +762,7 @@ ActiveRecord::Schema.define(version: 2020_02_04_130712) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.boolean "enabled", default: false, null: false
+    t.integer "special_deductible"
     t.index ["policy_application_id"], name: "index_policy_coverages_on_policy_application_id"
     t.index ["policy_id"], name: "index_policy_coverages_on_policy_id"
   end
@@ -797,6 +799,8 @@ ActiveRecord::Schema.define(version: 2020_02_04_130712) do
     t.integer "deposit_fees", default: 0
     t.integer "amortized_fees", default: 0
     t.integer "carrier_base", default: 0
+    t.integer "special_premium", default: 0
+    t.boolean "include_special_premium", default: false
     t.index ["billing_strategy_id"], name: "index_policy_premia_on_billing_strategy_id"
     t.index ["commission_strategy_id"], name: "index_policy_premia_on_commission_strategy_id"
     t.index ["policy_id"], name: "index_policy_premia_on_policy_id"
