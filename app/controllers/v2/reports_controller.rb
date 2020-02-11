@@ -30,13 +30,30 @@ module V2
 
 
     def generate
-      render json: params.to_unsafe_h
+      success, data, status = generate_report(type: params[:type], reportable: @reportable, save: params[:save])
+      if success
+        render json: {data: data}
+      else
+        render json: {message: data[:message], type: data[:type]}, status: status
+      end
     end
 
     private
 
+    def generate_report(type:, reportable:, save:)
+      report_class = type.constantize
+      if report_class.ancestors.include?(Report)
+        new_report = report_class.new(reportable: reportable)
+        return true, new_report.generate.data # data always should be present unless unpredicted errors
+      else
+        return false, { type: :wrong_report_type, message: 'Wrong report type' }, :unprocessable_entity
+      end
+    rescue NameError
+      return false, { type: :wrong_report_type, message: 'Wrong report type' }, :unprocessable_entity
+    end
+
     def is_staff?
-      render json: { error: "Unauthorized access"}, status: :unauthorized unless current_staff.present?
+      render json: { error: "Unauthorized access" }, status: :unauthorized unless current_staff.present?
     end
 
     def set_reportable

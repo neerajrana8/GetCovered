@@ -9,6 +9,11 @@ module Reports
       end
     end
 
+    def generate
+      data = reportable.coverage_report
+      self
+    end
+
     private
 
     def fields

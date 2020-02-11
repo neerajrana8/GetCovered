@@ -3,14 +3,10 @@ module Reports
   # if reportable is nil generates reports for all agencies and accounts
   # in other cases it generate report for object that has two required methods or relations : reports and  insurables
   class ActivityCreate < ActiveInteraction::Base
-    interface :reportable, methods: %i[reports insurables], default: nil
+    interface :reportable, methods: %i[reports insurables]
 
     def execute
-      if reportable.nil?
-        prepare_agencies_reports
-      else
-        prepare_report(reportable)
-      end
+      data
     end
 
     private
