@@ -52,16 +52,8 @@
                   <PayorCd>PD</PayorCd>
                   
                   <PaymentOption id="0">
-                  
-                    <% if request[:data][:billing_strategy].new_business["payments"].select { |e| e > 0 }.size > 4 %>
-                    <PaymentPlanCd>QBE_MoRe</PaymentPlanCd>
-                    <% elsif request[:data][:billing_strategy].new_business["payments"].select { |e| e > 0 }.size == 4 %>
-                    <PaymentPlanCd>QT</PaymentPlanCd>
-                    <% elsif request[:data][:billing_strategy].new_business["payments"].select { |e| e > 0 }.size == 2 %>
-                    <PaymentPlanCd>SA</PaymentPlanCd>
-                    <% elsif request[:data][:billing_strategy].new_business["payments"].select { |e| e > 0 }.size == 1 %>
-                    <PaymentPlanCd>FL</PaymentPlanCd>
-                    <% end %>
+                  	
+                    <PaymentPlanCd><%= request[:data][:billing_strategy].carrier_code %></PaymentPlanCd>
                     
                     <DayMonthDue><%= request[:data][:application].effective_date.strftime('%d') %></DayMonthDue>
                     

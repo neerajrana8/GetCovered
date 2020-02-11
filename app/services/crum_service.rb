@@ -403,7 +403,7 @@ class CrumService
         effectiveDate: args.policy_application.effective_date.strftime('%Y-%-m-%-d'),
         expirationDate: args.policy_application.expiration_date.strftime('%Y-%-m-%-d'),
         paymentMethod: "AgentBilling",
-        paymentTerm: "M09",
+        paymentTerm: args.policy_application.billing_strategy.carrier_code,
         isTRIAIncluded: "No",
         producerEmail: "brandon@getcoveredllc.com",
         insuredName: args.policy_application.fields["business"]["contact_name"], 

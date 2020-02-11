@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_02_06_192603) do
+ActiveRecord::Schema.define(version: 2020_02_11_033608) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -484,7 +484,9 @@ ActiveRecord::Schema.define(version: 2020_02_06_192603) do
     t.boolean "covered", default: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "agency_id"
     t.index ["account_id"], name: "index_insurables_on_account_id"
+    t.index ["agency_id"], name: "index_insurables_on_agency_id"
     t.index ["insurable_id"], name: "index_insurables_on_insurable_id"
     t.index ["insurable_type_id"], name: "index_insurables_on_insurable_type_id"
   end

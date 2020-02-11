@@ -98,66 +98,40 @@ if @get_covered.save
   	  					 ownerable: @get_covered) unless @fee_amount.nil?
   	end	
   end
+  
+  service_fee = { 
+		title: "Service Fee", 
+		type: :MISC,
+		amount_type: "PERCENTAGE", 
+		amortize: true,
+		amount: 5, 
+		enabled: true, 
+		ownerable: @get_covered 
+	}
 
   @get_covered.billing_strategies.create!(title: 'Annually', enabled: true, carrier: @qbe, 
-                                    				policy_type: PolicyType.find(1), 
-                                    				fees_attributes: [
-  	                                  				{ 
-  		                                  				title: "Service Fee", 
-  		                                  				type: :MISC, 
-  		                                  				per_payment: true,
-  		                                  				amount: 1000, 
-  		                                  				enabled: true, 
-  		                                  				ownerable: @get_covered 
-  		                                  			}
-                                    				])
+                                    				policy_type: PolicyType.find(1), carrier_code: "FL",
+                                    				fees_attributes: [service_fee])
                                     
-  @get_covered.billing_strategies.create!(title: 'Bi-Annually', enabled: true, 
+  @get_covered.billing_strategies.create!(title: 'Bi-Annually', enabled: true,  carrier_code: "SA",
   		                                      new_business: { payments: [50, 0, 0, 0, 0, 0, 50, 0, 0, 0, 0, 0], 
   		                                                      payments_per_term: 2, remainder_added_to_deposit: true },
   		                                      carrier: @qbe, policy_type: PolicyType.find(1), 
-                                    				fees_attributes: [
-  	                                  				{ 
-  		                                  				title: "Service Fee", 
-  		                                  				type: :MISC, 
-  		                                  				per_payment: true,
-  		                                  				amount: 1000, 
-  		                                  				enabled: true, 
-  		                                  				ownerable: @get_covered 
-  		                                  			}
-                                    				])
+                                    				fees_attributes: [service_fee])
                                     
-  @get_covered.billing_strategies.create!(title: 'Quarterly', enabled: true, 
+  @get_covered.billing_strategies.create!(title: 'Quarterly', enabled: true,  carrier_code: "QT",
   		                                      new_business: { payments: [25, 0, 0, 25, 0, 0, 25, 0, 0, 25, 0, 0], 
   		                                                      payments_per_term: 4, remainder_added_to_deposit: true },
   		                                      carrier: @qbe, policy_type: PolicyType.find(1), 
-                                    				fees_attributes: [
-  	                                  				{ 
-  		                                  				title: "Service Fee", 
-  		                                  				type: :MISC, 
-  		                                  				per_payment: true,
-  		                                  				amount: 1000, 
-  		                                  				enabled: true, 
-  		                                  				ownerable: @get_covered 
-  		                                  			}
-                                    				])
+                                    				fees_attributes: [service_fee])
                                     
-  @get_covered.billing_strategies.create!(title: 'Monthly', enabled: true, 
+  @get_covered.billing_strategies.create!(title: 'Monthly', enabled: true, carrier_code: "QBE_MoRe",
   		                                      new_business: { payments: [22.01, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09], 
   		                                                      payments_per_term: 12, remainder_added_to_deposit: true },
   		                                      renewal: { payments: [8.37, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33], 
   		                                                      payments_per_term: 12, remainder_added_to_deposit: true },
   		                                      carrier: @qbe, policy_type: PolicyType.find(1), 
-                                    				fees_attributes: [
-  	                                  				{ 
-  		                                  				title: "Service Fee", 
-  		                                  				type: :MISC, 
-  		                                  				per_payment: true,
-  		                                  				amount: 1000, 
-  		                                  				enabled: true, 
-  		                                  				ownerable: @get_covered 
-  		                                  			}
-                                    				])
+                                    				fees_attributes: [service_fee])
   
   @get_covered.commission_strategies.create!(title: 'Get Covered / QBE Residential Commission', 
   																						carrier: Carrier.find(1), 
@@ -174,22 +148,25 @@ if @get_covered.save
   ##
   # Crum / Get Covered Billing & Comission Strategies
                                     
-  @get_covered.billing_strategies.create!(title: 'Monthly', enabled: true, 
-		                                      new_business: { payments: [8.37, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33], 
+  @get_covered.billing_strategies.create!(title: 'Monthly', enabled: true,  carrier_code: "M09",
+		                                      new_business: { payments: [25.03, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 0, 0], 
 		                                                      payments_per_term: 12, remainder_added_to_deposit: true },
 		                                      renewal: { payments: [8.37, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33], 
 		                                                      payments_per_term: 12, remainder_added_to_deposit: true },
 		                                      carrier: @crum, policy_type: PolicyType.find(4), 
-                                  				fees_attributes: [
-	                                  				{ 
-		                                  				title: "Service Fee", 
-		                                  				type: :MISC, 
-		                                  				per_payment: true,
-		                                  				amount: 1000, 
-		                                  				enabled: true, 
-		                                  				ownerable: @get_covered 
-		                                  			}
-                                  				])
+                                  				fees_attributes: [service_fee])
+                                    
+  @get_covered.billing_strategies.create!(title: 'Quarterly', enabled: true,  carrier_code: "F",
+		                                      new_business: { payments: [40, 0, 0, 20, 0, 0, 20, 0, 0, 20, 0, 0], 
+		                                                      payments_per_term: 12, remainder_added_to_deposit: true },
+		                                      carrier: @crum, policy_type: PolicyType.find(4), 
+                                  				fees_attributes: [service_fee])
+                                    
+  @get_covered.billing_strategies.create!(title: 'Annually', enabled: true,  carrier_code: "A",
+		                                      new_business: { payments: [100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
+		                                                      payments_per_term: 12, remainder_added_to_deposit: true },
+		                                      carrier: @crum, policy_type: PolicyType.find(4), 
+                                  				fees_attributes: [service_fee])
   																						
   @get_covered.commission_strategies.create!(title: 'Get Covered / Crum Commercial Commission',
 																						 carrier: Carrier.find(3), 
@@ -318,20 +295,22 @@ end
     	end	
     end 
     
-    cambridge_agency.billing_strategies.create!(title: 'Annually', enabled: true, carrier: @qbe, 
+    cambridge_agency.billing_strategies.create!(title: 'Annually', enabled: true, carrier: @qbe, carrier_code: "FL",
+      		                                      new_business: { payments: [100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
+      		                                                      payments_per_term: 2, remainder_added_to_deposit: true }, 
                                       				  policy_type: PolicyType.find(1))
                                       
-    cambridge_agency.billing_strategies.create!(title: 'Bi-Annually', enabled: true, 
+    cambridge_agency.billing_strategies.create!(title: 'Bi-Annually', enabled: true, carrier_code: "SA", 
       		                                      new_business: { payments: [50, 0, 0, 0, 0, 0, 50, 0, 0, 0, 0, 0], 
       		                                                      payments_per_term: 2, remainder_added_to_deposit: true },
       		                                      carrier: @qbe, policy_type: PolicyType.find(1))
                                       
-    cambridge_agency.billing_strategies.create!(title: 'Quarterly', enabled: true, 
+    cambridge_agency.billing_strategies.create!(title: 'Quarterly', enabled: true, carrier_code: "QT", 
       		                                      new_business: { payments: [25, 0, 0, 25, 0, 0, 25, 0, 0, 25, 0, 0], 
       		                                                      payments_per_term: 4, remainder_added_to_deposit: true },
       		                                      carrier: @qbe, policy_type: PolicyType.find(1))
                                       
-    cambridge_agency.billing_strategies.create!(title: 'Monthly', enabled: true, 
+    cambridge_agency.billing_strategies.create!(title: 'Monthly', enabled: true, carrier_code: "QBE_MoRe", 
       		                                      new_business: { payments: [22.01, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09], 
       		                                                      payments_per_term: 12, remainder_added_to_deposit: true },
       		                                      renewal: { payments: [8.37, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33], 
@@ -462,19 +441,21 @@ end
     end 
     
     gc_qbesub_agency.billing_strategies.create!(title: 'Annually', enabled: true, carrier: @qbe, 
-                                      				  policy_type: PolicyType.find(1))
+      		                                      new_business: { payments: [100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
+      		                                                      payments_per_term: 2, remainder_added_to_deposit: true },
+                                      				   carrier_code: "FL", policy_type: PolicyType.find(1))
                                       
-    gc_qbesub_agency.billing_strategies.create!(title: 'Bi-Annually', enabled: true, 
+    gc_qbesub_agency.billing_strategies.create!(title: 'Bi-Annually', enabled: true, carrier_code: "SA",
       		                                      new_business: { payments: [50, 0, 0, 0, 0, 0, 50, 0, 0, 0, 0, 0], 
       		                                                      payments_per_term: 2, remainder_added_to_deposit: true },
       		                                      carrier: @qbe, policy_type: PolicyType.find(1))
                                       
-    gc_qbesub_agency.billing_strategies.create!(title: 'Quarterly', enabled: true, 
+    gc_qbesub_agency.billing_strategies.create!(title: 'Quarterly', enabled: true, carrier_code: "QT", 
       		                                      new_business: { payments: [25, 0, 0, 25, 0, 0, 25, 0, 0, 25, 0, 0], 
       		                                                      payments_per_term: 4, remainder_added_to_deposit: true },
       		                                      carrier: @qbe, policy_type: PolicyType.find(1))
                                       
-    gc_qbesub_agency.billing_strategies.create!(title: 'Monthly', enabled: true, 
+    gc_qbesub_agency.billing_strategies.create!(title: 'Monthly', enabled: true, carrier_code: "QBE_MoRe", 
       		                                      new_business: { payments: [22.01, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09], 
       		                                                      payments_per_term: 12, remainder_added_to_deposit: true },
       		                                      renewal: { payments: [8.37, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33], 
