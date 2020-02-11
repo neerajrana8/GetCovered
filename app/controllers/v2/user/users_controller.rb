@@ -29,7 +29,7 @@ module V2
       end
 
       def update_allowed?
-        true
+        true if @user.id == current_user.id
       end
 
       def set_user

@@ -8,8 +8,7 @@ class Devise::Users::SessionsController < DeviseTokenAuth::SessionsController
       if @resource
         @user = @resource
         
-        render json: @user.to_json({ :include => :profile }),
-               status: 200
+        render template: "v2/auth/user.json", status: :ok
       else
         render json: {
           success: false,
