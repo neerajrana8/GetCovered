@@ -12,7 +12,7 @@ module V2
 		  end
 		  
 		  def create
-			  @profile = current_user.payment_profiles.new(create_params)
+			  @profile = current_user.attach_payment_source(create_params[:source])
 			  
 				if profile.save
 					render json: @profile.to_json,
@@ -38,7 +38,7 @@ module V2
 			private
 			
 				def create_params
-					params.require(:payment_profile).permit(:source_id, :source_type, :active, :default_profile)
+					params.require(:payment_profile).permit(:source)
 				end
 				
 				def update_params
