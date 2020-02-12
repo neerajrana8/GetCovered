@@ -20,6 +20,10 @@
     resources :branding_profiles,
       path: "branding-profiles",
       only: [ :update, :index, :show ]
+      
+    resources :carrier_insurable_profiles,
+      path: "carrier-insurable-profiles",
+      only: [:update, :show]
   
     resources :claims,
       only: [ :create, :index, :show ] do
