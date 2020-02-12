@@ -39,15 +39,19 @@ module V2
         end
       
         def qbe_params
-          params.require(:carrier_insurable_profile).permit(traits: { :ppc, :bceg, :gated, :city_limit, :alarm_credit,
-                                                                      :pref_facility, :occupancy_type, :construction_type,
-                                                                      :construction_year, :protection_device_cd, :professionally_managed,
-                                                                      :professionally_managed_year }) 
+          params.require(:carrier_insurable_profile)
+          			.permit(traits: [ :ppc, :bceg, :gated, :city_limit, :alarm_credit,
+                                  :pref_facility, :occupancy_type, :construction_type,
+                                  :construction_year, :protection_device_cd, :professionally_managed,
+                                  :professionally_managed_year ])
         end
         
         def crum_params
-          
-          
+          params.require(:carrier_insurable_profile)
+          			.permit(traits: [ :ppc, :bceg, :gated, :city_limit, :alarm_credit,
+                                  :pref_facility, :occupancy_type, :construction_type,
+                                  :construction_year, :protection_device_cd, :professionally_managed,
+                                  :professionally_managed_year ]) 
         end
       
     end
