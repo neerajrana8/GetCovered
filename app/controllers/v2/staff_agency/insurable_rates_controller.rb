@@ -51,10 +51,7 @@ module V2
         end
                 
         def update_params
-          return({}) if params[:insurable_rate].blank?
-          params.require(:insurable_rate).permit(
-            :activated
-          )
+          params.require(:insurable_rate).permit(:enabled, :mandatory)
         end
         
         def supported_filters(called_from_orders = false)
