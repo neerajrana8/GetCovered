@@ -12,13 +12,11 @@ module V2
 		  end
 		  
 		  def create
-			  @profile = current_user.attach_payment_source(create_params[:source])
-			  
-				if profile.save
-					render json: @profile.to_json,
+				if current_user.attach_payment_source(create_params[:source])
+					render json: current_user.payment_profiles.order("created_at").last.to_json,
 								 status: :ok
 				else
-					render json: @profile.errors.to_json,
+					render json: { error: "Failure", message: "Unable to attach payment source to user" }.to_json,
 								 status: 422
 				end
 			end

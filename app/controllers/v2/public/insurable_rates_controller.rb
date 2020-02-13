@@ -20,8 +20,6 @@ module V2
 		  	
 		  	query = @address.state == "FL" ? "(deductibles ->> 'all_peril')::integer = #{ deductible } AND (deductibles ->> 'hurricane')::integer = #{ hurricane }" : "(deductibles ->> 'all_peril')::integer = #{ deductible }"
 		  	
-		  	puts "\n #{ query }"
-		  	
 		  	@rates["coverage_c"] = @insurable.insurable_rates
 		  										 							 .coverage_c
 													 							 .activated

@@ -10,7 +10,23 @@ module V2
       before_action :set_insurable_rate, only: [:update]
       
       def index
-        super(:@insurable_rates, @insurable.insurable_rates)
+	      @rates = {}		  	
+	      
+	      @rates["coverage_c"] = @insurable.insurable_rates
+		  										 							 .coverage_c
+													 							 .activated
+		  	
+		  	@rates["liability"] = @insurable.insurable_rates
+									  										.liability
+									  									  .activated	
+		  	
+		  	@rates["optional"] = @insurable.insurable_rates
+ 	  							  									 .optional
+  								  									 .activated
+								  										 .where.not(sub_schedule: "policy_fee")
+		  										 		  		      
+	      render json: @rates.to_json,
+	             status: :ok
       end
       
       def update
@@ -51,10 +67,7 @@ module V2
         end
                 
         def update_params
-          return({}) if params[:insurable_rate].blank?
-          params.require(:insurable_rate).permit(
-            :activated
-          )
+          params.require(:insurable_rate).permit(:enabled, :mandatory)
         end
         
         def supported_filters(called_from_orders = false)

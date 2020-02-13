@@ -35,6 +35,10 @@
     resources :branding_profiles,
       path: "branding-profiles",
       only: [ :update, :show ]
+      
+    resources :carrier_insurable_profiles,
+      path: "carrier-insurable-profiles",
+      only: [:update, :show]
   
     resources :carriers,
       only: [ :index, :show ] do
@@ -83,6 +87,13 @@
             via: "get",
             defaults: { recordable_type: Insurable }
           get :coverage_report
+          
+          post :sync_residential_address,
+          	path: "sync-residential-address"
+          	
+          post :get_residential_property_info,
+          	path: "get-residential-property-info"
+
         end
         resources :insurable_rates,
           path: "insurable-rates",
