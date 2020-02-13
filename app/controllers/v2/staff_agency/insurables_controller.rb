@@ -7,7 +7,8 @@ module V2
     class InsurablesController < StaffAgencyController
       
       before_action :set_insurable,
-        only: [:update, :destroy, :show, :coverage_report]
+        only: [:update, :destroy, :show, :coverage_report,
+        			 :sync_address, :get_property_info]
       
       def index
         if params[:short]
@@ -70,6 +71,37 @@ module V2
         render json: @insurable.coverage_report
       end
       
+      def sync_residential_address
+	      if @insurable.get_qbe_zip_code()
+		    	render json: { 
+			    			   title: "Property Address Synced", 
+			    			   message: "#{ @insurable.title } property info successfuly synced to carrier" 
+			    			 }.to_json,
+		    				 status: :ok 
+		    else
+		    	render json: { 
+			    			   title: "Property Address Sync Failed", 
+			    			   message: "#{ @insurable.title } property info could not be synced to carrier" 
+			    			 }.to_json,
+		    				 status: 422
+		    end
+	    end
+      
+      def get_residential_property_info
+	      if @insurable.get_qbe_property_info()
+		    	render json: { 
+			    			   title: "Property Address Synced", 
+			    			   message: "#{ @insurable.title } property info successfuly synced to carrier" 
+			    			 }.to_json,
+		    				 status: :ok 
+		    else
+		    	render json: { 
+			    			   title: "Property Address Sync Failed", 
+			    			   message: "#{ @insurable.title } property info could not be synced to carrier" 
+			    			 }.to_json,
+		    				 status: 422
+		    end	    	  
+	    end
       
       private
       
