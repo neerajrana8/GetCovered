@@ -10,11 +10,9 @@ module Reports
     end
 
     def generate
-      data = reportable.coverage_report
+      self.data = reportable.coverage_report
       self
     end
-
-    private
 
     def fields
       %w[
@@ -28,6 +26,8 @@ module Reports
          cancelled_policy_count
       ]
     end
+
+    private
     
     def set_defaults
       self.duration ||= 'day'

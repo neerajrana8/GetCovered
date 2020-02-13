@@ -15,12 +15,13 @@ module Reports
           # loop through account insurables
           account.insurables.where(insurable_type_id: InsurableType.communities.ids).each do |insurable|
             # set up new coverage report for insurable
-            insurable_report = Reports::Coverage.new(reportable: insurable, data: insurable.coverage_report)
+            insurable_report = Reports::Coverage.new(reportable: insurable).generate
 
-            # save Unit Report
+            # Optimization to reduce the amount of request to the database
+            # Should return in a result the same data as for: Reports::Coverage.new(reportable: account).generate or
+            # Reports::Coverage.new(reportable: agency)
             if insurable_report.save
               insurable_report.data.each do |key, value|
-                insurable_report.data[key] += value
                 account_report.data[key] += value
                 agency_report.data[key] += value
               end

@@ -1,12 +1,9 @@
 module Reports
   # Active Policies Report for Cambridge
   # if reportable is nil generates reports for all agencies and accounts
-  # in other cases it generate report for object that has two required methods or relations : reports and  insurables
   class ActivityCreate < ActiveInteraction::Base
-    interface :reportable, methods: %i[reports insurables]
-
     def execute
-      data
+      prepare_agencies_reports
     end
 
     private
@@ -17,36 +14,31 @@ module Reports
       end
     end
 
+    # Optimization to reduce the amount of requests to the database.
+    # Should return in a result the same data as for: Reports::Activity.new(reportable: account).generate or
+    # Reports::Activity.new(reportable: agency)
     def prepare_agency_report(agency)
-      data = {
-        'total_policy' => 0,
-        'total_canceled' => 0,
-        'total_third_party' => 0
-      }
+      agency_report = Reports::Activity.new(reportable: agency)
 
       agency.accounts.each do |account|
-        account_report = prepare_report(account)
-        data.keys.each { |key| data[key] += account_report.data[key] }
+        account_report = prepare_account_report(account)
+        agency_report.fields.each { |field| agency_report.data[field] += account_report.data[field] }
       end
 
-      Reports::Activity.create(data: data, reportable: agency)
+      agency_report.save
     end
 
-    def prepare_report(reportable)
-      data = {
-        'total_policy' => 0,
-        'total_canceled' => 0,
-        'total_third_party' => 0
-      }
+    def prepare_account_report(account)
+      account_report = Reports::Activity.new(reportable: account)
 
-      reportable.insurables.communities.each do |insurable|
+      account.insurables.communities.each do |insurable|
         coverage_report = insurable.coverage_report
-        data['total_policy'] += coverage_report[:policy_covered_count]
-        data['total_third_party'] += coverage_report[:policy_external_covered_count]
-        data['total_canceled'] += coverage_report[:cancelled_policy_count]
+        account_report.data['total_policy'] += coverage_report[:policy_covered_count]
+        account_report.data['total_third_party'] += coverage_report[:policy_external_covered_count]
+        account_report.data['total_canceled'] += coverage_report[:cancelled_policy_count]
       end
 
-      Reports::Activity.create(data: data, reportable: reportable)
+      account_report.tap(&:save)
     end
   end
 end

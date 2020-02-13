@@ -1,26 +1,31 @@
 module Reports
   module DetailedRentersInsurance
     class UncoveredUnits < ::Report
-
+      # @todo Rewrite using builder pattern, because now reports know about the class for what we generate this report
+      # I planned to make reports "class agnostic".
       def generate
-        insurable_community.units&.each do |unit|
-          unless unit.covered
-            data['rows'] << {
-              address: unit.title
-            }
+        units =
+          if reportable.is_a?(Insurable)
+            reportable.units
+          else
+            reportable.insurables.units
           end
+
+        units&.each do |unit|
+          self.data['rows'] << { address: unit.title } unless unit.covered
         end
+
         self
+      end
+
+      def fields
+        %w[address]
       end
 
       private
 
       def set_defaults
-        self.data ||= { rows:[] }
-      end
-
-      def headers
-        %w[address]
+        self.data ||= { rows: [] }
       end
     end
   end

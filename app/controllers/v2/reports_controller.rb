@@ -30,7 +30,7 @@ module V2
 
 
     def generate
-      success, data, status = generate_report(type: params[:type], reportable: @reportable, save: params[:save])
+      success, data, status = generate_report(type: params[:type], reportable: @reportable)
       if success
         render json: {data: data}
       else
@@ -40,7 +40,7 @@ module V2
 
     private
 
-    def generate_report(type:, reportable:, save:)
+    def generate_report(type:, reportable:)
       report_class = type.constantize
       if report_class.ancestors.include?(Report)
         new_report = report_class.new(reportable: reportable)

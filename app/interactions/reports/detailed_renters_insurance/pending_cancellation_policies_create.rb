@@ -1,17 +1,10 @@
 module Reports
   module DetailedRentersInsurance
     # Active Policies Report for Cambridge
-    # if reportable is nil generates reports for all agencies and accounts
-    # in other cases it generate report for object that has two required methods or relations : reports and  insurables
+    # Generates reports for all active agencies and accounts
     class PendingCancellationPoliciesCreate < ActiveInteraction::Base
-      interface :reportable, methods: %i[reports insurables], default: nil
-
       def execute
-        if reportable.nil?
-          prepare_agencies_reports
-        else
-          prepare_report(reportable)
-        end
+        prepare_agencies_reports
       end
 
       private
@@ -23,36 +16,20 @@ module Reports
       end
 
       def prepare_agency_report(agency)
-        data = { 'rows' => [] }
+        report = Reports::DetailedRentersInsurance::PendingCancellationPolicies.new(reportable: agency)
 
         agency.accounts.each do |account|
-          account_report = prepare_report(account)
-          data['rows'] += account_report.data['rows']
+          report.data['rows'] += prepare_account_report(account).data['rows']
         end
 
-        Reports::DetailedRentersInsurance::PendingCancellationPolicies.create(data: data, reportable: agency)
+        report.tap(&:save)
       end
 
-      def prepare_report(reportable)
-        data = { 'rows' => [] }
-        units = reportable.insurables.units
-        if units.present?
-          units.covered.each do |insurable|
-            policy = insurable.policies.take
-
-            if policy.present? && policy.billing_status == :BEHIND
-              data['rows'] << {
-                address: insurable.title,
-                primary_user: policy.primary_user&.profile&.full_name,
-                policy_type: 'H04',
-                policy: policy.number,
-                cancel_reason: 'Behind billing',
-                pending_cancel_date: policy
-              }
-            end
-          end
-        end
-        Reports::DetailedRentersInsurance::PendingCancellationPolicies.create(data: data, reportable: reportable)
+      def prepare_account_report(account)
+        Reports::DetailedRentersInsurance::PendingCancellationPolicies.
+          new(reportable: account).
+          generate.
+          tap(&:save)
       end
     end
   end

@@ -2,11 +2,20 @@ module Reports
   module DetailedRentersInsurance
     class CancelledPolicies < ::Report
 
+      # @todo Rewrite using builder pattern, because now reports know about the class for what we generate this report
+      # I planned to make reports "class agnostic".
       def generate
-        insurable_community.units&.each do |unit|
+        units =
+          if reportable.is_a?(Insurable)
+            reportable.units
+          else
+            reportable.insurables.units
+          end
+
+        units&.each do |unit|
           policy = unit.policies.take
           if policy&.status == 'CANCELLED'
-            data['rows'] << {
+            self.data['rows'] << {
               address: unit.title,
               primary_user: policy.primary_user&.profile&.full_name,
               policy_type: 'H04',
