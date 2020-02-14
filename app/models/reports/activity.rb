@@ -3,7 +3,7 @@ module Reports
     def to_csv
       CSV.generate do |csv|
         fields.each do |field|
-          csv << [field, self.data[field]]
+          csv << [column_names[field], self.data[field]]
         end
       end
     end
@@ -30,6 +30,15 @@ module Reports
 
     def fields
       %w[total_policy total_canceled total_third_party]
+    end
+
+    # There can be implemented a localization
+    def column_names
+      {
+        'total_policy' => 'Total policy',
+        'total_canceled' => 'Total canceled',
+        'total_third_party' => 'Total third party'
+      }
     end
 
     private

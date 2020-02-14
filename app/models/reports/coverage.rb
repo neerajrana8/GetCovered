@@ -27,6 +27,20 @@ module Reports
       ]
     end
 
+    # There can be implemented a localization
+    def column_names
+      {
+        'unit_count' => 'Units count',
+        'occupied_count' => 'Occupied count',
+        'covered_count' => 'Covered count',
+        'master_policy_covered_count' => 'Master policy covered count',
+        'policy_covered_count' => 'Policy covered count',
+        'policy_internal_covered_count' => 'Policy internal covered count',
+        'policy_external_covered_count' => 'Policy external covered count',
+        'cancelled_policy_count' => 'Cancelled policies count',
+      }
+    end
+
     private
     
     def set_defaults

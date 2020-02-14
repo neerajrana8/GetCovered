@@ -32,13 +32,15 @@ module Reports
       account_report = Reports::Activity.new(reportable: account)
 
       account.insurables.communities.each do |insurable|
-        coverage_report = insurable.coverage_report
-        account_report.data['total_policy'] += coverage_report[:policy_covered_count]
-        account_report.data['total_third_party'] += coverage_report[:policy_external_covered_count]
-        account_report.data['total_canceled'] += coverage_report[:cancelled_policy_count]
+        community_report = prepare_community_report(insurable)
+        account_report.fields.each { |field| account_report.data[field] += community_report.data[field] }
       end
 
       account_report.tap(&:save)
+    end
+
+    def prepare_community_report(community)
+      Reports::Activity.new(reportable: community).generate.tap(&:save)
     end
   end
 end

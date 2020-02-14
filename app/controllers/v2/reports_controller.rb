@@ -30,11 +30,14 @@ module V2
 
 
     def generate
-      success, data, status = generate_report(type: params[:type], reportable: @reportable)
+      success, result, status = generate_report(type: params[:type], reportable: @reportable)
       if success
-        render json: {data: data}
+        respond_to do |format|
+          format.json { render json: {data: result.data }}
+          format.csv { send_data result.to_csv, filename: "#{result.type.underscore.split('/').last}-#{Date.today}.csv" }
+        end
       else
-        render json: {message: data[:message], type: data[:type]}, status: status
+        render json: {message: result[:message], type: result[:type]}, status: status
       end
     end
 
@@ -44,7 +47,7 @@ module V2
       report_class = type.constantize
       if report_class.ancestors.include?(Report)
         new_report = report_class.new(reportable: reportable)
-        return true, new_report.generate.data # data always should be present unless unpredicted errors
+        return true, new_report.generate # data always should be present unless unpredicted errors
       else
         return false, { type: :wrong_report_type, message: 'Wrong report type' }, :unprocessable_entity
       end
