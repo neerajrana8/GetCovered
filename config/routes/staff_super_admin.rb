@@ -94,6 +94,8 @@
         end
         get "search", to: 'policies#search', on: :collection
       end
+    
+    resources :policy_coverages, only: [ :update ]
   
     resources :policy_applications,
       path: "policy-applications",
