@@ -4,7 +4,7 @@ module Reports
     def to_csv
       CSV.generate do |csv|
         fields.each do |field|
-          csv << [field, self.data[field]]
+          csv << [column_names[field], self.data[field]]
         end
       end
     end

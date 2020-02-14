@@ -34,6 +34,17 @@ module Reports
         self.data ||= { rows: [] }
       end
 
+      def column_names
+        {
+          'address' => 'Address',
+          'primary_user' => 'User',
+          'policy_type' => 'Policy type',
+          'policy' => 'Policy number',
+          'cancel_reason' => 'Cancel reason',
+          'cancel_date' => 'Cancel date',
+        }
+      end
+
       def headers
         %w[address primary_user policy_type policy cancel_reason cancel_date]
       end

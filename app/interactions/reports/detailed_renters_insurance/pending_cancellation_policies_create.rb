@@ -26,7 +26,7 @@ module Reports
       end
 
       def prepare_account_report(account)
-        report = Reports::DetailedRentersInsurance::PendingCancellationPolicies.create(reportable: account)
+        report = Reports::DetailedRentersInsurance::PendingCancellationPolicies.new(reportable: account)
 
         account.insurables.communities.each do |insurable|
           report.data['rows'] += prepare_community_report(insurable).data['rows']

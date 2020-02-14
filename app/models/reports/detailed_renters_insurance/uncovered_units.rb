@@ -18,8 +18,12 @@ module Reports
         self
       end
 
-      def fields
+      def headers
         %w[address]
+      end
+
+      def column_names
+        { 'address' => 'Address' }
       end
 
       private

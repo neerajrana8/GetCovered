@@ -14,7 +14,7 @@ module Reports
       private
 
       def prepare_agency_report(agency)
-        report = Reports::DetailedRentersInsurance::CancelledPolicies.create(reportable: agency)
+        report = Reports::DetailedRentersInsurance::CancelledPolicies.new(reportable: agency)
 
         agency.accounts.each do |account|
           report.data['rows'] += prepare_account_report(account).data['rows']
@@ -24,7 +24,7 @@ module Reports
       end
 
       def prepare_account_report(account)
-        report = Reports::DetailedRentersInsurance::CancelledPolicies.create(reportable: account)
+        report = Reports::DetailedRentersInsurance::CancelledPolicies.new(reportable: account)
 
         account.insurables.communities.each do |insurable|
           report.data['rows'] += prepare_community_report(insurable).data['rows']

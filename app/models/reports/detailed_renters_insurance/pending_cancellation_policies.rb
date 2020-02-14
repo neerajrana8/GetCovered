@@ -29,14 +29,25 @@ module Reports
         self
       end
 
-      private
-
-      def set_defaults
-        self.data ||= { rows: [] }
+      def column_names
+        {
+          'address' => 'Address',
+          'primary_user' => 'User',
+          'policy_type' => 'Policy type',
+          'policy' => 'Policy number',
+          'cancel_reason' => 'Cancel reason',
+          'pending_cancel_date' => 'Cancel date',
+        }
       end
 
       def headers
         %w[address primary_user policy_type policy cancel_reason pending_cancel_date]
+      end
+
+      private
+
+      def set_defaults
+        self.data ||= { rows: [] }
       end
     end
   end

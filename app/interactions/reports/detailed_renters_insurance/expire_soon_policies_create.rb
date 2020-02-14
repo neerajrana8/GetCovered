@@ -23,7 +23,7 @@ module Reports
       end
 
       def prepare_account_report(account)
-        account_report = Reports::DetailedRentersInsurance::ExpireSoonPolicies.create(account)
+        account_report = Reports::DetailedRentersInsurance::ExpireSoonPolicies.new(reportable: account)
 
         account.insurables.communities.each do |insurable|
           account_report.data['rows'] += prepare_community_report(insurable).data['rows']

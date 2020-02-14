@@ -30,7 +30,7 @@ class Report < ApplicationRecord
   # For classic table reports with rows and headers in other cases - redefine this method
   def to_csv
     CSV.generate(headers: true) do |csv|
-      csv << headers
+      csv << headers.map{|header| column_names[header]}
 
       data['rows'].each do |row|
         table_row = []
