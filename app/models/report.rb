@@ -35,6 +35,7 @@ class Report < ApplicationRecord
       data['rows'].each do |row|
         table_row = []
         headers.each do |attr|
+          ap row["#{attr}"]
           table_row << row["#{attr}"]
         end
         csv << table_row

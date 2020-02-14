@@ -1,6 +1,6 @@
 module Reports
   module DetailedRentersInsurance
-    class RunCancelledPoliciesReportsJob < ApplicationJob
+    class CancelledPoliciesReportsJob < ApplicationJob
       # Queue: Default
       queue_as :default
 

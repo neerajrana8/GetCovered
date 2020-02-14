@@ -10,7 +10,7 @@ module Reports
     end
 
     def generate
-      self.data = reportable.coverage_report
+      self.data = reportable.coverage_report.stringify_keys
       self
     end
 

@@ -15,11 +15,11 @@ module Reports
           policy = unit.policies.take
           if (policy&.auto_renew == false) && (policy&.expiration_date < Time.current + 30.days)
             self.data['rows'] << {
-              address: unit.title,
-              primary_user: policy.primary_user&.profile&.full_name,
-              policy_type: 'H04',
-              policy: policy.number,
-              expiration_date: policy.expiration_date
+              'address' => unit.title,
+              'primary_user' => policy.primary_user&.profile&.full_name,
+              'policy_type' => 'H04',
+              'policy' => policy.number,
+              'expiration_date' => policy.expiration_date
             }
           end
         end

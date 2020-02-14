@@ -17,12 +17,12 @@ module Reports
 
           if policy.present? && policy.billing_status == :BEHIND
             self.data['rows'] << {
-              address: insurable.title,
-              primary_user: policy.primary_user&.profile&.full_name,
-              policy_type: 'H04',
-              policy: policy.number,
-              cancel_reason: 'Behind billing',
-              pending_cancel_date: policy
+              'address' => insurable.title,
+              'primary_user' => policy.primary_user&.profile&.full_name,
+              'policy_type' => 'H04',
+              'policy' => policy.number,
+              'cancel_reason' => 'Behind billing',
+              'pending_cancel_date' => policy
             }
           end
         end

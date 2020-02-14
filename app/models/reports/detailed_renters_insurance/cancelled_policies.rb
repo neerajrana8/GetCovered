@@ -16,12 +16,12 @@ module Reports
           policy = unit.policies.take
           if policy&.status == 'CANCELLED'
             self.data['rows'] << {
-              address: unit.title,
-              primary_user: policy.primary_user&.profile&.full_name,
-              policy_type: 'H04',
-              policy: policy.number,
-              cancel_reason: 'Non Payment',
-              cancel_date: policy.cancellation_date_date
+              'address' => unit.title,
+              'primary_user' => policy.primary_user&.profile&.full_name,
+              'policy_type' => 'H04',
+              'policy' => policy.number,
+              'cancel_reason' => 'Non Payment',
+              'cancel_date' => policy.cancellation_date_date
             }
           end
         end

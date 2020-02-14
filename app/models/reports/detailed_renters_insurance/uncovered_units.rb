@@ -12,7 +12,7 @@ module Reports
           end
 
         units&.each do |unit|
-          self.data['rows'] << { address: unit.title } unless unit.covered
+          self.data['rows'] << { 'address' => unit.title } unless unit.covered
         end
 
         self

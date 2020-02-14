@@ -15,12 +15,12 @@ module Reports
           policy = insurable.policies.take
           if policy.present?
             self.data['rows'] << {
-              address: insurable.title,
-              primary_user: policy.primary_user&.profile&.full_name,
-              policy_type: 'H04',
-              policy: policy.number,
-              contents: policy.insurable_rates.coverage_c.last&.description,
-              liability: policy.insurable_rates.liability.last&.description
+              'address' => insurable.title,
+              'primary_user' => policy.primary_user&.profile&.full_name,
+              'policy_type' => 'H04',
+              'policy' => policy.number,
+              'contents' => policy.insurable_rates.coverage_c.last&.description,
+              'liability' => policy.insurable_rates.liability.last&.description
             }
           end
         end
