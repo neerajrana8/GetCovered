@@ -7,12 +7,12 @@ module Reports
       def generate
         units =
           if reportable.is_a?(Insurable)
-            reportable.units
+            reportable.units&.select{|unit| unit.covered}
           else
-            reportable.insurables.units
+            reportable.insurables.units.covered
           end
 
-        units&.covered&.each do |insurable|
+        units&.each do |insurable|
           policy = insurable.policies.take
 
           if policy.present? && policy.billing_status == :BEHIND
