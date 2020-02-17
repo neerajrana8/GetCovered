@@ -16,7 +16,7 @@ module V2
         format.json
         format.csv do
           file_name = "#{@report.type.underscore.split('/').last}-#{@report.created_at || Date.today}.csv"
-          send_data @report.to_csv, filename: file_name, disposition: 'inline'
+          send_data @report.to_csv, filename: file_name
         end
       end
     end
