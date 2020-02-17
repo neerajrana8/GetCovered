@@ -152,6 +152,27 @@ module V2
       end
       
       
+      def update
+        if @policy_application.policy_type.title == "Residential"
+          
+          if update_params.has_key?("policy_rates_attributes")
+            
+            new_rates = update_params["policy_rates_attributes"].map { |r| r["insurable_rate_id"] }
+            current_rates = @policy_application.policy_rates.map(&:insurable_rate_id)
+            
+            @policy_application.policy_rates.each { |r| r.destroy if !new_rates.include?( r.insurable_rate_id ) || r.insurable_rate.sub_schedule == "policy_fee" }
+            new_rates.each { |r| @application.insurable_rates << InsurableRate.find(r) if !current_rates.include?(r) }
+            
+            @policy_application.qbe_estimate()
+            
+          end
+          
+        else
+        
+        end
+      end
+      
+      
       private
 	      
 	      def view_path
@@ -177,6 +198,12 @@ module V2
 	# 		      							]
 	# 	      							])
 	      end
+	      
+	      def update_params
+  	      params.require(:policy_application)
+  	           .permit(policy_rates_attributes: [:insurable_rate_id],
+  	                   policy_insurables_attributes: [:insurable_id])  
+  	    end
 	        
 	      def valid_policy_types
 	        %w[residential commercial]

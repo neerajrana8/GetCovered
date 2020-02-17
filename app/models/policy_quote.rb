@@ -124,7 +124,7 @@ class PolicyQuote < ApplicationRecord
 		 				build_coverages() if policy_application.policy_type.title == "Residential"
 	  
 	          if update(policy: policy) && 
-	        		 policy_application.update(policy: policy) && 
+	        		 policy_application.update(policy: policy, status: "accepted") && 
 	        		 policy_premium.update(policy: policy)
 	        		 
 	 						PolicyQuoteStartBillingJob.perform_later(policy: policy, issue: quote_attempt[:issue_method])
@@ -157,7 +157,10 @@ class PolicyQuote < ApplicationRecord
   end
 	
 	def decline
-		success = self.update status: 'declined' ? true : false
+		success = false
+		if self.update status: 'declined' && self.policy_application.update status: "rejected"
+		  success = true
+		end
 		return success	
 	end
 
