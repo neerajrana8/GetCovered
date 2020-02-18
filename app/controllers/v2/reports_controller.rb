@@ -14,7 +14,10 @@ module V2
     def show
       respond_to do |format|
         format.json
-        format.csv { send_data @report.to_csv, filename: "#{@report.type.underscore.split('/').last}-#{Date.today}.csv" }
+        format.csv do
+          file_name = "#{@report.type.underscore.split('/').last}-#{@report.created_at || Date.today}.csv"
+          send_data @report.to_csv, filename: file_name
+        end
       end
     end
 
@@ -28,10 +31,35 @@ module V2
       }), status: :ok
     end
 
+
+    def generate
+      success, result, status = generate_report(type: params[:type], reportable: @reportable)
+      if success
+        respond_to do |format|
+          format.json { render json: {data: result.data }}
+          format.csv { send_data result.to_csv, filename: "#{result.type.underscore.split('/').last}-#{Date.today}.csv" }
+        end
+      else
+        render json: {message: result[:message], type: result[:type]}, status: status
+      end
+    end
+
     private
 
+    def generate_report(type:, reportable:)
+      report_class = type.constantize
+      if report_class.ancestors.include?(Report)
+        new_report = report_class.new(reportable: reportable)
+        return true, new_report.generate # data always should be present unless unpredicted errors
+      else
+        return false, { type: :wrong_report_type, message: 'Wrong report type' }, :unprocessable_entity
+      end
+    rescue NameError
+      return false, { type: :wrong_report_type, message: 'Wrong report type' }, :unprocessable_entity
+    end
+
     def is_staff?
-      render json: { error: "Unauthorized access"}, status: :unauthorized unless current_staff.present?
+      render json: { error: "Unauthorized access" }, status: :unauthorized unless current_staff.present?
     end
 
     def set_reportable

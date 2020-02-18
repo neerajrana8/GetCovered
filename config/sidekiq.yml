@@ -10,9 +10,24 @@ production:
   - elasticsearch
 
 :schedule:
-  build_coverage_reports_job:
+  coverage_reports_job:
     cron: '0 0 2 * * *'   # Every day at 2:00 AM
-    class: Reports::RunCoverageReportsJob
-  detailed_renters_insurance_run_cancelled_policies_job:
+    class: Reports::CoverageReportsJob
+  active_reports_job:
     cron: '0 0 2 * * *'   # Every day at 2:00 AM
-    class: Reports::DetailedRentersInsurance::RunCancelledPoliciesReportsJob
+    class: Reports::ActiveReportsJob
+  detailed_renters_insurance_active_policies_job:
+    cron: '0 0 2 * * *'   # Every day at 2:00 AM
+    class: Reports::DetailedRentersInsurance::ActivePoliciesReportsJob
+  detailed_renters_insurance_cancelled_policies_job:
+    cron: '0 0 2 * * *'   # Every day at 2:00 AM
+    class: Reports::DetailedRentersInsurance::CancelledPoliciesReportsJob
+  detailed_renters_insurance_expire_soon_policies_job:
+    cron: '0 0 2 * * *'   # Every day at 2:00 AM
+    class: Reports::DetailedRentersInsurance::ExpireSoonPoliciesReportsJob
+  detailed_renters_insurance_pending_cancellation_policies_job:
+    cron: '0 0 2 * * *'   # Every day at 2:00 AM
+    class: Reports::DetailedRentersInsurance::PendingCancellationPoliciesReportsJob
+  detailed_renters_insurance_uncovered_units_job:
+    cron: '0 0 2 * * *'   # Every day at 2:00 AM
+    class: Reports::DetailedRentersInsurance::UncoveredUnitsReportsJob

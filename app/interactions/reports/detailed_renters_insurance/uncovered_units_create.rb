@@ -1,17 +1,11 @@
 module Reports
   module DetailedRentersInsurance
     # Active Policies Report for Cambridge
-    # if reportable is nil generates reports for all agencies and accounts
-    # in other cases it generate report for object that has two required methods or relations : reports and  insurables
+    # Generates reports for all agencies and accounts
     class UncoveredUnitsCreate < ActiveInteraction::Base
-      interface :reportable, methods: %i[reports insurables], default: nil
 
       def execute
-        if reportable.nil?
-          prepare_agencies_reports
-        else
-          prepare_report(reportable)
-        end
+        prepare_agencies_reports
       end
 
       private
@@ -23,38 +17,28 @@ module Reports
       end
 
       def prepare_agency_report(agency)
-        data = { 'rows' => [] }
+        report = Reports::DetailedRentersInsurance::UncoveredUnits.new(reportable: agency)
 
         agency.accounts.each do |account|
-          account_report = prepare_report(account)
-          data['rows'] += account_report.data['rows']
+          report.data['rows'] += prepare_account_report(account).data['rows']
         end
-
-        Reports::DetailedRentersInsurance::UncoveredUnits.create(data: data, reportable: agency)
+        report.tap(&:save)
       end
 
-      def prepare_report(reportable)
-        data = { 'rows' => [] }
+      def prepare_account_report(account)
+        report = Reports::DetailedRentersInsurance::UncoveredUnits.new(reportable: account)
 
-        reportable.insurables.communities.each do |insurable|
-          community_report_data = prepare_community_report(insurable)
-          data['rows'] += community_report_data['rows']
+        account.insurables.communities.each do |insurable|
+          report.data['rows'] += prepare_community_report(insurable).data['rows']
         end
-
-        Reports::DetailedRentersInsurance::UncoveredUnits.create(data: data, reportable: reportable)
+        report.tap(&:save)
       end
 
       def prepare_community_report(insurable_community)
-        data = { 'rows' => [] }
-        insurable_community.units&.each do |unit|
-          unless unit.covered
-            data['rows'] << {
-              address: unit.title
-            }
-          end
-        end
-        Reports::DetailedRentersInsurance::UncoveredUnits.create(data: data, reportable: insurable_community)
-        data
+        Reports::DetailedRentersInsurance::UncoveredUnits.
+          new(reportable: insurable_community).
+          generate.
+          tap(&:save)
       end
     end
   end

@@ -41,7 +41,8 @@ Rails.application.routes.draw do
     concern :reportable do
       resources :reports, only: [:index, :show] do
         collection do
-          get '/available-range', to: 'reports#available_range'
+          get '/available-range', to: '/v2/reports#available_range'
+          get '/generate',        to: '/v2/reports#generate'
         end
       end
     end

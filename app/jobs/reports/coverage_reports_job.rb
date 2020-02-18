@@ -1,5 +1,5 @@
 module Reports
-  class RunCoverageReportsJob < ApplicationJob
+  class CoverageReportsJob < ApplicationJob
     queue_as :default
 
     def perform(*args)
