@@ -113,6 +113,8 @@ module V2
               id: %i[scalar array],
               title: %i[scalar like]
             },
+            created_at: %i[scalar like],
+            updated_at: %i[scalar like],
             status: %i[scalar like],
             policy_in_system: %i[scalar like],
             effective_date: %i[scalar like],

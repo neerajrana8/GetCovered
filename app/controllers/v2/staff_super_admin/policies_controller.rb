@@ -50,6 +50,8 @@ module V2
               title: %i[scalar like]
             },
             status: %i[scalar like],
+            created_at: %i[scalar like],
+            updated_at: %i[scalar like],
             policy_in_system: %i[scalar like],
             effective_date: %i[scalar like],
             expiration_date: %i[scalar like]
