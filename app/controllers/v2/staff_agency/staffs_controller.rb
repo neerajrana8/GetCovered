@@ -75,7 +75,11 @@ module V2
       end
         
       def create_allowed?
-        true
+        if create_params[:role] == 'super_admin'
+          false
+        else
+          true
+        end
       end
         
       def update_allowed?
