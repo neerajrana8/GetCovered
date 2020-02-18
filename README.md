@@ -24,3 +24,12 @@ Before installing docker and a local pg server should be running and all gems sh
 * `rails docker:install` Sets up all docker-compose services and migrates the database to latest version
 * `rails docker:start` Builds and Starts all docker-compose services
 * `rails docker:restart` Removes all docker-compose services, builds then re-start them under force-recreate
+
+#### Tests
+Credentials for the elasticsearch, redis and stripe are similar with the `development` environment
+
+Docker tasks:
+* `rails docker:tests:create_db` - Create test database 
+* `rails docker:tests:migrate_db` - Migrate test database 
+* `rails docker:tests:run_rspec` - Run rspec
+* `rails docker:tests:run` - Create and migrate test database then run rspec
