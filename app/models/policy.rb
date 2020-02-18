@@ -107,7 +107,8 @@ class Policy < ApplicationRecord
                                 :insurables, :policy_users, :policy_insurables
 
   #  after_save :update_leases, if: :saved_changes_to_status?
-
+  
+  validate :is_allowed_to_update?, on: :update
   validate :same_agency_as_account
   validate :status_allowed
   validate :carrier_agency
@@ -139,6 +140,9 @@ class Policy < ApplicationRecord
 		policy_insurable&.insurable	
 	end
 
+  def is_allowed_to_update?
+    errors.add(:policy_in_system, 'Cannot update in system policy') if policy_in_system == true
+  end
 
   # Perform Postdispute Processing
   #

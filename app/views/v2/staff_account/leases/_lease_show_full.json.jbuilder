@@ -9,6 +9,8 @@ json.account do
   end
 end
 
+json.agency lease&.account&.agency
+
 json.insurable do
   unless lease.insurable.nil?
     json.partial! "v2/staff_account/insurables/insurable_short_fields.json.jbuilder",

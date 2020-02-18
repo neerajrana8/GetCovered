@@ -133,16 +133,17 @@
     resources :payments,
       only: [ :index, :show ]
   
-    resources :policies,
-      only: [ :create, :update, :index, :show ] do
-        member do
-          get "histories",
-            to: "histories#index_recordable",
-            via: "get",
-            defaults: { recordable_type: Policy }
-        end
-        get "search", to: 'policies#search', on: :collection
+    resources :policies, only: [ :create, :update, :index, :show ] do
+      member do
+        get "histories",
+          to: "histories#index_recordable",
+          via: "get",
+          defaults: { recordable_type: Policy }
       end
+      get "search", to: 'policies#search', on: :collection
+    end
+
+    resources :policy_coverages, only: [ :update ]
   
     resources :policy_applications,
       path: "policy-applications",
