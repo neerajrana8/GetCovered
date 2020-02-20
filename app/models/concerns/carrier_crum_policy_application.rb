@@ -26,6 +26,8 @@ module CarrierCrumPolicyApplication
         crum_service = CrumService.new()
         request_template = crum_service.build_request_template("add_new_quote", self)
         
+        pp request_template
+        
         event = self.events.new(request: request_template.to_json, 
                                 started: Time.now, status: "in_progress", 
                                 verb: 'post', process: 'new_crum_quote', 
@@ -41,6 +43,7 @@ module CarrierCrumPolicyApplication
           unless request[:error] || request[:data].has_key?("responseMessages")
           
             data = request[:data]
+            
             if data["quoteDetails"]["policyService"]["isEligible"] == "Yes"
             
               quote_success[:success] = true
@@ -99,6 +102,7 @@ module CarrierCrumPolicyApplication
               
             end
           else
+          
             self.update status: "quote_failed"
             quote_success[:error] = true
             quote_success[:message] = "Policy Quote failed to return"            

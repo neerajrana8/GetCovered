@@ -39,6 +39,87 @@ module V2
       end
       
       def create
+        case params[:policy_application][:policy_type_id]
+        when 1
+        
+        when 4
+          create_commercial()
+        else
+          render json: { 
+                   title: "Policy Type not Recognized", 
+                   message: "Policy Type is not residential or commercial.  Please select a supported Policy Type" 
+                 }, status: 422
+        end
+      end
+      
+      def create_commercial
+        
+        @application = PolicyApplication.new(create_commercial_params) 
+        @application.agency = Agency.where(master_agency: true).take 
+
+				@application.billing_strategy = BillingStrategy.where(agency: @application.agency, 
+				                                                      policy_type: @application.policy_type,
+				                                                      title: 'Annually').take
+        
+        @application.policy_users.each do |pu|
+	        secure_tmp_password = SecureRandom.base64(12)
+	        pu.user.password = secure_tmp_password
+	        pu.user.password_confirmation = secure_tmp_password
+	      end
+		    
+		    if @application.save
+  		    
+          # Commercial Application Saved
+          @application.update(status: 'complete')
+  		    @application.primary_user().invite!
+          quote_attempt = @application.crum_quote()
+          
+          pp quote_attempt
+          
+					if quote_attempt[:success] == true
+						
+						@application.primary_user().set_stripe_id()
+						
+						@quote = @application.policy_quotes.last
+						@quote.generate_invoices_for_term()
+						@premium = @quote.policy_premium
+						
+						response = { 
+							quote: { 
+								id: @quote.id, 
+								status: @quote.status, 
+								premium: @premium
+							},
+							invoices: @quote.invoices,
+							user: { 
+								id: @application.primary_user().id,
+								stripe_id: @application.primary_user().stripe_id
+							},
+							billing_strategies: []
+						}
+						
+						if @premium.base >= 500000
+							BillingStrategy.where(agency: @application.agency_id, policy_type: @application.policy_type).each do |bs|
+							  response[:billing_strategies]	<< { id: bs.id, title: bs.title }
+              end
+						end
+							  
+						render json: response.to_json, status: 200
+																
+					else
+						render json: { error: "Quote Failed", message: "Quote could not be processed at this time" },
+									 status: 500							
+					end					  		  
+  		  else         
+          
+          # Commercial Application Save Error
+          render json: @application.errors.to_json,
+                 status: 422
+        
+        end       
+      end
+      
+      def create_archive
         @application = PolicyApplication.new(create_params)
         
         if @application.agency.nil? && 
@@ -198,6 +279,21 @@ module V2
 	# 		      							]
 	# 	      							])
 	      end
+	      
+	      def create_commercial_params
+  	      params.require(:policy_application)
+  	            .permit(:effective_date, :expiration_date, :fields, :auto_pay, 
+		      							:auto_renew, :billing_strategy_id, :account_id, :policy_type_id, 
+		      							:carrier_id, :agency_id, fields: {}, questions: [],
+	                      policy_users_attributes: [
+			      							:spouse, user_attributes: [
+				      							:email, profile_attributes: [
+					      							:first_name, :last_name, :job_title, 
+					      							:contact_phone, :birth_date	
+				      							]
+			      							]
+		      							])  
+  	    end
 	      
 	      def update_params
   	      params.require(:policy_application)
