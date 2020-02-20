@@ -41,7 +41,7 @@ module V2
       def create
         case params[:policy_application][:policy_type_id]
         when 1
-        
+          create_residential()
         when 4
           create_commercial()
         else
@@ -143,6 +143,41 @@ module V2
 	      if @application.save
   	      @application.primary_user().invite!
   	      if @application.update status: "complete"
+
+          	# if application.status updated to complete
+          	@application.qbe_estimate()
+          	@quote = @application.policy_quotes.last
+  					if @application.status != "quote_failed" || application.status != "quoted"
+  						# if application quote success or failure
+  						@application.qbe_quote(@quote.id) 
+  						@application.reload()
+  						@quote.reload()
+  						
+  						if @quote.status == "quoted"	
+  							
+  							@application.primary_user().set_stripe_id()
+  						  
+  							render json: { 
+  								quote: { 
+  									id: @quote.id, 
+  									status: @quote.status, 
+  									premium: @quote.policy_premium 
+  								},
+  								invoices: @quote.invoices.order('due_date ASC'),
+  								user: { 
+  									id: @application.primary_user().id,
+  									stripe_id: @application.primary_user().stripe_id
+  								}
+  							}.to_json, status: 200
+  						
+  						else
+  							render json: { error: "Quote Failed", message: "Quote could not be processed at this time" },
+  										 status: 500	
+  						end
+  					else
+  						render json: { error: "Application Unavailable", message: "Application cannot be quoted at this time" },
+  									 status: 400							
+  					end
     	      
           else
 	          render json: @application.errors.to_json,
