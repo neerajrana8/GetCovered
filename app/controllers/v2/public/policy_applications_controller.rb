@@ -105,7 +105,7 @@ module V2
   						render json: response.to_json, status: 200
   																
   					else
-  						render json: { error: "Quote Failed", message: "Quote could not be processed at this time" },
+  						render json: { error: "Quote Failed", message: quote_attempt[:message] },
   									 status: 500							
   					end
 					else
