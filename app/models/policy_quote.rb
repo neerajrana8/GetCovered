@@ -157,11 +157,11 @@ class PolicyQuote < ApplicationRecord
   end
 	
 	def decline
-		success = false
-		if self.update status: 'declined' && self.policy_application.update status: "rejected"
-		  success = true
+		return_success = false
+		if self.update(status: 'declined') && self.policy_application.update(status: "rejected")
+		  return_success = true
 		end
-		return success	
+		return return_success	
 	end
 
 	def build_coverages()

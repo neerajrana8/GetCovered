@@ -68,48 +68,50 @@ module V2
 	      end
 		    
 		    if @application.save
-  		    
-          # Commercial Application Saved
-          @application.update(status: 'complete')
-  		    @application.primary_user().invite!
-          quote_attempt = @application.crum_quote()
-          
-          pp quote_attempt
-          
-					if quote_attempt[:success] == true
-						
-						@application.primary_user().set_stripe_id()
-						
-						@quote = @application.policy_quotes.last
-						@quote.generate_invoices_for_term()
-						@premium = @quote.policy_premium
-						
-						response = { 
-							quote: { 
-								id: @quote.id, 
-								status: @quote.status, 
-								premium: @premium
-							},
-							invoices: @quote.invoices,
-							user: { 
-								id: @application.primary_user().id,
-								stripe_id: @application.primary_user().stripe_id
-							},
-							billing_strategies: []
-						}
-						
-						if @premium.base >= 500000
-							BillingStrategy.where(agency: @application.agency_id, policy_type: @application.policy_type).each do |bs|
-							  response[:billing_strategies]	<< { id: bs.id, title: bs.title }
-              end
-						end
-							  
-						render json: response.to_json, status: 200
-																
+  		    if @application.update(status: 'complete')
+            # Commercial Application Saved
+            
+    		    @application.primary_user().invite!
+            quote_attempt = @application.crum_quote()
+            
+  					if quote_attempt[:success] == true
+  						
+  						@application.primary_user().set_stripe_id()
+  						
+  						@quote = @application.policy_quotes.last
+  						@quote.generate_invoices_for_term()
+  						@premium = @quote.policy_premium
+  						
+  						response = { 
+  							quote: { 
+  								id: @quote.id, 
+  								status: @quote.status, 
+  								premium: @premium
+  							},
+  							invoices: @quote.invoices,
+  							user: { 
+  								id: @application.primary_user().id,
+  								stripe_id: @application.primary_user().stripe_id
+  							},
+  							billing_strategies: []
+  						}
+  						
+  						if @premium.base >= 500000
+  							BillingStrategy.where(agency: @application.agency_id, policy_type: @application.policy_type).each do |bs|
+  							  response[:billing_strategies]	<< { id: bs.id, title: bs.title }
+                end
+  						end
+  							  
+  						render json: response.to_json, status: 200
+  																
+  					else
+  						render json: { error: "Quote Failed", message: "Quote could not be processed at this time" },
+  									 status: 500							
+  					end
 					else
-						render json: { error: "Quote Failed", message: "Quote could not be processed at this time" },
-									 status: 500							
-					end					  		  
+            render json: @application.errors.to_json,
+                   status: 422					
+					end			  		  
   		  else         
           
           # Commercial Application Save Error
@@ -117,6 +119,39 @@ module V2
                  status: 422
         
         end       
+      end
+      
+      def create_residential
+        
+        @application = PolicyApplication.new(create_params)
+        
+        if @application.agency.nil? && 
+	         @application.account.nil?
+	         
+	        @application.agency = Agency.where(master_agency: true).take 
+	      elsif @application.agency.nil?
+	      
+          @application.agency = @application.account.agency  
+        end
+        
+        @application.policy_users.each do |pu|
+	        secure_tmp_password = SecureRandom.base64(12)
+	        pu.user.password = secure_tmp_password
+	        pu.user.password_confirmation = secure_tmp_password
+	      end
+	      
+	      if @application.save
+  	      @application.primary_user().invite!
+  	      if @application.update status: "complete"
+    	      
+          else
+	          render json: @application.errors.to_json,
+	                 status: 422	
+          end
+  	    else
+          render json: @application.errors.to_json,
+                 status: 422   
+  	    end
       end
       
       def create_archive
