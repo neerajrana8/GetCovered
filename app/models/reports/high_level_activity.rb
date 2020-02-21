@@ -14,7 +14,7 @@ module Reports
         common_properties = {
           'insurable_id' => community.id,
           'property_name' => community.title,
-          'total_units' => current_community_data[:units_count],
+          'total_units' => current_community_data[:unit_count],
           'total_active' => current_community_data[:covered_count],
           'total_pending_cancellation' => total_pending_cancellation(community),
           'total_cancelled' => current_community_data[:covered_count],
@@ -22,10 +22,10 @@ module Reports
         }
         changes =
           if last_report.present?
-            old_row_data = last_report.data['rows'].select { |row| row['insurable_id'] == community.id }
+            old_row_data = last_report.data['rows'].find { |row| row['insurable_id'] == community.id }
             {
               'added' => current_community_data[:policy_covered_count] - old_row_data['total_active'],
-              'canceled' => current_community_data[:cancelled_policy_count] - old_row_data['total_canceled'],
+              'canceled' => current_community_data[:cancelled_policy_count] - old_row_data['total_cancelled'],
               'third_party_added' => current_community_data[:policy_external_covered_count] - old_row_data['total_third_party'],
             }
           else
