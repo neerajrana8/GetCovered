@@ -38,7 +38,7 @@ module RecordChange
       invite_as_params: invite_as_params,
       send_invite: send_invite
     }
-    performed_object = new_record? ? Marshal.dump(self) : self
+    performed_object = new_record? ? PassingObjectSerializer.serialize(self) : self
     RecordChangeInviteAs.perform_later(performed_object, params)
   end
 
