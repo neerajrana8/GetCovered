@@ -70,7 +70,16 @@ class PolicyQuote < ApplicationRecord
     end
   end
   
+  def print_dev_message(message = nil)
+    if !message.nil? || ['local', 'development'].include?(ENV["RAILS_ENV"])
+      logger.debug "\n\n#{ message }\n\n"
+    end
+  end
+  
   def accept
+    
+    print_dev_message("Accept Process Started")
+    
 	  quote_attempt = {
 		  success: false,
 		  message: nil,
@@ -79,15 +88,32 @@ class PolicyQuote < ApplicationRecord
 	  }
 	  
 	  if quoted? || error?
+  	  
+  	  print_dev_message("Accept Process Able To Run")
+  	  
 			self.set_qbe_external_reference if policy_application.carrier.id == 1
 		  
 			if update(status: "accepted") && start_billing()
 			  bind_request = self.send(quote_attempt[:bind_method])
 			  
+			  pp bind_request
+			  
 			  unless bind_request[:error]
+  			  
+  			  print_dev_message("No Bind Error")
+  			  
+  			  if policy_application.policy_type.title == "Residential"
+    			  policy_number = bind_request[:data][:policy_number]
+    			  policy_status = bind_request[:data][:status] == "WARNING" ? "BOUND_WITH_WARNING" : "BOUND"    			  
+    		  elsif policy_application.policy_type.title == "Commercial"
+    		    policy_number = external_reference
+    		    policy_status = "BOUND"
+    		  end
+
+  			  
 	    		policy = build_policy(
-	      		number: bind_request[:data][:policy_number],
-	      		status: bind_request[:data][:status] == "WARNING" ? "BOUND_WITH_WARNING" : "BOUND",
+	      		number: policy_number,
+	      		status: policy_status,
 	      		billing_status: "CURRENT",
 	      		effective_date: policy_application.effective_date,
 	      		expiration_date: policy_application.expiration_date,
@@ -140,10 +166,13 @@ class PolicyQuote < ApplicationRecord
 				  else
 				  	quote_attempt[:message] = "Unable to save policy in system"
 				  	puts events.last.response
-				  	logger.debug policy.errors
+				  	pp policy.errors
 				  end
 				  
 				else
+  			  
+  			  print_dev_message("Bind Error")
+  			  
 					quote_attempt[:message] = "Unable to bind policy"	
 				end
 		  else
