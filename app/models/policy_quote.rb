@@ -70,15 +70,7 @@ class PolicyQuote < ApplicationRecord
     end
   end
   
-  def print_dev_message(message = nil)
-    if !message.nil? || ['local', 'development'].include?(ENV["RAILS_ENV"])
-      logger.debug "\n\n#{ message }\n\n"
-    end
-  end
-  
   def accept
-    
-    print_dev_message("Accept Process Started")
     
 	  quote_attempt = {
 		  success: false,
@@ -89,19 +81,12 @@ class PolicyQuote < ApplicationRecord
 	  
 	  if quoted? || error?
   	  
-  	  print_dev_message("Accept Process Able To Run")
-  	  
 			self.set_qbe_external_reference if policy_application.carrier.id == 1
 		  
 			if update(status: "accepted") && start_billing()
 			  bind_request = self.send(quote_attempt[:bind_method])
 			  
-			  pp bind_request
-			  
 			  unless bind_request[:error]
-  			  
-  			  print_dev_message("No Bind Error")
-  			  
   			  if policy_application.policy_type.title == "Residential"
     			  policy_number = bind_request[:data][:policy_number]
     			  policy_status = bind_request[:data][:status] == "WARNING" ? "BOUND_WITH_WARNING" : "BOUND"    			  
@@ -165,15 +150,10 @@ class PolicyQuote < ApplicationRecord
 	          end				  
 				  else
 				  	quote_attempt[:message] = "Unable to save policy in system"
-				  	puts events.last.response
-				  	pp policy.errors
 				  end
 				  
 				else
-  			  
-  			  print_dev_message("Bind Error")
-  			  
-					quote_attempt[:message] = "Unable to bind policy"	
+  			  quote_attempt[:message] = "Unable to bind policy"	
 				end
 		  else
 		  	quote_attempt[:message] = "Quote billing failed, unable to write policy"

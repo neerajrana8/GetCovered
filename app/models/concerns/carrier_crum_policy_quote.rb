@@ -68,12 +68,8 @@ module CarrierCrumPolicyQuote
         :data => {}  
       }
       
-      puts "\n\nRunning Crum Bind\n\n"
-      
 	 		if accepted?
-  	 		puts "\n\nQuote Eligable To Bind\n\n"
 		 		if policy_application.carrier.id == 3
-  	      puts "\n\nCarrier ID is Correct\n\n"
   	      crum_service = CrumService.new
   	      request_template = crum_service.build_request_template("bind", self)
             	      
@@ -84,10 +80,6 @@ module CarrierCrumPolicyQuote
   	    
           
           request = crum_service.bind(request_template)
-          
-          puts "\n\n"
-          pp request[:data]
-          puts "\n\n"
           
           event.update completed: Time.now, response: request[:data], status: request[:error] ? "error" : "success"
           
