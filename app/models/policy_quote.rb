@@ -4,7 +4,7 @@
 # frozen_string_literal: true
 
 class PolicyQuote < ApplicationRecord
-  Concerns
+  # Concerns
 	include CarrierQbePolicyQuote
 	include CarrierCrumPolicyQuote
 	include ElasticsearchSearchable
@@ -149,6 +149,7 @@ class PolicyQuote < ApplicationRecord
 	            update status: 'error'
 	          end				  
 				  else
+				    logger.debug policy.errors
 				  	quote_attempt[:message] = "Unable to save policy in system"
 				  end
 				  

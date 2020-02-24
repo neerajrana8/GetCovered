@@ -103,11 +103,6 @@ module CarrierQbePolicyQuote
               
               message += event.request
               
-              if ENV["RAILS_ENV"] != "production"
-	              puts message 
-	              puts "\n\n"
-              end
-              
               PolicyBindWarningNotificationJob.perform_later(message: message)
               
             end            

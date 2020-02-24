@@ -52,6 +52,47 @@ module V2
         end
       end
       
+      def create_policy_users
+        params[:policy_application][:policy_users_attributes].each_with_index do |policy_user, index|
+
+          if User.where(email: policy_user[:user_attributes][:email]).exists?
+            @user = User.find_by_email(policy_user[:user_attributes][:email])
+            if @user.invitation_accepted_at.nil?
+              @application.users << @user
+            else
+              puts "\n\nPolicy User: #{ policy_user[:user_attributes][:email] } has not accepted invitation\n\n"
+  	          render json: {
+    	          error: "User Account Exists",
+    	          message: "A User has already signed up with this email address.  Please log in to complete your application"
+  	          }.to_json,
+  	          status: 401              
+            end  
+          else
+            
+            secure_tmp_password = SecureRandom.base64(12)
+            @user = @application.policy_users.create!(
+              spouse: policy_user[:spouse],
+              user_attributes: {
+                email: policy_user[:user_attributes][:email],
+                password: secure_tmp_password,
+                password_confirmation: secure_tmp_password,
+                profile_attributes: {
+					        first_name: policy_user[:user_attributes][:profile_attributes][:first_name], 
+					        last_name: policy_user[:user_attributes][:profile_attributes][:last_name], 
+					        job_title: policy_user[:user_attributes][:profile_attributes][:job_title], 
+					      	contact_phone: policy_user[:user_attributes][:profile_attributes][:contact_phone], 
+					      	birth_date: policy_user[:user_attributes][:profile_attributes][:birth_date]                  
+                }
+              }
+            )
+            
+            @user.invite! if index == 0
+            
+          end
+          
+        end
+      end
+      
       def create_commercial
         
         @application = PolicyApplication.new(create_commercial_params) 
@@ -60,14 +101,9 @@ module V2
 				@application.billing_strategy = BillingStrategy.where(agency: @application.agency, 
 				                                                      policy_type: @application.policy_type,
 				                                                      title: 'Annually').take
-        
-        @application.policy_users.each do |pu|
-	        secure_tmp_password = SecureRandom.base64(12)
-	        pu.user.password = secure_tmp_password
-	        pu.user.password_confirmation = secure_tmp_password
-	      end
 		    
 		    if @application.save
+  		    create_policy_users()
   		    if @application.update(status: 'complete')
             # Commercial Application Saved
             
@@ -123,7 +159,7 @@ module V2
       
       def create_residential
         
-        @application = PolicyApplication.new(create_params)
+        @application = PolicyApplication.new(create_residential_params)
         
         if @application.agency.nil? && 
 	         @application.account.nil?
@@ -133,15 +169,9 @@ module V2
 	      
           @application.agency = @application.account.agency  
         end
-        
-        @application.policy_users.each do |pu|
-	        secure_tmp_password = SecureRandom.base64(12)
-	        pu.user.password = secure_tmp_password
-	        pu.user.password_confirmation = secure_tmp_password
-	      end
 	      
 	      if @application.save
-  	      @application.primary_user().invite!
+  	      create_policy_users()
   	      if @application.update status: "complete"
 
           	# if application.status updated to complete
@@ -220,37 +250,36 @@ module V2
 	      def set_policy_application
 	        @policy_application = access_model(::PolicyApplication, params[:id])
 	      end
-	        
-	      def create_params
-		      params.require(:policy_application).permit!
-	# 	      			.permit(:effective_date, :expiration_date, :fields, :auto_pay, 
-	# 	      							:auto_renew, :billing_strategy_id, :account_id, 
-	# 	      							:carrier_id, :agency_id, fields: {}, questions: [], 
-	#                       policy_rates_attributes: [:insurable_rate_id],
-	#                       policy_insurables_attributes: [:insurable_id],
-	#                       policy_users_attributes: [
-	# 		      							:spouse, user_attributes: [
-	# 			      							:email, profile_attributes: [
-	# 				      							:first_name, :last_name, :contact_phone, :birth_date	
-	# 			      							]
-	# 		      							]
-	# 	      							])
-	      end
+	      
+	      def create_residential_params
+  	      params.require(:policy_application)
+  	            .permit(:effective_date, :expiration_date, :fields, :auto_pay, 
+		      							:auto_renew, :billing_strategy_id, :account_id, :policy_type_id,
+		      							:carrier_id, :agency_id, fields: [:title, :value, options: []], 
+		      							questions: [:title, :value, options: []], 
+	                      policy_rates_attributes: [:insurable_rate_id],
+	                      policy_insurables_attributes: [:insurable_id]) 
+  	    end
 	      
 	      def create_commercial_params
   	      params.require(:policy_application)
   	            .permit(:effective_date, :expiration_date, :fields, :auto_pay, 
 		      							:auto_renew, :billing_strategy_id, :account_id, :policy_type_id, 
-		      							:carrier_id, :agency_id, fields: {}, questions: [],
-	                      policy_users_attributes: [
+		      							:carrier_id, :agency_id, fields: {}, 
+		      							questions: [:text, :value, :questionId, options: [], questions: [:text, :value, :questionId, options: []]])  
+  	    end
+  	    
+  	    def create_policy_users_params
+    	    params.require(:policy_application)
+    	          .permit(policy_users_attributes: [
 			      							:spouse, user_attributes: [
 				      							:email, profile_attributes: [
 					      							:first_name, :last_name, :job_title, 
 					      							:contact_phone, :birth_date	
 				      							]
 			      							]
-		      							])  
-  	    end
+			      					  ])  
+    	  end
 	      
 	      def update_params
   	      params.require(:policy_application)

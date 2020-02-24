@@ -109,7 +109,7 @@ class Policy < ApplicationRecord
   #  after_save :update_leases, if: :saved_changes_to_status?
   
   validate :is_allowed_to_update?, on: :update
-  validate :residential_accoung_present
+  validate :residential_account_present
   validate :same_agency_as_account
   validate :status_allowed
   validate :carrier_agency
@@ -162,8 +162,8 @@ class Policy < ApplicationRecord
     end
   end
   
-  def residential_accoung_present
-    errors.add(:account, 'Account must be specified') if policy_type_id != 4  
+  def residential_account_present
+    errors.add(:account, 'Account must be specified') if policy_type_id != 4 && account.nil? 
   end
 
   def same_agency_as_account
