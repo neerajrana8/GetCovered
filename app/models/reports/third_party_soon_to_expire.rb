@@ -3,7 +3,7 @@ module Reports
     # @todo Rewrite using builder pattern, because now reports know about the class for what we generate this report
     # I planned to make reports "class agnostic".
     def generate
-      reportable_policies.each do |policy|
+      reportable_policies&.each do |policy|
         insurable = policy.primary_insurable
         insurable_address = insurable&.primary_address
         primary_policy_user = policy&.primary_user&.profile
@@ -66,7 +66,7 @@ module Reports
         if (policy.auto_renew == false) && (policy.expiration_date < Time.current + 30.days) && !policy.policy_in_system?
           policy
         end
-      end.uniq.compact
+      end&.uniq&.compact
     end
 
     def set_defaults
