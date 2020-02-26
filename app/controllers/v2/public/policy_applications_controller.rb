@@ -60,7 +60,6 @@ module V2
             if @user.invitation_accepted_at.nil?
               @application.users << @user
             else
-              puts "\n\nPolicy User: #{ policy_user[:user_attributes][:email] } has not accepted invitation\n\n"
   	          render json: {
     	          error: "User Account Exists",
     	          message: "A User has already signed up with this email address.  Please log in to complete your application"
