@@ -68,7 +68,7 @@ module Reports
       if units.present?
         units.reduce(0) do |count, unit|
           policy = unit.policies.take
-          policy.present? && policy.billing_status == :BEHIND ? count + 1 : count
+          policy.present? && policy.billing_status == 'BEHIND' ? count + 1 : count
         end
       else
         0
