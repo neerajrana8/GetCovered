@@ -896,7 +896,10 @@ ActiveRecord::Schema.define(version: 2020_03_13_090034) do
     t.integer "status", default: 0
     t.datetime "disputed_at"
     t.integer "dispute_status", default: 0
+<<<<<<< HEAD
     t.text "dispute_reason"
+=======
+>>>>>>> 4e763cb... Setting up policy users confirmation and dispute mechanisms
     t.index ["policy_application_id"], name: "index_policy_users_on_policy_application_id"
     t.index ["policy_id"], name: "index_policy_users_on_policy_id"
     t.index ["user_id"], name: "index_policy_users_on_user_id"

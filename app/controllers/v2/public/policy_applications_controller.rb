@@ -56,16 +56,23 @@ module V2
         params[:policy_application][:policy_users_attributes].each_with_index do |policy_user, index|
 
           if User.where(email: policy_user[:user_attributes][:email]).exists?
+            
             @user = User.find_by_email(policy_user[:user_attributes][:email])
-            if @user.invitation_accepted_at.nil?
-              @application.users << @user
+            
+              if index == 0
+              if @user.invitation_accepted_at.nil?
+                @application.users << @user
+              else
+    	          render json: {
+      	          error: "User Account Exists",
+      	          message: "A User has already signed up with this email address.  Please log in to complete your application"
+    	          }.to_json,
+    	          status: 401              
+              end                
             else
-  	          render json: {
-    	          error: "User Account Exists",
-    	          message: "A User has already signed up with this email address.  Please log in to complete your application"
-  	          }.to_json,
-  	          status: 401              
-            end  
+              @application.users << @user
+            end
+            
           else
             
             secure_tmp_password = SecureRandom.base64(12)
