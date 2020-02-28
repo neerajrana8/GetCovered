@@ -32,5 +32,5 @@ production:
     cron: '0 0 2 * * *'   # Every day at 2:00 AM
     class: Reports::DetailedRentersInsurance::UncoveredUnitsReportsJob
   soon_to_expire_reports_job:
-    cron: '0 0 2 * * *'   # Every day at 2:00 AM
+    cron: '0 2 * * *'   # Every day at 2:00 AM
     class: Reports::SoonToExpireReportsJob
