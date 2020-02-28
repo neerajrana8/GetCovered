@@ -21,7 +21,7 @@ module Reports
           'primary_insurance_location' => insurable_address&.full,
           'effective_date' => policy.effective_date,
           'expiration_date' => policy.expiration_date,
-          'finished_date' => nil
+          'finished_date' => policy.expiration_date
         }
       end
       self
