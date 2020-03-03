@@ -6,7 +6,8 @@ class Devise::Users::PasswordsController < DeviseTokenAuth::PasswordsController
     @resource = find_resource(:uid, @email)
     if @resource
       yield @resource if block_given?
-      @resource.settings['last_reset_password_base_url'] = request.base_url
+      @resource.settings['last_reset_password_base_url'] = request.headers['origin']
+      binding.pry
       @resource.save
       @resource.send_reset_password_instructions(
         email: @email,
