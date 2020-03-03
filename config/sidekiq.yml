@@ -31,6 +31,6 @@ production:
   detailed_renters_insurance_uncovered_units_job:
     cron: '0 0 2 * * *'   # Every day at 2:00 AM
     class: Reports::DetailedRentersInsurance::UncoveredUnitsReportsJob
-  pending_cancel_policies_reports_job:
-    cron: '0 2 * * *'
-    class: Reports::PendingCancelPoliciesReportsJob2
+  active_policies_reports_job:
+    cron: '0 2 * * *'   # Every day at 2:00 AM
+    class: Reports::ActivePoliciesReportsJob
