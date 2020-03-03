@@ -78,7 +78,7 @@ module V2
           )
         existed_ids = permitted_params[:addresses_attributes]&.map { |addr| addr[:id] }
 
-        unless existed_ids.nil?
+        unless existed_ids.nil? || existed_ids.compact.blank?
           (@account.addresses.pluck(:id) - existed_ids).each do |id|
             permitted_params[:addresses_attributes] <<
               ActionController::Parameters.new(id: id, _destroy: true).permit(:id, :_destroy)
