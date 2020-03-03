@@ -33,7 +33,7 @@ module Reports
       end
 
       def prepare_community_report(insurable_community)
-        Reports::DetailedRentersInsurance::PendingCancellationPolicies.
+        Reports::DetailedRentersInsurance::ExpireSoonPolicies.
           new(reportable: insurable_community).
           generate.
           tap(&:save)
