@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_02_11_033608) do
+ActiveRecord::Schema.define(version: 2020_03_02_071256) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -167,6 +167,16 @@ ActiveRecord::Schema.define(version: 2020_02_11_033608) do
     t.index ["policy_type_id"], name: "index_billing_strategies_on_policy_type_id"
   end
 
+  create_table "branding_profile_attributes", force: :cascade do |t|
+    t.string "name"
+    t.string "value"
+    t.string "attribute_type"
+    t.bigint "branding_profile_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["branding_profile_id"], name: "index_branding_profile_attributes_on_branding_profile_id"
+  end
+
   create_table "branding_profiles", force: :cascade do |t|
     t.string "title"
     t.string "url"
@@ -176,6 +186,8 @@ ActiveRecord::Schema.define(version: 2020_02_11_033608) do
     t.bigint "profileable_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "logo_url"
+    t.string "footer_logo_url"
     t.index ["profileable_type", "profileable_id"], name: "index_branding_profiles_on_profileable_type_and_profileable_id"
     t.index ["url"], name: "index_branding_profiles_on_url", unique: true
   end
@@ -630,6 +642,15 @@ ActiveRecord::Schema.define(version: 2020_02_11_033608) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["notifiable_type", "notifiable_id"], name: "index_notifications_on_notifiable_type_and_notifiable_id"
+  end
+
+  create_table "pages", force: :cascade do |t|
+    t.text "content"
+    t.string "title"
+    t.bigint "agency_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["agency_id"], name: "index_pages_on_agency_id"
   end
 
   create_table "payment_profiles", force: :cascade do |t|

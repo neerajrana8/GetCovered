@@ -34,8 +34,10 @@
   
     resources :branding_profiles,
       path: "branding-profiles",
-      only: [ :update, :show ]
-      
+      only: [ :show, :create, :update ]
+    
+    resources :pages
+
     resources :carrier_insurable_profiles,
       path: "carrier-insurable-profiles",
       only: [:update, :show]

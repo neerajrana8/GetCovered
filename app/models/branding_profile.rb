@@ -9,10 +9,13 @@ class BrandingProfile < ApplicationRecord
   
   validates_presence_of :title, :url
   
-  belongs_to :profileable, 
-    polymorphic: true
+  belongs_to :profileable, polymorphic: true
+
+  has_many :branding_profile_attributes
     
   scope :default, -> { where(default: true) }
+
+  accepts_nested_attributes_for :branding_profile_attributes
     
   private
   

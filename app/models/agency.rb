@@ -83,6 +83,8 @@ class Agency < ApplicationRecord
   
   has_many :histories, as: :recordable
 
+  has_many :pages, dependent: :destroy
+
   accepts_nested_attributes_for :addresses
 
   scope :enabled, -> { where(enabled: true) }
