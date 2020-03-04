@@ -11,26 +11,38 @@ production:
 
 :schedule:
   coverage_reports_job:
-    cron: '0 0 2 * * *'   # Every day at 2:00 AM
+    cron: '0 2 * * *'   # Every day at 2:00 AM
     class: Reports::CoverageReportsJob
   active_reports_job:
-    cron: '0 0 2 * * *'   # Every day at 2:00 AM
+    cron: '0 2 * * *'   # Every day at 2:00 AM
     class: Reports::ActiveReportsJob
-  detailed_renters_insurance_active_policies_job:
+  third_party_soon_to_expire_reports_job:
     cron: '0 0 2 * * *'   # Every day at 2:00 AM
+    class: Reports::ThirdPartySoonToExpireReportsJob
+  detailed_renters_insurance_active_policies_job:
+    cron: '0 2 * * *'   # Every day at 2:00 AM
     class: Reports::DetailedRentersInsurance::ActivePoliciesReportsJob
   detailed_renters_insurance_cancelled_policies_job:
-    cron: '0 0 2 * * *'   # Every day at 2:00 AM
+    cron: '0 2 * * *'   # Every day at 2:00 AM
     class: Reports::DetailedRentersInsurance::CancelledPoliciesReportsJob
   detailed_renters_insurance_expire_soon_policies_job:
-    cron: '0 0 2 * * *'   # Every day at 2:00 AM
+    cron: '0 2 * * *'   # Every day at 2:00 AM
     class: Reports::DetailedRentersInsurance::ExpireSoonPoliciesReportsJob
   detailed_renters_insurance_pending_cancellation_policies_job:
-    cron: '0 0 2 * * *'   # Every day at 2:00 AM
+    cron: '0 2 * * *'   # Every day at 2:00 AM
     class: Reports::DetailedRentersInsurance::PendingCancellationPoliciesReportsJob
   detailed_renters_insurance_uncovered_units_job:
-    cron: '0 0 2 * * *'   # Every day at 2:00 AM
+    cron: '0 2 * * *'   # Every day at 2:00 AM
     class: Reports::DetailedRentersInsurance::UncoveredUnitsReportsJob
+  high_level_activity_report_job:
+    cron: '0 2 * * 0'   # Every Sunday at 2:00 AM
+    class: Reports::DetailedRentersInsurance::HighLevelActivityReports
+  soon_to_expire_reports_job:
+    cron: '0 2 * * *'   # Every day at 2:00 AM
+    class: Reports::SoonToExpireReportsJob
+  active_policies_reports_job:
+    cron: '0 2 * * *'   # Every day at 2:00 AM
+    class: Reports::ActivePoliciesReportsJob
   renewal_policies_create_job:
     cron: '0 2 * * *'
     class: Reports::RenewalPoliciesCreateJob

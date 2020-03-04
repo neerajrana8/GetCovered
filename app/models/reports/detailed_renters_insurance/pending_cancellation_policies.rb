@@ -15,7 +15,7 @@ module Reports
         units&.each do |insurable|
           policy = insurable.policies.take
 
-          if policy.present? && policy.billing_status == :BEHIND
+          if policy.present? && policy.billing_status == 'BEHIND'
             self.data['rows'] << {
               'address' => insurable.title,
               'primary_user' => policy.primary_user&.profile&.full_name,
