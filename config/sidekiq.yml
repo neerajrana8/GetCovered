@@ -44,5 +44,5 @@ production:
     cron: '0 2 * * *'   # Every day at 2:00 AM
     class: Reports::ActivePoliciesReportsJob
   renewal_policies_create_job:
-    cron: '0 2 * * *'
+    cron: '0 2 * * 0'
     class: Reports::RenewalPoliciesCreateJob

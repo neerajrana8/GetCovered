@@ -61,10 +61,14 @@ module Reports
       units&.map do |unit|
         policy = unit.policies.take
         next if policy.blank?
-        if policy
-          policy
-        end
+        policy if renewal?(policy)
       end&.uniq&.compact
+    end
+
+    def renewal?(policy)
+      policy.cancellation_date_date&.between?(range_start, range_end) ||
+        policy.billing_behind_since&.between?(range_start, range_end) ||
+        (policy.auto_renew == false && policy.expiration_date&.between?(range_start, range_end))
     end
 
     def set_defaults
