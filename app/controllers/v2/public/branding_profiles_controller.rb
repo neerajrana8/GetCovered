@@ -20,6 +20,7 @@ module V2
         else
           @branding_profile = BrandingProfile.find_by(subdomain: subdomain)
         end
+        @branding_profile ||= BrandingProfile.find_by(title: 'GetCovered')
       end
 	  end
 	end
