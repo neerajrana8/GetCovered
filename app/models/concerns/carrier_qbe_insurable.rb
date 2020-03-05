@@ -31,7 +31,7 @@ module CarrierQbeInsurable
 	        format: 'xml', 
 	        interface: 'SOAP',
 	        process: 'qbe_get_zipcode', 
-	        endpoint: Rails.application.credentials.qbe[:uri]
+	        endpoint: Rails.application.credentials.qbe[:uri][ENV["RAILS_ENV"].to_sym]
 	      )
 	      
 	      return false if @already_in_on_create.nil? == false
@@ -181,7 +181,7 @@ module CarrierQbeInsurable
 	        format: 'xml', 
 	        interface: 'SOAP',
 	        process: 'qbe_property_info', 
-	        endpoint: Rails.application.credentials.qbe[:uri]
+	        endpoint: Rails.application.credentials.qbe[:uri][ENV["RAILS_ENV"].to_sym]
 	      )      
 	      
 	      return false if @already_in_on_create.nil? == false
@@ -432,7 +432,7 @@ module CarrierQbeInsurable
 	        interface: 'SOAP',
 	        process: 'get_qbe_rates',
 	        request: qbe_service.compiled_rxml,
-	        endpoint: Rails.application.credentials.qbe[:uri]
+	        endpoint: Rails.application.credentials.qbe[:uri][ENV["RAILS_ENV"].to_sym]
 	      )
 	
 	      if event.save

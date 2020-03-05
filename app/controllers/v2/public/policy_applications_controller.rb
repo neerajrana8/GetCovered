@@ -76,7 +76,7 @@ module V2
           else
             
             secure_tmp_password = SecureRandom.base64(12)
-            @user = @application.policy_users.create!(
+            policy_user = @application.policy_users.create!(
               spouse: policy_user[:spouse],
               user_attributes: {
                 email: policy_user[:user_attributes][:email],
@@ -92,7 +92,7 @@ module V2
               }
             )
             
-            @user.invite! if index == 0
+            policy_user.user.invite! if index == 0
             
           end
           

@@ -43,7 +43,7 @@ module CarrierQbePolicyQuote
 	          format: 'xml', 
 	          interface: 'SOAP',
 	          process: 'send_qbe_policy_info', 
-	          endpoint: Rails.application.credentials.qbe[:uri]
+	          endpoint: Rails.application.credentials.qbe[:uri][ENV["RAILS_ENV"].to_sym]
 	        )
           
           carrier_agency = CarrierAgency.where(agency: account.agency, carrier: self.policy_application.carrier).take
