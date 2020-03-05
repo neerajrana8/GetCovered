@@ -7,8 +7,7 @@ module TokenValidationMethods
     def validate_token
       # @resource will have been set by set_user_by_token concern
       if @resource
-        # render template: show_json_path(@resource.class.name)
-        render json: @resource.as_json
+        render template: show_json_path(@resource.class.name)
       else
         render json: {
           success: false,
