@@ -8,12 +8,18 @@ module V2
 	  	before_action :set_branding_profile, only: [:show]
 
       def show
+        render :show, status: :ok
       end
       
       private
       
       def set_branding_profile
-        @branding_profile = BrandingProfile.find(params[:id])
+        subdomain = ActionDispatch::Http::URL.extract_subdomain(request.original_url, 1)
+        if subdomain.empty?
+          @branding_profile = BrandingProfile.find_by(title: 'GetCovered')
+        else
+          @branding_profile = BrandingProfile.find_by(subdomain: subdomain)
+        end
       end
 	  end
 	end
