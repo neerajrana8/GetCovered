@@ -17,7 +17,9 @@ scope module: :public do
   resources :billing_strategies,
     path: "billing-strategies",
     only: [ :index ]
-  
+
+	resources :branding_profiles, path: "branding-profiles", only: [ :show ]
+
   resources :carrier_class_codes,
     path: "class-codes",
     only: [:index]
