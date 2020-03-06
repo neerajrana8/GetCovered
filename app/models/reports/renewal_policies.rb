@@ -17,6 +17,7 @@ module Reports
           'primary_insured_phone' => primary_policy_user&.contact_phone,
           'primary_insured_email' => primary_policy_user&.contact_email,
           'primary_insurance_location' => insurable_address&.full,
+          'original_start_date' => nil,
           'renewal_effective_date' => policy.effective_date,
           'renewal_expiration_date' => policy.expiration_date
         }
@@ -37,6 +38,7 @@ module Reports
         'primary_insured_phone' => 'Primary Insured Phone',
         'primary_insured_email' => 'Primary Insured Email',
         'primary_insurance_location' => 'Primary Insurance Location',
+        'original_start_date' => 'Original start date',
         'renewal_effective_date' => 'Renewal effective date',
         'renewal_expiration_date' => 'Renewal expiration date'
       }
@@ -45,7 +47,7 @@ module Reports
     def headers
       %w[management_company property_name property_city property_state property_phone policy_type
          policy_number primary_insured_name primary_insured_phone primary_insured_email
-         primary_insurance_location renewal_effective_date renewal_expiration_date]
+         primary_insurance_location original_start_date renewal_effective_date renewal_expiration_date]
     end
 
     private
