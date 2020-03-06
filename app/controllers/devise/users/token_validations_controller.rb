@@ -5,7 +5,7 @@ class Devise::Users::TokenValidationsController < DeviseTokenAuth::TokenValidati
     # @resource will have been set by set_user_by_token concern
     if @resource
       @user = @resource
-      render template: "v2/auth/user.json", status: :ok
+      render template: "v2/user/users/show.json", status: :ok
     else
       render json: {
         success: false,
@@ -13,5 +13,4 @@ class Devise::Users::TokenValidationsController < DeviseTokenAuth::TokenValidati
       }, status: 401
     end  
   end
-     
 end
