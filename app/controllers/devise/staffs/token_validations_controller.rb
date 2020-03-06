@@ -5,7 +5,7 @@ class Devise::Staffs::TokenValidationsController < DeviseTokenAuth::TokenValidat
     # @resource will have been set by set_user_by_token concern
     if @resource
       @staff = @resource
-      render template: "v2/staff_super_admin/staffs/show", status: :ok
+      render template: "v2/staff_super_admin/staffs/show.json", status: :ok
     else
       render json: {
         success: false,
