@@ -20,9 +20,9 @@ module TokenValidationMethods
   def show_json_path(resource_type)
     case resource_type
     when 'User'
-      'v1/user/users/show.json'
+      'v2/user/users/show'
     when 'Staff'
-      'v1/account/staffs/show.json'
+      'v2/staff_super_admin/staffs/show'
     else
       ''
     end
