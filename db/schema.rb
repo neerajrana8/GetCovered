@@ -890,6 +890,10 @@ ActiveRecord::Schema.define(version: 2020_03_05_130724) do
     t.bigint "user_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "status", default: 0
+    t.datetime "disputed_at"
+    t.integer "dispute_status", default: 0
+    t.text "dispute_reason"
     t.index ["policy_application_id"], name: "index_policy_users_on_policy_application_id"
     t.index ["policy_id"], name: "index_policy_users_on_policy_id"
     t.index ["user_id"], name: "index_policy_users_on_user_id"
