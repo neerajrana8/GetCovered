@@ -30,7 +30,13 @@
       only: [ :create, :update, :index, :show ]
 
     resources :assignments, only: [ :index, :show ]
+
+    resources :branding_profiles,
+      path: "branding-profiles",
+      only: [ :index, :create, :update, :show, :destroy ]
   
+    resources :pages
+    
     resources :carriers,
       only: [ :create, :update, :index, :show ] do
         member do
