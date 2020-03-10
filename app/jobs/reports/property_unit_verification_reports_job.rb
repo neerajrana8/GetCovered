@@ -1,5 +1,5 @@
 module Reports
-  class PropertyUnitVerificationReportsJob
+  class PropertyUnitVerificationReportsJob < ApplicationJob
     queue_as :default
 
     def perform
