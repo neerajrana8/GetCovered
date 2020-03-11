@@ -183,7 +183,7 @@ module V2
           	# if application.status updated to complete
           	@application.qbe_estimate()
           	@quote = @application.policy_quotes.last
-  					if @application.status != "quote_failed" || application.status != "quoted"
+  					if @application.status != "quote_failed" || @application.status != "quoted"
   						# if application quote success or failure
   						@application.qbe_quote(@quote.id) 
   						@application.reload()
@@ -228,18 +228,50 @@ module V2
       
       def update
         if @policy_application.policy_type.title == "Residential"
+
+					@policy_application.policy_rates.destroy_all
           
-          if update_params.has_key?("policy_rates_attributes")
-            
-            new_rates = update_params["policy_rates_attributes"].map { |r| r["insurable_rate_id"] }
-            current_rates = @policy_application.policy_rates.map(&:insurable_rate_id)
-            
-            @policy_application.policy_rates.each { |r| r.destroy if !new_rates.include?( r.insurable_rate_id ) || r.insurable_rate.sub_schedule == "policy_fee" }
-            new_rates.each { |r| @application.insurable_rates << InsurableRate.find(r) if !current_rates.include?(r) }
-            
-            @policy_application.qbe_estimate()
-            
-          end
+          if @policy_application.update(update_params) && 
+             @policy_application.update(status: "complete")
+             
+          	@policy_application.qbe_estimate()
+          	@quote = @policy_application.policy_quotes.last
+  					if @policy_application.status != "quote_failed" || @policy_application.status != "quoted"
+  						# if application quote success or failure
+  						@policy_application.qbe_quote(@quote.id) 
+  						@policy_application.reload()
+  						@quote.reload()
+  						
+  						pp @quote
+  						
+  						if @quote.status == "quoted"	
+  						  
+  							render json: { 
+	  							id: @policy_application.id,
+  								quote: { 
+  									id: @quote.id, 
+  									status: @quote.status, 
+  									premium: @quote.policy_premium 
+  								},
+  								invoices: @quote.invoices.order('due_date ASC'),
+  								user: { 
+  									id: @policy_application.primary_user().id,
+  									stripe_id: @policy_application.primary_user().stripe_id
+  								}
+  							}.to_json, status: 200
+  						
+  						else
+  							render json: { error: "Quote Failed", message: "Quote could not be processed at this time" },
+  										 status: 500	
+  						end
+  					else
+  						render json: { error: "Application Unavailable", message: "Application cannot be quoted at this time" },
+  									 status: 400							
+  					end          	
+          else
+	          render json: @policy_application.errors.to_json,
+	                 status: 422	
+          end    
           
         else
         
