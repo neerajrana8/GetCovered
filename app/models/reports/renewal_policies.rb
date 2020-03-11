@@ -17,7 +17,7 @@ module Reports
           'primary_insured_phone' => primary_policy_user&.contact_phone,
           'primary_insured_email' => primary_policy_user&.contact_email,
           'primary_insurance_location' => insurable_address&.full,
-          'original_start_date' => nil,
+          'original_start_date' =>  policy.effective_date,
           'renewal_effective_date' => policy.effective_date,
           'renewal_expiration_date' => policy.expiration_date
         }
