@@ -242,8 +242,6 @@ module V2
   						@policy_application.reload()
   						@quote.reload()
   						
-  						pp @quote
-  						
   						if @quote.status == "quoted"	
   						  
   							render json: { 
