@@ -155,7 +155,7 @@ module CarrierQbeInsurable
 	      set_error = nil
 	    end
 	    
-	    return set_error
+	    return set_error ? false : true
 	  end
 	  
 	  # Get QBE Property Info
@@ -272,7 +272,7 @@ module CarrierQbeInsurable
 	      set_error = nil
 	    end    
 	    
-	    return set_error
+	    return set_error ? false : true
 	  end
   
 	  # Fix QBE Carrier Rates
@@ -292,8 +292,8 @@ module CarrierQbeInsurable
 		      if inline
 						get_qbe_rates(num)		      
 			    else
-		        # delay = index
-		        # GetCommunityRatesJob.set(wait: delay.minutes).perform_later(self, num)  
+		        delay = index
+		        GetInsurableRatesJob.set(wait: delay.minutes).perform_later(self, num)  
 	        end
 	      end
 	    end
