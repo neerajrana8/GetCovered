@@ -27,7 +27,13 @@ class Devise::Users::InvitationsController < Devise::InvitationsController
     end
   end
 
-  private  
+  private
+
+  def resource_from_invitation_token
+    @user = User.find_by_invitation_token(params[:invitation_token], true)
+    return if params[:invitation_token] && @user
+    render json: { errors: ['Invalid token.'] }, status: :not_acceptable
+  end
 
     def invite_params
       params.permit(user: [:email, :invitation_token, :provider, :skip_invitation])
