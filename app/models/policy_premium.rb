@@ -37,7 +37,7 @@ class PolicyPremium < ApplicationRecord
   end
   
   def combined_premium
-		return include_special_premium? ? self.base + self.special_premium : self.base  
+		return include_special_premium ? self.base + self.special_premium : self.base  
 	end
   
   def set_fees
