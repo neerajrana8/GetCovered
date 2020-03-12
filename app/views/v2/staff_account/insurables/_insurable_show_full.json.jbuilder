@@ -28,7 +28,7 @@ end
 json.carrier_insurable_profiles do
   unless insurable.carrier_insurable_profiles.nil?
     json.array! insurable.carrier_insurable_profiles do |insurable_carrier_insurable_profiles|
-      json.partial! "v2/staff_account/carrier_insurable_profiles/carrier_insurable_profile_short_fields.json.jbuilder",
+      json.partial! "v2/staff_account/carrier_insurable_profiles/carrier_insurable_profile_full_fields.json.jbuilder",
                     carrier_insurable_profile: insurable_carrier_insurable_profiles
     end
   end
