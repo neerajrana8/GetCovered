@@ -3,6 +3,8 @@
 # file: +app/models/branding_profile_attribute.rb+
 
 class BrandingProfileAttribute < ApplicationRecord  
+  include ActionView::Helpers::SanitizeHelper
+
   belongs_to :branding_profile
 
   before_save :sanitize_content
