@@ -19,6 +19,7 @@ scope module: :public do
     only: [ :index ]
 
 	get 'branding-profile', to: 'branding_profiles#show'
+	resources :pages, only: [ :show ]
 
   resources :carrier_class_codes,
     path: "class-codes",

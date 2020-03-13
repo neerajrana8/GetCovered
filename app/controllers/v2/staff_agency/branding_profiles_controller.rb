@@ -60,7 +60,7 @@ module V2
           return({}) if params[:branding_profile].blank?
           params.require(:branding_profile).permit(
             :default, :profileable_id, :profileable_type, :title,
-            :url, :footer_logo_url, :logo_url, 
+            :url, :footer_logo_url, :logo_url, :subdomain, :subdomain_test
             branding_profile_attributes_attributes: [ :id, :name, :value, :attribute_type], 
             styles: {}
           )

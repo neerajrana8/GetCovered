@@ -12,6 +12,7 @@ class BrandingProfile < ApplicationRecord
   belongs_to :profileable, polymorphic: true
 
   has_many :branding_profile_attributes
+  has_many :pages
     
   scope :default, -> { where(default: true) }
 
