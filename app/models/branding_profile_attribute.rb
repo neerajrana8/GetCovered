@@ -4,7 +4,6 @@
 
 class BrandingProfileAttribute < ApplicationRecord  
   belongs_to :branding_profile
-  belongs_to :agency
 
   before_save :sanitize_content
 
