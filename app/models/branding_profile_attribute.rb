@@ -9,7 +9,8 @@ class BrandingProfileAttribute < ApplicationRecord
   
   belongs_to :branding_profile
 
-  before_save :sanitize_content
+  # Turned off for now, because sanitizing inline svg
+  # before_save :sanitize_content
 
   def sanitize_content
     self.value = sanitize value, tags: ALLOWED_TAGS, attributes: ALLOWED_ATTRIBUTES 
