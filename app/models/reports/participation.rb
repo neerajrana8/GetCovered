@@ -1,76 +1,158 @@
 module Reports
   class Participation < ::Report
     def generate
-      reportable_policies&.each do |policy|
-        insurable = policy.primary_insurable
-        insurable_address = insurable&.primary_address
-        primary_policy_user = policy&.primary_user&.profile
-        self.data['rows'] << {
-          'management_company' => policy.account.title,
-          'property_name' => insurable_address&.full,
-          'property_city' => insurable_address&.city,
-          'property_state' => insurable_address&.state,
-          'property_phone' => nil,
-          'policy_type' => 'H04',
-          'policy_number' => policy.number,
-          'primary_insured_name' => primary_policy_user&.full_name,
-          'primary_insured_phone' => primary_policy_user&.contact_phone,
-          'primary_insured_email' => primary_policy_user&.contact_email,
-          'primary_insurance_location' => insurable_address&.full,
-          'effective_date' => policy.effective_date,
-          'expiration_date' => policy.expiration_date,
-          'finished_date' => policy.expiration_date
-        }
-      end
+      self.data = report_data
       self
     end
 
-    def column_names
-      {
-        'management_company' => 'Management Company',
-        'property_name' => 'Property Name',
-        'property_city' => 'Property City',
-        'property_state' => 'Property State',
-        'property_phone' => 'Property Phone',
-        'policy_type' => 'Policy Type',
-        'policy_number' => 'Policy Number',
-        'primary_insured_name' => 'Primary Insured Name',
-        'primary_insured_phone' => 'Primary Insured Phone',
-        'primary_insured_email' => 'Primary Insured Email',
-        'primary_insurance_location' => 'Primary Insurance Location',
-        'effective_date' => 'Effective date',
-        'expiration_date' => 'Expiration date',
-        'finished_date' => 'Finished date'
-      }
+    def to_csv
+      CSV.generate do |csv|
+        fields.each do |field|
+          csv << [column_names[field], self.data[field]]
+        end
+      end
     end
 
-    def headers
-      %w[management_company property_name property_city property_state property_phone policy_type
-         policy_number primary_insured_name primary_insured_phone primary_insured_email
-         primary_insurance_location effective_date expiration_date finished_date]
+    def fields
+      %w[
+         last_month_participation
+         participation_rate
+         participation_trend
+         occupied_participation_rate
+         occupied_participation_trend
+         in_system_participation_rate
+         3rd_party_participation_rate
+         total_units
+         total_occupied_units
+         number_covered_units
+         number_covered_in_system
+         number_uncovered
+         number_active_system_policies
+         number_active_3rd_party_policies
+      ]
+    end
+
+    # There can be implemented a localization
+    def column_names
+      {
+        'last_month_participation' => 'Last month participation rate',
+        'participation_rate' => 'Participation rate',
+        'participation_trend' => 'Participation trend',
+        'occupied_participation_rate' => 'Participation rate(occupied units)',
+        'occupied_participation_trend' => 'Participation trend(occupied units)',
+        'in_system_participation_rate' => 'Current Agency Participation Rate(%)',
+        '3rd_party_participation_rate' => 'Current 3rd Party Participation Rate',
+        'total_units' => 'Total units',
+        'total_occupied_units' => 'Total occupied units',
+        'number_covered_units' => 'Number covered units',
+        'number_covered_in_system' => 'Number covered units by the agency',
+        'number_uncovered' => 'Number uncovered units',
+        'number_active_system_policies' => 'Number of In-Force Agency Policies',
+        'number_active_3rd_party_policies' => 'Number of In-Force 3rd Party Policies'
+      }
     end
 
     private
 
-    def reportable_policies
-      units =
-        if reportable.is_a?(Insurable)
-          reportable.units
-        else
-          reportable.insurables.units
-        end
-
-      units&.map do |unit|
-        policy = unit.policies.take
-        next if policy.blank?
-        if policy.expiration_date > Time.current
-          policy
-        end
-      end&.uniq&.compact
+    def report_data
+      {
+        'last_month_participation' => last_month_participation,
+        'participation_rate' => participation_rate,
+        'participation_trend' => participation_trend,
+        'occupied_participation_rate' => occupied_participation_rate,
+        'occupied_participation_trend' => 'Participation trend(occupied units)',
+        'in_system_participation_rate' => in_system_participation_rate,
+        '3rd_party_participation_rate' => external_participation_rate,
+        'total_units' => coverage_report[:unit_count],
+        'total_occupied_units' => coverage_report[:occupied_count],
+        'number_covered_units' => coverage_report[:covered_count],
+        'number_covered_in_system' => coverage_report[:policy_internal_covered_count],
+        'number_uncovered' => coverage_report[:unit_count] - coverage_report[:covered_count],
+        'number_active_system_policies' => number_active_system_policies,
+        'number_active_3rd_party_policies' => number_active_3rd_party_policies
+      }
     end
 
-    def set_defaults
-      self.data ||= { rows:[] }
+    def coverage_report
+      @coverage_report ||= reportable.coverage_report
+    end
+
+    def reportable_units
+      if reportable.is_a?(Insurable)
+        reportable.units
+      else
+        reportable.insurables.units
+      end
+    end
+
+    def participation_rate
+      (coverage_report[:covered_count] / coverage_report[:unit_count] * 100).round(2)
+    end
+
+    def participation_trend
+      if last_month_report.present?
+        if participation_rate > last_month_report.data['participation_rate']
+          'up'
+        elsif participation_rate < last_month_report.data['participation_rate']
+          'down'
+        else
+          'not changed'
+        end
+      else
+        nil
+      end
+    end
+
+    def occupied_participation_rate
+      (coverage_report[:covered_count] / coverage_report[:occupied_count] * 100).round(2)
+    end
+
+    def occupied_participation_trend
+      if last_month_report.present?
+        if occupied_participation_rate > last_month_report.data['occupied_participation_trend']
+          'up'
+        elsif occupied_participation_rate < last_month_report.data['occupied_participation_trend']
+          'down'
+        else
+          'not changed'
+        end
+      else
+        nil
+      end
+    end
+
+    def in_system_participation_rate
+      (coverage_report[:policy_internal_covered_count] / coverage_report[:unit_count] * 100).round(2)
+    end
+
+    def external_participation_rate
+      (coverage_report[:policy_external_covered_count] / coverage_report[:unit_count] * 100).round(2)
+    end
+
+    def number_active_system_policies
+      Policy.
+        joins(:insurables).
+        where(insurables: { id: reportable_units.map(&:id) }, policies: {policy_in_system: true}).
+        where('policies.expiration_date > ?', Time.current).
+        distinct.
+        count
+    end
+
+    def number_active_3rd_party_policies
+      Policy.
+        joins(:insurables).
+        where(insurables: { id: reportable_units.map(&:id) }, policies: {policy_in_system: false}).
+        where('policies.expiration_date > ?', Time.current).
+        distinct.
+        count
+    end
+
+    def last_month_report
+      @last_month_report ||= Reports::Participation.where(reportable: reportable).order(created_at: :desc).first
+    end
+
+    def last_month_participation
+      last_month_report&.data['participation_rate']
     end
   end
 end

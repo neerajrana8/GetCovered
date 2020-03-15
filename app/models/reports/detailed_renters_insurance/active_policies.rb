@@ -13,7 +13,7 @@ module Reports
           end
         units&.each do |insurable|
           policy = insurable.policies.take
-          if policy.present?
+          if policy.present? && policy.expiration_date > Time.current
             self.data['rows'] << {
               'address' => insurable.title,
               'primary_user' => policy.primary_user&.profile&.full_name,
