@@ -60,7 +60,7 @@ module Reports
         'participation_rate' => participation_rate,
         'participation_trend' => participation_trend,
         'occupied_participation_rate' => occupied_participation_rate,
-        'occupied_participation_trend' => 'Participation trend(occupied units)',
+        'occupied_participation_trend' => occupied_participation_trend,
         'in_system_participation_rate' => in_system_participation_rate,
         '3rd_party_participation_rate' => external_participation_rate,
         'total_units' => coverage_report[:unit_count],
