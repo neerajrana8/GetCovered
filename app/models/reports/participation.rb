@@ -147,21 +147,29 @@ module Reports
     end
 
     def number_active_system_policies
-      Policy.
-        joins(:insurables).
-        where(insurables: { id: reportable_units.map(&:id) }, policies: {policy_in_system: true}).
-        where('policies.expiration_date > ?', Time.current).
-        distinct.
-        count
+      if reportable_units.present?
+        Policy.
+          joins(:insurables).
+          where(insurables: { id: reportable_units.map(&:id) }, policies: { policy_in_system: true }).
+          where('policies.expiration_date > ?', Time.current).
+          distinct.
+          count
+      else
+        0
+      end
     end
 
     def number_active_3rd_party_policies
-      Policy.
-        joins(:insurables).
-        where(insurables: { id: reportable_units.map(&:id) }, policies: {policy_in_system: false}).
-        where('policies.expiration_date > ?', Time.current).
-        distinct.
-        count
+      if reportable_units.present?
+        Policy.
+          joins(:insurables).
+          where(insurables: { id: reportable_units.map(&:id) }, policies: { policy_in_system: false }).
+          where('policies.expiration_date > ?', Time.current).
+          distinct.
+          count
+      else
+        0
+      end
     end
 
     def last_month_report
