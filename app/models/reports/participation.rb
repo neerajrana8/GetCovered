@@ -95,9 +95,9 @@ module Reports
 
     def participation_trend
       if last_month_report.present?
-        if participation_rate > last_month_report.data['participation_rate']
+        if participation_rate > last_month_report.data['participation_rate'].to_f.round(2)
           'up'
-        elsif participation_rate < last_month_report.data['participation_rate']
+        elsif participation_rate < last_month_report.data['participation_rate'].to_f.round(2)
           'down'
         else
           'not changed'
@@ -117,9 +117,9 @@ module Reports
 
     def occupied_participation_trend
       if last_month_report.present?
-        if occupied_participation_rate > last_month_report.data['occupied_participation_trend']
+        if occupied_participation_rate > last_month_report.data['occupied_participation_trend'].to_f.round(2)
           'up'
-        elsif occupied_participation_rate < last_month_report.data['occupied_participation_trend']
+        elsif occupied_participation_rate < last_month_report.data['occupied_participation_trend'].to_f.round(2)
           'down'
         else
           'not changed'
@@ -131,7 +131,7 @@ module Reports
 
     def in_system_participation_rate
       if coverage_report[:occupied_count] > 0
-        (coverage_report[:policy_internal_covered_count] / coverage_report[:unit_count] * 100).round(2)
+        (coverage_report[:policy_internal_covered_count].to_f / coverage_report[:unit_count] * 100).round(2)
       else
         0
       end
@@ -140,7 +140,7 @@ module Reports
 
     def external_participation_rate
       if coverage_report[:occupied_count] > 0
-        (coverage_report[:policy_external_covered_count] / coverage_report[:unit_count] * 100).round(2)
+        (coverage_report[:policy_external_covered_count].to_f / coverage_report[:unit_count] * 100).round(2)
       else
         0
       end
