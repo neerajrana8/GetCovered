@@ -117,9 +117,9 @@ module Reports
 
     def occupied_participation_trend
       if last_month_report.present?
-        if occupied_participation_rate > last_month_report.data['occupied_participation_trend'].to_f.round(2)
+        if occupied_participation_rate > last_month_report.data['occupied_participation_rate'].to_f.round(2)
           'up'
-        elsif occupied_participation_rate < last_month_report.data['occupied_participation_trend'].to_f.round(2)
+        elsif occupied_participation_rate < last_month_report.data['occupied_participation_rate'].to_f.round(2)
           'down'
         else
           'not changed'
