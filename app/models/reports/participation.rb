@@ -109,7 +109,7 @@ module Reports
 
     def occupied_participation_rate
       if coverage_report[:occupied_count] > 0
-        (coverage_report[:covered_count].to_f / coverage_report[:occupied_count] * 100).round(2)
+        (coverage_report[:occupied_covered_count].to_f / coverage_report[:occupied_count] * 100).round(2)
       else
         0
       end
