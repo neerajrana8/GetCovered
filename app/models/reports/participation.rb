@@ -86,7 +86,11 @@ module Reports
     end
 
     def participation_rate
-      (coverage_report[:covered_count] / coverage_report[:unit_count] * 100).round(2)
+      if coverage_report[:unit_count] > 0
+        (coverage_report[:covered_count].to_f / coverage_report[:unit_count] * 100).round(2)
+      else
+        0
+      end
     end
 
     def participation_trend
@@ -104,7 +108,11 @@ module Reports
     end
 
     def occupied_participation_rate
-      (coverage_report[:covered_count] / coverage_report[:occupied_count] * 100).round(2)
+      if coverage_report[:occupied_count] > 0
+        (coverage_report[:covered_count].to_f / coverage_report[:occupied_count] * 100).round(2)
+      else
+        0
+      end
     end
 
     def occupied_participation_trend
@@ -122,11 +130,20 @@ module Reports
     end
 
     def in_system_participation_rate
-      (coverage_report[:policy_internal_covered_count] / coverage_report[:unit_count] * 100).round(2)
+      if coverage_report[:occupied_count] > 0
+        (coverage_report[:policy_internal_covered_count] / coverage_report[:unit_count] * 100).round(2)
+      else
+        0
+      end
+
     end
 
     def external_participation_rate
-      (coverage_report[:policy_external_covered_count] / coverage_report[:unit_count] * 100).round(2)
+      if coverage_report[:occupied_count] > 0
+        (coverage_report[:policy_external_covered_count] / coverage_report[:unit_count] * 100).round(2)
+      else
+        0
+      end
     end
 
     def number_active_system_policies
@@ -152,7 +169,7 @@ module Reports
     end
 
     def last_month_participation
-      last_month_report&.data['participation_rate']
+      last_month_report ? last_month_report.data['participation_rate'] : nil
     end
   end
 end
