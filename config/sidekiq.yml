@@ -10,6 +10,7 @@ production:
   - elasticsearch
 
 :schedule:
+  # Reports
   coverage_reports_job:
     cron: '0 2 * * *'   # Every day at 2:00 AM
     class: Reports::CoverageReportsJob
@@ -45,4 +46,7 @@ production:
     class: Reports::ActivePoliciesReportsJob
   property_unit_verification_reports_job:
     cron: '0 2 * * *'   # Every day at 2:00 AM
+    class: Reports::PropertyUnitVerificationReportsJob
+  high_level_participation_reports_job:
+    cron: '0 2 1 * *'   # Each first day of month at 2:00 AM
     class: Reports::PropertyUnitVerificationReportsJob
