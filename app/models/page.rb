@@ -2,6 +2,7 @@ class Page < ApplicationRecord
   include ActionView::Helpers::SanitizeHelper
 
   belongs_to :agency
+  belongs_to :branding_profile
 
   before_save :sanitize_content
 

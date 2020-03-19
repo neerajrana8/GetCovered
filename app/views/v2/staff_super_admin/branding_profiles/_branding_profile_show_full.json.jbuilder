@@ -3,7 +3,9 @@ json.partial! "v2/staff_super_admin/branding_profiles/branding_profile_show_fiel
 
 
 json.profile_attributes do
-  unless branding_profile.branding_profile_attributes.nil?
-    json.array! branding_profile.branding_profile_attributes
-  end
+  json.array! branding_profile&.branding_profile_attributes
+end
+
+json.pages do
+  json.array! branding_profile&.pages
 end
