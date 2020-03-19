@@ -13,6 +13,9 @@ class Staff < ApplicationRecord
   include ElasticsearchSearchable
 
   enum role: { staff: 0, agent: 1, owner: 2, super_admin: 3 }
+
+  validate :proper_role
+
   # Active Record Callbacks
   after_initialize :initialize_staff
   after_create :set_first_as_primary_on_organizable
@@ -100,7 +103,14 @@ class Staff < ApplicationRecord
   private
 
 	  def initialize_staff
-	  end
+    end
+    
+    def proper_role
+      errors.add(:role, "must match organization type") if organizable_type == 'Agency' && role != 'agent'
+      
+      errors.add(:role, "must match organization type") if organizable_type == 'Account' && role != 'staff'
+    end
+
 
 		def set_first_as_primary_on_organizable
 			unless organizable.nil?
