@@ -3,7 +3,9 @@ json.partial! "v2/staff_agency/branding_profiles/branding_profile_show_fields.js
 
 
 json.profile_attributes do
-  unless branding_profile.branding_profile_attributes.nil?
-    json.array! branding_profile.branding_profile_attributes
-  end
+  json.array! branding_profile&.branding_profile_attributes
+end
+
+json.pages do
+  json.array! branding_profile&.pages
 end

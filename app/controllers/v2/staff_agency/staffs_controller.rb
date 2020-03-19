@@ -9,42 +9,47 @@ module V2
       before_action :set_staff, only: %i[update show re_invite]
             
       def index
-        super(:@staffs, current_staff.organizable.staff, :profile)
+        if (params[:filter] && params[:filter][:organizable_type] == 'Account')
+          super(:@staffs, current_staff.organizable.account_staff, :profile)
+        else
+          super(:@staffs, current_staff.organizable.staff, :profile)
+        end
       end
       
-      def show; end
+      def show
+        if show_allowed?
+          render :show, status: :ok
+        else
+          render json: { success: false, errors: ['Unauthorized Access'] }, status: :unauthorized
+        end
+
+      end
       
       def create
         if create_allowed?
-          @staff = current_staff.organizable.staff.new(create_params)
+          @staff = Staff.new(create_params)
           # remove password issues from errors since this is a Devise model
           @staff.valid? if @staff.errors.blank?
           @staff.errors.messages.except!(:password)
           if @staff.errors.none? && @staff.invite_as(current_staff)
-            render :show,
-              status: :created
+            render :show, status: :created
           else
-            render json: @staff.errors,
-                   status: :unprocessable_entity
+            render json: @staff.errors, status: :unprocessable_entity
           end
         else
-          render json: { success: false, errors: ['Unauthorized Access'] },
-                 status: :unauthorized
+          render json: { success: false, errors: ['Unauthorized Access'] }, status: :unauthorized
         end
       end
       
       def update
         if update_allowed?
           if @staff.update_as(current_staff, update_params)
-            render :show,
-              status: :ok
+            render :show, status: :ok
           else
-            render json: @staff.errors,
-                   status: :unprocessable_entity
+            render json: @staff.errors, status: :unprocessable_entity
           end
         else
-          render json: { success: false, errors: ['Unauthorized Access'] },
-                 status: :unauthorized
+          render json: { success: false, errors: ['Unauthorized Access'] }, status: :unauthorized
         end
       end
       
@@ -55,8 +60,7 @@ module V2
 
       def re_invite
         if @staff.enabled?
-          render json: { success: false, errors: { staff: 'Already activated' } },
-                 status: :unprocessable_entity
+          render json: { success: false, errors: { staff: 'Already activated' } }, status: :unprocessable_entity
         else
           if @staff.invite_as(current_staff)
             render json: { success: true }, status: :ok
@@ -73,13 +77,23 @@ module V2
       def view_path
         super + '/staffs'
       end
+
+      def show_allowed?
+        return true if current_staff.organizable == @staff.organizable
+
+        return true if current_staff.organizable.accounts.include?(@staff.organizable)
+
+        false
+      end
         
       def create_allowed?
-        if create_params[:role] == 'super_admin'
-          false
-        else
-          true
-        end
+        return false if create_params[:role] == 'super_admin'
+
+        return false if create_params[:organizable_type] == 'Agency' && current_staff.organizable.id != create_params[:organizable_id]
+
+        return false if create_params[:organizable_type] == 'Account' && current_staff.organizable.id != Account.find_by(id: create_params[:organizable_id])&.id
+        
+        true
       end
         
       def update_allowed?
@@ -87,7 +101,7 @@ module V2
       end
         
       def set_staff
-        @staff = current_staff.organizable.staff.find_by(id: params[:id])
+        @staff = Staff.find(params[:id])
       end
                 
       def create_params

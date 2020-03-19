@@ -3,7 +3,12 @@ json.partial! "v2/public/branding_profiles/branding_profile_show_fields.json.jbu
 
 
 json.profile_attributes do
-  unless branding_profile.branding_profile_attributes.nil?
-    json.array! branding_profile.branding_profile_attributes
+  json.array! branding_profile&.branding_profile_attributes
+end
+
+json.pages do
+  json.array! branding_profile&.pages do |page|
+    json.id page.id
+    json.title page.title
   end
 end
