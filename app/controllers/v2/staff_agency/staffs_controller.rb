@@ -16,7 +16,14 @@ module V2
         end
       end
       
-      def show; end
+      def show
+        if show_allowed?
+          render :show, status: :ok
+        else
+          render json: { success: false, errors: ['Unauthorized Access'] }, status: :unauthorized
+        end
+
+      end
       
       def create
         if create_allowed?
@@ -70,6 +77,14 @@ module V2
       def view_path
         super + '/staffs'
       end
+
+      def show_allowed?
+        return true if current_staff.organizable == @staff.organizable
+
+        return true if current_staff.organizable.accounts.include?(@staff.organizable)
+
+        false
+      end
         
       def create_allowed?
         return false if create_params[:role] == 'super_admin'
@@ -86,7 +101,7 @@ module V2
       end
         
       def set_staff
-        @staff = current_staff.organizable.staff.find_by(id: params[:id])
+        @staff = Staff.find(params[:id])
       end
                 
       def create_params
