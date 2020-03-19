@@ -86,7 +86,7 @@ module Reports
 
       {
         'insurable_id' => community.id,
-        'property_name' => community.primary_address.full,
+        'property_name' => community.primary_address&.full,
         'current_participation' => participation_report_data['participation_rate'],
         'last_month_participation' => last_month_data[:participation],
         'change_in_participation' => participation_report_data['participation_rate'] - last_month_data[:participation].to_f,
