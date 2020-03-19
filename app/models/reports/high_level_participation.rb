@@ -1,12 +1,30 @@
-# Usually this report will
+# This report is only for agencies and accounts
 module Reports
   class HighLevelParticipation < ::Report
     def generate
-      self.data['rows']
+      self.data['rows'] = rows
+      self.data['total'] = total
+      self
     end
 
     def to_csv
+      CSV.generate(headers: true) do |csv|
+        total_names.keys.each do |field|
+          csv << [total_names[field], self.data['total'][field]]
+        end
 
+        csv << []
+
+        csv << headers.map{|header| column_names[header]}
+        data['rows'].each do |row|
+          table_row = []
+          headers.each do |attr|
+            ap row["#{attr}"]
+            table_row << row["#{attr}"]
+          end
+          csv << table_row
+        end
+      end
     end
 
     def column_names
@@ -41,7 +59,44 @@ module Reports
       }
     end
 
+    def headers
+      %w[property_name current_participation last_month_participation change_in_participation
+      participation_trend current_in_system_participation last_month_in_system_participation
+      change_in_system_participation current_3rd_party_participation last_month_3rd_party_participation
+      change_3rd_party_participation total_in_system_active_policies total_3rd_party_active_policies]
+    end
+
     private
+
+    def rows
+      communities.map {|community| community_report_data(community)}
+    end
+
+    def communities
+      reportable.insurables.communities
+    end
+
+    def community_report_data(community)
+      {
+        'property_name' => community.primary_address.full,
+        'current_participation' => 'Current Participation',
+        'last_month_participation' => 'Last Month Participation',
+        'change_in_participation' => 'Change in Participation',
+        'participation_trend' => 'Participation trend',
+        'current_in_system_participation' => 'Current agency Participation',
+        'last_month_in_system_participation' => 'Last month Agency Participation',
+        'change_in_system_participation' => 'Change in Agency Participation',
+        'current_3rd_party_participation' => 'Current 3rd party Participation',
+        'last_month_3rd_party_participation' => 'Last month 3rd party Participation',
+        'change_3rd_party_participation' => 'Change in 3rd party Participation',
+        'total_in_system_active_policies' => 'Total In-Force Agency Policies',
+        'total_3rd_party_active_policies' => 'Total In-Force 3rd Party Policies'
+      }
+    end
+
+    def total
+
+    end
 
     def set_defaults
       self.data ||= {
