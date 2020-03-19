@@ -52,4 +52,4 @@ production:
     class: Reports::PropertyUnitVerificationReportsJob
   high_level_participation_reports_job:
     cron: '0 2 1 * *'   # Each first day of month at 2:00 AM
-    class: Reports::PropertyUnitVerificationReportsJob
+    class: Reports::HighLevelParticipationReportsJob
