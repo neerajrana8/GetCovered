@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_03_05_130724) do
+ActiveRecord::Schema.define(version: 2020_03_13_090034) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -169,7 +169,7 @@ ActiveRecord::Schema.define(version: 2020_03_05_130724) do
 
   create_table "branding_profile_attributes", force: :cascade do |t|
     t.string "name"
-    t.string "value"
+    t.text "value"
     t.string "attribute_type"
     t.bigint "branding_profile_id"
     t.datetime "created_at", null: false
@@ -189,6 +189,7 @@ ActiveRecord::Schema.define(version: 2020_03_05_130724) do
     t.string "logo_url"
     t.string "footer_logo_url"
     t.string "subdomain"
+    t.string "subdomain_test"
     t.index ["profileable_type", "profileable_id"], name: "index_branding_profiles_on_profileable_type_and_profileable_id"
     t.index ["url"], name: "index_branding_profiles_on_url", unique: true
   end
@@ -651,7 +652,9 @@ ActiveRecord::Schema.define(version: 2020_03_05_130724) do
     t.bigint "agency_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "branding_profile_id"
     t.index ["agency_id"], name: "index_pages_on_agency_id"
+    t.index ["branding_profile_id"], name: "index_pages_on_branding_profile_id"
   end
 
   create_table "payment_profiles", force: :cascade do |t|
