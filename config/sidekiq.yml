@@ -50,6 +50,9 @@ production:
   property_unit_verification_reports_job:
     cron: '0 2 * * *'   # Every day at 2:00 AM
     class: Reports::PropertyUnitVerificationReportsJob
+  participation_reports_job:
+    cron: '0 2 1 * *'   # Every first day of month at 2:00 AM
+    class: Reports::ParticipationReportsJob
   high_level_participation_reports_job:
     cron: '0 2 1 * *'   # Each first day of month at 2:00 AM
     class: Reports::HighLevelParticipationReportsJob
