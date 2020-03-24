@@ -1,6 +1,5 @@
 module Reports
   class Coverage < ::Report
-
     def to_csv
       CSV.generate do |csv|
         fields.each do |field|
