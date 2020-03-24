@@ -1,5 +1,7 @@
 module Reports
   class PendingCancelPolicies < ::Report
+    NAME = 'Pending cancel policies'.freeze
+
     def generate
       reportable_policies&.each do |policy|
         insurable = policy.primary_insurable

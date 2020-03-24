@@ -1,5 +1,7 @@
 module Reports
   class Participation < ::Report
+    NAME = 'Participation'.freeze
+
     def generate
       self.data = report_data
       self
