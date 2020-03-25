@@ -13,13 +13,64 @@ module Reports
     end
 
     def to_csv
+      CSV.generate do |csv|
+        csv << ['Portfolio wide participation trend']
+        csv << []
 
+        self.data['portfolio_wide_participation_trend'].each do |year|
+          csv << ['Year', year['year']]
+          days = ['Day']
+          total_participation = ['Total participation']
+          account_participation = ['Internal participation']
+          third_party_participation = ['Third party participation']
+          year['data'].each do |day|
+            days << day['date']
+            total_participation << day['total_participation']
+            account_participation << day['account_participation']
+            third_party_participation << day['third_party_participation']
+          end
+          csv << days
+          csv << total_participation
+          csv << account_participation
+          csv << third_party_participation
+          csv << []
+        end
+      end
+    end
+
+    def to_xlsx
+      Axlsx::Package.new do |p|
+        wb = p.workbook
+        wb.add_worksheet(:name => "Line Chart") do |sheet|
+          sheet.add_row['Portfolio wide participation trend']
+          sheet.add_row []
+          self.data['portfolio_wide_participation_trend'].each do |year|
+            sheet.add_row ['Year', year['year']]
+            days = ['Day']
+            total_participation = ['Total participation']
+            account_participation = ['Internal participation']
+            third_party_participation = ['Third party participation']
+            year['data'].each do |day|
+              days << day['date']
+              total_participation << day['total_participation']
+              account_participation << day['account_participation']
+              third_party_participation << day['third_party_participation']
+            end
+            sheet.add_row days
+            sheet.add_row total_participation
+            sheet.add_row account_participation
+            sheet.add_row third_party_participation
+            sheet.add_row []
+          end
+        end
+        p.serialize('simple.xlsx')
+      end
     end
 
     private
 
     def portfolio_wide_participation_trend
-      if :Reports::Coverage.where(reportable: reportable).present?
+      if ::Reports::Coverage.where(reportable: reportable).present?
         report_years.map(&method(:portfolio_wide_year))
       else
         []
@@ -34,11 +85,11 @@ module Reports
 
     def portfolio_wide_year(year)
       report_range = Time.zone.local(year).beginning_of_year..Time.zone.local(year).end_of_year
-      coverage_reports = ::Reports::Coverage.where(reportable: report_range, created_at: range).order(:created_at)
+      coverage_reports = ::Reports::Coverage.where(reportable: reportable, created_at: report_range).order(:created_at)
       {
         'year' => year,
         'data' => coverage_reports.map do |report|
-
+          date_coverage_data(report)
         end
       }
     end
@@ -56,9 +107,9 @@ module Reports
     def participation_rates(report_data)
       if report_data['unit_count'] > 0
         {
-          total: (report_data['covered_count'].to_f / report_data['unit_count']* 100).round(2),
-          account: (report_data['policy_internal_covered_count'].to_f / report_data['unit_count']* 100).round(2),
-          third_party: (report_data['policy_external_covered_count'].to_f / report_data['unit_count']* 100).round(2)
+          total: (report_data['covered_count'].to_f / report_data['unit_count'] * 100).round(2),
+          account: (report_data['policy_internal_covered_count'].to_f / report_data['unit_count'] * 100).round(2),
+          third_party: (report_data['policy_external_covered_count'].to_f / report_data['unit_count'] * 100).round(2)
         }
       else
         {

@@ -126,7 +126,6 @@ module V2
         def supported_orders
           supported_filters(true)
         end
-        
     end
   end # module StaffAccount
 end
