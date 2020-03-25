@@ -6,7 +6,7 @@ module V2
   module StaffSuperAdmin
     class InsurablesController < StaffSuperAdminController
 
-      before_action :set_insurable, only: [:show, :coverage_report]
+      before_action :set_insurable, only: [:show, :coverage_report, :policies]
 
       def index
         super(:@insurables, Insurable.all)
@@ -16,6 +16,18 @@ module V2
 
       def coverage_report
         render json: @insurable.coverage_report
+      end
+
+      def policies
+        insurable_units_ids =
+          if InsurableType::UNITS_IDS.include?(@insurable.insurable_type_id)
+            @insurable.id
+          else
+            [@insurable.units&.pluck(:id), @insurable.id, @insurable.insurables.ids].flatten.uniq.compact
+          end
+
+        @policies = Policy.joins(:insurables).where(insurables: { id: insurable_units_ids })
+        render :policies, status: :ok
       end
 
       private
