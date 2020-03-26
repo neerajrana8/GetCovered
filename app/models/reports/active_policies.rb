@@ -1,7 +1,7 @@
 module Reports
   class ActivePolicies < ::Report
-    # @todo Rewrite using builder pattern, because now reports know about the class for what we generate this report
-    # I planned to make reports "class agnostic".
+    NAME = 'Active policies'.freeze
+
     def generate
       reportable_policies&.each do |policy|
         insurable = policy.primary_insurable

@@ -1,5 +1,7 @@
 module Reports
   class RenewalPolicies < ::Report
+    NAME = 'Renewal policies'.freeze
+
     def generate
       reportable_policies&.each do |policy|
         insurable = policy.primary_insurable
