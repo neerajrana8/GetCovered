@@ -14,7 +14,10 @@ module CoverageReport
       policy_covered_count: nil,
       policy_internal_covered_count: insurable_units_policies.policy_in_system(true).count,
       policy_external_covered_count: insurable_units_policies.policy_in_system(false).count,
-      cancelled_policy_count: cancelled_policy_count
+      cancelled_policy_count: cancelled_policy_count,
+      in_force_policies_count: in_force_policies.count,
+      in_force_in_system_policies_count: in_force_policies.policy_in_system(true).count,
+      in_force_third_party_policies_count: in_force_policies.policy_in_system(false).count
     }
 
     report[:policy_covered_count] = report[:covered_count] - report[:master_policy_covered_count]
@@ -25,7 +28,6 @@ module CoverageReport
 
   # select only commercial and residential units in children and base insurables
   def insurables_units
-
     if self.class == ::Insurable
       units_ids = units&.pluck(:id)
       if units_ids.present?
@@ -62,6 +64,15 @@ module CoverageReport
       where.not(policy_type_id: PolicyType.master_policies.ids).
       where(status: 'CANCELLED').
       count
+  end
+
+  def in_force_policies
+    Policy.joins(:insurables).
+      where(insurables: { id: insurables_units.ids }).
+      distinct.
+      where.not(policy_type_id: PolicyType.master_policies.ids).
+      where('expiration_date > ?', Time.zone.now).
+      current
   end
 
   def insurable_units_policies

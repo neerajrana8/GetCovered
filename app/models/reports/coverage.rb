@@ -1,7 +1,7 @@
 module Reports
   class Coverage < ::Report
     NAME = 'Coverage'.freeze
-
+    
     def to_csv
       CSV.generate do |csv|
         fields.each do |field|
