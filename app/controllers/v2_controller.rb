@@ -50,7 +50,7 @@ exit
   end
 
   #private
-  
+
   def paginator(query)
     count = query.count
     per = (params.has_key?(:pagination) && params[:pagination].has_key?(:per)) ? params[:pagination][:per].to_i : default_pagination_per
