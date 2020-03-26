@@ -17,7 +17,7 @@ module Reports
         csv << ['Portfolio wide participation trend']
         csv << []
 
-        self.data['portfolio_wide_participation_trend'].each do |year|
+        self.data['portfolio_wide_participation_trend'].sort_by { ||  }.each do |year|
           csv << ['Year', year['year']]
           days = ['Day']
           total_participation = ['Total participation']
@@ -39,10 +39,10 @@ module Reports
     end
 
     def to_xlsx
-      Axlsx::Package.new do |p|
+      ::Axlsx::Package.new do |p|
         wb = p.workbook
-        wb.add_worksheet(:name => "Line Chart") do |sheet|
-          sheet.add_row['Portfolio wide participation trend']
+        wb.add_worksheet(:name => "Report") do |sheet|
+          sheet.add_row ['Portfolio wide participation trend']
           sheet.add_row []
           self.data['portfolio_wide_participation_trend'].each do |year|
             sheet.add_row ['Year', year['year']]
@@ -57,14 +57,24 @@ module Reports
               third_party_participation << day['third_party_participation']
             end
             sheet.add_row days
-            sheet.add_row total_participation
-            sheet.add_row account_participation
-            sheet.add_row third_party_participation
-            sheet.add_row []
+            total = sheet.add_row total_participation
+            account = sheet.add_row account_participation
+            third_party = sheet.add_row third_party_participation
+            chart = sheet.add_chart(
+              Axlsx::LineChart,
+              :title => "Trends #{year['year']}",
+              :start_at => [0,third_party.row_index + 1],
+              :end_at => [6, third_party.row_index + 10]
+            )
+            chart.add_series(data: total[0..-1], title: 'Total participation %')
+            chart.add_series(data: account[0..-1], title: 'Internal participation %')
+            chart.add_series(data: third_party[0..-1], title: 'Third party participation %')
+            12.times{ sheet.add_row [] }
           end
         end
         p.serialize('simple.xlsx')
       end
+      nil
     end
 
     private
