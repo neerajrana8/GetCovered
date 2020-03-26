@@ -68,6 +68,7 @@
     resources :insurables, only: [:index, :show ], concerns: :reportable do
       member do
         get :coverage_report
+        get :policies
       end
     end
   

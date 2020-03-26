@@ -53,7 +53,7 @@ class Policy < ApplicationRecord
   include RecordChange
 
   belongs_to :agency
-  belongs_to :account
+  belongs_to :account, optional: true
   belongs_to :carrier
   belongs_to :policy_type
   # belongs_to :billing_profie
@@ -109,6 +109,7 @@ class Policy < ApplicationRecord
   #  after_save :update_leases, if: :saved_changes_to_status?
   
   validate :is_allowed_to_update?, on: :update
+  validate :residential_account_present
   validate :same_agency_as_account
   validate :status_allowed
   validate :carrier_agency
@@ -160,9 +161,15 @@ class Policy < ApplicationRecord
       end
     end
   end
+  
+  def residential_account_present
+    errors.add(:account, 'Account must be specified') if policy_type_id != 4 && account.nil? 
+  end
 
   def same_agency_as_account
-    errors.add(:account, 'policy must belong to the same agency as account') if agency != account&.agency
+    if policy_type_id != 4
+      errors.add(:account, 'policy must belong to the same agency as account') if agency != account&.agency
+    end
   end
 
   def carrier_agency

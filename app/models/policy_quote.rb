@@ -4,7 +4,7 @@
 # frozen_string_literal: true
 
 class PolicyQuote < ApplicationRecord
-  Concerns
+  # Concerns
 	include CarrierQbePolicyQuote
 	include CarrierCrumPolicyQuote
 	include ElasticsearchSearchable
@@ -71,6 +71,7 @@ class PolicyQuote < ApplicationRecord
   end
   
   def accept
+    
 	  quote_attempt = {
 		  success: false,
 		  message: nil,
@@ -79,15 +80,25 @@ class PolicyQuote < ApplicationRecord
 	  }
 	  
 	  if quoted? || error?
+  	  
 			self.set_qbe_external_reference if policy_application.carrier.id == 1
 		  
 			if update(status: "accepted") && start_billing()
 			  bind_request = self.send(quote_attempt[:bind_method])
 			  
 			  unless bind_request[:error]
+  			  if policy_application.policy_type.title == "Residential"
+    			  policy_number = bind_request[:data][:policy_number]
+    			  policy_status = bind_request[:data][:status] == "WARNING" ? "BOUND_WITH_WARNING" : "BOUND"    			  
+    		  elsif policy_application.policy_type.title == "Commercial"
+    		    policy_number = external_reference
+    		    policy_status = "BOUND"
+    		  end
+
+  			  
 	    		policy = build_policy(
-	      		number: bind_request[:data][:policy_number],
-	      		status: bind_request[:data][:status] == "WARNING" ? "BOUND_WITH_WARNING" : "BOUND",
+	      		number: policy_number,
+	      		status: policy_status,
 	      		billing_status: "CURRENT",
 	      		effective_date: policy_application.effective_date,
 	      		expiration_date: policy_application.expiration_date,
@@ -124,7 +135,7 @@ class PolicyQuote < ApplicationRecord
 		 				build_coverages() if policy_application.policy_type.title == "Residential"
 	  
 	          if update(policy: policy) && 
-	        		 policy_application.update(policy: policy) && 
+	        		 policy_application.update(policy: policy, status: "accepted") && 
 	        		 policy_premium.update(policy: policy)
 	        		 
 	 						PolicyQuoteStartBillingJob.perform_later(policy: policy, issue: quote_attempt[:issue_method])
@@ -138,13 +149,12 @@ class PolicyQuote < ApplicationRecord
 	            update status: 'error'
 	          end				  
 				  else
+				    logger.debug policy.errors
 				  	quote_attempt[:message] = "Unable to save policy in system"
-				  	puts events.last.response
-				  	logger.debug policy.errors
 				  end
 				  
 				else
-					quote_attempt[:message] = "Unable to bind policy"	
+  			  quote_attempt[:message] = "Unable to bind policy"	
 				end
 		  else
 		  	quote_attempt[:message] = "Quote billing failed, unable to write policy"
@@ -157,8 +167,11 @@ class PolicyQuote < ApplicationRecord
   end
 	
 	def decline
-		success = self.update status: 'declined' ? true : false
-		return success	
+		return_success = false
+		if self.update(status: 'declined') && self.policy_application.update(status: "rejected")
+		  return_success = true
+		end
+		return return_success	
 	end
 
 	def build_coverages()

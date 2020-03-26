@@ -240,7 +240,7 @@ class CrumService
   		            {
   		              "numberOfInsured": opts["business"]["number_of_insured"],
   		              "businessName": opts["business"]["business_name"],
-  		              "address1": "#{ opts["business"]["address"]["street_number"] } #{ opts["business"]["address"]["street_name"] }",
+  		              "address1": "#{ opts["business"]["address"]["street_number"] } #{ opts["business"]["address"]["street_name"] }".strip,
   		              "address2": "",
   		              "city": opts["business"]["address"]["city"],
   		              "state": opts["business"]["address"]["state"],
@@ -365,7 +365,7 @@ class CrumService
 			opts["premise"].each_with_index do |premise, index|
 	      request_template[:quoteDetails][:policyService][:data][:account][:premises] << {
 	        "locationNumber": "#{ index + 1 }",
-	        "street": "#{ premise["address"]["street_number"] } #{ premise["address"]["street_name"] }",
+	        "street": "#{ premise["address"]["street_number"] } #{ premise["address"]["street_name"] }.strip",
 	        "city": premise["address"]["city"],
 	        "state": premise["address"]["state"],
 	        "county": premise["address"]["county"],

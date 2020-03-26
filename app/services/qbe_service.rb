@@ -300,8 +300,6 @@ class QbeService
           response: e
         }
         
-        pp e
-        
         ActionMailer::Base.mail(from: 'info@getcoveredinsurance.com', to: 'dev@getcoveredllc.com', subject: "QBE #{ action } error", body: call_data.to_json).deliver
         
       end

@@ -45,13 +45,14 @@
       only: [ :index ]
   
     resources :insurables,
-      only: [ :create, :update, :destroy, :index, :show ], concerns: :reportable do
+      only: [ :create, :update, :destroy, :index, :show], concerns: :reportable do
         member do
           get "histories",
             to: "histories#index_recordable",
             via: "get",
             defaults: { recordable_type: Insurable }
           get :coverage_report
+          get :policies
           
           post :sync_residential_address,
           	path: "sync-residential-address"

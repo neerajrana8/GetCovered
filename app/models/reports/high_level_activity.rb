@@ -2,7 +2,7 @@ module Reports
   # This report is available for agencies and accounts.
   # Maximum communities in report is ~1_000_000, because jsonb can't store JSON bigger than ~200MB.
   class HighLevelActivity < ::Report
-
+    NAME = 'High Level Activity'.freeze
     # @todo Rewrite using builder pattern, because now reports know about the class for what we generate this report
     # I planned to make reports "class agnostic".
     def generate

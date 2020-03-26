@@ -1,6 +1,8 @@
 # This report is only for agencies and accounts
 module Reports
   class HighLevelParticipation < ::Report
+    NAME = 'High Level Participation'.freeze
+
     def generate
       self.data['rows'] = rows
       self.data['total'] = total
