@@ -14,3 +14,12 @@ json.communities do
     json.partial! 'v2/shared/assignments/community.json.jbuilder', community: community
   end
 end
+
+if staff.organizable_type == 'Account'
+  json.account staff&.organizable&.title
+end
+
+if staff.organizable_type == 'Agency'
+  json.agency staff&.organizable&.title
+end
+
