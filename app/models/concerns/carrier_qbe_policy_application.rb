@@ -80,7 +80,7 @@ module CarrierQbePolicyApplication
 	          format: 'xml', 
 	          interface: 'SOAP',
 	          process: 'get_qbe_min_prem', 
-	          endpoint: Rails.application.credentials.qbe[:uri]
+	          endpoint: Rails.application.credentials.qbe[:uri][ENV["RAILS_ENV"].to_sym]
 	        )	
 					
 	        qbe_service = QbeService.new(:action => 'getMinPrem')

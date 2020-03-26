@@ -218,11 +218,12 @@ require 'faker'
     }
   }
   
-  puts @application.to_json
-  return false
-  
   if @application.save!
  		quote_attempt = @application.crum_quote()
+ 		
+ 		puts "\n"
+ 		pp quote_attempt
+ 		puts "\n"
  		
  		if quote_attempt[:error] == false &&  
    		 quote_attempt[:success] == true

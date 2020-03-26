@@ -31,7 +31,7 @@ module CarrierQbeInsurable
 	        format: 'xml', 
 	        interface: 'SOAP',
 	        process: 'qbe_get_zipcode', 
-	        endpoint: Rails.application.credentials.qbe[:uri]
+	        endpoint: Rails.application.credentials.qbe[:uri][ENV["RAILS_ENV"].to_sym]
 	      )
 	      
 	      return false if @already_in_on_create.nil? == false
@@ -155,7 +155,7 @@ module CarrierQbeInsurable
 	      set_error = nil
 	    end
 	    
-	    return set_error
+	    return set_error ? false : true
 	  end
 	  
 	  # Get QBE Property Info
@@ -181,7 +181,7 @@ module CarrierQbeInsurable
 	        format: 'xml', 
 	        interface: 'SOAP',
 	        process: 'qbe_property_info', 
-	        endpoint: Rails.application.credentials.qbe[:uri]
+	        endpoint: Rails.application.credentials.qbe[:uri][ENV["RAILS_ENV"].to_sym]
 	      )      
 	      
 	      return false if @already_in_on_create.nil? == false
@@ -272,7 +272,7 @@ module CarrierQbeInsurable
 	      set_error = nil
 	    end    
 	    
-	    return set_error
+	    return set_error ? false : true
 	  end
   
 	  # Fix QBE Carrier Rates
@@ -292,8 +292,8 @@ module CarrierQbeInsurable
 		      if inline
 						get_qbe_rates(num)		      
 			    else
-		        # delay = index
-		        # GetCommunityRatesJob.set(wait: delay.minutes).perform_later(self, num)  
+		        delay = index
+		        GetInsurableRatesJob.set(wait: delay.minutes).perform_later(self, num)  
 	        end
 	      end
 	    end
@@ -432,7 +432,7 @@ module CarrierQbeInsurable
 	        interface: 'SOAP',
 	        process: 'get_qbe_rates',
 	        request: qbe_service.compiled_rxml,
-	        endpoint: Rails.application.credentials.qbe[:uri]
+	        endpoint: Rails.application.credentials.qbe[:uri][ENV["RAILS_ENV"].to_sym]
 	      )
 	
 	      if event.save

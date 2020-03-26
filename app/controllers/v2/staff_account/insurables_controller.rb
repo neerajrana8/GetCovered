@@ -8,7 +8,7 @@ module V2
 
       before_action :set_insurable, 
       	only: [:update, :destroy, :show, :coverage_report,
-        			 :sync_address, :get_property_info]
+        			 :sync_residential_address, :get_residential_property_info]
 
       def index
         super(:@insurables, current_staff.organizable.insurables)
