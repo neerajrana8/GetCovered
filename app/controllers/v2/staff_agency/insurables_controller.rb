@@ -79,7 +79,9 @@ module V2
             [@insurable.units&.pluck(:id), @insurable.id, @insurable.insurables.ids].flatten.uniq.compact
           end
 
-        @policies = Policy.joins(:insurables).where(insurables: { id: insurable_units_ids })
+        policies_query = Policy.joins(:insurables).where(insurables: { id: insurable_units_ids }).order(:number)
+
+        @policies = paginator(policies_query)
         render :policies, status: :ok
       end
       

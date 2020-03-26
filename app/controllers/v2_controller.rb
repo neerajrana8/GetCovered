@@ -50,6 +50,19 @@ exit
   end
 
   #private
+  
+  def paginator(query)
+    count = query.count
+    per = (params.has_key?(:pagination) && params[:pagination].has_key?(:per)) ? params[:pagination][:per].to_i : default_pagination_per
+    per = default_pagination_per if per <= 0 || per > maximum_pagination_per
+    page_count = count == 0 ? 1 : (count.to_f / per).ceil
+    page = (params.has_key?(:pagination) && params[:pagination].has_key?(:page)) ? params[:pagination][:page].to_i : 0
+    response.headers['current-page'] = page.to_s
+    response.headers['total-pages'] = page_count.to_s
+    response.headers['total-entries'] = count.to_s
+
+    query.page(page + 1).per(per)
+  end
 
   # The default number of items per page.
   def default_pagination_per
