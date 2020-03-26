@@ -71,7 +71,7 @@ class PolicyApplication < ApplicationRecord
   
   enum status: { started: 0, in_progress: 1, complete: 2, abandoned: 3, 
                  quote_in_progress: 4, quote_failed: 5, quoted: 6, 
-                 more_required: 7, rejected: 8 }
+                 more_required: 7, accepted: 8, rejected: 9 }
   
   # PolicyApplication.estimate()
                

@@ -16,6 +16,10 @@ class Report < ApplicationRecord
   # Validations             
   validates_presence_of :data
 
+  def name
+    self.class::NAME
+  end
+
   # Generates data for this report without updating the object. It's useful when you only want to return the data
   # without saving it in the database, for example:
   #   new_report = Report::Activity.new(reportable: Agency.last)

@@ -41,6 +41,7 @@ module CarrierCrumPolicyApplication
           unless request[:error] || request[:data].has_key?("responseMessages")
           
             data = request[:data]
+            
             if data["quoteDetails"]["policyService"]["isEligible"] == "Yes"
             
               quote_success[:success] = true
@@ -97,8 +98,11 @@ module CarrierCrumPolicyApplication
               
               quote_success[:message] = messages.join(", ")
               
+              pp quote_success
+              
             end
           else
+          
             self.update status: "quote_failed"
             quote_success[:error] = true
             quote_success[:message] = "Policy Quote failed to return"            

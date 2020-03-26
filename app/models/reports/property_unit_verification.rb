@@ -1,5 +1,7 @@
 module Reports
   class PropertyUnitVerification < ::Report
+    NAME = 'Property unit verification'.freeze
+
     def generate
       units&.each do |unit|
         self.data['rows'] << {

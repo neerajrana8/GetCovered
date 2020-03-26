@@ -2,6 +2,7 @@ class UserCoverageMailer < ApplicationMailer
   before_action { @user = params[:user] }
   before_action { @policy = params[:policy] }
   before_action { @quote = params[:quote] }
+  before_action { @links = params[:links] }
   before_action :check_user_preference
  
   default to:       -> { @user.email },
@@ -30,6 +31,10 @@ class UserCoverageMailer < ApplicationMailer
     attachments["quote-#{ @quote.external_id }.pdf"] = open(file_url).read
     mail(:subject => "Your New Insurance Quote")
 	end
+	
+	def added_to_policy
+    mail(:subject => "You have been added to a new policy")	
+  end
   
   def policy_expiring
     mail(
