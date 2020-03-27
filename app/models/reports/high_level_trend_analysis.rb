@@ -3,11 +3,10 @@ module Reports
   class HighLevelTrendAnalysis < ::Report
     NAME = 'High Trend Analysis'.freeze
 
-    # @todo Rewrite using builder pattern, because now reports know about the class for what we generate this report
-    # I planned to make reports "class agnostic".
     def generate
       self.data = {
-        'portfolio_wide_participation_trend' => portfolio_wide_participation_trend
+        'portfolio_wide_participation_trend' => portfolio_participation_trend(reportable),
+        'communities' => communities_data
       }
       self
     end
@@ -17,7 +16,7 @@ module Reports
         csv << ['Portfolio wide participation trend']
         csv << []
 
-        self.data['portfolio_wide_participation_trend'].sort_by { ||  }.each do |year|
+        self.data['portfolio_wide_participation_trend'].sort{ |x, y| y['year'] <=> x['year'] }.each do |year|
           csv << ['Year', year['year']]
           days = ['Day']
           total_participation = ['Total participation']
@@ -44,7 +43,7 @@ module Reports
         wb.add_worksheet(:name => "Report") do |sheet|
           sheet.add_row ['Portfolio wide participation trend']
           sheet.add_row []
-          self.data['portfolio_wide_participation_trend'].each do |year|
+          self.data['portfolio_wide_participation_trend'].sort{ |x, y| y['year'] <=> x['year'] }.each do |year|
             sheet.add_row ['Year', year['year']]
             days = ['Day']
             total_participation = ['Total participation']
@@ -79,28 +78,26 @@ module Reports
 
     private
 
-    def portfolio_wide_participation_trend
-      if ::Reports::Coverage.where(reportable: reportable).present?
-        report_years.map(&method(:portfolio_wide_year))
+    def portfolio_participation_trend(object)
+      if ::Reports::Coverage.where(reportable: object).present?
+        report_years(object).map {|year| portfolio_wide_year(object, year) }
       else
         []
       end
     end
 
-    def report_years
-      first_report_date = ::Reports::Coverage.where(reportable: reportable).order(:created_at).first.created_at
-      last_report_date = ::Reports::Coverage.where(reportable: reportable).order(created_at: :desc).first.created_at
+    def report_years(object)
+      first_report_date = ::Reports::Coverage.where(reportable: object).order(:created_at).first.created_at
+      last_report_date = ::Reports::Coverage.where(reportable: object).order(created_at: :desc).first.created_at
       (first_report_date.year..last_report_date.year).to_a
     end
 
-    def portfolio_wide_year(year)
+    def portfolio_wide_year(object, year)
       report_range = Time.zone.local(year).beginning_of_year..Time.zone.local(year).end_of_year
-      coverage_reports = ::Reports::Coverage.where(reportable: reportable, created_at: report_range).order(:created_at)
+      coverage_reports = ::Reports::Coverage.where(reportable: object, created_at: report_range).order(:created_at)
       {
         'year' => year,
-        'data' => coverage_reports.map do |report|
-          date_coverage_data(report)
-        end
+        'data' => coverage_reports.map(&method(:date_coverage_data))
       }
     end
 
@@ -128,6 +125,23 @@ module Reports
           third_party: 0
         }
       end
+    end
+
+    def communities_data
+      communities = reportable.insurables.communities
+      communities.map(&method(:community_report))
+    end
+
+    def community_report(community)
+      current_coverage_report = community.coverage_report
+      current_participation_rate =
+        (current_coverage_report[:covered_count].to_f / current_coverage_report[:unit_count] * 100).round(2)
+      {
+        'id' => community.id,
+        'title' => community.title,
+        'current_participation_rate' => current_participation_rate,
+        'participation_trend' => portfolio_participation_trend(community)
+      }
     end
 
     def set_defaults
