@@ -69,6 +69,7 @@
       member do
         get :coverage_report
         get :policies
+        get 'related-insurables', to: 'insurables#related_insurables'
       end
     end
   

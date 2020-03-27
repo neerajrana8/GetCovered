@@ -53,6 +53,7 @@
             defaults: { recordable_type: Insurable }
           get :coverage_report
           get :policies
+          get 'related-insurables', to: 'insurables#related_insurables'
           
           post :sync_residential_address,
           	path: "sync-residential-address"
