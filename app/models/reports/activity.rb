@@ -1,5 +1,7 @@
 module Reports
   class Activity < ::Report
+    NAME = 'Activity'.freeze
+
     def to_csv
       CSV.generate do |csv|
         fields.each do |field|

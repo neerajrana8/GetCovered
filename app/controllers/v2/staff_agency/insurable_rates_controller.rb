@@ -45,7 +45,7 @@ module V2
       end  
       
       def refresh_rates
-        @insurable.reset_qbe_rates(params[:inline], params[:fix_all])
+        @insurable.reset_qbe_rates(true, false)
       end
 
       private

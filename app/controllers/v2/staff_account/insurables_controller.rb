@@ -6,15 +6,16 @@ module V2
   module StaffAccount
     class InsurablesController < StaffAccountController
 
-      before_action :set_insurable, 
-      	only: [:update, :destroy, :show, :coverage_report,
-        			 :sync_address, :get_property_info]
+      before_action :set_insurable,
+                    only: [:update, :destroy, :show, :coverage_report, :policies,
+                           :sync_address, :get_property_info]
 
       def index
         super(:@insurables, current_staff.organizable.insurables)
       end
 
-      def show; end
+      def show;
+      end
 
       def create
         if create_allowed?
@@ -62,41 +63,56 @@ module V2
         end
       end
 
+      def policies
+        insurable_units_ids =
+          if InsurableType::UNITS_IDS.include?(@insurable.insurable_type_id)
+            @insurable.id
+          else
+            [@insurable.units&.pluck(:id), @insurable.id, @insurable.insurables.ids].flatten.uniq.compact
+          end
+
+        policies_query = Policy.joins(:insurables).where(insurables: { id: insurable_units_ids }).order(created_at: :desc)
+
+        @policies = paginator(policies_query)
+
+        render :policies, status: :ok
+      end
+
       def coverage_report
         render json: @insurable.coverage_report
       end
-      
+
       def sync_residential_address
-	      if @insurable.get_qbe_zip_code()
-		    	render json: { 
-			    			   title: "Property Address Synced", 
-			    			   message: "#{ @insurable.title } property info successfuly synced to carrier" 
-			    			 }.to_json,
-		    				 status: :ok 
-		    else
-		    	render json: { 
-			    			   title: "Property Address Sync Failed", 
-			    			   message: "#{ @insurable.title } property info could not be synced to carrier" 
-			    			 }.to_json,
-		    				 status: 422
-		    end
-	    end
-      
+        if @insurable.get_qbe_zip_code()
+          render json: {
+            title: "Property Address Synced",
+            message: "#{ @insurable.title } property info successfuly synced to carrier"
+          }.to_json,
+                 status: :ok
+        else
+          render json: {
+            title: "Property Address Sync Failed",
+            message: "#{ @insurable.title } property info could not be synced to carrier"
+          }.to_json,
+                 status: 422
+        end
+      end
+
       def get_residential_property_info
-	      if @insurable.get_qbe_property_info()
-		    	render json: { 
-			    			   title: "Property Address Synced", 
-			    			   message: "#{ @insurable.title } property info successfuly synced to carrier" 
-			    			 }.to_json,
-		    				 status: :ok 
-		    else
-		    	render json: { 
-			    			   title: "Property Address Sync Failed", 
-			    			   message: "#{ @insurable.title } property info could not be synced to carrier" 
-			    			 }.to_json,
-		    				 status: 422
-		    end	    	  
-	    end
+        if @insurable.get_qbe_property_info()
+          render json: {
+            title: "Property Address Synced",
+            message: "#{ @insurable.title } property info successfuly synced to carrier"
+          }.to_json,
+                 status: :ok
+        else
+          render json: {
+            title: "Property Address Sync Failed",
+            message: "#{ @insurable.title } property info could not be synced to carrier"
+          }.to_json,
+                 status: 422
+        end
+      end
 
       private
 
@@ -148,12 +164,12 @@ module V2
       def supported_filters(called_from_orders = false)
         @calling_supported_orders = called_from_orders
         {
-          id: [ :scalar, :array ],
-          title: [ :scalar, :like ],
-          permissions: [ :scalar, :array ],
-          insurable_type_id: [ :scalar, :array ],
-          insurable_id: [ :scalar, :array ],
-          account_id: [ :scalar, :array ]
+          id: [:scalar, :array],
+          title: [:scalar, :like],
+          permissions: [:scalar, :array],
+          insurable_type_id: [:scalar, :array],
+          insurable_id: [:scalar, :array],
+          account_id: [:scalar, :array]
         }
       end
 

@@ -1,8 +1,8 @@
 module Reports
   module DetailedRentersInsurance
     class UncoveredUnits < ::Report
-      # @todo Rewrite using builder pattern, because now reports know about the class for what we generate this report
-      # I planned to make reports "class agnostic".
+      NAME = 'Detailed Renters Insurance - Uncovered units'.freeze
+
       def generate
         units =
           if reportable.is_a?(Insurable)

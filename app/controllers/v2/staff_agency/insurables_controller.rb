@@ -7,8 +7,8 @@ module V2
     class InsurablesController < StaffAgencyController
       
       before_action :set_insurable,
-        only: [:update, :destroy, :show, :coverage_report,
-        			 :sync_address, :get_property_info]
+        only: [:update, :destroy, :show, :coverage_report, :policies,
+        			 :sync_residential_address, :get_residential_property_info]
       
       def index
         if params[:short]
@@ -69,6 +69,20 @@ module V2
 
       def coverage_report
         render json: @insurable.coverage_report
+      end
+
+      def policies
+        insurable_units_ids =
+          if InsurableType::UNITS_IDS.include?(@insurable.insurable_type_id)
+            @insurable.id
+          else
+            [@insurable.units&.pluck(:id), @insurable.id, @insurable.insurables.ids].flatten.uniq.compact
+          end
+
+        policies_query = Policy.joins(:insurables).where(insurables: { id: insurable_units_ids }).order(created_at: :desc)
+
+        @policies = paginator(policies_query)
+        render :policies, status: :ok
       end
       
       def sync_residential_address
