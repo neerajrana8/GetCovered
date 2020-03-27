@@ -119,7 +119,11 @@ class Insurable < ApplicationRecord
 		end  
 		
 		return to_return
-	end
+  end
+  
+  def buildings
+    insurables.where(insurable_type_id: InsurableType::BUILDINGS_IDS)
+  end
 	
 	def parent_community
 		to_return = nil

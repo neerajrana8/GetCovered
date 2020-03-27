@@ -91,7 +91,7 @@ module V2
 
         return false if create_params[:organizable_type] == 'Agency' && current_staff.organizable.id != create_params[:organizable_id]
 
-        return false if create_params[:organizable_type] == 'Account' && current_staff.organizable.id != Account.find_by(id: create_params[:organizable_id])&.id
+        return false if create_params[:organizable_type] == 'Account' && !current_staff.organizable&.accounts&.ids&.include?(create_params[:organizable_id])
         
         true
       end
