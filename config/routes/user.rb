@@ -39,5 +39,8 @@ scope module: :user, path: "user" do
   
   resources :users,
     only: [ :update, :show ] do
+      member do
+        put 'change_password'
+    end
   end
 end
