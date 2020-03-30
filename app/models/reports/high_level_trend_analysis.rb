@@ -93,12 +93,13 @@ module Reports
               chart = sheet.add_chart(
                 Axlsx::LineChart,
                 :title => "Trends #{year['year']}",
+                :show_legend => true,
                 :start_at => [0, third_party.row_index + 1],
                 :end_at => [6, third_party.row_index + 10]
               )
-              chart.add_series(data: total[0..-1], title: 'Total participation %')
-              chart.add_series(data: account[0..-1], title: 'Internal participation %')
-              chart.add_series(data: third_party[0..-1], title: 'Third party participation %')
+              chart.add_series(data: total[1..-1], title: total[0])
+              chart.add_series(data: account[1..-1], title: account[0])
+              chart.add_series(data: third_party[1..-1], title: third_party[0])
               12.times { sheet.add_row [] }
             end
           end
