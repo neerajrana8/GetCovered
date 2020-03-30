@@ -36,9 +36,9 @@ development:
   
 test:
   <<: *default
-  host: db
+  # host: db
   database: gc_v2_test
-  username: postgres
+  # username: postgres
   
 awsdev:
   <<: *production_default

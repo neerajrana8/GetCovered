@@ -5,16 +5,18 @@
 module V2
   module StaffAgency
     class InsurablesController < StaffAgencyController
+      alias super_index index
       
       before_action :set_insurable,
         only: [:update, :destroy, :show, :coverage_report, :policies,
-        			 :sync_residential_address, :get_residential_property_info]
+               :sync_residential_address, :get_residential_property_info,
+               :related_insurables]
       
       def index
         if params[:short]
-          super(:@insurables, current_staff.organizable.insurables)
+          super_index(:@insurables, current_staff.organizable.insurables)
         else
-          super(:@insurables, current_staff.organizable.insurables, :account, :carrier_insurable_profiles)
+          super_index(:@insurables, current_staff.organizable.insurables, :account, :carrier_insurable_profiles)
         end
       end
       
@@ -83,6 +85,11 @@ module V2
 
         @policies = paginator(policies_query)
         render :policies, status: :ok
+      end
+
+      def related_insurables
+        @insurables = super_index(:@insurables, @insurable.insurables)
+        render :index, status: :ok
       end
       
       def sync_residential_address
