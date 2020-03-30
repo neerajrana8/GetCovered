@@ -250,23 +250,6 @@ module V2
         end
       end
       
-#       def create
-#         if create_allowed?
-#           @policy_application = @substrate.new(create_params)
-#           if !@policy_application.errors.any? && @policy_application.save
-#             render :show,
-#               status: :created
-#           else
-#             render json: @policy_application.errors,
-#               status: :unprocessable_entity
-#           end
-#         else
-#           render json: { success: false, errors: ['Unauthorized Access'] },
-#             status: :unauthorized
-#         end
-#       end
-      
-      
       private
       
         def view_path
