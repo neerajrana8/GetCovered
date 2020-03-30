@@ -21,7 +21,8 @@ end
   { title: "Residential", designation: "HO4", enabled: true },
   { title: "Master Policy", designation: "MASTER", enabled: true },
   { title: "Master Policy Coverage", designation: "MASTER-COVERAGE", enabled: true },
-  { title: "Commercial", designation: "BOP", enabled: true }
+  { title: "Commercial", designation: "BOP", enabled: true },
+  { title: "Rent Guarantee", designation: "RENT-GUARANTEE", enabled: true }
 ]
 
 @policy_types.each do |pt|
@@ -92,6 +93,16 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
 	  integration_designation: 'crum', 
 	  syncable: false, 
 	  rateable: true, 
+	  quotable: true, 
+	  bindable: true, 
+	  verifiable: false, 
+	  enabled: true 
+	},
+  { 
+	  title: "Pensio", 
+	  integration_designation: 'pensio', 
+	  syncable: false, 
+	  rateable: false, 
 	  quotable: true, 
 	  bindable: true, 
 	  verifiable: false, 
@@ -368,7 +379,57 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
 					}																									
 				]	      
       )  
-		        
+		      
+		# Add Rental Guarantee to Pensio
+		elsif carrier.id == 4
+		
+      policy_type = PolicyType.find(5)		
+      carrier_policy_type = CarrierPolicyType.create!(
+	      carrier: carrier,
+	      policy_type: policy_type,
+				application_required: true,
+				application_fields: {
+  				"monthly_rent": 0,
+      		"guarantee_option": 3,
+  				employment: {
+    				primary_applicant: {
+      				"employment_type": nil,
+      				"job_description": nil,
+      				"monthly_income": nil,
+      				"company_name": nil,
+      				"company_phone_number": nil,
+      				"address": {
+              		"street_number": nil,
+              		"street_name": nil,
+              		"street_two": nil,
+              		"city": nil,
+              		"state": nil,
+              		"county": nil,
+              		"zip_code": nil,
+              		"country": nil
+      				}       				
+    				},
+    				secondary_applicant: {
+      				"employment_type": nil,
+      				"job_description": nil,
+      				"monthly_income": nil,
+      				"company_name": nil,
+      				"company_phone_number": nil,
+      				"address": {
+              		"street_number": nil,
+              		"street_name": nil,
+              		"street_two": nil,
+              		"city": nil,
+              		"state": nil,
+              		"county": nil,
+              		"zip_code": nil,
+              		"country": nil
+      				}       				
+    				}
+  				}   				
+				}
+		  )      
+		  
     end
     
     # Set policy type from if else block above
@@ -378,7 +439,7 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
       51.times do |state|
         available = state == 0 || state == 11 ? false : true
         carrier_policy_availability = CarrierPolicyTypeAvailability.create(state: state, available: available, carrier_policy_type: carrier_policy_type)
-        carrier_policy_availability.fees.create(title: "Origination Fee", type: :ORIGINATION, amount: 2500, enabled: true, ownerable: carrier)
+        carrier_policy_availability.fees.create(title: "Origination Fee", type: :ORIGINATION, amount: 2500, enabled: true, ownerable: carrier) unless carrier.id == 4
       end      
     else
       pp carrier_policy_type.errors
