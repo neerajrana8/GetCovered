@@ -88,7 +88,7 @@ module V2
           return({}) if params[:staff].blank?
           params.require(:staff).permit(
             :enabled, notification_options: {}, settings: {},
-            profile_attributes: [
+            profile_attributes: [ :id,
               :birth_date, :contact_email, :contact_phone, :first_name,
               :job_title, :last_name, :middle_name, :suffix, :title
             ]

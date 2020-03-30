@@ -110,7 +110,7 @@ module V2
         to_return = params.require(:staff).permit(
           :email, :enabled, :organizable_id, :organizable_type, :role,
           notification_options: {}, settings: {},
-          profile_attributes: %i[
+          profile_attributes: %i[ id
             birth_date contact_email contact_phone first_name
             job_title last_name middle_name suffix title
           ]
@@ -123,7 +123,7 @@ module V2
 
         params.require(:staff).permit(
           :enabled, :email, notification_options: {}, settings: {},
-                    profile_attributes: %i[
+                    profile_attributes: %i[ id
                       birth_date contact_email contact_phone first_name
                       job_title last_name middle_name suffix title
                     ]
