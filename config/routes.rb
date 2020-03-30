@@ -39,7 +39,7 @@ Rails.application.routes.draw do
   
   namespace :v2, defaults: { format: 'json' } do
     concern :reportable do
-      resources :reports, only: [:index, :show] do
+      resources :reports, controller: '/v2/reports', only: [:index, :show] do
         collection do
           get '/available-range', to: '/v2/reports#available_range'
           get '/generate',        to: '/v2/reports#generate'
