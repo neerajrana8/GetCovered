@@ -13,10 +13,37 @@ module Reports
 
     def to_csv
       CSV.generate do |csv|
-        csv << ['Portfolio wide participation trend']
+        csv << ['INDIVIDUAL PROPERTY RENTERS INSURANCE TREND ANALYSIS']
+        csv << []
+        self.data['communities'].sort { |x, y| y['current_participation_rate'] <=> x['current_participation_rate'] }.each do |community|
+          csv << ['Property title: ', community['title']]
+          csv << ['Current participation rate(%):', community['current_participation_rate']]
+          csv << []
+          community['participation_trend'].sort { |x, y| y['year'] <=> x['year'] }.each do |year|
+            csv << ['Year', year['year']]
+            days = ['Day']
+            total_participation = ['Total participation']
+            account_participation = ['Internal participation']
+            third_party_participation = ['Third party participation']
+            year['data'].each do |day|
+              days << day['date']
+              total_participation << day['total_participation']
+              account_participation << day['account_participation']
+              third_party_participation << day['third_party_participation']
+            end
+            csv << days
+            csv << total_participation
+            csv << account_participation
+            csv << third_party_participation
+            csv << []
+          end
+        end
+
+
+        csv << ['PORTFOLIO WIDE TREND ANALYSIS']
         csv << []
 
-        self.data['portfolio_wide_participation_trend'].sort{ |x, y| y['year'] <=> x['year'] }.each do |year|
+        self.data['portfolio_wide_participation_trend'].sort { |x, y| y['year'] <=> x['year'] }.each do |year|
           csv << ['Year', year['year']]
           days = ['Day']
           total_participation = ['Total participation']
@@ -40,10 +67,47 @@ module Reports
     def to_xlsx
       ::Axlsx::Package.new do |p|
         wb = p.workbook
-        wb.add_worksheet(:name => "Report") do |sheet|
-          sheet.add_row ['Portfolio wide participation trend']
+        wb.add_worksheet(:name => "Individual trend analysis") do |sheet|
+          sheet.add_row ['INDIVIDUAL PROPERTY RENTERS INSURANCE TREND ANALYSIS']
           sheet.add_row []
-          self.data['portfolio_wide_participation_trend'].sort{ |x, y| y['year'] <=> x['year'] }.each do |year|
+          self.data['communities'].sort { |x, y| y['current_participation_rate'] <=> x['current_participation_rate'] }.each do |community|
+            sheet << ['Property title: ', community['title']]
+            sheet << ['Current participation rate(%):', community['current_participation_rate']]
+            sheet << []
+            community['participation_trend'].sort { |x, y| y['year'] <=> x['year'] }.each do |year|
+              sheet.add_row ['Year', year['year']]
+              days = ['Day']
+              total_participation = ['Total participation']
+              account_participation = ['Internal participation']
+              third_party_participation = ['Third party participation']
+              year['data'].each do |day|
+                days << day['date']
+                total_participation << day['total_participation']
+                account_participation << day['account_participation']
+                third_party_participation << day['third_party_participation']
+              end
+              sheet.add_row days
+              total = sheet.add_row total_participation
+              account = sheet.add_row account_participation
+              third_party = sheet.add_row third_party_participation
+              chart = sheet.add_chart(
+                Axlsx::LineChart,
+                :title => "Trends #{year['year']}",
+                :start_at => [0, third_party.row_index + 1],
+                :end_at => [6, third_party.row_index + 10]
+              )
+              chart.add_series(data: total[0..-1], title: 'Total participation %')
+              chart.add_series(data: account[0..-1], title: 'Internal participation %')
+              chart.add_series(data: third_party[0..-1], title: 'Third party participation %')
+              12.times { sheet.add_row [] }
+            end
+          end
+        end
+
+        wb.add_worksheet(:name => "Portfolio wide analysis") do |sheet|
+          sheet.add_row ['PORTFOLIO WIDE TREND ANALYSIS']
+          sheet.add_row []
+          self.data['portfolio_wide_participation_trend'].sort { |x, y| y['year'] <=> x['year'] }.each do |year|
             sheet.add_row ['Year', year['year']]
             days = ['Day']
             total_participation = ['Total participation']
@@ -62,13 +126,13 @@ module Reports
             chart = sheet.add_chart(
               Axlsx::LineChart,
               :title => "Trends #{year['year']}",
-              :start_at => [0,third_party.row_index + 1],
+              :start_at => [0, third_party.row_index + 1],
               :end_at => [6, third_party.row_index + 10]
             )
             chart.add_series(data: total[0..-1], title: 'Total participation %')
             chart.add_series(data: account[0..-1], title: 'Internal participation %')
             chart.add_series(data: third_party[0..-1], title: 'Third party participation %')
-            12.times{ sheet.add_row [] }
+            12.times { sheet.add_row [] }
           end
         end
         p.serialize('simple.xlsx')
@@ -80,7 +144,7 @@ module Reports
 
     def portfolio_participation_trend(object)
       if ::Reports::Coverage.where(reportable: object).present?
-        report_years(object).map {|year| portfolio_wide_year(object, year) }
+        report_years(object).map { |year| portfolio_wide_year(object, year) }
       else
         []
       end
