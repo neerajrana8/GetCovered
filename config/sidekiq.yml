@@ -53,9 +53,9 @@ production:
   renewal_policies_create_job:
     cron: '0 2 * * 0'
     class: Reports::RenewalPoliciesCreateJob
-  participation_reports_job:
-    cron: '0 2 1 * *'   # Every first day of month at 2:00 AM
-    class: Reports::ParticipationReportsJob
   high_level_participation_reports_job:
     cron: '0 2 1 * *'   # Each first day of month at 2:00 AM
     class: Reports::HighLevelParticipationReportsJob
+  high_trend_analysis_reports_job:
+    cron: '0 2 1 * *'   # Each first day of month at 2:00 AM
+    class: Reports::HighLevelTrendAnalysisReportsJob

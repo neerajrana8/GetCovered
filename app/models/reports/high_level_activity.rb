@@ -23,11 +23,19 @@ module Reports
         changes =
           if last_report.present?
             old_row_data = last_report.data['rows'].find { |row| row['insurable_id'] == community.id }
-            {
-              'added' => current_community_data[:covered_count] - old_row_data['total_active'],
-              'canceled' => current_community_data[:cancelled_policy_count] - old_row_data['total_cancelled'],
-              'third_party_added' => current_community_data[:policy_external_covered_count] - old_row_data['total_third_party'],
-            }
+            if old_row_data.present?
+              {
+                'added' => current_community_data[:covered_count] - old_row_data['total_active'],
+                'canceled' => current_community_data[:cancelled_policy_count] - old_row_data['total_cancelled'],
+                'third_party_added' => current_community_data[:policy_external_covered_count] - old_row_data['total_third_party'],
+              }
+            else
+              {
+                'added' => current_community_data[:covered_count],
+                'canceled' => current_community_data[:cancelled_policy_count],
+                'third_party_added' => current_community_data[:policy_external_covered_count],
+              }
+            end
           else
             {
               'added' => nil,
