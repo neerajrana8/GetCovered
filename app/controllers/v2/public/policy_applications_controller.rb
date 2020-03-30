@@ -23,9 +23,19 @@ module V2
       
       def new
         selected_policy_type = params[:policy_type].blank? ? 'residential' : params[:policy_type]
+        puts "\n\n#{ selected_policy_type }\n\n" 
         if valid_policy_types.include?(selected_policy_type)
           policy_type = PolicyType.find_by_slug(selected_policy_type)
-          carrier = selected_policy_type == 'residential' ? Carrier.find(1) : Carrier.find(3)
+          
+          if selected_policy_type == "residential"
+            carrier_id = 1
+          elsif selected_policy_type == "commercial"
+            carrier_id = 3
+          elsif selected_policy_type == "rent-guarantee"
+            carrier_id = 4
+          end
+          
+          carrier = Carrier.find(carrier_id)
           
           @application = PolicyApplication.new(policy_type: policy_type, carrier: carrier)
           @application.build_from_carrier_policy_type
@@ -234,8 +244,7 @@ module V2
                  status: 422   
   	    end
       end
-      
-      
+            
       def update
         if @policy_application.policy_type.title == "Residential"
 
@@ -334,7 +343,7 @@ module V2
   	    end
 	        
 	      def valid_policy_types
-	        %w[residential commercial]
+	        return ["residential", "commercial", "rent-guarantee"]
 	      end
         
     end
