@@ -20,8 +20,8 @@ require 'devise'
 # of increasing the boot-up time by auto-requiring all files in the support
 # directory. Alternatively, in the individual `*_spec.rb` files, manually
 # require only the support files necessary.
-#
-# Dir[Rails.root.join('spec', 'support', '**', '*.rb')].each { |f| require f }
+
+Dir[Rails.root.join('spec', 'support', '**', '*.rb')].each { |f| require f }
 
 # Checks for pending migrations and applies them before tests are run.
 # If you are not using ActiveRecord, you can remove these lines.
@@ -34,6 +34,7 @@ end
 RSpec.configure do |config|
   # Devise
   config.include Devise::Test::ControllerHelpers, :type => :controller
+  config.include Helpers
   
   # Remove this line if you're not using ActiveRecord or ActiveRecord fixtures
   config.fixture_path = "#{::Rails.root}/spec/fixtures"
@@ -63,13 +64,32 @@ RSpec.configure do |config|
   # arbitrary gems may also be filtered via:
   # config.filter_gems_from_backtrace("gem name")
 
+  # Clean database
+  config.before(:suite) do
+    DatabaseCleaner.strategy = :transaction
+    DatabaseCleaner.clean_with(:truncation)
+  end
+
+  config.around(:each) do |example|
+    DatabaseCleaner.cleaning do
+      example.run
+    end
+  end
+
+
+  # Stop elasticsearch cluster after test run
   config.after :suite do
-    $stderr.puts ''
-    $stderr.puts ''
-    $stderr.puts '##    Removing ES test indexes    ##'
-    ES_CLASSES.each do |esc|
-      klass = esc.constantize
-      klass.__elasticsearch__.delete_index! index: klass.index_name
+    ActiveRecord::Base.descendants.each do |model|
+      if model.respond_to?(:__elasticsearch__)
+        begin
+          model.__elasticsearch__.delete_index!
+        rescue Elasticsearch::Transport::Transport::Errors::NotFound => e
+          # This kills "Index does not exist" errors being written to console
+          # by this: https://github.com/elastic/elasticsearch-rails/blob/738c63efacc167b6e8faae3b01a1a0135cfc8bbb/elasticsearch-model/lib/elasticsearch/model/indexing.rb#L268
+        rescue => e
+          STDERR.puts "There was an error removing the elasticsearch index for #{model.name}: #{e.inspect}"
+        end
+      end
     end
   end
 end
