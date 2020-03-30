@@ -136,9 +136,7 @@ module Reports
             12.times { sheet.add_row [] }
           end
         end
-        p.serialize('simple.xlsx')
-      end
-      nil
+      end.to_stream
     end
 
     private
