@@ -95,6 +95,9 @@ gem 'net-sftp', '~> 2.1', '>= 2.1.2'
 gem 'wkhtmltopdf-binary'
 gem 'wicked_pdf'
 
+# xlsx file generation
+gem 'caxlsx'
+
 group :development, :test do
   # Call 'byebug' anywhere in the code to stop execution and get a debugger console
   gem 'byebug', platforms: %i[mri mingw x64_mingw]
