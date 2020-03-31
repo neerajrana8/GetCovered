@@ -3,6 +3,10 @@ module Reports
   class HighLevelTrendAnalysis < ::Report
     NAME = 'High Trend Analysis'.freeze
 
+    def available_formats
+      %w[csv xlsx]
+    end
+
     def generate
       self.data = {
         'portfolio_wide_participation_trend' => portfolio_participation_trend(reportable),
