@@ -20,6 +20,10 @@ class Report < ApplicationRecord
     self.class::NAME
   end
 
+  def available_formats
+    ['csv']
+  end
+
   # Generates data for this report without updating the object. It's useful when you only want to return the data
   # without saving it in the database, for example:
   #   new_report = Report::Activity.new(reportable: Agency.last)
