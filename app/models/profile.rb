@@ -17,6 +17,9 @@ class Profile < ApplicationRecord
   validates_presence_of :first_name, :last_name
   validate :user_age
 
+	enum gender: { unspecified: 0, male: 1, female: 2 }
+	enum salutation: { unspecified: 0, mr: 1, mrs: 2, miss: 3, dr: 4, lord: 5 }
+
   settings index: { number_of_shards: 1 } do
     mappings dynamic: 'false' do
       indexes :first_name, type: :text, analyzer: 'english'
