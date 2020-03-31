@@ -1,7 +1,7 @@
 module Reports
   # This report is available for accounts.
   class HighLevelTrendAnalysis < ::Report
-    NAME = 'High Trend Analysis'.freeze
+    NAME = 'High Level Trend Analysis'.freeze
 
     def available_formats
       %w[csv xlsx]
