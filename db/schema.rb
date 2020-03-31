@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_03_13_090034) do
+ActiveRecord::Schema.define(version: 2020_03_31_212353) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -916,6 +916,8 @@ ActiveRecord::Schema.define(version: 2020_03_13_090034) do
     t.bigint "profileable_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "gender", default: 0
+    t.integer "salutation", default: 0
     t.index ["profileable_type", "profileable_id"], name: "index_profiles_on_profileable_type_and_profileable_id"
   end
 
