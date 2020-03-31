@@ -15,8 +15,10 @@ module V2
       respond_to do |format|
         format.json
         format.csv do
-          file_name = "#{@report.type.underscore.split('/').last}-#{@report.created_at || Date.today}.csv"
-          send_data @report.to_csv, filename: file_name
+          send_data @report.to_csv, filename: file_name('csv')
+        end
+        format.xlsx do
+          send_data @report.to_xlsx.read, type: "application/xlsx", filename: file_name('xlsx')
         end
       end
     end
@@ -31,20 +33,23 @@ module V2
       }), status: :ok
     end
 
-
     def generate
       success, result, status = generate_report(type: params[:type], reportable: @reportable)
       if success
         respond_to do |format|
-          format.json { render json: {data: result.data }}
+          format.json { render json: { data: result.data } }
           format.csv { send_data result.to_csv, filename: "#{result.type.underscore.split('/').last}-#{Date.today}.csv" }
         end
       else
-        render json: {message: result[:message], type: result[:type]}, status: status
+        render json: { message: result[:message], type: result[:type] }, status: status
       end
     end
 
     private
+
+    def file_name(extension)
+      "#{@report.type.underscore.split('/').last}-#{@report.created_at || Date.today}.#{extension}"
+    end
 
     def generate_report(type:, reportable:)
       report_class = type.constantize
