@@ -3,9 +3,9 @@ json.extract! @application, :reference, :external_reference,
   :fields, :questions, :carrier_id, :policy_type_id, :agency_id,
   :account_id, :billing_strategy_id
 
-json.policy_rates []
+json.policy_rates_attributes []
 json.policy_insurables_attributes []
-json.policy_users [
+json.policy_users_attributes [
 	{ 
 		primary: true, 
 		spouse: false, 
