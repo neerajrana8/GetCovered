@@ -9,7 +9,8 @@ module V2
       def stripe_button_link
         stripe_url = 'https://connect.stripe.com/express/oauth/authorize'
         redirect_uri = v2_account_stripe_connect_url
-        client_id = Rails.application.credentials.stripe&.[](:client_id)
+        environment = ENV.fetch('RAILS_ENV', 'development')
+        client_id = Rails.application.credentials.stripe[environment.to_sym]&.[](:client_id)
         
         render json: { stripe_url: "#{stripe_url}?redirect_uri=#{redirect_uri}&client_id=#{client_id}" }, status: 200
       end
