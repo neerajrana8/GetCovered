@@ -10,8 +10,55 @@ module CarrierPensioPolicyApplication
 	  # Generate Quote
 	  # 
 	  
-	  def pensio_quote(quote_id = nil)  
-		  
+	  def pensio_quote  
+  	  
+  	  quote_success = {
+    	  error: false,
+    	  success: false,
+    	  message: nil,
+    	  data: nil
+  	  }
+  	  
+  	  status_check = self.complete? || self.quote_failed?
+  	  
+		  if status_check &&
+			   self.carrier == Carrier.find_by_call_sign('P') 
+			
+			  quote = policy_quotes.new(agency: self.agency)
+			  if quote.save
+				  
+				  if self.fields["guarantee_option"] == "12 Month"
+						multiplier = 0.035  
+					elsif self.fields["guarantee_option"] == "6 Month"
+						multiplier = 0.075
+					else
+						multiplier = 0.09
+					end
+				  
+				  premium = PolicyPremium.new base: ((( self.fields["monthly_rent"] * 100 ) * 12 ) * multiplier ).to_i,
+				  					policy_quote: quote, billing_strategy: quote.policy_application.billing_strategy
+				  
+# 					premium.set_fees
+					premium.calculate_fees(true)
+					premium.calculate_total(true)			    
+				  quote_method = premium.save ? "mark_successful" : "mark_failure" 
+				  
+				  quote.send(quote_method)
+				  
+				  quote_success[:success] = true
+				  			  
+				else
+					self.update status: "quote_failed"
+          quote_success[:error] = true
+          quote_success[:message] = "Policy Quote failed to return"
+				end
+			else
+        quote_success[:error] = true
+				quote_success[:message] = "Application unavailable to be quoted"
+			end
+			
+			return quote_success
+			
 		end
 		
 	end
