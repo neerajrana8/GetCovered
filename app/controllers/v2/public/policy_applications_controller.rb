@@ -54,6 +54,8 @@ module V2
           create_residential()
         when 4
           create_commercial()
+        when 5
+        	create_rental_guarantee()
         else
           render json: { 
                    title: "Policy Type not Recognized", 
@@ -112,6 +114,62 @@ module V2
         end
         return error_status.include?(true) ? false : true
       end
+      
+      def create_rental_guarantee
+        
+        @application = PolicyApplication.new(create_rental_guarantee_params) 
+        @application.agency = Agency.where(master_agency: true).take 
+
+				@application.billing_strategy = BillingStrategy.where(agency: @application.agency, 
+				                                                      policy_type: @application.policy_type).take
+		    
+		    if @application.save
+  		    if create_policy_users()
+    		    if @application.update(status: 'complete')
+              # Commercial Application Saved
+              
+      		    @application.primary_user().invite!
+              quote_attempt = @application.pensio_quote()
+              
+    					if quote_attempt[:success] == true
+    						
+    						@application.primary_user().set_stripe_id()
+    						
+    						@quote = @application.policy_quotes.last
+    						@quote.generate_invoices_for_term()
+    						@premium = @quote.policy_premium
+    						
+    						response = { 
+  	  						id: @application.id,
+    							quote: { 
+    								id: @quote.id, 
+    								status: @quote.status, 
+    								premium: @premium
+    							},
+    							invoices: @quote.invoices,
+    							user: { 
+    								id: @application.primary_user().id,
+    								stripe_id: @application.primary_user().stripe_id
+    							}
+    						}
+    							  
+    						render json: response.to_json, status: 200
+    																
+    					else
+    						render json: { error: "Quote Failed", message: quote_attempt[:message] },
+    									 status: 422							
+    					end							
+      		  else
+              render json: @application.errors.to_json,
+                     status: 422					
+  					end
+  		    end		  		  
+  		  else         
+          # Rental Guarantee Application Save Error
+          render json: @application.errors.to_json,
+                 status: 422
+        end     	  
+	    end
       
       def create_commercial
         
@@ -294,8 +352,7 @@ module V2
         
         end
       end
-      
-      
+            
       private
 	      
 	      def view_path
@@ -323,14 +380,22 @@ module V2
 		      							:carrier_id, :agency_id, fields: {}, 
 		      							questions: [:text, :value, :questionId, options: [], questions: [:text, :value, :questionId, options: []]])  
   	    end
+	      
+	      def create_rental_guarantee_params
+  	      params.require(:policy_application)
+  	            .permit(:effective_date, :expiration_date, :fields, :auto_pay, 
+		      							:auto_renew, :billing_strategy_id, :account_id, :policy_type_id, 
+		      							:carrier_id, :agency_id, fields: {})  
+  	    end
   	    
   	    def create_policy_users_params
     	    params.require(:policy_application)
     	          .permit(policy_users_attributes: [
-			      							:spouse, user_attributes: [
+			      							:primary, :spouse, user_attributes: [
 				      							:email, profile_attributes: [
 					      							:first_name, :last_name, :job_title, 
-					      							:contact_phone, :birth_date	
+					      							:contact_phone, :birth_date, :gender,
+					      							:salutation
 				      							]
 			      							]
 			      					  ])  
