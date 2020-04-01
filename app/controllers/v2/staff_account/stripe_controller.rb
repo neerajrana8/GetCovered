@@ -1,14 +1,14 @@
 ##
-# V2 StaffAgency Stripe Controller
-# File: app/controllers/v2/staff_agency/stripe_controller.rb
+# V2 StaffAccount Stripe Controller
+# File: app/controllers/v2/staff_account/stripe_controller.rb
 
 module V2
-  module StaffAgency
-    class StripeController < StaffAgencyController
+  module StaffAccount
+    class StripeController < StaffAccountController
 
       def stripe_button_link
         stripe_url = 'https://connect.stripe.com/express/oauth/authorize'
-        redirect_uri = v2_agency_stripe_connect_url
+        redirect_uri = v2_account_stripe_connect_url
         client_id = Rails.application.credentials.stripe&.[](:client_id)
         
         render json: { stripe_url: "#{stripe_url}?redirect_uri=#{redirect_uri}&client_id=#{client_id}" }, status: 200
@@ -31,7 +31,7 @@ module V2
         connected_account_id = response.stripe_user_id
         save_account_id(connected_account_id)
 
-        # Render json.
+        # Render some HTML or redirect to a different page.
         
         render json: { success: true }, status: 200
       end
