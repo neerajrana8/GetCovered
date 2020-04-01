@@ -10,7 +10,8 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_03_31_212353) do
+ActiveRecord::Schema.define(version: 2020_03_31_233356) do
+
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -189,6 +190,7 @@ ActiveRecord::Schema.define(version: 2020_03_31_212353) do
     t.string "logo_url"
     t.string "footer_logo_url"
     t.string "subdomain"
+    t.string "subdomain_test"
     t.index ["profileable_type", "profileable_id"], name: "index_branding_profiles_on_profileable_type_and_profileable_id"
     t.index ["url"], name: "index_branding_profiles_on_url", unique: true
   end
@@ -751,6 +753,12 @@ ActiveRecord::Schema.define(version: 2020_03_31_212353) do
     t.index ["policy_type_id"], name: "index_policy_application_fields_on_policy_type_id"
   end
 
+  create_table "policy_application_groups", force: :cascade do |t|
+    t.string "title"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
   create_table "policy_applications", force: :cascade do |t|
     t.string "reference"
     t.string "external_reference"
@@ -770,10 +778,12 @@ ActiveRecord::Schema.define(version: 2020_03_31_212353) do
     t.bigint "billing_strategy_id"
     t.boolean "auto_renew", default: true
     t.boolean "auto_pay", default: true
+    t.bigint "policy_application_group_id"
     t.index ["account_id"], name: "index_policy_applications_on_account_id"
     t.index ["agency_id"], name: "index_policy_applications_on_agency_id"
     t.index ["billing_strategy_id"], name: "index_policy_applications_on_billing_strategy_id"
     t.index ["carrier_id"], name: "index_policy_applications_on_carrier_id"
+    t.index ["policy_application_group_id"], name: "index_policy_applications_on_policy_application_group_id"
     t.index ["policy_id"], name: "index_policy_applications_on_policy_id"
     t.index ["policy_type_id"], name: "index_policy_applications_on_policy_type_id"
   end
@@ -791,6 +801,25 @@ ActiveRecord::Schema.define(version: 2020_03_31_212353) do
     t.integer "special_deductible"
     t.index ["policy_application_id"], name: "index_policy_coverages_on_policy_application_id"
     t.index ["policy_id"], name: "index_policy_coverages_on_policy_id"
+  end
+
+  create_table "policy_group_quotes", force: :cascade do |t|
+    t.string "reference"
+    t.string "external_reference"
+    t.integer "status"
+    t.datetime "status_updated_on"
+    t.integer "premium"
+    t.integer "tax"
+    t.integer "est_fees"
+    t.integer "total_premium"
+    t.bigint "agency_id"
+    t.bigint "account_id"
+    t.bigint "policy_application_group_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id"], name: "index_policy_group_quotes_on_account_id"
+    t.index ["agency_id"], name: "index_policy_group_quotes_on_agency_id"
+    t.index ["policy_application_group_id"], name: "index_policy_group_quotes_on_policy_application_group_id"
   end
 
   create_table "policy_insurables", force: :cascade do |t|
