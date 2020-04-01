@@ -10,7 +10,7 @@ module V2
         only: [:show]
       
       def index
-        super(:@users, current_staff.organizable.active_users, :profile)
+        super(:@users, User.all, :profile)
       end
 
       def show
@@ -29,7 +29,7 @@ module V2
       end
 
       def set_user
-        @user = current_staff.organizable.active_users.find_by(id: params[:id])
+        @user = User.all.find_by(id: params[:id])
       end
         
       def supported_filters(called_from_orders = false)
