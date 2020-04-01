@@ -391,6 +391,13 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
 				application_fields: {
   				"monthly_rent": 0,
       		"guarantee_option": 3,
+      		landlord: {
+        	  "company": nil,
+        	  "first_name": nil,
+        	  "last_name": nil,
+        	  "phone_number": nil,
+        	  "email": nil	
+      		},
   				employment: {
     				primary_applicant: {
       				"employment_type": nil,
