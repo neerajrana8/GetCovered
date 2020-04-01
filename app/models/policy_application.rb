@@ -6,6 +6,7 @@ class PolicyApplication < ApplicationRecord
   
   # Concerns
 #   include ElasticsearchSearchable
+  include CarrierPensioPolicyApplication
   include CarrierCrumPolicyApplication
   include CarrierQbePolicyApplication
   

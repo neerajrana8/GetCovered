@@ -5,6 +5,7 @@
 
 class PolicyQuote < ApplicationRecord
   # Concerns
+	include CarrierPensioPolicyQuote
 	include CarrierQbePolicyQuote
 	include CarrierCrumPolicyQuote
 	include ElasticsearchSearchable
