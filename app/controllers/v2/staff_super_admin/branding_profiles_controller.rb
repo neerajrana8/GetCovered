@@ -7,12 +7,11 @@ module V2
         super(:@branding_profiles, BrandingProfile)
       end
 
-
       def show
       end
 
       def create
-        @branding_profile = BrandingProfile.new(create_params)
+        @branding_profile = BrandingProfile.new(branding_profile_params)
         if !@branding_profile.errors.any? && @branding_profile.save
           render :show, status: :created
         else
@@ -22,7 +21,7 @@ module V2
       
       def update
         if update_allowed?
-          if @branding_profile.update(update_params)
+          if @branding_profile.update(branding_profile_params)
             render :show, status: :ok
           else
             render json: @branding_profile.errors, status: :unprocessable_entity
@@ -53,6 +52,10 @@ module V2
         end
         
         def update_allowed?
+          true
+        end
+
+        def destroy_allowed?
           true
         end
         
