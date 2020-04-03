@@ -23,7 +23,7 @@ class Event < ApplicationRecord
   
   # Validations
   
-  validates_presence_of :verb, :format, :interface, :status, :process
+  validates_presence_of :verb, :format, :interface, :status, :process, :endpoint
   
   validates :request, 
     presence: true,
