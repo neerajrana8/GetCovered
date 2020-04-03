@@ -76,6 +76,8 @@ class Account < ApplicationRecord
 
   accepts_nested_attributes_for :addresses, allow_destroy: true
 
+  # Validations
+
   validates_presence_of :title, :slug, :call_sign
   
   def owner

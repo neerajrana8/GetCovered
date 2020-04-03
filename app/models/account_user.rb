@@ -8,6 +8,10 @@ class AccountUser < ApplicationRecord
   belongs_to :user,
     required: true
 
+  # Validations
+  
+  validates_presence_of :status
+  
   validate :account_user_is_unique,
     unless: Proc.new { |au| au.account.nil? || au.user.nil? }
 
