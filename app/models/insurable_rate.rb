@@ -50,9 +50,6 @@ class InsurableRate < ApplicationRecord
 #     scope "#{scope_name}_insured".to_sym, -> { where(number_insured: number_insured) }
 #       
 #   end
-
-  validates :premium,
-    numericality: { greater_than_or_equal_to: 0 }
   
   enum interval: ["month", "quarter", "bi_annual", "annual"]
 
