@@ -11,7 +11,7 @@ class Fee < ApplicationRecord
   belongs_to :assignable, polymorphic: true
   belongs_to :ownerable, polymorphic: true # Can be either Agency or Carrier
   
-  validates_presence_of :title, :slug, :type, :amount_type, :per_payment
+  validates_presence_of :title, :slug, :type, :amount_type
   validates :amount,
     numericality: { greater_than_or_equal_to: 0 }
   validates_inclusion_of :amortize, :per_payment, :enabled, :locked,
