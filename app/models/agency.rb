@@ -92,6 +92,10 @@ class Agency < ApplicationRecord
   # ActiveSupport +pluralize+ method doesn't work correctly for this word(returns staffs). So I added alias for it
   alias staffs staff
   
+  # Validations
+  
+  validates_presence_of :title, :slug, :call_sign
+  
   def owner
     staff.where(id: staff_id).take
    end

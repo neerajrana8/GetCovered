@@ -28,7 +28,7 @@ module CarrierCrumPolicyApplication
         
         event = self.events.new(request: request_template.to_json, 
                                 started: Time.now, status: "in_progress", 
-                                verb: 'post', process: 'new_crum_quote', 
+                                verb: 'post', process: 'new_crum_quote', interface: 'REST',
                                 endpoint: Rails.application.credentials.crum[:uri][:add_quote])
         
         if event.save 

@@ -38,7 +38,9 @@ class Carrier < ApplicationRecord
 
   # Validations
   validates :title, presence: true,
-                    uniqueness: true  
+                    uniqueness: true
+  
+  validates_presence_of :slug, :call_sign
       
   settings index: { number_of_shards: 1 } do
     mappings dynamic: 'false' do
