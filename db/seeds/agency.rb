@@ -11,6 +11,7 @@ require 'socket'
 @qbe = Carrier.find(1)           # Residential Carrier
 @qbe_specialty = Carrier.find(2) # Also qbe, but has to be a seperate entity for reasons i dont understand
 @crum = Carrier.find(3)          # Commercial Carrier
+@pensio = Carrier.find(4)
 
 ##
 # Set Up Get Covered
@@ -61,6 +62,7 @@ if @get_covered.save
   @get_covered.carriers << @qbe 
   @get_covered.carriers << @qbe_specialty
   @get_covered.carriers << @crum  
+  @get_covered.carriers << @pensio
   
   CarrierAgency.where(agency_id: @get_covered.id, carrier_id: @qbe.id).take
                .update(external_carrier_id: "GETCVR")
@@ -180,7 +182,14 @@ if @get_covered.save
 																						 amount: 3, 
 																						 type: 0, 
 																						 house_override: 0)
- 
+
+
+                                    
+  @get_covered.billing_strategies.create!(title: 'Monthly', enabled: true, carrier_code: nil,
+  		                                      new_business: { payments: [8.37, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33], 
+  		                                                      payments_per_term: 12, remainder_added_to_deposit: true },
+  		                                      carrier: @pensio, policy_type: PolicyType.find(5), 
+                                    				fees_attributes: [service_fee]) 
 else
   pp @get_covered.errors
 end

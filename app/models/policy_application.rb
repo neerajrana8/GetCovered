@@ -6,6 +6,7 @@ class PolicyApplication < ApplicationRecord
   
   # Concerns
 #   include ElasticsearchSearchable
+  include CarrierPensioPolicyApplication
   include CarrierCrumPolicyApplication
   include CarrierQbePolicyApplication
   
@@ -22,7 +23,8 @@ class PolicyApplication < ApplicationRecord
   belongs_to :account, optional: true
   belongs_to :billing_strategy
   belongs_to :policy, optional: true
-  
+  belongs_to :policy_application_group, optional: true
+
   has_many :addresses, as: :addressable, autosave: true
     
   has_many :policy_insurables

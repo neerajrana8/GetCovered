@@ -48,6 +48,7 @@ class Policy < ApplicationRecord
 
   # Concerns
   include ElasticsearchSearchable
+  include CarrierPensioPolicy
   include CarrierCrumPolicy
   include CarrierQbePolicy
   include RecordChange
