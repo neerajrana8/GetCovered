@@ -76,7 +76,7 @@ class Account < ApplicationRecord
 
   accepts_nested_attributes_for :addresses, allow_destroy: true
 
-  validates_presence_of :title
+  validates_presence_of :title, :slug, :call_sign
   
   def owner
     staff.where(id: staff_id).take
