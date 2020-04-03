@@ -1,7 +1,14 @@
 class BillingStrategy < ApplicationRecord
+  # Concerns
+  
+  include SetSlug
+  
+  # Active Record Callbacks
   
   before_save :check_lock
-    
+  
+  # Associations
+  
   belongs_to :agency
   belongs_to :carrier
   belongs_to :policy_type
@@ -10,6 +17,9 @@ class BillingStrategy < ApplicationRecord
 
   accepts_nested_attributes_for :fees
   
+  # Validations
+  
+  validates_presence_of :title, :slug
   validate :carrier_accepts_policy_type
   validate :agency_authorized_for_carrier
   

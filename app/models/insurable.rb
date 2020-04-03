@@ -7,6 +7,7 @@ class Insurable < ApplicationRecord
   include CarrierQbeInsurable
   include CoverageReport # , EarningsReport, RecordChange
   include RecordChange
+  include SetSlug
   
   after_commit :create_profile_by_carrier,
     on: :create
@@ -40,6 +41,7 @@ class Insurable < ApplicationRecord
   
   enum category: %w[property entity]
   
+  validates_presence_of :title, :slug
   validate :must_belong_to_same_account_if_parent_insurable
 
   scope :covered, -> { where(covered: true) }

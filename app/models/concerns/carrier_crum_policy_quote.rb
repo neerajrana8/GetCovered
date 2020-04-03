@@ -26,7 +26,7 @@ module CarrierCrumPolicyQuote
             	      
         event = self.events.new(request: request_template.to_json, 
                                 started: Time.now, status: "in_progress", 
-                                verb: 'post', process: 'crum_get_quote_documents', 
+                                verb: 'post', process: 'crum_get_quote_documents', interface: 'REST',
                                 endpoint: Rails.application.credentials.crum[:uri][:documents]) 
                                 
 		 		request = crum_service.get_documents(request_template)
@@ -75,7 +75,7 @@ module CarrierCrumPolicyQuote
             	      
           event = self.events.new(request: request_template.to_json, 
                                   started: Time.now, status: "in_progress", 
-                                  verb: 'post', process: 'crum_bind', 
+                                  verb: 'post', process: 'crum_bind', interface: 'REST',
                                   endpoint: Rails.application.credentials.crum[:uri][:bind])  	      
   	    
           
