@@ -12,74 +12,66 @@ module V2
       end
 
       def create
-        @application_group = PolicyApplicationGroup.create
-        @agency =
-          if current_staff.organizable.is_a?(Agency)
-            current_staff.organizable
-          elsif current_staff.organizable.is_a?(Account)
-            current_staff.organizable.agency
-          end
-        policy_applications_params.each do
+        policy_application_group = PolicyApplicationGroup.create
 
+        errors = []
+
+        policy_applications_params.each do |policy_application_params|
+          all_policy_application_params =
+            policy_application_params[:policy_application].
+              merge(common_params).
+              merge(policy_application_group: policy_application_group)
+
+          outcome = ::PolicyApplications::RentGuarantee::Create.run(
+            policy_application_params: all_policy_application_params,
+            policy_users_params: policy_application_params[:policy_users]
+          )
+
+          unless outcome.valid?
+            errors << {
+              policy_application_params: all_policy_application_params,
+              errors: outcome.errors.to_json
+            }
+          end
         end
-        if @application.save
-          if create_policy_users()
-            if @application.update status: "complete"
 
-              # if application.status updated to complete
-              @application.qbe_estimate()
-              @quote = @application.policy_quotes.last
-              if @application.status != "quote_failed" || @application.status != "quoted"
-                # if application quote success or failure
-                @application.qbe_quote(@quote.id)
-                @application.reload()
-                @quote.reload()
-
-                if @quote.status == "quoted"
-
-                  @application.primary_user().set_stripe_id()
-
-                  render json: {
-                    id: @application.id,
-                    quote: {
-                      id: @quote.id,
-                      status: @quote.status,
-                      premium: @quote.policy_premium
-                    },
-                    invoices: @quote.invoices.order('due_date ASC'),
-                    user: {
-                      id: @application.primary_user().id,
-                      stripe_id: @application.primary_user().stripe_id
-                    }
-                  }.to_json, status: 200
-
-                else
-                  render json: { error: "Quote Failed", message: "Quote could not be processed at this time" },
-                         status: 500
-                end
-              else
-                render json: { error: "Application Unavailable", message: "Application cannot be quoted at this time" },
-                       status: 400
-              end
-
-            else
-              render json: @application.errors.to_json,
-                     status: 422
-            end
-          end
+        if errors.present?
+          render json: { success: false, errors: errors },
+                 status: :unprocessable_entity
         else
-          render json: @application.errors.to_json,
-                 status: 422
+          render json: policy_application_group.to_json, status: :ok
         end
       end
 
       private
 
-      def create_permitted_params
-        params.require(:policy_application_group)
-          .permit(:effective_date, :expiration_date, :fields, :auto_pay,
-                  :auto_renew, :billing_strategy_id, :account_id, :policy_type_id,
-                  :carrier_id, :agency_id, fields: {})
+      def common_params
+        params.
+          require(:policy_application_group).
+          require(:common_attributes).
+          permit(:effective_date, :expiration_date, :auto_pay,
+                 :auto_renew, :account_id, :policy_type_id,
+                 :carrier_id, :agency_id)
+      end
+
+      def policy_applications_params
+        params.
+          require(:policy_application_group).
+          permit(
+            policy_applications: [
+              policy_application: [ :fields, :billing_strategy_id, fields: {}],
+              policy_users: [
+                :primary, :spouse, user_attributes: [
+                  :email, profile_attributes: [
+                    :first_name, :last_name, :job_title,
+                    :contact_phone, :birth_date, :gender,
+                    :salutation
+                  ]
+                ]
+              ]
+            ]
+          ).
+          require(:policy_applications)
       end
     end
   end
