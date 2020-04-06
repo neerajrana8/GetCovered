@@ -10,7 +10,7 @@ class AccountUser < ApplicationRecord
   
   validates_presence_of :status
   
-  validates_uniqueness_of :account_id, scope: "user_id"
+  validates_uniqueness_of :account_id, scope: "user_id", message: "is already associated with that user"
 
   enum status: ['pending', 'enabled', 'disabled']
     
