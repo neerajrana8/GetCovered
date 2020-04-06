@@ -21,14 +21,7 @@ class CarrierAgencyAuthorization < ApplicationRecord
                 TN: 42, TX: 43, UT: 44, VA: 45, VT: 46, WA: 47, WI: 48, 
                 WV: 49, WY: 50 }
   
-  validates_presence_of :state           
-  validate :one_state_per_carrier_agency
-  
-  private
-  
-    def one_state_per_carrier_agency
-      if carrier_agency.carrier_agency_authorizations.where(state: state).count > 1
-        errors.add(:state, "record for parent Carrier Policy Type already exists") 
-      end
-    end
+  validates_presence_of :state
+  validates_uniqueness_of :state, scope: "carrier_agency_id", message: "record for parent Carrier Policy Type already exists"
+
 end
