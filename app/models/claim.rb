@@ -10,8 +10,7 @@ class Claim < ApplicationRecord
   
   # Relationships
   belongs_to :claimant, 
-    polymorphic: true,
-    required: true
+    polymorphic: true
 
   belongs_to :insurable
 
@@ -23,7 +22,7 @@ class Claim < ApplicationRecord
   has_many_attached :documents
 
   # Validations
-  validates_presence_of :subject, :description, :time_of_loss, :type_of_loss, :claimant
+  validates_presence_of :subject, :description, :time_of_loss, :type_of_loss
   
   validate :time_of_loss_cannot_be_in_future,
     unless: proc { |clm| clm.time_of_loss.nil? }
@@ -49,7 +48,7 @@ class Claim < ApplicationRecord
   
   def initialize_claim
     self.time_of_loss ||= Time.zone.today
-    self.insurable = policy.insurables.take if policy.residential?
+    self.insurable = policy.insurables.take if policy && policy.residential?
   end
 
   def time_of_loss_cannot_be_in_future
