@@ -18,8 +18,6 @@ class Refund < ApplicationRecord
 
   has_one :invoice, through: :charge
 
-  has_one :policy, through: :invoice
-
   has_one :user, through: :invoice
   
   has_many :notifications,
@@ -59,7 +57,7 @@ class Refund < ApplicationRecord
   # Methods
 
   def must_start_queued?
-    return(charge.invoice.policy.nil? ? false : charge.invoice.policy.reload.billing_dispute_status == 'disputed')
+    return(charge.refunds_must_start_queued?)
   end
 
   def may_lack_stripe_info?
@@ -151,21 +149,23 @@ class Refund < ApplicationRecord
 
     def send_failure_notifications
       if status == 'failed'
-        ([SystemDaemon.find_by_process('notify_refund_failure')] + charge.invoice.policy.agency.agents.to_a).each do |notifiable|
+        invoice.notifiables_for_refund_failure.each do |notifiable|
           notifications.create(
-            notifiable: notifiable,
-            action:     "refund_failed",
-            subject:    "Get Covered: Refund Failed",
-            message:    "A refund (id #{id}) for renters insurance policy ##{ charge.invoice.policy.number }, invoice #{ charge.invoice.number } has failed.#{failure_reason.blank? || failure_reason == 'unknown' ? "" : " The payment processor provided the following reason: #{failure_reason}"}"
+            notifiable: notifiable, 
+            action: "refund_failed",
+            code: "error",
+            subject: "GetCovered Refund Failure", 
+            message:    "A refund (id #{id}) for #{ invoice.get_descriptor }, invoice ##{ invoice.number } has failed.#{failure_reason.blank? || failure_reason == 'unknown' ? "" : " The payment processor provided the following reason: #{failure_reason}"}"
           )
         end
       elsif status == 'errored'
-        ([SystemDaemon.find_by_process('notify_refund_failure')] + charge.invoice.policy.agency.agents.to_a).each do |notifiable|
+        invoice.notifiables_for_refund_failure.each do |notifiable|
           notifications.create(
-            notifiable: notifiable,
-            action:     "refund_failed",
-            subject:    "Get Covered: Refund Failed",
-            message:    "A refund (id #{id}) for renters insurance policy ##{ charge.invoice.policy.number }, invoice #{ charge.invoice.number } has failed.#{error_message.blank? ? "" : " The payment processor provided the following error message: #{error_message}"}"
+            notifiable: notifiable, 
+            action: "refund_failed",
+            code: "error",
+            subject: "GetCovered Refund Failure",
+            message:    "A refund (id #{id}) for #{ invoice.get_descriptor }, invoice ##{ invoice.number } has failed.#{error_message.blank? ? "" : " The payment processor provided the following error message: #{error_message}"}"
           )
         end
       end

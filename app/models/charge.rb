@@ -161,6 +161,9 @@ class Charge < ApplicationRecord
     return({ success: false, errors: created_refund.errors })
   end
 
+  def refunds_must_start_queued?
+    invoice.refunds_must_start_queued?
+  end
 
   private
 

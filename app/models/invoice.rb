@@ -439,13 +439,23 @@ class Invoice < ApplicationRecord
   
   # returns a descriptor for charges
   def get_descriptor
-    policy.nil? ? "Policy Quote #{ self.policy_quote.external_reference }" : 
+    self.policy.nil? ? "Policy Quote #{ self.policy_quote.external_reference }" : 
 	        													 "Policy ##{self.policy.number}"
   end
   
-  # handles charges that become disputed
+  # keep track of number of disputed charges
   def modify_disputed_charge_count(opened_one, closed_one)
     # MOOSE WARNING: this used to be on Policy but was taken away in v2 and currently does nothing!!!
+  end
+  
+  # whether refunds must start queued instead of running immediately
+  def refunds_must_start_queued?
+    return(self.policy.nil? ? false : self.policy.reload.billing_dispute_status == 'disputed')
+  end
+  
+  # whom to inform on refund failure
+  def notifiables_for_refund_failure
+    self.policy.nil? ? [] : self.policy.agency.agents.to_a
   end
 
   private
