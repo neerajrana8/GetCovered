@@ -11,6 +11,6 @@ class BillDueInvoicesJob < ApplicationJob
   def set_invoices
     @invoices = Invoice.joins("LEFT JOIN policies ON (policies.id = invoices.invoiceable_product_id AND invoices.invoiceable_product_id = 'Policy')")
                        .where(policies: { billing_enabled: true, policy_in_system: true }, due_date: Time.current.to_date)
-                       .available
+                       .available # MOOSE WARNING: extend for PolicyGroup when it exists
   end
 end
