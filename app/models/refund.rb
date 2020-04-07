@@ -38,8 +38,6 @@ class Refund < ApplicationRecord
 
   validates :status, presence: true
 
-  validates :charge, presence: true
-
   # Enums
 
   enum status: ['processing', 'queued', 'pending', 'succeeded', 'succeeded_via_dispute_payout', 'failed', 'errored', 'failed_and_handled'] # 'failed_and_handled' exists so that we can query for failed or errored refunds and then change their status once they have been issued manually or otherwise taken care of

@@ -43,8 +43,6 @@ class Charge < ApplicationRecord
 
   validates :dispute_count, presence: true
 
-  validates :invoice, presence: true
-
   # Enums
 
   enum status: ['processing', 'pending', 'succeeded', 'failed']
