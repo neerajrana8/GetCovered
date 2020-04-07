@@ -11,9 +11,12 @@ class PaymentProfile < ApplicationRecord
   alias_attribute :default, :default_profile
 
   def set_default
+    succeeded = false
     ActiveRecord::Base.transaction do
       user.payment_profiles.where.not(id: id).update_all(default_profile: false)
-      update(default_profile: true)
+      raise ActiveRecord::Rollback unless update(default_profile: true)
+      succeeded = true
     end
+    return succeeded
   end
 end

@@ -7,6 +7,7 @@ class Insurable < ApplicationRecord
   include CarrierQbeInsurable
   include CoverageReport # , EarningsReport, RecordChange
   include RecordChange
+  include SetSlug
   
   after_commit :create_profile_by_carrier,
     on: :create
@@ -40,6 +41,7 @@ class Insurable < ApplicationRecord
   
   enum category: %w[property entity]
   
+  validates_presence_of :title, :slug
   validate :must_belong_to_same_account_if_parent_insurable
 
   scope :covered, -> { where(covered: true) }
@@ -80,15 +82,12 @@ class Insurable < ApplicationRecord
   #
   
   def create_carrier_profile(carrier_id)
-    carrier = Carrier.find(carrier_id)
-    if !carrier.nil? && carrier.carrier_insurable_types
-        .exists?(insurable_type: insurable_type)
-      carrier_insurable_type = carrier.carrier_insurable_types
-        .find_by(insurable_type: insurable_type)
-      carrier_insurable_profiles.create!(traits: carrier_insurable_type.profile_traits, 
-                                         data: carrier_insurable_type.profile_data,
-                                         carrier: carrier)
-    end    
+    cit = CarrierInsurableType.where(carrier_id: carrier_id, insurable_type_id: insurable_type_id).take
+    unless cit.nil?
+      carrier_insurable_profiles.create!(traits: cit.profile_traits,
+                                         data: cit.profile_data,
+                                         carrier_id: carrier_id)
+    end
   end
   
   # Insurable.carrier_profile(carrier_id)

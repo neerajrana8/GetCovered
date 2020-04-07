@@ -22,6 +22,10 @@ class Event < ApplicationRecord
   
   enum status: ['in_progress', 'success', 'error']
   
+  # Validations
+  
+  validates_presence_of :verb, :format, :interface, :status, :process, :endpoint
+  
   validates :request, 
     presence: true,
     if: Proc.new { |ev| ev.format == 'json' || ev.format == 'xml'  }
@@ -29,8 +33,6 @@ class Event < ApplicationRecord
   validates :response, 
     presence: true,
     if: Proc.new { |ev| (ev.format == 'json' || ev.format == 'xml')  && !ev.completed.nil? }
-  
-  validates_presence_of :process
 
 	def duration
 		return started.nil? || completed.nil? ? nil : (completed - started) * 1000.0

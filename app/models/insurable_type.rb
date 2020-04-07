@@ -1,5 +1,6 @@
 class InsurableType < ApplicationRecord
   include ElasticsearchSearchable
+  include SetSlug
 
   COMMUNITIES_IDS = [1, 2, 3]
   UNITS_IDS = [4, 5]
@@ -16,6 +17,10 @@ class InsurableType < ApplicationRecord
 
   scope :units, -> { where(id: UNITS_IDS) }
   scope :communities, -> { where(id: COMMUNITIES_IDS) }
+  
+  validates_presence_of :title, :slug, :category
+  validates_inclusion_of :enabled,
+    in: [true, false], message: 'cannot be blank'
 
   enum category: %w[property entity]
 end

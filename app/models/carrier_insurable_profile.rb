@@ -5,6 +5,8 @@ class CarrierInsurableProfile < ApplicationRecord
   belongs_to :carrier
   belongs_to :insurable
   
+  validate :traits_and_data_are_non_nil
+  
   private
     def set_qbe_id
       
@@ -25,4 +27,10 @@ class CarrierInsurableProfile < ApplicationRecord
       return return_status
       
     end  
+    
+    def traits_and_data_are_non_nil
+      # we allow blank, but not nil (because things will break if we call hash methods on nil)
+      errors.add(:traits, "cannot be null") if self.traits.nil?
+      errors.add(:data, "cannot be null") if self.data.nil?
+    end
 end
