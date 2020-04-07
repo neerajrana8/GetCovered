@@ -150,7 +150,7 @@ class Refund < ApplicationRecord
     def send_failure_notifications
       if status == 'failed'
         invoice.notifiables_for_refund_failure.each do |notifiable|
-          notifications.create(
+          notifications.create( # used to be SystemDaemon
             notifiable: notifiable, 
             action: "refund_failed",
             code: "error",

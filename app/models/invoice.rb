@@ -19,8 +19,8 @@ class Invoice < ApplicationRecord
 
   # ActiveRecord Associations
 
-	belongs_to :policy_quote
-  belongs_to :policy, optional: true
+  belongs_to :invoiceable_quote, polymorphic: true # can be PolicyQuote or PolicyQuoteGroup right now
+  belongs_to :invoiceable_product, polymorphic: true, optional: true # can be Policy or PolicyGroup right now
   belongs_to :user
   has_many :payments
   has_many :charges
@@ -41,7 +41,6 @@ class Invoice < ApplicationRecord
   validates :available_date, presence: true
   validates :tax, presence: true
   validates :tax_percent, presence: true
-#   validates :policy, presence: true
   validates :user, presence: true
 
 # 	validate :policy_unless_quoted
@@ -328,7 +327,8 @@ class Invoice < ApplicationRecord
       end
     end
 		
-		unless policy.nil?
+		if invoiceable_product_type == 'Policy' && !invoiceable_product.nil?
+      policy = invoiceable_product
 	    if policy.BEHIND? || policy.REJECTED?
 	      invoices = policy.invoices
 	      invoices_statuses = []
@@ -340,67 +340,70 @@ class Invoice < ApplicationRecord
 	    end
 			
 	    policy.last_payment_date = updated_at.to_date
-	    next_invoice = policy.invoices.order('due_date ASC').where('due_date > ?', due_date).limit(1).take
+	    next_invoice = policy.invoices.where('due_date > ?', due_date).order('due_date ASC').limit(1).take
 	    policy.next_payment_date = next_invoice.due_date unless next_invoice.nil?
 	
 	    policy.save
+    # MOOSE WARNING: needs elsif for PolicyGroup, once that exists
     end
   end
 
   def payment_failed
     unless status == 'complete'
-
+      # prepare for failure notifications
       failure_is_postproration = false # flag set to true when this is a post-policy-proration failure of a canceled policy
-
+      invoice_status = nil
+      user_notification_subject = nil
+      agent_notification_subject = nil
       if due_date >= Time.current.to_date
         invoice_status = 'available'
-        user_notification_subject = 'Get Covered: Policy Payment Failure'
-        user_notification_message = "A payment for your renters insurance policy ##{policy.number}, invoice ##{number} has failed.  Please submit another payment before #{due_date.strftime('%m/%d/%Y')}."
-        agent_notification_subject = 'Get Covered: Policy Payment Failure'
-        agent_notification_message = "A payment for renters insurance policy ##{policy.number}, invoice ##{number} has failed.  Payment due #{due_date.strftime('%m/%d/%Y')}."
+        user_notification_subject = 'Get Covered: Payment Failure'
+        user_notification_message = "A payment for #{get_descriptor}, invoice ##{number} has failed.  Please submit another payment before #{due_date.strftime('%m/%d/%Y')}."
+        agent_notification_subject = 'Get Covered: Payment Failure'
+        agent_notification_message = "A payment for #{get_descriptor}, invoice ##{number} has failed.  Payment due #{due_date.strftime('%m/%d/%Y')}."
       else
         invoice_status = 'missed'
-        user_notification_subject = 'Get Covered: Policy behind'
-        user_notification_message = "A payment for your renters insurance policy ##{policy.number}, invoice ##{number} has failed.  Your policy is now past due.  Please submit a payment immediately to prevent cancellation of coverage."
-        agent_notification_subject = 'Get Covered: Policy behind'
-        agent_notification_message = "A payment for renters insurance policy ##{policy.number}, invoice ##{number} has failed.  This policy is now past due."
+        user_notification_subject = 'Get Covered: Payments Behind'
+        user_notification_message = "A payment for #{get_descriptor}, invoice ##{number} has failed.  Your payment is now past due.  Please submit a payment immediately to prevent cancellation of coverage."
+        agent_notification_subject = 'Get Covered: Payments Behind'
+        agent_notification_message = "A payment for #{get_descriptor}, invoice ##{number} has failed.  This payment is now past due."
       end
-
+      # update our status
       update status: invoice_status
+      # handle when our payemnt is missed
       if invoice_status == 'missed'
         if has_pending_refund
           # if we are here, then a proration was applied to the invoice while payment was processing, and payment then failed
           failure_is_postproration = true
-          agent_notification_subject = 'Get Covered: Post-Cancelation Policy Payment Failure'
-          agent_notification_message = "A payment for renters insurance policy ##{policy.number}, invoice #{number} has failed. The payment was marked for proration adjustments via refund upon success, because the policy was canceled while the payment was being processed. No proration adjustment refunds will be issued; no payment was collected for this invoice."
-          notifications.create(
-            notifiable: SystemDaemon.find_by_process('notify_canceled_policy_payment_failure'),
-            action: 'invoice_payment_failed_after_proration',
-            subject: agent_notification_subject,
-            message: agent_notification_message
-          )
+          agent_notification_subject = 'Get Covered: Post-Cancelation Payment Failure'
+          agent_notification_message = "A payment for #{get_descriptor}, invoice #{number} has failed. The payment was marked for proration adjustments via refund upon its successful receipt, because the policy was canceled while the payment was being processed. Its failure means such adjustments can no longer be made. No proration adjustment refunds will be issued; no payment was collected for this invoice."
+          #notifications.create(
+          #  notifiable: SystemDaemon.find_by_process('notify_canceled_policy_payment_failure'),
+          #  action: 'invoice_payment_failed_after_proration',
+          #  subject: agent_notification_subject,
+          #  message: agent_notification_message
+          #)
         end
-        policy.update billing_status: 'behind'
+        self.invoiceable_product.update billing_status: 'BEHIND' if self.invoiceable_product_type == 'Policy' # MOOSE WARNING or policygroup once it exists
       end
-
-      # Find agents to notify
-      policy_agents = policy.agency.account_staff
-
+      
       # Notify responsible user
       unless failure_is_postproration
         notifications.create(
           notifiable: user,
           action: 'invoice_payment_failed',
+          code: "error",
           subject: user_notification_subject,
           message: user_notification_message
         )
       end
 
       # Notify policy agents
-      policy_agents.each do |agent|
+      notifiables_for_payment_failure.each do |notifiable|
         notifications.create(
-          notifiable: agent,
+          notifiable: notifiable, 
           action: failure_is_postproration ? 'invoice_payment_failed_after_proration' : 'invoice_payment_failed',
+          code: "error",
           subject: agent_notification_subject,
           message: agent_notification_message
         )
@@ -423,7 +426,7 @@ class Invoice < ApplicationRecord
           notifiable: user,
           action: 'invoice_available',
           template: 'invoice',
-          subject: "Policy #{policy.number} #{number}.",
+          subject: "#{get_descriptor}, Invoice ##{number}.",
           message: 'A new invoice is available for payment.'
         )
 
@@ -439,8 +442,22 @@ class Invoice < ApplicationRecord
   
   # returns a descriptor for charges
   def get_descriptor
-    self.policy.nil? ? "Policy Quote #{ self.policy_quote.external_reference }" : 
-	        													 "Policy ##{self.policy.number}"
+    # try to use invoiceable_product
+    unless self.invoiceable_product.nil?
+      case self.invoiceable_product_type
+        when "Policy"
+          return "Policy ##{self.invoiceable_product.number}"
+        # MOOSE WARNING: need to add PolicyGroup once it exists
+      end
+    end
+    # fall back to invoiceable_quote
+    case self.invoiceable_quote_type
+      when "PolicyQuote"
+        return "Policy Quote #{ self.invoiceable_quote.external_reference }"
+      # MOOSE WARNING: need to add PolicyQuoteGroup once it exists
+    end
+    # fall back to most generic possible term (should never happen, but just in case)
+    return "Product"
   end
   
   # keep track of number of disputed charges
@@ -450,12 +467,17 @@ class Invoice < ApplicationRecord
   
   # whether refunds must start queued instead of running immediately
   def refunds_must_start_queued?
-    return(self.policy.nil? ? false : self.policy.reload.billing_dispute_status == 'disputed')
+    return(self.invoiceable_product_type != 'Policy' || self.invoiceable_product.nil? ? false : self.invoiceable_product.reload.billing_dispute_status == 'DISPUTED')
+  end
+  
+  # whom to inform on payment failure
+  def notifiables_for_payment_failure
+    return(self.invoiceable_product_type != 'Policy' || self.invoiceable_product.nil? ? [] : self.invoiceable_product.agency.account_staff.to_a)
   end
   
   # whom to inform on refund failure
   def notifiables_for_refund_failure
-    self.policy.nil? ? [] : self.policy.agency.agents.to_a
+    return(self.invoiceable_product_type != 'Policy' || self.invoiceable_product.nil? ? [] : self.invoiceable_product.agency.account_staff.to_a)
   end
 
   private
@@ -467,7 +489,7 @@ class Invoice < ApplicationRecord
 # 	end
 
   def initialize_invoice
-    self.user ||= policy&.user unless policy.nil?
+    self.user ||= self.invoiceable_product&.user unless self.invoiceable_product_type != 'Policy' || self.invoiceable_product.nil? # MOOSE WARNING: policygroup? this should probably move to a callback anyway
   end
 
   # Calculation Methods
@@ -485,7 +507,7 @@ class Invoice < ApplicationRecord
   end
 
   def related_classes_through
-    [:policy]
+    []#[:policy]
   end
 
   def related_create_hash(_calling_relation)
@@ -513,29 +535,32 @@ class Invoice < ApplicationRecord
   # This method uses deprecated fields (e.g. agency_total).
   # Either refactor it or delete.
   def set_commission
-    agency_commission_rate = policy.agency.carrier_commission(policy.carrier.id)
-    account_commission_rate = policy.account.commission_rate
+    policy = self.invoiceable_product_type == 'Policy' ? self.invoiceable_product : nil
+    unless policy.nil?
+      agency_commission_rate = policy.agency.carrier_commission(policy.carrier.id)
+      account_commission_rate = policy.account.commission_rate
 
-    house_agency = policy.agency.master_agency?
+      house_agency = policy.agency.master_agency?
 
-    self.agency_subtotal = (subtotal * "0.#{agency_commission_rate}".to_f).ceil
-    self.carrier_total = subtotal - agency_subtotal
-    self.account_total = (agency_subtotal.to_f * "0.#{account_commission_rate}".to_f).ceil
-    self.house_subtotal = (agency_subtotal * "0.#{policy.agency.master_commission_split}".to_f).ceil
+      self.agency_subtotal = (subtotal * "0.#{agency_commission_rate}".to_f).ceil
+      self.carrier_total = subtotal - agency_subtotal
+      self.account_total = (agency_subtotal.to_f * "0.#{account_commission_rate}".to_f).ceil
+      self.house_subtotal = (agency_subtotal * "0.#{policy.agency.master_commission_split}".to_f).ceil
 
-    service_split = {}
-    service_split[:difference] = (total - subtotal)
-    service_split[:agency] = service_split[:difference] > 0 ? (service_split[:difference] * "0.#{policy.agency.master_take_split}".to_f).ceil : 0
-    service_split[:house] = service_split[:difference] - service_split[:agency]
+      service_split = {}
+      service_split[:difference] = (total - subtotal)
+      service_split[:agency] = service_split[:difference] > 0 ? (service_split[:difference] * "0.#{policy.agency.master_take_split}".to_f).ceil : 0
+      service_split[:house] = service_split[:difference] - service_split[:agency]
 
-    self.house_total = house_agency ? (agency_subtotal - account_total) + service_split[:house] : house_subtotal + service_split[:house]
-    self.agency_total = agency_subtotal - account_total - house_subtotal
-    self.agency_net = house_agency ? 0 : agency_total + service_split[:agency]
+      self.house_total = house_agency ? (agency_subtotal - account_total) + service_split[:house] : house_subtotal + service_split[:house]
+      self.agency_total = agency_subtotal - account_total - house_subtotal
+      self.agency_net = house_agency ? 0 : agency_total + service_split[:agency]
 
-    total_check = agency_total + account_total + house_subtotal + carrier_total
-    total_difference = (subtotal - total_check)
-    self.carrier_total = carrier_total + total_difference
+      total_check = agency_total + account_total + house_subtotal + carrier_total
+      total_difference = (subtotal - total_check)
+      self.carrier_total = carrier_total + total_difference
 
-    save
+      save
+    end
   end
 end
