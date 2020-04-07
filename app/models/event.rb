@@ -9,7 +9,8 @@ class Event < ApplicationRecord
   after_save :display_deets, if: Proc.new { |e| ENV["RAILS_ENV"] == "development" }
   
   belongs_to :eventable, 
-    polymorphic: true
+    polymorphic: true,
+    optional: true
                                     
   enum verb: ['get', 'put', 'post', 
               'patch', 'delete', 'options'], 
