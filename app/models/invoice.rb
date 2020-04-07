@@ -436,6 +436,17 @@ class Invoice < ApplicationRecord
       end
     end
   end
+  
+  # returns a descriptor for charges
+  def get_descriptor
+    policy.nil? ? "Policy Quote #{ self.policy_quote.external_reference }" : 
+	        													 "Policy ##{self.policy.number}"
+  end
+  
+  # handles charges that become disputed
+  def modify_disputed_charge_count(opened_one, closed_one)
+    # MOOSE WARNING: this used to be on Policy but was taken away in v2 and currently does nothing!!!
+  end
 
   private
 

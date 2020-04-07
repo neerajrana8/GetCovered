@@ -16,10 +16,6 @@ class Charge < ApplicationRecord
   # ActiveRecord Associations
 
   belongs_to :invoice
-  
-  has_one :policy_quote, through: :invoice
-
-  has_one :policy, through: :invoice
 
   has_one :user, through: :invoice
 
@@ -95,8 +91,8 @@ class Charge < ApplicationRecord
         succeeded = self.update(dispute_count: dispute_count + 1)
       end
       raise ActiveRecord::Rollback unless succeeded
-      # update policy
-      succeeded = policy.modify_disputed_charge_count(true, false) if became_disputed
+      # update invoice
+      succeeded = invoice.modify_disputed_charge_count(true, false) if became_disputed
       raise ActiveRecord::Rollback unless succeeded
     end
     return succeeded
@@ -145,8 +141,8 @@ class Charge < ApplicationRecord
         )
         raise ActiveRecord::Rollback unless succeeded
       end
-      # update policy
-      succeeded = policy.modify_disputed_charge_count(false, true) if became_undisputed
+      # update invoice
+      succeeded = invoice.modify_disputed_charge_count(false, true) if became_undisputed
       raise ActiveRecord::Rollback unless succeeded
     end
     return succeeded
@@ -262,9 +258,7 @@ class Charge < ApplicationRecord
       else
         # create charge
         begin
-	        descriptor = policy.nil? ? "Policy Quote #{ policy_quote.external_reference }" : 
-	        													 "Policy ##{invoice.policy.number}"
-	        													 
+	        descriptor = invoice.get_descriptor
           stripe_charge = Stripe::Charge.create({
             amount: amount,
             currency: 'usd',
