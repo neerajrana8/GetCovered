@@ -60,11 +60,13 @@ module V2
             tax_percent: [:scalar, :array, :interval],
             policy_id: [:scalar, :array],
             user_id: [:scalar, :array],
-            policy: {
-              id: [:scalar, :array],
-              number: [:scalar, :array],
-              account_id: [:scalar, :array]
-            },
+            invoiceable_product_id: [:scalar, :array],
+            invoiceable_product_type: [:scalar, :array],
+            #policy: {
+            #  id: [:scalar, :array],
+            #  number: [:scalar, :array],
+            #  account_id: [:scalar, :array]
+            #},
             user: {
               id: [:scalar, :array],
               profile: {
