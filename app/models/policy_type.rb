@@ -17,6 +17,7 @@ class PolicyType < ApplicationRecord
   
   # Validations
   validates :title, presence: true, uniqueness: true
+  validates_presence_of :slug
   # validates :designation, presence: true,
   #                         uniqueness: true
   #

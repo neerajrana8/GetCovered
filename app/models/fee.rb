@@ -11,6 +11,12 @@ class Fee < ApplicationRecord
   belongs_to :assignable, polymorphic: true
   belongs_to :ownerable, polymorphic: true # Can be either Agency or Carrier
   
+  validates_presence_of :title, :slug, :type, :amount_type
+  validates :amount,
+    numericality: { greater_than_or_equal_to: 0 }
+  validates_inclusion_of :amortize, :per_payment, :enabled, :locked,
+    in: [true, false], message: 'cannot be blank'
+  
   validate :prevent_amortize_of_per_payment_fees
   
   enum type: { ORIGINATION: 0, RENEWAL: 1, REINSTATEMENT: 2, MISC: 3 }

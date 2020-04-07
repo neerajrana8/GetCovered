@@ -101,7 +101,16 @@ class CrumService
 			
 			state_url = url.sub(':state', state)
 			error = false
-				
+			
+      event = Event.new(
+        verb: 'get', 
+        format: 'json', 
+        interface: 'REST',
+        process: 'crum_get_class_codes', 
+        endpoint: state_url,
+        request: '{ "data": null }'
+      )
+		  
 			begin	
 	    	request = HTTParty.get(state_url)
 	    rescue => e
@@ -110,8 +119,10 @@ class CrumService
 	    end
 	       
 	    unless error
+  	    event.response = request
+  	    event.status = "success"
 		  	request.each do |class_code|
-			  	@carrier.carrier_class_codes.create!(
+			  	@carrier.carrier_class_codes.create(
 			  		external_id: class_code["id"],
 			  		major_category: class_code["MajorCategory"],
 			  		sub_category: class_code["SubCategory"],
@@ -127,9 +138,13 @@ class CrumService
 			  		enabled: true, 
 			  		policy_type: @policy_type) unless @carrier.carrier_class_codes
 			  																							.exists?(external_id: class_code["id"])					
-			  end  
+			  end
+		  else
+		    event.status = "error"  
 		  end
 		  
+		  event.save
+  		
 		end
 		
 	end

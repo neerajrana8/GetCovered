@@ -2,7 +2,10 @@
 
   # StaffAccount
   scope module: :staff_account, path: "staff_account" do
-  
+    
+    get "stripe/button_link", to: "stripe#stripe_button_link", as: :account_stripe_link
+    get "stripe/connect", to: "stripe#connect", as: :account_stripe_connect
+
     resources :accounts,
       only: [ :update, :show ],
       concerns: :reportable do
