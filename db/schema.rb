@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_03_31_233356) do
+ActiveRecord::Schema.define(version: 2020_04_08_171100) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -526,10 +526,12 @@ ActiveRecord::Schema.define(version: 2020_03_31_233356) do
     t.bigint "user_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.bigint "policy_id"
-    t.bigint "policy_quote_id"
-    t.index ["policy_id"], name: "index_invoices_on_policy_id"
-    t.index ["policy_quote_id"], name: "index_invoices_on_policy_quote_id"
+    t.string "invoiceable_quote_type"
+    t.bigint "invoiceable_quote_id"
+    t.string "invoiceable_product_type"
+    t.bigint "invoiceable_product_id"
+    t.index ["invoiceable_product_type", "invoiceable_product_id"], name: "index_invoices_on_invoiceable_product"
+    t.index ["invoiceable_quote_type", "invoiceable_quote_id"], name: "index_invoices_on_invoiceable_quote"
     t.index ["user_id"], name: "index_invoices_on_user_id"
   end
 
