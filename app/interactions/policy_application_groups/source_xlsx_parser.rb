@@ -21,85 +21,113 @@ module PolicyApplicationGroups
     def grouped_data(row)
       {
         policy_application: {
-          date: row['Date'],
-          monthly_rent: row["Monthly Rent ($)-Dollars"],
-          guarantee_period: row["3, 6, or 12 Months Option Rent Guarantee"],
-          terms_of_payment: row["Terms of Payment"],
-          program_fee: row["Monthly Rent ($)-Dollars"].present? ? row["Program Fee ($)-Dollars"] : nil,
-          referral_code: row["Referral Code"],
-          reference_id: row["Reference ID"]
-        },
-        property_address: {
-          address_1: row["Address-Street Address"],
-          address_2: row["Address-Street Address Line 2"],
-          address_city: row["Address-City"],
-          address_state: row["Address-State"],
-          address_code: row["Address-Postal / Zip Code"],
-        },
-        applicant: {
-          salutation: row['Salutation'],
-          first_name: row["Applicant's Name-First"],
-          last_name: row["Applicant's Name-Last"],
-          birthday: row["Applicant's Date of birth" ],
-          gender: row["Gender"],
-          phone: row["Phone number"],
-          email: row["Applicant's Email address"],
-          employment_type: row["Applicant's Employment type"],
-          employment_description: row["Applicant's Employment Description"],
-          income: row["Applicant's Monthly Income"],
-          employer: {
-            name: row["Applicant's Employer's Name"],
-            address_1: row["Applicant's Employer's Address-Street Address" ],
-            address_2: row["Applicant's Employer's Address-Street Address Line 2" ],
-            city: row["Applicant's Employer's Address-City" ],
-            state: row["Applicant's Employer's Address-State"],
-            code: row["Applicant's Employer's Address-Postal / Zip Code"],
-            country: row["Applicant's Employer's Address-Country"],
-            phone: row["Applicant's Employer's Phone number"],
+          fields: {
+            "landlord" =>
+              {
+                "email" => row["Landlord Email Address"],
+                "company" => nil,
+                "last_name" => row["Landlord Contact name-Last"],
+                "first_name" => row["Landlord Contact name-First"],
+                "phone_number" => row["Landlord Phone number"]
+              },
+            "employment" => employment(row),
+            "monthly_rent" => row["Monthly Rent ($)-Dollars"],
+            "guarantee_option" => row["3, 6, or 12 Months Option Rent Guarantee"]
           }
         },
-        co_tenant: {
-          salutation: row["Salutation"],
-          first_name: row["Co-Tenant Name-First"],
-          last_name: row["Co-Tenant Name-Last"],
-          birthday: row["Co-Tenant Date of birth"],
-          gender: row["Gender2"],
-          phone: row["Co-Tenant Phone number"],
-          email: row["Co-Tenant Email address2"],
-          employment_type: row["Co-Tenant Employment"],
-          employment_description: row["Co-Tenant Employment Description"],
-          income: row["Co-Tenant Monthly Income"],
-          employer: {
-            name: row["Co-Tenant Employer's Name" ],
-            address_1: row["Co-Tenant's Employer's Address-Street Address"],
-            address_2: row["Co-Tenant's Employer's Address-Street Address2"],
-            city: row["Co-Tenant's Employer's Address-City"],
-            state: row["Co-Tenant's Employer's Address-State"],
-            code: row["Co-Tenant's Employer's Address-Postal / Zip Code"],
-            country: row["Co-Tenant's Employer's Address-Country" ],
-            phone: row["Co-Tenant's Employer's Phone number"],
-          }
-        },
-        landlord: {
-          first_name: row["Landlord Contact name-First"],
-          last_name: row["Landlord Contact name-Last"],
-          phone: row["Landlord Phone number"],
-          email: row["Landlord Email Address" ],
-        }
+        policy_users: policy_users(row)
       }
     end
 
+    def employment(row)
+      employment_hash =
+        {
+          "primary_applicant" =>
+            {
+              "address" =>
+                {
+                  "city" => row["Applicant's Employer's Address-City"],
+                  "state" => row["Applicant's Employer's Address-State"],
+                  "county" => nil,
+                  "country" => row["Applicant's Employer's Address-Country"],
+                  "zip_code" => row["Applicant's Employer's Address-Postal / Zip Code"],
+                  "street_two" => row["Applicant's Employer's Address-Street Address Line 2"],
+                  "street_name" => row["Applicant's Employer's Address-Street Address"],
+                  "street_number" => nil
+                },
+              "company_name" => row["Applicant's Employer's Name"],
+              "monthly_income" => row["Applicant's Monthly Income"],
+              "employment_type" => row["Applicant's Employment type"],
+              "job_description" => row["Applicant's Employment Description"],
+              "company_phone_number" => row["Applicant's Employer's Phone number"]
+            }
+        }
+      if row["Co-Tenant Employer's Name"].present?
+        employment_hash['secondary_applicant'] =
+          {
+            "address" =>
+              {
+                "city" => row["Co-Tenant's Employer's Address-City"],
+                "state" => row["Co-Tenant's Employer's Address-State"],
+                "county" => nil,
+                "country" => row["Co-Tenant's Employer's Address-Country"],
+                "zip_code" => row["Co-Tenant's Employer's Address-Postal / Zip Code"],
+                "street_two" => row["Co-Tenant's Employer's Address-Street Address2"],
+                "street_name" => row["Co-Tenant's Employer's Address-Street Address"],
+                "street_number" => nil
+              },
+            "company_name" => row["Co-Tenant Employer's Name"],
+            "monthly_income" => row["Co-Tenant Monthly Income"],
+            "employment_type" => row["Co-Tenant Employment"],
+            "job_description" => row["Co-Tenant Employment Description"],
+            "company_phone_number" => row["Co-Tenant's Employer's Phone number"]
+          }
+      end
+      employment_hash
+    end
+
+    def policy_users(row)
+      policy_users_params = [
+        {
+          primary: true,
+          user_attributes: {
+            email: row["Applicant's Email address"],
+            profile_attributes: {
+              first_name: row["Applicant's Name-First"],
+              last_name: row["Applicant's Name-Last"],
+              job_title: row["Applicant's Employment Description"],
+              contact_phone: row["Phone number"],
+              birth_date: row["Applicant's Date of birth"],
+              gender: row["Gender"],
+              salutation: row['Salutation']
+            }
+          }
+        }
+      ]
+      if row["Co-Tenant Email address2"].present?
+        policy_users_params << [
+          {
+            user_attributes: {
+              email: row["Co-Tenant Email address2"],
+              profile_attributes: {
+                first_name: row["Co-Tenant Name-First"],
+                last_name: row["Co-Tenant Name-Last"],
+                job_title: row["Co-Tenant Employment Description"],
+                contact_phone: row["Co-Tenant Phone number"],
+                birth_date: row["Co-Tenant Date of birth"],
+                gender: row["Gender2"],
+                salutation: row["Co-Tenant Salutation"],
+              }
+            }
+          }
+        ]
+      end
+      policy_users_params
+    end
+
     def row_empty?(row)
-      data = grouped_data(row)
-      [
-        data[:policy_application],
-        data[:property_address],
-        data[:landlord],
-        data[:applicant].except(:employer),
-        data[:co_tenant].except(:employer),
-        data.dig(:applicant, :employer),
-        data.dig(:co_tenant, :employer)
-      ].map(&:values).flatten.compact.blank?
+      # Excepts always calculated field and strange ending
+      row.except("Program Fee ($)-Dollars").values[0..53].compact.blank?
     end
   end
 end
