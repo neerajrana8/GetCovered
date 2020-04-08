@@ -1,20 +1,20 @@
 module PolicyApplications
   module RentGuarantee
     class Create < ActiveInteraction::Base
-      hash :policy_application_params
+      hash :policy_application_params, strip: false
       array :policy_users_params
       
       
       def execute
         application = PolicyApplication.new(policy_application_params)
+        application.carrier = Carrier.find(4)
+        application.policy_type = PolicyType.find_by_slug('rent-guarantee')
         application.agency = Agency.where(master_agency: true).take
-        application.billing_strategy = BillingStrategy.where(agency: application.agency,
-                                                             policy_type: application.policy_type).take
-
+        application.billing_strategy = BillingStrategy.where(agency: application.agency, policy_type: application.policy_type).take
         if application.save
           if create_policy_users(application)
             if application.update(status: 'complete')
-              application.primary_user().invite! # Waiting clarification from Brandon
+              application.primary_user().invite! # Waiting clarification from Brandon, maybe it should be deleted
               quote_attempt = application.pensio_quote()
               if quote_attempt[:success] == true
                 application
@@ -37,21 +37,7 @@ module PolicyApplications
         policy_users_params.each_with_index do |policy_user, index|
           if ::User.where(email: policy_user[:user_attributes][:email]).exists?
             user = ::User.find_by_email(policy_user[:user_attributes][:email])
-            if index == 0
-              if user.invitation_accepted_at? == false
-                application.users << user
-                error_status << false
-              else
-                errors.merge!(
-                  {
-                    error: "User Account Exists",
-                    message: "A User has already signed up with this email address.  Please log in to complete your application"
-                  }
-                )
-              end
-            else
-              application.users << user
-            end
+            application.users << user
           else
             secure_tmp_password = SecureRandom.base64(12)
             policy_user = application.policy_users.create!(
@@ -69,7 +55,7 @@ module PolicyApplications
                 }
               }
             )
-            policy_user.user.invite! if index == 0
+            policy_user.user.invite! if index == 0 # @todo Waiting clarification from Brandon, maybe it should be deleted
           end
         end
 

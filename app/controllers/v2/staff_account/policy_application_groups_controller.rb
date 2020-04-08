@@ -8,9 +8,8 @@ module V2
       end
 
       def create
-
         policy_application_group = PolicyApplicationGroup.create
-        ap common_params
+
         errors = []
 
         @parsed_input_file.each do |policy_application_params|
