@@ -11,6 +11,10 @@
             to: "histories#index_recordable",
             via: "get",
             defaults: { recordable_type: Account }
+
+          get "account_policies",
+            to: "accounts#account_policies",
+            via: "get"
         end
       end
   
