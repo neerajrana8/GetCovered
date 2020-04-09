@@ -1,10 +1,15 @@
 module V2
   module StaffAccount
     class PolicyApplicationGroupsController < StaffAccountController
+      before_action :set_policy_application_group, only: %i[show update]
       before_action :parse_input_file, only: [:upload_xlsx, :create]
 
       def upload_xlsx
         render json: { parsed_data: @parsed_input_file }, status: 200
+      end
+
+      def show
+        render json: @policy_application_group.to_json
       end
 
       def create
@@ -18,17 +23,10 @@ module V2
               merge(common_params).
               merge(policy_application_group: policy_application_group)
 
-          outcome = ::PolicyApplications::RentGuarantee::Create.run(
-            policy_application_params: all_policy_application_params,
-            policy_users_params: policy_application_params[:policy_users]
+         ::PolicyApplications::RentGuaranteeCreateJob.perform_later(
+            all_policy_application_params,
+            policy_application_params[:policy_users]
           )
-
-          unless outcome.valid?
-            errors << {
-              policy_application_params: all_policy_application_params,
-              errors: outcome.errors.to_json
-            }
-          end
         end
 
         if errors.present?
@@ -41,6 +39,10 @@ module V2
       end
 
       private
+
+      def set_policy_application_group
+        @policy_application_group = ::PolicyApplicationGroup.find(params[:id])
+      end
 
       def parse_input_file
         if params[:input_file].present?
@@ -56,8 +58,7 @@ module V2
           require(:policy_application_group).
           require(:common_attributes).
           permit(:effective_date, :expiration_date, :auto_pay,
-                 :auto_renew, :account_id, :policy_type_id,
-                 :carrier_id, :agency_id)
+                 :auto_renew, :account_id, :agency_id)
       end
     end
   end

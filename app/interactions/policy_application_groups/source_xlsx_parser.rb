@@ -111,7 +111,7 @@ module PolicyApplicationGroups
               last_name: row["Applicant's Name-Last"],
               job_title: row["Applicant's Employment Description"],
               contact_phone: row["Phone number"],
-              birth_date: row["Applicant's Date of birth"],
+              birth_date: row["Applicant's Date of birth"]&.to_s,
               gender: row["Gender"],
               salutation: row['Salutation']
             }
@@ -129,7 +129,7 @@ module PolicyApplicationGroups
               last_name: row["Co-Tenant Name-Last"],
               job_title: row["Co-Tenant Employment Description"],
               contact_phone: row["Co-Tenant Phone number"],
-              birth_date: row["Co-Tenant Date of birth"],
+              birth_date: row["Co-Tenant Date of birth"]&.to_s,
               gender: row["Gender2"],
               salutation: row["Co-Tenant Salutation"],
             }
