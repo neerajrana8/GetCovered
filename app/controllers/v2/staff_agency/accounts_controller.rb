@@ -15,6 +15,12 @@ module V2
           super(:@accounts, current_staff.organizable.accounts, :agency)
         end
       end
+
+      def account_policies
+        account = Account.includes(:polices).find(params[:id])
+        @account_policies = account.policies || []
+        render "/v2/staff_agency/accounts/account_policies", status: :ok
+      end
       
       def show
         render :show, status: :ok

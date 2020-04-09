@@ -7,6 +7,12 @@ module V2
     class AccountsController < StaffAccountController
       before_action :set_account, only: %i[update show]
 
+      def account_policies
+        account = Account.includes(:polices).find(params[:id])
+        @account_policies = account.policies || []
+        render "/v2/staff_account/accounts/account_policies", status: :ok
+      end
+
       def show
         render :show, status: :ok
       end
