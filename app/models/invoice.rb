@@ -19,8 +19,7 @@ class Invoice < ApplicationRecord
 
   # ActiveRecord Associations
 
-  belongs_to :invoiceable_quote, polymorphic: true # can be PolicyQuote or PolicyQuoteGroup right now
-  belongs_to :invoiceable_product, polymorphic: true, optional: true # can be Policy or PolicyGroup right now
+  belongs_to :invoiceable, polymorphic: true
   belongs_to :user
   has_many :payments
   has_many :charges
@@ -327,8 +326,8 @@ class Invoice < ApplicationRecord
       end
     end
 		
-		if invoiceable_product_type == 'Policy' && !invoiceable_product.nil?
-      policy = invoiceable_product
+		if invoiceable_type == 'Policy' && !invoiceable.nil?
+      policy = invoiceable
 	    if policy.BEHIND? || policy.REJECTED?
 	      invoices = policy.invoices
 	      invoices_statuses = []
@@ -384,7 +383,7 @@ class Invoice < ApplicationRecord
           #  message: agent_notification_message
           #)
         end
-        self.invoiceable_product.update billing_status: 'BEHIND' if self.invoiceable_product_type == 'Policy' # MOOSE WARNING or policygroup once it exists
+        self.invoiceable.update billing_status: 'BEHIND' if self.invoiceable_type == 'Policy' # MOOSE WARNING or policygroup once it exists
       end
       
       # Notify responsible user
@@ -442,22 +441,14 @@ class Invoice < ApplicationRecord
   
   # returns a descriptor for charges
   def get_descriptor
-    # try to use invoiceable_product
-    unless self.invoiceable_product.nil?
-      case self.invoiceable_product_type
-        when "Policy"
-          return "Policy ##{self.invoiceable_product.number}"
-        # MOOSE WARNING: need to add PolicyGroup once it exists
-      end
+    case(self.invoiceable.nil? ? nil : self.invoiceable_type) # force 'else' case if invoiceable is nil
+      when 'Policy'
+        "Policy ##{self.invoiceable.number}"
+      when 'PolicyQuote'
+        "Policy Quote #{self.invoiceable.external_reference}"
+      else
+        "Product"
     end
-    # fall back to invoiceable_quote
-    case self.invoiceable_quote_type
-      when "PolicyQuote"
-        return "Policy Quote #{ self.invoiceable_quote.external_reference }"
-      # MOOSE WARNING: need to add PolicyQuoteGroup once it exists
-    end
-    # fall back to most generic possible term (should never happen, but just in case)
-    return "Product"
   end
   
   # keep track of number of disputed charges
@@ -467,17 +458,32 @@ class Invoice < ApplicationRecord
   
   # whether refunds must start queued instead of running immediately
   def refunds_must_start_queued?
-    return(self.invoiceable_product_type != 'Policy' || self.invoiceable_product.nil? ? false : self.invoiceable_product.reload.billing_dispute_status == 'DISPUTED')
+    case(self.invoiceable&.reload.nil? ? nil : self.invoiceable_type)
+      when 'Policy'
+        self.invoiceable.billing_dispute_status == 'DISPUTED'
+      else
+        false
+    end
   end
   
-  # whom to inform on payment failure
+  # whom to inform on payment failure (excluding user)
   def notifiables_for_payment_failure
-    return(self.invoiceable_product_type != 'Policy' || self.invoiceable_product.nil? ? [] : self.invoiceable_product.agency.account_staff.to_a)
+    case(self.invoiceable.nil? ? nil : self.invoiceable_type)
+      when 'Policy'
+        self.invoiceable.agency.account_staff.to_a
+      else
+        []
+    end
   end
   
-  # whom to inform on refund failure
+  # whom to inform on refund failure (excluding user)
   def notifiables_for_refund_failure
-    return(self.invoiceable_product_type != 'Policy' || self.invoiceable_product.nil? ? [] : self.invoiceable_product.agency.account_staff.to_a)
+    case(self.invoiceable.nil? ? nil : self.invoiceable_type)
+      when 'Policy'
+        self.invoiceable.agency.account_staff.to_a
+      else
+        []
+    end
   end
 
   private
@@ -489,7 +495,6 @@ class Invoice < ApplicationRecord
 # 	end
 
   def initialize_invoice
-    self.user ||= self.invoiceable_product&.user unless self.invoiceable_product_type != 'Policy' || self.invoiceable_product.nil? # MOOSE WARNING: policygroup? this should probably move to a callback anyway
   end
 
   # Calculation Methods
@@ -535,7 +540,7 @@ class Invoice < ApplicationRecord
   # This method uses deprecated fields (e.g. agency_total).
   # Either refactor it or delete.
   def set_commission
-    policy = self.invoiceable_product_type == 'Policy' ? self.invoiceable_product : nil
+    policy = self.invoiceable_type == 'Policy' ? self.invoiceable : nil
     unless policy.nil?
       agency_commission_rate = policy.agency.carrier_commission(policy.carrier.id)
       account_commission_rate = policy.account.commission_rate
