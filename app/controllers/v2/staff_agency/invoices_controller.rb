@@ -73,8 +73,8 @@ module V2
             tax: [:scalar, :array, :interval],
             tax_percent: [:scalar, :array, :interval],
             user_id: [:scalar, :array],
-            invoiceable_product_id: [:scalar, :array],
-            invoiceable_product_type: [:scalar, :array],
+            invoiceable_id: [:scalar, :array],
+            invoiceable_type: [:scalar, :array],
             #policy: {
             #  id: [:scalar, :array],
             #  number: [:scalar, :array],

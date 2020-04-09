@@ -28,7 +28,7 @@ class PolicyQuote < ApplicationRecord
 		
 	has_one :policy_premium
 
-	has_many :invoices, as: :invoiceable_quote
+	has_many :invoices, as: :invoiceable
 
   has_many_attached :documents
 
@@ -131,7 +131,7 @@ class PolicyQuote < ApplicationRecord
 	          policy_application.policy_rates.update_all policy_id: policy.id
 	          
 	          # Add invoices to policy
-	          invoices.update_all(invoiceable_product_id: policy.id, invoiceable_product_type: 'Policy')
+	          invoices.update_all(invoiceable_id: policy.id, invoiceable_type: 'Policy')
 						
 		 				build_coverages() if policy_application.policy_type.title == "Residential"
 	  
