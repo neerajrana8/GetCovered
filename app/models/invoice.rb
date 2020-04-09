@@ -11,7 +11,8 @@ class Invoice < ApplicationRecord
   # after_initialize  :initialize_invoice
   include ElasticsearchSearchable
 
-  before_validation :calculate_subtotal, if: -> { line_items.count > 0 }
+  # DISABLED FOR NOW because it contains v1 functionality that's not being used anymore, and if anyone passes a line item to an invoice in v2 this would give them some nasty surprises
+  #before_validation :calculate_subtotal, if: -> { line_items.count > 0 }
 
   before_validation :set_number, on: :create
 
