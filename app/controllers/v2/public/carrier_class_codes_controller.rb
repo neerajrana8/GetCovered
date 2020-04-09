@@ -10,12 +10,10 @@ module V2
 		  	@state_code = params[:state_code].presence ? ["CW", "FL", "TX"].include?(params[:state_code]) ? params[:state_code] : "CW" : "CW"
 		  	@major_category = params[:major_category].presence ? params[:major_category].delete_prefix('"').delete_suffix('"') : nil
 		  	
-		  	puts "QUERY: enabled: true, state_code: #{ @state_code }, major_category: #{ @major_category.nil? ? 'nil' : @major_category.to_s }"
-		  	
-		  	@class_codes = @major_category.nil? ? CarrierClassCode.where(enabled: true, state_code: @state_code) : 
-		  	                                      CarrierClassCode.where(enabled: true, state_code: @state_code, major_category: @major_category.to_s)
+		  	@class_codes = @major_category.nil? ? CarrierClassCode.where(enabled: true, state_code: @state_code).uniq { |ccc| ccc.major_category } : 
+		  	                                      CarrierClassCode.where(enabled: true, state_code: @state_code, major_category: @major_category.to_s).order("major_category")
                                                 
-        render json: @class_codes.order("major_category").to_json,
+        render json: @class_codes.to_json,
                status: :ok
 	      
 		  end

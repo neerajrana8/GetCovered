@@ -32,8 +32,8 @@ class PolicyPremium < ApplicationRecord
 	end
   
   def correct_total
-		errors.add(:total, 'incorrect total') if total != base + taxes + total_fees
-		errors.add(:calculation_base, 'incorrect calculation base') if calculation_base != base + taxes + amortized_fees
+		errors.add(:total, 'incorrect total') if total != combined_premium() + taxes + total_fees
+		errors.add(:calculation_base, 'incorrect calculation base') if calculation_base != combined_premium() + taxes + amortized_fees
   end
   
   def combined_premium
