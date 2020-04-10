@@ -10,13 +10,25 @@ module PolicyApplicationGroups
         if row_empty?(row)
           break
         else
-          result << grouped_data(row)
+          result << grouped_data(row) if row_valid?(row)
         end
       end
       result
     end
 
     private
+
+    def row_valid?(row)
+      if row["Applicant's Date of birth"].present? && row["Applicant's Date of birth"] < 18.years.ago
+        true
+      else
+        errors[:bad_rows] << {
+          message: "Column with applicant's email: #{row["Applicant's Email address"]} has wrong Applicant's Date of birth",
+          column: row["Applicant's Email address"]
+        }
+        false
+      end
+    end
 
     def grouped_data(row)
       {
@@ -42,11 +54,11 @@ module PolicyApplicationGroups
     def guarantee_option(cell_value)
       case cell_value
       when '3 Months Option'
-        3
+        "3 Month"
       when '6 Months Option'
-        6
+        "6 Month"
       when '12 Months Option'
-        12
+        "12 Month"
       else
         cell_value
       end
@@ -69,7 +81,6 @@ module PolicyApplicationGroups
                   "street_number" => nil
                 },
               "company_name" => row["Applicant's Employer's Name"],
-              "monthly_income" => row["Applicant's Monthly Income"]&.to_i,
               "employment_type" => row["Applicant's Employment type"],
               "job_description" => row["Applicant's Employment Description"],
               "company_phone_number" => row["Applicant's Employer's Phone number"]
@@ -90,7 +101,6 @@ module PolicyApplicationGroups
                 "street_number" => nil
               },
             "company_name" => row["Co-Tenant Employer's Name"],
-            "monthly_income" => row["Co-Tenant Monthly Income"],
             "employment_type" => row["Co-Tenant Employment"],
             "job_description" => row["Co-Tenant Employment Description"],
             "company_phone_number" => row["Co-Tenant's Employer's Phone number"]
@@ -136,6 +146,7 @@ module PolicyApplicationGroups
           }
         }
       end
+
       policy_users_params
     end
 
