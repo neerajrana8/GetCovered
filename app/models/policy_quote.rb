@@ -248,11 +248,39 @@ class PolicyQuote < ApplicationRecord
 	  	if policy_premium.calculation_base > 0 && 
 		  	 status == "quoted" && 
 		  	 invoices.count == 0
-		  	
-		  	payment_count = policy_application.billing_strategy.new_business['payments'].select { |p| p > 0 }.count
-		  	
-		  	amortized_fees_per_payment = policy_premium.amortized_fees / payment_count
-		  	
+        # calculate relevant things
+        payment_count = policy_application.billing_strategy.new_business['payments'].select{|p| p > 0 }.count
+        payment_weight_total = policy_application.billing_strategy.new_business['payments'].inject(0){|sum,p| sum + p }.to_d
+        payment_weight_total = 100.to_d if payment_weight_total <= 0 # this can never happen unless someone fills new_business with 0s invalidly, but you can't be too careful
+		  	amortized_fees_per_payment = (policy_premium.amortized_fees / payment_count.to_d).floor
+=begin
+        # calculate invoice charges
+        invoice_hashes = policy_application.billing_strategy.new_business['payments'].map.with_index do |payment, index|
+			  	amount = (policy_premium.calculation_base * payment / payment_weight_total).floor
+					fees = index == 0 ? amortized_fees_per_payment + policy_premium.deposit_fees : amortized_fees_per_payment
+					due_date = index == 0 ? status_updated_on : policy_application.effective_date + index.months
+          {
+            due_date: due_date
+            available_date: due_date - available_period,
+            user: policy_application.primary_user,
+            subtotal: amount,
+            total: amount + fees,
+            status: "quoted"
+          }
+        end
+        invoice_total = invoice_hashes.inject(0){|sum,inv| sum + inv[:total] }
+        rounding_error = policy_premium.total - invoice_total
+        invoice_hashes.first[:total] += rounding_error unless rounding_error == 0
+        # create invoices
+        all_good = true
+        invoice_hashes.map do |invh|
+          unless invoices.create(invh)
+            pp invoice.errors
+            all_good = false
+          end
+        end
+        invoices_generated = all_good
+=end
 		  	policy_application.billing_strategy.new_business['payments'].each_with_index do |payment, index|
 					next if payment == 0
 					
