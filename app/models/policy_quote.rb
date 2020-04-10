@@ -263,12 +263,8 @@ class PolicyQuote < ApplicationRecord
         end.select{|tc| tc[:total] > 0 }
         
         # add any rounding errors to the first charge
-        rounding_errors = {
-          fees: policy_premium.total_fees - to_charge.inject(0){|sum,tc| sum + tc[:fees] },
-          total: policy_premium.total - to_charge.inject(0){|sum,tc| sum + tc[:total] }
-        }
-        to_charge[0][:fees] += rounding_errors[:fees]
-        to_charge[0][:total] += rounding_errors[:total]
+        to_charge[0][:fees] += policy_premium.total_fees - to_charge.inject(0){|sum,tc| sum + tc[:fees] }
+        to_charge[0][:total] += policy_premium.total - to_charge.inject(0){|sum,tc| sum + tc[:total] }
         
         # create invoices
         invoices_generated = true
