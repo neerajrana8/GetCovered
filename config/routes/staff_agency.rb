@@ -3,6 +3,9 @@
   # StaffAgency
   scope module: :staff_agency, path: "staff_agency" do
   
+    get "stripe/button_link", to: "stripe#stripe_button_link", as: :agency_stripe_link
+    get "stripe/connect", to: "stripe#connect", as: :agency_stripe_connect
+
     resources :accounts,
       only: [ :create, :update, :index, :show ],
       concerns: :reportable do
@@ -11,6 +14,10 @@
             to: "histories#index_recordable",
             via: "get",
             defaults: { recordable_type: Account }
+
+          get "account_policies",
+            to: "accounts#account_policies",
+            via: "get"
         end
       end
   
@@ -174,6 +181,7 @@
         end
       end
   
+    
     resources :users,
       only: [ :create, :update, :index, :show ] do
         member do

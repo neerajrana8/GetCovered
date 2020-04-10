@@ -19,14 +19,6 @@ class CarrierPolicyTypeAvailability < ApplicationRecord
                 TN: 42, TX: 43, UT: 44, VA: 45, VT: 46, WA: 47, WI: 48, 
                 WV: 49, WY: 50 }
   
-  validates_presence_of :state           
-  validate :one_state_per_carrier_policy_type
-  
-  private
-  
-    def one_state_per_carrier_policy_type
-      if carrier_policy_type.carrier_policy_type_availabilities.where(state: state).count > 1
-        errors.add(:state, "record for parent Carrier Policy Type already exists") 
-      end
-    end
+  validates_presence_of :state
+  validates_uniqueness_of :state, scope: "carrier_policy_type_id", message: "record for parent Carrier Policy Type already exists"
 end

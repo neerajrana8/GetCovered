@@ -3,9 +3,12 @@
 # file: +app/models/commission_strategy.rb+
 
 class CommissionStrategy < ApplicationRecord
+  # ActiveRecord Callbacks
   
   before_save :check_lock, 
     unless: Proc.new { |cs| cs.locked_changed? && cs.locked_was == false }
+  
+  # Assocatiations
   
   # Turn off single table inheritance
   self.inheritance_column = :_type_disabled
@@ -14,14 +17,21 @@ class CommissionStrategy < ApplicationRecord
   belongs_to :carrier
   belongs_to :policy_type
   belongs_to :commissionable, polymorphic: true
+  
+  # Validations
+  
+  validates_presence_of :title, :type, :fulfillment_schedule, :house_override, :override_type
+  validates_inclusion_of :amortize, :per_payment, :enabled, :locked,
+    in: [true, false], message: 'cannot be blank'
+  validates :amount,
+    numericality: { greater_than_or_equal_to: 0 }
+  validate :carrier_accepts_policy_type
+  validate :agency_authorized_for_carrier,
+    if: Proc.new { |cs| cs.commissionable_type == "Agency" }
  
   enum type: { PERCENT: 0, FLAT: 1 }
   enum override_type: { PERCENT: 0, FLAT: 1 }, _suffix: true
   enum fulfillment_schedule: { MONTHLY: 0, QUARTERLY: 1, ANNUALLY: 2, REAL_TIME: 3 }
-             
-  validate :carrier_accepts_policy_type
-  validate :agency_authorized_for_carrier,
-    if: Proc.new { |cs| cs.commissionable_type == "Agency" }
   
   private
   

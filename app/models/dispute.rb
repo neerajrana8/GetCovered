@@ -34,8 +34,6 @@ class Dispute < ApplicationRecord
   validates_inclusion_of :active, in: [true, false],
     message: "can't be blank"
 
-  validates :charge, presence: true
-
   # Enums
 
   enum status: ['warning_needs_response', 'warning_under_review', 'warning_closed', 'needs_response', 'under_review', 'charge_refunded', 'won', 'lost'] # these are in 1-to-1 correspondence with Stripe's Dispute::status values
