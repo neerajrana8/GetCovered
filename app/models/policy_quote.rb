@@ -267,23 +267,24 @@ class PolicyQuote < ApplicationRecord
         to_charge[0][:total] += policy_premium.total - to_charge.inject(0){|sum,tc| sum + tc[:total] }
         
         # create invoices
-        invoices_generated = true
-        ActiveRecord::Base.transaction do
-          to_charge.each do |tc|
-            invoices.create!({
-              due_date:       tc[:due_date],
-              available_date: tc[:due_date] - available_period,
-              user:           policy_application.primary_user,
-              subtotal:       tc[:total] - tc[:fees],
-              total:          tc[:total],
-              status:         "quoted"
-            })
+        begin
+          ActiveRecord::Base.transaction do
+            to_charge.each do |tc|
+              invoices.create!({
+                due_date:       tc[:due_date],
+                available_date: tc[:due_date] - available_period,
+                user:           policy_application.primary_user,
+                subtotal:       tc[:total] - tc[:fees],
+                total:          tc[:total],
+                status:         "quoted"
+              })
+            end
+            invoices_generated = true
           end
         rescue ActiveRecord::RecordInvalid => e
           puts e.to_s
-          invoices_generated = true
         rescue
-          invoices_generated = false
+          puts "Unknown error during invoice creation"
         end
 				
 		  end
