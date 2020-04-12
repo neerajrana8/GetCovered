@@ -60,6 +60,7 @@ class Account < ApplicationRecord
   has_many :commission_strategies, as: :commissionable
   
   has_many :commissions, as: :commissionable
+  has_many :commission_deductions, as: :deductee
 
   has_many :events,
     as: :eventable
@@ -93,6 +94,11 @@ class Account < ApplicationRecord
     json = super(options.reverse_merge(include: %i[agency primary_address owner]))
     json
   end
+
+  def commission_balance
+    commission_deductions.map(&:unearned_balance).reduce(:+) || 0
+  end
+
 
   settings index: { number_of_shards: 1 } do
     mappings dynamic: 'false' do
