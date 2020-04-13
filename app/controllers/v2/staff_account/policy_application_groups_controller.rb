@@ -75,7 +75,7 @@ module V2
           result = ::PolicyApplicationGroups::SourceXlsxParser.run(xlsx_file: file)
 
           unless result.valid?
-            render json: { error: 'Bad file', content: @parsed_input_file.errors[:bad_rows] },
+            render json: { error: 'Bad file', content: result.errors[:bad_rows] },
                    status: :unprocessable_entity
           end
 
