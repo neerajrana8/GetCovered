@@ -121,6 +121,12 @@
     resources :policy_applications,
       path: "policy-applications",
       only: [ :index, :show ]
+
+    resources :policy_application_groups, path: "policy-application-groups" do
+      collection do
+        post :upload_xlsx
+      end
+    end
   
     resources :policy_quotes,
       path: "policy-quotes",
@@ -159,9 +165,3 @@
   
   end
 # end
-
-
-
-
-
-
