@@ -58,6 +58,7 @@ class Agency < ApplicationRecord
   has_many :commission_strategies, as: :commissionable
   
   has_many :commissions, as: :commissionable
+  has_many :commission_deductions, as: :deductee
 
   has_many :billing_strategies
       
@@ -158,6 +159,10 @@ class Agency < ApplicationRecord
     else
       nil
     end
+  end
+
+  def commission_balance
+    commission_deductions.map(&:unearned_balance).reduce(:+) || 0
   end
   
   settings index: { number_of_shards: 1 } do
