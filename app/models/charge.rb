@@ -23,8 +23,6 @@ class Charge < ApplicationRecord
 
   has_many :disputes
 
-  has_many :payments
-
   # Validations
 
   validates :status, presence: true
@@ -249,7 +247,7 @@ class Charge < ApplicationRecord
           return
         end
         # rip the card or bank account out of the token for our use
-        stripe_source = token[token['type']]['id']
+        stripe_source = token[token['type']]['id'] # MOOSE WARNING: this will NOT work. It needs to be attached to the customer before calling Stripe::Charge.create on it
       end
       # processing
       if status != 'processing'
