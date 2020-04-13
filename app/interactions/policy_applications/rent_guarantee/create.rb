@@ -18,6 +18,7 @@ module PolicyApplications
               quote_attempt = application.pensio_quote()
               if quote_attempt[:success] == true
                 application
+                policy_application_group.update_status
               else
                 errors.merge!(application.errors)
               end
