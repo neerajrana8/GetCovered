@@ -32,6 +32,10 @@ module PolicyApplications
 
       private
 
+      def policy_application_group
+        @policy_application_group ||= policy_application_params[:policy_application_group]
+      end
+
       def create_policy_users(application)
         error_status = []
         policy_users_params.each_with_index do |policy_user, index|

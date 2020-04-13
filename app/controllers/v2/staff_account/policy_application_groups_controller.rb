@@ -14,9 +14,7 @@ module V2
 
       def create
         policy_application_group = PolicyApplicationGroup.create
-
-        errors = []
-
+        
         @parsed_input_file.each do |policy_application_params|
           all_policy_application_params =
             policy_application_params[:policy_application].
@@ -29,12 +27,7 @@ module V2
           )
         end
 
-        if errors.present?
-          policy_application_group.delete
-          render json: { success: false, errors: errors }, status: :unprocessable_entity
-        else
-          render json: policy_application_group.to_json, status: :ok
-        end
+        render json: policy_application_group.to_json, status: :ok
       end
 
       def update
@@ -42,7 +35,7 @@ module V2
           all_policy_application_params =
             policy_application_params[:policy_application].
               merge(common_params).
-              merge(policy_application_group: policy_application_group)
+              merge(policy_application_group: @policy_application_group)
 
           ::PolicyApplications::RentGuaranteeCreateJob.perform_later(
             all_policy_application_params,
@@ -50,12 +43,7 @@ module V2
           )
         end
 
-        if errors.present?
-          policy_application_group.delete
-          render json: { success: false, errors: errors }, status: :unprocessable_entity
-        else
-          render json: policy_application_group.to_json, status: :ok
-        end
+        render json: policy_application_group.to_json, status: :ok
       end
 
       def destroy
@@ -84,9 +72,9 @@ module V2
       def parse_input_file
         if params[:input_file].present?
           file = params[:input_file].open
-          @parsed_input_file = ::PolicyApplicationGroups::SourceXlsxParser.run!(xlsx_file: file)
+          @parsed_input_file = ::PolicyApplicationGroups::SourceXlsxParser.run(xlsx_file: file)
           unless @parsed_input_file.valid?
-            render json: { error: 'Bad file', content: @parsed_input_file.errors.details[:bad_rows].to_json },
+            render json: { error: 'Bad file', content: @parsed_input_file.errors[:bad_rows]},
                    status: :unprocessable_entity
           end
         else
