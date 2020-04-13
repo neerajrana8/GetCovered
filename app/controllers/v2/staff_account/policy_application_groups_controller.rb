@@ -21,7 +21,7 @@ module V2
       end
 
       def create
-        policy_application_group = PolicyApplicationGroup.create
+        policy_application_group = PolicyApplicationGroup.create(policy_applications_count: @parsed_input_file.count)
 
         @parsed_input_file.each do |policy_application_params|
           all_policy_application_params =
@@ -85,6 +85,10 @@ module V2
           unless result.valid?
             render json: { error: 'Bad file', content: result.errors[:bad_rows] },
                    status: :unprocessable_entity
+          end
+
+          if result.empty?
+            render json: { error: 'No rows' }, status: :unprocessable_entity
           end
 
           @parsed_input_file = result.result
