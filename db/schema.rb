@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_04_08_171100) do
+ActiveRecord::Schema.define(version: 2020_04_10_110719) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -339,6 +339,17 @@ ActiveRecord::Schema.define(version: 2020_04_08_171100) do
     t.index ["claimant_type", "claimant_id"], name: "index_claims_on_claimant_type_and_claimant_id"
     t.index ["insurable_id"], name: "index_claims_on_insurable_id"
     t.index ["policy_id"], name: "index_claims_on_policy_id"
+  end
+
+  create_table "commission_deductions", force: :cascade do |t|
+    t.integer "unearned_balance"
+    t.string "deductee_type"
+    t.bigint "deductee_id"
+    t.bigint "policy_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["deductee_type", "deductee_id"], name: "index_commission_deductions_on_deductee_type_and_deductee_id"
+    t.index ["policy_id"], name: "index_commission_deductions_on_policy_id"
   end
 
   create_table "commission_strategies", force: :cascade do |t|
@@ -853,6 +864,7 @@ ActiveRecord::Schema.define(version: 2020_04_08_171100) do
     t.integer "carrier_base", default: 0
     t.integer "special_premium", default: 0
     t.boolean "include_special_premium", default: false
+    t.integer "unearned_premium", default: 0
     t.index ["billing_strategy_id"], name: "index_policy_premia_on_billing_strategy_id"
     t.index ["commission_strategy_id"], name: "index_policy_premia_on_commission_strategy_id"
     t.index ["policy_id"], name: "index_policy_premia_on_policy_id"

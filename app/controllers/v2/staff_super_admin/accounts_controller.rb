@@ -21,7 +21,7 @@ module V2
       end
 
       def account_policies
-        account = Account.includes(:polices).find(params[:id])
+        account = Account.includes(:policies).find(params[:id])
         @account_policies = account.policies || []
         render "/v2/staff_super_admin/accounts/account_policies", status: :ok
       end
