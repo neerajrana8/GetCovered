@@ -8,8 +8,16 @@ module V2
         render json: { parsed_data: @parsed_input_file }, status: 200
       end
 
+      def index
+        groups_query = ::PolicyApplicationGroup.order(created_at: :desc)
+
+        @policy_application_groups = paginator(groups_query)
+
+        render template: "v2/shared/policy_application_groups/index.json.jbuilder", status: :ok
+      end
+
       def show
-        render json: @policy_application_group.to_json
+        render template: "v2/shared/policy_application_groups/show.json.jbuilder", status: :ok
       end
 
       def create
