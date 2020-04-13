@@ -280,32 +280,32 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
 						"options": [true, false]
 					},
 					{
-						"text": "Currently sell or has it sold in the past any fire arms, ammunitions or weapons of any kind?",
+						"text": "Do you currently sell or have you sold any fire arms, ammunition or weapons of any kind in the past?",
 						"value": false,
 						"options": [true, false]
 					},
 					{
-						"text": "Sell any products or perform any services for any military, law enforcement or other armed forces or services?",
+						"text": "Do you sell any products or perform any services for any military, law enforcement or other armed forces or services?",
 						"value": false,
 						"options": [true, false]
 					},
 					{
-						"text": "Own or operate any manned or unmanned aviation devices (aircraft, helicopters, drones etc)?",
+						"text": "Do you own or operate any manned or unmanned aviation devices (aircraft, helicopters, drones etc)?",
 						"value": false,
 						"options": [true, false]
 					},
 					{
-						"text": "Directly import more than 5% of the cost of goods sold from a country or territory outside the U.S,?",
+						"text": "Do you directly import more than 5% of the cost of goods sold from a country or territory outside the U.S.?",
 						"value": false,
 						"options": [true, false]
 					},
 					{
-						"text": "Have any discontinued or ongoing operations involving the manufacturing, blending, repackaging or relabeling of components or products made by others?",
+						"text": "Do you have any discontinued or ongoing operations involving the manufacturing, blending, repackaging or relabeling of components or products made by others?",
 						"value": false,
 						"options": [true, false]
 					},
 					{
-						"text": "Have any business premises that are open to the public?",
+						"text": "Do you have any business premises that are open to the public?",
 						"value": false,
 						"options": [true, false],
 						"questions": [
@@ -317,18 +317,18 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
 						]
 					},
 					{
-						"text": "Have a requirement  to post motor carrier financial responsibility filings to any Federal and or State Department of Transportation (DOT) or other agency?",
+						"text": "Do you have a requirement  to post motor carrier financial responsibility filings to any Federal and or State Department of Transportation (DOT) or other agency?",
 						"value": false,
 						"options": [true, false]
 					},
 					{
-						"text": "Hire non-employee drivers to perform delivery of your products or services?",
+						"text": "Do you hire non-employee drivers to perform delivery of your products or services?",
 						"value": false,
 						"options": [true, false]
 					},
 					{
-						"text": "Have any employees use their own personal vehicles to make deliveries (food or otherwise) for 
-			ten (10) days or or more per month?",
+						"text": "Do you have any employees use their own personal vehicles to make deliveries (food or otherwise) for 
+			ten (10) days or more per month?",
 						"value": false,
 						"options": [true, false]
 					},
