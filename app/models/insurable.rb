@@ -47,6 +47,7 @@ class Insurable < ApplicationRecord
   scope :covered, -> { where(covered: true) }
   scope :units, -> { where(insurable_type_id: InsurableType::UNITS_IDS) }
   scope :communities, -> { where(insurable_type_id: InsurableType::COMMUNITIES_IDS) }
+  scope :buildings, -> { where(insurable_type_id: InsurableType::BUILDINGS_IDS) }
 
   %w[Residential Commercial].each do |major_type|
     %w[Community Unit].each do |minor_type|
