@@ -15,10 +15,6 @@ class Dispute < ApplicationRecord
 
   belongs_to :charge
 
-  has_one :invoice, through: :charge
-
-  has_one :user, through: :invoice
-
   # Validations
 
   validates :stripe_id, presence: true
