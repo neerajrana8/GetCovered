@@ -18,6 +18,18 @@
           get "account_policies",
             to: "accounts#account_policies",
             via: "get"
+
+          get "account_communities",
+            to: "accounts#account_communities",
+            via: "get"
+
+          get "account_units",
+            to: "accounts#account_units",
+            via: "get"
+
+          get "account_buildings",
+            to: "accounts#account_buildings",
+            via: "get"
         end
       end
   
@@ -121,6 +133,12 @@
     resources :policy_applications,
       path: "policy-applications",
       only: [ :index, :show ]
+
+    resources :policy_application_groups, path: "policy-application-groups" do
+      collection do
+        post :upload_xlsx
+      end
+    end
   
     resources :policy_quotes,
       path: "policy-quotes",
@@ -159,9 +177,3 @@
   
   end
 # end
-
-
-
-
-
-

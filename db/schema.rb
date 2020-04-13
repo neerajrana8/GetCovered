@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_04_10_075532) do
+ActiveRecord::Schema.define(version: 2020_04_13_180131) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -190,6 +190,7 @@ ActiveRecord::Schema.define(version: 2020_04_10_075532) do
     t.string "logo_url"
     t.string "footer_logo_url"
     t.string "subdomain"
+    t.string "subdomain_test"
     t.index ["profileable_type", "profileable_id"], name: "index_branding_profiles_on_profileable_type_and_profileable_id"
     t.index ["url"], name: "index_branding_profiles_on_url", unique: true
   end
@@ -753,9 +754,10 @@ ActiveRecord::Schema.define(version: 2020_04_10_075532) do
   end
 
   create_table "policy_application_groups", force: :cascade do |t|
-    t.string "title"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "policy_applications_count"
+    t.integer "status", default: 0
   end
 
   create_table "policy_applications", force: :cascade do |t|
