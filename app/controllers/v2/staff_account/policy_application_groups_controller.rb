@@ -14,14 +14,14 @@ module V2
 
       def create
         policy_application_group = PolicyApplicationGroup.create
-        
+
         @parsed_input_file.each do |policy_application_params|
           all_policy_application_params =
             policy_application_params[:policy_application].
               merge(common_params).
               merge(policy_application_group: policy_application_group)
 
-         ::PolicyApplications::RentGuaranteeCreateJob.perform_later(
+          ::PolicyApplications::RentGuaranteeCreateJob.perform_later(
             all_policy_application_params,
             policy_application_params[:policy_users]
           )
@@ -72,11 +72,14 @@ module V2
       def parse_input_file
         if params[:input_file].present?
           file = params[:input_file].open
-          @parsed_input_file = ::PolicyApplicationGroups::SourceXlsxParser.run(xlsx_file: file)
-          unless @parsed_input_file.valid?
-            render json: { error: 'Bad file', content: @parsed_input_file.errors[:bad_rows]},
+          result = ::PolicyApplicationGroups::SourceXlsxParser.run(xlsx_file: file)
+
+          unless result.valid?
+            render json: { error: 'Bad file', content: @parsed_input_file.errors[:bad_rows] },
                    status: :unprocessable_entity
           end
+
+          @parsed_input_file = result.result
         else
           render json: { error: 'Need input_file' }, status: :unprocessable_entity
         end
