@@ -57,12 +57,15 @@ class Dispute < ApplicationRecord
     end
 
     def handle_new_dispute
-      throw :abort unless charge.react_to_new_dispute
+      unless charge.react_to_new_dispute
+        errors.add(:base, "charge new dispute handling error")
+        raise ActiveRecord::Rollback
+      end
     end
 
     def handle_closed_dispute
       if Dispute.closed_dispute_statuses.include?(status)
-        throw :abort unless charge.react_to_dispute_closure(id, status == 'lost' ? amount : 0)
+        raise ActiveRecord::Rollback unless charge.react_to_dispute_closure(id, status == 'lost' ? amount : 0)
       end
     end
 end
