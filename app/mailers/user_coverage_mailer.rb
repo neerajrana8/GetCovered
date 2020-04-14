@@ -25,9 +25,15 @@ class UserCoverageMailer < ApplicationMailer
       file_url = "#{Rails.application.credentials.uri[ENV["RAILS_ENV"].to_sym][:api]}#{Rails.application.routes.url_helpers.rails_blob_path(doc, only_path: true)}"  
       attachments[doc.filename.to_s] = open(file_url).read
     end
-#     file_url = "#{Rails.application.credentials.uri[ENV["RAILS_ENV"].to_sym][:api]}#{Rails.application.routes.url_helpers.rails_blob_path(@policy.documents.last, only_path: true)}"
-#     attachments["policy-#{ @policy.number }.pdf"] = open(file_url).read
-    mail(:subject => "Your New Insurance Policy")
+    
+    is_policy = @policy.policy_type_id == 5 ? false : true
+    
+    @content = {
+	  	:title => is_policy ? "Insurance Policy" : "Rent Guarantee",
+	  	:text => is_policy ? "Hello, #{ @user.profile.full_name }\n\nYour policy has been accepted on #{ Time.current.strftime('%m/%d/%y') }.  Your policy documents have been attached to this email.  Please log in to <a href=\"#{ Rails.application.credentials.uri[ENV["RAILS_ENV"].to_sym][:client] }\">our site</a> for more information." : "Hello #{ @user.profile.full_name },\n\nThank you for choosing Pensio Tenants.\n﻿Your Rent Guarantee registration has been accepted on #{ Time.current.strftime('%m/%d/%y') }.\nYour Rent Guarantee documents have been attached to this email.\nPlease log in to <a href=\"#{ Rails.application.credentials.uri[ENV["RAILS_ENV"].to_sym][:client] }\">our site</a> for more information.\n\nKind Regards,\nPensio Tenants Corp & the Get Covered Team\n\nKeeping You At Home!"  
+    }
+    
+    mail(:subject => "Your New #{ @content[:title] }")
   end
   
   def commercial_quote
