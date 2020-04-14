@@ -27,9 +27,9 @@
       <p>Between:</p>
       <p>Pensio Tenants Corp., a Nevada company (“<strong>Pensio</strong>”) administered by World Insurance Associates LLC.</p>
       <p>-and-</p>
-      <p><u><%= @policy.primary_user.profile.full_name %></u> (“<strong>You</strong>” or “<strong>Your</strong>”)</p>
+      <p><u><%= @policy&.primary_user&.profile&.full_name %></u> (“<strong>You</strong>” or “<strong>Your</strong>”)</p>
     </div>
-    <p>who resides as a legal tenant in the legal residential rental Unit described in Exhibit A and have a valid and existing lease agreement with a landlord, has applied for a <strong><%= @policy.policy_application.fields["guarantee_option"] %> Months Rent Guarantee Option described in the Rent Guarantee Summary (the “<strong>Guarantee Summary</strong>”), attached to this Agreement as Exhibit B.</p>
+    <p>who resides as a legal tenant in the legal residential rental Unit described in Exhibit A and have a valid and existing lease agreement with a landlord, has applied for a <strong><%= @policy&.policy_application&.fields&.[]("guarantee_option") %> Months Rent Guarantee Option described in the Rent Guarantee Summary (the “<strong>Guarantee Summary</strong>”), attached to this Agreement as Exhibit B.</p>
   <h2>Definitions</h2>
   <p>In this Rent Guarantee Agreement, the following terms will have the following meanings:</p>
   <p>“<strong>Administrator</strong>” means World Insurance Associates LLC, <a href="//www.worldins.net" target="_black">www.worldins.net</a>, which provides administrative and claims services in connection with the Pensio Tenants Rent Guarantee described fully in the Rent Guarantee Summary.</p>
@@ -149,21 +149,21 @@
         </tr>
       </thead>
         <tr>
-          <td><%= @policy.primary_user.profile.full_name %></td>
-          <td><%= @policy.primary_user.address.street_number %> <%= @policy.primary_user.address.street_name %></td>
-          <td><%= @policy.primary_user.address.street_two %></td>
-          <td><%= @policy.primary_user.address.city %></td>
-          <td><%= @policy.primary_user.address.state %></td>
-          <td><%= @policy.primary_user.address.zip_code %></td>
+          <td><%= @policy&.primary_user&.profile&.full_name %></td>
+          <td><%= @policy&.primary_user&.address&.street_number %> <%= @policy&.primary_user&.address&.street_name %></td>
+          <td><%= @policy&.primary_user&.address&.street_two %></td>
+          <td><%= @policy&.primary_user&.address&.city %></td>
+          <td><%= @policy&.primary_user&.address&.state %></td>
+          <td><%= @policy&.primary_user&.address&.zip_code %></td>
         </tr>
-        <% if @policy.users.count > 1 %>
+        <% if @policy&.users&.count > 1 %>
         <tr>
-          <td><%= @policy.users[1].profile.full_name %></td>
-          <td><%= @policy.primary_user.address.street_number %> <%= @policy.primary_user.address.street_name %></td>
-          <td><%= @policy.primary_user.address.street_two %></td>
-          <td><%= @policy.primary_user.address.city %></td>
-          <td><%= @policy.primary_user.address.state %></td>
-          <td><%= @policy.primary_user.address.zip_code %></td>
+          <td><%= @policy&.users[1]&.profile&.full_name %></td>
+          <td><%= @policy&.primary_user&.address&.street_number %> <%= @policy&.primary_user&.address&.street_name %></td>
+          <td><%= @policy&.primary_user&.address&.street_two %></td>
+          <td><%= @policy&.primary_user&.address&.city %></td>
+          <td><%= @policy&.primary_user&.address&.state %></td>
+          <td><%= @policy&.primary_user&.address&.zip_code %></td>
         </tr>
         <% end %>
       </table>
