@@ -17,8 +17,6 @@ class Dispute < ApplicationRecord
 
   has_one :invoice, through: :charge
 
-  has_one :policy, through: :invoice
-
   has_one :user, through: :invoice
 
   # Validations

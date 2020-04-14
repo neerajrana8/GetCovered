@@ -8,7 +8,7 @@ module V2
       before_action :set_account, only: %i[update show]
 
       def account_policies
-        account = Account.includes(:polices).find(params[:id])
+        account = Account.includes(:policies).find(params[:id])
         @account_policies = account.policies || []
         render "/v2/staff_account/accounts/account_policies", status: :ok
       end

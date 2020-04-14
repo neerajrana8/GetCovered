@@ -19,10 +19,3 @@ json.line_items_attributes do
     end
   end
 end
-
-json.policy do
-  unless invoice.policy.nil?
-    json.partial! "v2/staff_super_admin/policies/policy_short_fields.json.jbuilder",
-      policy: invoice.policy
-  end
-end

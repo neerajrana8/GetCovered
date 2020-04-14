@@ -90,11 +90,13 @@ class Policy < ApplicationRecord
   has_many :policy_premiums, autosave: true
   # has_one :premium, -> { find_by(enabled: true) }, class_name: 'PolicyPremium'
 
-  has_many :invoices
+  has_many :invoices, as: :invoiceable
 
   has_many :charges, through: :invoices
 
   has_many :refunds, through: :charges
+  
+  has_many :commission_deductions
 
   has_many :histories, as: :recordable
 
@@ -219,6 +221,16 @@ class Policy < ApplicationRecord
     else
       { error: 'Error happened with policy issue' }
     end
+  end
+
+  def cancel
+    update_attribute(:status, 'CANCELLED')
+    # Unearned balance is the remaining unearned amount on an insurance policy that 
+    # needs to be deducted from future commissions to recuperate the loss
+    commission_deductions.create(
+      unearned_balance: premium&.unearned_premium, 
+      deductee: premium&.commission_strategy&.commissionable
+    )
   end
 
 
