@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_04_13_180131) do
+ActiveRecord::Schema.define(version: 2020_04_14_132211) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -595,6 +595,16 @@ ActiveRecord::Schema.define(version: 2020_04_13_180131) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["invoice_id"], name: "index_line_items_on_invoice_id"
+  end
+
+  create_table "model_errors", force: :cascade do |t|
+    t.string "model_type"
+    t.bigint "model_id"
+    t.string "type"
+    t.jsonb "information"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["model_type", "model_id"], name: "index_model_errors_on_model_type_and_model_id"
   end
 
   create_table "modifiers", force: :cascade do |t|
