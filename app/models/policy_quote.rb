@@ -94,7 +94,7 @@ class PolicyQuote < ApplicationRecord
     		  elsif policy_application.policy_type.title == "Commercial"
     		    policy_number = external_reference
     		    policy_status = "BOUND"
-    		  elsif policy_application.policy_type.title == ""
+    		  elsif policy_application.policy_type.title == "Rent Guarantee"
     		    policy_number = bind_request[:data][:policy_number]
     		    policy_status = "BOUND"
     		  end
