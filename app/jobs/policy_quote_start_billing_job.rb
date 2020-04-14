@@ -4,6 +4,8 @@ class PolicyQuoteStartBillingJob < ApplicationJob
   def perform(policy: , issue: )
     return if policy.nil?
     
+    logger.debug issue
+    
     policy.issue
     
     UserCoverageMailer.with(policy: policy, user: policy.primary_user).proof_of_coverage().deliver

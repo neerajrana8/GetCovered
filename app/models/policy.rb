@@ -166,11 +166,11 @@ class Policy < ApplicationRecord
   end
   
   def residential_account_present
-    errors.add(:account, 'Account must be specified') if policy_type_id != 4 && account.nil? 
+    errors.add(:account, 'Account must be specified') if ![4,5].include?(policy_type_id) && account.nil? 
   end
 
   def same_agency_as_account
-    if policy_type_id != 4
+    if ![4,5].include?(policy_type_id)
       errors.add(:account, 'policy must belong to the same agency as account') if agency != account&.agency
     end
   end

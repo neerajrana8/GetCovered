@@ -94,6 +94,9 @@ class PolicyQuote < ApplicationRecord
     		  elsif policy_application.policy_type.title == "Commercial"
     		    policy_number = external_reference
     		    policy_status = "BOUND"
+    		  elsif policy_application.policy_type.title == ""
+    		    policy_number = bind_request[:data][:policy_number]
+    		    policy_status = "BOUND"
     		  end
 
   			  
@@ -150,7 +153,7 @@ class PolicyQuote < ApplicationRecord
 	            update status: 'error'
 	          end				  
 				  else
-				    logger.debug policy.errors
+				    logger.debug policy.errors.to_json
 				  	quote_attempt[:message] = "Unable to save policy in system"
 				  end
 				  

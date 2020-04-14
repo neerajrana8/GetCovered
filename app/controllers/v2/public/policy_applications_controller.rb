@@ -103,6 +103,16 @@ module V2
 					        job_title: policy_user[:user_attributes][:profile_attributes][:job_title], 
 					      	contact_phone: policy_user[:user_attributes][:profile_attributes][:contact_phone], 
 					      	birth_date: policy_user[:user_attributes][:profile_attributes][:birth_date]                  
+                },
+                address_attributes: {
+                  street_number: policy_user[:user_attributes][:address_attributes][:street_number],
+                  street_name: policy_user[:user_attributes][:address_attributes][:street_name] ,
+                  street_two: policy_user[:user_attributes][:address_attributes][:street_two],
+                  city: policy_user[:user_attributes][:address_attributes][:city],
+                  state: policy_user[:user_attributes][:address_attributes][:state],
+                  country: policy_user[:user_attributes][:address_attributes][:country],
+                  county: policy_user[:user_attributes][:address_attributes][:county],
+                  zip_code: policy_user[:user_attributes][:address_attributes][:zip_code]
                 }
               }
             )
@@ -396,6 +406,10 @@ module V2
 					      							:first_name, :last_name, :job_title, 
 					      							:contact_phone, :birth_date, :gender,
 					      							:salutation
+				      							], address_attributes: [
+                              :city, :country, :county, :id, :latitude, :longitude,
+                              :plus_four, :state, :street_name, :street_number,
+                              :street_two, :timezone, :zip_code
 				      							]
 			      							]
 			      					  ])  
