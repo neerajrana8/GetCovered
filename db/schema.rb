@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_04_14_132211) do
+ActiveRecord::Schema.define(version: 2020_04_14_180842) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -102,7 +102,6 @@ ActiveRecord::Schema.define(version: 2020_04_14_132211) do
     t.bigint "addressable_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.boolean "searchable", default: false
     t.index ["addressable_type", "addressable_id"], name: "index_addresses_on_addressable_type_and_addressable_id"
   end
 
@@ -190,6 +189,7 @@ ActiveRecord::Schema.define(version: 2020_04_14_132211) do
     t.string "logo_url"
     t.string "footer_logo_url"
     t.string "subdomain"
+    t.string "subdomain_test"
     t.index ["profileable_type", "profileable_id"], name: "index_branding_profiles_on_profileable_type_and_profileable_id"
     t.index ["url"], name: "index_branding_profiles_on_url", unique: true
   end
@@ -610,7 +610,7 @@ ActiveRecord::Schema.define(version: 2020_04_14_132211) do
   create_table "model_errors", force: :cascade do |t|
     t.string "model_type"
     t.bigint "model_id"
-    t.string "type"
+    t.string "kind"
     t.jsonb "information"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
@@ -777,6 +777,10 @@ ActiveRecord::Schema.define(version: 2020_04_14_132211) do
     t.datetime "updated_at", null: false
     t.integer "policy_applications_count"
     t.integer "status", default: 0
+    t.bigint "account_id"
+    t.bigint "agency_id"
+    t.index ["account_id"], name: "index_policy_application_groups_on_account_id"
+    t.index ["agency_id"], name: "index_policy_application_groups_on_agency_id"
   end
 
   create_table "policy_applications", force: :cascade do |t|

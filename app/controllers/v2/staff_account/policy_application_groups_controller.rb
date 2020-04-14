@@ -21,13 +21,13 @@ module V2
       end
 
       def create
-        policy_application_group = PolicyApplicationGroup.create(policy_applications_count: @parsed_input_file.count)
+        @policy_application_group = PolicyApplicationGroup.create(policy_applications_count: @parsed_input_file.count)
 
         @parsed_input_file.each do |policy_application_params|
           all_policy_application_params =
             policy_application_params[:policy_application].
               merge(common_params).
-              merge(policy_application_group: policy_application_group)
+              merge(policy_application_group: @policy_application_group)
 
           ::PolicyApplications::RentGuaranteeCreateJob.perform_later(
             all_policy_application_params,
@@ -35,7 +35,7 @@ module V2
           )
         end
 
-        render json: policy_application_group.to_json, status: :ok
+        render template: "v2/shared/policy_application_groups/show.json.jbuilder", status: :ok
       end
 
       def update
@@ -87,7 +87,7 @@ module V2
                    status: :unprocessable_entity
           end
 
-          if result.empty?
+          if result.result.empty?
             render json: { error: 'No rows' }, status: :unprocessable_entity
           end
 

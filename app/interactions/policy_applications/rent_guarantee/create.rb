@@ -3,8 +3,7 @@ module PolicyApplications
     class Create < ActiveInteraction::Base
       hash :policy_application_params, strip: false
       array :policy_users_params
-      
-      
+
       def execute
         application = PolicyApplication.new(policy_application_params)
         application.carrier = Carrier.find(4)
@@ -14,21 +13,46 @@ module PolicyApplications
         if application.save
           if create_policy_users(application)
             if application.update(status: 'complete')
-              application.primary_user().invite! # Waiting clarification from Brandon, maybe it should be deleted
+              application.primary_user().invite!
               quote_attempt = application.pensio_quote()
+
               if quote_attempt[:success] == true
                 application
-                policy_application_group.update_status
               else
-                errors.merge!(application.errors)
+                ModelError.create(
+                  model: policy_application_group,
+                  kind: :policy_application_was_not_created,
+                  information: {
+                    params: policy_application_params,
+                    policy_users_params: policy_users_params,
+                    errors: application.errors
+                  }
+                )
               end
             else
-              errors.merge!(application.errors)
+              ModelError.create(
+                model: policy_application_group,
+                kind: :policy_application_did_not_updated,
+                information: {
+                  params: policy_application_params,
+                  policy_users_params: policy_users_params,
+                  errors: application.errors
+                }
+              )
             end
           end
         else
-          errors.merge!(application.errors)
+          ModelError.create(
+            model: policy_application_group,
+            kind: :policy_application_was_not_created,
+            information: {
+              params: policy_application_params,
+              policy_users_params: policy_users_params,
+              errors: application.errors
+            }
+          )
         end
+        policy_application_group.update_status
       end
 
       private
@@ -60,7 +84,7 @@ module PolicyApplications
                 }
               }
             )
-            policy_user.user.invite! if index == 0 # @todo Waiting clarification from Brandon, maybe it should be deleted
+            policy_user.user.invite! if index == 0
           end
         end
 
