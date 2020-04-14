@@ -27,9 +27,11 @@ module CarrierPensioPolicyApplication
 			  quote = policy_quotes.new(agency: self.agency)
 			  if quote.save
 				  
-				  if self.fields["guarantee_option"] == "12"
+				  guarantee_option = self.fields["guarantee_option"].to_i
+				  
+				  if guarantee_option == 12
 						multiplier = 0.09  
-					elsif self.fields["guarantee_option"] == "6"
+					elsif guarantee_option == 6
 						multiplier = 0.075
 					else
 						multiplier = 0.035
