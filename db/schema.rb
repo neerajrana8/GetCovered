@@ -772,14 +772,18 @@ ActiveRecord::Schema.define(version: 2020_04_14_180842) do
   end
 
   create_table "policy_application_groups", force: :cascade do |t|
+    t.string "title"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+<<<<<<< HEAD
     t.integer "policy_applications_count"
     t.integer "status", default: 0
     t.bigint "account_id"
     t.bigint "agency_id"
     t.index ["account_id"], name: "index_policy_application_groups_on_account_id"
     t.index ["agency_id"], name: "index_policy_application_groups_on_agency_id"
+=======
+>>>>>>> GCV2-1706-generated-policy-documents-have-right-side-cropped-off
   end
 
   create_table "policy_applications", force: :cascade do |t|
