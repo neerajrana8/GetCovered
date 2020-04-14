@@ -27,12 +27,12 @@ module CarrierPensioPolicyApplication
 			  quote = policy_quotes.new(agency: self.agency)
 			  if quote.save
 				  
-				  if self.fields["guarantee_option"] == "12 Month"
-						multiplier = 0.035  
-					elsif self.fields["guarantee_option"] == "6 Month"
+				  if self.fields["guarantee_option"] == "12"
+						multiplier = 0.09  
+					elsif self.fields["guarantee_option"] == "6"
 						multiplier = 0.075
 					else
-						multiplier = 0.09
+						multiplier = 0.035
 					end
 				  
 				  premium = PolicyPremium.new base: ((( self.fields["monthly_rent"] * 100 ) * 12 ) * multiplier ).to_i,
