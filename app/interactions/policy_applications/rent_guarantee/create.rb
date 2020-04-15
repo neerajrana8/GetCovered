@@ -9,19 +9,20 @@ module PolicyApplications
         application.carrier = Carrier.find(4)
         application.policy_type = PolicyType.find_by_slug('rent-guarantee')
         application.agency = Agency.where(master_agency: true).take
-        application.billing_strategy = BillingStrategy.where(agency: application.agency, policy_type: application.policy_type).take
+        application.billing_strategy = 
+          BillingStrategy.where(agency: application.agency, policy_type: application.policy_type).take
         if application.save
           if create_policy_users(application)
             if application.update(status: 'complete')
-              application.primary_user().invite!
-              quote_attempt = application.pensio_quote()
+              application.primary_user.invite!
+              quote_attempt = application.pensio_quote
 
               if quote_attempt[:success] == true
                 application
               else
                 ModelError.create(
-                  model: policy_application_group,
-                  kind: :policy_application_was_not_created,
+                  model: application,
+                  kind: :policy_application_was_not_quoted,
                   information: {
                     params: policy_application_params,
                     policy_users_params: policy_users_params,
@@ -31,8 +32,8 @@ module PolicyApplications
               end
             else
               ModelError.create(
-                model: policy_application_group,
-                kind: :policy_application_did_not_updated,
+                model: application,
+                kind: :policy_application_did_not_update_status_to_complete,
                 information: {
                   params: policy_application_params,
                   policy_users_params: policy_users_params,
@@ -62,7 +63,6 @@ module PolicyApplications
       end
 
       def create_policy_users(application)
-        error_status = []
         policy_users_params.each_with_index do |policy_user, index|
           if ::User.where(email: policy_user[:user_attributes][:email]).exists?
             user = ::User.find_by_email(policy_user[:user_attributes][:email])
@@ -84,11 +84,9 @@ module PolicyApplications
                 }
               }
             )
-            policy_user.user.invite! if index == 0
+            policy_user.user.invite! if index.zero?
           end
         end
-
-        error_status.include?(true) ? false : true
       end
     end
   end
