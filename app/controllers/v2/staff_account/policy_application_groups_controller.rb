@@ -1,12 +1,8 @@
 module V2
   module StaffAccount
     class PolicyApplicationGroupsController < StaffAccountController
-      before_action :set_policy_application_group, only: %i[show update destroy]
-      before_action :parse_input_file, only: %i[upload_xlsx create update]
-
-      def upload_xlsx
-        render json: { parsed_data: @parsed_input_file }, status: 200
-      end
+      before_action :set_policy_application_group, only: %i[show destroy]
+      before_action :parse_input_file, only: %i[create]
 
       def index
         groups_query = ::PolicyApplicationGroup.order(created_at: :desc)
@@ -36,22 +32,6 @@ module V2
         end
 
         render template: "v2/shared/policy_application_groups/show.json.jbuilder", status: :ok
-      end
-
-      def update
-        @parsed_input_file.each do |policy_application_params|
-          all_policy_application_params =
-            policy_application_params[:policy_application].
-              merge(common_params).
-              merge(policy_application_group: @policy_application_group)
-
-          ::PolicyApplications::RentGuaranteeCreateJob.perform_later(
-            all_policy_application_params,
-            policy_application_params[:policy_users]
-          )
-        end
-
-        render json: policy_application_group.to_json, status: :ok
       end
 
       def destroy
