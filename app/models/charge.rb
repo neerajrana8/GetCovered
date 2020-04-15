@@ -250,6 +250,10 @@ class Charge < ApplicationRecord
         stripe_source = stripe_id
         # rip the card or bank account out of the token for our use
         # stripe_source = token[token['type']]['id'] # MOOSE WARNING: this will NOT work. It needs to be attached to the customer before calling Stripe::Charge.create on it
+      else
+        pay_attempt_failed(nil, 'unknown', "No payment source provided")
+        remove_instance_variable(:@already_in_on_create)
+        return
       end
       # processing
       if status != 'processing'
