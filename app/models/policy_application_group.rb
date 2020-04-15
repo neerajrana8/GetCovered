@@ -1,4 +1,6 @@
 class PolicyApplicationGroup < ApplicationRecord
+  belongs_to :account, optional: true
+  belongs_to :agency, optional: true
   has_many :policy_applications
   has_many :model_errors, as: :model, dependent: :destroy
 

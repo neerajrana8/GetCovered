@@ -5,7 +5,7 @@ module V2
       before_action :parse_input_file, only: %i[create]
 
       def index
-        groups_query = ::PolicyApplicationGroup.order(created_at: :desc)
+        groups_query = ::PolicyApplicationGroup.order(created_at: :desc).where(account: current_staff&.organizable)
 
         @policy_application_groups = paginator(groups_query)
 
@@ -17,7 +17,11 @@ module V2
       end
 
       def create
-        @policy_application_group = PolicyApplicationGroup.create(policy_applications_count: @parsed_input_file.count)
+        @policy_application_group = PolicyApplicationGroup.create(
+          policy_applications_count: @parsed_input_file.count,
+          account: current_staff&.organizable,
+          agency: current_staff&.organizable&.agency
+        )
 
         @parsed_input_file.each do |policy_application_params|
           all_policy_application_params =
