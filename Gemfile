@@ -94,6 +94,7 @@ gem 'net-sftp', '~> 2.1', '>= 2.1.2'
 # PDF gems
 gem 'wkhtmltopdf-binary'
 gem 'wicked_pdf'
+gem "docraptor"
 
 # xlsx file generation
 gem 'caxlsx'
