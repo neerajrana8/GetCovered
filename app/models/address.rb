@@ -157,7 +157,7 @@ class Address < ApplicationRecord
 	        {
 	          multi_match: {
 	            query: query,
-	            fields: [:full, :full_searchable, searchable: true]
+	            fields: [:full, :full_searchable]
 	          }
 	        },
 	        {
