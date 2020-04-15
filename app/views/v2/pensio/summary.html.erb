@@ -1,847 +1,861 @@
 <!doctype html>
 <html lang="en">
+
   <head>
-    <!-- Required meta tags -->
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=900">
+      <!-- Required meta tags -->
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=595">
     <!-- template CSS -->
-    <style>
-    @charset "UTF-8";
-    a,
-    abbr,
-    acronym,
-    address,
-    applet,
-    article,
-    aside,
-    audio,
-    b,
-    big,
-    blockquote,
-    body,
-    canvas,
-    caption,
-    center,
-    cite,
-    code,
-    dd,
-    del,
-    details,
-    dfn,
-    div,
-    dl,
-    dt,
-    em,
-    embed,
-    fieldset,
-    figcaption,
-    figure,
-    footer,
-    form,
-    h1,
-    h2,
-    h3,
-    h4,
-    h5,
-    h6,
-    header,
-    hgroup,
-    html,
-    i,
-    iframe,
-    img,
-    ins,
-    kbd,
-    label,
-    legend,
-    li,
-    mark,
-    menu,
-    nav,
-    object,
-    ol,
-    output,
-    p,
-    pre,
-    q,
-    ruby,
-    s,
-    samp,
-    section,
-    small,
-    span,
-    strike,
-    strong,
-    sub,
-    summary,
-    sup,
-    table,
-    tbody,
-    td,
-    tfoot,
-    th,
-    thead,
-    time,
-    tr,
-    tt,
-    u,
-    ul,
-    var,
-    video {
-        margin: 0;
-        padding: 0;
-        border: 0;
-        font-size: 100%;
-        font: inherit;
-        vertical-align: baseline
-    }
-    
-    :focus {
-        outline: 0
-    }
-    
-    article,
-    aside,
-    details,
-    figcaption,
-    figure,
-    footer,
-    header,
-    hgroup,
-    menu,
-    nav,
-    section {
-        display: block
-    }
-    
-    body {
-        line-height: 1
-    }
-    
-    ol,
-    ul {
-        list-style: none
-    }
-    
-    blockquote,
-    q {
-        quotes: none
-    }
-    
-    blockquote:after,
-    blockquote:before,
-    q:after,
-    q:before {
-        content: '';
-        content: none
-    }
-    
-    table {
-        border-collapse: collapse;
-        border-spacing: 0
-    }
-    
-    input[type=search]::-webkit-search-cancel-button,
-    input[type=search]::-webkit-search-decoration,
-    input[type=search]::-webkit-search-results-button,
-    input[type=search]::-webkit-search-results-decoration {
-        -webkit-appearance: none;
-        -moz-appearance: none
-    }
-    
-    input[type=search] {
-        -webkit-appearance: none;
-        -moz-appearance: none;
-        -webkit-box-sizing: content-box;
-        -moz-box-sizing: content-box;
-        box-sizing: content-box
-    }
-    
-    textarea {
-        overflow: auto;
-        vertical-align: top;
-        resize: vertical
-    }
-    
-    audio,
-    canvas,
-    video {
-        display: inline-block;
-        max-width: 100%
-    }
-    
-    audio:not([controls]) {
-        display: none;
-        height: 0
-    }
-    
-    [hidden] {
-        display: none
-    }
-    
-    html {
-        font-size: 100%;
-        -webkit-text-size-adjust: 100%;
-        -ms-text-size-adjust: 100%
-    }
-    
-    a:focus {
-        outline: thin dotted
-    }
-    
-    a:active,
-    a:hover {
-        outline: 0
-    }
-    
-    img {
-        border: 0;
-        -ms-interpolation-mode: bicubic
-    }
-    
-    figure {
-        margin: 0
-    }
-    
-    form {
-        margin: 0
-    }
-    
-    fieldset {
-        border: 1px solid silver;
-        margin: 0 2px;
-        padding: .35em .625em .75em
-    }
-    
-    legend {
-        border: 0;
-        padding: 0;
-        white-space: normal
-    }
-    
-    button,
-    input,
-    select,
-    textarea {
-        font-size: 100%;
-        margin: 0;
-        vertical-align: baseline
-    }
-    
-    button,
-    input {
-        line-height: normal
-    }
-    
-    button,
-    select {
-        text-transform: none
-    }
-    
-    button,
-    html input[type=button],
-    input[type=reset],
-    input[type=submit] {
-        -webkit-appearance: button;
-        cursor: pointer
-    }
-    
-    button[disabled],
-    html input[disabled] {
-        cursor: default
-    }
-    
-    input[type=checkbox],
-    input[type=radio] {
-        -webkit-box-sizing: border-box;
-        -moz-box-sizing: border-box;
-        box-sizing: border-box;
-        padding: 0
-    }
-    
-    input[type=search] {
-        -webkit-appearance: textfield;
-        -moz-box-sizing: content-box;
-        -webkit-box-sizing: content-box;
-        box-sizing: content-box
-    }
-    
-    input[type=search]::-webkit-search-cancel-button,
-    input[type=search]::-webkit-search-decoration {
-        -webkit-appearance: none
-    }
-    
-    button::-moz-focus-inner,
-    input::-moz-focus-inner {
-        border: 0;
-        padding: 0
-    }
-    
-    textarea {
-        overflow: auto;
-        vertical-align: top
-    }
-    
-    table {
-        border-collapse: collapse;
-        border-spacing: 0
-    }
-    
-    button,
-    html,
-    input,
-    select,
-    textarea {
-        color: #222
-    }
-    
-    ::-moz-selection {
-        background: #b3d4fc;
-        text-shadow: none
-    }
-    
-    ::selection {
-        background: #b3d4fc;
-        text-shadow: none
-    }
-    
-    img {
-        vertical-align: middle
-    }
-    
-    fieldset {
-        border: 0;
-        margin: 0;
-        padding: 0
-    }
-    
-    textarea {
-        resize: vertical
-    }
-    
-    .chromeframe {
-        margin: .2em 0;
-        background: #ccc;
-        color: #000;
-        padding: .2em 0
-    }
-    
-    :root {
-        font-size: 36px
-    }
-    
-    html {
-        scroll-behavior: smooth;
-        font-family: sans-serif;
-        line-height: 1.15;
-        -webkit-text-size-adjust: 100%;
-        -webkit-tap-highlight-color: transparent
-    }
-    
-    *,
-    ::after,
-    ::before {
-        -webkit-box-sizing: border-box;
-        -moz-box-sizing: border-box;
-        box-sizing: border-box
-    }
-    
-    body {
-        background-color: #fff;
-        line-height: 1.5;
-        font-weight: 400;
-        color: #3c3d3e;
-        font-family: Calibri, Candara, Segoe, "Segoe UI", Optima, Arial, sans-serif;
-        font-size: 36px
-    }
-    
-    h1 {
-        font-size: 46.28px;
-        color: #009983;
-        margin: 0;
-        padding: 0;
-        margin-bottom: 48px;
-        font-weight: 400
-    }
-    
-    h2 {
-        font-size: 41px;
-        color: #009983;
-        margin: 0;
-        padding: 0
-    }
-    
-    h3 {
-        font-size: 35px;
-        color: #009983;
-        margin: 0;
-        padding: 0
-    }
-    
-    h4 {
-        font-size: 30.5p;
-        color: #009983;
-        margin: 0;
-        padding: 0
-    }
-    
-    h5 {
-        font-size: 25.5px;
-        color: #009983;
-        margin: 0;
-        padding: 0
-    }
-    
-    p {
-        font-size: 36px;
-        margin: 0;
-        margin-bottom: 15px;
-        color: #3c3d3e
-    }
-    
-    p strong {
-        font-weight: 700
-    }
-    
-    .main-content {
-        max-width: 2400px;
-        width: 100%;
-        margin: 0 auto;
-        display: -webkit-box;
-        display: -webkit-flex;
-        display: -moz-box;
-        display: -ms-flexbox;
-        display: flex;
-        -webkit-flex-wrap: wrap;
-        -ms-flex-wrap: wrap;
-        flex-wrap: wrap;
-        padding: 50px 0
-    }
-    
-    a {
-        color: #009983;
-        text-decoration: none
-    }
-    
-    a:hover,
-    afocus {
-        text-decoration: none;
-        color: #333
-    }
-    
-    .left-panel {
-        -webkit-box-flex: 0;
-        -webkit-flex: 0 0 200px;
-        -moz-box-flex: 0;
-        -ms-flex: 0 0 200px;
-        flex: 0 0 200px;
-        max-width: 200px
-    }
-    
-    .left-panel figure {
-        margin: 0;
-        padding: 0;
-        text-align: center;
-        position: relative
-    }
-    
-    .left-panel figure img {
-        width: 152px;
-        height: auto
-        margin-right: 40px;
-    }
-    
-    .right-panel {
-        -webkit-box-flex: 0;
-        -webkit-flex: 0 0 calc(100% - 200px);
-        -moz-box-flex: 0;
-        -ms-flex: 0 0 calc(100% - 200px);
-        flex: 0 0 calc(100% - 200px);
-        max-width: calc(100% - 200px);
-        border-left: solid 1px #009983;
-        padding: 0 40px 0px 100px;
-        margin-left: 50px;
-    }
-    
-    .number-counter {
-        padding-left: 75px;
-        position: relative
-    }
-    
-    .number-counter span {
-        position: absolute;
-        left: 0;
-        top: 50%;
-        -webkit-transform: translateY(-50%);
-        -ms-transform: translateY(-50%);
-        -o-transform: translateY(-50%);
-        transform: translateY(-50%)
-    }
-    
-    .mar-bot-25 {
-        margin-bottom: 25px
-    }
-    
-    .root-list {
-        margin: 0;
-        padding: 0;
-        margin-left: 75px;
-        list-style-type: none;
-        position: relative;
-        padding-left: 75px
-    }
-    
-    .root-list span {
-        position: absolute;
-        left: 0;
-        top: 0
-    }
-    
-    ul.parent-list {
-        margin: 0;
-        padding: 0;
-        list-style-type: none;
-        counter-reset: my-sec-counter;
-        margin-left: 54px
-    }
-    
-    ul.parent-list>li {
-        counter-increment: my-sec-counter;
-        position: relative;
-        padding-left: 38px
-    }
-    
-    ul.parent-list>li:before {
-        content: "(" counter(my-sec-counter) ")";
-        position: absolute;
-        left: 0;
-        top: 0
-    }
-    
-    ol.inner-list-top {
-        margin: 0;
-        padding: 0;
-        list-style-type: none;
-        counter-reset: abc-counter
-    }
-    
-    ol.inner-list-top>li {
-        counter-increment: abc-counter;
-        position: relative;
-        padding-left: 38px
-    }
-    
-    ol.inner-list-top>li:before {
-        content: "(" counter(abc-counter, lower-alpha) ")";
-        position: absolute;
-        left: 0;
-        top: 0
-    }
-    
-    ul.inner-list-top2 {
-        margin: 0;
-        padding: 0;
-        list-style-type: none;
-        counter-reset: abc-counter2;
-        margin-left: 20px
-    }
-    
-    ul.inner-list-top2>li {
-        counter-increment: abc-counter2;
-        position: relative;
-        padding-left: 20px
-    }
-    
-    ul.inner-list-top2>li:before {
-        content: counter(abc-counter2, lower-alpha) ".";
-        position: absolute;
-        left: 0;
-        top: 0
-    }
-    
-    .bottom-end {
-        padding-top: 60px;
-        padding-bottom: 60px
-    }
-    
-    .footer-end-box {
-        max-width: 240px;
-        border-top: solid 1px #000;
-        padding-top: 5px
-    }
-    
-    .footer-end-box p {
-        margin-bottom: 3px
-    }
-    
-    img {
-        border: 0;
-        outline: 0
-    }
-    
-    .table-data {
-        padding: 40px 0
-    }
-    
-    .table-data table {
-        width: 100%;
-        max-width: 100%;
-        margin-bottom: 1rem;
-        background-color: transparent;
-        border-collapse: collapse;
-        border: solid 1px #009983
-    }
-    
-    .table-data table thead {
-        background-color: #009983
-    }
-    
-    .table-data table tr td,
-    .table-data table tr th {
-        padding: .75rem;
-        min-height: 46px;
-        vertical-align: top;
-        text-align: center;
-        color: #fff;
-        vertical-align: middle;
-        border-top: 1px solid #009983
-    }
-    
-    .table-data table tr td {
-        color: #333;
-        border-right: solid 1px #009983
-    }
-    
-    .table-data table tr td:last-child {
-        border-right: transparent
-    }
-    
-    .table-data table tr th {
-        background-color: #009983;
-        border-left: solid 1px transparent
-    }
-    
-    .table-data table tr th+th {
-        border-left: solid 1px #fff
-    }
-    
-    .table-data2 {
-        padding: 20px 0
-    }
-    
-    .table-data2 table {
-        width: 100%;
-        max-width: 100%;
-        margin-bottom: 1rem;
-        background-color: transparent;
-        border-collapse: collapse;
-        border: solid 1px #000
-    }
-    
-    .table-data2 table thead {
-        background-color: #009983
-    }
-    
-    .table-data2 table tr td,
-    .table-data2 table tr th {
-        padding: .75rem;
-        min-height: 46px;
-        vertical-align: top;
-        text-align: center;
-        color: #fff;
-        vertical-align: top;
-        border-top: 1px solid #009983
-    }
-    
-    .table-data2 table tr td {
-        color: #333;
-        border-right: solid 1px #000;
-        text-align: left
-    }
-    
-    .table-data2 table tr td:last-child {
-        border-right: transparent
-    }
-    
-    .table-data2 table tr th {
-        background-color: #009983;
-        border-left: solid 1px #000;
-        vertical-align: middle
-    }
-    
-    .table-data2 table tr th+th {
-        border-left: solid 1px #000
-    }
-    
-    .table-data2 .bder-bot {
-        border-bottom: solid 1px #000;
-        border-top: solid 1px #000
-    }
-    
-    .table-data2 sup {
-        font-size: 11px;
-        position: relative;
-        top: -8px
-    }
-    
-    p sup {
-        font-size: 11px;
-        position: relative;
-        top: -8px
-    }
-    
-    .text-justify p {
-        text-align: justify
-    }
-    
-    ul.list-arrow {
-        margin: 10px 0;
-        padding: 0;
-        list-style-type: none;
-        margin-left: 20px;
-        padding-bottom: 8px
-    }
-    
-    ul.list-arrow li {
-        position: relative;
-        padding-left: 20px
-    }
-    
-    ul.list-arrow li p {
-        margin-bottom: 5px
-    }
-    
-    ul.list-arrow li:before {
-        content: "›";
-        position: absolute;
-        left: 0;
-        top: 0
-    }
-    
-    .address-box {
-        margin-bottom: 15px;
-        padding: 5px 0
-    }
-    
-    .address-box .address-inner {
-        padding-left: 18px;
-        border-left: solid 2px #e8e8e8
-    }
-    
-    ul.parent-list-2 {
-        margin: 0;
-        padding: 0;
-        list-style-type: none;
-        counter-reset: alphacounter;
-        margin-left: 54px
-    }
-    
-    ul.parent-list-2>li {
-        counter-increment: alphacounter;
-        position: relative;
-        padding-left: 38px
-    }
-    
-    ul.parent-list-2>li:before {
-        content: counter(alphacounter, lower-alpha) ".";
-        position: absolute;
-        left: 0;
-        top: 0
-    }
-    
-    ol.romancount {
-        margin: 0;
-        padding: 0;
-        list-style-type: none;
-        counter-reset: abc-counter
-    }
-    
-    ol.romancount>li {
-        counter-increment: abc-counter;
-        position: relative;
-        padding-left: 38px
-    }
-    
-    ol.romancount>li:before {
-        content: counter(abc-counter, lower-roman) ".";
-        position: absolute;
-        left: 0;
-        top: 0
-    }
-    
-    .bold-it {
-        font-weight: 700;
-        font-style: italic;
-        text-decoration: underline
-    }
-    
-    @media print {
-        h1,
-        h2,
-        h3,
-        h4,
-        h5 {
-            page-break-after: avoid
-        }
-        figure,
-        table {
-            page-break-inside: avoid
-        }
-        .normal-brand {
-            -webkit-filter: grayscale(100%);
-            filter: grayscale(100%);
-            border: 0;
-            outline: 0
-        }
-        .table-data,
-        .table-data2 {
-            padding: 20px 0
-        }
-        .table-data table,
-        .table-data2 table {
-            width: 100%;
-            max-width: 100%;
-            margin-bottom: 1rem;
-            background-color: transparent;
-            border-collapse: collapse;
-            border: solid 1px #000
-        }
-        .table-data table thead,
-        .table-data2 table thead {
-            background-color: transparent
-        }
-        .table-data table tr td,
-        .table-data table tr th,
-        .table-data2 table tr td,
-        .table-data2 table tr th {
-            padding: .75rem;
-            min-height: 46px;
-            vertical-align: top;
-            text-align: center;
-            color: #333;
-            vertical-align: middle;
-            border-top: 1px solid #000
-        }
-        .table-data table tr td,
-        .table-data2 table tr td {
-            color: #333;
-            border-right: solid 1px #000
-        }
-        .table-data table tr td:last-child,
-        .table-data2 table tr td:last-child {
-            border-right: transparent
-        }
-        .table-data table tr th,
-        .table-data2 table tr th {
-            background-color: transparent;
-            border-left: solid 1px #000
-        }
-        .table-data table tr th+th,
-        .table-data2 table tr th+th {
-            border-left: solid 1px #000
-        }
-    }     
-    </style>
+      <style>
+          @charset "UTF-8";
+  
+          a,
+          abbr,
+          acronym,
+          address,
+          applet,
+          article,
+          aside,
+          audio,
+          b,
+          big,
+          blockquote,
+          body,
+          canvas,
+          caption,
+          center,
+          cite,
+          code,
+          dd,
+          del,
+          details,
+          dfn,
+          div,
+          dl,
+          dt,
+          em,
+          embed,
+          fieldset,
+          figcaption,
+          figure,
+          footer,
+          form,
+          h1,
+          h2,
+          h3,
+          h4,
+          h5,
+          h6,
+          header,
+          hgroup,
+          html,
+          i,
+          iframe,
+          img,
+          ins,
+          kbd,
+          label,
+          legend,
+          li,
+          mark,
+          menu,
+          nav,
+          object,
+          ol,
+          output,
+          p,
+          pre,
+          q,
+          ruby,
+          s,
+          samp,
+          section,
+          small,
+          span,
+          strike,
+          strong,
+          sub,
+          summary,
+          sup,
+          table,
+          tbody,
+          td,
+          tfoot,
+          th,
+          thead,
+          time,
+          tr,
+          tt,
+          u,
+          ul,
+          var,
+          video {
+              margin: 0;
+              padding: 0;
+              border: 0;
+              font-size: 100%;
+              font: inherit;
+              vertical-align: baseline
+          }
+  
+          :focus {
+              outline: 0
+          }
+  
+          article,
+          aside,
+          details,
+          figcaption,
+          figure,
+          footer,
+          header,
+          hgroup,
+          menu,
+          nav,
+          section {
+              display: block
+          }
+  
+          body {
+              line-height: 1
+          }
+  
+          ol,
+          ul {
+              list-style: none
+          }
+  
+          blockquote,
+          q {
+              quotes: none
+          }
+  
+          blockquote:after,
+          blockquote:before,
+          q:after,
+          q:before {
+              content: '';
+              content: none
+          }
+  
+          table {
+              border-collapse: collapse;
+              border-spacing: 0
+          }
+  
+          input[type=search]::-webkit-search-cancel-button,
+          input[type=search]::-webkit-search-decoration,
+          input[type=search]::-webkit-search-results-button,
+          input[type=search]::-webkit-search-results-decoration {
+              -webkit-appearance: none;
+              -moz-appearance: none
+          }
+  
+          input[type=search] {
+              -webkit-appearance: none;
+              -moz-appearance: none;
+              -webkit-box-sizing: content-box;
+              -moz-box-sizing: content-box;
+              box-sizing: content-box
+          }
+  
+          textarea {
+              overflow: auto;
+              vertical-align: top;
+              resize: vertical
+          }
+  
+          audio,
+          canvas,
+          video {
+              display: inline-block;
+              max-width: 100%
+          }
+  
+          audio:not([controls]) {
+              display: none;
+              height: 0
+          }
+  
+          [hidden] {
+              display: none
+          }
+  
+          html {
+              font-size: 100%;
+              -webkit-text-size-adjust: 100%;
+              -ms-text-size-adjust: 100%
+          }
+  
+          a:focus {
+              outline: thin dotted
+          }
+  
+          a:active,
+          a:hover {
+              outline: 0
+          }
+  
+          img {
+              border: 0;
+              -ms-interpolation-mode: bicubic
+          }
+  
+          figure {
+              margin: 0
+          }
+  
+          form {
+              margin: 0
+          }
+  
+          fieldset {
+              border: 1px solid silver;
+              margin: 0 2px;
+              padding: .35em .625em .75em
+          }
+  
+          legend {
+              border: 0;
+              padding: 0;
+              white-space: normal
+          }
+  
+          button,
+          input,
+          select,
+          textarea {
+              font-size: 100%;
+              margin: 0;
+              vertical-align: baseline
+          }
+  
+          button,
+          input {
+              line-height: normal
+          }
+  
+          button,
+          select {
+              text-transform: none
+          }
+  
+          button,
+          html input[type=button],
+          input[type=reset],
+          input[type=submit] {
+              -webkit-appearance: button;
+              cursor: pointer
+          }
+  
+          button[disabled],
+          html input[disabled] {
+              cursor: default
+          }
+  
+          input[type=checkbox],
+          input[type=radio] {
+              -webkit-box-sizing: border-box;
+              -moz-box-sizing: border-box;
+              box-sizing: border-box;
+              padding: 0
+          }
+  
+          input[type=search] {
+              -webkit-appearance: textfield;
+              -moz-box-sizing: content-box;
+              -webkit-box-sizing: content-box;
+              box-sizing: content-box
+          }
+  
+          input[type=search]::-webkit-search-cancel-button,
+          input[type=search]::-webkit-search-decoration {
+              -webkit-appearance: none
+          }
+  
+          button::-moz-focus-inner,
+          input::-moz-focus-inner {
+              border: 0;
+              padding: 0
+          }
+  
+          textarea {
+              overflow: auto;
+              vertical-align: top
+          }
+  
+          table {
+              border-collapse: collapse;
+              border-spacing: 0
+          }
+  
+          button,
+          html,
+          input,
+          select,
+          textarea {
+              color: #222
+          }
+  
+          ::-moz-selection {
+              background: #b3d4fc;
+              text-shadow: none
+          }
+  
+          ::selection {
+              background: #b3d4fc;
+              text-shadow: none
+          }
+  
+          img {
+              vertical-align: middle
+          }
+  
+          fieldset {
+              border: 0;
+              margin: 0;
+              padding: 0
+          }
+  
+          textarea {
+              resize: vertical
+          }
+  
+          .chromeframe {
+              margin: .2em 0;
+              background: #ccc;
+              color: #000;
+              padding: .2em 0
+          }
+  
+          :root {
+              font-size: 36px
+          }
+  
+          html {
+              scroll-behavior: smooth;
+              font-family: sans-serif;
+              line-height: 1.15;
+              -webkit-text-size-adjust: 100%;
+              -webkit-tap-highlight-color: transparent
+          }
+  
+          *,
+          ::after,
+          ::before {
+              -webkit-box-sizing: border-box;
+              -moz-box-sizing: border-box;
+              box-sizing: border-box
+          }
+  
+          body {
+              background-color: #fff;
+              line-height: 1.5;
+              font-weight: 400;
+              color: #3c3d3e;
+              font-family: Calibri, Candara, Segoe, "Segoe UI", Optima, Arial, sans-serif;
+              font-size: 36px
+          }
+  
+          h1 {
+              font-size: 30px;
+              color: #009983;
+              margin: 0;
+              padding: 0;
+              margin-bottom: 48px;
+              font-weight: 400
+          }
+  
+          h2 {
+              font-size: 26px;
+              color: #009983;
+              margin: 0;
+              padding: 0
+          }
+  
+          h3 {
+              font-size: 20px;
+              color: #009983;
+              margin: 0;
+              padding: 0
+          }
+  
+          h4 {
+              font-size: 14px;
+              color: #009983;
+              margin: 0;
+              padding: 0
+          }
+  
+          h5 {
+              font-size: 12px;
+              color: #009983;
+              margin: 0;
+              padding: 0
+          }
+  
+          p {
+              font-size: 14px;
+              margin: 0;
+              margin-bottom: 15px;
+              color: #3c3d3e
+          }
+  
+          p strong {
+              font-weight: 700
+          }
+  
+          .main-content {
+              font-size: 0.5rem !important;
+              max-width: 500px;
+              width: 100%;
+              margin: 0 0 0 0;
+              display: -webkit-box;
+              display: -webkit-flex;
+              display: -moz-box;
+              display: -ms-flexbox;
+              display: flex;
+              -webkit-flex-wrap: wrap;
+              -ms-flex-wrap: wrap;
+              flex-wrap: wrap;
+              padding: 10px 0
+          }
+  
+          a {
+              color: #009983;
+              text-decoration: none
+          }
+  
+          a:hover,
+          afocus {
+              text-decoration: none;
+              color: #333
+          }
+  
+          .left-panel {
+              -webkit-box-flex: 0;
+              -webkit-flex: 0 0 75px;
+              -moz-box-flex: 0;
+              -ms-flex: 0 0 75px;
+              flex: 0 0 75px;
+              max-width: 75px
+          }
+  
+          .left-panel figure {
+              margin: 0;
+              padding: 0;
+              text-align: center;
+              position: relative
+          }
+  
+          .left-panel figure img {
+              width: 70px;
+              height: auto;
+              margin-right: 40px;
+          }
+  
+          .right-panel {
+              -webkit-box-flex: 0;
+              -webkit-flex: 0 0 calc(100% - 100px);
+              -moz-box-flex: 0;
+              -ms-flex: 0 0 calc(100% - 100px);
+              flex: 0 0 calc(100% - 100px);
+              max-width: calc(100% - 100px);
+              border-left: solid 1px #009983;
+              padding: 0 10px 0px 10px;
+              margin-left: 10px;
+          }
+  
+          .number-counter {
+              padding-left: 75px;
+              position: relative
+          }
+  
+          .number-counter span {
+              position: absolute;
+              left: 0;
+              top: 50%;
+              -webkit-transform: translateY(-50%);
+              -ms-transform: translateY(-50%);
+              -o-transform: translateY(-50%);
+              transform: translateY(-50%)
+          }
+  
+          .mar-bot-25 {
+              margin-bottom: 25px
+          }
+  
+          .root-list {
+              margin: 0;
+              padding: 0;
+              margin-left: 14px;
+              list-style-type: none;
+              position: relative;
+              padding-left: 34px
+          }
+  
+          .root-list span {
+              position: absolute;
+              left: 0;
+              top: 0
+          }
+  
+          ul.parent-list {
+              margin: 0;
+              padding: 0;
+              list-style-type: none;
+              counter-reset: my-sec-counter;
+              margin-left: 54px
+          }
+  
+          ul.parent-list>li {
+              counter-increment: my-sec-counter;
+              position: relative;
+              padding-left: 38px
+          }
+  
+          ul.parent-list>li:before {
+              content: "("counter(my-sec-counter) ")";
+              position: absolute;
+              left: 0;
+              top: 0
+          }
+  
+          ol.inner-list-top {
+              margin: 0;
+              padding: 0;
+              list-style-type: none;
+              counter-reset: abc-counter
+          }
+  
+          ol.inner-list-top>li {
+              counter-increment: abc-counter;
+              position: relative;
+              padding-left: 38px
+          }
+  
+          ol.inner-list-top>li:before {
+              content: "("counter(abc-counter, lower-alpha) ")";
+              position: absolute;
+              left: 0;
+              top: 0
+          }
+  
+          ul.inner-list-top2 {
+              margin: 0;
+              padding: 0;
+              list-style-type: none;
+              counter-reset: abc-counter2;
+              margin-left: 20px
+          }
+  
+          ul.inner-list-top2>li {
+              counter-increment: abc-counter2;
+              position: relative;
+              padding-left: 20px
+          }
+  
+          ul.inner-list-top2>li:before {
+              content: counter(abc-counter2, lower-alpha) ".";
+              position: absolute;
+              left: 0;
+              top: 0
+          }
+  
+          .bottom-end {
+              padding-top: 60px;
+              padding-bottom: 60px
+          }
+  
+          .footer-end-box {
+              max-width: 240px;
+              border-top: solid 1px #000;
+              padding-top: 5px
+          }
+  
+          .footer-end-box p {
+              margin-bottom: 3px
+          }
+  
+          img {
+              border: 0;
+              outline: 0
+          }
+  
+          .table-data {
+              padding: 40px 0
+          }
+  
+          .table-data table {
+              width: 100%;
+              max-width: 100%;
+              margin-bottom: 1rem;
+              background-color: transparent;
+              border-collapse: collapse;
+              border: solid 1px #009983
+          }
+  
+          .table-data table thead {
+              background-color: #009983
+          }
+  
+          .table-data table tr td,
+          .table-data table tr th {
+              padding: .75rem;
+              min-height: 46px;
+              vertical-align: top;
+              text-align: center;
+              color: #fff;
+              vertical-align: middle;
+              border-top: 1px solid #009983
+          }
+  
+          .table-data table tr td {
+              color: #333;
+              border-right: solid 1px #009983
+          }
+  
+          .table-data table tr td:last-child {
+              border-right: transparent
+          }
+  
+          .table-data table tr th {
+              background-color: #009983;
+              border-left: solid 1px transparent
+          }
+  
+          .table-data table tr th+th {
+              border-left: solid 1px #fff
+          }
+  
+          .table-data2 {
+              padding: 20px 0
+          }
+  
+          .table-data2 table {
+              width: 100%;
+              max-width: 100%;
+              margin-bottom: 1rem;
+              background-color: transparent;
+              border-collapse: collapse;
+              border: solid 1px #000
+          }
+  
+          .table-data2 table thead {
+              background-color: #009983
+          }
+  
+          .table-data2 table tr td,
+          .table-data2 table tr th {
+              padding: .75rem;
+              min-height: 46px;
+              vertical-align: top;
+              text-align: center;
+              color: #fff;
+              vertical-align: top;
+              border-top: 1px solid #009983
+          }
+  
+          .table-data2 table tr td {
+              color: #333;
+              border-right: solid 1px #000;
+              text-align: left
+          }
+  
+          .table-data2 table tr td:last-child {
+              border-right: transparent
+          }
+  
+          .table-data2 table tr th {
+              background-color: #009983;
+              border-left: solid 1px #000;
+              vertical-align: middle
+          }
+  
+          .table-data2 table tr th+th {
+              border-left: solid 1px #000
+          }
+  
+          .table-data2 .bder-bot {
+              border-bottom: solid 1px #000;
+              border-top: solid 1px #000
+          }
+  
+          .table-data2 sup {
+              font-size: 11px;
+              position: relative;
+              top: -8px
+          }
+  
+          p sup {
+              font-size: 11px;
+              position: relative;
+              top: -8px
+          }
+  
+          .text-justify p {
+              text-align: justify
+          }
+  
+          ul.list-arrow {
+              margin: 10px 0;
+              padding: 0;
+              list-style-type: none;
+              margin-left: 20px;
+              padding-bottom: 8px
+          }
+  
+          ul.list-arrow li {
+              position: relative;
+              padding-left: 20px
+          }
+  
+          ul.list-arrow li p {
+              margin-bottom: 5px
+          }
+  
+          ul.list-arrow li:before {
+              content: "›";
+              position: absolute;
+              left: 0;
+              top: 0
+          }
+  
+          .address-box {
+              margin-bottom: 15px;
+              padding: 5px 0
+          }
+  
+          .address-box .address-inner {
+              padding-left: 14px;
+              border-left: solid 2px #e8e8e8
+          }
+  
+          ul.parent-list-2 {
+              margin: 0;
+              padding: 0;
+              list-style-type: none;
+              counter-reset: alphacounter;
+              margin-left: 54px
+          }
+  
+          ul.parent-list-2>li {
+              counter-increment: alphacounter;
+              position: relative;
+              padding-left: 38px
+          }
+  
+          ul.parent-list-2>li:before {
+              content: counter(alphacounter, lower-alpha) ".";
+              position: absolute;
+              left: 0;
+              top: 0
+          }
+  
+          ol.romancount {
+              margin: 0;
+              padding: 0;
+              list-style-type: none;
+              counter-reset: abc-counter
+          }
+  
+          ol.romancount>li {
+              counter-increment: abc-counter;
+              position: relative;
+              padding-left: 38px
+          }
+  
+          ol.romancount>li:before {
+              content: counter(abc-counter, lower-roman) ".";
+              position: absolute;
+              left: 0;
+              top: 0
+          }
+  
+          .bold-it {
+              font-weight: 700;
+              font-style: italic;
+              text-decoration: underline
+          }
+  
+          @media print {
+  
+              h1,
+              h2,
+              h3,
+              h4,
+              h5 {
+                  page-break-after: avoid
+              }
+  
+              figure,
+              table {
+                  page-break-inside: avoid
+              }
+  
+              .normal-brand {
+                  -webkit-filter: grayscale(100%);
+                  filter: grayscale(100%);
+                  border: 0;
+                  outline: 0
+              }
+  
+              .table-data,
+              .table-data2 {
+                  padding: 20px 0
+              }
+  
+              .table-data table,
+              .table-data2 table {
+                  width: 100%;
+                  max-width: 100%;
+                  margin-bottom: 1rem;
+                  background-color: transparent;
+                  border-collapse: collapse;
+                  border: solid 1px #000
+              }
+  
+              .table-data table thead,
+              .table-data2 table thead {
+                  background-color: transparent
+              }
+  
+              .table-data table tr td,
+              .table-data table tr th,
+              .table-data2 table tr td,
+              .table-data2 table tr th {
+                  padding: .75rem;
+                  min-height: 46px;
+                  vertical-align: top;
+                  text-align: center;
+                  color: #333;
+                  vertical-align: middle;
+                  border-top: 1px solid #000
+              }
+  
+              .table-data table tr td,
+              .table-data2 table tr td {
+                  color: #333;
+                  border-right: solid 1px #000
+              }
+  
+              .table-data table tr td:last-child,
+              .table-data2 table tr td:last-child {
+                  border-right: transparent
+              }
+  
+              .table-data table tr th,
+              .table-data2 table tr th {
+                  background-color: transparent;
+                  border-left: solid 1px #000
+              }
+  
+              .table-data table tr th+th,
+              .table-data2 table tr th+th {
+                  border-left: solid 1px #000
+              }
+          }
+      </style>
     <title>Pensio Tenants Rent Guarantee Summary Exhibit B – Pensio Tenants Rent Guarantee Agreement</title>
   </head>
   <body>
@@ -900,7 +914,7 @@ Exhibit B – Pensio Tenants Rent Guarantee Agreement</h1>
 		  <p>Involuntary Loss of Employment rent payment is not otherwise excluded under the terms, conditions and exclusions of YOUR Rent Guarantee from the Pensio Tenants Rent Guarantee Agreement. Refer to the section entitled “When Pensio will not pay”.</p>
 		  </li>
 	  </ul>
-	  <p>The total number of Monthly Rent Guarantee payments for YOU under the Pensio Rent Guarantee  Involuntary Loss of Employment Rent Guarantee is subject to your Rent Guarantee Summary for up to the Maximum Rent Guarantee Period of twelve (12) months provided the Involuntary Loss of Employment began on or after the date that YOUR execution of the Pensio Tenants Rent Guarantee Agreement commenced and that YOU have completed the Elimination Period. Successive periods of Involuntary Loss of Employment will be considered one episode of Involuntary Loss of Employment unless such periods are separated by at least one hundred eighty (180) days. This Total Involuntary Job Loss Rent Guarantee is paid directly to your Landlord by Pensio and, as such, is in addition to any other type of unemployment insurance coverage YOU may have.</p>
+	  <p>The total number of Monthly Rent Guarantee payments for YOU under the Pensio Rent Guarantee  Involuntary Loss of Employment Rent Guarantee is subject to your Rent Guarantee Summary for up to the Maximum Rent Guarantee Period of six (6) months provided the Involuntary Loss of Employment began on or after the date that YOUR execution of the Pensio Tenants Rent Guarantee Agreement commenced and that YOU have completed the Elimination Period. Successive periods of Involuntary Loss of Employment will be considered one episode of Involuntary Loss of Employment unless such periods are separated by at least one hundred eighty (180) days. This Involuntary Job Loss Rent Guarantee is paid directly to your Landlord by Pensio and, as such, is in addition to any other type of unemployment insurance coverage YOU may have.</p>
 	  
 	   <h2 class="mar-bot-25">Total Disability or Partial Disability</h2>
 	  <h3 class="mar-bot-25">Total Disability Rent Guarantee</h3>
@@ -910,7 +924,7 @@ Exhibit B – Pensio Tenants Rent Guarantee Agreement</h1>
 		   <li><p>the Total Disability Rent Guarantee payment is not otherwise excluded under the terms, conditions and exclusions of the Rent Guarantee. Refer to the section entitled “When Pensio will not pay”.</p></li>
 		     <li><p>the Total Disability Rent Guarantee payment is not otherwise excluded under the terms, conditions and exclusions of the Rent Guarantee. Refer to the section entitled “When Pensio will not pay”.</p></li>
 	  </ul>
-	  <p>Pensio will pay monthly Total Disability Rent Guarantee subject to your Rent Guarantee Summary for up to the Maximum Period of twelve (12) months for any one disability Rent Guarantee provided the Total Disability began on or after the date that YOUR Rent Guarantee commenced and that YOU have completed the Elimination Period. This Total Disability Rent Guarantee is paid directly to your Landlord by Pensio and, as such, is in addition to any other type of disability insurance coverage YOU may have.</p>
+	  <p>Pensio will pay monthly Total Disability Rent Guarantee subject to your Rent Guarantee Summary for up to the Maximum Period of six (6) months for any one disability Rent Guarantee provided the Total Disability began on or after the date that YOUR Rent Guarantee commenced and that YOU have completed the Elimination Period. This Total Disability Rent Guarantee is paid directly to your Landlord by Pensio and, as such, is in addition to any other type of disability insurance coverage YOU may have.</p>
 	<h3 class="mar-bot-25">Partial Disability Rent Guarantee </h3>  
 	  <p>For You or Your Co-Tenant  who are in good standing (“<strong>YOU</strong>” or “<strong>YOUR</strong>”) and have a legal and valid lease agreement,  who remain Partially Disabled and have executed the Pensio Tenants Rent Guarantee Agreement, Pensio subject to the payment of YOUR Monthly Rent Guarantee Fee will pay YOUR monthly rental payment subject to Your Rent Guarantee Summary for up to the Maximum Period of twelve (12) months if YOU under the terms and conditions of the Pensio Tenants Rent Guarantee Agreement meets and continues to meet all the following conditions:</p>
 	    <ul class="list-arrow">
@@ -937,7 +951,7 @@ Exhibit B – Pensio Tenants Rent Guarantee Agreement</h1>
 		  </p>
 		   </li>
 		   <li>
-		   <p>YOU are self-employed;  
+		   <p>YOU are self-employed without a verifiable services contract for the term of your Lease Rent Guarantee  
 		  </p>
 		   </li>
 		    <li>
@@ -959,10 +973,11 @@ Exhibit B – Pensio Tenants Rent Guarantee Agreement</h1>
 		  </p>
 		   </li>
 		       <li>
-		   <p>
-			  In the event that an epidemic or pandemic has been officially declared by the World Health Organization (WHO) and for the period of time that US federal, state, city or county government has enacted Stay in Place declarations, or has suspended evictions, public gatherings, state or county court services, during this period and sixty (60) days after the aforementioned conditions by US government have been lifted, the Rent Guarantee is not applicable for Job Loss;
+		   <p>In the event the federal, state, city or county government has enacted stay in place orders, restricted public gatherings, closed non-essential businesses, suspended evictions, suspended payment of rent, or has declared a State of Emergency, during this period and for a period of fourteen (14) days thereafter the orders, restrictions and suspensions have been cancelled, the involuntary Job Loss Rent Guarantee is not applicable;
 		  </p>
 		   </li>
+		   <li><p>Committing or attempting to commit a criminal offence;</p></li>
+		   <li><p>War or act of war declared or undeclared, or any act of war, terrorism, riot or insurrection, or service in the armed forces of any country, government or international organization;</p></li>
 		      <li>
 		   <p>
 			  Strike or labor dispute; or
@@ -1058,7 +1073,7 @@ Tinton Falls, NJ 07701<br>
 		   
 	  </li>
 		  <li>
-		  <p>the date the Pensio Rent Guarantee terminates; </p>  
+		  <p>the date YOU cease to be eligible under the Pensio Rent Guarantee; </p>  
 		     </li> 
 		
 		   
@@ -1107,7 +1122,7 @@ Tinton Falls, NJ 07701<br>
 	  
 	    
 	  	   <h3>When Monies Are Payable</h3>
-	  <p>All monies payable under this contract shall be paid by Pensio to pay your rent to your Landlord  named on your valid and legal lease for your Residential Rental Unit within 5 business  days after it has received proof of claim sufficient to the Pensio Administrator.  </p>
+	  <p>All monies payable under this contract shall be paid by Pensio to pay your rent to your Landlord  named on your valid and legal lease for your Residential Rental Unit within five (5) business days after it has received proof of claim sufficient to the Pensio Administrator.  </p>
 	  
 	  <h3>Recovery of Rent Guarantee Overpayment </h3>
 	  <p>Pensio reserves the right to recover any payment that was: </p>
@@ -1179,7 +1194,7 @@ Tinton Falls, NJ 07701<br>
 	  <p>In the absence of fraud, the validity of the Pensio Rent Guarantee will not be contested if it has been in force for two (2) years from its issue date and all outstanding Pensio Rent Guarantee fees have been paid.</p>
 	    <h3>Misrepresentation</h3>
 	  <p>If it is found that YOU materially misrepresented YOUR eligibility in order to obtain Your Rent Guarantees under this Rent Guarantee, Pensio has the right to void YOUR Rent Guarantee within the first two (2) years of the date of issue or within two (2) years of any change requested by Pensio or YOU. </p>
-	  <p>A misrepresentation is a false or a misleading statement on an application as to a past or present fact which leads Pensio to issue the Rent Guarantee Agreement and this Rent Guarantee whereas Pensio would not have issued the contract if the accurate facts were known. </p>
+	  <p>A misrepresentation is a false or a misleading statement on an a registration as to a past or present fact which leads Pensio to issue the Rent Guarantee Agreement and this Rent Guarantee whereas Pensio would not have issued the contract if the accurate facts were known. </p>
 	   <h3>Legal Actions </h3>
 	  <p>Every action or proceeding against Pensio for the recovery of Rent Guarantee money payable under the contract is absolutely barred unless commenced within the time set out in the Your State. </p>
 	  	   <h3>Complaint Procedures </h3>
