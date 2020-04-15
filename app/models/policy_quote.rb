@@ -257,11 +257,16 @@ class PolicyQuote < ApplicationRecord
         to_charge = policy_application.billing_strategy.new_business['payments'].map.with_index do |payment, index|
           {
             due_date: index == 0 ? status_updated_on : policy_application.effective_date + index.months,
+            term_first_date: policy_application.effective_date + index.months,
             fees: (policy_premium.amortized_fees * payment / payment_weight_total).floor + (index == 0 ? policy_premium.deposit_fees : 0),
             total: (policy_premium.calculation_base * payment / payment_weight_total).floor + (index == 0 ? policy_premium.deposit_fees : 0)
           }
         end.select{|tc| tc[:total] > 0 }
-        
+        # set term_last_dates
+        (0...(to_charge.length - 1)).each do |charge_index|
+          to_charge[charge_index][:term_last_date] = to_charge[charge_index + 1][:term_first_date] - 1.day
+        end
+        to_charge.last[:term_last_date] = policy_application.effective_date + 12.months - 1.day
         # add any rounding errors to the first charge
         to_charge[0][:fees] += policy_premium.total_fees - to_charge.inject(0){|sum,tc| sum + tc[:fees] }
         to_charge[0][:total] += policy_premium.total - to_charge.inject(0){|sum,tc| sum + tc[:total] }
@@ -273,6 +278,8 @@ class PolicyQuote < ApplicationRecord
               invoices.create!({
                 due_date:       tc[:due_date],
                 available_date: tc[:due_date] - available_period,
+                term_first_date: tc[:term_first_date],
+                term_last_date: tc[:term_last_date],
                 user:           policy_application.primary_user,
                 subtotal:       tc[:total] - tc[:fees],
                 total:          tc[:total],
