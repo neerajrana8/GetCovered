@@ -246,8 +246,10 @@ class Charge < ApplicationRecord
           remove_instance_variable(:@already_in_on_create)
           return
         end
+        # leave the token... we'll use it without a customer so it works
+        stripe_source = stripe_id
         # rip the card or bank account out of the token for our use
-        stripe_source = token[token['type']]['id'] # MOOSE WARNING: this will NOT work. It needs to be attached to the customer before calling Stripe::Charge.create on it
+        # stripe_source = token[token['type']]['id'] # MOOSE WARNING: this will NOT work. It needs to be attached to the customer before calling Stripe::Charge.create on it
       end
       # processing
       if status != 'processing'
@@ -255,6 +257,12 @@ class Charge < ApplicationRecord
         remove_instance_variable(:@already_in_on_create)
         return
       else
+        # get user stripe id (leave as nil if we're using a token, since Stripe won't accept an unattached source)
+        customer_stripe_id = nil
+        unless stripe_id_is_stripe_token
+          invoice.user.set_stripe_id if invoice.user.stripe_id.nil?
+          customer_stripe_id = invoice.user.stripe_id
+        end
         # create charge
         begin
 	        descriptor = invoice.get_descriptor
@@ -262,7 +270,7 @@ class Charge < ApplicationRecord
             amount: amount,
             currency: 'usd',
             description: "#{ descriptor }, Invoice ##{invoice.number}",
-            customer: invoice.user.stripe_id,
+            customer: customer_stripe_id,
             source: stripe_source
           }.delete_if { |k,v| v.nil? })
         rescue Stripe::StripeError => e
@@ -270,7 +278,6 @@ class Charge < ApplicationRecord
           remove_instance_variable(:@already_in_on_create)
           return
         end
-        
         # handle charge status
         if stripe_charge.nil?
           pay_attempt_failed(nil, 'unknown', "Payment processor failed to create charge") # this should never happen, but just in case...
