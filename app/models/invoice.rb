@@ -12,7 +12,7 @@ class Invoice < ApplicationRecord
   include ElasticsearchSearchable
 
   # DISABLED FOR NOW because it contains v1 functionality that's not being used anymore, and if anyone passes a line item to an invoice in v2 this would give them some nasty surprises
-  #before_validation :calculate_subtotal, if: -> { line_items.count > 0 }
+  before_validation :calculate_subtotal, if: -> { line_items.count > 0 }
 
   before_validation :set_number, on: :create
 
@@ -500,10 +500,9 @@ class Invoice < ApplicationRecord
 
   # Calculation Methods
 
-  def calculate_subtotal(and_save = false)
-    prior_subtotal = subtotal
+  def calculate_subtotal
     self.subtotal = line_items.inject(0) { |result, line_item| result += line_item.price }
-    calculate_total(self.user.nil? || self.user.current_payment_method == 'none' ? nil : self.user.current_payment_method == 'card' ? 'card' : 'bank_account', and_save) if subtotal != prior_subtotal
+    self.total = self.subtotal
   end
 
   # History Methods

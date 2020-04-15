@@ -274,7 +274,7 @@ class PolicyQuote < ApplicationRecord
         # create invoices
         begin
           ActiveRecord::Base.transaction do
-            to_charge.each do |tc|
+            to_charge.each.with_index do |tc, tci|
               invoices.create!({
                 due_date:       tc[:due_date],
                 available_date: tc[:due_date] - available_period,
@@ -283,7 +283,25 @@ class PolicyQuote < ApplicationRecord
                 user:           policy_application.primary_user,
                 subtotal:       tc[:total] - tc[:fees],
                 total:          tc[:total],
-                status:         "quoted"
+                status:         "quoted",
+                
+                line_items_attributes: [
+                  tci == 0 ? {
+                    title: "Deposit Fees",
+                    price: policy_premium.deposit_fees,
+                    refundability: 'no_refund'
+                  } : nil,
+                  {
+                    title: "Amortized Fees",
+                    price: tc[:fees] - (tci == 0 ? policy_premium.deposit_fees : 0),
+                    refundability: 'no_refund'
+                  },
+                  {
+                    title: "Premium Payment",
+                    price: tc[:total] - tc[:fees],
+                    refundability: 'prorated_refund'
+                  }
+                ].select{|lia| !lia.nil? && lia[:amount] > 0 }
               })
             end
             invoices_generated = true
