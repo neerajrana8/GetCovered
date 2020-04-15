@@ -157,13 +157,12 @@ class Address < ApplicationRecord
 	        {
 	          multi_match: {
 	            query: query,
-	            fields: [:full, :full_searchable]
+	            fields: [:full, :full_searchable, searchable: true]
 	          }
 	        },
 	        {
 	          match: {
-              addressable_type: "Insurable",
-              searchable: true
+              addressable_type: "Insurable"
 	          }
 	        }]
 	      }
