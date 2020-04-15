@@ -281,10 +281,9 @@ class PolicyQuote < ApplicationRecord
                 term_first_date: tc[:term_first_date],
                 term_last_date: tc[:term_last_date],
                 user:           policy_application.primary_user,
-                subtotal:       tc[:total] - tc[:fees],
-                total:          tc[:total],
                 status:         "quoted",
                 
+                total:          tc[:total], # subtotal & total are calculated automatically from line items, but if we pass one manually validations will fail if it doesn't match the calculation
                 line_items_attributes: [
                   tci == 0 ? {
                     title: "Deposit Fees",

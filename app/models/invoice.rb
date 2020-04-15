@@ -12,7 +12,7 @@ class Invoice < ApplicationRecord
   include ElasticsearchSearchable
 
   # DISABLED FOR NOW because it contains v1 functionality that's not being used anymore, and if anyone passes a line item to an invoice in v2 this would give them some nasty surprises
-  before_validation :calculate_subtotal, if: -> { line_items.count > 0 }
+  before_validation :calculate_subtotal
 
   before_validation :set_number, on: :create
 
@@ -34,11 +34,13 @@ class Invoice < ApplicationRecord
 
   validates :number, presence: true, uniqueness: true
   validates :subtotal, presence: true
-  validates :total, presence: true
+  validates :total, presence: true, numericality: { greater_than: 0 }
   validates :status, presence: true
   validates :due_date, presence: true
   validates :available_date, presence: true
   validates :user, presence: true
+  
+  validates_associated :line_items
 
 # 	validate :policy_unless_quoted
 
@@ -184,82 +186,6 @@ class Invoice < ApplicationRecord
       amount_not_refunded: to_refund,
       errors_by_charge: errors_encountered
     }
-  end
-
-  # Calculate Total
-  #
-  # Apply modifiers and tax to subtotal to calculate total
-  #
-  # Example:
-  #   @invoice = Invoice.find(1)
-  #   payment_method = [ nil, 'card', 'bank_account' ][rand(3)]
-  #   @invoice.calculate_total(payment_method)
-  #   => nil
-
-  def calculate_total(payment_method, and_save = true)
-    # setup
-    prereceipt = {}
-    payment_method = nil unless %w[card bank_account].include?(payment_method)
-    float_total = subtotal.to_f / 100.0
-    # add subtotal and line items to prereceipt
-    prereceipt['subtotal'] = subtotal
-    prereceipt['items'] = []
-    line_items.each do |line_item|
-      prereceipt['items'].push({ type: 'flat' }.merge(name: line_item.title, price: line_item.price))
-    end
-    # apply modifiers
-    modifiers.create(strategy: 'percentage', amount: 1.10, condition: 'card_payment') if payment_method == 'card' && modifiers.where(condition: 'card_payment').count == 0
-    modifier_array = modifiers.to_a
-    Modifier.pretax_tiers_in_order.each do |current_tier|
-      # apply percentage changes
-      current_coefficient = 1.0
-      modifier_array.each do |current_modifier|
-        if current_modifier.tier == current_tier && current_modifier.strategy == 'percentage' && current_modifier.should_apply?(payment_method)
-          current_coefficient *= current_modifier.amount
-        end
-      end
-      float_total *= current_coefficient
-      # apply flat changes
-      modifier_array.each do |current_modifier|
-        if current_modifier.tier == current_tier && current_modifier.strategy == 'flat' && current_modifier.should_apply?(payment_method)
-          float_total += current_modifier.amount / 100.0
-        end
-      end
-    end
-    # calculate tax and the final total
-    float_total = (float_total * 100.0).ceil # express in cents and round up
-    pretax_total = float_total               # grab
-    float_total /= 100.0                     # express in dollars again
-    float_total *= (1.0 + tax_percent) unless tax_percent.nil? # apply tax
-    float_total = (float_total * 100.0).ceil # express in cents and round up
-    # set tax & total
-    self.tax = float_total.to_i - pretax_total.to_i
-    self.total = float_total.to_i
-    prereceipt['tax'] = tax
-    prereceipt['total'] = total
-    unless pretax_total.to_i == subtotal
-      prereceipt['items'].push(
-        'type' => 'flat',
-        'name' => 'Service Fee',
-        'price' => pretax_total.to_i - subtotal
-      )
-    end
-    unless tax == 0
-      prereceipt['items'].push(
-        'type' => 'flat',
-        'name' => 'Tax',
-        'price' => tax
-      )
-    end
-    # all done
-
-    system_data['prereceipt'] = prereceipt
-
-    # Either need to refactor set_commission or remove it.
-    # if and_save
-    #   set_commission if save
-    # end
-    prereceipt
   end
 
   # Pay
@@ -417,8 +343,6 @@ class Invoice < ApplicationRecord
     if status == 'upcoming'
       if update status: 'available'
 
-        calculate_total(user.current_payment_method == 'none' ? nil : user.current_payment_method == 'card' ? 'card' : 'bank_account', true)
-
         user_notification = notifications.new(
           notifiable: user,
           action: 'invoice_available',
@@ -498,8 +422,12 @@ class Invoice < ApplicationRecord
   # Calculation Methods
 
   def calculate_subtotal
+    old_subtotal = self.will_save_change_to_attribute?('subtotal') ? self.subtotal : nil
+    old_total = self.will_save_change_to_attribute?('total') ? self.total : nil
     self.subtotal = line_items.inject(0) { |result, line_item| result += line_item.price }
-    self.total = self.subtotal
+    self.total = self.subtotal # total used to be subtotal + tax, but now it's just a redundant copy of subtotal
+    errors.add(:subtotal, "must match sum of line item prices") unless old_subtotal.nil? || old_subtotal == self.subtotal
+    errors.add(:total, "must match subtotal") unless old_total.nil? || old_total == self.total
   end
 
   # History Methods
