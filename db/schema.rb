@@ -189,7 +189,6 @@ ActiveRecord::Schema.define(version: 2020_04_14_180842) do
     t.string "logo_url"
     t.string "footer_logo_url"
     t.string "subdomain"
-    t.string "subdomain_test"
     t.index ["profileable_type", "profileable_id"], name: "index_branding_profiles_on_profileable_type_and_profileable_id"
     t.index ["url"], name: "index_branding_profiles_on_url", unique: true
   end

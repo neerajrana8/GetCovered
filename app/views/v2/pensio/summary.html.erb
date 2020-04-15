@@ -1,0 +1,1437 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=900">
+    <!-- template CSS -->
+    <style>
+    @charset "UTF-8";
+    a,
+    abbr,
+    acronym,
+    address,
+    applet,
+    article,
+    aside,
+    audio,
+    b,
+    big,
+    blockquote,
+    body,
+    canvas,
+    caption,
+    center,
+    cite,
+    code,
+    dd,
+    del,
+    details,
+    dfn,
+    div,
+    dl,
+    dt,
+    em,
+    embed,
+    fieldset,
+    figcaption,
+    figure,
+    footer,
+    form,
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6,
+    header,
+    hgroup,
+    html,
+    i,
+    iframe,
+    img,
+    ins,
+    kbd,
+    label,
+    legend,
+    li,
+    mark,
+    menu,
+    nav,
+    object,
+    ol,
+    output,
+    p,
+    pre,
+    q,
+    ruby,
+    s,
+    samp,
+    section,
+    small,
+    span,
+    strike,
+    strong,
+    sub,
+    summary,
+    sup,
+    table,
+    tbody,
+    td,
+    tfoot,
+    th,
+    thead,
+    time,
+    tr,
+    tt,
+    u,
+    ul,
+    var,
+    video {
+        margin: 0;
+        padding: 0;
+        border: 0;
+        font-size: 100%;
+        font: inherit;
+        vertical-align: baseline
+    }
+    
+    :focus {
+        outline: 0
+    }
+    
+    article,
+    aside,
+    details,
+    figcaption,
+    figure,
+    footer,
+    header,
+    hgroup,
+    menu,
+    nav,
+    section {
+        display: block
+    }
+    
+    body {
+        line-height: 1
+    }
+    
+    ol,
+    ul {
+        list-style: none
+    }
+    
+    blockquote,
+    q {
+        quotes: none
+    }
+    
+    blockquote:after,
+    blockquote:before,
+    q:after,
+    q:before {
+        content: '';
+        content: none
+    }
+    
+    table {
+        border-collapse: collapse;
+        border-spacing: 0
+    }
+    
+    input[type=search]::-webkit-search-cancel-button,
+    input[type=search]::-webkit-search-decoration,
+    input[type=search]::-webkit-search-results-button,
+    input[type=search]::-webkit-search-results-decoration {
+        -webkit-appearance: none;
+        -moz-appearance: none
+    }
+    
+    input[type=search] {
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        -webkit-box-sizing: content-box;
+        -moz-box-sizing: content-box;
+        box-sizing: content-box
+    }
+    
+    textarea {
+        overflow: auto;
+        vertical-align: top;
+        resize: vertical
+    }
+    
+    audio,
+    canvas,
+    video {
+        display: inline-block;
+        max-width: 100%
+    }
+    
+    audio:not([controls]) {
+        display: none;
+        height: 0
+    }
+    
+    [hidden] {
+        display: none
+    }
+    
+    html {
+        font-size: 100%;
+        -webkit-text-size-adjust: 100%;
+        -ms-text-size-adjust: 100%
+    }
+    
+    a:focus {
+        outline: thin dotted
+    }
+    
+    a:active,
+    a:hover {
+        outline: 0
+    }
+    
+    img {
+        border: 0;
+        -ms-interpolation-mode: bicubic
+    }
+    
+    figure {
+        margin: 0
+    }
+    
+    form {
+        margin: 0
+    }
+    
+    fieldset {
+        border: 1px solid silver;
+        margin: 0 2px;
+        padding: .35em .625em .75em
+    }
+    
+    legend {
+        border: 0;
+        padding: 0;
+        white-space: normal
+    }
+    
+    button,
+    input,
+    select,
+    textarea {
+        font-size: 100%;
+        margin: 0;
+        vertical-align: baseline
+    }
+    
+    button,
+    input {
+        line-height: normal
+    }
+    
+    button,
+    select {
+        text-transform: none
+    }
+    
+    button,
+    html input[type=button],
+    input[type=reset],
+    input[type=submit] {
+        -webkit-appearance: button;
+        cursor: pointer
+    }
+    
+    button[disabled],
+    html input[disabled] {
+        cursor: default
+    }
+    
+    input[type=checkbox],
+    input[type=radio] {
+        -webkit-box-sizing: border-box;
+        -moz-box-sizing: border-box;
+        box-sizing: border-box;
+        padding: 0
+    }
+    
+    input[type=search] {
+        -webkit-appearance: textfield;
+        -moz-box-sizing: content-box;
+        -webkit-box-sizing: content-box;
+        box-sizing: content-box
+    }
+    
+    input[type=search]::-webkit-search-cancel-button,
+    input[type=search]::-webkit-search-decoration {
+        -webkit-appearance: none
+    }
+    
+    button::-moz-focus-inner,
+    input::-moz-focus-inner {
+        border: 0;
+        padding: 0
+    }
+    
+    textarea {
+        overflow: auto;
+        vertical-align: top
+    }
+    
+    table {
+        border-collapse: collapse;
+        border-spacing: 0
+    }
+    
+    button,
+    html,
+    input,
+    select,
+    textarea {
+        color: #222
+    }
+    
+    ::-moz-selection {
+        background: #b3d4fc;
+        text-shadow: none
+    }
+    
+    ::selection {
+        background: #b3d4fc;
+        text-shadow: none
+    }
+    
+    img {
+        vertical-align: middle
+    }
+    
+    fieldset {
+        border: 0;
+        margin: 0;
+        padding: 0
+    }
+    
+    textarea {
+        resize: vertical
+    }
+    
+    .chromeframe {
+        margin: .2em 0;
+        background: #ccc;
+        color: #000;
+        padding: .2em 0
+    }
+    
+    :root {
+        font-size: 36px
+    }
+    
+    html {
+        scroll-behavior: smooth;
+        font-family: sans-serif;
+        line-height: 1.15;
+        -webkit-text-size-adjust: 100%;
+        -webkit-tap-highlight-color: transparent
+    }
+    
+    *,
+    ::after,
+    ::before {
+        -webkit-box-sizing: border-box;
+        -moz-box-sizing: border-box;
+        box-sizing: border-box
+    }
+    
+    body {
+        background-color: #fff;
+        line-height: 1.5;
+        font-weight: 400;
+        color: #3c3d3e;
+        font-family: Calibri, Candara, Segoe, "Segoe UI", Optima, Arial, sans-serif;
+        font-size: 36px
+    }
+    
+    h1 {
+        font-size: 46.28px;
+        color: #009983;
+        margin: 0;
+        padding: 0;
+        margin-bottom: 48px;
+        font-weight: 400
+    }
+    
+    h2 {
+        font-size: 41px;
+        color: #009983;
+        margin: 0;
+        padding: 0
+    }
+    
+    h3 {
+        font-size: 35px;
+        color: #009983;
+        margin: 0;
+        padding: 0
+    }
+    
+    h4 {
+        font-size: 30.5p;
+        color: #009983;
+        margin: 0;
+        padding: 0
+    }
+    
+    h5 {
+        font-size: 25.5px;
+        color: #009983;
+        margin: 0;
+        padding: 0
+    }
+    
+    p {
+        font-size: 36px;
+        margin: 0;
+        margin-bottom: 15px;
+        color: #3c3d3e
+    }
+    
+    p strong {
+        font-weight: 700
+    }
+    
+    .main-content {
+        max-width: 2400px;
+        width: 100%;
+        margin: 0 auto;
+        display: -webkit-box;
+        display: -webkit-flex;
+        display: -moz-box;
+        display: -ms-flexbox;
+        display: flex;
+        -webkit-flex-wrap: wrap;
+        -ms-flex-wrap: wrap;
+        flex-wrap: wrap;
+        padding: 50px 0
+    }
+    
+    a {
+        color: #009983;
+        text-decoration: none
+    }
+    
+    a:hover,
+    afocus {
+        text-decoration: none;
+        color: #333
+    }
+    
+    .left-panel {
+        -webkit-box-flex: 0;
+        -webkit-flex: 0 0 200px;
+        -moz-box-flex: 0;
+        -ms-flex: 0 0 200px;
+        flex: 0 0 200px;
+        max-width: 200px
+    }
+    
+    .left-panel figure {
+        margin: 0;
+        padding: 0;
+        text-align: center;
+        position: relative
+    }
+    
+    .left-panel figure img {
+        width: 152px;
+        height: auto
+        margin-right: 40px;
+    }
+    
+    .right-panel {
+        -webkit-box-flex: 0;
+        -webkit-flex: 0 0 calc(100% - 200px);
+        -moz-box-flex: 0;
+        -ms-flex: 0 0 calc(100% - 200px);
+        flex: 0 0 calc(100% - 200px);
+        max-width: calc(100% - 200px);
+        border-left: solid 1px #009983;
+        padding: 0 40px 0px 100px;
+        margin-left: 50px;
+    }
+    
+    .number-counter {
+        padding-left: 75px;
+        position: relative
+    }
+    
+    .number-counter span {
+        position: absolute;
+        left: 0;
+        top: 50%;
+        -webkit-transform: translateY(-50%);
+        -ms-transform: translateY(-50%);
+        -o-transform: translateY(-50%);
+        transform: translateY(-50%)
+    }
+    
+    .mar-bot-25 {
+        margin-bottom: 25px
+    }
+    
+    .root-list {
+        margin: 0;
+        padding: 0;
+        margin-left: 75px;
+        list-style-type: none;
+        position: relative;
+        padding-left: 75px
+    }
+    
+    .root-list span {
+        position: absolute;
+        left: 0;
+        top: 0
+    }
+    
+    ul.parent-list {
+        margin: 0;
+        padding: 0;
+        list-style-type: none;
+        counter-reset: my-sec-counter;
+        margin-left: 54px
+    }
+    
+    ul.parent-list>li {
+        counter-increment: my-sec-counter;
+        position: relative;
+        padding-left: 38px
+    }
+    
+    ul.parent-list>li:before {
+        content: "(" counter(my-sec-counter) ")";
+        position: absolute;
+        left: 0;
+        top: 0
+    }
+    
+    ol.inner-list-top {
+        margin: 0;
+        padding: 0;
+        list-style-type: none;
+        counter-reset: abc-counter
+    }
+    
+    ol.inner-list-top>li {
+        counter-increment: abc-counter;
+        position: relative;
+        padding-left: 38px
+    }
+    
+    ol.inner-list-top>li:before {
+        content: "(" counter(abc-counter, lower-alpha) ")";
+        position: absolute;
+        left: 0;
+        top: 0
+    }
+    
+    ul.inner-list-top2 {
+        margin: 0;
+        padding: 0;
+        list-style-type: none;
+        counter-reset: abc-counter2;
+        margin-left: 20px
+    }
+    
+    ul.inner-list-top2>li {
+        counter-increment: abc-counter2;
+        position: relative;
+        padding-left: 20px
+    }
+    
+    ul.inner-list-top2>li:before {
+        content: counter(abc-counter2, lower-alpha) ".";
+        position: absolute;
+        left: 0;
+        top: 0
+    }
+    
+    .bottom-end {
+        padding-top: 60px;
+        padding-bottom: 60px
+    }
+    
+    .footer-end-box {
+        max-width: 240px;
+        border-top: solid 1px #000;
+        padding-top: 5px
+    }
+    
+    .footer-end-box p {
+        margin-bottom: 3px
+    }
+    
+    img {
+        border: 0;
+        outline: 0
+    }
+    
+    .table-data {
+        padding: 40px 0
+    }
+    
+    .table-data table {
+        width: 100%;
+        max-width: 100%;
+        margin-bottom: 1rem;
+        background-color: transparent;
+        border-collapse: collapse;
+        border: solid 1px #009983
+    }
+    
+    .table-data table thead {
+        background-color: #009983
+    }
+    
+    .table-data table tr td,
+    .table-data table tr th {
+        padding: .75rem;
+        min-height: 46px;
+        vertical-align: top;
+        text-align: center;
+        color: #fff;
+        vertical-align: middle;
+        border-top: 1px solid #009983
+    }
+    
+    .table-data table tr td {
+        color: #333;
+        border-right: solid 1px #009983
+    }
+    
+    .table-data table tr td:last-child {
+        border-right: transparent
+    }
+    
+    .table-data table tr th {
+        background-color: #009983;
+        border-left: solid 1px transparent
+    }
+    
+    .table-data table tr th+th {
+        border-left: solid 1px #fff
+    }
+    
+    .table-data2 {
+        padding: 20px 0
+    }
+    
+    .table-data2 table {
+        width: 100%;
+        max-width: 100%;
+        margin-bottom: 1rem;
+        background-color: transparent;
+        border-collapse: collapse;
+        border: solid 1px #000
+    }
+    
+    .table-data2 table thead {
+        background-color: #009983
+    }
+    
+    .table-data2 table tr td,
+    .table-data2 table tr th {
+        padding: .75rem;
+        min-height: 46px;
+        vertical-align: top;
+        text-align: center;
+        color: #fff;
+        vertical-align: top;
+        border-top: 1px solid #009983
+    }
+    
+    .table-data2 table tr td {
+        color: #333;
+        border-right: solid 1px #000;
+        text-align: left
+    }
+    
+    .table-data2 table tr td:last-child {
+        border-right: transparent
+    }
+    
+    .table-data2 table tr th {
+        background-color: #009983;
+        border-left: solid 1px #000;
+        vertical-align: middle
+    }
+    
+    .table-data2 table tr th+th {
+        border-left: solid 1px #000
+    }
+    
+    .table-data2 .bder-bot {
+        border-bottom: solid 1px #000;
+        border-top: solid 1px #000
+    }
+    
+    .table-data2 sup {
+        font-size: 11px;
+        position: relative;
+        top: -8px
+    }
+    
+    p sup {
+        font-size: 11px;
+        position: relative;
+        top: -8px
+    }
+    
+    .text-justify p {
+        text-align: justify
+    }
+    
+    ul.list-arrow {
+        margin: 10px 0;
+        padding: 0;
+        list-style-type: none;
+        margin-left: 20px;
+        padding-bottom: 8px
+    }
+    
+    ul.list-arrow li {
+        position: relative;
+        padding-left: 20px
+    }
+    
+    ul.list-arrow li p {
+        margin-bottom: 5px
+    }
+    
+    ul.list-arrow li:before {
+        content: "›";
+        position: absolute;
+        left: 0;
+        top: 0
+    }
+    
+    .address-box {
+        margin-bottom: 15px;
+        padding: 5px 0
+    }
+    
+    .address-box .address-inner {
+        padding-left: 18px;
+        border-left: solid 2px #e8e8e8
+    }
+    
+    ul.parent-list-2 {
+        margin: 0;
+        padding: 0;
+        list-style-type: none;
+        counter-reset: alphacounter;
+        margin-left: 54px
+    }
+    
+    ul.parent-list-2>li {
+        counter-increment: alphacounter;
+        position: relative;
+        padding-left: 38px
+    }
+    
+    ul.parent-list-2>li:before {
+        content: counter(alphacounter, lower-alpha) ".";
+        position: absolute;
+        left: 0;
+        top: 0
+    }
+    
+    ol.romancount {
+        margin: 0;
+        padding: 0;
+        list-style-type: none;
+        counter-reset: abc-counter
+    }
+    
+    ol.romancount>li {
+        counter-increment: abc-counter;
+        position: relative;
+        padding-left: 38px
+    }
+    
+    ol.romancount>li:before {
+        content: counter(abc-counter, lower-roman) ".";
+        position: absolute;
+        left: 0;
+        top: 0
+    }
+    
+    .bold-it {
+        font-weight: 700;
+        font-style: italic;
+        text-decoration: underline
+    }
+    
+    @media print {
+        h1,
+        h2,
+        h3,
+        h4,
+        h5 {
+            page-break-after: avoid
+        }
+        figure,
+        table {
+            page-break-inside: avoid
+        }
+        .normal-brand {
+            -webkit-filter: grayscale(100%);
+            filter: grayscale(100%);
+            border: 0;
+            outline: 0
+        }
+        .table-data,
+        .table-data2 {
+            padding: 20px 0
+        }
+        .table-data table,
+        .table-data2 table {
+            width: 100%;
+            max-width: 100%;
+            margin-bottom: 1rem;
+            background-color: transparent;
+            border-collapse: collapse;
+            border: solid 1px #000
+        }
+        .table-data table thead,
+        .table-data2 table thead {
+            background-color: transparent
+        }
+        .table-data table tr td,
+        .table-data table tr th,
+        .table-data2 table tr td,
+        .table-data2 table tr th {
+            padding: .75rem;
+            min-height: 46px;
+            vertical-align: top;
+            text-align: center;
+            color: #333;
+            vertical-align: middle;
+            border-top: 1px solid #000
+        }
+        .table-data table tr td,
+        .table-data2 table tr td {
+            color: #333;
+            border-right: solid 1px #000
+        }
+        .table-data table tr td:last-child,
+        .table-data2 table tr td:last-child {
+            border-right: transparent
+        }
+        .table-data table tr th,
+        .table-data2 table tr th {
+            background-color: transparent;
+            border-left: solid 1px #000
+        }
+        .table-data table tr th+th,
+        .table-data2 table tr th+th {
+            border-left: solid 1px #000
+        }
+    }     
+    </style>
+    <title>Pensio Tenants Rent Guarantee Summary Exhibit B – Pensio Tenants Rent Guarantee Agreement</title>
+  </head>
+  <body>
+
+<div class="main-content ">
+  <div class="left-panel">
+    <figure>
+      <img src="<%= Rails.root.join("public", "assets", "pensio-brand.png").to_s %>" alt="" class="normal-brand">
+      
+    </figure>
+  </div>
+  <div class="right-panel text-justify">
+    <h1>Pensio Tenants Rent Guarantee Summary<br>
+Exhibit B – Pensio Tenants Rent Guarantee Agreement</h1>
+    <h2 class="mar-bot-25">Insurance Broker and Administrator</h2>
+
+    <p>Surety Broker, Rent Guarantee Administrator and bond issuer: <strong>World Insurance Associates LLC</strong>, 656 Shrewsbury Avenue, Suite 200, Tinton Falls, NJ 07701, <a href="//www.worldins.net" target="_black">www.worldins.net</a></p>
+  <h2 class="mar-bot-25">Rent Guarantee Summary</h2>
+  <p>This Rent Guarantee Summary (“<strong>Rent Guarantee</strong>” or “<strong>Rent Guarantee Summary</strong>”) is provided as part of Your Pensio Tenants Rent Guarantee Agreement and your valid lease agreement with your landlord, and is provided to inform You that under a Performance Bond issued to Pensio Tenants Corp. (“<strong>Pensio</strong>”), You are entitled to Rent Guarantees as referenced hereunder.</p>
+ <p>This Rent Guarantee Summary is provided under the terms contained in the Rent Guarantee Agreement, and is subject to all terms, conditions and limitations of this Rent Guarantee Summary, your valid lease agreement and a Performance Bond issued to Pensio (the “<strong>Principal</strong>“) naming You as (“<strong>Obligee</strong>”).  Pensio is a participating Member of Rentalis Insurance Company, Inc., a protected cell captive, reinsured by reinsurers rated AM Best A or Better.</p>
+    <p>For any questions concerning this Rent Guarantee Summary (including questions or concerns concerning demands), please contact the Administrator, World Insurance Associates LLC, 656 Shrewsbury Avenue, Suite 200, Tinton Falls, NJ 07701, <a href="//www.worldins.net" target="_black">www.worldins.net</a>, telephone (732) 380-0900. Frank Costa, Email: <a href="mailto:frankcosta@worldins.net">frankcosta@worldins.net</a>.</p>
+	    <h2 class="mar-bot-25">Involuntary Loss of Employment</h2>
+	  <p>For You or Your co-Tenant who are in good standing (“<strong>YOU</strong>” or “<strong>YOUR</strong>”) who were Employed at the time of the execution of the Pensio Tenants Rent Guarantee Agreement and have a legal and valid lease agreement  Pensio subject to the payment of YOUR Rent Guarantee Fee, will pay YOUR monthly rental payment following the Elimination Period subject to this Rent Guarantee Summary for up to the Maximum Rent Guarantee Period twelve (12) months if YOU under the terms and conditions of the Pensio Tenants Rent Guarantee Agreement meets and continues to meet all the following conditions: </p>
+	  <ul class="list-arrow">
+	  <li>
+		  <p>YOU have involuntarily lost YOUR Employment; </p>
+		  </li>
+		   <li>
+		  <p>YOU must not be involved in or working at any repetitive activity for a salary or another form of remuneration;  </p>
+		  </li>
+		  <li>
+		  <p>YOU must be eligible to collect Unemployment Insurance following YOUR termination of Employment and your Rent Guarantee will only cover the period that you receive your Unemployment Insurance Benefit;  </p>
+		  </li>
+		   <li>
+		  <p>YOUR former Employment must be within the United States of America; </p>
+		  </li>
+		   <li>
+		  <p>YOU must have worked at least an average of twenty-four (24) hours per week during the twenty-six (26) weeks prior to YOUR involuntary job loss; </p>
+		  </li>
+		  <li>
+		  <p>YOU must not have been receiving short-term disability or long-term disability benefits from YOUR employer due to illness or injury on the date YOUR Pensio Tenants Rent Guarantee commenced; </p>
+		  </li>
+		  <li>
+		  <p>YOU must have lost YOUR Employment solely because of compulsory redundancy or dismissal without cause;</p>
+		  </li>
+		   <li>
+		  <p>YOUR Loss of Employment must not have been due to misconduct or inability/refusal to perform YOUR normal duties;</p>
+		  </li>
+		   <li>
+		  <p>YOU have provided a Record of Employment and/or a notice of unemployment directly from YOUR former employer that clearly indicates the cause of loss of Employment and clearly indicates the date of unemployment/dismissal;</p>
+		  </li>
+		   <li>
+		  <p>YOUR date of unemployment/dismissal must have been sixty (60) days after the date that YOU executed your Pensio Tenants Rent Guarantee Agreement, and,</p>
+		  </li>
+		  <li>
+		  <p>Involuntary Loss of Employment rent payment is not otherwise excluded under the terms, conditions and exclusions of YOUR Rent Guarantee from the Pensio Tenants Rent Guarantee Agreement. Refer to the section entitled “When Pensio will not pay”.</p>
+		  </li>
+	  </ul>
+	  <p>The total number of Monthly Rent Guarantee payments for YOU under the Pensio Rent Guarantee  Involuntary Loss of Employment Rent Guarantee is subject to your Rent Guarantee Summary for up to the Maximum Rent Guarantee Period of twelve (12) months provided the Involuntary Loss of Employment began on or after the date that YOUR execution of the Pensio Tenants Rent Guarantee Agreement commenced and that YOU have completed the Elimination Period. Successive periods of Involuntary Loss of Employment will be considered one episode of Involuntary Loss of Employment unless such periods are separated by at least one hundred eighty (180) days. This Total Involuntary Job Loss Rent Guarantee is paid directly to your Landlord by Pensio and, as such, is in addition to any other type of unemployment insurance coverage YOU may have.</p>
+	  
+	   <h2 class="mar-bot-25">Total Disability or Partial Disability</h2>
+	  <h3 class="mar-bot-25">Total Disability Rent Guarantee</h3>
+	  <p>For You or Your Co-Tenant who are in good standing (“<strong>YOU</strong>” or “<strong>YOUR</strong>”) and have a legal and valid lease agreement who become Totally Disabled after the execution of the Pensio Tenants Rent Guarantee Agreement, Pensio subject to the payment of YOUR Rent Guarantee Fee will pay Your monthly rental payment following the Elimination Period subject to this Rent Guarantee Summary for up to the Maximum Period of twelve (12) months, if YOU under the terms and conditions of the Pensio Tenants Rent Guarantee Agreement meets and continues to meet all the following conditions:</p>
+	  <ul class="list-arrow">
+	  <li><p>YOU are certified as Totally Disabled or as having a Total Disability by a Doctor or a Physician if your illness occurred 60 days after the date that YOU executed your Pensio Tenants Rent Guarantee Agreement; and </p></li>
+		   <li><p>the Total Disability Rent Guarantee payment is not otherwise excluded under the terms, conditions and exclusions of the Rent Guarantee. Refer to the section entitled “When Pensio will not pay”.</p></li>
+		     <li><p>the Total Disability Rent Guarantee payment is not otherwise excluded under the terms, conditions and exclusions of the Rent Guarantee. Refer to the section entitled “When Pensio will not pay”.</p></li>
+	  </ul>
+	  <p>Pensio will pay monthly Total Disability Rent Guarantee subject to your Rent Guarantee Summary for up to the Maximum Period of twelve (12) months for any one disability Rent Guarantee provided the Total Disability began on or after the date that YOUR Rent Guarantee commenced and that YOU have completed the Elimination Period. This Total Disability Rent Guarantee is paid directly to your Landlord by Pensio and, as such, is in addition to any other type of disability insurance coverage YOU may have.</p>
+	<h3 class="mar-bot-25">Partial Disability Rent Guarantee </h3>  
+	  <p>For You or Your Co-Tenant  who are in good standing (“<strong>YOU</strong>” or “<strong>YOUR</strong>”) and have a legal and valid lease agreement,  who remain Partially Disabled and have executed the Pensio Tenants Rent Guarantee Agreement, Pensio subject to the payment of YOUR Monthly Rent Guarantee Fee will pay YOUR monthly rental payment subject to Your Rent Guarantee Summary for up to the Maximum Period of twelve (12) months if YOU under the terms and conditions of the Pensio Tenants Rent Guarantee Agreement meets and continues to meet all the following conditions:</p>
+	    <ul class="list-arrow">
+	  <li><p>YOU have received at least one monthly rent payment for Total Disability within the two (2) months prior to making a claim for the Partial Disability Rent Guarantee; </p></li>
+		   <li><p>YOU are certified as having a partial disability by a Doctor or a Physician;</p></li>
+		     <li><p>YOU have provided evidence of being substantially unable to perform at least fifty percent (50%) of his or her normal work schedule; and</p></li>
+			 <li><p>the Partial Disability Rent Guarantee payment is not otherwise excluded under the terms, conditions and exclusions of the Rent Guarantee. Refer to the section entitled “When Pensio will not pay”.</p></li>
+			
+	  </ul>
+	  <p>Pensio will pay the Partial Disability Monthly Rent Guarantee Amount subject to your Rent Guarantee Summary for up to a maximum of twelve (12) months for any one Partial Disability claim. This Partial Disability Rent Guarantee is paid directly to your Landlord by Pensio and, as such, is in addition to any other type of partial disability insurance coverage YOU may have.</p>
+	  <h3>Important</h3> 
+	  <p>If YOU are a Joint Tenant with a spouse, or partner, or are a co-tenant in respect of your lease agreement, the Total Disability and Involuntary Loss of Employment Rent Guarantee will be reduced accordingly to 50% of the Monthly Rent per Joint Guaranteed Tenant.  Partial Disability Rent Guarantee will be reduced to 25% of the Monthly Rent per Joint Guaranteed Tenant.</p>
+	    <h3>Eligibility Provisions</h3> 
+	  <p>The total number of monthly rental Rent Guarantee payments for YOU under the Total Disability Rent Guarantee and the Partial Disability Rent Guarantee combined is subject to your Rent Guarantee Summary is limited to a maximum of up to twelve (12) months per disability. Successive periods of Total Disability or Partial Disability will be considered as being part of a single episode of disability unless such periods are separated by at least one hundred-eighty (180) days or the subsequent disability arises from injuries or sicknesses or events that are very clearly unrelated, different or separate from the cause of the initial period of Total Disability or Partial Disability.</p>
+	   <h3>Important</h3> 
+	  <p>YOU may only receive one type of the three following Rent Guarantees, namely Total Disability Rent Guarantee, Partial Disability Rent Guarantee or Involuntary Loss of Employment Rent Guarantee, at any given time. The maximum amount of rent payments per month is subject to your Rent Guarantee Summary and is limited to 100% of the Monthly Rent per Rental Unit. The maximum number of monthly rent payments of any type that can be demanded throughout the lifetime of your Rent Guarantee Agreement is thirty-six (36) months for the later three rent payments.</p>
+	  <h2 class="mar-bot-25">Exclusions</h2>
+	  <h3>When Pensio will not pay </h3>
+	  <p>Pensio will not pay any Involuntary Loss of Employment Rent Guarantee for YOUR claim that results, directly or indirectly, from any of the following exclusions and limitations:</p>
+	  
+	   <ul class="list-arrow">
+	  <li>
+		   <p>YOU or YOUR co-tenant do not have a legal and binding lease agreement;   
+		  </p>
+		   </li>
+		   <li>
+		   <p>YOU are self-employed;  
+		  </p>
+		   </li>
+		    <li>
+		   <p>Voluntary unemployment;  
+		  </p>
+		   </li>
+		       <li>
+		   <p> Early or normal retirement; 
+		  </p>
+		   </li>
+		       <li>
+		   <p> 
+			   Dismissal for cause including but not limited to misconduct, personality conflict, inability to perform or refusal to perform;
+		  </p>
+		   </li>
+		     <li>
+		   <p>
+			  YOU being previously notified that YOUR employer was ceasing operations, planning layoffs, or lockout, prior to the date of YOUR Pensio Rent Guarantee commencement date;
+		  </p>
+		   </li>
+		       <li>
+		   <p>
+			  In the event that an epidemic or pandemic has been officially declared by the World Health Organization (WHO) and for the period of time that US federal, state, city or county government has enacted Stay in Place declarations, or has suspended evictions, public gatherings, state or county court services, during this period and sixty (60) days after the aforementioned conditions by US government have been lifted, the Rent Guarantee is not applicable for Job Loss;
+		  </p>
+		   </li>
+		      <li>
+		   <p>
+			  Strike or labor dispute; or
+		  </p>
+		   </li>
+		       <li>
+		   <p>
+			Loss of Employment due to the expected end of a contract of Employment, if Loss of Employment is due to an unexpected end of a contract, involuntarily Loss of Employment Rent Guarantees will be paid only until the first date the Monthly Rent is due after the expected end of that Contract. 
+		  </p>
+		   </li>
+		    <li>
+		   <p>
+			Loss of Employment due to the expected end of a contract of Employment, if Loss of Employment is due to an unexpected end of a contract, involuntarily Loss of Employment Rent Guarantees will be paid only until the first date the Monthly Rent is due after the expected end of that Contract. 
+		  </p>
+		   </li>
+	  </ul>
+	  <p>Pensio will not pay any Total Disability Rent Guarantee or Partial Disability Rent Guarantee for YOUR claim that results, directly or indirectly, from any of the following exclusions and limitations:</p>
+	  <ul class="list-arrow">
+	  <li>
+		  <p>YOU or YOUR co-tenant do not have a legal and binding lease agreement   </p>
+		  </li>
+		    <li>
+		  <p>You had been disabled from the same, similar, or a related condition at any point within the twelve (12) months prior to the date of YOUR Pensio Rent Guarantee commencement date;  </p>
+		  </li>
+		   <li>
+		  <p>In the event that an epidemic or pandemic has been officially declared by the World Health Organization (WHO) and for the period of time that US federal, state, city or county government has enacted Stay in Place declarations, or has suspended evictions, public gatherings, state or county court services, during this period and sixty (60) days after the aforementioned conditions by US government have been lifted, the Rent Guarantee is not applicable if your disability was related directly or indirectly with the stated epidemic or pandemic; </p>
+		  </li>
+		    <li>
+		  <p>Intentional or self-inflicted harm, or attempted suicide or suicide; </p>
+		  </li>
+		   <li>
+		  <p>Committing or attempting to commit a criminal offence; </p>
+		  </li>
+		     <li>
+		  <p> Misuse of medication, or the abuse of drugs or intoxicants including alcohol, or from operating a vehicle while having a blood alcohol level greater than the legal amount;  </p>
+		  </li>
+		     <li>
+		  <p>Voluntary inhalation of or asphyxiation by gas or fumes;</p>
+		  </li>
+		     <li>
+		  <p>War or act of war declared or undeclared, or any act of war, terrorism, riot or insurrection, or service in the armed forces of any country, government or international organization;</p>
+		  </li>
+		       <li>
+		  <p>Mental or nervous disorder;</p>
+		  </li>
+		        <li>
+		  <p> Childbirth; or</p>
+		  </li>
+		       <li>
+		  <p>Cosmetic or elective surgery.</p>
+		  </li>
+		     <li>
+		  <p>Pensio will not pay any rent payment if this Rent Guarantee is declared void due to a material omission, misrepresentation or in the event of fraud. In the event that any Rent Guarantees are paid due to material omission, misrepresentation or fraud, Pensio will seek reimbursement of such rent payments from YOU.</p>
+		  </li>
+	  </ul>
+	   <h2 class="mar-bot-25">Eligibility Provisions </h2>
+	  <h3>How to become Eligible for Rent Guarantees</h3>
+	  <p>To become eligible under this Rent Guarantee, YOU must be one (1) of the first two (2) tenants listed on the legal and valid lease agreement for your Residential  Rental Unit, not be in arrears in Monthly Rent or owe any other amounts to the Landlord and appear on a report listing You and Your rental Unit  provided to the Administrator.</p>
+	  <p>However, clerical error on the part of Pensio or the Administrator in maintaining records in connection with this Rent Guarantee shall not invalidate Your rent payments in force. </p>
+	  <h3>Effective Date of YOUR Rent Guarantee:</h3>
+	  <p>For YOU when Registered with Pensio effective on the later of: </p>
+	  <ul class="inner-list-top2 ">
+		  <li>
+			  <p>Date of execution by You into the Pensio Tenants Rent Guarantee Agreement Effective Date; </p>
+		  </li>
+		    <li>
+			  <p>The first (1st) day of the month following YOUR monthly Pensio Rent Guarantee fee; or </p>
+		  </li>
+		    <li>
+			  <p>Payment of the outstanding Monthly Rent. If YOU paid Monthly Rent on the first (1st) day of the month, your rent payments will commence on that day subsequent to you paying the monthly Pensio Rent Guarantee fee. </p>
+		  </li>
+	  </ul>
+	  <p>YOU must be the person named on the legal and valid lease of the Residential Rental Unit. If there is more than one person named on the lease of the Rental Unit (“Joint Tenants”), a Rent Guarantee will be provided to the Joint Tenants in equal proportions and the Total Disability and Involuntary Loss of Employment Rent Guarantees will be reduced accordingly to 50% of the Monthly Rent per Guaranteed Tenant or 25% of the Monthly for the Partial Disability Rent Guarantee. A maximum of two (2) Joint Tenants per Rental Unit can be covered under this Rent Guarantee.</p>
+	  <p>The Joint Tenants may elect to have only one person named on the Rent Guarantee provided by Pensio and for that person be eligible for 100% of the Rent Guarantee. Such an election must occur within the first two (2) months of the date YOUR rent payments commenced and must be made in writing to: </p>
+	  <div class="address-box">
+	  	<div class="address-inner">
+		  <address>
+			World Insurance Associates LLC <br>
+656 Shrewsbury Avenue, Suite 200<br>
+Tinton Falls, NJ 07701<br>
++1 (732) 380-0900 | <a href="//>www.worldins.net" traget="_blank">www.worldins.net </a>
+          </address>
+		  </div>
+	  </div>
+	  
+	  <p>Following the death of a Joint Tenant, the remaining Joint Tenant must inform in writing at the above-noted address. The remaining Joint Guaranteed Tenant can inform World Insurance Associates LLC of the death of a Joint Tenant and have the remaining Joint Tenant eligible for 100% of the Rent Guarantee.</p>
+	  
+	  <h2 class="mar-bot-25">Termination Provisions </h2>
+	  <p>Termination of the Pensio Rent Guarantee: YOU can terminate on the earliest of the following dates: </p>
+	  <ul class="list-arrow">
+	  <li>
+		<p>the date the Pensio Rent Guarantee terminates; </p>  
+		   
+	  </li>
+		  <li>
+		  <p>the date the Pensio Rent Guarantee terminates; </p>  
+		     </li> 
+		
+		   
+	 <li>
+		  <p>YOUR 65th birthday;</p> 
+		  </li>
+		  
+		  	 <li>
+		  <p>Ythe Expiration Date; or</p> 
+		  </li>
+		 <li>
+		  <p>YOUR date of death.</p> 
+		  </li>
+		   
+	  </ul>
+	  
+	   <h2 class="mar-bot-25">Claim Provisions</h2>
+	  <h3>Payment of Claims</h3>
+	  <p>All rent payments or indemnities of the Pensio Rent Guarantee are payable by Pensio to your Landlord.  In the event YOU die prior to the Rent Guarantee being paid, the payment will be made to the Landlord who will in turn credit YOUR estate. </p>
+	  <p>Should a discrepancy occur, the Rent Guarantee proceeds may be paid into court. </p>
+	  <h3>Notice and Proof of Claim</h3>
+	  <p>In the event of a Loss, YOU, and only YOU, or YOUR executor or any other person authorized by YOU to represent the Guaranteed Tenant, shall:</p>
+	  
+	  	  <ul class="inner-list-top2">
+		  <li>
+			  <p>notify the Administrator of the Loss within thirty (30) days at the address or telephone number set out below; </p>
+		  </li>
+		    <li>
+			  <p>within ninety (90) days from the date of the commencement of Total Disability or Involuntary Loss of Employment for which the claim is made, furnish to the Administrator, World Insurance Associates LLC such proof of claim as is reasonably possible in the circumstances of the Total Disability or Involuntary Loss of Employment and the Loss occasioned thereby; and </p>
+		  </li>
+		    <li>
+			  <p>if so required by the Administrator, furnish a certificate as to the cause and nature of the Total Disability or Involuntary Loss of Employment for which the claim is made and as to the duration of the disability caused thereby, from a Doctor or Physician. </p>
+		  </li>
+	  </ul>
+	  
+	  <h3>Failure to Give Notice of Proof</h3>
+	  <p>Failure to give notice of claim or furnish proof of claim within the time prescribed in this condition will not invalidate the claim if the notice or proof is given or furnished as soon as reasonably possible and if it is shown that it was not reasonably possible to give notice or furnish proof within the time so prescribed. In no event will the Administrator accept notice of claim more than one (1) year after the first date of the demanded Loss. </p>
+	  	  <h3>Administrator to Furnish Forms for Proof of claim</h3>
+	  <p>The Administrator on behalf of Pensio shall furnish forms for proof of claim within fifteen (15) days after receiving notice of claim but where the demandant has not received the forms within that time, YOU may submit proof of claim in the form of a written statement of the happening and character of the Total Disability or Involuntary Loss of Employment giving rise to the claim and of the extent of the loss.  </p>
+	  
+	   <h3>Costs</h3>
+	  <p>Any costs for the completion of a claim form or any documentation submitted in support of a claim are at YOUR expense.  Rent will not be paid if YOU refuse to provide a claim form or any documentation that is, or may be, reasonably required in support of a claim.  </p>
+	  
+	  	   <h3>Right to Examination</h3>
+	  <p>Pensio  has the right, and the demandant, executor or any other person representing the demandant, shall afford to Pensio an opportunity to examine YOU when and as often as it may reasonably require while the claim hereunder is pending or ongoing, and, also, in the case of the death of the person, to make an autopsy subject to any law of the State relating to autopsies.  </p>
+	  
+	    
+	  	   <h3>When Monies Are Payable</h3>
+	  <p>All monies payable under this contract shall be paid by Pensio to pay your rent to your Landlord  named on your valid and legal lease for your Residential Rental Unit within 5 business  days after it has received proof of claim sufficient to the Pensio Administrator.  </p>
+	  
+	  <h3>Recovery of Rent Guarantee Overpayment </h3>
+	  <p>Pensio reserves the right to recover any payment that was: </p>
+	  
+	    <ul class="inner-list-top2">
+		  <li>
+			  <p>made in error; </p>
+		  </li>
+		    <li>
+			  <p>made to the incorrect person or entity;  </p>
+		  </li>
+		    <li>
+			  <p>made to You or any party on YOUR behalf where Pensio determines that such payment made is greater than the amount payable under the Pensio Rent Guarantee; or </p>
+		  </li>
+			 <li>
+			  <p>d.made to You or any party on YOUR behalf based on fraudulent or misrepresented information.  </p>
+		  </li>
+	  </ul>
+	  <p>If Rent Guarantees are overpaid or paid in error, Pensio has the right to recover the amount overpaid, or paid in error, including but not limited to, by any of the following methods: </p>
+	  
+	      <ul class="inner-list-top2">
+		  <li>
+			  <p>a request to make a lump sum payment of the amount overpaid or paid in error; and/or </p>
+		  </li>
+		    <li>
+			  <p>b.a reduction and/or set-off of any proceeds payable under this Pensio Rent Guarantee for a then-current or future Rent Guarantee(s) by any amounts overpaid or paid in error.  </p>
+		  </li>
+		  
+	  </ul>
+	  <p>YOU can contact the Pensio Rent Guarantee Administrator at the following address or telephone number: </p>
+	  
+	    <div class="address-box">
+	  	<div class="address-inner">
+		  <address>
+			World Insurance Associates LLC <br>
+656 Shrewsbury Avenue, Suite 200<br>
+Tinton Falls, NJ 07701<br>
++1 (732) 380-0900 | <a href="//>www.worldins.net" traget="_blank">www.worldins.net </a>
+          </address>
+		  </div>
+	  </div>
+	  
+	   <h2 class="mar-bot-25">General Provisions</h2>
+	  <h3>Waiver</h3>
+	  <p>Pensio shall be deemed not to have waived any condition of this Rent Guarantee, either in whole or in part, unless the waiver is clearly expressed in writing signed by the Administrator.</p>
+	  
+	    <h3>Prohibition Against Assignment </h3>
+	  <p>Rent payable under the Pensio Tenants Rent Guarantee Agreement and this Rent Guarantee Summary cannot be assigned. </p>
+	      <h3>Currency </h3>
+	  <p>All monies paid shall be lawful USD currency. </p>
+	       <h3>Conformity with Statutes  </h3>
+	  <p>Any provision of the Rent Guarantee or any condition of the Pensio Tenants Rent Guarantee Agreement which is in conflict with the statutes of the State in which the Rent Guarantee is delivered is hereby amended to conform to the minimum requirements of such State. This Rent Guarantee does not apply to the extent that trade or economic sanctions or other laws or regulations prohibit us from providing Rent Guarantees contained herein including, but not limited to, the payment of Rent Guarantees. All other terms and conditions of the Rent Guarantee remain unchanged. </p>
+	  
+	     <h3>Clerical Error </h3>
+	  <p>A clerical error is a mistake in writing, typing or copying data. A clerical error made will not invalidate Rent Guarantee rent payments otherwise in force or continue rent payments otherwise terminated under the terms of the Pensio Rent Guarantee. If YOUR age has been misstated, YOUR true age will be used to determine: </p> 
+	    	  <ul class="inner-list-top2">
+		  <li>
+			  <p>the date that YOUR Rent Guarantee will commence or terminate;  </p>
+		  </li>
+		    <li>
+			  <p>b.the amount of rent payments; and  </p>
+		  </li>
+		    <li>
+			  <p>any other rights or rent payments under this Rent Guarantee</p>
+		  </li>
+	  </ul>
+	  <p>Pensio will adjust the Rent Guarantees in force where this is affected by a clerical error or a misstatement of age.</p>
+	    <h3>Contesting Pensio’s Rent Guarantee </h3>
+	  <p>In the absence of fraud, the validity of the Pensio Rent Guarantee will not be contested if it has been in force for two (2) years from its issue date and all outstanding Pensio Rent Guarantee fees have been paid.</p>
+	    <h3>Misrepresentation</h3>
+	  <p>If it is found that YOU materially misrepresented YOUR eligibility in order to obtain Your Rent Guarantees under this Rent Guarantee, Pensio has the right to void YOUR Rent Guarantee within the first two (2) years of the date of issue or within two (2) years of any change requested by Pensio or YOU. </p>
+	  <p>A misrepresentation is a false or a misleading statement on an application as to a past or present fact which leads Pensio to issue the Rent Guarantee Agreement and this Rent Guarantee whereas Pensio would not have issued the contract if the accurate facts were known. </p>
+	   <h3>Legal Actions </h3>
+	  <p>Every action or proceeding against Pensio for the recovery of Rent Guarantee money payable under the contract is absolutely barred unless commenced within the time set out in the Your State. </p>
+	  	   <h3>Complaint Procedures </h3>
+	  <p>If YOU have a complaint or inquiry about any aspect of this Rent Guarantee, YOU can contact the Pensio Rent Guarantee Administrator at the following address or telephone number:  </p>
+	  	  <div class="address-box">
+	  	<div class="address-inner">
+		  <address>
+			   World Insurance Associates LLC <br>
+				656 Shrewsbury Avenue, Suite 200<br>
+				Tinton Falls, NJ 07701<br>
+				+1 (732) 380-0900 | <a href="//>www.worldins.net" traget="_blank">www.worldins.net </a>
+          </address>
+		  </div>
+	  </div>
+	  
+	     <h3>No Multiple Rent Payments </h3>
+	  <p>Any rent paid under this Rent Guarantee will only be paid once for the same occurrence. If YOU are eligible concurrently for a Rent Guarantee payment payable for more than one claim event covered by this Rent Guarantee, the rent paid shall be limited to the most generous one </p>
+	  
+	     <h3>Contestability of Rent Guarantee</h3>
+	  <p>The Rent Guarantee payments under this Rent Guarantee shall be contestable in accordance with the applicable laws in the jurisdiction where the Tenant resides. </p>
+	  
+	  
+	       <h3>Confidentiality </h3>
+	  <p>In conjunction with the administration of this Rent Guarantee, the Administrator on behalf of Pensio will establish a Disability or Involuntary Loss of Employment claim file when the Administrator is notified of such a claim.  </p>
+	  
+	        
+	  <p>To ensure the confidentiality of YOUR personal information, the Administrator will keep YOUR file(s) at the Pensio offices and only the following persons will have access to YOUR file:  </p>
+	  
+	  <ul class="inner-list-top2 ">
+		  <li>
+			  <p>the employees of Pensio, Administrator and;  </p>
+		  </li>
+		    <li>
+			  <p>representatives who are responsible for underwriting, administration, investigation and demands; and  </p>
+		  </li>
+		    <li>
+			  <p>any person YOU authorize.  </p>
+		  </li>
+	  </ul>
+	  <h3>Collecting Customer Information</h3>
+	  <p>Pensio and the Administrator only collects and keeps information about its customers which is needed to provide the products and services that are requested by the customer. It collects information from its customers, either directly or through its representatives. Pensio and the Administrator may also need to collect information about YOU from sources such as hospitals, Doctors and other health care providers, the government (including government health insurance plans) and other governmental agencies, other insurance companies, financial institutions, motor vehicle reports, and current and former employers. </p>
+	  <h3>Privacy Matters </h3>
+	  <p>Pensio, and the Administrator are committed to protecting the privacy of all of its customers and wants its customers to understand how it collects and uses the personal information that is provided by its customers. </p>
+	  <p>You may request to review the personal information in his or her file or request to make a correction by writing to: </p>
+	  <div class="address-box">
+	  	<div class="address-inner">
+		  <address>
+			Attn: Chief Privacy Officer  <br>
+World Insurance Associates LLC <br>
+656 Shrewsbury Avenue, Suite 200<br>
+Tinton Falls, NJ 07701<br>
++1 (732) 380-0900&ensp;|&ensp;<a href="//>www.worldins.net" traget="_blank">www.worldins.net </a>
+          </address>
+		  </div>
+	  </div>
+	  
+	  <h3 class="mar-bot-25">Definitions </h3>
+	  <p>“<strong>Anniversary Date</strong>” means the date on which Your Pensio Rent Guarantee will renew. The initial anniversary date will be twelve (12) months from the Pensio Rent Guarantee Effective Date and every twelve (12) months thereafter. </p>
+	  <p>“<strong>Care of a Doctor</strong>” means the regular and personal care of a Doctor or Physician, which under prevailing medical standards, is appropriate for the conditions(s) causing injury. </p>
+<p>“<strong>Rent Guarantee</strong>” means this document together with your legal and valid lease agreement and the Rent Guarantee Agreement which applies to YOU and defines rent payments and provisions for YOU.  A Rent Guarantee is made available electronically to You.</p>
+	  <p>“<strong>Rent Guarantee Effective Date</strong>” means the date that the rent payments in respect of this Rent Guarantee will commence. </p>
+	  <p>“<strong>Doctor</strong>” means a licensed medical professional recognized and certified by certified Physicians and Surgeons, or certified Dental Surgeons, in the state within the United States in which the Treatment is rendered. The medical professional must not be related to the Guaranteed Tenant by blood or marriage or ordinarily reside with YOU demanding rent payments under the Pensio Rent Guarantee or a business associate of YOURS demanding Rent Guarantees under this Rent Guarantee. </p>
+	  <p> ‘<strong>Elimination Period</strong>” sixty (60) days from the date of execution of the Pensio Rent Guarantee enrollment.</p>
+	  <p>“<strong>Employment</strong>” or “<strong>Employed</strong>” means YOUR primary remunerative activity YOU have been working at least one hundred eighty-two (182) consecutive days for a salary or another form of remuneration for at least twenty-four (24) hours each week immediately prior to the date YOUR Involuntary Loss of Employment commenced, including ordinary sick days or a short-term disability leave provided by YOUR employer but not including long-term disability leaves or any other leaves of absence for any reason, whether paid or unpaid</p>
+	  <p>“<strong>Expiration Date</strong>” means the date that the Pensio Rent Guarantee terminates following failure to pay YOUR monthly Rent Guarantee fees as outlined in YOUR Pensio Tenants Rent Guarantee Agreement. </p>
+	  <p>“<strong>Joint Tenant</strong>” means, if there is more than one individual listed on the lease agreement for a Rental Unit, rent payments provided in this Rent Guarantee will be divided in equal proportions between the </p>
+	  <p>two individuals whose names are listed first on the lease for the Rental Unit who will then become the Tenants for the Rental Unit. Rent payments are limited to a maximum of two (2) Joint Tenants per Rental Unit. The two (2) Joint Tenants must be the first two tenants listed on the lease for the Rental Unit. Notwithstanding the designated principal Tenant of the two Joint Tenants must be the Registered with Pensio. </p>
+	  <p>“<strong>Loss</strong>” means an event for which a Rent Guarantee may become payable under this Rent Guarantee. </p>
+	  <p>“<strong>Maximum Period</strong>” means the total period for which monthly rent payments are payable as a result of disability or loss of employment. The Maximum Period is set out in the Rent Guarantee Summary and will not exceed twelve (12) months or the end of the lease whichever is the lessor. </p>
+	  <p>“<strong>Monthly Rent</strong>” means the appropriate fixed amount of money or monies paid by YOU to YOUR Landlord in respect of your valid and legal lease agreement per calendar month for the purpose of occupying YOUR  Rental Unit. </p>
+	  <p>“<strong>Partially Disabled</strong>” or “P<strong>artial Disability</strong>” means that: </p>
+	  <ul class="inner-list-top2 ">
+		  <li>
+			  <p>Guaranteed Tenant has already received at least one monthly Rent Guarantee for Total Disability; and  </p>
+		  </li>
+		    <li>
+			  <p>A licensed Doctor or Physician certifies that the Guaranteed Tenant has a Partial Disability and confirms the minimum number of work hours (or days) required have been completed to qualify for Partial Disability Rent Guarantee. The total number of work hours must be no more than 50% of YOUR normal work hour schedule.  </p>
+		  </li>
+		  
+	  </ul>
+	  <p>“<strong>Pensio</strong>” means Pensio Tenants Corp., providing certain Rent Guarantees to YOU in respect of YOUR legal and valid lease agreement for YOUR Residential Rental Unit.  Pensio is a participating member of Rentalis Insurance Company, Inc., a protected cell captive, reinsured by reinsurers rated AM Best A or better. </p>
+	  <p>“<strong>Physician</strong>” means a Doctor of Medicine (M.D.) duly licensed to practice medicine in the United States, recognized and certified in the State in which the Treatment is rendered. The physician must not be related to YOU by blood or marriage or ordinarily resident with YOU demanding rent payments under the Pensio Tenants Rent Guarantee Agreement or a business associate of YOU demanding rent payments under the Pensio Rent Guarantee.</p>
+	  <p> “<strong>Rental Unit</strong>” means a rental Unit YOU and your legal co-tenant occupy, have a legal and valid lease agreement and  are paying Monthly Rent so that the YOU may use such space only as a residence and not for any commercial or other purposes. </p>
+	  <p> “<strong>Totally Disabled</strong>” or “<strong>Total Disability</strong>” means that: </p>
+	  <div class="root-list">
+      <span>1.</span><p> YOU are under the Care of a Doctor, and</p>
+    </div>
+	  <ul class="parent-list-2">
+	  <li>
+		  <p>YOU who has remunerative employment at the time Total Disability begins, </p>
+		  <ol class="romancount">
+		  <li><p>for the first six (6) months following a Loss, YOU are unable to substantially perform the daily duties of his or her Employment; </p></li>
+			    <li><p>after six (6) months following a Loss, YOU are unable to perform the material and substantial duties of any occupation for which YOU are reasonably suited by education, training and experience; or Total Disability is deemed to begin with the first medical Treatment by a Doctor or Physician following the injury, condition, illness or sickness. </p></li>
+		  </ol>
+		  </li>
+	  </ul>
+	  <p>“<strong>Treatment</strong>” means a medical or therapeutic procedure prescribed, performed or recommended by a Doctor or a Physician including, but not limited to, prescribed medication, therapy and surgery related to an injury, condition, illness or sickness.</p>
+	  <p>“<strong>YOU</strong>” or “<strong>YOUR</strong>” means YOU an individual who has an executed Pensio Tenants Rent Guarantee Agreement:   </p>
+	  
+	  <ul class="inner-list-top2">
+		  <li>
+			  <p>is between the ages of 18 and 65; </p>
+		  </li>
+		    <li>
+			  <p>is a permanent resident of the United States; </p>
+		  </li>
+		  <li>
+			  <p>is renting a Rental Unit and paying Monthly Rent; and </p>
+		  </li> 
+		    <li>
+			  <p>is listed on a report provided to the Administrator by Pensio. </p>
+		  </li> 
+	  </ul>
+	  <h2 class="mar-bot-25">Rent Guarantee Summary</h2>
+	  <h3 class="bold-it">3 Months Rent Guarantee Option</h3>
+	  <p>Monthly Rent Guarantee Payment Amount: 100% of Monthly Rent <br> Monthly Rent Guarantee Payment Amount for Joint Tenants: 50% of Monthly Rent</p>
+	 
+	  
+	  <div class="table-data2">
+      <table>
+        <thead>
+			<tr>
+			    <th colspan="4" class="bder-bot">3 Months Rent Guarantee Option</th>
+			</tr>
+        <tr>
+          <th>Rent Guarantee</th>
+          <th>Maximum Period <sup>1</sup></th>
+          <th>Rent Guarantee Amount <sup>2</sup></th>
+          <th>Elimination Period</th>
+          
+        </tr>
+      </thead>
+        <tbody><tr>
+          <td>Total Disability Rent Guarantee</td>
+          <td>Up to 3 Months</td>
+          <td>100% of Monthly Rent Guarantee Payment Amount</td>
+          <td>60 days following commencement</td>
+         
+        </tr>
+        <tr>
+          <td>Partial Disability Rent Guarantee</td>
+          <td>Up to 2 Months Following Receipt of a Minimum 1 Month of Total Disability Rent Guarantee Payments</td>
+          <td>50% of Monthly Rent Guarantee Payment Amount</td>
+          <td>60 days following commencement </td>
+      
+        </tr>
+			 <tr>
+          <td>Involuntary Loss of Employment Rent Guarantee</td>
+          <td>Up to 3 Months</td>
+          <td>100% of Monthly Rent Guarantee Payment Amount</td>
+          <td>60 days following commencement </td>
+      
+        </tr>
+      </tbody>
+		  </table>
+    </div>
+	  <p><sup>1</sup> The maximum number of monthly Rent Guarantee payments of any type that can be demanded throughout the lifetime of the Involuntary Job Loss and Disability and Partial Disability Rent Guarantee is thirty-six (36) months.</p>
+	  <p><sup>2</sup> For Joint Tenants see Eligibility Provisions.</p>
+	  <h3 class="bold-it">6 Months Rent Guarantee Option</h3>
+	  <p>Monthly Rent Guarantee Payments: 100% of Monthly Rent</p>
+	  
+	  <p>Monthly Rent Guarantee Payment Amount for Joint Tenants: 50% of Monthly Rent</p>
+	  
+	  <div class="table-data2">
+      <table>
+        <thead>
+			<tr>
+			    <th colspan="4" class="bder-bot">6 Months Rent Guarantee Option</th>
+			</tr>
+        <tr>
+          <th>Rent Guarantee</th>
+          <th>Maximum Period <sup>1</sup></th>
+          <th>Rent Guarantee Amount <sup>2</sup></th>
+          <th>Elimination Period</th>
+          
+        </tr>
+      </thead>
+        <tbody><tr>
+          <td>Total Disability Rent Guarantee</td>
+          <td>Up to 6 Months</td>
+          <td>100% of Monthly Rent Guarantee Payment Amount</td>
+          <td>60 days following commencement</td>
+         
+        </tr>
+        <tr>
+          <td>Partial Disability Rent Guarantee</td>
+          <td>Up to 5 Months Following Receipt of a Minimum 1 Month of Total Disability Rent Guarantee Payments</td>
+          <td>50% of Monthly Rent Guarantee Payment Amount</td>
+          <td>60 days following commencement </td>
+      
+        </tr>
+			 <tr>
+          <td>Involuntary Loss of Employment Rent Guarantee</td>
+          <td>Up to 6 Months</td>
+          <td>100% of Monthly Rent Guarantee Payment Amount</td>
+          <td>60 days following commencement </td>
+      
+        </tr>
+      </tbody>
+		  </table>
+    </div>
+	    <p><sup>1</sup> The maximum number of monthly Rent Guarantee payments of any type that can be demanded throughout the lifetime of the Involuntary Job Loss and Disability and Partial Disability Rent Guarantee is thirty-six (36) months.</p>
+	  <p><sup>2</sup> For Joint Tenants see Eligibility Provisions.</p>
+	  
+	  
+	  <h3 class="bold-it">12 Months Rent Guarantee Option</h3>
+	  <p>Monthly Rent Guarantee Payments: 100% of Monthly Rent</p>
+	  
+	  <p>Monthly Rent Guarantee Payment Amount for Joint Tenants: 50% of Monthly Rent</p>
+	  
+	  <div class="table-data2">
+      <table>
+        <thead>
+			<tr>
+			    <th colspan="4" class="bder-bot">12 Months Rent Guarantee Option</th>
+			</tr>
+        <tr>
+          <th>Rent Guarantee</th>
+          <th>Maximum Period <sup>1</sup></th>
+          <th>Rent Guarantee Amount <sup>2</sup></th>
+          <th>Elimination Period</th>
+          
+        </tr>
+      </thead>
+        <tbody><tr>
+          <td>Total Disability Rent Guarantee</td>
+          <td>Up to 12 Months</td>
+          <td>100% of Monthly Rent Guarantee Payment Amount</td>
+          <td>60 days following commencement</td>
+         
+        </tr>
+        <tr>
+          <td>Partial Disability Rent Guarantee</td>
+          <td>Up to 6 Months Following Receipt of a Minimum 1 Month of Total Disability Rent Guarantee Payments</td>
+          <td>50% of Monthly Rent Guarantee Payment Amount</td>
+          <td>60 days following commencement </td>
+      
+        </tr>
+			 <tr>
+          <td>Involuntary Loss of Employment Rent Guarantee</td>
+          <td>Up to 12 Months</td>
+          <td>100% of Monthly Rent Guarantee Payment Amount</td>
+          <td>60 days following commencement </td>
+      
+        </tr>
+      </tbody>
+		  </table>
+    </div>
+	 	    <p><sup>1</sup> The maximum number of monthly Rent Guarantee payments of any type that can be demanded throughout the lifetime of the Involuntary Job Loss and Disability and Partial Disability Rent Guarantee is thirty-six (36) months.</p>
+	  <p><sup>2</sup> For Joint Tenants see Eligibility Provisions.</p> 
+  </div>
+</div>
+   
+  </body>
+</html>
