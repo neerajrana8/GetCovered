@@ -18,7 +18,7 @@ class Commission < ApplicationRecord
       Stripe::Transfer.create({
         amount: amount,
         currency: 'usd',
-        destination: "acct_1GT6ghHcGuTo2RO6"
+        destination: commissionable&.stripe_id
       })
     rescue Stripe::InvalidRequestError => exception
       # TODO: once ModelError branch is merged, refactor to create errors to Commission
