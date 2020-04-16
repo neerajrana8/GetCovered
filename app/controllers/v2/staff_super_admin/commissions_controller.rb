@@ -6,7 +6,7 @@ module V2
   module StaffSuperAdmin
     class CommissionsController < StaffSuperAdminController
       
-      before_action :set_commission, only: %i[show update approve destroy]
+      before_action :set_commission, only: %i[show update approve]
       
       def index
         super(:@commissions, Commission.all)
@@ -27,7 +27,7 @@ module V2
       end
 
       def approve
-        @policy.approve
+        @commission.approve
         render json: { message: 'Commission Payout is scheduled' }, status: :ok
       end
       
