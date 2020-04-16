@@ -20,15 +20,11 @@ module CarrierPensioPolicy
           locals: { 
             :@policy => self
           }
-        ),
-        page_size: "A4",
-        dpi: 72
+        )
       )
 
       summary_pdf = WickedPdf.new.pdf_from_string(
-      	ActionController::Base.new.render_to_string("v2/pensio/summary", locals: {:@policy => self}),
-        page_size: "A4",
-        dpi: 72
+        ActionController::Base.new.render_to_string("v2/pensio/summary")
       )
       
       FileUtils::mkdir_p "#{ Rails.root }/tmp/eois"
@@ -44,11 +40,11 @@ module CarrierPensioPolicy
       end
       
       if documents.attach(io: File.open(agreement_save_path), filename: "#{ number }-agreement.pdf", content_type: 'application/pdf')
-# 				File.delete(agreement_save_path) if File.exist?(agreement_save_path) 	
+				File.delete(agreement_save_path) if File.exist?(agreement_save_path) 	
 			end
       
       if documents.attach(io: File.open(summary_save_path), filename: "#{ number }-summary.pdf", content_type: 'application/pdf')
-# 				File.delete(summary_save_path) if File.exist?(summary_save_path) 	
+				File.delete(summary_save_path) if File.exist?(summary_save_path) 	
 			end
       
     end
