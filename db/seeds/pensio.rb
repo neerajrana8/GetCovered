@@ -1,5 +1,6 @@
 policy_type = PolicyType.create(title: "Rent Guarantee", designation: "RENT-GUARANTEE", enabled: true)
 carrier = Carrier.create(title: "Pensio", integration_designation: 'pensio', syncable: false, rateable: false, quotable: true, bindable: true, verifiable: false, enabled: true)
+get_covered = Agency.find(1)
 
 carrier_policy_type = CarrierPolicyType.create!(
   carrier: carrier,
@@ -58,3 +59,7 @@ carrier_policy_type = CarrierPolicyType.create!(
   available = state == 0 || state == 11 ? false : true
   carrier_policy_availability = CarrierPolicyTypeAvailability.create(state: state, available: available, carrier_policy_type: carrier_policy_type)
 end
+
+carrier.agencies << get_covered
+
+get_covered.billing_strategies.create!(title: 'Monthly', enabled: true, carrier_code: nil, new_business: { payments: [8.37, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33], payments_per_term: 12, remainder_added_to_deposit: true }, carrier: carrier, policy_type: policy_type)
