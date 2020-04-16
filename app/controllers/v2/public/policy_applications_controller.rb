@@ -78,14 +78,49 @@ module V2
                 error_status << false
               else
     	          render json: {
-      	          error: "User Account Exists",
-      	          message: "A User has already signed up with this email address.  Please log in to complete your application"
-    	          }.to_json,
-    	          status: 401 
+      	            error: "User Account Exists",
+      	            message: "A User has already signed up with this email address.  Please log in to complete your application"
+    	            }.to_json,
+    	            status: 401 
     	          error_status << true           
               end                
             else
               @application.users << @user
+            end
+            
+            if policy_user[:user_attributes][:address_attributes]
+              if @user.address.nil?
+                @user.create_address(
+                  street_number: policy_user[:user_attributes][:address_attributes][:street_number],
+                  street_name: policy_user[:user_attributes][:address_attributes][:street_name] ,
+                  street_two: policy_user[:user_attributes][:address_attributes][:street_two],
+                  city: policy_user[:user_attributes][:address_attributes][:city],
+                  state: policy_user[:user_attributes][:address_attributes][:state],
+                  country: policy_user[:user_attributes][:address_attributes][:country],
+                  county: policy_user[:user_attributes][:address_attributes][:county],
+                  zip_code: policy_user[:user_attributes][:address_attributes][:zip_code]
+                )  
+              else  
+                tmp_full = policy_user[:user_attributes][:address_attributes].to_unsafe_h
+                                                                             .map { |k,v|
+                                                                               unless ['county', 'country'].include?(k) 
+                                                                                 "#{ v }"
+                                                                               end
+                                                                             }
+                                                                             .join(' ')
+                                                                             .gsub(/\s+/, ' ')
+                                                                             .gsub(/[^0-9a-z ]/i, '')
+                                                                             .strip
+
+                if @user.address.full_searchable != tmp_full
+      	          render json: {
+        	            error: "Address mismatch",
+        	            message: "The mailing address associated with this email is different than the one supplied in the recent request.  To change your address please log in"
+      	            }.to_json,
+      	            status: 401 
+      	          error_status << true   
+                end        
+              end
             end
             
           else
