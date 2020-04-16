@@ -125,6 +125,7 @@ class Address < ApplicationRecord
                             combined_zip_code()].compact
                                     .join(' ')
                                     .gsub(/\s+/, ' ')
+                                    .gsub(/[^0-9a-z ]/i, '')
                                     .strip
   end
   
