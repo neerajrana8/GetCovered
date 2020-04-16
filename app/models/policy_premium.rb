@@ -7,7 +7,9 @@ class PolicyPremium < ApplicationRecord
   belongs_to :policy_quote
 	belongs_to :billing_strategy
 	belongs_to :commission_strategy, optional: true
-  
+	
+	has_one :commission
+	
   has_many :policy_premium_fees
   has_many :fees, 
     through: :policy_premium_fees

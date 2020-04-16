@@ -227,8 +227,11 @@ class Policy < ApplicationRecord
     update_attribute(:status, 'CANCELLED')
     # Unearned balance is the remaining unearned amount on an insurance policy that 
     # needs to be deducted from future commissions to recuperate the loss
+    commision_amount = premium&.commission&.amount || 0
+    unearned_premium = premium&.unearned_premium || 0
+    balance = (commision_amount * unearned_premium / premium&.base)
     commission_deductions.create(
-      unearned_balance: premium&.unearned_premium, 
+      unearned_balance: balance, 
       deductee: premium&.commission_strategy&.commissionable
     )
   end
