@@ -24,7 +24,7 @@ Layout:
     Enabled: false
   TrailingWhitespace:
     Enabled: false
-Layout/AlignParameters:
+Layout/ParametersAlignment:
   EnforcedStyle: with_fixed_indentation
 
 Layout/TrailingWhitespace:

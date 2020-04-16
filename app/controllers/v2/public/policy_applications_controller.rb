@@ -257,7 +257,6 @@ module V2
 	         
 	        @application.agency = Agency.where(master_agency: true).take 
 	      elsif @application.agency.nil?
-	      
           @application.agency = @application.account.agency  
         end
 	      

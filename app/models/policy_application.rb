@@ -29,6 +29,7 @@ class PolicyApplication < ApplicationRecord
     
   has_many :policy_insurables
   has_many :insurables, through: :policy_insurables, before_add: :check_address
+  has_many :model_errors, as: :model, dependent: :destroy
   
   has_many :policy_users
   has_many :users, through: :policy_users
