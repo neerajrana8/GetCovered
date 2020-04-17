@@ -132,6 +132,6 @@ policy_application
       else
         nil
       end
-    endA
+    end
 
 end
