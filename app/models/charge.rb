@@ -66,14 +66,18 @@ class Charge < ApplicationRecord
 
 
   def mark_succeeded(message = nil)
-    update_columns(status: 'succeeded', status_information: message)
-    invoice.payment_succeeded
+    invoice.with_lock do  # we lock the invoice to ensure serial processing with other invoice events
+      update_columns(status: 'succeeded', status_information: message)
+      invoice.payment_succeeded
+    end
   end
 
 
   def mark_failed(message = nil)
-    update_columns(status: 'failed', status_information: message)
-    invoice.payment_failed
+    invoice.with_lock do  # we lock the invoice to ensure serial processing with other invoice events
+      update_columns(status: 'failed', status_information: message)
+      invoice.payment_failed
+    end
   end
 
 
