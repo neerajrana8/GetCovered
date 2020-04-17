@@ -12,7 +12,8 @@ class Invoice < ApplicationRecord
   include ElasticsearchSearchable
 
   # DISABLED FOR NOW because it contains v1 functionality that's not being used anymore, and if anyone passes a line item to an invoice in v2 this would give them some nasty surprises
-  before_validation :calculate_subtotal
+  before_validation :calculate_subtotal,
+    on: :create
 
   before_validation :set_number, on: :create
 
@@ -241,12 +242,12 @@ class Invoice < ApplicationRecord
   end
 
   def payment_succeeded
-    update(status: 'complete')
-    reload
-
-    if has_pending_refund
-      if refund_proportion(pending_refund_data['proportion'], pending_refund_data['full_reason'], pending_refund_data['stripe_reason'])
-        update(has_pending_refund: false)
+    with_lock do
+      update(status: 'complete')
+      if has_pending_refund
+        if refund_proportion(pending_refund_data['proportion'], pending_refund_data['full_reason'], pending_refund_data['stripe_reason'])
+          update(has_pending_refund: false)
+        end
       end
     end
 		

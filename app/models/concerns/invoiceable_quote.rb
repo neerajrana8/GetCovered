@@ -94,15 +94,17 @@ policy_application
                     price: tc[:total] - tc[:fees],
                     refundability: 'prorated_refund'
                   }
-                ].select{|lia| !lia.nil? && lia[:amount] > 0 }
+                ].select{|lia| !lia.nil? && lia[:price] > 0 }
               })
             end
             invoices_generated = true
           end
         rescue ActiveRecord::RecordInvalid => e
           puts e.to_s
+        rescue StandardError => e
+          puts "Error during invoice creation! #{e}"
         rescue
-          puts "Unknown error during invoice creation"
+          puts "Unknown error during invoice creation!"
         end
 				
 		  end
