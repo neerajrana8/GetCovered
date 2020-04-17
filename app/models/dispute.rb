@@ -14,6 +14,8 @@ class Dispute < ApplicationRecord
   # ActiveRecord Associations
 
   belongs_to :charge
+  
+  belongs_to :invoice, through: :charge
 
   # Validations
 
@@ -43,11 +45,13 @@ class Dispute < ApplicationRecord
   # Methods
 
   def update_from_stripe_hash(dispute_hash)
-    update(
-      amount: dispute_hash['amount'],
-      reason: dispute_hash['reason'],
-      status: dispute_hash['status']
-    ) # only status should change, but update the rest just in case
+   invoice.with_lock do # we lock the invoice to ensure serial processing with other invoice events
+      update(
+        amount: dispute_hash['amount'],
+        reason: dispute_hash['reason'],
+        status: dispute_hash['status']
+      ) # only status should change, but update the rest just in case
+    end
   end
 
   private

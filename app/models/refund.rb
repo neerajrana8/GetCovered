@@ -71,15 +71,17 @@ class Refund < ApplicationRecord
   end
 
   def update_from_stripe_hash(refund_hash)
-    update(
-      amount: refund_hash['amount'],
-      currency: refund_hash['currency'],
-      failure_reason: refund_hash['failure_reason'],
-      stripe_reason: refund_hash['reason'],
-      receipt_number: refund_hash['receipt_number'],
-      stripe_status: refund_hash['status'],
-      status: status_from_stripe_status(refund_hash['status'])
-    ) # most of these are not expected to be able to change, but are included for completeness
+    invoice.with_lock do # we lock the invoice to ensure serial processing with other invoice events
+      update(
+        amount: refund_hash['amount'],
+        currency: refund_hash['currency'],
+        failure_reason: refund_hash['failure_reason'],
+        stripe_reason: refund_hash['reason'],
+        receipt_number: refund_hash['receipt_number'],
+        stripe_status: refund_hash['status'],
+        status: status_from_stripe_status(refund_hash['status'])
+      ) # most of these are not expected to be able to change, but are included for completeness
+    end
   end
 
   def process(allow_processing_if_queued = false)
