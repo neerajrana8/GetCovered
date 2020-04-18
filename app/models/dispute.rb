@@ -15,7 +15,7 @@ class Dispute < ApplicationRecord
 
   belongs_to :charge
   
-  belongs_to :invoice, through: :charge
+  has_one :invoice, through: :charge
 
   # Validations
 
