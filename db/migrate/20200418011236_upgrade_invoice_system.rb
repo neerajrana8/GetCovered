@@ -9,7 +9,9 @@ class UpgradeInvoiceSystem < ActiveRecord::Migration[5.2]
     
     # add line items
     add_column :line_items, :refundability, :integer, null: false
-    PolicyQuote.each do |pq|
+    
+    ::PolicyQuote.all.each do |pq|
+      next if pq.invoices.blank?
       # add line items
       with_deposit = pq.invoices.sort{|a,b| a.due_date <=> b.due_date }.first
       with_deposit.line_items.create!(
@@ -41,15 +43,15 @@ class UpgradeInvoiceSystem < ActiveRecord::Migration[5.2]
         )
       end
     end
-    Invoices.each do |inv|
+    ::Invoice.all.each do |inv|
       # subtotal used to be total - fees; now it is total - proration_reduction, which is 0
-      inv.update_columns(subtotal: total, proration_reduction: 0)
+      inv.update_columns(subtotal: inv.total, proration_reduction: 0)
     end
   end
   
   
   def down
-    Invoices.each do |inv|
+    ::Invoice.all.each do |inv|
       # restore subtotal to total - fees instead of total - proration_reduction
       inv.update_columns(subtotal: inv.line_items.where(refundability: 'prorated_refund').inject(0){|sum,li| sum + li.price })
     end

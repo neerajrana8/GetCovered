@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_04_10_110719) do
+ActiveRecord::Schema.define(version: 2020_04_18_011236) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -539,6 +539,7 @@ ActiveRecord::Schema.define(version: 2020_04_10_110719) do
     t.datetime "updated_at", null: false
     t.string "invoiceable_type"
     t.bigint "invoiceable_id"
+    t.integer "proration_reduction", default: 0, null: false
     t.index ["invoiceable_type", "invoiceable_id"], name: "index_invoices_on_invoiceable"
     t.index ["user_id"], name: "index_invoices_on_user_id"
   end
@@ -603,6 +604,7 @@ ActiveRecord::Schema.define(version: 2020_04_10_110719) do
     t.bigint "invoice_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "refundability", null: false
     t.index ["invoice_id"], name: "index_line_items_on_invoice_id"
   end
 
@@ -702,13 +704,13 @@ ActiveRecord::Schema.define(version: 2020_04_10_110719) do
     t.date "last_renewed_on"
     t.integer "renew_count"
     t.integer "billing_status"
-    t.integer "billing_dispute_count"
+    t.integer "billing_dispute_count", default: 0
     t.date "billing_behind_since"
     t.integer "cancellation_code"
     t.string "cancellation_date_date"
     t.integer "status"
     t.datetime "status_changed_on"
-    t.integer "billing_dispute_status"
+    t.integer "billing_dispute_status", default: 0
     t.boolean "billing_enabled", default: false, null: false
     t.boolean "system_purchased", default: false, null: false
     t.boolean "serviceable", default: false, null: false
