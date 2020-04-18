@@ -131,8 +131,8 @@ class Refund < ApplicationRecord
 
     def update_charge_for_refund_creation
       true_amount = amount - amount_returned_via_dispute
-      if true_amount > 0
-        charge.with_lock do
+      charge.with_lock do
+        if true_amount > 0
           charge.update(
             amount_refunded: charge.amount_refunded + true_amount,
             amount_in_queued_refunds: status == 'queued' ? charge.amount_in_queued_refunds + true_amount : charge.amount_in_queued_refunds
@@ -155,7 +155,7 @@ class Refund < ApplicationRecord
             action: "refund_failed",
             code: "error",
             subject: "GetCovered Refund Failure", 
-            message:    "A refund (id #{id}) for #{ invoice.get_descriptor }, invoice ##{ invoice.number } has failed.#{failure_reason.blank? || failure_reason == 'unknown' ? "" : " The payment processor provided the following reason: #{failure_reason}"}"
+            message:    "A refund (id #{id}) for #{ invoice.get_descriptor }, invoice ##{ invoice.number } has failed.#{failure_reason.blank? || failure_reason == 'unknown' ? "" : " The payment processor provided the following failure reason: #{failure_reason}"}"
           )
         end
       elsif status == 'errored'

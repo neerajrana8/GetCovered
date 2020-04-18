@@ -14,6 +14,8 @@ class Invoice < ApplicationRecord
   # DISABLED FOR NOW because it contains v1 functionality that's not being used anymore, and if anyone passes a line item to an invoice in v2 this would give them some nasty surprises
   before_validation :calculate_subtotal,
     on: :create
+    
+  before_validation :calculate_total
 
   before_validation :set_number, on: :create
 
@@ -42,6 +44,7 @@ class Invoice < ApplicationRecord
   validates :user, presence: true
   
   validates_associated :line_items
+  validate :term_dates_are_sensible
 
 # 	validate :policy_unless_quoted
 
@@ -78,116 +81,95 @@ class Invoice < ApplicationRecord
   #   proration_date = Time.current.to_date - 2.weeks
   #   @invoice.apply_proration(proration_date)
   #   => true
-
-  def apply_proration(new_term_last_date)
-    return true if term_first_date.nil? || term_last_date.nil?
-
-    if new_term_last_date < term_first_date
-      # this invoice's term falls entirely after the period requiring payment; cancel
-      case status
-      when 'upcoming', 'available'
-        return update(status: 'canceled')
-      when 'processing', 'complete'
-        return refund_proportion(1.0, 'proration adjustment')
-      when 'missed', 'canceled'
-        return true
-      end
-    elsif new_term_last_date > term_last_date
-      # this invoice's term falls entirely before the period requiring payment; do nothing
-      return true
-    else
-      # the date of proration falls within this invoice's term; prorate
-      proportion_to_refund = (term_last_date - new_term_last_date).to_f / (term_last_date + 1.day - term_first_date).to_f
-      return true if proportion_to_refund == 0.0
-
-      case status
-      when 'upcoming', 'available'
-        return update(status: 'canceled')
-      when 'processing', 'complete'
-        return refund_proportion(proportion_to_refund, 'proration adjustment')
-      when 'missed', 'canceled'
-        return true
-      end
-    end
-    false # control should never reach this line
-  end
-
-  # Refund Proportion
-  #
-  # Perform a refund for a certain proportion (as a decimal) of the total.
-  # This method takes prior refunds into account; that is, if 50% has been refunded
-  # already, refund_proportion(0.75) will refund an additional 25%.
-  #
-  # Example:
-  #   @invoice = Invoice.find(1)
-  #   @invoice.refund_proportion(0.5, "refunding half sounded good", nil)
-  #   => true
-
-  def refund_proportion(proportion, full_reason = nil, stripe_reason = nil)
-    reload
-    case status
-    when 'complete'
-      to_refund = [(proportion * total.to_f).floor.to_i - amount_refunded, 0].max
-      return true if to_refund == 0
-
-      result = apply_refund(to_refund, full_reason, stripe_reason)
-      return true if result[:success]
-
-      # try again if somehow we failed
-      to_refund = result[:amount_not_refunded]
-      result = apply_refund(to_refund, full_reason, stripe_reason)
-      return true if result[:success]
-
-      # fail sadly WARNING: we discard result[:errors] here... but if this method is called again, amount_refunded should be updated according to any successful refunds, so it should cause no problems
-      return false
-    when 'processing'
-      succeeded = false
-      with_lock do
-        unless has_pending_refund && pending_refund_data['proportion'] && pending_refund_data['proportion'] > proportion
-          self.pending_refund_data = {
-            'proportion' => proportion,
-            'full_reason' => full_reason,
-            'stripe_reason' => stripe_reason
-          }
-        end
-        self.has_pending_refund = true
-        succeeded = save
-      end
-      return succeeded
-    else
-      return false
-    end
-  end
-
-  # Apply Refund
-  #
-  # Perform a refund for a certain number of cents. If it cannot all be
-  # refunded, it will refund as much as possible and make the left-over
-  # amount available in its return value.
-  #
-  # Example:
-  #   @invoice = Invoice.find(1)
-  #   @invoice.apply_refund(5100, "I just felt like refunding this", nil)
-  #   => { success: true, amount_not_refunded: 0, errors_by_charge: {} }
-
-  def apply_refund(to_refund, full_reason = nil, stripe_reason = nil)
-    errors_encountered = {}
-    charges.succeeded.each do |current_charge|
-      to_refund_now = [[current_charge.amount - current_charge.amount_refunded, to_refund].min, 0].max
-      result = current_charge.apply_refund(to_refund_now, full_reason, stripe_reason)
-      if result[:success]
-        to_refund -= to_refund_now
-        break if to_refund == 0
+  
+  # issue a proration refund for a completed/processing invoice
+  def apply_proration(new_term_last_date, refund_date: nil, to_refund_override: nil)
+    with_lock do
+      to_refund = nil
+      if to_refund_override.nil?
+        # get refund date and proportion-to-refund
+        refund_date = Time.current.to_date if refund_date.nil?
+        proportion_to_refund = new_term_last_date < term_first_date ? 1.to_d :
+                               new_term_last_date >= term_last_date ? 0.to_d :
+                               (term_last_date - new_term_last_date).to_d / (term_last_date - term_first_date + 1).to_d
+        # calculate how much to refund
+        to_refund = line_items.group_by{|li| li.refundability }
+        to_refund['no_refund'] = 0
+        to_refund['prorated_refund'] = ((to_refund['prorated_refund'] || []).inject(0){|sum,li| sum + li.price } * proportion_to_refund).floor
+        to_refund['complete_refund_before_term'] = refund_date >= term_first_date ? 0 : to_refund['complete_refund_before_term'].inject(0){|sum,li| sum + li.price }
+        to_refund['complete_refund_during_term'] = refund_date > term_last_date ? 0 : to_refund['complete_refund_during_term'].inject(0){|sum,li| sum + li.price }
+        to_refund['complete_refund_before_due_date'] = refund_date >= due_date ? 0 : to_refund['complete_refund_before_due_date'].inject(0){|sum,li| sum + li.price }
+        to_refund = to_refund.transform_values{|v| v.class == ::Array ? 0 : v }.inject(0){|sum,r| sum + r }
       else
-        errors_encountered[current_charge.id] = result[:errors]
+        to_refund = to_refund_override
+      end
+      # apply refund
+      case status
+        when 'upcoming', 'available'
+          # apply a proration_reduction to the total
+          new_total = subtotal - to_refund
+          if new_total < 0
+            new_total = 0
+            to_refund = subtotal
+          end
+          if new_total == 0
+            return update(proration_reduction: to_refund, total: new_total, status: 'canceled')
+          end
+          return update(proration_reduction: to_refund, total: new_total)
+        when 'complete'
+          # apply the refund
+          to_refund -= proration_reduction # if a proration was already applied prior to payment and we're prorating again (which can't happen in the current workflow anyway), the proration_reduction was a sort of "pre-refund" and we don't want to refund it twice
+          return true if to_refund <= 0
+          result = ensure_refunded(to_refund, "Proration Adjustment", nil)
+          return true if result[:success]
+          return false # WARNING: we discard result[:errors] here
+        when 'processing'
+          return update(has_pending_refund: true, pending_refund_data: { 'proration_refund' => to_refund })
+        when 'missing'
+          # MOOSE WARNING: we do nothing here atm... should we?
+          return true
+        when 'canceled'
+          # we do nothing
+          return true
+      end
+    end
+    return false
+  end
+  
+  # refunds whatever is necessary to ensure the total amount refunded is to_refund cents (if it starts above that, it refunds nothing)
+  def ensure_refunded(to_refund, full_reason = nil, stripe_reason = nil)
+    with_lock do
+      return { success: false, errors: "invoice status must be 'complete' before refunding" } unless status == 'complete'
+      already_refunded = charges.succeeded.inject(0){|sum, current_charge| sum + current_charge.amount_refunded }
+      to_refund_now = [0, to_refund - already_refunded].max
+      return current_charge.apply_refund(to_refund_now, full_reason, stripe_reason)
+    end
+  end
+  
+  # refunds an exact amount, regardless of what has been refunded before; or refunds as much of it as possible and reports what it failed to refund
+  def apply_refund(to_refund, full_reason = nil, stripe_reason = nil)
+    with_lock do
+      return { success: false, errors: "invoice status must be 'complete' before refunding" } unless status == 'complete'
+      errors_encountered = {}
+      charges.succeeded.each do |current_charge|
+        to_refund_now = [[current_charge.amount - current_charge.amount_refunded, to_refund].min, 0].max
+        result = current_charge.apply_refund(to_refund_now, full_reason, stripe_reason)
+        if result[:success]
+          to_refund -= to_refund_now
+          break if to_refund <= 0
+        else
+          errors_encountered[current_charge.id] = result[:errors]
+        end
       end
     end
     {
-      success: to_refund == 0,
+      success: to_refund <= 0,
       amount_not_refunded: to_refund,
+      errors: {},
       errors_by_charge: errors_encountered
     }
   end
+
 
   # Pay
   #
@@ -244,9 +226,9 @@ class Invoice < ApplicationRecord
   def payment_succeeded
     with_lock do
       update(status: 'complete')
-      if has_pending_refund
-        if refund_proportion(pending_refund_data['proportion'], pending_refund_data['full_reason'], pending_refund_data['stripe_reason'])
-          update(has_pending_refund: false)
+      if has_pending_refund && pending_refund_data.has_key?('proration_refund')
+        if apply_proration(nil, to_refund_override: pending_refund_data['proration_refund'].to_i)
+          update_columns(has_pending_refund: false)
         end
       end
     end
@@ -294,7 +276,7 @@ class Invoice < ApplicationRecord
       end
       # update our status
       update status: invoice_status
-      # handle when our payemnt is missed
+      # handle when our payment is missed
       if invoice_status == 'missed'
         if has_pending_refund
           # if we are here, then a proration was applied to the invoice while payment was processing, and payment then failed
@@ -424,11 +406,20 @@ class Invoice < ApplicationRecord
 
   def calculate_subtotal
     old_subtotal = self.will_save_change_to_attribute?('subtotal') ? self.subtotal : nil
-    old_total = self.will_save_change_to_attribute?('total') ? self.total : nil
     self.subtotal = line_items.inject(0) { |result, line_item| result += line_item.price }
-    self.total = self.subtotal # total used to be subtotal + tax, but now it's just a redundant copy of subtotal
     errors.add(:subtotal, "must match sum of line item prices") unless old_subtotal.nil? || old_subtotal == self.subtotal
+  end
+  
+  def calculate_total
+    old_total = self.will_save_change_to_attribute?('total') ? self.total : nil
+    self.total = self.subtotal - self.proration_reduction # total is subtotal - proration_reduction
     errors.add(:total, "must match subtotal") unless old_total.nil? || old_total == self.total
+  end
+  
+  def term_dates_are_sensible
+    errors.add(:term_last_date, "cannot precede term first date") unless term_last_date.nil? || term_first_date.nil? || (term_last_date >= term_first_date)
+    errors.add(:term_last_date, "cannot be blank when term first date is provided") if term_last_date.nil? && !term_first_date.nil?
+    errors.add(:term_first_date, "cannot be blank when term last date is provided") if term_first_date.nil? && !term_last_date.nil?
   end
 
   # History Methods

@@ -104,27 +104,24 @@ class Charge < ApplicationRecord
     became_undisputed = false
     ActiveRecord::Base.transaction do
       # update internal numbers
-      self.with_lock do
-        became_undisputed = (dispute_count == 1)
-        succeeded = self.update(
-          dispute_count: dispute_count - 1,
-          amount_lost_to_disputes: amount_lost_to_disputes + amount_lost,
-          amount_refunded: amount_refunded + [amount_lost - amount_in_queued_refunds, 0].max,
-          amount_in_queued_refunds: [amount_in_queued_refunds - amount_lost, 0].max
-        )
-      end
+      reload
+      became_undisputed = (dispute_count == 1)
+      succeeded = self.update(
+        dispute_count: dispute_count - 1,
+        amount_lost_to_disputes: amount_lost_to_disputes + amount_lost,
+        amount_refunded: amount_refunded + [amount_lost - amount_in_queued_refunds, 0].max,
+        amount_in_queued_refunds: [amount_in_queued_refunds - amount_lost, 0].max
+      )
       raise ActiveRecord::Rollback unless succeeded
       # apply amount_lost to refunds
       unless amount_lost == 0
         succeeded = true
-        refunds.queued.each do |queued_refund|
-          queued_refund.with_lock do
-            amount_to_credit = [amount_lost, queued_refund.amount - queued_refund.amount_returned_via_dispute].min
-            if queued_refund.apply_dispute_payout(amount_to_credit)
-              amount_lost -= amount_to_credit
-            else
-              succeeded = false
-            end
+        refunds.queued.reload.each do |queued_refund|
+          amount_to_credit = [amount_lost, queued_refund.amount - queued_refund.amount_returned_via_dispute].min
+          if queued_refund.apply_dispute_payout(amount_to_credit)
+            amount_lost -= amount_to_credit
+          else
+            succeeded = false
           end
           break if amount_lost == 0
         end
