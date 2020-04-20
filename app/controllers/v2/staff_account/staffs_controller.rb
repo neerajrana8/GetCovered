@@ -6,7 +6,7 @@ module V2
   module StaffAccount
     class StaffsController < StaffAccountController
       
-      before_action :set_staff, only: [:update, :show]
+      before_action :set_staff, only: [:update, :show, :toggle_enabled]
             
       def index
         super(:@staffs, current_staff.organizable.staff, :profile)
@@ -53,6 +53,15 @@ module V2
         @staff = Staff.search(params[:query]).records.where(organizable_id: current_staff.organizable_id)
         render json: @staff.to_json, status: 200
       end
+
+      def toggle_enabled
+        if current_staff.owner && current_staff.organizable == @staff.organizable
+          @staff.toggle!(:enabled)
+          render json: { success: true }, status: :ok
+        else
+          render json: { success: false, errors: ['Unauthorized Access'] }, status: :unauthorized
+        end
+      end
       
       private
       
@@ -75,7 +84,7 @@ module V2
         def create_params
           return({}) if params[:staff].blank?
           to_return = params.require(:staff).permit(
-            :email, :enabled, notification_options: {}, settings: {},
+            :email, notification_options: {}, settings: {},
             profile_attributes: [
               :birth_date, :contact_email, :contact_phone, :first_name,
               :job_title, :last_name, :middle_name, :suffix, :title
@@ -87,7 +96,7 @@ module V2
         def update_params
           return({}) if params[:staff].blank?
           params.require(:staff).permit(
-            :enabled, notification_options: {}, settings: {},
+            notification_options: {}, settings: {},
             profile_attributes: [ :id,
               :birth_date, :contact_email, :contact_phone, :first_name,
               :job_title, :last_name, :middle_name, :suffix, :title

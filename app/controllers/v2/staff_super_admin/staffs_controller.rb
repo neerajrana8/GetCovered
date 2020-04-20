@@ -6,7 +6,7 @@ module V2
   module StaffSuperAdmin
     class StaffsController < StaffSuperAdminController
       
-      before_action :set_staff, only: [:show, :re_invite]
+      before_action :set_staff, only: [:show, :re_invite, :toggle_enabled]
             
       def index
         super(:@staffs, Staff, :profile)
@@ -48,6 +48,12 @@ module V2
                  status: :unprocessable_entity
         end
       end
+
+      def toggle_enabled
+        @staff.toggle!(:enabled)
+        render json: { success: true }, status: :ok
+      end
+
       
       private
       
