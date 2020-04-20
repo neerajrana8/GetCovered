@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_04_18_011236) do
+ActiveRecord::Schema.define(version: 2020_04_10_110719) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -539,7 +539,6 @@ ActiveRecord::Schema.define(version: 2020_04_18_011236) do
     t.datetime "updated_at", null: false
     t.string "invoiceable_type"
     t.bigint "invoiceable_id"
-    t.integer "proration_reduction", default: 0, null: false
     t.index ["invoiceable_type", "invoiceable_id"], name: "index_invoices_on_invoiceable"
     t.index ["user_id"], name: "index_invoices_on_user_id"
   end
@@ -604,7 +603,6 @@ ActiveRecord::Schema.define(version: 2020_04_18_011236) do
     t.bigint "invoice_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.integer "refundability", null: false
     t.index ["invoice_id"], name: "index_line_items_on_invoice_id"
   end
 

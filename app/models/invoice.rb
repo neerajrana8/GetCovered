@@ -236,11 +236,7 @@ class Invoice < ApplicationRecord
 		if invoiceable_type == 'Policy' && !invoiceable.nil?
       policy = invoiceable
 	    if policy.BEHIND? || policy.REJECTED?
-	      invoices = policy.invoices
-	      invoices_statuses = []
-	      invoices.each { |i| invoices_statuses << i.status }
-	
-	      policy.billing_status = 'RESCINDED' unless invoices_statuses.include? 'missed'
+        policy.billing_status = 'RESCINDED' unless policy.invoices.map{|inv| inv.status }.include?('missed')
 	    else
 	      policy.billing_status = 'CURRENT'
 	    end

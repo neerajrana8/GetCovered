@@ -17,8 +17,6 @@ class Refund < ApplicationRecord
   belongs_to :charge
 
   has_one :invoice, through: :charge
-
-  has_one :user, through: :invoice
   
   has_many :notifications,
     as: :eventable
