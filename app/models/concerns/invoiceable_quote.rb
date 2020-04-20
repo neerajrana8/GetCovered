@@ -74,7 +74,7 @@ policy_application
                 available_date: tc[:due_date] - available_period,
                 term_first_date: tc[:term_first_date],
                 term_last_date: tc[:term_last_date],
-                user:           billing_plan[:primary_user],
+                payee:           billing_plan[:payee],
                 status:         "quoted",
                 
                 total:          tc[:total], # subtotal & total are calculated automatically from line items, but if we pass one manually validations will fail if it doesn't match the calculation
@@ -125,7 +125,7 @@ policy_application
         {
           billing_schedule: policy_application.billing_strategy.new_business['payments'],
           effective_date: policy_application.effective_date,
-          primary_user: policy_application.primary_user
+          payee: policy_application.primary_user
         }
       # MOOSE WARNING: fill this out once PolicyApplicationGroup has the appropriate fields
       #elsif respond_to?(:policy_application_group)

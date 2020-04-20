@@ -6,7 +6,7 @@
 class Invoice < ApplicationRecord
   # ActiveRecord Callbacks
 
-  # All initialization was moved to database. Only user assignment is left, 
+  # All initialization was moved to database. Only payee assignment is left, 
   # which will be uncommented when Policy is ready.
   # after_initialize  :initialize_invoice
   include ElasticsearchSearchable
@@ -24,7 +24,8 @@ class Invoice < ApplicationRecord
   # ActiveRecord Associations
 
   belongs_to :invoiceable, polymorphic: true
-  belongs_to :user
+  belongs_to :payee, polymorphic: true
+  
   has_many :charges
   has_many :refunds, through: :charges
   has_many :disputes, through: :charges
@@ -41,7 +42,6 @@ class Invoice < ApplicationRecord
   validates :status, presence: true
   validates :due_date, presence: true
   validates :available_date, presence: true
-  validates :user, presence: true
   
   validates_associated :line_items
   validate :term_dates_are_sensible
@@ -198,7 +198,7 @@ class Invoice < ApplicationRecord
 
     # attempt to make payment
     created_charge = nil
-    created_charge = if !stripe_source.nil? # use one-time source
+    created_charge = if !stripe_source.nil?    # use specified source
                        charges.create(amount: total, stripe_id: stripe_source)
                      elsif !stripe_token.nil?  # use token
                        charges.create(amount: total, stripe_id: stripe_token)
@@ -255,18 +255,18 @@ class Invoice < ApplicationRecord
       # prepare for failure notifications
       failure_is_postproration = false # flag set to true when this is a post-policy-proration failure of a canceled policy
       invoice_status = nil
-      user_notification_subject = nil
+      payee_notification_subject = nil
       agent_notification_subject = nil
       if due_date >= Time.current.to_date
         invoice_status = 'available'
-        user_notification_subject = 'Get Covered: Payment Failure'
-        user_notification_message = "A payment for #{get_descriptor}, invoice ##{number} has failed.  Please submit another payment before #{due_date.strftime('%m/%d/%Y')}."
+        payee_notification_subject = 'Get Covered: Payment Failure'
+        payee_notification_message = "A payment for #{get_descriptor}, invoice ##{number} has failed.  Please submit another payment before #{due_date.strftime('%m/%d/%Y')}."
         agent_notification_subject = 'Get Covered: Payment Failure'
         agent_notification_message = "A payment for #{get_descriptor}, invoice ##{number} has failed.  Payment due #{due_date.strftime('%m/%d/%Y')}."
       else
         invoice_status = 'missed'
-        user_notification_subject = 'Get Covered: Payments Behind'
-        user_notification_message = "A payment for #{get_descriptor}, invoice ##{number} has failed.  Your payment is now past due.  Please submit a payment immediately to prevent cancellation of coverage."
+        payee_notification_subject = 'Get Covered: Payments Behind'
+        payee_notification_message = "A payment for #{get_descriptor}, invoice ##{number} has failed.  Your payment is now past due.  Please submit a payment immediately to prevent cancellation of coverage."
         agent_notification_subject = 'Get Covered: Payments Behind'
         agent_notification_message = "A payment for #{get_descriptor}, invoice ##{number} has failed.  This payment is now past due."
       end
@@ -289,14 +289,14 @@ class Invoice < ApplicationRecord
         self.invoiceable.update billing_status: 'BEHIND' if self.invoiceable_type == 'Policy' # MOOSE WARNING or policygroup once it exists
       end
       
-      # Notify responsible user
+      # Notify responsible payee
       unless failure_is_postproration
         notifications.create(
-          notifiable: user,
+          notifiable: payee,
           action: 'invoice_payment_failed',
           code: "error",
-          subject: user_notification_subject,
-          message: user_notification_message
+          subject: payee_notification_subject,
+          message: payee_notification_message
         )
       end
 
@@ -322,18 +322,18 @@ class Invoice < ApplicationRecord
     if status == 'upcoming'
       if update status: 'available'
 
-        user_notification = notifications.new(
-          notifiable: user,
+        payee_notification = notifications.new(
+          notifiable: payee,
           action: 'invoice_available',
           template: 'invoice',
           subject: "#{get_descriptor}, Invoice ##{number}.",
           message: 'A new invoice is available for payment.'
         )
 
-        if user_notification.save
+        if payee_notification.save
 
         else
-          pp user_notification.errors
+          pp payee_notification.errors
         end
 
       end
@@ -367,7 +367,7 @@ class Invoice < ApplicationRecord
     end
   end
   
-  # whom to inform on payment failure (excluding user)
+  # whom to inform on payment failure (excluding payee)
   def notifiables_for_payment_failure
     case(self.invoiceable.nil? ? nil : self.invoiceable_type)
       when 'Policy'
@@ -377,7 +377,7 @@ class Invoice < ApplicationRecord
     end
   end
   
-  # whom to inform on refund failure (excluding user)
+  # whom to inform on refund failure (excluding payee)
   def notifiables_for_refund_failure
     case(self.invoiceable.nil? ? nil : self.invoiceable_type)
       when 'Policy'
