@@ -4,46 +4,46 @@ class Staff < ApplicationRecord
   # Include default devise modules. Others available are:
   # :confirmable, :lockable, :timeoutable and :omniauthable
   devise :invitable, :database_authenticatable, :registerable,
-         :recoverable, :rememberable, :trackable, :validatable
+  :recoverable, :rememberable, :trackable, :validatable
   serialize :tokens
   
   include SetAsOwner
   include RecordChange
   include DeviseTokenAuth::Concerns::User
   include ElasticsearchSearchable
-
+  
   enum role: { staff: 0, agent: 1, owner: 2, super_admin: 3 }
-
+  
   validate :proper_role
-
+  
   # Active Record Callbacks
   after_initialize :initialize_staff
   after_create :set_first_as_primary_on_organizable
-
+  
   # belongs_to relationships
   # belongs_to :account, required: true
-
+  
   belongs_to :organizable, polymorphic: true, required: false
-
+  
   # has_many relationships
   has_many :histories,
-           as: :recordable,
-           class_name: 'History',
-           foreign_key: :recordable_id
-           
+  as: :recordable,
+  class_name: 'History',
+  foreign_key: :recordable_id
+  
   has_many :assignments
-
+  
   # has_one relationships
   has_one :profile,
-          as: :profileable,
-          autosave: true
-
+  as: :profileable,
+  autosave: true
+  
   has_many :reports, as: :reportable
-
+  
   scope :enabled, ->(){ where(enabled: true) }
-
+  
   accepts_nested_attributes_for :profile
-
+  
   settings index: { number_of_shards: 1 } do
     mappings dynamic: 'false' do
       indexes :email, type: :text
@@ -60,7 +60,7 @@ class Staff < ApplicationRecord
       end
     end
   end
-
+  
   def as_indexed_json(options = {})
     self.as_json(
       options.merge(
@@ -69,12 +69,12 @@ class Staff < ApplicationRecord
       )
     )
   end
-
+  
   def self.update_profile(profile, options = {})
     options[:index] ||= index_name
     options[:type]  ||= document_type
     options[:wait_for_completion] ||= false
-
+    
     options[:body] = {
       conflicts: :proceed,
       query: {
@@ -88,21 +88,28 @@ class Staff < ApplicationRecord
         params: { profile: { contact_phone: profile.contact_phone, last_name: profile.last_name, first_name: profile.first_name, full_name: profile.full_name, title: profile.title, contact_email: profile.contact_email } }
       }
     }
-
+    
     __elasticsearch__.client.update_by_query(options)
   end
-
-
+  
+  
   # Override as_json to always include profile information
   def as_json(options = {})
     json = super(options.reverse_merge(include: :profile))
     json
   end
 
-
+  # Override active_for_authentication? to prevent non-owners or non-enabled staff to authorize
+  def active_for_authentication?
+    
+    super && (owner || enabled)
+  end
+  
+  
+  
   private
-
-	  def initialize_staff
+  
+    def initialize_staff
     end
     
     def proper_role
@@ -110,11 +117,11 @@ class Staff < ApplicationRecord
       
       errors.add(:role, "must match organization type") if organizable_type == 'Account' && role != 'staff'
     end
-
-
-		def set_first_as_primary_on_organizable
-			unless organizable.nil?
-				self.organizable.update staff_id: id if organizable.staff.count == 1
-			end	
-		end
+    
+    
+    def set_first_as_primary_on_organizable
+      unless organizable.nil?
+        self.organizable.update staff_id: id if organizable.staff.count == 1
+      end	
+    end
 end

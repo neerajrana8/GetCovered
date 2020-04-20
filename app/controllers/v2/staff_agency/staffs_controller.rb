@@ -6,7 +6,7 @@ module V2
   module StaffAgency
     class StaffsController < StaffAgencyController
       
-      before_action :set_staff, only: %i[update show re_invite]
+      before_action :set_staff, only: %i[update show re_invite toggle_enabled]
             
       def index
         if (params[:filter] && params[:filter][:organizable_type] == 'Account')
@@ -71,6 +71,15 @@ module V2
           end
         end
       end
+
+      def toggle_enabled
+        if show_allowed? && current_staff.owner
+          @staff.toggle!(:enabled)
+          render json: { success: true }, status: :ok
+        else
+          render json: { success: false, errors: ['Unauthorized Access'] }, status: :unauthorized
+        end
+      end
       
       private
       
@@ -89,7 +98,7 @@ module V2
       def create_allowed?
         return false if create_params[:role] == 'super_admin'
 
-        return false if create_params[:organizable_type] == 'Agency' && current_staff.organizable.id != create_params[:organizable_id]
+        return false if create_params[:organizable_type] == 'Agency' && current_staff.organizable.id != create_params[:organizable_id]&.to_i
 
         return false if create_params[:organizable_type] == 'Account' && !current_staff.organizable&.accounts&.ids&.include?(create_params[:organizable_id])
         
@@ -108,7 +117,7 @@ module V2
         return({}) if params[:staff].blank?
 
         to_return = params.require(:staff).permit(
-          :email, :enabled, :organizable_id, :organizable_type, :role,
+          :email, :organizable_id, :organizable_type, :role,
           notification_options: {}, settings: {},
           profile_attributes: %i[ id
             birth_date contact_email contact_phone first_name
@@ -122,7 +131,7 @@ module V2
         return({}) if params[:staff].blank?
 
         params.require(:staff).permit(
-          :enabled, :email, notification_options: {}, settings: {},
+          :email, notification_options: {}, settings: {},
                     profile_attributes: %i[ id
                       birth_date contact_email contact_phone first_name
                       job_title last_name middle_name suffix title
