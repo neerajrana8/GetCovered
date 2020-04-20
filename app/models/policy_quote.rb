@@ -251,7 +251,7 @@ class PolicyQuote < ApplicationRecord
 		  	invoice.update status: index == 0 ? "available" : "upcoming"
 		  end		
 			 
-			charge_invoice = invoices.order("due_date").first.pay(stripe_source: policy_application.primary_user().payment_profiles.first.source_id)
+			charge_invoice = invoices.order("due_date").first.pay(stripe_source: :default)
 																
       if charge_invoice[:success] == true
         return true

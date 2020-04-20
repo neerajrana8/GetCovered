@@ -196,13 +196,15 @@ class Invoice < ApplicationRecord
     end
     return return_error unless return_error.nil?
 
+    # grab the default payment method, if needed
+    stripe_source = payee.payment_profiles.where(default: true).take&.source_id if stripe_source == :default
     # attempt to make payment
     created_charge = nil
     created_charge = if !stripe_source.nil?    # use specified source
                        charges.create(amount: total, stripe_id: stripe_source)
                      elsif !stripe_token.nil?  # use token
                        charges.create(amount: total, stripe_id: stripe_token)
-                     else                      # use default payment method
+                     else                      # use charge's default behavior (which right now is to fail with an error message, and shall probably remain such)
                        charges.create(amount: total)
                      end
 
