@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_04_10_110719) do
+ActiveRecord::Schema.define(version: 2020_04_20_205407) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -534,13 +534,15 @@ ActiveRecord::Schema.define(version: 2020_04_10_110719) do
     t.integer "amount_to_refund_on_completion", default: 0
     t.boolean "has_pending_refund", default: false
     t.jsonb "pending_refund_data", default: {}
-    t.bigint "user_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "invoiceable_type"
     t.bigint "invoiceable_id"
+    t.integer "proration_reduction", default: 0, null: false
+    t.string "payee_type"
+    t.bigint "payee_id"
     t.index ["invoiceable_type", "invoiceable_id"], name: "index_invoices_on_invoiceable"
-    t.index ["user_id"], name: "index_invoices_on_user_id"
+    t.index ["payee_type", "payee_id"], name: "index_invoices_on_payee"
   end
 
   create_table "lease_type_insurable_types", force: :cascade do |t|
@@ -603,6 +605,7 @@ ActiveRecord::Schema.define(version: 2020_04_10_110719) do
     t.bigint "invoice_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "refundability", null: false
     t.index ["invoice_id"], name: "index_line_items_on_invoice_id"
   end
 

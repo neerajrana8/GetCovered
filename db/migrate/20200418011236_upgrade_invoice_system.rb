@@ -55,6 +55,7 @@ class UpgradeInvoiceSystem < ActiveRecord::Migration[5.2]
       # restore subtotal to total - fees instead of total - proration_reduction
       inv.update_columns(subtotal: inv.line_items.where(refundability: 'prorated_refund').inject(0){|sum,li| sum + li.price })
     end
+    ::LineItem.all.delete_all
     
     remove_column :invoices, :proration_reduction
     remove_column :line_items, :refundability
