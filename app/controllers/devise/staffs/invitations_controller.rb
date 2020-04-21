@@ -15,6 +15,7 @@ class Devise::Staffs::InvitationsController < Devise::InvitationsController
     if @staff.errors.empty?
       @resource = @staff
       @token = @resource.create_token
+      @resource.enabled = true
       @resource.save!
       update_auth_header
       render json: { success: true },

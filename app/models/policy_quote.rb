@@ -144,7 +144,8 @@ class PolicyQuote < ApplicationRecord
 	        		 policy_premium.update(policy: policy)
 	        		 
 	 						PolicyQuoteStartBillingJob.perform_later(policy: policy, issue: quote_attempt[:issue_method])
-	 						quote_attempt[:message] = "Policy #{ policy.number }, has been accepted.  Please check your email for more information."
+	 						policy_type_identifier = policy_application.policy_type_id == 5 ? "Rental Guarantee" : "Policy"
+	 						quote_attempt[:message] = "#{ policy_type_identifier } ##{ policy.number }, has been accepted.  Please check your email for more information."
 	 						quote_attempt[:success] = true
 
 	          else

@@ -138,6 +138,7 @@
             to: "histories#index_authorable",
             via: "get",
             defaults: { authorable_type: Staff }
+          put :toggle_enabled
         end
         collection do
           get "search", to: 'staffs#search'

@@ -72,9 +72,10 @@ module V2
 			    	if @user.attach_payment_source(accept_policy_quote_params[:source])
 				    	
 				    	@quote_attempt = @policy_quote.accept
+				    	@policy_type_identifier = @policy_quote.policy_application.policy_type_id == 5 ? "Rental Guarantee" : "Policy"
 							
 							render json: {
-								:error => @quote_attempt[:success] ? "Policy Accepted" : "Policy Could Not Be Accepted",
+								:error => @quote_attempt[:success] ? "#{ @policy_type_identifier } Accepted" : "#{ @policy_type_identifier } Could Not Be Accepted",
 								:message => @quote_attempt[:message]
 							}, status: @quote_attempt[:success] ? 200 : 500
 							
