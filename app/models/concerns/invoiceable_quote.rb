@@ -31,7 +31,7 @@ policy_application
 	    
 	    invoices.destroy_all if refresh
 	    
-	  	if policy_premium.calculation_base > 0 && 
+	  	if policy_premium.total > 0 && 
 		  	 status == "quoted" && 
 		  	 invoices.count == 0
         
@@ -47,24 +47,35 @@ policy_application
         payment_weight_total = billing_plan[:billing_schedule].inject(0){|sum,p| sum + p }.to_d
         payment_weight_total = 100.to_d if payment_weight_total <= 0 # this can never happen unless someone fills new_business with 0s invalidly, but you can't be too careful
         
+        # setup
+        roundables = [:deposit_fees, :amortized_fees, :base, :special_premium, :taxes] # fields on PolicyPremium to have rounding errors fixed
+        refundabilities = { base: 'prorated_refund', special_premium: 'prorated_refund', taxes: 'prorated_refund' } # fields that can be refunded on cancellation
+        line_item_names = { base: "Premium", special_premium: "Special Premium" } # fields to rename on the invoice
+        
         # calculate invoice charges
         to_charge = billing_plan[:billing_schedule].map.with_index do |payment, index|
           {
             due_date: index == 0 ? status_updated_on : billing_plan[:effective_date] + index.months,
             term_first_date: billing_plan[:effective_date] + index.months,
-            fees: (policy_premium.amortized_fees * payment / payment_weight_total).floor + (index == 0 ? policy_premium.deposit_fees : 0),
-            total: (policy_premium.calculation_base * payment / payment_weight_total).floor + (index == 0 ? policy_premium.deposit_fees : 0)
+            deposit_fees: (index == 0 ? policy_premium.deposit_fees : 0),
+            amortized_fees: (policy_premium.amortized_fees * payment / payment_weight_total).floor,
+            base: (policy_premium.base * payment / payment_weight_total).floor,
+            special_premium: (policy_premium.special_premium * payment / payment_weight_total).floor,
+            taxes: (policy_premium.taxes * payment / payment_weight_total).floor
           }
-        end.select{|tc| tc[:total] > 0 }
+        end.map{|tc| tc.merge({ total: roundables.inject(0){|sum,r| sum + tc[r] } }) }.select{|tc| tc[:total] > 0 }
         # set term_last_dates
         (0...(to_charge.length - 1)).each do |charge_index|
           to_charge[charge_index][:term_last_date] = to_charge[charge_index + 1][:term_first_date] - 1.day
         end
         to_charge.last[:term_last_date] = billing_plan[:effective_date] + 12.months - 1.day
         # add any rounding errors to the first charge
-        to_charge[0][:fees] += policy_premium.total_fees - to_charge.inject(0){|sum,tc| sum + tc[:fees] }
-        to_charge[0][:total] += policy_premium.total - to_charge.inject(0){|sum,tc| sum + tc[:total] }
-        
+        roundables.each do |roundable|
+          to_charge[0][roundable] += policy_premium.send(roundable) - to_charge.inject(0){|sum,tc| sum + tc[roundable] }
+        end
+        to_charge[0][:total] = roundables.inject(0){|sum,r| sum + to_charge[0][r] }
+        unaccounted_error = policy_premium.total - to_charge.inject(0){|sum,tc| sum + tc[:total] }
+        to_charge[0][:additional_fees] = unaccounted_error unless unaccounted_error <= 0 # this should always be 0
         # create invoices
         begin
           ActiveRecord::Base.transaction do
@@ -78,23 +89,13 @@ policy_application
                 status:         "quoted",
                 
                 total:          tc[:total], # subtotal & total are calculated automatically from line items, but if we pass one manually validations will fail if it doesn't match the calculation
-                line_items_attributes: [
-                  tci == 0 ? {
-                    title: "Deposit Fees",
-                    price: policy_premium.deposit_fees,
-                    refundability: 'no_refund'
-                  } : nil,
+                line_items_attributes: (roundables + [:additional_fees]).map do |roundable|
                   {
-                    title: "Amortized Fees",
-                    price: tc[:fees] - (tci == 0 ? policy_premium.deposit_fees : 0),
-                    refundability: 'no_refund'
-                  },
-                  {
-                    title: "Premium Payment",
-                    price: tc[:total] - tc[:fees],
-                    refundability: 'prorated_refund'
+                    title: line_item_names[roundable] || roundable.to_s.titleize,
+                    price: tc[roundable] || 0,
+                    refundability: refundabilities[roundable] || 'no_refund'
                   }
-                ].select{|lia| !lia.nil? && lia[:price] > 0 }
+                end.select{|lia| !lia.nil? && lia[:price] > 0 }
               })
             end
             invoices_generated = true
