@@ -69,9 +69,15 @@ class UpgradeInvoiceSystem < ActiveRecord::Migration[5.2]
       roundables = [:deposit_fees, :amortized_fees, :base, :special_premium, :taxes] # fields on PolicyPremium to have rounding errors fixed
       refundabilities = { base: 'prorated_refund', special_premium: 'prorated_refund', taxes: 'prorated_refund' } # fields that can be refunded on cancellation
       line_item_names = { base: "Premium", special_premium: "Special Premium" } # fields to rename on the invoice
-      line_item_specials { base: "unearned_premium" }
+      line_item_specials = { base: "unearned_premium" }
+      # flee if incomprehensible error occurs
+      payments = billing_plan[:billing_schedule].select{|p| p > 0 }
+      if payments.length != invoice_array.length
+        raise "Migration failed: there are #{invoice_array.length} invoices for #{invoices.first.invoiceable_type} ##{invoices.first.invoiceable_id}, but the billing schedule has only #{payments.length} pay periods"
+      end
       # calculate invoice charges
       to_charge = invoice_array.map.with_index do |invoice, index|
+        payment = payments[index]
         {
           invoice: invoice,
           deposit_fees: (index == 0 ? policy_premium.deposit_fees : 0),
@@ -91,7 +97,7 @@ class UpgradeInvoiceSystem < ActiveRecord::Migration[5.2]
       if to_charge.inject(0){|sum,tc| sum + tc[:invoice_extra] } != 0
         raise "Migration failed: invoices for #{invoices.first.invoiceable_type} ##{invoices.first.invoiceable_id} have non-canceling discrepancies from the line item prices for this policy as they would be calculated now."
       end
-      discrepancies = roundables.select{|roundable| roundable != :deposit_fees && (roundable != :special_premium || policy_premium.special_premium > 0) }.map do |roundable|
+      discrepancies = roundables.select{|roundable| roundable != :deposit_fees && (roundable != :special_premium || policy_premium.special_premium > 0) && policy_premium.send(roundable) != 0 }.map do |roundable|
         [
           roundable,
           0
@@ -99,28 +105,28 @@ class UpgradeInvoiceSystem < ActiveRecord::Migration[5.2]
       end.to_h
       #adjust for discrepancies
       to_charge.select{|tc| tc[:invoice_extra] < 0 }.each do |tc| # first handle negative discrepancies
-        (0...(-tc[:invoice_extra])).do |n|
-          roundable = discrepancies.select{|k,v| tc[k] > 0 }.sort{|a,b| a[1].to_d / policy_premium.send(a[0]) <=> b[1].to_d / policy_premium.send(a[1]) }.last[0] # they're all nonpositive, so the greatest has the least absolute value
+        (0...(-tc[:invoice_extra])).each do |n|
+          roundable = discrepancies.select{|k,v| !tc[k].nil? && tc[k] > 0 }.sort{|a,b| a[1].to_d / policy_premium.send(a[0]) <=> b[1].to_d / policy_premium.send(b[0]) }.last[0] # they're all nonpositive, so the greatest has the least absolute value
           tc[roundable] -= 1
           discrepancies[roundable] -= 1
         end
         tc[:invoice_extra] = 0
       end
       to_charge.select{|tc| tc[:invoice_extra] > 0 }.each do |tc| # then we handle positive discrepancies
-        (0...tc[:invoice_extra]).do |n|
-          roundable = discrepancies.sort{|a,b| a[1].to_d / policy_premium.send(a[0]) <=> b[1].to_d / policy_premium.send(a[1]) }.first[0] # they're all nonpositive, so the least has the greatest absolute value
+        (0...tc[:invoice_extra]).each do |n|
+          roundable = discrepancies.select{|k,v| !tc[k].nil? }.sort{|a,b| a[1].to_d / policy_premium.send(a[0]) <=> b[1].to_d / policy_premium.send(b[0]) }.first[0] # they're all nonpositive, so the least has the greatest absolute value
           tc[roundable] += 1
           discrepancies[roundable] += 1
         end
         tc[:invoice_extra] = 0
       end
-      if to_charge.any?{|tc| tc[:invoice_extra] != 0
+      if to_charge.any?{|tc| tc[:invoice_extra] != 0 }
         # literally impossible to run, but I'd rather find out I coded something wrong by getting an impossible error message than by messing up live invoices
         raise "Migration failed: invoices for #{invoices.first.invoiceable_type} ##{invoices.first.invoiceable_id} have discrepancies from new-style line item calculation that inexplicably failed to cancel"
       end
       # create line items
       to_charge.each do |tc|
-        tc.line_items.create!((roundables + [:additional_fees]).map do |roundable|
+        tc[:invoice].line_items.create!((roundables + [:additional_fees]).map do |roundable|
             {
               title: line_item_names[roundable] || roundable.to_s.titleize,
               price: tc[roundable] || 0,
@@ -128,7 +134,7 @@ class UpgradeInvoiceSystem < ActiveRecord::Migration[5.2]
               special: line_item_specials[roundable] || 'no_special'
             }
           end.select{|lia| !lia.nil? && lia[:price] > 0 }
-        end
+        )
       end
     end
 end
