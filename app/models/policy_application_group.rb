@@ -3,6 +3,7 @@ class PolicyApplicationGroup < ApplicationRecord
   belongs_to :agency, optional: true
   has_many :policy_applications
   has_one :policy_group_quote, dependent: :destroy
+  belongs_to :billing_strategy
   has_many :model_errors, as: :model, dependent: :destroy
 
   enum status: %i[in_progress success error]
@@ -12,6 +13,7 @@ class PolicyApplicationGroup < ApplicationRecord
       update(status: :success)
       policy_group_quote.calculate_premium
       policy_group_quote.generate_invoices
+      policy_group_quote.update(status: :quoted)
     elsif all_errors_any?
       update(status: :error)
     end

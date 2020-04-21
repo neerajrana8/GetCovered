@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_04_19_122719) do
+ActiveRecord::Schema.define(version: 2020_04_21_121501) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -779,8 +779,18 @@ ActiveRecord::Schema.define(version: 2020_04_19_122719) do
     t.integer "status", default: 0
     t.bigint "account_id"
     t.bigint "agency_id"
+    t.date "effective_date"
+    t.date "expiration_date"
+    t.bigint "billing_strategy_id"
+    t.bigint "policy_group_id"
+    t.bigint "carrier_id"
+    t.bigint "policy_type_id"
     t.index ["account_id"], name: "index_policy_application_groups_on_account_id"
     t.index ["agency_id"], name: "index_policy_application_groups_on_agency_id"
+    t.index ["billing_strategy_id"], name: "index_policy_application_groups_on_billing_strategy_id"
+    t.index ["carrier_id"], name: "index_policy_application_groups_on_carrier_id"
+    t.index ["policy_group_id"], name: "index_policy_application_groups_on_policy_group_id"
+    t.index ["policy_type_id"], name: "index_policy_application_groups_on_policy_type_id"
   end
 
   create_table "policy_applications", force: :cascade do |t|
@@ -871,6 +881,43 @@ ActiveRecord::Schema.define(version: 2020_04_19_122719) do
     t.index ["account_id"], name: "index_policy_group_quotes_on_account_id"
     t.index ["agency_id"], name: "index_policy_group_quotes_on_agency_id"
     t.index ["policy_application_group_id"], name: "index_policy_group_quotes_on_policy_application_group_id"
+  end
+
+  create_table "policy_groups", force: :cascade do |t|
+    t.string "number"
+    t.date "effective_date"
+    t.date "expiration_date"
+    t.boolean "auto_renew", default: false, null: false
+    t.date "last_renewed_on"
+    t.integer "renew_count"
+    t.integer "billing_status"
+    t.integer "billing_dispute_count"
+    t.date "billing_behind_since"
+    t.integer "cancellation_code"
+    t.string "cancellation_date_date"
+    t.integer "status"
+    t.datetime "status_changed_on"
+    t.integer "billing_dispute_status"
+    t.boolean "billing_enabled", default: false, null: false
+    t.boolean "system_purchased", default: false, null: false
+    t.boolean "serviceable", default: false, null: false
+    t.boolean "has_outstanding_refund", default: false, null: false
+    t.jsonb "system_data", default: {}
+    t.date "last_payment_date"
+    t.date "next_payment_date"
+    t.boolean "policy_in_system"
+    t.boolean "auto_pay"
+    t.bigint "agency_id"
+    t.bigint "account_id"
+    t.bigint "carrier_id"
+    t.bigint "policy_type_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id"], name: "index_policy_groups_on_account_id"
+    t.index ["agency_id"], name: "index_policy_groups_on_agency_id"
+    t.index ["carrier_id"], name: "index_policy_groups_on_carrier_id"
+    t.index ["number"], name: "index_policy_groups_on_number", unique: true
+    t.index ["policy_type_id"], name: "index_policy_groups_on_policy_type_id"
   end
 
   create_table "policy_insurables", force: :cascade do |t|

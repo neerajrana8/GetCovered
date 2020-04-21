@@ -21,7 +21,12 @@ module V2
           policy_applications_count: @parsed_input_file.count,
           account: current_staff&.organizable,
           agency: current_staff&.organizable&.agency,
-          policy_group_quote: ::PolicyGroupQuote.create(status: :awaiting_estimate)
+          policy_group_quote: ::PolicyGroupQuote.create(status: :awaiting_estimate),
+          billing_strategy:
+            BillingStrategy.where(
+              agency: Agency.where(master_agency: true).take,
+              policy_type: PolicyType.find_by_slug('rent-guarantee')
+            ).take
         )
 
         @parsed_input_file.each do |policy_application_params|

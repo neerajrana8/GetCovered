@@ -9,8 +9,7 @@ module PolicyApplications
         application.carrier = Carrier.find(4)
         application.policy_type = PolicyType.find_by_slug('rent-guarantee')
         application.agency = Agency.where(master_agency: true).take
-        application.billing_strategy =
-          BillingStrategy.where(agency: application.agency, policy_type: application.policy_type).take
+        application.billing_strategy = policy_application_group.billing_strategy
 
         if application.save
           if create_policy_users(application) && application.update(status: 'complete')
