@@ -87,15 +87,16 @@ class Invoice < ApplicationRecord
         refund_date = Time.current.to_date if refund_date.nil?
         proportion_to_refund = new_term_last_date < term_first_date ? 1.to_d :
                                new_term_last_date >= term_last_date ? 0.to_d :
-                               (term_last_date - new_term_last_date).to_d / ((term_last_date - term_first_date) + 1).to_d
+                               (term_last_date - new_term_last_date).to_i.to_d / ((term_last_date - term_first_date) + 1).to_i.to_d
         # calculate how much to refund
         to_refund = line_items.group_by{|li| li.refundability }
         to_refund['no_refund'] = 0
-        to_refund['prorated_refund'] = (to_refund['prorated_refund'] || []).inject(0){|sum,li| sum + (li.price * proportion_to_refund).floor }
-        to_refund['complete_refund_before_term'] = refund_date >= term_first_date ? 0 : to_refund['complete_refund_before_term'].inject(0){|sum,li| sum + li.price }
-        to_refund['complete_refund_during_term'] = refund_date > term_last_date ? 0 : to_refund['complete_refund_during_term'].inject(0){|sum,li| sum + li.price }
-        to_refund['complete_refund_before_due_date'] = refund_date >= due_date ? 0 : to_refund['complete_refund_before_due_date'].inject(0){|sum,li| sum + li.price }
-        to_refund = to_refund.transform_values{|v| v.class == ::Array ? 0 : v }.inject(0){|sum,r| sum + r }
+        to_refund['prorated_refund'] = (to_refund['prorated_refund'] || []).inject(0){|sum,li| sum + (li.price * proportion_to_refund).floor } if to_refund.has_key?('prorated_refund')
+        to_refund['complete_refund_before_term'] = refund_date >= term_first_date ? 0 : to_refund['complete_refund_before_term'].inject(0){|sum,li| sum + li.price } if to_refund.has_key?('complete_refund_before_term')
+        to_refund['complete_refund_during_term'] = refund_date > term_last_date ? 0 : to_refund['complete_refund_during_term'].inject(0){|sum,li| sum + li.price } if to_refund.has_key?('complete_refund_during_term')
+        to_refund['complete_refund_before_due_date'] = refund_date >= due_date ? 0 : to_refund['complete_refund_before_due_date'].inject(0){|sum,li| sum + li.price } if to_refund.has_key?('complete_refund_before_due_date')
+        puts "HEY THERE: #{to_refund}"
+        to_refund = to_refund.transform_values{|v| v.class == ::Array ? 0 : v }.inject(0){|sum,r| sum + r[1] }
       else
         to_refund = to_refund_override
       end
@@ -138,15 +139,15 @@ class Invoice < ApplicationRecord
       return { success: false, errors: "invoice status must be 'complete' before refunding" } unless status == 'complete'
       already_refunded = charges.succeeded.inject(0){|sum, current_charge| sum + current_charge.amount_refunded }
       to_refund_now = [0, to_refund - already_refunded].max
-      return current_charge.apply_refund(to_refund_now, full_reason, stripe_reason)
+      return apply_refund(to_refund_now, full_reason, stripe_reason)
     end
   end
   
   # refunds an exact amount, regardless of what has been refunded before; or refunds as much of it as possible and reports what it failed to refund
   def apply_refund(to_refund, full_reason = nil, stripe_reason = nil)
+    errors_encountered = {}
     with_lock do
       return { success: false, errors: "invoice status must be 'complete' before refunding" } unless status == 'complete'
-      errors_encountered = {}
       charges.succeeded.each do |current_charge|
         to_refund_now = [[current_charge.amount - current_charge.amount_refunded, to_refund].min, 0].max
         result = current_charge.apply_refund(to_refund_now, full_reason, stripe_reason)
