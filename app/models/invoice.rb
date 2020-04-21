@@ -91,7 +91,7 @@ class Invoice < ApplicationRecord
         # calculate how much to refund
         to_refund = line_items.group_by{|li| li.refundability }
         to_refund['no_refund'] = 0
-        to_refund['prorated_refund'] = ((to_refund['prorated_refund'] || []).inject(0){|sum,li| sum + li.price } * proportion_to_refund).floor
+        to_refund['prorated_refund'] = (to_refund['prorated_refund'] || []).inject(0){|sum,li| sum + (li.price * proportion_to_refund).floor }
         to_refund['complete_refund_before_term'] = refund_date >= term_first_date ? 0 : to_refund['complete_refund_before_term'].inject(0){|sum,li| sum + li.price }
         to_refund['complete_refund_during_term'] = refund_date > term_last_date ? 0 : to_refund['complete_refund_during_term'].inject(0){|sum,li| sum + li.price }
         to_refund['complete_refund_before_due_date'] = refund_date >= due_date ? 0 : to_refund['complete_refund_before_due_date'].inject(0){|sum,li| sum + li.price }
