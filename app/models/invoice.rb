@@ -91,7 +91,7 @@ class Invoice < ApplicationRecord
         refund_date = Time.current.to_date if refund_date.nil?
         proportion_to_refund = new_term_last_date < term_first_date ? 1.to_d :
                                new_term_last_date >= term_last_date ? 0.to_d :
-                               (term_last_date - new_term_last_date).to_d / (term_last_date - term_first_date + 1).to_d
+                               (term_last_date - new_term_last_date).to_d / ((term_last_date - term_first_date) + 1).to_d
         # calculate how much to refund
         to_refund = line_items.group_by{|li| li.refundability }
         to_refund['no_refund'] = 0
