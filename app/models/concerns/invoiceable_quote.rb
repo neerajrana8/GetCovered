@@ -23,7 +23,6 @@ policy_application
   primary_user
 =end
 
-
 	def generate_invoices_for_term(renewal = false, refresh = false)
     invoices_generated = false
     
@@ -51,6 +50,7 @@ policy_application
         roundables = [:deposit_fees, :amortized_fees, :base, :special_premium, :taxes] # fields on PolicyPremium to have rounding errors fixed
         refundabilities = { base: 'prorated_refund', special_premium: 'prorated_refund', taxes: 'prorated_refund' } # fields that can be refunded on cancellation
         line_item_names = { base: "Premium", special_premium: "Special Premium" } # fields to rename on the invoice
+        line_item_specials { base: "unearned_premium" }
         
         # calculate invoice charges
         to_charge = billing_plan[:billing_schedule].map.with_index do |payment, index|
@@ -93,7 +93,8 @@ policy_application
                   {
                     title: line_item_names[roundable] || roundable.to_s.titleize,
                     price: tc[roundable] || 0,
-                    refundability: refundabilities[roundable] || 'no_refund'
+                    refundability: refundabilities[roundable] || 'no_refund',
+                    special: line_item_specials[roundable] || 'no_special'
                   }
                 end.select{|lia| !lia.nil? && lia[:price] > 0 }
               })

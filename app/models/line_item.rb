@@ -13,5 +13,10 @@ class LineItem < ApplicationRecord
     complete_refund_before_term: 2,       # if we cancel before term start, complete refund, otherwise no refund
     complete_refund_during_term: 3,       # if we cancel before or during term, complete refund, otherwise no refund
     complete_refund_before_due_date: 4    # if we cancel before the due date, complete refund, otherwise no refund
-  } 
+  }
+  
+  enum special: {
+    no_special: 0,
+    unearned_premium: 1
+  }
 end
