@@ -6,12 +6,8 @@
 class Invoice < ApplicationRecord
   # ActiveRecord Callbacks
 
-  # All initialization was moved to database. Only payee assignment is left, 
-  # which will be uncommented when Policy is ready.
-  # after_initialize  :initialize_invoice
   include ElasticsearchSearchable
 
-  # DISABLED FOR NOW because it contains v1 functionality that's not being used anymore, and if anyone passes a line item to an invoice in v2 this would give them some nasty surprises
   before_validation :calculate_subtotal,
     on: :create
     
@@ -396,9 +392,6 @@ class Invoice < ApplicationRecord
 # 			errors.add(:policy_id, "must exist if status is anything but quoted")	
 # 		end
 # 	end
-
-  def initialize_invoice
-  end
 
   # Calculation Methods
 
