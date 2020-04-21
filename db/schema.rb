@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_04_14_180842) do
+ActiveRecord::Schema.define(version: 2020_04_19_122719) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -102,7 +102,6 @@ ActiveRecord::Schema.define(version: 2020_04_14_180842) do
     t.bigint "addressable_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.boolean "searchable", default: false
     t.index ["addressable_type", "addressable_id"], name: "index_addresses_on_addressable_type_and_addressable_id"
   end
 
@@ -190,6 +189,7 @@ ActiveRecord::Schema.define(version: 2020_04_14_180842) do
     t.string "logo_url"
     t.string "footer_logo_url"
     t.string "subdomain"
+    t.string "subdomain_test"
     t.index ["profileable_type", "profileable_id"], name: "index_branding_profiles_on_profileable_type_and_profileable_id"
     t.index ["url"], name: "index_branding_profiles_on_url", unique: true
   end
@@ -827,6 +827,33 @@ ActiveRecord::Schema.define(version: 2020_04_14_180842) do
     t.index ["policy_id"], name: "index_policy_coverages_on_policy_id"
   end
 
+  create_table "policy_group_premia", force: :cascade do |t|
+    t.integer "base", default: 0
+    t.integer "taxes", default: 0
+    t.integer "total_fees", default: 0
+    t.integer "total", default: 0
+    t.integer "estimate"
+    t.integer "calculation_base", default: 0
+    t.integer "deposit_fees", default: 0
+    t.integer "amortized_fees", default: 0
+    t.integer "special_premium", default: 0
+    t.integer "integer", default: 0
+    t.boolean "include_special_premium", default: false
+    t.boolean "boolean", default: false
+    t.integer "carrier_base", default: 0
+    t.integer "unearned_premium", default: 0
+    t.boolean "enabled", default: false, null: false
+    t.datetime "enabled_changed"
+    t.bigint "policy_group_quote_id"
+    t.bigint "billing_strategy_id"
+    t.bigint "commission_strategy_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["billing_strategy_id"], name: "index_policy_group_premia_on_billing_strategy_id"
+    t.index ["commission_strategy_id"], name: "index_policy_group_premia_on_commission_strategy_id"
+    t.index ["policy_group_quote_id"], name: "index_policy_group_premia_on_policy_group_quote_id"
+  end
+
   create_table "policy_group_quotes", force: :cascade do |t|
     t.string "reference"
     t.string "external_reference"
@@ -909,10 +936,12 @@ ActiveRecord::Schema.define(version: 2020_04_14_180842) do
     t.datetime "updated_at", null: false
     t.integer "est_premium"
     t.string "external_id"
+    t.bigint "policy_group_quote_id"
     t.index ["account_id"], name: "index_policy_quotes_on_account_id"
     t.index ["agency_id"], name: "index_policy_quotes_on_agency_id"
     t.index ["external_id"], name: "index_policy_quotes_on_external_id", unique: true
     t.index ["policy_application_id"], name: "index_policy_quotes_on_policy_application_id"
+    t.index ["policy_group_quote_id"], name: "index_policy_quotes_on_policy_group_quote_id"
     t.index ["policy_id"], name: "index_policy_quotes_on_policy_id"
   end
 

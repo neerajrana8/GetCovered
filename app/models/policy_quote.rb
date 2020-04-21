@@ -20,6 +20,7 @@ class PolicyQuote < ApplicationRecord
   belongs_to :agency, optional: true
   belongs_to :account, optional: true
   belongs_to :policy, optional: true
+	belongs_to :policy_group_quote, optional: true
 
 	has_many :events, as: :eventable
 
@@ -316,7 +317,6 @@ class PolicyQuote < ApplicationRecord
       if charge_invoice[:success] == true
         return true
       end
-															
 		end    
 		
 #     if !policy.nil? && policy_premium.calculation_base > 0 && status == "accepted"
