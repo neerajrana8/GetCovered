@@ -81,15 +81,19 @@ class Invoice < ApplicationRecord
   #   => true
   
   # issue a proration refund for a completed/processing invoice
-  def apply_proration(new_term_last_date, refund_date: nil, to_refund_override: nil)
+  def apply_proration(new_term_last_date, refund_date: nil, to_refund_override: nil, cancel_if_unpaid_override: nil)
     with_lock do
       to_refund = nil
+      cancel_if_unpaid = false
       if to_refund_override.nil?
         # get refund date and proportion-to-refund
         refund_date = Time.current.to_date if refund_date.nil?
+        proportion_to_refund = 0
         proportion_to_refund = new_term_last_date < term_first_date ? 1.to_d :
                                new_term_last_date >= term_last_date ? 0.to_d :
                                (term_last_date - new_term_last_date).to_i.to_d / ((term_last_date - term_first_date) + 1).to_i.to_d
+        # set cancel_if_unpaid
+        cancel_if_unpaid = (new_term_last_date < term_first_date)
         # calculate how much to refund
         to_refund = line_items.group_by{|li| li.refundability }
         to_refund['no_refund'] = 0
@@ -97,15 +101,16 @@ class Invoice < ApplicationRecord
         to_refund['complete_refund_before_term'] = refund_date >= term_first_date ? 0 : to_refund['complete_refund_before_term'].inject(0){|sum,li| sum + li.price } if to_refund.has_key?('complete_refund_before_term')
         to_refund['complete_refund_during_term'] = refund_date > term_last_date ? 0 : to_refund['complete_refund_during_term'].inject(0){|sum,li| sum + li.price } if to_refund.has_key?('complete_refund_during_term')
         to_refund['complete_refund_before_due_date'] = refund_date >= due_date ? 0 : to_refund['complete_refund_before_due_date'].inject(0){|sum,li| sum + li.price } if to_refund.has_key?('complete_refund_before_due_date')
-        puts "HEY THERE: #{to_refund}"
         to_refund = to_refund.transform_values{|v| v.class == ::Array ? 0 : v }.inject(0){|sum,r| sum + r[1] }
       else
         to_refund = to_refund_override
       end
+      cancel_if_unpaid = cancel_if_unpaid_override unless cancel_if_unpaid_override.nil?
       # apply refund
       case status
-        when 'upcoming', 'available'
+        when 'upcoming', 'available', 'missing'
           # apply a proration_reduction to the total
+          to_refund = subtotal if cancel_if_unpaid
           new_total = subtotal - to_refund
           if new_total < 0
             new_total = 0
@@ -123,13 +128,16 @@ class Invoice < ApplicationRecord
           return true if result[:success]
           return false # WARNING: we discard result[:errors] here
         when 'processing'
-          return update(has_pending_refund: true, pending_refund_data: { 'proration_refund' => to_refund })
-        when 'missing'
-          # MOOSE WARNING: we do nothing here atm... should we?
-          return true
+          return update(has_pending_refund: true, pending_refund_data: { 'proration_refund' => to_refund, 'cancel_if_unpaid' => cancel_if_unpaid })
         when 'canceled'
-          # we do nothing
-          return true
+          # apply a proration_reduction to the total (might as well keep track of changes even to canceled invoices)
+          to_refund = subtotal if cancel_if_unpaid
+          new_total = subtotal - to_refund
+          if new_total < 0
+            new_total = 0
+            to_refund = subtotal
+          end
+          return update(proration_reduction: to_refund, total: new_total)
       end
     end
     return false
@@ -179,7 +187,7 @@ class Invoice < ApplicationRecord
   #   @invoice.pay()
   #   => { success: true }
 
-  def pay(allow_upcoming: false, amount_override: nil, stripe_source: nil, stripe_token: nil) # all optional
+  def pay(allow_upcoming: false, amount_override: nil, stripe_source: nil, stripe_token: nil) # all optional... stripe_source can be passed as :default instead of a source id string to use the default payment method
     # set invoice status to processing
     return_error = nil
     with_lock do
@@ -226,94 +234,48 @@ class Invoice < ApplicationRecord
 
   def payment_succeeded
     with_lock do
-      update(status: 'complete')
+      self.update(status: 'complete')
+      invoiceable.payment_succeeded(self) if invoiceable.respond_to?(:payment_succeeded)
       if has_pending_refund && pending_refund_data.has_key?('proration_refund')
-        if apply_proration(nil, to_refund_override: pending_refund_data['proration_refund'].to_i)
+        if apply_proration(nil, to_refund_override: pending_refund_data['proration_refund'].to_i, cancel_if_unpaid_override: pending_refund_data['cancel_if_unpaid'])
           update_columns(has_pending_refund: false)
+        else
+          # WARNING: do nothing on proration application failure... would be a good place for a generalized error to be logged to the db
         end
       end
-    end
-		
-		if invoiceable_type == 'Policy' && !invoiceable.nil?
-      policy = invoiceable
-	    if policy.BEHIND? || policy.REJECTED?
-        policy.billing_status = 'RESCINDED' unless policy.invoices.map{|inv| inv.status }.include?('missed')
-	    else
-	      policy.billing_status = 'CURRENT'
-	    end
-			
-	    policy.last_payment_date = updated_at.to_date
-	    next_invoice = policy.invoices.where('due_date > ?', due_date).order('due_date ASC').limit(1).take
-	    policy.next_payment_date = next_invoice.due_date unless next_invoice.nil?
-	
-	    policy.save
-    # MOOSE WARNING: needs elsif for PolicyGroup, once that exists
     end
   end
 
   def payment_failed
-    unless status == 'complete'
-      # prepare for failure notifications
-      failure_is_postproration = false # flag set to true when this is a post-policy-proration failure of a canceled policy
-      invoice_status = nil
-      payee_notification_subject = nil
-      agent_notification_subject = nil
-      if due_date >= Time.current.to_date
-        invoice_status = 'available'
-        payee_notification_subject = 'Get Covered: Payment Failure'
-        payee_notification_message = "A payment for #{get_descriptor}, invoice ##{number} has failed.  Please submit another payment before #{due_date.strftime('%m/%d/%Y')}."
-        agent_notification_subject = 'Get Covered: Payment Failure'
-        agent_notification_message = "A payment for #{get_descriptor}, invoice ##{number} has failed.  Payment due #{due_date.strftime('%m/%d/%Y')}."
-      else
-        invoice_status = 'missed'
-        payee_notification_subject = 'Get Covered: Payments Behind'
-        payee_notification_message = "A payment for #{get_descriptor}, invoice ##{number} has failed.  Your payment is now past due.  Please submit a payment immediately to prevent cancellation of coverage."
-        agent_notification_subject = 'Get Covered: Payments Behind'
-        agent_notification_message = "A payment for #{get_descriptor}, invoice ##{number} has failed.  This payment is now past due."
-      end
-      # update our status
-      update status: invoice_status
-      # handle when our payment is missed
-      if invoice_status == 'missed'
-        if has_pending_refund
-          # if we are here, then a proration was applied to the invoice while payment was processing, and payment then failed
-          failure_is_postproration = true
-          agent_notification_subject = 'Get Covered: Post-Cancelation Payment Failure'
-          agent_notification_message = "A payment for #{get_descriptor}, invoice #{number} has failed. The payment was marked for proration adjustments via refund upon its successful receipt, because the policy was canceled while the payment was being processed. Its failure means such adjustments can no longer be made. No proration adjustment refunds will be issued; no payment was collected for this invoice."
-          #notifications.create(
-          #  notifiable: SystemDaemon.find_by_process('notify_canceled_policy_payment_failure'),
-          #  action: 'invoice_payment_failed_after_proration',
-          #  subject: agent_notification_subject,
-          #  message: agent_notification_message
-          #)
+    with_lock do
+      unless self.status == 'complete'
+        invoiceable.payment_failed(self) if invoiceable.respond_to?(:payment_failed)
+        if due_date >= Time.current.to_date
+          self.update(status: 'available')
+        else
+          self.payment_missed
         end
-        self.invoiceable.update billing_status: 'BEHIND' if self.invoiceable_type == 'Policy' # MOOSE WARNING or policygroup once it exists
       end
-      
-      # Notify responsible payee
-      unless failure_is_postproration
-        notifications.create(
-          notifiable: payee,
-          action: 'invoice_payment_failed',
-          code: "error",
-          subject: payee_notification_subject,
-          message: payee_notification_message
-        )
-      end
-
-      # Notify policy agents
-      notifiables_for_payment_failure.each do |notifiable|
-        notifications.create(
-          notifiable: notifiable, 
-          action: failure_is_postproration ? 'invoice_payment_failed_after_proration' : 'invoice_payment_failed',
-          code: "error",
-          subject: agent_notification_subject,
-          message: agent_notification_message
-        )
-      end
-
     end
   end
+  
+  def payment_missed
+    with_lock do
+      if self.status == 'upcoming' || self.status == 'available' # other statuses mean we were canceled or already paid
+        self.update(status: 'missed')
+        if self.has_pending_refund && self.pending_refund_data.has_key?('proration_refund')
+          if apply_proration(nil, to_refund_override: pending_refund_data['proration_refund'].to_i, cancel_if_unpaid_override: pending_refund_data['cancel_if_unpaid'])
+            update_columns(has_pending_refund: false)
+          else
+            # WARNING: do nothing on proration application failure... would be a good place for a generalized error to be logged to the db
+          end
+        end
+        invoiceable.payment_missed(self) if invoiceable.respond_to?(:payment_missed) && !self.reload.status == 'canceled' # just in case apply_proration reduced our total due to 0 and we are now canceled instead of missed
+      end
+    end
+  end
+
+
 
   # Make available
   #
