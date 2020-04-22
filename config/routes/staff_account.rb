@@ -113,6 +113,10 @@
   
     resources :notifications,
       only: [ :update, :index, :show ]
+
+    resources :payment_profiles,
+      path: "payment-profiles",
+      only: [:index, :create, :update]
   
     resources :payments,
       only: [ :index, :show ]

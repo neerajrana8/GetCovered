@@ -1,4 +1,3 @@
 json.extract! account, :call_sign, :contact_info, :id, :settings, :slug,
   :staff_id, :title, :tos_accepted, :tos_accepted_at, :verified,
-  :whitelabel
-
+  :whitelabel, :stripe_id

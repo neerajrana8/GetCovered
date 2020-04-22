@@ -5,6 +5,7 @@
 module V2
   module StaffAgency
     class StripeController < StaffAgencyController
+      before_action :is_owner?
 
       def stripe_button_link
         stripe_url = 'https://connect.stripe.com/express/oauth/authorize'
@@ -41,6 +42,10 @@ module V2
         current_staff.organizable.update_attribute(:stripe_id, connected_account_id)
       end
 
+      def is_owner?
+        render(json: { success: false, errors: ['Unauthorized Access'] }, 
+               status: :unauthorized) and return unless current_staff.owner
+      end
     end
   end
 end
