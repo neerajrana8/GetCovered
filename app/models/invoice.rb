@@ -30,7 +30,7 @@ class Invoice < ApplicationRecord
   has_many :line_items, autosave: true
   
   has_many :histories, as: :recordable
-  has_many :notifications, as: :notifiable
+  #has_many :notifications, as: :eventable
 
   # Validations
 
@@ -108,7 +108,7 @@ class Invoice < ApplicationRecord
       cancel_if_unpaid = cancel_if_unpaid_override unless cancel_if_unpaid_override.nil?
       # apply refund
       case status
-        when 'upcoming', 'available', 'missing'
+        when 'upcoming', 'available'
           # apply a proration_reduction to the total
           to_refund = subtotal if cancel_if_unpaid
           new_total = subtotal - to_refund
@@ -127,7 +127,7 @@ class Invoice < ApplicationRecord
           result = ensure_refunded(to_refund, "Proration Adjustment", nil)
           return true if result[:success]
           return false # WARNING: we discard result[:errors] here
-        when 'processing'
+        when 'processing', 'missed'
           return update(has_pending_refund: true, pending_refund_data: { 'proration_refund' => to_refund, 'cancel_if_unpaid' => cancel_if_unpaid })
         when 'canceled'
           # apply a proration_reduction to the total (might as well keep track of changes even to canceled invoices)
@@ -248,7 +248,7 @@ class Invoice < ApplicationRecord
 
   def payment_failed
     with_lock do
-      unless self.status == 'complete'
+      if self.status == 'available' || self.status == 'processing'
         invoiceable.payment_failed(self) if invoiceable.respond_to?(:payment_failed)
         if due_date >= Time.current.to_date
           self.update(status: 'available')
@@ -261,7 +261,7 @@ class Invoice < ApplicationRecord
   
   def payment_missed
     with_lock do
-      if self.status == 'upcoming' || self.status == 'available' # other statuses mean we were canceled or already paid
+      if self.status == 'available' # other statuses mean we were canceled or already paid
         self.update(status: 'missed')
         if self.has_pending_refund && self.pending_refund_data.has_key?('proration_refund')
           if apply_proration(nil, to_refund_override: pending_refund_data['proration_refund'].to_i, cancel_if_unpaid_override: pending_refund_data['cancel_if_unpaid'])
@@ -271,34 +271,6 @@ class Invoice < ApplicationRecord
           end
         end
         invoiceable.payment_missed(self) if invoiceable.respond_to?(:payment_missed) && !self.reload.status == 'canceled' # just in case apply_proration reduced our total due to 0 and we are now canceled instead of missed
-      end
-    end
-  end
-
-
-
-  # Make available
-  #
-  # Sets invoice as available
-
-  def make_available
-    if status == 'upcoming'
-      if update status: 'available'
-
-        payee_notification = notifications.new(
-          notifiable: payee,
-          action: 'invoice_available',
-          template: 'invoice',
-          subject: "#{get_descriptor}, Invoice ##{number}.",
-          message: 'A new invoice is available for payment.'
-        )
-
-        if payee_notification.save
-
-        else
-          pp payee_notification.errors
-        end
-
       end
     end
   end

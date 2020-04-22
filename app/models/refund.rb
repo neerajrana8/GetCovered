@@ -15,8 +15,8 @@ class Refund < ApplicationRecord
 
   has_one :invoice, through: :charge
   
-  has_many :notifications,
-    as: :eventable
+  #has_many :notifications,
+  #  as: :eventable
 
   # Validations
 

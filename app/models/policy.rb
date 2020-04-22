@@ -254,7 +254,7 @@ class Policy < ApplicationRecord
       end
       update(
         billing_dispute_count: new_bdc,
-        billing_dispute_status: count_change == new_bdc ? 'DISPUTED' : new_bdc == 0 ? 'AWAITING_POSTDISPUTE_PROCESSING'
+        billing_dispute_status: new_bdc == 0 ? 'AWAITING_POSTDISPUTE_PROCESSING' : 'DISPUTED'
       )
     end
     return true
@@ -271,26 +271,26 @@ class Policy < ApplicationRecord
   
   # to be invoked by Invoice, not directly; an invoice payment attempt failed (keep in mind it might not actually have been due yet, and that invoice.status will not yet have been changed to available/missed when this is called!)
   def payment_failed(invoice)
-    payee_notification_subject = 'Get Covered: Payment Failure'
-    payee_notification_message = "A payment for #{invoice.get_descriptor}, invoice ##{invoice.number} has failed.  Please submit another payment before #{invoice.due_date.strftime('%m/%d/%Y')}."
-    agent_notification_subject = 'Get Covered: Payment Failure'
-    agent_notification_message = "A payment for #{invoice.get_descriptor}, invoice ##{invoice.number} has failed.  Payment due #{invoice.due_date.strftime('%m/%d/%Y')}."
-    notifications.create(
-      notifiable: invoice.payee,
-      action: 'invoice_payment_failed',
-      code: "error",
-      subject: payee_notification_subject,
-      message: payee_notification_message
-    )
-    self.agency.account_staff.to_a.each do |notifiable|
-      notifications.create(
-        notifiable: notifiable, 
-        action: 'invoice_payment_failed',
-        code: "error",
-        subject: agent_notification_subject,
-        message: agent_notification_message
-      )
-    end
+    #payee_notification_subject = 'Get Covered: Payment Failure'
+    #payee_notification_message = "A payment for #{invoice.get_descriptor}, invoice ##{invoice.number} has failed.  Please submit another payment before #{invoice.due_date.strftime('%m/%d/%Y')}."
+    #agent_notification_subject = 'Get Covered: Payment Failure'
+    #agent_notification_message = "A payment for #{invoice.get_descriptor}, invoice ##{invoice.number} has failed.  Payment due #{invoice.due_date.strftime('%m/%d/%Y')}."
+    #inver = invoice.notifications.create(
+    #  notifiable: invoice.payee,
+    #  action: 'invoice_payment_failed',
+    #  code: "error",
+    #  subject: payee_notification_subject,
+    #  message: payee_notification_message
+    #)
+    #self.agency.account_staff.to_a.each do |notifiable|
+    #  inver = invoice.notifications.create(
+    #    notifiable: notifiable, 
+    #    action: 'invoice_payment_failed',
+    #    code: "error",
+    #    subject: agent_notification_subject,
+    #    message: agent_notification_message
+    #  )
+    #end
   end
   
   # to be invoked by Invoice, not directly; an invoice payment attempt was missed
@@ -298,26 +298,26 @@ class Policy < ApplicationRecord
   def payment_missed(invoice)
     self.update(billing_status: 'BEHIND', billing_behind_since: Time.current.to_date)
     
-    payee_notification_subject = 'Get Covered: Payments Behind'
-    payee_notification_message = "A payment for #{invoice.get_descriptor}, invoice ##{invoice.number} has failed.  Your payment is now past due.  Please submit a payment immediately to prevent cancellation of coverage."
-    agent_notification_subject = 'Get Covered: Payments Behind'
-    agent_notification_message = "A payment for #{invoice.get_descriptor}, invoice ##{invoice.number} has failed.  This payment is now past due."
-    notifications.create(
-      notifiable: invoice.payee,
-      action: 'invoice_payment_failed',
-      code: "error",
-      subject: payee_notification_subject,
-      message: payee_notification_message
-    )
-    self.agency.account_staff.to_a.each do |notifiable|
-      notifications.create(
-        notifiable: notifiable, 
-        action: 'invoice_payment_failed',
-        code: "error",
-        subject: agent_notification_subject,
-        message: agent_notification_message
-      )
-    end
+    #payee_notification_subject = 'Get Covered: Payments Behind'
+    #payee_notification_message = "A payment for #{invoice.get_descriptor}, invoice ##{invoice.number} has failed.  Your payment is now past due.  Please submit a payment immediately to prevent cancellation of coverage."
+    #agent_notification_subject = 'Get Covered: Payments Behind'
+    #agent_notification_message = "A payment for #{invoice.get_descriptor}, invoice ##{invoice.number} has failed.  This payment is now past due."
+    #invoice.notifications.create(
+    #  notifiable: invoice.payee,
+    #  action: 'invoice_payment_failed',
+    #  code: "error",
+    #  subject: payee_notification_subject,
+    #  message: payee_notification_message
+    #)
+    #self.agency.account_staff.to_a.each do |notifiable|
+    #  invoice.notifications.create(
+    #    notifiable: notifiable, 
+    #    action: 'invoice_payment_failed',
+    #    code: "error",
+    #    subject: agent_notification_subject,
+    #    message: agent_notification_message
+    #  )
+    #end
   end
 
   private
