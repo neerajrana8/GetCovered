@@ -90,7 +90,7 @@ class Charge < ApplicationRecord
       end
       raise ActiveRecord::Rollback unless succeeded
       # update invoice
-      succeeded = invoice.modify_disputed_charge_count(true, false) if became_disputed
+      succeeded = invoice.modify_disputed_charge_count(1) if became_disputed
       raise ActiveRecord::Rollback unless succeeded
     end
     return succeeded
@@ -98,49 +98,51 @@ class Charge < ApplicationRecord
 
 
   def react_to_dispute_closure(dispute_id, amount_lost)
-    succeeded = false
-    became_undisputed = false
-    ActiveRecord::Base.transaction do
-      # update internal numbers
-      reload
-      became_undisputed = (dispute_count == 1)
-      succeeded = self.update(
-        dispute_count: dispute_count - 1,
-        amount_lost_to_disputes: amount_lost_to_disputes + amount_lost,
-        amount_refunded: amount_refunded + [amount_lost - amount_in_queued_refunds, 0].max,
-        amount_in_queued_refunds: [amount_in_queued_refunds - amount_lost, 0].max
-      )
-      raise ActiveRecord::Rollback unless succeeded
-      # apply amount_lost to refunds
-      unless amount_lost == 0
-        succeeded = true
-        refunds.queued.reload.each do |queued_refund|
-          amount_to_credit = [amount_lost, queued_refund.amount - queued_refund.amount_returned_via_dispute].min
-          if queued_refund.apply_dispute_payout(amount_to_credit)
-            amount_lost -= amount_to_credit
-          else
-            succeeded = false
-          end
-          break if amount_lost == 0
-        end
-      end
-      succeeded ||= (amount_lost == 0) # we succeeded if no apply_dispute_payout call failed, or if some failed but we applied the full amount_lost as credit anyway
-      raise ActiveRecord::Rollback unless succeeded
-      # create a bookkeeping refund for any amount left over
-      unless amount_lost == 0
-        succeeded = refunds.create(
-          amount: amount_lost,
-          amount_returned_via_dispute: amount_lost,
-          status: 'succeeded_via_dispute_payout',
-          full_reason: "payout for dispute ##{dispute_id}"
+    invoice.with_lock do # should only be called by Dispute#handle_dispute_closure and already in this lock, but to be safe...
+      succeeded = false
+      became_undisputed = false
+      ActiveRecord::Base.transaction do
+        # update internal numbers
+        reload
+        became_undisputed = (dispute_count == 1)
+        succeeded = self.update(
+          dispute_count: dispute_count - 1,
+          amount_lost_to_disputes: amount_lost_to_disputes + amount_lost,
+          amount_refunded: amount_refunded + [amount_lost - amount_in_queued_refunds, 0].max,
+          amount_in_queued_refunds: [amount_in_queued_refunds - amount_lost, 0].max
         )
         raise ActiveRecord::Rollback unless succeeded
+        # apply amount_lost to refunds
+        unless amount_lost == 0
+          succeeded = true
+          refunds.queued.reload.each do |queued_refund|
+            amount_to_credit = [amount_lost, queued_refund.amount - queued_refund.amount_returned_via_dispute].min
+            if queued_refund.apply_dispute_payout(amount_to_credit)
+              amount_lost -= amount_to_credit
+            else
+              succeeded = false
+            end
+            break if amount_lost == 0
+          end
+        end
+        succeeded ||= (amount_lost == 0) # we succeeded if no apply_dispute_payout call failed, or if some failed but we applied the full amount_lost as credit anyway
+        raise ActiveRecord::Rollback unless succeeded
+        # create a bookkeeping refund for any amount left over
+        unless amount_lost == 0
+          succeeded = refunds.create(
+            amount: amount_lost,
+            amount_returned_via_dispute: amount_lost,
+            status: 'succeeded_via_dispute_payout',
+            full_reason: "payout for dispute ##{dispute_id}"
+          )
+          raise ActiveRecord::Rollback unless succeeded
+        end
+        # update invoice
+        succeeded = invoice.modify_disputed_charge_count(-1) if became_undisputed
+        raise ActiveRecord::Rollback unless succeeded
       end
-      # update invoice
-      succeeded = invoice.modify_disputed_charge_count(false, true) if became_undisputed
-      raise ActiveRecord::Rollback unless succeeded
+      return succeeded
     end
-    return succeeded
   end
 
 

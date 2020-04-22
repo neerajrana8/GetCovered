@@ -243,10 +243,24 @@ class Policy < ApplicationRecord
       indexes :number, type: :text
     end
   end
+  
+  def modify_disputed_invoice_count(count_change)
+    self.with_lock do
+      new_bdc = self.billing_dispute_count + count_change
+      if new_bdc < 0
+        return false # this should never happen... WARNING: good place to put an error logger just in case?
+      end
+      update(
+        billing_dispute_count: new_bdc,
+        billing_dispute_status: count_change == new_bdc && new_bdc > 0 ? 'DISPUTED' : new_bdc == 0 && count_change != 0 ? 'AWAITING_POSTDISPUTE_PROCESSING'
+      )
+    end
+    return true
+  end
 
   private
 
-  def date_order
-    errors.add(:expiration_date, 'expiration date cannot be before effective date.') if expiration_date < effective_date
-  end
+    def date_order
+      errors.add(:expiration_date, 'expiration date cannot be before effective date.') if expiration_date < effective_date
+    end
 end

@@ -354,18 +354,30 @@ class Invoice < ApplicationRecord
   end
   
   # keep track of number of disputed charges
-  def modify_disputed_charge_count(opened_one, closed_one)
-    # MOOSE WARNING: this used to be on Policy but was taken away in v2 and currently does nothing!!!
+  def modify_disputed_charge_count(count_change)
+    return true if count_change == 0
+    with_lock do
+      # update our dispute count
+      new_disputed_charge_count = disputed_charge_count + count_change
+      if new_disputed_charge_count < 0
+        return false # makra pragmata ei touto gignotai
+      end
+      update_columns(disputed_charge_count: new_disputed_charge_count)
+      if new_disputed_charge_count == 0
+        refunds.queued.each{|ref| ref.process(true) }
+      end
+      # update our invoiceable if it wants updates
+      invoice_dispute_changes = (new_disputed_charge_count == count_change ? 1 : new_disputed_charge_count == 0 ? -1 : 0)
+      if self.invoiceable.respond_to?(:modify_disputed_invoice_count) && invoice_dispute_changes != 0
+        self.invoiceable.modify_disputed_invoice_count(invoice_dispute_changes)
+      end
+    end
+    return true
   end
   
   # whether refunds must start queued instead of running immediately
   def refunds_must_start_queued?
-    case(self.invoiceable&.reload.nil? ? nil : self.invoiceable_type)
-      when 'Policy'
-        self.invoiceable.billing_dispute_status == 'DISPUTED'
-      else
-        false
-    end
+    return(self.reload.disputed_charge_count > 0)
   end
   
   # whom to inform on payment failure (excluding payee)
