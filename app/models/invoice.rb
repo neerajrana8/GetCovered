@@ -16,6 +16,8 @@ class Invoice < ApplicationRecord
   before_validation :set_number, on: :create
 
   before_save :set_status_changed, if: -> { status_changed? }
+  
+  before_create :mark_line_items_priced_in
 
   # ActiveRecord Associations
 
@@ -412,6 +414,10 @@ class Invoice < ApplicationRecord
     errors.add(:term_last_date, "cannot precede term first date") unless term_last_date.nil? || term_first_date.nil? || (term_last_date >= term_first_date)
     errors.add(:term_last_date, "cannot be blank when term first date is provided") if term_last_date.nil? && !term_first_date.nil?
     errors.add(:term_first_date, "cannot be blank when term last date is provided") if term_first_date.nil? && !term_last_date.nil?
+  end
+  
+  def mark_line_items_priced_in
+    self.line_items.update_all(priced_in: true)
   end
 
   # History Methods

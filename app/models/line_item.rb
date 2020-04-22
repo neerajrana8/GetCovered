@@ -15,8 +15,12 @@ class LineItem < ApplicationRecord
     complete_refund_before_due_date: 4    # if we cancel before the due date, complete refund, otherwise no refund
   }
   
-  enum special: {
-    no_special: 0,
-    unearned_premium: 1
+  enum category: {
+    uncategorized: 0,
+    base_premium: 1,
+    special_premium: 2,
+    taxes: 3,
+    deposit_fees: 4,
+    amortized_fees: 5
   }
 end

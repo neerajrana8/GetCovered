@@ -3,13 +3,16 @@ class UpgradeInvoiceSystem < ActiveRecord::Migration[5.2]
     # add proration_reduction to Invoice
     add_column :invoices, :proration_reduction, :integer, null: false, default: 0
     
-    # restore defaults to policy billing dispute fields
+    # restore defaults & non-null constraints to policy billing dispute fields
     change_column_default :policies, :billing_dispute_count, 0
     change_column_default :policies, :billing_dispute_status, 0
+    change_column_null :policies, :billing_dispute_count, false
+    change_column_null :policies, :billing_dispute_status, false
     
     # add line item columns
     add_column :line_items, :refundability, :integer, null: false
-    add_column :line_items, :special, :integer, null: false, default: 0
+    add_column :line_items, :category, :integer, null: false, default: 0
+    add_column :line_items, :priced_in, :boolean, null: false, default: false
     
     # add line items themselves
     ::Invoice.group("invoiceable_type, invoiceable_id").pluck("invoiceable_type, invoiceable_id").each do |invoiceable|
@@ -44,9 +47,10 @@ class UpgradeInvoiceSystem < ActiveRecord::Migration[5.2]
     end
     ::LineItem.all.delete_all
     
-    remove_column :invoices, :proration_reduction
+    remove_column :line_items, :priced_in
+    remove_column :line_items, :category
     remove_column :line_items, :refundability
-    remove_column :line_items, :special
+    remove_column :invoices, :proration_reduction
   end
   
   private
@@ -69,7 +73,7 @@ class UpgradeInvoiceSystem < ActiveRecord::Migration[5.2]
       roundables = [:deposit_fees, :amortized_fees, :base, :special_premium, :taxes] # fields on PolicyPremium to have rounding errors fixed
       refundabilities = { base: 'prorated_refund', special_premium: 'prorated_refund', taxes: 'prorated_refund' } # fields that can be refunded on cancellation
       line_item_names = { base: "Premium", special_premium: "Special Premium" } # fields to rename on the invoice
-      line_item_specials = { base: "unearned_premium" }
+      line_item_categories = { base: "base_premium", special_premium: "special_premium", taxes: "taxes", deposit_fees: "deposit_fees", amortized_fees: "amortized_fees" }
       # flee if incomprehensible error occurs
       payments = billing_plan[:billing_schedule].select{|p| p > 0 }
       if payments.length != invoice_array.length
@@ -131,7 +135,7 @@ class UpgradeInvoiceSystem < ActiveRecord::Migration[5.2]
               title: line_item_names[roundable] || roundable.to_s.titleize,
               price: tc[roundable] || 0,
               refundability: refundabilities[roundable] || 'no_refund',
-              special: line_item_specials[roundable] || 'no_special'
+              category: line_item_categories[roundable] || 'uncategorized'
             }
           end.select{|lia| !lia.nil? && lia[:price] > 0 }
         )
