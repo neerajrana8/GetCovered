@@ -13,20 +13,28 @@ module CarrierPensioPolicyQuote
       {
         error: false,
         message: nil,
-        data: { policy_number: generate_policy_number }
+        data: { policy_number: pensio_generate_number(Policy) }
       }
     end
 
-    def generate_policy_number
-      policy_number = nil
+    def pensio_bind_group
+      {
+        error: false,
+        message: nil,
+        data: { policy_group_number: pensio_generate_number(PolicyGroup) }
+      }
+    end
+
+    def pensio_generate_number(model)
+      number = nil
 
       loop do
-        policy_number = "PENSIOUSA#{rand(36**12).to_s(36).upcase}"
+        number = "PENSIOUSA#{rand(36**12).to_s(36).upcase}"
 
-        break unless Policy.exists?(number: policy_number)
+        break unless model.exists?(number: number)
       end
 
-      return policy_number unless policy_number.nil?
+      return number unless number.nil?
     end
   end
 end
