@@ -6,23 +6,11 @@ module InvoiceableQuote
   extend ActiveSupport::Concern
 
 
-=begin
-#vars used:
-self
-  status_updated_on
-  available_period
-policy_premium
-  deposit_fees
-  amortized_fees
-  calculation_base
-  total_fees
-  total
-policy_application
-  billing_strategy.new_business['payments']
-  effective_date
-  primary_user
-=end
 
+  # WARNING:
+  #  the model this concern is used on must provide status_updated_on and available_period,
+  #  and must have an entry in this concern's private methods
+  #  get_policy_premium_invoice_information and get_policy_application_invoice_information
 	def generate_invoices_for_term(renewal = false, refresh = false)
     invoices_generated = false
     
@@ -30,7 +18,14 @@ policy_application
 	    
 	    invoices.destroy_all if refresh
 	    
-	  	if policy_premium.total > 0 && 
+      premium_data = get_policy_premium_invoice_information
+      if premium_data.nil?
+        puts "Invoiceable Quote cannot generate invoices without an associated policy premium"
+        invoices_generated = false
+        return invoices_generated
+      end
+      
+	  	if premium_data[:total] > 0 && 
 		  	 status == "quoted" && 
 		  	 invoices.count == 0
         
@@ -57,11 +52,11 @@ policy_application
           {
             due_date: index == 0 ? status_updated_on : billing_plan[:effective_date] + index.months,
             term_first_date: billing_plan[:effective_date] + index.months,
-            deposit_fees: (index == 0 ? policy_premium.deposit_fees : 0),
-            amortized_fees: (policy_premium.amortized_fees * payment / payment_weight_total).floor,
-            base: (policy_premium.base * payment / payment_weight_total).floor,
-            special_premium: (policy_premium.special_premium * payment / payment_weight_total).floor,
-            taxes: (policy_premium.taxes * payment / payment_weight_total).floor
+            deposit_fees: (index == 0 ? premium_data[:deposit_fees] : 0),
+            amortized_fees: (premium_data[:amortized_fees] * payment / payment_weight_total).floor,
+            base: (premium_data[:base] * payment / payment_weight_total).floor,
+            special_premium: (premium_data[:special_premium] * payment / payment_weight_total).floor,
+            taxes: (premium_data[:taxes] * payment / payment_weight_total).floor
           }
         end.map{|tc| tc.merge({ total: roundables.inject(0){|sum,r| sum + tc[r] } }) }.select{|tc| tc[:total] > 0 }
         # set term_last_dates
@@ -71,10 +66,10 @@ policy_application
         to_charge.last[:term_last_date] = billing_plan[:effective_date] + 12.months - 1.day
         # add any rounding errors to the first charge
         roundables.each do |roundable|
-          to_charge[0][roundable] += policy_premium.send(roundable) - to_charge.inject(0){|sum,tc| sum + tc[roundable] }
+          to_charge[0][roundable] += premium_data[roundable] - to_charge.inject(0){|sum,tc| sum + tc[roundable] }
         end
         to_charge[0][:total] = roundables.inject(0){|sum,r| sum + to_charge[0][r] }
-        unaccounted_error = policy_premium.total - to_charge.inject(0){|sum,tc| sum + tc[:total] }
+        unaccounted_error = premium_data[:total] - to_charge.inject(0){|sum,tc| sum + tc[:total] }
         to_charge[0][:additional_fees] = unaccounted_error unless unaccounted_error <= 0 # this should always be 0
         # create invoices
         begin
@@ -122,6 +117,23 @@ policy_application
   private
   
   
+    def get_policy_premium_invoice_information
+      if respond_to?(:policy_premium)
+        {
+          total: policy_premium.total,
+          deposit_fees: policy_premium.deposit_fees,
+          amortized_fees: policy_premium.amortized_fees,
+          base: policy_premium.base,
+          special_premium: policy_premium.special_premium,
+          taxes: policy_premium.taxes,
+          total: policy_premium.total
+        }
+      else
+        nil
+      end
+    end
+    
+  
     def get_policy_application_invoice_information
       if respond_to?(:policy_application)
         {
@@ -137,5 +149,6 @@ policy_application
         nil
       end
     end
+    
 
 end

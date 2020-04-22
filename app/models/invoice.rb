@@ -342,16 +342,6 @@ class Invoice < ApplicationRecord
     return(self.reload.disputed_charge_count > 0)
   end
   
-  # whom to inform on payment failure (excluding payee)
-  def notifiables_for_payment_failure
-    case(self.invoiceable.nil? ? nil : self.invoiceable_type)
-      when 'Policy'
-        self.invoiceable.agency.account_staff.to_a
-      else
-        []
-    end
-  end
-  
   # whom to inform on refund failure (excluding payee)
   def notifiables_for_refund_failure
     case(self.invoiceable.nil? ? nil : self.invoiceable_type)
@@ -363,12 +353,6 @@ class Invoice < ApplicationRecord
   end
 
   private
-
-# 	def policy_unless_quoted
-# 		if policy.nil? && status != "quoted"
-# 			errors.add(:policy_id, "must exist if status is anything but quoted")	
-# 		end
-# 	end
 
   # Calculation Methods
 

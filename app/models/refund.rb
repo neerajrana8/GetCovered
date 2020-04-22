@@ -9,9 +9,6 @@ class Refund < ApplicationRecord
 
   after_create :process
 
-  after_save :send_failure_notifications,
-    if: Proc.new { |rfnd| rfnd.saved_change_to_status? && ['failed', 'errored'].include?(rfnd.status) }
-
   # ActiveRecord Associations
 
   belongs_to :charge
@@ -145,27 +142,4 @@ class Refund < ApplicationRecord
       end
     end
 
-    def send_failure_notifications
-      if status == 'failed'
-        invoice.notifiables_for_refund_failure.each do |notifiable|
-          notifications.create( # used to be SystemDaemon
-            notifiable: notifiable, 
-            action: "refund_failed",
-            code: "error",
-            subject: "GetCovered Refund Failure", 
-            message:    "A refund (id #{id}) for #{ invoice.get_descriptor }, invoice ##{ invoice.number } has failed.#{failure_reason.blank? || failure_reason == 'unknown' ? "" : " The payment processor provided the following failure reason: #{failure_reason}"}"
-          )
-        end
-      elsif status == 'errored'
-        invoice.notifiables_for_refund_failure.each do |notifiable|
-          notifications.create(
-            notifiable: notifiable, 
-            action: "refund_failed",
-            code: "error",
-            subject: "GetCovered Refund Failure",
-            message:    "A refund (id #{id}) for #{ invoice.get_descriptor }, invoice ##{ invoice.number } has failed.#{error_message.blank? ? "" : " The payment processor provided the following error message: #{error_message}"}"
-          )
-        end
-      end
-    end
 end
