@@ -23,7 +23,7 @@ module V2
       
       def new
         selected_policy_type = params[:policy_type].blank? ? 'residential' : params[:policy_type]
-        puts "\n\n#{ selected_policy_type }\n\n" 
+        
         if valid_policy_types.include?(selected_policy_type)
           policy_type = PolicyType.find_by_slug(selected_policy_type)
           
