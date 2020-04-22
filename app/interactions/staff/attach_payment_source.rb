@@ -1,10 +1,10 @@
-class User
+class Staff
   class AttachPaymentSource < ActiveInteraction::Base
-    object :user
+    object :staff
     string :token, default: nil
     boolean :make_default, default: true
 
-    delegate :email, :profile, :stripe_id, :payment_profiles, :invoices, to: :user
+    delegate :email, :profile, :stripe_id, :payment_profiles, :invoices, to: :staff
 
     def execute
       begin
@@ -21,11 +21,11 @@ class User
                 source_type: 'bank_account',
                 fingerprint: token_data.bank_account.fingerprint,
                 verified: token_data.bank_account.status == 'verified',
-                payer: user
+                payer: staff
               )
 
               if make_default
-                user.current_payment_method = token_data.bank_account.status == 'verified' ? 'ach_verified' : 'ach_unverified'
+                staff.current_payment_method = token_data.bank_account.status == 'verified' ? 'ach_verified' : 'ach_unverified'
                 payment_profile.set_default
               end
 
@@ -38,11 +38,11 @@ class User
                 source_id: token_data.card.id,
                 source_type: 'card',
                 fingerprint: token_data.card.fingerprint,
-                payer: user
+                payer: staff
               )
 
               if make_default
-                user.current_payment_method = 'card'
+                staff.current_payment_method = 'card'
                 payment_profile.set_default
               end
             end
@@ -50,10 +50,10 @@ class User
             set_default_payment
           end
 
-          if user.save
+          if staff.save
             if make_default
               invoices.upcoming.each do |nvc|
-                payment_method = user.current_payment_method == 'card' ? 'card' : 'bank_account'
+                payment_method = staff.current_payment_method == 'card' ? 'card' : 'bank_account'
                 nvc.calculate_total(payment_method)
               end
             end
@@ -82,10 +82,10 @@ class User
             }
           )
 
-          if user.update_columns(stripe_id: customer.id)
+          if staff.update_columns(stripe_id: customer.id)
             customer
           else
-            errors.merge!(user.errors)
+            errors.merge!(staff.errors)
             false
           end
         else
@@ -105,10 +105,10 @@ class User
         reactivated_bank_account = customer.sources.retrieve(stored_method.source_id)
         account_verification_status = reactivated_bank_account.status == 'verified'
         stored_method.update(verified: account_verification_status)
-        user.current_payment_method = (account_verification_status ? 'ach_verified' : 'ach_unverified')
+        staff.current_payment_method = (account_verification_status ? 'ach_verified' : 'ach_unverified')
         stored_method.set_default
       when 'card'
-        user.current_payment_method = 'card'
+        staff.current_payment_method = 'card'
         stored_method.set_default
       end
     end
@@ -119,7 +119,7 @@ class User
         return false
       end
 
-      @stored_method ||= user.payment_profiles.find_by(source_type: token_data.type,
+      @stored_method ||= staff.payment_profiles.find_by(source_type: token_data.type,
                                                        fingerprint: token_data[token_data.type].fingerprint)
     end
   end
