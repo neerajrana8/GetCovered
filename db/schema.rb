@@ -102,7 +102,6 @@ ActiveRecord::Schema.define(version: 2020_04_14_180842) do
     t.bigint "addressable_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.boolean "searchable", default: false
     t.index ["addressable_type", "addressable_id"], name: "index_addresses_on_addressable_type_and_addressable_id"
   end
 
