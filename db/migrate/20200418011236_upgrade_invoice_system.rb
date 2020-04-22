@@ -3,6 +3,7 @@ class UpgradeInvoiceSystem < ActiveRecord::Migration[5.2]
     # add proration_reduction & active_dispute_count to Invoice
     add_column :invoices, :proration_reduction, :integer, null: false, default: 0
     add_column :invoices, :disputed_charge_count, :integer, null: false, default: 0
+    add_column :invoices, :was_missed, :boolean, null: false, default: false
     
     # fix up policy billing dispute fields
     change_column_default :policies, :billing_dispute_count, 0
@@ -51,6 +52,7 @@ class UpgradeInvoiceSystem < ActiveRecord::Migration[5.2]
     remove_column :line_items, :priced_in
     remove_column :line_items, :category
     remove_column :line_items, :refundability
+    remove_column :invoices, :was_missed
     remove_column :invoices, :disputed_charge_count
     remove_column :invoices, :proration_reduction
   end

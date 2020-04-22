@@ -17,6 +17,8 @@ class Invoice < ApplicationRecord
 
   before_save :set_status_changed, if: -> { status_changed? }
   
+  before_save :set_was_missed if: Proc.new{|inv| inv.will_save_change_to_attribute?('status') && inv.status == 'missed' }
+  
   before_create :mark_line_items_priced_in
 
   # ActiveRecord Associations
@@ -187,11 +189,11 @@ class Invoice < ApplicationRecord
   #   @invoice.pay()
   #   => { success: true }
 
-  def pay(allow_upcoming: false, amount_override: nil, stripe_source: nil, stripe_token: nil) # all optional... stripe_source can be passed as :default instead of a source id string to use the default payment method
+  def pay(allow_upcoming: false, allow_missed: false, stripe_source: nil, stripe_token: nil) # all optional... stripe_source can be passed as :default instead of a source id string to use the default payment method
     # set invoice status to processing
     return_error = nil
     with_lock do
-      unless ((allow_upcoming && status == 'upcoming') || status == 'available') && update(status: 'processing', total: amount_override || total)
+      unless (status == 'available' || (allow_upcoming && status == 'upcoming') || (allow_missed && status == 'missed')) && update(status: 'processing')
         return_error = {
           success: false,
           charge_id: nil,
@@ -370,6 +372,10 @@ class Invoice < ApplicationRecord
 
   def set_status_changed
     self.status_changed = Time.now
+  end
+  
+  def set_was_missed
+    self.was_missed = true
   end
 
   # This method uses deprecated fields (e.g. agency_total).
