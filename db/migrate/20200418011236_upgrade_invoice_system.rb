@@ -137,7 +137,8 @@ class UpgradeInvoiceSystem < ActiveRecord::Migration[5.2]
               title: line_item_names[roundable] || roundable.to_s.titleize,
               price: tc[roundable] || 0,
               refundability: refundabilities[roundable] || 'no_refund',
-              category: line_item_categories[roundable] || 'uncategorized'
+              category: line_item_categories[roundable] || 'uncategorized',
+              priced_in: true
             }
           end.select{|lia| !lia.nil? && lia[:price] > 0 }
         )

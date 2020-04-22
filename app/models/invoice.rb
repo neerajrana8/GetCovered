@@ -341,16 +341,6 @@ class Invoice < ApplicationRecord
   def refunds_must_start_queued?
     return(self.reload.disputed_charge_count > 0)
   end
-  
-  # whom to inform on refund failure (excluding payee)
-  def notifiables_for_refund_failure
-    case(self.invoiceable.nil? ? nil : self.invoiceable_type)
-      when 'Policy'
-        self.invoiceable.agency.account_staff.to_a
-      else
-        []
-    end
-  end
 
   private
 
