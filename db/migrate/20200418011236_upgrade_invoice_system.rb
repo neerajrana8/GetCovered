@@ -6,6 +6,8 @@ class UpgradeInvoiceSystem < ActiveRecord::Migration[5.2]
     add_column :invoices, :was_missed, :boolean, null: false, default: false
     
     # fix up policy billing dispute fields
+    Policy.where(billing_dispute_count: nil).update_all(billing_dispute_count: 0)
+    Policy.where(billing_dispute_status: nil).update_all(billing_dispute_status: 0)
     change_column_default :policies, :billing_dispute_count, 0
     change_column_default :policies, :billing_dispute_status, 0
     change_column_null :policies, :billing_dispute_count, false
