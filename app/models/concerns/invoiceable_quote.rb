@@ -51,13 +51,13 @@ module InvoiceableQuote
         # calculate invoice charges
         to_charge = billing_plan[:billing_schedule].map.with_index do |payment, index|
           {
-            due_date: index == 0 ? status_updated_on : billing_plan[:effective_date] + index.months,
+            due_date:        index == 0 ? status_updated_on : billing_plan[:effective_date] + index.months,
             term_first_date: billing_plan[:effective_date] + index.months,
-            deposit_fees: (index == 0 ? premium_data[:deposit_fees] : 0),
-            amortized_fees: (premium_data[:amortized_fees] * payment / payment_weight_total).floor,
-            base: (premium_data[:base] * payment / payment_weight_total).floor,
+            deposit_fees:    (index == 0 ? premium_data[:deposit_fees] : 0),
+            amortized_fees:  (premium_data[:amortized_fees] * payment / payment_weight_total).floor,
+            base:            (premium_data[:base] * payment / payment_weight_total).floor,
             special_premium: (premium_data[:special_premium] * payment / payment_weight_total).floor,
-            taxes: (premium_data[:taxes] * payment / payment_weight_total).floor
+            taxes:           (premium_data[:taxes] * payment / payment_weight_total).floor
           }
         end.map{|tc| tc.merge({ total: roundables.inject(0){|sum,r| sum + tc[r] } }) }.select{|tc| tc[:total] > 0 }
         # set term_last_dates
@@ -77,14 +77,14 @@ module InvoiceableQuote
           ActiveRecord::Base.transaction do
             to_charge.each.with_index do |tc, tci|
               invoices.create!({
-                due_date:       tc[:due_date],
-                available_date: tc[:due_date] - available_period,
-                term_first_date: tc[:term_first_date],
-                term_last_date: tc[:term_last_date],
-                payee:           billing_plan[:payee],
-                status:         "quoted",
+                due_date:         tc[:due_date],
+                available_date:   tc[:due_date] - available_period,
+                term_first_date:  tc[:term_first_date],
+                term_last_date:   tc[:term_last_date],
+                payee:            billing_plan[:payee],
+                status:           "quoted",
                 
-                total:          tc[:total], # subtotal & total are calculated automatically from line items, but if we pass one manually validations will fail if it doesn't match the calculation
+                total:            tc[:total], # subtotal & total are calculated automatically from line items, but if we pass one manually validations will fail if it doesn't match the calculation
                 line_items_attributes: (roundables + [:additional_fees]).map do |roundable|
                   {
                     title: line_item_names[roundable] || roundable.to_s.titleize,
@@ -129,6 +129,7 @@ module InvoiceableQuote
           taxes: policy_premium.taxes,
           total: policy_premium.total
         }
+      # MOOSE WARNING: fill this out once PolicyApplicationGroup has the appropriate fields
       else
         nil
       end
