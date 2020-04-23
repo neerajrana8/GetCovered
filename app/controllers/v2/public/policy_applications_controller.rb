@@ -399,7 +399,7 @@ module V2
   						@policy_application.primary_user().set_stripe_id()
   						
   						@quote = @policy_application.policy_quotes.last
-  						@quote.generate_invoices_for_term()
+  						invoice_errors = @quote.generate_invoices_for_term()
   						@premium = @quote.policy_premium
   						
   						response = { 
@@ -409,6 +409,7 @@ module V2
   								status: @policy_application.status, 
   								premium: @premium
   							},
+                invoice_errors: invoice_errors,
   							invoices: @quote.invoices,
   							user: { 
   								id: @policy_application.primary_user().id,

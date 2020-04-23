@@ -318,7 +318,6 @@ module V2
   								status: @policy_application.status, 
   								premium: @premium
   							},
-                invoice_errors: results,
   							invoices: @quote.invoices,
   							user: { 
   								id: @policy_application.primary_user().id,
