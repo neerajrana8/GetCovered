@@ -102,7 +102,7 @@ module InvoiceableQuote
           errors = e.record.errors.to_h
         rescue StandardError => e
           puts "Error during invoice creation! #{e}"
-          errors[:server] = "encountered an error during invoice generation"
+          errors[:server] = "encountered an error during invoice generation #{e}"
         rescue
           puts "Unknown error during invoice creation!"
           errors[:server] = "encountered an error during invoice creation"
