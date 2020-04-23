@@ -540,6 +540,7 @@ ActiveRecord::Schema.define(version: 2020_04_20_205407) do
     t.bigint "invoiceable_id"
     t.integer "proration_reduction", default: 0, null: false
     t.integer "disputed_charge_count", default: 0, null: false
+    t.boolean "was_missed", default: false, null: false
     t.string "payee_type"
     t.bigint "payee_id"
     t.index ["invoiceable_type", "invoiceable_id"], name: "index_invoices_on_invoiceable"

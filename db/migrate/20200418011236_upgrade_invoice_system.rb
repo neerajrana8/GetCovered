@@ -11,6 +11,11 @@ class UpgradeInvoiceSystem < ActiveRecord::Migration[5.2]
     change_column_null :policies, :billing_dispute_count, false
     change_column_null :policies, :billing_dispute_status, false
     
+    # give default to dispute#active
+    change_column_default :disputes, :active, true
+    ::Dispute.where(active: nil).each{|disp| disp.update_columns(active: !Dispute.closed_dispute_statuses.include?(disp.status)) }
+    change_column_null :disputes, :active, false
+    
     # add line item columns
     add_column :line_items, :refundability, :integer, null: false
     add_column :line_items, :category, :integer, null: false, default: 0

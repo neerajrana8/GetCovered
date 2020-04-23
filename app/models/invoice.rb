@@ -17,7 +17,7 @@ class Invoice < ApplicationRecord
 
   before_save :set_status_changed, if: -> { status_changed? }
   
-  before_save :set_was_missed if: Proc.new{|inv| inv.will_save_change_to_attribute?('status') && inv.status == 'missed' }
+  before_save :set_was_missed, if: Proc.new{|inv| inv.will_save_change_to_attribute?('status') && inv.status == 'missed' }
   
   before_create :mark_line_items_priced_in
 
@@ -236,13 +236,15 @@ class Invoice < ApplicationRecord
 
   def payment_succeeded
     with_lock do
-      self.update(status: 'complete')
-      invoiceable.payment_succeeded(self) if invoiceable.respond_to?(:payment_succeeded)
-      if has_pending_refund && pending_refund_data.has_key?('proration_refund')
-        if apply_proration(nil, to_refund_override: pending_refund_data['proration_refund'].to_i, cancel_if_unpaid_override: pending_refund_data['cancel_if_unpaid'])
-          update_columns(has_pending_refund: false)
-        else
-          # WARNING: do nothing on proration application failure... would be a good place for a generalized error to be logged to the db
+      if self.status == 'processing'
+        self.update(status: 'complete')
+        invoiceable.payment_succeeded(self) if invoiceable.respond_to?(:payment_succeeded)
+        if has_pending_refund && pending_refund_data.has_key?('proration_refund')
+          if apply_proration(nil, to_refund_override: pending_refund_data['proration_refund'].to_i, cancel_if_unpaid_override: pending_refund_data['cancel_if_unpaid'])
+            update_columns(has_pending_refund: false)
+          else
+            # WARNING: do nothing on proration application failure... would be a good place for a generalized error to be logged to the db
+          end
         end
       end
     end
@@ -250,7 +252,7 @@ class Invoice < ApplicationRecord
 
   def payment_failed
     with_lock do
-      if self.status == 'available' || self.status == 'processing'
+      if self.status == 'processing'
         invoiceable.payment_failed(self) if invoiceable.respond_to?(:payment_failed)
         if due_date >= Time.current.to_date
           self.update(status: 'available')
@@ -263,11 +265,11 @@ class Invoice < ApplicationRecord
   
   def payment_missed
     with_lock do
-      if self.status == 'available' # other statuses mean we were canceled or already paid
+      if self.status == 'available' || self.status == 'processing' # other statuses mean we were canceled or already paid
         self.update(status: 'missed')
         if self.has_pending_refund && self.pending_refund_data.has_key?('proration_refund')
           if apply_proration(nil, to_refund_override: pending_refund_data['proration_refund'].to_i, cancel_if_unpaid_override: pending_refund_data['cancel_if_unpaid'])
-            update_columns(has_pending_refund: false)
+            update(has_pending_refund: false)
           else
             # WARNING: do nothing on proration application failure... would be a good place for a generalized error to be logged to the db
           end
@@ -298,7 +300,7 @@ class Invoice < ApplicationRecord
       if new_disputed_charge_count < 0
         return false # makra pragmata ei touto gignotai
       end
-      update_columns(disputed_charge_count: new_disputed_charge_count)
+      update(disputed_charge_count: new_disputed_charge_count)
       if new_disputed_charge_count == 0
         refunds.queued.each{|ref| ref.process(true) }
       end
