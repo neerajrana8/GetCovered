@@ -84,9 +84,7 @@ module V2
 		    if @application.save
   		    if create_policy_users()
     		    if @application.update(status: 'in_progress')
-              # Commercial Application Saved
               
-      		    @application.primary_user().invite!
       		    render "v2/public/policy_applications/show"
       		    							
       		  else
@@ -115,7 +113,6 @@ module V2
   		    if @application.update(status: 'complete')
             # Commercial Application Saved
             
-    		    @application.primary_user().invite!
             quote_attempt = @application.crum_quote()
             
   					if quote_attempt[:success] == true

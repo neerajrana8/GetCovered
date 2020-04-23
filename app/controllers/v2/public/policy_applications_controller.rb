@@ -117,7 +117,7 @@ module V2
         	            error: "Address mismatch",
         	            message: "The mailing address associated with this email is different than the one supplied in the recent request.  To change your address please log in"
       	            }.to_json,
-      	            status: 401 
+      	            status: 401 and return
       	          error_status << true   
                 end        
               end
@@ -312,7 +312,6 @@ module V2
   	                 status: 422	
             end
   	      end
-
   	    else
           render json: @application.errors.to_json,
                  status: 422   
