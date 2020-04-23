@@ -70,6 +70,7 @@ module InvoiceableQuote
           to_charge[0][roundable] += premium_data[roundable] - to_charge.inject(0){|sum,tc| sum + tc[roundable] }
         end
         to_charge[0][:total] = roundables.inject(0){|sum,r| sum + to_charge[0][r] }
+        # ensure total matches premium_data[:total]... this should never be necessary
         unaccounted_error = premium_data[:total] - to_charge.inject(0){|sum,tc| sum + tc[:total] }
         to_charge[0][:additional_fees] = unaccounted_error unless unaccounted_error <= 0 # this should always be 0
         # create invoices
