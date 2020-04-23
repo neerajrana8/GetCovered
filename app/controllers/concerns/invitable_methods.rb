@@ -22,7 +22,7 @@ module InvitableMethods
   end
 
   def resource_from_invitation_token
-    @staff = Staff.find_by_invitation_token(params[:invitation_token], true)
+    @staff = Staff.find_by(invitation_token: params[:invitation_token])
     return if params[:invitation_token] && @staff
     render json: { errors: ['Invalid token.'] }, status: :not_acceptable
   end

@@ -31,3 +31,7 @@
 
 en:
   hello: "Hello world"
+
+  devise_token_auth:
+    sessions:
+      not_confirmed: "Your account is deactivated"

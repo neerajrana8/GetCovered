@@ -613,6 +613,16 @@ ActiveRecord::Schema.define(version: 2020_04_20_205407) do
     t.index ["invoice_id"], name: "index_line_items_on_invoice_id"
   end
 
+  create_table "model_errors", force: :cascade do |t|
+    t.string "model_type"
+    t.bigint "model_id"
+    t.string "kind"
+    t.jsonb "information"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["model_type", "model_id"], name: "index_model_errors_on_model_type_and_model_id"
+  end
+
   create_table "modifiers", force: :cascade do |t|
     t.integer "strategy"
     t.float "amount"
@@ -769,9 +779,14 @@ ActiveRecord::Schema.define(version: 2020_04_20_205407) do
   end
 
   create_table "policy_application_groups", force: :cascade do |t|
-    t.string "title"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "policy_applications_count"
+    t.integer "status", default: 0
+    t.bigint "account_id"
+    t.bigint "agency_id"
+    t.index ["account_id"], name: "index_policy_application_groups_on_account_id"
+    t.index ["agency_id"], name: "index_policy_application_groups_on_agency_id"
   end
 
   create_table "policy_applications", force: :cascade do |t|

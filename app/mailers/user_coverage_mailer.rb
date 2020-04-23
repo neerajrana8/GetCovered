@@ -21,9 +21,19 @@ class UserCoverageMailer < ApplicationMailer
   end
   
   def proof_of_coverage
-    file_url = "#{Rails.application.credentials.uri[ENV["RAILS_ENV"].to_sym][:api]}#{Rails.application.routes.url_helpers.rails_blob_path(@policy.documents.last, only_path: true)}"
-    attachments["policy-#{ @policy.number }.pdf"] = open(file_url).read
-    mail(:subject => "Your New Insurance Policy")
+    @policy.documents.each do |doc|
+      file_url = "#{Rails.application.credentials.uri[ENV["RAILS_ENV"].to_sym][:api]}#{Rails.application.routes.url_helpers.rails_blob_path(doc, only_path: true)}"  
+      attachments[doc.filename.to_s] = open(file_url).read
+    end
+    
+    is_policy = @policy.policy_type_id == 5 ? false : true
+    
+    @content = {
+	  	:title => is_policy ? "Insurance Policy" : "Rent Guarantee",
+	  	:text => is_policy ? "Hello, #{ @user.profile.full_name }<br><br>Your policy has been accepted on #{ Time.current.strftime('%m/%d/%y') }.  Your policy documents have been attached to this email.  Please log in to <a href=\"#{ Rails.application.credentials.uri[ENV["RAILS_ENV"].to_sym][:client] }\">our site</a> for more information." : "Hello #{ @user.profile.full_name },<br><br>Thank you for choosing Pensio Tenants.<br>﻿Your Rent Guarantee registration has been accepted on #{ Time.current.strftime('%m/%d/%y') }.<br>Your Rent Guarantee documents have been attached to this email.<br>Please log in to <a href=\"#{ Rails.application.credentials.uri[ENV["RAILS_ENV"].to_sym][:client] }\">our site</a> for more information.<br><br>Kind Regards,<br>Pensio Tenants Corp & the Get Covered Team<br><br>Keeping You At Home!"  
+    }
+    
+    mail(:subject => "Your New #{ @content[:title] }")
   end
   
   def commercial_quote

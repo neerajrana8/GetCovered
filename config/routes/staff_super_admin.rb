@@ -69,6 +69,12 @@
 
     resources :claims, only: [:index, :show]
 
+    resources :commissions, only: [:index, :show, :update] do
+      member do
+        put :approve
+      end
+    end
+
     resources :insurables, only: [:index, :show ], concerns: :reportable do
       member do
         get :coverage_report
@@ -120,6 +126,7 @@
       only: [ :create, :index, :show ] do
         member do
           put :re_invite
+          put :toggle_enabled
           get "histories",
             to: "histories#index_recordable",
             via: "get",

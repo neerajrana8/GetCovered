@@ -8,7 +8,7 @@ module V2
     class PolicyApplicationsController < PublicController
       
       before_action :set_policy_application,
-        only: %i[update show]
+        only: %i[update, show]
       
       def show
         if %w[started in_progress
@@ -23,7 +23,7 @@ module V2
       
       def new
         selected_policy_type = params[:policy_type].blank? ? 'residential' : params[:policy_type]
-        puts "\n\n#{ selected_policy_type }\n\n" 
+        
         if valid_policy_types.include?(selected_policy_type)
           policy_type = PolicyType.find_by_slug(selected_policy_type)
           
@@ -78,14 +78,49 @@ module V2
                 error_status << false
               else
     	          render json: {
-      	          error: "User Account Exists",
-      	          message: "A User has already signed up with this email address.  Please log in to complete your application"
-    	          }.to_json,
-    	          status: 401 
+      	            error: "User Account Exists",
+      	            message: "A User has already signed up with this email address.  Please log in to complete your application"
+    	            }.to_json,
+    	            status: 401 
     	          error_status << true           
               end                
             else
               @application.users << @user
+            end
+            
+            if policy_user[:user_attributes][:address_attributes]
+              if @user.address.nil?
+                @user.create_address(
+                  street_number: policy_user[:user_attributes][:address_attributes][:street_number],
+                  street_name: policy_user[:user_attributes][:address_attributes][:street_name] ,
+                  street_two: policy_user[:user_attributes][:address_attributes][:street_two],
+                  city: policy_user[:user_attributes][:address_attributes][:city],
+                  state: policy_user[:user_attributes][:address_attributes][:state],
+                  country: policy_user[:user_attributes][:address_attributes][:country],
+                  county: policy_user[:user_attributes][:address_attributes][:county],
+                  zip_code: policy_user[:user_attributes][:address_attributes][:zip_code]
+                )  
+              else  
+                tmp_full = policy_user[:user_attributes][:address_attributes].to_unsafe_h
+                                                                             .map { |k,v|
+                                                                               unless ['county', 'country'].include?(k) 
+                                                                                 "#{ v }"
+                                                                               end
+                                                                             }
+                                                                             .join(' ')
+                                                                             .gsub(/\s+/, ' ')
+                                                                             .gsub(/[^0-9a-z ]/i, '')
+                                                                             .strip
+
+                if @user.address.full_searchable != tmp_full
+      	          render json: {
+        	            error: "Address mismatch",
+        	            message: "The mailing address associated with this email is different than the one supplied in the recent request.  To change your address please log in"
+      	            }.to_json,
+      	            status: 401 
+      	          error_status << true   
+                end        
+              end
             end
             
           else
@@ -103,6 +138,16 @@ module V2
 					        job_title: policy_user[:user_attributes][:profile_attributes][:job_title], 
 					      	contact_phone: policy_user[:user_attributes][:profile_attributes][:contact_phone], 
 					      	birth_date: policy_user[:user_attributes][:profile_attributes][:birth_date]                  
+                },
+                address_attributes: {
+                  street_number: policy_user[:user_attributes][:address_attributes][:street_number],
+                  street_name: policy_user[:user_attributes][:address_attributes][:street_name] ,
+                  street_two: policy_user[:user_attributes][:address_attributes][:street_two],
+                  city: policy_user[:user_attributes][:address_attributes][:city],
+                  state: policy_user[:user_attributes][:address_attributes][:state],
+                  country: policy_user[:user_attributes][:address_attributes][:country],
+                  county: policy_user[:user_attributes][:address_attributes][:county],
+                  zip_code: policy_user[:user_attributes][:address_attributes][:zip_code]
                 }
               }
             )
@@ -125,40 +170,12 @@ module V2
 		    
 		    if @application.save
   		    if create_policy_users()
-    		    if @application.update(status: 'complete')
+    		    if @application.update(status: 'in_progress')
               # Commercial Application Saved
               
       		    @application.primary_user().invite!
-              quote_attempt = @application.pensio_quote()
-              
-    					if quote_attempt[:success] == true
-    						
-    						@application.primary_user().set_stripe_id()
-    						
-    						@quote = @application.policy_quotes.last
-    						@quote.generate_invoices_for_term()
-    						@premium = @quote.policy_premium
-    						
-    						response = { 
-  	  						id: @application.id,
-    							quote: { 
-    								id: @quote.id, 
-    								status: @quote.status, 
-    								premium: @premium
-    							},
-    							invoices: @quote.invoices,
-    							user: { 
-    								id: @application.primary_user().id,
-    								stripe_id: @application.primary_user().stripe_id
-    							}
-    						}
-    							  
-    						render json: response.to_json, status: 200
-    																
-    					else
-    						render json: { error: "Quote Failed", message: quote_attempt[:message] },
-    									 status: 422							
-    					end							
+      		    render "v2/public/policy_applications/show"
+      		    							
       		  else
               render json: @application.errors.to_json,
                      status: 422					
@@ -247,7 +264,6 @@ module V2
 	         
 	        @application.agency = Agency.where(master_agency: true).take 
 	      elsif @application.agency.nil?
-	      
           @application.agency = @application.account.agency  
         end
 	      
@@ -301,14 +317,30 @@ module V2
           render json: @application.errors.to_json,
                  status: 422   
   	    end
+      end      
+      
+      def update
+        case params[:policy_application][:policy_type_id]
+        when 1
+          update_residential()
+        when 5
+        	update_rental_guarantee()
+        else
+          render json: { 
+                   title: "Policy or Guarantee Type Not Recognized", 
+                   message: "Only Residential Policies and Rental Guaranatees are available for update from this screen" 
+                 }, status: 422
+        end
       end
             
-      def update
+      def update_residential
+	      @policy_application = PolicyApplication.find(params[:id])
+	      
         if @policy_application.policy_type.title == "Residential"
 
 					@policy_application.policy_rates.destroy_all
           
-          if @policy_application.update(update_params) && 
+          if @policy_application.update(update_residential_params) && 
              @policy_application.update(status: "complete")
              
           	@policy_application.qbe_estimate()
@@ -352,6 +384,52 @@ module V2
         
         end
       end
+      
+      def update_rental_guarantee
+	      @policy_application = PolicyApplication.find(params[:id])
+	      
+        if @policy_application.policy_type.title == "Rent Guarantee"
+          
+          if @policy_application.update(update_rental_guarantee_params) && 
+             @policy_application.update(status: "complete") 
+             
+            quote_attempt = @policy_application.pensio_quote()
+            
+  					if quote_attempt[:success] == true
+  						
+  						@policy_application.primary_user().set_stripe_id()
+  						
+  						@quote = @policy_application.policy_quotes.last
+  						@quote.generate_invoices_for_term()
+  						@premium = @quote.policy_premium
+  						
+  						response = { 
+	  						id: @policy_application.id,
+  							quote: { 
+  								id: @policy_application.id, 
+  								status: @policy_application.status, 
+  								premium: @premium
+  							},
+  							invoices: @quote.invoices,
+  							user: { 
+  								id: @policy_application.primary_user().id,
+  								stripe_id: @policy_application.primary_user().stripe_id
+  							}
+  						}
+  							  
+  						render json: response.to_json, status: 200
+  																
+  					else
+  						render json: { error: "Quote Failed", message: quote_attempt[:message] },
+  									 status: 422							
+  					end             
+                      	
+          else
+	          render json: @policy_application.errors.to_json,
+	                 status: 422	
+          end 
+	      end
+	    end
             
       private
 	      
@@ -360,6 +438,7 @@ module V2
 	      end
 	        
 	      def set_policy_application
+		      puts "SET POLICY APPLICATION RUNNING ID: #{ params[:id] }"
 	        @policy_application = access_model(::PolicyApplication, params[:id])
 	      end
 	      
@@ -396,15 +475,24 @@ module V2
 					      							:first_name, :last_name, :job_title, 
 					      							:contact_phone, :birth_date, :gender,
 					      							:salutation
+				      							], address_attributes: [
+                              :city, :country, :county, :id, :latitude, :longitude,
+                              :plus_four, :state, :street_name, :street_number,
+                              :street_two, :timezone, :zip_code
 				      							]
 			      							]
 			      					  ])  
     	  end
 	      
-	      def update_params
+	      def update_residential_params
   	      params.require(:policy_application)
-  	           .permit(policy_rates_attributes: [:insurable_rate_id],
+  	            .permit(policy_rates_attributes: [:insurable_rate_id],
   	                   policy_insurables_attributes: [:insurable_id])  
+  	    end
+	      
+	      def update_rental_guarantee_params
+  	      params.require(:policy_application)
+  	            .permit(:fields, fields: {})  
   	    end
 	        
 	      def valid_policy_types

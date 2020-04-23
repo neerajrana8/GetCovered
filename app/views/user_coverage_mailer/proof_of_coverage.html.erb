@@ -3,7 +3,7 @@
   <head>
     <meta name="viewport" content="width=device-width" />
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-    <title>Get Covered | Policy Accepted</title>
+    <title>Get Covered | <%= @content[:title] %> Accepted</title>
     <link rel="stylesheet" href="<%= Rails.application.credentials.uri[ENV["RAILS_ENV"].to_sym]["api"] %>/assets/mail.css">
   </head>
   <body class="">
@@ -14,7 +14,7 @@
           <div class="content">
 
             <!-- START CENTERED WHITE CONTAINER -->
-            <span class="preheader">Policy <%= @policy.number %> Accepted</span>
+            <span class="preheader"><%= @content[:title] %> <%= @policy.number %> Accepted</span>
             <table class="main">
 
               <!-- START MAIN CONTENT AREA -->
@@ -24,8 +24,7 @@
                     <tr>
                       <td>
 
-                        <p>Hello, <%= @user.profile.full_name %></p>
-                        <p>Your policy has been accepted on <%= Time.current.strftime('%m/%d/%y') %>.  Your policy documents have been attached to this email.  Please log in to <a href="<%= Rails.application.credentials.uri[ENV["RAILS_ENV"].to_sym][:client] %>">our site</a> for more information.</p>
+                        <p><%= raw(@content[:text]) %></p>
 
                       </td>
                     </tr>

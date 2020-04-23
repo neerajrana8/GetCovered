@@ -95,6 +95,9 @@ class PolicyQuote < ApplicationRecord
     		  elsif policy_application.policy_type.title == "Commercial"
     		    policy_number = external_reference
     		    policy_status = "BOUND"
+    		  elsif policy_application.policy_type.title == "Rent Guarantee"
+    		    policy_number = bind_request[:data][:policy_number]
+    		    policy_status = "BOUND"
     		  end
 
   			  
@@ -141,7 +144,8 @@ class PolicyQuote < ApplicationRecord
 	        		 policy_premium.update(policy: policy)
 	        		 
 	 						PolicyQuoteStartBillingJob.perform_later(policy: policy, issue: quote_attempt[:issue_method])
-	 						quote_attempt[:message] = "Policy #{ policy.number }, has been accepted.  Please check your email for more information."
+	 						policy_type_identifier = policy_application.policy_type_id == 5 ? "Rental Guarantee" : "Policy"
+	 						quote_attempt[:message] = "#{ policy_type_identifier } ##{ policy.number }, has been accepted.  Please check your email for more information."
 	 						quote_attempt[:success] = true
 
 	          else
@@ -151,7 +155,7 @@ class PolicyQuote < ApplicationRecord
 	            update status: 'error'
 	          end				  
 				  else
-				    logger.debug policy.errors
+				    logger.debug policy.errors.to_json
 				  	quote_attempt[:message] = "Unable to save policy in system"
 				  end
 				  

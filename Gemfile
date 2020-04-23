@@ -94,9 +94,12 @@ gem 'net-sftp', '~> 2.1', '>= 2.1.2'
 # PDF gems
 gem 'wkhtmltopdf-binary'
 gem 'wicked_pdf'
+gem "docraptor"
 
 # xlsx file generation
 gem 'caxlsx'
+# Roo for spreadsheet interaction
+gem 'roo', '~> 2.8.0'
 
 group :development, :test do
   # Call 'byebug' anywhere in the code to stop execution and get a debugger console
@@ -109,8 +112,6 @@ group :development, :test do
   gem 'rubocop', '~> 0.63.1', require: false
   # RDoc for Documentation
   gem 'rdoc'
-  # Roo for spreadsheet interaction
-  gem 'roo', '~> 2.8.0'
 end
 
 group :development do

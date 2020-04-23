@@ -120,6 +120,8 @@
     resources :policy_applications,
       path: "policy-applications",
       only: [ :index, :show ]
+
+    resources :policy_application_groups, path: "policy-application-groups", except: [:update, :edit]
   
     resources :policy_quotes,
       path: "policy-quotes",
@@ -136,6 +138,7 @@
             to: "histories#index_authorable",
             via: "get",
             defaults: { authorable_type: Staff }
+          put :toggle_enabled
         end
         collection do
           get "search", to: 'staffs#search'
@@ -158,9 +161,3 @@
   
   end
 # end
-
-
-
-
-
-

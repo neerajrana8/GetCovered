@@ -166,11 +166,11 @@ class Policy < ApplicationRecord
   end
   
   def residential_account_present
-    errors.add(:account, 'Account must be specified') if policy_type_id != 4 && account.nil? 
+    errors.add(:account, 'Account must be specified') if ![4,5].include?(policy_type_id) && account.nil? 
   end
 
   def same_agency_as_account
-    if policy_type_id != 4
+    if ![4,5].include?(policy_type_id)
       errors.add(:account, 'policy must belong to the same agency as account') if agency != account&.agency
     end
   end
@@ -227,8 +227,11 @@ class Policy < ApplicationRecord
     update_attribute(:status, 'CANCELLED')
     # Unearned balance is the remaining unearned amount on an insurance policy that 
     # needs to be deducted from future commissions to recuperate the loss
+    commision_amount = premium&.commission&.amount || 0
+    unearned_premium = premium&.unearned_premium || 0
+    balance = (commision_amount * unearned_premium / premium&.base)
     commission_deductions.create(
-      unearned_balance: premium&.unearned_premium, 
+      unearned_balance: balance, 
       deductee: premium&.commission_strategy&.commissionable
     )
   end
