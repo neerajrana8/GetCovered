@@ -18,6 +18,7 @@ module InvoiceableQuote
 	    
 	    invoices.destroy_all if refresh
 	    
+      # get info from policy premium
       premium_data = get_policy_premium_invoice_information
       if premium_data.nil?
         puts "Invoiceable Quote cannot generate invoices without an associated policy premium"
