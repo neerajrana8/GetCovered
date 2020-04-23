@@ -1,6 +1,10 @@
 class PolicyApplicationGroup < ApplicationRecord
   belongs_to :account, optional: true
   belongs_to :agency, optional: true
+  belongs_to :carrier
+  belongs_to :policy_type
+  belongs_to :policy_group, optional: true
+
   has_many :policy_applications
   has_one :policy_group_quote, dependent: :destroy
   belongs_to :billing_strategy

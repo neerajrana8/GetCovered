@@ -13,7 +13,7 @@ module CarrierPensioPolicyQuote
       {
         error: false,
         message: nil,
-        data: { policy_number: pensio_generate_number(Policy) }
+        data: { policy_number: pensio_generate_number(::Policy) }
       }
     end
 

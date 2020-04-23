@@ -4,6 +4,7 @@ class PolicyGroupQuote < ApplicationRecord
   include CarrierPensioPolicyQuote
 
   belongs_to :policy_application_group
+  belongs_to :policy_group, optional: true
   has_one :policy_group_premium, dependent: :destroy
   has_many :policy_applications, through: :policy_application_group
   has_many :policy_quotes
@@ -19,7 +20,7 @@ class PolicyGroupQuote < ApplicationRecord
   def calculate_premium
     self.policy_group_premium = PolicyGroupPremium.create(billing_strategy_id: PENSIO_BILLING_STRATEGY_ID)
     policy_group_premium.calculate_total
-    update(status: :estimated)
+    update(status: :quoted)
   end
 
   def accept
@@ -105,7 +106,7 @@ class PolicyGroupQuote < ApplicationRecord
   private
 
   def try_update_and_start
-    if update(status: :accepted) && start_billing
+    if update(status: :accepted) #&& start_billing
       try_bind_request
     else
       {
@@ -132,7 +133,7 @@ class PolicyGroupQuote < ApplicationRecord
       policy_group.reload
 
       # Add invoices to policy
-      invoices.update_all(invoiceable: policy_group)
+      invoices.update_all(invoiceable_id: policy_group.id, invoiceable_type: ::PolicyGroup)
 
       update_related_entities(policy_group)
     else
@@ -181,18 +182,19 @@ class PolicyGroupQuote < ApplicationRecord
         billing_enabled: true,
         serviceable: policy_quote.policy_application.carrier.syncable,
         policy_type: policy_quote.policy_application.policy_type,
+        policy_group: policy_group,
         agency: policy_quote.policy_application.agency,
         account: policy_quote.policy_application.account,
         carrier: policy_quote.policy_application.carrier
       )
       policy.save
-      policy.reload!
-      PolicyQuoteStartBillingJob.perform_later(policy: policy, issue: issue_method)
+      policy.reload
+      PolicyQuoteStartBillingJob.perform_later(policy: policy, issue: issue_policy_method)
     end
   end
 
   def get_policy_number
-    send("#{policy_application_group.carrier.integration_designation}_generate_number", Policy)
+    send("#{policy_application_group.carrier.integration_designation}_generate_number", ::Policy)
   end
 
   def bind_request
@@ -201,6 +203,10 @@ class PolicyGroupQuote < ApplicationRecord
 
   def bind_method
     "#{policy_application_group.carrier.integration_designation}_bind_group"
+  end
+
+  def issue_policy_method
+    "#{policy_application_group.carrier.integration_designation}_issue_policy"
   end
 
   def issue_method
@@ -241,18 +247,18 @@ class PolicyGroupQuote < ApplicationRecord
       number: group_policy_number,
       status: policy_status,
       billing_status: 'CURRENT',
-      effective_date: policy_application.effective_date,
-      expiration_date: policy_application.expiration_date,
-      auto_renew: policy_application.auto_renew,
-      auto_pay: policy_application.auto_pay,
+      effective_date: policy_application_group.effective_date,
+      expiration_date: policy_application_group.expiration_date,
+      auto_renew: policy_application_group.auto_renew,
+      auto_pay: policy_application_group.auto_pay,
       policy_in_system: true,
       system_purchased: true,
       billing_enabled: true,
-      serviceable: policy_application.carrier.syncable,
-      policy_type: policy_application.policy_type,
-      agency: policy_application.agency,
-      account: policy_application.account,
-      carrier: policy_application.carrier
+      serviceable: policy_application_group.carrier.syncable,
+      policy_type: policy_application_group.policy_type,
+      agency: policy_application_group.agency,
+      account: policy_application_group.account,
+      carrier: policy_application_group.carrier
     )
   end
 

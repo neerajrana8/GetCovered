@@ -2,6 +2,8 @@ class AddColumnsToPolicyApplicationGroups < ActiveRecord::Migration[5.2]
   def change
     add_column :policy_application_groups, :effective_date, :date
     add_column :policy_application_groups, :expiration_date, :date
+    add_column :policy_application_groups, :auto_renew, :boolean
+    add_column :policy_application_groups, :auto_pay, :boolean
 
     add_reference :policy_application_groups, :billing_strategy
     add_reference :policy_application_groups, :policy_group

@@ -2,6 +2,7 @@ class PolicyGroupPremium < ApplicationRecord
   belongs_to :policy_group_quote
   belongs_to :billing_strategy
   belongs_to :commission_strategy, optional: true
+  belongs_to :policy_group, optional: true
 
   has_many :policy_premiums, through: :policy_group_quote
 
@@ -13,6 +14,6 @@ class PolicyGroupPremium < ApplicationRecord
     ]
     values = policy_premiums.pluck(keys).transpose.map(&:sum)
     self.attributes = Hash[keys.zip values]
-    save
+    save!
   end
 end

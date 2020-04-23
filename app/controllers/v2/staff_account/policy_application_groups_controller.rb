@@ -22,6 +22,7 @@ module V2
           account: current_staff&.organizable,
           agency: current_staff&.organizable&.agency,
           policy_group_quote: ::PolicyGroupQuote.create(status: :awaiting_estimate),
+          policy_type: PolicyType.find(5),
           billing_strategy:
             BillingStrategy.where(
               agency: Agency.where(master_agency: true).take,
