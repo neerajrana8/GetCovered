@@ -38,7 +38,7 @@ class Invoice < ApplicationRecord
 
   validates :number, presence: true, uniqueness: true
   validates :subtotal, presence: true
-  validates :total, presence: true, numericality: { greater_than: 0 }
+  validates :total, presence: true, numericality: { greater_than_or_equal_to: 0 }
   validates :status, presence: true
   validates :due_date, presence: true
   validates :available_date, presence: true

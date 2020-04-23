@@ -225,7 +225,11 @@ class Charge < ApplicationRecord
       # setup
       @already_in_on_create = true
       stripe_source = nil
-      if stripe_id_is_stripe_source
+      if amount == 0
+        pay_attempt_succeeded(nil, 'unknown')
+        remove_instance_variable(:@already_in_on_create)
+        return
+      elsif stripe_id_is_stripe_source
         stripe_source = stripe_id
       elsif stripe_id_is_stripe_token # MOOSE WARNING: probably remove this
         # retrieve the token
