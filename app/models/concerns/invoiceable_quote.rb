@@ -12,7 +12,7 @@ module InvoiceableQuote
   #  and must have an entry in this concern's private methods
   #  get_policy_premium_invoice_information and get_policy_application_invoice_information
 	def generate_invoices_for_term(renewal = false, refresh = false)
-    invoices_generated = false
+    errors = {}
     
     unless renewal
 	    
@@ -22,8 +22,8 @@ module InvoiceableQuote
       premium_data = get_policy_premium_invoice_information
       if premium_data.nil?
         puts "Invoiceable Quote cannot generate invoices without an associated policy premium"
-        invoices_generated = false
-        return invoices_generated
+        errors[:policy_premium] = "cannot be blank"
+        return errors
       end
       
 	  	if premium_data[:total] > 0 && 
@@ -34,8 +34,8 @@ module InvoiceableQuote
         billing_plan = get_policy_application_invoice_information
         if billing_plan.nil?
           puts "Invoiceable Quote cannot generate invoices without an associated policy application"
-          invoices_generated = false
-          return invoices_generated
+          errors[:policy_application] = "cannot be blank"
+          return errors
         end
         
         # calculate sum of weights (should be 100, but just in case it's 33+33+33 or something)
@@ -96,14 +96,16 @@ module InvoiceableQuote
                 end.select{|lia| !lia.nil? && lia[:price] > 0 }
               })
             end
-            invoices_generated = true
           end
         rescue ActiveRecord::RecordInvalid => e
           puts e.to_s
+          errors = e.record.errors.to_h
         rescue StandardError => e
           puts "Error during invoice creation! #{e}"
+          errors[:server] = "encountered an error during invoice generation"
         rescue
           puts "Unknown error during invoice creation!"
+          errors[:server] = "encountered an error during invoice creation"
         end
 				
 		  end
@@ -111,7 +113,7 @@ module InvoiceableQuote
 	  	# Set up Renewal Invoice Generation
 	  end
     
-    return invoices_generated
+    return errors
     
   end
 
