@@ -130,7 +130,7 @@ module InvoiceableQuote
           taxes: policy_premium.taxes,
           total: policy_premium.total
         }
-      # MOOSE WARNING: fill this out once PolicyApplicationGroup has the appropriate fields
+      # MOOSE WARNING: fill this out once PolicyPremiumGroup exists
       else
         nil
       end
