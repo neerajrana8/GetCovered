@@ -339,7 +339,14 @@ class Invoice < ApplicationRecord
   end
   
   def mark_line_items_priced_in
-    self.line_items.update_all(priced_in: true)
+    # it's redundant to calculate these twice, but I'm paranoid about validations being missed or called early; better safe than sorry when dealing with money!
+    self.calculate_subtotal
+    self.calculate_total
+    if self.errors.blank?
+      self.line_items.update_all(priced_in: true)
+    else
+      throw :abort
+    end
   end
 
   # History Methods
