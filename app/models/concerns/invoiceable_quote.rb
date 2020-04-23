@@ -43,9 +43,9 @@ module InvoiceableQuote
         payment_weight_total = 100.to_d if payment_weight_total <= 0 # this can never happen unless someone fills new_business with 0s invalidly, but you can't be too careful
         
         # setup
-        roundables = [:deposit_fees, :amortized_fees, :base, :special_premium, :taxes] # fields on PolicyPremium to have rounding errors fixed
-        refundabilities = { base: 'prorated_refund', special_premium: 'prorated_refund', taxes: 'prorated_refund' } # fields that can be refunded on cancellation
-        line_item_names = { base: "Premium", special_premium: "Special Premium" } # fields to rename on the invoice
+        roundables = [:deposit_fees, :amortized_fees, :base, :special_premium, :taxes]                              # fields on PolicyPremium to have rounding errors fixed
+        refundabilities = { base: 'prorated_refund', special_premium: 'prorated_refund', taxes: 'prorated_refund' } # fields that can be refunded on cancellation (values are LineItem#refundability values)
+        line_item_names = { base: "Premium" }                                                                       # fields to rename on the invoice
         line_item_categories = { base: "base_premium", special_premium: "special_premium", taxes: "taxes", deposit_fees: "deposit_fees", amortized_fees: "amortized_fees" }
         
         # calculate invoice charges
