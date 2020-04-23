@@ -50,15 +50,7 @@ class User
             set_default_payment
           end
 
-          if user.save
-            if make_default
-              invoices.upcoming.each do |nvc|
-                payment_method = user.current_payment_method == 'card' ? 'card' : 'bank_account'
-                nvc.calculate_total(payment_method)
-              end
-            end
-            return true
-          end
+          return true if user.save && make_default
         end
       rescue Stripe::APIConnectionError => _
         errors.add(:payment_method, 'Network Error')
