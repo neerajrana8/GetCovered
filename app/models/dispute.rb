@@ -45,9 +45,9 @@ class Dispute < ApplicationRecord
   def update_from_stripe_hash(dispute_hash)
    invoice.with_lock do # we lock the invoice to ensure serial processing with other invoice events
       update({
-        amount: dispute_hash[:amount],
-        reason: dispute_hash[:reason],
-        status: dispute_hash[:status]
+        amount: dispute_hash['amount'],
+        reason: dispute_hash['reason'],
+        status: dispute_hash['status']
       }.select{|k,v| !v.nil? })
       # only status should change, but update the rest just in case
     end
