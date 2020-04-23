@@ -127,8 +127,7 @@ module InvoiceableQuote
           amortized_fees: policy_premium.amortized_fees,
           base: policy_premium.base,
           special_premium: policy_premium.special_premium,
-          taxes: policy_premium.taxes,
-          total: policy_premium.total
+          taxes: policy_premium.taxes
         }
       # MOOSE WARNING: fill this out once PolicyPremiumGroup exists
       else
