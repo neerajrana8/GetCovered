@@ -6,6 +6,7 @@ class LineItem < ApplicationRecord
   validates_presence_of :title
   validates_presence_of :price
   validates_presence_of :refundability
+  validates_presence_of :category
   
   enum refundability: {
     no_refund: 0,                         # if we cancel, no refund
