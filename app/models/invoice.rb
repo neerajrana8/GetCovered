@@ -6,42 +6,45 @@
 class Invoice < ApplicationRecord
   # ActiveRecord Callbacks
 
-  # All initialization was moved to database. Only user assignment is left, 
-  # which will be uncommented when Policy is ready.
-  # after_initialize  :initialize_invoice
   include ElasticsearchSearchable
 
-  # DISABLED FOR NOW because it contains v1 functionality that's not being used anymore, and if anyone passes a line item to an invoice in v2 this would give them some nasty surprises
-  #before_validation :calculate_subtotal, if: -> { line_items.count > 0 }
+  before_validation :calculate_subtotal,
+    on: :create
+    
+  before_validation :calculate_total
 
   before_validation :set_number, on: :create
 
   before_save :set_status_changed, if: -> { status_changed? }
+  
+  before_save :set_was_missed, if: Proc.new{|inv| inv.will_save_change_to_attribute?('status') && inv.status == 'missed' }
+  
+  before_create :mark_line_items_priced_in
 
   # ActiveRecord Associations
 
   belongs_to :invoiceable, polymorphic: true
-  belongs_to :user
-  has_many :payments
+  belongs_to :payee, polymorphic: true
+  
   has_many :charges
   has_many :refunds, through: :charges
   has_many :disputes, through: :charges
   has_many :line_items, autosave: true
-  has_many :modifiers
+  
   has_many :histories, as: :recordable
-  has_many :notifications, as: :notifiable
+  #has_many :notifications, as: :eventable
 
   # Validations
 
   validates :number, presence: true, uniqueness: true
   validates :subtotal, presence: true
-  validates :total, presence: true
+  validates :total, presence: true, numericality: { greater_than_or_equal_to: 0 }
   validates :status, presence: true
   validates :due_date, presence: true
   validates :available_date, presence: true
-  validates :tax, presence: true
-  validates :tax_percent, presence: true
-  validates :user, presence: true
+  
+  validates_associated :line_items
+  validate :term_dates_are_sensible
 
 # 	validate :policy_unless_quoted
 
@@ -78,192 +81,104 @@ class Invoice < ApplicationRecord
   #   proration_date = Time.current.to_date - 2.weeks
   #   @invoice.apply_proration(proration_date)
   #   => true
-
-  def apply_proration(new_term_last_date)
-    return true if term_first_date.nil? || term_last_date.nil?
-
-    if new_term_last_date < term_first_date
-      # this invoice's term falls entirely after the period requiring payment; cancel
-      case status
-      when 'upcoming', 'available'
-        return update(status: 'canceled')
-      when 'processing', 'complete'
-        return refund_proportion(1.0, 'proration adjustment')
-      when 'missed', 'canceled'
-        return true
+  
+  # issue a proration refund for a completed/processing invoice
+  def apply_proration(new_term_last_date, refund_date: nil, to_refund_override: nil, cancel_if_unpaid_override: nil)
+    with_lock do
+      to_refund = nil
+      cancel_if_unpaid = false
+      if to_refund_override.nil?
+        # get refund date and proportion-to-refund
+        refund_date = Time.current.to_date if refund_date.nil?
+        proportion_to_refund = 0
+        proportion_to_refund = new_term_last_date < term_first_date ? 1.to_d :
+                               new_term_last_date >= term_last_date ? 0.to_d :
+                               (term_last_date - new_term_last_date).to_i.to_d / ((term_last_date - term_first_date) + 1).to_i.to_d
+        # set cancel_if_unpaid
+        cancel_if_unpaid = (new_term_last_date < term_first_date)
+        # calculate how much to refund
+        to_refund = line_items.group_by{|li| li.refundability }
+        to_refund['no_refund'] = 0
+        to_refund['prorated_refund'] = (to_refund['prorated_refund'] || []).inject(0){|sum,li| sum + (li.price * proportion_to_refund).floor } if to_refund.has_key?('prorated_refund')
+        to_refund['complete_refund_before_term'] = refund_date >= term_first_date ? 0 : to_refund['complete_refund_before_term'].inject(0){|sum,li| sum + li.price } if to_refund.has_key?('complete_refund_before_term')
+        to_refund['complete_refund_during_term'] = refund_date > term_last_date ? 0 : to_refund['complete_refund_during_term'].inject(0){|sum,li| sum + li.price } if to_refund.has_key?('complete_refund_during_term')
+        to_refund['complete_refund_before_due_date'] = refund_date >= due_date ? 0 : to_refund['complete_refund_before_due_date'].inject(0){|sum,li| sum + li.price } if to_refund.has_key?('complete_refund_before_due_date')
+        to_refund = to_refund.transform_values{|v| v.class == ::Array ? 0 : v }.inject(0){|sum,r| sum + r[1] }
+      else
+        to_refund = to_refund_override
       end
-    elsif new_term_last_date > term_last_date
-      # this invoice's term falls entirely before the period requiring payment; do nothing
-      return true
-    else
-      # the date of proration falls within this invoice's term; prorate
-      proportion_to_refund = (term_last_date - new_term_last_date).to_f / (term_last_date + 1.day - term_first_date).to_f
-      return true if proportion_to_refund == 0.0
-
+      cancel_if_unpaid = cancel_if_unpaid_override unless cancel_if_unpaid_override.nil?
+      # apply refund
       case status
-      when 'upcoming', 'available'
-        return update(status: 'canceled')
-      when 'processing', 'complete'
-        return refund_proportion(proportion_to_refund, 'proration adjustment')
-      when 'missed', 'canceled'
-        return true
+        when 'upcoming', 'available'
+          # apply a proration_reduction to the total
+          to_refund = subtotal if cancel_if_unpaid
+          new_total = subtotal - to_refund
+          if new_total < 0
+            new_total = 0
+            to_refund = subtotal
+          end
+          if new_total == 0
+            return update(proration_reduction: to_refund, total: new_total, status: 'canceled')
+          end
+          return update(proration_reduction: to_refund, total: new_total)
+        when 'complete'
+          # apply the refund
+          to_refund -= proration_reduction # if a proration was already applied prior to payment and we're prorating again (which can't happen in the current workflow anyway), the proration_reduction was a sort of "pre-refund" and we don't want to refund it twice
+          return true if to_refund <= 0
+          result = ensure_refunded(to_refund, "Proration Adjustment", nil)
+          return true if result[:success]
+          return false # WARNING: we discard result[:errors] here
+        when 'processing', 'missed'
+          return update(has_pending_refund: true, pending_refund_data: { 'proration_refund' => to_refund, 'cancel_if_unpaid' => cancel_if_unpaid })
+        when 'canceled'
+          # apply a proration_reduction to the total (might as well keep track of changes even to canceled invoices)
+          to_refund = subtotal if cancel_if_unpaid
+          new_total = subtotal - to_refund
+          if new_total < 0
+            new_total = 0
+            to_refund = subtotal
+          end
+          return update(proration_reduction: to_refund, total: new_total)
       end
     end
-    false # control should never reach this line
+    return false
   end
-
-  # Refund Proportion
-  #
-  # Perform a refund for a certain proportion (as a decimal) of the total.
-  # This method takes prior refunds into account; that is, if 50% has been refunded
-  # already, refund_proportion(0.75) will refund an additional 25%.
-  #
-  # Example:
-  #   @invoice = Invoice.find(1)
-  #   @invoice.refund_proportion(0.5, "refunding half sounded good", nil)
-  #   => true
-
-  def refund_proportion(proportion, full_reason = nil, stripe_reason = nil)
-    reload
-    case status
-    when 'complete'
-      to_refund = [(proportion * total.to_f).floor.to_i - amount_refunded, 0].max
-      return true if to_refund == 0
-
-      result = apply_refund(to_refund, full_reason, stripe_reason)
-      return true if result[:success]
-
-      # try again if somehow we failed
-      to_refund = result[:amount_not_refunded]
-      result = apply_refund(to_refund, full_reason, stripe_reason)
-      return true if result[:success]
-
-      # fail sadly WARNING: we discard result[:errors] here... but if this method is called again, amount_refunded should be updated according to any successful refunds, so it should cause no problems
-      return false
-    when 'processing'
-      succeeded = false
-      with_lock do
-        unless has_pending_refund && pending_refund_data['proportion'] && pending_refund_data['proportion'] > proportion
-          self.pending_refund_data = {
-            'proportion' => proportion,
-            'full_reason' => full_reason,
-            'stripe_reason' => stripe_reason
-          }
-        end
-        self.has_pending_refund = true
-        succeeded = save
-      end
-      return succeeded
-    else
-      return false
+  
+  # refunds whatever is necessary to ensure the total amount refunded is to_refund cents (if it starts above that, it refunds nothing)
+  def ensure_refunded(to_refund, full_reason = nil, stripe_reason = nil)
+    with_lock do
+      return { success: false, errors: "invoice status must be 'complete' before refunding" } unless status == 'complete'
+      already_refunded = charges.succeeded.inject(0){|sum, current_charge| sum + current_charge.amount_refunded }
+      to_refund_now = [0, to_refund - already_refunded].max
+      return apply_refund(to_refund_now, full_reason, stripe_reason)
     end
   end
-
-  # Apply Refund
-  #
-  # Perform a refund for a certain number of cents. If it cannot all be
-  # refunded, it will refund as much as possible and make the left-over
-  # amount available in its return value.
-  #
-  # Example:
-  #   @invoice = Invoice.find(1)
-  #   @invoice.apply_refund(5100, "I just felt like refunding this", nil)
-  #   => { success: true, amount_not_refunded: 0, errors_by_charge: {} }
-
+  
+  # refunds an exact amount, regardless of what has been refunded before; or refunds as much of it as possible and reports what it failed to refund
   def apply_refund(to_refund, full_reason = nil, stripe_reason = nil)
     errors_encountered = {}
-    charges.succeeded.each do |current_charge|
-      to_refund_now = [[current_charge.amount - current_charge.amount_refunded, to_refund].min, 0].max
-      result = current_charge.apply_refund(to_refund_now, full_reason, stripe_reason)
-      if result[:success]
-        to_refund -= to_refund_now
-        break if to_refund == 0
-      else
-        errors_encountered[current_charge.id] = result[:errors]
+    with_lock do
+      return { success: false, errors: "invoice status must be 'complete' before refunding" } unless status == 'complete'
+      charges.succeeded.each do |current_charge|
+        to_refund_now = [[current_charge.amount - current_charge.amount_refunded, to_refund].min, 0].max
+        result = current_charge.apply_refund(to_refund_now, full_reason, stripe_reason)
+        if result[:success]
+          to_refund -= to_refund_now
+          break if to_refund <= 0
+        else
+          errors_encountered[current_charge.id] = result[:errors]
+        end
       end
     end
     {
-      success: to_refund == 0,
+      success: to_refund <= 0,
       amount_not_refunded: to_refund,
+      errors: {},
       errors_by_charge: errors_encountered
     }
   end
 
-  # Calculate Total
-  #
-  # Apply modifiers and tax to subtotal to calculate total
-  #
-  # Example:
-  #   @invoice = Invoice.find(1)
-  #   payment_method = [ nil, 'card', 'bank_account' ][rand(3)]
-  #   @invoice.calculate_total(payment_method)
-  #   => nil
-
-  def calculate_total(payment_method, and_save = true)
-    # setup
-    prereceipt = {}
-    payment_method = nil unless %w[card bank_account].include?(payment_method)
-    float_total = subtotal.to_f / 100.0
-    # add subtotal and line items to prereceipt
-    prereceipt['subtotal'] = subtotal
-    prereceipt['items'] = []
-    line_items.each do |line_item|
-      prereceipt['items'].push({ type: 'flat' }.merge(name: line_item.title, price: line_item.price))
-    end
-    # apply modifiers
-    modifiers.create(strategy: 'percentage', amount: 1.10, condition: 'card_payment') if payment_method == 'card' && modifiers.where(condition: 'card_payment').count == 0
-    modifier_array = modifiers.to_a
-    Modifier.pretax_tiers_in_order.each do |current_tier|
-      # apply percentage changes
-      current_coefficient = 1.0
-      modifier_array.each do |current_modifier|
-        if current_modifier.tier == current_tier && current_modifier.strategy == 'percentage' && current_modifier.should_apply?(payment_method)
-          current_coefficient *= current_modifier.amount
-        end
-      end
-      float_total *= current_coefficient
-      # apply flat changes
-      modifier_array.each do |current_modifier|
-        if current_modifier.tier == current_tier && current_modifier.strategy == 'flat' && current_modifier.should_apply?(payment_method)
-          float_total += current_modifier.amount / 100.0
-        end
-      end
-    end
-    # calculate tax and the final total
-    float_total = (float_total * 100.0).ceil # express in cents and round up
-    pretax_total = float_total               # grab
-    float_total /= 100.0                     # express in dollars again
-    float_total *= (1.0 + tax_percent) unless tax_percent.nil? # apply tax
-    float_total = (float_total * 100.0).ceil # express in cents and round up
-    # set tax & total
-    self.tax = float_total.to_i - pretax_total.to_i
-    self.total = float_total.to_i
-    prereceipt['tax'] = tax
-    prereceipt['total'] = total
-    unless pretax_total.to_i == subtotal
-      prereceipt['items'].push(
-        'type' => 'flat',
-        'name' => 'Service Fee',
-        'price' => pretax_total.to_i - subtotal
-      )
-    end
-    unless tax == 0
-      prereceipt['items'].push(
-        'type' => 'flat',
-        'name' => 'Tax',
-        'price' => tax
-      )
-    end
-    # all done
-
-    system_data['prereceipt'] = prereceipt
-
-    # Either need to refactor set_commission or remove it.
-    # if and_save
-    #   set_commission if save
-    # end
-    prereceipt
-  end
 
   # Pay
   #
@@ -274,11 +189,11 @@ class Invoice < ApplicationRecord
   #   @invoice.pay()
   #   => { success: true }
 
-  def pay(allow_upcoming: false, amount_override: nil, stripe_source: nil, stripe_token: nil) # all optional
+  def pay(allow_upcoming: false, allow_missed: false, stripe_source: nil, stripe_token: nil) # all optional... stripe_source can be passed as :default instead of a source id string to use the default payment method
     # set invoice status to processing
     return_error = nil
     with_lock do
-      unless ((allow_upcoming && status == 'upcoming') || status == 'available') && update(status: 'processing', total: amount_override || total)
+      unless (status == 'available' || (allow_upcoming && status == 'upcoming') || (allow_missed && status == 'missed')) && update(status: 'processing')
         return_error = {
           success: false,
           charge_id: nil,
@@ -290,13 +205,15 @@ class Invoice < ApplicationRecord
     end
     return return_error unless return_error.nil?
 
+    # grab the default payment method, if needed
+    stripe_source = payee.payment_profiles.where(default: true).take&.source_id if stripe_source == :default
     # attempt to make payment
     created_charge = nil
-    created_charge = if !stripe_source.nil? # use one-time source
+    created_charge = if !stripe_source.nil?    # use specified source
                        charges.create(amount: total, stripe_id: stripe_source)
                      elsif !stripe_token.nil?  # use token
                        charges.create(amount: total, stripe_id: stripe_token)
-                     else                      # use default payment method
+                     else                      # use charge's default behavior (which right now is to fail with an error message, and shall probably remain such)
                        charges.create(amount: total)
                      end
 
@@ -318,124 +235,46 @@ class Invoice < ApplicationRecord
   end
 
   def payment_succeeded
-    update(status: 'complete')
-    reload
-
-    if has_pending_refund
-      if refund_proportion(pending_refund_data['proportion'], pending_refund_data['full_reason'], pending_refund_data['stripe_reason'])
-        update(has_pending_refund: false)
+    with_lock do
+      if self.status == 'processing'
+        self.update(status: 'complete')
+        invoiceable.payment_succeeded(self) if invoiceable.respond_to?(:payment_succeeded)
+        if has_pending_refund && pending_refund_data.has_key?('proration_refund')
+          if apply_proration(nil, to_refund_override: pending_refund_data['proration_refund'].to_i, cancel_if_unpaid_override: pending_refund_data['cancel_if_unpaid'])
+            update_columns(has_pending_refund: false)
+          else
+            # WARNING: do nothing on proration application failure... would be a good place for a generalized error to be logged to the db
+          end
+        end
       end
-    end
-		
-		if invoiceable_type == 'Policy' && !invoiceable.nil?
-      policy = invoiceable
-	    if policy.BEHIND? || policy.REJECTED?
-	      invoices = policy.invoices
-	      invoices_statuses = []
-	      invoices.each { |i| invoices_statuses << i.status }
-	
-	      policy.billing_status = 'RESCINDED' unless invoices_statuses.include? 'missed'
-	    else
-	      policy.billing_status = 'CURRENT'
-	    end
-			
-	    policy.last_payment_date = updated_at.to_date
-	    next_invoice = policy.invoices.where('due_date > ?', due_date).order('due_date ASC').limit(1).take
-	    policy.next_payment_date = next_invoice.due_date unless next_invoice.nil?
-	
-	    policy.save
-    # MOOSE WARNING: needs elsif for PolicyGroup, once that exists
     end
   end
 
   def payment_failed
-    unless status == 'complete'
-      # prepare for failure notifications
-      failure_is_postproration = false # flag set to true when this is a post-policy-proration failure of a canceled policy
-      invoice_status = nil
-      user_notification_subject = nil
-      agent_notification_subject = nil
-      if due_date >= Time.current.to_date
-        invoice_status = 'available'
-        user_notification_subject = 'Get Covered: Payment Failure'
-        user_notification_message = "A payment for #{get_descriptor}, invoice ##{number} has failed.  Please submit another payment before #{due_date.strftime('%m/%d/%Y')}."
-        agent_notification_subject = 'Get Covered: Payment Failure'
-        agent_notification_message = "A payment for #{get_descriptor}, invoice ##{number} has failed.  Payment due #{due_date.strftime('%m/%d/%Y')}."
-      else
-        invoice_status = 'missed'
-        user_notification_subject = 'Get Covered: Payments Behind'
-        user_notification_message = "A payment for #{get_descriptor}, invoice ##{number} has failed.  Your payment is now past due.  Please submit a payment immediately to prevent cancellation of coverage."
-        agent_notification_subject = 'Get Covered: Payments Behind'
-        agent_notification_message = "A payment for #{get_descriptor}, invoice ##{number} has failed.  This payment is now past due."
-      end
-      # update our status
-      update status: invoice_status
-      # handle when our payemnt is missed
-      if invoice_status == 'missed'
-        if has_pending_refund
-          # if we are here, then a proration was applied to the invoice while payment was processing, and payment then failed
-          failure_is_postproration = true
-          agent_notification_subject = 'Get Covered: Post-Cancelation Payment Failure'
-          agent_notification_message = "A payment for #{get_descriptor}, invoice #{number} has failed. The payment was marked for proration adjustments via refund upon its successful receipt, because the policy was canceled while the payment was being processed. Its failure means such adjustments can no longer be made. No proration adjustment refunds will be issued; no payment was collected for this invoice."
-          #notifications.create(
-          #  notifiable: SystemDaemon.find_by_process('notify_canceled_policy_payment_failure'),
-          #  action: 'invoice_payment_failed_after_proration',
-          #  subject: agent_notification_subject,
-          #  message: agent_notification_message
-          #)
+    with_lock do
+      if self.status == 'processing'
+        invoiceable.payment_failed(self) if invoiceable.respond_to?(:payment_failed)
+        if due_date >= Time.current.to_date
+          self.update(status: 'available')
+        else
+          self.payment_missed
         end
-        self.invoiceable.update billing_status: 'BEHIND' if self.invoiceable_type == 'Policy' # MOOSE WARNING or policygroup once it exists
       end
-      
-      # Notify responsible user
-      unless failure_is_postproration
-        notifications.create(
-          notifiable: user,
-          action: 'invoice_payment_failed',
-          code: "error",
-          subject: user_notification_subject,
-          message: user_notification_message
-        )
-      end
-
-      # Notify policy agents
-      notifiables_for_payment_failure.each do |notifiable|
-        notifications.create(
-          notifiable: notifiable, 
-          action: failure_is_postproration ? 'invoice_payment_failed_after_proration' : 'invoice_payment_failed',
-          code: "error",
-          subject: agent_notification_subject,
-          message: agent_notification_message
-        )
-      end
-
     end
   end
-
-  # Make available
-  #
-  # Sets invoice as available
-
-  def make_available
-    if status == 'upcoming'
-      if update status: 'available'
-
-        calculate_total(user.current_payment_method == 'none' ? nil : user.current_payment_method == 'card' ? 'card' : 'bank_account', true)
-
-        user_notification = notifications.new(
-          notifiable: user,
-          action: 'invoice_available',
-          template: 'invoice',
-          subject: "#{get_descriptor}, Invoice ##{number}.",
-          message: 'A new invoice is available for payment.'
-        )
-
-        if user_notification.save
-
-        else
-          pp user_notification.errors
+  
+  def payment_missed
+    with_lock do
+      if self.status == 'available' || self.status == 'processing' # other statuses mean we were canceled or already paid
+        self.update(status: 'missed')
+        if self.has_pending_refund && self.pending_refund_data.has_key?('proration_refund')
+          if apply_proration(nil, to_refund_override: pending_refund_data['proration_refund'].to_i, cancel_if_unpaid_override: pending_refund_data['cancel_if_unpaid'])
+            update(has_pending_refund: false)
+          else
+            # WARNING: do nothing on proration application failure... would be a good place for a generalized error to be logged to the db
+          end
         end
-
+        invoiceable.payment_missed(self) if invoiceable.respond_to?(:payment_missed) && !self.reload.status == 'canceled' # just in case apply_proration reduced our total due to 0 and we are now canceled instead of missed
       end
     end
   end
@@ -453,57 +292,63 @@ class Invoice < ApplicationRecord
   end
   
   # keep track of number of disputed charges
-  def modify_disputed_charge_count(opened_one, closed_one)
-    # MOOSE WARNING: this used to be on Policy but was taken away in v2 and currently does nothing!!!
+  def modify_disputed_charge_count(count_change)
+    return true if count_change == 0
+    with_lock do
+      # update our dispute count
+      new_disputed_charge_count = disputed_charge_count + count_change
+      if new_disputed_charge_count < 0
+        return false # makra pragmata ei touto gignotai
+      end
+      update(disputed_charge_count: new_disputed_charge_count)
+      if new_disputed_charge_count == 0
+        refunds.queued.each{|ref| ref.process(true) }
+      end
+      # update our invoiceable if it wants updates
+      invoice_dispute_changes = (new_disputed_charge_count == count_change ? 1 : new_disputed_charge_count == 0 ? -1 : 0)
+      if self.invoiceable.respond_to?(:modify_disputed_invoice_count) && invoice_dispute_changes != 0
+        self.invoiceable.modify_disputed_invoice_count(invoice_dispute_changes)
+      end
+    end
+    return true
   end
   
   # whether refunds must start queued instead of running immediately
   def refunds_must_start_queued?
-    case(self.invoiceable&.reload.nil? ? nil : self.invoiceable_type)
-      when 'Policy'
-        self.invoiceable.billing_dispute_status == 'DISPUTED'
-      else
-        false
-    end
-  end
-  
-  # whom to inform on payment failure (excluding user)
-  def notifiables_for_payment_failure
-    case(self.invoiceable.nil? ? nil : self.invoiceable_type)
-      when 'Policy'
-        self.invoiceable.agency.account_staff.to_a
-      else
-        []
-    end
-  end
-  
-  # whom to inform on refund failure (excluding user)
-  def notifiables_for_refund_failure
-    case(self.invoiceable.nil? ? nil : self.invoiceable_type)
-      when 'Policy'
-        self.invoiceable.agency.account_staff.to_a
-      else
-        []
-    end
+    return(self.reload.disputed_charge_count > 0)
   end
 
   private
 
-# 	def policy_unless_quoted
-# 		if policy.nil? && status != "quoted"
-# 			errors.add(:policy_id, "must exist if status is anything but quoted")	
-# 		end
-# 	end
-
-  def initialize_invoice
-  end
-
   # Calculation Methods
 
-  def calculate_subtotal(and_save = false)
-    prior_subtotal = subtotal
+  def calculate_subtotal
+    old_subtotal = self.will_save_change_to_attribute?('subtotal') ? self.subtotal : nil
     self.subtotal = line_items.inject(0) { |result, line_item| result += line_item.price }
-    calculate_total(self.user.nil? || self.user.current_payment_method == 'none' ? nil : self.user.current_payment_method == 'card' ? 'card' : 'bank_account', and_save) if subtotal != prior_subtotal
+    errors.add(:subtotal, "must match sum of line item prices") unless old_subtotal.nil? || old_subtotal == self.subtotal
+  end
+  
+  def calculate_total
+    old_total = self.will_save_change_to_attribute?('total') ? self.total : nil
+    self.total = self.subtotal - self.proration_reduction # total is subtotal - proration_reduction
+    errors.add(:total, "must match subtotal") unless old_total.nil? || old_total == self.total
+  end
+  
+  def term_dates_are_sensible
+    errors.add(:term_last_date, "cannot precede term first date") unless term_last_date.nil? || term_first_date.nil? || (term_last_date >= term_first_date)
+    errors.add(:term_last_date, "cannot be blank when term first date is provided") if term_last_date.nil? && !term_first_date.nil?
+    errors.add(:term_first_date, "cannot be blank when term last date is provided") if term_first_date.nil? && !term_last_date.nil?
+  end
+  
+  def mark_line_items_priced_in
+    # it's redundant to calculate these twice, but I'm paranoid about validations being missed or called early; better safe than sorry when dealing with money!
+    calculate_subtotal
+    calculate_total
+    if self.errors.blank?
+      self.line_items.update_all(priced_in: true)
+    else
+      throw :abort
+    end
   end
 
   # History Methods
@@ -536,6 +381,10 @@ class Invoice < ApplicationRecord
 
   def set_status_changed
     self.status_changed = Time.now
+  end
+  
+  def set_was_missed
+    self.was_missed = true
   end
 
   # This method uses deprecated fields (e.g. agency_total).

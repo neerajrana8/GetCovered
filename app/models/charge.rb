@@ -17,13 +17,9 @@ class Charge < ApplicationRecord
 
   belongs_to :invoice
 
-  has_one :user, through: :invoice
-
   has_many :refunds
 
   has_many :disputes
-
-  has_many :payments
 
   # Validations
 
@@ -68,14 +64,18 @@ class Charge < ApplicationRecord
 
 
   def mark_succeeded(message = nil)
-    update_columns(status: 'succeeded', status_information: message)
-    invoice.payment_succeeded
+    invoice.with_lock do  # we lock the invoice to ensure serial processing with other invoice events
+      update_columns(status: 'succeeded', status_information: message)
+      invoice.payment_succeeded
+    end
   end
 
 
   def mark_failed(message = nil)
-    update_columns(status: 'failed', status_information: message)
-    invoice.payment_failed
+    invoice.with_lock do  # we lock the invoice to ensure serial processing with other invoice events
+      update_columns(status: 'failed', status_information: message)
+      invoice.payment_failed
+    end
   end
 
 
@@ -90,7 +90,7 @@ class Charge < ApplicationRecord
       end
       raise ActiveRecord::Rollback unless succeeded
       # update invoice
-      succeeded = invoice.modify_disputed_charge_count(true, false) if became_disputed
+      succeeded = invoice.modify_disputed_charge_count(1) if became_disputed
       raise ActiveRecord::Rollback unless succeeded
     end
     return succeeded
@@ -98,11 +98,12 @@ class Charge < ApplicationRecord
 
 
   def react_to_dispute_closure(dispute_id, amount_lost)
-    succeeded = false
-    became_undisputed = false
-    ActiveRecord::Base.transaction do
-      # update internal numbers
-      self.with_lock do
+    invoice.with_lock do # should only be called by Dispute#handle_dispute_closure and already in this lock, but to be safe...
+      succeeded = false
+      became_undisputed = false
+      ActiveRecord::Base.transaction do
+        # update internal numbers
+        reload
         became_undisputed = (dispute_count == 1)
         succeeded = self.update(
           dispute_count: dispute_count - 1,
@@ -110,40 +111,38 @@ class Charge < ApplicationRecord
           amount_refunded: amount_refunded + [amount_lost - amount_in_queued_refunds, 0].max,
           amount_in_queued_refunds: [amount_in_queued_refunds - amount_lost, 0].max
         )
-      end
-      raise ActiveRecord::Rollback unless succeeded
-      # apply amount_lost to refunds
-      unless amount_lost == 0
-        succeeded = true
-        refunds.queued.each do |queued_refund|
-          queued_refund.with_lock do
+        raise ActiveRecord::Rollback unless succeeded
+        # apply amount_lost to refunds
+        unless amount_lost == 0
+          succeeded = true
+          refunds.queued.reload.each do |queued_refund|
             amount_to_credit = [amount_lost, queued_refund.amount - queued_refund.amount_returned_via_dispute].min
             if queued_refund.apply_dispute_payout(amount_to_credit)
               amount_lost -= amount_to_credit
             else
               succeeded = false
             end
+            break if amount_lost == 0
           end
-          break if amount_lost == 0
         end
-      end
-      succeeded ||= (amount_lost == 0) # we succeeded if no apply_dispute_payout call failed, or if some failed but we applied the full amount_lost as credit anyway
-      raise ActiveRecord::Rollback unless succeeded
-      # create a bookkeeping refund for any amount left over
-      unless amount_lost == 0
-        succeeded = refunds.create(
-          amount: amount_lost,
-          amount_returned_via_dispute: amount_lost,
-          status: 'succeeded_via_dispute_payout',
-          full_reason: "payout for dispute ##{dispute_id}"
-        )
+        succeeded ||= (amount_lost == 0) # we succeeded if no apply_dispute_payout call failed, or if some failed but we applied the full amount_lost as credit anyway
+        raise ActiveRecord::Rollback unless succeeded
+        # create a bookkeeping refund for any amount left over
+        unless amount_lost == 0
+          succeeded = refunds.create(
+            amount: amount_lost,
+            amount_returned_via_dispute: amount_lost,
+            status: 'succeeded_via_dispute_payout',
+            full_reason: "payout for dispute ##{dispute_id}"
+          )
+          raise ActiveRecord::Rollback unless succeeded
+        end
+        # update invoice
+        succeeded = invoice.modify_disputed_charge_count(-1) if became_undisputed
         raise ActiveRecord::Rollback unless succeeded
       end
-      # update invoice
-      succeeded = invoice.modify_disputed_charge_count(false, true) if became_undisputed
-      raise ActiveRecord::Rollback unless succeeded
+      return succeeded
     end
-    return succeeded
   end
 
 
@@ -226,7 +225,11 @@ class Charge < ApplicationRecord
       # setup
       @already_in_on_create = true
       stripe_source = nil
-      if stripe_id_is_stripe_source
+      if amount == 0
+        pay_attempt_succeeded(nil, 'unknown')
+        remove_instance_variable(:@already_in_on_create)
+        return
+      elsif stripe_id_is_stripe_source
         stripe_source = stripe_id
       elsif stripe_id_is_stripe_token # MOOSE WARNING: probably remove this
         # retrieve the token
@@ -248,8 +251,14 @@ class Charge < ApplicationRecord
           remove_instance_variable(:@already_in_on_create)
           return
         end
+        # leave the token... we'll use it without a customer so it works
+        stripe_source = stripe_id
         # rip the card or bank account out of the token for our use
-        stripe_source = token[token['type']]['id']
+        # stripe_source = token[token['type']]['id'] # MOOSE WARNING: this will NOT work. It needs to be attached to the customer before calling Stripe::Charge.create on it
+      else
+        pay_attempt_failed(nil, 'unknown', "No payment source provided")
+        remove_instance_variable(:@already_in_on_create)
+        return
       end
       # processing
       if status != 'processing'
@@ -257,6 +266,12 @@ class Charge < ApplicationRecord
         remove_instance_variable(:@already_in_on_create)
         return
       else
+        # get payee stripe id (leave as nil if we're using a token, since Stripe won't accept an unattached source)
+        customer_stripe_id = nil
+        unless stripe_id_is_stripe_token || invoice.payee.nil? || !invoice.payee.respond_to?(:set_stripe_id) || !invoice.payee.respond_to?(:stripe_id)
+          invoice.payee.set_stripe_id if invoice.payee.stripe_id.nil?
+          customer_stripe_id = invoice.payee.stripe_id
+        end
         # create charge
         begin
 	        descriptor = invoice.get_descriptor
@@ -264,7 +279,7 @@ class Charge < ApplicationRecord
             amount: amount,
             currency: 'usd',
             description: "#{ descriptor }, Invoice ##{invoice.number}",
-            customer: invoice.user.stripe_id,
+            customer: customer_stripe_id,
             source: stripe_source
           }.delete_if { |k,v| v.nil? })
         rescue Stripe::StripeError => e
@@ -272,7 +287,6 @@ class Charge < ApplicationRecord
           remove_instance_variable(:@already_in_on_create)
           return
         end
-        
         # handle charge status
         if stripe_charge.nil?
           pay_attempt_failed(nil, 'unknown', "Payment processor failed to create charge") # this should never happen, but just in case...

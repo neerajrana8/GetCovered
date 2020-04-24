@@ -9,19 +9,14 @@ class Refund < ApplicationRecord
 
   after_create :process
 
-  after_save :send_failure_notifications,
-    if: Proc.new { |rfnd| rfnd.saved_change_to_status? && ['failed', 'errored'].include?(rfnd.status) }
-
   # ActiveRecord Associations
 
   belongs_to :charge
 
   has_one :invoice, through: :charge
-
-  has_one :user, through: :invoice
   
-  has_many :notifications,
-    as: :eventable
+  #has_many :notifications,
+  #  as: :eventable
 
   # Validations
 
@@ -71,15 +66,17 @@ class Refund < ApplicationRecord
   end
 
   def update_from_stripe_hash(refund_hash)
-    update(
-      amount: refund_hash['amount'],
-      currency: refund_hash['currency'],
-      failure_reason: refund_hash['failure_reason'],
-      stripe_reason: refund_hash['reason'],
-      receipt_number: refund_hash['receipt_number'],
-      stripe_status: refund_hash['status'],
-      status: status_from_stripe_status(refund_hash['status'])
-    ) # most of these are not expected to be able to change, but are included for completeness
+    invoice.with_lock do # we lock the invoice to ensure serial processing with other invoice events
+      update(
+        amount: refund_hash['amount'],
+        currency: refund_hash['currency'],
+        failure_reason: refund_hash['failure_reason'],
+        stripe_reason: refund_hash['reason'],
+        receipt_number: refund_hash['receipt_number'],
+        stripe_status: refund_hash['status'],
+        status: status_from_stripe_status(refund_hash['status'])
+      ) # most of these are not expected to be able to change, but are included for completeness
+    end
   end
 
   def process(allow_processing_if_queued = false)
@@ -129,8 +126,8 @@ class Refund < ApplicationRecord
 
     def update_charge_for_refund_creation
       true_amount = amount - amount_returned_via_dispute
-      if true_amount > 0
-        charge.with_lock do
+      charge.with_lock do
+        if true_amount > 0
           charge.update(
             amount_refunded: charge.amount_refunded + true_amount,
             amount_in_queued_refunds: status == 'queued' ? charge.amount_in_queued_refunds + true_amount : charge.amount_in_queued_refunds
@@ -145,27 +142,4 @@ class Refund < ApplicationRecord
       end
     end
 
-    def send_failure_notifications
-      if status == 'failed'
-        invoice.notifiables_for_refund_failure.each do |notifiable|
-          notifications.create( # used to be SystemDaemon
-            notifiable: notifiable, 
-            action: "refund_failed",
-            code: "error",
-            subject: "GetCovered Refund Failure", 
-            message:    "A refund (id #{id}) for #{ invoice.get_descriptor }, invoice ##{ invoice.number } has failed.#{failure_reason.blank? || failure_reason == 'unknown' ? "" : " The payment processor provided the following reason: #{failure_reason}"}"
-          )
-        end
-      elsif status == 'errored'
-        invoice.notifiables_for_refund_failure.each do |notifiable|
-          notifications.create(
-            notifiable: notifiable, 
-            action: "refund_failed",
-            code: "error",
-            subject: "GetCovered Refund Failure",
-            message:    "A refund (id #{id}) for #{ invoice.get_descriptor }, invoice ##{ invoice.number } has failed.#{error_message.blank? ? "" : " The payment processor provided the following error message: #{error_message}"}"
-          )
-        end
-      end
-    end
 end

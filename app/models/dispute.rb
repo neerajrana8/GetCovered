@@ -1,12 +1,10 @@
 class Dispute < ApplicationRecord
     # ActiveRecord Callbacks
 
-  after_initialize :initialize_dispute
-
-  before_validation :set_active_flag
-
   after_create :handle_new_dispute,
     if: Proc.new { |dspt| dspt.active }
+
+  before_save :set_active_flag
 
   after_save :handle_closed_dispute,
     if: Proc.new { |dspt| !dspt.active && dspt.saved_change_to_active? }
@@ -14,10 +12,8 @@ class Dispute < ApplicationRecord
   # ActiveRecord Associations
 
   belongs_to :charge
-
+  
   has_one :invoice, through: :charge
-
-  has_one :user, through: :invoice
 
   # Validations
 
@@ -47,11 +43,14 @@ class Dispute < ApplicationRecord
   # Methods
 
   def update_from_stripe_hash(dispute_hash)
-    update(
-      amount: dispute_hash['amount'],
-      reason: dispute_hash['reason'],
-      status: dispute_hash['status']
-    ) # only status should change, but update the rest just in case
+   invoice.with_lock do # we lock the invoice to ensure serial processing with other invoice events
+      update({
+        amount: dispute_hash['amount'],
+        reason: dispute_hash['reason'],
+        status: dispute_hash['status']
+      }.select{|k,v| !v.nil? })
+      # only status should change, but update the rest just in case
+    end
   end
 
   private
@@ -61,12 +60,15 @@ class Dispute < ApplicationRecord
     end
 
     def handle_new_dispute
-      throw :abort unless charge.react_to_new_dispute
+      unless charge.react_to_new_dispute
+        errors.add(:base, "charge new dispute handling error")
+        raise ActiveRecord::Rollback
+      end
     end
 
     def handle_closed_dispute
       if Dispute.closed_dispute_statuses.include?(status)
-        throw :abort unless charge.react_to_dispute_closure(id, status == 'lost' ? amount : 0)
+        raise ActiveRecord::Rollback unless charge.react_to_dispute_closure(id, status == 'lost' ? amount : 0)
       end
     end
 end
