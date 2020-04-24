@@ -58,6 +58,8 @@ class Policy < ApplicationRecord
   belongs_to :carrier
   belongs_to :policy_type
   # belongs_to :billing_profie
+  belongs_to :policy_group_quote, optional: true
+  belongs_to :policy_group, optional: true
 
   has_many :policy_insurables, inverse_of: :policy
   has_many :insurables, through: :policy_insurables

@@ -9,25 +9,21 @@ module V2
 
         @policy_application_groups = paginator(groups_query)
 
-        render template: "v2/shared/policy_application_groups/index.json.jbuilder", status: :ok
+        render template: 'v2/shared/policy_application_groups/index.json.jbuilder', status: :ok
       end
 
       def show
-        render template: "v2/shared/policy_application_groups/show.json.jbuilder", status: :ok
+        render template: 'v2/shared/policy_application_groups/show.json.jbuilder', status: :ok
       end
 
       def create
-        @policy_application_group = PolicyApplicationGroup.create(
-          policy_applications_count: @parsed_input_file.count,
-          account: current_staff&.organizable,
-          agency: current_staff&.organizable&.agency
-        )
+        @policy_application_group = ::PolicyApplicationGroup.create(policy_application_group_params)
 
         @parsed_input_file.each do |policy_application_params|
           all_policy_application_params =
-            policy_application_params[:policy_application].
-              merge(common_params).
-              merge(policy_application_group: @policy_application_group)
+            policy_application_params[:policy_application]
+              .merge(common_params)
+              .merge(policy_application_group: @policy_application_group)
 
           ::PolicyApplications::RentGuaranteeCreateJob.perform_later(
             all_policy_application_params,
@@ -35,7 +31,16 @@ module V2
           )
         end
 
-        render template: "v2/shared/policy_application_groups/show.json.jbuilder", status: :ok
+        render template: 'v2/shared/policy_application_groups/show.json.jbuilder', status: :ok
+      end
+
+      def accept_quote
+        result = @policy_application_group.policy_group_quote.accept
+
+        render json: {
+          error: result[:success] ? 'Policy Group Accepted' : 'Policy Group Could Not Be Accepted',
+          message: result[:message]
+        }, status: result[:success] ? 200 : 500
       end
 
       def destroy
@@ -52,6 +57,25 @@ module V2
       end
 
       private
+
+      def policy_application_group_params
+        billing_strategy =
+          BillingStrategy.where(
+            agency: Agency.where(master_agency: true).take,
+            policy_type: PolicyType.find_by_slug('rent-guarantee')
+          ).take
+        {
+          policy_applications_count: @parsed_input_file.count,
+          account: current_staff&.organizable,
+          agency: current_staff&.organizable&.agency,
+          policy_group_quote: ::PolicyGroupQuote.create(status: :awaiting_estimate),
+          policy_type: PolicyType.find(5),
+          carrier: Carrier.find_by_call_sign('P'),
+          auto_renew: false,
+          auto_pay: false,
+          billing_strategy: billing_strategy
+        }.merge(common_params)
+      end
 
       def destroy_allowed?
         true
@@ -71,9 +95,7 @@ module V2
                    status: :unprocessable_entity
           end
 
-          if result.result.empty?
-            render json: { error: 'No rows' }, status: :unprocessable_entity
-          end
+          render json: { error: 'No rows' }, status: :unprocessable_entity if result.result.empty?
 
           @parsed_input_file = result.result
         else
@@ -82,11 +104,10 @@ module V2
       end
 
       def common_params
-        params.
-          require(:policy_application_group).
-          require(:common_attributes).
-          permit(:effective_date, :expiration_date, :auto_pay,
-                 :auto_renew, :account_id, :agency_id)
+        params
+          .require(:policy_application_group)
+          .require(:common_attributes)
+          .permit(:effective_date, :expiration_date, :auto_pay, :auto_renew)
       end
     end
   end

@@ -24,18 +24,22 @@ module CarrierPensioPolicyApplication
 		  if status_check &&
 			   self.carrier == Carrier.find_by_call_sign('P') 
 			
-			  quote = policy_quotes.new(agency: self.agency)
+			  quote = policy_quotes.new(
+					agency: self.agency,
+					policy_group_quote: self.policy_application_group&.policy_group_quote
+				)
 			  if quote.save
 				  
 				  guarantee_option = self.fields["guarantee_option"].to_i
-				  
-				  if guarantee_option == 12
-						multiplier = 0.09  
-					elsif guarantee_option == 6
-						multiplier = 0.075
-					else
-						multiplier = 0.035
-					end
+
+					multiplier =
+						if guarantee_option == 12
+							0.09
+						elsif guarantee_option == 6
+							0.075
+						else
+							0.035
+						end
 					
 					unchecked_premium = ((( self.fields["monthly_rent"] * 100 ) * 12 ) * multiplier ).to_i
 					checked_premium = unchecked_premium < 42000 ? 42000 : unchecked_premium
