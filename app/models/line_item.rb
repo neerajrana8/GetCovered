@@ -8,6 +8,7 @@ class LineItem < ApplicationRecord
   validates_presence_of :refundability
   validates_presence_of :category
   validates_presence_of :collected
+  validates_presence_of :proration_reduction
   
   enum refundability: {
     no_refund: 0,                         # if we cancel, no refund
@@ -25,4 +26,8 @@ class LineItem < ApplicationRecord
     deposit_fees: 4,
     amortized_fees: 5
   }
+  
+  def adjusted_price
+    self.price - self.proration_reduction
+  end
 end
