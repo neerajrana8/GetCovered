@@ -71,7 +71,8 @@ module PolicyApplications
                 email: policy_user[:user_attributes][:email],
                 password: secure_tmp_password,
                 password_confirmation: secure_tmp_password,
-                profile_attributes: policy_user[:user_attributes][:profile_attributes]
+                profile_attributes: policy_user[:user_attributes][:profile_attributes],
+                address_attributes: policy_user[:user_attributes][:address_attributes]
               }
             )
             policy_user.user.invite! if index.zero?
