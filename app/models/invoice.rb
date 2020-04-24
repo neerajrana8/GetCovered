@@ -20,6 +20,8 @@ class Invoice < ApplicationRecord
   before_save :set_was_missed, if: Proc.new{|inv| inv.will_save_change_to_attribute?('status') && inv.status == 'missed' }
   
   before_create :mark_line_items_priced_in
+  
+  after_save :total_collected_changed, if: Proc.new{|inv| inv.status == 'complete' && (inv.saved_change_to_attribute?('amount_refunded') || inv.saved_change_to_attribute?('status')) }
 
   # ActiveRecord Associations
 
@@ -317,6 +319,20 @@ class Invoice < ApplicationRecord
   def refunds_must_start_queued?
     return(self.reload.disputed_charge_count > 0)
   end
+  
+  # returns [ [group of line items paid first], [group of line items paid next], ..., [group of line items paid last] ]
+  # (payment order is reverse of refund order)
+  def line_item_groups
+    arr = [
+      [self.due_date, 'complete_refund_before_due_date'],
+      [self.term_first_date || self.due_date, 'complete_refund_before_term'],
+      [(self.term_last_date + 1.day) || self.due_date, 'complete_refund_during_term']
+    ].sort{|a,b| a[0] <=> b[0] }
+     .map{|x| x[1] }
+    arr.insert(arr.index{|x| x == 'complete_refund_during_term' }, 'prorated_refund')
+    arr.insert(0, 'no_refund')
+    arr.map{|x| self.line_items.select{|li| li.priced_in && li.refundability == x } }
+  end
 
   private
 
@@ -385,6 +401,13 @@ class Invoice < ApplicationRecord
   
   def set_was_missed
     self.was_missed = true
+  end
+  
+  def total_collected_changed
+    # get amounts collected
+    amount_collected = self.total - self.amount_refunded
+    old_amount_collected = (self.attribute_before_last_save('status') != 'complete' ? 0 : self.total || 0) - (self.attribute_before_last_save('amount_refunded') || 0)
+    # 
   end
 
   # This method uses deprecated fields (e.g. agency_total).
