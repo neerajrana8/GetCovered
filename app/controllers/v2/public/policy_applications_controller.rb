@@ -405,8 +405,8 @@ module V2
   						response = { 
 	  						id: @policy_application.id,
   							quote: { 
-  								id: @policy_application.id, 
-  								status: @policy_application.status, 
+  								id: @quote.id,
+  								status: @quote.status,
   								premium: @premium
   							},
                 invoice_errors: invoice_errors,
