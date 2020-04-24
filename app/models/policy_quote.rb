@@ -9,6 +9,7 @@ class PolicyQuote < ApplicationRecord
 	include CarrierQbePolicyQuote
 	include CarrierCrumPolicyQuote
 	include ElasticsearchSearchable
+  include InvoiceableQuote
 
   before_save :set_status_updated_on,
   	if: Proc.new { |quote| quote.status_changed? }
@@ -242,64 +243,6 @@ class PolicyQuote < ApplicationRecord
 			end
 		end
 	end
-	
-	def generate_invoices_for_term(renewal = false, refresh = false)
-    invoices_generated = false
-    
-    unless renewal
-	    
-	    invoices.destroy_all if refresh
-	    
-	  	if policy_premium.calculation_base > 0 && 
-		  	 status == "quoted" && 
-		  	 invoices.count == 0
-         
-        # calculate sum of weights (should be 100, but just in case it's 33+33+33 or something)
-        payment_weight_total = policy_application.billing_strategy.new_business['payments'].inject(0){|sum,p| sum + p }.to_d
-        payment_weight_total = 100.to_d if payment_weight_total <= 0 # this can never happen unless someone fills new_business with 0s invalidly, but you can't be too careful
-        
-        # calculate invoice charges
-        to_charge = policy_application.billing_strategy.new_business['payments'].map.with_index do |payment, index|
-          {
-            due_date: index == 0 ? status_updated_on : policy_application.effective_date + index.months,
-            fees: (policy_premium.amortized_fees * payment / payment_weight_total).floor + (index == 0 ? policy_premium.deposit_fees : 0),
-            total: (policy_premium.calculation_base * payment / payment_weight_total).floor + (index == 0 ? policy_premium.deposit_fees : 0)
-          }
-        end.select{|tc| tc[:total] > 0 }
-        
-        # add any rounding errors to the first charge
-        to_charge[0][:fees] += policy_premium.total_fees - to_charge.inject(0){|sum,tc| sum + tc[:fees] }
-        to_charge[0][:total] += policy_premium.total - to_charge.inject(0){|sum,tc| sum + tc[:total] }
-        
-        # create invoices
-        begin
-          ActiveRecord::Base.transaction do
-            to_charge.each do |tc|
-              invoices.create!({
-                due_date:       tc[:due_date],
-                available_date: tc[:due_date] - available_period,
-                user:           policy_application.primary_user,
-                subtotal:       tc[:total] - tc[:fees],
-                total:          tc[:total],
-                status:         "quoted"
-              })
-            end
-            invoices_generated = true
-          end
-        rescue ActiveRecord::RecordInvalid => e
-          puts e.to_s
-        rescue
-          puts "Unknown error during invoice creation"
-        end
-				
-		  end
-	  else
-	  	# Set up Renewal Invoice Generation
-	  end
-    
-    return invoices_generated
-    
-  end
 
   def start_billing
 
@@ -313,7 +256,7 @@ class PolicyQuote < ApplicationRecord
 		  	invoice.update status: index == 0 ? "available" : "upcoming"
 		  end		
 			 
-			charge_invoice = invoices.order("due_date").first.pay(stripe_source: policy_application.primary_user().payment_profiles.first.source_id)
+			charge_invoice = invoices.order("due_date").first.pay(stripe_source: :default)
 																
       if charge_invoice[:success] == true
         return true

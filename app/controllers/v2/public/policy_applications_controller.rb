@@ -23,7 +23,7 @@ module V2
       
       def new
         selected_policy_type = params[:policy_type].blank? ? 'residential' : params[:policy_type]
-        puts "\n\n#{ selected_policy_type }\n\n" 
+        
         if valid_policy_types.include?(selected_policy_type)
           policy_type = PolicyType.find_by_slug(selected_policy_type)
           
@@ -117,7 +117,7 @@ module V2
         	            error: "Address mismatch",
         	            message: "The mailing address associated with this email is different than the one supplied in the recent request.  To change your address please log in"
       	            }.to_json,
-      	            status: 401 
+      	            status: 401 and return
       	          error_status << true   
                 end        
               end
@@ -312,7 +312,6 @@ module V2
   	                 status: 422	
             end
   	      end
-
   	    else
           render json: @application.errors.to_json,
                  status: 422   
@@ -406,8 +405,8 @@ module V2
   						response = { 
 	  						id: @policy_application.id,
   							quote: { 
-  								id: @policy_application.id, 
-  								status: @policy_application.status, 
+  								id: @quote.id,
+  								status: @quote.status,
   								premium: @premium
   							},
   							invoices: @quote.invoices,

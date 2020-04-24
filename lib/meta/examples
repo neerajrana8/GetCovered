@@ -1,0 +1,45 @@
+Retrieve all models:
+
+  all_models
+  all_models(concern: RecordChange)                 # just the ones with the RecordChange concern
+  
+Retrieve an array of models targed by a given reflection (`belongs_to :staff` targets Staff, `belongs_to :belongable, polymorphic: true` targets whichever models have a corresponding `has_one/many :something, as: :belongable`*)
+* Note: If the environment variable RBMETA_EMPIRICAL_POLYMORPHIC_REFLECTION_TARGETS is true then polymorphic associations also target any models which are actually their type in some instance in the live database.
+
+  reflection_targets(Profile.reflections["profileable"])                # returns array of all the models which have an association as: :profileable
+  reflection_targets("Profile#profileable")                             # you can also pass a string
+
+Retrieve a { model_name => [association_name,...] } hash of all associations satisfying criteria:
+
+  all_models(association: "profileable", association_hash: true)                                      # associations called "profileable"
+  all_models(association: { name: "profileable" }, association_hash: true)                            # also associations called "profileable"
+  all_models(association: { name: "profileable", target: "Account" }, association_hash: true)         # associations named profileable and targeting Account
+  all_models(association: [{ name: "profileable" }, { target: "Account" }], association_hash: true)   # associations named profileable OR targeting Account
+
+  all_models(association: { target: [Staff,User] }, association_hash: true)                           # associations whose target is Staff or User (can also pass model names as strings)
+  all_models(association: { target: [nil] }, association_hash: true)                                  # polymorphic associatiations
+  all_models(association: { target: [Staff,nil] }, association_hash: true)                            # associations whose target is Staff or that are polymorphic
+  all_models(association: { target: [Staff], polymorphic: true }, association_hash: true)             # associations whose target includes Staff AND that are polymorphic
+  all_models(association: { polymorphic: true }, association_hash: true)                              # polymorphic associations (again)
+  all_models(association: { polymorphic: false }, association_hash: true)                             # non-polymorphic associations
+
+The association_hash: true option causes all_models to return an association hash instead of an array of models. You can leave it out to get the model array instead, or pass a hash to have it return the model array & store the association hash in the hash you provide:
+
+  all_models(association: { polymorphic: true })                                                      # return array of models which have the desired association, don't bother making an association hash
+  h = {}; all_models(association: { polymorphic: true }, association_hash: h)                         # return array of models which have the desired association, store the association hash in h
+
+Find files/lines where a given condition is satisfied (have your block return an integer to specify a column, or any truthy value to just say the line satisfied your constraints):
+
+  print_findings find_where("MOOSE WARNING")                                        # checks the main app files for places where "MOOSE WARNING" appears
+  print_findings find_where(:all, "MOOSE WARNING")                                  # checks everywhere including unusual places, like views & seeds
+  print_findings find_where{|line| line.include?("MOOSE WARNING") }                 # checks the main app files for places where "MOOSE WARNING" appears; uses a block so you could do something more complex than a string match
+  print_findings find_where{|line| line.index("MOOSE WARNING") }                    # checks the main app files for places where "MOOSE WARNING" appears, returns the column
+  print_findings find_where(:all){|line| line.index("MOOSE WARNING") }              # checks everywhere including unusual places, like views & seeds
+  print_findings find_where(controller_source){|line| line.index("MOOSE WARNING") } # check just controllers
+
+
+Find places where a given model method is called (may not be 100% perfect--it may find calls on polymorphic associations that aren't actually for the right model, and it may miss calls involving local variables (e.g. `temp = User.first; temp.profile` will not be recognized in a 'User#profile' search, but `Account.users.profile` and `User.new.profile` will be)):
+
+  print_findings find_where(calls: "Invoice#create/new")                            # checks the main app files
+  print_findings find_where(seeds_source, calls: "Invoice#create/new")              # checks just seeds
+
