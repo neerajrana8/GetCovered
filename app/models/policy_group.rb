@@ -1,5 +1,7 @@
 class PolicyGroup < ApplicationRecord
   has_many :policies
+  has_many :invoices, as: :invoiceable
+  has_one :policy_application
 
   belongs_to :agency
   belongs_to :account, optional: true

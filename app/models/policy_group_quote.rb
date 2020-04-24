@@ -189,7 +189,23 @@ class PolicyGroupQuote < ApplicationRecord
       )
       policy.save
       policy.reload
-      PolicyQuoteStartBillingJob.perform_later(policy: policy, issue: issue_policy_method)
+
+      policy_quote.policy_application.policy_users.each do |pu|
+        pu.update(policy: policy)
+        pu.user.convert_prospect_to_customer()
+      end
+
+      if policy_quote.update(policy: policy) &&
+        policy_quote.policy_application.update(policy: policy, status: "accepted") &&
+        policy_quote.policy_premium.update(policy: policy)
+
+        PolicyQuoteStartBillingJob.perform_now(policy: policy, issue: issue_policy_method)
+      else
+        # If self.policy, policy_application.policy or
+        # policy_premium.policy cannot be set correctly
+        quote_attempt[:message] = "Error attaching policy to system"
+        policy_quote.update(status: 'error')
+      end
     end
   end
 
@@ -242,7 +258,6 @@ class PolicyGroupQuote < ApplicationRecord
   end
 
   def init_policy_group
-
     build_policy_group(
       number: group_policy_number,
       status: policy_status,

@@ -132,6 +132,16 @@ module PolicyApplicationGroups
               birth_date: row["Applicant's Date of birth"]&.to_s,
               gender: row["Gender"],
               salutation: row['Salutation']
+            },
+            address_attributes: {
+              street_number: '',
+              street_name: row["Address-Street Address"],
+              street_two: row["Address-Street Address Line 2"],
+              city: row["Address-City"],
+              state: row["Address-State"],
+              country: row["Address-Country"],
+              county: '',
+              zip_code: row["Address-Postal / Zip Code"]
             }
           }
         }
@@ -150,6 +160,16 @@ module PolicyApplicationGroups
               birth_date: row["Co-Tenant Date of birth"]&.to_s,
               gender: row["Gender2"],
               salutation: row["Co-Tenant Salutation"],
+            },
+            address_attributes: {
+              street_number: '',
+              street_name: row["Address-Street Address"],
+              street_two: row["Address-Street Address Line 2"],
+              city: row["Address-City"],
+              state: row["Address-State"],
+              country: row["Address-Country"],
+              county: '',
+              zip_code: row["Address-Postal / Zip Code"]
             }
           }
         }

@@ -17,18 +17,7 @@ module V2
       end
 
       def create
-        @policy_application_group = ::PolicyApplicationGroup.create(
-          policy_applications_count: @parsed_input_file.count,
-          account: current_staff&.organizable,
-          agency: current_staff&.organizable&.agency,
-          policy_group_quote: ::PolicyGroupQuote.create(status: :awaiting_estimate),
-          policy_type: PolicyType.find(5),
-          billing_strategy:
-            BillingStrategy.where(
-              agency: Agency.where(master_agency: true).take,
-              policy_type: PolicyType.find_by_slug('rent-guarantee')
-            ).take
-        )
+        @policy_application_group = ::PolicyApplicationGroup.create(policy_application_group_params)
 
         @parsed_input_file.each do |policy_application_params|
           all_policy_application_params =
@@ -69,6 +58,25 @@ module V2
 
       private
 
+      def policy_application_group_params
+        billing_strategy =
+          BillingStrategy.where(
+            agency: Agency.where(master_agency: true).take,
+            policy_type: PolicyType.find_by_slug('rent-guarantee')
+          ).take
+        {
+          policy_applications_count: @parsed_input_file.count,
+          account: current_staff&.organizable,
+          agency: current_staff&.organizable&.agency,
+          policy_group_quote: ::PolicyGroupQuote.create(status: :awaiting_estimate),
+          policy_type: PolicyType.find(5),
+          carrier: Carrier.find_by_call_sign('P'),
+          auto_renew: false,
+          auto_pay: false,
+          billing_strategy: billing_strategy
+        }.merge(common_params)
+      end
+
       def destroy_allowed?
         true
       end
@@ -99,8 +107,7 @@ module V2
         params
           .require(:policy_application_group)
           .require(:common_attributes)
-          .permit(:effective_date, :expiration_date, :auto_pay,
-                  :auto_renew, :account_id, :agency_id)
+          .permit(:effective_date, :expiration_date, :auto_pay, :auto_renew)
       end
     end
   end
