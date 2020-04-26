@@ -5,6 +5,7 @@
     
     get "stripe/button_link", to: "stripe#stripe_button_link", as: :account_stripe_link
     get "stripe/connect", to: "stripe#connect", as: :account_stripe_connect
+    post "plaid/connect", to: "plaid#connect", as: :account_plaid_connect
 
     resources :accounts,
       only: [ :update, :show ],
