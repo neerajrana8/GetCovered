@@ -78,7 +78,7 @@ module V2
           :email, :enabled, notification_options: {}, settings: {},
                             profile_attributes: %i[
                               birth_date contact_email contact_phone first_name
-                              job_title last_name middle_name suffix title
+                              job_title last_name middle_name suffix title gender salutation
                             ]
         )
         to_return
@@ -91,7 +91,7 @@ module V2
           :enabled, notification_options: {}, settings: {},
                     profile_attributes: %i[
                       birth_date contact_email contact_phone first_name
-                      job_title last_name middle_name suffix title
+                      job_title last_name middle_name suffix title gender salutation
                     ]
         )
       end

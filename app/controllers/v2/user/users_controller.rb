@@ -55,10 +55,11 @@ module V2
         
         params.require(:user).permit(
           :current_password, :password, :password_confirmation,
-          notification_options: {}, settings: {},
+          notification_options: {},
+          settings: {},
           profile_attributes: %i[
             birth_date contact_email contact_phone first_name
-            job_title last_name middle_name suffix title
+            job_title last_name middle_name suffix title gender salutation
           ]
         )
       end
