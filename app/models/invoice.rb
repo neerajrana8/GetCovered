@@ -406,7 +406,7 @@ class Invoice < ApplicationRecord
   end
   
   
-  def get_refund_distribution(refund_amount,)
+  def get_refund_distribution(refund_amount, ignore_prorations = false)
       ligs = self.line_item_groups
       # distribute refunds
       amt_left = refund_amount
@@ -415,37 +415,40 @@ class Invoice < ApplicationRecord
           total_collected = lig.inject(0){|li| li.collected }
           total_refundable = [amt_left, total_collected].min
           next nil if total_refundable == 0
-          # how shall we distribute it?
-          total_price = lig.inject(0){|sum,li| sum + li.adjusted_price }.to_d # the price over the total_price is the weight for each element
-          total_price = 1.to_d if total_price == 0
-          # let's distribute it!
+          # prepare to distribute it
           amounts = lig.map{|li| {
             line_item: li,
+            price: (ignore_prorations ? li.price : li.adjusted_price),
+            collected: li.collected,
             amount: 0
           } }
+          total_price = amounts.inject(0){|sum,amt| sum + amt[:price] }.to_d
+          total_price = 1.to_d if total_price == 0
+          # let's distribute it!
           lig_amt_left = total_refundable
           while lig_amt > 0
             old_lig_amt = lig_amt_left
             # distribute lig_amt_left proportionally among the line items that haven't been fully refunded, never exceeding the amount actually collected
-            relevant_amounts = amounts.select{|amt| amt[:amount] < amt[:line_item].collected }
-            total_price = relevant_amounts.inject(0){|sum,amt| sum + amt[:line_item].adjusted_price }
+            relevant_amounts = amounts.select{|amt| amt[:amount] < amt[:collected] }
+            total_price = relevant_amounts.inject(0){|sum,amt| sum + amt[:price] }.to_d
+            total_price = 1.to_d if total_price == 0
             relevant_amounts.each do |amt|
-              amt[:amount] += [(lig_amt_left * li.adjusted_price.to_d / total_price).floor, li.collected - amt[:amount]].min
+              amt[:amount] += [(lig_amt_left * amt[:price] / total_price).floor, amt[:collected] - amt[:amount]].min
             end
             lig_amt_left = total_refundable - amounts.inject(0){|sum,amt| amt[:amount] }
             # if the floor functions caused there to be no change, choose the line item with the greatest proportional unrefunded amount, and refund 1 cent to it
             if lig_amt_left == old_lig_amt_left
-              to_increment = relevant_amounts.sort{|amt1,amt2| (amt1[:line_item].collected - amt1[:amount]).to_f / (amt1[:line_item].adjusted_price || 1) <=> (amt2[:line_item].collected - amt2[:amount]).to_f / (amt2[:line_item].adjusted_price || 1) }.last
+              to_increment = relevant_amounts.sort{|amt1,amt2| (amt1[:collected] - amt1[:amount]).to_d / (amt1[:price] == 0 ? 1 : amt1[:price]) <=> (amt2[:collected] - amt2[:amount]).to_d / (amt2[:price] == 0 ? 1 : amt2[:price]) }.last
               to_increment[:amount] += 1
               lig_amt_left -= 1
             end
           end
-          # paranoid error-fixing, just in case a negative somehow slips in one day
+          # paranoid error-fixing, just in case a negative somehow slips in one day (ignores efficiency considerations and handles things cent-by-cent)
           while lig_amt < 0
             amounts.find{|amt| amt[:amount] > 0 }[:amount] -= 1
             lig_amt += 1
           end
-          # we're done with this line itemgroup
+          # we're done with this line item group
           amt_left -= total_refundable
           next amounts
         end.flatten
