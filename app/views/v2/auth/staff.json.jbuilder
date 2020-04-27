@@ -1,5 +1,5 @@
 json.extract! @staff, :id, :email, :organizable_type, 
-                      :role, :enabled, :organizable_id
+                      :role, :enabled, :organizable_id, :owner
                       
 
 unless @staff.profile.blank?

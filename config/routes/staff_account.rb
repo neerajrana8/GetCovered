@@ -5,6 +5,7 @@
     
     get "stripe/button_link", to: "stripe#stripe_button_link", as: :account_stripe_link
     get "stripe/connect", to: "stripe#connect", as: :account_stripe_connect
+    post "plaid/connect", to: "plaid#connect", as: :account_plaid_connect
 
     resources :accounts,
       only: [ :update, :show ],
@@ -100,6 +101,10 @@
   
     resources :notifications,
       only: [ :update, :index, :show ]
+
+    resources :payment_profiles,
+      path: "payment-profiles",
+      only: [:index, :create, :update]
   
     resources :payments,
       only: [ :index, :show ]

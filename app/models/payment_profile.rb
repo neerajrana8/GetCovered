@@ -1,5 +1,5 @@
 class PaymentProfile < ApplicationRecord
-  belongs_to :user
+  belongs_to :payer, polymorphic: true
 
   serialize :source_id, StringEncrypterSerializer
   serialize :fingerprint, StringEncrypterSerializer
@@ -13,7 +13,7 @@ class PaymentProfile < ApplicationRecord
   def set_default
     succeeded = false
     ActiveRecord::Base.transaction do
-      user.payment_profiles.where.not(id: id).update_all(default_profile: false)
+      payer.payment_profiles.where.not(id: id).update_all(default_profile: false)
       raise ActiveRecord::Rollback unless update(default_profile: true)
       succeeded = true
     end
