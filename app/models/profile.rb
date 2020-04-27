@@ -18,7 +18,7 @@ class Profile < ApplicationRecord
   validate :user_age
 
 	enum gender: { unspecified: 0, male: 1, female: 2 }, _suffix: true
-	enum salutation: { unspecified: 0, mr: 1, mrs: 2, miss: 3, dr: 4, lord: 5 }
+  enum salutation: { unspecified: 0, mr: 1, mrs: 2, miss: 3, dr: 4, lord: 5 }
 
   settings index: { number_of_shards: 1 } do
     mappings dynamic: 'false' do

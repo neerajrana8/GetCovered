@@ -21,7 +21,6 @@ module V2
         end
       end
       
-      
       private
       
       def view_path
