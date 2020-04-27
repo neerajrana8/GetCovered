@@ -189,6 +189,7 @@ ActiveRecord::Schema.define(version: 2020_04_22_123655) do
     t.string "logo_url"
     t.string "footer_logo_url"
     t.string "subdomain"
+    t.string "subdomain_test"
     t.index ["profileable_type", "profileable_id"], name: "index_branding_profiles_on_profileable_type_and_profileable_id"
     t.index ["url"], name: "index_branding_profiles_on_url", unique: true
   end
@@ -742,10 +743,12 @@ ActiveRecord::Schema.define(version: 2020_04_22_123655) do
     t.boolean "auto_pay"
     t.date "last_payment_date"
     t.date "next_payment_date"
+    t.bigint "policy_group_id"
     t.index ["account_id"], name: "index_policies_on_account_id"
     t.index ["agency_id"], name: "index_policies_on_agency_id"
     t.index ["carrier_id"], name: "index_policies_on_carrier_id"
     t.index ["number"], name: "index_policies_on_number", unique: true
+    t.index ["policy_group_id"], name: "index_policies_on_policy_group_id"
     t.index ["policy_type_id"], name: "index_policies_on_policy_type_id"
   end
 
@@ -786,8 +789,20 @@ ActiveRecord::Schema.define(version: 2020_04_22_123655) do
     t.integer "status", default: 0
     t.bigint "account_id"
     t.bigint "agency_id"
+    t.date "effective_date"
+    t.date "expiration_date"
+    t.boolean "auto_renew"
+    t.boolean "auto_pay"
+    t.bigint "billing_strategy_id"
+    t.bigint "policy_group_id"
+    t.bigint "carrier_id"
+    t.bigint "policy_type_id"
     t.index ["account_id"], name: "index_policy_application_groups_on_account_id"
     t.index ["agency_id"], name: "index_policy_application_groups_on_agency_id"
+    t.index ["billing_strategy_id"], name: "index_policy_application_groups_on_billing_strategy_id"
+    t.index ["carrier_id"], name: "index_policy_application_groups_on_carrier_id"
+    t.index ["policy_group_id"], name: "index_policy_application_groups_on_policy_group_id"
+    t.index ["policy_type_id"], name: "index_policy_application_groups_on_policy_type_id"
   end
 
   create_table "policy_applications", force: :cascade do |t|
@@ -834,6 +849,35 @@ ActiveRecord::Schema.define(version: 2020_04_22_123655) do
     t.index ["policy_id"], name: "index_policy_coverages_on_policy_id"
   end
 
+  create_table "policy_group_premia", force: :cascade do |t|
+    t.integer "base", default: 0
+    t.integer "taxes", default: 0
+    t.integer "total_fees", default: 0
+    t.integer "total", default: 0
+    t.integer "estimate"
+    t.integer "calculation_base", default: 0
+    t.integer "deposit_fees", default: 0
+    t.integer "amortized_fees", default: 0
+    t.integer "special_premium", default: 0
+    t.integer "integer", default: 0
+    t.boolean "include_special_premium", default: false
+    t.boolean "boolean", default: false
+    t.integer "carrier_base", default: 0
+    t.integer "unearned_premium", default: 0
+    t.boolean "enabled", default: false, null: false
+    t.datetime "enabled_changed"
+    t.bigint "policy_group_quote_id"
+    t.bigint "billing_strategy_id"
+    t.bigint "commission_strategy_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "policy_group_id"
+    t.index ["billing_strategy_id"], name: "index_policy_group_premia_on_billing_strategy_id"
+    t.index ["commission_strategy_id"], name: "index_policy_group_premia_on_commission_strategy_id"
+    t.index ["policy_group_id"], name: "index_policy_group_premia_on_policy_group_id"
+    t.index ["policy_group_quote_id"], name: "index_policy_group_premia_on_policy_group_quote_id"
+  end
+
   create_table "policy_group_quotes", force: :cascade do |t|
     t.string "reference"
     t.string "external_reference"
@@ -848,9 +892,48 @@ ActiveRecord::Schema.define(version: 2020_04_22_123655) do
     t.bigint "policy_application_group_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "policy_group_id"
     t.index ["account_id"], name: "index_policy_group_quotes_on_account_id"
     t.index ["agency_id"], name: "index_policy_group_quotes_on_agency_id"
     t.index ["policy_application_group_id"], name: "index_policy_group_quotes_on_policy_application_group_id"
+    t.index ["policy_group_id"], name: "index_policy_group_quotes_on_policy_group_id"
+  end
+
+  create_table "policy_groups", force: :cascade do |t|
+    t.string "number"
+    t.date "effective_date"
+    t.date "expiration_date"
+    t.boolean "auto_renew", default: false, null: false
+    t.date "last_renewed_on"
+    t.integer "renew_count"
+    t.integer "billing_status"
+    t.integer "billing_dispute_count"
+    t.date "billing_behind_since"
+    t.integer "cancellation_code"
+    t.string "cancellation_date_date"
+    t.integer "status"
+    t.datetime "status_changed_on"
+    t.integer "billing_dispute_status"
+    t.boolean "billing_enabled", default: false, null: false
+    t.boolean "system_purchased", default: false, null: false
+    t.boolean "serviceable", default: false, null: false
+    t.boolean "has_outstanding_refund", default: false, null: false
+    t.jsonb "system_data", default: {}
+    t.date "last_payment_date"
+    t.date "next_payment_date"
+    t.boolean "policy_in_system"
+    t.boolean "auto_pay"
+    t.bigint "agency_id"
+    t.bigint "account_id"
+    t.bigint "carrier_id"
+    t.bigint "policy_type_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id"], name: "index_policy_groups_on_account_id"
+    t.index ["agency_id"], name: "index_policy_groups_on_agency_id"
+    t.index ["carrier_id"], name: "index_policy_groups_on_carrier_id"
+    t.index ["number"], name: "index_policy_groups_on_number", unique: true
+    t.index ["policy_type_id"], name: "index_policy_groups_on_policy_type_id"
   end
 
   create_table "policy_insurables", force: :cascade do |t|
@@ -916,10 +999,12 @@ ActiveRecord::Schema.define(version: 2020_04_22_123655) do
     t.datetime "updated_at", null: false
     t.integer "est_premium"
     t.string "external_id"
+    t.bigint "policy_group_quote_id"
     t.index ["account_id"], name: "index_policy_quotes_on_account_id"
     t.index ["agency_id"], name: "index_policy_quotes_on_agency_id"
     t.index ["external_id"], name: "index_policy_quotes_on_external_id", unique: true
     t.index ["policy_application_id"], name: "index_policy_quotes_on_policy_application_id"
+    t.index ["policy_group_quote_id"], name: "index_policy_quotes_on_policy_group_quote_id"
     t.index ["policy_id"], name: "index_policy_quotes_on_policy_id"
   end
 

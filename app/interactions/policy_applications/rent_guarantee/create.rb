@@ -9,31 +9,17 @@ module PolicyApplications
         application.carrier = Carrier.find(4)
         application.policy_type = PolicyType.find_by_slug('rent-guarantee')
         application.agency = Agency.where(master_agency: true).take
-        application.billing_strategy = 
-          BillingStrategy.where(agency: application.agency, policy_type: application.policy_type).take
-        if application.save
-          if create_policy_users(application)
-            if application.update(status: 'complete')
-              application.primary_user.invite!
-              quote_attempt = application.pensio_quote
+        application.billing_strategy = policy_application_group.billing_strategy
 
-              if quote_attempt[:success] == true
-                application
-              else
-                ModelError.create(
-                  model: application,
-                  kind: :policy_application_was_not_quoted,
-                  information: {
-                    params: policy_application_params,
-                    policy_users_params: policy_users_params,
-                    errors: application.errors
-                  }
-                )
-              end
-            else
+        if application.save
+          if create_policy_users(application) && application.update(status: 'complete')
+            application.primary_user.invite!
+            quote_attempt = application.pensio_quote
+
+            unless quote_attempt[:success] == true
               ModelError.create(
                 model: application,
-                kind: :policy_application_did_not_update_status_to_complete,
+                kind: :policy_application_was_not_quoted,
                 information: {
                   params: policy_application_params,
                   policy_users_params: policy_users_params,
@@ -41,8 +27,18 @@ module PolicyApplications
                 }
               )
             end
+          else
+            ModelError.create(
+              model: application,
+              kind: :policy_application_did_not_update_status_to_complete,
+              information: {
+                params: policy_application_params,
+                policy_users_params: policy_users_params,
+                errors: application.errors
+              }
+            )
           end
-        else
+        elsif policy_application_group
           ModelError.create(
             model: policy_application_group,
             kind: :policy_application_was_not_created,
@@ -53,7 +49,7 @@ module PolicyApplications
             }
           )
         end
-        policy_application_group.update_status
+        policy_application_group&.update_status
       end
 
       private
@@ -75,13 +71,8 @@ module PolicyApplications
                 email: policy_user[:user_attributes][:email],
                 password: secure_tmp_password,
                 password_confirmation: secure_tmp_password,
-                profile_attributes: {
-                  first_name: policy_user[:user_attributes][:profile_attributes][:first_name],
-                  last_name: policy_user[:user_attributes][:profile_attributes][:last_name],
-                  job_title: policy_user[:user_attributes][:profile_attributes][:job_title],
-                  contact_phone: policy_user[:user_attributes][:profile_attributes][:contact_phone],
-                  birth_date: policy_user[:user_attributes][:profile_attributes][:birth_date]
-                }
+                profile_attributes: policy_user[:user_attributes][:profile_attributes],
+                address_attributes: policy_user[:user_attributes][:address_attributes]
               }
             )
             policy_user.user.invite! if index.zero?
