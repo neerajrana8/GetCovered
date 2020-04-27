@@ -79,7 +79,7 @@ module V2
       end
 
       def destroy_allowed?
-        true
+        @policy_application_group.status == :error
       end
 
       def set_policy_application_group

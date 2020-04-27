@@ -123,7 +123,7 @@
 
     resources :policy_application_groups, path: "policy-application-groups", except: [:update, :edit] do
       member do
-        get :accept
+        patch :accept
       end
     end
   
