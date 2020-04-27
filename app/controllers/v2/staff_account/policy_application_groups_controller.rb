@@ -1,7 +1,8 @@
 module V2
   module StaffAccount
+    # This controller is used to the bulk policy creation
     class PolicyApplicationGroupsController < StaffAccountController
-      before_action :set_policy_application_group, only: %i[show destroy]
+      before_action :set_policy_application_group, only: %i[show accept destroy]
       before_action :parse_input_file, only: %i[create]
 
       def index
@@ -10,10 +11,6 @@ module V2
         @policy_application_groups = paginator(groups_query)
 
         render template: 'v2/shared/policy_application_groups/index.json.jbuilder', status: :ok
-      end
-
-      def show
-        render template: 'v2/shared/policy_application_groups/show.json.jbuilder', status: :ok
       end
 
       def create
@@ -34,7 +31,11 @@ module V2
         render template: 'v2/shared/policy_application_groups/show.json.jbuilder', status: :ok
       end
 
-      def accept_quote
+      def show
+        render template: 'v2/shared/policy_application_groups/show.json.jbuilder', status: :ok
+      end
+
+      def accept
         result = @policy_application_group.policy_group_quote.accept
 
         render json: {

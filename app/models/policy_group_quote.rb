@@ -128,6 +128,14 @@ class PolicyGroupQuote < ApplicationRecord
     end
   end
 
+  def bind_request
+    @bind_request ||= send(bind_method)
+  end
+
+  def bind_method
+    "#{policy_application_group.carrier.integration_designation}_bind_group"
+  end
+
   def try_save_policy_group(policy_group)
     if policy_group.save
       policy_group.reload
@@ -211,14 +219,6 @@ class PolicyGroupQuote < ApplicationRecord
 
   def get_policy_number
     send("#{policy_application_group.carrier.integration_designation}_generate_number", ::Policy)
-  end
-
-  def bind_request
-    @bind_request ||= send(bind_method)
-  end
-
-  def bind_method
-    "#{policy_application_group.carrier.integration_designation}_bind_group"
   end
 
   def issue_policy_method
