@@ -189,7 +189,6 @@ ActiveRecord::Schema.define(version: 2020_04_23_171622) do
     t.string "logo_url"
     t.string "footer_logo_url"
     t.string "subdomain"
-    t.string "subdomain_test"
     t.index ["profileable_type", "profileable_id"], name: "index_branding_profiles_on_profileable_type_and_profileable_id"
     t.index ["url"], name: "index_branding_profiles_on_url", unique: true
   end
@@ -691,10 +690,11 @@ ActiveRecord::Schema.define(version: 2020_04_23_171622) do
     t.boolean "default_profile", default: false
     t.boolean "active"
     t.boolean "verified"
-    t.bigint "user_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["user_id"], name: "index_payment_profiles_on_user_id"
+    t.string "payer_type"
+    t.bigint "payer_id"
+    t.index ["payer_type", "payer_id"], name: "index_payment_profiles_on_payer_type_and_payer_id"
   end
 
   create_table "payments", force: :cascade do |t|
@@ -1136,6 +1136,8 @@ ActiveRecord::Schema.define(version: 2020_04_23_171622) do
     t.string "current_sign_in_ip"
     t.string "last_sign_in_ip"
     t.integer "role", default: 0
+    t.string "stripe_id"
+    t.integer "current_payment_method"
     t.index ["confirmation_token"], name: "index_staffs_on_confirmation_token", unique: true
     t.index ["email"], name: "index_staffs_on_email", unique: true
     t.index ["invitation_token"], name: "index_staffs_on_invitation_token", unique: true
@@ -1202,7 +1204,6 @@ ActiveRecord::Schema.define(version: 2020_04_23_171622) do
   end
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
-  add_foreign_key "payment_profiles", "users"
   add_foreign_key "payments", "invoices"
   add_foreign_key "policy_coverages", "policies"
   add_foreign_key "policy_coverages", "policy_applications"

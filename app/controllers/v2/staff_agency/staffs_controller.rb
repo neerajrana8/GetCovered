@@ -98,7 +98,7 @@ module V2
       def create_allowed?
         return false if create_params[:role] == 'super_admin'
 
-        return false if create_params[:organizable_type] == 'Agency' && current_staff.organizable.id != create_params[:organizable_id]&.to_i
+        return true if create_params[:organizable_type] == 'Agency' && (current_staff.organizable.id == create_params[:organizable_id]&.to_i || current_staff.organizable.agencies.ids.include?(create_params[:organizable_id]&.to_i))
 
         return false if create_params[:organizable_type] == 'Account' && current_staff.organizable.id != Account.find_by(id: create_params[:organizable_id])&.id
         
