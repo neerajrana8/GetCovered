@@ -238,11 +238,15 @@ class Invoice < ApplicationRecord
     { success: false, error: 'Unknown error', charge_id: created_charge.nil? ? nil : created_charge.id, charge_status: created_charge.nil? ? nil : created_charge.status }
   end
 
-  def payment_succeeded
+  def payment_succeeded(charge)
     with_lock do
       if self.status == 'processing'
+        # update our status and distribute funds over line items
         self.update(status: 'complete')
+        get_fund_distribution
+        # invoiceable callback
         invoiceable.payment_succeeded(self) if invoiceable.respond_to?(:payment_succeeded)
+        # handle pending proration refund if we have one
         if has_pending_refund && pending_refund_data.has_key?('proration_refund')
           if apply_proration(nil, to_refund_override: pending_refund_data['proration_refund'].to_i, cancel_if_unpaid_override: pending_refund_data['cancel_if_unpaid'])
             update_columns(has_pending_refund: false)
@@ -254,7 +258,7 @@ class Invoice < ApplicationRecord
     end
   end
 
-  def payment_failed
+  def payment_failed(charge)
     with_lock do
       if self.status == 'processing'
         invoiceable.payment_failed(self) if invoiceable.respond_to?(:payment_failed)

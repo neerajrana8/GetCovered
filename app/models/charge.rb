@@ -66,7 +66,7 @@ class Charge < ApplicationRecord
   def mark_succeeded(message = nil)
     invoice.with_lock do  # we lock the invoice to ensure serial processing with other invoice events
       update_columns(status: 'succeeded', status_information: message)
-      invoice.payment_succeeded
+      invoice.payment_succeeded(self)
     end
   end
 
@@ -182,12 +182,12 @@ class Charge < ApplicationRecord
 
     def pay_attempt_succeeded(stripe_charge_id, the_payment_method, message = nil)
       update_columns(status: 'succeeded', stripe_id: stripe_charge_id, payment_method: the_payment_method, status_information: message)
-      invoice.payment_succeeded
+      invoice.payment_succeeded(self)
     end
 
     def pay_attempt_failed(stripe_charge_id, the_payment_method, message = nil)
       update_columns(status: 'failed', stripe_id: stripe_charge_id, payment_method: the_payment_method, status_information: message)
-      invoice.payment_failed
+      invoice.payment_failed(self)
     end
 
     def pay_attempt_pending(stripe_charge_id, the_payment_method, message = nil)

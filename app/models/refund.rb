@@ -127,6 +127,7 @@ class Refund < ApplicationRecord
     end
 
     def update_associates_for_refund_creation
+=begin
       invoice.with_lock do
         # update line items
         lia = self.invoice.line_items.to_a
@@ -150,6 +151,7 @@ class Refund < ApplicationRecord
           )
         end
       end
+=end
     end
     
     def set_line_item_refunds
