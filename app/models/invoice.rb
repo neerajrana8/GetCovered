@@ -323,8 +323,8 @@ class Invoice < ApplicationRecord
   end
   
   # returns [ [group of line items paid first], [group of line items paid next], ..., [group of line items paid last] ]
-  # (payment order is reverse of refund order)
-  def line_item_groups
+  # filters out line items which don't satisfy the block
+  def line_item_groups(&block)
     arr = [
       [self.due_date, 'complete_refund_before_due_date'],
       [self.term_first_date || self.due_date, 'complete_refund_before_term'],
@@ -333,7 +333,8 @@ class Invoice < ApplicationRecord
      .map{|x| x[1] }
     arr.insert(arr.index{|x| x == 'complete_refund_during_term' }, 'prorated_refund')
     arr.insert(0, 'no_refund')
-    arr.map{|x| self.line_items.select{|li| li.priced_in && li.refundability == x } }
+    arr.map{|x| self.line_items.select{|li| li.priced_in && li.refundability == x }.select{|li| block.nil? || block.call(li) } }
+       .select{|arr| arr.length > 0 }
   end
 
   private
