@@ -96,7 +96,8 @@ class PolicyGroupQuote < ApplicationRecord
         invoice.update status: index.zero? ? 'available' : 'upcoming'
       end
 
-      charge_invoice = invoices.order('due_date').first.pay(stripe_source: PaymentProfile.last.source_id)
+      stripe_id = policy_application_group.account.current_payment_source.stripe_id
+      charge_invoice = invoices.order('due_date').first.pay(stripe_source: stripe_id)
 
       return true if charge_invoice[:success] == true
     end
@@ -106,7 +107,7 @@ class PolicyGroupQuote < ApplicationRecord
   private
 
   def try_update_and_start
-    if update(status: :accepted) #&& start_billing
+    if update(status: :accepted) && start_billing
       try_bind_request
     else
       {

@@ -167,6 +167,5 @@
             defaults: { authorable_type: User }
         end
       end
-  
   end
 # end

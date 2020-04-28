@@ -36,12 +36,20 @@ module V2
       end
 
       def accept
-        result = @policy_application_group.policy_group_quote.accept
+        if @policy_application_group.account.current_payment_method
+          result = @policy_application_group.policy_group_quote.accept
 
-        render json: {
-          error: result[:success] ? 'Policy Group Accepted' : 'Policy Group Could Not Be Accepted',
-          message: result[:message]
-        }, status: result[:success] ? 200 : 500
+          if result[:success]
+            render json: { success: true, message: result[:message] }, status: :ok
+          else
+            render json: { success: false, message: result[:message] }, status: :internal_server_error
+          end
+        else
+          render json: {
+            success: false,
+            message: "Current staff doesn't have attached payment sources"
+          }, status: :unprocessable_entity
+        end
       end
 
       def destroy
