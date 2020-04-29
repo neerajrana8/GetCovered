@@ -1088,7 +1088,6 @@ ActiveRecord::Schema.define(version: 2020_04_28_184502) do
     t.bigint "charge_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.jsonb "by_line_item", null: false
     t.index ["charge_id"], name: "index_refunds_on_charge_id"
     t.index ["status"], name: "refund_status"
     t.index ["stripe_id"], name: "refund_stripe_id"
