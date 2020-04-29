@@ -14,3 +14,5 @@ class UpgradeInvoiceSystemForPremiumTracking < ActiveRecord::Migration[5.2]
     add_column :charges, :invoice_update_error_hash, :jsonb, null: true
   end
 end
+# MOOSE WARNING: 
+# set priced in

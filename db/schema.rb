@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_04_20_205407) do
+ActiveRecord::Schema.define(version: 2020_04_28_184502) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -102,6 +102,7 @@ ActiveRecord::Schema.define(version: 2020_04_20_205407) do
     t.bigint "addressable_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "searchable", default: false
     t.index ["addressable_type", "addressable_id"], name: "index_addresses_on_addressable_type_and_addressable_id"
   end
 
@@ -189,7 +190,6 @@ ActiveRecord::Schema.define(version: 2020_04_20_205407) do
     t.string "logo_url"
     t.string "footer_logo_url"
     t.string "subdomain"
-    t.string "subdomain_test"
     t.index ["profileable_type", "profileable_id"], name: "index_branding_profiles_on_profileable_type_and_profileable_id"
     t.index ["url"], name: "index_branding_profiles_on_url", unique: true
   end
@@ -321,6 +321,10 @@ ActiveRecord::Schema.define(version: 2020_04_20_205407) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "amount", default: 0
+    t.boolean "invoice_update_failed", default: false, null: false
+    t.string "invoice_update_error_call"
+    t.string "invoice_update_error_record"
+    t.jsonb "invoice_update_error_hash"
     t.index ["invoice_id"], name: "index_charges_on_invoice_id"
     t.index ["stripe_id"], name: "charge_stripe_id"
   end
@@ -611,6 +615,8 @@ ActiveRecord::Schema.define(version: 2020_04_20_205407) do
     t.integer "refundability", null: false
     t.integer "category", default: 0, null: false
     t.boolean "priced_in", default: false, null: false
+    t.integer "collected", default: 0, null: false
+    t.integer "proration_reduction", default: 0, null: false
     t.index ["invoice_id"], name: "index_line_items_on_invoice_id"
   end
 
@@ -691,10 +697,11 @@ ActiveRecord::Schema.define(version: 2020_04_20_205407) do
     t.boolean "default_profile", default: false
     t.boolean "active"
     t.boolean "verified"
-    t.bigint "user_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["user_id"], name: "index_payment_profiles_on_user_id"
+    t.string "payer_type"
+    t.bigint "payer_id"
+    t.index ["payer_type", "payer_id"], name: "index_payment_profiles_on_payer_type_and_payer_id"
   end
 
   create_table "payments", force: :cascade do |t|
@@ -1081,6 +1088,7 @@ ActiveRecord::Schema.define(version: 2020_04_20_205407) do
     t.bigint "charge_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.jsonb "by_line_item", null: false
     t.index ["charge_id"], name: "index_refunds_on_charge_id"
     t.index ["status"], name: "refund_status"
     t.index ["stripe_id"], name: "refund_stripe_id"
@@ -1136,6 +1144,8 @@ ActiveRecord::Schema.define(version: 2020_04_20_205407) do
     t.string "current_sign_in_ip"
     t.string "last_sign_in_ip"
     t.integer "role", default: 0
+    t.string "stripe_id"
+    t.integer "current_payment_method"
     t.index ["confirmation_token"], name: "index_staffs_on_confirmation_token", unique: true
     t.index ["email"], name: "index_staffs_on_email", unique: true
     t.index ["invitation_token"], name: "index_staffs_on_invitation_token", unique: true
@@ -1202,7 +1212,6 @@ ActiveRecord::Schema.define(version: 2020_04_20_205407) do
   end
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
-  add_foreign_key "payment_profiles", "users"
   add_foreign_key "payments", "invoices"
   add_foreign_key "policy_coverages", "policies"
   add_foreign_key "policy_coverages", "policy_applications"
