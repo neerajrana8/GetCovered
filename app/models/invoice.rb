@@ -594,10 +594,11 @@ class Invoice < ApplicationRecord
     
     
     def total_collected_changed
+      self.reload
       # get amounts collected
       amount_collected = self.total - self.amount_refunded
       old_amount_collected = (self.attribute_before_last_save('status') != 'complete' ? 0 : self.total || 0) - (self.attribute_before_last_save('amount_refunded') || 0)
-      # MOOSE WARNING: invoke callbacks
+      self.invoiceable.invoice_collected_changed(self, amount_collected, old_amount_collected) if self.invoiceable.respond_to?(:invoice_collected_changed)
     end
 
     # This method uses deprecated fields (e.g. agency_total).
