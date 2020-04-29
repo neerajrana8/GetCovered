@@ -517,7 +517,7 @@ class Invoice < ApplicationRecord
           total_amt = [amt_left, total_ceiling].min
           next [] if total_amt == 0
           # distribute
-          lig_amt_left = total_expendable
+          lig_amt_left = total_amt
           while lig_amt_left > 0
             old_lig_amt_left = lig_amt_left
             # distribute proportionally, never exceeding ceilings

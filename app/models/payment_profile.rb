@@ -1,5 +1,5 @@
 class PaymentProfile < ApplicationRecord
-  belongs_to :user
+  belongs_to :payer, polymorphic: true
 
   serialize :source_id, StringEncrypterSerializer
   serialize :fingerprint, StringEncrypterSerializer
