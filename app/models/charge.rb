@@ -116,6 +116,7 @@ class Charge < ApplicationRecord
         unless amount_lost == 0
           succeeded = true
           refunds.queued.reload.each do |queued_refund|
+            next unless queued_refund.status == 'queued'
             amount_to_credit = [amount_lost, queued_refund.amount - queued_refund.amount_returned_via_dispute].min
             if queued_refund.apply_dispute_payout(amount_to_credit)
               amount_lost -= amount_to_credit

@@ -196,6 +196,7 @@ class Invoice < ApplicationRecord
     with_lock do
       return { success: false, errors: "invoice status must be 'complete' before refunding" } unless status == 'complete'
       # get line item breakdown if provided a scalar number
+      to_refund = [to_refund] if to_refund.class == ::Hash
       unless to_refund.class == ::Array
         to_refund = get_fund_distribution(to_refund, :max_refund, leave_line_item_models: true)
       end
@@ -230,6 +231,7 @@ class Invoice < ApplicationRecord
     with_lock do
       return { success: false, errors: "invoice status must be 'complete' before refunding" } unless status == 'complete'
       # get line item breakdown if provided a scalar number
+      to_refund = [to_refund] if to_refund.class == ::Hash
       unless to_refund.class == ::Array
         to_refund = get_fund_distribution(to_refund, :refund, leave_line_item_models: true)
       end
@@ -513,6 +515,16 @@ class Invoice < ApplicationRecord
     )
   end
 
+  def apply_dispute_refund(dispute)
+    with_lock do
+      dist = self.get_fund_distribution(dispute.amount, :refund, leave_line_item_models: true)
+      dist.each do |li|
+        li['line_item'].update!(collected: li['line_item'].collected - li['amount'])
+      end
+      self.update!(amount_refunded: self.amount_refunded + dispute.amount)
+    end
+  end
+
   private
 
     # Calculation Methods
@@ -594,7 +606,6 @@ class Invoice < ApplicationRecord
     
     
     def total_collected_changed
-      self.reload
       # get amounts collected
       amount_collected = self.total - self.amount_refunded
       old_amount_collected = (self.attribute_before_last_save('status') != 'complete' ? 0 : self.total || 0) - (self.attribute_before_last_save('amount_refunded') || 0)

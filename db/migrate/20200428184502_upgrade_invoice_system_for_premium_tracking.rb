@@ -31,9 +31,26 @@ class UpgradeInvoiceSystemForPremiumTracking < ActiveRecord::Migration[5.2]
         li['line_item'].update(collected: li['line_item'].collected - li['amount'])
       end
     end
+    # move invoices back to PolicyQuotes
+    ::Invoice.where(invoiceable_type: "Policy").each do |inv|
+      invy = inv.invoiceable.policy_quotes.accepted.take
+      inv.update(invoiceable: invy)
+    end
+    ::Invoice.where(invoiceable_type: "PolicyGroup").each do |inv|
+      invy = PolicyGroupQuote.where(policy_group_id: inv.invoiceable_id).accepted.take
+      inv.update(invoiceable: invy)
+    end
   end
   
   def down
+    # move invoices from PolicyQuotes
+    ::Invoice.where(invoiceable_type: "PolicyQuote").where.not(status: 'quoted').each do |inv|
+      inv.update(invoiceable: inv.invoiceable.policy)
+    end
+    ::Invoice.where(invoiceable_type: "PolicyGroupQuote").where.not(status: 'quoted').each do |inv|
+      inv.update(invoiceable: inv.invoiceable.policy_group)
+    end
+    # no need to fix line item settings, since the down migration just nukes the new fields
     # change payer back to payee
     rename_column :invoices, :payer_type, :payee_type
     rename_column :invoices, :payer_id, :payee_id
