@@ -21,7 +21,7 @@ class User
                 source_type: 'bank_account',
                 fingerprint: token_data.bank_account.fingerprint,
                 verified: token_data.bank_account.status == 'verified',
-                user: user
+                payer: user
               )
 
               if make_default
@@ -38,7 +38,7 @@ class User
                 source_id: token_data.card.id,
                 source_type: 'card',
                 fingerprint: token_data.card.fingerprint,
-                user: user
+                payer: user
               )
 
               if make_default

@@ -5,11 +5,12 @@
 module V2
   module StaffSuperAdmin
     class InsurablesController < StaffSuperAdminController
+      alias super_index index
 
-      before_action :set_insurable, only: [:show, :coverage_report, :policies]
+      before_action :set_insurable, only: [:show, :coverage_report, :policies, :related_insurables]
 
       def index
-        super(:@insurables, Insurable.all)
+        super_index(:@insurables, Insurable.all)
       end
 
       def show; end
@@ -31,6 +32,12 @@ module V2
         @policies = paginator(policies_query)
         render :policies, status: :ok
       end
+
+      def related_insurables
+        @insurables = super_index(:@insurables, @insurable.insurables)
+        render :index, status: :ok
+      end
+
 
       private
 

@@ -11,10 +11,10 @@ module V2
 		    			 status: :ok
 		  end
 		  
-		  def create
+			def create
 				if current_user.attach_payment_source(create_params[:source])
 					render json: current_user.payment_profiles.order("created_at").last.to_json,
-								 status: :ok
+								 status: :created
 				else
 					render json: { error: "Failure", message: "Unable to attach payment source to user" }.to_json,
 								 status: 422

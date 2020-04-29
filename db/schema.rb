@@ -10,7 +10,11 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
+<<<<<<< HEAD
 ActiveRecord::Schema.define(version: 2020_04_28_184502) do
+=======
+ActiveRecord::Schema.define(version: 2020_04_29_153022) do
+>>>>>>> master
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -55,6 +59,8 @@ ActiveRecord::Schema.define(version: 2020_04_28_184502) do
     t.bigint "agency_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "payment_profile_stripe_id"
+    t.integer "current_payment_method"
     t.index ["agency_id"], name: "index_accounts_on_agency_id"
     t.index ["call_sign"], name: "index_accounts_on_call_sign", unique: true
     t.index ["staff_id"], name: "index_accounts_on_staff_id"
