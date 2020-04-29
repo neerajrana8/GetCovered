@@ -192,7 +192,7 @@ class Invoice < ApplicationRecord
   
   
   # refunds whatever is necessary to ensure the total amount refunded is to_refund cents (if it starts above that, it refunds nothing)
-  def ensure_refunded(to_refund, full_reason = nil, stripe_reason = nil)
+  def ensure_refunded(to_refund, full_reason = nil, stripe_reason = nil, ignore_total: false)
     with_lock do
       return { success: false, errors: "invoice status must be 'complete' before refunding" } unless status == 'complete'
       # get line item breakdown if provided a scalar number
@@ -208,11 +208,18 @@ class Invoice < ApplicationRecord
       rescue
         return { success: false, errors: "invalid line items specified" }
       end
+      # flee if there's excess
+      unless ignore_total
+        return { success: true } if to_refund.inject(0){|sum,li| sum + li['amount'] } <= self.reload.amount_refunded
+      end
       # fix line item breakdown to actually refundable amounts
       to_refund.each do |li|
+        li['amount'] = [li['amount'] - (li['line_item'].price - li['line_item'].collected), 0].max # remove whatever was previously refunded of that line item
         li['amount'] = [li['amount'], li['line_item'].collected].min
       end
+      to_refund = to_refund.select{|li| li['amount'] > 0 }
       # apply refund
+      return { success: true } if to_refund.blank?
       return apply_refund(to_refund, full_reason, stripe_reason)
     end
   end
@@ -255,14 +262,14 @@ class Invoice < ApplicationRecord
         li['line_item'].update(collected: li['line_item'].collected - li['amount'])
       end
       self.update(amount_refunded: self.amount_refunded + total_to_refund - left_to_refund)
+      {
+        success: left_to_refund <= 0,
+        amount_not_refunded: left_to_refund,
+        errors: {},
+        errors_by_charge: errors_encountered,
+        by_line_item: to_refund
+      }
     end
-    {
-      success: left_to_refund <= 0,
-      amount_not_refunded: left_to_refund,
-      errors: {},
-      errors_by_charge: errors_encountered,
-      by_line_item: to_refund
-    }
   end
 
 
