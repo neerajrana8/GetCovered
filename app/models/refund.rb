@@ -2,12 +2,8 @@ class Refund < ApplicationRecord
     # ActiveRecord Callbacks
 
   after_initialize :initialize_refund
-  
-  before_create :set_line_item_refunds
-  
-  before_create :ensure_line_item_refunds_valid
 
-  after_create :update_associates_for_refund_creation
+  after_create :update_charge_for_refund_creation
 
   after_create :process
 
@@ -126,22 +122,8 @@ class Refund < ApplicationRecord
       return(stripe_status_value == 'canceled' ? 'failed' : stripe_status_value)
     end
 
-    def update_associates_for_refund_creation
-=begin
-      invoice.with_lock do
-        # update line items
-        lia = self.invoice.line_items.to_a
-        self.by_line_item.each do |li_data|
-          found = lia.find{|li| li.id == li_data['line_item'] }
-          if found.nil?
-            # MOOSE WARNING: hideous error
-          elsif found.collected < li_data['amount']
-            # MOOSE WARNING: hideous error
-          end
-          found.update(collected: found.collected - li_data['amount'])
-        end
-        # update invoice itself
-        self.invoice.update(amount_refunded: invoice.amount_refunded + amount)
+    def update_charge_for_refund_creation
+      charge.with_lock
         # update charge
         true_amount = amount - amount_returned_via_dispute
         if true_amount > 0
@@ -150,32 +132,6 @@ class Refund < ApplicationRecord
             amount_in_queued_refunds: status == 'queued' ? charge.amount_in_queued_refunds + true_amount : charge.amount_in_queued_refunds
           )
         end
-      end
-=end
-    end
-    
-    def set_line_item_refunds
-      self.by_line_item = self.invoice.get_fund_distribution(self.amount, :refund) if self.by_line_item.blank?
-    end
-
-
-    def ensure_line_item_refunds_valid
-      error_message = nil
-      if self.by_line_item.class != ::Array
-        error_message = "is invalid"
-      elsif self.by_line_item.inject(0){|sum,bli| sum + bli['amount'] } != self.amount
-        error_message = "amounts total must match refund amount"
-      else
-        lis = self.invoice.line_items.to_a
-        if self.by_line_item.any?{|bli| !lis.any?{|li| li.id == bli['line_item'].to_i } }
-          error_message = "amounts must be for priced-in invoice line items"
-        elsif self.by_line_item.any?{|bli| bli['amount'] > lis.find{|li| li.id == bli['line_item'].to_i }.collected }
-          error_message = "amounts must not exceed line item collected amounts"
-        end
-      end
-      unless error_message.nil?
-        self.errors.add(:by_line_item, error_message)
-        throw(:abort)
       end
     end
 

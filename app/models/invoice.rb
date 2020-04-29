@@ -21,8 +21,6 @@ class Invoice < ApplicationRecord
   
   before_create :mark_line_items_priced_in
   
-  after_update :adjust_line_items_for_proration, if: Proc.new{|inv| inv.saved_change_to_attribute?('proration_reduction') }
-  
   after_save :total_collected_changed, if: Proc.new{|inv| inv.status == 'complete' && (inv.saved_change_to_attribute?('amount_refunded') || inv.saved_change_to_attribute?('status')) }
 
   # ActiveRecord Associations
@@ -86,7 +84,8 @@ class Invoice < ApplicationRecord
   #   @invoice.apply_proration(proration_date)
   #   => true
   
-  # issue a proration refund for a completed/processing invoice
+  
+  
   def apply_proration(new_term_last_date, refund_date: nil, to_refund_override: nil, cancel_if_unpaid_override: nil)
     with_lock do
       to_refund = nil
@@ -101,61 +100,107 @@ class Invoice < ApplicationRecord
         # set cancel_if_unpaid
         cancel_if_unpaid = (new_term_last_date < term_first_date)
         # calculate how much to refund
-        to_refund = line_items.group_by{|li| li.refundability }
-        to_refund['no_refund'] = 0
-        to_refund['prorated_refund'] = (to_refund['prorated_refund'] || []).inject(0){|sum,li| sum + (li.price * proportion_to_refund).floor } if to_refund.has_key?('prorated_refund')
-        to_refund['complete_refund_before_term'] = refund_date >= term_first_date ? 0 : to_refund['complete_refund_before_term'].inject(0){|sum,li| sum + li.price } if to_refund.has_key?('complete_refund_before_term')
-        to_refund['complete_refund_during_term'] = refund_date > term_last_date ? 0 : to_refund['complete_refund_during_term'].inject(0){|sum,li| sum + li.price } if to_refund.has_key?('complete_refund_during_term')
-        to_refund['complete_refund_before_due_date'] = refund_date >= due_date ? 0 : to_refund['complete_refund_before_due_date'].inject(0){|sum,li| sum + li.price } if to_refund.has_key?('complete_refund_before_due_date')
-        to_refund = to_refund.transform_values{|v| v.class == ::Array ? 0 : v }.inject(0){|sum,r| sum + r[1] }
+        to_refund = line_items.map do |li|
+          {
+            'line_item' => li,
+            'amount' => case li.refundability
+              when 'no_refund'
+                0
+              when 'prorated_refund'
+                (li.price * proportion_to_refund).floor
+              when 'complete_refund_before_term'
+                refund_date >= term_first_date ? 0 : li.price
+              when 'complete_refund_during_term'
+                refund_date > term_last_date ? 0 : li.price
+              when 'complete_refund_before_due_date'
+                refund_date >= due_date ? 0 : li.price
+              else
+                0
+            end
+          }
+        end.select{|datum| datum['amount'] > 0 }
       else
         to_refund = to_refund_override
+        to_refund.each do |li|
+          li['line_item'] = line_items.where(id: li['line_item']).take if li['line_item'].class != ::LineItem
+          return false if li['line_item'].nil?
+        end
       end
       cancel_if_unpaid = cancel_if_unpaid_override unless cancel_if_unpaid_override.nil?
       # apply refund
       case status
         when 'upcoming', 'available'
-          # apply a proration_reduction to the total
-          to_refund = subtotal if cancel_if_unpaid
-          new_total = subtotal - to_refund
-          if new_total < 0
-            new_total = 0
-            to_refund = subtotal
+          # apply a proration adjustment
+          # WARNING: if we ever update to allow partial payments, you need to first refund whenever a line item's collected amount exceeds its price
+          if cancel_if_unpaid
+            line_items.each do |li|
+              li.update(proration_reduction: li.price)
+            end
+            return update(proration_reduction: subtotal, total: 0, status: 'canceled')
+          else
+            prored = to_refund.inject(0){|sum,li| sum + li['amount'] }
+            if prored > subtotal
+              self.reduce_distribution_total(subtotal, :adjustment, to_refund)
+              prored = subtotal
+            end
+            to_refund.each do |li|
+              li['line_item'].update(proration_reduction: li['amount'])
+            end
+            return update(proration_reduction: prored, total: subtotal - prored) # MOOSE WARNING; would we like to cancel the invoice if total is zero?
           end
-          if new_total == 0
-            return update(proration_reduction: to_refund, total: new_total, status: 'canceled')
-          end
-          return update(proration_reduction: to_refund, total: new_total)
         when 'complete'
           # apply the refund
-          to_refund -= proration_reduction # if a proration was already applied prior to payment and we're prorating again (which can't happen in the current workflow anyway), the proration_reduction was a sort of "pre-refund" and we don't want to refund it twice
-          return true if to_refund <= 0
           result = ensure_refunded(to_refund, "Proration Adjustment", nil)
           return true if result[:success]
           return false # WARNING: we discard result[:errors] here
         when 'processing', 'missed'
-          return update(has_pending_refund: true, pending_refund_data: { 'proration_refund' => to_refund, 'cancel_if_unpaid' => cancel_if_unpaid })
+          return update(has_pending_refund: true, pending_refund_data: {
+            'proration_refund' => to_refund.map{|li| {
+              'line_item' => li['line_item'].id,
+              'amount' => li['amount']
+            } },
+            'cancel_if_unpaid' => cancel_if_unpaid
+          })
         when 'canceled'
           # apply a proration_reduction to the total (might as well keep track of changes even to canceled invoices)
-          to_refund = subtotal if cancel_if_unpaid
-          new_total = subtotal - to_refund
-          if new_total < 0
-            new_total = 0
-            to_refund = subtotal
+          prored = to_refund.inject(0){|sum,li| sum + li['amount'] }
+          if prored > subtotal
+            self.reduce_distribution_total(subtotal, :adjustment, to_refund)
+            prored = subtotal
           end
-          return update(proration_reduction: to_refund, total: new_total)
+          to_refund.each do |li|
+            li['line_item'].update(proration_reduction: li['amount'])
+          end
+          return update(proration_reduction: prored, total: subtotal - prored)
       end
     end
     return false
   end
   
+  
   # refunds whatever is necessary to ensure the total amount refunded is to_refund cents (if it starts above that, it refunds nothing)
   def ensure_refunded(to_refund, full_reason = nil, stripe_reason = nil)
     with_lock do
       return { success: false, errors: "invoice status must be 'complete' before refunding" } unless status == 'complete'
-      already_refunded = charges.succeeded.inject(0){|sum, current_charge| sum + current_charge.amount_refunded }
-      to_refund_now = [0, to_refund - already_refunded].max
-      return apply_refund(to_refund_now, full_reason, stripe_reason)
+      # get line item breakdown if provided a scalar number
+      unless to_refund.class == ::Array
+        to_refund = get_fund_distribution(to_refund, :max_refund, leave_line_item_models: true)
+      end
+      # validate line item breakdown
+      begin
+        to_refund.each |li|
+          li['line_item'] = self.line_items.where(id: li['line_item']).take unless li['line_item'].class == ::LineItem
+          return { success: false, errors: "invalid line items specified" } if li['line_item'].nil?
+        end
+      rescue
+        return { success: false, errors: "invalid line items specified" }
+      end
+      # fix line item breakdown to actually refundable amounts
+      to_refund.each |li|
+        li['amount'] = [li['amount'], li['line_item'].collected].min
+      end
+      # apply refund
+      return apply_refund(to_refund, full_reason, stripe_reason)
     end
   end
   
@@ -164,22 +209,46 @@ class Invoice < ApplicationRecord
     errors_encountered = {}
     with_lock do
       return { success: false, errors: "invoice status must be 'complete' before refunding" } unless status == 'complete'
+      # get line item breakdown if provided a scalar number
+      unless to_refund.class == ::Array
+        to_refund = get_fund_distribution(to_refund, :refund, leave_line_item_models: true)
+      end
+      # validate line item breakdown
+      begin
+        to_refund.each |li|
+          li['line_item'] = self.line_items.where(id: li['line_item']).take unless li['line_item'].class == ::LineItem
+          return { success: false, errors: "invalid line items specified" } if li['line_item'].nil?
+          return { success: false, errors: "refund amount #{li['amount']} for line item #{li['line_item'].title} cannot exceed amount collected (#{li['amount']})" } if li['amount'] > li['line_item'].collected
+        end
+      rescue
+        return { success: false, errors: "invalid line items specified" }
+      end
+      # apply refunds
+      left_to_refund = to_refund.inject(0){|sum,li| sum + li['amount'] }
+      total_to_refund = left_to_refund
       charges.succeeded.each do |current_charge|
-        to_refund_now = [[current_charge.amount - current_charge.amount_refunded, to_refund].min, 0].max
+        to_refund_now = [[current_charge.amount - current_charge.amount_refunded, left_to_refund].min, 0].max
         result = current_charge.apply_refund(to_refund_now, full_reason, stripe_reason)
         if result[:success]
-          to_refund -= to_refund_now
-          break if to_refund <= 0
+          left_to_refund -= to_refund_now
+          break if left_to_refund <= 0
         else
           errors_encountered[current_charge.id] = result[:errors]
         end
       end
+      # apply line item changes (just in case errors prevented the full refund)
+      self.reduce_distribution_total(total_to_refund - left_to_refund, :refund, to_refund) if left_to_refund > 0
+      to_refund.each do |li|
+        li['line_item'].update(collected: li['line_item'].collected - li['amount'])
+      end
+      self.update(amount_refunded: self.amount_refunded + total_to_refund - left_to_refund)
     end
     {
-      success: to_refund <= 0,
-      amount_not_refunded: to_refund,
+      success: left_to_refund <= 0,
+      amount_not_refunded: left_to_refund,
       errors: {},
-      errors_by_charge: errors_encountered
+      errors_by_charge: errors_encountered,
+      by_line_item: to_refund
     }
   end
 
@@ -208,7 +277,6 @@ class Invoice < ApplicationRecord
       end
     end
     return return_error unless return_error.nil?
-
     # grab the default payment method, if needed
     stripe_source = payee.payment_profiles.where(default: true).take&.source_id if stripe_source == :default
     # attempt to make payment
@@ -334,7 +402,7 @@ class Invoice < ApplicationRecord
   # mode should be:
   #   :payment to order from first to pay to last to pay
   #   :refund to order from first to refund to last to refund
-  #   :adjustment is the same as refund, provided for convenient use by get_fund_distribution
+  #   :adjustment & :max_refund are the same as refund, provided for convenient use by get_fund_distribution
   def line_item_groups(mode = :payment, &block)
     arr = [
       [self.due_date, 'complete_refund_before_due_date'],
@@ -344,8 +412,9 @@ class Invoice < ApplicationRecord
      .map{|x| x[1] }
     arr.insert(arr.index{|x| x == 'complete_refund_during_term' }, 'prorated_refund')
     arr.insert(0, 'no_refund')
-    arr.map{|x| self.line_items.select{|li| li.priced_in && li.refundability == x }.select{|li| block.nil? || block.call(li) } }
-       .select{|arr| arr.length > 0 }
+    arr.map!{|x| self.line_items.select{|li| li.priced_in && li.refundability == x }.select{|li| block.nil? || block.call(li) } }
+       .select!{|arr| arr.length > 0 }
+    arr.send(mode == :payment ? :itself : :reverse)
   end
 
   private
@@ -418,22 +487,31 @@ class Invoice < ApplicationRecord
     end
     
     # returns an array of { line_item: $line_item_id, amount: $currency_amount } hashes giving a distribution of dist_amount over the line items
-    # applies payments in refund order (no_refund, complete_refund_before_term, prorated_refund, complete_refund_during_term--complete_refund_before_due_date is inserted between the term date-based ones depending on the due date);
-    # applies refunds in reverse order;
+    # applies in order: [no_refund, complete_refund_before_term, prorated_refund, complete_refund_during_term], with complete_refund_before_due_date inserted before one of the term date-based ones depending on the due date;
+    # applies refunds/adjustments in reverse order;
     # distributes payments proportionally over line items with the same refund type;
     # mode should be:
     #   :payment for payment application
     #   :refund for refund application
+    #   :max_refund for refund application without regard to what's already been refunded
     #   :adjustment for determining proration adjustments on unpaid invoices
-    def get_fund_distribution(dist_amount, mode, leave_line_item_models: false)
+    def get_fund_distribution(dist_amount, mode, leave_line_item_models: false, &block)
       amt_left = dist_amount
-      return(self.line_item_groups(mode).map do |lig|
+      return(self.line_item_groups(mode, &block).map do |lig|
           # prepare
           amounts = lig.map{|li| {
-            line_item: li,
-            weight: (case mode; when :payment, :refund; li.adjusted_price; when :adjustment; li.price; end),
-            ceiling: (case mode; when :payment; li.adjusted_price - li.collected; when :refund; li.collected; when :adjustment; li.price - li.collected; end),
-            amount: 0
+            line_item: li,      # the line item model this entry applies to
+            weight: case mode   # the weight for proportional allocation among line items in the same group
+              when :payment; li.adjusted_price
+              when :refund, :max_refund, :adjustment; li.price;
+            end,
+            ceiling: case mode  # the max amount allocatable to this line item
+              when :payment; [li.adjusted_price - li.collected, 0].max # shouldn't be < 0, but just in case
+              when :refund; li.collected
+              when :max_refund; li.price
+              when :adjustment; [li.price - li.collected, 0].max # shouldn't be < 0, but just in case
+            end,
+            amount: 0           # the amount allocated to this line item so far
           } }
           total_ceiling = amounts.inject(0){|sum,amt| sum + amt[:ceiling] )
           total_amt = [amt_left, total_ceiling].min
@@ -477,14 +555,15 @@ class Invoice < ApplicationRecord
       )
     end
     
-    def adjust_line_items_for_proration
-      # proration_reduction changed & needs to be distributed over line items
-      refdist = get_fund_distribution(self.proration_reduction, :adjustment)
-      
-      
-      
-      # MOOSE WARRRNING
+    def reduce_distribution_total(new_total, mode, distribution)
+      # WARNING: this shouldn't need to get called, so it just does the simplest thing possible..
+      # ideally it would act like get_fund_distribution, using line_item_groups and reducing amounts proportionally in each group in sequence
+      old_total = distribution.inject(0){|sum,li| sum + li['amount'] }
+      while old_total > new_total
+        distribution.find{|d| d['amount'] > 0 }['amount'] -= [d['amount'], old_total - new_total].min
+      end
     end
+    
     
     def total_collected_changed
       # get amounts collected
