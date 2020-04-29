@@ -69,6 +69,19 @@ class Invoice < ApplicationRecord
   end
   # Methods
 
+
+  # refresh price for new line items
+  def refresh
+    with_lock do
+      if status == 'available' || status == 'upcoming' || status == 'missed'
+        self.subtotal = line_items.inject(0) { |result, line_item| result += line_item.price }
+        self.total = self.subtotal - self.proration_reduction
+        self.save!
+        self.line_items.update_all(priced_in: true)
+      end
+    end
+  end
+
   # Apply Proration
   #
   # Apply a proration to the invoice. If the new_term_last_date falls
