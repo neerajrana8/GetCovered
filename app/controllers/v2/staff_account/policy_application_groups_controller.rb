@@ -36,7 +36,8 @@ module V2
       end
 
       def accept
-        if @policy_application_group.account.current_payment_method
+
+        if 1
           result = @policy_application_group.policy_group_quote.accept
 
           if result[:success]

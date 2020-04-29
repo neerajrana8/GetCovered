@@ -325,6 +325,8 @@ class Invoice < ApplicationRecord
   def calculate_subtotal
     old_subtotal = self.will_save_change_to_attribute?('subtotal') ? self.subtotal : nil
     self.subtotal = line_items.inject(0) { |result, line_item| result += line_item.price }
+    ap subtotal
+    ap old_subtotal
     errors.add(:subtotal, "must match sum of line item prices") unless old_subtotal.nil? || old_subtotal == self.subtotal
   end
   

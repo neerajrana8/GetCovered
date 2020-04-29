@@ -128,7 +128,7 @@
 
     resources :policy_application_groups, path: "policy-application-groups", except: [:update, :edit] do
       member do
-        patch :accept
+        put :accept
       end
     end
   
