@@ -308,7 +308,7 @@ module V2
   						@policy_application.primary_user().set_stripe_id()
   						
   						@quote = @policy_application.policy_quotes.last
-  						@quote.generate_invoices_for_term()
+  						results = @quote.generate_invoices_for_term()
   						@premium = @quote.policy_premium
   						
   						response = { 

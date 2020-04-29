@@ -14,6 +14,10 @@ class Staff < ApplicationRecord
   
   enum role: { staff: 0, agent: 1, owner: 2, super_admin: 3 }
   
+  enum current_payment_method: ['none', 'ach_unverified', 'ach_verified', 'card', 'other'],
+    _prefix: true
+
+  
   validate :proper_role
   
   # Active Record Callbacks
@@ -39,6 +43,10 @@ class Staff < ApplicationRecord
   autosave: true
   
   has_many :reports, as: :reportable
+
+  has_many :invoices, as: :invoiceable
+  has_many :payment_profiles, as: :payer
+
   
   scope :enabled, ->(){ where(enabled: true) }
   
@@ -101,10 +109,8 @@ class Staff < ApplicationRecord
 
   # Override active_for_authentication? to prevent non-owners or non-enabled staff to authorize
   def active_for_authentication?
-    
     super && (owner || enabled)
   end
-  
   
   
   private

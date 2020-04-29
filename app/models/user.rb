@@ -57,7 +57,7 @@ class User < ApplicationRecord
   has_many :leases,
     through: :lease_users
 
-  has_many :payment_profiles
+  has_many :payment_profiles, as: :payer
   has_many :accounts,
     through: :active_account_users
 

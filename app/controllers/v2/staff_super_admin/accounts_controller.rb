@@ -26,6 +26,24 @@ module V2
         render "/v2/staff_super_admin/accounts/account_policies", status: :ok
       end
 
+      def account_communities
+        account = Account.includes(:insurables).find(params[:id])
+        @account_communities = Insurable.where(account_id: account.id).communities || []
+        render "/v2/staff_super_admin/accounts/account_communities", status: :ok
+      end
+
+      def account_buildings
+        account = Account.includes(:insurables).find(params[:id])
+        @account_buildings = Insurable.where(account_id: account.id).buildings || []
+        render "/v2/staff_super_admin/accounts/account_buildings", status: :ok
+      end
+
+      def account_units
+        account = Account.includes(:insurables).find(params[:id])
+        @account_units = Insurable.where(account_id: account.id).units || []
+        render "/v2/staff_super_admin/accounts/account_units", status: :ok
+      end
+
       def show
         render :show, status: :ok
       end
