@@ -19,13 +19,8 @@ module V2
       private
 
       def set_branding_profile_by_subdomain
-        subdomain = ActionDispatch::Http::URL.extract_subdomain(request.headers['origin'].strip.sub(/^https?\:\/\//, ''), 1)
-        if subdomain.empty?
-          @branding_profile = BrandingProfile.find_by(title: 'GetCovered')
-        else
-          @branding_profile = BrandingProfile.find_by(subdomain: subdomain)
-        end
-        @branding_profile ||= BrandingProfile.find_by(title: 'GetCovered')
+        host = URI(request.headers['origin']).host
+        @branding_profile = BrandingProfile.find_by(url: host) || BrandingProfile.find_by(title: 'GetCovered')
       end
       
       def set_branding_profile
