@@ -6,7 +6,7 @@ module V2
   module StaffAccount
     class UsersController < StaffAccountController
 
-      before_action :set_user, only: [:update, :show]
+      before_action :set_user, only: %i[update show]
 
       def index
         super(:@users, current_staff.organizable.active_users, :profile)
@@ -74,23 +74,28 @@ module V2
 
       def create_params
         return({}) if params[:user].blank?
-        to_return = params.require(:user).permit(
-          :email, :enabled, notification_options: {}, settings: {},
-          profile_attributes: [
-            :birth_date, :contact_email, :contact_phone, :first_name,
-            :job_title, :last_name, :middle_name, :suffix, :title
+
+        params.require(:user).permit(
+          :email, :enabled,
+          notification_options: {},
+          settings: {},
+          profile_attributes: %i[
+            birth_date contact_email contact_phone first_name
+            job_title last_name middle_name suffix title gender salutation
           ]
         )
-        return(to_return)
       end
 
       def update_params
         return({}) if params[:user].blank?
+
         params.require(:user).permit(
-          :enabled, notification_options: {}, settings: {},
-          profile_attributes: [
-            :birth_date, :contact_email, :contact_phone, :first_name,
-            :job_title, :last_name, :middle_name, :suffix, :title
+          :enabled,
+          notification_options: {},
+          settings: {},
+          profile_attributes: %i[
+            birth_date contact_email contact_phone first_name
+            job_title last_name middle_name suffix title gender salutation
           ]
         )
       end
@@ -98,8 +103,8 @@ module V2
       def supported_filters(called_from_orders = false)
         @calling_supported_orders = called_from_orders
         {
-          created_at: [:scalar, :array, :interval],
-          updated_at: [:scalar, :array, :interval],
+          created_at: %i[scalar array interval],
+          updated_at: %i[scalar array interval],
         }
       end
 

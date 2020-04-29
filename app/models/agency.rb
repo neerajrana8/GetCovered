@@ -25,18 +25,15 @@ class Agency < ApplicationRecord
   
   # has_many relationships
   has_many :carrier_agencies
-  has_many :carriers,
-    through: :carrier_agencies
-  has_many :carrier_agency_authorizations,
-    through: :carrier_agencies
+  has_many :carriers, through: :carrier_agencies
+  has_many :carrier_agency_authorizations, through: :carrier_agencies
     
   has_many :accounts
   has_many :insurables, through: :accounts
   has_many :insurable_rates
   has_many :leases, through: :accounts
   has_many :insurable_rates
-  has_many :staff,
-    as: :organizable
+  has_many :staff, as: :organizable
       
   has_many :account_staff,
     through: :accounts,
@@ -103,7 +100,7 @@ class Agency < ApplicationRecord
   
   def primary_address
     addresses.where(primary: true).take 
-   end
+  end
   
   # Agent.provides(policy_type_id)
   # checks to see if agent is authorized for a policy type
@@ -176,5 +173,5 @@ class Agency < ApplicationRecord
     
   def initialize_agency
    # Blank for now...
- end
+  end
 end
