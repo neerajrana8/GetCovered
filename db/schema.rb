@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_04_23_171622) do
+ActiveRecord::Schema.define(version: 2020_04_29_153022) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -55,6 +55,8 @@ ActiveRecord::Schema.define(version: 2020_04_23_171622) do
     t.bigint "agency_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "payment_profile_stripe_id"
+    t.integer "current_payment_method"
     t.index ["agency_id"], name: "index_accounts_on_agency_id"
     t.index ["call_sign"], name: "index_accounts_on_call_sign", unique: true
     t.index ["staff_id"], name: "index_accounts_on_staff_id"
@@ -1137,8 +1139,6 @@ ActiveRecord::Schema.define(version: 2020_04_23_171622) do
     t.string "current_sign_in_ip"
     t.string "last_sign_in_ip"
     t.integer "role", default: 0
-    t.string "stripe_id"
-    t.integer "current_payment_method"
     t.index ["confirmation_token"], name: "index_staffs_on_confirmation_token", unique: true
     t.index ["email"], name: "index_staffs_on_email", unique: true
     t.index ["invitation_token"], name: "index_staffs_on_invitation_token", unique: true

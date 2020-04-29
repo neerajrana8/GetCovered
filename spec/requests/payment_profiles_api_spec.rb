@@ -47,7 +47,7 @@ describe 'PaymentProfile API spec', type: :request do
     
   end
   
-  context 'for Accounts' do
+  context 'for StaffAccounts' do
     before :all do
       @agency = FactoryBot.create(:agency)
       @staff = create_account_for @agency
@@ -59,7 +59,7 @@ describe 'PaymentProfile API spec', type: :request do
     end
     
     def create_profile
-      post '/v2/staff_account/payment-profiles', params: { payment_profile: payment_profile_params(payer: @staff) }, headers: @headers
+      post '/v2/staff_account/payment-profiles', params: { payment_profile: payment_profile_params(payer: @staff.organizable) }, headers: @headers
     end
     
     it 'should create PaymentProfile' do
@@ -72,8 +72,8 @@ describe 'PaymentProfile API spec', type: :request do
     end
     
     it 'should list PaymentProfiles' do
-      first_profile = FactoryBot.create(:payment_profile, payer: @staff)
-      second_profile = FactoryBot.create(:payment_profile, payer: @staff)
+      first_profile = FactoryBot.create(:payment_profile, payer: @staff.organizable)
+      second_profile = FactoryBot.create(:payment_profile, payer: @staff.organizable)
       expect(PaymentProfile.count).to eq(2)
       get "/v2/staff_account/payment-profiles", headers: @headers
       result = JSON.parse response.body
@@ -82,7 +82,7 @@ describe 'PaymentProfile API spec', type: :request do
     end
     
     it 'should update PaymentProfile' do
-      profile = FactoryBot.create(:payment_profile, payer: @staff)
+      profile = FactoryBot.create(:payment_profile, payer: @staff.organizable)
       expect(profile.active).to eq(false)
       put "/v2/staff_account/payment-profiles/#{profile.id}", params: { payment_profile: {active: true } }, headers: @headers
       result = JSON.parse response.body
