@@ -40,6 +40,10 @@ class UpgradeInvoiceSystemForPremiumTracking < ActiveRecord::Migration[5.2]
       invy = PolicyGroupQuote.where(policy_group_id: inv.invoiceable_id).accepted.take
       inv.update(invoiceable: invy)
     end
+    # run unearned premium updates
+    ::PolicyPremium.all.each do |pp|
+      pp.update_unearned_premium
+    end
   end
   
   def down

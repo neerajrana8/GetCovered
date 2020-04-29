@@ -15,6 +15,8 @@ class PolicyPremium < ApplicationRecord
     through: :policy_premium_fees
   
   validate :correct_total
+  
+  after_create :update_unearned_premium
 
   def application
 		return policy_quote.policy_application  

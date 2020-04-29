@@ -48,8 +48,6 @@ class Invoice < ApplicationRecord
   validates_associated :line_items
   validate :term_dates_are_sensible
 
-# 	validate :policy_unless_quoted
-
   accepts_nested_attributes_for :line_items
 
   # Enums
