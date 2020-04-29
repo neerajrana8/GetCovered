@@ -36,20 +36,12 @@ module V2
       end
 
       def accept
+        result = @policy_application_group.policy_group_quote.accept
 
-        if 1
-          result = @policy_application_group.policy_group_quote.accept
-
-          if result[:success]
-            render json: { success: true, message: result[:message] }, status: :ok
-          else
-            render json: { success: false, message: result[:message] }, status: :internal_server_error
-          end
+        if result[:success]
+          render json: { success: true, message: result[:message] }, status: :ok
         else
-          render json: {
-            success: false,
-            message: "Current staff doesn't have attached payment sources"
-          }, status: :unprocessable_entity
+          render json: { success: false, message: result[:message] }, status: :internal_server_error
         end
       end
 
