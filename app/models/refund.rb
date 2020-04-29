@@ -80,6 +80,7 @@ class Refund < ApplicationRecord
   def process(allow_processing_if_queued = false)
     # perform the refund, if our status is appropriate
     if status == 'processing' || (status == 'queued' && allow_processing_if_queued)
+      # try to refund via stripe
       begin
         created_refund = Stripe::Refund.create({
           charge: charge.stripe_id,
@@ -91,12 +92,13 @@ class Refund < ApplicationRecord
         self.update(status: 'errored', error_message: e.message)
         return
       end
-      # MOOSE WARNING: wrap these in a transaction or some such thing?
+      # remove our total from amount_in_queued_refunds
       if status == 'queued'
         charge.with_lock do
           charge.update(amount_in_queued_refunds: charge.amount_in_queued_refunds - (amount - amount_returned_via_dispute))
         end
       end
+      # update ourselves, woot woot
       self.update(
         stripe_id: created_refund.id,
         currency: created_refund.currency,
