@@ -188,7 +188,7 @@ class Invoice < ApplicationRecord
       end
       # validate line item breakdown
       begin
-        to_refund.each |li|
+        to_refund.each do |li|
           li['line_item'] = self.line_items.where(id: li['line_item']).take unless li['line_item'].class == ::LineItem
           return { success: false, errors: "invalid line items specified" } if li['line_item'].nil?
         end
@@ -196,7 +196,7 @@ class Invoice < ApplicationRecord
         return { success: false, errors: "invalid line items specified" }
       end
       # fix line item breakdown to actually refundable amounts
-      to_refund.each |li|
+      to_refund.each do |li|
         li['amount'] = [li['amount'], li['line_item'].collected].min
       end
       # apply refund
@@ -215,7 +215,7 @@ class Invoice < ApplicationRecord
       end
       # validate line item breakdown
       begin
-        to_refund.each |li|
+        to_refund.each do |li|
           li['line_item'] = self.line_items.where(id: li['line_item']).take unless li['line_item'].class == ::LineItem
           return { success: false, errors: "invalid line items specified" } if li['line_item'].nil?
           return { success: false, errors: "refund amount #{li['amount']} for line item #{li['line_item'].title} cannot exceed amount collected (#{li['amount']})" } if li['amount'] > li['line_item'].collected
@@ -513,7 +513,7 @@ class Invoice < ApplicationRecord
             end,
             amount: 0           # the amount allocated to this line item so far
           } }
-          total_ceiling = amounts.inject(0){|sum,amt| sum + amt[:ceiling] )
+          total_ceiling = amounts.inject(0){|sum,amt| sum + amt[:ceiling] }
           total_amt = [amt_left, total_ceiling].min
           next [] if total_amt == 0
           # distribute

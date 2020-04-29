@@ -123,7 +123,7 @@ class Refund < ApplicationRecord
     end
 
     def update_charge_for_refund_creation
-      charge.with_lock
+      charge.with_lock do
         # update charge
         true_amount = amount - amount_returned_via_dispute
         if true_amount > 0
