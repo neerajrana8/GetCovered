@@ -359,6 +359,7 @@ class PolicyQuote < ApplicationRecord
     #end
   end
 
+  # to be invoked by Invoice, not directly; an invoice received payment or underwent a refund
   def invoice_collected_changed(invoice, amount_collected, old_amount_collected)
     self.policy_premium.update_unearned_premium
   end

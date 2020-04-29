@@ -130,13 +130,14 @@ class Charge < ApplicationRecord
         raise ActiveRecord::Rollback unless succeeded
         # create a bookkeeping refund for any amount left over
         unless amount_lost == 0
-          succeeded = refunds.create(
+          succeeded = false
+          ref = refunds.create!(
             amount: amount_lost,
             amount_returned_via_dispute: amount_lost,
             status: 'succeeded_via_dispute_payout',
             full_reason: "payout for dispute ##{dispute_id}"
           )
-          raise ActiveRecord::Rollback unless succeeded
+          invoice.apply_dispute_refund(ref)
         end
         # update invoice
         succeeded = invoice.modify_disputed_charge_count(-1) if became_undisputed
