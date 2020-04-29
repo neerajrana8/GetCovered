@@ -126,8 +126,9 @@ class Staff < ApplicationRecord
     
     
     def set_first_as_primary_on_organizable
-      unless organizable.nil?
-        self.organizable.update staff_id: id if organizable.staff.count == 1
-      end	
+      if organizable&.staff&.count&.eql?(1)
+        organizable.update staff_id: id
+        update_attribute(:owner, true)
+      end
     end
 end

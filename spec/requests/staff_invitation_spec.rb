@@ -1,4 +1,5 @@
 require 'rails_helper'
+require 'nokogiri'
 include ActionController::RespondWith
 ActiveJob::Base.queue_adapter = :test
 
@@ -25,10 +26,16 @@ describe 'Staff invitation spec', type: :request do
     allow(Rails.application.credentials).to receive(:uri).and_return({ test: { admin: 'localhost' } })
     
     expect { create_staff(@staff_params) }.to change { Staff.count }.by(1)
+    last_mail = Nokogiri::HTML(ActionMailer::Base.deliveries.last.html_part.body.decoded)
+    url = last_mail.css('a').first["href"]
+    token = url.partition("localhost/auth/accept-invitation/").last
+    
     new_staff = Staff.last
-    put staff_invitation_path, params: {invitation_token: new_staff.invitation_token, password: 'foobar', password_confirmation: 'foobar'}
+    put staff_invitation_path, params: { invitation_token: token, password: 'foobar', password_confirmation: 'foobar' }
+    
     result = JSON.parse response.body
     expect(new_staff.reload.enabled).to eq(true)
+    expect(new_staff.owner).to eq(false)
     expect(result["success"]).to eq(true)
   end
   

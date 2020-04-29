@@ -8,6 +8,37 @@ describe 'BrandingProfile API spec', type: :request do
     @super_admin = FactoryBot.create(:staff, role: 'super_admin')
   end
   
+  context 'public api' do
+    before :all do
+      @new_agency = FactoryBot.create(:agency, title: 'New Whitelabel Agency')
+      @agency_profile = FactoryBot.create(:branding_profile, title: "New agency", profileable: @new_agency, url: "new_agency.getcovered.com")
+    end
+    
+    it 'should find correct profile with origin header' do
+      get '/v2/branding-profile', headers: { 'Origin' => "https://new_agency.getcovered.com"}
+      result = JSON.parse response.body
+      expect(response.status).to eq(200)
+      expect(result["id"]).to eq(@agency_profile.id)
+      expect(result["url"]).to eq(@agency_profile.url)
+    end
+    
+    it 'should find correct profile with path origin header' do
+      get '/v2/branding-profile', headers: { 'Origin' => "https://new_agency.getcovered.com/vas?dfs=df"}
+      result = JSON.parse response.body
+      expect(response.status).to eq(200)
+      expect(result["id"]).to eq(@agency_profile.id)
+      expect(result["url"]).to eq(@agency_profile.url)
+    end
+
+    it 'should find correct profile with http header' do
+      get '/v2/branding-profile', headers: { 'Origin' => "http://new_agency.getcovered.com/vas?dfs=df"}
+      result = JSON.parse response.body
+      expect(response.status).to eq(200)
+      expect(result["id"]).to eq(@agency_profile.id)
+      expect(result["url"]).to eq(@agency_profile.url)
+    end
+  end
+  
   
   context 'for Agency role' do
     before :each do
@@ -45,7 +76,7 @@ describe 'BrandingProfile API spec', type: :request do
     end
     
   end
-
+  
   context 'for SuperAdmin roles' do
     before :each do
       login_staff(@super_admin)
@@ -80,7 +111,7 @@ describe 'BrandingProfile API spec', type: :request do
       expect(result["title"]).to eq(new_title)
       expect(result["styles"]).to eq(style)
     end
-
+    
     it 'should destroy BrandingProfile' do
       @profile = BrandingProfile.create(correct_params)
       new_title = "A new title"
@@ -90,13 +121,13 @@ describe 'BrandingProfile API spec', type: :request do
       expect(response.status).to eq(200)
       expect(result["success"]).to eq(true)
     end
-
+    
     
   end
   
   def correct_params
     {
-      subdomain: "os",
+      subdomain: "",
       title: "GetCovered",
       profileable_id: @agency.id,
       profileable_type: "Agency",

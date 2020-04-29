@@ -191,7 +191,6 @@ ActiveRecord::Schema.define(version: 2020_04_29_153022) do
     t.string "logo_url"
     t.string "footer_logo_url"
     t.string "subdomain"
-    t.string "subdomain_test"
     t.index ["profileable_type", "profileable_id"], name: "index_branding_profiles_on_profileable_type_and_profileable_id"
     t.index ["url"], name: "index_branding_profiles_on_url", unique: true
   end
@@ -1139,6 +1138,8 @@ ActiveRecord::Schema.define(version: 2020_04_29_153022) do
     t.string "current_sign_in_ip"
     t.string "last_sign_in_ip"
     t.integer "role", default: 0
+    t.string "stripe_id"
+    t.integer "current_payment_method"
     t.index ["confirmation_token"], name: "index_staffs_on_confirmation_token", unique: true
     t.index ["email"], name: "index_staffs_on_email", unique: true
     t.index ["invitation_token"], name: "index_staffs_on_invitation_token", unique: true

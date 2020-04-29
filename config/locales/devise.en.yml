@@ -63,3 +63,6 @@ en:
       not_saved:
         one: "1 error prohibited this %{resource} from being saved:"
         other: "%{count} errors prohibited this %{resource} from being saved:"
+  devise_token_auth:
+    passwords:
+      user_not_found: "There is no account with this email, please register for an account"
