@@ -26,7 +26,7 @@ class Invoice < ApplicationRecord
   # ActiveRecord Associations
 
   belongs_to :invoiceable, polymorphic: true
-  belongs_to :payee, polymorphic: true
+  belongs_to :payer, polymorphic: true
   
   has_many :charges
   has_many :refunds, through: :charges
@@ -278,7 +278,7 @@ class Invoice < ApplicationRecord
     end
     return return_error unless return_error.nil?
     # grab the default payment method, if needed
-    stripe_source = payee.payment_profiles.where(default: true).take&.source_id if stripe_source == :default
+    stripe_source = payer.payment_profiles.where(default: true).take&.source_id if stripe_source == :default
     # attempt to make payment
     created_charge = nil
     created_charge = if !stripe_source.nil?    # use specified source

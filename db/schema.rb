@@ -10,11 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-<<<<<<< HEAD
-ActiveRecord::Schema.define(version: 2020_04_28_184502) do
-=======
 ActiveRecord::Schema.define(version: 2020_04_29_153022) do
->>>>>>> master
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -552,10 +548,10 @@ ActiveRecord::Schema.define(version: 2020_04_29_153022) do
     t.integer "proration_reduction", default: 0, null: false
     t.integer "disputed_charge_count", default: 0, null: false
     t.boolean "was_missed", default: false, null: false
-    t.string "payee_type"
-    t.bigint "payee_id"
+    t.string "payer_type"
+    t.bigint "payer_id"
     t.index ["invoiceable_type", "invoiceable_id"], name: "index_invoices_on_invoiceable"
-    t.index ["payee_type", "payee_id"], name: "index_invoices_on_payee"
+    t.index ["payer_type", "payer_id"], name: "index_invoices_on_payee"
   end
 
   create_table "lease_type_insurable_types", force: :cascade do |t|
@@ -1149,8 +1145,6 @@ ActiveRecord::Schema.define(version: 2020_04_29_153022) do
     t.string "current_sign_in_ip"
     t.string "last_sign_in_ip"
     t.integer "role", default: 0
-    t.string "stripe_id"
-    t.integer "current_payment_method"
     t.index ["confirmation_token"], name: "index_staffs_on_confirmation_token", unique: true
     t.index ["email"], name: "index_staffs_on_email", unique: true
     t.index ["invitation_token"], name: "index_staffs_on_invitation_token", unique: true

@@ -278,11 +278,11 @@ class Charge < ApplicationRecord
         remove_instance_variable(:@already_in_on_create)
         return
       else
-        # get payee stripe id (leave as nil if we're using a token, since Stripe won't accept an unattached source)
+        # get payer stripe id (leave as nil if we're using a token, since Stripe won't accept an unattached source)
         customer_stripe_id = nil
-        unless stripe_id_is_stripe_token || invoice.payee.nil? || !invoice.payee.respond_to?(:set_stripe_id) || !invoice.payee.respond_to?(:stripe_id)
-          invoice.payee.set_stripe_id if invoice.payee.stripe_id.nil?
-          customer_stripe_id = invoice.payee.stripe_id
+        unless stripe_id_is_stripe_token || invoice.payer.nil? || !invoice.payer.respond_to?(:set_stripe_id) || !invoice.payer.respond_to?(:stripe_id)
+          invoice.payer.set_stripe_id if invoice.payer.stripe_id.nil?
+          customer_stripe_id = invoice.payer.stripe_id
         end
         # create charge
         begin
