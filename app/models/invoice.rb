@@ -425,9 +425,85 @@ class Invoice < ApplicationRecord
      .map{|x| x[1] }
     arr.insert(arr.index{|x| x == 'complete_refund_during_term' }, 'prorated_refund')
     arr.insert(0, 'no_refund')
-    arr.map!{|x| self.line_items.select{|li| li.priced_in && li.refundability == x }.select{|li| block.nil? || block.call(li) } }
+    arr.map!{|x| self.line_items.reload.select{|li| li.priced_in && li.refundability == x }.select{|li| block.nil? || block.call(li) } }
        .select!{|arr| arr.length > 0 }
     arr.send(mode == :payment ? :itself : :reverse)
+  end
+  
+  # returns an array of { line_item: $line_item_id, amount: $currency_amount } hashes giving a distribution of dist_amount over the line items
+  # applies in order: [no_refund, complete_refund_before_term, prorated_refund, complete_refund_during_term], with complete_refund_before_due_date inserted before one of the term date-based ones depending on the due date;
+  # applies refunds/adjustments in reverse order;
+  # distributes payments proportionally over line items with the same refund type;
+  # mode should be:
+  #   :payment for payment application
+  #   :refund for refund application
+  #   :max_refund for refund application without regard to what's already been refunded
+  #   :adjustment for determining proration adjustments on unpaid invoices
+  def get_fund_distribution(dist_amount, mode, leave_line_item_models: false, &block)
+    amt_left = dist_amount
+    return(self.line_item_groups(mode, &block).map do |lig|
+        # prepare
+        amounts = lig.map{|li| {
+          line_item: li,      # the line item model this entry applies to
+          weight: case mode   # the weight for proportional allocation among line items in the same group
+            when :payment; li.adjusted_price
+            when :refund, :max_refund, :adjustment; li.price;
+          end,
+          ceiling: case mode  # the max amount allocatable to this line item
+            when :payment; [li.adjusted_price - li.collected, 0].max # shouldn't be < 0, but just in case
+            when :refund; li.collected
+            when :max_refund; li.price
+            when :adjustment; [li.price - li.collected, 0].max # shouldn't be < 0, but just in case
+          end,
+          amount: 0           # the amount allocated to this line item so far
+        } }
+        total_ceiling = amounts.inject(0){|sum,amt| sum + amt[:ceiling] }
+        total_amt = [amt_left, total_ceiling].min
+        # handle easy cases
+        if total_amt == 0
+          next []
+        elsif total_amt > total_ceiling
+          amounts.each{|amt| amt[:amount] = amt[:ceiling] }
+          amt_left -= total_ceiling
+          next amounts
+        end
+        # distribute
+        lig_amt_left = total_amt
+        while lig_amt_left > 0
+          old_lig_amt_left = lig_amt_left
+          # distribute proportionally, never exceeding ceilings
+          relevant_amounts = amounts.select{|amt| amt[:amount] < amt[:ceiling] }
+          total_weight = relevant_amounts.inject(0){|sum,amt| sum + amt[:weight] }.to_d
+          total_weight = 1.to_d if total_weight == 0
+          relevant_amounts.each do |amt|
+            amt[:amount] += [(lig_amt_left * amt[:weight] / total_weight).floor, amt[:ceiling] - amt[:amount]].min
+          end
+          lig_amt_left = total_amt - amounts.inject(0){|sum,amt| sum + amt[:amount] }
+          # if the floor functions prevented any change, allocate 1 cent to the line item with the greatest proportional difference from its ceiling
+          if lig_amt_left == old_lig_amt_left
+            to_increment = relevant_amounts.sort do |amt1,amt2|
+              (amt1[:ceiling] - amt1[:amount]).to_d / (amt1[:weight] == 0 ? 1 : amt1[:weight]) <=> 
+              (amt2[:ceiling] - amt2[:amount]).to_d / (amt2[:weight] == 0 ? 1 : amt2[:weight])
+            end.last
+            to_increment[:amount] += 1
+            lig_amt_left -= 1
+          end
+        end
+        # paranoid error-fixing, just in case a negative somehow slips in one day (ignores efficiency considerations and handles things cent-by-cent)
+        while lig_amt_left < 0
+          amounts.find{|amt| amt[:amount] > 0 }[:amount] -= 1
+          lig_amt_left += 1
+        end
+        # we're done with this line item group
+        amt_left -= total_amt
+        next amounts
+      end.flatten
+         .map{|li_entry| {
+            'line_item' => leave_line_item_models ? li_entry[:line_item] : li_entry[:line_item].id,
+            'amount' => li_entry[:amount]
+          } }
+         .select{|li_entry| li_entry['amount'] != 0 }
+    )
   end
 
   private
@@ -498,75 +574,7 @@ class Invoice < ApplicationRecord
     def set_was_missed
       self.was_missed = true
     end
-    
-    # returns an array of { line_item: $line_item_id, amount: $currency_amount } hashes giving a distribution of dist_amount over the line items
-    # applies in order: [no_refund, complete_refund_before_term, prorated_refund, complete_refund_during_term], with complete_refund_before_due_date inserted before one of the term date-based ones depending on the due date;
-    # applies refunds/adjustments in reverse order;
-    # distributes payments proportionally over line items with the same refund type;
-    # mode should be:
-    #   :payment for payment application
-    #   :refund for refund application
-    #   :max_refund for refund application without regard to what's already been refunded
-    #   :adjustment for determining proration adjustments on unpaid invoices
-    def get_fund_distribution(dist_amount, mode, leave_line_item_models: false, &block)
-      amt_left = dist_amount
-      return(self.line_item_groups(mode, &block).map do |lig|
-          # prepare
-          amounts = lig.map{|li| {
-            line_item: li,      # the line item model this entry applies to
-            weight: case mode   # the weight for proportional allocation among line items in the same group
-              when :payment; li.adjusted_price
-              when :refund, :max_refund, :adjustment; li.price;
-            end,
-            ceiling: case mode  # the max amount allocatable to this line item
-              when :payment; [li.adjusted_price - li.collected, 0].max # shouldn't be < 0, but just in case
-              when :refund; li.collected
-              when :max_refund; li.price
-              when :adjustment; [li.price - li.collected, 0].max # shouldn't be < 0, but just in case
-            end,
-            amount: 0           # the amount allocated to this line item so far
-          } }
-          total_ceiling = amounts.inject(0){|sum,amt| sum + amt[:ceiling] }
-          total_amt = [amt_left, total_ceiling].min
-          next [] if total_amt == 0
-          # distribute
-          lig_amt_left = total_amt
-          while lig_amt_left > 0
-            old_lig_amt_left = lig_amt_left
-            # distribute proportionally, never exceeding ceilings
-            relevant_amounts = amounts.select{|amt| amt[:amount] < amt[:ceiling] }
-            total_weight = relevant_amounts.inject(0){|sum,amt| sum + amt[:weight] }.to_d
-            total_weight = 1.to_d if total_weight == 0
-            relevant_amounts.each do |amt|
-              amt[:amount] += [(lig_amt_left * amt[:weight] / total_weight).floor, amt[:ceiling] - amt[:amount]].min
-            end
-            lig_amt_left = total_amt - amounts.inject(0){|sum,amt| amt[:amount] }
-            # if the floor functions prevented any change, allocate 1 cent to the line item with the greatest proportional difference from its ceiling
-            if lig_amt_left == old_lig_amt_left
-              to_increment = relevant_amounts.sort do |amt1,amt2|
-                (amt1[:ceiling] - amt1[:amount]).to_d / (amt1[:weight] == 0 ? 1 : amt1[:weight]) <=> 
-                (amt2[:ceiling] - amt2[:amount]).to_d / (amt2[:weight] == 0 ? 1 : amt2[:weight])
-              end.last
-              to_increment[:amount] += 1
-              lig_amt_left -= 1
-            end
-          end
-          # paranoid error-fixing, just in case a negative somehow slips in one day (ignores efficiency considerations and handles things cent-by-cent)
-          while lig_amt_left < 0
-            amounts.find{|amt| amt[:amount] > 0 }[:amount] -= 1
-            lig_amt_left += 1
-          end
-          # we're done with this line item group
-          amt_left -= total_amt
-          next amounts
-        end.flatten
-           .map{|li_entry| {
-              'line_item' => leave_line_item_models ? li_entry[:line_item] : li_entry[:line_item].id,
-              'amount' => li_entry[:amount]
-            } }
-           .select{|li_entry| li_entry['amount'] != 0 }
-      )
-    end
+
     
     def reduce_distribution_total(new_total, mode, distribution)
       # WARNING: this shouldn't need to get called, so it just does the simplest thing possible..
@@ -582,7 +590,7 @@ class Invoice < ApplicationRecord
       # get amounts collected
       amount_collected = self.total - self.amount_refunded
       old_amount_collected = (self.attribute_before_last_save('status') != 'complete' ? 0 : self.total || 0) - (self.attribute_before_last_save('amount_refunded') || 0)
-      # 
+      # MOOSE WARNING: invoke callbacks
     end
 
     # This method uses deprecated fields (e.g. agency_total).
