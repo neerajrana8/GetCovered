@@ -104,6 +104,7 @@ ActiveRecord::Schema.define(version: 2020_04_29_153022) do
     t.bigint "addressable_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "searchable", default: false
     t.index ["addressable_type", "addressable_id"], name: "index_addresses_on_addressable_type_and_addressable_id"
   end
 
@@ -322,6 +323,10 @@ ActiveRecord::Schema.define(version: 2020_04_29_153022) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "amount", default: 0
+    t.boolean "invoice_update_failed", default: false, null: false
+    t.string "invoice_update_error_call"
+    t.string "invoice_update_error_record"
+    t.jsonb "invoice_update_error_hash"
     t.index ["invoice_id"], name: "index_charges_on_invoice_id"
     t.index ["stripe_id"], name: "charge_stripe_id"
   end
@@ -543,10 +548,10 @@ ActiveRecord::Schema.define(version: 2020_04_29_153022) do
     t.integer "proration_reduction", default: 0, null: false
     t.integer "disputed_charge_count", default: 0, null: false
     t.boolean "was_missed", default: false, null: false
-    t.string "payee_type"
-    t.bigint "payee_id"
+    t.string "payer_type"
+    t.bigint "payer_id"
     t.index ["invoiceable_type", "invoiceable_id"], name: "index_invoices_on_invoiceable"
-    t.index ["payee_type", "payee_id"], name: "index_invoices_on_payee"
+    t.index ["payer_type", "payer_id"], name: "index_invoices_on_payee"
   end
 
   create_table "lease_type_insurable_types", force: :cascade do |t|
@@ -612,6 +617,8 @@ ActiveRecord::Schema.define(version: 2020_04_29_153022) do
     t.integer "refundability", null: false
     t.integer "category", default: 0, null: false
     t.boolean "priced_in", default: false, null: false
+    t.integer "collected", default: 0, null: false
+    t.integer "proration_reduction", default: 0, null: false
     t.index ["invoice_id"], name: "index_line_items_on_invoice_id"
   end
 
@@ -1138,8 +1145,6 @@ ActiveRecord::Schema.define(version: 2020_04_29_153022) do
     t.string "current_sign_in_ip"
     t.string "last_sign_in_ip"
     t.integer "role", default: 0
-    t.string "stripe_id"
-    t.integer "current_payment_method"
     t.index ["confirmation_token"], name: "index_staffs_on_confirmation_token", unique: true
     t.index ["email"], name: "index_staffs_on_email", unique: true
     t.index ["invitation_token"], name: "index_staffs_on_invitation_token", unique: true

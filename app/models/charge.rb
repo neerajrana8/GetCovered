@@ -66,7 +66,7 @@ class Charge < ApplicationRecord
   def mark_succeeded(message = nil)
     invoice.with_lock do  # we lock the invoice to ensure serial processing with other invoice events
       update_columns(status: 'succeeded', status_information: message)
-      invoice.payment_succeeded
+      invoice.payment_succeeded(self)
     end
   end
 
@@ -116,6 +116,7 @@ class Charge < ApplicationRecord
         unless amount_lost == 0
           succeeded = true
           refunds.queued.reload.each do |queued_refund|
+            next unless queued_refund.status == 'queued'
             amount_to_credit = [amount_lost, queued_refund.amount - queued_refund.amount_returned_via_dispute].min
             if queued_refund.apply_dispute_payout(amount_to_credit)
               amount_lost -= amount_to_credit
@@ -129,13 +130,14 @@ class Charge < ApplicationRecord
         raise ActiveRecord::Rollback unless succeeded
         # create a bookkeeping refund for any amount left over
         unless amount_lost == 0
-          succeeded = refunds.create(
+          succeeded = false
+          ref = refunds.create!(
             amount: amount_lost,
             amount_returned_via_dispute: amount_lost,
             status: 'succeeded_via_dispute_payout',
             full_reason: "payout for dispute ##{dispute_id}"
           )
-          raise ActiveRecord::Rollback unless succeeded
+          invoice.apply_dispute_refund(ref)
         end
         # update invoice
         succeeded = invoice.modify_disputed_charge_count(-1) if became_undisputed
@@ -182,12 +184,24 @@ class Charge < ApplicationRecord
 
     def pay_attempt_succeeded(stripe_charge_id, the_payment_method, message = nil)
       update_columns(status: 'succeeded', stripe_id: stripe_charge_id, payment_method: the_payment_method, status_information: message)
-      invoice.payment_succeeded
+      begin
+        invoice.payment_succeeded(self)
+      rescue ActiveRecord::RecordInvalid => e
+        update_columns(invoice_update_failed: true, invoice_update_error_call: 'payment_succeeded', invoice_update_error_record: "#{e.record.class.name}##{e.record.id}", invoice_update_error_hash: e.record.errors.to_h)
+      rescue
+        update_columns(invoice_update_failed: true, invoice_update_error_call: 'payment_succeeded', invoice_update_error_record: nil, invoice_update_error_hash: nil)
+      end
     end
 
     def pay_attempt_failed(stripe_charge_id, the_payment_method, message = nil)
       update_columns(status: 'failed', stripe_id: stripe_charge_id, payment_method: the_payment_method, status_information: message)
-      invoice.payment_failed
+      begin
+        invoice.payment_failed(self)
+      rescue ActiveRecord::RecordInvalid => e
+        update_columns(invoice_update_failed: true, invoice_update_error_call: 'payment_failed', invoice_update_error_record: "#{e.record.class.name}##{e.record.id}", invoice_update_error_hash: e.record.errors.to_h)
+      rescue
+        update_columns(invoice_update_failed: true, invoice_update_error_call: 'payment_failed', invoice_update_error_record: nil, invoice_update_error_hash: nil)
+      end
     end
 
     def pay_attempt_pending(stripe_charge_id, the_payment_method, message = nil)
@@ -266,11 +280,11 @@ class Charge < ApplicationRecord
         remove_instance_variable(:@already_in_on_create)
         return
       else
-        # get payee stripe id (leave as nil if we're using a token, since Stripe won't accept an unattached source)
+        # get payer stripe id (leave as nil if we're using a token, since Stripe won't accept an unattached source)
         customer_stripe_id = nil
-        unless stripe_id_is_stripe_token || invoice.payee.nil? || !invoice.payee.respond_to?(:set_stripe_id) || !invoice.payee.respond_to?(:stripe_id)
-          invoice.payee.set_stripe_id if invoice.payee.stripe_id.nil?
-          customer_stripe_id = invoice.payee.stripe_id
+        unless stripe_id_is_stripe_token || invoice.payer.nil? || !invoice.payer.respond_to?(:set_stripe_id) || !invoice.payer.respond_to?(:stripe_id)
+          invoice.payer.set_stripe_id if invoice.payer.stripe_id.nil?
+          customer_stripe_id = invoice.payer.stripe_id
         end
         # create charge
         begin

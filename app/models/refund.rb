@@ -5,8 +5,6 @@ class Refund < ApplicationRecord
 
   after_create :update_charge_for_refund_creation
 
-  after_create :update_invoice_for_refund_creation
-
   after_create :process
 
   # ActiveRecord Associations
@@ -82,6 +80,7 @@ class Refund < ApplicationRecord
   def process(allow_processing_if_queued = false)
     # perform the refund, if our status is appropriate
     if status == 'processing' || (status == 'queued' && allow_processing_if_queued)
+      # try to refund via stripe
       begin
         created_refund = Stripe::Refund.create({
           charge: charge.stripe_id,
@@ -93,12 +92,13 @@ class Refund < ApplicationRecord
         self.update(status: 'errored', error_message: e.message)
         return
       end
-      # MOOSE WARNING: wrap these in a transaction or some such thing?
+      # remove our total from amount_in_queued_refunds
       if status == 'queued'
         charge.with_lock do
           charge.update(amount_in_queued_refunds: charge.amount_in_queued_refunds - (amount - amount_returned_via_dispute))
         end
       end
+      # update ourselves, woot woot
       self.update(
         stripe_id: created_refund.id,
         currency: created_refund.currency,
@@ -125,20 +125,15 @@ class Refund < ApplicationRecord
     end
 
     def update_charge_for_refund_creation
-      true_amount = amount - amount_returned_via_dispute
       charge.with_lock do
+        # update charge
+        true_amount = amount - amount_returned_via_dispute
         if true_amount > 0
           charge.update(
             amount_refunded: charge.amount_refunded + true_amount,
             amount_in_queued_refunds: status == 'queued' ? charge.amount_in_queued_refunds + true_amount : charge.amount_in_queued_refunds
           )
         end
-      end
-    end
-
-    def update_invoice_for_refund_creation
-      invoice.with_lock do
-        invoice.update(amount_refunded: invoice.amount_refunded + amount)
       end
     end
 

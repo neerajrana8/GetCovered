@@ -92,7 +92,7 @@ class Policy < ApplicationRecord
   has_many :policy_premiums, autosave: true
   # has_one :premium, -> { find_by(enabled: true) }, class_name: 'PolicyPremium'
 
-  has_many :invoices, as: :invoiceable
+  has_many :invoices, through: :policy_quotes
 
   has_many :charges, through: :invoices
 
@@ -148,23 +148,6 @@ class Policy < ApplicationRecord
 
   def is_allowed_to_update?
     errors.add(:policy_in_system, 'Cannot update in system policy') if policy_in_system == true
-  end
-
-  # Perform Postdispute Processing
-  #
-  # Performs all queued refunds after payment disputes have been resolved.
-  #
-  # Example:
-  #   @policy = Policy.find(1)
-  #   @policy.perform_postdispute_processing
-  #   => nil
-  def perform_postdispute_processing
-    if in_system?
-      refunds.queued.each { |rfnd| rfnd.process(true) }
-      with_lock do
-        update(billing_dispute_status: 'undisputed') if billing_dispute_status == 'awaiting_postdispute_processing'
-      end
-    end
   end
   
   def residential_account_present
@@ -247,82 +230,6 @@ class Policy < ApplicationRecord
     mappings dynamic: 'false' do
       indexes :number, type: :text
     end
-  end
-  
-  # to be invoked by Invoice, not directly; an invoice became disputed or its disputes were all resolved. count_change is 1 if an invoice became disputed, -1 if not
-  def modify_disputed_invoice_count(count_change)
-    return true if count_change == 0
-    self.with_lock do
-      new_bdc = self.billing_dispute_count + count_change
-      if new_bdc < 0
-        return false # this should never happen... WARNING: good place to put an error logger just in case?
-      end
-      update(
-        billing_dispute_count: new_bdc,
-        billing_dispute_status: new_bdc == 0 ? 'AWAITING_POSTDISPUTE_PROCESSING' : 'DISPUTED'
-      )
-    end
-    return true
-  end
-  
-  # to be invoked by Invoice, not directly; an invoice payment attempt was successful
-  def payment_succeeded(invoice)
-    if self.BEHIND? || self.REJECTED?
-      self.update(billing_status: 'RESCINDED') unless self.invoices.map{|inv| inv.status }.include?('missed')
-    else
-      self.update(billing_status: 'CURRENT')
-    end
-  end
-  
-  # to be invoked by Invoice, not directly; an invoice payment attempt failed (keep in mind it might not actually have been due yet, and that invoice.status will not yet have been changed to available/missed when this is called!)
-  def payment_failed(invoice)
-    #payee_notification_subject = 'Get Covered: Payment Failure'
-    #payee_notification_message = "A payment for #{invoice.get_descriptor}, invoice ##{invoice.number} has failed.  Please submit another payment before #{invoice.due_date.strftime('%m/%d/%Y')}."
-    #agent_notification_subject = 'Get Covered: Payment Failure'
-    #agent_notification_message = "A payment for #{invoice.get_descriptor}, invoice ##{invoice.number} has failed.  Payment due #{invoice.due_date.strftime('%m/%d/%Y')}."
-    #inver = invoice.notifications.create(
-    #  notifiable: invoice.payee,
-    #  action: 'invoice_payment_failed',
-    #  code: "error",
-    #  subject: payee_notification_subject,
-    #  message: payee_notification_message
-    #)
-    #self.agency.account_staff.to_a.each do |notifiable|
-    #  inver = invoice.notifications.create(
-    #    notifiable: notifiable, 
-    #    action: 'invoice_payment_failed',
-    #    code: "error",
-    #    subject: agent_notification_subject,
-    #    message: agent_notification_message
-    #  )
-    #end
-  end
-  
-  # to be invoked by Invoice, not directly; an invoice payment attempt was missed
-  #(either a job invoked this on/after the due date, or a payment attempt failed after the due date, in which case payment_failed and then payment_missed will be invoked by the invoice)
-  def payment_missed(invoice)
-    self.update(billing_status: 'BEHIND', billing_behind_since: Time.current.to_date)
-    
-    #payee_notification_subject = 'Get Covered: Payments Behind'
-    #payee_notification_message = "A payment for #{invoice.get_descriptor}, invoice ##{invoice.number} has failed.  Your payment is now past due.  Please submit a payment immediately to prevent cancellation of coverage."
-    #agent_notification_subject = 'Get Covered: Payments Behind'
-    #agent_notification_message = "A payment for #{invoice.get_descriptor}, invoice ##{invoice.number} has failed.  This payment is now past due."
-    #invoice.notifications.create(
-    #  notifiable: invoice.payee,
-    #  action: 'invoice_payment_failed',
-    #  code: "error",
-    #  subject: payee_notification_subject,
-    #  message: payee_notification_message
-    #)
-    #self.agency.account_staff.to_a.each do |notifiable|
-    #  invoice.notifications.create(
-    #    notifiable: notifiable, 
-    #    action: 'invoice_payment_failed',
-    #    code: "error",
-    #    subject: agent_notification_subject,
-    #    message: agent_notification_message
-    #  )
-    #end
   end
 
   private
