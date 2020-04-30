@@ -29,8 +29,8 @@ class Account < ApplicationRecord
   # ActiveSupport +pluralize+ method doesn't work correctly for this word(returns staffs). So I added alias for it
   alias staffs staff
       
-  has_many :branding_profiles,
-    as: :profileable
+  has_many :branding_profiles, as: :profileable
+  has_many :payment_profiles, as: :payer
   
   has_many :insurables 
   
@@ -99,6 +99,14 @@ class Account < ApplicationRecord
     commission_deductions.map(&:unearned_balance).reduce(:+) || 0
   end
 
+
+  # Attach Payment Source
+  #
+  # Attach a stripe source token to a user (Stripe Customer)
+  
+  def attach_payment_source(token = nil, make_default = true)
+    AttachPaymentSource.run!(account: self, token: token, make_default: make_default)
+  end
 
   settings index: { number_of_shards: 1 } do
     mappings dynamic: 'false' do

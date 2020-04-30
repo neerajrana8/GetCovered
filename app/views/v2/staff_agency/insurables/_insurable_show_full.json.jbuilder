@@ -57,3 +57,6 @@ json.parent_building do
                   insurable: insurable.parent_building
   end
 end
+
+json.buildings_count insurable&.buildings&.count
+json.units_count insurable&.insurables&.where(insurable_type_id: InsurableType::UNITS_IDS)&.count

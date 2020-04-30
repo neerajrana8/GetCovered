@@ -5,13 +5,14 @@
 module V2
   module StaffAccount
     class InsurablesController < StaffAccountController
+      alias super_index index
 
       before_action :set_insurable,
                     only: [:update, :destroy, :show, :coverage_report, :policies,
-                           :sync_address, :get_property_info]
+                           :sync_address, :get_property_info, :related_insurables]
 
       def index
-        super(:@insurables, current_staff.organizable.insurables)
+        super_index(:@insurables, current_staff.organizable.insurables)
       end
 
       def show;
@@ -77,6 +78,12 @@ module V2
 
         render :policies, status: :ok
       end
+
+      def related_insurables
+        @insurables = super_index(:@insurables, @insurable.insurables)
+        render :index, status: :ok
+      end
+
 
       def coverage_report
         render json: @insurable.coverage_report

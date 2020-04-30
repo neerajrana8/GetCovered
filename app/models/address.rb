@@ -48,6 +48,7 @@ class Address < ApplicationRecord
 #       indexes :location, type: 'geo_point'
       indexes :timezone, type: :text, analyzer: 'english'
       indexes :primary, type: :boolean
+      indexes :searchable, type: :boolean
       indexes :created_at, type: :date
       indexes :updated_at, type: :date
     end
@@ -162,7 +163,7 @@ class Address < ApplicationRecord
 	        },
 	        {
 	          match: {
-	            addressable_type: "Insurable"
+              addressable_type: "Insurable"
 	          }
 	        }]
 	      }

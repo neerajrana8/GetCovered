@@ -19,6 +19,18 @@
           get "account_policies",
             to: "accounts#account_policies",
             via: "get"
+
+          get "account_communities",
+            to: "accounts#account_communities",
+            via: "get"
+
+          get "account_units",
+            to: "accounts#account_units",
+            via: "get"
+
+          get "account_buildings",
+            to: "accounts#account_buildings",
+            via: "get"
         end
       end
   
@@ -61,6 +73,7 @@
             defaults: { recordable_type: Insurable }
           get :coverage_report
           get :policies
+          get 'related-insurables', to: 'insurables#related_insurables'
           
           post :sync_residential_address,
           	path: "sync-residential-address"

@@ -109,14 +109,9 @@ class Staff < ApplicationRecord
 
   # Override active_for_authentication? to prevent non-owners or non-enabled staff to authorize
   def active_for_authentication?
-    
     super && (owner || enabled)
   end
   
-  def attach_payment_source(token = nil, make_default = true)
-    AttachPaymentSource.run!(staff: self, token: token, make_default: make_default)
-  end
-
   
   private
   

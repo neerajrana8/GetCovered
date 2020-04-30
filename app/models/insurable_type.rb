@@ -17,6 +17,7 @@ class InsurableType < ApplicationRecord
 
   scope :units, -> { where(id: UNITS_IDS) }
   scope :communities, -> { where(id: COMMUNITIES_IDS) }
+  scope :buildings, -> { where(id: BUILDINGS_IDS) }
   
   validates_presence_of :title, :slug, :category
   validates_inclusion_of :enabled,
