@@ -50,7 +50,7 @@ module V2
                  status: :unauthorized
         end
       end
-      
+
       
       private
       
@@ -84,7 +84,7 @@ module V2
           to_return = params.require(:policy).permit(
             :account_id, :agency_id, :auto_renew, :cancellation_code,
             :cancellation_date_date, :carrier_id, :effective_date,
-            :expiration_date, :number, :policy_type_id, :status,
+            :expiration_date, :number, :policy_type_id, :status, :document,
             policy_insurables_attributes: [ :insurable_id ],
             policy_users_attributes: [ :user_id ],
             policy_coverages_attributes: [ :id, :policy_application_id, :policy_id,
@@ -98,7 +98,7 @@ module V2
           params.require(:policy).permit(
             :account_id, :agency_id, :auto_renew, :cancellation_code,
             :cancellation_date_date, :carrier_id, :effective_date,
-            :expiration_date, :number, :policy_type_id, :status,
+            :expiration_date, :number, :policy_type_id, :status, :document,
             policy_insurables_attributes: [ :insurable_id ],
             policy_users_attributes: [ :user_id ],
             policy_coverages_attributes: [ :id, :policy_application_id, :policy_id,
