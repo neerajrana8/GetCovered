@@ -56,6 +56,9 @@ gem 'newrelic_rpm'
 gem 'stripe'
 gem 'money'
 
+gem 'plaid'
+
+
 # Sidekiq for background job processing
 gem 'sidekiq'
 gem 'sidekiq-scheduler'
