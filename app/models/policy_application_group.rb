@@ -6,7 +6,7 @@ class PolicyApplicationGroup < ApplicationRecord
   belongs_to :policy_group, optional: true
 
   has_many :policy_applications
-  has_one :policy_group_quote, dependent: :destroy
+  has_one :policy_group_quote
   belongs_to :billing_strategy
   has_many :model_errors, as: :model, dependent: :destroy
 

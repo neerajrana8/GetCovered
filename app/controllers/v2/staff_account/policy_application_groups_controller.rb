@@ -54,10 +54,11 @@ module V2
 
       def destroy
         if destroy_allowed?
-          if @policy_application_group.destroy
+          result = ::PolicyApplicationGroups::TotalDestroy.run(policy_application_group: @policy_application_group)
+          if result.valid?
             render json: { success: true }, status: :ok
           else
-            render json: { success: false }, status: :unprocessable_entity
+            render json: { success: false, messages: result.errors.messages }, status: :unprocessable_entity
           end
         else
           render json: { success: false, errors: ['Unauthorized Access'] },

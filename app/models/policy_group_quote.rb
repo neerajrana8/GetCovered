@@ -6,7 +6,7 @@ class PolicyGroupQuote < ApplicationRecord
 
   belongs_to :policy_application_group
   belongs_to :policy_group, optional: true
-  has_one :policy_group_premium, dependent: :destroy
+  has_one :policy_group_premium
   has_many :policy_applications, through: :policy_application_group
   has_many :policy_quotes
   has_many :policy_premiums, through: :policy_quotes
