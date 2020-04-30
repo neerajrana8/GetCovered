@@ -135,9 +135,6 @@ class PolicyQuote < ApplicationRecord
 	          # Add rates to policy
 	          policy_application.policy_rates.update_all policy_id: policy.id
 	          
-	          # Add invoices to policy
-	          invoices.update_all(invoiceable_id: policy.id, invoiceable_type: 'Policy')
-						
 		 				build_coverages() if policy_application.policy_type.title == "Residential"
 	  
 	          if update(policy: policy) && 
@@ -283,6 +280,88 @@ class PolicyQuote < ApplicationRecord
     
     billing_started
   
+  end
+  
+  
+  # to be invoked by Invoice, not directly; an invoice became disputed or its disputes were all resolved. count_change is 1 if an invoice became disputed, -1 if not
+  def modify_disputed_invoice_count(count_change)
+    return true if count_change == 0
+    self.policy.with_lock do
+      new_bdc = self.policy.billing_dispute_count + count_change
+      if new_bdc < 0
+        return false # this should never happen... WARNING: good place to put an error logger just in case?
+      end
+      self.policy.update(
+        billing_dispute_count: new_bdc,
+        billing_dispute_status: new_bdc == 0 ? 'AWAITING_POSTDISPUTE_PROCESSING' : 'DISPUTED'
+      )
+    end
+    return true
+  end
+  
+  # to be invoked by Invoice, not directly; an invoice payment attempt was successful
+  def payment_succeeded(invoice)
+    if self.BEHIND? || self.REJECTED?
+      self.policy.update(billing_status: 'RESCINDED') unless self.policy.invoices.map{|inv| inv.status }.include?('missed')
+    else
+      self.policy.update(billing_status: 'CURRENT')
+    end
+  end
+  
+  # to be invoked by Invoice, not directly; an invoice payment attempt failed (keep in mind it might not actually have been due yet, and that invoice.status will not yet have been changed to available/missed when this is called!)
+  def payment_failed(invoice)
+    #payer_notification_subject = 'Get Covered: Payment Failure'
+    #payer_notification_message = "A payment for #{invoice.get_descriptor}, invoice ##{invoice.number} has failed.  Please submit another payment before #{invoice.due_date.strftime('%m/%d/%Y')}."
+    #agent_notification_subject = 'Get Covered: Payment Failure'
+    #agent_notification_message = "A payment for #{invoice.get_descriptor}, invoice ##{invoice.number} has failed.  Payment due #{invoice.due_date.strftime('%m/%d/%Y')}."
+    #inver = invoice.notifications.create(
+    #  notifiable: invoice.payer,
+    #  action: 'invoice_payment_failed',
+    #  code: "error",
+    #  subject: payer_notification_subject,
+    #  message: payer_notification_message
+    #)
+    #self.agency.account_staff.to_a.each do |notifiable|
+    #  inver = invoice.notifications.create(
+    #    notifiable: notifiable, 
+    #    action: 'invoice_payment_failed',
+    #    code: "error",
+    #    subject: agent_notification_subject,
+    #    message: agent_notification_message
+    #  )
+    #end
+  end
+  
+  # to be invoked by Invoice, not directly; an invoice payment attempt was missed
+  #(either a job invoked this on/after the due date, or a payment attempt failed after the due date, in which case payment_failed and then payment_missed will be invoked by the invoice)
+  def payment_missed(invoice)
+    self.policy.update(billing_status: 'BEHIND', billing_behind_since: Time.current.to_date)
+    
+    #payer_notification_subject = 'Get Covered: Payments Behind'
+    #payer_notification_message = "A payment for #{invoice.get_descriptor}, invoice ##{invoice.number} has failed.  Your payment is now past due.  Please submit a payment immediately to prevent cancellation of coverage."
+    #agent_notification_subject = 'Get Covered: Payments Behind'
+    #agent_notification_message = "A payment for #{invoice.get_descriptor}, invoice ##{invoice.number} has failed.  This payment is now past due."
+    #invoice.notifications.create(
+    #  notifiable: invoice.payer,
+    #  action: 'invoice_payment_failed',
+    #  code: "error",
+    #  subject: payer_notification_subject,
+    #  message: payer_notification_message
+    #)
+    #self.agency.account_staff.to_a.each do |notifiable|
+    #  invoice.notifications.create(
+    #    notifiable: notifiable, 
+    #    action: 'invoice_payment_failed',
+    #    code: "error",
+    #    subject: agent_notification_subject,
+    #    message: agent_notification_message
+    #  )
+    #end
+  end
+
+  # to be invoked by Invoice, not directly; an invoice received payment or underwent a refund
+  def invoice_collected_changed(invoice, amount_collected, old_amount_collected)
+    self.policy_premium.update_unearned_premium
   end
 
   private

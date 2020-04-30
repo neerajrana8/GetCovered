@@ -3,5 +3,5 @@ json.extract! invoice, :amount_refunded, :available_date, :created_at,
   :invoiceable_id, :invoiceable_type,
   :pending_refund_data, :renewal_cycle, :status,
   :status_changed, :subtotal, :tax, :tax_percent, :term_first_date,
-  :term_last_date, :total, :payee_id, :payee_type
+  :term_last_date, :total, :payer_id, :payer_type
 

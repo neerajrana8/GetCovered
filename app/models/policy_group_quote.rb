@@ -92,9 +92,6 @@ class PolicyGroupQuote < ApplicationRecord
     if policy_group.save
       policy_group.reload
 
-      # Add invoices to policy
-      invoices.update_all(invoiceable_id: policy_group.id, invoiceable_type: ::PolicyGroup)
-
       update_related_entities(policy_group)
     else
       logger.debug policy_group.errors.to_json
