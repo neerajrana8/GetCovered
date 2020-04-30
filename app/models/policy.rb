@@ -102,7 +102,7 @@ class Policy < ApplicationRecord
 
   has_many :histories, as: :recordable
 
-  has_many_attached :documents
+  has_one_attached :document
 
   scope :current, -> { where(status: %i[BOUND BOUND_WITH_WARNING]) }
   scope :policy_in_system, ->(policy_in_system) { where(policy_in_system: policy_in_system) }
@@ -237,4 +237,5 @@ class Policy < ApplicationRecord
     def date_order
       errors.add(:expiration_date, 'expiration date cannot be before effective date.') if expiration_date < effective_date
     end
+
 end
