@@ -16,7 +16,7 @@ class PolicyApplicationGroup < ApplicationRecord
     if policy_applications.count == policy_applications_count && !all_errors_any?
       update(status: :success)
       policy_group_quote.calculate_premium
-      policy_group_quote.generate_invoices_for_term
+      policy_group_quote.generate_invoices_for_term(false, true)
       policy_group_quote.update(status: :quoted)
     elsif all_errors_any?
       update(status: :error)

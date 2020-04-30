@@ -36,12 +36,19 @@ module V2
       end
 
       def accept
-        result = @policy_application_group.policy_group_quote.accept
+        if @policy_application_group.account.payment_profiles.where(default: true).take&.source_id
+          result = @policy_application_group.policy_group_quote.accept
 
-        if result[:success]
-          render json: { success: true, message: result[:message] }, status: :ok
+          if result[:success]
+            render json: { success: true, message: result[:message] }, status: :ok
+          else
+            render json: { success: false, message: result[:message] }, status: :internal_server_error
+          end
         else
-          render json: { success: false, message: result[:message] }, status: :internal_server_error
+          render json: {
+            success: false,
+            message: "Account doesn't have attached payment sources"
+          }, status: :unprocessable_entity
         end
       end
 

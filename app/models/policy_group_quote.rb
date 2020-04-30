@@ -47,10 +47,8 @@ class PolicyGroupQuote < ApplicationRecord
       invoices.order('due_date').each_with_index do |invoice, index|
         invoice.update status: index.zero? ? 'available' : 'upcoming'
       end
-
-      stripe_id = 'tok_visa' # PaymentProfile.find(3).source_id #policy_application_group.account.current_payment_source.stripe_id
-
-      charge_invoice = invoices.order('due_date').first.pay(stripe_source: stripe_id)
+      ap invoices.order('due_date')
+      charge_invoice = invoices.order('due_date').first.pay(stripe_source: :default)
       ap charge_invoice
       return true if charge_invoice[:success] == true
     end
