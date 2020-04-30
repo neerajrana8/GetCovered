@@ -21,10 +21,9 @@ class UserCoverageMailer < ApplicationMailer
   end
   
   def proof_of_coverage
-    @policy.documents.each do |doc|
-      file_url = "#{Rails.application.credentials.uri[ENV["RAILS_ENV"].to_sym][:api]}#{Rails.application.routes.url_helpers.rails_blob_path(doc, only_path: true)}"  
-      attachments[doc.filename.to_s] = open(file_url).read
-    end
+    doc = @policy.document
+    file_url = "#{Rails.application.credentials.uri[ENV["RAILS_ENV"].to_sym][:api]}#{Rails.application.routes.url_helpers.rails_blob_path(doc, only_path: true)}"  
+    attachments[doc.filename.to_s] = open(file_url).read
     
     is_policy = @policy.policy_type_id == 5 ? false : true
     
