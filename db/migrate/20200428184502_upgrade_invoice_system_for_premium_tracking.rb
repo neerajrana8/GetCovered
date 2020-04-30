@@ -68,5 +68,3 @@ class UpgradeInvoiceSystemForPremiumTracking < ActiveRecord::Migration[5.2]
     remove_column :line_items, :collected
   end
 end
-# MOOSE WARNING: 
-# set priced in
