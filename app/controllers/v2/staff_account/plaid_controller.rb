@@ -8,7 +8,7 @@ module V2
       
       def connect
         environment = ENV['RAILS_ENV'] == 'development' ? 'sandbox' : ENV['RAILS_ENV']
-        client = Plaid::Client.new(env: environment,
+        client = ::Plaid::Client.new(env: environment,
           client_id: Rails.application.credentials.plaid[:client_id],
           secret: Rails.application.credentials.plaid[ENV['RAILS_ENV'].to_sym]&.[](:secret_key),
           public_key: Rails.application.credentials.plaid[:public_key])

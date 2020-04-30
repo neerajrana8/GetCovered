@@ -16,13 +16,11 @@ class Notification < ApplicationRecord
   
   # Model recieving notification
   
-  belongs_to :notifiable, 
-    polymorphic: true
+  belongs_to :notifiable, polymorphic: true
   
   # Model generating notification
   
-  belongs_to :eventable, 
-    polymorphic: true
+  belongs_to :eventable, polymorphic: true
   
   # Notification Status Enum
   # Provides options for notification lifecycle
