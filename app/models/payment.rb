@@ -2,6 +2,7 @@
 # file: app/models/payment.rb
 
 class Payment < ApplicationRecord
+=begin
   # Concerns
   include RecordChange
 
@@ -152,5 +153,5 @@ class Payment < ApplicationRecord
         }
       }
     end
-
+=end
 end

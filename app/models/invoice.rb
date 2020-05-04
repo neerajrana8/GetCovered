@@ -99,6 +99,7 @@ class Invoice < ApplicationRecord
   
   def apply_proration(new_term_last_date, refund_date: nil, to_refund_override: nil, cancel_if_unpaid_override: nil)
     with_lock do
+      return false if term_first_date.nil? || term_last_date.nil?
       to_refund = nil
       cancel_if_unpaid = false
       if to_refund_override.nil?
@@ -426,8 +427,8 @@ class Invoice < ApplicationRecord
   def line_item_groups(mode = :payment, &block)
     arr = [
       [self.due_date, 'complete_refund_before_due_date'],
-      [self.term_first_date || self.due_date, 'complete_refund_before_term'],
-      [(self.term_last_date + 1.day) || self.due_date, 'complete_refund_during_term']
+      [self.term_first_date || (self.due_date + 1.day), 'complete_refund_before_term'],
+      [(self.term_last_date || (self.due_date + 1.day)) + 1.day, 'complete_refund_during_term']
     ].sort{|a,b| a[0] <=> b[0] }
      .map{|x| x[1] }
     arr.insert(arr.index{|x| x == 'complete_refund_during_term' }, 'prorated_refund')

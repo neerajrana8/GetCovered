@@ -51,12 +51,6 @@ class Account
           end
 
           if account.save
-            if make_default
-              invoices.upcoming.each do |nvc|
-                payment_method = account.current_payment_method == 'card' ? 'card' : 'bank_account'
-                nvc.calculate_total(payment_method)
-              end
-            end
             return true
           end
         end
