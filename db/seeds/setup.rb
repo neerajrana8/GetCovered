@@ -107,7 +107,17 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
 	  bindable: true, 
 	  verifiable: false, 
 	  enabled: true 
-	}
+	},
+  {
+    title: "Millennial Services Insurance",
+    integration_designation: 'msi',
+    syncable: false, # MOOSE WARNING: fix these
+    rateable: false,
+    quotable: false,
+    bindable: false,
+    verifiable: false,
+    enabled: true
+  }
 ]
 
 @carriers.each do |c|
@@ -116,7 +126,7 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
     
     carrier_policy_type = carrier.carrier_policy_types.new(application_required: carrier.id == 2 ? false : true)
     carrier.access_tokens.create!
-    
+
     # Add Residential to Queensland Business Insurance
     if carrier.id == 1
 	    
@@ -435,7 +445,42 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
     				}
   				}   				
 				}
-		  )      
+		  )    
+      
+    elsif carrier.id == 5
+    
+	    # Get Residential (HO4) Policy Type
+      policy_type = PolicyType.find(1)
+
+      # MSI Insurable Type for Residential Communities
+      carrier_insurable_type = CarrierInsurableType.create!(carrier: carrier, insurable_type: InsurableType.find(1),
+                                                            enabled: true, profile_traits: {
+                                                              # community name, number of units, address fields
+                                                              "professionally_managed_years": 6, # MUST BE PROF MAN
+                                                              "property_manager_name": nil,
+                                                              "community_sales_rep_id": nil, # ???
+                                                              "construction_year": nil,
+                                                              "gated": false
+                                                            },
+                                                            profile_data: {
+                                                            })
+      # MSI Insurable Type for Residential units
+      carrier_insurable_type = CarrierInsurableType.create!(carrier: carrier, insurable_type: InsurableType.find(4), enabled: true)
+      # Residential Unit Policy Type
+      carrier_policy_type = CarrierPolicyType.create!(
+	      carrier: carrier,
+	      policy_type: policy_type,
+				application_required: true,
+				application_fields: [
+			    {
+				  	title: "Number of Insured",
+				  	answer_type: "INTEGER",
+				  	default_answer: 1,
+				  	value: 1,
+				    options: [1, 2, 3, 4, 5, 6, 7, 8]
+			    }	      																											
+				]     
+      )
 		  
     end
     

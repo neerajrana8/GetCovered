@@ -201,6 +201,13 @@ alias views_source view_source
 alias view_sources view_source
 alias views_sources view_source
 
+def migration_source(**args)
+  source_from("db/migrate", **({}.merge(args)))
+end
+alias migrations_source migration_source
+alias migrations_sources migration_source
+alias migration_sources migration_source
+
 # MOOSE WARNING: MISSING MAILERS
 
 # excludes seeds & views
