@@ -2,7 +2,7 @@
 # file: app/models/modifier.rb
 
 class Modifier < ApplicationRecord
-
+=begin
   # ActiveRecord Callbacks
 
   after_initialize :initialize_modifier
@@ -63,4 +63,5 @@ class Modifier < ApplicationRecord
         errors.add(:invoice, "one service fee per invoice.")  
       end
     end
+=end
 end

@@ -74,9 +74,9 @@ def all_models(
         target: nil,      # allowed target classes
         poly: false,      # accept polymorphic assoc in lieu of target satisfaction
         polymorphic: nil, # true to require assocs be polymorphic, false to require they not be
-        type: assoc[:type],        # :belongs_to, :has_one, :has_many, etc. (or nil for no restriction, or array for multiple options)
-        forbid_extra_targets: assoc[:forbid_extra_targets] || false,
-        forbid_multi_targets: assoc[:forbid_multi_targets] || false
+        type: assoc.class == ::Hash ? assoc[:type] : nil,        # :belongs_to, :has_one, :has_many, etc. (or nil for no restriction, or array for multiple options)
+        forbid_extra_targets: assoc.class == ::Hash ? (assoc[:forbid_extra_targets] || false) : false,
+        forbid_multi_targets: assoc.class == ::Hash ? (assoc[:forbid_multi_targets] || false) : false
       }
       if assoc.class == ::String || assoc.class == ::Symbol
         assoc_data[:name] = [assoc.to_s]
