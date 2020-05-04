@@ -23,8 +23,7 @@ class UpgradeInvoiceSystemForPremiumTracking < ActiveRecord::Migration[5.2]
     # assign term_first_date and term_last_date to invoices missing them
     to_fix = ::Invoice.where(term_first_date: nil).or(::Invoice.where(term_last_date: nil)).where(invoiceable_type: "PolicyQuote")
                       .group("invoiceable_id").pluck("invoiceable_id")
-    ::PolicyQuote.references("invoices", "policy_applications" => "billing_strategies").includes("invoices", "policy_application" => "billing_strategy")
-                 .where(id: to_fix).each do |pq|
+    ::PolicyQuote.references("policy_applications" => "billing_strategies").includes("policy_application" => "billing_strategy").where(id: to_fix).each do |pq|
       sorted_invoices = pq.invoices.sort{|a,b| a.due_date <=> b.due_date }
       start_dates = pq.policy_application.billing_strategy.new_business['payments'].map.with_index do |p,i|
         p == 0 ? nil : pq.policy_application.effective_date + i.months
