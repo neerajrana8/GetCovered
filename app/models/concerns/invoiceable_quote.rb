@@ -64,7 +64,7 @@ module InvoiceableQuote
         (0...(to_charge.length - 1)).each do |charge_index|
           to_charge[charge_index][:term_last_date] = to_charge[charge_index + 1][:term_first_date] - 1.day
         end
-        to_charge.last[:term_last_date] = billing_plan[:expiration_date] - 1.day
+        to_charge.last[:term_last_date] = billing_plan[:expiration_date]
         # add any rounding errors to the first charge
         roundables.each do |roundable|
           to_charge[0][roundable] += premium_data[roundable] - to_charge.inject(0){|sum,tc| sum + tc[roundable] }

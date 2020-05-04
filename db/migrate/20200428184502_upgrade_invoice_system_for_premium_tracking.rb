@@ -34,7 +34,7 @@ class UpgradeInvoiceSystemForPremiumTracking < ActiveRecord::Migration[5.2]
       sorted_invoices.each.with_index do |inv, i|
         inv.update!(
           term_first_date: start_dates[i],
-          term_last_date: i+1 == start_dates.length ? pq.policy_application.expiration_date - 1.day : start_dates[i+1] - 1.day
+          term_last_date: i+1 == start_dates.length ? pq.policy_application.expiration_date : start_dates[i+1] - 1.day
         )
       end
     end
