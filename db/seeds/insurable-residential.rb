@@ -136,8 +136,10 @@ require 'faker'
 @accounts.each do |account|
 	@count.times do |i|
 		
-		addr = @addresses[Insurable.residential_communities.count]
-		
+    # QBE communities
+    
+		addr = @addresses[Insurable.residential_communities.count % @addresses.length]
+    
 		args = { 
 			carrier_id: 1,
 			policy_type_id: 1,
@@ -169,6 +171,80 @@ require 'faker'
 				
 		  	@profile.save()
 		  	
+		  	# puts "[#{ @community.title }] Accessing QBE Zip Code"
+		  	@community.get_qbe_zip_code()
+		  	
+		  	# puts "[#{ @community.title }] Accessing QBE Property Info"
+		  	@community.get_qbe_property_info()
+		  	
+		    units_per_floor = rand(5..10)
+		    floors = rand(1..4).to_i
+		    
+		    floors.times do |floor|
+		      
+		      floor_id = (floor + 1) * 100
+		      
+		      units_per_floor.times do |unit_num|
+		        
+		        mailing_id = floor_id + (unit_num + 1)
+		        @unit = @community.insurables.new(title: mailing_id, insurable_type: @residential_unit_insurable_type,
+		        																		 enabled: true, category: 'property', account: account)
+		        
+		        if @unit.save
+		          @unit.create_carrier_profile(1)
+		        else
+		          puts "\nUnit Save Error\n\n"
+		          pp @unit.errors.to_json
+		        end                
+		      end
+		    end
+		    
+		  	@community.reset_qbe_rates(true, true)
+			else	
+				pp @community.errors
+			end	
+		end		
+    
+    # MSI communities
+    
+		addr = @addresses[Insurable.residential_communities.count % @addresses.length]
+    
+		args = { 
+			carrier_id: 5,
+			policy_type_id: 1,
+			state: addr[:state],
+			zip_code: addr[:zip_code],
+			plus_four: addr[:plus_four]
+		}
+
+		if account.agency.offers_policy_type_in_region(args)
+			@community = account.insurables.new(title: "#{Faker::Movies::LordOfTheRings.location} #{@building_name_options[rand(0..3)]}", 
+																					insurable_type: @residential_community_insurable_type, 
+																					enabled: true, category: 'property',
+																					addresses_attributes: [ addr ])			
+			if @community.save
+		  	
+		  	account.staff
+		  					.order("RANDOM()")
+		  					.each do |staff|
+			  					
+			  	Assignment.create!(staff: staff, assignable: @community)
+			  end
+		  	
+		  	@community.create_carrier_profile(5)
+		  	@profile = @community.carrier_profile(5)
+		  	
+        @profile.traits['professionally_managed_years'] = rand(6..20) # MOOSE WARNING: can be 0?
+        @profile.traits['community_sales_rep_id'] = nil # MOOSE WARNING: dunno wut dis be
+        @profile.traits['construction_year'] = rand(1979..2005).to_s
+        @profile.traits['gated'] = [false, true][rand(0..1)]
+				
+		  	@profile.save()
+		  	
+        ##### MOOSE WARNING RUN THIS
+        
+        throw "FINISH THE SEEDS, YO!"
+        
 		  	# puts "[#{ @community.title }] Accessing QBE Zip Code"
 		  	@community.get_qbe_zip_code()
 		  	
