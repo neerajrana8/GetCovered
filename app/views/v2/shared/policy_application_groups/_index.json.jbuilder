@@ -13,3 +13,10 @@ json.policy_group_quote do
     end
   end
 end
+
+json.policy_group do
+  if policy_application_group.policy_group.present?
+    json.partial! 'v2/shared/policy_groups/fields.json.jbuilder',
+                  policy_group: policy_application_group.policy_group
+  end
+end
