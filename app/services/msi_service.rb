@@ -26,14 +26,16 @@ class MsiService
       message: 'must be from approved list' 
     }
   
+  def build_request(action_name, **args)
+    self.send("build_#{action_name}", **args)
+  end
   
-  
-  def get_or_create_community(
-      :effective_date,
-      :community_name, :number_of_units, :sales_rep_id, :property_manager_name, :years_professionally_managed, :year_built, :gated?,
-      :address_line_one, :city, :state, :zip
+  def build_get_or_create_community(
+      effective_date:,
+      community_name:, number_of_units:, sales_rep_id:, property_manager_name:, years_professionally_managed:, year_built:, gated?:,
+      address_line_one:, city:, state:, zip:
   )
-    json_req = {
+    compiled_rxml = compile_xml({
       InsuranceSvcRq: {
         RenterPolicyQuoteInqRq: {
           MSI_CommunityInfo: {
@@ -64,8 +66,37 @@ class MsiService
           }
         }
       }
-    }
-    
+    })
+  end
+  
+  def build_quote_final_premium(
+    community_id:, effective_date:
+  )
+    compiled_rxml = compile_xml({
+      InsuranceSvcRq: {
+        RenterPolicyQuoteInqRq: {
+          # insured or principals
+          Location: {
+            '': { id: '0' },
+            Addr: {
+              MSI_CommunityID:                  community_id
+            },
+            PersPolicy: {
+              ContractTerm: {
+                EffectiveDt:                    effective_date.strftime("%D")
+              }
+            },
+            HomeLineBusiness: {
+              Dwell: {
+                '': { LocationRef: '0', id: 'Dwell1' },
+                PolicyTypeCd: 'H04'
+              }
+            }
+            #coverages
+          }
+        }
+      }
+    })
   end
   
   
@@ -113,4 +144,12 @@ private
       } : child_string
     end
   
+    def compile_xml(obj)
+      compiled_rxml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + json_to_xml({
+        MSIACORD: {
+          'xmlns:xsd': 'http://www.w3.org/2001/XMLSchema',
+          'xmlns:xsi': 'http://www.w3.org/2001/XMLSchema-instance'
+        }.merge(get_auth_json).merge(obj)
+      })}
+    end
 end
