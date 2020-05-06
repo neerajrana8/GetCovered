@@ -20,7 +20,7 @@ class CommissionService
     
     case commission_strategy.type
     when 'PERCENT'
-      amount_before_deduction = base * commission_strategy.amount / 100
+      amount_before_deduction = base * commission_strategy.percentage / 100
     when 'FLAT'
       amount_before_deduction = commission_strategy.amount
     end

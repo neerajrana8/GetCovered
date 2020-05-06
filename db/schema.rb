@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_05_04_175414) do
+ActiveRecord::Schema.define(version: 2020_05_06_083145) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -377,6 +377,7 @@ ActiveRecord::Schema.define(version: 2020_05_04_175414) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.bigint "commission_strategy_id"
+    t.decimal "percentage", precision: 5, scale: 2
     t.index ["carrier_id"], name: "index_commission_strategies_on_carrier_id"
     t.index ["commission_strategy_id"], name: "index_commission_strategies_on_commission_strategy_id"
     t.index ["commissionable_type", "commissionable_id"], name: "index_strategy_on_type_and_id"
