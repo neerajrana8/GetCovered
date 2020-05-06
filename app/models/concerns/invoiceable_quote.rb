@@ -64,7 +64,7 @@ module InvoiceableQuote
         (0...(to_charge.length - 1)).each do |charge_index|
           to_charge[charge_index][:term_last_date] = to_charge[charge_index + 1][:term_first_date] - 1.day
         end
-        to_charge.last[:term_last_date] = billing_plan[:effective_date] + 12.months - 1.day
+        to_charge.last[:term_last_date] = billing_plan[:expiration_date]
         # add any rounding errors to the first charge
         roundables.each do |roundable|
           to_charge[0][roundable] += premium_data[roundable] - to_charge.inject(0){|sum,tc| sum + tc[roundable] }
@@ -151,6 +151,7 @@ module InvoiceableQuote
         {
           billing_schedule: policy_application.billing_strategy.new_business['payments'],
           effective_date: policy_application.effective_date,
+          expiration_date: policy_application.expiration_date,
           payer: policy_application.primary_user
         }
       elsif respond_to?(:policy_application_group)
