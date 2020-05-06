@@ -139,7 +139,7 @@
       path: "policy-applications",
       only: [ :index, :show ]
 
-    resources :policy_application_groups, path: "policy-application-groups", except: [:update, :edit] do
+    resources :policy_application_groups, path: "policy-application-groups" do
       member do
         put :accept
       end
