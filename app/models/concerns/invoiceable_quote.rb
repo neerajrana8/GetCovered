@@ -158,6 +158,7 @@ module InvoiceableQuote
         {
           billing_schedule: policy_application_group.billing_strategy.new_business['payments'],
           effective_date: policy_application_group.effective_date,
+          expiration_date: policy_application.expiration_date,
           payer: policy_application_group.account
         }
       else
