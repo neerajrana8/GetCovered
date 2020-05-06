@@ -456,7 +456,7 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
       carrier_insurable_type = CarrierInsurableType.create!(carrier: carrier, insurable_type: InsurableType.find(1),
                                                             enabled: true, profile_traits: {
                                                               # community name, number of units, address fields, property manager name
-                                                              "professionally_managed_years": 6, # MUST BE PROF MAN??
+                                                              "professionally_managed_year": nil, # MUST BE PROF MAN??
                                                               "community_sales_rep_id": nil, # ???
                                                               "construction_year": nil,
                                                               "gated": false
