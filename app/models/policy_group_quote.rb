@@ -1,6 +1,4 @@
 class PolicyGroupQuote < ApplicationRecord
-  PENSIO_BILLING_STRATEGY_ID = 23
-
   include CarrierPensioPolicyQuote
   include InvoiceableQuote
 
@@ -11,6 +9,7 @@ class PolicyGroupQuote < ApplicationRecord
   has_many :policy_quotes
   has_many :policy_premiums, through: :policy_quotes
   has_many :invoices, as: :invoiceable
+  has_many :model_errors, as: :model, dependent: :destroy
 
   before_save :set_status_updated_on, if: proc { |quote| quote.status_changed? }
 
@@ -19,7 +18,7 @@ class PolicyGroupQuote < ApplicationRecord
                  abandoned: 6, expired: 7, error: 8 }
 
   def calculate_premium
-    self.policy_group_premium = PolicyGroupPremium.create(billing_strategy_id: PENSIO_BILLING_STRATEGY_ID)
+    self.policy_group_premium = PolicyGroupPremium.create(billing_strategy: policy_application_group.billing_strategy)
     policy_group_premium.calculate_total
     update(status: :quoted)
   end
@@ -47,9 +46,7 @@ class PolicyGroupQuote < ApplicationRecord
       invoices.order('due_date').each_with_index do |invoice, index|
         invoice.update status: index.zero? ? 'available' : 'upcoming'
       end
-      ap invoices.order('due_date')
       charge_invoice = invoices.order('due_date').first.pay(stripe_source: :default)
-      ap charge_invoice
       return true if charge_invoice[:success] == true
     end
     billing_started
@@ -61,18 +58,22 @@ class PolicyGroupQuote < ApplicationRecord
     if update(status: :accepted) && start_billing
       try_bind_request
     else
+      message = 'Quote billing failed, unable to write policy'
+      set_error(:policy_group_quote_was_not_accepted, message)
       {
         success: false,
-        message: 'Quote billing failed, unable to write policy'
+        message: message
       }
     end
   end
 
   def try_bind_request
     if bind_request[:error]
+      message = 'Unable to bind policy'
+      set_error(:policy_group_quote_was_not_accepted, message)
       {
         success: false,
-        message: 'Unable to bind policy'
+        message: message
       }
     else
       policy_group = init_policy_group
@@ -95,9 +96,11 @@ class PolicyGroupQuote < ApplicationRecord
       update_related_entities(policy_group)
     else
       logger.debug policy_group.errors.to_json
+      message = 'Unable to save policy in system'
+      set_error(:policy_group_quote_was_not_accepted, message)
       {
         success: false,
-        message: 'Unable to save policy in system'
+        message: message
       }
     end
   end
@@ -110,6 +113,7 @@ class PolicyGroupQuote < ApplicationRecord
 
       policy_type_identifier = policy_application_group.policy_type_id == 5 ? 'Rental Guarantee' : 'Policy'
 
+      policy_application_group.update(status: :accepted)
       {
         success: true,
         message: "#{policy_type_identifier} Group ##{policy_group.number}, has been accepted."
@@ -117,9 +121,12 @@ class PolicyGroupQuote < ApplicationRecord
     else
       # If self.policy, policy_application.policy or policy_premium.policy cannot be set correctly
       update(status: 'error')
+      policy_application_group.update(status: :error)
+      message = 'Error attaching policy to system'
+      set_error(:policy_group_quote_was_not_accepted, message)
       {
         success: false,
-        message: 'Error attaching policy to system'
+        message: message
       }
     end
   end
@@ -228,5 +235,19 @@ class PolicyGroupQuote < ApplicationRecord
 
   def set_status_updated_on
     self.status_updated_on = Time.now
+  end
+
+  def set_error(kind, message)
+    ModelError.create(
+      model: self,
+      kind: kind,
+      information: {
+        params: nil,
+        policy_users_params: nil,
+        errors: {
+          message: message
+        }
+      }
+    )
   end
 end
