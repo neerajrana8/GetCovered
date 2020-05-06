@@ -14,11 +14,12 @@ class PolicyApplicationGroup < ApplicationRecord
 
   def update_status
     if policy_applications.count == policy_applications_count && !all_errors_any?
+      policy_group_quote.calculate_premium
 
-      if policy_group_quote.calculate_premium &&
-        policy_group_quote.generate_invoices_for_term(false, true).blank? &&
+      invoices_errors = policy_group_quote.generate_invoices_for_term(false, true)
+
+      if invoices_errors.blank?
         policy_group_quote.update(status: :quoted)
-
         update(status: :awaiting_acceptance)
       else
         ModelError.create(
@@ -27,9 +28,7 @@ class PolicyApplicationGroup < ApplicationRecord
           information: {
             params: nil,
             policy_users_params: nil,
-            errors: {
-              message: 'Problem with the generating invoices'
-            }
+            errors: invoices_errors
           }
         )
         update(status: :error)
