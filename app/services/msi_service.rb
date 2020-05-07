@@ -84,7 +84,14 @@ class MsiService
       xml_doc = Nokogiri::XML(call_data[:data])
       
     end
-      
+    # scream to the console for the benefit of any watchers
+    display_status = call_data[:error] ? 'ERROR' : 'SUCCESS'
+    display_status_color = call_data[:error] ? :red : :green
+    puts "#{'['.yellow} #{'MSI Service'.blue} #{']'.yellow}#{'['.yellow} #{display_status.colorize(display_status_color)} #{']'.yellow}: #{action.to_s.blue}"
+    # all done
+    return call_data
+  end
+=begin
       ##### QBE reference code #####
       
       if call_data[:error]
@@ -124,8 +131,7 @@ class MsiService
       call_data
       
       #### end QBE reference code #########
-  end
-  
+=end
   
   
   
