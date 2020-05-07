@@ -18,14 +18,14 @@ class MsiService
     :action,
     :rxml
 
-  validates :action, 
-    presence: true,
-    format: {
-      with: /GetOrCreateCommunity/QuotePolicy/BindPolicy/GetPolicyDetails/
-    
-      with: /getZipCode|PropertyInfo|getRates|getMinPrem|SendPolicyInfo|sendCancellationList|downloadAcordFile/, 
-      message: 'must be from approved list' 
-    }
+  #validates :action, 
+  #  presence: true,
+  #  format: {
+  #    with: /GetOrCreateCommunity/QuotePolicy/BindPolicy/GetPolicyDetails/
+  #  
+  #    with: /getZipCode|PropertyInfo|getRates|getMinPrem|SendPolicyInfo|sendCancellationList|downloadAcordFile/, 
+  #    message: 'must be from approved list' 
+  #  }
   
   def initialize
     self.action = nil
@@ -153,7 +153,7 @@ class MsiService
   
   def build_get_or_create_community(
       effective_date:,
-      community_name:, number_of_units:, sales_rep_id:, property_manager_name:, years_professionally_managed:, year_built:, gated?:,
+      community_name:, number_of_units:, sales_rep_id:, property_manager_name:, years_professionally_managed:, year_built:, gated:,
       address_line_one:, city:, state:, zip:
   )
     self.action = :get_or_create_community
@@ -163,11 +163,12 @@ class MsiService
         RenterPolicyQuoteInqRq: {
           MSI_CommunityInfo: {
             MSI_CommunityName:                community_name,
-            MSI_CommunityYearsProfManaged:    years_professionally_managed,
+            MSI_CommunityYearsProfManaged:    years_professionally_managed.nil? ? 6 : years_professionally_managed,
             MSI_PropertyManagerName:          property_manager_name,
             MSI_NumberOfUnits:                number_of_units,
             MSI_CommunitySalesRepID:          sales_rep_id,
             MSI_CommunityYearBuilt:           year_built,
+            MSI_CommunityIsGated:             gated.nil? ? true : gated,
             Addr: {
               Addr1:                          address_line_one,
               Addr2:                          nil,
@@ -277,6 +278,6 @@ private
           'xmlns:xsd': 'http://www.w3.org/2001/XMLSchema',
           'xmlns:xsi': 'http://www.w3.org/2001/XMLSchema-instance'
         }.merge(get_auth_json).merge(obj)
-      })}
+      })
     end
 end
