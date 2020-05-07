@@ -139,7 +139,11 @@
       path: "policy-applications",
       only: [ :index, :show ]
 
-    resources :policy_application_groups, path: "policy-application-groups", except: [:update, :edit]
+    resources :policy_application_groups, path: "policy-application-groups" do
+      member do
+        put :accept
+      end
+    end
   
     resources :policy_quotes,
       path: "policy-quotes",
@@ -176,6 +180,5 @@
             defaults: { authorable_type: User }
         end
       end
-  
   end
 # end

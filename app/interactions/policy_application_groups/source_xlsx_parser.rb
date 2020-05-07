@@ -19,7 +19,7 @@ module PolicyApplicationGroups
     private
 
     def row_valid?(row)
-      if  row["Applicant's Date of birth"] > 18.years.ago
+      if row["Applicant's Date of birth"] > 18.years.ago
         errors[:bad_rows] << {
           message: "Column with applicant's email: #{row["Applicant's Email address"]} has wrong Applicant's Date of birth",
           column: row["Applicant's Email address"]
@@ -28,11 +28,11 @@ module PolicyApplicationGroups
       end
 
       if row["Co-Tenant Email address2"].present? && row["Co-Tenant Date of birth"] > 18.years.ago
-          errors[:bad_rows] << {
-            message: "Column with co tenant's email: #{row["Co-Tenant Email address2"]} has wrong Co-Tenant Date of birth",
-            column: row["Co-Tenant Email address2"]
-          }
-          return false
+        errors[:bad_rows] << {
+          message: "Column with co tenant's email: #{row["Co-Tenant Email address2"]} has wrong Co-Tenant Date of birth",
+          column: row["Co-Tenant Email address2"]
+        }
+        return false
       end
 
       true

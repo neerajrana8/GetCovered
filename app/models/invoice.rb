@@ -20,7 +20,7 @@ class Invoice < ApplicationRecord
   before_save :set_was_missed, if: Proc.new{|inv| inv.will_save_change_to_attribute?('status') && inv.status == 'missed' }
   
   before_create :mark_line_items_priced_in
-  
+
   after_save :total_collected_changed, if: Proc.new{|inv| inv.status == 'complete' && (inv.saved_change_to_attribute?('amount_refunded') || inv.saved_change_to_attribute?('status')) }
 
   # ActiveRecord Associations
@@ -95,8 +95,8 @@ class Invoice < ApplicationRecord
   #   @invoice.apply_proration(proration_date)
   #   => true
   
-  
-  
+
+
   def apply_proration(new_term_last_date, refund_date: nil, to_refund_override: nil, cancel_if_unpaid_override: nil)
     with_lock do
       return false if term_first_date.nil? || term_last_date.nil?
@@ -189,7 +189,7 @@ class Invoice < ApplicationRecord
     return false
   end
   
-  
+
   # refunds whatever is necessary to ensure the total amount refunded is to_refund cents (if it starts above that, it refunds nothing)
   def ensure_refunded(to_refund, full_reason = nil, stripe_reason = nil, ignore_total: false)
     with_lock do
@@ -417,7 +417,7 @@ class Invoice < ApplicationRecord
   def refunds_must_start_queued?
     return(self.reload.disputed_charge_count > 0)
   end
-  
+
   # returns [ [group of line items paid first], [group of line items paid next], ..., [group of line items paid last] ]
   # filters out line items which don't satisfy the block, if one was provided
   # mode should be:
@@ -437,7 +437,7 @@ class Invoice < ApplicationRecord
        .select!{|arr| arr.length > 0 }
     arr.send(mode == :payment ? :itself : :reverse)
   end
-  
+
   # returns an array of { line_item: $line_item_id, amount: $currency_amount } hashes giving a distribution of dist_amount over the line items
   # applies in order: [no_refund, complete_refund_before_term, prorated_refund, complete_refund_during_term], with complete_refund_before_due_date inserted before one of the term date-based ones depending on the due date;
   # applies refunds/adjustments in reverse order;
@@ -490,7 +490,7 @@ class Invoice < ApplicationRecord
           # if the floor functions prevented any change, allocate 1 cent to the line item with the greatest proportional difference from its ceiling
           if lig_amt_left == old_lig_amt_left
             to_increment = relevant_amounts.sort do |amt1,amt2|
-              (amt1[:ceiling] - amt1[:amount]).to_d / (amt1[:weight] == 0 ? 1 : amt1[:weight]) <=> 
+              (amt1[:ceiling] - amt1[:amount]).to_d / (amt1[:weight] == 0 ? 1 : amt1[:weight]) <=>
               (amt2[:ceiling] - amt2[:amount]).to_d / (amt2[:weight] == 0 ? 1 : amt2[:weight])
             end.last
             to_increment[:amount] += 1
@@ -533,19 +533,19 @@ class Invoice < ApplicationRecord
       self.subtotal = line_items.inject(0) { |result, line_item| result += line_item.price }
       errors.add(:subtotal, "must match sum of line item prices") unless old_subtotal.nil? || old_subtotal == self.subtotal
     end
-    
+
     def calculate_total
       old_total = self.will_save_change_to_attribute?('total') ? self.total : nil
       self.total = self.subtotal - self.proration_reduction # total is subtotal - proration_reduction
       errors.add(:total, "must match subtotal") unless old_total.nil? || old_total == self.total
     end
-    
+
     def term_dates_are_sensible
       errors.add(:term_last_date, "cannot precede term first date") unless term_last_date.nil? || term_first_date.nil? || (term_last_date >= term_first_date)
       errors.add(:term_last_date, "cannot be blank when term first date is provided") if term_last_date.nil? && !term_first_date.nil?
       errors.add(:term_first_date, "cannot be blank when term last date is provided") if term_first_date.nil? && !term_last_date.nil?
     end
-    
+
     def mark_line_items_priced_in
       # it's redundant to calculate these twice, but I'm paranoid about validations being missed or called early; better safe than sorry when dealing with money!
       calculate_subtotal
@@ -588,12 +588,12 @@ class Invoice < ApplicationRecord
     def set_status_changed
       self.status_changed = Time.now
     end
-    
+
     def set_was_missed
       self.was_missed = true
     end
 
-    
+
     def reduce_distribution_total(new_total, mode, distribution)
       # WARNING: this shouldn't need to get called, so it just does the simplest thing possible..
       # ideally it would act like get_fund_distribution, using line_item_groups and reducing amounts proportionally in each group in sequence
@@ -602,8 +602,8 @@ class Invoice < ApplicationRecord
         distribution.find{|d| d['amount'] > 0 }['amount'] -= [d['amount'], old_total - new_total].min
       end
     end
-    
-    
+
+
     def total_collected_changed
       # get amounts collected
       amount_collected = self.total - self.amount_refunded

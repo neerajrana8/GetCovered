@@ -4,7 +4,7 @@
 
 class BrandingProfile < ApplicationRecord
   
-  after_initialize  :initialize_branding_profile
+  after_initialize :initialize_branding_profile
   after_save :check_default
   
   validates_presence_of :title, :url

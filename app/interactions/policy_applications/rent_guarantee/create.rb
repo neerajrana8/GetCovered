@@ -65,7 +65,7 @@ module PolicyApplications
             application.users << user
           else
             secure_tmp_password = SecureRandom.base64(12)
-            policy_user = application.policy_users.create!(
+            policy_user = application.policy_users.create(
               spouse: policy_user[:spouse],
               user_attributes: {
                 email: policy_user[:user_attributes][:email],
@@ -75,9 +75,23 @@ module PolicyApplications
                 address_attributes: policy_user[:user_attributes][:address_attributes]
               }
             )
-            policy_user.user.invite! if index.zero?
+            if policy_user.errors.any?
+              ModelError.create(
+                model: application,
+                kind: :policy_application_user_was_not_created,
+                information: {
+                  params: policy_application_params,
+                  policy_users_params: policy_users_params,
+                  errors: policy_user.errors
+                }
+              )
+              return false
+            else
+              policy_user.user.invite! if index.zero?
+            end
           end
         end
+        true
       end
     end
   end

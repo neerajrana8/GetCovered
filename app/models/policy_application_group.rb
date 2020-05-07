@@ -6,18 +6,33 @@ class PolicyApplicationGroup < ApplicationRecord
   belongs_to :policy_group, optional: true
 
   has_many :policy_applications
-  has_one :policy_group_quote, dependent: :destroy
+  has_one :policy_group_quote
   belongs_to :billing_strategy
   has_many :model_errors, as: :model, dependent: :destroy
 
-  enum status: %i[in_progress success error]
+  enum status: %i[in_progress awaiting_acceptance error accepted]
 
   def update_status
     if policy_applications.count == policy_applications_count && !all_errors_any?
-      update(status: :success)
       policy_group_quote.calculate_premium
-      policy_group_quote.generate_invoices
-      policy_group_quote.update(status: :quoted)
+
+      invoices_errors = policy_group_quote.generate_invoices_for_term(false, true)
+
+      if invoices_errors.blank?
+        policy_group_quote.update(status: :quoted)
+        update(status: :awaiting_acceptance)
+      else
+        ModelError.create(
+          model: self,
+          kind: :premium_and_invoices_was_not_generated,
+          information: {
+            params: nil,
+            policy_users_params: nil,
+            errors: invoices_errors
+          }
+        )
+        update(status: :error)
+      end
     elsif all_errors_any?
       update(status: :error)
     end
@@ -25,11 +40,11 @@ class PolicyApplicationGroup < ApplicationRecord
 
   # Checks the errors existence without getting all of them from the database
   def all_errors_any?
-    model_errors.any? || policy_applications_errors.any?
+    model_errors.any? || policy_applications_errors.any? || policy_group_quote.model_errors.any?
   end
 
   def all_errors
-    model_errors | policy_applications_errors
+    model_errors | policy_applications_errors | policy_group_quote.model_errors
   end
 
   private
