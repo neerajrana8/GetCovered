@@ -110,7 +110,7 @@ module InvoiceableQuote
 				
 		  end
 	  else
-	  	# Set up Renewal Invoice Generation
+      ap 'ssss'
 	  end
     
     return errors
@@ -131,7 +131,15 @@ module InvoiceableQuote
           special_premium: policy_premium.special_premium,
           taxes: policy_premium.taxes
         }
-      # MOOSE WARNING: fill this out once PolicyPremiumGroup exists
+      elsif respond_to?(:policy_group_premium)
+        {
+          total: policy_group_premium.total,
+          deposit_fees: policy_group_premium.deposit_fees,
+          amortized_fees: policy_group_premium.amortized_fees,
+          base: policy_group_premium.base,
+          special_premium: policy_group_premium.special_premium,
+          taxes: policy_group_premium.taxes
+        }
       else
         nil
       end
@@ -146,10 +154,13 @@ module InvoiceableQuote
           expiration_date: policy_application.expiration_date,
           payer: policy_application.primary_user
         }
-      # MOOSE WARNING: fill this out once PolicyApplicationGroup has the appropriate fields
-      #elsif respond_to?(:policy_application_group)
-      #  {
-      #  }
+      elsif respond_to?(:policy_application_group)
+        {
+          billing_schedule: policy_application_group.billing_strategy.new_business['payments'],
+          effective_date: policy_application_group.effective_date,
+          expiration_date: policy_application_group.expiration_date,
+          payer: policy_application_group.account
+        }
       else
         nil
       end

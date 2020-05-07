@@ -1,7 +1,8 @@
 module V2
   module StaffAccount
+    # This controller is used to the bulk policy creation
     class PolicyApplicationGroupsController < StaffAccountController
-      before_action :set_policy_application_group, only: %i[show destroy]
+      before_action :set_policy_application_group, only: %i[show accept destroy]
       before_action :parse_input_file, only: %i[create]
 
       def index
@@ -10,10 +11,6 @@ module V2
         @policy_application_groups = paginator(groups_query)
 
         render template: 'v2/shared/policy_application_groups/index.json.jbuilder', status: :ok
-      end
-
-      def show
-        render template: 'v2/shared/policy_application_groups/show.json.jbuilder', status: :ok
       end
 
       def create
@@ -34,21 +31,34 @@ module V2
         render template: 'v2/shared/policy_application_groups/show.json.jbuilder', status: :ok
       end
 
-      def accept_quote
-        result = @policy_application_group.policy_group_quote.accept
+      def show
+        render template: 'v2/shared/policy_application_groups/show.json.jbuilder', status: :ok
+      end
 
-        render json: {
-          error: result[:success] ? 'Policy Group Accepted' : 'Policy Group Could Not Be Accepted',
-          message: result[:message]
-        }, status: result[:success] ? 200 : 500
+      def accept
+        if @policy_application_group.account.payment_profiles.where(default: true).take&.source_id
+          result = @policy_application_group.policy_group_quote.accept
+
+          if result[:success]
+            render json: { success: true, message: result[:message] }, status: :ok
+          else
+            render json: { success: false, message: result[:message] }, status: :internal_server_error
+          end
+        else
+          render json: {
+            success: false,
+            message: "Account doesn't have attached payment sources"
+          }, status: :unprocessable_entity
+        end
       end
 
       def destroy
         if destroy_allowed?
-          if @policy_application_group.destroy
+          result = ::PolicyApplicationGroups::TotalDestroy.run(policy_application_group: @policy_application_group)
+          if result.valid?
             render json: { success: true }, status: :ok
           else
-            render json: { success: false }, status: :unprocessable_entity
+            render json: { success: false, messages: result.errors.messages }, status: :unprocessable_entity
           end
         else
           render json: { success: false, errors: ['Unauthorized Access'] },
@@ -78,7 +88,7 @@ module V2
       end
 
       def destroy_allowed?
-        true
+        @policy_application_group.status == :error
       end
 
       def set_policy_application_group

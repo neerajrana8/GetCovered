@@ -7,7 +7,7 @@ class EnsureInvoiceableTermsExist < ActiveRecord::Migration[5.2]
     end
     ::Invoice.where(invoiceable_type: "PolicyGroup").each do |inv|
       invy = PolicyGroupQuote.where(policy_group_id: inv.invoiceable_id).accepted.take
-      inv.update_columns(invoiceable_type: "PolicyGroupQuote", invoiceable_id: invy.id)
+      inv.update_columns(invoiceable_type: "PolicyGroupQuote", invoiceable_id: invy.id) if invy
     end
     # assign term_first_date and term_last_date to invoices missing them
     to_fix = ::Invoice.where(term_first_date: nil).or(::Invoice.where(term_last_date: nil)).where(invoiceable_type: "PolicyQuote")
