@@ -9,7 +9,7 @@ describe 'Commission calculation spec', type: :request do
     @carrier = FactoryBot.create(:carrier)
     @carrier.policy_types << @policy_type
     @carrier.agencies << [@getcovered_agency, @cambridge_agency]
-    @getcovered_commission_strategy = FactoryBot.build(:commission_strategy, carrier: @carrier, policy_type: @policy_type, type: 'PERCENT', amount: 30, commissionable: @getcovered_agency)
+    @getcovered_commission_strategy = FactoryBot.build(:commission_strategy, carrier: @carrier, policy_type: @policy_type, type: 'PERCENT', percentage: 20.45, commissionable: @getcovered_agency)
     @getcovered_commission_strategy.save!
     @cambridge_commission_strategy = FactoryBot.build(:commission_strategy, carrier: @carrier, policy_type: @policy_type, type: 'FLAT', amount: 500)
     @cambridge_commission_strategy.commissionable = @cambridge_agency
@@ -37,16 +37,30 @@ describe 'Commission calculation spec', type: :request do
     cambridge_commission = Commission.where(commissionable: @cambridge_agency).first
     expect(cambridge_commission.amount).to eq(500)
   
-    # GetCovered Commission strategy is 30%, so the commission must be $30
+    # GetCovered Commission strategy is 20.45%, so the commission must be $20.45
     getcovered_commission = Commission.where(commissionable: @getcovered_agency).first
-    expect(getcovered_commission.amount).to eq(3000)
+    expect(getcovered_commission.amount).to eq(2045)
   end
+
+  it 'should create commissions with decimal amounts' do
+    # Policy Premium base is $100.00.
+    CommissionService.new(@cambridge_commission_strategy, @policy_premium).process
+    expect(Commission.count).to eq(2)
+    # Cambridge CommissionStrategy is flat $5. So the commission amount must be 500
+    cambridge_commission = Commission.where(commissionable: @cambridge_agency).first
+    expect(cambridge_commission.amount).to eq(500)
+  
+    # GetCovered Commission strategy is 20.45%, so the commission must be $20.45
+    getcovered_commission = Commission.where(commissionable: @getcovered_agency).first
+    expect(getcovered_commission.amount).to eq(2045)
+  end
+
   
   
   it 'should create three commissions with proper amounts' do
   
-    # Create Account Commission Strategy with 5% fee:
-    @account_commission_strategy = FactoryBot.build(:commission_strategy, carrier: @carrier, policy_type: @policy_type, type: 'PERCENT', amount: 7)
+    # Create Account Commission Strategy with 7.5% fee:
+    @account_commission_strategy = FactoryBot.build(:commission_strategy, carrier: @carrier, policy_type: @policy_type, type: 'PERCENT', percentage: 7.5)
     @account_commission_strategy.commissionable = @account
     @account_commission_strategy.commission_strategy = @cambridge_commission_strategy
     @account_commission_strategy.save!    
@@ -54,30 +68,30 @@ describe 'Commission calculation spec', type: :request do
     # Policy Premium base is $100.00.
     CommissionService.new(@account_commission_strategy, @policy_premium).process
     expect(Commission.count).to eq(3)
-    # Account CommissionStrategy is 7%. So the commission amount must be 500
+    # Account CommissionStrategy is 7.5%. So the commission amount must be 750
     account_commission = Commission.where(commissionable: @account).first
-    expect(account_commission.amount).to eq(700)
+    expect(account_commission.amount).to eq(750)
   
     # Cambridge CommissionStrategy is flat $5. So the commission amount must be 500
     cambridge_commission = Commission.where(commissionable: @cambridge_agency).first
     expect(cambridge_commission.amount).to eq(500)
   
-    # GetCovered Commission strategy is 30%, so the commission must be $30
+    # GetCovered Commission strategy is 20.45%, so the commission must be $20.45
     getcovered_commission = Commission.where(commissionable: @getcovered_agency).first
-    expect(getcovered_commission.amount).to eq(3000)
+    expect(getcovered_commission.amount).to eq(2045)
   end
   
   # This would probably need to be refactored into separate test
   it 'should appropriately calculate commission amount after policy cancellation' do
     # Create new CommissionStrategy to create big amount of Deduction:
-    new_cambridge_commission_strategy = FactoryBot.build(:commission_strategy, carrier: @carrier, policy_type: @policy_type, type: 'PERCENT', amount: 30)
+    new_cambridge_commission_strategy = FactoryBot.build(:commission_strategy, carrier: @carrier, policy_type: @policy_type, type: 'PERCENT', percentage: 30.74)
     new_cambridge_commission_strategy.commissionable = @cambridge_agency
     new_cambridge_commission_strategy.commission_strategy = @getcovered_commission_strategy
     new_cambridge_commission_strategy.save!
     # Run CommissionService to create new Commissions
     CommissionService.new(new_cambridge_commission_strategy, @policy_premium).process
     cambridge_commission = Commission.where(commissionable: @cambridge_agency).first
-    expect(cambridge_commission.amount).to eq(3000)
+    expect(cambridge_commission.amount).to eq(3074)
 
     # If policy is cancelled halfway, then unearned premium should be negative half of premium base
     @policy_premium.unearned_premium = -@policy_premium.base/2
@@ -86,11 +100,11 @@ describe 'Commission calculation spec', type: :request do
     
     # should create CommissionDeduction with correct amount:
     # UnearnedBalance = Commission.amount * Premium.unearned_balance / Premium.base
-    # = $30 * $50 / $100 = $15
+    # = $30.74 * $50 / $100 = $15.37
     expect(CommissionDeduction.count).to eq(1)
-    expect(CommissionDeduction.last.unearned_balance).to eq(-1500)
+    expect(CommissionDeduction.last.unearned_balance).to eq(-1537)
     # Deductee should have a negative commission balance:
-    expect(@cambridge_agency.reload.commission_balance).to eq(-1500)
+    expect(@cambridge_agency.reload.commission_balance).to eq(-1537)
     
     # when new policy with new commission strategy is created, it should deduct correct amount
     new_policy = FactoryBot.create(:policy, agency: @cambridge_agency, carrier: @carrier, account: @account, policy_type: @policy_type)
@@ -114,20 +128,20 @@ describe 'Commission calculation spec', type: :request do
     expect(CommissionDeduction.count).to eq(2)
     expect(CommissionDeduction.last.unearned_balance).to eq(500)
     # Deductee balance should be correct:
-    # Policy cancellation created a deduction of -$15.
+    # Policy cancellation created a deduction of -$15.37.
     # New Policy sell created a deduction of +$5.
-    # Balance should be -$10
+    # Balance should be -$9.63
     @cambridge_agency.reload
-    expect(@cambridge_agency.commission_balance).to eq(-1000)
+    expect(@cambridge_agency.commission_balance).to eq(-1037)
     
-    # GetCovered Commission strategy is 30% from $200.00, so the commission must be $30
+    # GetCovered Commission strategy is 20.45% from $200.00, so the commission must be $40.9
     getcovered_commission = Commission.where(commissionable: @getcovered_agency).last
-    expect(getcovered_commission.amount).to eq(6000)
+    expect(getcovered_commission.amount).to eq(4090)
     
     
     # =====Third Policy =====
     # when another new policy with $500 premium is created, it should create commission with correct amount
-    new_cambridge_commission_strategy = FactoryBot.build(:commission_strategy, carrier: @carrier, policy_type: @policy_type, type: 'PERCENT', amount: 12)
+    new_cambridge_commission_strategy = FactoryBot.build(:commission_strategy, carrier: @carrier, policy_type: @policy_type, type: 'PERCENT', percentage: 12.11)
     new_cambridge_commission_strategy.commissionable = @cambridge_agency
     new_cambridge_commission_strategy.commission_strategy = @getcovered_commission_strategy
     new_cambridge_commission_strategy.save!
@@ -144,21 +158,21 @@ describe 'Commission calculation spec', type: :request do
     # Policy Premium base is $500.00.
     CommissionService.new(new_cambridge_commission_strategy, third_policy_premium).process
     expect(Commission.count).to eq(6)
-    # Cambridge CommissionStrategy is 12%. Commission without deduction should be $60.
-    # Cambridge commission balance equals to -$10, so the commission should be $50
+    # Cambridge CommissionStrategy is 12.11%. Commission without deduction should be $60.55.
+    # Cambridge commission balance equals to -$10.37, so the commission should be $50.18
     cambridge_commission = Commission.where(commissionable: @cambridge_agency).last
-    expect(cambridge_commission.amount).to eq(5000)
+    expect(cambridge_commission.amount).to eq(5018)
     # CommissionService should create a new deduction with amount equal to
     # negative commission balance:
     expect(CommissionDeduction.count).to eq(3)
-    expect(CommissionDeduction.last.unearned_balance).to eq(1000)
+    expect(CommissionDeduction.last.unearned_balance).to eq(1037)
     # Deductee balance should be zero:
     @cambridge_agency.reload
     expect(@cambridge_agency.commission_balance).to eq(0)
     
-    # GetCovered Commission strategy is 30% from $500.00, so the commission must be $150.00
+    # GetCovered Commission strategy is 20.45% from $500.00, so the commission must be $150.00
     getcovered_commission = Commission.where(commissionable: @getcovered_agency).last
-    expect(getcovered_commission.amount).to eq(15000)
+    expect(getcovered_commission.amount).to eq(10225)
   end
   
 end
