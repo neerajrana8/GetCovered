@@ -19,7 +19,6 @@ class PolicyApplicationGroup < ApplicationRecord
       invoices_errors = policy_group_quote.generate_invoices_for_term(false, true)
 
       if invoices_errors.blank?
-        policy_group_quote.update(status: :quoted)
         update(status: :awaiting_acceptance)
       else
         ModelError.create(
