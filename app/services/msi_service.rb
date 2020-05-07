@@ -235,10 +235,10 @@ private
         SignonRq: {
           SignonPswd: {
             CustId: {
-              CustLoginId: Rails.application.credentials.msi[:username][ENV['RAILS_ENV'].to_sym]
+              CustLoginId: Rails.application.credentials.msi[:un][ENV['RAILS_ENV'].to_sym]
             },
             CustPswd: {
-              Pswd: Rails.application.credentials.msi[:password][ENV['RAILS_ENV'].to_sym]
+              Pswd: Rails.application.credentials.msi[:pw][ENV['RAILS_ENV'].to_sym]
             }
           }
         }
