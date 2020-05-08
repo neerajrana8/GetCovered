@@ -13,28 +13,29 @@ class PolicyApplicationGroup < ApplicationRecord
   enum status: %i[in_progress awaiting_acceptance error accepted]
 
   def update_status
-    if policy_applications.count == policy_applications_count && !all_errors_any?
-      policy_group_quote.calculate_premium
+    ActiveRecord::Base.transaction do
+      if policy_applications.count == policy_applications_count && !all_errors_any? && !awaiting_acceptance?
+        policy_group_quote.calculate_premium
 
-      invoices_errors = policy_group_quote.generate_invoices_for_term(false, true)
+        invoices_errors = policy_group_quote.generate_invoices_for_term(false, true)
 
-      if invoices_errors.blank?
-        policy_group_quote.update(status: :quoted)
-        update(status: :awaiting_acceptance)
-      else
-        ModelError.create(
-          model: self,
-          kind: :premium_and_invoices_was_not_generated,
-          information: {
-            params: nil,
-            policy_users_params: nil,
-            errors: invoices_errors
-          }
-        )
+        if invoices_errors.blank?
+          update(status: :awaiting_acceptance)
+        else
+          ModelError.create(
+            model: self,
+            kind: :premium_and_invoices_was_not_generated,
+            information: {
+              params: nil,
+              policy_users_params: nil,
+              errors: invoices_errors
+            }
+          )
+          update(status: :error)
+        end
+      elsif all_errors_any?
         update(status: :error)
       end
-    elsif all_errors_any?
-      update(status: :error)
     end
   end
 

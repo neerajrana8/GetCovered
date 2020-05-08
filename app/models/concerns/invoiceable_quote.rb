@@ -110,7 +110,7 @@ module InvoiceableQuote
 				
 		  end
 	  else
-      ap 'ssss'
+      ap '============================================================='
 	  end
     
     return errors
@@ -165,6 +165,6 @@ module InvoiceableQuote
         nil
       end
     end
-    
+
 
 end
