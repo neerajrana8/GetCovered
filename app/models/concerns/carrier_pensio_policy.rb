@@ -46,8 +46,6 @@ module CarrierPensioPolicy
       if document.attach(io: File.open(summary_save_path), filename: "#{ number }-summary.pdf", content_type: 'application/pdf')
 				File.delete(summary_save_path) if File.exist?(summary_save_path) 	
 			end
-      
     end
-    
   end
 end

@@ -18,6 +18,7 @@ class PolicyGroupQuote < ApplicationRecord
                  abandoned: 6, expired: 7, error: 8 }
 
   def calculate_premium
+    policy_group_premium.destroy if policy_group_premium.present?
     self.policy_group_premium = PolicyGroupPremium.create(billing_strategy: policy_application_group.billing_strategy)
     policy_group_premium.calculate_total
     update(status: :quoted)
@@ -47,6 +48,7 @@ class PolicyGroupQuote < ApplicationRecord
         invoice.update status: index.zero? ? 'available' : 'upcoming'
       end
       charge_invoice = invoices.order('due_date').first.pay(stripe_source: :default)
+      ap charge_invoice
       return true if charge_invoice[:success] == true
     end
     billing_started
@@ -133,52 +135,13 @@ class PolicyGroupQuote < ApplicationRecord
 
   def create_related_policies
     policy_quotes.each do |policy_quote|
-      policy = policy_quote.build_policy(
-        number: get_policy_number,
-        status: policy_status,
-        billing_status: 'CURRENT',
-        effective_date: policy_quote.policy_application.effective_date,
-        expiration_date: policy_quote.policy_application.expiration_date,
-        auto_renew: policy_quote.policy_application.auto_renew,
-        auto_pay: policy_quote.policy_application.auto_pay,
-        policy_in_system: true,
-        system_purchased: true,
-        billing_enabled: true,
-        serviceable: policy_quote.policy_application.carrier.syncable,
-        policy_type: policy_quote.policy_application.policy_type,
-        policy_group: policy_group,
-        agency: policy_quote.policy_application.agency,
-        account: policy_quote.policy_application.account,
-        carrier: policy_quote.policy_application.carrier
+      ::Policies::CreateFromQuoteJob.perform_later(
+        policy_quote,
+        policy_status,
+        policy_application_group.carrier.integration_designation,
+        policy_group
       )
-      policy.save
-      policy.reload
-
-      policy_quote.policy_application.policy_users.each do |pu|
-        pu.update(policy: policy)
-        pu.user.convert_prospect_to_customer()
-      end
-
-      if policy_quote.update(policy: policy) &&
-        policy_quote.policy_application.update(policy: policy, status: "accepted") &&
-        policy_quote.policy_premium.update(policy: policy)
-
-        PolicyQuoteStartBillingJob.perform_now(policy: policy, issue: issue_policy_method)
-      else
-        # If self.policy, policy_application.policy or
-        # policy_premium.policy cannot be set correctly
-        quote_attempt[:message] = "Error attaching policy to system"
-        policy_quote.update(status: 'error')
-      end
     end
-  end
-
-  def get_policy_number
-    send("#{policy_application_group.carrier.integration_designation}_generate_number", ::Policy)
-  end
-
-  def issue_policy_method
-    "#{policy_application_group.carrier.integration_designation}_issue_policy"
   end
 
   def issue_method
