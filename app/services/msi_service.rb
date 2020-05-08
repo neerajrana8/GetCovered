@@ -59,11 +59,13 @@ class MsiService
     }
     begin
       
-      call_data[:response] = HTTParty.post(Rails.application.credentials.msi[:uri][ENV['RAILS_ENV'].to_sym],
+      call_data[:response] = HTTParty.post(Rails.application.credentials.msi[:uri][ENV['RAILS_ENV'].to_sym] + "/#{self.action.to_s.camelize}",
         body: compiled_rxml,
         headers: {
           'Content-Type' => 'text/xml'#MOOSE WARNING: doc example in crazy .net lingo also has: 'Content-Length' => compiled_rxml.length, timeout 15000, cache policy new RequestCachePolicy(RequestCacheLevel.BypassCache)
-        })
+        },
+        ssl_version: :TLSv1_2
+      )
           
     rescue StandardError => e
       call_data = {
@@ -81,7 +83,7 @@ class MsiService
       pp call_data
     else
       call_data[:data] = call_data[:response].parsed_response
-      xml_doc = Nokogiri::XML(call_data[:data])
+      #xml_doc = Nokogiri::XML(call_data[:data])
       
     end
     # scream to the console for the benefit of any watchers
@@ -154,11 +156,12 @@ class MsiService
   def build_get_or_create_community(
       effective_date:,
       community_name:, number_of_units:, sales_rep_id:, property_manager_name:, years_professionally_managed:, year_built:, gated:,
-      address_line_one:, city:, state:, zip:
+      address_line_one:, city:, state:, zip:,
+      **compilation_args
   )
     self.action = :get_or_create_community
     self.errors = nil
-    compiled_rxml = compile_xml({
+    self.compiled_rxml = compile_xml({
       InsuranceSvcRq: {
         RenterPolicyQuoteInqRq: {
           MSI_CommunityInfo: {
@@ -190,12 +193,13 @@ class MsiService
           }
         }
       }
-    })
+    }, **compilation_args)
     return errors.blank?
   end
   
   def build_quote_final_premium(
-    community_id:, effective_date:
+    community_id:, effective_date:,
+    **compilation_args
   )
     self.action = :quote_final_premium
     self.errors = nil
@@ -223,7 +227,7 @@ class MsiService
           }
         }
       }
-    })
+    }, **compilation_args)
     return errors.blank?
   end
   
@@ -245,26 +249,41 @@ private
       }
     end
     
-    def json_to_xml(obj, abbreviate_nils: true, closeless: false, internal: false)
+    def json_to_xml(obj, abbreviate_nils: true, closeless: false,  indent: nil, line_breaks: false, internal: false)
+      # dynamic default parameters
+      line_breaks = true unless indent.nil?
+      indent = "" if line_breaks && indent.nil?
+      # go wild
       prop_string = ""
       child_string = ""
       case obj
         when ::Hash
+          # handle properties to pass back up to our caller
           if obj.has_key?(:'')
             prop_string = obj[:''].blank? ? "" : obj[:''].class == ::String ? obj[:''] :
               obj[:''].map{|k,v| "#{k}=\"#{v.to_s.gsub('"', '&quot;').gsub('&', '&amp;').gsub('<', '&lt;')}\"" }.join(" ")
             prop_string = " #{prop_string}" unless prop_string.blank?
             obj = obj.select{|k,v| k != :'' }
           end
+          # convert ourselves into an xml string
           child_string = obj.map do |k,v|
-            subxml = json_to_xml(v, abbreviate_nils: abbreviate_nils, internal: true)
-            "<#{k}#{subxml[:prop_string]}" + ((abbreviate_nils && subxml[:child_string].nil?) ? "/>"
-              : (">#{subxml[:child_string].to_s}" + (closeless ? "" : "</#{k}>")))
-          end.join("")
+            # induce recursion and set line break settings
+            subxml = json_to_xml(v, abbreviate_nils: abbreviate_nils, indent: indent.nil? ? nil : indent + "  ", internal: true)
+            line_mode = !line_breaks ? :none : (subxml[:child_string].nil? || (subxml[:child_string].index("\n").nil? && subxml[:child_string].length < 64)) ? :inline : :block
+            # return our fancy little text block
+            case line_mode
+              when :none, :inline
+                "<#{k}#{subxml[:prop_string]}" + ((abbreviate_nils && subxml[:child_string].nil?) ? "/>"
+                  : (">#{subxml[:child_string].to_s}" + (closeless ? "" : "</#{k}>")))
+              when :block
+                "<#{k}#{subxml[:prop_string]}" + ((abbreviate_nils && subxml[:child_string].nil?) ? "/>"
+                  : (">\n#{indent}  #{subxml[:child_string].to_s}" + (closeless ? "" : "\n#{indent}</#{k}>")))
+            end
+          end.join(line_breaks ? "\n#{indent}" : "")
         when ::NilClass
           child_string = nil
         else
-          child_string = obj.to_s.gsub("<", "&lt;").gsub("<", "&gt;").gsub("&", "&amp;")
+          child_string = obj.to_s.gsub("<", "&lt;").gsub("<", "&gt;").gsub("&", "&amp;").split("\n").join("#{indent}\n")
       end
       internal ? {
         prop_string: prop_string,
@@ -272,12 +291,18 @@ private
       } : child_string
     end
   
-    def compile_xml(obj)
-      compiled_rxml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + json_to_xml({
+    def compile_xml(obj, line_breaks: false, **other_args)
+      compiled_rxml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>#{line_breaks ? "\n" : ""}" + json_to_xml({
         MSIACORD: {
-          'xmlns:xsd': 'http://www.w3.org/2001/XMLSchema',
-          'xmlns:xsi': 'http://www.w3.org/2001/XMLSchema-instance'
+          '': {
+            'xmlns:xsd': 'http://www.w3.org/2001/XMLSchema',
+            'xmlns:xsi': 'http://www.w3.org/2001/XMLSchema-instance'
+          }
         }.merge(get_auth_json).merge(obj)
-      })
+      },
+        line_breaks: line_breaks
+      )
     end
 end
+
+
