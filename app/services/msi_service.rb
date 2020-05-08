@@ -62,10 +62,11 @@ class MsiService
       call_data[:response] = HTTParty.post(Rails.application.credentials.msi[:uri][ENV['RAILS_ENV'].to_sym] + "/#{self.action.to_s.camelize}",
         body: compiled_rxml,
         headers: {
-          'Content-Type' => 'text/xml'#MOOSE WARNING: doc example in crazy .net lingo also has: 'Content-Length' => compiled_rxml.length, timeout 15000, cache policy new RequestCachePolicy(RequestCacheLevel.BypassCache)
+          'Content-Type' => 'text/xml'
         },
         ssl_version: :TLSv1_2
       )
+      #MOOSE WARNING: doc example in crazy .net lingo also has: 'Content-Length' => compiled_rxml.length, timeout 15000, cache policy new RequestCachePolicy(RequestCacheLevel.BypassCache)
           
     rescue StandardError => e
       call_data = {
