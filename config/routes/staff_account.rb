@@ -115,9 +115,11 @@
     resources :notifications,
       only: [ :update, :index, :show ]
 
-    resources :payment_profiles,
-      path: "payment-profiles",
-      only: [:index, :create, :update]
+    resources :payment_profiles, path: "payment-profiles", only: [:index, :create, :update] do
+      member do
+        put "set_default"
+      end
+    end
   
     resources :payments,
       only: [ :index, :show ]

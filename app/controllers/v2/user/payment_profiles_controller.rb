@@ -32,6 +32,15 @@ module V2
 								 status: 422
 				end	
 			end
+
+			def set_default
+				@profile = current_user.payment_profiles.find(params[:id])
+				if @profile.set_default
+					render json: @profile.to_json, status: :ok
+				else
+					render json: @profile.errors.to_json, status: 422
+				end	
+			end
 			
 			private
 			
