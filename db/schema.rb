@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_05_06_091124) do
+ActiveRecord::Schema.define(version: 2020_05_11_121420) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -192,7 +192,6 @@ ActiveRecord::Schema.define(version: 2020_05_06_091124) do
     t.string "logo_url"
     t.string "footer_logo_url"
     t.string "subdomain"
-    t.string "subdomain_test"
     t.index ["profileable_type", "profileable_id"], name: "index_branding_profiles_on_profileable_type_and_profileable_id"
     t.index ["url"], name: "index_branding_profiles_on_url", unique: true
   end
@@ -705,6 +704,7 @@ ActiveRecord::Schema.define(version: 2020_05_06_091124) do
     t.datetime "updated_at", null: false
     t.string "payer_type"
     t.bigint "payer_id"
+    t.jsonb "card"
     t.index ["payer_type", "payer_id"], name: "index_payment_profiles_on_payer_type_and_payer_id"
   end
 

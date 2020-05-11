@@ -9,45 +9,42 @@ class User
     def execute
       begin
         if token.present? && customer != false && stored_method != false
-          if stored_method.nil? # payment method was not previously used
-            case token_data.type
-            when 'bank_account'
-              customer.sources.create(source: token_data.id)
-              customer.default_source = token_data.bank_account.id if make_default
-              customer.save
+          case token_data.type
+          when 'bank_account'
+            customer.sources.create(source: token_data.id)
+            customer.default_source = token_data.bank_account.id if make_default
+            customer.save
 
-              payment_profile = PaymentProfile.create(
-                source_id: token_data.bank_account.id,
-                source_type: 'bank_account',
-                fingerprint: token_data.bank_account.fingerprint,
-                verified: token_data.bank_account.status == 'verified',
-                payer: user
-              )
+            payment_profile = PaymentProfile.create(
+              source_id: token_data.bank_account.id,
+              source_type: 'bank_account',
+              fingerprint: token_data.bank_account.fingerprint,
+              verified: token_data.bank_account.status == 'verified',
+              payer: user
+            )
 
-              if make_default
-                user.current_payment_method = token_data.bank_account.status == 'verified' ? 'ach_verified' : 'ach_unverified'
-                payment_profile.set_default
-              end
-
-            when 'card'
-              customer.sources.create(source: token_data.id)
-              customer.default_source = token_data.card.id if make_default
-              customer.save
-
-              payment_profile = PaymentProfile.create(
-                source_id: token_data.card.id,
-                source_type: 'card',
-                fingerprint: token_data.card.fingerprint,
-                payer: user
-              )
-
-              if make_default
-                user.current_payment_method = 'card'
-                payment_profile.set_default
-              end
+            if make_default
+              user.current_payment_method = token_data.bank_account.status == 'verified' ? 'ach_verified' : 'ach_unverified'
+              payment_profile.set_default
             end
-          elsif make_default
-            set_default_payment
+
+          when 'card'
+            customer.sources.create(source: token_data.id)
+            customer.default_source = token_data.card.id if make_default
+            customer.save
+
+            payment_profile = PaymentProfile.create(
+              source_id: token_data.card.id,
+              source_type: 'card',
+              fingerprint: token_data.card.fingerprint,
+              payer: user,
+              card: token_data.card
+            )
+
+            if make_default
+              user.current_payment_method = 'card'
+              payment_profile.set_default
+            end
           end
 
           return true if user.save && make_default
