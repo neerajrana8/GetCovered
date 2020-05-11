@@ -83,8 +83,19 @@ class MsiService
       puts 'ERROR ERROR ERROR'.red
       pp call_data
     else
-      call_data[:data] = call_data[:response].parsed_response
-      #xml_doc = Nokogiri::XML(call_data[:data])
+      call_data[:data] = call_data[:response].parsed_response # WARNING: if staging server doesn't parse to json, we might need this and its fellows: xml_doc = Nokogiri::XML(call_data[:data])
+      case call_data[:data].dig("MSIACORD", "InsuranceSvcRs", "MsgStatus", "MsgStatusCd")
+        when 'SUCCESS'
+          # it worked! huzzah!
+        when 'ERROR'
+          call_data[:error] = true
+          call_data[:message] = "Request failed externally"
+          call_data[:code] = 409
+        when nil
+          call_data[:error] = true
+          call_data[:message] = "Request failed externally"
+          call_data[:code] = 409
+      end
       
     end
     # scream to the console for the benefit of any watchers
