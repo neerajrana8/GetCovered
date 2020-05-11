@@ -38,6 +38,7 @@ end
 
 json.premium policy.premium
 
+
 json.documents policy.documents do |document|
   json.id document.id
   json.filename document.filename
