@@ -30,7 +30,6 @@ module CarrierMsiInsurable
         
         community_name:                 self.title,
         number_of_units:                units.count,
-        sales_rep_id:                   @carrier_profile.traits['community_sales_rep_id'], # MOOSE WARNING: dunno what this means
         property_manager_name:          account.title, # MOOSE WARNING: should this instead be in the carrier insurable profile?
         years_professionally_managed:   @carrier_profile.traits['professionally_managed_year'].nil? ?
                                           6 :

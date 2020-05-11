@@ -156,7 +156,7 @@ class MsiService
   
   def build_get_or_create_community(
       effective_date:,
-      community_name:, number_of_units:, sales_rep_id:, property_manager_name:, years_professionally_managed:, year_built:, gated:,
+      community_name:, number_of_units:, property_manager_name:, years_professionally_managed:, year_built:, gated:,
       address_line_one:, city:, state:, zip:,
       **compilation_args
   )
@@ -170,7 +170,7 @@ class MsiService
             MSI_CommunityYearsProfManaged:    years_professionally_managed.nil? ? 6 : years_professionally_managed,
             MSI_PropertyManagerName:          property_manager_name,
             MSI_NumberOfUnits:                number_of_units,
-            MSI_CommunitySalesRepID:          sales_rep_id,
+            MSI_CommunitySalesRepID:          Rails.application.credentials.msi[:csr][ENV["RAILS_ENV"].to_s,
             MSI_CommunityYearBuilt:           year_built,
             MSI_CommunityIsGated:             gated.nil? ? true : gated,
             Addr: {
