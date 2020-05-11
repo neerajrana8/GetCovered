@@ -64,4 +64,40 @@ module Helpers
     post user_session_path, params: { email: user.email, password: 'test1234' }.to_json, headers: { 'CONTENT_TYPE' => 'application/json', 'ACCEPT' => 'application/json' }
   end
   
+  # Insurable
+  def create_community(account)
+    insurable_type = InsurableType.find_or_create_by(id: 1) do |insurable_type|
+      insurable_type.title = 'Residential Community'
+      insurable_type.category = 'property'
+      insurable_type.enabled = true
+    end
+    Insurable.create(insurable_params(account, insurable_type))
+  end
+  
+  def create_insurable_for(account, insurable_type, insurable = nil)
+    Insurable.create insurable_params(account, insurable_type, insurable)
+  end
+  
+  def insurable_params(account, insurable_type, insurable = nil)
+    {
+      category: "property", 
+      covered: "true", 
+      enabled: "true", 
+      title: "some new insurable",
+      account: account,
+      insurable: insurable,
+      insurable_type: insurable_type,
+      addresses_attributes: [
+        {
+          city: "Los Angeles",
+          county: "LOS ANGELES",
+          state: "CA",
+          street_number: "3301",
+          street_name: "New Drive"
+        }
+      ]
+    }
+  end
+  
+  
 end
