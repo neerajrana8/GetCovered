@@ -40,7 +40,7 @@ class Carrier < ApplicationRecord
   validates :title, presence: true,
                     uniqueness: true
   
-  validates :integration_designation, inclusion: { in: ['qbe', 'qbe_specialty', 'crum', 'pensio'], message: "must be valid" }
+  validates :integration_designation, inclusion: { in: ['qbe', 'qbe_specialty', 'crum', 'pensio', 'msi'], message: "must be valid" }
   
   validates_presence_of :slug, :call_sign
       

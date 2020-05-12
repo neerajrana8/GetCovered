@@ -133,12 +133,14 @@ require 'faker'
 @count = 2
 @accounts = Account.all
 
+qbe_created = 0
+msi_created = 0
 @accounts.each do |account|
 	@count.times do |i|
 		
     # QBE communities
     
-		addr = @addresses[Insurable.residential_communities.count % @addresses.length]
+		addr = @addresses[qbe_created % @addresses.length]#Insurable.residential_communities.count % @addresses.length]
     
 		args = { 
 			carrier_id: 1,
@@ -154,6 +156,7 @@ require 'faker'
 																					enabled: true, category: 'property',
 																					addresses_attributes: [ addr ])			
 			if @community.save
+        qbe_created += 1
 		  	
 		  	account.staff
 		  					.order("RANDOM()")
@@ -207,7 +210,7 @@ require 'faker'
     
     # MSI communities
     
-		addr = @addresses[Insurable.residential_communities.count % @addresses.length]
+		addr = @addresses[msi_created % @addresses.length]#Insurable.residential_communities.count % @addresses.length]
     
 		args = { 
 			carrier_id: 5,
@@ -225,6 +228,7 @@ require 'faker'
 			unless @community.save
 				pp @community.errors
       else
+        msi_created += 1
 		  	# create assignments (with pointless random ordering)
 		  	account.staff.order("RANDOM()").each do |staff|
 			  	Assignment.create!(staff: staff, assignable: @community)

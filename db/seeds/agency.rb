@@ -230,7 +230,7 @@ if @get_covered.save
   																						type: 0, 
   																						house_override: 0)
   @get_covered.commission_strategies.create!(title: 'Get Covered / MSI Producer Commission', 
-  																						carrier: @msi 
+  																						carrier: @msi,
   																						policy_type: PolicyType.find(1), 
   																						amount: 5, 
   																						type: 0, 
