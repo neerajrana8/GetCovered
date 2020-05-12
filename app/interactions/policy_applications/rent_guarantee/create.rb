@@ -8,7 +8,8 @@ module PolicyApplications
         application = PolicyApplication.new(policy_application_params)
         application.carrier = Carrier.find(4)
         application.policy_type = PolicyType.find_by_slug('rent-guarantee')
-        application.agency = Agency.where(master_agency: true).take
+        application.agency = policy_application_group.agency
+        application.account = policy_application_group.account
         application.billing_strategy = policy_application_group.billing_strategy
 
         if application.save

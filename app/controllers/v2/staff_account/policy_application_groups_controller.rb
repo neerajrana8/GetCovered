@@ -71,7 +71,7 @@ module V2
       def policy_application_group_params
         billing_strategy =
           BillingStrategy.where(
-            agency: Agency.where(master_agency: true).take,
+            agency: current_staff&.organizable&.agency,
             policy_type: PolicyType.find_by_slug('rent-guarantee')
           ).take
         {
