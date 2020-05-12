@@ -257,7 +257,7 @@ require 'faker'
 		        end                
 		      end
 		    end
-        # register
+        # register with msi
         errors = @community.register_with_msi
         unless errors.blank?
           puts "\nCommunity MSI Registration Error"

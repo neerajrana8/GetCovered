@@ -1,10 +1,14 @@
 @leases = Lease.all
+@qbe_id = 1
+@msi_id = 5
 
 @leases.each do |lease|
 # 	if rand(0..100) > 33 # Create a 66% Coverage Rate
-		
+
+  if !lease.insurable.carrier_profile(@qbe_id).nil?
+		#.insurable.carrier_profile(3)
 		policy_type = PolicyType.find(1)
-		billing_strategy = BillingStrategy.where(agency: lease.account.agency, policy_type: policy_type)
+		billing_strategy = BillingStrategy.where(agency: lease.account.agency, policy_type: policy_type, carrier_id: @qbe_id)
 		                                  .order("RANDOM()")
 		                                  .take
 		
@@ -112,6 +116,12 @@
 		else
 			pp application.errors	
 		end
-			
+  # end qbe
+  elsif !lease.insurable.carrier_profile(@msi_id).nil?
+  
+    # MOOSE WARNING: implement msi policy creation here
+  
+  # end msi
+  end
 # 	end	
 end
