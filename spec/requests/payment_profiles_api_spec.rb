@@ -44,7 +44,16 @@ describe 'PaymentProfile API spec', type: :request do
       expect(response.status).to eq(200)
       expect(result["active"]).to eq(true)
     end
-    
+    it 'should set default PaymentProfile' do
+      profile = FactoryBot.create(:payment_profile, payer: @user)
+      last_profile = FactoryBot.create(:payment_profile, payer: @user, default_profile: true)
+      
+      expect(last_profile.default_profile).to eq(true)
+      put "/v2/user/payment-profiles/#{profile.id}/set_default", headers: @headers
+      result = JSON.parse response.body
+      expect(response.status).to eq(200)
+      expect(result["default_profile"]).to eq(true)
+    end
   end
   
   context 'for StaffAccounts' do
@@ -90,6 +99,16 @@ describe 'PaymentProfile API spec', type: :request do
       expect(result["active"]).to eq(true)
     end
     
+    it 'should set default PaymentProfile' do
+      profile = FactoryBot.create(:payment_profile, payer: @staff.organizable)
+      last_profile = FactoryBot.create(:payment_profile, payer: @staff.organizable, default_profile: true)
+      
+      expect(last_profile.default_profile).to eq(true)
+      put "/v2/staff_account/payment-profiles/#{profile.id}/set_default", headers: @headers
+      result = JSON.parse response.body
+      expect(response.status).to eq(200)
+      expect(result["default_profile"]).to eq(true)
+    end
   end
   
   

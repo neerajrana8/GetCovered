@@ -9,7 +9,7 @@ include ActionController::RespondWith
 describe 'Whether authentication is ocurring properly', type: :request do
   before(:each) do
     @user = FactoryBot.create(:user)
-    @staff = FactoryBot.create(:staff, role: 'account')
+    @staff = create_account_for FactoryBot.create(:agency)
   end
   
   
@@ -90,9 +90,10 @@ describe 'Whether authentication is ocurring properly', type: :request do
       expect(result['message']).to eq('Your password has been successfully updated.')
     end
     
-    it 'should not authenticate not enabled staff' do
-      @staff.update_attribute(:enabled, false)
+    it 'should not authenticate not enabled and non-owner staff' do
+      @staff.update_attributes(enabled: false, owner: false)
       login_staff @staff
+      
       result = JSON.parse response.body
       expect(response.has_header?('access-token')).to eq(false)
       expect(response.status).to eq(401)

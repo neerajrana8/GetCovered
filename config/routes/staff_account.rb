@@ -43,7 +43,7 @@
       
     resources :carrier_insurable_profiles,
       path: "carrier-insurable-profiles",
-      only: [:update, :show]
+      only: [:update, :show, :create]
   
     resources :claims,
       only: [ :create, :index, :show ] do
@@ -115,9 +115,11 @@
     resources :notifications,
       only: [ :update, :index, :show ]
 
-    resources :payment_profiles,
-      path: "payment-profiles",
-      only: [:index, :create, :update]
+    resources :payment_profiles, path: "payment-profiles", only: [:index, :create, :update] do
+      member do
+        put "set_default"
+      end
+    end
   
     resources :payments,
       only: [ :index, :show ]
