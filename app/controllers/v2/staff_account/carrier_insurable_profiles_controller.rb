@@ -31,6 +31,26 @@ module V2
                  status: 422
         end
       end
+
+      def create
+        params_set = nil
+        
+        case @carrier_insurable_profile.carrier_id
+        when 1
+          params_set = qbe_params
+        when 3
+          params_set = crum_params
+        end
+        
+        @carrier_insurable_profile.new(params_set)
+        if @carrier_insurable_profile.save
+          render json: @carrier_insurable_profile.to_json,
+                 status: :ok
+        else
+          render json: @carrier_insurable_profile.errors.to_json,
+                 status: 422
+        end
+      end
     
       private
       
