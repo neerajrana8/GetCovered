@@ -8,6 +8,13 @@ json.account do
   end
 end
 
+json.policy_application do
+  if policy.policy_application.present?
+    json.partial! 'v2/staff_agency/policy_applications/policy_application.json.jbuilder',
+                  policy_application: policy.policy_application
+  end
+end
+
 json.agency do
   unless policy.agency.nil?
     json.partial! 'v2/user/agencies/agency_short_fields.json.jbuilder',

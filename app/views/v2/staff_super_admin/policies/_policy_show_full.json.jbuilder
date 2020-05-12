@@ -7,6 +7,13 @@ json.agency policy.agency
 
 json.account policy.account
 
+json.policy_application do
+  if policy.policy_application.present?
+    json.partial! 'v2/staff_super_admin/policy_applications/policy_application.json.jbuilder',
+                  policy_application: policy.policy_application
+  end
+end
+
 json.users do
   json.array! policy.policy_users do |policy_user|
     json.primary policy_user.primary
