@@ -53,14 +53,36 @@ module CarrierMsiInsurable
       if !event.save
         return ["Failed to save service call status-tracking Event"]
       else
-        # execute
+        # execute & log
         event.started = Time.now
         msi_data = msi_service.call
-        event.completed = complete_time
+        event.completed = complete_time        
+        event.response = msi_data[:data]
+        event.status = msi_data[:error] ? 'error' : 'success'
+        unless event.save
+          return ["Failed to save response to service call status-tracking Event"]
+        end
         # handle response
-        
+        if msi_data[:error]
+          return ["Service call resulted in error"] # MOOSE WARNING: make service store easily-accessible error message & pull it here
+        else
+          # grab the id
+          external id = msi_data[:data].dig("MSIACORD", "InsuranceSvcRs", "RenterPolicyQuoteInqRs", "MSI_CommunityInfo", "MSI_CommunityID")
+          if external_id.nil?
+            return ["Successful service call did not return an id"]
+          end
+          @carrier_profile.update_columns(external_carrier_id: external_id)
+          # handle address corrections MOOSE WARNING: fix up the address and store fixes in profile_data (address_corrected and address_correction_data)
+          # address info: msi_data[:data].dig("MSIACORD", "InsuranceSvcRs", "RenterPolicyQuoteInqRs", "MSI_CommunityInfo", "Addr") # DetailAddr etc
+          @carrier_profile.external_carrier_id = external_id
+          @carrier_profile.data['msi_external_id'] = external_id
+          @carrier_profile.data['registered_with_msi'] = true
+          @carrier_profile.data['registered_with_msi_on'] = Time.current.strftime("%m/%d/%Y %I:%M %p")
+          @carrier_profile.save
+        end
       end
-    
+      # finished successfully
+      return nil
     end
 	  
 	end

@@ -462,6 +462,11 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
                                                               "gated": false
                                                             },
                                                             profile_data: {
+                                                              "address_corrected": false,
+                                                              "address_correction_data": {},
+                                                              "registered_with_msi": false,
+                                                              "registered_with_msi_on": nil,
+                                                              "msi_external_id": nil
                                                             })
       # MSI Insurable Type for Residential units
       carrier_insurable_type = CarrierInsurableType.create!(carrier: carrier, insurable_type: InsurableType.find(4), enabled: true)
