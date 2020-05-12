@@ -83,7 +83,7 @@ if @get_covered.save
   		elsif carrier.id == 3
   			@policy_type = PolicyType.find(4)
   			@fee_amount = 2500
-  		elsif carrier.id == 1 # MOOSE WARNING: testing fee
+  		elsif carrier.id == 5 # MOOSE WARNING: testing fee
   			@policy_type = PolicyType.find(1)
   			@fee_amount = 2500
   		end

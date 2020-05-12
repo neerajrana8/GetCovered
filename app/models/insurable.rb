@@ -5,6 +5,7 @@ class Insurable < ApplicationRecord
   # Concerns
   include ElasticsearchSearchable
   include CarrierQbeInsurable
+  include CarrierMsiInsurable
   include CoverageReport # , EarningsReport, RecordChange
   include RecordChange
   include SetSlug

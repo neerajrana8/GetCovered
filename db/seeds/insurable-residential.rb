@@ -175,7 +175,9 @@ msi_created = 0
 		  	@profile.save()
 		  	
 		  	# puts "[#{ @community.title }] Accessing QBE Zip Code"
+puts "!!!!!!!! I'm a zippy QBE boi"
 		  	@community.get_qbe_zip_code()
+puts "........ all done zippin'"
 		  	
 		  	# puts "[#{ @community.title }] Accessing QBE Property Info"
 		  	@community.get_qbe_property_info()
@@ -219,6 +221,8 @@ msi_created = 0
 			zip_code: addr[:zip_code],
 			plus_four: addr[:plus_four]
 		}
+
+puts "Weeeee'll try msi... account.agency.offers_policy_type_in_region(args) ? #{account.agency.offers_policy_type_in_region(args) ? "TRUE" : "FALSE" }"
 
 		if account.agency.offers_policy_type_in_region(args)
 			@community = account.insurables.new(title: "#{Faker::Movies::LordOfTheRings.location} #{@building_name_options[rand(0..3)]}", 

@@ -31,12 +31,12 @@ module CarrierMsiInsurable
         community_name:                 self.title,
         number_of_units:                units.count,
         property_manager_name:          account.title, # MOOSE WARNING: should this instead be in the carrier insurable profile?
-        years_professionally_managed:   @carrier_profile.traits['professionally_managed'] != false ?
+        years_professionally_managed:   (@carrier_profile.traits['professionally_managed'] != false) ?
                                           (@carrier_profile.traits['professionally_managed_year'].nil? ?
                                             6 :
-                                            Time.current.year + 1 - @carrier_profile.traits['professionally_managed_year'].to_i, # +1 so that we round up instead of down
+                                            Time.current.year + 1 - @carrier_profile.traits['professionally_managed_year'].to_i # +1 so that we round up instead of down
                                           ) :
-                                          0
+                                          0,
         year_built:                     @carrier_profile.traits['construction_year'],
         gated:                          @carrier_profile.traits['gated'],
         

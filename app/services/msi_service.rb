@@ -181,7 +181,7 @@ class MsiService
             MSI_CommunityYearsProfManaged:    years_professionally_managed.nil? ? 6 : years_professionally_managed,
             MSI_PropertyManagerName:          property_manager_name,
             MSI_NumberOfUnits:                number_of_units,
-            MSI_CommunitySalesRepID:          Rails.application.credentials.msi[:csr][ENV["RAILS_ENV"].to_s,
+            MSI_CommunitySalesRepID:          Rails.application.credentials.msi[:csr][ENV["RAILS_ENV"].to_sym].to_s,
             MSI_CommunityYearBuilt:           year_built,
             MSI_CommunityIsGated:             gated.nil? ? true : gated,
             Addr: {
