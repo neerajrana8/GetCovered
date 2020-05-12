@@ -17,3 +17,11 @@ json.accounts do
     end
   end
 end
+
+
+json.address do
+  if user.address.present?
+    json.partial! "v2/user/addresses/address_show_fields.json.jbuilder",
+                  address: user.address
+  end
+end
