@@ -2,6 +2,10 @@ module Policies
   class CreateFromQuoteJob < ApplicationJob
     include CarrierPensioPolicyQuote
 
+    rescue_from(StandardError) do |exception|
+      Rails.logger.error "[FAIL][#{self.class.name}] Hey, something was wrong with this job #{exception.to_s}"
+    end
+
     queue_as :default
 
     def perform(policy_quote, status, integration_designation, policy_group = nil)
@@ -35,13 +39,21 @@ module Policies
          policy_quote.policy_application.update(policy: policy, status: 'accepted') &&
          policy_quote.policy_premium.update(policy: policy)
 
-        PolicyQuoteStartBillingJob.perform_now(policy: policy, issue: issue_policy_method(integration_designation))
+        policy.send(issue_policy_method(integration_designation))
+        policy.user.invite!
+        UserCoverageMailer.with(policy: policy, user: policy.primary_user).proof_of_coverage.deliver
       else
         policy_quote.update(status: 'error')
       end
     end
 
     private
+
+    def invite_users(policy)
+      policy.users.each do |user|
+        user.invite! unless user.invitation_accepted_at.present?
+      end
+    end
 
     def issue_policy_method(integration_designation)
       "#{integration_designation}_issue_policy"

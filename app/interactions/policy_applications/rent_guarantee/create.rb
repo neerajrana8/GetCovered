@@ -49,6 +49,18 @@ module PolicyApplications
             }
           )
         end
+      rescue StandardError => e
+        ModelError.create(
+          model: policy_application_group,
+          kind: :unknown_error,
+          information: {
+            params: policy_application_params,
+            policy_users_params: policy_users_params,
+            errors: e.to_s
+          }
+        )
+        Rails.logger.error "[#{self.class.name}] Hey, something was wrong with this interaction #{e.to_s}"
+      ensure
         policy_application_group&.update_status
       end
 
@@ -59,7 +71,7 @@ module PolicyApplications
       end
 
       def create_policy_users(application)
-        policy_users_params.each_with_index do |policy_user, index|
+        policy_users_params.each_with_index do |policy_user, _|
           if ::User.where(email: policy_user[:user_attributes][:email]).exists?
             user = ::User.find_by_email(policy_user[:user_attributes][:email])
             application.users << user
@@ -86,8 +98,6 @@ module PolicyApplications
                 }
               )
               return false
-            else
-              policy_user.user.invite! if index.zero?
             end
           end
         end
