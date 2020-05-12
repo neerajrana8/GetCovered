@@ -9,7 +9,7 @@ json.account policy.account
 
 json.policy_application do
   if policy.policy_application.present?
-    json.partial! 'v2/staff_super_admin/policy_applications/policy_application.json.jbuilder',
+    json.partial! 'v2/staff_super_admin/policy_applications/policy_application_show_fields.json.jbuilder',
                   policy_application: policy.policy_application
   end
 end
