@@ -123,6 +123,7 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
 @carriers.each do |c|
   carrier = Carrier.new(c)
   if carrier.save!
+    puts "Initializing carrier ##{carrier.id}..."
     
     carrier_policy_type = carrier.carrier_policy_types.new(application_required: carrier.id == 2 ? false : true)
     carrier.access_tokens.create!

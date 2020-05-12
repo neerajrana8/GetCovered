@@ -96,6 +96,9 @@ end
 	  site_staff.each do |staff|
 	    SeedFunctions.adduser(Staff, staff)
 	  end
+  else
+    puts "FAILED TO SAVE ACCOUNT: #{demo_account.errors.to_h}"
+    exit
 	end
 
 end

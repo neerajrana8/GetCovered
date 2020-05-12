@@ -21,11 +21,12 @@ module CarrierMsiInsurable
         verb: 'post',
         format: 'xml',
         interface: 'REST',
-        endpoint: Rails.application.credentials.msi[:uri][ENV["RAILS_ENV"].to_sym]
+        endpoint: Rails.application.credentials.msi[:uri][ENV["RAILS_ENV"].to_sym],
+        process: 'msi_get_or_create_community'
       )
       # MOOSE WARNING figure out what to do with CarrierAgency external id
       msi_service = MsiService.new
-      errors_returned = msi_service.build_request(:get_or_create_community,
+      succeeded = msi_service.build_request(:get_or_create_community,
         effective_date:                 Time.current.to_date + 1.day,
         
         community_name:                 self.title,
@@ -45,18 +46,22 @@ module CarrierMsiInsurable
         state:                          @address.state,
         zip:                            @address.zip_code
       )
-      if errors
-        return errors_returned.map{|err| "Service call error: #{err}" }
+      if !succeeded
+        if msi_service.errors.blank?
+          return ["Building GetOrCreateCommunity request failed"]
+        else
+          return msi_service.errors.map{|err| "GetOrCreateCommunity service call error: #{err}" }
+        end
       end
       event.request = msi_service.compiled_rxml
       # try to execute the request
       if !event.save
-        return ["Failed to save service call status-tracking Event"]
+        return ["Failed to save service call status-tracking Event: #{event.errors.to_h}"]
       else
         # execute & log
         event.started = Time.now
         msi_data = msi_service.call
-        event.completed = complete_time        
+        event.completed = Time.now     
         event.response = msi_data[:data]
         event.status = msi_data[:error] ? 'error' : 'success'
         unless event.save
@@ -67,7 +72,7 @@ module CarrierMsiInsurable
           return ["Service call resulted in error"] # MOOSE WARNING: make service store easily-accessible error message & pull it here
         else
           # grab the id
-          external id = msi_data[:data].dig("MSIACORD", "InsuranceSvcRs", "RenterPolicyQuoteInqRs", "MSI_CommunityInfo", "MSI_CommunityID")
+          external_id = msi_data[:data].dig("MSIACORD", "InsuranceSvcRs", "RenterPolicyQuoteInqRs", "MSI_CommunityInfo", "MSI_CommunityID")
           if external_id.nil?
             return ["Successful service call did not return an id"]
           end
