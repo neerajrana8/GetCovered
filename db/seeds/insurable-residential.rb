@@ -222,60 +222,50 @@ require 'faker'
 																					insurable_type: @residential_community_insurable_type, 
 																					enabled: true, category: 'property',
 																					addresses_attributes: [ addr ])			
-			if @community.save
-		  	
-		  	account.staff
-		  					.order("RANDOM()")
-		  					.each do |staff|
-			  					
+			unless @community.save
+				pp @community.errors
+      else
+		  	# create assignments (with pointless random ordering)
+		  	account.staff.order("RANDOM()").each do |staff|
 			  	Assignment.create!(staff: staff, assignable: @community)
 			  end
-		  	
+        # build profile
 		  	@community.create_carrier_profile(5)
 		  	@profile = @community.carrier_profile(5)
-		  	
-        @profile.traits['professionally_managed_years'] = rand(6..20) # MOOSE WARNING: can be 0?
-        @profile.traits['community_sales_rep_id'] = nil # MOOSE WARNING: dunno wut dis be
-        @profile.traits['construction_year'] = rand(1979..2005).to_s
+        @profile.traits['professionally_manged'] = (rand(1..100) == 0 ? false : true)
+        @profile.traits['professionally_managed_year'] = @profile.traits['professionally_manged'] ? (Time.current.to_date - rand(0..20).years).year : nil
+        @profile.traits['construction_year'] = (@profile.traits['professionally_managed_year'] || Time.current.to_date.year) - rand(1..15)
         @profile.traits['gated'] = [false, true][rand(0..1)]
-				
-		  	@profile.save()
-		  	
-        ##### MOOSE WARNING RUN THIS
-        
-        throw "FINISH THE SEEDS, YO!"
-        
-		  	# puts "[#{ @community.title }] Accessing QBE Zip Code"
-		  	@community.get_qbe_zip_code()
-		  	
-		  	# puts "[#{ @community.title }] Accessing QBE Property Info"
-		  	@community.get_qbe_property_info()
-		  	
-		    units_per_floor = rand(5..10)
+		  	unless @profile.save()
+          puts "\nCommunity Carrier Profile Save Error\n\n"
+          pp @profile.errors.to_json
+        end
+        # build floors
+        units_per_floor = rand(5..10)
 		    floors = rand(1..4).to_i
-		    
 		    floors.times do |floor|
-		      
 		      floor_id = (floor + 1) * 100
-		      
 		      units_per_floor.times do |unit_num|
-		        
 		        mailing_id = floor_id + (unit_num + 1)
 		        @unit = @community.insurables.new(title: mailing_id, insurable_type: @residential_unit_insurable_type,
 		        																		 enabled: true, category: 'property', account: account)
-		        
 		        if @unit.save
-		          @unit.create_carrier_profile(1)
+		          @unit.create_carrier_profile(5)
 		        else
 		          puts "\nUnit Save Error\n\n"
 		          pp @unit.errors.to_json
 		        end                
 		      end
 		    end
-		    
-		  	@community.reset_qbe_rates(true, true)
-			else	
-				pp @community.errors
+        # register
+        errors = @community.register_with_msi
+        unless errors.blank?
+          puts "\nCommunity MSI Registration Error"
+          errors.each do |err|
+            puts "  #{err}"
+          end
+          puts "\n\n"
+        end
 			end	
 		end		
 		
