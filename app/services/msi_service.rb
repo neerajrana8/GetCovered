@@ -6,6 +6,57 @@ require 'base64'
 require 'fileutils'
 
 class MsiService
+
+  @@coverage_codes = {
+    AllOtherPeril:                                { code: 1, limit: true },
+    Theft:                                        { code: 2, limit: false },
+    Hurricane:                                    { code: 3, limit: false },
+    Wind:                                         { code: 4, limit: false },
+    WindHail:                                     { code: 5, limit: false },
+    CoverageA:                                    { code: 1001, limit: false },
+    CoverageB:                                    { code: 1002, limit: false },
+    CoverageC:                                    { code: 1003, limit: true },
+    CoverageD:                                    { code: 1004, limit: true },
+    CoverageE:                                    { code: 1005, limit: true },
+    CoverageF:                                    { code: 1006, limit: true },
+    PetDamage:                                    { code: 1007, limit: false },
+    WaterBackup:                                  { code: 1008, limit: false },
+    TenantsPlusPackage:                           { code: 1009, limit: false },
+    ReplacementCost_UnscheduledPersonalProperty:  { code: 1010, limit: false },
+    ScheduledPersonalProperty:                    { code: 1011, limit: false },
+    ScheduledPersonalProperty_Jewelry:            { code: 1012, limit: true },
+    ScheduledPersonalProperty_Furs:               { code: 1013, limit: true },
+    ScheduledPersonalProperty_Silverware:         { code: 1014, limit: true },
+    ScheduledPersonalProperty_FineArts:           { code: 1015, limit: true },
+    ScheduledPersonalProperty_Cameras:            { code: 1016, limit: true },
+    ScheduledPersonalProperty_MusicalEquipment:   { code: 1017, limit: true },
+    ScheduledPersonalProperty_GolfEquipment:      { code: 1018, limit: true },
+    ScheduledPersonalProperty_StampCollections:   { code: 1019, limit: true },
+    ScheduledPersonalProperty_MensJewelry:        { code: 1020, limit: true },
+    ScheduledPersonalProperty_WomensJewelry:      { code: 1021, limit: true },
+    IncreasedPropertyLimits:                      { code: 1040, limit: true },
+    IncreasedPropertyLimits_JewelryWatchesFurs:   { code: 1041, limit: false },
+    IncreasedPropertyLimits_SilverwareGoldwarePewterware:
+                                                  { code: 1042, limit: false },
+    IncreasedPropertyLimits_JewelryWatches:       { code: 1043, limit: false },
+    AnimalLiability:                              { code: 1060, limit: true },
+    Earthquake:                                   { code: 1061, limit: false },
+    WorkersCompensation:                          { code: 1062, limit: false },
+    HomeDayCare:                                  { code: 1063, limit: false },
+    InvoluntaryUnemployment:                      { code: 1064, limit: false },
+    IdentityFraud:                                { code: 1065, limit: false },
+    FireDepartmentService:                        { code: 1066, limit: false },
+    SinkHole:                                     { code: 1067, limit: false },
+    WindHailExclusion:                            { code: 1068, limit: false },
+    OrdinanceOrLaw:                               { code: 1070, limit: false },
+    LossAssessment:                               { code: 1071, limit: true },
+    RefrigeratedProperty:                         { code: 1072, limit: false },
+    RentalIncome:                                 { code: 1073, limit: false },
+    FungiContents:                                { code: 1074, limit: false },
+    ForcedEntryTheft:                             { code: 1076, limit: false },
+    FungiLiability:                               { code: 1078, limit: false },
+    SelfStorageBuyBack:                           { code: 1081, limit: false }
+  }
   
   include HTTParty
   include ActiveModel::Validations
@@ -16,7 +67,8 @@ class MsiService
     :errors,
     :request,
     :action,
-    :rxml
+    :rxml,
+    :coverage_codes
 
   #validates :action, 
   #  presence: true,
@@ -34,7 +86,7 @@ class MsiService
   
   # Valid action names:
   #   get_or_create_community
-  #   quote_final_premium
+  #   final_premium
   def build_request(action_name, **args)
     self.action = action_name
     self.errors = nil
@@ -163,8 +215,6 @@ class MsiService
   
   
   
-  
-  
   def build_get_or_create_community(
       effective_date:,
       community_name:, number_of_units:, property_manager_name:, years_professionally_managed:, year_built:, gated:,
@@ -209,34 +259,48 @@ class MsiService
     return errors.blank?
   end
   
-  def build_quote_final_premium(
-    community_id:, effective_date:,
+  def build_final_premium(
+     effective_date:, additional_insured_count:, additional_interest_count:,
+     community_id:, #address_line_one:, city:, state:, zip:,
+     coverage_DEBUG:,
     **compilation_args
   )
-    self.action = :quote_final_premium
+    self.action = :final_premium
     self.errors = nil
-    compiled_rxml = compile_xml({
+    # arguing with arguments
+    if additional_insured_count > 7
+      return ['Additional insured count cannot exceed 7']
+    elsif additional_interest_count > 2
+      return ['Additional interest count cannot exceed 2']
+    end
+    # go go go
+    self.compiled_rxml = compile_xml({
       InsuranceSvcRq: {
         RenterPolicyQuoteInqRq: {
-          # insured or principals
           Location: {
             '': { id: '0' },
             Addr: {
               MSI_CommunityID:                  community_id
-            },
-            PersPolicy: {
-              ContractTerm: {
-                EffectiveDt:                    effective_date.strftime("%D")
-              }
-            },
-            HomeLineBusiness: {
-              Dwell: {
-                '': { LocationRef: '0', id: 'Dwell1' },
-                PolicyTypeCd: 'H04'
-              }
             }
-            #coverages
-          }
+          },
+          PersPolicy: {
+            ContractTerm: {
+              EffectiveDt:                    effective_date.strftime("%D")
+            }
+          },
+          HomeLineBusiness: {
+            Dwell: {
+              :'' => { LocationRef: 0, id: "Dwell1" },
+              PolicyTypeCd: 'H04'
+            },
+            Coverage: coverage_DEBUG
+          },
+          InsuredOrPrincipal: [
+            InsuredOrPrincipalInfo: {
+              InsuredOrPrincipalRoleCd: "PRIMARYNAMEDINSURED"
+            }
+          ] + (0...additional_insured_count).map{|n| { InsuredOrPrincipalInfo: { InsuredOrPrincipalRoleCd: "OTHERNAMEDINSURED" } } } +
+              (0...additional_interest_count).map{|n| { InsuredOrPrincipalInfo: { InsuredOrPrincipalRoleCd: "ADDITIONALINTEREST" } } }
         }
       }
     }, **compilation_args)
@@ -280,18 +344,25 @@ private
           # convert ourselves into an xml string
           child_string = obj.map do |k,v|
             # induce recursion and set line break settings
-            subxml = json_to_xml(v, abbreviate_nils: abbreviate_nils, indent: indent.nil? ? nil : indent + "  ", internal: true)
-            line_mode = !line_breaks ? :none : (subxml[:child_string].nil? || (subxml[:child_string].index("\n").nil? && subxml[:child_string].length < 64)) ? :inline : :block
-            # return our fancy little text block
-            case line_mode
-              when :none, :inline
-                "<#{k}#{subxml[:prop_string]}" + ((abbreviate_nils && subxml[:child_string].nil?) ? "/>"
-                  : (">#{subxml[:child_string].to_s}" + (closeless ? "" : "</#{k}>")))
-              when :block
-                "<#{k}#{subxml[:prop_string]}" + ((abbreviate_nils && subxml[:child_string].nil?) ? "/>"
-                  : (">\n#{indent}  #{subxml[:child_string].to_s}" + (closeless ? "" : "\n#{indent}</#{k}>")))
+            subxml_result = json_to_xml(v, abbreviate_nils: abbreviate_nils, indent: indent.nil? ? nil : indent + "  ", internal: true)
+            subxml_result = [subxml_result] unless subxml_result.class == ::Array
+            subxml_result.map do |subxml|
+              line_mode = subxml.nil? ? :cancel : !line_breaks ? :none : (subxml[:child_string].nil? || (subxml[:child_string].index("\n").nil? && subxml[:child_string].length < 64)) ? :inline : :block
+              # return our fancy little text block
+              case line_mode
+                when :none, :inline
+                  "<#{k}#{subxml[:prop_string]}" + ((abbreviate_nils && subxml[:child_string].nil?) ? "/>"
+                    : (">#{subxml[:child_string].to_s}" + (closeless ? "" : "</#{k}>")))
+                when :block
+                  "<#{k}#{subxml[:prop_string]}" + ((abbreviate_nils && subxml[:child_string].nil?) ? "/>"
+                    : (">\n#{indent}  #{subxml[:child_string].to_s}" + (closeless ? "" : "\n#{indent}</#{k}>")))
+                when :cancel
+                  nil
+              end
             end
-          end.join(line_breaks ? "\n#{indent}" : "")
+          end.flatten.compact.join(line_breaks ? "\n#{indent}" : "")
+        when ::Array
+          return obj.map{|v| json_to_xml(v, abbreviate_nils: abbreviate_nils, indent: indent, internal: true) }
         when ::NilClass
           child_string = nil
         else
@@ -304,7 +375,7 @@ private
     end
   
     def compile_xml(obj, line_breaks: false, **other_args)
-      compiled_rxml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>#{line_breaks ? "\n" : ""}" + json_to_xml({
+      "<?xml version=\"1.0\" encoding=\"UTF-8\"?>#{line_breaks ? "\n" : ""}" + json_to_xml({
         MSIACORD: {
           '': {
             'xmlns:xsd': 'http://www.w3.org/2001/XMLSchema',
