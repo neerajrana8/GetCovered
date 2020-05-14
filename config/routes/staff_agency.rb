@@ -59,7 +59,7 @@
 
     resources :carrier_insurable_profiles,
       path: "carrier-insurable-profiles",
-      only: [:update, :show]
+      only: [:update, :show, :create]
   
     resources :carriers,
       only: [ :index, :show ] do
