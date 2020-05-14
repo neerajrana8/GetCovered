@@ -170,5 +170,14 @@ class Address < ApplicationRecord
 	    }
 	  })
 	end
+  
+  def get_msi_addr(include_line2 = true)
+    {
+      Addr1: self.combined_street_address,
+      City: self.city,
+      StateProvCd: self.state,
+      PostalCode: self.zip_code
+    }.merge(include_line2 ? { Addr2: street_two.blank? ? nil : street_two } : {})
+  end
       
 end
