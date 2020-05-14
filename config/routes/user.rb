@@ -28,8 +28,11 @@ scope module: :user, path: "user" do
   resources :payments,
     only: [ :create, :index, :show ]
   
-  resources :policies,
-    only: [ :index, :show ]
+  resources :policies, only: [ :index, :show ] do
+    member do
+      get 'bulk_decline'
+    end
+  end
   
   resources :policy_applications,
     path: "policy-applications",

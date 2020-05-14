@@ -5,12 +5,14 @@
 module V2
   module User
     class PoliciesController < UserController
+
+      skip_before_action :authenticate_user!, only: [:bulk_decline]
+
+      before_action :authenticate_user_with_auth_token, only: [:bulk_decline]
       
-      before_action :set_policy,
-        only: [:show]
+      before_action :set_policy, only: [:show]
       
-      before_action :set_substrate,
-        only: [:index]
+      before_action :set_substrate, only: [:index]
       
       def index
         if params[:short]
@@ -21,6 +23,14 @@ module V2
       end
       
       def show
+      end
+
+      def bulk_decline
+        @policy = ::Policy.find(params[:id])
+        render json: { errors: ['Unauthorized Access'] }, status: :unauthorized and return unless @policy.primary_user == current_user
+
+        @policy.bulk_decline
+        render json: { message: 'Policy is declined' }
       end
       
       
