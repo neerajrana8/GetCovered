@@ -36,10 +36,9 @@ module V2
       def render_eoi
         @policy = ::Policy.find(params[:id])
         render json: { errors: ['Unauthorized Access'] }, status: :unauthorized and return unless @policy.primary_user == @user
-
         render json: {
-          evidence_of_insurance: open("#{Rails.root}/app/views/v2/pensio/evidence_of_insurance.html.erb") { |f| f.read }.html_safe,
-          summary: open("#{Rails.root}/app/views/v2/pensio/summary.html.erb") { |f| f.read }.html_safe,
+          evidence_of_insurance: render_to_string("/v2/pensio/evidence_of_insurance.html.erb", :layout => false),
+          summary: render_to_string("/v2/pensio/summary.html.erb", :layout => false),
         }
       end
       

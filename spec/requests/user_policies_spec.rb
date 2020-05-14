@@ -26,7 +26,8 @@ describe 'User Policy spec', type: :request do
     @policy.save
     @user.skip_invitation = true
     @user.invite!
-
+    @user.address = FactoryBot.create(:address)
+    @user.save
     
     @quote = PolicyQuote.create(reference: "GC-B4JN3L4C6YYI", status: "quoted", status_updated_on: 1.day.ago, agency: @agency, account: @account, policy: @policy, policy_group_quote: policy_group_quote)
     @second_quote = PolicyQuote.create(reference: "GC-B4JN3L4C6YY2", status: "quoted", status_updated_on: 1.day.ago, agency: @agency, account: @account, policy: @second_policy, policy_group_quote: policy_group_quote)
