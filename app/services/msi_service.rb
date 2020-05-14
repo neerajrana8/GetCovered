@@ -448,6 +448,27 @@ class MsiService
     return errors.blank?
   end
   
+  def build_web_api_credit_card_authorization_request(property_state:, underwriter:)
+    self.action = :web_api_credit_card_authorization_request
+    self.errors = nil
+    # do it bro, I dare you
+    self.compiled_rxml = compile_xml({
+      InsuranceSvcRq: {
+        RenterPolicyQuoteInqRq: {
+          Location: {
+            Addr: {
+              StateProvCd:                    state
+            }
+          },
+          PersPolicy: {
+            CompanyProductCd:                 underwriter
+          }
+        }
+      }
+    })
+    return errors.blank?
+  end
+  
 private
 
     def get_auth_json
