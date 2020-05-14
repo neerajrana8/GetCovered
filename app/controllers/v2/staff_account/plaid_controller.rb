@@ -11,7 +11,7 @@ module V2
           when 'development'
             :sandbox
           when 'awsdev'
-            :development
+            :sandbox
           when 'test'
             :sandbox
           when 'aws_staging'
