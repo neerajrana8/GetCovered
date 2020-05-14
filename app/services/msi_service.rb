@@ -319,9 +319,9 @@ class MsiService
     self.action = :final_premium
     self.errors = nil
     # arguing with arguments
-    if additional_insured_count > 7
+    if additional_insured.count > 7
       return ['Additional insured count cannot exceed 7']
-    elsif additional_interest_count > 2
+    elsif additional_interest.count > 2
       return ['Additional interest count cannot exceed 2']
     end
     # go go go
@@ -385,6 +385,22 @@ class MsiService
         }
       }
     }, **compilation_args)
+    return errors.blank?
+  end
+  
+  def build_policy_details(policy_number:)
+    self.action = :policy_details
+    self.errors = nil
+    # w000t
+    self.compiled_rxml = compile_xml({
+      InsuranceSvcRq: {
+        RenterPolicyQuoteInqRq: {
+          MSI_PolicySearch: {
+            PolicyNumber:                     policy_number
+          }
+        }
+      }
+    })
     return errors.blank?
   end
   
