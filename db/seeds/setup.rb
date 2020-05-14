@@ -123,6 +123,7 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
 @carriers.each do |c|
   carrier = Carrier.new(c)
   if carrier.save!
+    puts "Initializing carrier ##{carrier.id}..."
     
     carrier_policy_type = carrier.carrier_policy_types.new(application_required: carrier.id == 2 ? false : true)
     carrier.access_tokens.create!
@@ -455,14 +456,18 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
       # MSI Insurable Type for Residential Communities
       carrier_insurable_type = CarrierInsurableType.create!(carrier: carrier, insurable_type: InsurableType.find(1),
                                                             enabled: true, profile_traits: {
-                                                              # community name, number of units, address fields
-                                                              "professionally_managed_years": 6, # MUST BE PROF MAN
-                                                              "property_manager_name": nil,
-                                                              "community_sales_rep_id": nil, # ???
+                                                              # community name, number of units, address fields, property manager name
+                                                              "professionally_managed": true,
+                                                              "professionally_managed_year": nil,
                                                               "construction_year": nil,
                                                               "gated": false
                                                             },
                                                             profile_data: {
+                                                              "address_corrected": false,
+                                                              "address_correction_data": {},
+                                                              "registered_with_msi": false,
+                                                              "registered_with_msi_on": nil,
+                                                              "msi_external_id": nil
                                                             })
       # MSI Insurable Type for Residential units
       carrier_insurable_type = CarrierInsurableType.create!(carrier: carrier, insurable_type: InsurableType.find(4), enabled: true)

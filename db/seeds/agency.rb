@@ -12,6 +12,7 @@ require 'socket'
 @qbe_specialty = Carrier.find(2) # Also qbe, but has to be a seperate entity for reasons i dont understand
 @crum = Carrier.find(3)          # Commercial Carrier
 @pensio = Carrier.find(4)
+@msi = Carrier.find(5);          # Residential Carrier
 
 ##
 # Set Up Get Covered
@@ -63,6 +64,7 @@ if @get_covered.save
   @get_covered.carriers << @qbe_specialty
   @get_covered.carriers << @crum  
   @get_covered.carriers << @pensio
+  @get_covered.carriers << @msi
   
   CarrierAgency.where(agency_id: @get_covered.id, carrier_id: @qbe.id).take
                .update(external_carrier_id: "GETCVR")
@@ -80,6 +82,9 @@ if @get_covered.save
   			@policy_type = PolicyType.find(2)
   		elsif carrier.id == 3
   			@policy_type = PolicyType.find(4)
+  			@fee_amount = 2500
+  		elsif carrier.id == 5 # MOOSE WARNING: testing fee
+  			@policy_type = PolicyType.find(1)
   			@fee_amount = 2500
   		end
   		
@@ -190,6 +195,46 @@ if @get_covered.save
   		                                                      payments_per_term: 12, remainder_added_to_deposit: true },
   		                                      carrier: @pensio, policy_type: PolicyType.find(5), 
                                     				fees_attributes: [service_fee]) 
+                                            
+  # MSI / Get Covered Billing & Commission Strategies
+  
+  @get_covered.billing_strategies.create!(title: 'Annually', enabled: true, carrier: @msi, 
+                                    				policy_type: PolicyType.find(1), carrier_code: "annual",
+                                    				fees_attributes: [service_fee])
+                                    
+  @get_covered.billing_strategies.create!(title: 'Bi-Annually', enabled: true,  carrier_code: "semiannual",
+  		                                      new_business: { payments: [50, 0, 0, 0, 0, 0, 50, 0, 0, 0, 0, 0], 
+  		                                                      payments_per_term: 2, remainder_added_to_deposit: true },
+  		                                      carrier: @msi, policy_type: PolicyType.find(1), 
+                                    				fees_attributes: [service_fee])
+                                    
+  @get_covered.billing_strategies.create!(title: 'Quarterly', enabled: true,  carrier_code: "quarterly",
+  		                                      new_business: { payments: [25, 0, 0, 25, 0, 0, 25, 0, 0, 25, 0, 0], 
+  		                                                      payments_per_term: 4, remainder_added_to_deposit: true },
+  		                                      carrier: @msi, policy_type: PolicyType.find(1), 
+                                    				fees_attributes: [service_fee])
+  # MOOSE WARNING: docs say 20% down payment and 10 monthly payments... wut sense dis make?
+  @get_covered.billing_strategies.create!(title: 'Monthly', enabled: true, carrier_code: "monthly",
+  		                                      new_business: { payments: [22.01, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09], 
+  		                                                      payments_per_term: 12, remainder_added_to_deposit: true },
+  		                                      renewal: { payments: [8.37, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33], 
+  		                                                      payments_per_term: 12, remainder_added_to_deposit: true },
+  		                                      carrier: @msi, policy_type: PolicyType.find(1), 
+                                    				fees_attributes: [service_fee])
+  
+  # MOOSE WARNING: these are just copies of the QBE commission strategies and likely need to be changed
+  @get_covered.commission_strategies.create!(title: 'Get Covered / MSI Residential Commission', 
+  																						carrier: @msi, 
+  																						policy_type: PolicyType.find(1), 
+  																						amount: 30, 
+  																						type: 0, 
+  																						house_override: 0)
+  @get_covered.commission_strategies.create!(title: 'Get Covered / MSI Producer Commission', 
+  																						carrier: @msi,
+  																						policy_type: PolicyType.find(1), 
+  																						amount: 5, 
+  																						type: 0, 
+  																						house_override: 0)
 else
   pp @get_covered.errors
 end
