@@ -404,6 +404,50 @@ class MsiService
     return errors.blank?
   end
   
+  def build_policy_download(start_datetime:, end_datetime:, ignore_start_time: false, ignore_end_time: false, ignore_times: false)
+    self.action = :policy_download
+    self.errors = nil
+    # param magic
+    if ignore_times
+      ignore_start_time = true
+      ignore_end_time = true
+    end
+    start_time_code = (ignore_start_time ? "%F" : "%F %T")
+    end_time_code = (ignore_end_time ? "%F" : "%F %T")
+    # w00t!!!
+    self.compiled_rxml = compile_xml({
+      InsuranceSvcRq: {
+        RenterPolicyQuoteInqRq: {
+          TransactionStartDate:               start_datetime.strftime(start_time_code),
+          TransactionEndDate:                 end_datetime.strftime(end_time_code)
+        }
+      }
+    })
+    return errors.blank?
+  end
+  
+  def build_claims_download(start_datetime:, end_datetime:, ignore_start_time: false, ignore_end_time: false, ignore_times: false)
+    self.action = :claims_download
+    self.errors = nil
+    # param magic
+    if ignore_times
+      ignore_start_time = true
+      ignore_end_time = true
+    end
+    start_time_code = (ignore_start_time ? "%F 00:00:00" : "%F %T")
+    end_time_code = (ignore_end_time ? "%F 23:59:59" : "%F %T")
+    # w00t!!!
+    self.compiled_rxml = compile_xml({
+      InsuranceSvcRq: {
+        RenterPolicyQuoteInqRq: {
+          TransactionStartDate:               start_datetime.strftime(start_time_code),
+          TransactionEndDate:                 end_datetime.strftime(end_time_code)
+        }
+      }
+    })
+    return errors.blank?
+  end
+  
 private
 
     def get_auth_json
