@@ -366,6 +366,7 @@ class MsiService
                   InsuredOrPrincipalRoleCd: "PRIMARYNAMEDINSURED"
                 },
                 GeneralPartyInfo:             primary_insured
+              }
             }
           ] + additional_insured.map do |ai|
             {
@@ -388,7 +389,10 @@ class MsiService
     return errors.blank?
   end
   
-  def build_policy_details(policy_number:)
+  def build_policy_details(
+    policy_number:,
+    **compilation_args
+  )
     self.action = :policy_details
     self.errors = nil
     # w000t
@@ -400,11 +404,15 @@ class MsiService
           }
         }
       }
-    })
+    }, **compilation_args)
     return errors.blank?
   end
   
-  def build_policy_download(start_datetime:, end_datetime:, ignore_start_time: false, ignore_end_time: false, ignore_times: false)
+  def build_policy_download(
+    start_datetime:, end_datetime:,
+    ignore_start_time: false, ignore_end_time: false, ignore_times: false,
+    **compilation_args
+  )
     self.action = :policy_download
     self.errors = nil
     # param magic
@@ -422,11 +430,15 @@ class MsiService
           TransactionEndDate:                 end_datetime.strftime(end_time_code)
         }
       }
-    })
+    }, **compilation_args)
     return errors.blank?
   end
   
-  def build_claims_download(start_datetime:, end_datetime:, ignore_start_time: false, ignore_end_time: false, ignore_times: false)
+  def build_claims_download(
+    start_datetime:, end_datetime:,
+    ignore_start_time: false, ignore_end_time: false, ignore_times: false,
+    **compilation_args
+  )
     self.action = :claims_download
     self.errors = nil
     # param magic
@@ -436,7 +448,7 @@ class MsiService
     end
     start_time_code = (ignore_start_time ? "%F 00:00:00" : "%F %T")
     end_time_code = (ignore_end_time ? "%F 23:59:59" : "%F %T")
-    # w00t!!!
+    # yepperdoodles!!!
     self.compiled_rxml = compile_xml({
       InsuranceSvcRq: {
         RenterPolicyQuoteInqRq: {
@@ -444,11 +456,14 @@ class MsiService
           TransactionEndDate:                 end_datetime.strftime(end_time_code)
         }
       }
-    })
+    }, **compilation_args)
     return errors.blank?
   end
   
-  def build_web_api_credit_card_authorization_request(property_state:, underwriter:)
+  def build_web_api_credit_card_authorization_request(
+    property_state:, underwriter:,
+    **compilation_args
+  )
     self.action = :web_api_credit_card_authorization_request
     self.errors = nil
     # do it bro, I dare you
@@ -465,7 +480,7 @@ class MsiService
           }
         }
       }
-    })
+    }, **compilation_args)
     return errors.blank?
   end
   
