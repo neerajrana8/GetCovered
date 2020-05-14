@@ -4,9 +4,6 @@
 require 'digest'
 
 class User < ApplicationRecord
-
-  MINIMUM_TOKEN_LENGTH = 24
-  
   # Include default devise modules. Others available are:
   # :confirmable, :lockable, :timeoutable and :omniauthable
   devise :database_authenticatable, :registerable, :recoverable, :rememberable,
@@ -194,10 +191,6 @@ class User < ApplicationRecord
     else
       return "ONLY WORKS IN LOCAL AND DEVELOPMENT ENVIRONMENTS"
     end
-  end
-
-  def generate_unique_secure_token(length: MINIMUM_TOKEN_LENGTH)
-    SecureRandom.base58(length)
   end
 
   private

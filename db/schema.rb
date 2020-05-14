@@ -1201,7 +1201,6 @@ ActiveRecord::Schema.define(version: 2020_05_12_113233) do
     t.integer "mailchimp_category", default: 0
     t.string "qbe_id"
     t.integer "marital_status", default: 0
-    t.string "auth_token"
     t.index ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["invitation_token"], name: "index_users_on_invitation_token", unique: true

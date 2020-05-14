@@ -36,14 +36,22 @@ module Policies
          policy_quote.policy_premium.update(policy: policy)
 
         policy.send(issue_policy_method(integration_designation))
-        invite_users(policy)
-        UserCoverageMailer.with(policy: policy, user: policy.primary_user).proof_of_coverage.deliver
+        send_acceptance_email_to_primary_user
+        # invite_users(policy)
+        # UserCoverageMailer.with(policy: policy, user: policy.primary_user).proof_of_coverage.deliver
       else
         policy_quote.update(status: 'error')
       end
     end
 
     private
+
+    def send_acceptance_email_to_primary_user
+      user = policy.primary_user
+      user.skip_invitation = true
+      user.invite!
+      UserCoverageMailer.with(policy: policy, user: user).acceptance_email.deliver
+    end
 
     def invite_users(policy)
       policy.users.each do |user|

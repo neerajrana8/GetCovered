@@ -12,12 +12,10 @@ module V2
       super + '/user'
     end
 
-    def authenticate_user_with_auth_token
-      if !params[:auth_token].blank? && @user = ::User.find_by(auth_token: params[:auth_token])
-        @current_user ||= @user
-      else
-        render json: { errors: ['Unauthorized Access'] }, status: :unauthorized
-      end
+    def user_from_invitation_token
+      @user = ::User.find_by_invitation_token(params[:invitation_token], true)
+      return if params[:invitation_token] && @user
+      render json: { errors: ['Invalid token.'] }, status: :not_acceptable
     end
 
     # this method returns:

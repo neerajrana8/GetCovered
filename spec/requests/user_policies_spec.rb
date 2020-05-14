@@ -40,29 +40,48 @@ describe 'User Policy spec', type: :request do
   end
   
   
-  it 'should not let cancel policy for bulk Policy Application without auth_token' do
+  it 'should not let cancel policy for bulk Policy Application without invitation_token' do
     get "/v2/user/policies/#{@policy.id}/bulk_decline"
-    expect(response.body).to eq("{\"errors\":[\"Unauthorized Access\"]}")
-    expect(response.status).to eq(401)
+    expect(response.body).to eq("{\"errors\":[\"Invalid token.\"]}")
+    expect(response.status).to eq(406)
   end
   
   it 'should not let cancel policy for not primary user' do
     user = create_user
-    user.update_attribute(:auth_token, user.generate_unique_secure_token)
-    get "/v2/user/policies/#{@policy.id}/bulk_decline", params: {auth_token: user.auth_token}
+    user.skip_invitation = true
+    user.invite!
+    get "/v2/user/policies/#{@policy.id}/bulk_decline", params: {invitation_token: user.raw_invitation_token}
     expect(response.body).to eq("{\"errors\":[\"Unauthorized Access\"]}")
     expect(response.status).to eq(401)
   end
   
+  it 'should render coi and summary' do
+    get "/v2/user/policies/#{@policy.id}/render_eoi"
+    expect(response.status).to eq(200)
+    result = JSON.parse response.body
+    expect(result['evidence_of_insurance']).not_to be_empty
+    expect(result['summary']).not_to be_empty
+  end
+  
   it 'should cancel policy for bulk Policy Application with refund if 30 days' do
-    @user.update_attribute(:auth_token, @user.generate_unique_secure_token)
+    @user.skip_invitation = true
+    @user.invite!
+    allow(Rails.application.credentials).to receive(:uri).and_return({ test: { client: 'localhost' } })
+    UserCoverageMailer.with(policy: @policy, user: @user).acceptance_email.deliver
+    last_mail = Nokogiri::HTML(ActionMailer::Base.deliveries.last.html_part.body.decoded)
+    url = last_mail.css('a').first["href"]
+    token = url[/confirm\/(.*?)\?/m, 1]
+    policy_id = url[/policy_id=(.*?)$/, 1]
+    expect(token).to eq(@user.raw_invitation_token)
+    expect(policy_id.to_i).to eq(@policy.id)
+
     invoices = @policy_group_premium.policy_group_quote.invoices
     invoices.first.update(status: 'available')
     invoices.first.pay
     expect(@policy_group_premium.base).to eq(@policy_premium.base + @second_policy_premium.base + @third_policy_premium.base + @fourth_policy_premium.base)
     expect(invoices.first.total).to eq(18112)
     expect(invoices.second.total).to eq(18022)
-    get "/v2/user/policies/#{@policy.id}/bulk_decline", params: {auth_token: @user.auth_token}
+    get "/v2/user/policies/#{@policy.id}/bulk_decline", params: {invitation_token: @user.raw_invitation_token}
     expect(response.status).to eq(200)
     expect(@policy.reload.declined).to eq(true)
     expect(@policy.policy_premiums&.last&.base).to eq(0)

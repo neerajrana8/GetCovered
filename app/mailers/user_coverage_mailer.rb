@@ -19,6 +19,15 @@ class UserCoverageMailer < ApplicationMailer
       :subject => "FOR THE LOVE OF GOD GET RENTERS INSURANCE" 
     ) 
   end
+
+  def acceptance_email    
+    @title = "Rent Guarantee"
+
+	  @text = "Hello #{ @user.profile.full_name },<br><br>Thank you for choosing Pensio Tenants.<br>﻿Your Rent Guarantee registration has been accepted on #{ Time.current.strftime('%m/%d/%y') }.<br>You can accept your Rent Guarantee by <a href=\"#{ Rails.application.credentials.uri[ENV["RAILS_ENV"].to_sym][:client] }/rentguarantee/confirm/#{ @user.raw_invitation_token }?policy_id=#{ @policy.id }\">clicking here</a>.<br><br>Kind Regards,<br>Pensio Tenants Corp & the Get Covered Team<br><br>Keeping You At Home!"  
+    
+    mail(:subject => "Your New #{ @title }")
+
+  end
   
   def proof_of_coverage
     doc = @policy.documents.last
