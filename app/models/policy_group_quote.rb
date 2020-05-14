@@ -40,7 +40,7 @@ class PolicyGroupQuote < ApplicationRecord
   end
 
   def start_billing
-    if policy_group.nil? && policy_group_premium.calculation_base.positive? && status == 'accepted'
+    if policy_group.nil? && policy_group_premium.calculation_base.positive?
 
       invoices.order('due_date').each_with_index do |invoice, index|
         invoice.update status: index.zero? ? 'available' : 'upcoming'
@@ -57,9 +57,9 @@ class PolicyGroupQuote < ApplicationRecord
   private
 
   def try_update_and_start
-    update(status: :accepted)
     start_billing_result = start_billing
     if start_billing_result[:success]
+      update(status: :accepted)
       try_bind_request
     else
       set_error(:policy_group_quote_was_not_accepted, start_billing_result[:error])
