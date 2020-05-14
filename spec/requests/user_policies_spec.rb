@@ -24,6 +24,9 @@ describe 'User Policy spec', type: :request do
     
     @policy.primary_user = @user
     @policy.save
+    @user.skip_invitation = true
+    @user.invite!
+
     
     @quote = PolicyQuote.create(reference: "GC-B4JN3L4C6YYI", status: "quoted", status_updated_on: 1.day.ago, agency: @agency, account: @account, policy: @policy, policy_group_quote: policy_group_quote)
     @second_quote = PolicyQuote.create(reference: "GC-B4JN3L4C6YY2", status: "quoted", status_updated_on: 1.day.ago, agency: @agency, account: @account, policy: @second_policy, policy_group_quote: policy_group_quote)
@@ -56,7 +59,7 @@ describe 'User Policy spec', type: :request do
   end
   
   it 'should render coi and summary' do
-    get "/v2/user/policies/#{@policy.id}/render_eoi"
+    get "/v2/user/policies/#{@policy.id}/render_eoi", params: {invitation_token: @user.raw_invitation_token}
     expect(response.status).to eq(200)
     result = JSON.parse response.body
     expect(result['evidence_of_insurance']).not_to be_empty
@@ -64,8 +67,6 @@ describe 'User Policy spec', type: :request do
   end
   
   it 'should cancel policy for bulk Policy Application with refund if 30 days' do
-    @user.skip_invitation = true
-    @user.invite!
     allow(Rails.application.credentials).to receive(:uri).and_return({ test: { client: 'localhost' } })
     UserCoverageMailer.with(policy: @policy, user: @user).acceptance_email.deliver
     last_mail = Nokogiri::HTML(ActionMailer::Base.deliveries.last.html_part.body.decoded)

@@ -8,7 +8,7 @@ module V2
 
       skip_before_action :authenticate_user!, only: [:bulk_decline, :render_eoi]
 
-      before_action :user_from_invitation_token, only: [:bulk_decline]
+      before_action :user_from_invitation_token, only: [:bulk_decline, :render_eoi]
       
       before_action :set_policy, only: [:show]
       
@@ -35,6 +35,8 @@ module V2
 
       def render_eoi
         @policy = ::Policy.find(params[:id])
+        render json: { errors: ['Unauthorized Access'] }, status: :unauthorized and return unless @policy.primary_user == @user
+
         render json: {
           evidence_of_insurance: open("#{Rails.root}/app/views/v2/pensio/evidence_of_insurance.html.erb") { |f| f.read }.html_safe,
           summary: open("#{Rails.root}/app/views/v2/pensio/summary.html.erb") { |f| f.read }.html_safe,
