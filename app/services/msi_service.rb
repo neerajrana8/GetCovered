@@ -258,11 +258,11 @@ class MsiService
     }, **compilation_args)
     return errors.blank?
   end
-  
+
   def build_final_premium(
      effective_date:, additional_insured_count:, additional_interest_count:,
      community_id:, #address_line_one:, city:, state:, zip:,
-     coverage_DEBUG:,
+     coverage_DEBUG:, # MOOSE WARNING: for debug!
     **compilation_args
   )
     self.action = :final_premium
@@ -307,6 +307,84 @@ class MsiService
     return errors.blank?
   end
   
+  def build_bind_policy(
+     effective_date:, additional_insured_count:, additional_interest_count:,
+     payment_plan:, installment_day:,
+     community_id:, #address_line_one:, city:, state:, zip:,
+     payment_merchant_id:, payment_processor:, payment_method:, payment_info:, payment_other_id:,
+     primary_insured:, additional_insured:, additional_interest:,
+     coverage_DEBUG:, # MOOSE WARNING: for debug!
+    **compilation_args
+  )
+    self.action = :final_premium
+    self.errors = nil
+    # arguing with arguments
+    if additional_insured_count > 7
+      return ['Additional insured count cannot exceed 7']
+    elsif additional_interest_count > 2
+      return ['Additional interest count cannot exceed 2']
+    end
+    # go go go
+    self.compiled_rxml = compile_xml({
+      InsuranceSvcRq: {
+        RenterPolicyQuoteInqRq: {
+          Location: {
+            '': { id: '0' },
+            Addr: {
+              MSI_CommunityID:                community_id
+            }
+          },
+          PersPolicy: {
+            ContractTerm: {
+              EffectiveDt:                    effective_date.strftime("%D")
+            },
+            PaymentPlan: {
+              PaymentPlanCd:                  payment_plan,
+              InstallmentDayofMonth:          installment_day
+            },
+            PaymentMethod: {
+              MSI_PaymentMerchantID:          payment_merchant_id,
+              MSI_PaymentProcessor:           payment_processor,
+              MethodPaymentCd:                payment_method
+            }.merge(                          payment_info)
+          },
+          HomeLineBusiness: {
+            Dwell: {
+              :'' => { LocationRef: 0, id: "Dwell1" },
+              PolicyTypeCd: 'H04'
+            },
+            Coverage: coverage_DEBUG
+          },
+          InsuredOrPrincipal: [
+            {
+              ItemIdInfo: {
+                OtherIdentifier: {
+                  OtherTypeCd: "CustProfileId",
+                  OtherId:                    payment_other_id
+                },
+                InsuredOrPrincipalInfo: {
+                  InsuredOrPrincipalRoleCd: "PRIMARYNAMEDINSURED"
+                }
+              }.merge(                        primary_insured)
+            }
+          ] + additional_insured.map do |ai|
+            {
+              InsuredOrPrincipalInfo: {
+                InsuredOrPrincipalRoleCd: "OTHERNAMEDINSURED"
+              }
+            }.merge(                          ai)
+          end + additional_interest.map do |ai|
+            {
+              InsuredOrPrincipalInfo: {
+                InsuredOrPrincipalRoleCd: "ADDITIONALINTEREST"
+              }
+            }.merge(                          ai)
+          end
+        }
+      }
+    }, **compilation_args)
+    return errors.blank?
+  end
   
 private
 
