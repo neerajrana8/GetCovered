@@ -364,21 +364,23 @@ class MsiService
                 },
                 InsuredOrPrincipalInfo: {
                   InsuredOrPrincipalRoleCd: "PRIMARYNAMEDINSURED"
-                }
-              }.merge(                        primary_insured)
+                },
+                GeneralPartyInfo:             primary_insured
             }
           ] + additional_insured.map do |ai|
             {
               InsuredOrPrincipalInfo: {
                 InsuredOrPrincipalRoleCd: "OTHERNAMEDINSURED"
-              }
-            }.merge(                          ai)
+              },
+              GeneralPartyInfo:               ai
+            }
           end + additional_interest.map do |ai|
             {
               InsuredOrPrincipalInfo: {
                 InsuredOrPrincipalRoleCd: "ADDITIONALINTEREST"
-              }
-            }.merge(                          ai)
+              },
+              GeneralPartyInfo:               ai
+            }
           end
         }
       }

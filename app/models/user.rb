@@ -192,6 +192,25 @@ class User < ApplicationRecord
       return "ONLY WORKS IN LOCAL AND DEVELOPMENT ENVIRONMENTS"
     end
   end
+  
+  def get_msi_general_party_info
+    {
+      NameInfo: {
+        PersonName: {
+          GivenName: self.profile.first_name,
+          Surname:   self.profile.last_name
+        }.merge(self.profile.middle_name.blank? ? {} : { OtherGivenName: self.profile.middle_name })
+      },
+      Communications: {
+        PhoneInfo: {
+          PhoneNumber: self.profile.contact_phone.tr('^0-9', '')
+        },
+        EmailInfo: {
+          EmailAddr: self.email
+        }
+      }
+    }
+  end
 
   private
   
