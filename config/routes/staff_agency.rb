@@ -41,6 +41,7 @@
             to: "histories#index_recordable",
             via: "get",
             defaults: { recordable_type: Agency }
+          get 'branding_profile'
         end
       end
   

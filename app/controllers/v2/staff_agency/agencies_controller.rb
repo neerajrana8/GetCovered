@@ -6,7 +6,7 @@ module V2
   module StaffAgency
     class AgenciesController < StaffAgencyController
 
-      before_action :set_agency, only: [:update, :show]
+      before_action :set_agency, only: [:update, :show, :branding_profile]
 
       def index
         if params[:short]
@@ -47,6 +47,15 @@ module V2
         else
           render json: { success: false, errors: ['Unauthorized Access'] },
                  status: :unauthorized
+        end
+      end
+
+      def branding_profile
+        @branding_profile = BrandingProfile.where(profileable: @agency).take
+        if @branding_profile.present?
+          render '/v2/staff_agency/branding_profiles/show', status: :ok
+        else
+          render json: { success: false, errors: ['Agency does not have a branding profile'] }, status: :not_found
         end
       end
 
