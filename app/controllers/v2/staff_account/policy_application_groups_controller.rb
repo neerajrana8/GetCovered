@@ -88,7 +88,7 @@ module V2
       end
 
       def destroy_allowed?
-        @policy_application_group.status == :error
+        %w[error awaiting_acceptance].include?(@policy_application_group.status)
       end
 
       def set_policy_application_group
