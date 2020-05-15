@@ -98,6 +98,22 @@ describe 'User Policy spec', type: :request do
       expect(invoice.total).to eq(14522)
     end
   end
-end
 
+  it 'should send email if policy is accepted' do
+    allow(Rails.application.credentials).to receive(:uri).and_return({ test: { client: 'localhost' } })
+    user = create_user
+    user.address = FactoryBot.create(:address)
+    user.save
+    @second_policy.primary_user = user
+    @second_policy.documents.attach(io: File.open("#{Rails.root}/spec/files/eoi.pdf"), filename: "eoi.pdf")
+    @second_policy.save
+    
+    user.skip_invitation = true
+    user.invite!
+    get "/v2/user/policies/#{@second_policy.id}/bulk_accept", params: {invitation_token: user.raw_invitation_token}
+
+    expect(response.status).to eq(200)
+    expect(@second_policy.reload.declined).to eq(false)
+  end
+end
 

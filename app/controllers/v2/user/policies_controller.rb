@@ -6,9 +6,9 @@ module V2
   module User
     class PoliciesController < UserController
 
-      skip_before_action :authenticate_user!, only: [:bulk_decline, :render_eoi]
+      skip_before_action :authenticate_user!, only: [:bulk_decline, :render_eoi, :bulk_accept]
 
-      before_action :user_from_invitation_token, only: [:bulk_decline, :render_eoi]
+      before_action :user_from_invitation_token, only: [:bulk_decline, :render_eoi, :bulk_accept]
       
       before_action :set_policy, only: [:show]
       
@@ -31,6 +31,16 @@ module V2
 
         @policy.bulk_decline
         render json: { message: 'Policy is declined' }
+      end
+
+      def bulk_accept
+        @policy = ::Policy.find(params[:id])
+        render json: { errors: ['Unauthorized Access'] }, status: :unauthorized and return unless @policy.primary_user == @user
+
+        @policy.update(declined: false)
+        ::Policies::SendProofOfCoverageJob.perform_later(@policy.id)
+
+        render json: { message: 'Policy is accepted. An email sent with attached Policy' }
       end
 
       def render_eoi

@@ -32,6 +32,7 @@ scope module: :user, path: "user" do
     member do
       get 'bulk_decline'
       get 'render_eoi'
+      get 'bulk_accept'
     end
   end
   
