@@ -7,6 +7,8 @@ json.agency policy.agency
 
 json.account policy.account
 
+json.policy_application_group_id policy.policy_group&.policy_application_group&.id
+
 json.policy_application do
   if policy.policy_application.present?
     json.partial! 'v2/staff_agency/policy_applications/policy_application_show_fields.json.jbuilder',
