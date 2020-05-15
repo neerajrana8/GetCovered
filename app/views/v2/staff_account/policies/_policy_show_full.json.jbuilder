@@ -7,6 +7,8 @@ json.agency policy.agency
 
 json.account policy.account
 
+json.policy_application_group_id policy.policy_group&.policy_application_group&.id
+
 json.users do
   json.array! policy.policy_users do |policy_user|
     json.primary policy_user.primary
