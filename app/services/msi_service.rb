@@ -209,8 +209,40 @@ class MsiService
   
   
   
-  
-  
+  # address part params values:
+  #   true:         required in address
+  #   false:        omitted even if in address
+  #   nil:          use if present in address, otherwise leave out
+  #   :nil (sym):   set to nil but do not purge
+  #   some string:  use the string provided (overriding whatever is provided in address, if necessary)
+  def untangle_address_params(address: nil, address_line_one: true, address_line_two: nil, city: true, state: true, zip: true, throw_errors: true)
+    case address
+      when ::Address
+        address = address.get_msi_addr(address_line_two != false)
+      when ::Hash
+        # do nothing
+      when ::NilClass
+        address = {}
+      else
+        raise ArgumentError.new("address parameter provided with invalid class '#{address.class.name}'") if throw_errors
+        address = {}
+    end
+    lexicon = { Addr1: 'address_line_one', Addr2: 'address_line_two', City: 'city', StateProvCd: 'state', PostalCode: 'zip' }
+    valid_keys = lexicon.transform_values{|v| eval(v) }.select{|k,v| v != false }
+    address.transform_keys!{|k| k.to_sym }.delete_if{|k| !valid_keys.has_key?(k) }
+    valid_keys.each do |k,v|
+      address[k] = v unless v.nil? || v == true
+    end
+    address.compact!
+    address.transform_values!{|v| v == :nil ? nil : v }
+    if throw_errors
+      missing_params = valid_keys.select{|k,v| v == true }.keys - address.keys
+      unless missing_params.blank?
+        raise ArgumentError.new("missing keywords: #{missing_params.map{|mp| lexicon[mp] }.join(", ")}")
+      end
+    end
+    return address
+  end
   
   
   
@@ -218,9 +250,12 @@ class MsiService
   def build_get_or_create_community(
       effective_date:,
       community_name:, number_of_units:, property_manager_name:, years_professionally_managed:, year_built:, gated:,
-      address_line_one:, city:, state:, zip:,
+      address: nil, address_line_one: nil, city: nil, state: nil, zip: nil, # provide EITHER address OR these other params
       **compilation_args
   )
+    # do some fancy dynamic stuff with parameters
+    address = untangle_address_params(**{ address: address, address_line_one: address_line_one, city: city, state: state, zip: zip }.compact)
+    # put the request together
     self.action = :get_or_create_community
     self.errors = nil
     self.compiled_rxml = compile_xml({
@@ -234,13 +269,7 @@ class MsiService
             MSI_CommunitySalesRepID:          Rails.application.credentials.msi[:csr][ENV["RAILS_ENV"].to_sym].to_s,
             MSI_CommunityYearBuilt:           year_built,
             MSI_CommunityIsGated:             gated.nil? ? true : gated,
-            Addr: {
-              Addr1:                          address_line_one,
-              Addr2:                          nil,
-              City:                           city,
-              StateProvCd:                    state,
-              PostalCode:                     zip
-            }
+            Addr:                             address
           },
           PersPolicy: {
             ContractTerm: {
