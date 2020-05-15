@@ -5,7 +5,6 @@
 module V2
   module StaffSuperAdmin
     class AccountsController < StaffSuperAdminController
-
       before_action :set_account,
                     only: [:show]
 
@@ -22,26 +21,26 @@ module V2
 
       def account_policies
         account = Account.includes(:policies).find(params[:id])
-        @account_policies = account.policies || []
-        render "/v2/staff_super_admin/accounts/account_policies", status: :ok
+        @account_policies = paginator(account.policies)
+        render '/v2/staff_super_admin/accounts/account_policies', status: :ok
       end
 
       def account_communities
         account = Account.includes(:insurables).find(params[:id])
-        @account_communities = Insurable.where(account_id: account.id).communities || []
-        render "/v2/staff_super_admin/accounts/account_communities", status: :ok
+        @account_communities = paginator(Insurable.where(account_id: account.id).communities)
+        render '/v2/staff_super_admin/accounts/account_communities', status: :ok
       end
 
       def account_buildings
         account = Account.includes(:insurables).find(params[:id])
-        @account_buildings = Insurable.where(account_id: account.id).buildings || []
-        render "/v2/staff_super_admin/accounts/account_buildings", status: :ok
+        @account_buildings = paginator(Insurable.where(account_id: account.id).buildings)
+        render '/v2/staff_super_admin/accounts/account_buildings', status: :ok
       end
 
       def account_units
         account = Account.includes(:insurables).find(params[:id])
-        @account_units = Insurable.where(account_id: account.id).units || []
-        render "/v2/staff_super_admin/accounts/account_units", status: :ok
+        @account_units = paginator(Insurable.where(account_id: account.id).units)
+        render '/v2/staff_super_admin/accounts/account_units', status: :ok
       end
 
       def show
@@ -51,7 +50,7 @@ module V2
       private
 
       def view_path
-        super + "/accounts"
+        super + '/accounts'
       end
 
       def set_account
@@ -70,22 +69,22 @@ module V2
       def supported_filters(called_from_orders = false)
         @calling_supported_orders = called_from_orders
         {
-          id: [:scalar, :array],
+          id: %i[scalar array],
           agency: {
-            title: [:scalar, :like],
+            title: %i[scalar like]
           },
-          agency_id: [:scalar, :array],
+          agency_id: %i[scalar array],
           owner: {
             profile: {
-              contact_phone: [:scalar, :like],
-              contact_email: [:scalar, :like]
+              contact_phone: %i[scalar like],
+              contact_email: %i[scalar like]
             }
           },
           enabled: [:scalar],
           addresses: {
-            state: [:scalar, :array, :like],
-            city: [:scalar, :array, :like],
-            zip_code: [:scalar, :array]
+            state: %i[scalar array like],
+            city: %i[scalar array like],
+            zip_code: %i[scalar array]
           }
         }
       end
@@ -93,7 +92,6 @@ module V2
       def supported_orders
         supported_filters(true)
       end
-
     end
   end # module StaffSuperAdmin
 end
