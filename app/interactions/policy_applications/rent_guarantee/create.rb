@@ -14,7 +14,6 @@ module PolicyApplications
 
         if application.save
           if create_policy_users(application) && application.update(status: 'complete')
-            application.primary_user.invite!
             quote_attempt = application.pensio_quote
 
             unless quote_attempt[:success] == true
