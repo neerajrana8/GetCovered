@@ -105,7 +105,6 @@ describe 'User Policy spec', type: :request do
     user.address = FactoryBot.create(:address)
     user.save
     @second_policy.primary_user = user
-    @second_policy.documents.attach(io: File.open("#{Rails.root}/spec/files/eoi.pdf"), filename: "eoi.pdf")
     @second_policy.save
     
     user.skip_invitation = true
