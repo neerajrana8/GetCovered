@@ -29,6 +29,8 @@ module V2
         @policy = ::Policy.find(params[:id])
         render json: { errors: ['Unauthorized Access'] }, status: :unauthorized and return unless @policy.primary_user == @user
 
+        render json: { errors: ["Policy was already #{@policy.declined ? 'declined' : 'accepted'}"] }, status: :not_acceptable and return unless @policy.declined.nil?
+
         @policy.bulk_decline
         render json: { message: 'Policy is declined' }
       end
@@ -36,6 +38,8 @@ module V2
       def bulk_accept
         @policy = ::Policy.find(params[:id])
         render json: { errors: ['Unauthorized Access'] }, status: :unauthorized and return unless @policy.primary_user == @user
+
+        render json: { errors: ["Policy was already #{@policy.declined ? 'declined' : 'accepted'}"] }, status: :not_acceptable and return unless @policy.declined.nil?
 
         @policy.update(declined: false)
         ::Policies::SendProofOfCoverageJob.perform_later(@policy.id)

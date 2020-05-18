@@ -113,6 +113,13 @@ describe 'User Policy spec', type: :request do
 
     expect(response.status).to eq(200)
     expect(@second_policy.reload.declined).to eq(false)
+
+    # should not let accept again
+    get "/v2/user/policies/#{@second_policy.id}/bulk_accept", params: {invitation_token: user.raw_invitation_token}
+
+    expect(response.status).to eq(406)
+    expect(@second_policy.reload.declined).to eq(false)
+
   end
 end
 
