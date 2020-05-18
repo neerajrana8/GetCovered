@@ -70,8 +70,8 @@ module V2
       private
 
       def validate_accept
-        if @policy_application_group.effective_date < Time.zone.now && 
-           @policy_application_groups.policy_applications.where('effective_date < ?', Time.zone.now).any?
+        if @policy_application_group.effective_date < Time.zone.now &&
+          @policy_application_group.policy_applications.where('effective_date < ?', Time.zone.now).any?
           render json: { error: 'Incorrect effective dates' }, status: :unprocessable_entity
         end
       end
