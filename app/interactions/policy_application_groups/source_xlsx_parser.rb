@@ -179,8 +179,8 @@ module PolicyApplicationGroups
     end
 
     def row_empty?(row)
-      # Excepts always calculated field and strange ending
-      row.except("Program Fee ($)-Dollars").values[0..53].compact.blank?
+      # Excepts always calculated field and strange ending and that doesn't contain primary user's email
+      row.except("Program Fee ($)-Dollars").values[0..53].compact.blank? || row["Applicant's Name-First"].blank?
     end
   end
 end

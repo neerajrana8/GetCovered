@@ -105,7 +105,7 @@ module V2
                    status: :unprocessable_entity
           end
 
-          render json: { error: 'No rows' }, status: :unprocessable_entity if result.result.empty?
+          render json: { error: 'No valid rows' }, status: :unprocessable_entity if result.result.empty?
 
           @parsed_input_file = result.result
         else
