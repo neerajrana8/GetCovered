@@ -755,6 +755,8 @@ ActiveRecord::Schema.define(version: 2020_05_12_113233) do
     t.date "next_payment_date"
     t.bigint "policy_group_id"
     t.boolean "declined"
+    t.string "address"
+    t.string "out_of_system_carrier_title"
     t.index ["account_id"], name: "index_policies_on_account_id"
     t.index ["agency_id"], name: "index_policies_on_agency_id"
     t.index ["carrier_id"], name: "index_policies_on_carrier_id"
