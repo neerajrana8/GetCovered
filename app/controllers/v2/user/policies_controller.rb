@@ -5,12 +5,14 @@
 module V2
   module User
     class PoliciesController < UserController
+
+      skip_before_action :authenticate_user!, only: [:bulk_decline, :render_eoi, :bulk_accept]
+
+      before_action :user_from_invitation_token, only: [:bulk_decline, :render_eoi, :bulk_accept]
       
-      before_action :set_policy,
-        only: [:show]
+      before_action :set_policy, only: [:show]
       
-      before_action :set_substrate,
-        only: [:index]
+      before_action :set_substrate, only: [:index]
       
       def index
         if params[:short]
@@ -21,6 +23,37 @@ module V2
       end
       
       def show
+      end
+
+      def bulk_decline
+        @policy = ::Policy.find(params[:id])
+        render json: { errors: ['Unauthorized Access'] }, status: :unauthorized and return unless @policy.primary_user == @user
+
+        render json: { errors: ["Policy was already #{@policy.declined ? 'declined' : 'accepted'}"] }, status: :not_acceptable and return unless @policy.declined.nil?
+
+        @policy.bulk_decline
+        render json: { message: 'Policy is declined' }
+      end
+
+      def bulk_accept
+        @policy = ::Policy.find(params[:id])
+        render json: { errors: ['Unauthorized Access'] }, status: :unauthorized and return unless @policy.primary_user == @user
+
+        render json: { errors: ["Policy was already #{@policy.declined ? 'declined' : 'accepted'}"] }, status: :not_acceptable and return unless @policy.declined.nil?
+
+        @policy.update(declined: false)
+        ::Policies::SendProofOfCoverageJob.perform_later(@policy.id)
+
+        render json: { message: 'Policy is accepted. An email sent with attached Policy' }
+      end
+
+      def render_eoi
+        @policy = ::Policy.find(params[:id])
+        render json: { errors: ['Unauthorized Access'] }, status: :unauthorized and return unless @policy.primary_user == @user
+        render json: {
+          evidence_of_insurance: render_to_string("/v2/pensio/evidence_of_insurance.html.erb", :layout => false),
+          summary: render_to_string("/v2/pensio/summary.html.erb", :layout => false),
+        }
       end
       
       

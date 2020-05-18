@@ -80,6 +80,15 @@ class Invoice < ApplicationRecord
     end
   end
 
+  def refresh_quoted
+    if status == 'quoted'
+      self.subtotal = line_items.inject(0) { |result, line_item| result += line_item.price }
+      self.total = self.subtotal - self.proration_reduction
+      self.save!
+      self.line_items.update_all(priced_in: true)
+    end
+  end
+
   # Apply Proration
   #
   # Apply a proration to the invoice. If the new_term_last_date falls

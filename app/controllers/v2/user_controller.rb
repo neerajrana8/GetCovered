@@ -12,6 +12,12 @@ module V2
       super + '/user'
     end
 
+    def user_from_invitation_token
+      @user = ::User.find_by_invitation_token(params[:invitation_token], true)
+      return if params[:invitation_token] && @user
+      render json: { errors: ['Invalid token.'] }, status: :not_acceptable
+    end
+
     # this method returns:
     # - current user if you trying to get user, even if you try to get/modify user with another id;
     # - all model_class' objects (example result: current_user.invoices) if model_id is nil;
