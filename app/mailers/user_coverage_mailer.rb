@@ -23,7 +23,7 @@ class UserCoverageMailer < ApplicationMailer
   def acceptance_email    
     @title = "Rent Guarantee"
 
-	  @text = "Hello #{ @user.profile.full_name },<br><br>Thank you for choosing Pensio Tenants.<br>﻿Your Rent Guarantee registration has been accepted on #{ Time.current.strftime('%m/%d/%y') }.<br>You can accept your Rent Guarantee by <a href=\"#{ Rails.application.credentials.uri[ENV["RAILS_ENV"].to_sym][:client] }/rentguarantee/confirm/#{ @user.raw_invitation_token }?policy_id=#{ @policy.id }\">clicking here</a>.<br><br>Kind Regards,<br>Pensio Tenants Corp & the Get Covered Team<br><br>Keeping You At Home!"  
+	  @text = "Hello #{ @user.profile.full_name },<br><br>Thank you for choosing Pensio Tenants.<br>﻿Your Rent Guarantee registration has been accepted on #{ Time.current.strftime('%m/%d/%y') }.<br>You can accept your Rent Guarantee by <a href=\"#{ whitelabel_host(@policy.agency) }/rentguarantee/confirm/#{ @user.raw_invitation_token }?policy_id=#{ @policy.id }\">clicking here</a>.<br><br>Kind Regards,<br>Pensio Tenants Corp & the Get Covered Team<br><br>Keeping You At Home!"  
     
     mail(:subject => "Your New #{ @title }")
 
@@ -38,7 +38,7 @@ class UserCoverageMailer < ApplicationMailer
     
     @content = {
 	  	:title => is_policy ? "Insurance Policy" : "Rent Guarantee",
-	  	:text => is_policy ? "Hello, #{ @user.profile.full_name }<br><br>Your policy has been accepted on #{ Time.current.strftime('%m/%d/%y') }.  Your policy documents have been attached to this email.  Please log in to <a href=\"#{ Rails.application.credentials.uri[ENV["RAILS_ENV"].to_sym][:client] }\">our site</a> for more information." : "Hello #{ @user.profile.full_name },<br><br>Thank you for choosing Pensio Tenants.<br>﻿Your Rent Guarantee registration has been accepted on #{ Time.current.strftime('%m/%d/%y') }.<br>Your Rent Guarantee documents have been attached to this email.<br>Please log in to <a href=\"#{ Rails.application.credentials.uri[ENV["RAILS_ENV"].to_sym][:client] }\">our site</a> for more information.<br><br>Kind Regards,<br>Pensio Tenants Corp & the Get Covered Team<br><br>Keeping You At Home!"  
+	  	:text => is_policy ? "Hello, #{ @user.profile.full_name }<br><br>Your policy has been accepted on #{ Time.current.strftime('%m/%d/%y') }.  Your policy documents have been attached to this email.  Please log in to <a href=\"#{ whitelabel_host(@policy.agency) }\">our site</a> for more information." : "Hello #{ @user.profile.full_name },<br><br>Thank you for choosing Pensio Tenants.<br>﻿Your Rent Guarantee registration has been accepted on #{ Time.current.strftime('%m/%d/%y') }.<br>Your Rent Guarantee documents have been attached to this email.<br>Please log in to <a href=\"#{ whitelabel_host(@policy.agency) }\">our site</a> for more information.<br><br>Kind Regards,<br>Pensio Tenants Corp & the Get Covered Team<br><br>Keeping You At Home!"  
     }
     
     mail(:subject => "Your New #{ @content[:title] }")
@@ -85,6 +85,15 @@ class UserCoverageMailer < ApplicationMailer
   end
   
   private
+
+    def whitelabel_host(agency)
+      return Rails.application.credentials.uri[ENV["RAILS_ENV"].to_sym][:client] if ENV["RAILS_ENV"] != 'production'
+
+      host = agency&.branding_profiles&.last&.url
+      return 'https://getcoveredinsurance.com' if host&.blank?
+
+      host
+    end
   
     def check_user_preference
       return false if @user.nil?
