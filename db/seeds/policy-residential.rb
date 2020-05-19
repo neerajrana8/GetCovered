@@ -5,17 +5,18 @@
 @leases.each do |lease|
 # 	if rand(0..100) > 33 # Create a 66% Coverage Rate
 
-  if !lease.insurable.carrier_profile(@qbe_id).nil?
+  carrier_id = @qbe_id
+  if !lease.insurable.carrier_profile(carrier_id).nil?
 		#.insurable.carrier_profile(3)
 		policy_type = PolicyType.find(1)
-		billing_strategy = BillingStrategy.where(agency: lease.account.agency, policy_type: policy_type, carrier_id: @qbe_id)
+		billing_strategy = BillingStrategy.where(agency: lease.account.agency, policy_type: policy_type, carrier_id: carrier_id)
 		                                  .order("RANDOM()")
 		                                  .take
 		
 		application = PolicyApplication.new(
 			effective_date: lease.start_date,
 			expiration_date: lease.end_date,
-			carrier_id: 1,
+			carrier_id: carrier_id,
 			policy_type: policy_type,
 			billing_strategy: billing_strategy,
 			agency: lease.account.agency,
@@ -28,7 +29,6 @@
 		
 		if application.save()
 			community = lease.insurable.insurable
-			application.insurables << lease.insurable
 			
 			primary_user = lease.primary_user()
 			lease_users = lease.users.where.not(id: primary_user.id)
