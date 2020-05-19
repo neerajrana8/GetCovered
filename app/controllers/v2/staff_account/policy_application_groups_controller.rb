@@ -96,7 +96,8 @@ module V2
       end
 
       def parse_input_file
-        if params[:input_file].present?
+        if params[:input_file].present? &&
+           params[:input_file].content_type == 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
           file = params[:input_file].open
           result = ::PolicyApplicationGroups::SourceXlsxParser.run(xlsx_file: file)
 
@@ -109,7 +110,7 @@ module V2
 
           @parsed_input_file = result.result
         else
-          render json: { error: 'Need input_file' }, status: :unprocessable_entity
+          render json: { error: 'Need the correct xlsx spreadsheet' }, status: :unprocessable_entity
         end
       end
 
