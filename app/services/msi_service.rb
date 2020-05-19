@@ -620,7 +620,8 @@ private
           }
         }.merge(get_auth_json).merge(obj)
       },
-        line_breaks: line_breaks
+        line_breaks: line_breaks,
+        **other_args
       )
     end
 end
