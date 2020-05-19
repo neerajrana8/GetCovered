@@ -245,6 +245,38 @@ class MsiService
   end
   
   
+  def build_get_product_definition(
+    effective_date:, state:,
+    **compilation_args
+  )
+    # it's go time
+    self.action = :get_product_definition
+    self.errors = nil
+    self.compiled_rxml = compile_xml({
+      InsuranceSvcRq: {
+        RenterPolicyQuoteInqRq: {
+          Location: {
+            '': { id: "0" },
+            Addr: {
+              StateProvCd:                state
+            }
+          },
+          PersPolicy: {
+            ContractTerm: {
+              EffectiveDt:                effective_date.strftime("%F")
+            }
+          },
+          HomeLineBusiness: {
+            Dwell: {
+              '': { LocationRef: "0", id: "Dwell1" },
+              PolicyTypeCd: "H04"
+            }
+          }
+        }
+      }
+    }, **compilation_args)
+    return errors.blank?
+  end
   
   
   def build_get_or_create_community(
