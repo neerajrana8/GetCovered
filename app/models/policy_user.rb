@@ -40,8 +40,8 @@ class PolicyUser < ApplicationRecord
            user.nil?
       
       links = {
-        :accept => "#{ Rails.application.credentials.uri[ENV["RAILS_ENV"].to_sym][:client] }/confirm-policy",
-        :dispute => "#{ Rails.application.credentials.uri[ENV["RAILS_ENV"].to_sym][:client] }/dispute-policy" 
+        accept: "#{client_host_link}/confirm-policy",
+        dispute: "#{client_host_link}/dispute-policy"
       }
       
       UserCoverageMailer.with(policy: policy, user: user, links: links).added_to_policy().deliver
@@ -67,6 +67,19 @@ class PolicyUser < ApplicationRecord
   end
   
   private
+
+  def client_host_link
+    branding_profile =
+      policy&.account&.branding_profiles&.take ||
+      policy&.account&.agency&.branding_profiles&.take ||
+      policy_application&.account&.branding_profiles&.take ||
+      policy_application&.account&.agency&.branding_profiles&.take
+    if branding_profile.present?
+      branding_profile.url
+    else
+      Rails.application.credentials.uri[ENV['RAILS_ENV'].to_sym][:client]
+    end
+  end
     
     def set_first_as_primary
       ref_model = policy.nil? ? policy_application : policy
