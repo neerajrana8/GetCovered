@@ -41,7 +41,7 @@ module V2
 
         render json: { errors: ["Policy was already #{@policy.declined ? 'declined' : 'accepted'}"] }, status: :not_acceptable and return unless @policy.declined.nil?
 
-        @policy.update(declined: false)
+        @policy.update_attribute(:declined, false)
         ::Policies::SendProofOfCoverageJob.perform_later(@policy.id)
 
         render json: { message: 'Policy is accepted. An email sent with attached Policy' }
@@ -50,6 +50,9 @@ module V2
       def render_eoi
         @policy = ::Policy.find(params[:id])
         render json: { errors: ['Unauthorized Access'] }, status: :unauthorized and return unless @policy.primary_user == @user
+        
+        render json: { errors: ["Policy was already #{@policy.declined ? 'declined' : 'accepted'}"] }, status: :not_acceptable and return unless @policy.declined.nil?
+
         render json: {
           evidence_of_insurance: render_to_string("/v2/pensio/evidence_of_insurance.html.erb", :layout => false),
           summary: render_to_string("/v2/pensio/summary.html.erb", :layout => false),
