@@ -131,12 +131,12 @@ module CarrierMsiInsurable
           return ["Service call resulted in error"] # MOOSE WARNING: make service store easily-accessible error message & pull it here
         else
           # MOOSE WARNING: handle stuff here.....
-          ### external_id = msi_data[:data].dig("MSIACORD", "InsuranceSvcRs", "RenterPolicyQuoteInqRs", "MSI_CommunityInfo", "MSI_CommunityID")
-          ####### 
-          ###
-          #
-          #
-          
+          # grab relevant bois from out da hood
+          product = msi_data[:data].dig("MSIACORD", "InsuranceSvcRs", "RenterPolicyQuoteInqRs", "MSI_ProductDefinition")
+          coverages = product.dig("MSI_ProductCoverageList", "MSI_ProductCoverageDefinition")
+          deductibles = product.dig("MSI_ProductDeductibleList", "MSI_ProductDeductibleDefinition")
+          payment_plans = product.dig("MSI_ProductPaymentPlanDefinition", "MSI_ProductPaymentPlanDefinition")
+          # 
         end
       end
     end
