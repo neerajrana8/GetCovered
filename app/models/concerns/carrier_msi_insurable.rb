@@ -17,15 +17,15 @@ module CarrierMsiInsurable
 	    @address = primary_address()
 	    return ["Community lacks a primary address"] if @address.nil?
       # try to build the request
+      msi_service = MsiService.new
       event = events.new(
         verb: 'post',
         format: 'xml',
         interface: 'REST',
-        endpoint: Rails.application.credentials.msi[:uri][ENV["RAILS_ENV"].to_sym],
+        endpoint: msi_service.endpoint_for(:get_or_create_community),
         process: 'msi_get_or_create_community'
       )
       # MOOSE WARNING figure out what to do with CarrierAgency external id
-      msi_service = MsiService.new
       succeeded = msi_service.build_request(:get_or_create_community,
         effective_date:                 Time.current.to_date + 1.day,
         
@@ -88,6 +88,57 @@ module CarrierMsiInsurable
       end
       # finished successfully
       return nil
+    end
+    
+    def make_rates(state, effective_date: Time.current.to_date + 1.day)
+      # try to build the request
+      msi_service = MsiService.new
+      event = events.new(
+        verb: 'post',
+        format: 'xml',
+        interface: 'REST',
+        endpoint: msi_service.endpoint_for(:get_product_definition),
+        process: 'msi_get_product_definition'
+      )
+      # MOOSE WARNING figure out what to do with CarrierAgency external id
+      succeeded = msi_service.build_request(:get_product_definition,
+        effective_date:                 effective_date,
+        state:                          state
+      )
+      if !succeeded
+        if msi_service.errors.blank?
+          return ["Building GetProductDefinition request failed"]
+        else
+          return msi_service.errors.map{|err| "GetProductDefinition service call error: #{err}" }
+        end
+      end
+      event.request = msi_service.compiled_rxml
+      # try to execute the request
+      if !event.save
+        return ["Failed to save service call status-tracking Event: #{event.errors.to_h}"]
+      else
+        # execute & log
+        event.started = Time.now
+        msi_data = msi_service.call
+        event.completed = Time.now     
+        event.response = msi_data[:data]
+        event.status = msi_data[:error] ? 'error' : 'success'
+        unless event.save
+          return ["Failed to save response to service call status-tracking Event"]
+        end
+        # handle response
+        if msi_data[:error]
+          return ["Service call resulted in error"] # MOOSE WARNING: make service store easily-accessible error message & pull it here
+        else
+          # MOOSE WARNING: handle stuff here.....
+          ### external_id = msi_data[:data].dig("MSIACORD", "InsuranceSvcRs", "RenterPolicyQuoteInqRs", "MSI_CommunityInfo", "MSI_CommunityID")
+          ####### 
+          ###
+          #
+          #
+          
+        end
+      end
     end
 	  
 	end

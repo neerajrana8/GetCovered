@@ -98,6 +98,9 @@ class MsiService
     return self.errors.blank?
   end
   
+  def endpoint_for(which_call)
+    Rails.application.credentials.msi[:uri][ENV['RAILS_ENV'].to_sym] + "/#{which_call.to_s.camelize}"
+  end
   
   ##
   def call
@@ -111,7 +114,7 @@ class MsiService
     }
     begin
       
-      call_data[:response] = HTTParty.post(Rails.application.credentials.msi[:uri][ENV['RAILS_ENV'].to_sym] + "/#{self.action.to_s.camelize}",
+      call_data[:response] = HTTParty.post(endpoint_for(self.action),
         body: compiled_rxml,
         headers: {
           'Content-Type' => 'text/xml'
