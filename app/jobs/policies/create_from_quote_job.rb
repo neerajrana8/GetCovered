@@ -55,7 +55,8 @@ module Policies
     def send_acceptance_email_to_primary_user(policy)
       user = policy.primary_user
       user.skip_invitation = true
-      user.invite!(nil, client_host: (policy.account.branding_profiles.take || policy.account.agency.branding_profiles.take)&.url)
+      branding_profile_url = BrandingProfiles::FindByObject.run!(object: policy)&.url
+      user.invite!(nil, client_host: branding_profile_url)
       UserCoverageMailer.with(policy: policy, user: user).acceptance_email.deliver
     end
 

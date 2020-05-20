@@ -30,8 +30,10 @@ class PolicyUser < ApplicationRecord
   end
   
   def invite
-    
     invite_sent = false
+    client_host_link =
+      BrandingProfiles::FindByObject.run!(object: self)&.url ||
+      Rails.application.credentials.uri[ENV['RAILS_ENV'].to_sym][:client]
     
     unless disputed? || 
            accepted? ||
@@ -67,20 +69,6 @@ class PolicyUser < ApplicationRecord
   end
   
   private
-
-  def client_host_link
-    branding_profile =
-      policy&.account&.branding_profiles&.take ||
-      policy&.account&.agency&.branding_profiles&.take ||
-      policy_application&.account&.branding_profiles&.take ||
-      policy_application&.account&.agency&.branding_profiles&.take
-    if branding_profile.present?
-      branding_profile.url
-    else
-      Rails.application.credentials.uri[ENV['RAILS_ENV'].to_sym][:client]
-    end
-  end
-    
     def set_first_as_primary
       ref_model = policy.nil? ? policy_application : policy
       if ref_model.policy_users.count == 0
