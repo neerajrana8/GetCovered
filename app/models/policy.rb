@@ -118,7 +118,8 @@ class Policy < ApplicationRecord
   validate :same_agency_as_account
   validate :status_allowed
   validate :carrier_agency
-  validates_presence_of :expiration_date, :effective_date
+  # validates_presence_of :expiration_date, :effective_date
+  validate :effective_date_expiration_date
   validate :date_order,
     unless: proc { |pol| pol.effective_date.nil? || pol.expiration_date.nil? }
 
@@ -137,6 +138,14 @@ class Policy < ApplicationRecord
 
   def premium
     policy_premiums.where(enabled: true).take
+  end
+
+  def effective_date_expiration_date
+    if policy_type_id == 2 || policy_type_id == 3
+      validates_presence_of :effective_date
+    else
+      validates_presence_of :expiration_date, :effective_date
+    end
   end
 
   	# PolicyApplication.primary_insurable
