@@ -154,7 +154,8 @@ module V2
 							)
 						end
             policy_user = @application.policy_users.create!(policy_user_params)
-            policy_user.user.invite! if index == 0
+						client_host_url = BrandingProfiles::FindByObject.run!(object: @application)&.url
+            policy_user.user.invite!(nil, client_host: client_host_url) if index == 0
           end
 				end
 
@@ -174,7 +175,10 @@ module V2
     		    if @application.update(status: 'in_progress')
               # Commercial Application Saved
               
-      		    @application.primary_user().invite!
+      		    @application.primary_user().invite!(
+								nil,
+								client_host: BrandingProfiles::FindByObject.run!(object: @application)&.url
+							)
       		    render "v2/public/policy_applications/show"
       		    							
       		  else
@@ -204,7 +208,10 @@ module V2
     		    if @application.update(status: 'complete')
               # Commercial Application Saved
               
-      		    @application.primary_user().invite!
+      		    @application.primary_user().invite!(
+								nil,
+								client_host: BrandingProfiles::FindByObject.run!(object: @application)&.url
+							)
               quote_attempt = @application.crum_quote()
               
     					if quote_attempt[:success] == true
