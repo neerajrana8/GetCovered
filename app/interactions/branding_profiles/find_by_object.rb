@@ -9,7 +9,7 @@ module BrandingProfiles
     private
 
     def agency
-      agency.branding_profiles.last
+      object.branding_profiles.last
     end
 
     def account
@@ -20,7 +20,7 @@ module BrandingProfiles
     end
 
     def policy
-      self.class.run!(object: object.account)
+      self.class.run!(object: object.account) || self.class.run!(object: object.agency)
     end
 
     def policy_user
@@ -36,7 +36,7 @@ module BrandingProfiles
     end
 
     def policy_application
-      self.class.run!(object: object.account)
+      self.class.run!(object: object.account) || self.class.run!(object: object.agency)
     end
   end
 end
