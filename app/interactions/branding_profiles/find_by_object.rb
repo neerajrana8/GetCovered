@@ -32,7 +32,7 @@ module BrandingProfiles
     # let's assume that user relates only to one active account. Because of uncertainty,  I recommend to use this method
     # only if other aren't available
     def user
-      self.class.run!(object: user.accounts.last)
+      self.class.run!(object: object.accounts.last)
     end
 
     def policy_application
