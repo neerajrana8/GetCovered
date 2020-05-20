@@ -10,18 +10,18 @@ class UserCoverageMailer < ApplicationMailer
 
   def coverage_required
     mail(
-      :subject => "Get Renters Insurance"
+      :subject => 'Get Renters Insurance'
     )
   end
 
   def coverage_required_follow_up
     mail(
-      :subject => "FOR THE LOVE OF GOD GET RENTERS INSURANCE"
+      :subject => 'FOR THE LOVE OF GOD GET RENTERS INSURANCE'
     )
   end
 
   def acceptance_email
-    @title = "Rent Guarantee"
+    @title = 'Rent Guarantee'
 
     @text = "Hello #{ @user.profile.full_name },<br><br>Thank you for choosing Pensio Tenants.<br>﻿Your Rent Guarantee registration has been accepted on #{ Time.current.strftime('%m/%d/%y') }.<br>You can accept your Rent Guarantee by <a href=\"#{ whitelabel_host(@policy.agency) }/rentguarantee/confirm/#{ @user.raw_invitation_token }?policy_id=#{ @policy.id }\">clicking here</a>.<br><br>Kind Regards,<br>Pensio Tenants Corp & the Get Covered Team<br><br>Keeping You At Home!"
 
@@ -37,7 +37,7 @@ class UserCoverageMailer < ApplicationMailer
     is_policy = @policy.policy_type_id == 5 ? false : true
 
     @content = {
-      :title => is_policy ? "Insurance Policy" : "Rent Guarantee",
+      :title => is_policy ? 'Insurance Policy' : 'Rent Guarantee',
       :text => is_policy ? "Hello, #{ @user.profile.full_name }<br><br>Your policy has been accepted on #{ Time.current.strftime('%m/%d/%y') }.  Your policy documents have been attached to this email.  Please log in to <a href=\"#{ whitelabel_host(@policy.agency) }\">our site</a> for more information." : "Hello #{ @user.profile.full_name },<br><br>Thank you for choosing Pensio Tenants.<br>﻿Your Rent Guarantee registration has been accepted on #{ Time.current.strftime('%m/%d/%y') }.<br>Your Rent Guarantee documents have been attached to this email.<br>Please log in to <a href=\"#{ whitelabel_host(@policy.agency) }\">our site</a> for more information.<br><br>Kind Regards,<br>Pensio Tenants Corp & the Get Covered Team<br><br>Keeping You At Home!"
     }
 
@@ -47,16 +47,16 @@ class UserCoverageMailer < ApplicationMailer
   def commercial_quote
     file_url = "#{Rails.application.credentials.uri[ENV["RAILS_ENV"].to_sym][:api]}#{Rails.application.routes.url_helpers.rails_blob_path(@quote.documents.last, only_path: true)}"
     attachments["quote-#{ @quote.external_id }.pdf"] = open(file_url).read
-    mail(:subject => "Your New Insurance Quote")
+    mail(:subject => 'Your New Insurance Quote')
   end
 
   def added_to_policy
-    mail(:subject => "You have been added to a new policy")
+    mail(:subject => 'You have been added to a new policy')
   end
 
   def policy_expiring
     mail(
-      :subject => "Your policy is expiring"
+      :subject => 'Your policy is expiring'
     )
   end
 
@@ -87,12 +87,8 @@ class UserCoverageMailer < ApplicationMailer
   private
 
   def whitelabel_host(agency)
-    return Rails.application.credentials.uri[ENV["RAILS_ENV"].to_sym][:client] if ENV["RAILS_ENV"] != 'production'
-
-    host = agency&.branding_profiles&.last&.url
-    return 'https://getcoveredinsurance.com' if host&.blank?
-
-    host
+   BrandingProfiles::FindByObject.run!(object: agency)&.url ||
+     Rails.application.credentials.uri[ENV['RAILS_ENV'].to_sym][:client]
   end
 
   def check_user_preference
