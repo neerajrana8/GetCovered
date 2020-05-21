@@ -128,10 +128,11 @@ module PolicyApplicationGroups
               first_name: row["Applicant's Name-First"],
               last_name: row["Applicant's Name-Last"],
               job_title: row["Applicant's Employment Description"],
-              contact_phone: row["Phone number"],
+              contact_phone: row["Applicant's Phone number"],
+              contact_email: row["Co-Tenant Email address2"],
               birth_date: row["Applicant's Date of birth"]&.to_s,
-              gender: row["Gender"],
-              salutation: row['Salutation']
+              gender: row["Gender"]&.downcase,
+              salutation: row['Salutation']&.downcase
             },
             address_attributes: {
               street_number: '',
@@ -157,9 +158,10 @@ module PolicyApplicationGroups
               last_name: row["Co-Tenant Name-Last"],
               job_title: row["Co-Tenant Employment Description"],
               contact_phone: row["Co-Tenant Phone number"],
+              contact_email: row["Applicant's Email address"],
               birth_date: row["Co-Tenant Date of birth"]&.to_s,
-              gender: row["Gender2"],
-              salutation: row["Co-Tenant Salutation"],
+              gender: row["Gender2"]&.downcase,
+              salutation: row["Co-Tenant Salutation"]&.downcase
             },
             address_attributes: {
               street_number: '',
