@@ -4,6 +4,7 @@ module V2
     class PolicyApplicationGroupsController < StaffAccountController
       before_action :set_policy_application_group, only: %i[show update accept destroy]
       before_action :parse_input_file, only: %i[create]
+      before_action :validate_accept, only: %i[accept]
 
       def index
         groups_query = ::PolicyApplicationGroup.order(created_at: :desc).where(account: current_staff&.organizable)
@@ -82,6 +83,13 @@ module V2
       end
 
       private
+
+      def validate_accept
+        if @policy_application_group.effective_date < Time.zone.now &&
+          @policy_application_group.policy_applications.where('effective_date < ?', Time.zone.now).any?
+          render json: { error: 'Incorrect effective dates' }, status: :unprocessable_entity
+        end
+      end
 
       def policy_application_group_params
         billing_strategy =
