@@ -123,7 +123,8 @@ module V2
       end
 
       def parse_input_file
-        if params[:input_file].present?
+        if params[:input_file].present? &&
+           params[:input_file].content_type == 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
           file = params[:input_file].open
           result = ::PolicyApplicationGroups::SourceXlsxParser.run(xlsx_file: file)
 
@@ -132,11 +133,11 @@ module V2
                    status: :unprocessable_entity
           end
 
-          render json: { error: 'No rows' }, status: :unprocessable_entity if result.result.empty?
+          render json: { error: 'No valid rows' }, status: :unprocessable_entity if result.result.empty?
 
           @parsed_input_file = result.result
         else
-          render json: { error: 'Need input_file' }, status: :unprocessable_entity
+          render json: { error: 'Need the correct xlsx spreadsheet' }, status: :unprocessable_entity
         end
       end
 
