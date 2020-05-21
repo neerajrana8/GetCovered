@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_05_12_113233) do
+ActiveRecord::Schema.define(version: 2020_05_21_070251) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -137,6 +137,19 @@ ActiveRecord::Schema.define(version: 2020_05_12_113233) do
     t.string "slug"
     t.jsonb "nodes", default: {}
     t.boolean "enabled"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
+  create_table "application_notifications", force: :cascade do |t|
+    t.string "action"
+    t.string "subject"
+    t.integer "status"
+    t.integer "code"
+    t.boolean "read", default: false
+    t.integer "notifiable_id"
+    t.string "notifiable_type"
+    t.string "message"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
   end
@@ -757,11 +770,13 @@ ActiveRecord::Schema.define(version: 2020_05_12_113233) do
     t.boolean "declined"
     t.string "address"
     t.string "out_of_system_carrier_title"
+    t.bigint "policy_id"
     t.index ["account_id"], name: "index_policies_on_account_id"
     t.index ["agency_id"], name: "index_policies_on_agency_id"
     t.index ["carrier_id"], name: "index_policies_on_carrier_id"
     t.index ["number"], name: "index_policies_on_number", unique: true
     t.index ["policy_group_id"], name: "index_policies_on_policy_group_id"
+    t.index ["policy_id"], name: "index_policies_on_policy_id"
     t.index ["policy_type_id"], name: "index_policies_on_policy_type_id"
   end
 
