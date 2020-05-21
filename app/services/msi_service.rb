@@ -349,7 +349,7 @@ class MsiService
           },
           PersPolicy: {
             ContractTerm: {
-              EffectiveDt:                    effective_date.strftime("%D")
+              EffectiveDt:                    effective_date.strftime("%m/%d/%Y")
             }
           },
           HomeLineBusiness: {
@@ -417,7 +417,7 @@ class MsiService
           ],
           PersPolicy: {
             ContractTerm: {
-              EffectiveDt:                    effective_date.strftime("%D")
+              EffectiveDt:                    effective_date.strftime("%m/%d/%Y")
             },
             PaymentPlan: {
               PaymentPlanCd:                  payment_plan,
@@ -443,11 +443,11 @@ class MsiService
                   OtherTypeCd: "CustProfileId",
                   OtherId:                    payment_other_id
                 },
-                InsuredOrPrincipalInfo: {
-                  InsuredOrPrincipalRoleCd: "PRIMARYNAMEDINSURED"
-                },
-                GeneralPartyInfo:             primary_insured
-              }
+              },
+              InsuredOrPrincipalInfo: {
+                InsuredOrPrincipalRoleCd: "PRIMARYNAMEDINSURED"
+              },
+              GeneralPartyInfo:             primary_insured
             }
           ] + additional_insured.map do |ai|
             {
