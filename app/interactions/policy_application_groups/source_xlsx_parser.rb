@@ -35,6 +35,14 @@ module PolicyApplicationGroups
         return false
       end
 
+      if row["Co-Tenant Email address2"] == row["Applicant's Email address"]
+        errors[:bad_rows] << {
+          message: "A co-tenant can't have the same email with an applicant",
+          column: row["Applicant's Email address"]
+        }
+        return false
+      end
+
       true
     end
 
