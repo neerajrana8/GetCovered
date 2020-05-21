@@ -221,6 +221,42 @@ class Policy < ApplicationRecord
     )
   end
 
+  def bulk_decline
+    update(declined: true)
+    generate_refund if created_at > 1.month.ago
+    subtract_from_future_invoices
+    recalculate_policy_premium
+  end
+
+  def bulk_premium_amount
+    premium = policy_premiums&.last&.total || 0
+    terms = policy_premiums&.last&.billing_strategy&.new_business&.[]('payments_per_term') || 12
+    amount = premium / terms
+    amount
+  end
+
+  def generate_refund
+    amount = bulk_premium_amount
+    charge = policy_group&.policy_group_premium&.policy_group_quote&.invoices&.first&.charges&.first
+    return if bulk_premium_amount.zero? || charge.nil?
+
+    charge.refunds.create(amount: amount, currency: 'usd')
+  end
+
+  def recalculate_policy_premium
+    policy_premiums&.last&.update(base: 0, taxes: 0, total_fees: 0, total: 0, calculation_base: 0, deposit_fees: 0, amortized_fees: 0, carrier_base: 0, special_premium: 0)
+    policy_group&.policy_group_premium&.calculate_total
+  end
+
+  def subtract_from_future_invoices
+    amount = bulk_premium_amount
+    policy_group&.policy_group_premium&.policy_group_quote&.invoices&.quoted&.each do |invoice|      
+      line_item = invoice.line_items.base_premium.take
+      line_item.price = line_item.price - amount
+      line_item.save
+      invoice.refresh_quoted
+    end
+  end
 
   def residential?
     policy_type == PolicyType.residential

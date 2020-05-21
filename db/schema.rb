@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_05_11_121420) do
+ActiveRecord::Schema.define(version: 2020_05_12_113233) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -754,6 +754,9 @@ ActiveRecord::Schema.define(version: 2020_05_11_121420) do
     t.date "last_payment_date"
     t.date "next_payment_date"
     t.bigint "policy_group_id"
+    t.boolean "declined"
+    t.string "address"
+    t.string "out_of_system_carrier_title"
     t.index ["account_id"], name: "index_policies_on_account_id"
     t.index ["agency_id"], name: "index_policies_on_agency_id"
     t.index ["carrier_id"], name: "index_policies_on_carrier_id"
