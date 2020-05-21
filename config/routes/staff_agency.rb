@@ -45,6 +45,9 @@
         end
       end
   
+    resources :fees,
+      only: [ :create, :update, :index, :show ]
+
     resources :assignments,
       only: [ :create, :update, :destroy, :index, :show ]
   

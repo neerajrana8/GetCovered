@@ -2,7 +2,7 @@ module V2
   module StaffAccount
     # This controller is used to the bulk policy creation
     class PolicyApplicationGroupsController < StaffAccountController
-      before_action :set_policy_application_group, only: %i[show accept destroy]
+      before_action :set_policy_application_group, only: %i[show update accept destroy]
       before_action :parse_input_file, only: %i[create]
       before_action :validate_accept, only: %i[accept]
 
@@ -30,6 +30,21 @@ module V2
         end
 
         render template: 'v2/shared/policy_application_groups/show.json.jbuilder', status: :ok
+      end
+
+      def update
+        if edit_allowed?
+          ap common_params
+          ActiveRecord::Base.transaction do
+            @policy_application_group.update(common_params)
+            @policy_application_group.policy_applications.update_all(common_params.to_h)
+            @policy_application_group.policy_group_quote&.generate_invoices_for_term(false, true)
+          end
+          render template: 'v2/shared/policy_application_groups/show.json.jbuilder', status: :ok
+        else
+          render json: { success: false, errors: ['The policy application is in the wrong state'] },
+                 status: :unprocessable_entity
+        end
       end
 
       def show
@@ -62,7 +77,7 @@ module V2
             render json: { success: false, messages: result.errors.messages }, status: :unprocessable_entity
           end
         else
-          render json: { success: false, errors: ['Unauthorized Access'] },
+          render json: { success: false, errors: ['The policy application is in the wrong state'] },
                  status: :unprocessable_entity
         end
       end
@@ -93,6 +108,10 @@ module V2
           auto_pay: false,
           billing_strategy: billing_strategy
         }.merge(common_params)
+      end
+
+      def edit_allowed?
+        %w[awaiting_acceptance].include?(@policy_application_group.status)
       end
 
       def destroy_allowed?

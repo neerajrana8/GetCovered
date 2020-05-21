@@ -93,7 +93,9 @@ class PolicyUser < ApplicationRecord
     end
     
     def user_listed_once
-      user_ids = policy_application.users.map(&:id)
-      errors.add(:user, "Already included on policy or policy application") if user_ids.count(user.id) > 1  
+      if policy_application
+        user_ids = policy_application.users.map(&:id)
+        errors.add(:user, "Already included on policy or policy application") if user_ids.count(user.id) > 1  
+      end
     end
 end
