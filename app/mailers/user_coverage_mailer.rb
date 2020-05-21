@@ -87,8 +87,8 @@ class UserCoverageMailer < ApplicationMailer
   private
 
   def whitelabel_host(agency)
-   BrandingProfiles::FindByObject.run!(object: agency)&.url ||
-     Rails.application.credentials.uri[ENV['RAILS_ENV'].to_sym][:client]
+    BrandingProfiles::FindByObject.run!(object: agency)&.url ||
+      Rails.application.credentials.uri[ENV['RAILS_ENV'].to_sym][:client]
   end
 
   def check_user_preference
