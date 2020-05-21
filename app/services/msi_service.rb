@@ -372,14 +372,19 @@ class MsiService
   end
   
   def build_bind_policy(
-     effective_date:, additional_insured_count:, additional_interest_count:,
+     effective_date:,
      payment_plan:, installment_day:,
-     community_id:, #address_line_one:, city:, state:, zip:,
+     community_id:,
+     unit: nil,
+     unit_prefix: unit.nil? ? nil : "Apartment",
+     address: nil, address_line_one: nil, city: nil, state: nil, zip: nil, # provide EITHER address OR these other params
+     maddress: nil, maddress_line_one: nil, maddress_line_two: nil, mcity: nil, mstate: nil, mzip: nil, # provide EITHER address OR these other params
      payment_merchant_id:, payment_processor:, payment_method:, payment_info:, payment_other_id:,
      primary_insured:, additional_insured:, additional_interest:,
      coverage_DEBUG:, # MOOSE WARNING: for debug!
     **compilation_args
   )
+    # set up
     self.action = :final_premium
     self.errors = nil
     # arguing with arguments
@@ -388,16 +393,28 @@ class MsiService
     elsif additional_interest.count > 2
       return ['Additional interest count cannot exceed 2']
     end
+    address = untangle_address_params(**{ address: address, address_line_one: address_line_one, address_line_two: unit.nil? ? false : "#{unit_prefix ? unit_prefix.strip + " " : ""}#{unit}", city: city, state: state, zip: zip }.compact)
+    if !maddress.nil? || !maddress_line_one.nil? || !maddress_line_two.nil? || !mcity.nil? || !mstate.nil? || !mzip.nil?
+      maddress = untangle_address_params(**{ address: maddress, address_line_one: maddress_line_one, address_line_two: maddress_line_two || false, city: mcity, state: mstate, zip: mzip }.compact)
+    else
+      maddress = address
+    end
     # go go go
     self.compiled_rxml = compile_xml({
       InsuranceSvcRq: {
         RenterPolicyQuoteInqRq: {
-          Location: {
-            '': { id: '0' },
-            Addr: {
-              MSI_CommunityID:                community_id
+          Location: [
+            {
+              '': { id: '0' },
+              MSI_CommunityID:                  community_id,
+              MSI_Unit:                         unit,
+              Addr:                             address
+            }.compact,
+            {
+              '': { id: '1' },
+              Addr:                             address
             }
-          },
+          ],
           PersPolicy: {
             ContractTerm: {
               EffectiveDt:                    effective_date.strftime("%D")
