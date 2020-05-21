@@ -385,7 +385,7 @@ class MsiService
     **compilation_args
   )
     # set up
-    self.action = :final_premium
+    self.action = :bind_policy
     self.errors = nil
     # arguing with arguments
     if additional_insured.count > 7
@@ -406,14 +406,16 @@ class MsiService
           Location: [
             {
               '': { id: '0' },
-              MSI_CommunityID:                  community_id,
-              MSI_Unit:                         unit,
-              Addr:                             address
-            }.compact,
-            {
-              '': { id: '1' },
-              Addr:                             address
-            }
+
+              Addr:                             address.merge({
+                            MSI_CommunityID:                  community_id,
+              MSI_Unit:                         unit
+             })
+            }.compact#,
+            #{
+            #  '': { id: '1' },
+            #  Addr:                             address
+            #}
           ],
           PersPolicy: {
             ContractTerm: {
@@ -440,7 +442,7 @@ class MsiService
             {
               ItemIdInfo: {
                 OtherIdentifier: {
-                  OtherTypeCd: "CustProfileId",
+                  OtherIdTypeCd: "CustProfileId",
                   OtherId:                    payment_other_id
                 },
               },
