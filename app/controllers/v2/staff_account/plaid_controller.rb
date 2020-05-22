@@ -11,7 +11,7 @@ module V2
           when 'development'
             :sandbox
           when 'awsdev'
-            :development
+            :sandbox
           when 'test'
             :sandbox
           when 'aws_staging'
@@ -30,7 +30,7 @@ module V2
         access_token = exchange_token_response['access_token']
         
         stripe_response = client.processor.stripe.bank_account_token.create(access_token, params[:account_id])
-        payment_profile = current_staff.payment_profiles.new(
+        payment_profile = current_staff.organizable.payment_profiles.new(
           source_id: stripe_response['stripe_bank_account_token'], 
           source_type: 'bank_account'
         )

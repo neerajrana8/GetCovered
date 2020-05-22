@@ -96,7 +96,7 @@ class Agency < ApplicationRecord
   
   def owner
     staff.where(id: staff_id).take
-   end
+  end
   
   def primary_address
     addresses.where(primary: true).take 

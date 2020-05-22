@@ -16,7 +16,7 @@ production:
     class: Reports::CoverageReportsJob
   active_reports_job:
     cron: '0 2 * * *'   # Every day at 2:00 AM
-    class: Reports::ActiveReportsJob
+    class: Reports::ActivityReportsJob
   third_party_soon_to_expire_reports_job:
     cron: '0 0 2 * * *'   # Every day at 2:00 AM
     class: Reports::ThirdPartySoonToExpireReportsJob

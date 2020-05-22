@@ -41,9 +41,13 @@
             to: "histories#index_recordable",
             via: "get",
             defaults: { recordable_type: Agency }
+          get 'branding_profile'
         end
       end
   
+    resources :fees,
+      only: [ :create, :update, :index, :show ]
+
     resources :assignments,
       only: [ :create, :update, :destroy, :index, :show ]
   

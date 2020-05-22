@@ -40,31 +40,32 @@ class PolicyGroupQuote < ApplicationRecord
   end
 
   def start_billing
-    billing_started = false
-
-    if policy_group.nil? && policy_group_premium.calculation_base.positive? && status == 'accepted'
+    if policy_group.nil? && policy_group_premium.calculation_base.positive?
 
       invoices.order('due_date').each_with_index do |invoice, index|
         invoice.update status: index.zero? ? 'available' : 'upcoming'
       end
-      charge_invoice = invoices.order('due_date').first.pay(stripe_source: :default)
-      ap charge_invoice
-      return true if charge_invoice[:success] == true
+      invoices.order('due_date').first.pay(stripe_source: :default)
+    else
+      {
+        success: false,
+        error: 'Quote ineligible for acceptance'
+      }
     end
-    billing_started
   end
 
   private
 
   def try_update_and_start
-    if update(status: :accepted) && start_billing
+    start_billing_result = start_billing
+    if start_billing_result[:success]
+      update(status: :accepted)
       try_bind_request
     else
-      message = 'Quote billing failed, unable to write policy'
-      set_error(:policy_group_quote_was_not_accepted, message)
+      set_error(:policy_group_quote_was_not_accepted, start_billing_result[:error])
       {
         success: false,
-        message: message
+        message: start_billing_result[:error]
       }
     end
   end
