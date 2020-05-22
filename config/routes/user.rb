@@ -29,6 +29,10 @@ scope module: :user, path: "user" do
     only: [ :create, :index, :show ]
   
   resources :policies, only: [ :index, :show ] do
+    collection do
+      post :add_coverage_proof
+      delete :delete_coverage_proof_documents
+    end
     member do
       get 'bulk_decline'
       get 'render_eoi'
