@@ -6,13 +6,13 @@ module V2
   module User
     class PoliciesController < UserController
 
-      skip_before_action :authenticate_user!, only: [:bulk_decline, :render_eoi, :bulk_accept, :add_coverage_proof, :attach_documents]
+      skip_before_action :authenticate_user!, only: [:bulk_decline, :render_eoi, :bulk_accept]
 
       before_action :user_from_invitation_token, only: [:bulk_decline, :render_eoi, :bulk_accept]
       
       before_action :set_policy, only: [:show]
       
-      before_action :set_substrate, only: [:index]
+      before_action :set_substrate, only: [:index, :add_coverage_proof]
       
       def index
         if params[:short]
@@ -26,7 +26,7 @@ module V2
       end
 
       def add_coverage_proof
-        @policy = ::Policy.new(coverage_proof_params)
+        @policy = @substrate.new(coverage_proof_params)
         params.permit(:documents)[:documents].tap do |file|
           @policy.documents.attach(file)
         end
