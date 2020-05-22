@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_05_12_113233) do
+ActiveRecord::Schema.define(version: 2020_05_22_103547) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -818,8 +818,8 @@ ActiveRecord::Schema.define(version: 2020_05_12_113233) do
     t.bigint "agency_id"
     t.date "effective_date"
     t.date "expiration_date"
-    t.boolean "auto_renew"
-    t.boolean "auto_pay"
+    t.boolean "auto_renew", default: false
+    t.boolean "auto_pay", default: false
     t.bigint "billing_strategy_id"
     t.bigint "policy_group_id"
     t.bigint "carrier_id"

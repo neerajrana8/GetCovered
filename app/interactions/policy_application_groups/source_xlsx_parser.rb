@@ -53,7 +53,7 @@ module PolicyApplicationGroups
             "landlord" =>
               {
                 "email" => row["Landlord Email Address"],
-                "company" => nil,
+                "company" => row["Landlord - Company Name (if applicable)"],
                 "last_name" => row["Landlord Contact name-Last"],
                 "first_name" => row["Landlord Contact name-First"],
                 "phone_number" => row["Landlord Phone number"]
