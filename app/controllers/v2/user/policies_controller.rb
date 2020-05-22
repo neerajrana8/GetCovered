@@ -6,7 +6,7 @@ module V2
   module User
     class PoliciesController < UserController
 
-      skip_before_action :authenticate_user!, only: [:bulk_decline, :render_eoi, :bulk_accept]
+      skip_before_action :authenticate_user!, only: [:bulk_decline, :render_eoi, :bulk_accept, :add_coverage_proof, :attach_documents]
 
       before_action :user_from_invitation_token, only: [:bulk_decline, :render_eoi, :bulk_accept]
       
@@ -23,6 +23,22 @@ module V2
       end
       
       def show
+      end
+
+      def add_coverage_proof
+        @policy = ::Policy.new(coverage_proof_params)
+        params.permit(:documents)[:documents].tap do |file|
+          @policy.documents.attach(file)
+        end
+        if @policy.save!(validate: false)
+          render json: { message: 'Policy created' }, status: :created
+        else
+          render json: { message: 'Policy failed' }, status: :faild
+        end
+      end
+
+      def delete_coverage_proof_documents
+        @policy.documents.where(id: params.permit(documents_ids: [])[:documents_ids]).purge
       end
 
       def bulk_decline
@@ -85,7 +101,17 @@ module V2
         def supported_orders
           supported_filters(true)
         end
-        
+
+        def coverage_proof_params
+          return({}) if params.blank?
+          to_return = params.permit(:number,
+            :account_id, :agency_id,
+            :carrier_id, :effective_date, :expiration_date,
+            :out_of_system_carrier_title, :address
+          )
+          return(to_return)
+        end
+
     end
   end # module User
 end
