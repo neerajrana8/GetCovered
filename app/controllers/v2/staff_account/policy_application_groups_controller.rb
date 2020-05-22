@@ -4,6 +4,7 @@ module V2
     class PolicyApplicationGroupsController < StaffAccountController
       before_action :set_policy_application_group, only: %i[show update accept destroy]
       before_action :parse_input_file, only: %i[create]
+      before_action :validate_accept, only: %i[accept]
 
       def index
         groups_query = ::PolicyApplicationGroup.order(created_at: :desc).where(account: current_staff&.organizable)
@@ -83,6 +84,13 @@ module V2
 
       private
 
+      def validate_accept
+        if @policy_application_group.effective_date < Time.zone.now &&
+          @policy_application_group.policy_applications.where('effective_date < ?', Time.zone.now).any?
+          render json: { error: 'Incorrect effective dates' }, status: :unprocessable_entity
+        end
+      end
+
       def policy_application_group_params
         billing_strategy =
           BillingStrategy.where(
@@ -115,7 +123,8 @@ module V2
       end
 
       def parse_input_file
-        if params[:input_file].present?
+        if params[:input_file].present? &&
+           params[:input_file].content_type == 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
           file = params[:input_file].open
           result = ::PolicyApplicationGroups::SourceXlsxParser.run(xlsx_file: file)
 
@@ -124,11 +133,11 @@ module V2
                    status: :unprocessable_entity
           end
 
-          render json: { error: 'No rows' }, status: :unprocessable_entity if result.result.empty?
+          render json: { error: 'No valid rows' }, status: :unprocessable_entity if result.result.empty?
 
           @parsed_input_file = result.result
         else
-          render json: { error: 'Need input_file' }, status: :unprocessable_entity
+          render json: { error: 'Need the correct xlsx spreadsheet' }, status: :unprocessable_entity
         end
       end
 
