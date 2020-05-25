@@ -23,7 +23,7 @@ module PolicyApplicationGroups
       empty_necessary_rows = ALWAYS_PRESENT_ROWS.select { |column| row[column].blank? }
       if empty_necessary_rows.any?
         errors[:bad_rows] << {
-          message: "Next columns columns with applicant's email #{row["Applicant's Email address"]} should be present: #{empty_necessary_rows}",
+          message: "Next columns columns with applicant's email #{row["Applicant's Email address"]} should be present: #{empty_necessary_rows.join(', ')}",
           column: row["Applicant's Email address"]
         }
         return false
