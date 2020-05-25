@@ -63,6 +63,7 @@ class Policy < ApplicationRecord
 
   has_many :policy_insurables, inverse_of: :policy
   has_many :insurables, through: :policy_insurables
+  has_many :policies
 
   has_many :claims
 

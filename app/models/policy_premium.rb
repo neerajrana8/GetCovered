@@ -4,8 +4,8 @@
 
 class PolicyPremium < ApplicationRecord
   belongs_to :policy, optional: true
-  belongs_to :policy_quote
-	belongs_to :billing_strategy
+  belongs_to :policy_quote, optional: true
+	belongs_to :billing_strategy, optional: true
 	belongs_to :commission_strategy, optional: true
 	
 	has_one :commission
