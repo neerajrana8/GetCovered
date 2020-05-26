@@ -23,6 +23,11 @@ class PolicyType < ApplicationRecord
   #
   scope :master_policies, -> { where("title LIKE 'Master%'") }
 
+  def master_policy?
+    designation == 'MASTER'
+  end
+
+
   class << self
     def residential
       find_by!(slug: 'residential')
