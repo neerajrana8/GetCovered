@@ -11,10 +11,11 @@ module V2
 			end
 			
 			def create
-				if current_staff.organizable.attach_payment_source(create_params[:source])
+				result = current_staff.organizable.attach_payment_source(create_params[:source])
+				if result.valid?
 					render json: current_staff.organizable.payment_profiles.order("created_at").last.to_json, status: :created
 				else
-					render json: { error: "Failure", message: "Unable to attach payment source to user" }.to_json, status: 422
+					render json: { error: "Failure", message: result.errors.full_messages.join(' and ') }.to_json, status: 422
 				end
 			end
 			

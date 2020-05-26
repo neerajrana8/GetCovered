@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_05_21_070251) do
+ActiveRecord::Schema.define(version: 2020_05_26_081042) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -205,6 +205,7 @@ ActiveRecord::Schema.define(version: 2020_05_21_070251) do
     t.string "logo_url"
     t.string "footer_logo_url"
     t.string "subdomain"
+    t.string "subdomain_test"
     t.index ["profileable_type", "profileable_id"], name: "index_branding_profiles_on_profileable_type_and_profileable_id"
     t.index ["url"], name: "index_branding_profiles_on_url", unique: true
   end
@@ -702,6 +703,7 @@ ActiveRecord::Schema.define(version: 2020_05_21_070251) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.bigint "branding_profile_id"
+    t.jsonb "styles"
     t.index ["agency_id"], name: "index_pages_on_agency_id"
     t.index ["branding_profile_id"], name: "index_pages_on_branding_profile_id"
   end
@@ -767,9 +769,9 @@ ActiveRecord::Schema.define(version: 2020_05_21_070251) do
     t.date "last_payment_date"
     t.date "next_payment_date"
     t.bigint "policy_group_id"
-    t.boolean "declined"
     t.string "address"
     t.string "out_of_system_carrier_title"
+    t.boolean "declined"
     t.bigint "policy_id"
     t.index ["account_id"], name: "index_policies_on_account_id"
     t.index ["agency_id"], name: "index_policies_on_agency_id"
@@ -819,8 +821,8 @@ ActiveRecord::Schema.define(version: 2020_05_21_070251) do
     t.bigint "agency_id"
     t.date "effective_date"
     t.date "expiration_date"
-    t.boolean "auto_renew"
-    t.boolean "auto_pay"
+    t.boolean "auto_renew", default: false
+    t.boolean "auto_pay", default: false
     t.bigint "billing_strategy_id"
     t.bigint "policy_group_id"
     t.bigint "carrier_id"

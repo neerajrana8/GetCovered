@@ -55,7 +55,7 @@ module Policies
     def send_acceptance_email_to_primary_user(policy)
       user = policy.primary_user
       user.skip_invitation = true
-      user.invite!
+      user.invite! # only for setting headers
       UserCoverageMailer.with(policy: policy, user: user).acceptance_email.deliver
     end
 
