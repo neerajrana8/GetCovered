@@ -202,7 +202,7 @@ class Insurable < ApplicationRecord
 
   def title_uniqueness
     return if insurable.nil?
-    if insurable.insurables.where(title: title, insurable_type: insurable_type)
+    if insurable.insurables.where(title: title, insurable_type: insurable_type).any?
       errors.add(:title, 'should be uniq inside group')
     end
   end
