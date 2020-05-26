@@ -44,6 +44,7 @@ class Insurable < ApplicationRecord
   
   validates_presence_of :title, :slug
   validate :must_belong_to_same_account_if_parent_insurable
+  validate :title_uniqueness, on: :create
 
   scope :covered, -> { where(covered: true) }
   scope :units, -> { where(insurable_type_id: InsurableType::UNITS_IDS) }
@@ -198,6 +199,13 @@ class Insurable < ApplicationRecord
   end
   
   private
+
+  def title_uniqueness
+    return if insurable.nil?
+    if insurable.insurables.where(title: title, insurable_type: insurable_type).any?
+      errors.add(:title, 'should be uniq inside group')
+    end
+  end
     
     def create_profile_by_carrier
       if insurable_type.title.include? "Residential"
