@@ -122,6 +122,11 @@
           	path: "get-residential-property-info"
 
         end
+
+        collection do
+          post :bulk_create
+        end
+
         resources :insurable_rates,
           path: "insurable-rates",
           defaults: {
