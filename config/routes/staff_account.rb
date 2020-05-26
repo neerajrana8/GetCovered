@@ -33,6 +33,13 @@
             via: "get"
         end
       end
+
+    resources :master_policies,
+      only: [ :index, :show ]do
+        member do
+          post :show_create
+        end
+      end
   
     resources :assignments,
       only: [ :create, :update, :destroy, :index, :show ]

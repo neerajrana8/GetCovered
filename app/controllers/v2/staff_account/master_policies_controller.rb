@@ -16,9 +16,9 @@ module V2
       end
       
       def show
-        @master_policy = current_staff.organizable.policies.where(policy_type_id: 2).find(params[:id])
-        if @master_policy.present?
-          render json: @master_policy, status: :ok
+        @master_policy_covarages = current_staff.organizable.policies.where(policy_type_id: 3).find(params[:id])
+        if @master_policy_coverages.present?
+          render json: @master_policy_coverages, status: :ok
         else
           render json: { message: 'Policy does\'t exist' }
         end

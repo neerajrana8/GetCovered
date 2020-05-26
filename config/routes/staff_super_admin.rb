@@ -29,6 +29,9 @@
             via: "get"
         end
       end
+
+    resources :master_policies,
+      only: [ :index, :show ]
   
     resources :agencies,
       only: [ :create, :update, :index, :show ],

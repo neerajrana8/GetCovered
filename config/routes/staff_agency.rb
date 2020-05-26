@@ -32,7 +32,14 @@
             via: "get"
         end
       end
-  
+
+    resources :master_policies,
+      only: [ :create, :update, :index, :show ]do
+        member do
+          post :show_create
+        end
+      end
+
     resources :agencies,
       only: [ :create, :update, :index, :show ],
       concerns: :reportable do

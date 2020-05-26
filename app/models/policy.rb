@@ -119,8 +119,7 @@ class Policy < ApplicationRecord
   validate :same_agency_as_account
   validate :status_allowed
   validate :carrier_agency
-  # validates_presence_of :expiration_date, :effective_date
-  validate :effective_date_expiration_date
+  validates_presence_of :expiration_date, :effective_date, unless: -> { policy_type.designation == 'MASTER' }
   validate :date_order,
     unless: proc { |pol| pol.effective_date.nil? || pol.expiration_date.nil? }
 
@@ -139,14 +138,6 @@ class Policy < ApplicationRecord
 
   def premium
     policy_premiums.where(enabled: true).take
-  end
-
-  def effective_date_expiration_date
-    if policy_type_id == 2 || policy_type_id == 3
-      validates_presence_of :effective_date
-    else
-      validates_presence_of :expiration_date, :effective_date
-    end
   end
 
   	# PolicyApplication.primary_insurable
@@ -240,6 +231,29 @@ class Policy < ApplicationRecord
     mappings dynamic: 'false' do
       indexes :number, type: :text
     end
+  end
+
+  # Recount every month, so we will get monthly invoice
+  def master_policy_billing
+    billing_started = false
+
+    policy_coverages = policies&.where(policy_type: 3) || ''
+    policy_coverages.each_with_index do |index|
+      amount = policy_premiums&.take.base
+      policy_coverage_number = policies&.where(policy_type: 3).count || 0
+      total_amount = amount * policy_coverage_number
+      next if total_amount == 0
+
+      due_date = index == 0 ? status_updated_on : policy.effective_date + index.months
+      invoice = invoices.new do |inv|
+        inv.due_date        = due_date
+        inv.available_date  = due_date + available_period
+        inv.user            = primary_user
+        inv.amount          = amount
+      end
+      invoice.save
+    end
+    billing_started
   end
 
   private
