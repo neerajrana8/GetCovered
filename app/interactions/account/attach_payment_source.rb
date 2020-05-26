@@ -55,7 +55,7 @@ class Account
         errors.add(:payment_method, 'Network Error')
       rescue Stripe::StripeError => error
         Rails.logger.error "AttachPaymentSource StripeError: #{error.to_s}. Token: #{token}"
-        errors.add(:payment_method, "Unable to process account. AttachPaymentSource StripeError: #{error.to_s}. Token: #{token}")
+        errors.add(:payment_method, "Unable to process account. #{error.to_s} | Token: #{token}")
       end
       false
     end
