@@ -39,8 +39,8 @@ module V2
         else
           render json: { errors: payment_profile.errors }, status: :unprocessable_entity
         end
-      rescue Plaid::InvalidInputError => e
-        render json: { error: e.error_message }, status: :unprocessable_entity
+      rescue Plaid::PlaidAPIError => e
+        render json: { error_message: e.error_message, error_type: e.error_type, error_code: e.error_code }, status: :unprocessable_entity
       end
     end
   end
