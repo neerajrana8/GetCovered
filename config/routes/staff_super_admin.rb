@@ -51,7 +51,11 @@
     resources :branding_profiles,
       path: "branding-profiles",
       only: [ :index, :create, :update, :show, :destroy ]
-  
+      
+    resources :branding_profile_attributes,
+      path: "branding-profile-attributes",
+      only: [ :destroy ]
+
     resources :pages
     
     resources :carriers,
