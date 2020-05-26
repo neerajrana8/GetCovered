@@ -247,7 +247,7 @@ class Policy < ApplicationRecord
   end
   
   def bulk_decline
-    update(declined: true)
+    update_attribute(:declined, true)
     generate_refund if created_at > 1.month.ago
     subtract_from_future_invoices
     recalculate_policy_premium
