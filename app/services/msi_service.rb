@@ -87,6 +87,7 @@ class MsiService
   # Valid action names:
   #   get_or_create_community
   #   final_premium
+  #   
   def build_request(action_name, **args)
     self.action = action_name
     self.errors = nil
@@ -203,8 +204,42 @@ class MsiService
 =end
   
   
-  
-  
+  def extract_insurable_rate_configuration(product_definition_response)
+    # grab relevant bois from out da hood
+    product = product_definition_response.dig("MSIACORD", "InsuranceSvcRs", "RenterPolicyQuoteInqRs", "MSI_ProductDefinition")
+    coverages = product.dig("MSI_ProductCoverageList", "MSI_ProductCoverageDefinition")
+    deductibles = product.dig("MSI_ProductDeductibleList", "MSI_ProductDeductibleDefinition")
+    payment_plans = product.dig("MSI_ProductPaymentPlanDefinition", "MSI_ProductPaymentPlanDefinition")
+    # transcribe into IRC object
+    irc = InsurableRateConfiguration.new(carrier_id: msi_carrier_id, configurable: self)
+    irc.carrier_info = {
+      "effective_date"      => product["MSI_EffectiveDate"],
+      "underwriter_id"      => product["MSI_UnderwritingCompanyID"],
+      "underwriter_name"    => product["MSI_UnderwritingCompanyName"],
+      "product_id"          => product["MSI_ProductID"],
+      "product_version_id"  => product["MSI_ProductVersionID"]
+    }
+    irc.converages = coverages.map do |cov|
+        {
+          "uid"           => cov["CoverageCd"],
+          "title"         => cov["CoverageDescription"], # MOOSE WARNING: better as description?
+          "required"      => (cov["MSI_IsMandatoryCoverage"] || "").strip == "True",
+          "category"      => "limit",
+          "options_type"  => cov["MSI_LimitList"].blank? ? "none" : "multiple_choice",
+          "options"       => cov["MSI_LimitList"].blank? ? nil : cov["MSI_LimitList"]["string"].map{|v| v }
+        }
+      end + deductibles.map do |ded|
+        {
+          "uid"           => ded["MSI_DeductibleCd"],
+          "title"         => ded["MSI_DeductibleName"],
+          "required"      => false, #MOOSE WARNING: some are required, but they aren't marked as such
+          "category"      => "deductible",
+          "options_type"  => ded["MSI_DeductibleOptionList"].blank? ? "none" : "multiple_choice",
+          "options"       => ded["MSI_DeductibleOptionList"].blank? ? nil : ded["MSI_DeductibleOptionList"]["Deductible"].map{|d| d["Amt"] }
+        }
+    end
+    return irc
+  end
   
   
   
