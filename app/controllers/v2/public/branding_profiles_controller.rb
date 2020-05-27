@@ -20,7 +20,7 @@ module V2
 
       def set_branding_profile_by_subdomain
         request_url = request.headers['origin'] || request.referer
-        host = request_url.present? && request_url =~ URI::DEFAULT_PARSER.make_regexp ? URI(request_url).host : nil
+        host = request_url.present? ? URI(request_url).host : nil
         @branding_profile = BrandingProfile.find_by(url: host) || BrandingProfile.find_by(title: 'GetCovered')
       end
       
