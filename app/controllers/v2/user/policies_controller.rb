@@ -26,7 +26,13 @@ module V2
       end
       
       def add_coverage_proof
+        insurable = Insurable.find_by(id: params[:insurable_id])
+        render json: { message: 'Need Insurable' }, status: :unprocessable_entity and return if insurable.nil?
+
         @policy = @substrate.new(coverage_proof_params)
+        @policy.account = insurable.account
+        @policy.agency = insurable.account.agency
+        @policy.carrier = insurable.insurable_type&.carrier_insurable_types.take&.carrier
         @policy.policy_users.new(user_id: current_user.id)
         if @policy.save
           render json: { message: 'Policy created' }, status: :created

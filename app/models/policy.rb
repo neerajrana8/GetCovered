@@ -58,7 +58,7 @@ class Policy < ApplicationRecord
   
   after_save :start_automatic_master_coverage_policy_issue, if: -> { policy_type&.designation == 'MASTER' }
   
-  belongs_to :agency, optional: true
+  belongs_to :agency
   belongs_to :account, optional: true
   belongs_to :carrier
   belongs_to :policy_type, optional: true
@@ -158,9 +158,7 @@ class Policy < ApplicationRecord
     errors.add(:policy_in_system, 'Cannot update in system policy') if policy_in_system == true
   end
   
-  def residential_account_present
-    return if account.nil?
-    
+  def residential_account_present    
     errors.add(:account, 'Account must be specified') if ![4,5].include?(policy_type_id) && account.nil? 
   end
   
@@ -171,8 +169,6 @@ class Policy < ApplicationRecord
   end
   
   def carrier_agency
-    return if agency.nil?
-
     errors.add(:carrier, 'carrier agency must exist') unless agency&.carriers&.include?(carrier)
   end
   
