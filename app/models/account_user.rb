@@ -3,7 +3,7 @@
 
 class AccountUser < ApplicationRecord
   
-  belongs_to :account
+  belongs_to :account, optional: true
   belongs_to :user
 
   # Validations
