@@ -1,0 +1,4 @@
+start_date,end_date,status,lease_type,unit,tenant_one_email,tenant_one_first_name,tenant_one_last_name,tenant_one_birthday,tenant_two_email,tenant_two_first_name,tenant_two_last_name,tenant_two_birthday
+22/12/2020,22/12/2021,current,Residential,1,ivaniln+t11@nitka.com,Tenant One Name 1,Tenant One Last Name 1,21/01/1990,ivaniln+t21@nitka.com,Tenant Two Name 1,Tenant Two Last Name 1,21/01/1990
+22/12/2020,22/12/2021,current,Residential,2,ivaniln+t12@nitka.com,Tenant One Name 2,Tenant One Last Name 1,21/01/1990,ivaniln+t22@nitka.com,Tenant Two Name 2,Tenant Two Last Name 2,21/01/1990
+22/12/2020,22/12/2021,current,Residential,3,ivaniln+t13@nitka.com,Tenant One Name 3,Tenant One Last Name 1,21/01/1990,ivaniln+t23@nitka.com,Tenant Two Name 3,Tenant Two Last Name 3,21/01/1990

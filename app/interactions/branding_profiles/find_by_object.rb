@@ -19,6 +19,10 @@ module BrandingProfiles
       self.class.run!(object: object.agency)
     end
 
+    def insurable
+      self.class.run!(object: object.account)
+    end
+
     def policy
       self.class.run!(object: object.account) || self.class.run!(object: object.agency)
     end
