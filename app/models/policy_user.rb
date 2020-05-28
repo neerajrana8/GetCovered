@@ -80,7 +80,8 @@ class PolicyUser < ApplicationRecord
     def set_account_user
       ref_model = policy.nil? ? policy_application : policy
 			policy_type_check = ref_model.policy_type == PolicyType.find(4) || 
-													ref_model.policy_type == PolicyType.find(5)
+                          ref_model.policy_type == PolicyType.find(5)
+                          
       unless policy_type_check && ref_model.account.nil?
         acct = AccountUser.where(user_id: user.id, account_id: ref_model.account_id).take
         if acct.nil?
