@@ -69,7 +69,7 @@ class Policy < ApplicationRecord
   
   has_many :policy_insurables, inverse_of: :policy
   has_many :insurables, through: :policy_insurables
-  
+  has_many :policies
   has_many :claims
   
   has_many :policy_quotes
@@ -124,6 +124,7 @@ class Policy < ApplicationRecord
   validate :same_agency_as_account
   validate :status_allowed
   validate :carrier_agency
+  validates_presence_of :expiration_date, :effective_date, unless: -> { policy_type.designation == 'MASTER' }
   validate :master_policy, if: -> { policy_type.designation == 'MASTER-COVERAGE' }
   
   validates_presence_of :expiration_date, :effective_date, unless: -> { policy_type.designation == 'MASTER-COVERAGE' }
@@ -292,7 +293,30 @@ class Policy < ApplicationRecord
       indexes :number, type: :text
     end
   end
-      
+
+  # Recount every month, so we will get monthly invoice
+  def master_policy_billing
+    billing_started = false
+
+    policy_coverages = policies&.where(policy_type: 3) || ''
+    policy_coverages.each_with_index do |index|
+      amount = policy_premiums&.take.base
+      policy_coverage_number = policies&.where(policy_type: 3).count || 0
+      total_amount = amount * policy_coverage_number
+      next if total_amount == 0
+
+      due_date = index == 0 ? status_updated_on : policy.effective_date + index.months
+      invoice = invoices.new do |inv|
+        inv.due_date        = due_date
+        inv.available_date  = due_date + available_period
+        inv.user            = primary_user
+        inv.amount          = amount
+      end
+      invoice.save
+    end
+    billing_started
+  end
+
   private
       
     def date_order
