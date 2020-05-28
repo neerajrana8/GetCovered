@@ -163,8 +163,11 @@ module V2
       
       def create_rental_guarantee
         
-        @application = PolicyApplication.new(create_rental_guarantee_params) 
-        @application.agency = Agency.where(master_agency: true).take 
+        @application = PolicyApplication.new(create_rental_guarantee_params)
+        
+        if @application.agency.nil?
+          @application.agency = Agency.where(master_agency: true).take 
+        end
 
 				@application.billing_strategy = BillingStrategy.where(agency: @application.agency, 
 				                                                      policy_type: @application.policy_type).take
