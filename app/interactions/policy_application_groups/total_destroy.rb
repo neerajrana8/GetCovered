@@ -3,6 +3,7 @@ module PolicyApplicationGroups
   # it through the depend destroy because in some cases we should not delete some objects
   class TotalDestroy < ActiveInteraction::Base
     object :policy_application_group
+    boolean :only_related_objects, default: false
 
     delegate :policy_group_quote, :policy_group, to: :policy_application_group
 
@@ -20,7 +21,7 @@ module PolicyApplicationGroups
       end
       policy_application_group.policy_applications.destroy_all
       policy_group_quote&.destroy
-      policy_application_group.destroy
+      policy_application_group.destroy unless only_related_objects
     end
   end
 end

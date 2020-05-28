@@ -30,8 +30,10 @@ class PolicyUser < ApplicationRecord
   end
   
   def invite
-    
     invite_sent = false
+    client_host_link =
+      BrandingProfiles::FindByObject.run!(object: self)&.url ||
+      Rails.application.credentials.uri[ENV['RAILS_ENV'].to_sym][:client]
     
     unless disputed? || 
            accepted? ||
@@ -40,8 +42,8 @@ class PolicyUser < ApplicationRecord
            user.nil?
       
       links = {
-        :accept => "#{ Rails.application.credentials.uri[ENV["RAILS_ENV"].to_sym][:client] }/confirm-policy",
-        :dispute => "#{ Rails.application.credentials.uri[ENV["RAILS_ENV"].to_sym][:client] }/dispute-policy" 
+        accept: "#{client_host_link}/confirm-policy",
+        dispute: "#{client_host_link}/dispute-policy"
       }
       
       UserCoverageMailer.with(policy: policy, user: user, links: links).added_to_policy().deliver
@@ -67,7 +69,6 @@ class PolicyUser < ApplicationRecord
   end
   
   private
-    
     def set_first_as_primary
       ref_model = policy.nil? ? policy_application : policy
       if ref_model.policy_users.count == 0
@@ -93,7 +94,9 @@ class PolicyUser < ApplicationRecord
     end
     
     def user_listed_once
-      user_ids = policy_application.users.map(&:id)
-      errors.add(:user, "Already included on policy or policy application") if user_ids.count(user.id) > 1  
+      if policy_application
+        user_ids = policy_application.users.map(&:id)
+        errors.add(:user, "Already included on policy or policy application") if user_ids.count(user.id) > 1  
+      end
     end
 end

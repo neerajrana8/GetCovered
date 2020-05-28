@@ -52,6 +52,9 @@
         end
       end
   
+    resources :fees,
+      only: [ :create, :update, :index, :show ]
+
     resources :assignments,
       only: [ :create, :update, :destroy, :index, :show ]
   
@@ -126,6 +129,11 @@
           	path: "get-residential-property-info"
 
         end
+
+        collection do
+          post :bulk_create
+        end
+
         resources :insurable_rates,
           path: "insurable-rates",
           defaults: {
