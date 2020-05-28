@@ -86,7 +86,7 @@ module V2
         end
         
         def page_params
-          params.require(:page).permit(:content, :title, :agency_id, :branding_profile_id)
+          params.require(:page).permit(:content, :title, :agency_id, :branding_profile_id, styles: {})
         end
         
     end
