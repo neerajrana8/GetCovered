@@ -112,7 +112,9 @@ class PolicyPremium < ApplicationRecord
         .where(category: 'base_premium', invoices: { invoiceable_type: 'PolicyQuote', invoiceable_id: self.policy_quote_id })
         .inject(0){|sum,li| sum + li.collected }
     # these validations shouldn't be ever necessary, but let's be safe!
-    new_unearned_premium = new_unearned_premium > 0 ? 0 : new_unearned_premium < -self.base ? -self.base : new_unearned_premium
+    new_unearned_premium =  new_unearned_premium > 0 ? 0 :
+                            new_unearned_premium < -self.base ? -self.base :
+                            new_unearned_premium
     self.update(unearned_premium: new_unearned_premium)
   end
 end
