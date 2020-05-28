@@ -82,7 +82,8 @@ module V2
       	            message: "A User has already signed up with this email address.  Please log in to complete your application"
     	            }.to_json,
     	            status: 401 
-    	          error_status << true           
+    	          error_status << true
+                break      
               end                
             else
               @application.users << @user
@@ -118,7 +119,8 @@ module V2
         	            message: "The mailing address associated with this email is different than the one supplied in the recent request.  To change your address please log in"
       	            }.to_json,
       	            status: 401 and return
-      	          error_status << true   
+      	          error_status << true
+                  break
                 end        
               end
             end
