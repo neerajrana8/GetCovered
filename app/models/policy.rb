@@ -58,9 +58,9 @@ class Policy < ApplicationRecord
   
   after_save :start_automatic_master_coverage_policy_issue, if: -> { policy_type&.designation == 'MASTER' }
   
-  belongs_to :agency
+  belongs_to :agency, optional: true
   belongs_to :account, optional: true
-  belongs_to :carrier
+  belongs_to :carrier, optional: true
   belongs_to :policy_type, optional: true
   # belongs_to :billing_profie
   belongs_to :policy_group_quote, optional: true
@@ -125,7 +125,9 @@ class Policy < ApplicationRecord
   validate :status_allowed
   validate :carrier_agency
   validate :master_policy, if: -> { policy_type&.designation == 'MASTER-COVERAGE' }
-  
+  validates :agency, presence: true, if: :in_system?
+  validates :carrier, presence: true, if: :in_system?
+
   validates_presence_of :expiration_date, :effective_date, unless: -> { policy_type&.designation == 'MASTER-COVERAGE' }
   validate :date_order,
   unless: proc { |pol| pol.effective_date.nil? || pol.expiration_date.nil? }
@@ -163,12 +165,16 @@ class Policy < ApplicationRecord
   end
   
   def same_agency_as_account
+    return unless in_system?
+    
     if ![4,5].include?(policy_type_id)
       errors.add(:account, 'policy must belong to the same agency as account') if agency != account&.agency
     end
   end
   
   def carrier_agency
+    return unless in_system?
+
     errors.add(:carrier, 'carrier agency must exist') unless agency&.carriers&.include?(carrier)
   end
   

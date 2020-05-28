@@ -31,8 +31,7 @@ module V2
 
         @policy = @substrate.new(coverage_proof_params)
         @policy.account = insurable.account
-        @policy.agency = insurable.account.agency
-        @policy.carrier = insurable.insurable_type&.carrier_insurable_types.take&.carrier
+        @policy.policy_in_system = false
         @policy.policy_users.new(user_id: current_user.id)
         if @policy.save
           render json: { message: 'Policy created' }, status: :created
