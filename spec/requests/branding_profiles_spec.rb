@@ -74,6 +74,13 @@ describe 'BrandingProfile API spec', type: :request do
       expect(result["title"]).to eq(new_title)
       expect(result["styles"]).to eq(style)
     end
+
+    it 'should destroy BrandingProfileAttribute' do
+      attribute = BrandingProfile.create(correct_params).branding_profile_attributes.first
+      delete "/v2/staff_agency/branding-profile-attributes/#{attribute.id}", headers: @headers
+      result = JSON.parse response.body
+      expect(response.status).to eq(200)
+    end
     
   end
   
@@ -121,7 +128,13 @@ describe 'BrandingProfile API spec', type: :request do
       expect(response.status).to eq(200)
       expect(result["success"]).to eq(true)
     end
-    
+
+    it 'should destroy BrandingProfileAttribute' do
+      attribute = BrandingProfile.create(correct_params).branding_profile_attributes.first
+      delete "/v2/staff_super_admin/branding-profile-attributes/#{attribute.id}", headers: @headers
+      result = JSON.parse response.body
+      expect(response.status).to eq(200)
+    end
     
   end
   

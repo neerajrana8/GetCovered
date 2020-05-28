@@ -66,6 +66,10 @@
       path: "branding-profiles",
       only: [ :show, :create, :update ]
     
+    resources :branding_profile_attributes,
+      path: "branding-profile-attributes",
+      only: [ :destroy ]
+      
     resources :pages
 
     resources :carrier_insurable_profiles,
