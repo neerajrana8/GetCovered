@@ -195,7 +195,9 @@ module V2
       def create_commercial
         
         @application = PolicyApplication.new(create_commercial_params) 
-        @application.agency = Agency.where(master_agency: true).take 
+        if @application.agency.nil?
+          @application.agency = Agency.where(master_agency: true).take 
+        end
 
 				@application.billing_strategy = BillingStrategy.where(agency: @application.agency, 
 				                                                      policy_type: @application.policy_type,
@@ -448,7 +450,7 @@ module V2
 	      
 	      def create_residential_params
   	      params.require(:policy_application)
-  	            .permit(:effective_date, :expiration_date, :fields, :auto_pay, 
+  	            .permit(:effective_date, :expiration_date, :auto_pay, 
 		      							:auto_renew, :billing_strategy_id, :account_id, :policy_type_id,
 		      							:carrier_id, :agency_id, fields: [:title, :value, options: []], 
 		      							questions: [:title, :value, options: []], 
@@ -458,7 +460,7 @@ module V2
 	      
 	      def create_commercial_params
   	      params.require(:policy_application)
-  	            .permit(:effective_date, :expiration_date, :fields, :auto_pay, 
+  	            .permit(:effective_date, :expiration_date, :auto_pay, 
 		      							:auto_renew, :billing_strategy_id, :account_id, :policy_type_id, 
 		      							:carrier_id, :agency_id, fields: {}, 
 		      							questions: [:text, :value, :questionId, options: [], questions: [:text, :value, :questionId, options: []]])  
@@ -466,7 +468,7 @@ module V2
 	      
 	      def create_rental_guarantee_params
   	      params.require(:policy_application)
-  	            .permit(:effective_date, :expiration_date, :fields, :auto_pay, 
+  	            .permit(:effective_date, :expiration_date, :auto_pay, 
 		      							:auto_renew, :billing_strategy_id, :account_id, :policy_type_id, 
 		      							:carrier_id, :agency_id, fields: {})  
   	    end
