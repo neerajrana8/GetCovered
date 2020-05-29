@@ -128,6 +128,7 @@ class Policy < ApplicationRecord
   validates :agency, presence: true, if: :in_system?
   validates :carrier, presence: true, if: :in_system?
 
+  validates_presence_of :expiration_date, :effective_date, unless: -> { policy_type&.designation == 'MASTER' }
   validates_presence_of :expiration_date, :effective_date, unless: -> { policy_type&.designation == 'MASTER-COVERAGE' }
 
   validate :date_order,
