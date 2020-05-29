@@ -2,12 +2,14 @@ module Leases
   module BulkCreate
     class InputFileParser < ActiveInteraction::Base
       file :input_file
+      
 
       HEADERS = %w[start_date end_date status lease_type unit
                    tenant_one_email tenant_one_first_name tenant_one_last_name tenant_one_birthday
                    tenant_two_email tenant_two_first_name tenant_two_last_name tenant_two_birthday].freeze
       ALWAYS_PRESENT_ROWS = %w[start_date end_date status lease_type unit].freeze
       VALID_LEASE_TYPES = %w[Residential Commercial].freeze
+      DATE_FORMAT = '%m/%d/%Y'.freeze
 
       def execute
         result = []
@@ -62,8 +64,6 @@ module Leases
           }
           return
         end
-
-
 
         true
       end
