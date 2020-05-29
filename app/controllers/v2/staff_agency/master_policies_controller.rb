@@ -115,9 +115,7 @@ module V2
 
       def create_policy_premium
         return({}) if params.blank?
-        params.permit(:base:, :total, :calculation_base,
-          :carrier_base
-        )
+        params.permit(:base, :total, :calculation_base, :carrier_base)
       end
     end
   end # module StaffAgency
