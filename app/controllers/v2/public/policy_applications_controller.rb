@@ -137,7 +137,9 @@ module V2
 									last_name: policy_user[:user_attributes][:profile_attributes][:last_name],
 									job_title: policy_user[:user_attributes][:profile_attributes][:job_title],
 									contact_phone: policy_user[:user_attributes][:profile_attributes][:contact_phone],
-									birth_date: policy_user[:user_attributes][:profile_attributes][:birth_date]
+									birth_date: policy_user[:user_attributes][:profile_attributes][:birth_date],
+									salutation: policy_user[:user_attributes][:profile_attributes][:salutation],
+									gender: policy_user[:user_attributes][:profile_attributes][:gender],
 								}
 							}
 						}
