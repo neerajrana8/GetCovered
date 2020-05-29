@@ -65,19 +65,35 @@ module Leases
           return
         end
 
+        begin
+          if Date.strptime(row['start_date'], DATE_FORMAT) > Date.strptime(row['end_date'], DATE_FORMAT)
+            errors[:bad_rows] << {
+              message: "In the Row #{row_number} end_date is earlier than start_date",
+              row: row_number
+            }
+            return
+          end
+        rescue ArgumentError => _e
+          errors[:bad_rows] << {
+            message: "Row #{row_number} has invalid end start_date or end_date",
+            row: row_number
+          }
+          return
+        end
+
         true
       end
 
-      def params(row)
+      def params(refined_row)
         {
           lease: {
-            start_date: row['start_date'],
-            end_date: row['end_date'],
-            status: row['status'],
-            lease_type: row['lease_type'],
-            insurable: row['unit']
+            start_date: refined_row['start_date'],
+            end_date: refined_row['end_date'],
+            status: refined_row['status'],
+            lease_type: refined_row['lease_type'],
+            insurable: refined_row['insurable_id']
           },
-          lease_users: lease_users_params(row)
+          lease_users: lease_users_params(refined_row)
         }
       end
 
