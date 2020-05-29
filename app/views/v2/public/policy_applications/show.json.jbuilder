@@ -16,7 +16,9 @@ json.policy_users_attributes(@application.policy_users) do |policy_user|
 			json.contact_phone policy_user.user.profile.contact_phone
 			json.birth_date policy_user.user.profile.birth_date
 			json.job_title policy_user.user.profile.job_title			
-		end	
+			json.salutation policy_user.user.profile.salutation
+			json.gender policy_user.user.profile.gender
+		end
 		json.address_attributes do
       json.street_number policy_user.user.address&.street_number
       json.street_name policy_user.user.address&.street_name
