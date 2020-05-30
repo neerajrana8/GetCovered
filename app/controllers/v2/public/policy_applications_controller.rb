@@ -122,10 +122,10 @@ module V2
                 end        
               end
             end
-          else
+					else
             secure_tmp_password = SecureRandom.base64(12)
 						policy_user_params = {
-							spouse: policy_user[:spouse],
+							spouse: policy_user[:spouse] || false,
 							user_attributes: {
 								email: policy_user[:user_attributes][:email],
 								password: secure_tmp_password,
