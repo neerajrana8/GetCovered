@@ -560,7 +560,8 @@ class Invoice < ApplicationRecord
       calculate_subtotal
       calculate_total
       if self.errors.blank?
-        self.line_items.update_all(priced_in: true)
+        self.line_items.each{|li| li.priced_in = true } # in case they aren't saved yet
+        self.line_items.update_all(priced_in: true) # in case they are saved -_-'
       else
         throw :abort
       end
