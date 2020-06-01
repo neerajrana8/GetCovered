@@ -40,11 +40,32 @@ module V2
 
       def bulk_create
         @parsed_input_file.each do |lease_params|
-          lease = Lease.create(lease_params)
+          lease = Lease.create(lease_params[:lease].merge(account: current_staff.organizable))
+
           if lease.valid?
-            render json: { success: false, message: lease.errors.full_messages } && return
-          else
+            lease_params[:lease_users].each do |lease_user|
+              if ::User.where(email: lease_user[:user_attributes][:email]).exists?
+                user = ::User.find_by_email(lease_user[:user_attributes][:email])
+                lease.users << user
+              else
+                secure_tmp_password = SecureRandom.base64(12)
+                user = User.create(
+                  email: lease_user[:user_attributes][:email],
+                  password: secure_tmp_password,
+                  password_confirmation: secure_tmp_password,
+                  profile_attributes: lease_user[:user_attributes][:profile_attributes]
+                )
+                if !user.valid?
+                  ap user.errors.full_messages
+                  render json: { success: false, message: user.errors.full_messages } && return
+                else
+                  lease.users << user
+                end
+              end
+            end
             Leases::InviteUsersJob.perform_later(lease)
+          else
+            render json: { success: false, message: lease.errors.full_messages } && return
           end
         end
         head :no_content
@@ -116,7 +137,11 @@ module V2
         if params[:input_file].present? &&
            params[:input_file].content_type == 'text/csv'
           file = params[:input_file].open
-          result = ::Leases::BulkCreate::InputFileParser.run(input_file: file)
+          result =
+            ::Leases::BulkCreate::InputFileParser.run(
+              input_file: file,
+              insurable_id: bulk_create_params[:community_insurable_id]
+            )
 
           unless result.valid?
             render(json: { error: 'Bad file', content: result.errors[:bad_rows] }, status: :unprocessable_entity) && return
@@ -138,6 +163,12 @@ module V2
           :start_date, :status,
           lease_users_attributes: [:user_id],
           users_attributes: %i[id email password]
+        )
+      end
+
+      def bulk_create_params
+        params.require(:leases).permit(
+          :community_insurable_id
         )
       end
         

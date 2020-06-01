@@ -16,7 +16,7 @@ module Leases
         parsed_file.each_with_index do |row, index|
           next unless row_valid?(row, index + 2)
 
-          refined_row = refine_row(row, row_number)
+          refined_row = refine_row(row, index + 2)
           next unless refined_row
 
           result << params(refined_row)
@@ -79,7 +79,7 @@ module Leases
       end
 
       def tenant_data_valid?(row, row_number, tenant)
-        if row["tenant_#{tenant}_birthday"].blank? || parse_date(row["tenant_#{tenant}__birthday"]) > 18.years.ago
+        if row["tenant_#{tenant}_birthday"].blank? || parse_date(row["tenant_#{tenant}_birthday"]) > 18.years.ago
           errors[:bad_rows] << {
             message: "Tenant #{tenant} in the row #{row_number} should be older than 18",
             row: row_number
@@ -107,17 +107,25 @@ module Leases
       end
 
       def refine_row(row, row_number)
-        unit_id = Insurable.where(insurable_id: insurable_id, title: row['unit']).take&.id
+        unit_id = Insurable.where(
+          insurable_id: insurable_id,
+          title: row['unit'],
+          insurable_type_id: InsurableType::RESIDENTIAL_UNITS_IDS
+        ).take&.id
         if unit_id.present?
           row['insurable_id'] = unit_id
-          row
         else
           errors[:bad_rows] << {
             message: "Unit #{row['unit']} in the row #{row_number} doesn't exist in the system",
             row: row_number
           }
-          false
+          return false
         end
+
+        row['lease_type'] = LeaseType.find_by_title(row['lease_type'])
+        row['start_date'] = parse_date(row['start_date'])
+        row['end_date'] =   parse_date(row['end_date'])
+        row
       end
 
       def params(refined_row)
@@ -142,7 +150,7 @@ module Leases
               profile_attributes: {
                 first_name: row['tenant_one_first_name'],
                 last_name: row['tenant_one_last_name'],
-                birth_date: row['tenant_one_birthday']&.to_s,
+                birth_date: parse_date(row['tenant_one_birthday']),
                 contact_email: row['tenant_one_email']
               }
             }
@@ -157,7 +165,7 @@ module Leases
               profile_attributes: {
                 first_name: row['tenant_two_first_name'],
                 last_name: row['tenant_two_last_name'],
-                birth_date: row['tenant_two_birthday']&.to_s,
+                birth_date: parse_date(row['tenant_two_birthday']),
                 contact_email: row['tenant_two_email']
               }
             }

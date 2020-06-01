@@ -1,7 +1,6 @@
 module Leases
   class InviteUsersJob < ApplicationJob
     queue_as :default
-    before_perform :set_invoices
 
     def perform(lease)
       client_host = ::BrandingProfiles::FindByObject.run!(object: lease.insurable)&.url
