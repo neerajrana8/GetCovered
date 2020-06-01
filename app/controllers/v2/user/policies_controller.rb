@@ -110,7 +110,7 @@ module V2
       
       def coverage_proof_params
         params.require(:policy).permit(:number,
-          :account_id, :agency_id,
+          :account_id, :agency_id, :policy_type_id,
           :carrier_id, :effective_date, :expiration_date,
           :out_of_system_carrier_title, :address, documents: [],
           policy_users_attributes: [ :user_id ]
