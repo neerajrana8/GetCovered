@@ -187,8 +187,8 @@ class Charge < ApplicationRecord
         update_columns(invoice_update_failed: false, invoice_update_error_call: nil, invoice_update_error_record: nil, invoice_update_error_hash: nil)
       rescue ActiveRecord::RecordInvalid => e
         update_columns(invoice_update_failed: true, invoice_update_error_call: 'payment_succeeded', invoice_update_error_record: "#{e.record.class.name}##{e.record.id}", invoice_update_error_hash: e.record.errors.to_h)
-      rescue
-        update_columns(invoice_update_failed: true, invoice_update_error_call: 'payment_succeeded', invoice_update_error_record: nil, invoice_update_error_hash: nil)
+      rescue StandardError => e
+        update_columns(invoice_update_failed: true, invoice_update_error_call: 'payment_succeeded', invoice_update_error_record: nil, invoice_update_error_hash: { error: { classname: e.class.name, message: e.message } } )
       end
     end
 
@@ -199,8 +199,8 @@ class Charge < ApplicationRecord
         update_columns(invoice_update_failed: false, invoice_update_error_call: nil, invoice_update_error_record: nil, invoice_update_error_hash: nil)
       rescue ActiveRecord::RecordInvalid => e
         update_columns(invoice_update_failed: true, invoice_update_error_call: 'payment_failed', invoice_update_error_record: "#{e.record.class.name}##{e.record.id}", invoice_update_error_hash: e.record.errors.to_h)
-      rescue
-        update_columns(invoice_update_failed: true, invoice_update_error_call: 'payment_failed', invoice_update_error_record: nil, invoice_update_error_hash: nil)
+      rescue StandardError => e
+        update_columns(invoice_update_failed: true, invoice_update_error_call: 'payment_failed', invoice_update_error_record: nil, invoice_update_error_hash: { error: { classname: e.class.name, message: e.message } } )
       end
     end
 
