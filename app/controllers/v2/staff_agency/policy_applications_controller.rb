@@ -12,9 +12,9 @@ module V2
       
       def index
         if current_staff.organizable_id == Agency::GET_COVERED_ID
-          super(:@policies, PolicyApplication.all)
+          super(:@policy_applications, PolicyApplication.all)
         else
-          super(:@policies, PolicyApplication.where(agency_id: current_staff.organizable_id))
+          super(:@policy_applications, PolicyApplication.where(agency_id: current_staff.organizable_id))
         end
       end
       
