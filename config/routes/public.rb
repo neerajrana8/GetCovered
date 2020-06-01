@@ -38,7 +38,9 @@ scope module: :public do
   resources :policy_applications,
     path: "policy-applications",
     only: [ :create, :update, :show, :new ]
-  
+	
+	resources :policy_types, path: 'policy-types', only: [ :index ]	
+	
   resources :policy_quotes,
   	path: "policy-quotes",
   	only: [:update] do
