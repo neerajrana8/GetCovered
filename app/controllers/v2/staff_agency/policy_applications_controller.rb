@@ -11,7 +11,11 @@ module V2
       before_action :set_substrate, only: [:index]
       
       def index
-        super(:@policy_applications, @substrate)
+        if current_staff.organizable_id == Agency::GET_COVERED_ID
+          super(:@policies, PolicyApplication.all)
+        else
+          super(:@policies, PolicyApplication.where(agency_id: current_staff.organizable_id))
+        end
       end
       
       def show
