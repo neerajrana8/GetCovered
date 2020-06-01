@@ -11,14 +11,22 @@ module V2
       before_action :set_substrate, only: [:create, :index]
       
       def index
-        super(:@policies, @substrate)
+        if current_staff.organizable_id == Agency::GET_COVERED_ID
+          super(:@policies, Policy.all)
+        else
+          super(:@policies, Policy.where(agency_id: current_staff.organizable_id))
+        end
       end
 
       def search
-        @policies = Policy.search(params[:query]).records.where(agency_id: current_staff.organizable_id)
+        @policies =
+          if current_staff.organizable_id == Agency::GET_COVERED_ID
+            Policy.search(params[:query]).records
+          else
+            Policy.search(params[:query]).records.where(agency_id: current_staff.organizable_id)
+          end
         render json: @policies.to_json, status: 200
       end
-
       
       def show
       end
