@@ -6,6 +6,8 @@ development: &default
   log: true  
 test:
   host: http://localhost:9200
+test_container:
+  host: http://localhost:9200
 awsdev:
   host: https://search-gc-nonprod-esd-sv27jbj3vohqctw5o5672xg3a4.us-west-2.es.amazonaws.com
   log: true
