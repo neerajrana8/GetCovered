@@ -40,9 +40,18 @@ module CarrierPensioPolicyApplication
 						else
 							0.035
 						end
+						
+				  minimum_premium = 
+				    if guarantee_option == 12
+  				    108000
+  				  elsif guarantee_option == 6
+  				    90000
+  				  else
+  				    42000
+  				  end
 					
 					unchecked_premium = ((( self.fields["monthly_rent"] * 100 ) * 12 ) * multiplier ).to_i
-					checked_premium = unchecked_premium < 42000 ? 42000 : unchecked_premium
+					checked_premium = unchecked_premium < minimum_premium ? minimum_premium : unchecked_premium
 				  
 				  premium = PolicyPremium.new base: checked_premium, policy_quote: quote, 
 				                              billing_strategy: quote.policy_application.billing_strategy
