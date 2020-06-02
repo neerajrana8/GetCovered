@@ -82,7 +82,8 @@ module V2
       	            message: "A User has already signed up with this email address.  Please log in to complete your application"
     	            }.to_json,
     	            status: 401 
-    	          error_status << true           
+    	          error_status << true
+                break      
               end                
             else
               @application.users << @user
@@ -118,14 +119,15 @@ module V2
         	            message: "The mailing address associated with this email is different than the one supplied in the recent request.  To change your address please log in"
       	            }.to_json,
       	            status: 401 and return
-      	          error_status << true   
+      	          error_status << true
+                  break
                 end        
               end
             end
-          else
+					else
             secure_tmp_password = SecureRandom.base64(12)
 						policy_user_params = {
-							spouse: policy_user[:spouse],
+							spouse: policy_user[:spouse] || false,
 							user_attributes: {
 								email: policy_user[:user_attributes][:email],
 								password: secure_tmp_password,
@@ -135,7 +137,9 @@ module V2
 									last_name: policy_user[:user_attributes][:profile_attributes][:last_name],
 									job_title: policy_user[:user_attributes][:profile_attributes][:job_title],
 									contact_phone: policy_user[:user_attributes][:profile_attributes][:contact_phone],
-									birth_date: policy_user[:user_attributes][:profile_attributes][:birth_date]
+									birth_date: policy_user[:user_attributes][:profile_attributes][:birth_date],
+									salutation: policy_user[:user_attributes][:profile_attributes][:salutation],
+									gender: policy_user[:user_attributes][:profile_attributes][:gender],
 								}
 							}
 						}
@@ -163,8 +167,11 @@ module V2
       
       def create_rental_guarantee
         
-        @application = PolicyApplication.new(create_rental_guarantee_params) 
-        @application.agency = Agency.where(master_agency: true).take 
+        @application = PolicyApplication.new(create_rental_guarantee_params)
+        
+        if @application.agency.nil?
+          @application.agency = Agency.where(master_agency: true).take 
+        end
 
 				@application.billing_strategy = BillingStrategy.where(agency: @application.agency, 
 				                                                      policy_type: @application.policy_type).take
@@ -192,7 +199,9 @@ module V2
       def create_commercial
         
         @application = PolicyApplication.new(create_commercial_params) 
-        @application.agency = Agency.where(master_agency: true).take 
+        if @application.agency.nil?
+          @application.agency = Agency.where(master_agency: true).take 
+        end
 
 				@application.billing_strategy = BillingStrategy.where(agency: @application.agency, 
 				                                                      policy_type: @application.policy_type,
@@ -445,7 +454,7 @@ module V2
 	      
 	      def create_residential_params
   	      params.require(:policy_application)
-  	            .permit(:effective_date, :expiration_date, :fields, :auto_pay, 
+  	            .permit(:effective_date, :expiration_date, :auto_pay, 
 		      							:auto_renew, :billing_strategy_id, :account_id, :policy_type_id,
 		      							:carrier_id, :agency_id, fields: [:title, :value, options: []], 
 		      							questions: [:title, :value, options: []], 
@@ -455,7 +464,7 @@ module V2
 	      
 	      def create_commercial_params
   	      params.require(:policy_application)
-  	            .permit(:effective_date, :expiration_date, :fields, :auto_pay, 
+  	            .permit(:effective_date, :expiration_date, :auto_pay, 
 		      							:auto_renew, :billing_strategy_id, :account_id, :policy_type_id, 
 		      							:carrier_id, :agency_id, fields: {}, 
 		      							questions: [:text, :value, :questionId, options: [], questions: [:text, :value, :questionId, options: []]])  
@@ -463,7 +472,7 @@ module V2
 	      
 	      def create_rental_guarantee_params
   	      params.require(:policy_application)
-  	            .permit(:effective_date, :expiration_date, :fields, :auto_pay, 
+  	            .permit(:effective_date, :expiration_date, :auto_pay, 
 		      							:auto_renew, :billing_strategy_id, :account_id, :policy_type_id, 
 		      							:carrier_id, :agency_id, fields: {})  
   	    end

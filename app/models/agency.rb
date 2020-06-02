@@ -93,6 +93,8 @@ class Agency < ApplicationRecord
   # Validations
   
   validates_presence_of :title, :slug, :call_sign
+
+  GET_COVERED_ID = 1
   
   def owner
     staff.where(id: staff_id).take

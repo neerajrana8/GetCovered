@@ -11,42 +11,48 @@ module V2
       before_action :set_substrate, only: [:index]
       
       def index
-        super(:@policy_applications, @substrate)
+        if current_staff.organizable_id == Agency::GET_COVERED_ID
+          super(:@policy_applications, PolicyApplication.all)
+        else
+          super(:@policy_applications, PolicyApplication.where(agency_id: current_staff.organizable_id))
+        end
       end
       
-      def show
-      end
-      
+      def show; end
       
       private
       
-        def view_path
-          super + "/policy_applications"
-        end
-        
-        def set_policy_application
-          @policy_application = access_model(::PolicyApplication, params[:id])
-        end
-        
-        def set_substrate
-          super
-          if @substrate.nil?
-            @substrate = access_model(::PolicyApplication)
-          elsif !params[:substrate_association_provided]
-            @substrate = @substrate.policy_applications
-          end
-        end
-        
-        def supported_filters(called_from_orders = false)
-          @calling_supported_orders = called_from_orders
-          {
-          }
-        end
+      def view_path
+        super + "/policy_applications"
+      end
 
-        def supported_orders
-          supported_filters(true)
+      def set_policy_application
+        @policy_application =
+          if current_staff.organizable_id == Agency::GET_COVERED_ID
+            PolicyApplication.find(params[:id])
+          else
+            current_staff.organizable.policy_applications.find(params[:id])
+          end
+      end
+
+      def set_substrate
+        super
+        if @substrate.nil?
+          @substrate = access_model(::PolicyApplication)
+        elsif !params[:substrate_association_provided]
+          @substrate = @substrate.policy_applications
         end
-        
+      end
+
+      def supported_filters(called_from_orders = false)
+        @calling_supported_orders = called_from_orders
+        {
+        }
+      end
+
+      def supported_orders
+        supported_filters(true)
+      end
     end
-  end # module StaffAgency
+  end
 end

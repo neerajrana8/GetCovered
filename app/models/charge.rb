@@ -64,17 +64,15 @@ class Charge < ApplicationRecord
 
 
   def mark_succeeded(message = nil)
-    invoice.with_lock do  # we lock the invoice to ensure serial processing with other invoice events
-      update_columns(status: 'succeeded', status_information: message)
-      invoice.payment_succeeded(self)
+    invoice.with_lock do
+      pay_attempt_succeeded(self.stripe_id, self.payment_method, message)
     end
   end
 
 
   def mark_failed(message = nil)
-    invoice.with_lock do  # we lock the invoice to ensure serial processing with other invoice events
-      update_columns(status: 'failed', status_information: message)
-      invoice.payment_failed
+    invoice.with_lock do
+      pay_attempt_failed(self.stripe_id, self.payment_method, message)
     end
   end
 
@@ -186,10 +184,11 @@ class Charge < ApplicationRecord
       update_columns(status: 'succeeded', stripe_id: stripe_charge_id, payment_method: the_payment_method, status_information: message)
       begin
         invoice.payment_succeeded(self)
+        update_columns(invoice_update_failed: false, invoice_update_error_call: nil, invoice_update_error_record: nil, invoice_update_error_hash: nil)
       rescue ActiveRecord::RecordInvalid => e
         update_columns(invoice_update_failed: true, invoice_update_error_call: 'payment_succeeded', invoice_update_error_record: "#{e.record.class.name}##{e.record.id}", invoice_update_error_hash: e.record.errors.to_h)
-      rescue
-        update_columns(invoice_update_failed: true, invoice_update_error_call: 'payment_succeeded', invoice_update_error_record: nil, invoice_update_error_hash: nil)
+      rescue StandardError => e
+        update_columns(invoice_update_failed: true, invoice_update_error_call: 'payment_succeeded', invoice_update_error_record: nil, invoice_update_error_hash: { error: { classname: e.class.name, message: e.message } } )
       end
     end
 
@@ -197,10 +196,11 @@ class Charge < ApplicationRecord
       update_columns(status: 'failed', stripe_id: stripe_charge_id, payment_method: the_payment_method, status_information: message)
       begin
         invoice.payment_failed(self)
+        update_columns(invoice_update_failed: false, invoice_update_error_call: nil, invoice_update_error_record: nil, invoice_update_error_hash: nil)
       rescue ActiveRecord::RecordInvalid => e
         update_columns(invoice_update_failed: true, invoice_update_error_call: 'payment_failed', invoice_update_error_record: "#{e.record.class.name}##{e.record.id}", invoice_update_error_hash: e.record.errors.to_h)
-      rescue
-        update_columns(invoice_update_failed: true, invoice_update_error_call: 'payment_failed', invoice_update_error_record: nil, invoice_update_error_hash: nil)
+      rescue StandardError => e
+        update_columns(invoice_update_failed: true, invoice_update_error_call: 'payment_failed', invoice_update_error_record: nil, invoice_update_error_hash: { error: { classname: e.class.name, message: e.message } } )
       end
     end
 

@@ -16,15 +16,17 @@ json.policy_users_attributes(@application.policy_users) do |policy_user|
 			json.contact_phone policy_user.user.profile.contact_phone
 			json.birth_date policy_user.user.profile.birth_date
 			json.job_title policy_user.user.profile.job_title			
-		end	
+			json.salutation policy_user.user.profile.salutation
+			json.gender policy_user.user.profile.gender
+		end
 		json.address_attributes do
-      json.street_number policy_user.user.address.street_number
-      json.street_name policy_user.user.address.street_name
-      json.city policy_user.user.address.city
-      json.state policy_user.user.address.state
-      json.country policy_user.user.address.country
-      json.county policy_user.user.address.county
-      json.zip_code policy_user.user.address.zip_code			
+      json.street_number policy_user.user.address&.street_number
+      json.street_name policy_user.user.address&.street_name
+      json.city policy_user.user.address&.city
+      json.state policy_user.user.address&.state
+      json.country policy_user.user.address&.country
+      json.county policy_user.user.address&.county
+      json.zip_code policy_user.user.address&.zip_code			
 		end
 	end
 end

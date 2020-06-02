@@ -291,20 +291,22 @@ class PolicyQuote < ApplicationRecord
       if new_bdc < 0
         return false # this should never happen... WARNING: good place to put an error logger just in case?
       end
-      self.policy.update(
+      self.policy.update_columns(
         billing_dispute_count: new_bdc,
         billing_dispute_status: new_bdc == 0 ? 'AWAITING_POSTDISPUTE_PROCESSING' : 'DISPUTED'
       )
-    end
+    end unless self.policy.nil?
     return true
   end
   
   # to be invoked by Invoice, not directly; an invoice payment attempt was successful
   def payment_succeeded(invoice)
-    if self.BEHIND? || self.REJECTED?
-      self.policy.update(billing_status: 'RESCINDED') unless self.policy.invoices.map{|inv| inv.status }.include?('missed')
-    else
-      self.policy.update(billing_status: 'CURRENT')
+    unless self.policy.nil?
+      if self.policy.BEHIND? || self.policy.REJECTED?
+        self.policy.update_columns(billing_status: 'RESCINDED') unless self.policy.invoices.map{|inv| inv.status }.include?('missed')
+      else
+        self.policy.update_columns(billing_status: 'CURRENT')
+      end
     end
   end
   
@@ -335,8 +337,9 @@ class PolicyQuote < ApplicationRecord
   # to be invoked by Invoice, not directly; an invoice payment attempt was missed
   #(either a job invoked this on/after the due date, or a payment attempt failed after the due date, in which case payment_failed and then payment_missed will be invoked by the invoice)
   def payment_missed(invoice)
-    self.policy.update(billing_status: 'BEHIND', billing_behind_since: Time.current.to_date)
-    
+    unless self.policy.nil?
+      self.policy.update_columns(billing_status: 'BEHIND', billing_behind_since: Time.current.to_date) unless self.policy.billing_status == 'BEHIND'
+    end
     #payer_notification_subject = 'Get Covered: Payments Behind'
     #payer_notification_message = "A payment for #{invoice.get_descriptor}, invoice ##{invoice.number} has failed.  Your payment is now past due.  Please submit a payment immediately to prevent cancellation of coverage."
     #agent_notification_subject = 'Get Covered: Payments Behind'

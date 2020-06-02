@@ -32,7 +32,14 @@
             via: "get"
         end
       end
-  
+
+    resources :master_policies,
+      only: [ :create, :update, :index, :show ]do
+        member do
+          post :show_create
+        end
+      end
+
     resources :agencies,
       only: [ :create, :update, :index, :show ],
       concerns: :reportable do
@@ -59,6 +66,10 @@
       path: "branding-profiles",
       only: [ :show, :create, :update ]
     
+    resources :branding_profile_attributes,
+      path: "branding-profile-attributes",
+      only: [ :destroy ]
+      
     resources :pages
 
     resources :carrier_insurable_profiles,
@@ -122,6 +133,11 @@
           	path: "get-residential-property-info"
 
         end
+
+        collection do
+          post :bulk_create
+        end
+
         resources :insurable_rates,
           path: "insurable-rates",
           defaults: {

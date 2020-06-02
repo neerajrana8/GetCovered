@@ -60,6 +60,7 @@ describe 'Insurables API spec', type: :request do
       create_insurable_for @account, @building, community
       create_insurable_for @account, @building, community
       create_insurable_for @account, @building, community
+      expect(community.insurables.count).to eq(3)
       get "/v2/staff_agency/insurables", params: {"filter[insurable_id]" => community.id}, headers: @headers
       result = JSON.parse response.body
       expect(result.count).to eq(3)

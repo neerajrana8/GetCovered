@@ -83,7 +83,7 @@ module Helpers
       category: "property", 
       covered: "true", 
       enabled: "true", 
-      title: "some new insurable",
+      title: "some new insurable with unique id: #{SecureRandom.uuid}",
       account: account,
       insurable: insurable,
       insurable_type: insurable_type,
