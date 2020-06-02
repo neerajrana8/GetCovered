@@ -31,7 +31,7 @@ module V2
           if current_staff.organizable_id == Agency::GET_COVERED_ID
             PolicyApplication.find(params[:id])
           else
-            access_model(::PolicyApplication, params[:id])
+            current_staff.organizable.policy_applications.find(params[:id])
           end
       end
 
