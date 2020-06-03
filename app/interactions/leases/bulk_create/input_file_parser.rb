@@ -7,7 +7,8 @@ module Leases
       HEADERS = %w[start_date end_date status lease_type unit
                    tenant_one_email tenant_one_first_name tenant_one_last_name tenant_one_birthday
                    tenant_two_email tenant_two_first_name tenant_two_last_name tenant_two_birthday].freeze
-      ALWAYS_PRESENT_ROWS = %w[start_date end_date status lease_type unit].freeze
+      ALWAYS_PRESENT_ROWS = %w[start_date end_date status lease_type unit
+                               tenant_one_email tenant_one_first_name tenant_one_last_name tenant_one_birthday].freeze
       VALID_LEASE_TYPES = %w[Residential Commercial].freeze
       DATE_FORMAT = '%m/%d/%Y'.freeze
 
@@ -36,7 +37,7 @@ module Leases
           return false
         end
 
-        if row['tenant_one_email'].present? && !tenant_data_valid?(row, row_number, 'one')
+        unless tenant_data_valid?(row, row_number, 'one')
           return false
         end
 

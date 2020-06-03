@@ -1,0 +1,11 @@
+start_date,end_date,status,lease_type,unit,tenant_one_email,tenant_one_first_name,tenant_one_last_name,tenant_one_birthday,tenant_two_email,tenant_two_first_name,tenant_two_last_name,tenant_two_birthday
+,,,,,,,,,,,,
+12/12/20,01/14/21,current,Residential,1,,,,,,,,
+12/12/20,01/14/21,current,Residential,1,tenant_11@test.com,Tenant One Name,Tenant One Last Name,11/01/2022,,," ",
+12/12/20,01/14/21,current,Residential,1,tenant_12@test.com,Tenant One Name,Tenant One Last Name,589456456,,," ",
+12/12/20,01/14/21,current,Residential,1,tenant_13@test.com,Tenant One Name,Tenant One Last Name,11/01/2000,,," ",
+12/12/20,01/14/21,current,Residential,1,tenant_14@test.com,Tenant One Name,Tenant One Last Name,11/01/2000,tenant_21@test.com,," ",
+12/12/20,01/14/21,current,Residential,1,tenant_15@test.com,Tenant One Name,Tenant One Last Name,11/01/2000,tenant_22@test.com,," ",11/01/2000
+12/12/20,01/14/21,strange,Residential,1,tenant_16@test.com,Tenant One Name,Tenant One Last Name,11/01/2000,tenant_23@test.com,Tenant Two Name,Tenant Two Last Name,11/01/2000
+12/12/20,01/14/21,current,Strange,1,tenant_16@test.com,Tenant One Name,Tenant One Last Name,11/01/2000,tenant_23@test.com,Tenant Two Name,Tenant Two Last Name,11/01/2000
+12/12/20,01/14/21,current,Residential,6,tenant_16@test.com,Tenant One Name,Tenant One Last Name,11/01/2000,tenant_23@test.com,Tenant Two Name,Tenant Two Last Name,11/01/2000
