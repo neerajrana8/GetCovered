@@ -283,7 +283,7 @@ class Policy < ApplicationRecord
   
   def subtract_from_future_invoices
     amount = bulk_premium_amount
-    policy_group&.policy_group_premium&.policy_group_quote&.invoices&.quoted&.each do |invoice|      
+    policy_group&.policy_group_premium&.policy_group_quote&.invoices&.each do |invoice|      
       line_item = invoice.line_items.base_premium.take
       line_item.price = line_item.price - amount
       line_item.save
