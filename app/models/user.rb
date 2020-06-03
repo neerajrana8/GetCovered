@@ -82,7 +82,32 @@ class User < ApplicationRecord
 #   def payment_methods
 #     super.nil? ? super : EncryptionService.decrypt(super)
 #   end
+  article_es_settings = {
+    index: {
+      analysis: {
+        filter: {
+          autocomplete_filter: {
+            type: "edge_ngram",
+            min_gram: 1,
+            max_gram: 20
+          }
+        },
+        analyzer:{
+          autocomplete: {
+            type: "custom",
+            tokenizer: "standard",
+            filter: ["lowercase", "autocomplete_filter"]
+          }
+        }
+      }
+    }
+  }
 
+  settings article_es_settings do
+    mapping do
+      indexes :email, type: 'string', analyzer: 'autocomplete'
+    end
+  end
 
   # Set Stripe ID
   #
