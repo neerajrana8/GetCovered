@@ -72,8 +72,8 @@ module PolicyApplications
 
       def create_policy_users(application)
         policy_users_params.each_with_index do |policy_user, _|
-          if ::User.where(email: policy_user[:user_attributes][:email]).exists?
-            user = ::User.find_by_email(policy_user[:user_attributes][:email])
+          if ::User.where(email: policy_user[:user_attributes][:email]&.downcase).exists?
+            user = ::User.find_by_email(policy_user[:user_attributes][:email]&.downcase)
             application.users << user
           else
             secure_tmp_password = SecureRandom.base64(12)

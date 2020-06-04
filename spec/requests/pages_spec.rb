@@ -19,6 +19,9 @@ describe 'Page API spec', type: :request do
       result = JSON.parse response.body
       expect(response.status).to eq(201)
       expect(result["id"]).to_not eq(nil)
+      expect(result['styles']['color']).to eq('white')
+      page = Page.last
+      expect(page.styles['color']).to eq('white')
     end
     
     it 'should show Page' do
@@ -66,7 +69,10 @@ describe 'Page API spec', type: :request do
       title: "GetCovered",
       content: "This is page content",
       agency_id: @agency.id,
-      branding_profile_id: @branding_profile.id
+      branding_profile_id: @branding_profile.id,
+      styles: {
+        color: 'white'
+      }
     }
   end
 end 

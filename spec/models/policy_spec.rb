@@ -102,7 +102,6 @@ RSpec.describe Policy, elasticsearch: true, type: :model do
       master_policy.insurables << residential_community
       master_policy.save
       expect(enqueued_jobs.size).to eq(1)
-      byebug
       # perform_enqueued_jobs do
       #   AutomaticMasterCoveragePolicyIssueJob.perform_later(master_policy.id)
       # end

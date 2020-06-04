@@ -53,15 +53,15 @@ class Policy < ApplicationRecord
   include CarrierQbePolicy
   include RecordChange
   
-  after_create :inherit_policy_coverages, if: -> { policy_type.designation == 'MASTER-COVERAGE' }
-  after_create :schedule_coverage_reminders, if: -> { policy_type.designation == 'MASTER-COVERAGE' }
+  after_create :inherit_policy_coverages, if: -> { policy_type&.designation == 'MASTER-COVERAGE' }
+  after_create :schedule_coverage_reminders, if: -> { policy_type&.designation == 'MASTER-COVERAGE' }
   
-  after_save :start_automatic_master_coverage_policy_issue, if: -> { policy_type.designation == 'MASTER' }
+  after_save :start_automatic_master_coverage_policy_issue, if: -> { policy_type&.designation == 'MASTER' }
   
-  belongs_to :agency
+  belongs_to :agency, optional: true
   belongs_to :account, optional: true
-  belongs_to :carrier
-  belongs_to :policy_type
+  belongs_to :carrier, optional: true
+  belongs_to :policy_type, optional: true
   # belongs_to :billing_profie
   belongs_to :policy_group_quote, optional: true
   belongs_to :policy_group, optional: true
@@ -69,7 +69,7 @@ class Policy < ApplicationRecord
   
   has_many :policy_insurables, inverse_of: :policy
   has_many :insurables, through: :policy_insurables
-  
+  has_many :policies
   has_many :claims
   
   has_many :policy_quotes
@@ -124,9 +124,13 @@ class Policy < ApplicationRecord
   validate :same_agency_as_account
   validate :status_allowed
   validate :carrier_agency
-  validate :master_policy, if: -> { policy_type.designation == 'MASTER-COVERAGE' }
-  
-  validates_presence_of :expiration_date, :effective_date, unless: -> { policy_type.designation == 'MASTER-COVERAGE' }
+  validate :master_policy, if: -> { policy_type&.designation == 'MASTER-COVERAGE' }
+  validates :agency, presence: true, if: :in_system?
+  validates :carrier, presence: true, if: :in_system?
+
+  validates_presence_of :expiration_date, :effective_date, unless: -> { policy_type&.designation == 'MASTER' }
+  validates_presence_of :expiration_date, :effective_date, unless: -> { policy_type&.designation == 'MASTER-COVERAGE' }
+
   validate :date_order,
   unless: proc { |pol| pol.effective_date.nil? || pol.expiration_date.nil? }
     
@@ -158,17 +162,21 @@ class Policy < ApplicationRecord
     errors.add(:policy_in_system, 'Cannot update in system policy') if policy_in_system == true
   end
   
-  def residential_account_present
+  def residential_account_present    
     errors.add(:account, 'Account must be specified') if ![4,5].include?(policy_type_id) && account.nil? 
   end
   
   def same_agency_as_account
+    return unless in_system?
+    
     if ![4,5].include?(policy_type_id)
       errors.add(:account, 'policy must belong to the same agency as account') if agency != account&.agency
     end
   end
   
   def carrier_agency
+    return unless in_system?
+
     errors.add(:carrier, 'carrier agency must exist') unless agency&.carriers&.include?(carrier)
   end
   
@@ -292,7 +300,30 @@ class Policy < ApplicationRecord
       indexes :number, type: :text
     end
   end
-      
+
+  # Recount every month, so we will get monthly invoice
+  def master_policy_billing
+    billing_started = false
+
+    policy_coverages = policies&.where(policy_type: 3) || ''
+    policy_coverages.each_with_index do |index|
+      amount = policy_premiums&.take.base
+      policy_coverage_number = policies&.where(policy_type: 3).count || 0
+      total_amount = amount * policy_coverage_number
+      next if total_amount == 0
+
+      due_date = index == 0 ? status_updated_on : policy.effective_date + index.months
+      invoice = invoices.new do |inv|
+        inv.due_date        = due_date
+        inv.available_date  = due_date + available_period
+        inv.user            = primary_user
+        inv.amount          = amount
+      end
+      invoice.save
+    end
+    billing_started
+  end
+
   private
       
     def date_order

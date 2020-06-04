@@ -19,7 +19,8 @@
       { title: "Pet Damage", designation: "pet_damage", limit: rand(100000..500000).round(-3), deductible: rand(25000..100000).round(-3) },
       { title: "Loss of Rent", designation: "loss_of_rents", limit: rand(100000..500000).round(-3), deductible: 0 },
       { title: "Tenant Contingent Contents", designation: "tenant_contingent_contents", limit: rand(100000..500000).round(-3), deductible: 0 },
-      { title: "Contingent Contents", designation: "contingent_contents", limit: rand(100000..500000).round(-3), deductible: 0 }
+      { title: "Contingent Contents", designation: "contingent_liability_options", limit: rand(100000..500000).round(-3), deductible: 0 }
+      { title: "Landlord Supplemental", designation: "landlord_supplemental", limit: rand(100000..500000).round(-3), deductible: 0 }
     ]
   }
 ]
