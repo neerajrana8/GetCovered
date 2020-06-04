@@ -68,9 +68,8 @@ module V2
 	    	unless @policy_quote.nil?
 		    	@user = ::User.find(accept_policy_quote_params[:id])
 		    	unless @user.nil?
-			    	
-			    	if @user.attach_payment_source(accept_policy_quote_params[:source])
-				    	
+						result = @user.attach_payment_source(accept_policy_quote_params[:source])
+			    	if result.valid?
 				    	@quote_attempt = @policy_quote.accept
 				    	@policy_type_identifier = @policy_quote.policy_application.policy_type_id == 5 ? "Rental Guarantee" : "Policy"
 							
@@ -80,12 +79,7 @@ module V2
 							}, status: @quote_attempt[:success] ? 200 : 500
 							
 				    else
-				    
-				    	render json: {
-					    	:error => "Payment Source Could not Be Attached",
-					    	:message => "An Error has occured with the provided payment method.  Please try again."
-				    	}, status: 500
-			    	
+				    	render json: { error: "Failure", message: result.errors.full_messages.join(' and ') }.to_json, status: 422
 			    	end
 			    else
 			    	

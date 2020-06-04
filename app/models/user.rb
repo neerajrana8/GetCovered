@@ -117,7 +117,7 @@ class User < ApplicationRecord
   # Attach a stripe source token to a user (Stripe Customer)
   
   def attach_payment_source(token = nil, make_default = true)
-    AttachPaymentSource.run!(user: self, token: token, make_default: make_default)
+    AttachPaymentSource.run(user: self, token: token, make_default: make_default)
   end
   
   settings index: { number_of_shards: 1 } do
