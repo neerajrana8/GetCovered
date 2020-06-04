@@ -4,15 +4,11 @@ include ActionController::RespondWith
 describe 'Leases API spec', type: :request do
   describe 'Bulk Creation' do
     before :all do
-      community_type_id = InsurableType::RESIDENTIAL_COMMUNITIES_IDS.first
-      unit_type_id = InsurableType::RESIDENTIAL_UNITS_IDS.first
-
       agency = FactoryBot.create(:agency)
       @account = FactoryBot.create(:account, agency: agency)
-      @community = FactoryBot.create(:insurable, insurable_type_id: community_type_id, agency_id: agency.id, account_id: @account.id)
+      @community = FactoryBot.create(:insurable, :residential_community, agency_id: agency.id, account_id: @account.id)
       FactoryBot.rewind_sequences
-      FactoryBot.create_list(:insurable, 3,
-                             insurable_type_id: unit_type_id,
+      FactoryBot.create_list(:insurable, 3, :residential_unit,
                              insurable: @community,
                              agency_id: agency.id,
                              account_id: @account.id)

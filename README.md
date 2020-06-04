@@ -26,8 +26,16 @@ Before installing docker and a local pg server should be running and all gems sh
 * `rails docker:restart` Removes all docker-compose services, builds then re-start them under force-recreate
 
 #### Tests
-There are two ways to launch test locally and in 
-##### Using Test
+There are two ways to launch tests: locally and in a container.
+
+##### Locally
+Before all you should prepare the test environment: 
+* `RAILS_ENV=test web bundle exec rake db:drop` - drop database if exists
+* `RAILS_ENV=test web bundle exec rake db:create` - create test database
+* `RAILS_ENV=test web bundle exec rake db:migrate` - run migrations
+* `RAILS_ENV=test web bundle exec rake db:seed section=setup` - create default tables
+
+After it you can run tests using `bundle exec rspec` command.
 
 ##### Using Docker Compose
 Before it you should run `docker-compose up` because the all listed below are started by using the `docker-composer exec`.
@@ -36,3 +44,8 @@ There are two main commands:
 * `RAILS_ENV=test_container bundle exec rake docker:tests:recreate_database` - recreates a database, runs migrations,
 and seeds by data from the db/seeds/setup.rb
 * `RAILS_ENV=test_container bundle exec rake docker:tests:rspec` - run all tests
+
+If you want to launch a certain test use the next form: 
+
+`docker-compose exec -e "RAILS_ENV=test_container" web bundle exec rspec 'spec/requests/leases/bulk_creation_spec.rb'`
+
