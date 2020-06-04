@@ -115,6 +115,10 @@
             via: "get",
             defaults: { recordable_type: Lease }
         end
+
+        collection do
+          post :bulk_create
+        end
       end
   
     resources :lease_types,

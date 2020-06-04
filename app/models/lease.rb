@@ -33,8 +33,7 @@ class Lease < ApplicationRecord
   # Validations
   validates_presence_of :start_date, :end_date
 
-  validate :start_date_precedes_end_date,
-    unless: proc { |lease| lease.end_date.nil? || lease.start_date.nil? }
+  validate :start_date_precedes_end_date
 
   validate :lease_type_insurable_type
   # validates :type, presence: true,

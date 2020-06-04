@@ -1,0 +1,4 @@
+start_date,end_date,status,lease_type,unit,tenant_one_email,tenant_one_first_name,tenant_one_last_name,tenant_one_birthday,tenant_two_email,tenant_two_first_name,tenant_two_last_name,tenant_two_birthday
+12/12/20,01/14/21,current,Residential,1,tenant_11@test.com,Tenant One Name 1,Tenant One Last Name 1,11/01/90,tenant_21@test.com,Tenant Two Name 1,Tenant Two Last Name 1,11/01/90
+12/12/20,01/12/21,current,Residential,2,tenant_12@test.com,Tenant One Name 2,Tenant One Last Name 2,11/01/90,"","","",""
+12/12/20,01/12/21,current,Residential,3,tenant_12@test.com,Tenant One Name 3,Tenant One Last Name 3,11/01/90,"","","",""
