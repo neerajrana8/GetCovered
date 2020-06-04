@@ -76,8 +76,13 @@ class InsurableRateConfiguration < ApplicationRecord
             throw 'invalid_assert_placement' unless asserts
             if code[1].class == ::Array
               if code[1][0] == 'selected'
-                # we're asserting
+                val = execute(code[2])
+                # MOOSE WARNING: what to do with assertion?
+                true
               elsif code[1][0] == 'value'
+                val = num(execute(code[2]))
+                # MOOSE WARNING: what to do with assertion?
+                true
               else
                 throw 'invalid_assert_subject_code'
               end
@@ -121,16 +126,19 @@ class InsurableRateConfiguration < ApplicationRecord
     end
   end
   
-  def num(val)
+  def num(val, crashable: false)
     case val
       when ::TrueClass
+        throw 'invalid_number' if crashable
         1.to_d
       when ::FalseClass
+        throw 'invalid_number' if crashable
         0.to_d
+      when ::NilClass
+        throw 'invalid_number' if crashable
+        -BigDecimal::INFINITY
       when ::String
         val.to_d
-      when ::NilClass
-        -BigDecimal::INFINITY
       else # MOOSE WARNING: are there other possibilities besides numeric?
         val.to_d
     end
