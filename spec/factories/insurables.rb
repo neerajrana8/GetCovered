@@ -1,6 +1,6 @@
 FactoryBot.define do
   factory :insurable do
-    title { 'Test title' }
+    sequence :title, &:to_s
     association :insurable_type, factory: :insurable_type
     association :account, factory: :account
   end

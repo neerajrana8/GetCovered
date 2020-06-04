@@ -2,14 +2,14 @@ class InsurableType < ApplicationRecord
   include ElasticsearchSearchable
   include SetSlug
 
-  COMMUNITIES_IDS = [1, 2, 3]
-  UNITS_IDS = [4, 5]
-  BUILDINGS_IDS = [7]
+  COMMUNITIES_IDS = [1, 2, 3].freeze
+  UNITS_IDS = [4, 5].freeze
+  BUILDINGS_IDS = [7].freeze
 
-  RESIDENTIAL_COMMUNITIES_IDS = [1, 2]
-  RESIDENTIAL_UNITS_IDS = [4]
+  RESIDENTIAL_COMMUNITIES_IDS = [1, 2].freeze
+  RESIDENTIAL_UNITS_IDS = [4].freeze
 
-  COMMERCIAL_COMMUNITIES_IDS = [2, 3]
+  COMMERCIAL_COMMUNITIES_IDS = [2, 3].freeze
 
   has_many :insurables
   has_many :carrier_insurable_types
@@ -21,7 +21,7 @@ class InsurableType < ApplicationRecord
   
   validates_presence_of :title, :slug, :category
   validates_inclusion_of :enabled,
-    in: [true, false], message: 'cannot be blank'
+                         in: [true, false], message: 'cannot be blank'
 
   enum category: %w[property entity]
 end

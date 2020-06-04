@@ -4,17 +4,19 @@ include ActionController::RespondWith
 describe 'Leases API spec', type: :request do
   describe 'Bulk Creation' do
     before :all do
-      @agency = FactoryBot.create(:agency)
-      @account = FactoryBot.create(:account, agency: @agency)
-      @community_type = FactoryBot.create(:insurable_type, id: 1)
-      @community = FactoryBot.create(:insurable, insurable_type: @community_type, agency_id: @agency.id, account_id: @account.id)
-      @unit_type = FactoryBot.create(:insurable_type, id: 4)
-      @unit_1 = FactoryBot.create(:insurable, insurable_type: @unit_type, title: '1', insurable: @community, agency_id: @agency.id, account_id: @account.id)
-      @unit_2 = FactoryBot.create(:insurable, insurable_type: @unit_type, title: '2', insurable: @community, agency_id: @agency.id, account_id: @account.id)
-      @unit_3 = FactoryBot.create(:insurable, insurable_type: @unit_type, title: '3', insurable: @community, agency_id: @agency.id, account_id: @account.id)
-      @lease_type = FactoryBot.create(:lease_type, title: 'Residential')
-      @lease_type.insurable_types << @unit_type
-      @agent = create_agent_for @agency
+      community_type_id = InsurableType::RESIDENTIAL_COMMUNITIES_IDS.first
+      unit_type_id = InsurableType::RESIDENTIAL_UNITS_IDS.first
+
+      agency = FactoryBot.create(:agency)
+      @account = FactoryBot.create(:account, agency: agency)
+      @community = FactoryBot.create(:insurable, insurable_type_id: community_type_id, agency_id: agency.id, account_id: @account.id)
+      FactoryBot.rewind_sequences
+      FactoryBot.create_list(:insurable, 3,
+                             insurable_type_id: unit_type_id,
+                             insurable: @community,
+                             agency_id: agency.id,
+                             account_id: @account.id)
+      @agent = create_agent_for agency
       @staff = FactoryBot.create(:staff, organizable: @account, role: 'staff')
     end
 
