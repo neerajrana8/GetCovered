@@ -30,12 +30,12 @@ There are two ways to launch tests: locally and in a container.
 
 ##### Locally
 Before all you should prepare the test environment: 
-* `RAILS_ENV=test web bundle exec rake db:drop` - drop database if exists
-* `RAILS_ENV=test web bundle exec rake db:create` - create test database
-* `RAILS_ENV=test web bundle exec rake db:migrate` - run migrations
-* `RAILS_ENV=test web bundle exec rake db:seed section=setup` - create default tables
+* `RAILS_ENV=test bundle exec rake db:drop` - drop database if exists
+* `RAILS_ENV=test bundle exec rake db:create` - create test database
+* `RAILS_ENV=test bundle exec rake db:migrate` - run migrations
+* `RAILS_ENV=test bundle exec rake db:seed section=setup` - create default tables
 
-After it you can run tests using `bundle exec rspec` command.
+After it you can run tests using `RAILS_ENV=test bundle exec rspec` command.
 
 ##### Using Docker Compose
 Before it you should run `docker-compose up` because the all listed below are started by using the `docker-composer exec`.
