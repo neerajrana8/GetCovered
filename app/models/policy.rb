@@ -287,7 +287,7 @@ class Policy < ApplicationRecord
       line_item = invoice.line_items.base_premium.take
       line_item.price = line_item.price - amount
       line_item.save
-      invoice.refresh_quoted
+      invoice.refresh_totals
     end
   end
   
