@@ -92,10 +92,15 @@ class User < ApplicationRecord
     if stripe_id.nil? && valid?
       
       stripe_customer = Stripe::Customer.create(
-        :email    => email,
-        :metadata => {
-          :first_name => profile.first_name,
-          :last_name  => profile.last_name
+        email: email,
+        metadata: {
+          first_name: profile.first_name,
+          last_name: profile.last_name,
+          email: email,
+          phone: profile&.contact_phone,
+          agency: policies.take&.agency&.title,
+          policy_number: policies.take&.number,
+          product: policies.take&.policy_type&.title
         }
       )
       

@@ -69,7 +69,11 @@ class Account
             email: owner.email,
             metadata: {
               first_name: owner&.profile&.first_name,
-              last_name: owner&.profile&.last_name
+              last_name: owner&.profile&.last_name,
+              email: owner.email,
+              phone: owner&.profile&.contact_phone,
+              agency: policies.take&.agency&.title,
+              product: policies.take&.policy_type&.title
             }
           )
 
