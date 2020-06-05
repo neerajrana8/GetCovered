@@ -67,7 +67,11 @@ class User
             email: email,
             metadata: {
               first_name: profile.first_name,
-              last_name: profile.last_name
+              last_name: profile.last_name,
+              email: email,
+              phone: profile&.contact_phone,
+              agency: policies.take&.agency&.title,
+              product: policies.take&.policy_type&.title
             }
           )
 
