@@ -82,7 +82,8 @@ RSpec.configure do |config|
     DatabaseCleaner.strategy = :transaction
     DatabaseCleaner.clean_with(:truncation,
                                except: %w[lease_types policy_types insurable_types carriers
-                                          lease_type_policy_types lease_type_insurable_types])
+                                          lease_type_policy_types lease_type_insurable_types
+                                          carrier_policy_types carrier_insurable_types])
   end
   
   config.around(:each) do |example|

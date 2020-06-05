@@ -68,7 +68,6 @@ describe 'User Policy spec', type: :request do
   end
   
   it 'should cancel policy for bulk Policy Application with refund if 30 days' do
-    allow(Rails.application.credentials).to receive(:uri).and_return({ test: { client: 'localhost' } })
     UserCoverageMailer.with(policy: @policy, user: @user).acceptance_email.deliver
     last_mail = Nokogiri::HTML(ActionMailer::Base.deliveries.last.html_part.body.decoded)
     url = last_mail.css('a').first["href"]
@@ -100,7 +99,6 @@ describe 'User Policy spec', type: :request do
   end
 
   it 'should send email if policy is accepted' do
-    allow(Rails.application.credentials).to receive(:uri).and_return({ test: { client: 'localhost' } })
     user = create_user
     user.address = FactoryBot.create(:address)
     user.save

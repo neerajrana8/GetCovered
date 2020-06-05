@@ -119,6 +119,7 @@ group :development, :test, :test_container do
   gem 'rubocop', '~> 0.63.1', require: false
   # RDoc for Documentation
   gem 'rdoc'
+  gem 'fuubar'
 end
 
 group :development do

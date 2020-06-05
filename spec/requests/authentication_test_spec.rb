@@ -76,7 +76,6 @@ describe 'Whether authentication is ocurring properly', type: :request do
     end
     
     it 'should update password with valid token' do
-      allow(Rails.application.credentials).to receive(:uri).and_return({ test: { admin: 'localhost' } })
       @reset_password_token  = @staff.send_reset_password_instructions
       params = {
         password: 'new password',
