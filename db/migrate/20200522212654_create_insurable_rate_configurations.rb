@@ -7,11 +7,12 @@ class CreateInsurableRateConfigurations < ActiveRecord::Migration[5.2]
       t.jsonb :coverage_options,
         null: false,
         default: []
-        
-        
       t.jsonb :rules,
         null: false,
         default: []
+      
+      #t.string
+      
       t.references :configurable,
         polymorphic: true
       t.references :carrier

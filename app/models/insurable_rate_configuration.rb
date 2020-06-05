@@ -5,9 +5,9 @@ class InsurableRateConfiguration < ApplicationRecord
   def validate_coverage_options
     # Coverage schema:
     #{
-    #  "title"         => string,
     #  "category"      => 'coverage' or 'deductible',
     #  "uid"           => string,
+    #  "title"         => string,
     #  "description"   => string (optional)",
     #  "requirement"   => boolean or nil,
     #  "options_type"  => ["none", "multiple_choice", "min_max"],
@@ -67,7 +67,11 @@ class InsurableRateConfiguration < ApplicationRecord
     end
   end
   
-  
+  # params:
+  #   selections: an array of hashes of the form { 'category'=>cat, 'uid'=>uid, 'selection'=>sel }, where sel is the # selected if applicable, and otherwise true or false
+  #   asserts: internal use, keeps track of where in the syntax assertions are allowed
+  # returns:
+  #   array of hashes of the form { 'category'=>cat, 'uid'=>uid, '
   def execute(code, selections: [], asserts: false)
     case code
       when ::Array
