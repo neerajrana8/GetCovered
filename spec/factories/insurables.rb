@@ -9,7 +9,11 @@ FactoryBot.define do
     end
 
     trait :residential_unit do
-      insurable_type_id { InsurableType::RESIDENTIAL_UNITS_IDS.first}
+      insurable_type_id { InsurableType::RESIDENTIAL_UNITS_IDS.first }
+    end
+
+    trait :building do
+      insurable_type_id { InsurableType::BUILDINGS_IDS.first }
     end
   end
 end
