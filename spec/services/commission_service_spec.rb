@@ -2,12 +2,11 @@ require 'rails_helper'
 
 describe 'Commission calculation spec', type: :request do
   before(:all) do
-    @policy_type = FactoryBot.create(:policy_type)
+    @carrier = Carrier.first
+    @policy_type = @carrier.policy_types.take
     @getcovered_agency = FactoryBot.create(:agency)
     @cambridge_agency = FactoryBot.create(:agency, title: "Cambridge")
     @account = FactoryBot.create(:account, agency: @cambridge_agency)
-    @carrier = FactoryBot.create(:carrier)
-    @carrier.policy_types << @policy_type
     @carrier.agencies << [@getcovered_agency, @cambridge_agency]
     @getcovered_commission_strategy = FactoryBot.build(:commission_strategy, carrier: @carrier, policy_type: @policy_type, type: 'PERCENT', percentage: 20.45, commissionable: @getcovered_agency)
     @getcovered_commission_strategy.save!

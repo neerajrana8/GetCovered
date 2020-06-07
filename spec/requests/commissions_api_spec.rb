@@ -4,13 +4,12 @@ include ActionController::RespondWith
 describe 'Commissions API spec', type: :request do
   ActiveJob::Base.queue_adapter = :test
   before :all do
+    @carrier = Carrier.first
+    @policy_type = @carrier.policy_types.take
     @staff = FactoryBot.create(:staff, role: 'super_admin')
-    @policy_type = FactoryBot.create(:policy_type)
     @getcovered_agency = FactoryBot.create(:agency)
     @cambridge_agency = FactoryBot.create(:agency, title: "Cambridge")
     @account = FactoryBot.create(:account, agency: @cambridge_agency)
-    @carrier = FactoryBot.create(:carrier)
-    @carrier.policy_types << @policy_type
     @carrier.agencies << [@getcovered_agency, @cambridge_agency]
     @getcovered_commission_strategy = FactoryBot.build(:commission_strategy, carrier: @carrier, policy_type: @policy_type, type: 'PERCENT', amount: 30, commissionable: @getcovered_agency)
     @getcovered_commission_strategy.save!

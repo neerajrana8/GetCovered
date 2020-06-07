@@ -7,7 +7,7 @@ describe 'Policy jobs spec', type: :request do
   it 'should generate payments for enabled next payment date policies' do
     user = FactoryBot.create(:user)
     primary_policy_user = FactoryBot.create(:policy_user)
-    policy_type = FactoryBot.create(:policy_type)
+    policy_type = PolicyType.find_by_title('Residential')
     policy = FactoryBot.build(:policy)
     policy.policy_in_system = true
     policy.policy_type = policy_type
@@ -31,7 +31,7 @@ describe 'Policy jobs spec', type: :request do
   
   it 'should perform queued refunds' do
     user = FactoryBot.create(:user)
-    policy_type = FactoryBot.create(:policy_type)
+    policy_type = PolicyType.find_by_title('Residential')
     policy = FactoryBot.build(:policy)
     policy.policy_in_system = true
     policy.policy_type = policy_type
