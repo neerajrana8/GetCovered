@@ -5,6 +5,13 @@ FactoryBot.define do
     password { 'test1234' }
     password_confirmation { 'test1234' }
     association :profile, factory: :profile
-    association :organizable, factory: :account
+    organizable do
+      case role
+      when 'agent'
+        FactoryBot.create(:agency)
+      when 'staff'
+        FactoryBot.create(:account)
+      end
+    end
   end
 end

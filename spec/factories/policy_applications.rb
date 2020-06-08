@@ -4,8 +4,9 @@ FactoryBot.define do
     effective_date { 1.day.ago }
     carrier { Carrier.first }
     policy
-    account
     agency
+    account { FactoryBot.create(:account, agency: agency) }
     policy_type { carrier.policy_types.take }
+    billing_strategy { FactoryBot.create(:monthly_billing_strategy, agency: agency, carrier: carrier, policy_type: policy_type) }
   end
 end

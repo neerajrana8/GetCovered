@@ -5,6 +5,7 @@ require 'rails_helper'
 describe 'Policy jobs spec', type: :request do
   
   it 'should generate payments for enabled next payment date policies' do
+    pending('should be fixed or removed, because we do not use this job')
     user = FactoryBot.create(:user)
     policy_type = PolicyType.find_by_title('Residential')
     agency = FactoryBot.create(:agency)
@@ -33,6 +34,7 @@ describe 'Policy jobs spec', type: :request do
   end
   
   it 'should perform queued refunds' do
+    pending('should be fixed or removed, because we do not use this job')
     user = FactoryBot.create(:user)
     policy_type = PolicyType.find_by_title('Residential')
     agency = FactoryBot.create(:agency)
@@ -42,7 +44,7 @@ describe 'Policy jobs spec', type: :request do
     policy = FactoryBot.build(:policy, account: account, agency: agency, carrier: carrier)
     policy.policy_in_system = true
     policy.policy_type = policy_type
-    policy.billing_dispute_status = 'AWATING_POSTDISPUTE_PROCESSING'
+    policy.billing_dispute_status = 'AWAITING_POSTDISPUTE_PROCESSING'
     policy.billing_enabled = true
     policy.auto_pay = false
     policy.save!

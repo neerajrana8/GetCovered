@@ -2,7 +2,13 @@ require 'rails_helper'
 
 RSpec.describe PolicyApplication, type: :model do
   it 'answer must be from options if options are defined' do
-    policy_application_answer = FactoryBot.create(:policy_application_answer)
+
+    agency = FactoryBot.create(:agency)
+    account = FactoryBot.create(:account, agency: agency)
+    carrier = Carrier.first
+    carrier.agencies << [agency]
+    policy_application = FactoryBot.create(:policy_application, carrier: carrier, agency: agency, account: account)
+    policy_application_answer = FactoryBot.create(:policy_application_answer, policy_application: policy_application)
     policy_application_answer.data['options'] = ['test1', 'test2', 'test3']
     policy_application_answer.save
     policy_application_answer.data['answer'] = 'Not in options'
@@ -14,7 +20,12 @@ RSpec.describe PolicyApplication, type: :model do
   end
 
   it 'answer must be from options if options are defined' do
-    policy_application_answer = FactoryBot.create(:policy_application_answer)
+    agency = FactoryBot.create(:agency)
+    account = FactoryBot.create(:account, agency: agency)
+    carrier = Carrier.first
+    carrier.agencies << [agency]
+    policy_application = FactoryBot.create(:policy_application, carrier: carrier, agency: agency, account: account)
+    policy_application_answer = FactoryBot.create(:policy_application_answer, policy_application: policy_application)
     policy_application_answer.data['desired'] = 'test1'
     policy_application_answer.save
     policy_application_answer.data['answer'] = 'Not desired'
