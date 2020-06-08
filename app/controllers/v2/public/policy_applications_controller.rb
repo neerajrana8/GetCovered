@@ -179,11 +179,8 @@ module V2
 		    if @application.save
   		    if create_policy_users()
     		    if @application.update(status: 'in_progress')
-              # Commercial Application Saved
-              
-      		    @application.primary_user().invite!
-      		    render "v2/public/policy_applications/show"
-      		    							
+              invite_primary_user(@application)
+							render "v2/public/policy_applications/show"
       		  else
               render json: @application.errors.to_json,
                      status: 422					
@@ -212,8 +209,8 @@ module V2
   		    if create_policy_users()
     		    if @application.update(status: 'complete')
               # Commercial Application Saved
-              
-      		    @application.primary_user().invite!
+              invite_primary_user(@application)
+
               quote_attempt = @application.crum_quote()
               
     					if quote_attempt[:success] == true
@@ -442,7 +439,14 @@ module V2
 	    end
             
       private
-	      
+
+      def invite_primary_user(policy_application)
+        primary_user = policy_application.primary_user
+        if primary_user.invitation_accepted_at.nil? && (primary_user.invitation_created_at.blank? || primary_user.invitation_created_at < 1.days.ago)
+          @application.primary_user.invite!
+        end
+      end
+
 	      def view_path
 	        super + '/policy_applications'
 	      end
