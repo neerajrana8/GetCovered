@@ -7,11 +7,9 @@ describe 'Leases API spec', type: :request do
       agency = FactoryBot.create(:agency)
       @account = FactoryBot.create(:account, agency: agency)
       @community = FactoryBot.create(:insurable, :residential_community, agency_id: agency.id, account_id: @account.id)
-      FactoryBot.rewind_sequences
-      FactoryBot.create_list(:insurable, 3, :residential_unit,
-                             insurable: @community,
-                             agency_id: agency.id,
-                             account_id: @account.id)
+      (1..3).each do |title|
+        FactoryBot.create(:insurable, :residential_unit, title: title, insurable: @community, agency_id: agency.id, account_id: @account.id)
+      end
       @agent = create_agent_for agency
       @staff = FactoryBot.create(:staff, organizable: @account, role: 'staff')
     end
