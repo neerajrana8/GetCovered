@@ -179,7 +179,7 @@ module V2
 		    if @application.save
   		    if create_policy_users()
     		    if @application.update(status: 'in_progress')
-							invite_primary_user(@application)
+              invite_primary_user(@application)
 							render "v2/public/policy_applications/show"
       		  else
               render json: @application.errors.to_json,
@@ -209,7 +209,7 @@ module V2
   		    if create_policy_users()
     		    if @application.update(status: 'complete')
               # Commercial Application Saved
-							invite_primary_user(@application)
+              invite_primary_user(@application)
 
               quote_attempt = @application.crum_quote()
               
