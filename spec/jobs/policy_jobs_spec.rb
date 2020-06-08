@@ -6,23 +6,26 @@ describe 'Policy jobs spec', type: :request do
   
   it 'should generate payments for enabled next payment date policies' do
     user = FactoryBot.create(:user)
-    primary_policy_user = FactoryBot.create(:policy_user)
     policy_type = PolicyType.find_by_title('Residential')
-    policy = FactoryBot.build(:policy)
-    policy.policy_in_system = true
-    policy.policy_type = policy_type
-    policy.status = 'QUOTE_ACCEPTED'
-    policy.primary_policy_user = primary_policy_user
-    policy.billing_enabled = true
-    policy.auto_pay = false
-    policy.save!
+    agency = FactoryBot.create(:agency)
+    account = FactoryBot.create(:account, agency: agency)
+    carrier = Carrier.first
+    carrier.agencies << [agency]
+   
+    policy = FactoryBot.build(:policy, account: account, agency: agency, carrier: carrier,
+                                       policy_in_system: true,
+                                       policy_type: policy_type,
+                                       status: 'QUOTE_ACCEPTED',
+                                       auto_pay: false,
+                                       billing_enabled: true)
+    FactoryBot.create(:policy_user, user: user, policy: policy)
     invoice = Invoice.new do |i|
-      i.user = user
+      i.payer = user
       i.status = 'missed'
       i.number = Time.now.to_i
       i.due_date = 1.day.ago
       i.available_date = 1.day.ago
-      i.policy = policy
+      i.invoiceable = policy
     end
     invoice.save!
 
@@ -32,7 +35,11 @@ describe 'Policy jobs spec', type: :request do
   it 'should perform queued refunds' do
     user = FactoryBot.create(:user)
     policy_type = PolicyType.find_by_title('Residential')
-    policy = FactoryBot.build(:policy)
+    agency = FactoryBot.create(:agency)
+    account = FactoryBot.create(:account, agency: agency)
+    carrier = Carrier.first
+    carrier.agencies << [agency]
+    policy = FactoryBot.build(:policy, account: account, agency: agency, carrier: carrier)
     policy.policy_in_system = true
     policy.policy_type = policy_type
     policy.billing_dispute_status = 'AWATING_POSTDISPUTE_PROCESSING'

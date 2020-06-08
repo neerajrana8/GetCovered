@@ -5,5 +5,6 @@ FactoryBot.define do
     password { 'test1234' }
     password_confirmation { 'test1234' }
     association :profile, factory: :profile
+    association :organizable, factory: :account
   end
 end

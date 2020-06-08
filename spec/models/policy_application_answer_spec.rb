@@ -24,6 +24,4 @@ RSpec.describe PolicyApplication, type: :model do
     policy_application_answer.data['answer'] = 'test1'
     expect(policy_application_answer).to be_valid
   end
-
-  
 end

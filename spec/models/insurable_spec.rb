@@ -19,7 +19,7 @@ RSpec.describe Insurable, elasticsearch: true, type:  :model do
     child_insurable = insurable.insurables.create(
       title: 'New test insurable',
       account: account,
-      insurable_type: FactoryBot.create(:insurable_type)
+      insurable_type_id: InsurableType::RESIDENTIAL_UNITS_IDS.first
     )
     expect(child_insurable).to_not be_valid
     child_insurable.errors[:account].should include('must belong to same account as parent')
