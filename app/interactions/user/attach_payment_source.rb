@@ -53,7 +53,7 @@ class User
         errors.add(:payment_method, 'Network Error')
       rescue Stripe::StripeError => error
         Rails.logger.error "AttachPaymentSource StripeError: #{error.to_s}. Token: #{token}"
-        errors.add(:payment_method, 'Unable to process account')
+        errors.add(:payment_method, error.message)
       end
       false
     end
@@ -67,7 +67,11 @@ class User
             email: email,
             metadata: {
               first_name: profile.first_name,
-              last_name: profile.last_name
+              last_name: profile.last_name,
+              email: email,
+              phone: profile&.contact_phone,
+              agency: policies.take&.agency&.title,
+              product: policies.take&.policy_type&.title
             }
           )
 

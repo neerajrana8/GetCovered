@@ -108,7 +108,7 @@ gem 'roo', '~> 2.8.0'
 gem 'ruby-prof'
 gem 'memory_profiler'
 
-group :development, :test do
+group :development, :test, :test_container do
   # Call 'byebug' anywhere in the code to stop execution and get a debugger console
   gem 'byebug', platforms: %i[mri mingw x64_mingw]
   gem 'database_cleaner'
@@ -119,6 +119,7 @@ group :development, :test do
   gem 'rubocop', '~> 0.63.1', require: false
   # RDoc for Documentation
   gem 'rdoc'
+  gem 'fuubar'
 end
 
 group :development do

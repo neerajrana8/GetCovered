@@ -12,9 +12,9 @@ RSpec.describe Page, :type => :model do
     expect(subject).to be_valid
   end
 
-  it "is not valid without a agency" do
+  it "is valid without an agency" do
     subject.agency = nil
-    expect(subject).to_not be_valid
+    expect(subject).to be_valid
   end
 
   it "is not valid without a branding_profile" do

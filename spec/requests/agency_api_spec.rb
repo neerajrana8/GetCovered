@@ -20,7 +20,6 @@ describe 'Agency invitation spec', type: :request do
   end
   
   it 'should create new subagency with first staff as owner', perform_enqueued: true do
-    allow(Rails.application.credentials).to receive(:uri).and_return({ test: { admin: 'localhost' } })
     
     expect { create_agency(agency_params) }.to change { Agency.count }.by(1)
     expect(Agency.last.agency).to eq(@agency)

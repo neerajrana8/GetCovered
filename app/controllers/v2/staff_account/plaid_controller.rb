@@ -14,6 +14,8 @@ module V2
                         :sandbox
                       when 'test'
                         :sandbox
+                      when 'test_container'
+                        :sandbox
                       when 'aws_staging'
                         :development
                       when 'production'

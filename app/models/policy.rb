@@ -128,8 +128,7 @@ class Policy < ApplicationRecord
   validates :agency, presence: true, if: :in_system?
   validates :carrier, presence: true, if: :in_system?
 
-  validates_presence_of :expiration_date, :effective_date, unless: -> { policy_type&.designation == 'MASTER' }
-  validates_presence_of :expiration_date, :effective_date, unless: -> { policy_type&.designation == 'MASTER-COVERAGE' }
+  validates_presence_of :expiration_date, :effective_date, unless: -> { ['MASTER-COVERAGE', 'MASTER'].include?(policy_type&.designation) }
 
   validate :date_order,
   unless: proc { |pol| pol.effective_date.nil? || pol.expiration_date.nil? }
@@ -283,11 +282,11 @@ class Policy < ApplicationRecord
   
   def subtract_from_future_invoices
     amount = bulk_premium_amount
-    policy_group&.policy_group_premium&.policy_group_quote&.invoices&.quoted&.each do |invoice|      
+    policy_group&.policy_group_premium&.policy_group_quote&.invoices&.each do |invoice|      
       line_item = invoice.line_items.base_premium.take
       line_item.price = line_item.price - amount
       line_item.save
-      invoice.refresh_quoted
+      invoice.refresh_totals
     end
   end
   
@@ -331,4 +330,3 @@ class Policy < ApplicationRecord
     end
         
 end
-      

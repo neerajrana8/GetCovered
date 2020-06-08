@@ -12,6 +12,11 @@ module V2
         super(:@users, current_staff.organizable.active_users, :profile)
       end
 
+      def search
+        @users = ::User.search(query: { match: { email: { query: params[:query], analyzer: 'standard'} } } ).records
+        render json: @users.records.to_json, status: :ok
+      end
+
       def show
         if @user
           render :show, status: :ok
@@ -103,6 +108,7 @@ module V2
       def supported_filters(called_from_orders = false)
         @calling_supported_orders = called_from_orders
         {
+          email: [ :scalar, :array, :like ],
           created_at: %i[scalar array interval],
           updated_at: %i[scalar array interval],
         }

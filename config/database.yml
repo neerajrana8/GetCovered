@@ -39,7 +39,13 @@ test:
   # host: db
   database: gc_v2_test
   # username: postgres
-  
+
+test_container:
+  <<: *default
+  host: db
+  database: gc_v2_test
+  username: postgres
+
 awsdev:
   <<: *production_default
   database: <%= Rails.application.credentials.postgres[:awsdev][:database] %>

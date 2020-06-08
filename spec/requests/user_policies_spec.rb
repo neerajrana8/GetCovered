@@ -3,12 +3,11 @@ include ActionController::RespondWith
 
 describe 'User Policy spec', type: :request do
   before :all do
+    @carrier = Carrier.first
+    @policy_type = @carrier.policy_types.take
     @user = create_user
-    @policy_type = FactoryBot.create(:policy_type)
     @agency = FactoryBot.create(:agency)
     @account = FactoryBot.create(:account, agency: @agency)
-    @carrier = FactoryBot.create(:carrier)
-    @carrier.policy_types << @policy_type
     @carrier.agencies << @agency
     billing_strategy = BillingStrategy.create(title: "Monthly", slug: nil, enabled: true, new_business: {"payments"=>[8.37, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33], "payments_per_term"=>12, "remainder_added_to_deposit"=>true}, renewal: nil, locked: false, agency: @agency, carrier: @carrier, policy_type: @policy_type, carrier_code: nil)
     @bulk = PolicyGroup.create(effective_date: 1.day.from_now, expiration_date: 1.year.from_now, number: "PENSIOUSA3O8M4DCTJI69", policy_type: @policy_type, carrier: @carrier, agency: @agency, account: @account, policy_in_system: true)
@@ -68,7 +67,6 @@ describe 'User Policy spec', type: :request do
   end
   
   it 'should cancel policy for bulk Policy Application with refund if 30 days' do
-    allow(Rails.application.credentials).to receive(:uri).and_return({ test: { client: 'localhost' } })
     UserCoverageMailer.with(policy: @policy, user: @user).acceptance_email.deliver
     last_mail = Nokogiri::HTML(ActionMailer::Base.deliveries.last.html_part.body.decoded)
     url = last_mail.css('a').first["href"]
@@ -100,7 +98,6 @@ describe 'User Policy spec', type: :request do
   end
 
   it 'should send email if policy is accepted' do
-    allow(Rails.application.credentials).to receive(:uri).and_return({ test: { client: 'localhost' } })
     user = create_user
     user.address = FactoryBot.create(:address)
     user.save
@@ -119,7 +116,5 @@ describe 'User Policy spec', type: :request do
 
     expect(response.status).to eq(406)
     expect(@second_policy.reload.declined).to eq(false)
-
   end
 end
-

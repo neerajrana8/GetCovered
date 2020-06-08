@@ -106,7 +106,11 @@ class PolicyApplication < ApplicationRecord
   
   def primary_user
     policy_user = policy_users.where(primary: true).take
-    policy_user.user.nil? ? nil : policy_user.user  
+    unless policy_user.nil?
+      return policy_user.user.nil? ? nil : policy_user.user
+    else
+      return nil
+    end
   end
   
   # PolicyApplication.available_rates

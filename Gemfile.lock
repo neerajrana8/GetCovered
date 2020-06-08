@@ -913,6 +913,9 @@ GEM
     fugit (1.1.9)
       et-orbi (~> 1.1, >= 1.1.7)
       raabro (~> 1.1)
+    fuubar (2.5.0)
+      rspec-core (~> 3.0)
+      ruby-progressbar (~> 1.4)
     geocoder (1.5.1)
     globalid (0.4.2)
       activesupport (>= 4.2.0)
@@ -1193,6 +1196,7 @@ DEPENDENCIES
   elasticsearch-rails!
   factory_bot_rails
   faker
+  fuubar
   geocoder
   guard-rspec
   httparty

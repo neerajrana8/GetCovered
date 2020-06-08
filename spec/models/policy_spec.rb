@@ -7,20 +7,20 @@ RSpec.describe Policy, elasticsearch: true, type: :model do
     before :all do
       # TODO: Need to refactor creation of all policy types into a method that runs
       # before all tests
-      @residential_policy_type = FactoryBot.create(:policy_type, title: "Residential", designation: "HO4", enabled: true)
-      @master_policy_type = FactoryBot.create(:policy_type, title: "Master Policy", designation: "MASTER", enabled: true)
-      @master_policy_coverage_type = FactoryBot.create(:policy_type, title: "Master Policy Coverage", designation: "MASTER-COVERAGE", enabled: true)
-      @commercial_policy_type = FactoryBot.create(:policy_type, title: "Commercial", designation: "BOP", enabled: true)
-      @rent_guarantee_policy_type = FactoryBot.create(:policy_type, title: "Rent Guarantee", designation: "RENT-GUARANTEE", enabled: true)
+      @residential_policy_type = PolicyType.find_by_title('Residential')
+      @master_policy_type = PolicyType.find_by_title('Master Policy')
+      @master_policy_coverage_type = PolicyType.find_by_title('Master Policy Coverage')
+      @commercial_policy_type = PolicyType.find_by_title('Commercial')
+      @rent_guarantee_policy_type = PolicyType.find_by_title('Rent Guarantee')
       
-      @insurable_type_1 = FactoryBot.create(:insurable_type)
-      @insurable_type_2 = FactoryBot.create(:insurable_type)
-      @insurable_type_3 = FactoryBot.create(:insurable_type)
-      @insurable_type_4 = FactoryBot.create(:insurable_type)
+      @insurable_type_1 = InsurableType.find_by_title('Residential Community')
+      @insurable_type_2 = InsurableType.find_by_title('Mixed Use Community')
+      @insurable_type_3 = InsurableType.find_by_title('Commercial Community')
+      @insurable_type_4 = InsurableType.find_by_title('Residential Unit')
       
       @agency = FactoryBot.create(:agency)
       @account = FactoryBot.create(:account, agency: @agency)
-      @carrier = FactoryBot.create(:carrier)
+      @carrier = Carrier.first
       @carrier.policy_types << [@residential_policy_type, @master_policy_type, @master_policy_coverage_type, @commercial_policy_type, @rent_guarantee_policy_type]
       @carrier.agencies << [@agency]
       @user = FactoryBot.create(:user)

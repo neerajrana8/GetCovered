@@ -82,7 +82,32 @@ class User < ApplicationRecord
 #   def payment_methods
 #     super.nil? ? super : EncryptionService.decrypt(super)
 #   end
+  article_es_settings = {
+    index: {
+      analysis: {
+        filter: {
+          autocomplete_filter: {
+            type: "edge_ngram",
+            min_gram: 1,
+            max_gram: 20
+          }
+        },
+        analyzer:{
+          autocomplete: {
+            type: "custom",
+            tokenizer: "standard",
+            filter: ["lowercase", "autocomplete_filter"]
+          }
+        }
+      }
+    }
+  }
 
+  settings article_es_settings do
+    mapping do
+      indexes :email, type: 'string', analyzer: 'autocomplete'
+    end
+  end
 
   # Set Stripe ID
   #
@@ -92,10 +117,15 @@ class User < ApplicationRecord
     if stripe_id.nil? && valid?
       
       stripe_customer = Stripe::Customer.create(
-        :email    => email,
-        :metadata => {
-          :first_name => profile.first_name,
-          :last_name  => profile.last_name
+        email: email,
+        metadata: {
+          first_name: profile.first_name,
+          last_name: profile.last_name,
+          email: email,
+          phone: profile&.contact_phone,
+          agency: policies.take&.agency&.title,
+          policy_number: policies.take&.number,
+          product: policies.take&.policy_type&.title
         }
       )
       
@@ -117,7 +147,7 @@ class User < ApplicationRecord
   # Attach a stripe source token to a user (Stripe Customer)
   
   def attach_payment_source(token = nil, make_default = true)
-    AttachPaymentSource.run!(user: self, token: token, make_default: make_default)
+    AttachPaymentSource.run(user: self, token: token, make_default: make_default)
   end
   
   settings index: { number_of_shards: 1 } do
