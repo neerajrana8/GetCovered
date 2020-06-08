@@ -55,6 +55,16 @@ module V2
         @policy = @substrate.new(coverage_proof_params)
         @policy.policy_in_system = false
         if @policy.save
+          user_params[:users]&.each do |user_params|
+            user = User.find_by(email: user_params[:email])
+            if user.nil?
+              user = User.new(user_params)
+              user.password = SecureRandom.base64(12)
+              user.save
+            end
+            @policy.users << user
+          end
+
           render json: { message: 'Policy created' }, status: :created
         else
           render json: { message: 'Policy failed' }, status: :unprocessable_entity
@@ -125,6 +135,15 @@ module V2
             :carrier_id, :effective_date, :expiration_date,
             :out_of_system_carrier_title, :address, documents: [],
             policy_users_attributes: [ :user_id ]
+          )
+        end
+
+        def user_params
+          params.permit(users: [:primary,
+            :email, :agency_id, profile_attributes: [:birth_date, :contact_phone, 
+              :first_name, :gender, :job_title, :last_name, :salutation],
+            address_attributes: [ :city, :country, :state, :street_name, 
+              :street_two, :zip_code] ]
           )
         end
 

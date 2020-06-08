@@ -26,9 +26,10 @@ describe 'Admin Policy spec', type: :request do
     
     
     it 'should add coverage proof' do
-      post '/v2/staff_account/policies/add_coverage_proof', params: { policy: coverage_proof_params }, headers: @headers
+      post '/v2/staff_account/policies/add_coverage_proof', params: { policy: coverage_proof_params, users: [user_params] }, headers: @headers
       result = JSON.parse response.body
       expect(result["message"]).to eq("Policy created")
+      expect(Policy.last.users.last.email).to eq('yernar.mussin@nitka.com')
     end
   end
   
@@ -43,10 +44,11 @@ describe 'Admin Policy spec', type: :request do
     
     
     it 'should add coverage proof' do
-      post '/v2/staff_agency/policies/add_coverage_proof', params: { policy: coverage_proof_params }, headers: @headers
+      post '/v2/staff_agency/policies/add_coverage_proof', params: { policy: coverage_proof_params, users: [user_params] }, headers: @headers
       result = JSON.parse response.body
       expect(result["message"]).to eq("Policy created")
       expect(Policy.last.users.first).to eq(@user)
+      expect(Policy.last.users.last.email).to eq('yernar.mussin@nitka.com')
     end
   end
   
@@ -62,12 +64,33 @@ describe 'Admin Policy spec', type: :request do
       expiration_date: 6.months.from_now,
       out_of_system_carrier_title: 'Out of system carrier',
       address: "Some address",
-      content: "This is page content",
       policy_users_attributes: [
         {
           user_id: @user.id
         }
       ]
+    }
+  end
+  
+  def user_params
+    {
+      email: "yernar.mussin@nitka.com",
+      address_attributes: {
+        city: "Louisville",
+        country: "United States",
+        state: "KY",
+        street_name: "7111 Jefferson Run Dr",
+        street_two: "102",
+        zip_code: "40219",
+      },
+      profile_attributes: {
+        birth_date: "1993-04-27",
+        contact_phone: "7770556406",
+        first_name: "Yernar",
+        gender: "male",
+        last_name: "Mussin",
+        salutation: "mr"
+      }
     }
   end
   
