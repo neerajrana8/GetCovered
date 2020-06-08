@@ -1,5 +1,6 @@
 class InsurableRateConfiguration < ApplicationRecord
   belongs_to :configurable, polymorphic: true
+  belongs_to :applicable, polymorphic: true
   belongs_to :carrier
   
   def validate_coverage_options

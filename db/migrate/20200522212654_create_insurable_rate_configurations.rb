@@ -11,9 +11,9 @@ class CreateInsurableRateConfigurations < ActiveRecord::Migration[5.2]
         null: false,
         default: []
       
-      #t.string
-      
       t.references :configurable,
+        polymorphic: true
+      t.references :configurer,
         polymorphic: true
       t.references :carrier
       t.timestamps
