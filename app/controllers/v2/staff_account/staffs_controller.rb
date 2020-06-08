@@ -50,7 +50,7 @@ module V2
       end
 
       def search
-        @staff = Staff.search(params[:query]).records.where(organizable_id: current_staff.organizable_id)
+        @staff = ::Staff.search(params[:query]).records.where(organizable_id: current_staff.organizable_id)
         render json: @staff.to_json, status: 200
       end
 

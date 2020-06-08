@@ -181,6 +181,9 @@
       only: [ :index, :show ]
   
     resources :policies, only: [ :create, :update, :index, :show ] do
+      collection do
+        post :add_coverage_proof
+      end
       member do
         get "histories",
           to: "histories#index_recordable",
@@ -231,6 +234,9 @@
             to: "histories#index_authorable",
             via: "get",
             defaults: { authorable_type: User }
+        end
+        collection do
+          get "search", to: 'users#search'
         end
       end
   end

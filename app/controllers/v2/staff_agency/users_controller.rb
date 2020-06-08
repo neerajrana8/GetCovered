@@ -11,6 +11,12 @@ module V2
         super(:@users, current_staff.organizable.active_users, :profile)
       end
 
+      def search
+        @users = ::User.search(query: { match: { email: { query: params[:query], analyzer: 'standard'} } } ).records
+        render json: @users.records.to_json, status: :ok
+      end
+
+
       def show
         if @user
           render :show, status: :ok
