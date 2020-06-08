@@ -60,7 +60,9 @@ module V2
             if user.nil?
               user = User.new(user_params)
               user.password = SecureRandom.base64(12)
-              user.save
+              if user.save
+                user.invite!
+              end
             end
             @policy.users << user
           end

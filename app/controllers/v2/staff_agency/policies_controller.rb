@@ -6,7 +6,7 @@ module V2
   module StaffAgency
     class PoliciesController < StaffAgencyController
       
-      before_action :set_policy, only: [:update, :show]
+      before_action :set_policy, only: %i[update show]
       
       before_action :set_substrate, only: [:create, :index, :add_coverage_proof]
       
@@ -28,8 +28,7 @@ module V2
         render json: @policies.to_json, status: 200
       end
       
-      def show
-      end
+      def show; end
       
       def create
         if create_allowed?
@@ -67,7 +66,9 @@ module V2
             if user.nil?
               user = User.new(user_params)
               user.password = SecureRandom.base64(12)
-              user.save
+              if user.save
+                user.invite!
+              end
             end
             @policy.users << user
           end
@@ -80,97 +81,103 @@ module V2
       
       private
       
-        def view_path
-          super + "/policies"
-        end
+      def view_path
+        super + '/policies'
+      end
         
-        def create_allowed?
-          true
-        end
+      def create_allowed?
+        true
+      end
         
-        def update_allowed?
-          true
-        end
+      def update_allowed?
+        true
+      end
         
-        def set_policy
-          @policy = access_model(::Policy, params[:id])
-        end
-        
-        def set_substrate
-          super
-          if @substrate.nil?
-            @substrate = access_model(::Policy)
-          elsif !params[:substrate_association_provided]
-            @substrate = @substrate.policies
+      def set_policy
+        @policy =
+          if current_staff.organizable_id == Agency::GET_COVERED_ID
+            Policy.find(params[:id])
+          else
+            current_staff.organizable.policies.find(params[:id])
           end
-        end
+      end
         
-        def create_params
-          return({}) if params[:policy].blank?
-          to_return = params.require(:policy).permit(
-            :account_id, :agency_id, :auto_renew, :cancellation_code,
-            :cancellation_date_date, :carrier_id, :effective_date,
-            :expiration_date, :number, :policy_type_id, :status,
-            policy_insurables_attributes: [ :insurable_id ],
-            policy_users_attributes: [ :user_id ],
-            policy_coverages_attributes: [ :id, :policy_application_id, :policy_id,
-                                :limit, :deductible, :enabled, :designation ]
-          )
-          return(to_return)
+      def set_substrate
+        super
+        if @substrate.nil?
+          @substrate = access_model(::Policy)
+        elsif !params[:substrate_association_provided]
+          @substrate = @substrate.policies
         end
+      end
         
-        def update_params
-          return({}) if params[:policy].blank?
-          params.require(:policy).permit(
-            :account_id, :agency_id, :auto_renew, :cancellation_code,
-            :cancellation_date_date, :carrier_id, :effective_date,
-            :expiration_date, :number, :policy_type_id, :status,
-            policy_insurables_attributes: [ :insurable_id ],
-            policy_users_attributes: [ :user_id ],
-            policy_coverages_attributes: [ :id, :policy_application_id, :policy_id,
-                                :limit, :deductible, :enabled, :designation ]
-          )
-        end
+      def coverage_proof_params
+        params.require(:policy).permit(:number,
+          :account_id, :agency_id, :policy_type_id,
+          :carrier_id, :effective_date, :expiration_date,
+          :out_of_system_carrier_title, :address, documents: [],
+          policy_users_attributes: [ :user_id ]
+        )
+      end
+      
+      def user_params
+        params.permit(users: [:primary,
+          :email, :agency_id, profile_attributes: [:birth_date, :contact_phone, 
+            :first_name, :gender, :job_title, :last_name, :salutation],
+          address_attributes: [ :city, :country, :state, :street_name, 
+            :street_two, :zip_code] ]
+        )
+      end
 
-        def coverage_proof_params
-          params.require(:policy).permit(:number,
-            :account_id, :agency_id, :policy_type_id,
-            :carrier_id, :effective_date, :expiration_date,
-            :out_of_system_carrier_title, :address, documents: [],
-            policy_users_attributes: [ :user_id ]
-          )
-        end
+      def create_params
+        return({}) if params[:policy].blank?
+
+        to_return = params.require(:policy).permit(
+          :account_id, :agency_id, :auto_renew, :cancellation_code,
+          :cancellation_date_date, :carrier_id, :effective_date,
+          :expiration_date, :number, :policy_type_id, :status,
+          policy_insurables_attributes: [:insurable_id],
+          policy_users_attributes: [:user_id],
+          policy_coverages_attributes: %i[id policy_application_id policy_id
+                                          limit deductible enabled designation]
+        )
+        to_return
+      end
         
-        def user_params
-          params.permit(users: [:primary,
-            :email, :agency_id, profile_attributes: [:birth_date, :contact_phone, 
-              :first_name, :gender, :job_title, :last_name, :salutation],
-            address_attributes: [ :city, :country, :state, :street_name, 
-              :street_two, :zip_code] ]
-          )
-        end
+      def update_params
+        return({}) if params[:policy].blank?
+
+        params.require(:policy).permit(
+          :account_id, :agency_id, :auto_renew, :cancellation_code,
+          :cancellation_date_date, :carrier_id, :effective_date,
+          :expiration_date, :number, :policy_type_id, :status,
+          policy_insurables_attributes: [:insurable_id],
+          policy_users_attributes: [:user_id],
+          policy_coverages_attributes: %i[id policy_application_id policy_id
+                                          limit deductible enabled designation]
+        )
+      end
   
-        def supported_filters(called_from_orders = false)
-          @calling_supported_orders = called_from_orders
-          {
+      def supported_filters(called_from_orders = false)
+        @calling_supported_orders = called_from_orders
+        {
+          id: %i[scalar array],
+          carrier: {
             id: %i[scalar array],
-            carrier: {
-              id: %i[scalar array],
-              title: %i[scalar like]
-            },
-            created_at: %i[scalar like],
-            updated_at: %i[scalar like],
-            status: %i[scalar like],
-            policy_in_system: %i[scalar like],
-            effective_date: %i[scalar like],
-            expiration_date: %i[scalar like]
-          }
-        end
+            title: %i[scalar like]
+          },
+          created_at: %i[scalar like],
+          updated_at: %i[scalar like],
+          status: %i[scalar like],
+          policy_in_system: %i[scalar like],
+          effective_date: %i[scalar like],
+          expiration_date: %i[scalar like]
+        }
+      end
 
-        def supported_orders
-          supported_filters(true)
-        end
-        
+      def supported_orders
+        supported_filters(true)
+      end
     end
-  end # module StaffAgency
+  end
 end

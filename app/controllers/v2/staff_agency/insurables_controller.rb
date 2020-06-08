@@ -39,6 +39,14 @@ module V2
       end
 
       def bulk_create
+        account = current_staff.organizable.accounts.find_by_id(bulk_create_params[:common_attributes][:account_id])
+
+        unless account.present?
+          render json: { success: false, errors: ['account_id should be present and relate to this agency'] },
+                 status: :unprocessable_entity
+          return
+        end
+
         already_created_insurables =
           Insurable.where(insurable_id: bulk_create_params[:common_attributes][:insurable_id],
                           insurable_type_id: bulk_create_params[:common_attributes][:insurable_type_id],
@@ -48,7 +56,7 @@ module V2
           result << bulk_create_params[:common_attributes].merge(title: title)
         end
 
-        @insurables = current_staff.organizable.insurables.create(new_insurables_params)
+        @insurables = account.insurables.create(new_insurables_params)
 
         errors = @insurables.
           reject(&:valid?).
@@ -158,7 +166,7 @@ module V2
         params.require(:insurables).permit(
           common_attributes: [
             :category, :covered, :enabled, :insurable_id,
-            :insurable_type_id, addresses_attributes: %i[
+            :insurable_type_id, :account_id, addresses_attributes: %i[
               city country county id latitude longitude
               plus_four state street_name street_number
               street_two timezone zip_code
