@@ -13,7 +13,7 @@ module V2
         if params[:short]
           super(:@claims, @substrate)
         else
-          super(:@claims, @substrate, :insurable, :policy)
+          super(:@claims, @substrate, :insurable)
         end
       end
       
@@ -23,8 +23,8 @@ module V2
         if create_allowed?
           @claim = @substrate.new(create_params)
           if @claim.errors.none? && @claim.save_as(current_staff)
-            render :show,
-              status: :created
+            render :show, status: :created
+            # ClaimSendJob.perform_later(current_staff)
           else
             render json: @claim.errors,
                    status: :unprocessable_entity
@@ -33,14 +33,6 @@ module V2
           render json: { success: false, errors: ['Unauthorized Access'] },
                  status: :unauthorized
         end
-      end
-
-      def attach_documents
-        params.permit(documents: [])[:documents].each do |file|
-          @claim.documents.attach(file)
-        end
-
-        render :show, status: :created
       end
 
       def delete_documents
@@ -79,7 +71,7 @@ module V2
 
         to_return = params.require(:claim).permit(
           :claimant_id, :claimant_type, :description, :insurable_id,
-          :policy_id, :subject, :time_of_loss, :type_of_loss
+          :policy_id, :subject, :time_of_loss, :type_of_loss, documents: []
         )
         to_return
       end
@@ -89,7 +81,7 @@ module V2
 
         params.require(:claim).permit(
           :description, :insurable_id, :policy_id, :subject,
-          :time_of_loss, :type_of_loss
+          :time_of_loss, :type_of_loss, documents: []
         )
       end
         

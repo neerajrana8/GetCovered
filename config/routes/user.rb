@@ -5,7 +5,6 @@ scope module: :user, path: "user" do
   resources :claims,
     only: [ :index, :show, :create ] do
       member do
-        post :attach_documents
         delete :delete_documents
       end
     end
