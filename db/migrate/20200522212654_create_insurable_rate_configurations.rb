@@ -15,7 +15,7 @@ class CreateInsurableRateConfigurations < ActiveRecord::Migration[5.2]
         polymorphic: true
       t.references :configurer,
         polymorphic: true
-      t.references :carrier
+      t.references :carrier_insurable_type
       t.timestamps
     end
   end

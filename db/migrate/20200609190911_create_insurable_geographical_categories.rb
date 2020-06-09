@@ -6,6 +6,8 @@ class CreateInsurableGeographicalCategories < ActiveRecord::Migration[5.2]
       t.string :zip_code, array: true
       t.integer :state, array: true
       
+      t.references :configurer,
+        polymorphic: true
       t.references :carrier_insurable_type
 
       t.timestamps
