@@ -4,7 +4,7 @@ include ActionController::RespondWith
 describe 'Admin Policy spec', type: :request do
   before :all do
     @user = create_user
-    @policy_type = FactoryBot.create(:policy_type)
+    @policy_type = PolicyType.find_by_title('Residential')
     @agency = FactoryBot.create(:agency)
     @account = FactoryBot.create(:account, agency: @agency)
     @carrier = FactoryBot.create(:carrier)
