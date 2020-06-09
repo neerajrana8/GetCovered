@@ -21,18 +21,11 @@ module V2
         @claim = @substrate.new(claim_params)
         if @claim.errors.none? && @claim.save_as(current_user)
           render :show, status: :created
+          # ClaimSendJob.perform_later(current_user)
         else
           render json: @claim.errors,
                  status: :unprocessable_entity
         end
-      end
-
-      def attach_documents
-        params.permit(documents: [])[:documents].each do |file|
-          @claim.documents.attach(file)
-        end
-
-        render :show, status: :created
       end
 
       def delete_documents
@@ -63,7 +56,7 @@ module V2
 
         to_return = params.require(:claim).permit(
           :description, :insurable_id, :policy_id, :subject,
-          :time_of_loss, :type_of_loss
+          :time_of_loss, :type_of_loss, documents: []
         )
         to_return
       end

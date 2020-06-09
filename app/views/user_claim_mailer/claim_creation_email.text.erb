@@ -1,0 +1,12 @@
+ClaimCreation#claim_created
+Date of loss: <%= @claim.time_of_loss %>
+Policy id: <%= @claim.policy_id %>
+Type of loss: <%= @claim.type_of_loss %>
+Subject: <%= @claim.subject %>
+Description: <%= @claim.description %>
+<% unless @claim.documents.nil? %>
+  <% @claim.documents.each do |doc| %>
+    <%= doc.filename %>
+    <%= link_to_document(doc) %>
+  <% end %>
+<% end %>
