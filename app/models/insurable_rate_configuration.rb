@@ -1,6 +1,6 @@
 class InsurableRateConfiguration < ApplicationRecord
   belongs_to :configurable, polymorphic: true
-  belongs_to :applicable, polymorphic: true
+  belongs_to :configurer, polymorphic: true
   belongs_to :carrier
   
   def validate_coverage_options
@@ -70,7 +70,7 @@ class InsurableRateConfiguration < ApplicationRecord
   
   # params:
   #   selections: an array of hashes of the form { 'category'=>cat, 'uid'=>uid, 'selection'=>sel }, where sel is the # selected if applicable, and otherwise true or false
-  #   asserts: internal use, keeps track of where in the syntax assertions are allowed
+  #   asserts: internal use, keeps track of where in the syntax asserts are allowed (false if not allowed, array of asserts if allowed)
   # returns:
   #   array of hashes of the form { 'category'=>cat, 'uid'=>uid, '
   def execute(code, selections: [], asserts: false)
@@ -81,12 +81,34 @@ class InsurableRateConfiguration < ApplicationRecord
             throw 'invalid_assert_placement' unless asserts
             if code[1].class == ::Array
               if code[1][0] == 'selected'
-                val = execute(code[2])
-                # MOOSE WARNING: what to do with assertion?
+                # get what to assign and what to assign it to
+                category = execute(code[1][1])
+                uid = execute(code[1][2])
+                value = execute(code[2])
+                # perform the assignation
+                index = asserts.find_index{|a| a['category'] == category && a['uid'] == uid }
+                if index.nil?
+                  index = asserts.length
+                  asserts[index] = { 'category' => category, 'uid' => uid }
+                end
+                asserts[index]['selected'] = [] if asserts[index]['selected'].nil?
+                asserts[index]['selected'].push(value)
+                asserts[index]['selected'].uniq!
                 true
               elsif code[1][0] == 'value'
-                val = num(execute(code[2]))
-                # MOOSE WARNING: what to do with assertion?
+                # get what to assign and what to assign it to
+                category = execute(code[1][1])
+                uid = execute(code[1][2])
+                value = execute(code[2])
+                # perform the assignation
+                index = asserts.find_index{|a| a['category'] == category && a['uid'] == uid }
+                if index.nil?
+                  index = asserts.length
+                  asserts[index] = { 'category' => category, 'uid' => uid }
+                end
+                asserts[index]['value'] = [] if asserts[index]['value'].nil?
+                asserts[index]['value'].push(value)
+                asserts[index]['value'].uniq! # WARNING: might be array of values or an interval (see '[], '()', etc. case below)
                 true
               else
                 throw 'invalid_assert_subject_code'
@@ -97,9 +119,13 @@ class InsurableRateConfiguration < ApplicationRecord
           when '?', 'if'
             execute(code[1]) ? execute(code[2], asserts: asserts) : execute(code[3], asserts: asserts)
           when '&&'
-            (1...code.length).inject(true){|s,v| break false unless execute(c, asserts: asserts); true }
+            (1...code.length).inject(true){|s,i| break false unless execute(code[i], asserts: asserts); true }
           when '||'
-            (1...code.length).inject(false){|s,v| break true if execute(c, asserts: asserts); false }
+            (1...code.length).inject(false){|s,i| break true if execute(code[i], asserts: asserts); false }
+          when '|'
+            (1...code.length).inject([]){|s,i| temp = execute(code[i]); s += (temp.class == ::Array ? temp : [temp]) }
+          when '[]', '()', '[)', '(]'
+            { interval: code[0], start: num(execute(code[1])), end: num(execute(code[2])), step: code[3].nil? ? nil : num(execute(code[3])) }
           when '=='
             (num(execute(code[1])) - num(execute(code[2]))).abs <= (num(code[3]) || 0)
           when '<'
