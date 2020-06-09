@@ -1,15 +1,46 @@
 version: 2.1
 orbs:
-  ruby: circleci/ruby@0.1.2 
+  ruby: circleci/ruby@0.1.2
 
 jobs:
   build:
+    working_directory: ~/GetCovered-V2
+
     docker:
-      - image: circleci/ruby:2.6.3-stretch-node
-    executor: ruby/default
+      - image: circleci/ruby:2.5.1
+        environment:
+          RAILS_ENV: test
+
+      - image: circleci/postgres:12.0-alpine
+        environment:
+          POSTGRES_DB: gc_v2_test
+
     steps:
       - checkout
+
+      # Restore bundle cache
+      - restore_cache:
+          keys:
+            - getcovered-v2-{{ checksum "Gemfile.lock" }}
+            - getcovered-v2-
+
+      # Bundle install dependencies
       - run:
-          name: Which bundler?
-          command: bundle -v
-      - ruby/bundle-install
+          name: Install dependencies
+          command: bundle check --path=vendor/bundle || bundle install --path=vendor/bundle --jobs 4 --retry 3
+
+      - run: sudo apt install -y postgresql-client || true
+
+      # Store bundle cache
+      - save_cache:
+          key: getcovered-v2-{{ checksum "Gemfile.lock" }}
+          paths:
+            - vendor/bundle
+
+      - run:
+          name: RSpec
+          command: bundle exec rspec
+
+      # Save artifacts
+      - store_test_results:
+          path: /tmp/test-results
