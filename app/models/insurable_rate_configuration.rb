@@ -5,6 +5,12 @@ class InsurableRateConfiguration < ApplicationRecord
   
   validate :validate_coverage_options
   
+  REQUIREMENT_TYPES = {
+    'required' => 0,
+    'forbidden' => 1,
+    'optional' => 2,
+    'locked' => 3
+  }
   
   def merge(mutable, to_merge)
     # MOOSE WARNING: do it!
@@ -17,43 +23,28 @@ class InsurableRateConfiguration < ApplicationRecord
     #  "uid"           => string,
     #  "title"         => string,
     #  "description"   => string (optional)",
-    #  "requirement"   => string ('required', 'forbidden', 'optional', 'hidden'),
-    #  "requirement_locked" => boolean (optional entry; true to lock, false or nil or omitted not to),
+    #  "enabled"       => boolean,
+    #  "requirement"   => string (from among REQUIREMENT_TYPES),
     #  "options_type"  => ["none", "multiple_choice", "min_max"],
     #  "options"       => depends on options_type:
     #     none: omit this entry, it doesn't matter,
     #     multiple_choice: array of numerical values
-    #     min_max: { min: number, max: number, step: +number }, with step optional & defaulting to 1 only if min & max are both integers
     #}
     self.coverage_options.each.with_index do |cov,i|
       disp_title = cov["title"].blank? ? "coverage option ##{i}" : cov["title"]
       errors.add(:coverage_title, "cannot be blank (#{disp_title})") if cov["title"].blank?
       errors.add(:coverage_uid, "cannot be blank (#{disp_title})") if cov["uid"].blank?
       # description can be blank
-      errors.add(:coverage_requirement, "must be 'required', 'disabled', 'optional', or 'hidden' (#{disp_title})") unless ['required', 'disabled', 'optional', 'hidden'].include?(cov["requirement"])
-      errors.add(:coverage_requirement_locked, "must be true, false, or omitted (#{disp_title}") unless [true, false, nil].include?(cov["requirement_locked"]) # omission results in nil, of course
+      errors.add(:coverage_requirement, "must be 'required', 'disabled', 'optional', or 'locked' (#{disp_title})") unless REQUIREMENT_TYPES.has_key?(cov["requirement"])
+      errors.add(:coverage_requirement_enabled, "must be true or false (#{disp_title}") unless [true, false].include?(cov["requirement_enabled"])
       errors.add(:coverage_category, "must be 'limit', or 'deductible'") unless ['coverage', 'deductible'].include?(cov["category"])
       case cov["options_type"]
         when "none"
           # all good
         when "multiple_choice"
           errors.add(:coverage_options, "must be a set of numerical options (#{disp_title})") unless cov["options"].class == ::Array # MOOSE WARNING: check numericality
-        when "min_max"
-          if cov["options"].class !== ::Hash
-            erros.add(:coverage_options, "must specify min/max values (#{disp_title})")
-          elsif !cov["options"]["min"]
-            errors.add(:coverage_options, "must specify min (#{disp_title})")
-          elsif !cov["options"]["max"]
-            errors.add(:coverage_options, "must specify max (#{disp_title})")
-          elsif cov["options"]["min"].to_f > cov["options"]["max"].to_f
-            errors.add(:coverage_options_min, "cannot exceed max (#{disp_title})")
-          elsif cov["options"]["step"].nil? && (cov["options"]["min"] % 1 != 0 || cov["options"]["max"] % 1 != 0)
-            errors.add(:coverage_options, "must specify step for non-integer min and max values (#{disp_title})")
-          elsif !cov["options"]["step"].nil? && cov["options"]["step"].to_f <= 0
-            errors.add(:coverage_options, "step must be greater than 0 (#{disp_title})")
-          end
         else
-          errors.add(:coverage_options_type, "must be 'none', 'multiple_choice', or 'min_max' (#{disp_title})")
+          errors.add(:coverage_options_type, "must be 'none' or 'multiple_choice' (#{disp_title})")
       end
     end
   end
@@ -74,10 +65,15 @@ class InsurableRateConfiguration < ApplicationRecord
     asserts.each do |assert|
       option = options.find{|opt| opt['category'] == assert['category'] && opt['uid'] == assert['uid'] }
       next if option.nil?
-      if assert['selected']
-        # MOOSE WARNING: do this
+      if assert['requirement']
+        unless option['requirement_locked'] # MOOSE WARNING: make sure this is implemented in merge
+          # if there are multiple asserts, let non-optional statuses override optional statuses and take the last one
+          option['requirement'] = REQUIREMENT_TYPES.key(assert['requirement'].select{|v| v != REQUIREMENT_TYPES['optional'] }.last || REQUIREMENT_TYPES['optional'])
+        end
       end
-      refine_options!(option['options_type'], option['options'], assert['value']) if assert['value']
+      if assert['value']
+        refine_options!(option['options_type'], option['options'], assert['value'])
+      end
     end
     # done
     return options
@@ -105,8 +101,6 @@ class InsurableRateConfiguration < ApplicationRecord
             options.select!{|opt| opt.to_d == assert }
           end
         end
-      when 'min_max'
-        # MOOSE WARNING: oughtta do this, but we don't use min_max yet
     end
   end
   
@@ -115,14 +109,14 @@ class InsurableRateConfiguration < ApplicationRecord
   #   asserts: internal use, keeps track of where in the syntax asserts are allowed (false if not allowed, array of asserts if allowed)
   # returns:
   #   array of hashes of the form { 'category'=>cat, 'uid'=>uid, '
-  def execute(code, selections: [], asserts: false)
+  def execute(code, options, selections: [], asserts: false)
     case code
       when ::Array
         case code[0]
           when '='
             throw 'invalid_assert_placement' unless asserts
             if code[1].class == ::Array
-              if code[1][0] == 'selected'
+              if code[1][0] == 'requirement'
                 # get what to assign and what to assign it to
                 category = execute(code[1][1])
                 uid = execute(code[1][2])
@@ -133,9 +127,9 @@ class InsurableRateConfiguration < ApplicationRecord
                   index = asserts.length
                   asserts[index] = { 'category' => category, 'uid' => uid }
                 end
-                asserts[index]['selected'] = [] if asserts[index]['selected'].nil?
-                asserts[index]['selected'].push(value)
-                asserts[index]['selected'].uniq!
+                asserts[index]['requirement'] = [] if asserts[index]['requirement'].nil?
+                asserts[index]['requirement'].push(value)
+                asserts[index]['requirement'].uniq!
                 true
               elsif code[1][0] == 'value'
                 # get what to assign and what to assign it to
@@ -180,12 +174,19 @@ class InsurableRateConfiguration < ApplicationRecord
             (num(execute(code[1])) - num(execute(code[2]))) >= -(num(code[3]) || 0)
           when 'selected'
             selections.find{|s| s['category'] == execute(code[1]) && s['uid'] == execute(code[2]) } ? true : false
+          when 'requirement'
+            found = options.find{|s| s['category'] == execute(code[1]) && s['uid'] == execute(code[2]) }
+            if found.nil?
+              REQUIREMENT_TYPES['forbidden']
+            else
+              REQUIREMENT_TYPES[found['requirement'] || 'forbidden']
+            end
           when 'value'
             found = selections.find{|s| s['category'] == execute(code[1]) && s['uid'] == execute(code[2]) }
-            if found.nil?
+            if found.nil? || found['selection'].nil?
               throw 'no_value'
             else
-              found
+              found['selection']
             end
           when '+'
             num(execute(code[1])) + num(execute(code[2]))
@@ -211,10 +212,18 @@ class InsurableRateConfiguration < ApplicationRecord
         throw 'invalid_number' if crashable
         -BigDecimal::INFINITY
       when ::String
-        val.to_d
+        case val
+          when *(REQUIREMENT_TYPES.keys)
+            REQUIREMENT_TYPES[val]
+          else
+            val.to_d
+        end
       else # MOOSE WARNING: are there other possibilities besides numeric?
         val.to_d
     end
   end
   
+  def can_define_coverages?
+    configurer_type == 'Carrier'
+  end
 end
