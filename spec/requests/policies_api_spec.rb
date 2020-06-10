@@ -31,6 +31,14 @@ describe 'Admin Policy spec', type: :request do
       expect(result["message"]).to eq("Policy created")
       expect(Policy.last.users.last.email).to eq('yernar.mussin@nitka.com')
     end
+    
+    it 'should filter by policy type id' do
+      get '/v2/staff_account/policies', params: { 'filter[policy_type_id]' => @policy_type.id }, headers: @headers
+      result = JSON.parse response.body
+      expect(result.count).to eq(1)
+      expect(response.status).to eq(200)
+
+    end
   end
   
   context 'for StaffAccount roles' do
