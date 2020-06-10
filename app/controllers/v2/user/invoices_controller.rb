@@ -9,14 +9,16 @@ module V2
       before_action :set_invoice,
         only: [:show]
       
-      before_action :set_substrate,
-        only: [:index]
+      # before_action :set_substrate,
+      #   only: [:index]
       
       def index
         if params[:short]
-          super(:@invoices, @substrate)
+          @invoices = paginator(Invoice.order(created_at: :desc))
+          render :short, status: :ok
         else
-          super(:@invoices, @substrate)
+          @invoices = paginator(Invoice.order(created_at: :desc))
+          render :index, status: :ok
         end
       end
       

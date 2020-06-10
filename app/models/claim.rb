@@ -7,12 +7,13 @@ class Claim < ApplicationRecord
   
   # Active Record Callbacks
   after_initialize :initialize_claim
+  after_create :send_email
   
   # Relationships
   belongs_to :claimant, 
     polymorphic: true
 
-  belongs_to :insurable
+  belongs_to :insurable, optional: true
 
   belongs_to :policy
 
@@ -57,5 +58,14 @@ class Claim < ApplicationRecord
 
   def ownership_matches_up
     # TODO: need to refactor
+  end
+
+  def send_email
+    if claimant_type == 'User'
+      user = User.find_by(id: claimant_id)
+      ClaimSendJob.perform_later(user)
+    else
+      puts 'No user'
+    end
   end
 end
