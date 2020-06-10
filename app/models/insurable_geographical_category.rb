@@ -11,12 +11,18 @@ class InsurableGeographicalCategory < ApplicationRecord
                 ND: 28, NE: 29, NH: 30, NJ: 31, NM: 32, NV: 33, NY: 34, 
                 OH: 35, OK: 36, OR: 37, PA: 38, RI: 39, SC: 40, SD: 41, 
                 TN: 42, TX: 43, UT: 44, VA: 45, VT: 46, WA: 47, WI: 48, 
-                WV: 49, WY: 50 } # WARNING: this should always match the state codes in Address
+                WV: 49, WY: 50 } # WARNING: this should always match the state codes in Address (use a concern?)
 
-  array_enum state: US_STATE_CODES
+  CONFIGURER_MODELS = { # values should arrange them so that parent < child
+    'Carrier' => 0,
+    'Agency' => 1,
+    'Account' => 2
+  }
+
+  enum state: US_STATE_CODES
   
   def get_parents(mutable: nil)
-    generic_superset_query(
+    to_return = generic_superset_query(
       case mutable
         when true 
           InsurableGeographicalCategory.where(configurer_type: configurer_type, configurer_id: configurer_id)
@@ -50,17 +56,63 @@ class InsurableGeographicalCategory < ApplicationRecord
           InsurableGeographicalCategory.where(configurer_type: configurer_type, configurer_id: configurer_id)
       end
     )
+    return to_return
   end
 
+  def <=>(other)
+    return CONFIGURER_MODELS[configurer_type] - CONFIGURER_MODELS[other.configurer_type] unless configurer_type == other.configurer_type
+    return 0
+  end
+  
+  def contains?(other)
+    [:state,:county,:zip_code,:city].all?{|prop| other.send(prop).nil? || (self.send(prop) - other.send(prop)).blank? }
+  end
+  
+  def arrange_for_inheritance(to_arrange, candidates: [])
+    
+  end
+  
+=begin
+  def arrange_for_inheritance(to_arrange, candidates: [])
+    to_arrange.each do |x|
+      
+    end
+  end
+  
+  
+  
+  def arrange_for_inheritance(list)
+    arrangement = []
+    cur_level = arrangement
+    to_insert = list.map{|x| x }
+    old_inserters = list
+    
+    to_insert.each do |x|
+      container = cur_level.find{|y| y[0].contains?(x) }
+      if container.nil?
+        # create a new entry & move any contained entries into it
+        container = [x]
+        contained_indices = cur_level.map.with_index{|y,i| x.contains?(y[0]) ? i : nil }.compact
+        unless contained_indices.length == 0
+          contained_indices.each{|i| container.push(cur_level[i]); cur_level[i] = nil }
+          cur_level.compact!
+        end
+      else
+        # add us to the entry that contains us
+        container.push(x)
+      end
+    end
+    
+  end
+=end
   
   private
   
     def generic_superset_query(starting_query = InsurableGeographicalCategory.all)
       starting_query
-        .where('city IS NULL OR city @> ARRAY[?]::string[]', city)
-        .where('state IS NULL OR state @> ARRAY[?]::integer[]', state.map{|s| self.class.states[s] }) # MOOSE WARNING: state?
-        .where('zip_code IS NULL OR zip_code @> ARRAY[?]::string[]', zip_code)
+        .where(state: nil).or(starting_query.where(state: state))
         .where('county IS NULL OR county @> ARRAY[?]::string[]', county)
         .where(carrier_insurable_type_id: carrier_insurable_type_id)
     end
+    
 end

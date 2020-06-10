@@ -1,15 +1,13 @@
 class InsurableRateConfiguration < ApplicationRecord
   belongs_to :configurable, polymorphic: true # Insurable or InsurableGeographicCategory (for now)
-  belongs_to :configurer, polymorphic: true   # Account, Agency, or Carrier
+  #belongs_to :configurer, polymorphic: true   # Account, Agency, or Carrier
   belongs_to :carrier_insurable_type
   
+  validate :validate_coverage_options
   
-  def get_immutable_parents
-    ::Insurable
-  end
   
-  def get_mutable_parents
-    ::InsurableRateConfiguration.w
+  def merge(mutable, to_merge)
+    # MOOSE WARNING: do it!
   end
   
   def validate_coverage_options
@@ -19,10 +17,11 @@ class InsurableRateConfiguration < ApplicationRecord
     #  "uid"           => string,
     #  "title"         => string,
     #  "description"   => string (optional)",
-    #  "requirement"   => boolean or nil,
+    #  "requirement"   => string ('required', 'forbidden', 'optional', 'hidden'),
+    #  "requirement_locked" => boolean (optional entry; true to lock, false or nil or omitted not to),
     #  "options_type"  => ["none", "multiple_choice", "min_max"],
     #  "options"       => depends on options_type:
-    #     none: omittable,
+    #     none: omit this entry, it doesn't matter,
     #     multiple_choice: array of numerical values
     #     min_max: { min: number, max: number, step: +number }, with step optional & defaulting to 1 only if min & max are both integers
     #}
@@ -31,8 +30,9 @@ class InsurableRateConfiguration < ApplicationRecord
       errors.add(:coverage_title, "cannot be blank (#{disp_title})") if cov["title"].blank?
       errors.add(:coverage_uid, "cannot be blank (#{disp_title})") if cov["uid"].blank?
       # description can be blank
-      errors.add(:coverage_requirement, "must be true (required), false (disabled), or null (optional) (#{disp_title})") unless [true,false].include?(cov["requirement"])
-      errors.add(:coverage_cateogry, "must be 'limit', or 'deductible'") unless ['coverage', 'deductible'].include?(cov["category"])
+      errors.add(:coverage_requirement, "must be 'required', 'disabled', 'optional', or 'hidden' (#{disp_title})") unless ['required', 'disabled', 'optional', 'hidden'].include?(cov["requirement"])
+      errors.add(:coverage_requirement_locked, "must be true, false, or omitted (#{disp_title}") unless [true, false, nil].include?(cov["requirement_locked"]) # omission results in nil, of course
+      errors.add(:coverage_category, "must be 'limit', or 'deductible'") unless ['coverage', 'deductible'].include?(cov["category"])
       case cov["options_type"]
         when "none"
           # all good
@@ -59,21 +59,54 @@ class InsurableRateConfiguration < ApplicationRecord
   end
   
   def validate_rules
-    #Rules schema:
-    #{
-    #  "message" => string,           # human-readable rule description
-    #  "option_category" => string,   # the category of the 
-    #  "option_uid" => string,
-    #  "code" => recursive combination of [operator, ...arguments] arrays
-    #}
-    
-    
+    # MOOSE WARNING: add errors for invalid rules (but right now only there's no rule customization, just valid seeds)
   end
   
-  def annotate_options(selections)
-    # selections should be a hash of form { uid => true (selected)/false(not selected)/some # (for the selected option) }
-    to_return = self.coverages.map do |cov|
-      
+  # options should be a copy of self.coverage_options, or the same with parents merged in
+  # selections should be an array of hashes of the form { 'category'=>cat, 'uid'=>uid, 'selection'=>sel }, where sel is the # selected if applicable, and otherwise true or false
+  def annotate_options(selections, options = self.coverage_options, skip_copy: false)
+    # copy options
+    options = Marshal.load(Marshal.dump(options)) unless skip_copy
+    # apply rules to get asserts
+    asserts = []
+    execute(self.rules, selections: selections, asserts: asserts)
+    # apply asserts
+    asserts.each do |assert|
+      option = options.find{|opt| opt['category'] == assert['category'] && opt['uid'] == assert['uid'] }
+      next if option.nil?
+      if assert['selected']
+        # MOOSE WARNING: do this
+      end
+      refine_options!(option['options_type'], option['options'], assert['value']) if assert['value']
+    end
+    # done
+    return options
+  end
+  
+  def refine_options!(options_type, options, asserts)
+    case options_type
+      when 'multiple_choice'
+        options.map!{|opt| opt }
+        asserts.each do |assert|
+          if assert.class == ::Array
+            options.select!{|opt| assert.include?(opt) }
+          elsif assert.class == ::Hash
+            case assert['interval']
+              when '()'
+                options.select!{|opt| opt > assert['start'] && opt < assert['end'] }
+              when '(]'
+                options.select!{|opt| opt > assert['start'] && opt <= assert['end'] }
+              when '[)'
+                options.select!{|opt| opt >= assert['start'] && opt < assert['end'] }
+              when '[]'
+                options.select!{|opt| opt >= assert['start'] && opt <= assert['end'] }
+            end
+          else
+            options.select!{|opt| opt.to_d == assert }
+          end
+        end
+      when 'min_max'
+        # MOOSE WARNING: oughtta do this, but we don't use min_max yet
     end
   end
   
@@ -134,7 +167,7 @@ class InsurableRateConfiguration < ApplicationRecord
           when '|'
             (1...code.length).inject([]){|s,i| temp = execute(code[i]); s += (temp.class == ::Array ? temp : [temp]) }
           when '[]', '()', '[)', '(]'
-            { interval: code[0], start: num(execute(code[1])), end: num(execute(code[2])), step: code[3].nil? ? nil : num(execute(code[3])) }
+            { 'interval' => code[0], 'start' => num(execute(code[1])), 'end' => num(execute(code[2])) }
           when '=='
             (num(execute(code[1])) - num(execute(code[2]))).abs <= (num(code[3]) || 0)
           when '<'

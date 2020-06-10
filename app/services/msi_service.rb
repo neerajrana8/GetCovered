@@ -204,14 +204,14 @@ class MsiService
 =end
   
   
-  def extract_insurable_rate_configuration(product_definition_response)
+  def extract_insurable_rate_configuration(product_definition_response, configurable: nil, carrier_insurable_type: nil, use_default_rules_for: nil)
     # grab relevant bois from out da hood
     product = product_definition_response.dig("MSIACORD", "InsuranceSvcRs", "RenterPolicyQuoteInqRs", "MSI_ProductDefinition")
     coverages = product.dig("MSI_ProductCoverageList", "MSI_ProductCoverageDefinition")
     deductibles = product.dig("MSI_ProductDeductibleList", "MSI_ProductDeductibleDefinition")
     payment_plans = product.dig("MSI_ProductPaymentPlanDefinition", "MSI_ProductPaymentPlanDefinition")
     # transcribe into IRC object
-    irc = InsurableRateConfiguration.new(carrier_id: msi_carrier_id, configurable: self)
+    irc = InsurableRateConfiguration.new(configurable: configurable, carrier_insurable_type: carrier_insurable_type)
     irc.carrier_info = {
       "effective_date"      => product["MSI_EffectiveDate"],
       "underwriter_id"      => product["MSI_UnderwritingCompanyID"],
@@ -219,24 +219,61 @@ class MsiService
       "product_id"          => product["MSI_ProductID"],
       "product_version_id"  => product["MSI_ProductVersionID"]
     }
-    irc.converages = coverages.map do |cov|
+    irc.coverage_options = (coverages.map do |cov|
         {
           "uid"           => cov["CoverageCd"],
           "title"         => cov["CoverageDescription"], # MOOSE WARNING: better as description?
-          "required"      => (cov["MSI_IsMandatoryCoverage"] || "").strip == "True",
+          "requirement"   => (cov["MSI_IsMandatoryCoverage"] || "").strip == "True" ? 'required' : 'optional',
           "category"      => "limit",
           "options_type"  => cov["MSI_LimitList"].blank? ? "none" : "multiple_choice",
-          "options"       => cov["MSI_LimitList"].blank? ? nil : cov["MSI_LimitList"]["string"].map{|v| v }
+          "options"       => cov["MSI_LimitList"].blank? ? nil : cov["MSI_LimitList"]["string"].map{|v| v.to_d }
         }
       end + deductibles.map do |ded|
         {
           "uid"           => ded["MSI_DeductibleCd"],
           "title"         => ded["MSI_DeductibleName"],
-          "required"      => false, #MOOSE WARNING: some are required, but they aren't marked as such
+          "requirement"   => 'required', #MOOSE WARNING: in special cases some are optional, address these
           "category"      => "deductible",
           "options_type"  => ded["MSI_DeductibleOptionList"].blank? ? "none" : "multiple_choice",
-          "options"       => ded["MSI_DeductibleOptionList"].blank? ? nil : ded["MSI_DeductibleOptionList"]["Deductible"].map{|d| d["Amt"] }
+          "options"       => ded["MSI_DeductibleOptionList"].blank? ? nil : ded["MSI_DeductibleOptionList"]["Deductible"].map{|d| d["Amt"].to_d }
         }
+    end)
+    unless use_default_rules_for.nil?
+      case use_default_rules_for
+        when :general
+          irc.rules = {
+            'loss_of_use_rule' => {
+              'message' => 'Cov D must be greater of $2000 or 20% of Cov C, unless Additional Protection Added (then 40%)',
+              'code' => {
+                ['=',
+                  ['value', 'coverage', @@coverage_codes[:CoverageD][:code]],
+                  ['max',
+                    ['*', 
+                      ['if', ['selected', ###add_prot###], 0.4, 0.2] # MOOSE WARNING: what is 'additional protection', which coverage letter? look it up & replace!
+                      ['value', 'coverage', @@coverage_codes[:CoverageC][:code]]
+                    ],
+                    2000
+                  ]
+                ]
+              }
+            },
+            'theft_deductible_rule' => {
+              'message' => 'Theft deductible cannot be less than the all perils deductible',
+              'code' => {
+                ['if', ['selected', 'deductible', @@coverage_codes[:AllOtherPeril][:code]],
+                  ['=',
+                    ['value', 'deductible', @@coverage_codes[:Theft][:code]],
+                    ['[)',
+                      ['value', 'deductible', @@coverage_codes[:AllOtherPeril][:code]],
+                      'Infinity'
+                    ]
+                  ],
+                  nil
+                ]
+              }
+            }
+          }
+      end
     end
     return irc
   end

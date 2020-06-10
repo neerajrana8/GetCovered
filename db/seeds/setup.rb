@@ -486,6 +486,38 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
 			    }	      																											
 				]     
       )
+      
+      # Set up MSI InsurableRateConfigurations
+      msis = MsiService.new
+      ::InsurableGeographicalCategory::US_STATE_CODES.each do |state, state_code|
+        # make carrier IGC for this state
+        igc = ::InsurableGeographicalCategory.create!(
+          state: state,
+          counties: nil,
+          configurer: carrier,
+          carrier_insurable_type: carrier_insurable_type
+        )
+        # grab rates from MSI for this state
+        result = msis.build_request(:get_product_definition,
+          effective_date: Time.current.to_date + 1.day,
+          state: state
+        )
+        unless result
+          pp msis.errors
+          puts "!!!!!MSI GET RATES FAILURE (#{state})!!!!!"
+          exit
+        end
+        result = msis.call
+        if result[:error]
+          pp result[:response].parsed_response
+          puts ""
+          puts "!!!!!MSI GET RATES FAILURE (#{state})!!!!!"
+          exit
+        end
+        # build IRC for this state
+        irc = msis.extract_insurable_rate_configuration(result[:data], configurable: igc, carrier_insurable_type: carrier_insurable_type, enable_default_rules: true)
+        irc.save!
+      end
 		  
     end
     
