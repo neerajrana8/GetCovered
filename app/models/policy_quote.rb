@@ -149,18 +149,22 @@ class PolicyQuote < ApplicationRecord
 	          else
 	            # If self.policy, policy_application.policy or 
 	            # policy_premium.policy cannot be set correctly
+							logger.error policy.errors.to_json
+							logger.error policy_application.errors.to_json
+							logger.error policy_premium.errors.to_json
 							quote_attempt[:message] = "Error attaching policy to system"
 	            update status: 'error'
 	          end				  
 				  else
-				    logger.debug policy.errors.to_json
+						logger.error policy.errors.to_json
 				  	quote_attempt[:message] = "Unable to save policy in system"
 				  end
-				  
 				else
+					logger.error "Policy quote errors: #{self.errors.to_json}\nQuote attempt: #{quote_attempt}"
   			  quote_attempt[:message] = "Unable to bind policy"	
 				end
-		  else
+			else
+				logger.error "Policy quote errors: #{self.errors.to_json}\nQuote attempt: #{quote_attempt}"
 		  	quote_attempt[:message] = "Quote billing failed, unable to write policy"
 		  end		  
 		else
@@ -254,7 +258,7 @@ class PolicyQuote < ApplicationRecord
 		  end		
 			 
 			charge_invoice = invoices.order("due_date").first.pay(stripe_source: :default)
-																
+			logger.error "Charge invoice: #{charge_invoice.to_json}" unless charge_invoice[:success]
       if charge_invoice[:success] == true
         return true
       end
