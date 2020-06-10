@@ -48,7 +48,7 @@ jobs:
           command: dockerize -wait tcp://localhost:6379 -timeout 1m
       - run:
           name: Database setup
-          command: bundle exec rake db:create db:schema:load db:seed section=setup
+          command: bundle exec rake db:schema:load db:seed section=setup
 
       # Run rspec in parallel
       - ruby/rspec-test
