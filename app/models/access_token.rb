@@ -47,6 +47,7 @@ class AccessToken < ApplicationRecord
 		end
 		
 		def set_access_token_secret_hash
+			logger.debug("Self secret: #{self.secret}")
 			self.secret_hash = self.secret.to_s.crypt(self.secret_salt)
 		end
 end
