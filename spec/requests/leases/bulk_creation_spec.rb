@@ -20,7 +20,6 @@ describe 'Leases API spec', type: :request do
         params = { input_file: file, leases: leases_params }
         post "/v2/#{role_route}/leases/bulk_create", params: params, headers: @headers
         assert_response :success
-        expect(false).to be(true) # test fail
       end
 
       it 'returns 422 and the list of bad columns' do
