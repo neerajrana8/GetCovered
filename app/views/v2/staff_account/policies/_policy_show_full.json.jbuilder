@@ -48,6 +48,8 @@ end
 
 json.premium policy.premium
 
+json.policy_type_title policy&.policy_type&.title
+
 json.documents policy.documents do |document|
   json.id document.id
   json.filename document.filename
