@@ -8,9 +8,15 @@ class Devise::Users::RegistrationsController < DeviseTokenAuth::RegistrationsCon
   # end
 
   # POST /resource
-  # def create
-  #   super
-  # end
+  def create
+    super
+    return unless @resource.persisted?
+    ::Analytics.track(
+      user_id: @resource.id,
+      event: 'Signed Up',
+      properties: { plan: 'Account' }
+    )
+  end
 
   # GET /resource/edit
   # def edit
