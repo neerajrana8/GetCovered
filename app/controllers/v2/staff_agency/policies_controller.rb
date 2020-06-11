@@ -166,6 +166,7 @@ module V2
             id: %i[scalar array],
             title: %i[scalar like]
           },
+          number: %i[scalar like],
           policy_type_id: %i[scalar array],
           created_at: %i[scalar like],
           updated_at: %i[scalar like],

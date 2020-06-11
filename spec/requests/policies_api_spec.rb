@@ -40,6 +40,17 @@ describe 'Admin Policy spec', type: :request do
       result = JSON.parse response.body
       expect(result.first['policy_type_title']).to eq(@policy_type.title)
     end
+    it 'should filter by policy number' do
+      # First Request should return 3 policies belonging to @policy_type
+      policy = FactoryBot.create(:policy, number: 'n0909', agency: @agency, carrier: @carrier, account: @account, policy_type: @policy_type)
+      FactoryBot.create(:policy, agency: @agency, carrier: @carrier, account: @account, policy_type: @policy_type)
+      FactoryBot.create(:policy, agency: @agency, carrier: @carrier, account: @account, policy_type: @policy_type)
+      get '/v2/staff_account/policies', params: { 'filter[number]' => policy.number }, headers: @headers
+      result = JSON.parse response.body
+      expect(result.count).to eq(1)
+      expect(result.first['number']).to eq(policy.number)
+      expect(response.status).to eq(200)
+    end
     
     it 'should filter by policy type id' do
       # First Request should return 3 policies belonging to @policy_type
@@ -109,6 +120,18 @@ describe 'Admin Policy spec', type: :request do
       get '/v2/staff_agency/policies', headers: @headers
       result = JSON.parse response.body
       expect(result.first['policy_type_title']).to eq(@policy_type.title)
+    end
+
+    it 'should filter by policy number' do
+      # First Request should return 3 policies belonging to @policy_type
+      policy = FactoryBot.create(:policy, number: 'n0909', agency: @agency, carrier: @carrier, account: @account, policy_type: @policy_type)
+      FactoryBot.create(:policy, agency: @agency, carrier: @carrier, account: @account, policy_type: @policy_type)
+      FactoryBot.create(:policy, agency: @agency, carrier: @carrier, account: @account, policy_type: @policy_type)
+      get '/v2/staff_agency/policies', params: { 'filter[number]' => policy.number }, headers: @headers
+      result = JSON.parse response.body
+      expect(result.count).to eq(1)
+      expect(result.first['number']).to eq(policy.number)
+      expect(response.status).to eq(200)
     end
     
     it 'should filter by policy type id' do
