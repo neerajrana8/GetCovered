@@ -34,6 +34,13 @@ describe 'Admin Policy spec', type: :request do
       expect(Policy.last.users.last.email).to eq('yernar.mussin@nitka.com')
     end
     
+    it 'should include policy type title in index' do
+      FactoryBot.create(:policy, agency: @agency, carrier: @carrier, account: @account, policy_type: @policy_type)
+      get '/v2/staff_account/policies', headers: @headers
+      result = JSON.parse response.body
+      expect(result.first['policy_type_title']).to eq(@policy_type.title)
+    end
+    
     it 'should filter by policy type id' do
       # First Request should return 3 policies belonging to @policy_type
       FactoryBot.create(:policy, agency: @agency, carrier: @carrier, account: @account, policy_type: @policy_type)
@@ -79,7 +86,7 @@ describe 'Admin Policy spec', type: :request do
     end
   end
   
-  context 'for StaffAccount roles' do
+  context 'for StaffAgency roles' do
     before :all do
       @staff = create_agent_for @agency
     end
@@ -95,6 +102,13 @@ describe 'Admin Policy spec', type: :request do
       expect(result["message"]).to eq("Policy created")
       expect(Policy.last.users.first).to eq(@user)
       expect(Policy.last.users.last.email).to eq('yernar.mussin@nitka.com')
+    end
+
+    it 'should include policy type title in index' do
+      FactoryBot.create(:policy, agency: @agency, carrier: @carrier, account: @account, policy_type: @policy_type)
+      get '/v2/staff_agency/policies', headers: @headers
+      result = JSON.parse response.body
+      expect(result.first['policy_type_title']).to eq(@policy_type.title)
     end
     
     it 'should filter by policy type id' do
@@ -128,7 +142,7 @@ describe 'Admin Policy spec', type: :request do
       expect(response.status).to eq(200)
       expect(result.count).to eq(1)
     end
-
+    
     it 'should search policies by number' do
       policy = FactoryBot.create(:policy, number: "nagency0101", agency: @agency, carrier: @carrier, account: @account, policy_type: @policy_type)
       FactoryBot.create(:policy, agency: @agency, carrier: @carrier, account: @account, policy_type: @policy_type)
