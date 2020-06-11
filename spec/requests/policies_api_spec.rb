@@ -4,15 +4,14 @@ include ActionController::RespondWith
 describe 'Admin Policy spec', type: :request do
   before :all do
     @user = create_user
-    @policy_type = FactoryBot.create(:policy_type)
     @agency = FactoryBot.create(:agency)
     @account = FactoryBot.create(:account, agency: @agency)
-    @carrier = FactoryBot.create(:carrier)
-    @carrier.policy_types << @policy_type
+    @carrier = Carrier.first
+    @policy_type = @carrier.policy_types.take
+    @agency = FactoryBot.create(:agency)
     @carrier.agencies << @agency
-    billing_strategy = BillingStrategy.create(title: "Monthly", slug: nil, enabled: true, new_business: {"payments"=>[8.37, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33], "payments_per_term"=>12, "remainder_added_to_deposit"=>true}, renewal: nil, locked: false, agency: @agency, carrier: @carrier, policy_type: @policy_type, carrier_code: nil)
-    @agency = FactoryBot.create(:agency)
     @account = FactoryBot.create(:account, agency: @agency)
+    BillingStrategy.create(title: "Monthly", slug: nil, enabled: true, new_business: {"payments"=>[8.37, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33], "payments_per_term"=>12, "remainder_added_to_deposit"=>true}, renewal: nil, locked: false, agency: @agency, carrier: @carrier, policy_type: @policy_type, carrier_code: nil)
   end
   
   context 'for StaffAccount roles' do

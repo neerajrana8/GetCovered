@@ -1,4 +1,6 @@
 # Get Covered 
+[![CircleCI](https://circleci.com/gh/getcoveredllc/GetCovered-V2.svg?style=svg&circle-token=0052abe2ebc6773f064fe6582363f1cf58e28dcd)](https://app.circleci.com/pipelines/github/getcoveredllc/GetCovered-V2)
+
 #### API Layer
 #### Version 2.0.0/development
 
