@@ -6,3 +6,5 @@ json.carrier policy.carrier
 json.agency policy.agency
 
 json.account policy.account
+
+json.policy_type_title policy&.policy_type&.title
