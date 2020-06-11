@@ -3,6 +3,9 @@ include ActionController::RespondWith
 
 describe 'Admin Policy spec', type: :request do
   before :all do
+    Policy.__elasticsearch__.client.indices.delete index: Policy.index_name rescue nil
+    Policy.__elasticsearch__.create_index!
+    Policy.import force: true
     @user = create_user
     @agency = FactoryBot.create(:agency)
     @account = FactoryBot.create(:account, agency: @agency)
@@ -16,7 +19,7 @@ describe 'Admin Policy spec', type: :request do
   
   context 'for StaffAccount roles' do
     before :all do
-      @staff = create_account_for @agency
+      @staff = FactoryBot.create(:staff, organizable: @account, role: 'staff')
     end
     before :each do
       login_staff(@staff)
@@ -32,11 +35,47 @@ describe 'Admin Policy spec', type: :request do
     end
     
     it 'should filter by policy type id' do
+      # First Request should return 3 policies belonging to @policy_type
+      FactoryBot.create(:policy, agency: @agency, carrier: @carrier, account: @account, policy_type: @policy_type)
+      FactoryBot.create(:policy, agency: @agency, carrier: @carrier, account: @account, policy_type: @policy_type)
+      FactoryBot.create(:policy, agency: @agency, carrier: @carrier, account: @account, policy_type: @policy_type)
       get '/v2/staff_account/policies', params: { 'filter[policy_type_id]' => @policy_type.id }, headers: @headers
       result = JSON.parse response.body
-      expect(result.count).to eq(1)
+      expect(result.count).to eq(3)
+      result.each do |policy|
+        expect(policy['policy_type_id']).to eq(@policy_type.id)
+      end
       expect(response.status).to eq(200)
-
+      
+      # Second Request should return 0 policies belonging to non-existent policy_type
+      login_staff(@staff)
+      @headers = get_auth_headers_from_login_response_headers(response)
+      get '/v2/staff_account/policies', params: { 'filter[policy_type_id]' => '20' }, headers: @headers
+      result = JSON.parse response.body
+      expect(response.status).to eq(200)
+      expect(result.count).to eq(0)
+      
+      # Third Request should return 1 policy belonging to a new policy_type
+      new_policy_type = @carrier.policy_types.create(title: "New Policy Type")
+      FactoryBot.create(:policy, agency: @agency, carrier: @carrier, account: @account, policy_type: new_policy_type)
+      login_staff(@staff)
+      @headers = get_auth_headers_from_login_response_headers(response)
+      get '/v2/staff_account/policies', params: { 'filter[policy_type_id]' => new_policy_type.id }, headers: @headers
+      result = JSON.parse response.body
+      expect(response.status).to eq(200)
+      expect(result.count).to eq(1)
+    end
+    
+    it 'should search policies by number' do
+      policy = FactoryBot.create(:policy, number: "n0101", agency: @agency, carrier: @carrier, account: @account, policy_type: @policy_type)
+      FactoryBot.create(:policy, agency: @agency, carrier: @carrier, account: @account, policy_type: @policy_type)
+      FactoryBot.create(:policy, agency: @agency, carrier: @carrier, account: @account, policy_type: @policy_type)
+      sleep 1
+      get '/v2/staff_account/policies/search', params: { 'query' => policy.number }, headers: @headers
+      result = JSON.parse response.body
+      expect(response.status).to eq(200)
+      expect(result.count).to eq(1)
+      expect(result.first['number']).to eq(policy.number)
     end
   end
   
@@ -56,6 +95,50 @@ describe 'Admin Policy spec', type: :request do
       expect(result["message"]).to eq("Policy created")
       expect(Policy.last.users.first).to eq(@user)
       expect(Policy.last.users.last.email).to eq('yernar.mussin@nitka.com')
+    end
+    
+    it 'should filter by policy type id' do
+      # First Request should return 3 policies belonging to @policy_type
+      FactoryBot.create(:policy, agency: @agency, carrier: @carrier, account: @account, policy_type: @policy_type)
+      FactoryBot.create(:policy, agency: @agency, carrier: @carrier, account: @account, policy_type: @policy_type)
+      FactoryBot.create(:policy, agency: @agency, carrier: @carrier, account: @account, policy_type: @policy_type)
+      get '/v2/staff_agency/policies', params: { 'filter[policy_type_id]' => @policy_type.id }, headers: @headers
+      result = JSON.parse response.body
+      expect(result.count).to eq(3)
+      result.each do |policy|
+        expect(policy['policy_type_id']).to eq(@policy_type.id)
+      end
+      expect(response.status).to eq(200)
+      
+      # Second Request should return 0 policies belonging to non-existent policy_type
+      login_staff(@staff)
+      @headers = get_auth_headers_from_login_response_headers(response)
+      get '/v2/staff_agency/policies', params: { 'filter[policy_type_id]' => '20' }, headers: @headers
+      result = JSON.parse response.body
+      expect(response.status).to eq(200)
+      expect(result.count).to eq(0)
+      
+      # Third Request should return 1 policy belonging to a new policy_type
+      new_policy_type = @carrier.policy_types.create(title: "New Policy Type")
+      FactoryBot.create(:policy, agency: @agency, carrier: @carrier, account: @account, policy_type: new_policy_type)
+      login_staff(@staff)
+      @headers = get_auth_headers_from_login_response_headers(response)
+      get '/v2/staff_agency/policies', params: { 'filter[policy_type_id]' => new_policy_type.id }, headers: @headers
+      result = JSON.parse response.body
+      expect(response.status).to eq(200)
+      expect(result.count).to eq(1)
+    end
+
+    it 'should search policies by number' do
+      policy = FactoryBot.create(:policy, number: "nagency0101", agency: @agency, carrier: @carrier, account: @account, policy_type: @policy_type)
+      FactoryBot.create(:policy, agency: @agency, carrier: @carrier, account: @account, policy_type: @policy_type)
+      FactoryBot.create(:policy, agency: @agency, carrier: @carrier, account: @account, policy_type: @policy_type)
+      sleep 1
+      get '/v2/staff_agency/policies/search', params: { 'query' => policy.number }, headers: @headers
+      result = JSON.parse response.body
+      expect(response.status).to eq(200)
+      expect(result.count).to eq(1)
+      expect(result.first['number']).to eq(policy.number)
     end
   end
   

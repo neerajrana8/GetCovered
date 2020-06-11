@@ -15,7 +15,7 @@ module V2
       end
 
       def search
-        @policies = Policy.search(params[:query]).records.where(account_id: current_staff.organizable_id)
+        @policies = ::Policy.search(params[:query]).records.where(account_id: current_staff.organizable_id)
         render json: @policies.to_json, status: 200
       end
       

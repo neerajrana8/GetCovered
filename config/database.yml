@@ -38,7 +38,7 @@ test:
   <<: *default
   # host: db
   database: gc_v2_test
-  username: postgres
+  # username: postgres
 
 test_container:
   <<: *default
