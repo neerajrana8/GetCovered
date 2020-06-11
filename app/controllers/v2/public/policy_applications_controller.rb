@@ -437,6 +437,41 @@ module V2
           end 
 	      end
 	    end
+      
+      #### MOOSE WARNING: modify to integrate with the existing policy application flow #####
+      def get_coverage_options
+        @msi_id = 5
+        # grab params
+        cip = CarrierInsurableProfile.where(carrier_id: @msi_id, insurable_id: get_coverage_options_params[:insurable_id].to_i).take
+        if cip.nil?
+          render json: { error: "insurable not found" },
+            status: :unprocessable_entity
+        end
+        selections = get_coverage_options_params[:coverage_selections] || []
+        # get IRCs
+        irc_hierarchy = cip.get_insurable_rate_configuration_hierarchy # MOOSE WARNING: implement this boi
+        irc_hierarchy.map{|ircs| InsurableRateConfiguration.merge(ircs, mutable: true) } # MOOSE WARNING: implement this boi
+        # for each IRC, apply rules and merge down
+        coverage_options = []
+        irc_hierarchy.each do |irc|
+          irc.merge_options(coverage_options, mutable: false) # MOOSE WARNING: implement this boi
+          coverage_options = irc.annotate_options(selections)
+        end
+        # call GetFinalPremium to get prices???
+        # done
+        render json: coverage_options,
+          status: :success
+      end
+
+
+
+      def get_coverage_options_params
+        params.require(:coverage_options)
+              .permit(:insurable_id, coverage_selections: [
+                :category, :uid, :selection
+              ])
+      end
+      #######################################################################################
             
       private
 

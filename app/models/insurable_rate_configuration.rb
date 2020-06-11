@@ -1,6 +1,6 @@
 class InsurableRateConfiguration < ApplicationRecord
   belongs_to :configurable, polymorphic: true # Insurable or InsurableGeographicCategory (for now)
-  #belongs_to :configurer, polymorphic: true   # Account, Agency, or Carrier
+  belongs_to :configurer, polymorphic: true   # Account, Agency, or Carrier
   belongs_to :carrier_insurable_type
   
   validate :validate_coverage_options
