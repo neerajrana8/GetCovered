@@ -97,7 +97,7 @@ describe 'Histories API spec', type: :request do
     
     context 'should record Claim' do
       it 'creation' do
-        post '/v2/staff_agency/claims', params: { claim: claim_params }, headers: @headers
+        post '/v2/staff_agency/claims', params: { claim: claim_params(@agency) }, headers: @headers
         result = JSON.parse response.body
         expect(response.status).to eq(201)
         expect(result["id"]).to_not eq(nil)
@@ -118,6 +118,7 @@ describe 'Histories API spec', type: :request do
       end
       
       it 'update' do
+        claim_params = claim_params(@agency)
         claim = Claim.create(claim_params)
         expect(claim.persisted?).to eq(true)
         expect(claim.subject).to eq(claim_params[:subject])
@@ -135,37 +136,45 @@ describe 'Histories API spec', type: :request do
       end
     end
     
-    
-  end
-  
-  def agency_params
-    {
-      title: "GetCovered",
-      tos_accepted: true,
-      whitelabel: true
-    }
-  end
-  
-  def account_params
-    {
-      enabled: true, 
-      title: "New account",
-      whitelabel: false
-    }
-  end
-  
-  def claim_params
-    user = FactoryBot.create(:user)
-    {
-      subject: 'New subject claim',
-      type_of_loss: "FIRE",
-      claimant_id: user.id,
-      claimant_type: "User",
-      description: "New claim",
-      insurable_id: FactoryBot.create(:insurable).id,
-      policy_id: FactoryBot.create(:policy, agency: @agency).id
-    }
-    
-  end
-  
+    context 'should record Insurable' do
+      it 'creation' do
+        post '/v2/staff_agency/insurables', params: { insurable: insurable_params(FactoryBot.create(:account, agency: @agency)) }, headers: @headers
+        result = JSON.parse response.body
+        expect(response.status).to eq(201)
+        expect(result["id"]).to_not eq(nil)
+        insurable = Insurable.find result["id"]
+        expect(insurable.histories.count).to eq(1)
+        expect(insurable.histories.first.action).to eq('create')
+        expect(insurable.histories.first.recordable_type).to eq('Insurable')
+        expect(insurable.histories.first.recordable_id).to eq(insurable.id)
+        expect(insurable.histories.first.authorable_type).to eq('Staff')
+        expect(insurable.histories.first.authorable_id).to eq(@staff.id)
+        
+        login_staff(@staff)
+        @headers = get_auth_headers_from_login_response_headers(response)
+        get "/v2/staff_agency/insurables/#{insurable.id}/histories", headers: @headers
+        result = JSON.parse response.body
+        expect(result.first['id']).to eq(insurable.histories.last.id)
+        
+      end
+      
+      it 'update' do
+        insurable_params = insurable_params(FactoryBot.create(:account, agency: @agency))
+        insurable = Insurable.create(insurable_params)
+        expect(insurable.persisted?).to eq(true)
+        expect(insurable.title).to eq(insurable_params[:title])
+        put "/v2/staff_agency/insurables/#{insurable.id}", params: { insurable: {title: "New subject"} }, headers: @headers
+        result = JSON.parse response.body
+        expect(response.status).to eq(200)
+        expect(result["title"]).to eq('New subject')
+        expect(insurable.histories.last.action).to eq('update')
+        expect(insurable.histories.last.recordable_type).to eq('Insurable')
+        expect(insurable.histories.last.recordable_id).to eq(insurable.id)
+        expect(insurable.histories.last.authorable_type).to eq('Staff')
+        expect(insurable.histories.last.authorable_id).to eq(@staff.id)
+        expect(insurable.histories.last.data['title']['previous_value']).to eq(insurable_params[:title])
+        expect(insurable.histories.last.data['title']['new_value']).to eq("New subject")
+      end
+    end
+  end  
 end 
