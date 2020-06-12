@@ -37,7 +37,7 @@ module V2
 
       def update
         if update_allowed?
-          if @account.update(update_params)
+          if @account.update_as(current_staff, update_params)
             render :show, status: :ok
           else
             render json: @account.errors,
