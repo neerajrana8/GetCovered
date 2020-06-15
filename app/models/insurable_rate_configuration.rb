@@ -222,7 +222,7 @@ class InsurableRateConfiguration < ApplicationRecord
   #   selections: an array of hashes of the form { 'category'=>cat, 'uid'=>uid, 'selection'=>sel }, where sel is the # selected if applicable, and otherwise true or false
   #   asserts: internal use, keeps track of where in the syntax asserts are allowed (false if not allowed, array of asserts if allowed)
   # returns:
-  #   array of hashes of the form { 'category'=>cat, 'uid'=>uid, '
+  #   value of executed expression
   def execute(code, options, selections: [], asserts: false)
     case code
       when ::Array
@@ -287,10 +287,10 @@ class InsurableRateConfiguration < ApplicationRecord
           when '>='
             (num(execute(code[1])) - num(execute(code[2]))) >= -(num(code[3]) || 0)
           when 'selected'
-            selections.find{|s| s['category'] == execute(code[1]) && s['uid'] == execute(code[2]) } ? true : false
+            selections.find{|s| s['category'] == execute(code[1]) && s['uid'] == execute(code[2]) }&.[]('selection') ? true : false
           when 'requirement'
             found = options.find{|s| s['category'] == execute(code[1]) && s['uid'] == execute(code[2]) }
-            if found.nil?
+            if found.nil? || found['enabled'] == false
               REQUIREMENT_TYPES['forbidden']
             else
               REQUIREMENT_TYPES[found['requirement'] || 'forbidden']
@@ -298,7 +298,7 @@ class InsurableRateConfiguration < ApplicationRecord
           when 'value'
             found = selections.find{|s| s['category'] == execute(code[1]) && s['uid'] == execute(code[2]) }
             if found.nil? || found['selection'].nil?
-              throw 'no_value'
+              0.to_d # just return zero instead of throwing throw 'no_value'
             else
               found['selection']
             end

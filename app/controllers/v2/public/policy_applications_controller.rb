@@ -470,6 +470,14 @@ module V2
               .permit(:insurable_id, coverage_selections: [
                 :category, :uid, :selection
               ])
+        ####
+        policy_application:
+            effective_date
+            account_id
+            agency_id
+            policy_type_id
+            carrier_id
+            
       end
       #######################################################################################
             
