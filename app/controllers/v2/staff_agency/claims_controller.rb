@@ -6,11 +6,9 @@ module V2
   module StaffAgency
     class ClaimsController < StaffAgencyController
       
-      before_action :set_claim,
-        only: %i[update show attach_documents delete_documents]
+      before_action :set_claim, only: %i[update show attach_documents delete_documents]
       
-      before_action :set_substrate,
-        only: %i[create index]
+      before_action :set_substrate, only: %i[create index]
       
       def index
         if params[:short]

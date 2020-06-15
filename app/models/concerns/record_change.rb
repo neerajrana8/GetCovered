@@ -6,9 +6,8 @@ module RecordChange
   extend ActiveSupport::Concern
 
   included do
-    before_save :record_change,
-      if: Proc.new { |r| r.persisted? }
-      
+    before_save :record_change, if: proc { |r| r.persisted? }
+    
     after_create :record_create
   end
 
@@ -56,8 +55,8 @@ module RecordChange
 
   def record_change
     
-    author = instance_variable_defined?(:@author) ? @author : nil
-    changes = Hash.new
+    author = @author
+    changes = {}
 
     self.class.columns.each do |column|
       if self.will_save_change_to_attribute?(column.name) &&
@@ -82,9 +81,8 @@ module RecordChange
 
   end
 
-
   def record_create
-    author = instance_variable_defined?(:@author) ? @author : nil
+    author = @author
     
     unless author.nil?
       self.histories.create(authorable: author, action: 'create') unless self.respond_to?(:create_ahistorically, true) && create_ahistorically
@@ -98,5 +96,4 @@ module RecordChange
     end
     remove_instance_variable(:@author) if instance_variable_defined?(:@author)
   end
-
 end

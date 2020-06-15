@@ -22,7 +22,7 @@ module V2
       def create
         if create_allowed?
           @agency = Agency.new(create_params)
-          if !@agency.errors.any? && @agency.save
+          if !@agency.errors.any? && @agency.save_as(current_staff)
             render :show,
               status: :created
           else
@@ -37,7 +37,7 @@ module V2
       
       def update
         if update_allowed?
-          if @agency.update(update_params)
+          if @agency.update_as(current_staff, update_params)
             render :show,
               status: :ok
           else
