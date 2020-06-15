@@ -69,6 +69,32 @@ module ModelParams
     }
   end
   
+  def lease_params(account)
+    lease_type = LeaseType.first
+    insurable = FactoryBot.create(:insurable)
+    {
+      account_id: account.id,
+      lease_type_id: lease_type.id,
+      insurable_id: insurable.id,
+      start_date: 6.months.ago,
+      end_date: 6.months.from_now,
+      status: :approved,
+      covered: true
+    }
+  end
+
+  def policy_params(account)
+    {
+      number: "New policy wiht number: #{SecureRandom.uuid}",
+      account_id: account.id,
+      agency_id: account.agency.id,
+      policy_type_id: PolicyType.first.id,
+      carrier_id: Carrier.first.id,
+      effective_date: 6.months.ago,
+      expiration_date: 6.months.from_now,
+      policy_in_system: false
+    }
+  end
   
   
 end

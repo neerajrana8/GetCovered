@@ -176,5 +176,87 @@ describe 'Histories API spec', type: :request do
         expect(insurable.histories.last.data['title']['new_value']).to eq("New subject")
       end
     end
+
+    context 'should record Lease' do
+      it 'creation' do
+        post '/v2/staff_agency/leases', params: { lease: lease_params(FactoryBot.create(:account, agency: @agency)) }, headers: @headers
+        result = JSON.parse response.body
+        expect(response.status).to eq(201)
+        expect(result["id"]).to_not eq(nil)
+        lease = Lease.find result["id"]
+        expect(lease.histories.count).to eq(1)
+        expect(lease.histories.first.action).to eq('create')
+        expect(lease.histories.first.recordable_type).to eq('Lease')
+        expect(lease.histories.first.recordable_id).to eq(lease.id)
+        expect(lease.histories.first.authorable_type).to eq('Staff')
+        expect(lease.histories.first.authorable_id).to eq(@staff.id)
+        
+        login_staff(@staff)
+        @headers = get_auth_headers_from_login_response_headers(response)
+        get "/v2/staff_agency/leases/#{lease.id}/histories", headers: @headers
+        result = JSON.parse response.body
+        expect(result.first['id']).to eq(lease.histories.last.id)
+        
+      end
+      
+      it 'update' do
+        lease_params = lease_params(FactoryBot.create(:account, agency: @agency))
+        lease = Lease.create(lease_params)
+        expect(lease.persisted?).to eq(true)
+        expect(lease.covered).to eq(true)
+        put "/v2/staff_agency/leases/#{lease.id}", params: { lease: {covered: false} }, headers: @headers
+        result = JSON.parse response.body
+        expect(response.status).to eq(200)
+        expect(result["covered"]).to eq(false)
+        expect(lease.histories.last.action).to eq('update')
+        expect(lease.histories.last.recordable_type).to eq('Lease')
+        expect(lease.histories.last.recordable_id).to eq(lease.id)
+        expect(lease.histories.last.authorable_type).to eq('Staff')
+        expect(lease.histories.last.authorable_id).to eq(@staff.id)
+        expect(lease.histories.last.data['covered']['previous_value']).to eq(true)
+        expect(lease.histories.last.data['covered']['new_value']).to eq(false)
+      end
+    end
+
+    context 'should record Policy' do
+      it 'creation' do
+        post '/v2/staff_agency/policies', params: { policy: policy_params(FactoryBot.create(:account, agency: @agency)) }, headers: @headers
+        result = JSON.parse response.body
+        expect(response.status).to eq(201)
+        expect(result["id"]).to_not eq(nil)
+        policy = Policy.find result["id"]
+        expect(policy.histories.count).to eq(1)
+        expect(policy.histories.first.action).to eq('create')
+        expect(policy.histories.first.recordable_type).to eq('Policy')
+        expect(policy.histories.first.recordable_id).to eq(policy.id)
+        expect(policy.histories.first.authorable_type).to eq('Staff')
+        expect(policy.histories.first.authorable_id).to eq(@staff.id)
+        
+        login_staff(@staff)
+        @headers = get_auth_headers_from_login_response_headers(response)
+        get "/v2/staff_agency/policies/#{policy.id}/histories", headers: @headers
+        result = JSON.parse response.body
+        expect(result.first['id']).to eq(policy.histories.last.id)
+        
+      end
+      
+      it 'update' do
+        policy_params = policy_params(FactoryBot.create(:account, agency: @agency))
+        policy = Policy.create(policy_params)
+        expect(policy.persisted?).to eq(true)
+        expect(policy.auto_renew).to eq(false)
+        put "/v2/staff_agency/policies/#{policy.id}", params: { policy: {auto_renew: true} }, headers: @headers
+        result = JSON.parse response.body
+        expect(response.status).to eq(200)
+        expect(result["auto_renew"]).to eq(true)
+        expect(policy.histories.last.action).to eq('update')
+        expect(policy.histories.last.recordable_type).to eq('Policy')
+        expect(policy.histories.last.recordable_id).to eq(policy.id)
+        expect(policy.histories.last.authorable_type).to eq('Staff')
+        expect(policy.histories.last.authorable_id).to eq(@staff.id)
+        expect(policy.histories.last.data['auto_renew']['previous_value']).to eq(false)
+        expect(policy.histories.last.data['auto_renew']['new_value']).to eq(true)
+      end
+    end
   end  
 end 
