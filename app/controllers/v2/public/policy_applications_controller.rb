@@ -450,11 +450,11 @@ module V2
         selections = get_coverage_options_params[:coverage_selections] || []
         # get IRCs
         irc_hierarchy = cip.get_insurable_rate_configuration_hierarchy # MOOSE WARNING: implement this boi
-        irc_hierarchy.map{|ircs| InsurableRateConfiguration.merge(ircs, mutable: true) } # MOOSE WARNING: implement this boi
+        irc_hierarchy.map!{|ircs| InsurableRateConfiguration.merge(ircs, mutable: true) }
         # for each IRC, apply rules and merge down
         coverage_options = []
         irc_hierarchy.each do |irc|
-          irc.merge_options!(coverage_options, mutable: false) # MOOSE WARNING: implement this boi
+          irc.merge_options!(coverage_options, mutable: false)
           coverage_options = irc.annotate_options(selections)
         end
         # call GetFinalPremium to get prices???
