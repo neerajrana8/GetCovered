@@ -454,7 +454,7 @@ module V2
         # for each IRC, apply rules and merge down
         coverage_options = []
         irc_hierarchy.each do |irc|
-          irc.merge_options(coverage_options, mutable: false) # MOOSE WARNING: implement this boi
+          irc.merge_options!(coverage_options, mutable: false) # MOOSE WARNING: implement this boi
           coverage_options = irc.annotate_options(selections)
         end
         # call GetFinalPremium to get prices???

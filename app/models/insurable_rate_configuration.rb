@@ -4,16 +4,123 @@ class InsurableRateConfiguration < ApplicationRecord
   belongs_to :carrier_insurable_type
   
   validate :validate_coverage_options
+  validate :validate_rules
   
+  # Available values for 'requirement', associated with numerical distinguishing values.
   REQUIREMENT_TYPES = {
-    'required' => 0,
-    'forbidden' => 1,
-    'optional' => 2,
-    'locked' => 3
+    'required' => 0,    # coverage must be selected
+    'forbidden' => 1,   # coverage may not be selected
+    'optional' => 2,    # coverage can be selected if desired
+    'locked' => 3       # coverage may not be selected by default, but rules, even from lower configurers, can override this
   }
   
-  def merge(mutable, to_merge)
-    # MOOSE WARNING: do it!
+  # Requirement types which can be overwritten by lower configurers
+  OVERWRITEABLE_REQUIREMENT_TYPES = ['optional', 'locked']
+  
+  # Configurer types which can add distinct new coverages
+  COVERAGE_ADDING_CONFIGUERERS = {
+    'Carrier' => true
+  }
+  
+  def class.merge(irc_array, :mutable)
+    # setup
+    to_return = InsurableRateConfiguration.new(
+      configurable_type: irc_array.drop(1).inject(irc_array.first&.configurable_type){|res,irc| break nil unless irc.configurable_type == res; res },
+      configurable_id:   irc_array.drop(1).inject(irc_array.first&.configurable_id)  {|res,irc| break nil unless irc.configurable_id == res; res },
+      configurer_type:   irc_array.drop(1).inject(irc_array.first&.configurer_type){|res,irc| break nil unless irc.configurer_type == res; res },
+      configurer_id:     irc_array.drop(1).inject(irc_array.first&.configurer_id)  {|res,irc| break nil unless irc.configurer_id == res; res },
+      carrier_info: {},
+      coverage_options: [],
+      rules: {}
+    )
+    # carrier info
+    irc_array.each do |irc|
+      irc.carrier_info.each do |k,v|
+        mv = Marshal.dump(v)
+        if to_return.coverage_options.has_key?(k)
+          to_return.coverage_options[k] = nil unless to_return.coverage_options[k] == mv
+        else
+          to_return.coverage_options[k] = v
+        end
+      end
+    end
+    to_return.coverage_options.compact!
+    to_return.coverage_options.transform_values!{|v| Marshal.load(v) }
+    # rules
+    if mutable
+      irc_array.each{|irc| to_return.rules.merge!(irc.rules) }
+    else
+      # WARNING: only messages are overwritten; code is IGNORED when the rule already exists. alternative is to include code as a separate rule (change the name)
+      irc_array.each do |irc|
+        irc.rules.each do |r_name, r_data|
+          if to_return.rules.has_key?(r_name)
+            to_return.rules[r_name]['message'] = r_data['message']
+          else
+            to_return.rules[r_name] = Marshal.load(Marshal.dump(r_data))
+          end
+        end
+      end
+    end
+    # coverage_options
+    to_return.coverage_options = irc_array.first&.coverage_options || []
+    irc_array.drop(1).each do |irc|
+      to_return.merge_options!(irc.coverage_options, mutable: mutable, allow_new_coverages: irc.configurer_type.nil? ? mutable : COVERAGE_ADDING_CONFIGURERS.include?(irc.configurer_type))
+    end
+    # done
+    return to_return
+  end
+  
+  # merge parent options into self.coverage_options (does not save the model)
+  def merge_options!(parent_options, :mutable)
+    self.coverage_options = merge_options(parent_options, mutable: :mutable)
+    return self
+  end
+  
+  # merges parent options into child options
+  def merge_options(
+    parent_options,
+    child_options = self.coverage_options,
+    :mutable,
+    allow_new_coverages: mutable
+  )
+    to_return = Marshal.load(Marshal.dump(parent_options))
+    child_options.each do |co|
+      # grab the corresponding parent option
+      po = to_return.find{|opt| opt['category'] == co['category'] && opt['uid'] == co['uid'] }
+      if po.nil?
+        # ignore or insert the new coverage option
+        next if !allow_new_coverages
+        to_return.push(co)
+      else
+        # see about overrides
+        po['title'] = co['title'] unless co['title'].nil?
+        po['description'] = co['description'] unless co['description'].nil?
+        po['enabled'] = co['enabled'] unless co['enabled'].nil? || (!mutable && po['enabled'] == false)
+        po['requirement'] = co['requirement'] unless co['requirement'].nil? || (!mutable && !OVERWRITEABLE_REQUIREMENT_TYPES.include?(po['requirement']))
+        if mutable
+          po['options_type'] = co['options_type'] unless co['options_type'].nil?
+          po['options'] = co['options'] unless co['options'].nil?
+        elsif co['options_type'] && co['options']
+          refine_options_for_merge!(po['options_type'], po['options'], co['options_type'], co['options'])
+        end
+      end
+    end
+    return to_return
+  end
+  
+  # refine parent (po) options by filtering out options not compatible with child (co) options;
+  # uses coverage_options format
+  def refine_options_for_merge!(po_type, po_options, co_type, co_options)
+    refine_options_for_code!(po_type, po_options, asserts_for_options(co_type, co_options))
+  end
+  
+  # converge coverage_options options format to asserts format
+  def asserts_for_options(options_type, options)
+    case options_type
+      when 'multiple_choice'
+        return([options])
+    end
+    return []
   end
   
   def validate_coverage_options
@@ -25,7 +132,7 @@ class InsurableRateConfiguration < ApplicationRecord
     #  "description"   => string (optional)",
     #  "enabled"       => boolean,
     #  "requirement"   => string (from among REQUIREMENT_TYPES),
-    #  "options_type"  => ["none", "multiple_choice", "min_max"],
+    #  "options_type"  => ["none", "multiple_choice"],
     #  "options"       => depends on options_type:
     #     none: omit this entry, it doesn't matter,
     #     multiple_choice: array of numerical values
@@ -50,7 +157,15 @@ class InsurableRateConfiguration < ApplicationRecord
   end
   
   def validate_rules
-    # MOOSE WARNING: add errors for invalid rules (but right now only there's no rule customization, just valid seeds)
+    self.rules.each do |r_name, r_data|
+      unless r_data.class == ::Hash
+        errors.add(:rules, "includes invalid rule (#{r_name})")
+      else
+        errors.add(:rules, "includes rule without message (#{r_name)}") unless r_data.has_key?("message")
+        errors.add(:rules, "includes rule without specification (#{r_name)}") unless r_data.has_key?("code")
+        # MOOSE WARNING: add errors for invalid rule code syntax (but right now only there's no rule customization, just valid seeds); code can be nil, or valid syntax
+      end
+    end
   end
   
   # options should be a copy of self.coverage_options, or the same with parents merged in
@@ -60,7 +175,7 @@ class InsurableRateConfiguration < ApplicationRecord
     options = Marshal.load(Marshal.dump(options)) unless skip_copy
     # apply rules to get asserts
     asserts = []
-    execute(self.rules, selections: selections, asserts: asserts)
+    execute(self.rules.map{|k,v| v['code'] }.compact, selections: selections, asserts: asserts)
     # apply asserts
     asserts.each do |assert|
       option = options.find{|opt| opt['category'] == assert['category'] && opt['uid'] == assert['uid'] }
@@ -72,17 +187,16 @@ class InsurableRateConfiguration < ApplicationRecord
         end
       end
       if assert['value']
-        refine_options!(option['options_type'], option['options'], assert['value'])
+        refine_options_for_code!(option['options_type'], option['options'], assert['value'])
       end
     end
     # done
     return options
   end
   
-  def refine_options!(options_type, options, asserts)
+  def refine_options_for_code!(options_type, options, asserts)
     case options_type
       when 'multiple_choice'
-        options.map!{|opt| opt }
         asserts.each do |assert|
           if assert.class == ::Array
             options.select!{|opt| assert.include?(opt) }
