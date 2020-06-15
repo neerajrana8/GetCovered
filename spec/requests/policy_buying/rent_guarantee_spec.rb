@@ -5,13 +5,13 @@ describe 'Policy buying' do
   describe 'Rent Guarantee Form' do
     it 'New user buys a policy' do
       post('/v2/policy-applications', params: correct_policy_application_params)
-      ap response.body
+
       expect(response.status).to eq(200)
     end
 
     def correct_policy_application_params(new_user: true, co_tenant: false)
       {
-        "policy_application": { 
+        policy_application: {
           "reference": nil,
           "external_reference": nil,
           "effective_date": '2020-06-17',
