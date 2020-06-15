@@ -228,43 +228,46 @@ class InsurableRateConfiguration < ApplicationRecord
       when ::Array
         case code[0]
           when '='
-            throw 'invalid_assert_placement' unless asserts
-            if code[1].class == ::Array
-              if code[1][0] == 'requirement'
-                # get what to assign and what to assign it to
-                category = execute(code[1][1])
-                uid = execute(code[1][2])
-                value = execute(code[2])
-                # perform the assignation
-                index = asserts.find_index{|a| a['category'] == category && a['uid'] == uid }
-                if index.nil?
-                  index = asserts.length
-                  asserts[index] = { 'category' => category, 'uid' => uid }
-                end
-                asserts[index]['requirement'] = [] if asserts[index]['requirement'].nil?
-                asserts[index]['requirement'].push(value)
-                asserts[index]['requirement'].uniq!
-                true
-              elsif code[1][0] == 'value'
-                # get what to assign and what to assign it to
-                category = execute(code[1][1])
-                uid = execute(code[1][2])
-                value = execute(code[2])
-                # perform the assignation
-                index = asserts.find_index{|a| a['category'] == category && a['uid'] == uid }
-                if index.nil?
-                  index = asserts.length
-                  asserts[index] = { 'category' => category, 'uid' => uid }
-                end
-                asserts[index]['value'] = [] if asserts[index]['value'].nil?
-                asserts[index]['value'].push(value)
-                asserts[index]['value'].uniq! # WARNING: might be array of values or an interval (see '[], '()', etc. case below)
-                true
-              else
-                throw 'invalid_assert_subject_code'
-              end
+            if !asserts
+              return false # throws disabled for now: throw 'invalid_assert_placement'
             else
-              throw 'invalid_assert_subject_value'
+              if code[1].class == ::Array
+                if code[1][0] == 'requirement'
+                  # get what to assign and what to assign it to
+                  category = execute(code[1][1])
+                  uid = execute(code[1][2])
+                  value = execute(code[2])
+                  # perform the assignation
+                  index = asserts.find_index{|a| a['category'] == category && a['uid'] == uid }
+                  if index.nil?
+                    index = asserts.length
+                    asserts[index] = { 'category' => category, 'uid' => uid }
+                  end
+                  asserts[index]['requirement'] = [] if asserts[index]['requirement'].nil?
+                  asserts[index]['requirement'].push(value)
+                  asserts[index]['requirement'].uniq!
+                  true
+                elsif code[1][0] == 'value'
+                  # get what to assign and what to assign it to
+                  category = execute(code[1][1])
+                  uid = execute(code[1][2])
+                  value = execute(code[2])
+                  # perform the assignation
+                  index = asserts.find_index{|a| a['category'] == category && a['uid'] == uid }
+                  if index.nil?
+                    index = asserts.length
+                    asserts[index] = { 'category' => category, 'uid' => uid }
+                  end
+                  asserts[index]['value'] = [] if asserts[index]['value'].nil?
+                  asserts[index]['value'].push(value)
+                  asserts[index]['value'].uniq! # WARNING: might be array of values or an interval (see '[], '()', etc. case below)
+                  true
+                else
+                  return false # throws disabled for now: throw 'invalid_assert_subject_code'
+                end
+              else
+                return false # throws disabled for now: throw 'invalid_assert_subject_value'
+              end
             end
           when '?', 'if'
             execute(code[1]) ? execute(code[2], asserts: asserts) : execute(code[3], asserts: asserts)
