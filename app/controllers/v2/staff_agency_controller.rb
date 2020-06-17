@@ -7,6 +7,18 @@ module V2
     
     before_action :authenticate_staff!
     before_action :is_agent?
+    before_action :set_agency
+
+    def set_agency
+      subagency_id = params[:agency_id]&.to_i
+      if subagency_id.blank?
+        @agency = current_staff.organizable
+      else
+        render json: { error: "Unauthorized access"}, status: :unauthorized and return unless current_staff.organizable.agencies.ids.include?(subagency_id)
+
+        @agency = current_staff.organizable.agencies.find(id: subagency_id)
+      end
+    end
 
     private
 
@@ -19,8 +31,9 @@ module V2
       end
       
       def access_model(model_class, model_id = nil)
-        return current_staff.organizable if model_class == ::Agency && model_id&.to_i == current_staff.organizable_id
-        return current_staff.organizable.send(model_class.name.underscore.pluralize).send(*(model_id.nil? ? [:itself] : [:find, model_id])) rescue nil
+        @agency ||= current_staff.organizable
+        return @agency if model_class == ::Agency && model_id&.to_i == current_staff.organizable_id
+        return @agency.send(model_class.name.underscore.pluralize).send(*(model_id.nil? ? [:itself] : [:find, model_id])) rescue nil
       end
       
   end

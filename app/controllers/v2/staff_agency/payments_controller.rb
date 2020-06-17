@@ -9,7 +9,7 @@ module V2
       before_action :set_payment, only: [:show]
             
       def index
-        super(:@payments, current_staff.organizable.payments)
+        super(:@payments, @agency.payments)
       end
       
       def show

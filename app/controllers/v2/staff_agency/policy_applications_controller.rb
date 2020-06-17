@@ -11,10 +11,10 @@ module V2
       before_action :set_substrate, only: [:index]
       
       def index
-        if current_staff.organizable_id == Agency::GET_COVERED_ID
+        if @agency.id == Agency::GET_COVERED_ID
           super(:@policy_applications, PolicyApplication.all)
         else
-          super(:@policy_applications, PolicyApplication.where(agency_id: current_staff.organizable_id))
+          super(:@policy_applications, PolicyApplication.where(agency_id: @agency.id))
         end
       end
       
@@ -28,10 +28,10 @@ module V2
 
       def set_policy_application
         @policy_application =
-          if current_staff.organizable_id == Agency::GET_COVERED_ID
+          if @agency.id == Agency::GET_COVERED_ID
             PolicyApplication.find(params[:id])
           else
-            current_staff.organizable.policy_applications.find(params[:id])
+            @agency.policy_applications.find(params[:id])
           end
       end
 

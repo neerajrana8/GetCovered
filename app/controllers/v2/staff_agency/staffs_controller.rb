@@ -10,9 +10,9 @@ module V2
             
       def index
         if (params[:filter] && params[:filter][:organizable_type] == 'Account')
-          super(:@staffs, current_staff.organizable.account_staff, :profile)
+          super(:@staffs, @agency.account_staff, :profile)
         else
-          super(:@staffs, current_staff.organizable.staff, :profile)
+          super(:@staffs, @agency.staff, :profile)
         end
       end
       
@@ -54,7 +54,7 @@ module V2
       end
       
       def search
-        @staff = Staff.search(params[:query]).records.where(organizable_id: current_staff.organizable_id)
+        @staff = Staff.search(params[:query]).records.where(organizable_id: @agency.id)
         render json: @staff.to_json, status: 200
       end
 
@@ -88,9 +88,9 @@ module V2
       end
 
       def show_allowed?
-        return true if current_staff.organizable == @staff.organizable
+        return true if @agency == @staff.organizable
 
-        return true if current_staff.organizable.accounts.include?(@staff.organizable)
+        return true if @agency.accounts.include?(@staff.organizable)
 
         false
       end
@@ -98,9 +98,9 @@ module V2
       def create_allowed?
         return false if create_params[:role] == 'super_admin'
 
-        return true if create_params[:organizable_type] == 'Agency' && (current_staff.organizable.id == create_params[:organizable_id]&.to_i || current_staff.organizable.agencies.ids.include?(create_params[:organizable_id]&.to_i))
+        return true if create_params[:organizable_type] == 'Agency' && (@agency.id == create_params[:organizable_id]&.to_i || @agency.agencies.ids.include?(create_params[:organizable_id]&.to_i))
 
-        return false if create_params[:organizable_type] == 'Account' && !current_staff.organizable&.accounts&.ids&.include?(create_params[:organizable_id])
+        return false if create_params[:organizable_type] == 'Account' && !@agency&.accounts&.ids&.include?(create_params[:organizable_id])
         
         true
       end

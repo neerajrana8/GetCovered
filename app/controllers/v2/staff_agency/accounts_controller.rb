@@ -10,9 +10,9 @@ module V2
             
       def index
         if params[:short]
-          super(:@accounts, current_staff.organizable.accounts)
+          super(:@accounts, @agency.accounts)
         else
-          super(:@accounts, current_staff.organizable.accounts, :agency)
+          super(:@accounts, @agency.accounts, :agency)
         end
       end
 
@@ -46,7 +46,7 @@ module V2
       
       def create
         if create_allowed?
-          @account = current_staff.organizable.accounts.new(account_params)
+          @account = @agency.accounts.new(account_params)
           if @account.errors.none? && @account.save_as(current_staff)
             render :show, status: :created
           else
@@ -87,7 +87,7 @@ module V2
       end
         
       def set_account
-        @account = current_staff.organizable.accounts.find_by(id: params[:id])
+        @account = @agency.accounts.find_by(id: params[:id])
       end
                         
       def account_params
