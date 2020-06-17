@@ -1,7 +1,21 @@
 class InsurableRateConfiguration < ApplicationRecord
+
+  # ActiveRecord Associations
+  
   belongs_to :configurable, polymorphic: true # Insurable or InsurableGeographicCategory (for now)
   belongs_to :configurer, polymorphic: true   # Account, Agency, or Carrier
   belongs_to :carrier_insurable_type
+  
+  # Convenience associations to particular types of configurable
+  belongs_to :insurable_geographical_category,
+    -> { where(insurable_rate_configurations: {configurable_type: 'InsurableGeographicCategory'}) },
+    foreign_key: 'configurable_id'
+  def insurable_geographical_category
+   return nil unless configurable_type == "InsurableGeographicCategory"
+   super
+  end
+  
+  # Validations
   
   validate :validate_coverage_options
   validate :validate_rules
@@ -21,6 +35,32 @@ class InsurableRateConfiguration < ApplicationRecord
   COVERAGE_ADDING_CONFIGUERERS = {
     'Carrier' => true
   }
+  
+  def get_parent_hierarchy
+    query = ::InsurableRateConfiguration.includes(:insurable_geographical_category)
+    # add configurer restrictions to query
+    case configurer_type
+      when 'Account'
+        query = query.where(configurer_type: 'Account', configurer_id: configurer_id)
+                     .or(where(configurer_type: 'Agency', configurer_id: configurer.agency_id))
+                     .or(query.where(configurer_type: 'Carrier', configurer_id: carrier_insurable_type.carrier_id))
+      when 'Agency'
+        query = query.where(configurer_type: 'Agency', configurer_id: configurer_id)
+                     .or(query.where(configurer_type: 'Carrier', configurer_id: carrier_insurable_type.carrier_id))
+      when 'Carrier'
+        query = query.where(configurer_type: 'Carrier', configurer_id: configurer_id)
+      else
+        return []
+    end
+    # add configurable restrictions to query
+    # MOOSE WARNING: finish this
+    case configurable_type
+      when 'CarrierInsurableProfile'
+      when 'InsurableGeographicalCategory'
+    end
+    # done
+    return query
+  end
   
   def class.merge(irc_array, :mutable)
     # setup
