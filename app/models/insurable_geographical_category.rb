@@ -1,9 +1,6 @@
 class InsurableGeographicalCategory < ApplicationRecord
   extend ArrayEnum
   
-  belongs_to :configurer, polymorphic: true   # Account, Agency, or Carrier
-  belongs_to :carrier_insurable_type
-  
   US_STATE_CODES = { AK: 0, AL: 1, AR: 2, AZ: 3, CA: 4, CO: 5, CT: 6, 
                 DC: 7, DE: 8, FL: 9, GA: 10, HI: 11, IA: 12, ID: 13, 
                 IL: 14, IN: 15, KS: 16, KY: 17, LA: 18, MA: 19, MD: 20, 
@@ -20,7 +17,7 @@ class InsurableGeographicalCategory < ApplicationRecord
   }
 
   enum state: US_STATE_CODES
-  
+=begin
   def get_parents(mutable: nil)
     to_return = generic_superset_query(
       case mutable
@@ -71,6 +68,7 @@ class InsurableGeographicalCategory < ApplicationRecord
   def arrange_for_inheritance(to_arrange, candidates: [])
     
   end
+=end
   
 =begin
   def arrange_for_inheritance(to_arrange, candidates: [])
@@ -108,11 +106,11 @@ class InsurableGeographicalCategory < ApplicationRecord
   
   private
   
-    def generic_superset_query(starting_query = InsurableGeographicalCategory.all)
-      starting_query
-        .where(state: nil).or(starting_query.where(state: state))
-        .where('county IS NULL OR county @> ARRAY[?]::string[]', county)
-        .where(carrier_insurable_type_id: carrier_insurable_type_id)
-    end
+    #def generic_superset_query(starting_query = InsurableGeographicalCategory.all)
+    #  starting_query
+    #    .where(state: nil).or(starting_query.where(state: state))
+    #    .where('county IS NULL OR county @> ARRAY[?]::string[]', county)
+    #    .where(carrier_insurable_type_id: carrier_insurable_type_id)
+    #end
     
 end

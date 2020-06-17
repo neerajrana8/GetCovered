@@ -42,7 +42,7 @@ class InsurableRateConfiguration < ApplicationRecord
     case configurer_type
       when 'Account'
         query = query.where(configurer_type: 'Account', configurer_id: configurer_id)
-                     .or(where(configurer_type: 'Agency', configurer_id: configurer.agency_id))
+                     .or(query.where(configurer_type: 'Agency', configurer_id: configurer.agency_id))
                      .or(query.where(configurer_type: 'Carrier', configurer_id: carrier_insurable_type.carrier_id))
       when 'Agency'
         query = query.where(configurer_type: 'Agency', configurer_id: configurer_id)
@@ -62,7 +62,7 @@ class InsurableRateConfiguration < ApplicationRecord
     return query
   end
   
-  def class.merge(irc_array, :mutable)
+  def self.merge(irc_array, mutable:)
     # setup
     to_return = InsurableRateConfiguration.new(
       configurable_type: irc_array.drop(1).inject(irc_array.first&.configurable_type){|res,irc| break nil unless irc.configurable_type == res; res },
@@ -111,7 +111,7 @@ class InsurableRateConfiguration < ApplicationRecord
   end
   
   # merge parent options into self.coverage_options (does not save the model)
-  def merge_options!(parent_options, :mutable)
+  def merge_options!(parent_options, mutable:)
     self.coverage_options = merge_options(parent_options, mutable: :mutable)
     return self
   end
@@ -120,7 +120,7 @@ class InsurableRateConfiguration < ApplicationRecord
   def merge_options(
     parent_options,
     child_options = self.coverage_options,
-    :mutable,
+    mutable:,
     allow_new_coverages: mutable
   )
     to_return = Marshal.load(Marshal.dump(parent_options))
@@ -201,8 +201,8 @@ class InsurableRateConfiguration < ApplicationRecord
       unless r_data.class == ::Hash
         errors.add(:rules, "includes invalid rule (#{r_name})")
       else
-        errors.add(:rules, "includes rule without message (#{r_name)}") unless r_data.has_key?("message")
-        errors.add(:rules, "includes rule without specification (#{r_name)}") unless r_data.has_key?("code")
+        errors.add(:rules, "includes rule without message (#{r_name})") unless r_data.has_key?("message")
+        errors.add(:rules, "includes rule without specification (#{r_name})") unless r_data.has_key?("code")
         # MOOSE WARNING: add errors for invalid rule code syntax (but right now only there's no rule customization, just valid seeds); code can be nil, or valid syntax
       end
     end
