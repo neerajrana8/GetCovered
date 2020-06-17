@@ -14,9 +14,11 @@ module V2
       if subagency_id.blank?
         @agency = current_staff.organizable
       else
-        render json: { error: "Unauthorized access"}, status: :unauthorized and return unless current_staff.organizable.agencies.ids.include?(subagency_id)
-
-        @agency = current_staff.organizable.agencies.find(id: subagency_id)
+        if current_staff.organizable.agencies.ids.include?(subagency_id)
+          @agency = current_staff.organizable.agencies.find(id: subagency_id)
+        else
+          @agency = current_staff.organizable
+        end
       end
     end
 
