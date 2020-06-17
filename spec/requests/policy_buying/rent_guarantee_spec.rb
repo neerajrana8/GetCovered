@@ -68,9 +68,5 @@ describe 'Policy buying' do
         }
       }.to_json
     end
-
-    def user_params; end
-
-    def co_tenant_params; end
   end
 end
