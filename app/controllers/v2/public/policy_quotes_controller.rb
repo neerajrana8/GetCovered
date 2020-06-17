@@ -72,7 +72,13 @@ module V2
 			    	if result.valid?
 				    	@quote_attempt = @policy_quote.accept
 				    	@policy_type_identifier = @policy_quote.policy_application.policy_type_id == 5 ? "Rental Guarantee" : "Policy"
-							
+							if @quote_attempt[:success]
+								::Analytics.track(
+									user_id: @user.id,
+									event: 'Order Completed',
+									properties: { plan: 'Orders' }
+								)
+							end
 							render json: {
 								:error => @quote_attempt[:success] ? "#{ @policy_type_identifier } Accepted" : "#{ @policy_type_identifier } Could Not Be Accepted",
 								:message => @quote_attempt[:message]

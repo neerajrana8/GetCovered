@@ -72,7 +72,6 @@ describe 'PaymentProfile API spec', type: :request do
     end
     
     it 'should create PaymentProfile' do
-      pending 'should be fixed'
       expect { create_profile }.to change { PaymentProfile.count }.by(1)
       
       expect(PaymentProfile.count).to eq(1)

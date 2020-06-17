@@ -3,7 +3,7 @@ class BillDueInvoicesJob < ApplicationJob
   before_perform :set_invoices
 
   def perform(*_args)
-    @invoices.each { |invoice| invoice.pay(allow_upcoming: true) }
+    @invoices.each { |invoice| invoice.pay(allow_upcoming: true, stripe_source: :default) }
   end
 
   private

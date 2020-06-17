@@ -4,6 +4,7 @@ Policy id: <%= @claim.policy_id %>
 Type of loss: <%= @claim.type_of_loss %>
 Subject: <%= @claim.subject %>
 Description: <%= @claim.description %>
+Policy type: <%= @claim&.policy&.policy_type&.designation %>
 <% unless @claim.documents.nil? %>
   <% @claim.documents.each do |doc| %>
     <%= doc.filename %>

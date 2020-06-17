@@ -33,7 +33,7 @@ module V2
         @policy.account = insurable.account
         @policy.policy_in_system = false
         @policy.policy_users.new(user_id: current_user.id)
-        if @policy.save
+        if @policy.save_as(current_user)
           render json: { message: 'Policy created' }, status: :created
         else
           render json: { message: 'Policy failed' }, status: :unprocessable_entity

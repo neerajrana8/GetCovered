@@ -20,7 +20,7 @@ module V2
       def create
         if create_allowed?
           @insurable = current_staff.organizable.insurables.new(create_params)
-          if @insurable.errors.none? && @insurable.save
+          if @insurable.errors.none? && @insurable.save_as(current_staff)
             render :show,
                    status: :created
           else
@@ -58,7 +58,7 @@ module V2
 
       def update
         if update_allowed?
-          if @insurable.update(update_params)
+          if @insurable.update_as(current_staff, update_params)
             render :show,
                    status: :ok
           else
