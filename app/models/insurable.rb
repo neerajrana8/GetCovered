@@ -37,8 +37,8 @@ class Insurable < ApplicationRecord
   has_many :reports, as: :reportable
 
   has_many :histories, as: :recordable
-  
-  accepts_nested_attributes_for :addresses
+
+  accepts_nested_attributes_for :addresses, allow_destroy: true
   
   enum category: %w[property entity]
   
