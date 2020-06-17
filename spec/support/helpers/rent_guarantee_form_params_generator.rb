@@ -1,7 +1,7 @@
 module Helpers
   class RentGuaranteeFormParamsGenerator < ActiveInteraction::Base
-    string :applicants_email, default: 'applicant@email.com'
-    string :co_tenants_email, default: nil
+    string :applicant_email, default: 'applicant@email.com'
+    string :co_tenant_email, default: nil
 
     def execute
       {
@@ -77,31 +77,31 @@ module Helpers
           policy_rates_attributes: [],
           policy_insurables_attributes: [],
           policy_users_attributes: [
-                       {
-                         primary: true,
-                         spouse: false,
-                         user_attributes: {
-                           email: 'applicant@email.com',
-                           profile_attributes: {
-                             first_name: 'Applicant First Name',
-                             last_name: 'Applicant Last Name',
-                             contact_phone: '2122222222',
-                             birth_date: DateTime.now - 20.years,
-                             job_title: nil,
-                             salutation: 'mr',
-                             gender: 'female'
-                           },
-                           address_attributes: {
-                             street_name: 'Test street',
-                             street_two: '',
-                             city: 'City 17',
-                             state: 'DC',
-                             zip_code: '12222',
-                             country: 'United States'
-                           }
-                         }
-                       }
-                     ]
+            {
+              primary: true,
+              spouse: false,
+              user_attributes: {
+                email: applicant_email,
+                profile_attributes: {
+                  first_name: 'Applicant First Name',
+                  last_name: 'Applicant Last Name',
+                  contact_phone: '2122222222',
+                  birth_date: DateTime.now - 20.years,
+                  job_title: nil,
+                  salutation: 'mr',
+                  gender: 'female'
+                },
+                address_attributes: {
+                  street_name: 'Test street',
+                  street_two: '',
+                  city: 'City 17',
+                  state: 'DC',
+                  zip_code: '12222',
+                  country: 'United States'
+                }
+              }
+            }
+          ]
         }
       }.to_json
     end
@@ -171,31 +171,31 @@ module Helpers
         policy_rates_attributes: [],
         policy_insurables_attributes: [],
         policy_users_attributes: [
-                     {
-                       primary: true,
-                       spouse: false,
-                       user_attributes: {
-                         email: 'applicant@email.com',
-                         profile_attributes: {
-                           first_name: 'Applicant First Name',
-                           last_name: 'Applicant Last Name',
-                           contact_phone: '2122222222',
-                           birth_date: DateTime.now - 20.years,
-                           job_title: nil,
-                           salutation: 'mr',
-                           gender: 'female'
-                         },
-                         address_attributes: {
-                           street_name: 'Test street',
-                           street_two: '',
-                           city: 'City 17',
-                           state: 'DC',
-                           zip_code: '12222',
-                           country: 'United States'
-                         }
-                       }
-                     }
-                   ]
+          {
+            primary: true,
+            spouse: false,
+            user_attributes: {
+              email: applicant_email,
+              profile_attributes: {
+                first_name: 'Applicant First Name',
+                last_name: 'Applicant Last Name',
+                contact_phone: '2122222222',
+                birth_date: DateTime.now - 20.years,
+                job_title: nil,
+                salutation: 'mr',
+                gender: 'female'
+              },
+              address_attributes: {
+                street_name: 'Test street',
+                street_two: '',
+                city: 'City 17',
+                state: 'DC',
+                zip_code: '12222',
+                country: 'United States'
+              }
+            }
+          }
+        ]
       }.to_json
     end
   end
