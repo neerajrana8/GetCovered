@@ -200,7 +200,7 @@ module V2
         return({}) if params[:insurable].blank?
 
         to_return = params.require(:insurable).permit(
-          :category, :covered, :enabled, :insurable_id,
+          :account_id, :category, :covered, :enabled, :insurable_id,
           :insurable_type_id, :title, addresses_attributes: %i[
             city country county id latitude longitude
             plus_four state street_name street_number
