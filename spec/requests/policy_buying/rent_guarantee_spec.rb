@@ -70,7 +70,6 @@ describe 'Policy buying' do
       it 'a new user with a new co-tenant' do
         params = Helpers::RentGuaranteeFormParamsGenerator.run!(co_tenant: {})
         post('/v2/policy-applications', params: params[:create_policy_application], headers: headers)
-        ap JSON.parse(response.body)
         expect(response.status).to eq(200)
 
         response_json = JSON.parse(response.body)
