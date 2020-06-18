@@ -59,8 +59,6 @@ GEM
     addressable (2.6.0)
       public_suffix (>= 2.0.2, < 4.0)
     arel (9.0.0)
-    array_enum (1.2.0)
-      activemodel
     ast (2.4.0)
     attr_encrypted (3.0.3)
       encryptor (~> 3.0.0)
@@ -1182,7 +1180,6 @@ PLATFORMS
 DEPENDENCIES
   StreetAddress
   active_interaction (~> 3.7)
-  array_enum
   attr_encrypted (~> 3.0.0)
   awesome_print
   aws-sdk (~> 3)
