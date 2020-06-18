@@ -368,7 +368,7 @@ class MsiService
   def build_final_premium(
      effective_date:, additional_insured_count:, additional_interest_count:,
      community_id:, #address_line_one:, city:, state:, zip:,
-     coverage_DEBUG:, # MOOSE WARNING: for debug!
+     coverages_formatted:,
     **compilation_args
   )
     self.action = :final_premium
@@ -399,7 +399,7 @@ class MsiService
               :'' => { LocationRef: 0, id: "Dwell1" },
               PolicyTypeCd: 'H04'
             },
-            Coverage: coverage_DEBUG
+            Coverage:                         coverages_formatted
           },
           InsuredOrPrincipal: [
             InsuredOrPrincipalInfo: {

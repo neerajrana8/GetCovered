@@ -442,12 +442,12 @@ module V2
       def get_coverage_options
         @msi_id = 5
         # grab params
-        cip = CarrierInsurableProfile.where(carrier_id: @msi_id, insurable_id: get_coverage_options_params[:insurable_id].to_i).take
+        cip = CarrierInsurableProfile.where(carrier_id: @msi_id, insurable_id: params[:insurable_id].to_i).take
         if cip.nil?
           render json: { error: "insurable not found" },
             status: :unprocessable_entity
         end
-        selections = get_coverage_options_params[:coverage_selections] || []
+        selections = params[:coverage_selections] || []
         # get IRCs
         irc = cip.insurable_rate_configurations.sort_by{|irc| (InsurableRateConfiguration::CONFIGURER_SORTING_ORDER[ircs.configurer_type] || 999999) }.last
         irc_hierarchy = get_parent_hierarchy(include_self: true)
@@ -458,28 +458,57 @@ module V2
           irc.merge_options!(coverage_options, mutable: false)
           coverage_options = irc.annotate_options(selections)
         end
-        # call GetFinalPremium to get prices???
+        # call GetFinalPremium to get estimate MOOSE WARNING: add call logging
+        estimated_premium = {}
+        estimated_premium_error = nil
+        msis = MsiService.new
+        result = msis.build_request(:final_premium,
+          effective_date: params[:effective_date],
+          additional_insured_count: params[:additional_insured],
+          additional_interest_count: 0, # MOOSE WARNING: or 1, to include prop manager?
+          community_id: cip.external_carrier_id,
+          coverages_formatted:  selections.select{|s| s['selection'] }
+                                  .map do |sel|
+                                    if sel['category'] == 'coverage'
+                                      {
+                                        CoverageCd: sel['uid']
+                                      }.merge(sel['selection'] == true ? {} : {
+                                        Limit: { Amt: sel['uid'] }
+                                      })
+                                    elsif sel['category'] == 'deductible'
+                                      {
+                                        CoverageCd: sel['uid']
+                                      }.merge(sel['selection'] == true ? {} : {
+                                        Deductible: { Amt: sel['uid'] }
+                                      })
+                                    else
+                                      nil
+                                    end
+                                  end.compact
+          line_breaks: true
+        )
+        if !result
+          # failed to get final premium
+          estimated_premium_error = "Unknown error occurred" # MOOSE WARNING: make it nicer! log an error?
+        else
+          result = msis.call
+          if result[:error]
+            estimated_premium_error = "Error calculating premium" # MOOSE WARNING: probably just means selections aren't valid yet... check first maybe?
+          else
+            estimated_premium = result[:data].dig("MSIACORD", "InsuranceSvcRs", "RenterPolicyQuoteInqRs", "PersPolicy", "PaymentPlan")
+                                            .map do |plan|
+                                              [
+                                                plan["PaymentPlanCd"],
+                                                plan["MSI_TotalPremiumAmt"]["Amt"]
+                                              ]
+                                            end.to_h
+          end
+        end
         # done
-        render json: coverage_options,
+        render json: { coverage_options: coverage_options, estimated_premium: estimated_premium, estimated_premium_error: estimated_premium_error },
           status: :success
       end
 
-
-
-      def get_coverage_options_params
-        params.require(:coverage_options)
-              .permit(:insurable_id, coverage_selections: [
-                :category, :uid, :selection
-              ])
-        ####
-        policy_application:
-            effective_date
-            account_id
-            agency_id
-            policy_type_id
-            carrier_id
-            
-      end
       #######################################################################################
             
       private
