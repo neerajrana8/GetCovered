@@ -108,8 +108,6 @@ gem 'roo', '~> 2.8.0'
 gem 'ruby-prof'
 gem 'memory_profiler'
 
-# enum postgres arrays
-gem 'array_enum'
 
 group :development, :test, :test_container do
   # Call 'byebug' anywhere in the code to stop execution and get a debugger console
