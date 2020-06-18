@@ -1,6 +1,7 @@
 module Helpers
   class RentGuaranteeFormParamsGenerator < ActiveInteraction::Base
     string :applicant_email, default: 'applicant@email.com'
+    integer :agency_id
     hash :co_tenant, default: nil do
       string :email, default: 'co-tenant@email.com'
     end
@@ -73,7 +74,7 @@ module Helpers
           questions: [],
           carrier_id: 4,
           policy_type_id: 5,
-          agency_id: 1,
+          agency_id: agency_id,
           account_id: nil,
           billing_strategy_id: nil,
           policy_rates_attributes: [],
@@ -142,7 +143,7 @@ module Helpers
         questions: [],
         carrier_id: 4,
         policy_type_id: 5,
-        agency_id: 1,
+        agency_id: agency_id,
         account_id: nil,
         billing_strategy_id: nil,
         policy_rates_attributes: [],

@@ -5,15 +5,15 @@ describe 'Policy buying' do
   describe 'Rent Guarantee Form' do
     before(:context) do
       carrier = Carrier.find(4)
-      agency  = FactoryBot.create(:agency)
-      carrier.agencies << agency
-      FactoryBot.create(:monthly_billing_strategy, agency: agency, carrier: carrier, policy_type_id: 5)
+      @agency = FactoryBot.create(:agency)
+      carrier.agencies << @agency
+      FactoryBot.create(:monthly_billing_strategy, agency: @agency, carrier: carrier, policy_type_id: 5)
     end
 
     context 'without logged in user' do
       it 'a new user' do
         # Create policy application
-        params = Helpers::RentGuaranteeFormParamsGenerator.run!
+        params = Helpers::RentGuaranteeFormParamsGenerator.run!(agency_id: @agency.id)
         post('/v2/policy-applications', params: params[:create_policy_application], headers: headers)
         expect(response.status).to eq(200)
         response_json = JSON.parse(response.body)
@@ -54,7 +54,7 @@ describe 'Policy buying' do
 
       it 'an existed user' do
         user = FactoryBot.create(:user, :accepted)
-        params = Helpers::RentGuaranteeFormParamsGenerator.run!(applicant_email: user.email)
+        params = Helpers::RentGuaranteeFormParamsGenerator.run!(applicant_email: user.email, agency_id: @agency.id)
 
         # Create Policy Application
         post('/v2/policy-applications', params: params[:create_policy_application], headers: headers)
@@ -68,7 +68,7 @@ describe 'Policy buying' do
       end
 
       it 'a new user with a new co-tenant' do
-        params = Helpers::RentGuaranteeFormParamsGenerator.run!(co_tenant: {})
+        params = Helpers::RentGuaranteeFormParamsGenerator.run!(co_tenant: {}, agency_id: @agency.id)
         post('/v2/policy-applications', params: params[:create_policy_application], headers: headers)
         expect(response.status).to eq(200)
 
@@ -111,7 +111,7 @@ describe 'Policy buying' do
 
       it 'a new user with an existing co-tenant' do
         user = FactoryBot.create(:user)
-        params = Helpers::RentGuaranteeFormParamsGenerator.run!(co_tenant: { email: user.email })
+        params = Helpers::RentGuaranteeFormParamsGenerator.run!(co_tenant: { email: user.email }, agency_id: @agency.id)
         post('/v2/policy-applications', params: params[:create_policy_application], headers: headers)
         expect(response.status).to eq(401)
         expected_body = {
