@@ -18,7 +18,7 @@ class InsurableRateConfiguration < ApplicationRecord
   
   # Validations
   
-  validate :validate_coverage_options
+  #validate :validate_coverage_options MOOSE WARNING: restore this after modifying it to allow missing keys (because of inheritance)
   validate :validate_rules
   
   # Useful constants
@@ -48,22 +48,59 @@ class InsurableRateConfiguration < ApplicationRecord
   
   # Public Methods
   
-  def get_parent_hierarchy(include_self: false)
-    query = ::InsurableRateConfiguration.includes(:insurable_geographical_category)
+  def self.get_hierarchy(carrier_insurable_type, configurer, configurable)
+    # grab classes and ids, build query
+    configurer_type = configurer.class.name
+    configurer_id = configurer.id
+    configurable_type = configurable.class.name
+    configurable_id = configurable.id
+    carrier_insurable_type_id = carrier_insurable_type.id
+    query = ::InsurableRateConfiguration.includes(:insurable_geographical_category).where(carrier_insurable_type_id: carrier_insurable_type_id)
     # add configurer restrictions to query
-    case configurer_type
-      when 'Account'
-        query = query.where(configurer_type: 'Account', configurer_id: configurer_id)
-                     .or(query.where(configurer_type: 'Agency', configurer_id: configurer.agency_id))
-                     .or(query.where(configurer_type: 'Carrier', configurer_id: carrier_insurable_type.carrier_id))
-      when 'Agency'
-        query = query.where(configurer_type: 'Agency', configurer_id: configurer_id)
-                     .or(query.where(configurer_type: 'Carrier', configurer_id: carrier_insurable_type.carrier_id))
-      when 'Carrier'
-        query = query.where(configurer_type: 'Carrier', configurer_id: configurer_id)
+    query = add_configurer_restrictions(query, configurer_type, configurer_id, carrier_insurable_type.carrier_id)
+    # add configurable restrictions to query
+    to_add = []
+    case configurable_type
+      when 'CarrierInsurableProfile'
+        address = configurable.insurable.primary_address
+        return [] if address.nil?
+        query = query.where(insurable_geographical_categories: { state: nil })
+                     .or(query.where(insurable_geographical_categories: { state: address.state, counties: nil }))
+                     .or(query.where(insurable_geographical_categories: { state: address.state }).where('insurable_geographical_categories.counties @> ARRAY[?]::string[]', address.county))
+        to_add = add_configurer_restrictions(::InsurableRateConfiguration.where(carrier_insurable_type_id: carrier_insurable_type_id), configurer_type, configurer_id, carrier_insurable_type.carrier_id)
+                 .where(configurable_type: 'CarrierInsurableProfile', configurable_id: configurable_id)
+      when 'InsurableGeographicalCategory'
+        if configurable.state.nil?
+          query = query.where(insurable_geographical_categories: { state: nil })
+        elsif configurable.counties.blank?
+          query = query.where(insurable_geographical_categories: { state: nil })
+                       .or(query.where(insurable_geographical_categories: { state: configurable.state, counties: nil }))
+        else
+          query = query.where(insurable_geographical_categories: { state: nil })
+                       .or(query.where(insurable_geographical_categories: { state: configurable.state, counties: nil }))
+                       .or(query.where(insurable_geographical_categories: { state: configurable.state }).where('insurable_geographical_categories.counties @> ARRAY[?]::string[]', configurable.counties))
+        end
       else
         return []
     end
+    # sort into hierarchy
+    to_return = query.to_a.group_by{|irc| irc.configurer_type }
+    to_add.each do |irc|
+      # add in to_add if necessary
+      to_return[irc.configurer_type] ||= []
+      to_return[irc.configurer_type].push(irc)
+    end
+    to_return = to_return.values
+    to_return.sort_by!{|ircs| (CONFIGURER_SORTING_ORDER[ircs.first.configurer_type] || 999999) }
+    to_return.each{|ircs| ircs.sort_by!(&:configurable) }
+    # done
+    return to_return
+  end
+  
+  def get_parent_hierarchy(include_self: false)
+    query = ::InsurableRateConfiguration.includes(:insurable_geographical_category).where(carrier_insurable_type_id: carrier_insurable_type_id)
+    # add configurer restrictions to query
+    query = self.class.add_configurer_restrictions(query, configurer_type, configurer_id, carrier_insurable_type.carrier_id)
     # add configurable restrictions to query
     case configurable_type
       when 'CarrierInsurableProfile'
@@ -216,6 +253,7 @@ class InsurableRateConfiguration < ApplicationRecord
     #  "enabled"       => boolean,
     #  "requirement"   => string (from among REQUIREMENT_TYPES),
     #  "options_type"  => ["none", "multiple_choice"],
+    #  "options_format"=> 'none' if options_type is 'none, otherwise 'currency' or 'percent',
     #  "options"       => depends on options_type:
     #     none: omit this entry, it doesn't matter,
     #     multiple_choice: array of numerical values
@@ -426,4 +464,22 @@ class InsurableRateConfiguration < ApplicationRecord
   def can_define_coverages?
     configurer_type == 'Carrier'
   end
+  
+  private
+  
+    def self.add_configurer_restrictions(query, configurer_type, configurer_id, carrier_id)
+      case configurer.class.name
+        when 'Account'
+          query.where(configurer_type: 'Account', configurer_id: configurer_id)
+               .or(query.where(configurer_type: 'Agency', configurer_id: configurer.agency_id))
+               .or(query.where(configurer_type: 'Carrier', configurer_id: carrier_id))
+        when 'Agency'
+          query.where(configurer_type: 'Agency', configurer_id: configurer_id)
+               .or(query.where(configurer_type: 'Carrier', configurer_id: carrier_id))
+        when 'Carrier'
+          query.where(configurer_type: 'Carrier', configurer_id: configurer_id)
+        else
+          return []
+      end
+    end
 end

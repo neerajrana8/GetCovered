@@ -616,8 +616,8 @@ class MsiService
     unless product_definition_response.nil?
       # grab relevant bois from out da hood
       product = product_definition_response.dig("MSIACORD", "InsuranceSvcRs", "RenterPolicyQuoteInqRs", "MSI_ProductDefinition")
-      coverages = product.dig("MSI_ProductCoverageList", "MSI_ProductCoverageDefinition")
-      deductibles = product.dig("MSI_ProductDeductibleList", "MSI_ProductDeductibleDefinition")
+      coverages = arrayify(product.dig("MSI_ProductCoverageList", "MSI_ProductCoverageDefinition"))
+      deductibles = arrayify(product.dig("MSI_ProductDeductibleList", "MSI_ProductDeductibleDefinition"))
       payment_plans = product.dig("MSI_ProductPaymentPlanDefinition", "MSI_ProductPaymentPlanDefinition")
       # transcribe into IRC object
       irc.carrier_info = {
@@ -634,7 +634,8 @@ class MsiService
             "requirement"   => (cov["MSI_IsMandatoryCoverage"] || "").strip == "True" ? 'required' : 'optional',
             "category"      => "limit",
             "options_type"  => cov["MSI_LimitList"].blank? ? "none" : "multiple_choice",
-            "options"       => cov["MSI_LimitList"].blank? ? nil : cov["MSI_LimitList"]["string"].map{|v| v.to_d }
+            "options_format"=> cov["MSI_LimitList"].blank? ? "none" : "currency",
+            "options"       => cov["MSI_LimitList"].blank? ? nil : arrayify(cov["MSI_LimitList"]["string"]).map{|v| v.to_d }
           }
         end + deductibles.map do |ded|
           {
@@ -643,7 +644,8 @@ class MsiService
             "requirement"   => 'required', #MOOSE WARNING: in special cases some are optional, address these
             "category"      => "deductible",
             "options_type"  => ded["MSI_DeductibleOptionList"].blank? ? "none" : "multiple_choice",
-            "options"       => ded["MSI_DeductibleOptionList"].blank? ? nil : ded["MSI_DeductibleOptionList"]["Deductible"].map{|d| d["Amt"].to_d }
+            "options"       => ded["MSI_DeductibleOptionList"].blank? ? nil : arrayify(ded["MSI_DeductibleOptionList"]["Deductible"]).map{|d| d["Amt"] ? d["Amt"].to_d : d["FormatPct"].to_d * 100 }, # MOOSE WARNING: handle percents in special way?
+            "options_format"=> ded["MSI_DeductibleOptionList"].blank? ? "none" : arrayify(ded["MSI_DeductibleOptionList"]["Deductible"]).first["Amt"] ? "currency" : "percent"
           }
       end)
     end
@@ -660,6 +662,10 @@ class MsiService
   
   
 private
+
+    def arrayify(val, nil_as_object: false)
+      val.class == ::Array ? val : val.nil? && !nil_as_object ? [] : [val]
+    end
 
     def get_auth_json
       {

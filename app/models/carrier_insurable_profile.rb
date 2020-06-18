@@ -36,10 +36,13 @@ class CarrierInsurableProfile < ApplicationRecord
     
     def create_insurable_rate_configuration
       unless self.insurable.account_id.nil?
+        cit = ::CarrierInsurableType.where(carrier_id: self.carrier_id, insurable_type_id: self.insurable.insurable_type_id).take
+        # MOOSE WARNING: restrict cit to residential unit?
         ::InsurableRateConfiguration.create!(
           configurer_type: 'Account',
           configurer_id: self.insurable.account_id,
-          carrier_insurable_type: ::CarrierInsurableType.where(carrier_id: self.carrier_id, insurable_type_id: self.insurable.insurable_type_id).take
+          configurable: self,
+          carrier_insurable_type: cit
         )
       end
     end

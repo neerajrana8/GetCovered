@@ -512,9 +512,25 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
           puts "!!!!!MSI GET RATES FAILURE (#{state})!!!!!"
           exit
         end
+        event = ::Event.new(
+          eventable: igc,
+          verb: 'post',
+          format: 'xml',
+          interface: 'REST',
+          endpoint: msis.endpoint_for(:get_product_definition),
+          process: 'msi_get_product_definition'
+        )
+        event.request = msis.compiled_rxml
+        event.save!
+        event.started = Time.now
+        result = msis.call
+        event.completed = Time.now     
+        event.response = result[:data]
+        event.status = result[:error] ? 'error' : 'success'
+        event.save!
         result = msis.call
         if result[:error]
-          pp result[:response].parsed_response
+          pp result[:response]&.parsed_response
           puts ""
           puts "!!!!!MSI GET RATES FAILURE (#{state})!!!!!"
           exit

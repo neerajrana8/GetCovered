@@ -468,18 +468,20 @@ module V2
           additional_interest_count: 0, # MOOSE WARNING: or 1, to include prop manager?
           community_id: cip.external_carrier_id,
           coverages_formatted:  selections.select{|s| s['selection'] }
+                                  .map{|s| s['options'] = coverage_options.find{|co| co['category'] == s['category'] && co['uid'] == s['uid'] }; s }
+                                  .select{|s| !s['options'].nil? }
                                   .map do |sel|
                                     if sel['category'] == 'coverage'
                                       {
                                         CoverageCd: sel['uid']
                                       }.merge(sel['selection'] == true ? {} : {
-                                        Limit: { Amt: sel['uid'] }
+                                        Limit: { Amt: sel['selection'] }
                                       })
                                     elsif sel['category'] == 'deductible'
                                       {
                                         CoverageCd: sel['uid']
                                       }.merge(sel['selection'] == true ? {} : {
-                                        Deductible: { Amt: sel['uid'] }
+                                        Deductible: sel['options']['options_format'] == 'percent' ? { FormatPct: sel['selection'].to_d / 100 } : { Amt: sel['selection'] }
                                       })
                                     else
                                       nil
