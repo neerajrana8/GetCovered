@@ -25,7 +25,7 @@ class InsurableGeographicalCategory < ApplicationRecord
   
   # Methods
   
-  def self.get_for(state, counties = nil, save_on_create: true)
+  def self.get_for(state:, counties: nil, save_on_create: true)
     query = InsurableGeographicalCategory.where(state: state)
     if counties.blank?
       counties = nil
