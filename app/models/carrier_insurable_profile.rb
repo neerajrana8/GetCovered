@@ -5,6 +5,9 @@ class CarrierInsurableProfile < ApplicationRecord
   belongs_to :carrier
   belongs_to :insurable
   
+  has_many :insurable_rate_configurations,
+    as: :configurable
+  
   validate :traits_and_data_are_non_nil
   
   private

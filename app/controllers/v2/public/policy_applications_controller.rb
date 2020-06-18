@@ -449,7 +449,8 @@ module V2
         end
         selections = get_coverage_options_params[:coverage_selections] || []
         # get IRCs
-        irc_hierarchy = cip.get_insurable_rate_configuration_hierarchy # MOOSE WARNING: implement this boi
+        irc = cip.insurable_rate_configurations.sort_by{|irc| (InsurableRateConfiguration::CONFIGURER_SORTING_ORDER[ircs.configurer_type] || 999999) }.last
+        irc_hierarchy = get_parent_hierarchy(include_self: true)
         irc_hierarchy.map!{|ircs| InsurableRateConfiguration.merge(ircs, mutable: true) }
         # for each IRC, apply rules and merge down
         coverage_options = []
