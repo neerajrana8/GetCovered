@@ -14,7 +14,7 @@ class Devise::Users::RegistrationsController < DeviseTokenAuth::RegistrationsCon
     ::Analytics.track(
       user_id: @resource.id,
       event: 'Signed Up',
-      properties: { plan: 'Account' }
+      properties: { category: 'Account' }
     )
   end
 

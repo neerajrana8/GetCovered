@@ -49,7 +49,7 @@ class User
           ::Analytics.track(
             user_id: user.id,
             event: 'Added Payment Method',
-            properties: { plan: 'Account' }
+            properties: { category: 'Account' }
           )
 
           return true if user.save && make_default
