@@ -27,13 +27,14 @@ class InsurableGeographicalCategory < ApplicationRecord
   # Methods
   
   def self.get_for(state, counties = nil, save_on_create: true)
+    query = InsurableGeographicalCategory.where(state: state)
     if counties.blank?
       counties = nil
+      query = query.where(counties: nil)
     else
       counties = counties.sort.uniq
+      query = query.where('counties = ARRAY[?]::string[]', counties)
     end
-    query = InsurableGeographicalCategory.where(state: state)
-    query = query.where('counties = ARRAY[?]::string[]', counties) unless counties.nil?
     to_return = query.take
     if to_return.nil?
       to_return = InsurableGeographicalCategory.new(state: state, counties: counties)
