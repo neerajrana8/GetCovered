@@ -62,91 +62,79 @@ class MsiService
     'USA' => {
       'loss_of_use' => {
         'message' => 'Cov D must be greater of $2000 or 20% of Cov C, unless Additional Protection Added (then 40%)',
-        'code' => {
-          ['=',
-            ['value', 'coverage', @@coverage_codes[:CoverageD][:code]],
-            ['max',
-              ['*', 
-                0.2, #['if', ['selected', ###add_prot###], 0.4, 0.2] # MOOSE WARNING: what is 'additional protection', which coverage letter? look it up & replace!
-                ['value', 'coverage', @@coverage_codes[:CoverageC][:code]]
-              ],
-              2000
-            ]
+        'code' => ['=',
+          ['value', 'coverage', @@coverage_codes[:CoverageD][:code]],
+          ['max',
+            ['*', 
+              0.2, #['if', ['selected', ###add_prot###], 0.4, 0.2] # MOOSE WARNING: what is 'additional protection', which coverage letter? look it up & replace!
+              ['value', 'coverage', @@coverage_codes[:CoverageC][:code]]
+            ],
+            2000
           ]
-        }
+        ]
       },
       'theft_deductible' => {
         'message' => 'Theft deductible cannot be less than the all perils deductible',
-        'code' => {
-          ['if', ['selected', 'deductible', @@coverage_codes[:AllOtherPeril][:code]],
-            ['=',
-              ['value', 'deductible', @@coverage_codes[:Theft][:code]],
-              ['[)',
-                ['value', 'deductible', @@coverage_codes[:AllOtherPeril][:code]],
-                'Infinity'
-              ]
-            ],
-            nil
-          ]
-        }
+        'code' => ['if', ['selected', 'deductible', @@coverage_codes[:AllOtherPeril][:code]],
+          ['=',
+            ['value', 'deductible', @@coverage_codes[:Theft][:code]],
+            ['[)',
+              ['value', 'deductible', @@coverage_codes[:AllOtherPeril][:code]],
+              'Infinity'
+            ]
+          ],
+          nil
+        ]
       }
     },
     'CT' => {
       'loss_of_use' => {
         'message' => 'Cov D must be greater of $2000 or 30% of Cov C, unless Additional Protection Added (then 40%)', # MOOSE WARNING: 40% and $2000 may need to change; check!
-        'code' => {
-          ['=',
-            ['value', 'coverage', @@coverage_codes[:CoverageD][:code]],
-            ['max',
-              ['*', 
-                0.3, #['if', ['selected', ###add_prot###], 0.4, 0.2] # MOOSE WARNING: put coverage stuff here as in USA, and change 40% & 2000 as needed
-                ['value', 'coverage', @@coverage_codes[:CoverageC][:code]]
-              ],
-              2000
-            ]
+        'code' => ['=',
+          ['value', 'coverage', @@coverage_codes[:CoverageD][:code]],
+          ['max',
+            ['*', 
+              0.3, #['if', ['selected', ###add_prot###], 0.4, 0.2] # MOOSE WARNING: put coverage stuff here as in USA, and change 40% & 2000 as needed
+              ['value', 'coverage', @@coverage_codes[:CoverageC][:code]]
+            ],
+            2000
           ]
-        }
+        ]
       }
     },
     'FL' => {
       'loss_of_use' => {
         'message' => 'Cov D must be greater of $2000 or 10% of Cov C, unless Additional Protection Added (then 40%)', # MOOSE WARNING: 40% and $2000 may need to change; check!
-        'code' => {
-          ['=',
-            ['value', 'coverage', @@coverage_codes[:CoverageD][:code]],
-            ['max',
-              ['*', 
-                0.1, #['if', ['selected', ###add_prot###], 0.4, 0.2] # MOOSE WARNING: put coverage stuff here as in USA, and change 40% & 2000 as needed
-                ['value', 'coverage', @@coverage_codes[:CoverageC][:code]]
-              ],
-              2000
-            ]
+        'code' => ['=',
+          ['value', 'coverage', @@coverage_codes[:CoverageD][:code]],
+          ['max',
+            ['*', 
+              0.1, #['if', ['selected', ###add_prot###], 0.4, 0.2] # MOOSE WARNING: put coverage stuff here as in USA, and change 40% & 2000 as needed
+              ['value', 'coverage', @@coverage_codes[:CoverageC][:code]]
+            ],
+            2000
           ]
-        }
+        ]
       },
       'ordinance_or_law' => {
         'message' => 'Ordinance Or Law limit must be 2.5% of Coverage C limit',
-        'code' => {
-          ['=',
-            ['value', 'coverage', @@coverage_codes[:OrdinanceOrLaw][:code]],
-            ['*',
-              0.025,
-              ['value', 'coverage', @@coverage_codes[:CoverageC][:code]]
-            ]
+        'code' => ['=',
+          ['value', 'coverage', @@coverage_codes[:OrdinanceOrLaw][:code]],
+          ['*',
+            0.025,
+            ['value', 'coverage', @@coverage_codes[:CoverageC][:code]]
           ]
-        }
+        ]
       },
       'coverage_c_maximum' => { # MOOSE WARNING: isn't this inherent in the product download options?
         'message' => 'Coverage C limit cannot exceed $50,000',
-        'code' => {
-          ['=',
-            ['value', 'coverage', @@coverage_codes[:CoverageC][:code]],
-            ['[]',
-              0,
-              50000
-            ]
+        'code' => ['=',
+          ['value', 'coverage', @@coverage_codes[:CoverageC][:code]],
+          ['[]',
+            0,
+            50000
           ]
-        }
+        ]
       }
     },
     'GA_COUNTIES' => {

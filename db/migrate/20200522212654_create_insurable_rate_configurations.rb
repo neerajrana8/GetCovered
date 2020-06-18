@@ -12,10 +12,13 @@ class CreateInsurableRateConfigurations < ActiveRecord::Migration[5.2]
         default: {}
       
       t.references :configurable,
-        polymorphic: true
+        polymorphic: true,
+        index: { name: :index_irc_configurable }
       t.references :configurer,
-        polymorphic: true
-      t.references :carrier_insurable_type
+        polymorphic: true,
+        index: { name: :index_irc_configurer }
+      t.references :carrier_insurable_type,
+        index: { name: :index_irc_cit }
       t.timestamps
     end
   end

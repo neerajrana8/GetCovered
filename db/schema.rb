@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_05_26_081042) do
+ActiveRecord::Schema.define(version: 2020_06_09_190911) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -469,6 +469,29 @@ ActiveRecord::Schema.define(version: 2020_05_26_081042) do
     t.index ["recordable_type", "recordable_id"], name: "index_histories_on_recordable_type_and_recordable_id"
   end
 
+  create_table "insurable_geographical_categories", force: :cascade do |t|
+    t.integer "state"
+    t.string "counties", array: true
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
+  create_table "insurable_rate_configurations", force: :cascade do |t|
+    t.jsonb "carrier_info", default: {}, null: false
+    t.jsonb "coverage_options", default: [], null: false
+    t.jsonb "rules", default: {}, null: false
+    t.string "configurable_type"
+    t.bigint "configurable_id"
+    t.string "configurer_type"
+    t.bigint "configurer_id"
+    t.bigint "carrier_insurable_type_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["carrier_insurable_type_id"], name: "index_irc_cit"
+    t.index ["configurable_type", "configurable_id"], name: "index_irc_configurable"
+    t.index ["configurer_type", "configurer_id"], name: "index_irc_configurer"
+  end
+
   create_table "insurable_rates", force: :cascade do |t|
     t.string "title"
     t.string "schedule"
@@ -755,10 +778,10 @@ ActiveRecord::Schema.define(version: 2020_05_26_081042) do
     t.date "last_payment_date"
     t.date "next_payment_date"
     t.bigint "policy_group_id"
-    t.string "address"
-    t.string "out_of_system_carrier_title"
     t.boolean "declined"
     t.bigint "policy_id"
+    t.string "address"
+    t.string "out_of_system_carrier_title"
     t.index ["account_id"], name: "index_policies_on_account_id"
     t.index ["agency_id"], name: "index_policies_on_agency_id"
     t.index ["carrier_id"], name: "index_policies_on_carrier_id"

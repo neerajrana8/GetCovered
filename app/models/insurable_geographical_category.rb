@@ -1,6 +1,5 @@
 class InsurableGeographicalCategory < ApplicationRecord
-  extend ArrayEnum
-  
+
   # ActiveRecord Callbacks
   
   before_validation :set_counties_nil_if_empty

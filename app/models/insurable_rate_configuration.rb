@@ -9,7 +9,8 @@ class InsurableRateConfiguration < ApplicationRecord
   # Convenience associations to particular types of configurable
   belongs_to :insurable_geographical_category,
     -> { where(insurable_rate_configurations: {configurable_type: 'InsurableGeographicCategory'}) },
-    foreign_key: 'configurable_id'
+    foreign_key: 'configurable_id',
+    optional: true
   def insurable_geographical_category
    return nil unless configurable_type == "InsurableGeographicCategory"
    super
