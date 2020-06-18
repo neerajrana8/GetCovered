@@ -127,6 +127,7 @@ class Policy < ApplicationRecord
   validate :master_policy, if: -> { policy_type&.designation == 'MASTER-COVERAGE' }
   validates :agency, presence: true, if: :in_system?
   validates :carrier, presence: true, if: :in_system?
+  validates :number, uniqueness: true
 
   validates_presence_of :expiration_date, :effective_date, unless: -> { ['MASTER-COVERAGE', 'MASTER'].include?(policy_type&.designation) }
 
