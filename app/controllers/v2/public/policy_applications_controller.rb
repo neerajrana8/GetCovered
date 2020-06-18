@@ -73,6 +73,7 @@ module V2
             @user = ::User.find_by_email(policy_user[:user_attributes][:email])
 						
 						@user.update(policy_user[:user_attributes])
+						@user.profile.update(policy_user[:user_attributes][:profile_attributes])
 						
             if index == 0
               if @user.invitation_accepted_at? == false
