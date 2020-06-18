@@ -108,10 +108,13 @@ gem 'roo', '~> 2.8.0'
 gem 'ruby-prof'
 gem 'memory_profiler'
 
+gem 'analytics-ruby', '~> 2.0.0', :require => 'segment/analytics'
+
 
 group :development, :test, :test_container do
   # Call 'byebug' anywhere in the code to stop execution and get a debugger console
   gem 'byebug', platforms: %i[mri mingw x64_mingw]
+  gem 'rspec_junit_formatter'
   gem 'database_cleaner'
   gem 'factory_bot_rails'
   gem 'guard-rspec'

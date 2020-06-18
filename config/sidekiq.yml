@@ -37,7 +37,7 @@ production:
     class: Reports::DetailedRentersInsurance::UncoveredUnitsReportsJob
   high_level_activity_report_job:
     cron: '0 2 * * 0'   # Every Sunday at 2:00 AM
-    class: Reports::DetailedRentersInsurance::HighLevelActivityReports
+    class: Reports::HighLevelActivityReportsJob
   soon_to_expire_reports_job:
     cron: '0 2 * * *'   # Every day at 2:00 AM
     class: Reports::SoonToExpireReportsJob
@@ -59,3 +59,7 @@ production:
   high_trend_analysis_reports_job:
     cron: '0 2 1 * *'   # Each first day of month at 2:00 AM
     class: Reports::HighLevelTrendAnalysisReportsJob
+  # Invoices
+  bill_due_invoices:
+    cron: '0 2 * * *'   # Every day at 2:00 AM
+    class: BillDueInvoicesJob

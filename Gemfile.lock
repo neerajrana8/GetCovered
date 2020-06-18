@@ -58,6 +58,7 @@ GEM
       tzinfo (~> 1.1)
     addressable (2.6.0)
       public_suffix (>= 2.0.2, < 4.0)
+    analytics-ruby (2.0.13)
     arel (9.0.0)
     ast (2.4.0)
     attr_encrypted (3.0.3)
@@ -1108,6 +1109,8 @@ GEM
       rspec-mocks (~> 3.8.0)
       rspec-support (~> 3.8.0)
     rspec-support (3.8.0)
+    rspec_junit_formatter (0.4.1)
+      rspec-core (>= 2, < 4, != 2.12.0)
     rubocop (0.63.1)
       jaro_winkler (~> 1.5.1)
       parallel (~> 1.10)
@@ -1180,6 +1183,7 @@ PLATFORMS
 DEPENDENCIES
   StreetAddress
   active_interaction (~> 3.7)
+  analytics-ruby (~> 2.0.0)
   attr_encrypted (~> 3.0.0)
   awesome_print
   aws-sdk (~> 3)
@@ -1224,6 +1228,7 @@ DEPENDENCIES
   redis (~> 4.0)
   roo (~> 2.8.0)
   rspec-rails
+  rspec_junit_formatter
   rubocop (~> 0.63.1)
   ruby-prof
   sidekiq

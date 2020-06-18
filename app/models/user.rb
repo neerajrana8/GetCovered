@@ -16,7 +16,8 @@ class User < ApplicationRecord
   after_initialize :initialize_user
   
   after_create_commit :add_to_mailchimp,
-                      :set_qbe_id
+                      :set_qbe_id,
+                      :identify_segment
   
 	has_many :invoices
 
@@ -240,6 +241,17 @@ class User < ApplicationRecord
         }
       }
     }
+  end
+
+  def identify_segment
+    Analytics.identify(
+      user_id: id,
+      traits: {
+        name: "#{profile&.first_name} #{profile&.last_name}",
+        email: email,
+        created_at: created_at
+      }
+    )
   end
 
   private

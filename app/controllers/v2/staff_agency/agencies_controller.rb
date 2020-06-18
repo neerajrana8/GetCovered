@@ -22,12 +22,10 @@ module V2
       def create
         if create_allowed?
           @agency = current_staff.organizable.agencies.new(create_params)
-          if !@agency.errors.any? && @agency.save
-            render :show,
-                   status: :created
+          if !@agency.errors.any? && @agency.save_as(current_staff)
+            render :show, status: :created
           else
-            render json: @agency.errors,
-                   status: :unprocessable_entity
+            render json: @agency.errors, status: :unprocessable_entity
           end
         else
           render json: { success: false, errors: ['Unauthorized Access'] },
@@ -37,12 +35,10 @@ module V2
 
       def update
         if update_allowed?
-          if @agency.update(update_params)
-            render :show,
-                   status: :ok
+          if @agency.update_as(current_staff, update_params)
+            render :show, status: :ok
           else
-            render json: @agency.errors,
-                   status: :unprocessable_entity
+            render json: @agency.errors, status: :unprocessable_entity
           end
         else
           render json: { success: false, errors: ['Unauthorized Access'] },

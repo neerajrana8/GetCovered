@@ -15,7 +15,7 @@ module V2
       end
 
       def search
-        @policies = Policy.search(params[:query]).records.where(account_id: current_staff.organizable_id)
+        @policies = ::Policy.search(params[:query]).records.where(account_id: current_staff.organizable_id)
         render json: @policies.to_json, status: 200
       end
       
@@ -25,7 +25,7 @@ module V2
       def create
         if create_allowed?
           @policy = @substrate.new(create_params)
-          if @policy.errors.none? && @policy.save
+          if @policy.errors.none? && @policy.save_as(current_staff)
             render :show, status: :created
           else
             render json: @policy.errors, status: :unprocessable_entity
@@ -38,7 +38,7 @@ module V2
       
       def update
         if update_allowed?
-          if @policy.update(update_params)
+          if @policy.update_as(current_staff, update_params)
             render :show,
               status: :ok
           else
@@ -158,6 +158,8 @@ module V2
               id: %i[scalar array],
               title: %i[scalar like]
             },
+            number: %i[scalar like],
+            policy_type_id: %i[scalar array],
             status: %i[scalar like],
             created_at: %i[scalar like],
             updated_at: %i[scalar like],

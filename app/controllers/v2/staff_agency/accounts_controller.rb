@@ -47,7 +47,7 @@ module V2
       def create
         if create_allowed?
           @account = current_staff.organizable.accounts.new(account_params)
-          if @account.errors.none? && @account.save
+          if @account.errors.none? && @account.save_as(current_staff)
             render :show, status: :created
           else
             render json: @account.errors, status: :unprocessable_entity
@@ -60,7 +60,7 @@ module V2
       
       def update
         if update_allowed?
-          if @account.update(account_params)
+          if @account.update_as(current_staff, account_params)
             render :show, status: :ok
           else
             render json: @account.errors, status: :unprocessable_entity

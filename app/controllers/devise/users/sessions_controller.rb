@@ -7,7 +7,12 @@ class Devise::Users::SessionsController < DeviseTokenAuth::SessionsController
       # @resource will have been set by set_user_by_token concern
       if @resource
         @user = @resource
-        
+        ::Analytics.track(
+          user_id: @user.id,
+          event: 'Logged In',
+          properties: { plan: 'Account' }
+        )
+
         render template: "v2/auth/user.json", status: :ok
       else
         render json: {

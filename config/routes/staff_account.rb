@@ -60,7 +60,6 @@
             via: "get",
             defaults: { recordable_type: Claim }
 
-          post :attach_documents
           delete :delete_documents
         end
       end

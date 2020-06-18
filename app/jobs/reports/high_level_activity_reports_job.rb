@@ -1,5 +1,5 @@
 module Reports
-  class HighLevelActivityReports < ApplicationJob
+  class HighLevelActivityReportsJob < ApplicationJob
     queue_as :default
 
     def perform(*args)

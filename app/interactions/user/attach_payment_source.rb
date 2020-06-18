@@ -4,7 +4,7 @@ class User
     string :token, default: nil
     boolean :make_default, default: true
 
-    delegate :email, :profile, :stripe_id, :payment_profiles, :invoices, to: :user
+    delegate :email, :profile, :stripe_id, :payment_profiles, :invoices, :policies, to: :user
 
     def execute
       begin
@@ -46,6 +46,11 @@ class User
               payment_profile.set_default
             end
           end
+          ::Analytics.track(
+            user_id: user.id,
+            event: 'Added Payment Method',
+            properties: { plan: 'Account' }
+          )
 
           return true if user.save && make_default
         end

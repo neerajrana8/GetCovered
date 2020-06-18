@@ -25,12 +25,10 @@ module V2
       def create
         if create_allowed?
           @lease = @substrate.new(create_params)
-          if @lease.errors.none? && @lease.save
-            render :show,
-                   status: :created
+          if @lease.errors.none? && @lease.save_as(current_staff)
+            render :show, status: :created
           else
-            render json: @lease.errors,
-                   status: :unprocessable_entity
+            render json: @lease.errors, status: :unprocessable_entity
           end
         else
           render json: { success: false, errors: ['Unauthorized Access'] },
@@ -73,12 +71,10 @@ module V2
       
       def update
         if update_allowed?
-          if @lease.update(update_params)
-            render :show,
-                   status: :ok
+          if @lease.update_as(current_staff, update_params)
+            render :show, status: :ok
           else
-            render json: @lease.errors,
-                   status: :unprocessable_entity
+            render json: @lease.errors, status: :unprocessable_entity
           end
         else
           render json: { success: false, errors: ['Unauthorized Access'] },

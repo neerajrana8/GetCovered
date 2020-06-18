@@ -165,7 +165,7 @@ class Lease < ApplicationRecord
   # History methods
 
   def related_classes_through
-    %i[account building community unit]
+    %i[account insurable]
   end
 
   def related_create_hash(_relation, _related_model)
@@ -184,7 +184,7 @@ class Lease < ApplicationRecord
     if reference.nil?
 
       loop do
-        self.reference = "#{account.call_sign}-#{rand(36**12).to_s(36).upcase}"
+        self.reference = "#{account&.call_sign}-#{rand(36**12).to_s(36).upcase}"
         return_status = true
 
         break unless Lease.exists?(reference: reference)
