@@ -9,7 +9,7 @@ module V2
       before_action :set_commission, only: [:show]
             
       def index
-        super(:@commissions, current_staff.organizable.commissions)
+        super(:@commissions, @agency.commissions)
       end
       
       def show

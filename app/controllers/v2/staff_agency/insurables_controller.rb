@@ -14,9 +14,9 @@ module V2
 
       def index
         if params[:short]
-          super_index(:@insurables, current_staff.organizable.insurables)
+          super_index(:@insurables, @agency.insurables)
         else
-          super_index(:@insurables, current_staff.organizable.insurables, :account, :carrier_insurable_profiles)
+          super_index(:@insurables, @agency.insurables, :account, :carrier_insurable_profiles)
         end
       end
 
@@ -24,7 +24,7 @@ module V2
 
       def create
         if create_allowed?
-          @insurable = current_staff.organizable.insurables.new(insurable_params)
+          @insurable = @agency.insurables.new(insurable_params)
           if !@insurable.errors.any? && @insurable.save_as(current_staff)
             render :show,
                    status: :created
@@ -39,7 +39,7 @@ module V2
       end
 
       def bulk_create
-        account = current_staff.organizable.accounts.find_by_id(bulk_create_params[:common_attributes][:account_id])
+        account = @agency.accounts.find_by_id(bulk_create_params[:common_attributes][:account_id])
 
         unless account.present?
           render json: { success: false, errors: ['account_id should be present and relate to this agency'] },
@@ -193,7 +193,7 @@ module V2
       end
 
       def set_insurable
-        @insurable = current_staff.organizable.insurables.find(params[:id])
+        @insurable = @agency.insurables.find(params[:id])
       end
 
       def insurable_params
