@@ -489,14 +489,19 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
       
       # Set up MSI InsurableRateConfigurations
       msis = MsiService.new
+      # IRC for US
+      igc = ::InsurableGeographicalCategory.get_for(state: nil)
+      irc = msis.extract_insurable_rate_configuration(nil,
+        configurer: carrier,
+        configurable: igc,
+        carrier_insurable_type: carrier_insurable_type,
+        use_default_rules_for: 'USA'
+      )
+      irc.save!
+      # IRCs for the various states (and special counties)
       ::InsurableGeographicalCategory::US_STATE_CODES.each do |state, state_code|
         # make carrier IGC for this state
-        igc = ::InsurableGeographicalCategory.create!(
-          state: state,
-          counties: nil,
-          configurer: carrier,
-          carrier_insurable_type: carrier_insurable_type
-        )
+        igc = ::InsurableGeographicalCategory.get_for(state: state)
         # grab rates from MSI for this state
         result = msis.build_request(:get_product_definition,
           effective_date: Time.current.to_date + 1.day,
@@ -515,8 +520,24 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
           exit
         end
         # build IRC for this state
-        irc = msis.extract_insurable_rate_configuration(result[:data], configurable: igc, carrier_insurable_type: carrier_insurable_type, enable_default_rules: true)
+        irc = msis.extract_insurable_rate_configuration(result[:data],
+          configurer: carrier,
+          configurable: igc,
+          carrier_insurable_type: carrier_insurable_type,
+          use_default_rules_for: state
+        )
         irc.save!
+        # build county IRCs if needed
+        if state == 'GA'
+          igc = ::InsurableGeographicalCategory.get_for(state: state, counties: ['Bryan', 'Camden', 'Chatham', 'Glynn', 'Liberty', 'McIntosh'])
+          irc = msis.extract_insurable_rate_configuration(nil,
+            configurer: carrier,
+            configurable: igc,
+            carrier_insurable_type: carrier_insurable_type,
+            use_default_rules_for: 'GA_COUNTIES'
+          )
+          irc.save!
+        end
       end
 		  
     end

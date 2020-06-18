@@ -5,7 +5,7 @@ class InsurableGeographicalCategory < ApplicationRecord
   
   before_validation :set_counties_nil_if_empty
   
-  before_validation :sort_counties # should improve effiency
+  before_validation :normalize_counties
   
   # Validations
   
@@ -32,7 +32,7 @@ class InsurableGeographicalCategory < ApplicationRecord
       counties = nil
       query = query.where(counties: nil)
     else
-      counties = counties.sort.uniq
+      counties = counties.map{|c| c.upcase }.sort!.uniq!
       query = query.where('counties = ARRAY[?]::string[]', counties)
     end
     to_return = query.take
@@ -76,8 +76,8 @@ class InsurableGeographicalCategory < ApplicationRecord
       self.counties = nil if self.counties.blank?
     end
     
-    def sort_counties
-      self.counties.sort!.uniq! unless countiles.nil?
+    def normalize_counties
+      self.counties.map!{|cty| cty.upcase }.sort!.uniq! unless self.counties.nil?
     end
   
     def nonempty_counties_implies_nonempty_state

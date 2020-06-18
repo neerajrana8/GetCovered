@@ -58,6 +58,101 @@ class MsiService
     SelfStorageBuyBack:                           { code: 1081, limit: false }
   }
   
+  RULE_SPECIFICATION = {
+    'USA' => {
+      'loss_of_use' => {
+        'message' => 'Cov D must be greater of $2000 or 20% of Cov C, unless Additional Protection Added (then 40%)',
+        'code' => {
+          ['=',
+            ['value', 'coverage', @@coverage_codes[:CoverageD][:code]],
+            ['max',
+              ['*', 
+                0.2, #['if', ['selected', ###add_prot###], 0.4, 0.2] # MOOSE WARNING: what is 'additional protection', which coverage letter? look it up & replace!
+                ['value', 'coverage', @@coverage_codes[:CoverageC][:code]]
+              ],
+              2000
+            ]
+          ]
+        }
+      },
+      'theft_deductible' => {
+        'message' => 'Theft deductible cannot be less than the all perils deductible',
+        'code' => {
+          ['if', ['selected', 'deductible', @@coverage_codes[:AllOtherPeril][:code]],
+            ['=',
+              ['value', 'deductible', @@coverage_codes[:Theft][:code]],
+              ['[)',
+                ['value', 'deductible', @@coverage_codes[:AllOtherPeril][:code]],
+                'Infinity'
+              ]
+            ],
+            nil
+          ]
+        }
+      }
+    },
+    'CT' => {
+      'loss_of_use' => {
+        'message' => 'Cov D must be greater of $2000 or 30% of Cov C, unless Additional Protection Added (then 40%)', # MOOSE WARNING: 40% and $2000 may need to change; check!
+        'code' => {
+          ['=',
+            ['value', 'coverage', @@coverage_codes[:CoverageD][:code]],
+            ['max',
+              ['*', 
+                0.3, #['if', ['selected', ###add_prot###], 0.4, 0.2] # MOOSE WARNING: put coverage stuff here as in USA, and change 40% & 2000 as needed
+                ['value', 'coverage', @@coverage_codes[:CoverageC][:code]]
+              ],
+              2000
+            ]
+          ]
+        }
+      }
+    },
+    'FL' => {
+      'loss_of_use' => {
+        'message' => 'Cov D must be greater of $2000 or 10% of Cov C, unless Additional Protection Added (then 40%)', # MOOSE WARNING: 40% and $2000 may need to change; check!
+        'code' => {
+          ['=',
+            ['value', 'coverage', @@coverage_codes[:CoverageD][:code]],
+            ['max',
+              ['*', 
+                0.1, #['if', ['selected', ###add_prot###], 0.4, 0.2] # MOOSE WARNING: put coverage stuff here as in USA, and change 40% & 2000 as needed
+                ['value', 'coverage', @@coverage_codes[:CoverageC][:code]]
+              ],
+              2000
+            ]
+          ]
+        }
+      },
+      'ordinance_or_law' => {
+        'message' => 'Ordinance Or Law limit must be 2.5% of Coverage C limit',
+        'code' => {
+          ['=',
+            ['value', 'coverage', @@coverage_codes[:OrdinanceOrLaw][:code]],
+            ['*',
+              0.025,
+              ['value', 'coverage', @@coverage_codes[:CoverageC][:code]]
+            ]
+          ]
+        }
+      },
+      'coverage_c_maximum' => { # MOOSE WARNING: isn't this inherent in the product download options?
+        'message' => 'Coverage C limit cannot exceed $50,000',
+        'code' => {
+          ['=',
+            ['value', 'coverage', @@coverage_codes[:CoverageC][:code]],
+            ['[]',
+              0,
+              50000
+            ]
+          ]
+        }
+      }
+    },
+    'GA_COUNTIES' => {
+    }
+  }
+  
   include HTTParty
   include ActiveModel::Validations
   include ActiveModel::Conversion
@@ -161,122 +256,9 @@ class MsiService
     # all done
     return call_data
   end
-=begin
-      ##### QBE reference code #####
-      
-      if call_data[:error]
-        
-        puts 'ERROR ERROR ERROR'.red
-        pp call_data
-        
-      else
-        call_data[:data] = call_data[:response].parsed_response['Envelope']['Body']['processRenterRequestResponse']['xmlOutput']
-        xml_doc = Nokogiri::XML(call_data[:data])
-        result = nil
-        
-        if action == 'SendPolicyInfo'
-          result = xml_doc.css('MsgStatusCd').children.to_s
-          
-          unless %w[SUCCESS WARNING].include?(result)
-            call_data[:error] = true
-            call_data[:message] = 'Request Failed Externally'
-            call_data[:code] = 409
-          end
-        else
-          result = xml_doc.css('//result').attr('status').value
-          
-          if result != 'pass'
-            call_data[:error] = true
-            call_data[:message] = 'Request Failed Externally'
-            call_data[:code] = 409
-          end
-        end
-        
-      end
-      
-      display_status = call_data[:error] ? 'ERROR' : 'SUCCESS'
-      display_status_color = call_data[:error] ? :red : :green
-      puts "#{'['.yellow} #{'QBE Service'.blue} #{']'.yellow}#{'['.yellow} #{display_status.colorize(display_status_color)} #{']'.yellow}: #{action.to_s.blue}"
-      
-      call_data
-      
-      #### end QBE reference code #########
-=end
   
   
-  def extract_insurable_rate_configuration(product_definition_response, configurable: nil, carrier_insurable_type: nil, use_default_rules_for: nil)
-    # grab relevant bois from out da hood
-    product = product_definition_response.dig("MSIACORD", "InsuranceSvcRs", "RenterPolicyQuoteInqRs", "MSI_ProductDefinition")
-    coverages = product.dig("MSI_ProductCoverageList", "MSI_ProductCoverageDefinition")
-    deductibles = product.dig("MSI_ProductDeductibleList", "MSI_ProductDeductibleDefinition")
-    payment_plans = product.dig("MSI_ProductPaymentPlanDefinition", "MSI_ProductPaymentPlanDefinition")
-    # transcribe into IRC object
-    irc = InsurableRateConfiguration.new(configurable: configurable, carrier_insurable_type: carrier_insurable_type)
-    irc.carrier_info = {
-      "effective_date"      => product["MSI_EffectiveDate"],
-      "underwriter_id"      => product["MSI_UnderwritingCompanyID"],
-      "underwriter_name"    => product["MSI_UnderwritingCompanyName"],
-      "product_id"          => product["MSI_ProductID"],
-      "product_version_id"  => product["MSI_ProductVersionID"]
-    }
-    irc.coverage_options = (coverages.map do |cov|
-        {
-          "uid"           => cov["CoverageCd"],
-          "title"         => cov["CoverageDescription"], # MOOSE WARNING: better as description?
-          "requirement"   => (cov["MSI_IsMandatoryCoverage"] || "").strip == "True" ? 'required' : 'optional',
-          "category"      => "limit",
-          "options_type"  => cov["MSI_LimitList"].blank? ? "none" : "multiple_choice",
-          "options"       => cov["MSI_LimitList"].blank? ? nil : cov["MSI_LimitList"]["string"].map{|v| v.to_d }
-        }
-      end + deductibles.map do |ded|
-        {
-          "uid"           => ded["MSI_DeductibleCd"],
-          "title"         => ded["MSI_DeductibleName"],
-          "requirement"   => 'required', #MOOSE WARNING: in special cases some are optional, address these
-          "category"      => "deductible",
-          "options_type"  => ded["MSI_DeductibleOptionList"].blank? ? "none" : "multiple_choice",
-          "options"       => ded["MSI_DeductibleOptionList"].blank? ? nil : ded["MSI_DeductibleOptionList"]["Deductible"].map{|d| d["Amt"].to_d }
-        }
-    end)
-    unless use_default_rules_for.nil?
-      case use_default_rules_for
-        when :general
-          irc.rules = {
-            'loss_of_use_rule' => {
-              'message' => 'Cov D must be greater of $2000 or 20% of Cov C, unless Additional Protection Added (then 40%)',
-              'code' => {
-                ['=',
-                  ['value', 'coverage', @@coverage_codes[:CoverageD][:code]],
-                  ['max',
-                    ['*', 
-                      ['if', ['selected', ###add_prot###], 0.4, 0.2] # MOOSE WARNING: what is 'additional protection', which coverage letter? look it up & replace!
-                      ['value', 'coverage', @@coverage_codes[:CoverageC][:code]]
-                    ],
-                    2000
-                  ]
-                ]
-              }
-            },
-            'theft_deductible_rule' => {
-              'message' => 'Theft deductible cannot be less than the all perils deductible',
-              'code' => {
-                ['if', ['selected', 'deductible', @@coverage_codes[:AllOtherPeril][:code]],
-                  ['=',
-                    ['value', 'deductible', @@coverage_codes[:Theft][:code]],
-                    ['[)',
-                      ['value', 'deductible', @@coverage_codes[:AllOtherPeril][:code]],
-                      'Infinity'
-                    ]
-                  ],
-                  nil
-                ]
-              }
-            }
-          }
-      end
-    end
-    return irc
-  end
+
   
   
   
@@ -639,6 +621,56 @@ class MsiService
     return errors.blank?
   end
   
+  
+  
+  def extract_insurable_rate_configuration(product_definition_response, configurer: nil, configurable: nil, carrier_insurable_type: nil, use_default_rules_for: nil)
+    irc = InsurableRateConfiguration.new(configurer: configurer, configurable: configurable, carrier_insurable_type: carrier_insurable_type)
+    unless product_definition_response.nil?
+      # grab relevant bois from out da hood
+      product = product_definition_response.dig("MSIACORD", "InsuranceSvcRs", "RenterPolicyQuoteInqRs", "MSI_ProductDefinition")
+      coverages = product.dig("MSI_ProductCoverageList", "MSI_ProductCoverageDefinition")
+      deductibles = product.dig("MSI_ProductDeductibleList", "MSI_ProductDeductibleDefinition")
+      payment_plans = product.dig("MSI_ProductPaymentPlanDefinition", "MSI_ProductPaymentPlanDefinition")
+      # transcribe into IRC object
+      irc.carrier_info = {
+        "effective_date"      => product["MSI_EffectiveDate"],
+        "underwriter_id"      => product["MSI_UnderwritingCompanyID"],
+        "underwriter_name"    => product["MSI_UnderwritingCompanyName"],
+        "product_id"          => product["MSI_ProductID"],
+        "product_version_id"  => product["MSI_ProductVersionID"]
+      }
+      irc.coverage_options = (coverages.map do |cov|
+          {
+            "uid"           => cov["CoverageCd"],
+            "title"         => cov["CoverageDescription"], # MOOSE WARNING: better as description?
+            "requirement"   => (cov["MSI_IsMandatoryCoverage"] || "").strip == "True" ? 'required' : 'optional',
+            "category"      => "limit",
+            "options_type"  => cov["MSI_LimitList"].blank? ? "none" : "multiple_choice",
+            "options"       => cov["MSI_LimitList"].blank? ? nil : cov["MSI_LimitList"]["string"].map{|v| v.to_d }
+          }
+        end + deductibles.map do |ded|
+          {
+            "uid"           => ded["MSI_DeductibleCd"],
+            "title"         => ded["MSI_DeductibleName"],
+            "requirement"   => 'required', #MOOSE WARNING: in special cases some are optional, address these
+            "category"      => "deductible",
+            "options_type"  => ded["MSI_DeductibleOptionList"].blank? ? "none" : "multiple_choice",
+            "options"       => ded["MSI_DeductibleOptionList"].blank? ? nil : ded["MSI_DeductibleOptionList"]["Deductible"].map{|d| d["Amt"].to_d }
+          }
+      end)
+    end
+    # set rules
+    irc.rules = RULE_SPECIFICATION[use_default_rules_for] || {}
+    return irc
+  end
+  
+  
+  
+  
+  
+  
+  
+  
 private
 
     def get_auth_json
@@ -718,6 +750,22 @@ private
         **other_args
       )
     end
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
 end
 
 
