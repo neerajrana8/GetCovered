@@ -71,7 +71,9 @@ module V2
           if ::User.where(email: policy_user[:user_attributes][:email]).exists?
             
             @user = ::User.find_by_email(policy_user[:user_attributes][:email])
-            
+						
+						@user.update(policy_user[:user_attributes])
+						
             if index == 0
               if @user.invitation_accepted_at? == false
                 @application.users << @user
