@@ -20,6 +20,8 @@ class InsurableRateConfiguration < ApplicationRecord
   validate :validate_coverage_options
   validate :validate_rules
   
+  # Useful constants
+  
   # Available values for 'requirement', associated with numerical distinguishing values.
   REQUIREMENT_TYPES = {
     'required' => 0,    # coverage must be selected
@@ -31,12 +33,21 @@ class InsurableRateConfiguration < ApplicationRecord
   # Requirement types which can be overwritten by lower configurers
   OVERWRITEABLE_REQUIREMENT_TYPES = ['optional', 'locked']
   
+  # Configurer types for sorting
+  CONFIGURER_SORTING_ORDER = {
+    'Carrier' => 0,
+    'Agency' => 1,
+    'Account' => 2
+  }
+  
   # Configurer types which can add distinct new coverages
   COVERAGE_ADDING_CONFIGUERERS = {
     'Carrier' => true
   }
   
-  def get_parent_hierarchy
+  # Public Methods
+  
+  def get_parent_hierarchy(include_self: false)
     query = ::InsurableRateConfiguration.includes(:insurable_geographical_category)
     # add configurer restrictions to query
     case configurer_type
@@ -53,13 +64,42 @@ class InsurableRateConfiguration < ApplicationRecord
         return []
     end
     # add configurable restrictions to query
-    # MOOSE WARNING: finish this
     case configurable_type
       when 'CarrierInsurableProfile'
+        address = configurable.insurable.primary_address
+        return [] if address.nil?
+        query = query.where(insurable_geographical_categories: { state: nil })
+                     .or(query.where(insurable_geographical_categories: { state: address.state, counties: nil }))
+                     .or(query.where(insurable_geographical_categories: { state: address.state }).where('insurable_geographical_categories.counties @> ARRAY[?]::string[]', address.county))
       when 'InsurableGeographicalCategory'
+        if configurable.state.nil?
+          query = query.where(insurable_geographical_categories: { state: nil })
+        elsif configurable.counties.blank?
+          query = query.where(insurable_geographical_categories: { state: nil })
+                       .or(query.where(insurable_geographical_categories: { state: configurable.state, counties: nil }))
+        else
+          query = query.where(insurable_geographical_categories: { state: nil })
+                       .or(query.where(insurable_geographical_categories: { state: configurable.state, counties: nil }))
+                       .or(query.where(insurable_geographical_categories: { state: configurable.state }).where('insurable_geographical_categories.counties @> ARRAY[?]::string[]', configurable.counties))
+        end
+    end
+    # remove ourselves
+    query = query.where.not(id: self.id) unless self.id.nil?
+    # sort into hierarchy
+    to_return = query.to_a.group_by{|irc| irc.configurable_type }.values
+    to_return.sort_by!{|ircs| (CONFIGURER_SORTING_ORDER[ircs.first.configurer_type] || 999999) }
+    to_return.each{|ircs| ircs.sort_by!(&:configurable) }
+    # shove ourselves in
+    if include_self
+      index = to_return.index{|ircs| ircs.first.configurer_type == self.configurer_type }
+      if index.nil?
+        to_return.push([self])
+      else
+        to_return[index].push(self)
+      end
     end
     # done
-    return query
+    return to_return
   end
   
   def self.merge(irc_array, mutable:)
