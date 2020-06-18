@@ -7,16 +7,6 @@ class CarrierInsurableProfile < ApplicationRecord
   
   validate :traits_and_data_are_non_nil
   
-  # returns array of InsurableRateConfigurations such that
-  #  the arrays are arranged from parent to child configurer,
-  #  and the IRCs in each array are arranged from parent to child configurable
-  def get_insurable_rate_configuration_hierarchy(account)
-    # flee if this doesn't apply to us
-    return [] if carrier_id != 5 # MOOSE WARNING: should also check insurable.insurable_type
-    # find 'em
-    # MOOSE WARNING: write the query to actually get this
-  end
-  
   private
     def set_qbe_id
       

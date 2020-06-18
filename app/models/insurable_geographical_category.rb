@@ -5,6 +5,8 @@ class InsurableGeographicalCategory < ApplicationRecord
   
   before_validation :set_counties_nil_if_empty
   
+  before_validation :sort_counties # should improve effiency
+  
   # Validations
   
   validate :nonempty_counties_implies_nonempty_state
@@ -23,6 +25,22 @@ class InsurableGeographicalCategory < ApplicationRecord
   enum state: US_STATE_CODES
   
   # Methods
+  
+  def self.get_for(state, counties = nil, save_on_create: true)
+    if counties.blank?
+      counties = nil
+    else
+      counties = counties.sort.uniq
+    end
+    query = InsurableGeographicalCategory.where(state: state)
+    query = query.where('counties = ARRAY[?]::string[]', counties) unless counties.nil?
+    to_return = query.take
+    if to_return.nil?
+      to_return = InsurableGeographicalCategory.new(state: state, counties: counties)
+      to_return.save if save_on_create
+    end
+    return to_return
+  end
   
   # Sorts them from most general to most specific;
   # sorting an array of IGCs will ensure that if one contains another,
@@ -55,6 +73,10 @@ class InsurableGeographicalCategory < ApplicationRecord
   
     def set_counties_nil_if_empty
       self.counties = nil if self.counties.blank?
+    end
+    
+    def sort_counties
+      self.counties.sort!.uniq! unless countiles.nil?
     end
   
     def nonempty_counties_implies_nonempty_state

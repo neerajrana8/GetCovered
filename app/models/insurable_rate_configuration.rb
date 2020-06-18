@@ -82,6 +82,8 @@ class InsurableRateConfiguration < ApplicationRecord
                        .or(query.where(insurable_geographical_categories: { state: configurable.state, counties: nil }))
                        .or(query.where(insurable_geographical_categories: { state: configurable.state }).where('insurable_geographical_categories.counties @> ARRAY[?]::string[]', configurable.counties))
         end
+      else
+        return []
     end
     # remove ourselves
     query = query.where.not(id: self.id) unless self.id.nil?
