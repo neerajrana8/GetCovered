@@ -24,7 +24,6 @@ module V2
       end
       
       def create
-				ap params[:policy_application]
         case params[:policy_application][:policy_type_id]
         when 1
           create_residential()
