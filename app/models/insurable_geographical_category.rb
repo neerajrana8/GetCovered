@@ -49,7 +49,7 @@ class InsurableGeographicalCategory < ApplicationRecord
         end
       end
     end
-end
+  end
 
   private
   
@@ -60,109 +60,5 @@ end
     def nonempty_counties_implies_nonempty_state
       errors.add(:state, "cannot be blank if counties are specified") if !self.counties.blank? && state.nil?
     end
-  
-  
-  
-  
-  
-  
-  
-  
-  
-=begin
-  def get_parents(mutable: nil)
-    to_return = generic_superset_query(
-      case mutable
-        when true 
-          InsurableGeographicalCategory.where(configurer_type: configurer_type, configurer_id: configurer_id)
-        when false
-          case configurer_type
-            when 'Account'
-              InsurableGeographicalCategory.where(configurer_type: 'Agency', configurer_id: configurer.agency_id)
-                .or(InsurableGeographicalCategory.where(configurer_type: 'Carrier', configurer_id: carrier_insurable_type.carrier_id))
-            when 'Agency'
-              InsurableGeographicalCategory.where(configurer_type: 'Carrier', configurer_id: carrier_insurable_type.carrier_id)
-            when 'Carrier'
-              InsurableGeographicalCategory.where("TRUE = FALSE")
-            else # should never run
-              InsurableGeographicalCategory.where("TRUE = FALSE")
-          end
-        when nil
-          case configurer_type
-            when 'Account'
-              InsurableGeographicalCategory.where(configurer_type: 'Agency', configurer_id: configurer.agency_id)
-                .or(InsurableGeographicalCategory.where(configurer_type: 'Carrier', configurer_id: carrier_insurable_type.carrier_id))
-                .or(InsurableGeographicalCategory.where(configurer_type: configurer_type, configurer_id: configurer_id)
-            when 'Agency'
-              InsurableGeographicalCategory.where(configurer_type: 'Carrier', configurer_id: carrier_insurable_type.carrier_id)
-                .or(InsurableGeographicalCategory.where(configurer_type: configurer_type, configurer_id: configurer_id)
-            when 'Carrier'
-              InsurableGeographicalCategory.where(configurer_type: configurer_type, configurer_id: configurer_id)
-            else # should never run
-              InsurableGeographicalCategory.where(configurer_type: configurer_type, configurer_id: configurer_id)
-          end
-        else # should never run
-          InsurableGeographicalCategory.where(configurer_type: configurer_type, configurer_id: configurer_id)
-      end
-    )
-    return to_return
-  end
-
-  def <=>(other)
-    return CONFIGURER_MODELS[configurer_type] - CONFIGURER_MODELS[other.configurer_type] unless configurer_type == other.configurer_type
-    return 0
-  end
-  
-  def contains?(other)
-    [:state,:county,:zip_code,:city].all?{|prop| other.send(prop).nil? || (self.send(prop) - other.send(prop)).blank? }
-  end
-  
-  def arrange_for_inheritance(to_arrange, candidates: [])
-    
-  end
-=end
-  
-=begin
-  def arrange_for_inheritance(to_arrange, candidates: [])
-    to_arrange.each do |x|
-      
-    end
-  end
-  
-  
-  
-  def arrange_for_inheritance(list)
-    arrangement = []
-    cur_level = arrangement
-    to_insert = list.map{|x| x }
-    old_inserters = list
-    
-    to_insert.each do |x|
-      container = cur_level.find{|y| y[0].contains?(x) }
-      if container.nil?
-        # create a new entry & move any contained entries into it
-        container = [x]
-        contained_indices = cur_level.map.with_index{|y,i| x.contains?(y[0]) ? i : nil }.compact
-        unless contained_indices.length == 0
-          contained_indices.each{|i| container.push(cur_level[i]); cur_level[i] = nil }
-          cur_level.compact!
-        end
-      else
-        # add us to the entry that contains us
-        container.push(x)
-      end
-    end
-    
-  end
-=end
-  
-  private
-  
-    #def generic_superset_query(starting_query = InsurableGeographicalCategory.all)
-    #  starting_query
-    #    .where(state: nil).or(starting_query.where(state: state))
-    #    .where('county IS NULL OR county @> ARRAY[?]::string[]', county)
-    #    .where(carrier_insurable_type_id: carrier_insurable_type_id)
-    #end
     
 end
