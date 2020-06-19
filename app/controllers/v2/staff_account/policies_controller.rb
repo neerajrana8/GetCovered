@@ -35,6 +35,11 @@ module V2
                  status: :unauthorized
         end
       end
+
+      def resend_policy_documents
+        ::Policies::SendProofOfCoverageJob.perform_later(params[:id])
+        render json: { message: 'Documents were sent' }
+      end
       
       def update
         if update_allowed?
