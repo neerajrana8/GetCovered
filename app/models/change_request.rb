@@ -8,6 +8,6 @@ class ChangeRequest < ApplicationRecord
   belongs_to :staff
 
   # Enum Options
-  enum action: %i[send delete update create]
+  enum customized_action: %i[send delete update create]
   enum status: %i[in_progress success error]
 end

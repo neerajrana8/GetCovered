@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_06_17_075444) do
+ActiveRecord::Schema.define(version: 2020_06_19_170134) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -137,19 +137,6 @@ ActiveRecord::Schema.define(version: 2020_06_17_075444) do
     t.string "slug"
     t.jsonb "nodes", default: {}
     t.boolean "enabled"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-  end
-
-  create_table "application_notifications", force: :cascade do |t|
-    t.string "action"
-    t.string "subject"
-    t.integer "status"
-    t.integer "code"
-    t.boolean "read", default: false
-    t.integer "notifiable_id"
-    t.string "notifiable_type"
-    t.string "message"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
   end
@@ -323,7 +310,7 @@ ActiveRecord::Schema.define(version: 2020_06_17_075444) do
 
   create_table "change_requests", force: :cascade do |t|
     t.text "reason"
-    t.integer "action", default: 0
+    t.integer "customized_action", default: 0
     t.string "method"
     t.string "field"
     t.string "current_value"
@@ -333,7 +320,7 @@ ActiveRecord::Schema.define(version: 2020_06_17_075444) do
     t.bigint "staff_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["action"], name: "index_change_requests_on_action", unique: true
+    t.index ["customized_action"], name: "index_change_requests_on_customized_action", unique: true
     t.index ["staff_id"], name: "index_change_requests_on_staff_id"
     t.index ["status"], name: "index_change_requests_on_status", unique: true
   end
@@ -373,9 +360,6 @@ ActiveRecord::Schema.define(version: 2020_06_17_075444) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "type_of_loss", default: 0, null: false
-    t.string "name"
-    t.string "address"
-    t.string "nature_of_claim"
     t.index ["claimant_type", "claimant_id"], name: "index_claims_on_claimant_type_and_claimant_id"
     t.index ["insurable_id"], name: "index_claims_on_insurable_id"
     t.index ["policy_id"], name: "index_claims_on_policy_id"
@@ -792,7 +776,6 @@ ActiveRecord::Schema.define(version: 2020_06_17_075444) do
     t.bigint "policy_id"
     t.string "address"
     t.string "out_of_system_carrier_title"
-    t.string "something"
     t.index ["account_id"], name: "index_policies_on_account_id"
     t.index ["agency_id"], name: "index_policies_on_agency_id"
     t.index ["carrier_id"], name: "index_policies_on_carrier_id"
