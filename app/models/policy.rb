@@ -119,6 +119,7 @@ class Policy < ApplicationRecord
   
   #  after_save :update_leases, if: :saved_changes_to_status?
   
+  validate :correct_document_mime_type
   validate :is_allowed_to_update?, on: :update
   validate :residential_account_present
   validate :same_agency_as_account
@@ -329,5 +330,15 @@ class Policy < ApplicationRecord
     def date_order
       errors.add(:expiration_date, 'expiration date cannot be before effective date.') if expiration_date < effective_date
     end
-        
+
+    def correct_document_mime_type
+      documents.each do |document|
+        if !document.blob.content_type.starts_with?('image/png', 'image/jpeg', 'image/jpg', 'image/svg',
+          'image/gif', 'application/pdf', 'text/plain', 'text/csv',
+          'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+          )
+          errors.add(:documents, 'The document wrong format, only: PDF, DOC, DOCX, XLSX, XLS, SCV, JPG, JPEG, PNG, GIF')
+        end
+      end
+    end
 end
