@@ -39,7 +39,7 @@ module V2
       end
 
       def save_account_id(connected_account_id)
-        current_staff.organizable.update_attribute(:stripe_id, connected_account_id)
+        @agency.update_attribute(:stripe_id, connected_account_id)
       end
 
       def is_owner?

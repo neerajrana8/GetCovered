@@ -36,7 +36,7 @@ module V2
       end
 
       def set_substrate
-        organizable = current_staff.organizable
+        organizable = @agency
         if organizable.present?
           @substrate = organizable.histories
         else

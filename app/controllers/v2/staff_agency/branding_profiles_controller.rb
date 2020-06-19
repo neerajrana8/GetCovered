@@ -13,7 +13,7 @@ module V2
 
       def create
         if create_allowed?
-          @branding_profile = current_staff.organizable.branding_profiles.new(branding_profile_params)
+          @branding_profile = @agency.branding_profiles.new(branding_profile_params)
           if !@branding_profile.errors.any? && @branding_profile.save
             render :show, status: :created
           else

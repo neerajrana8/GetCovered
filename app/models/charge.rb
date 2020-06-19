@@ -213,7 +213,7 @@ class Charge < ApplicationRecord
     end
 
     def stripe_id_is_stripe_token
-      return(!stripe_id.nil? && stripe_id.first(4) == 'tok_')
+      return(!stripe_id.nil? && (stripe_id.first(4) == 'tok_' || stripe_id.first(4) == 'btok'))
     end
     
     def set_refund_status

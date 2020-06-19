@@ -10,7 +10,7 @@ class Devise::Users::SessionsController < DeviseTokenAuth::SessionsController
         ::Analytics.track(
           user_id: @user.id,
           event: 'Logged In',
-          properties: { plan: 'Account' }
+          properties: { category: 'Account' }
         )
 
         render template: "v2/auth/user.json", status: :ok

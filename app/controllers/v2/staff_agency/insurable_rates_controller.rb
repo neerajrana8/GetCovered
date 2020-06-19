@@ -59,7 +59,7 @@ module V2
         end
 
         def set_insurable
-          @insurable = current_staff.organizable.insurables.find(params[:insurable_id])
+          @insurable = @agency.insurables.find(params[:insurable_id])
         end
         
         def set_insurable_rate

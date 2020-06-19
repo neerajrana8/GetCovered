@@ -29,7 +29,7 @@ module V2
       end
       
       def update_allowed?
-        @policy_coverage&.policy&.agency == current_staff.organizable
+        @policy_coverage&.policy&.agency == @agency
       end
       
       def set_policy_coverage

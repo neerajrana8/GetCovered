@@ -10,7 +10,7 @@ module V2
       before_action :set_substrate, only: [:create]
       
       def index
-        @master_policies = current_staff&.organizable&.policies&.where(policy_type_id: 2) || []
+        @master_policies = @agency&.policies&.where(policy_type_id: 2) || []
         if @master_policies.present?
           render json: @master_policies, status: :ok
         else
@@ -19,7 +19,7 @@ module V2
       end
       
       def show
-        @master_policies = current_staff&.organizable&.policies&.where(policy_type_id: 3) || []
+        @master_policies = @agency&.policies&.where(policy_type_id: 3) || []
         render json: @master_policies, status: :ok
       end
 
