@@ -441,16 +441,19 @@ module V2
       #### MOOSE WARNING: modify to integrate with the existing policy application flow #####
       def get_coverage_options
         @msi_id = 5
-        # grab params
+        # grab params and pull stuff from the db
         cip = CarrierInsurableProfile.where(carrier_id: @msi_id, insurable_id: params[:insurable_id].to_i).take
         if cip.nil?
           render json: { error: "insurable not found" },
             status: :unprocessable_entity
         end
+        carrier_insurable_type = CarrierInsurableType.where(carrier_id: @msi_id, insurable_type_id: cip.insurable.insurable_type_id).take
         selections = params[:coverage_selections] || []
         # get IRCs
-        irc = cip.insurable_rate_configurations.sort_by{|irc| (InsurableRateConfiguration::CONFIGURER_SORTING_ORDER[ircs.configurer_type] || 999999) }.last
-        irc_hierarchy = get_parent_hierarchy(include_self: true)
+        #irc = cip.insurable_rate_configurations.sort_by{|irc| (InsurableRateConfiguration::CONFIGURER_SORTING_ORDER[ircs.configurer_type] || 999999) }.last
+        #irc_hierarchy = get_parent_hierarchy(include_self: true)
+        
+        irc_hierarchy = ::InsurableRateConfiguration.get_hierarchy(carrier_insurable_type, cip.insurable.account, cip)
         irc_hierarchy.map!{|ircs| InsurableRateConfiguration.merge(ircs, mutable: true) }
         # for each IRC, apply rules and merge down
         coverage_options = []
@@ -495,9 +498,9 @@ module V2
         else
           result = msis.call
           if result[:error]
-            estimated_premium_error = "Error calculating premium" # MOOSE WARNING: probably just means selections aren't valid yet... check first maybe?
+            estimated_premium_error = "Error calculating premium" # MOOSE WARNING: probably just means selections aren't valid yet... check first maybe? should we set the error to result[:error] to send to the user?
           else
-            estimated_premium = result[:data].dig("MSIACORD", "InsuranceSvcRs", "RenterPolicyQuoteInqRs", "PersPolicy", "PaymentPlan")
+            estimated_premium = [result[:data].dig("MSIACORD", "InsuranceSvcRs", "RenterPolicyQuoteInqRs", "PersPolicy", "PaymentPlan")].flatten
                                             .map do |plan|
                                               [
                                                 plan["PaymentPlanCd"],
@@ -507,8 +510,13 @@ module V2
           end
         end
         # done
-        render json: { coverage_options: coverage_options, estimated_premium: estimated_premium, estimated_premium_error: estimated_premium_error },
-          status: :success
+        if estimated_premium_error.nil?
+          render json: { coverage_options: coverage_options, estimated_premium: estimated_premium },
+            status: :success
+        else
+          render json: { error: estimated_premium_error },
+            status: :unprocessable_entity
+        end
       end
 
 

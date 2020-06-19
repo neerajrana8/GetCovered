@@ -102,7 +102,7 @@ class InsurableRateConfiguration < ApplicationRecord
   end
   
   def get_parent_hierarchy(include_self: false)
-    query = ::InsurableRateConfiguration.includes(:insurable_geographical_category).where(carrier_insurable_type_id: carrier_insurable_type_id)
+    query = ::InsurableRateConfiguration.joins(:insurable_geographical_category).includes(:insurable_geographical_category).where(carrier_insurable_type_id: carrier_insurable_type_id)
     # add configurer restrictions to query
     query = self.class.add_configurer_restrictions(query, configurer, carrier_insurable_type.carrier_id)
     # add configurable restrictions to query

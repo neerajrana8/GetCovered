@@ -2,9 +2,6 @@ class CarrierInsurableProfile < ApplicationRecord
   after_create_commit :set_qbe_id,
     if: Proc.new { |cip| cip.carrier_id == 1 }
     
-  after_create :create_insurable_rate_configuration,
-    if: Proc.new { |cip| cip.carrier_id == 5 }
-    
   belongs_to :carrier
   belongs_to :insurable
   
@@ -32,19 +29,6 @@ class CarrierInsurableProfile < ApplicationRecord
       
       return return_status
       
-    end
-    
-    def create_insurable_rate_configuration
-      unless self.insurable.account_id.nil?
-        cit = ::CarrierInsurableType.where(carrier_id: self.carrier_id, insurable_type_id: self.insurable.insurable_type_id).take
-        # MOOSE WARNING: restrict cit to residential unit?
-        ::InsurableRateConfiguration.create!(
-          configurer_type: 'Account',
-          configurer_id: self.insurable.account_id,
-          configurable: self,
-          carrier_insurable_type: cit
-        )
-      end
     end
     
     def traits_and_data_are_non_nil

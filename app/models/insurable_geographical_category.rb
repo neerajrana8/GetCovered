@@ -1,5 +1,10 @@
 class InsurableGeographicalCategory < ApplicationRecord
 
+  # Associations
+  
+  has_many :insurable_rate_configurations,
+    as: :configurable
+
   # ActiveRecord Callbacks
   
   before_validation :set_counties_nil_if_empty
