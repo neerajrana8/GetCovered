@@ -8,11 +8,11 @@ class InsurableRateConfiguration < ApplicationRecord
   
   # Convenience associations to particular types of configurable
   belongs_to :insurable_geographical_category,
-    -> { where(insurable_rate_configurations: {configurable_type: 'InsurableGeographicCategory'}) },
+    -> { where(insurable_rate_configurations: {configurable_type: 'InsurableGeographicalCategory'}) },
     foreign_key: 'configurable_id',
     optional: true
   def insurable_geographical_category
-   return nil unless configurable_type == "InsurableGeographicCategory"
+   return nil unless configurable_type == "InsurableGeographicalCategory"
    super
   end
   
@@ -55,9 +55,9 @@ class InsurableRateConfiguration < ApplicationRecord
     configurable_type = configurable.class.name
     configurable_id = configurable.id
     carrier_insurable_type_id = carrier_insurable_type.id
-    query = ::InsurableRateConfiguration.includes(:insurable_geographical_category).where(carrier_insurable_type_id: carrier_insurable_type_id)
+    query = ::InsurableRateConfiguration.joins(:insurable_geographical_category).includes(:insurable_geographical_category).references(:insurable_geographical_categories).where(carrier_insurable_type_id: carrier_insurable_type_id)
     # add configurer restrictions to query
-    query = add_configurer_restrictions(query, configurer_type, configurer_id, carrier_insurable_type.carrier_id)
+    query = add_configurer_restrictions(query, configurer, carrier_insurable_type.carrier_id)
     # add configurable restrictions to query
     to_add = []
     case configurable_type
@@ -85,14 +85,18 @@ class InsurableRateConfiguration < ApplicationRecord
     end
     # sort into hierarchy
     to_return = query.to_a.group_by{|irc| irc.configurer_type }
-    to_add.each do |irc|
-      # add in to_add if necessary
-      to_return[irc.configurer_type] ||= []
-      to_return[irc.configurer_type].push(irc)
-    end
     to_return = to_return.values
     to_return.sort_by!{|ircs| (CONFIGURER_SORTING_ORDER[ircs.first.configurer_type] || 999999) }
-    to_return.each{|ircs| ircs.sort_by!(&:configurable) }
+    to_return.each{|ircs| ircs.sort_by!(&:insurable_geographical_category) }
+    # add in add-in (they'll always go at the end)
+    to_add.each do |irc|
+      found = to_return.find{|ircs| ircs.first.configurer_type == irc.configurer_type }
+      if found
+        found.push(irc)
+      else
+        to_return.push([irc])
+      end
+    end
     # done
     return to_return
   end
@@ -100,7 +104,7 @@ class InsurableRateConfiguration < ApplicationRecord
   def get_parent_hierarchy(include_self: false)
     query = ::InsurableRateConfiguration.includes(:insurable_geographical_category).where(carrier_insurable_type_id: carrier_insurable_type_id)
     # add configurer restrictions to query
-    query = self.class.add_configurer_restrictions(query, configurer_type, configurer_id, carrier_insurable_type.carrier_id)
+    query = self.class.add_configurer_restrictions(query, configurer, carrier_insurable_type.carrier_id)
     # add configurable restrictions to query
     case configurable_type
       when 'CarrierInsurableProfile'
@@ -467,17 +471,17 @@ class InsurableRateConfiguration < ApplicationRecord
   
   private
   
-    def self.add_configurer_restrictions(query, configurer_type, configurer_id, carrier_id)
+    def self.add_configurer_restrictions(query, configurer, carrier_id)
       case configurer.class.name
         when 'Account'
-          query.where(configurer_type: 'Account', configurer_id: configurer_id)
+          query.where(configurer_type: 'Account', configurer_id: configurer.id)
                .or(query.where(configurer_type: 'Agency', configurer_id: configurer.agency_id))
                .or(query.where(configurer_type: 'Carrier', configurer_id: carrier_id))
         when 'Agency'
-          query.where(configurer_type: 'Agency', configurer_id: configurer_id)
+          query.where(configurer_type: 'Agency', configurer_id: configurer.id)
                .or(query.where(configurer_type: 'Carrier', configurer_id: carrier_id))
         when 'Carrier'
-          query.where(configurer_type: 'Carrier', configurer_id: configurer_id)
+          query.where(configurer_type: 'Carrier', configurer_id: configurer.id)
         else
           return []
       end
