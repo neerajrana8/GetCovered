@@ -153,11 +153,11 @@
 			account: lease.account
 		)
 		
-		application.build_from_carrier_policy_type()
+		application.build_from_carrier_policy_type() ### MOOSE WARNING: implement me boiiiii
 		application.fields[0]["value"] = lease.users.count
 		application.insurables << lease.insurable
 		
-		if application.save()
+		if application.save
 			community = lease.insurable.parent_community
 			
 			primary_user = lease.primary_user()
@@ -167,37 +167,57 @@
 			lease_users.each { |u| application.users << u }
 		  
 		  # If application is set as complete
-      if application.update status: 'complete'
-					
-				florida_check = application.primary_insurable().insurable.primary_address().state == "FL" ? true : false
-	      deductibles = florida_check ? [50000, 100000] : [25000, 50000, 100000]
-	      hurricane_deductibles = florida_check ? [50000, 100000, 250000, 500000] : nil 
-	      
-	      deductible = deductibles[rand(0..(deductibles.length - 1))]
-	      
-	      if florida_check == true
-	        hurricane_deductible = 0
-	        while hurricane_deductible < deductible
-	          hurricane_deductible = hurricane_deductibles[rand(0..(hurricane_deductibles.length - 1))]
-	        end
-	      else
-	        hurricane_deductible = nil
-	      end
-
-				query = florida_check ? "(deductibles ->> 'all_peril')::integer = #{ deductible } AND (deductibles ->> 'hurricane')::integer = #{ hurricane_deductible } AND number_insured = #{ lease.users.count }" : 
-				                        "(deductibles ->> 'all_peril')::integer = #{ deductible } AND number_insured = #{ lease.users.count }"      
-
-				coverage_c_rates = community.insurable_rates
-				                            .activated
-				                            .coverage_c
-				                            .where(interval: application.billing_strategy.title.downcase.sub(/ly/, '').gsub('-', '_'))
-				                            .where(query)
-				
-				liability_rates = community.insurable_rates
-				                           .activated
-				                           .liability
-				                           .where(number_insured: lease.users.count, 
-				                           				interval: application.billing_strategy.title.downcase.sub(/ly/, '').gsub('-', '_'))
+      if application.update(status: 'complete')
+      
+        # prepare to choose rates
+        cip = CarrierInsurableProfile.where(carrier_id: carrier_id, insurable_id: community.id).take
+        effective_date = application.effective_date
+        additional_insured_count = application.users.count - 1
+        # choose rates
+        coverage_options = []
+        coverage_selections = []
+        result = { valid: false }
+        loop do
+          result = ::InsurableRateConfiguration.get_coverage_options(
+            carrier_id,
+            cip,
+            coverage_selections,
+            application.effective_date,
+            additional_insured_count
+          )
+          if result[:valid]
+            break
+          elsif result[:coverage_options]
+            coverage_selections = coverage_options.map do |opt|
+              return nil if opt['requirement'] != 'required' && opt['requirement'] != 'forbidden'
+              sel = coverage_selections.find{|x| x['category'] == opt['category'] && x['uid'] == opt['uid'] }
+              if opt['requirement'] == 'required'
+                {
+                  'category' => opt['category'],
+                  'uid'      => opt['uid'],
+                  'selection'=> opt['options_type'] == 'none' || opt['options'].blank? ? true : !sel.nil? && opt['options'].map{|o| o.to_d }.include?(sel['selection'].to_d) ? sel['selection'] : opt['options'][rand(opt['options'].length)]
+                }
+              elsif opt['requirement'] == 'optional'
+                next nil # WARNING: no optional coverages for now... randomize it later
+              else
+                next nil
+              end
+            end.compact
+          else
+            application.update(status: 'quote_failed')
+            puts "Application ID: #{ application.id } | Application Status: #{ application.status } | Failed to find valid coverage options selection!!!"
+          end
+        end
+        # continue to quote if valid
+        if result[:valid]
+          # MOOSE WARNING: attach coverage_selections to the application
+          #   the qbe method is to insert rates into application.insurable_rates, call application.qbe_estimate, and then set quote = application.policy_quotes.first
+          if application.status == 'quote_failed' # MOOSE WARNING: qbe version checks for status 'quoted'... do we need to do that?
+          
+          end
+        end
+      
+      #### QBE CODE FOLLOWS: #####
 	      
 	      # Checking necessary rates have been found
 	      unless coverage_c_rates.count == 0 || liability_rates.count == 0 || application.insurables.count == 0
