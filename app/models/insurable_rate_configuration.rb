@@ -66,8 +66,8 @@ class InsurableRateConfiguration < ApplicationRecord
         return [] if address.nil?
         query = query.where(insurable_geographical_categories: { state: nil })
                      .or(query.where(insurable_geographical_categories: { state: address.state, counties: nil }))
-                     .or(query.where(insurable_geographical_categories: { state: address.state }).where('insurable_geographical_categories.counties @> ARRAY[?]::string[]', address.county))
-        to_add = add_configurer_restrictions(::InsurableRateConfiguration.where(carrier_insurable_type_id: carrier_insurable_type_id), configurer_type, configurer_id, carrier_insurable_type.carrier_id)
+                     .or(query.where(insurable_geographical_categories: { state: address.state }).where('insurable_geographical_categories.counties @> ARRAY[?]::varchar[]', address.county))
+        to_add = add_configurer_restrictions(::InsurableRateConfiguration.where(carrier_insurable_type_id: carrier_insurable_type_id), configurer, carrier_insurable_type.carrier_id)
                  .where(configurable_type: 'CarrierInsurableProfile', configurable_id: configurable_id)
       when 'InsurableGeographicalCategory'
         if configurable.state.nil?
@@ -78,7 +78,7 @@ class InsurableRateConfiguration < ApplicationRecord
         else
           query = query.where(insurable_geographical_categories: { state: nil })
                        .or(query.where(insurable_geographical_categories: { state: configurable.state, counties: nil }))
-                       .or(query.where(insurable_geographical_categories: { state: configurable.state }).where('insurable_geographical_categories.counties @> ARRAY[?]::string[]', configurable.counties))
+                       .or(query.where(insurable_geographical_categories: { state: configurable.state }).where('insurable_geographical_categories.counties @> ARRAY[?]::varchar[]', configurable.counties))
         end
       else
         return []
@@ -112,7 +112,7 @@ class InsurableRateConfiguration < ApplicationRecord
         return [] if address.nil?
         query = query.where(insurable_geographical_categories: { state: nil })
                      .or(query.where(insurable_geographical_categories: { state: address.state, counties: nil }))
-                     .or(query.where(insurable_geographical_categories: { state: address.state }).where('insurable_geographical_categories.counties @> ARRAY[?]::string[]', address.county))
+                     .or(query.where(insurable_geographical_categories: { state: address.state }).where('insurable_geographical_categories.counties @> ARRAY[?]::varchar[]', address.county))
       when 'InsurableGeographicalCategory'
         if configurable.state.nil?
           query = query.where(insurable_geographical_categories: { state: nil })
@@ -122,7 +122,7 @@ class InsurableRateConfiguration < ApplicationRecord
         else
           query = query.where(insurable_geographical_categories: { state: nil })
                        .or(query.where(insurable_geographical_categories: { state: configurable.state, counties: nil }))
-                       .or(query.where(insurable_geographical_categories: { state: configurable.state }).where('insurable_geographical_categories.counties @> ARRAY[?]::string[]', configurable.counties))
+                       .or(query.where(insurable_geographical_categories: { state: configurable.state }).where('insurable_geographical_categories.counties @> ARRAY[?]::varchar[]', configurable.counties))
         end
       else
         return []

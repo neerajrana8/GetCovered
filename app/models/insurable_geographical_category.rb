@@ -37,7 +37,7 @@ class InsurableGeographicalCategory < ApplicationRecord
       query = query.where(counties: nil)
     else
       counties = counties.map{|c| c.upcase }.sort!.uniq!
-      query = query.where('counties = ARRAY[?]::string[]', counties)
+      query = query.where('counties = ARRAY[?]::varchar[]', counties)
     end
     to_return = query.take
     if to_return.nil?

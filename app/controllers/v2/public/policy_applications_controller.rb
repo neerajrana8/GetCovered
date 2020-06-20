@@ -441,19 +441,25 @@ module V2
       #### MOOSE WARNING: modify to integrate with the existing policy application flow #####
       def get_coverage_options
         @msi_id = 5
-        # grab params and pull stuff from the db
-        cip = CarrierInsurableProfile.where(carrier_id: @msi_id, insurable_id: params[:insurable_id].to_i).take
-        if cip.nil?
-          render json: { error: "insurable not found" },
+        @residential_community_insurable_type_id = 1
+        @residential_unit_insurable_type_id = 4
+        @carrier_insurable_type = CarrierInsurableType.where(carrier_id: @msi_id, insurable_type_id: @residential_unit_insurable_type_id).take
+        # grab params and pull unit from db
+        unit = Insurable.where(insurable_id: params[:insurable_id].to_i).take
+        if unit.nil? || unit.insurable_type_id != @residential_unit_insurable_type_id
+          render json: { error: "unit not found" },
             status: :unprocessable_entity
         end
-        carrier_insurable_type = CarrierInsurableType.where(carrier_id: @msi_id, insurable_type_id: cip.insurable.insurable_type_id).take
+        # grab community and make sure it's registered with msi
+        community = unit.parent_community
+        cip = CarrierInsurableProfile.where(carrier_id: @msi_id, insurable_id: community.id).take
+        if cip.nil? || cip.external_carrier_id.nil?
+          render json: { error: "community not found" },
+            status: :unprocessable_entity
+        end
         selections = params[:coverage_selections] || []
         # get IRCs
-        #irc = cip.insurable_rate_configurations.sort_by{|irc| (InsurableRateConfiguration::CONFIGURER_SORTING_ORDER[ircs.configurer_type] || 999999) }.last
-        #irc_hierarchy = get_parent_hierarchy(include_self: true)
-        
-        irc_hierarchy = ::InsurableRateConfiguration.get_hierarchy(carrier_insurable_type, cip.insurable.account, cip)
+        irc_hierarchy = ::InsurableRateConfiguration.get_hierarchy(@carrier_insurable_type, community.account, cip)
         irc_hierarchy.map!{|ircs| InsurableRateConfiguration.merge(ircs, mutable: true) }
         # for each IRC, apply rules and merge down
         coverage_options = []
@@ -489,7 +495,7 @@ module V2
                                     else
                                       nil
                                     end
-                                  end.compact
+                                  end.compact,
           line_breaks: true
         )
         if !result
