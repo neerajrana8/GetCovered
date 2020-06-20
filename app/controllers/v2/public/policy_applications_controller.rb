@@ -465,13 +465,8 @@ module V2
           params[:additional_insured]
         )
         # done
-        if results[:errors].nil?
-          render json: results.select{|k,v| k != :errors },
-            status: :success
-        else
-          render json: { error: results[:errors][:external] },
-            status: :unprocessable_entity
-        end
+        render json: results.select{|k,v| k != :errors }.merge({ estimated_premium_errors: results[:errors][:external] }),
+          status: :success
       end
 
 
