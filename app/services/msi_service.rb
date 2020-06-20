@@ -229,10 +229,12 @@ class MsiService
         when 'ERROR'
           call_data[:error] = true
           call_data[:message] = "Request failed externally"
+          call_data[:external_message] = call_data[:data].dig("MSIACORD", "InsuranceSvcRs", "MsgStatus", "MsgStatusDesc").to_s
           call_data[:code] = 409
         when nil
           call_data[:error] = true
           call_data[:message] = "Request failed externally"
+          call_data[:external_message] = "No status message received"
           call_data[:code] = 409
       end
       
@@ -632,7 +634,7 @@ class MsiService
             "uid"           => cov["CoverageCd"],
             "title"         => cov["CoverageDescription"], # MOOSE WARNING: better as description?
             "requirement"   => (cov["MSI_IsMandatoryCoverage"] || "").strip == "True" ? 'required' : 'optional',
-            "category"      => "limit",
+            "category"      => "coverage",
             "options_type"  => cov["MSI_LimitList"].blank? ? "none" : "multiple_choice",
             "options_format"=> cov["MSI_LimitList"].blank? ? "none" : "currency",
             "options"       => cov["MSI_LimitList"].blank? ? nil : arrayify(cov["MSI_LimitList"]["string"]).map{|v| v.to_d }

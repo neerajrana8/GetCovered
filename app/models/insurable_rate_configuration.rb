@@ -42,7 +42,7 @@ class InsurableRateConfiguration < ApplicationRecord
   }
   
   # Configurer types which can add distinct new coverages
-  COVERAGE_ADDING_CONFIGUERERS = {
+  COVERAGE_ADDING_CONFIGURERS = {
     'Carrier' => true
   }
   
@@ -158,18 +158,18 @@ class InsurableRateConfiguration < ApplicationRecord
       rules: {}
     )
     # carrier info
-    irc_array.each do |irc|
-      irc.carrier_info.each do |k,v|
-        mv = Marshal.dump(v)
-        if to_return.coverage_options.has_key?(k)
-          to_return.coverage_options[k] = nil unless to_return.coverage_options[k] == mv
-        else
-          to_return.coverage_options[k] = v
-        end
-      end
-    end
-    to_return.coverage_options.compact!
-    to_return.coverage_options.transform_values!{|v| Marshal.load(v) }
+    #irc_array.each do |irc|
+    #  irc.carrier_info.each do |k,v|
+    #    mv = Marshal.dump(v)
+    #    if to_return.carrier_info.has_key?(k)
+    #      to_return.carrier_info[k] = nil unless to_return.carrier_info[k] == mv
+    #    else
+    #      to_return.carrier_info[k] = v
+    #    end
+    #  end
+    #end
+    #to_return.carrier_info.compact!
+    #to_return.carrier_info.transform_values!{|v| Marshal.load(v) }
     # rules
     if mutable
       irc_array.each{|irc| to_return.rules.merge!(irc.rules) }
@@ -195,8 +195,8 @@ class InsurableRateConfiguration < ApplicationRecord
   end
   
   # merge parent options into self.coverage_options (does not save the model)
-  def merge_options!(parent_options, mutable:)
-    self.coverage_options = merge_options(parent_options, mutable: :mutable)
+  def merge_options!(parent_options, mutable:, allow_new_coverages: mutable)
+    self.coverage_options = merge_options(parent_options, mutable: :mutable, allow_new_coverages: allow_new_coverages)
     return self
   end
   
@@ -269,7 +269,7 @@ class InsurableRateConfiguration < ApplicationRecord
       # description can be blank
       errors.add(:coverage_requirement, "must be 'required', 'disabled', 'optional', or 'locked' (#{disp_title})") unless REQUIREMENT_TYPES.has_key?(cov["requirement"])
       errors.add(:coverage_requirement_enabled, "must be true or false (#{disp_title}") unless [true, false].include?(cov["requirement_enabled"])
-      errors.add(:coverage_category, "must be 'limit', or 'deductible'") unless ['coverage', 'deductible'].include?(cov["category"])
+      errors.add(:coverage_category, "must be 'coverage', or 'deductible'") unless ['coverage', 'deductible'].include?(cov["category"])
       case cov["options_type"]
         when "none"
           # all good
@@ -469,6 +469,24 @@ class InsurableRateConfiguration < ApplicationRecord
     configurer_type == 'Carrier'
   end
   
+  def self.automatically_select_options(options, selections = [])
+    options.map do |opt|
+      next nil if opt['requirement'] != 'required' && opt['requirement'] != 'forbidden'
+      sel = selections.find{|x| x['category'] == opt['category'] && x['uid'] == opt['uid'] }
+      if opt['requirement'] == 'required'
+        {
+          'category' => opt['category'],
+          'uid'      => opt['uid'],
+          'selection'=> opt['options_type'] == 'none' || opt['options'].blank? ? true : !sel.nil? && opt['options'].map{|o| o.to_d }.include?(sel['selection'].to_d) ? sel['selection'] : opt['options'][rand(opt['options'].length)]
+        }
+      elsif opt['requirement'] == 'optional'
+        next nil # WARNING: no optional coverages for now... randomize it later
+      else
+        next nil
+      end
+    end.compact
+  end
+  
   def self.get_coverage_options(carrier_id, carrier_insurable_profile, selections, effective_date, additional_insured_count, insurable_type_id: 4, account: carrier_insurable_profile.insurable.account)
     cip = carrier_insurable_profile
     carrier_insurable_type = CarrierInsurableType.where(carrier_id: carrier_id, insurable_type_id: insurable_type_id).take
@@ -478,7 +496,7 @@ class InsurableRateConfiguration < ApplicationRecord
     # for each IRC, apply rules and merge down
     coverage_options = []
     irc_hierarchy.each do |irc|
-      irc.merge_options!(coverage_options, mutable: false)
+      irc.merge_options!(coverage_options, mutable: false, allow_new_coverages: COVERAGE_ADDING_CONFIGURERS.include?(irc.configurer_type))
       coverage_options = irc.annotate_options(selections)
     end
     # call GetFinalPremium to get estimate MOOSE WARNING: add call logging
@@ -491,7 +509,7 @@ class InsurableRateConfiguration < ApplicationRecord
       additional_insured_count: additional_insured_count,
       additional_interest_count: 0, # MOOSE WARNING: or 1, to include prop manager?
       community_id: cip.external_carrier_id,
-      coverages_formatted:  selections.select{|s| s['selection'] }
+      coverages_formatted:  temp = selections.select{|s| s['selection'] }
                               .map{|s| s['options'] = coverage_options.find{|co| co['category'] == s['category'] && co['uid'] == s['uid'] }; s }
                               .select{|s| !s['options'].nil? }
                               .map do |sel|
@@ -513,13 +531,17 @@ class InsurableRateConfiguration < ApplicationRecord
                               end.compact,
       line_breaks: true
     )
+#pp msis.compiled_rxml
+#pp temp
+#pp coverage_options
+#return
     if !result
       # failed to get final premium
       estimated_premium_error = { internal: msis.errors.to_s, external: "Unknown error occurred" }
     else
       result = msis.call
       if result[:error]
-        estimated_premium_error = { internal: result[:error].to_s, external: "Error calculating premium" } # MOOSE WARNING: probably just means selections aren't valid yet... check first maybe? should we set the error to result[:error] to send to the user?
+        estimated_premium_error = { internal: result[:external_message].to_s, external: "Error calculating premium" } # MOOSE WARNING: probably just means selections aren't valid yet... check first maybe? should we set the error to result[:error] to send to the user?
       else
         valid = true
         estimated_premium = [result[:data].dig("MSIACORD", "InsuranceSvcRs", "RenterPolicyQuoteInqRs", "PersPolicy", "PaymentPlan")].flatten
