@@ -296,14 +296,20 @@ class InsurableRateConfiguration < ApplicationRecord
   # options should be a copy of self.coverage_options, or the same with parents merged in
   # selections should be an array of hashes of the form { 'category'=>cat, 'uid'=>uid, 'selection'=>sel }, where sel is the # selected if applicable, and otherwise true or false
   def annotate_options(selections, options = self.coverage_options, skip_copy: false)
+#puts "ANNOTATING"
     # copy options
     options = Marshal.load(Marshal.dump(options)) unless skip_copy
     # apply rules to get asserts
     asserts = []
-    execute(self.rules.map{|k,v| v['code'] }.compact, selections: selections, asserts: asserts)
+#puts "Executing: #{self.rules.map{|k,v| v['code'] }.compact }"
+    self.rules.map{|k,v| v['code'] }.compact.each do |code|
+      execute(code, options, selections: selections, asserts: asserts)
+    end
     # apply asserts
     asserts.each do |assert|
+#puts "assert #{assert}"
       option = options.find{|opt| opt['category'] == assert['category'] && opt['uid'] == assert['uid'] }
+#puts "found opt #{option}"
       next if option.nil?
       if assert['requirement']
         unless option['requirement_locked'] # MOOSE WARNING: make sure this is implemented in merge
@@ -312,6 +318,7 @@ class InsurableRateConfiguration < ApplicationRecord
         end
       end
       if assert['value']
+#puts "assert is value"
         refine_options_for_code!(option['options_type'], option['options'], assert['value'])
       end
     end
@@ -349,19 +356,22 @@ class InsurableRateConfiguration < ApplicationRecord
   # returns:
   #   value of executed expression
   def execute(code, options, selections: [], asserts: false)
+  #puts "exec code #{code}"
     case code
       when ::Array
         case code[0]
           when '='
+  #puts "assert encountered (#{asserts})"
             if !asserts
+  #puts "  asserts is false, no no no"
               return false # throws disabled for now: throw 'invalid_assert_placement'
             else
               if code[1].class == ::Array
                 if code[1][0] == 'requirement'
                   # get what to assign and what to assign it to
-                  category = execute(code[1][1])
-                  uid = execute(code[1][2])
-                  value = execute(code[2])
+                  category = execute(code[1][1], options, selections: selections).to_s
+                  uid = execute(code[1][2], options, selections: selections).to_s
+                  value = execute(code[2], options, selections: selections)
                   # perform the assignation
                   index = asserts.find_index{|a| a['category'] == category && a['uid'] == uid }
                   if index.nil?
@@ -374,9 +384,10 @@ class InsurableRateConfiguration < ApplicationRecord
                   true
                 elsif code[1][0] == 'value'
                   # get what to assign and what to assign it to
-                  category = execute(code[1][1])
-                  uid = execute(code[1][2])
-                  value = execute(code[2])
+                  category = execute(code[1][1], options, selections: selections).to_s
+                  uid = execute(code[1][2], options, selections: selections).to_s
+                  value = execute(code[2], options, selections: selections)
+  #puts "assert(value, #{category}, #{uid}) = #{value}"
                   # perform the assignation
                   index = asserts.find_index{|a| a['category'] == category && a['uid'] == uid }
                   if index.nil?
@@ -395,47 +406,54 @@ class InsurableRateConfiguration < ApplicationRecord
               end
             end
           when '?', 'if'
-            execute(code[1]) ? execute(code[2], asserts: asserts) : execute(code[3], asserts: asserts)
+            execute(code[1], options, selections: selections) ? execute(code[2], options, selections: selections, asserts: asserts) : execute(code[3], options, selections: selections, asserts: asserts)
+          when ';'
+            (1...code.length).each{|c| execute(c, options, selections: selections, asserts: asserts); }
+            true
           when '&&'
-            (1...code.length).inject(true){|s,i| break false unless execute(code[i], asserts: asserts); true }
+            (1...code.length).inject(true){|s,i| break false unless execute(code[i], options, selections: selections, asserts: asserts); true }
           when '||'
-            (1...code.length).inject(false){|s,i| break true if execute(code[i], asserts: asserts); false }
+            (1...code.length).inject(false){|s,i| break true if execute(code[i], options, selections: selections, asserts: asserts); false }
           when '|'
-            (1...code.length).inject([]){|s,i| temp = execute(code[i]); s += (temp.class == ::Array ? temp : [temp]) }
+            (1...code.length).inject([]){|s,i| temp = execute(code[i], options, selections: selections); s += (temp.class == ::Array ? temp : [temp]) }
           when '[]', '()', '[)', '(]'
-            { 'interval' => code[0], 'start' => num(execute(code[1])), 'end' => num(execute(code[2])) }
+            { 'interval' => code[0], 'start' => num(execute(code[1], options, selections: selections)), 'end' => num(execute(code[2], options, selections: selections)) }
           when '=='
-            (num(execute(code[1])) - num(execute(code[2]))).abs <= (num(code[3]) || 0)
+            (num(execute(code[1], options, selections: selections)) - num(execute(code[2], options, selections: selections))).abs <= (num(code[3], options, selections: selections) || 0)
           when '<'
-            (num(execute(code[1])) - num(execute(code[2]))) < (num(code[3]) || 0)
+            (num(execute(code[1], options, selections: selections)) - num(execute(code[2], options, selections: selections))) < (num(code[3], options, selections: selections) || 0)
           when '>'
-            (num(execute(code[1])) - num(execute(code[2]))) > -(num(code[3]) || 0)
+            (num(execute(code[1], options, selections: selections)) - num(execute(code[2], options, selections: selections))) > -(num(code[3], options, selections: selections) || 0)
           when '<='
-            (num(execute(code[1])) - num(execute(code[2]))) <= (num(code[3]) || 0)
+            (num(execute(code[1], options, selections: selections)) - num(execute(code[2], options, selections: selections))) <= (num(code[3], options, selections: selections) || 0)
           when '>='
-            (num(execute(code[1])) - num(execute(code[2]))) >= -(num(code[3]) || 0)
+            (num(execute(code[1], options, selections: selections)) - num(execute(code[2], options, selections: selections))) >= -(num(code[3], options, selections: selections) || 0)
           when 'selected'
-            selections.find{|s| s['category'] == execute(code[1]) && s['uid'] == execute(code[2]) }&.[]('selection') ? true : false
+            selections.find{|s| s['category'] == execute(code[1], options, selections: selections) && s['uid'] == execute(code[2], options, selections: selections) }&.[]('selection') ? true : false
           when 'requirement'
-            found = options.find{|s| s['category'] == execute(code[1]) && s['uid'] == execute(code[2]) }
+            found = options.find{|s| s['category'] == execute(code[1], options, selections: selections) && s['uid'] == execute(code[2], options, selections: selections) }
             if found.nil? || found['enabled'] == false
               REQUIREMENT_TYPES['forbidden']
             else
               REQUIREMENT_TYPES[found['requirement'] || 'forbidden']
             end
           when 'value'
-            found = selections.find{|s| s['category'] == execute(code[1]) && s['uid'] == execute(code[2]) }
+            found = selections.find{|s| s['category'] == execute(code[1], options, selections: selections) && s['uid'] == execute(code[2], options, selections: selections) }
             if found.nil? || found['selection'].nil?
               0.to_d # just return zero instead of throwing throw 'no_value'
             else
               found['selection']
             end
+          when 'max'
+            code.drop(1).map{|c| num(execute(c, options, selections: selections)) }.max
+          when 'min'
+            code.drop(1).map{|c| num(execute(c, options, selections: selections)) }.min
           when '+'
-            num(execute(code[1])) + num(execute(code[2]))
+            num(execute(code[1], options, selections: selections)) + num(execute(code[2], options, selections: selections))
           when '-'
-            num(execute(code[1])) - num(execute(code[2]))
+            num(execute(code[1], options, selections: selections)) - num(execute(code[2], options, selections: selections))
           when '*'
-            num(execute(code[1])) * num(execute(code[2]))
+            num(execute(code[1], options, selections: selections)) * num(execute(code[2], options, selections: selections))
         end
       else
         code
@@ -499,6 +517,7 @@ class InsurableRateConfiguration < ApplicationRecord
       irc.merge_options!(coverage_options, mutable: false, allow_new_coverages: COVERAGE_ADDING_CONFIGURERS.include?(irc.configurer_type))
       coverage_options = irc.annotate_options(selections)
     end
+#return coverage_options #GOOSE
     # call GetFinalPremium to get estimate MOOSE WARNING: add call logging
     valid = false
     estimated_premium = {}
@@ -531,10 +550,6 @@ class InsurableRateConfiguration < ApplicationRecord
                               end.compact,
       line_breaks: true
     )
-#pp msis.compiled_rxml
-#pp temp
-#pp coverage_options
-#return
     if !result
       # failed to get final premium
       estimated_premium_error = { internal: msis.errors.to_s, external: "Unknown error occurred" }
