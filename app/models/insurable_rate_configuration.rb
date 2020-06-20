@@ -482,6 +482,7 @@ class InsurableRateConfiguration < ApplicationRecord
       coverage_options = irc.annotate_options(selections)
     end
     # call GetFinalPremium to get estimate MOOSE WARNING: add call logging
+    valid = false
     estimated_premium = {}
     estimated_premium_error = nil
     msis = MsiService.new
@@ -520,6 +521,7 @@ class InsurableRateConfiguration < ApplicationRecord
       if result[:error]
         estimated_premium_error = { internal: result[:error].to_s, external: "Error calculating premium" } # MOOSE WARNING: probably just means selections aren't valid yet... check first maybe? should we set the error to result[:error] to send to the user?
       else
+        valid = true
         estimated_premium = [result[:data].dig("MSIACORD", "InsuranceSvcRs", "RenterPolicyQuoteInqRs", "PersPolicy", "PaymentPlan")].flatten
                                         .map do |plan|
                                           [
@@ -530,7 +532,7 @@ class InsurableRateConfiguration < ApplicationRecord
       end
     end
     # done
-    return { coverage_options: coverage_options, estimated_premium: estimated_premium, errors: estimated_premium_error }
+    return { valid: valid, coverage_options: coverage_options, estimated_premium: estimated_premium, errors: estimated_premium_error }
   end
   
   private
