@@ -443,7 +443,6 @@ module V2
         @msi_id = 5
         @residential_community_insurable_type_id = 1
         @residential_unit_insurable_type_id = 4
-        @carrier_insurable_type = CarrierInsurableType.where(carrier_id: @msi_id, insurable_type_id: @residential_unit_insurable_type_id).take
         # grab params and pull unit from db
         unit = Insurable.where(insurable_id: params[:insurable_id].to_i).take
         if unit.nil? || unit.insurable_type_id != @residential_unit_insurable_type_id
@@ -452,75 +451,25 @@ module V2
         end
         # grab community and make sure it's registered with msi
         community = unit.parent_community
-        cip = CarrierInsurableProfile.where(carrier_id: @msi_id, insurable_id: community.id).take
+        cip = CarrierInsurableProfile.where(carrier_id: @msi_id, insurable_id: community&.id).take
         if cip.nil? || cip.external_carrier_id.nil?
           render json: { error: "community not found" },
             status: :unprocessable_entity
         end
-        selections = params[:coverage_selections] || []
-        # get IRCs
-        irc_hierarchy = ::InsurableRateConfiguration.get_hierarchy(@carrier_insurable_type, community.account, cip)
-        irc_hierarchy.map!{|ircs| InsurableRateConfiguration.merge(ircs, mutable: true) }
-        # for each IRC, apply rules and merge down
-        coverage_options = []
-        irc_hierarchy.each do |irc|
-          irc.merge_options!(coverage_options, mutable: false)
-          coverage_options = irc.annotate_options(selections)
-        end
-        # call GetFinalPremium to get estimate MOOSE WARNING: add call logging
-        estimated_premium = {}
-        estimated_premium_error = nil
-        msis = MsiService.new
-        result = msis.build_request(:final_premium,
-          effective_date: params[:effective_date],
-          additional_insured_count: params[:additional_insured],
-          additional_interest_count: 0, # MOOSE WARNING: or 1, to include prop manager?
-          community_id: cip.external_carrier_id,
-          coverages_formatted:  selections.select{|s| s['selection'] }
-                                  .map{|s| s['options'] = coverage_options.find{|co| co['category'] == s['category'] && co['uid'] == s['uid'] }; s }
-                                  .select{|s| !s['options'].nil? }
-                                  .map do |sel|
-                                    if sel['category'] == 'coverage'
-                                      {
-                                        CoverageCd: sel['uid']
-                                      }.merge(sel['selection'] == true ? {} : {
-                                        Limit: { Amt: sel['selection'] }
-                                      })
-                                    elsif sel['category'] == 'deductible'
-                                      {
-                                        CoverageCd: sel['uid']
-                                      }.merge(sel['selection'] == true ? {} : {
-                                        Deductible: sel['options']['options_format'] == 'percent' ? { FormatPct: sel['selection'].to_d / 100 } : { Amt: sel['selection'] }
-                                      })
-                                    else
-                                      nil
-                                    end
-                                  end.compact,
-          line_breaks: true
+        # get coverage options
+        results = ::InsurableRateConfiguration.get_coverage_options(
+          @msi_id,
+          cip,
+          params[:coverage_selections] || [],
+          params[:effective_date],
+          params[:additional_insured]
         )
-        if !result
-          # failed to get final premium
-          estimated_premium_error = "Unknown error occurred" # MOOSE WARNING: make it nicer! log an error?
-        else
-          result = msis.call
-          if result[:error]
-            estimated_premium_error = "Error calculating premium" # MOOSE WARNING: probably just means selections aren't valid yet... check first maybe? should we set the error to result[:error] to send to the user?
-          else
-            estimated_premium = [result[:data].dig("MSIACORD", "InsuranceSvcRs", "RenterPolicyQuoteInqRs", "PersPolicy", "PaymentPlan")].flatten
-                                            .map do |plan|
-                                              [
-                                                plan["PaymentPlanCd"],
-                                                plan["MSI_TotalPremiumAmt"]["Amt"]
-                                              ]
-                                            end.to_h
-          end
-        end
         # done
-        if estimated_premium_error.nil?
-          render json: { coverage_options: coverage_options, estimated_premium: estimated_premium },
+        if results[:errors].nil?
+          render json: results.select{|k,v| k != :errors },
             status: :success
         else
-          render json: { error: estimated_premium_error },
+          render json: { error: results[:errors][:external] },
             status: :unprocessable_entity
         end
       end

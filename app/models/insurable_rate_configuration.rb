@@ -469,6 +469,70 @@ class InsurableRateConfiguration < ApplicationRecord
     configurer_type == 'Carrier'
   end
   
+  def self.get_coverage_options(carrier_id, carrier_insurable_profile, selections, effective_date, additional_insured_count, insurable_type_id: 4, account: carrier_insurable_profile.insurable.account)
+    cip = carrier_insurable_profile
+    carrier_insurable_type = CarrierInsurableType.where(carrier_id: carrier_id, insurable_type_id: insurable_type_id).take
+    # get IRCs
+    irc_hierarchy = ::InsurableRateConfiguration.get_hierarchy(carrier_insurable_type, account, cip)
+    irc_hierarchy.map!{|ircs| InsurableRateConfiguration.merge(ircs, mutable: true) }
+    # for each IRC, apply rules and merge down
+    coverage_options = []
+    irc_hierarchy.each do |irc|
+      irc.merge_options!(coverage_options, mutable: false)
+      coverage_options = irc.annotate_options(selections)
+    end
+    # call GetFinalPremium to get estimate MOOSE WARNING: add call logging
+    estimated_premium = {}
+    estimated_premium_error = nil
+    msis = MsiService.new
+    result = msis.build_request(:final_premium,
+      effective_date: effective_date,
+      additional_insured_count: additional_insured_count,
+      additional_interest_count: 0, # MOOSE WARNING: or 1, to include prop manager?
+      community_id: cip.external_carrier_id,
+      coverages_formatted:  selections.select{|s| s['selection'] }
+                              .map{|s| s['options'] = coverage_options.find{|co| co['category'] == s['category'] && co['uid'] == s['uid'] }; s }
+                              .select{|s| !s['options'].nil? }
+                              .map do |sel|
+                                if sel['category'] == 'coverage'
+                                  {
+                                    CoverageCd: sel['uid']
+                                  }.merge(sel['selection'] == true ? {} : {
+                                    Limit: { Amt: sel['selection'] }
+                                  })
+                                elsif sel['category'] == 'deductible'
+                                  {
+                                    CoverageCd: sel['uid']
+                                  }.merge(sel['selection'] == true ? {} : {
+                                    Deductible: sel['options']['options_format'] == 'percent' ? { FormatPct: sel['selection'].to_d / 100 } : { Amt: sel['selection'] }
+                                  })
+                                else
+                                  nil
+                                end
+                              end.compact,
+      line_breaks: true
+    )
+    if !result
+      # failed to get final premium
+      estimated_premium_error = { internal: msis.errors.to_s, external: "Unknown error occurred" }
+    else
+      result = msis.call
+      if result[:error]
+        estimated_premium_error = { internal: result[:error].to_s, external: "Error calculating premium" } # MOOSE WARNING: probably just means selections aren't valid yet... check first maybe? should we set the error to result[:error] to send to the user?
+      else
+        estimated_premium = [result[:data].dig("MSIACORD", "InsuranceSvcRs", "RenterPolicyQuoteInqRs", "PersPolicy", "PaymentPlan")].flatten
+                                        .map do |plan|
+                                          [
+                                            plan["PaymentPlanCd"],
+                                            plan["MSI_TotalPremiumAmt"]["Amt"]
+                                          ]
+                                        end.to_h
+      end
+    end
+    # done
+    return { coverage_options: coverage_options, estimated_premium: estimated_premium, errors: estimated_premium_error }
+  end
+  
   private
   
     def self.add_configurer_restrictions(query, configurer, carrier_id)
