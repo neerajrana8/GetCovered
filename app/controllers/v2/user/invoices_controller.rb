@@ -13,11 +13,11 @@ module V2
       #   only: [:index]
       
       def index
-        if params[:short]
-          @invoices = paginator(Invoice.order(created_at: :desc))
+        if params[:short].present?
+          @invoices = paginator(Invoice.where('invoiceable_id = ?', current_user.id).order(created_at: :desc))
           render :short, status: :ok
         else
-          @invoices = paginator(Invoice.order(created_at: :desc))
+          @invoices = paginator(Invoice.where('invoiceable_id = ?', current_user.id).order(created_at: :desc))
           render :index, status: :ok
         end
       end
