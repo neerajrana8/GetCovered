@@ -1,98 +1,38 @@
-# =QBE Policy Quote Functions Concern
+# =MSI Policy Quote Functions Concern
 # file: +app/models/concerns/carrier_qbe_policy.rb+
 
-module CarrierQbePolicyQuote
+module CarrierMsiPolicyQuote
   extend ActiveSupport::Concern
 
   included do
 
-    def set_qbe_external_reference
+    # MOOSE WARNING: PolicyQuote#bind_policy should call this boi if necessary
+    def set_msi_external_reference
       
-      return_status = false
-      
-      if external_reference.nil?
-        
-        loop do
-          self.external_reference = Rails.application.credentials.qbe[:employee_id] + rand(36**7).to_s(36).upcase
-          return_status = true
-          
-          break unless PolicyQuote.exists?(:external_reference => self.external_reference)
-        end
-      end
-      
-      update_column(:external_reference, self.external_reference) if return_status == true
-      
-      return return_status
+      return_status = true # MOOSE WARNING: change it?
       
     end
     
-    # QBE build coverages
+    # MSI build coverages
     
-    def qbe_build_coverages
-      policy_application.insurable_rates.each do |rate|
-        if rate.schedule == 'liability'
-          liability_coverage = self.policy.policy_coverages.new
-          liability_coverage.policy_application = self.policy_application
-          liability_coverage.designation = 'liability'
-          liability_coverage.limit = rate.coverage_limits['liability']
-          liability_coverage.deductible = rate.deductibles["all_peril"]
-          liability_coverage.special_deductible = rate.deductibles["hurricane"] if rate.deductibles.key?("hurricane")
-          liability_coverage.enabled = true
-
-          medical_coverage = self.policy.policy_coverages.new
-          medical_coverage.policy_application = self.policy_application
-          medical_coverage.designation = 'medical'
-          medical_coverage.limit = rate.coverage_limits['medical']
-          medical_coverage.deductible = rate.deductibles["all_peril"]
-          medical_coverage.special_deductible = rate.deductibles["hurricane"] if rate.deductibles.key?("hurricane")
-          medical_coverage.enabled = true
-
-          liability_coverage.save
-          medical_coverage.save
-        elsif rate.schedule == 'coverage_c'
-          coverage = self.policy.policy_coverages.new
-          coverage.policy_application = self.policy_application
-          coverage.designation = rate.schedule
-          coverage.limit = rate.coverage_limits[rate.schedule]
-          coverage.deductible = rate.deductibles["all_peril"]
-          coverage.special_deductible = rate.deductibles["hurricane"] if rate.deductibles.key?("hurricane")
-          coverage.enabled = true
-
-          coverage_d = self.policy.policy_coverages.new
-          coverage_d.policy_application = self.policy_application
-          coverage_d.designation = "loss_of_use"
-          coverage_d.limit = rate.coverage_limits[rate.schedule] * 0.2
-          coverage_d.deductible = rate.deductibles["all_peril"]
-          coverage_d.special_deductible = rate.deductibles["hurricane"] if rate.deductibles.key?("hurricane")
-          coverage_d.enabled = true
-
-          coverage.save
-          coverage_d.save
-        elsif rate.schedule == 'optional'
-          designation = nil
-
-          if rate.sub_schedule == "policy_fee"
-            designation = "qbe_fee"
-          else
-            designation = rate.sub_schedule
-          end
-
-          coverage = self.policy.policy_coverages.new
-          coverage.policy_application = self.policy_application
-          coverage.designation = designation
-          coverage.limit = rate.coverage_limits["coverage_c"]
-          coverage.deductible = rate.deductibles["all_peril"]
-          coverage.special_deductible = rate.deductibles["hurricane"] if rate.deductibles.key?("hurricane")
-          coverage.enabled = true
-
-          coverage.save
-        end
+    def msi_build_coverages
+      self.policy_application.coverage_selections.select{|covsel| covsel['selection'] != false }.each do |covsel|
+        self.policy.policy_coverages.create(
+          policy_application: self.policy_application,
+          title: covsel['title'],
+          designation: covsel['uid'],
+          schedule: covsel['category'],
+          limit: covsel['category'] != 'coverage' ? 0 : [nil, true].include?(covsel['selection']) ? 0 : covsel['selection'].to_i,
+          deductible: covsel['category'] != 'deductible' ? 0 : [nil, true].include?(covsel['selection']) ? 0 : covsel['selection'].to_i,
+          enabled: true
+        )
       end
     end
     
-    # QBE Bind
+    # MSI Bind
   
-    def qbe_bind
+    def msi_bind
+      # MOOSE WARNING: modify qbe bind methods here
       @bind_response = {
         :error => true,
         :message => nil,
@@ -100,7 +40,7 @@ module CarrierQbePolicyQuote
       }
       
 	 		if accepted? && policy.nil?
-		 		if policy_application.carrier.id == 1
+		 		if policy_application.carrier_id == 5
 
 	        event = events.new(
 	          verb: 'post', 
