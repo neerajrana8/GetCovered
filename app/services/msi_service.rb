@@ -64,14 +64,16 @@ class MsiService
     'USA' => {
       'loss_of_use' => {
         'message' => 'Cov D must be greater of $2000 or 20% of Cov C, unless Additional Protection Added (then 40%)',
-        'code' => ['=',
-          ['value', 'coverage', @@coverage_codes[:CoverageD][:code]],
-          ['max',
-            ['*', 
-              0.2, #['if', ['selected', ###add_prot###], 0.4, 0.2] # MOOSE WARNING: what is 'additional protection', which coverage letter? look it up & replace!
-              ['value', 'coverage', @@coverage_codes[:CoverageC][:code]]
-            ],
-            2000
+        'code' => ['if', ['selected', 'coverage', @@coverage_codes[:CoverageC][:code]],
+          ['=',
+            ['value', 'coverage', @@coverage_codes[:CoverageD][:code]],
+            ['max',
+              ['*', 
+                0.2, #['if', ['selected', ###add_prot###], 0.4, 0.2] # MOOSE WARNING: what is 'additional protection', which coverage letter? look it up & replace!
+                ['value', 'coverage', @@coverage_codes[:CoverageC][:code]]
+              ],
+              2000
+            ]
           ]
         ]
       },
@@ -483,7 +485,7 @@ class MsiService
               :'' => { LocationRef: 0, id: "Dwell1" },
               PolicyTypeCd: 'H04'
             },
-            Coverage: coverages_raw
+            Coverage: coverage_raw
           },
           InsuredOrPrincipal: [
             {
@@ -496,7 +498,7 @@ class MsiService
               InsuredOrPrincipalInfo: {
                 InsuredOrPrincipalRoleCd: "PRIMARYNAMEDINSURED"
               },
-              GeneralPartyInfo:             primary_insured == ::User ? primary_insured.get_msi_general_party_info : primary_insured
+              GeneralPartyInfo:             primary_insured.class == ::User ? primary_insured.get_msi_general_party_info : primary_insured
             }
           ] + additional_insured.map do |ai|
             {

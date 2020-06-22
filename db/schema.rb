@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_06_20_190037) do
+ActiveRecord::Schema.define(version: 2020_06_22_190059) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -912,6 +912,8 @@ ActiveRecord::Schema.define(version: 2020_06_20_190037) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.bigint "policy_group_id"
+    t.boolean "only_fees_internal", default: false
+    t.integer "external_fees", default: 0
     t.index ["billing_strategy_id"], name: "index_policy_group_premia_on_billing_strategy_id"
     t.index ["commission_strategy_id"], name: "index_policy_group_premia_on_commission_strategy_id"
     t.index ["policy_group_id"], name: "index_policy_group_premia_on_policy_group_id"
@@ -1011,6 +1013,8 @@ ActiveRecord::Schema.define(version: 2020_06_20_190037) do
     t.integer "special_premium", default: 0
     t.boolean "include_special_premium", default: false
     t.integer "unearned_premium", default: 0
+    t.boolean "only_fees_internal", default: false
+    t.integer "external_fees", default: 0
     t.index ["billing_strategy_id"], name: "index_policy_premia_on_billing_strategy_id"
     t.index ["commission_strategy_id"], name: "index_policy_premia_on_commission_strategy_id"
     t.index ["policy_id"], name: "index_policy_premia_on_policy_id"
@@ -1040,6 +1044,7 @@ ActiveRecord::Schema.define(version: 2020_06_20_190037) do
     t.integer "est_premium"
     t.string "external_id"
     t.bigint "policy_group_quote_id"
+    t.jsonb "carrier_payment_data"
     t.index ["account_id"], name: "index_policy_quotes_on_account_id"
     t.index ["agency_id"], name: "index_policy_quotes_on_agency_id"
     t.index ["external_id"], name: "index_policy_quotes_on_external_id", unique: true

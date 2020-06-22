@@ -89,7 +89,7 @@ module V2
                state: @policy_quote.policy_application.primary_insurable.primary_address.state,
               line_breaks: true
             )
-            event.request = msi_service.comkpiled_rxml
+            event.request = msi_service.compiled_rxml
             event.save
             event.started = Time.now
             result = msis.call
@@ -149,7 +149,7 @@ module V2
                 ]
               end
               # bind
-				    	@quote_attempt = @policy_quote.accept(bind_params)
+				    	@quote_attempt = @policy_quote.accept(bind_params: bind_params)
 				    	@policy_type_identifier = @policy_quote.policy_application.policy_type_id == 5 ? "Rental Guarantee" : "Policy"
 							if @quote_attempt[:success]
 								::Analytics.track(

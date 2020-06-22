@@ -330,16 +330,16 @@ class InsurableRateConfiguration < ApplicationRecord
           elsif assert.class == ::Hash
             case assert['interval']
               when '()'
-                options.select!{|opt| opt > assert['start'] && opt < assert['end'] }
+                options.select!{|opt| opt.to_d > assert['start'] && opt.to_d < assert['end'] }
               when '(]'
-                options.select!{|opt| opt > assert['start'] && opt <= assert['end'] }
+                options.select!{|opt| opt.to_d > assert['start'] && opt.to_d <= assert['end'] }
               when '[)'
-                options.select!{|opt| opt >= assert['start'] && opt < assert['end'] }
+                options.select!{|opt| opt.to_d >= assert['start'] && opt.to_d < assert['end'] }
               when '[]'
-                options.select!{|opt| opt >= assert['start'] && opt <= assert['end'] }
+                options.select!{|opt| opt.to_d >= assert['start'] && opt.to_d <= assert['end'] }
             end
           else
-            options.select!{|opt| opt.to_d == assert }
+            options.select!{|opt| opt.to_d == assert.to_d }
           end
         end
     end
@@ -410,26 +410,26 @@ class InsurableRateConfiguration < ApplicationRecord
           when '[]', '()', '[)', '(]'
             { 'interval' => code[0], 'start' => num(execute(code[1], options, selections)), 'end' => num(execute(code[2], options, selections)) }
           when '=='
-            (num(execute(code[1], options, selections)) - num(execute(code[2], options, selections))).abs <= (num(code[3], options, selections) || 0)
+            (num(execute(code[1], options, selections)) - num(execute(code[2], options, selections))).abs <= num(execute(code[3], options, selections) || 0)
           when '<'
-            (num(execute(code[1], options, selections)) - num(execute(code[2], options, selections))) < (num(code[3], options, selections) || 0)
+            (num(execute(code[1], options, selections)) - num(execute(code[2], options, selections))) < num(execute(code[3], options, selections) || 0)
           when '>'
-            (num(execute(code[1], options, selections)) - num(execute(code[2], options, selections))) > -(num(code[3], options, selections) || 0)
+            (num(execute(code[1], options, selections)) - num(execute(code[2], options, selections))) > -num(execute(code[3], options, selections) || 0)
           when '<='
-            (num(execute(code[1], options, selections)) - num(execute(code[2], options, selections))) <= (num(code[3], options, selections) || 0)
+            (num(execute(code[1], options, selections)) - num(execute(code[2], options, selections))) <= num(execute(code[3], options, selections) || 0)
           when '>='
-            (num(execute(code[1], options, selections)) - num(execute(code[2], options, selections))) >= -(num(code[3], options, selections) || 0)
+            (num(execute(code[1], options, selections)) - num(execute(code[2], options, selections))) >= -num(execute(code[3], options, selections) || 0)
           when 'selected'
-            selections.find{|s| s['category'] == execute(code[1], options, selections) && s['uid'] == execute(code[2], options, selections) }&.[]('selection') ? true : false
+            selections.find{|s| s['category'] == execute(code[1], options, selections).to_s && s['uid'] == execute(code[2], options, selections).to_s }&.[]('selection') ? true : false
           when 'requirement'
-            found = options.find{|s| s['category'] == execute(code[1], options, selections) && s['uid'] == execute(code[2], options, selections) }
+            found = options.find{|s| s['category'] == execute(code[1], options, selections).to_s && s['uid'] == execute(code[2], options, selections).to_s }
             if found.nil? || found['enabled'] == false
               REQUIREMENT_TYPES['forbidden']
             else
               REQUIREMENT_TYPES[found['requirement'] || 'forbidden']
             end
           when 'value'
-            found = selections.find{|s| s['category'] == execute(code[1], options, selections) && s['uid'] == execute(code[2], options, selections) }
+            found = selections.find{|s| s['category'] == execute(code[1], options, selections).to_s && s['uid'] == execute(code[2], options, selections).to_s }
             if found.nil? || found['selection'].nil?
               0.to_d # just return zero instead of throwing throw 'no_value'
             else
@@ -496,6 +496,23 @@ class InsurableRateConfiguration < ApplicationRecord
     end.compact
   end
   
+  def self.get_selection_errors(selections, options)
+    options.select{|opt| opt['requirement'] == 'required' }.each do |opt|
+      sel = selections.find{|s| s['category'] == opt['category'] && s['uid'] == opt['uid'] }
+      return "#{opt['title']} selection is required" if sel.nil? || !sel['selection']
+    end
+    selections.select{|sel| sel['selection'] }.each do |sel|
+      opt = options.find{|o| o['category'] == sel['category'] && o['uid'] == sel['uid'] }
+      return "#{opt['title']} is not a valid coverage option" if opt['enabled'] == false
+      return "#{opt['title']} selection is not allowed" if ['forbidden', 'locked'].include?(opt['requirement'])
+      case opt['options_type']
+        when 'multiple_choice'
+          return "#{opt['title']} selection is not a valid choice" unless opt['options'].map{|o| o.to_d }.include?(sel['selection'].to_d)
+      end
+    end
+    return nil
+  end
+  
   def self.get_coverage_options(carrier_id, carrier_insurable_profile, selections, effective_date, additional_insured_count, insurable_type_id: 4, account: carrier_insurable_profile.insurable.account, eventable: nil)
     cip = carrier_insurable_profile
     carrier_insurable_type = CarrierInsurableType.where(carrier_id: carrier_id, insurable_type_id: insurable_type_id).take
@@ -508,18 +525,19 @@ class InsurableRateConfiguration < ApplicationRecord
       irc.merge_options!(coverage_options, mutable: false, allow_new_coverages: COVERAGE_ADDING_CONFIGURERS.include?(irc.configurer_type))
       coverage_options = irc.annotate_options(selections)
     end
-    # call GetFinalPremium to get estimate
-    valid = false
+    # validate selections
     estimated_premium = {}
-    estimated_premium_error = nil
-    # MOOSE WARNING: add validation method for rule satisfaction, skip msi call if it fails
+    estimated_premium_error = get_selection_errors(selections, coverage_options)
+    valid = estimated_premium_error.nil?
+    estimated_premium_error = { internal: estimated_premium_error, external: estimated_premium_error } unless estimated_premium_error.nil?
+    # call GetFinalPremium to get estimate
     msis = MsiService.new
     event = ::Event.new(
       eventable: eventable,
       verb: 'post',
       format: 'xml',
       interface: 'REST',
-      endpoint: msi_service.endpoint_for(:final_premium),
+      endpoint: msis.endpoint_for(:final_premium),
       process: 'msi_final_premium'
     )
     result = msis.build_request(:final_premium,
@@ -552,10 +570,11 @@ class InsurableRateConfiguration < ApplicationRecord
     selections.each{|sel| sel.delete('options') } # remove the options we inserted for convenience (but leave the options_format string we inserted)
     if !result
       # failed to get final premium
-      estimated_premium_error = { internal: msis.errors.to_s, external: "Unknown error occurred" }
+      valid = false
+      estimated_premium_error = { internal: msis.errors.to_s, external: "Unknown error occurred" } if estimated_premium_error.blank? # error before making the call
     else
       # make the call
-      event.request = msi_service.comkpiled_rxml
+      event.request = msis.compiled_rxml
       event.save
       event.started = Time.now
       result = msis.call
@@ -565,9 +584,9 @@ class InsurableRateConfiguration < ApplicationRecord
       event.save
       # handle the result
       if result[:error]
-        estimated_premium_error = { internal: result[:external_message].to_s, external: "Error calculating premium" } # MOOSE WARNING: probably just means selections aren't valid yet... check first maybe? should we set the error to result[:error] to send to the user?
+        valid = false
+        estimated_premium_error = { internal: result[:external_message].to_s, external: "Error calculating premium" } if estimated_premium_error.blank?
       else
-        valid = true
         estimated_premium = [result[:data].dig("MSIACORD", "InsuranceSvcRs", "RenterPolicyQuoteInqRs", "PersPolicy", "PaymentPlan")].flatten
                                         .map do |plan|
                                           [

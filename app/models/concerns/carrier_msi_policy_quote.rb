@@ -21,7 +21,6 @@ module CarrierMsiPolicyQuote
           policy_application: self.policy_application,
           title: covsel['title'],
           designation: covsel['uid'],
-          schedule: covsel['category'],
           limit: covsel['category'] != 'coverage' ? 0 : [nil, true].include?(covsel['selection']) ? 0 : covsel['selection'].to_i,
           deductible: covsel['category'] != 'deductible' ? 0 : [nil, true].include?(covsel['selection']) ? 0 : covsel['selection'].to_i,
           enabled: true
@@ -81,7 +80,7 @@ module CarrierMsiPolicyQuote
         verb: 'post',
         format: 'xml',
         interface: 'REST',
-        endpoint: msi_service.endpoint_for(:bind_policy),
+        endpoint: msis.endpoint_for(:bind_policy),
         process: 'msi_bind_policy'
       )
       result = msis.build_request(:bind_policy,
@@ -95,7 +94,7 @@ module CarrierMsiPolicyQuote
         primary_insured:    primary_insured,
         additional_insured: additional_insured,
         additional_interest: [], # MOOSE WARNING: put the Account here somehow!!!!!!
-        coverages_raw: policy_application.coverage_selections.map do |sel|
+        coverage_raw: policy_application.coverage_selections.map do |sel|
           if sel['category'] == 'coverage'
             {
               CoverageCd: sel['uid']
@@ -125,6 +124,7 @@ module CarrierMsiPolicyQuote
         PolicyBindWarningNotificationJob.perform_later(message: @bind_response[:message])
         return @bind_response
       end
+      event.request = msis.compiled_rxml
       event.started = Time.now
       result = msis.call
       event.completed = Time.now
@@ -132,7 +132,7 @@ module CarrierMsiPolicyQuote
       event.status = result[:error] ? 'error' : 'success'
       event.save
       if result[:error]
-        @bind_response[:message] = "MSI bind failure (Event ID: #{event.id})\nMSI Error: #{result[:external_message]}\n#{result[:extended_external_message]}"
+        @bind_response[:message] = "MSI bind failure (Event ID: #{event.id || event.errors.to_h})\nMSI Error: #{result[:external_message]}\n#{result[:extended_external_message]}"
         PolicyBindWarningNotificationJob.perform_later(message: @bind_response[:message])
         return @bind_response
       end

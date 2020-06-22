@@ -82,7 +82,7 @@ class PolicyApplication < ApplicationRecord
                
   def estimate(args = [])
     method = "#{carrier.integration_designation}_estimate"
-    complete? && respond_to?(method) ? send(method, args) : false
+    complete? && respond_to?(method) ? send(*([method] + args)) : false
   end
   
   # PolicyApplication.quote()

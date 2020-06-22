@@ -90,7 +90,7 @@ class PolicyQuote < ApplicationRecord
       self.set_qbe_external_reference if policy_application.carrier.id == 1
 
       if update(status: "accepted") && start_billing()
-        bind_request = self.send(*([quote_attempt[:bind_method]] + bind_params))
+        bind_request = self.send(*([quote_attempt[:bind_method]] + (bind_params.class == ::Array ? bind_params : [bind_params])))
 
         unless bind_request[:error]
           if policy_application.policy_type.title == "Residential"
@@ -164,7 +164,7 @@ class PolicyQuote < ApplicationRecord
           end
         else
           logger.error "Policy quote errors: #{self.errors.to_json}\nQuote attempt: #{quote_attempt}"
-          quote_attempt[:message] = "Unable to bind policy"
+          quote_attempt[:message] = "Unable to bind policy\n PQ errors: #{self.errors.to_s}\n Bind data: #{bind_request}"
         end
       else
         logger.error "Policy quote errors: #{self.errors.to_json}\nQuote attempt: #{quote_attempt}"

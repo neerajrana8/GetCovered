@@ -182,6 +182,7 @@ while @addresses.length > 0
       args[:carrier_id] = carrier_assignment_id
       # try qbe
       if args[:carrier_id] == 1
+        next # MOOSE WARNING: remove this!! it skips qbe!
         if account.agency.offers_policy_type_in_region(args)
           @community = account.insurables.new(title: "#{Faker::Movies::LordOfTheRings.location} #{@building_name_options[rand(0..3)]}", 
                                               insurable_type: @residential_community_insurable_type, 

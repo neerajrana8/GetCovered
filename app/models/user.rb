@@ -234,7 +234,7 @@ class User < ApplicationRecord
       },
       Communications: {
         PhoneInfo: {
-          PhoneNumber: self.profile.contact_phone.tr('^0-9', '')
+          PhoneNumber: (self.profile.contact_phone || '').tr('^0-9', '')
         },
         EmailInfo: {
           EmailAddr: self.email

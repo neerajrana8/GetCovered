@@ -51,6 +51,7 @@
 # 	if rand(0..100) > 33 # Create a 66% Coverage Rate
 
   if !lease.insurable.carrier_profile(@qbe_id).nil?
+    next # MOOSE WARNING: remove this! it skips qbe! 
     carrier_id = @qbe_id
 		#.insurable.carrier_profile(3)
 		policy_type = PolicyType.find(1)
@@ -135,16 +136,26 @@
   						
   						acceptance = quote.accept()
   						
-  						quote.reload()
-  						
-  						premium = quote.policy_premium
-  						policy = quote.policy
-  						
-  						message = "POLICY #{ policy.number } has been #{ policy.status.humanize }\n"
-  						message += "Application ID: #{ application.id } | Application Status: #{ application.status } | Quote Status: #{ quote.status }\n" 
-  						message += "Premium Base: $#{ '%.2f' % (premium.base.to_f / 100) } | Taxes: $#{ '%.2f' % (premium.taxes.to_f / 100) } | Fees: $#{ '%.2f' % (premium.total_fees.to_f / 100) } | Total: $#{ '%.2f' % (premium.total.to_f / 100) }"
-  				
+              if acceptance[:success]
+              
+                quote.reload()
+                
+                premium = quote.policy_premium
+                policy = quote.policy
+                
+                message = "POLICY #{ policy.number } has been #{ policy.status.humanize }\n"
+                message += "Application ID: #{ application.id } | Application Status: #{ application.status } | Quote Status: #{ quote.status }\n" 
+                message += "Premium Base: $#{ '%.2f' % (premium.base.to_f / 100) } | Taxes: $#{ '%.2f' % (premium.taxes.to_f / 100) } | Fees: $#{ '%.2f' % (premium.total_fees.to_f / 100) } | Total: $#{ '%.2f' % (premium.total.to_f / 100) }"
+            
+                puts message
+              
+              else
+                
+						  message = "QBE Quote Failed: Application #{ application.id } | Application Status: #{ application.status } | Quote #{quote.id} | Quote Status: #{ quote.status }"
+              message += "\n  Accept message: #{acceptance[:message]}"
               puts message
+              
+              end
               
 						else
 						  puts "Application ID: #{ application.id } | Application Status: #{ application.status } | Quote Status: #{ quote.status }"
@@ -203,7 +214,7 @@
     coverage_selections = []
     result = { valid: false }
     iteration = 0
-    max_iters = 50
+    max_iters = 3
     loop do
       iteration += 1
       result = ::InsurableRateConfiguration.get_coverage_options(
@@ -237,7 +248,10 @@
         puts "Application ID: 'NONE' | Application Status: #{ application.status } | Failed to save application!!!"
       else
         # create quote
-        quote = application.create_msi_quote # MOOSE WARNING: implement this
+        quote = application.estimate
+        #puts "Got quote #{quote.class.name} : #{quote.respond_to?(:id) ? quote.id : 'no id'}"
+        application.quote(quote.id)
+        quote.reload
         if quote.id.nil? || quote.status != 'quoted'
           puts quote.errors.to_h.to_s unless quote.id
           puts "Application ID: #{ application.id } | Application Status: #{ application.status } | Quote ID: #{quote.id} | Quote Status: #{ quote.status }"
@@ -249,8 +263,11 @@
             'payment_token' => @msi_test_card_data[quote.carrier_payment_data['product_id'].to_i][:token],
           }
           # accept quote
-          quote.accept(test_payment_data)
-          if !quote.policy.nil?
+          acceptance = quote.accept(bind_params: test_payment_data)
+          
+          puts "#{acceptance}"
+          
+          if !quote.reload.policy.nil?
             # print a celebratory message
             premium = quote.policy_premium
             policy = quote.policy

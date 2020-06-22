@@ -13,6 +13,7 @@ module CarrierMsiPolicyApplication
 			
 		  quote = quote_id.nil? ? policy_quotes.create!(agency: agency, account: account) : 
 		                          policy_quotes.find(quote_id)
+      quote.update(status: 'estimated')
       return quote
                               
       # There's no need to bother calling GetFinalPremium an extra time here, just do it in msi_quote
@@ -68,15 +69,15 @@ module CarrierMsiPolicyApplication
           )
           # make sure we succeeded
           if !results[:valid]
-            puts "MSI Coverage Validation Or FinalPremium Request Unsuccessful, Errors: #{ results[:errors][:internal] }, Event ID: #{ event.id }"
+            puts "MSI Coverage Validation Or FinalPremium Request Unsuccessful, Errors: #{ results[:errors][:internal] }, Event ID: #{ results[:event].id }"
             quote.mark_failure()
             return false
           elsif results[:msi_data][:error] # just in case
-            puts "MSI FinalPremium Request Unsuccessful, Errors: #{ results[:errors][:internal] }, Event ID: #{ event.id }"
+            puts "MSI FinalPremium Request Unsuccessful, Errors: #{ results[:errors][:internal] }, Event ID: #{ results[:event].id }"
             quote.mark_failure()
             return false
           elsif !self.update(coverage_selections: results[:annotated_selections]) # update our coverage selections with any annotations from the get_coverage_options call
-            puts "MSI Selection Annotation Failed, Errors: #{self.errors.to_h.to_s}, Event ID: #{ event.id }"
+            puts "MSI Selection Annotation Failed, Errors: #{self.errors.to_h.to_s}, Event ID: #{ results[:event].id }"
             quote.mark_failure()
             return false
           else
@@ -84,16 +85,16 @@ module CarrierMsiPolicyApplication
             payment_plan = self.billing_strategy.carrier_code
             installment_count = MsiService::INSTALLMENT_COUNT[payment_plan]
             if installment_count.nil?
-              puts "MSI Missing Installment Count, Payment Plan Carrier Code: '#{payment_plan}', Event ID: #{ event.id }"
+              puts "MSI Missing Installment Count, Payment Plan Carrier Code: '#{payment_plan}', Event ID: #{ results[:event].id }"
               quote.mark_failure()
               return false
             end
-            policy_data = msi_data[:data].dig("MSIACORD", "InsuranceSvcRs", "RenterPolicyQuoteInqRs", "PersPolicy")
+            policy_data = results[:msi_data][:data].dig("MSIACORD", "InsuranceSvcRs", "RenterPolicyQuoteInqRs", "PersPolicy")
             product_uid = policy_data["CompanyProductCd"]
             msi_policy_fee = policy_data["MSI_PolicyFee"] # not sure how this fits into anything
             payment_data = policy_data["PaymentPlan"].find{|pp| pp["PaymentPlanCd"] = payment_plan }
             if payment_data.nil?
-              puts "MSI FinalPremium PaymentData Nonexistent, Payment Plan Carrier Code: '#{payment_plan}', Event ID: #{ event.id }"
+              puts "MSI FinalPremium PaymentData Nonexistent, Payment Plan Carrier Code: '#{payment_plan}', Event ID: #{ results[:event].id }"
               quote.mark_failure()
               return false
             end
@@ -110,7 +111,7 @@ module CarrierMsiPolicyApplication
               reading = "MSI_DownPaymentAmount"
               down_payment = (payment_data.dig("MSI_DownPaymentAmount", "Amt").to_d * 100).ceil             # the total amount of the first payment
             rescue NoMethodError => e
-              puts "MSI FinalPremium PaymentData Missing Field '#{reading}', Payment Plan Carrier Code: '#{payment_plan}', Event ID: #{ event.id }"
+              puts "MSI FinalPremium PaymentData Missing Field '#{reading}', Payment Plan Carrier Code: '#{payment_plan}', Event ID: #{ results[:event].id }"
               quote.mark_failure()
               return false
             end
@@ -143,6 +144,7 @@ module CarrierMsiPolicyApplication
             )
             premium.set_fees
             premium.calculate_fees(true)
+            premium.calculate_total(true)
             # woot
             quote_method = premium.save ? "mark_successful" : "mark_failure"
             quote.send(quote_method)

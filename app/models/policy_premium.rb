@@ -103,7 +103,7 @@ class PolicyPremium < ApplicationRecord
   def calculate_total(persist = false)
     self.total = self.combined_premium() + self.taxes + self.total_fees
     self.carrier_base = self.combined_premium() + self.taxes
-    self.calculation_base = self.combined_premium() + self.taxes + self.amortized_fees
+    self.calculation_base = self.combined_premium(internal: true) + self.internal_taxes + self.amortized_fees
     save() if self.total > 0 && persist
   end
   
