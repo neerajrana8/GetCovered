@@ -34,7 +34,7 @@ class User
             customer.save
 
             payment_profile = PaymentProfile.create(
-              source_id: token_data.card.id,
+              source_id: Rails.env.to_sym == :awsdev ? 'tok_visa' : token_data.card.id, # Dirty hack upon request from the front-end team
               source_type: 'card',
               fingerprint: token_data.card.fingerprint,
               payer: user,
