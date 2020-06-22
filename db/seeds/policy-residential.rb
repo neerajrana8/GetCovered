@@ -263,9 +263,6 @@
           }
           # accept quote
           acceptance = quote.accept(bind_params: test_payment_data)
-          
-          puts "#{acceptance}"
-          
           if !quote.reload.policy.nil?
             # print a celebratory message
             premium = quote.policy_premium

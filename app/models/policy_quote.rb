@@ -163,8 +163,8 @@ class PolicyQuote < ApplicationRecord
             quote_attempt[:message] = "Unable to save policy in system"
           end
         else
-          logger.error "Policy quote errors: #{self.errors.to_json}\nQuote attempt: #{quote_attempt}"
-          quote_attempt[:message] = "Unable to bind policy\n PQ errors: #{self.errors.to_s}\n Bind data: #{bind_request}"
+          logger.error "Bind Failure; Message: #{bind_request[:message]}"
+          quote_attempt[:message] = "Unable to bind policy"
         end
       else
         logger.error "Policy quote errors: #{self.errors.to_json}\nQuote attempt: #{quote_attempt}"
