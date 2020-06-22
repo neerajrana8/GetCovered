@@ -527,7 +527,7 @@ class InsurableRateConfiguration < ApplicationRecord
       additional_insured_count: additional_insured_count,
       additional_interest_count: 0, # MOOSE WARNING: or 1, to include prop manager?
       community_id: cip.external_carrier_id,
-      coverages_formatted:  temp = selections.select{|s| s['selection'] }
+      coverages_formatted:  selections.select{|s| s['selection'] }
                               .map{|s| s['options'] = coverage_options.find{|co| co['category'] == s['category'] && co['uid'] == s['uid'] }; s }
                               .select{|s| !s['options'].nil? }
                               .map do |sel|
@@ -535,13 +535,13 @@ class InsurableRateConfiguration < ApplicationRecord
                                   {
                                     CoverageCd: sel['uid']
                                   }.merge(sel['selection'] == true ? {} : {
-                                    Limit: { Amt: sel['selection'] }
+                                    Limit: (sel['options_format'] = sel['options']['options_format'] || 'currency') == 'percent' ? { FormatPct: sel['selection'].to_d / 100.to_d } : { Amt: sel['selection'] }
                                   })
                                 elsif sel['category'] == 'deductible'
                                   {
                                     CoverageCd: sel['uid']
                                   }.merge(sel['selection'] == true ? {} : {
-                                    Deductible: sel['options']['options_format'] == 'percent' ? { FormatPct: sel['selection'].to_d / 100.to_d } : { Amt: sel['selection'] }
+                                    Deductible: (sel['options_format'] = sel['options']['options_format'] || 'currency') == 'percent' ? { FormatPct: sel['selection'].to_d / 100.to_d } : { Amt: sel['selection'] }
                                   })
                                 else
                                   nil
@@ -549,6 +549,7 @@ class InsurableRateConfiguration < ApplicationRecord
                               end.compact,
       line_breaks: true
     )
+    selections.each{|sel| sel.delete('options') } # remove the options we inserted for convenience (but leave the options_format string we inserted)
     if !result
       # failed to get final premium
       estimated_premium_error = { internal: msis.errors.to_s, external: "Unknown error occurred" }
@@ -584,7 +585,8 @@ class InsurableRateConfiguration < ApplicationRecord
       errors: estimated_premium_error
     }.merge(eventable.class != ::PolicyQuote ? {} : {
       msi_data: result,
-      event: event
+      event: event,
+      annotated_selections: selections # for now we just inserted options_format everywhere, we didn't even copy the hash
     })
   end
   

@@ -429,7 +429,7 @@ class MsiService
      maddress: nil, maddress_line_one: nil, maddress_line_two: nil, mcity: nil, mstate: nil, mzip: nil, # provide EITHER address OR these other params
      payment_merchant_id:, payment_processor:, payment_method:, payment_info:, payment_other_id:,
      primary_insured:, additional_insured:, additional_interest:,
-     coverage_DEBUG:, # MOOSE WARNING: for debug!
+     coverage_raw:, # WARNING: raw msi formatted coverage hash; modify later to accept a nicer format
     **compilation_args
   )
     # set up
@@ -483,7 +483,7 @@ class MsiService
               :'' => { LocationRef: 0, id: "Dwell1" },
               PolicyTypeCd: 'H04'
             },
-            Coverage: coverage_DEBUG
+            Coverage: coverages_raw
           },
           InsuredOrPrincipal: [
             {

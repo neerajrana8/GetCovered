@@ -64,7 +64,7 @@ module CarrierMsiPolicyApplication
             self.coverage_selections,
             self.effective_date,
             self.users.count - 1,
-            eventable: quote # by passing a PolicyQuote we ensure results[:msi_data] & results[:event] get passed back out
+            eventable: quote # by passing a PolicyQuote we ensure results[:msi_data], results[:event], and results[:annotated_selections] get passed back out
           )
           # make sure we succeeded
           if !results[:valid]
@@ -73,6 +73,10 @@ module CarrierMsiPolicyApplication
             return false
           elsif results[:msi_data][:error] # just in case
             puts "MSI FinalPremium Request Unsuccessful, Errors: #{ results[:errors][:internal] }, Event ID: #{ event.id }"
+            quote.mark_failure()
+            return false
+          elsif !self.update(coverage_selections: results[:annotated_selections]) # update our coverage selections with any annotations from the get_coverage_options call
+            puts "MSI Selection Annotation Failed, Errors: #{self.errors.to_h.to_s}, Event ID: #{ event.id }"
             quote.mark_failure()
             return false
           else
@@ -129,11 +133,11 @@ module CarrierMsiPolicyApplication
             end
             quote.update(carrier_payment_data: { 'product_id' => product_uid, 'payment_methods' => payment_methods })
             # build policy premium
-            ############# MOOSE WARNING: currently no support for EXTERNAL 'invoices'; all of this will be charged on invoice!!!! ##########
             premium = PolicyPremium.new(
               base: down_payment + premium_installment * installment_count,
               taxes: 0,
-              amortized_fees: fee_installment * installment_count,
+              external_fees: fee_installment * installment_count,
+              only_fees_internal: true,
               billing_strategy: self.billing_strategy,
               policy_quote: quote
             )

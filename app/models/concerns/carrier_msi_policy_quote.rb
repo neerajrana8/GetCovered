@@ -95,8 +95,23 @@ module CarrierMsiPolicyQuote
         primary_insured:    primary_insured,
         additional_insured: additional_insured,
         additional_interest: [], # MOOSE WARNING: put the Account here somehow!!!!!!
-        coverage_DEBUG: (coverages + deductibles), ####### MOOSE WARNING: THIS THIS THIS needs to be fixed
-        
+        coverages_raw: policy_application.coverage_selections.map do |sel|
+          if sel['category'] == 'coverage'
+            {
+              CoverageCd: sel['uid']
+            }.merge(sel['selection'] == true ? {} : {
+              Limit: sel['options_format'] == 'percent' ? { FormatPct: sel['selection'].to_d / 100.to_d } : { Amt: sel['selection'] }
+            })
+          elsif sel['category'] == 'deductible'
+            {
+              CoverageCd: sel['uid']
+            }.merge(sel['selection'] == true ? {} : {
+              Deductible: sel['options_format'] == 'percent' ? { FormatPct: sel['selection'].to_d / 100.to_d } : { Amt: sel['selection'] }
+            })
+          else
+            nil
+          end
+        end.compact,
         payment_merchant_id:  payment_merchant_id,
         payment_processor:    payment_processor,
         payment_method:       payment_method,
