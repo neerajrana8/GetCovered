@@ -95,7 +95,7 @@ module CarrierMsiPolicyQuote
         primary_insured:    primary_insured,
         additional_insured: additional_insured,
         additional_interest: [], # MOOSE WARNING: put the Account here somehow!!!!!!
-        coverage_DEBUG: (coverages + deductibles),
+        coverage_DEBUG: (coverages + deductibles), ####### MOOSE WARNING: THIS THIS THIS needs to be fixed
         
         payment_merchant_id:  payment_merchant_id,
         payment_processor:    payment_processor,

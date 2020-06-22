@@ -198,6 +198,24 @@ module V2
 					params.require(:user).permit( :id, :source )
 				end
         
+        def accept_policy_quote_payment_params
+          params.require(:payment).permit(:payment_method, :token,
+            CreditCardInfo: [
+              :CardHolderName,
+              :CardExpirationDate,
+              :CardType,
+              :CreditCardLast4Digits,
+              Addr: [
+                :Addr1,
+                :Addr2,
+                :City,
+                :StateProvCd,
+                :PostalCode
+              ]
+            ]
+          )
+        end
+        
     end
   end # module Public
 end
