@@ -111,11 +111,11 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
   {
     title: "Millennial Services Insurance",
     integration_designation: 'msi',
-    syncable: false, # MOOSE WARNING: fix these
-    rateable: false,
-    quotable: false,
-    bindable: false,
-    verifiable: false,
+	  syncable: false, 
+	  rateable: true, 
+	  quotable: true, 
+	  bindable: true, 
+	  verifiable: false, 
     enabled: true
   }
 ]

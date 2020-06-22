@@ -189,12 +189,12 @@ class PolicyQuote < ApplicationRecord
     case policy_application.carrier.integration_designation
       when 'qbe'
         qbe_build_coverages
-      when 'qbe_specialty'
-        # MOOSE WARNING: do anything?
+      when 'qbe_specialty' # WARNING: the following aren't really errors... but they also aren't checked anywhere, so it doesn't hurt to leave them for now
         { error: 'No build coverages for QBE Specialty' }
       when 'crum'
-        # MOOSE WARNING: do anything?
         { error: 'No build coverages for Crum' }
+      when 'pensio'
+        { error: 'No build coverages for Pensio' }
       when 'msi'
         msi_build_coverages
       else
