@@ -51,7 +51,6 @@
 # 	if rand(0..100) > 33 # Create a 66% Coverage Rate
 
   if !lease.insurable.carrier_profile(@qbe_id).nil?
-    next # MOOSE WARNING: remove this! it skips qbe! 
     carrier_id = @qbe_id
 		#.insurable.carrier_profile(3)
 		policy_type = PolicyType.find(1)
