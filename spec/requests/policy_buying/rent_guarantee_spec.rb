@@ -131,7 +131,7 @@ describe 'Policy buying' do
       it 'a new user' do
         # Create policy application
         params = Helpers::RentGuaranteeFormParamsGenerator.run!(agency_id: @agency.id)
-        post('/v2/users/policy-applications', params: params[:create_policy_application], headers: headers.merge(@auth_headers))
+        post('/v2/user/policy-applications', params: params[:create_policy_application], headers: headers.merge(@auth_headers))
         expect(response.status).to eq(200)
         response_json = JSON.parse(response.body)
         policy_application_id = response_json['id']
@@ -169,10 +169,9 @@ describe 'Policy buying' do
       end
 
       it 'a logged in user' do
-        pending('should be fixed')
         # Create policy application
         params = Helpers::RentGuaranteeFormParamsGenerator.run!(agency_id: @agency.id, applicant_email: @user.email)
-        post('/v2/users/policy-applications', params: params[:create_policy_application], headers: headers.merge(@auth_headers))
+        post('/v2/user/policy-applications', params: params[:create_policy_application], headers: headers.merge(@auth_headers))
         expect(response.status).to eq(200)
         response_json = JSON.parse(response.body)
         policy_application_id = response_json['id']
@@ -198,7 +197,7 @@ describe 'Policy buying' do
         policy_application.reload
 
         expect(policy_application.status).to eq('accepted')
-        expect(policy_application.users.find_by_email('applicant@email.com')).to be_present
+        expect(policy_application.users.find_by_email(@user.email)).to be_present
         expect(policy_application.policy_quotes.last.invoices.order(:due_date).first.status).to eq('complete')
 
         policy = policy_application.policy
@@ -211,7 +210,8 @@ describe 'Policy buying' do
 
       it 'a new user with a new co-tenant' do
         params = Helpers::RentGuaranteeFormParamsGenerator.run!(co_tenant: {}, agency_id: @agency.id)
-        post('/v2/policy-applications', params: params[:create_policy_application], headers: headers)
+        post('/v2/user/policy-applications', params: params[:create_policy_application], headers: headers.merge(@auth_headers))
+        ap response.body
         expect(response.status).to eq(200)
 
         response_json = JSON.parse(response.body)
@@ -253,7 +253,7 @@ describe 'Policy buying' do
 
       it 'a new user with a logged co-tenant' do
         params = Helpers::RentGuaranteeFormParamsGenerator.run!(co_tenant: { email: @user.email }, agency_id: @agency.id)
-        post('/v2/users/policy-applications', params: params[:create_policy_application], headers: headers)
+        post('/v2/user/policy-applications', params: params[:create_policy_application], headers: headers.merge(@auth_headers))
         expect(response.status).to eq(401)
         expected_body = {
           'error' => 'Address mismatch',
