@@ -266,9 +266,7 @@ module V2
         
         @application = PolicyApplication.new(create_residential_params)
         
-        if @application.agency.nil? && 
-	         @application.account.nil?
-	         
+        if @application.agency.nil? && @application.account.nil?
 	        @application.agency = Agency.where(master_agency: true).take 
 	      elsif @application.agency.nil?
           @application.agency = @application.account.agency  
@@ -279,11 +277,11 @@ module V2
     	      if @application.update status: "complete"
   
             	# if application.status updated to complete
-            	@application.qbe_estimate()
-            	@quote = @application.policy_quotes.last
+            	@application.estimate()
+            	@quote = @application.policy_quotes.order('created_at ASC').last
     					if @application.status != "quote_failed" || @application.status != "quoted"
     						# if application quote success or failure
-    						@application.qbe_quote(@quote.id) 
+    						@application.quote(@quote.id) 
     						@application.reload()
     						@quote.reload()
     						
@@ -349,11 +347,11 @@ module V2
           if @policy_application.update(update_residential_params) && 
              @policy_application.update(status: "complete")
              
-          	@policy_application.qbe_estimate()
-          	@quote = @policy_application.policy_quotes.last
+          	@policy_application.estimate()
+          	@quote = @policy_application.policy_quotes.order("updated_at ASC").last
   					if @policy_application.status != "quote_failed" || @policy_application.status != "quoted"
   						# if application quote success or failure
-  						@policy_application.qbe_quote(@quote.id) 
+  						@policy_application.quote(@quote.id) 
   						@policy_application.reload()
   						@quote.reload()
   						
@@ -439,6 +437,12 @@ module V2
 	    end
       
       #### MOOSE WARNING: modify to integrate with the existing policy application flow #####
+      
+      #insurable_id
+      #effective_date
+      #additional_insured
+      #coverage_selections
+      
       def get_coverage_options
         @msi_id = 5
         @residential_community_insurable_type_id = 1
@@ -462,7 +466,8 @@ module V2
           cip,
           params[:coverage_selections] || [],
           params[:effective_date],
-          params[:additional_insured]
+          params[:additional_insured],
+          eventable: unit
         )
         # done
         render json: results.select{|k,v| k != :errors }.merge({ estimated_premium_errors: results[:errors][:external] }),

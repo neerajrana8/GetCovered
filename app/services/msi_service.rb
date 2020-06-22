@@ -58,6 +58,8 @@ class MsiService
     SelfStorageBuyBack:                           { code: 1081, limit: false }
   }
   
+  INSTALLMENT_COUNT = { "Annual" => 0, "SemiAnnual" => 1, "Quarterly" => 3, "Monthly" => 10 }
+  
   RULE_SPECIFICATION = {
     'USA' => {
       'loss_of_use' => {

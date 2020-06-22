@@ -199,22 +199,22 @@ if @get_covered.save
   # MSI / Get Covered Billing & Commission Strategies
   
   @get_covered.billing_strategies.create!(title: 'Annually', enabled: true, carrier: @msi, 
-                                    				policy_type: PolicyType.find(1), carrier_code: "annual",
+                                    				policy_type: PolicyType.find(1), carrier_code: "Annual",
                                     				fees_attributes: [service_fee])
                                     
-  @get_covered.billing_strategies.create!(title: 'Bi-Annually', enabled: true,  carrier_code: "semiannual",
+  @get_covered.billing_strategies.create!(title: 'Bi-Annually', enabled: true,  carrier_code: "SemiAnnual",
   		                                      new_business: { payments: [50, 0, 0, 0, 0, 0, 50, 0, 0, 0, 0, 0], 
   		                                                      payments_per_term: 2, remainder_added_to_deposit: true },
   		                                      carrier: @msi, policy_type: PolicyType.find(1), 
                                     				fees_attributes: [service_fee])
                                     
-  @get_covered.billing_strategies.create!(title: 'Quarterly', enabled: true,  carrier_code: "quarterly",
+  @get_covered.billing_strategies.create!(title: 'Quarterly', enabled: true,  carrier_code: "Quarterly",
   		                                      new_business: { payments: [25, 0, 0, 25, 0, 0, 25, 0, 0, 25, 0, 0], 
   		                                                      payments_per_term: 4, remainder_added_to_deposit: true },
   		                                      carrier: @msi, policy_type: PolicyType.find(1), 
                                     				fees_attributes: [service_fee])
   # MOOSE WARNING: docs say 20% down payment and 10 monthly payments... wut sense dis make?
-  @get_covered.billing_strategies.create!(title: 'Monthly', enabled: true, carrier_code: "monthly",
+  @get_covered.billing_strategies.create!(title: 'Monthly', enabled: true, carrier_code: "Monthly",
   		                                      new_business: { payments: [22.01, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09], 
   		                                                      payments_per_term: 12, remainder_added_to_deposit: true },
   		                                      renewal: { payments: [8.37, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33], 

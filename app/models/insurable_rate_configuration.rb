@@ -496,7 +496,7 @@ class InsurableRateConfiguration < ApplicationRecord
     end.compact
   end
   
-  def self.get_coverage_options(carrier_id, carrier_insurable_profile, selections, effective_date, additional_insured_count, insurable_type_id: 4, account: carrier_insurable_profile.insurable.account)
+  def self.get_coverage_options(carrier_id, carrier_insurable_profile, selections, effective_date, additional_insured_count, insurable_type_id: 4, account: carrier_insurable_profile.insurable.account, eventable: nil)
     cip = carrier_insurable_profile
     carrier_insurable_type = CarrierInsurableType.where(carrier_id: carrier_id, insurable_type_id: insurable_type_id).take
     # get IRCs
@@ -508,14 +508,22 @@ class InsurableRateConfiguration < ApplicationRecord
       irc.merge_options!(coverage_options, mutable: false, allow_new_coverages: COVERAGE_ADDING_CONFIGURERS.include?(irc.configurer_type))
       coverage_options = irc.annotate_options(selections)
     end
-#return coverage_options #GOOSE
-    # call GetFinalPremium to get estimate MOOSE WARNING: add call logging
+    # call GetFinalPremium to get estimate
     valid = false
     estimated_premium = {}
     estimated_premium_error = nil
+    # MOOSE WARNING: add validation method for rule satisfaction, skip msi call if it fails
     msis = MsiService.new
+    event = ::Event.new(
+      eventable: eventable,
+      verb: 'post',
+      format: 'xml',
+      interface: 'REST',
+      endpoint: msi_service.endpoint_for(:final_premium),
+      process: 'msi_final_premium'
+    )
     result = msis.build_request(:final_premium,
-      effective_date: effective_date,
+      effective_date: effective_date, 
       additional_insured_count: additional_insured_count,
       additional_interest_count: 0, # MOOSE WARNING: or 1, to include prop manager?
       community_id: cip.external_carrier_id,
@@ -545,7 +553,16 @@ class InsurableRateConfiguration < ApplicationRecord
       # failed to get final premium
       estimated_premium_error = { internal: msis.errors.to_s, external: "Unknown error occurred" }
     else
+      # make the call
+      event.request = msi_service.comkpiled_rxml
+      event.save
+      event.started = Time.now
       result = msis.call
+      event.completed = Time.now
+      event.response = msi_data[:data]
+      event.status = msi_data[:error] ? 'error' : 'success'
+      event.save
+      # handle the result
       if result[:error]
         estimated_premium_error = { internal: result[:external_message].to_s, external: "Error calculating premium" } # MOOSE WARNING: probably just means selections aren't valid yet... check first maybe? should we set the error to result[:error] to send to the user?
       else
@@ -560,7 +577,15 @@ class InsurableRateConfiguration < ApplicationRecord
       end
     end
     # done
-    return { valid: valid, coverage_options: coverage_options, estimated_premium: estimated_premium, errors: estimated_premium_error }
+    return {
+      valid: valid,
+      coverage_options: coverage_options,
+      estimated_premium: estimated_premium,
+      errors: estimated_premium_error
+    }.merge(eventable.class != ::PolicyQuote ? {} : {
+      msi_data: result,
+      event: event
+    })
   end
   
   private
