@@ -2,6 +2,51 @@
 @qbe_id = 1
 @msi_id = 5
 
+
+
+@msi_test_card_data = {
+  1257 => {
+    token: "9495846215171111",
+    card_info: {
+      CreditCardInfo: {
+        CardHolderName: "Payment Test",
+        CardExpirationDate: "0125",
+        CardType: "Visa",
+        CreditCardLast4Digits: "1111",
+        Addr: {
+          Addr1: "2601 Lakeshore Dr",
+          Addr2: nil,
+          City: "Flower Mound",
+          StateProvCd: "TX",
+          PostalCode: "75028"
+        }
+      }
+    }
+  },
+  47 => {
+    token: "2738374128080004",
+    card_info: {
+      CreditCardInfo: {
+        CardHolderName: "Payment Testing",
+        CardExpirationDate: "0226",
+        CardType: "Mastercard",
+        CreditCardLast4Digits: "0004",
+        Addr: {
+          Addr1: "1414 Northeast Campus Parkway",
+          Addr2: nil,
+          City: "Seattle",
+          StateProvCd: "WA",
+          PostalCode: "98195"
+        }
+      }
+    }
+  }
+}
+
+
+
+
+
 @leases.each do |lease|
 # 	if rand(0..100) > 33 # Create a 66% Coverage Rate
 
@@ -197,8 +242,14 @@
           puts quote.errors.to_h.to_s unless quote.id
           puts "Application ID: #{ application.id } | Application Status: #{ application.status } | Quote ID: #{quote.id} | Quote Status: #{ quote.status }"
         else
+          # grab test payment data
+          test_payment_data = {
+            'payment_method' => 'card',
+            'payment_info' => @msi_test_card_data[quote.carrier_payment_data['product_id'].to_i][:card_info],
+            'payment_token' => @msi_test_card_data[quote.carrier_payment_data['product_id'].to_i][:token],
+          }
           # accept quote
-          quote.accept # MOOSE WARNING: implement this for msi. don't forget to pass payment token...
+          quote.accept(test_payment_data)
           if !quote.policy.nil?
             # print a celebratory message
             premium = quote.policy_premium
