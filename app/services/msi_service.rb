@@ -232,6 +232,8 @@ class MsiService
           call_data[:error] = true
           call_data[:message] = "Request failed externally"
           call_data[:external_message] = call_data[:data].dig("MSIACORD", "InsuranceSvcRs", "MsgStatus", "MsgStatusDesc").to_s
+          call_data[:extended_external_message] = [call_data[:data].dig("MSIACORD", "InsuranceSvcRs", "MsgStatus", "ExtendedStatus")].flatten.compact
+            .map{|el| "#{el["ExtendedStatusCd"]}: #{el["ExtendedStatusDesc"]}" }.join("\n")
           call_data[:code] = 409
         when nil
           call_data[:error] = true
@@ -452,10 +454,9 @@ class MsiService
           Location: [
             {
               '': { id: '0' },
-
-              Addr:                             address.merge({
-                            MSI_CommunityID:                  community_id,
-              MSI_Unit:                         unit
+              Addr:                           address.merge({
+                MSI_CommunityID:                community_id,
+                MSI_Unit:                       unit
              })
             }.compact#,
             #{
@@ -495,21 +496,21 @@ class MsiService
               InsuredOrPrincipalInfo: {
                 InsuredOrPrincipalRoleCd: "PRIMARYNAMEDINSURED"
               },
-              GeneralPartyInfo:             primary_insured
+              GeneralPartyInfo:             primary_insured == ::User ? primary_insured.get_msi_general_party_info : primary_insured
             }
           ] + additional_insured.map do |ai|
             {
               InsuredOrPrincipalInfo: {
                 InsuredOrPrincipalRoleCd: "OTHERNAMEDINSURED"
               },
-              GeneralPartyInfo:               ai
+              GeneralPartyInfo:               ai.class == ::User ? ai.get_msi_general_party_info : ai
             }
           end + additional_interest.map do |ai|
             {
               InsuredOrPrincipalInfo: {
                 InsuredOrPrincipalRoleCd: "ADDITIONALINTEREST"
               },
-              GeneralPartyInfo:               ai
+              GeneralPartyInfo:               ai.class == ::User ? ai.get_msi_general_party_info : ai
             }
           end
         }
@@ -590,7 +591,7 @@ class MsiService
   end
   
   def build_web_api_credit_card_authorization_request(
-    property_state:, underwriter:,
+    state:, product_id:,
     **compilation_args
   )
     self.action = :web_api_credit_card_authorization_request
@@ -605,7 +606,7 @@ class MsiService
             }
           },
           PersPolicy: {
-            CompanyProductCd:                 underwriter
+            CompanyProductCd:                 product_id
           }
         }
       }

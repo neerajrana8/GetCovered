@@ -76,7 +76,7 @@ class PolicyQuote < ApplicationRecord
     end
   end
   
-  def accept
+  def accept(bind_params: [])
     
     quote_attempt = {
       success: false,
@@ -90,7 +90,7 @@ class PolicyQuote < ApplicationRecord
       self.set_qbe_external_reference if policy_application.carrier.id == 1
 
       if update(status: "accepted") && start_billing()
-        bind_request = self.send(quote_attempt[:bind_method])
+        bind_request = self.send(*([quote_attempt[:bind_method]] + bind_params))
 
         unless bind_request[:error]
           if policy_application.policy_type.title == "Residential"

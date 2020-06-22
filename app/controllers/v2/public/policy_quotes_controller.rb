@@ -64,13 +64,92 @@ module V2
         end
       end
       
+      # requires param 'payment_method' to be 'card' or 'ach'
+      def external_payment_auth
+        unless @policy_quote.policy_application.carrier_id == 5 && @policy_quote.status == 'quoted' && @policy_quote.carrier_payment_data && @policy_quote.carrier_payment_data['product_id']
+          render json: {
+            :error => "Not applicable",
+            :message => "External payment authorization is not applicable to this policy quote"
+          }, status: :unprocessable_entity
+          return
+        end
+        case params[:payment_method]
+          when 'card'
+            # make the call
+            msis = MsiService.new
+            event = @policy_quote.events.new(
+              verb: 'post',
+              format: 'xml',
+              interface: 'REST',
+              endpoint: msi_service.endpoint_for(:web_api_credit_card_authorization_request),
+              process: 'msi_web_api_credit_card_authorization_request'
+            )
+            result = msis.build_request(:web_api_credit_card_authorization_request,        
+              product_id: @policy_quote.carrier_payment_data['product_id'],
+               state: @policy_quote.policy_application.primary_insurable.primary_address.state,
+              line_breaks: true
+            )
+            event.request = msi_service.comkpiled_rxml
+            event.save
+            event.started = Time.now
+            result = msis.call
+            event.completed = Time.now
+            event.response = result[:data]
+            event.status = result[:error] ? 'error' : 'success'
+            event.save
+            # return the result
+            if result[:error]
+              render json: {
+                :error => "System error",
+                :message => "Remote system failed to provide authorization (#{event.id || '-1'})"
+              }, status: :unprocessable_entity
+            else
+              data = result[:data].dig("MSIACORD", "InsuranceSvcRs", "RenterPolicyQuoteInqRs", "MSI_CreditCardPreAuthorization")
+              if data.nil? || data["MSI_PreAuthorizationToken"].nil? || data["MSI_PreAuthorizationPublicKeyBase64"].nil?
+                render json: {
+                  :error => "System error",
+                  :message => "Remote system failed to provide authorization (#{event.id || '-2'})"
+                }, status: :unprocessable_entity
+              else
+                render json: {
+                  token: data["MSI_PreAuthorizationToken"],
+                  public_key: data["MSI_PreAuthorizationPublicKeyBase64"]
+                }, status: :ok
+              end
+            end
+          when 'ach' # MOOSE WARNING: implement this...
+            render json: {
+              :error => "Invalid payment method",
+              :message => "ACH support not applicable"
+            }, status: :unprocessable_entity
+          else
+            render json: {
+              :error => "Invalid payment method",
+              :message => "Payment method must be 'card' or 'ach'; received '#{params[:payment_method] || 'null'}'"
+            }, status: :unprocessable_entity
+        end
+      end
+      
       def accept
 	    	unless @policy_quote.nil?
 		    	@user = ::User.find(accept_policy_quote_params[:id])
 		    	unless @user.nil?
-						result = @user.attach_payment_source(accept_policy_quote_params[:source])
+						result = @user.attach_payment_source(accept_policy_quote_params[:source]) # MOOSE WARNING: implement MSI stuff
 			    	if result.valid?
-				    	@quote_attempt = @policy_quote.accept
+              bind_params = []
+              # collect bind params for msi
+              if @policy_quote.policy_application.carrier_id == 5
+                # MOOSE WARNING: fix this stuff up
+                bind_params = [
+                  {
+                    'payment_method' => params[:method], # MOOSE WARNING: from params ('card' or 'ach')
+                    'payment_info' => {}, # MOOSE WARNING: redacted card or bank acount info from params
+                    'payment_token' => params[:token] # MOOSE WARNING: from params
+                  }
+                ]
+              end
+              # bind
+				    	@quote_attempt = @policy_quote.accept(bind_params)
 				    	@policy_type_identifier = @policy_quote.policy_application.policy_type_id == 5 ? "Rental Guarantee" : "Policy"
 							if @quote_attempt[:success]
 								::Analytics.track(

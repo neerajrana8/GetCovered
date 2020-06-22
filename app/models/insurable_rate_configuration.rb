@@ -541,7 +541,7 @@ class InsurableRateConfiguration < ApplicationRecord
                                   {
                                     CoverageCd: sel['uid']
                                   }.merge(sel['selection'] == true ? {} : {
-                                    Deductible: sel['options']['options_format'] == 'percent' ? { FormatPct: sel['selection'].to_d / 100 } : { Amt: sel['selection'] }
+                                    Deductible: sel['options']['options_format'] == 'percent' ? { FormatPct: sel['selection'].to_d / 100.to_d } : { Amt: sel['selection'] }
                                   })
                                 else
                                   nil
@@ -559,8 +559,8 @@ class InsurableRateConfiguration < ApplicationRecord
       event.started = Time.now
       result = msis.call
       event.completed = Time.now
-      event.response = msi_data[:data]
-      event.status = msi_data[:error] ? 'error' : 'success'
+      event.response = result[:data]
+      event.status = result[:error] ? 'error' : 'success'
       event.save
       # handle the result
       if result[:error]

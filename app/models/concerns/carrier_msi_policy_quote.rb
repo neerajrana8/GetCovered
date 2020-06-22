@@ -31,98 +31,103 @@ module CarrierMsiPolicyQuote
     
     # MSI Bind
   
-    def msi_bind
+    # payment_params should be a hash of form:
+    #   {
+    #     'payment_method' => 'card' or 'ach',
+    #     'payment_info'   => msi format hash of card/bank info,
+    #     'payment_token'  => the token
+    #   }
+    def msi_bind(payment_params)
       # MOOSE WARNING: modify qbe bind methods here
       @bind_response = {
         :error => true,
         :message => nil,
         :data => {}  
       }
-      
-	 		if accepted? && policy.nil?
-		 		if policy_application.carrier_id == 5
-
-	        event = events.new(
-	          verb: 'post', 
-	          format: 'xml', 
-	          interface: 'SOAP',
-	          process: 'send_qbe_policy_info', 
-	          endpoint: Rails.application.credentials.qbe[:uri][ENV["RAILS_ENV"].to_sym]
-	        )
-          
-          carrier_agency = CarrierAgency.where(agency: account.agency, carrier: self.policy_application.carrier).take
-          
-	        qbe_service = QbeService.new(:action => 'SendPolicyInfo')
-	        qbe_service.build_request({ agent_code: carrier_agency.external_carrier_id }, true, true, self, self.policy_application.users)
-	  
- 	        event.request = qbe_service.compiled_rxml
- 			 		event.started = Time.now
-			 		
-			 		qbe_data = qbe_service.call()
-			 		
-			 		event.completed = Time.now
-			 		event.response = qbe_data[:data]
- 			 		event.status = qbe_data[:error] ? 'error' : 'success'
-			 		
-			 		event.save
-			 		
-          unless qbe_data[:error] # QBE Response success
-                    
- 	          xml_doc = Nokogiri::XML(qbe_data[:data])
- 	          bind_status = xml_doc.css('MsgStatusCd').children.to_s
-            policy_number = xml_doc.css('PolicyNumber').children.to_s
-            notify_of_error = false
-            
-            if bind_status != "FAILURE"
-              @bind_response[:error] = false
-              @bind_response[:data][:status] = bind_status
-              @bind_response[:data][:policy_number] = policy_number
-              notify_of_error = bind_status == "WARNING" ? true : false 
-            else
-              @bind_response[:data][:status]
-              notify_of_error = true
-            end
-            
-            if notify_of_error
-              message = "Get Covered Bind Warning.\n"
-              message += "Application Environment: #{ ENV["RAILS_ENV"] }\n"
-              message += "Bind Status: #{ bind_status }\n"
-              message += bind_status == "WARNING" ? "Policy: #{ policy_number }\n" : "N/A"
-              message += "Timestamp: #{ DateTime.now.to_s(:db) }\n\n"
-              message_components = []
-              
-            	xml_doc.css('ExtendedStatus').each do |status|
-              	unless message_components.any? { |mc| mc[:status_cd] == status.css('ExtendedStatusCd').children.to_s }
-	              	message_components << {
-		              	:status_cd => status.css('ExtendedStatusCd').children.to_s,
-		              	:status_message => status.css('ExtendedStatusDesc').children.to_s
-	              	}
-              	end		              
-              end
-
-            	message_components.each do |mc|
-              	message += "#{ mc[:status_cd] }\n"
-              	message += "#{ mc[:status_message] }\n\n"	
-              end
-              
-              message += event.request
-              
-              PolicyBindWarningNotificationJob.perform_later(message: message)
-              
-            end            
-            
-          else # QBE Response failure
-            @bind_response[:message] = "QBE Bind Failure"
-          end
-			 	else
-			 		@bind_response[:message] = "Carrier must be QBE to bind residential quote"
-			 	end
-		 	else
+      # handle common failure scenarios
+      unless policy_application.carrier_id == 5
+        @bind_response[:message] = "Carrier must be QBE to bind residential quote"
+        PolicyBindWarningNotificationJob.perform_later(message: @bind_response[:message])
+        return @bind_response
+      end
+		 	unless accepted? && policy.nil?
 		 		@bind_response[:message] = "Status must be quoted or error to bind quote"
-		 	end 
-		 	
-		 	return @bind_response  
-     
+        PolicyBindWarningNotificationJob.perform_later(message: @bind_response[:message])
+        return @bind_response
+		 	end
+      # unpack payment info
+      payment_data = ((self.carrier_payment_data || {})['payment_methods'] || {})[payment_params['payment_method']]
+      if payment_data.nil? || payment_data.class != ::Hash ||
+          !payment_data.has_key?('method_id') || !payment_data.has_key?('merchant_id') || !payment_data.has_key?('processor_id') ||
+          !payment_params.has_key?('payment_info') || !payment_params.has_key?('payment_token')
+        # invalid payment data
+        @bind_response[:message] = "Invalid payment data for binding policy"
+        PolicyBindWarningNotificationJob.perform_later(message: @bind_response[:message])
+        return @bind_response
+      end
+      payment_merchant_id = payment_data['merchant_id']
+      payment_processor = payment_data['processor_id']
+      payment_method = payment_data['method_id']
+      # grab useful variables
+      carrier_agency = CarrierAgency.where(agency: account.agency, carrier_id: 5).take
+      unit = policy_application.primary_insurable
+      community = unit.parent_community
+      address = unit.primary_address
+      primary_insured = policy_application.primary_user
+      additional_insured = policy_application.users.select{|u| u.id != primary_insured.id }
+      # prepare for bind call
+      msis = MsiService.new
+      event = events.new(
+        verb: 'post',
+        format: 'xml',
+        interface: 'REST',
+        endpoint: msi_service.endpoint_for(:bind_policy),
+        process: 'msi_bind_policy'
+      )
+      result = msis.build_request(:bind_policy,
+        effective_date:   policy_application.effective_date,
+        payment_plan:     policy_application.billing_strategy.carrier_code,
+        installment_day:  [28, Time.current.to_date.day].min, # WARNING: or do we prefer to always set it to 1?
+        community_id:     community.carrier_profile(5).external_carrier_id,
+        unit:             unit.title,
+        address:          unit.primary_address,
+        # MOOSE WARNING: mailing address!
+        primary_insured:    primary_insured,
+        additional_insured: additional_insured,
+        additional_interest: [], # MOOSE WARNING: put the Account here somehow!!!!!!
+        coverage_DEBUG: (coverages + deductibles),
+        
+        payment_merchant_id:  payment_merchant_id,
+        payment_processor:    payment_processor,
+        payment_method:       payment_method,
+        payment_info:         payment_params['payment_info'],
+        payment_other_id:     payment_params['payment_token'],
+        
+        line_breaks: true
+      )
+      if !result
+        @bind_response[:message] = "Failed to build bind request (#{msis.errors.to_s})"
+        PolicyBindWarningNotificationJob.perform_later(message: @bind_response[:message])
+        return @bind_response
+      end
+      event.started = Time.now
+      result = msis.call
+      event.completed = Time.now
+      event.response = result[:data]
+      event.status = result[:error] ? 'error' : 'success'
+      event.save
+      if result[:error]
+        @bind_response[:message] = "MSI bind failure (Event ID: #{event.id})\nMSI Error: #{result[:external_message]}\n#{result[:extended_external_message]}"
+        PolicyBindWarningNotificationJob.perform_later(message: @bind_response[:message])
+        return @bind_response
+      end
+      # handle successful bind
+      policy_data = result[:data].dig("MSIACORD", "InsuranceSvcRs", "RenterPolicyQuoteInqRs", "PersPolicy")
+      @bind_response[:error] = false
+      @bind_response[:data][:status] = "SUCCESS"
+      @bind_response[:data][:policy_number] = policy_data["PolicyNumber"]
+      @bind_response[:data][:policy_prefix] = policy_data["MSI_PolicyPrefix"]
+      return @bind_response
     end
     
   end

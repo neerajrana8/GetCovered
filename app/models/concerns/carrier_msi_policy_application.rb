@@ -68,11 +68,11 @@ module CarrierMsiPolicyApplication
           )
           # make sure we succeeded
           if !results[:valid]
-            puts "\MSI Coverage Validation Or FinalPremium Request Unsuccessful, Errors: #{ results[:errors][:internal] }, Event ID: #{ event.id }"
+            puts "MSI Coverage Validation Or FinalPremium Request Unsuccessful, Errors: #{ results[:errors][:internal] }, Event ID: #{ event.id }"
             quote.mark_failure()
             return false
           elsif results[:msi_data][:error] # just in case
-            puts "\MSI FinalPremium Request Unsuccessful, Errors: #{ results[:errors][:internal] }, Event ID: #{ event.id }"
+            puts "MSI FinalPremium Request Unsuccessful, Errors: #{ results[:errors][:internal] }, Event ID: #{ event.id }"
             quote.mark_failure()
             return false
           else
@@ -80,7 +80,7 @@ module CarrierMsiPolicyApplication
             payment_plan = self.billing_strategy.carrier_code
             installment_count = MsiService::INSTALLMENT_COUNT[payment_plan]
             if installment_count.nil?
-              puts "\MSI Missing Installment Count, Payment Plan Carrier Code: '#{payment_plan}', Event ID: #{ event.id }"
+              puts "MSI Missing Installment Count, Payment Plan Carrier Code: '#{payment_plan}', Event ID: #{ event.id }"
               quote.mark_failure()
               return false
             end
@@ -89,7 +89,7 @@ module CarrierMsiPolicyApplication
             msi_policy_fee = policy_data["MSI_PolicyFee"] # not sure how this fits into anything
             payment_data = policy_data["PaymentPlan"].find{|pp| pp["PaymentPlanCd"] = payment_plan }
             if payment_data.nil?
-              puts "\MSI FinalPremium PaymentData Nonexistent, Payment Plan Carrier Code: '#{payment_plan}', Event ID: #{ event.id }"
+              puts "MSI FinalPremium PaymentData Nonexistent, Payment Plan Carrier Code: '#{payment_plan}', Event ID: #{ event.id }"
               quote.mark_failure()
               return false
             end
@@ -106,10 +106,28 @@ module CarrierMsiPolicyApplication
               reading = "MSI_DownPaymentAmount"
               down_payment = (payment_data.dig("MSI_DownPaymentAmount", "Amt").to_d * 100).ceil             # the total amount of the first payment
             rescue NoMethodError => e
-              puts "\MSI FinalPremium PaymentData Missing Field '#{reading}', Payment Plan Carrier Code: '#{payment_plan}', Event ID: #{ event.id }"
+              puts "MSI FinalPremium PaymentData Missing Field '#{reading}', Payment Plan Carrier Code: '#{payment_plan}', Event ID: #{ event.id }"
               quote.mark_failure()
               return false
             end
+            # grab payment processor data
+            payment_methods = {}
+            policy_data["PaymentMethod"].each do |pm|
+              if pm["MethodPaymentCd"] == "CreditDebit"
+                payment_methods['card'] = {
+                  'merchant_id' => pm["MSI_PaymentMerchantID"],
+                  'processor_id' => pm["MSI_PaymentProcessor"],
+                  'method_id' => "CreditDebit"
+                }
+              elsif pm["MethodPaymentCd"] == "ACH"
+                payment_methods['ach'] = {
+                  'merchant_id' => pm["MSI_PaymentMerchantID"],
+                  'processor_id' => pm["MSI_PaymentProcessor"],
+                  'method_id' => "ACH"
+                }
+              end
+            end
+            quote.update(carrier_payment_data: { 'product_id' => product_uid, 'payment_methods' => payment_methods })
             # build policy premium
             ############# MOOSE WARNING: currently no support for EXTERNAL 'invoices'; all of this will be charged on invoice!!!! ##########
             premium = PolicyPremium.new(
