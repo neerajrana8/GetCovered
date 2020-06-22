@@ -160,7 +160,7 @@ require 'faker'
 @residential_community_insurable_type = InsurableType.find(1)
 @residential_unit_insurable_type = InsurableType.find(4)
 
-
+@carrier_assignments = { 1 => 0, 5 => 0 }
 @accounts = Account.all.to_a.map{|acct| { account: acct, assignments: 0 } }
 while @addresses.length > 0
   # set up address and args
@@ -176,120 +176,128 @@ while @addresses.length > 0
     # extract account and setup flag to tell us when we successfuly assigned it
     account = account_data[:account]
     assigned = false
-    # now try to assign it to the account under various carriers (yes, we duplicate it for each carrier that will accept it)
-    # try qbe
-    args[:carrier_id] = 1
-    if account.agency.offers_policy_type_in_region(args)
-			@community = account.insurables.new(title: "#{Faker::Movies::LordOfTheRings.location} #{@building_name_options[rand(0..3)]}", 
-																					insurable_type: @residential_community_insurable_type, 
-																					enabled: true, category: 'property',
-																					addresses_attributes: [ addr ])			
-			if @community.save
-        assigned = true
-		  	
-		  	account.staff
-		  					.order("RANDOM()")
-		  					.each do |staff|
-			  					
-			  	Assignment.create!(staff: staff, assignable: @community)	
-			  end
-		  	
-		  	@community.create_carrier_profile(1)
-		  	@profile = @community.carrier_profile(1)
-		  	
-		  	@profile.traits['construction_year'] = rand(1979..2005)
-		  	@profile.traits['professionally_managed'] = true
-		  	@profile.traits['professionally_managed_year'] = @profile.traits['construction_year'] + 1
-				
-		  	@profile.save()
-		  	
-		  	# puts "[#{ @community.title }] Accessing QBE Zip Code"
-		  	@community.get_qbe_zip_code()
-		  	
-		  	# puts "[#{ @community.title }] Accessing QBE Property Info"
-		  	@community.get_qbe_property_info()
-		  	
-		    units_per_floor = rand(5..10)
-		    floors = rand(1..4).to_i
-		    
-		    floors.times do |floor|
-		      
-		      floor_id = (floor + 1) * 100
-		      
-		      units_per_floor.times do |unit_num|
-		        
-		        mailing_id = floor_id + (unit_num + 1)
-		        @unit = @community.insurables.new(title: mailing_id, insurable_type: @residential_unit_insurable_type,
-		        																		 enabled: true, category: 'property', account: account)
-		        
-		        if @unit.save
-		          @unit.create_carrier_profile(1)
-		        else
-		          puts "\nUnit Save Error\n\n"
-		          pp @unit.errors.to_json
-		        end                
-		      end
-		    end
-		    
-		  	@community.reset_qbe_rates(true, true)
-			else	
-				pp @community.errors
-			end
-    end
-    # try msi
-    args[:carrier_id] = 5
-		if account.agency.offers_policy_type_in_region(args)
-			@community = account.insurables.new(title: "#{Faker::Movies::LordOfTheRings.location} #{@building_name_options[rand(0..3)]}", 
-																					insurable_type: @residential_community_insurable_type, 
-																					enabled: true, category: 'property',
-																					addresses_attributes: [ addr ])			
-			unless @community.save
-				pp @community.errors
-      else
-        assigned = true
-		  	# create assignments (with pointless random ordering)
-		  	account.staff.order("RANDOM()").each do |staff|
-			  	Assignment.create!(staff: staff, assignable: @community)
-			  end
-        # build profile
-		  	@community.create_carrier_profile(5)
-		  	@profile = @community.carrier_profile(5)
-        @profile.traits['professionally_manged'] = (rand(1..100) == 0 ? false : true)
-        @profile.traits['professionally_managed_year'] = @profile.traits['professionally_manged'] ? (Time.current.to_date - rand(0..20).years).year : nil
-        @profile.traits['construction_year'] = (@profile.traits['professionally_managed_year'] || Time.current.to_date.year) - rand(1..15)
-        @profile.traits['gated'] = [false, true][rand(0..1)]
-		  	unless @profile.save()
-          puts "\nCommunity Carrier Profile Save Error\n\n"
-          pp @profile.errors.to_json
-        end
-        # build floors
-        units_per_floor = rand(5..10)
-		    floors = rand(1..4).to_i
-		    floors.times do |floor|
-		      floor_id = (floor + 1) * 100
-		      units_per_floor.times do |unit_num|
-		        mailing_id = floor_id + (unit_num + 1)
-		        @unit = @community.insurables.new(title: mailing_id, insurable_type: @residential_unit_insurable_type,
-		        																		 enabled: true, category: 'property', account: account)
-		        if @unit.save
-		          @unit.create_carrier_profile(5)
-		        else
-		          puts "\nUnit Save Error\n\n"
-		          pp @unit.errors.to_json
-		        end                
-		      end
-		    end
-        # register with msi
-        errors = @community.register_with_msi
-        unless errors.blank?
-          puts "\nCommunity MSI Registration Error"
-          errors.each do |err|
-            puts "  #{err}"
+    # now try to assign it to the account under various carriers
+    carriers_to_attempt = @carrier_assignments.to_a.sort{|a,b| a[1] <=> b[1] }.map{|ca| ca[0] }
+    carriers_to_attempt.each do |carrier_assignment_id|
+      args[:carrier_id] = carrier_assignment_id
+      # try qbe
+      if args[:carrier_id] == 1
+        if account.agency.offers_policy_type_in_region(args)
+          @community = account.insurables.new(title: "#{Faker::Movies::LordOfTheRings.location} #{@building_name_options[rand(0..3)]}", 
+                                              insurable_type: @residential_community_insurable_type, 
+                                              enabled: true, category: 'property',
+                                              addresses_attributes: [ addr ])			
+          if @community.save
+            @carrier_assignments[args[:carrier_id]] += 1
+            assigned = true
+            
+            account.staff
+                    .order("RANDOM()")
+                    .each do |staff|
+                      
+              Assignment.create!(staff: staff, assignable: @community)	
+            end
+            
+            @community.create_carrier_profile(1)
+            @profile = @community.carrier_profile(1)
+            
+            @profile.traits['construction_year'] = rand(1979..2005)
+            @profile.traits['professionally_managed'] = true
+            @profile.traits['professionally_managed_year'] = @profile.traits['construction_year'] + 1
+            
+            @profile.save()
+            
+            # puts "[#{ @community.title }] Accessing QBE Zip Code"
+            @community.get_qbe_zip_code()
+            
+            # puts "[#{ @community.title }] Accessing QBE Property Info"
+            @community.get_qbe_property_info()
+            
+            units_per_floor = rand(5..10)
+            floors = rand(1..4).to_i
+            
+            floors.times do |floor|
+              
+              floor_id = (floor + 1) * 100
+              
+              units_per_floor.times do |unit_num|
+                
+                mailing_id = floor_id + (unit_num + 1)
+                @unit = @community.insurables.new(title: mailing_id, insurable_type: @residential_unit_insurable_type,
+                                                     enabled: true, category: 'property', account: account)
+                
+                if @unit.save
+                  @unit.create_carrier_profile(1)
+                else
+                  puts "\nUnit Save Error\n\n"
+                  pp @unit.errors.to_json
+                end                
+              end
+            end
+            
+            @community.reset_qbe_rates(true, true)
+          else	
+            pp @community.errors
           end
-          puts "\n\n"
         end
-			end	
-		end		
+      end
+      # try msi
+      if args[:carrier_id] == 5
+        if account.agency.offers_policy_type_in_region(args)
+          @community = account.insurables.new(title: "#{Faker::Movies::LordOfTheRings.location} #{@building_name_options[rand(0..3)]}", 
+                                              insurable_type: @residential_community_insurable_type, 
+                                              enabled: true, category: 'property',
+                                              addresses_attributes: [ addr ])			
+          unless @community.save
+            pp @community.errors
+          else
+            @carrier_assignments[args[:carrier_id]] += 1
+            assigned = true
+            # create assignments (with pointless random ordering)
+            account.staff.order("RANDOM()").each do |staff|
+              Assignment.create!(staff: staff, assignable: @community)
+            end
+            # build profile
+            @community.create_carrier_profile(5)
+            @profile = @community.carrier_profile(5)
+            @profile.traits['professionally_manged'] = (rand(1..100) == 0 ? false : true)
+            @profile.traits['professionally_managed_year'] = @profile.traits['professionally_manged'] ? (Time.current.to_date - rand(0..20).years).year : nil
+            @profile.traits['construction_year'] = (@profile.traits['professionally_managed_year'] || Time.current.to_date.year) - rand(1..15)
+            @profile.traits['gated'] = [false, true][rand(0..1)]
+            unless @profile.save()
+              puts "\nCommunity Carrier Profile Save Error\n\n"
+              pp @profile.errors.to_json
+            end
+            # build floors
+            units_per_floor = rand(5..10)
+            floors = rand(1..4).to_i
+            floors.times do |floor|
+              floor_id = (floor + 1) * 100
+              units_per_floor.times do |unit_num|
+                mailing_id = floor_id + (unit_num + 1)
+                @unit = @community.insurables.new(title: mailing_id, insurable_type: @residential_unit_insurable_type,
+                                                     enabled: true, category: 'property', account: account)
+                if @unit.save
+                  @unit.create_carrier_profile(5)
+                else
+                  puts "\nUnit Save Error\n\n"
+                  pp @unit.errors.to_json
+                end                
+              end
+            end
+            # register with msi
+            errors = @community.register_with_msi
+            unless errors.blank?
+              puts "\nCommunity MSI Registration Error"
+              errors.each do |err|
+                puts "  #{err}"
+              end
+              puts "\n\n"
+            end
+          end	
+        end		
+      end
+    end
     # break out of the loop if we managed to assign it
     if assigned
       account_data[:assignments] += 1

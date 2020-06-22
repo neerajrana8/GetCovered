@@ -456,7 +456,6 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
       # MSI Insurable Type for Residential Communities
       carrier_insurable_type = CarrierInsurableType.create!(carrier: carrier, insurable_type: InsurableType.find(1),
                                                             enabled: true, profile_traits: {
-                                                              # community name, number of units, address fields, property manager name
                                                               "professionally_managed": true,
                                                               "professionally_managed_year": nil,
                                                               "construction_year": nil,
