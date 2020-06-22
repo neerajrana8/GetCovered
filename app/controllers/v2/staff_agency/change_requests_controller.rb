@@ -45,7 +45,7 @@ module V2
         return({}) if params[:change_request].blank?
 
         to_return = params.require(:change_request).permit(
-          :reason, :action, :method, :field, :current_value,
+          :reason, :customized_action, :method, :field, :current_value,
           :new_value, :status, :status_changed_on, :staff_id
         )
         to_return
