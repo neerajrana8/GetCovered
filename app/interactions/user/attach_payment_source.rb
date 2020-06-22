@@ -16,7 +16,7 @@ class User
             customer.save
 
             payment_profile = PaymentProfile.create(
-              source_id: Rails.env.to_sym == :awsdev ? 'tok_visa' : token_data.bank_account.id, # Dirty hack upon request from the front-end team
+              source_id: token_data.bank_account.id,
               source_type: 'bank_account',
               fingerprint: token_data.bank_account.fingerprint,
               verified: token_data.bank_account.status == 'verified',
