@@ -68,7 +68,6 @@ module V2
             policy_user.user.invite! if index == 0
             
           end
-          
         end
       end
       
@@ -423,7 +422,6 @@ module V2
         def supported_orders
           supported_filters(true)
         end
-        
     end
   end
 end

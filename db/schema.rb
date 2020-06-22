@@ -141,19 +141,6 @@ ActiveRecord::Schema.define(version: 2020_06_17_075444) do
     t.datetime "updated_at", null: false
   end
 
-  create_table "application_notifications", force: :cascade do |t|
-    t.string "action"
-    t.string "subject"
-    t.integer "status"
-    t.integer "code"
-    t.boolean "read", default: false
-    t.integer "notifiable_id"
-    t.string "notifiable_type"
-    t.string "message"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-  end
-
   create_table "assignments", force: :cascade do |t|
     t.boolean "primary"
     t.bigint "staff_id"
@@ -785,10 +772,10 @@ ActiveRecord::Schema.define(version: 2020_06_17_075444) do
     t.date "last_payment_date"
     t.date "next_payment_date"
     t.bigint "policy_group_id"
-    t.string "address"
-    t.string "out_of_system_carrier_title"
     t.boolean "declined"
     t.bigint "policy_id"
+    t.string "address"
+    t.string "out_of_system_carrier_title"
     t.index ["account_id"], name: "index_policies_on_account_id"
     t.index ["agency_id"], name: "index_policies_on_agency_id"
     t.index ["carrier_id"], name: "index_policies_on_carrier_id"
