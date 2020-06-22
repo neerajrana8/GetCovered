@@ -188,6 +188,7 @@
           to: "histories#index_recordable",
           via: "get",
           defaults: { recordable_type: Policy }
+        get 'resend_policy_documents'
       end
       get "search", to: 'policies#search', on: :collection
     end

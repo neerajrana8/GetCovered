@@ -33,7 +33,7 @@ module V2
         @policy.account = insurable.account
         @policy.policy_in_system = false
         @policy.policy_users.new(user_id: current_user.id)
-        if @policy.save_as(current_user)
+        if @policy.save
           render json: { message: 'Policy created' }, status: :created
         else
           render json: { message: 'Policy failed' }, status: :unprocessable_entity
@@ -64,6 +64,11 @@ module V2
         ::Policies::SendProofOfCoverageJob.perform_later(@policy.id)
         
         render json: { message: 'Policy is accepted. An email sent with attached Policy' }
+      end
+
+      def resend_policy_documents
+        ::Policies::SendProofOfCoverageJob.perform_later(params[:id])
+        render json: { message: 'Documents were sent' }
       end
       
       def render_eoi
