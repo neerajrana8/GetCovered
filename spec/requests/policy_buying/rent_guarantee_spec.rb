@@ -211,7 +211,6 @@ describe 'Policy buying' do
       it 'a new user with a new co-tenant' do
         params = Helpers::RentGuaranteeFormParamsGenerator.run!(co_tenant: {}, agency_id: @agency.id)
         post('/v2/user/policy-applications', params: params[:create_policy_application], headers: headers.merge(@auth_headers))
-        ap response.body
         expect(response.status).to eq(200)
 
         response_json = JSON.parse(response.body)
@@ -254,13 +253,43 @@ describe 'Policy buying' do
       it 'a new user with a logged co-tenant' do
         params = Helpers::RentGuaranteeFormParamsGenerator.run!(co_tenant: { email: @user.email }, agency_id: @agency.id)
         post('/v2/user/policy-applications', params: params[:create_policy_application], headers: headers.merge(@auth_headers))
-        expect(response.status).to eq(401)
-        expected_body = {
-          'error' => 'Address mismatch',
-          'message' => 'The mailing address associated with this email is different than the one supplied in the recent request.  To change your address please log in'
-        }
-        body = JSON.parse(response.body)
-        expect(body).to eq(expected_body)
+        expect(response.status).to eq(200)
+
+        response_json = JSON.parse(response.body)
+        policy_application_id = response_json['id']
+        policy_application = PolicyApplication.find(policy_application_id)
+
+        expect(policy_application).to be_present
+        expect(policy_application.status).to eq('in_progress')
+
+        # Update Policy
+        put("/v2/policy-applications/#{policy_application_id}", params: params[:update_policy_application], headers: headers)
+        expect(response.status).to eq(200)
+        response_body = JSON.parse(response.body)
+        policy_application = PolicyApplication.find(policy_application_id)
+        expect(policy_application).to be_present
+        expect(policy_application.status).to eq('quoted')
+        expect(policy_application.policy_users.count).to eq(2)
+        expect(policy_application.users.find_by_email('applicant@email.com')).to be_present
+        expect(policy_application.users.find_by_email(@user.email)).to be_present
+        # Accept policy application
+        policy_quote_id = response_body['quote']['id']
+        primary_user_id = response_body['user']['id']
+        post("/v2/policy-quotes/#{policy_quote_id}/accept", params: policy_quotes_accept_params(primary_user_id), headers: headers)
+        expect(response.status).to eq(200)
+        policy_application.reload
+
+        expect(policy_application.status).to eq('accepted')
+        expect(policy_application.users.find_by_email('applicant@email.com')).to be_present
+        expect(policy_application.users.find_by_email(@user.email)).to be_present
+        expect(policy_application.policy_quotes.last.invoices.order(:due_date).first.status).to eq('complete')
+
+        policy = policy_application.policy
+        expect(policy).to be_present
+        expect(policy.status).to eq('BOUND')
+        expect(policy.billing_status).to eq('CURRENT')
+        expect(policy.policy_in_system).to eq(true)
+        expect(policy.policy_users.count).to eq(2)
       end
     end
 
