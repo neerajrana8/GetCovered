@@ -499,7 +499,7 @@ module V2
           end
         end
         # pull unit from db
-        unit = Insurable.where(insurable_id: inputs[:insurable_id].to_i).take
+        unit = Insurable.where(id: inputs[:insurable_id].to_i).take
         if unit.nil? || unit.insurable_type_id != @residential_unit_insurable_type_id
           render json: { error: "unit not found" },
             status: :unprocessable_entity

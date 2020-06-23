@@ -43,7 +43,7 @@ scope module: :public do
           to: 'policy_applications#new',
           as: :new
         post '/get-coverage-options',
-          to: 'policy_application#get_coverage_options',
+          to: 'policy_applications#get_coverage_options',
           as: :get_coverage_options
       end
     end

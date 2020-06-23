@@ -608,7 +608,7 @@ class MsiService
     return errors.blank?
   end
   
-  def build_web_api_credit_card_authorization_request(
+  def build_web_api_credit_card_authorization(
     state:, product_id:,
     **compilation_args
   )

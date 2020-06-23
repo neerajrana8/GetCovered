@@ -81,7 +81,7 @@ module V2
               verb: 'post',
               format: 'xml',
               interface: 'REST',
-              endpoint: msi_service.endpoint_for(:web_api_credit_card_authorization_request),
+              endpoint: msis.endpoint_for(:web_api_credit_card_authorization_request),
               process: 'msi_web_api_credit_card_authorization_request'
             )
             result = msis.build_request(:web_api_credit_card_authorization_request,        
@@ -89,7 +89,7 @@ module V2
                state: @policy_quote.policy_application.primary_insurable.primary_address.state,
               line_breaks: true
             )
-            event.request = msi_service.compiled_rxml
+            event.request = msis.compiled_rxml
             event.save
             event.started = Time.now
             result = msis.call
