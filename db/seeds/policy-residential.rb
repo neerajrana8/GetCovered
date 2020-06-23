@@ -1,7 +1,7 @@
 @leases = Lease.all
 @qbe_id = 1
 @msi_id = 5
-
+@max_msi_coverage_selection_iterations = 5
 
 
 @msi_test_card_data = {
@@ -173,12 +173,6 @@
 		end
   # end qbe
   elsif !lease.insurable.carrier_profile(@msi_id).nil?
-  
-    # MOOSE WARNING: implement msi policy creation here
-    
-    
-
-
     # grab useful variables & set up application
     carrier_id = @msi_id
 		policy_type = PolicyType.find(1)
@@ -213,7 +207,7 @@
     coverage_selections = []
     result = { valid: false }
     iteration = 0
-    max_iters = 3
+    max_iters = @max_msi_coverage_selection_iterations
     loop do
       iteration += 1
       result = ::InsurableRateConfiguration.get_coverage_options(

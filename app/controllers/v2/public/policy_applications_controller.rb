@@ -29,6 +29,7 @@ module V2
           
           if selected_policy_type == "residential"
             agency_id = new_residential_params[:agency_id].to_i
+            account_id = new_residential_params[:account_id].to_i
             insurable_id = ((new_residential_params[:policy_insurables_attributes] || []).first || { id: nil })[:id]
             insurable = Insurable.where(id: insurable_id).take
             if insurable.nil?
@@ -36,7 +37,7 @@ module V2
                 status: :unprocessable_entity
               return
             end
-            # MOOSE WARNING: eventually, use agency_id to determine which to select when there are multiple
+            # MOOSE WARNING: eventually, use account_id/agency_id to determine which to select when there are multiple
             cip = insurable.carrier_insurable_profiles.where(carrier_id: policy_type.carrier_policy_types.map{|cpt| cpt.id }).order("created_at ASC").take
             carrier_id = cip&.carrier_id
             if carrier_id.nil?
@@ -549,9 +550,8 @@ module V2
         
         def new_residential_params
           params.require(:policy_application)
-                .permit(:agency_id, policy_insurables_attributes: [
-                  :id
-                ])
+                .permit(:agency_id, :account_id, :policy_type_id,
+                         policy_insurables_attributes: [:id])
         end
 	      
 	      def create_residential_params
