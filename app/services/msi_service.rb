@@ -13,6 +13,7 @@ class MsiService
     Hurricane:                                    { code: 3, limit: false },
     Wind:                                         { code: 4, limit: false },
     WindHail:                                     { code: 5, limit: false },
+    EarthquakeDeductible:                         { code: 6, limit: true },
     CoverageA:                                    { code: 1001, limit: false },
     CoverageB:                                    { code: 1002, limit: false },
     CoverageC:                                    { code: 1003, limit: true },
@@ -60,6 +61,12 @@ class MsiService
   
   INSTALLMENT_COUNT = { "Annual" => 0, "SemiAnnual" => 1, "Quarterly" => 3, "Monthly" => 10 }
   
+  OVERRIDE_SPECIFICATION = {
+    'CA' =>           { 'category' => 'deductible', 'uid' => @@coverage_codes[:EarthquakeDeductible][:code].to_s, 'requirement' => 'forbidden' }, # forbid earthquake ded unless earthquake cov selected
+    'GA' =>           { 'category' => 'deductible', 'uid' => '5', 'enabled' => 'false' },                                                         # disable WindHail
+    'GA_COUNTIES' =>  { 'category' => 'deductible', 'uid' => '5', 'enabled' => 'true', 'requirement' => 'required' }                              # enable WindHail & make sure it's required
+  }
+  
   RULE_SPECIFICATION = {
     'USA' => {
       'loss_of_use' => {
@@ -69,7 +76,7 @@ class MsiService
             ['value', 'coverage', @@coverage_codes[:CoverageD][:code]],
             ['max',
               ['*', 
-                0.2, #['if', ['selected', ###add_prot###], 0.4, 0.2] # MOOSE WARNING: what is 'additional protection', which coverage letter? look it up & replace!
+                0.2, #['if', ['selected', ###add_prot###], 0.4, 0.2] # MOOSE WARNING: what is 'additional protection', which coverage letter? find out & replace!
                 ['value', 'coverage', @@coverage_codes[:CoverageC][:code]]
               ],
               2000
@@ -86,8 +93,27 @@ class MsiService
               ['value', 'deductible', @@coverage_codes[:AllOtherPeril][:code]],
               'Infinity'
             ]
-          ],
-          nil
+          ]
+        ]
+      }
+    },
+    'CA' => {
+      'earthquake_deductible' => {
+        'message' => 'Earthquake deductible must be nonzero when earthquake coverage is selected',
+        'code' => ['if', ['selected', 'coverage', @@coverage_codes[:Earthquake][:code]],
+          [';',
+            ['=',
+              ['requirement', 'deductible', @@coverage_codes[:EarthquakeDeductible][:code]],
+              'required'
+            ],
+            ['=',
+              ['value', 'deductible', @@coverage_codes[:EarthquakeDeductible][:code]],
+              ['()',
+                0,
+                'Infinity'
+              ]
+            ]
+          ]
         ]
       }
     },
@@ -122,26 +148,16 @@ class MsiService
       },
       'ordinance_or_law' => {
         'message' => 'Ordinance Or Law limit must be 2.5% of Coverage C limit',
-        'code' => ['=',
-          ['value', 'coverage', @@coverage_codes[:OrdinanceOrLaw][:code]],
-          ['*',
-            0.025,
-            ['value', 'coverage', @@coverage_codes[:CoverageC][:code]]
-          ]
-        ]
-      },
-      'coverage_c_maximum' => { # MOOSE WARNING: isn't this inherent in the product download options?
-        'message' => 'Coverage C limit cannot exceed $50,000',
-        'code' => ['=',
-          ['value', 'coverage', @@coverage_codes[:CoverageC][:code]],
-          ['[]',
-            0,
-            50000
+        'code' => ['if', ['selected', 'coverage', @@coverage_codes[:CoverageC][:code]],
+          ['=',
+            ['value', 'coverage', @@coverage_codes[:OrdinanceOrLaw][:code]],
+            ['*',
+              0.025,
+              ['value', 'coverage', @@coverage_codes[:CoverageC][:code]]
+            ]
           ]
         ]
       }
-    },
-    'GA_COUNTIES' => {
     }
   }
   
@@ -655,8 +671,17 @@ class MsiService
             "options_format"=> ded["MSI_DeductibleOptionList"].blank? ? "none" : arrayify(ded["MSI_DeductibleOptionList"]["Deductible"]).first["Amt"] ? "currency" : "percent"
           }
       end)
+      # apply overrides, if any
+      (OVERRIDE_SPECIFICATION[use_default_rules_for] || {}).each do |ovrd|
+        found = irc.coverage_options.find{|co| co['category'] == ovrd['category'] && co['uid'].to_s == ovrd['uid'].to_s }
+        if found.nil?
+          irc.coverage_options.push(ovrd)
+        else
+          found.merge!(ovrd)
+        end
+      end
     end
-    # set rules
+    # set rules, if any
     irc.rules = RULE_SPECIFICATION[use_default_rules_for] || {}
     return irc
   end

@@ -525,6 +525,7 @@ class InsurableRateConfiguration < ApplicationRecord
       irc.merge_options!(coverage_options, mutable: false, allow_new_coverages: COVERAGE_ADDING_CONFIGURERS.include?(irc.configurer_type))
       coverage_options = irc.annotate_options(selections)
     end
+    coverage_options.select!{|co| co['enabled'] != false }
     # validate selections
     estimated_premium = {}
     estimated_premium_error = get_selection_errors(selections, coverage_options)
