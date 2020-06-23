@@ -486,7 +486,7 @@ class InsurableRateConfiguration < ApplicationRecord
         {
           'category' => opt['category'],
           'uid'      => opt['uid'],
-          'selection'=> opt['options_type'] == 'none' || opt['options'].blank? ? true : !sel.nil? && opt['options'].map{|o| o.to_d }.include?(sel['selection'].to_d) ? sel['selection'] : opt['options'][rand(opt['options'].length)]
+          'selection'=> opt['options_type'] == 'none' ? true : opt['options'].blank? ? false : !sel.nil? && opt['options'].map{|o| o.to_d }.include?(sel['selection'].to_d) ? sel['selection'] : opt['options'][rand(opt['options'].length)]
         }
       elsif opt['requirement'] == 'optional'
         next nil # WARNING: no optional coverages for now... randomize it later
@@ -507,6 +507,7 @@ class InsurableRateConfiguration < ApplicationRecord
       return "#{opt['title']} selection is not allowed" if ['forbidden', 'locked'].include?(opt['requirement'])
       case opt['options_type']
         when 'multiple_choice'
+          return "#{opt['title']} numerical selection is required" if sel['selection'] == true
           return "#{opt['title']} selection is not a valid choice" unless opt['options'].map{|o| o.to_d }.include?(sel['selection'].to_d)
       end
     end
