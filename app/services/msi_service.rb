@@ -608,11 +608,11 @@ class MsiService
     return errors.blank?
   end
   
-  def build_web_api_credit_card_authorization(
+  def build_get_credit_card_pre_authorization_token(
     state:, product_id:,
     **compilation_args
   )
-    self.action = :web_api_credit_card_authorization_request
+    self.action = :get_credit_card_pre_authorization_token
     self.errors = nil
     # do it bro, I dare you
     self.compiled_rxml = compile_xml({
