@@ -28,7 +28,22 @@ module V2
           policy_type = PolicyType.find_by_slug(selected_policy_type)
           
           if selected_policy_type == "residential"
-            carrier_id = 1
+            agency_id = new_residential_params[:agency_id].to_i
+            insurable_id = ((new_residential_params[:policy_insurables_attributes] || []).first || { id: nil })[:id]
+            insurable = Insurable.where(id: insurable_id).take
+            if insurable.nil?
+              render json: { error: "Unit not found" },
+                status: :unprocessable_entity
+              return
+            end
+            # MOOSE WARNING: eventually, use agency_id to determine which to select when there are multiple
+            cip = insurable.carrier_insurable_profiles.where(carrier_id: policy_type.carrier_policy_types.map{|cpt| cpt.id }).order("created_at ASC").take
+            carrier_id = cip&.carrier_id
+            if carrier_id.nil?
+              render json: { error: "Invalid unit" },
+                status: :unprocessable_entity
+              return
+            end
           elsif selected_policy_type == "commercial"
             carrier_id = 3
           elsif selected_policy_type == "rent-guarantee"
@@ -470,7 +485,7 @@ module V2
           eventable: unit
         )
         # done
-        render json: results.select{|k,v| k != :errors }.merge({ estimated_premium_errors: results[:errors][:external] }),
+        render json: results.select{|k,v| k != :errors }.merge(results[:errors] ? { estimated_premium_errors: [results[:errors][:external]].flatten } : {}),
           status: :success
       end
 
@@ -494,6 +509,13 @@ module V2
 		      puts "SET POLICY APPLICATION RUNNING ID: #{ params[:id] }"
 	        @policy_application = access_model(::PolicyApplication, params[:id])
 	      end
+        
+        def new_residential_params
+          params.require(:policy_application)
+                .permit(:agency_id, policy_insurables_attributes: [
+                  :id
+                ])
+        end
 	      
 	      def create_residential_params
   	      params.require(:policy_application)
