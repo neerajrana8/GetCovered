@@ -134,17 +134,16 @@ module V2
 	    	unless @policy_quote.nil?
 		    	@user = ::User.find(accept_policy_quote_params[:id])
 		    	unless @user.nil?
-						result = @user.attach_payment_source(accept_policy_quote_params[:source]) # MOOSE WARNING: implement MSI stuff
+						result = @user.attach_payment_source(accept_policy_quote_params[:source])
 			    	if result.valid?
               bind_params = []
               # collect bind params for msi
               if @policy_quote.policy_application.carrier_id == 5
-                # MOOSE WARNING: fix this stuff up
                 bind_params = [
                   {
-                    'payment_method' => params[:method], # MOOSE WARNING: from params ('card' or 'ach')
-                    'payment_info' => {}, # MOOSE WARNING: redacted card or bank acount info from params
-                    'payment_token' => params[:token] # MOOSE WARNING: from params
+                    'payment_method' => accept_policy_quote_payment_params[:payment_method],
+                    'payment_info' => { CreditCardInfo: accept_policy_quote_payment_params[:CreditCardInfo] },
+                    'payment_token' => accept_policy_quote_payment_params[:token]
                   }
                 ]
               end
