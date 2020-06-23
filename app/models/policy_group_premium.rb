@@ -9,8 +9,7 @@ class PolicyGroupPremium < ApplicationRecord
   def calculate_total
     keys = %i[
       base taxes total_fees total
-      calculation_base deposit_fees amortized_fees
-      external_fees only_fees_internal
+      calculation_base deposit_fees amortized_fees external_fees
       carrier_base special_premium unearned_premium
     ]
     values = policy_premiums.pluck(keys).transpose.map(&:sum)
