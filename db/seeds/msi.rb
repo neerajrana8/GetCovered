@@ -236,7 +236,7 @@ service_fee = {
 
 @created_communities = []
 
- @addresses = {
+ @addresses = [{
   street_number: "1304",
   street_name: "University City Blvd",
   city: "Blacksburg",
@@ -265,7 +265,7 @@ service_fee = {
   zip_code: "77840",
   plus_four: "6312",
   primary: true
-}
+}]
 
 @building_name_options = ['Estates', 'Gardens', 'Homes', 'Place']
 @residential_community_insurable_type = InsurableType.find(1)
