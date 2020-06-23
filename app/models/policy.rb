@@ -337,7 +337,7 @@ class Policy < ApplicationRecord
           'image/gif', 'application/pdf', 'text/plain', 'text/csv',
           'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
           )
-          errors.add(:documents, 'The document wrong format, only: PDF, DOC, DOCX, XLSX, XLS, SCV, JPG, JPEG, PNG, GIF')
+          errors.add(:documents, 'The document wrong format, only: PDF, DOC, DOCX, XLSX, XLS, CSV, JPG, JPEG, PNG, GIF, SVG, TXT')
         end
       end
     end
