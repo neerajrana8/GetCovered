@@ -66,7 +66,7 @@ module V2
       
       def create_policy_users
         error_status = []
-        params[:policy_application][:policy_users_attributes].each_with_index do |policy_user, index|
+				create_policy_users_params[:policy_users_attributes].each_with_index do |policy_user, index|
 
           if ::User.where(email: policy_user[:user_attributes][:email]).exists?
             
