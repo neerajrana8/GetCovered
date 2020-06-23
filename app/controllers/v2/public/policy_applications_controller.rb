@@ -451,22 +451,58 @@ module V2
 	      end
 	    end
       
-      #### MOOSE WARNING: modify to integrate with the existing policy application flow #####
+
       
-      #insurable_id
-      #effective_date
-      #additional_insured
-      #coverage_selections
       
       def get_coverage_options
         @msi_id = 5
         @residential_community_insurable_type_id = 1
         @residential_unit_insurable_type_id = 4
-        # grab params and pull unit from db
-        unit = Insurable.where(insurable_id: params[:insurable_id].to_i).take
+        # grab params and validate 'em
+        inputs = get_coverage_options_params
+        if inputs[:insurable_id].nil?
+          render json: { error: "insurable_id cannot be blank" },
+            status: :unprocessable_entity
+          return
+        end
+        if inputs[:effective_date].nil?
+          render json: { error: "effective_date cannot be blank" },
+            status: :unprocessable_entity
+          return
+        else
+          begin
+            Date.parse(inputs[:effective_date])
+          rescue ArgumentError
+            render json: { error: "effective_date must be a valid date" },
+              status: :unprocessable_entity
+            return
+          end
+        end
+        if inputs[:additional_insured].nil?
+          render json: { error: "additional_insured cannot be blank" },
+            status: :unprocessable_entity
+          return
+        end
+        unless inputs[:coverage_selections].nil?
+          if inputs[:coverage_selections].class != ::Array
+            render json: { error: "coverage_selections must be an array of coverage selections" },
+              status: :unprocessable_entity
+            return
+          else
+            broken = inputs[:coverage_selections].select{|cs| cs[:category].blank? || cs[:uid].blank? }
+            unless broken.length == 0
+              render json: { error: "all entries of coverage_selections must include a category and uid" },
+                status: :unprocessable_entity
+              return
+            end
+          end
+        end
+        # pull unit from db
+        unit = Insurable.where(insurable_id: inputs[:insurable_id].to_i).take
         if unit.nil? || unit.insurable_type_id != @residential_unit_insurable_type_id
           render json: { error: "unit not found" },
             status: :unprocessable_entity
+          return
         end
         # grab community and make sure it's registered with msi
         community = unit.parent_community
@@ -474,14 +510,15 @@ module V2
         if cip.nil? || cip.external_carrier_id.nil?
           render json: { error: "community not found" },
             status: :unprocessable_entity
+          return
         end
         # get coverage options
         results = ::InsurableRateConfiguration.get_coverage_options(
           @msi_id,
           cip,
-          params[:coverage_selections] || [],
-          params[:effective_date],
-          params[:additional_insured],
+          inputs[:coverage_selections] || [],
+          Date.parse(inputs[:effective_date]),
+          inputs[:additional_insured].to_i,
           eventable: unit
         )
         # done
@@ -490,7 +527,7 @@ module V2
       end
 
 
-      #######################################################################################
+
             
       private
 
@@ -569,6 +606,11 @@ module V2
   	      params.require(:policy_application)
   	            .permit(:fields, fields: {})  
   	    end
+        
+        def get_coverage_options_params
+          params.permit(:insurable_id, :effective_date, :additional_insured,
+            coverage_selections: [:category, :uid, :selection])
+        end
 	        
 	      def valid_policy_types
 	        return ["residential", "commercial", "rent-guarantee"]
