@@ -345,6 +345,7 @@ service_fee = {
     # increment if we managed to assign it
     if assigned
       account_data[:assignments] += 1
+      break
     end
   end
 
