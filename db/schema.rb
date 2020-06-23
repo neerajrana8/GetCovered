@@ -864,7 +864,7 @@ ActiveRecord::Schema.define(version: 2020_06_22_190059) do
     t.boolean "auto_renew", default: true
     t.boolean "auto_pay", default: true
     t.bigint "policy_application_group_id"
-    t.jsonb "coverage_selections"
+    t.jsonb "coverage_selections", default: [], null: false
     t.index ["account_id"], name: "index_policy_applications_on_account_id"
     t.index ["agency_id"], name: "index_policy_applications_on_agency_id"
     t.index ["billing_strategy_id"], name: "index_policy_applications_on_billing_strategy_id"
