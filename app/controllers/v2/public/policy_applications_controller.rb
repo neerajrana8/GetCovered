@@ -524,7 +524,7 @@ module V2
         )
         # done
         render json: results.select{|k,v| k != :errors }.merge(results[:errors] ? { estimated_premium_errors: [results[:errors][:external]].flatten } : {}),
-          status: results[:valid] ? 200 : 202
+          status: 200
       end
 
 
