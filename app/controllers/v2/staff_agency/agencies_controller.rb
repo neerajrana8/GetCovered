@@ -5,24 +5,34 @@
 module V2
   module StaffAgency
     class AgenciesController < StaffAgencyController
-
-      before_action :set_agency, only: [:update, :show, :branding_profile]
+      before_action :set_agency, only: %i[update show branding_profile]
 
       def index
-        if params[:short]
-          super(:@agencies, current_staff.organizable.agencies)
+        if current_staff.organizable_id == ::Agency::GET_COVERED_ID
+          required_fields = %i[enabled id title contact_info updated_at stripe_id agency_id]
+          result = []
+
+          Agency.where(agency_id: nil).select(required_fields).each do |agency|
+            sub_agencies = agency.agencies.select(required_fields)
+            result << if sub_agencies.any?
+              agency.attributes.reverse_merge(agencies: sub_agencies.map(&:attributes))
+            else
+              agency.attributes
+            end
+          end
+
+          render json: result.to_json
         else
-          super(:@agencies, current_staff.organizable.agencies, :agency)
+          super(:@agencies, current_staff.organizable.agencies)
         end
       end
 
-      def show
-      end
+      def show; end
 
       def create
         if create_allowed?
           @agency = current_staff.organizable.agencies.new(create_params)
-          if !@agency.errors.any? && @agency.save_as(current_staff)
+          if @agency.errors.none? && @agency.save_as(current_staff)
             render :show, status: :created
           else
             render json: @agency.errors, status: :unprocessable_entity
@@ -58,7 +68,7 @@ module V2
       private
 
       def view_path
-        super + "/agencies"
+        super + '/agencies'
       end
 
       def create_allowed?
@@ -80,26 +90,28 @@ module V2
 
       def create_params
         return({}) if params[:agency].blank?
+
         to_return = params.require(:agency).permit(
           :staff_id, :title, :tos_accepted, :whitelabel,
-          contact_info: {}, addresses_attributes: [
-          :city, :country, :county, :id, :latitude, :longitude,
-          :plus_four, :state, :street_name, :street_number,
-          :street_two, :timezone, :zip_code
-        ]
+          contact_info: {}, addresses_attributes: %i[
+            city country county id latitude longitude
+            plus_four state street_name street_number
+            street_two timezone zip_code
+          ]
         )
-        return(to_return)
+        to_return
       end
 
       def update_params
         return({}) if params[:agency].blank?
+
         params.require(:agency).permit(
           :staff_id, :title, :tos_accepted, :whitelabel,
-          contact_info: {}, settings: {}, addresses_attributes: [
-          :city, :country, :county, :id, :latitude, :longitude,
-          :plus_four, :state, :street_name, :street_number,
-          :street_two, :timezone, :zip_code
-        ]
+          contact_info: {}, settings: {}, addresses_attributes: %i[
+            city country county id latitude longitude
+            plus_four state street_name street_number
+            street_two timezone zip_code
+          ]
         )
       end
 
