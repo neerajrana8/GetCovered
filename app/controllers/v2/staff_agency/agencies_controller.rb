@@ -5,13 +5,22 @@
 module V2
   module StaffAgency
     class AgenciesController < StaffAgencyController
-      before_action :set_agency, only: %i[update show branding_profile]
+
+      before_action :set_agency, only: [:update, :show, :branding_profile]
 
       def index
-        if current_staff.organizable_id == ::Agency::GET_COVERED_ID
-          required_fields = %i[enabled id title contact_info updated_at stripe_id agency_id]
-          result = []
+        if params[:short]
+          super(:@agencies, current_staff.organizable.agencies)
+        else
+          super(:@agencies, current_staff.organizable.agencies, :agency)
+        end
+      end
 
+      def sub_agencies_index
+        result = []
+        required_fields = %i[id title agency_id]
+
+        if current_staff.organizable_id == ::Agency::GET_COVERED_ID
           Agency.where(agency_id: nil).select(required_fields).each do |agency|
             sub_agencies = agency.agencies.select(required_fields)
             result << if sub_agencies.any?
@@ -20,11 +29,11 @@ module V2
               agency.attributes
             end
           end
-
-          render json: result.to_json
         else
-          super(:@agencies, current_staff.organizable.agencies)
+          result = current_staff.organizable.agencies.select(required_fields).map(&:attributes)
         end
+
+        render json: result.to_json
       end
 
       def show; end
