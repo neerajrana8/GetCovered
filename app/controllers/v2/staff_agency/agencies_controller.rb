@@ -92,8 +92,10 @@ module V2
         @agency =
           if current_staff.organizable_type == 'Agency' && current_staff.organizable_id.to_s == params[:id]
             current_staff.organizable
+          elsif current_staff.organizable_type == 'Agency' && current_staff.organizable_id == ::Agency::GET_COVERED_ID
+            Agency.find(params[:id])
           else
-            current_staff.organizable.agencies.find_by(id: params[:id])
+            current_staff.organizable.agencies.find(params[:id])
           end
       end
 
