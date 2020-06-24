@@ -1,5 +1,10 @@
 module Helpers
+  def base_headers
+    { 'CONTENT_TYPE' => 'application/json', 'ACCEPT' => 'application/json' }
+  end
+
   # Staff
+
   def create_agency
     FactoryBot.create(:agency)
   end
@@ -21,8 +26,8 @@ module Helpers
     FactoryBot.create(:staff, organizable: account, role: 'staff')
   end
   
-  def login_staff(staff)
-    post staff_session_path, params: { email: staff.email, password: 'test1234' }.to_json, headers: { 'CONTENT_TYPE' => 'application/json', 'ACCEPT' => 'application/json' }
+  def login_staff(staff, password: 'test1234')
+    post staff_session_path, params: { email: staff.email, password: password }.to_json, headers: base_headers
   end
   
   def get_auth_headers_from_login_response_headers(response)
@@ -53,15 +58,13 @@ module Helpers
     }
   end
   
-  
-  
   # USER
   def create_user
     FactoryBot.create(:user)
   end
   
-  def login_user(user)
-    post user_session_path, params: { email: user.email, password: 'test1234' }.to_json, headers: { 'CONTENT_TYPE' => 'application/json', 'ACCEPT' => 'application/json' }
+  def login_user(user, password: 'test1234')
+    post user_session_path, params: { email: user.email, password: password }.to_json, headers: base_headers
   end
 
   def insurable_params(account, insurable_type, insurable = nil)
