@@ -20,6 +20,14 @@ include Elasticsearch::Model
 include Elasticsearch::Model::Callbacks
 include Elasticsearch::Model::Indexing
 
+require 'simplecov'
+SimpleCov.start 'rails' do
+  add_filter '/bin/'
+  add_filter '/db/'
+  add_filter '/spec/' # for rspec
+  add_filter '/lib/'
+end
+
 RSpec.configure do |config|
   # rspec-expectations config goes here. You can use an alternate
   # assertion/expectation library such as wrong or the stdlib/minitest

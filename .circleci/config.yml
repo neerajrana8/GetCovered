@@ -52,6 +52,8 @@ jobs:
 
       # Run rspec in parallel
       - ruby/rspec-test
+      - store_artifacts:
+          path: coverage
 
 workflows:
   version: 2
