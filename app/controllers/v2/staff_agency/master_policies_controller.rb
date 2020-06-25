@@ -10,13 +10,11 @@ module V2
       
       def index
         @master_policies = Policy.where('policy_type_id = ? AND agency_id = ?', 2, @agency.id) || []
-        render json: @master_policies, status: :ok
       end
       
       def show
         @master_policy = Policy.find_by(policy_type_id: 2, id: params[:id])
         @master_policy_coverages = @master_policy.policies.where('policy_type_id = ? AND agency_id = ?', 3, @agency.id) || []
-        render json: { master_policy: @master_policy, master_policy_coverages: @master_policy_coverages }, status: :ok
       end
 
       def show_create
