@@ -8,4 +8,9 @@ json.account master_policy.account
 
 json.policy_coverages master_policy.policy_coverages
 
-json.array! master_policy_coverages, partial: 'v2/staff_agency/master_policies/master_policy_index_full.json.jbuilder', as: :master_policy
+json.master_policy_coverages do
+  if master_policy_coverages.present?
+    json.array! master_policy_coverages, partial: 'v2/staff_agency/master_policies/master_policy_index_full.json.jbuilder', as: :master_policy
+  end
+end
+
