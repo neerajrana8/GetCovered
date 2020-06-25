@@ -67,6 +67,7 @@ module CarrierMsiPolicyApplication
             self.effective_date,
             self.users.count - 1,
             self.billing_strategy.carrier_code,
+            perform_estimate: true,
             eventable: quote # by passing a PolicyQuote we ensure results[:msi_data], results[:event], and results[:annotated_selections] get passed back out
           )
           # make sure we succeeded

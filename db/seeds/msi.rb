@@ -507,7 +507,8 @@ puts "\nOccupancy Rate: #{ (Lease.count.to_f / Insurable.residential_units.count
         coverage_selections,
         application.effective_date,
         additional_insured_count,
-        billing_strategy.carrier_code
+        billing_strategy.carrier_code,
+        perform_estimate: false
       )
       if result[:valid]
         break
