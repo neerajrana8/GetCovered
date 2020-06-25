@@ -20,7 +20,7 @@ module V2
         result = []
         required_fields = %i[id title agency_id]
 
-        if current_staff.organizable_id == ::Agency::GET_COVERED_ID
+        if current_staff.getcovered_agent?
           Agency.where(agency_id: nil).select(required_fields).each do |agency|
             sub_agencies = agency.agencies.select(required_fields)
             result << if sub_agencies.any?
@@ -92,7 +92,7 @@ module V2
         @agency =
           if current_staff.organizable_type == 'Agency' && current_staff.organizable_id.to_s == params[:id]
             current_staff.organizable
-          elsif current_staff.organizable_type == 'Agency' && current_staff.organizable_id == ::Agency::GET_COVERED_ID
+          elsif current_staff.getcovered_agent?
             Agency.find(params[:id])
           else
             current_staff.organizable.agencies.find(params[:id])

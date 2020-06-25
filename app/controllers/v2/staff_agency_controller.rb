@@ -9,16 +9,16 @@ module V2
     before_action :set_agency
 
     def set_agency
-      subagency_id = params[:agency_id]&.to_i
+      agency_id = params[:agency_id]&.to_i
       @agency =
-        if subagency_id.blank?
+        if agency_id.blank?
           current_staff.organizable
+        elsif current_staff.getcovered_agent?
+          Agency.find(agency_id)
+        elsif current_staff.organizable.agencies.ids.include?(agency_id)
+          current_staff.organizable.agencies.find(agency_id)
         else
-          if current_staff.organizable.agencies.ids.include?(subagency_id)
-            current_staff.organizable.agencies.find(subagency_id)
-          else
-            current_staff.organizable
-          end
+          current_staff.organizable
         end
     end
 
