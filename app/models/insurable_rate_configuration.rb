@@ -514,7 +514,7 @@ class InsurableRateConfiguration < ApplicationRecord
     return nil
   end
   
-  def self.get_coverage_options(carrier_id, carrier_insurable_profile, selections, effective_date, additional_insured_count, insurable_type_id: 4, account: carrier_insurable_profile.insurable.account, eventable: nil)
+  def self.get_coverage_options(carrier_id, carrier_insurable_profile, selections, effective_date, additional_insured_count, billing_strategy_carrier_code, perform_estimate: true, insurable_type_id: 4, account: carrier_insurable_profile.insurable.account, eventable: nil, estimate_default_on_billing_strategy_code_failure: :min)
     cip = carrier_insurable_profile
     carrier_insurable_type = CarrierInsurableType.where(carrier_id: carrier_id, insurable_type_id: insurable_type_id).take
     # get IRCs
@@ -528,74 +528,80 @@ class InsurableRateConfiguration < ApplicationRecord
     end
     coverage_options.select!{|co| co['enabled'] != false }
     # validate selections
-    estimated_premium = {}
+    estimated_premium = nil
     estimated_premium_error = get_selection_errors(selections, coverage_options)
     valid = estimated_premium_error.nil?
     estimated_premium_error = { internal: estimated_premium_error, external: estimated_premium_error } unless estimated_premium_error.nil?
     # call GetFinalPremium to get estimate
-    msis = MsiService.new
-    event = ::Event.new(
-      eventable: eventable,
-      verb: 'post',
-      format: 'xml',
-      interface: 'REST',
-      endpoint: msis.endpoint_for(:final_premium),
-      process: 'msi_final_premium'
-    )
-    result = msis.build_request(:final_premium,
-      effective_date: effective_date, 
-      additional_insured_count: additional_insured_count,
-      additional_interest_count: 0, # MOOSE WARNING: or 1, to include prop manager?
-      community_id: cip.external_carrier_id,
-      coverages_formatted:  selections.select{|s| s['selection'] }
-                              .map{|s| s['options'] = coverage_options.find{|co| co['category'] == s['category'] && co['uid'] == s['uid'] }; s }
-                              .select{|s| !s['options'].nil? }
-                              .map do |sel|
-                                if sel['category'] == 'coverage'
-                                  {
-                                    CoverageCd: sel['uid']
-                                  }.merge(sel['selection'] == true ? {} : {
-                                    Limit: (sel['options_format'] = sel['options']['options_format'] || 'currency') == 'percent' ? { FormatPct: sel['selection'].to_d / 100.to_d } : { Amt: sel['selection'] }
-                                  })
-                                elsif sel['category'] == 'deductible'
-                                  {
-                                    CoverageCd: sel['uid']
-                                  }.merge(sel['selection'] == true ? {} : {
-                                    Deductible: (sel['options_format'] = sel['options']['options_format'] || 'currency') == 'percent' ? { FormatPct: sel['selection'].to_d / 100.to_d } : { Amt: sel['selection'] }
-                                  })
-                                else
-                                  nil
-                                end
-                              end.compact,
-      line_breaks: true
-    )
-    selections.each{|sel| sel.delete('options') } # remove the options we inserted for convenience (but leave the options_format string we inserted)
-    if !result
-      # failed to get final premium
-      valid = false
-      estimated_premium_error = { internal: msis.errors.to_s, external: "Unknown error occurred" } if estimated_premium_error.blank? # error before making the call
-    else
-      # make the call
-      event.request = msis.compiled_rxml
-      event.save
-      event.started = Time.now
-      result = msis.call
-      event.completed = Time.now
-      event.response = result[:data]
-      event.status = result[:error] ? 'error' : 'success'
-      event.save
-      # handle the result
-      if result[:error]
+    result = nil
+    event = nil
+    if perform_estimate
+      # prepare the call
+      msis = MsiService.new
+      event = ::Event.new(
+        eventable: eventable,
+        verb: 'post',
+        format: 'xml',
+        interface: 'REST',
+        endpoint: msis.endpoint_for(:final_premium),
+        process: 'msi_final_premium'
+      )
+      result = msis.build_request(:final_premium,
+        effective_date: effective_date, 
+        additional_insured_count: additional_insured_count,
+        additional_interest_count: 0, # MOOSE WARNING: or 1, to include prop manager?
+        community_id: cip.external_carrier_id,
+        coverages_formatted:  selections.select{|s| s['selection'] }
+                                .map{|s| s['options'] = coverage_options.find{|co| co['category'] == s['category'] && co['uid'] == s['uid'] }; s }
+                                .select{|s| !s['options'].nil? }
+                                .map do |sel|
+                                  if sel['category'] == 'coverage'
+                                    {
+                                      CoverageCd: sel['uid']
+                                    }.merge(sel['selection'] == true ? {} : {
+                                      Limit: (sel['options_format'] = sel['options']['options_format'] || 'currency') == 'percent' ? { FormatPct: sel['selection'].to_d / 100.to_d } : { Amt: sel['selection'] }
+                                    })
+                                  elsif sel['category'] == 'deductible'
+                                    {
+                                      CoverageCd: sel['uid']
+                                    }.merge(sel['selection'] == true ? {} : {
+                                      Deductible: (sel['options_format'] = sel['options']['options_format'] || 'currency') == 'percent' ? { FormatPct: sel['selection'].to_d / 100.to_d } : { Amt: sel['selection'] }
+                                    })
+                                  else
+                                    nil
+                                  end
+                                end.compact,
+        line_breaks: true
+      )
+      selections.each{|sel| sel.delete('options') } # remove the options we inserted for convenience (but leave the options_format string we inserted)
+      if !result
+        # failed to get final premium
         valid = false
-        estimated_premium_error = { internal: result[:external_message].to_s, external: "Error calculating premium" } if estimated_premium_error.blank?
+        estimated_premium_error = { internal: msis.errors.to_s, external: "Unknown error occurred" } if estimated_premium_error.blank? # error before making the call
       else
-        estimated_premium = [result[:data].dig("MSIACORD", "InsuranceSvcRs", "RenterPolicyQuoteInqRs", "PersPolicy", "PaymentPlan")].flatten
-                                        .map do |plan|
-                                          [
-                                            plan["PaymentPlanCd"],
-                                            plan["MSI_TotalPremiumAmt"]["Amt"]
-                                          ]
-                                        end.to_h
+        # make the call
+        event.request = msis.compiled_rxml
+        event.save
+        event.started = Time.now
+        result = msis.call
+        event.completed = Time.now
+        event.response = result[:data]
+        event.status = result[:error] ? 'error' : 'success'
+        event.save
+        # handle the result
+        if result[:error]
+          valid = false
+          estimated_premium_error = { internal: result[:external_message].to_s, external: "Error calculating premium" } if estimated_premium_error.blank?
+        else
+          estimated_premium = [result[:data].dig("MSIACORD", "InsuranceSvcRs", "RenterPolicyQuoteInqRs", "PersPolicy", "PaymentPlan")].flatten
+                                          .map do |plan|
+                                            [
+                                              plan["PaymentPlanCd"],
+                                              plan["MSI_TotalPremiumAmt"]["Amt"]
+                                            ]
+                                          end.to_h
+          estimated_premium = estimated_premium[billing_strategy_carrier_code].to_d || estimated_premium.values.send(estimate_default_on_billing_strategy_code_failure)
+        end
       end
     end
     # done

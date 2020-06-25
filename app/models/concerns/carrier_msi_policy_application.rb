@@ -24,7 +24,8 @@ module CarrierMsiPolicyApplication
       #    self.primary_insurable.carrier_profile(5),
       #    self.coverage_selections || [],
       #    self.effective_date,
-      #    self.users.count - 1
+      #    self.users.count - 1,
+      #    self.billing_strategy.carrier_code
       #  )
       #  if result[:valid] && !result[:estimated_premium].blank?
       #    quote.update(
@@ -65,6 +66,7 @@ module CarrierMsiPolicyApplication
             self.coverage_selections,
             self.effective_date,
             self.users.count - 1,
+            self.billing_strategy.carrier_code,
             eventable: quote # by passing a PolicyQuote we ensure results[:msi_data], results[:event], and results[:annotated_selections] get passed back out
           )
           # make sure we succeeded

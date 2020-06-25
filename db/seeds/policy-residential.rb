@@ -215,7 +215,8 @@
         cip,
         coverage_selections,
         application.effective_date,
-        additional_insured_count
+        additional_insured_count,
+        billing_strategy.carrier_code
       )
       if result[:valid]
         break

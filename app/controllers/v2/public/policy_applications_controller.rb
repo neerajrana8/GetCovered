@@ -459,6 +459,7 @@ module V2
         @msi_id = 5
         @residential_community_insurable_type_id = 1
         @residential_unit_insurable_type_id = 4
+        @ho4_policy_type_id = 1
         # grab params and validate 'em
         inputs = get_coverage_options_params
         if inputs[:insurable_id].nil?
@@ -498,6 +499,16 @@ module V2
             end
           end
         end
+        if inputs[:billing_strategy_id].nil?
+          render json: { error: "billing_strategy_id cannot be blank" },
+            status: :unprocessable_entity
+          return
+        end
+        if inputs[:agency_id].nil?
+          render json: { error: "agency_id cannot be blank" },
+            status: :unprocessable_entity
+          return
+        end
         # pull unit from db
         unit = Insurable.where(id: inputs[:insurable_id].to_i).take
         if unit.nil? || unit.insurable_type_id != @residential_unit_insurable_type_id
@@ -513,6 +524,16 @@ module V2
             status: :unprocessable_entity
           return
         end
+        # grab billing strategy and make sure it's valid
+        billing_strategy_code = nil
+        billing_strategy = BillingStrategy.where(carrier_id: @msi_id, agency_id: inputs[:agency_id].to_i, policy_type_id: @ho4_policy_type_id).take
+        if billing_strategy.nil?
+          render json: { error: "billing strategy must belong to the correct carrier, agency, and HO4 policy type" },
+            status: :unprocessable_entity
+          return
+        else
+          billing_strategy_code = billing_strategy.carrier_code
+        end
         # get coverage options
         results = ::InsurableRateConfiguration.get_coverage_options(
           @msi_id,
@@ -520,14 +541,14 @@ module V2
           inputs[:coverage_selections] || [],
           Date.parse(inputs[:effective_date]),
           inputs[:additional_insured].to_i,
+          billing_strategy_code,
+          perform_estimate: inputs[:estimate_premium] ? true : false,
           eventable: unit
         )
         # done
         render json: results.select{|k,v| k != :errors }.merge(results[:errors] ? { estimated_premium_errors: [results[:errors][:external]].flatten } : {}),
           status: 200
       end
-
-
 
             
       private
@@ -609,7 +630,9 @@ module V2
   	    end
         
         def get_coverage_options_params
-          params.permit(:insurable_id, :effective_date, :additional_insured,
+          params.permit(:insurable_id, :agency_id, :billing_strategy_id,
+            :effective_date, :additional_insured,
+            :estimate_premium,
             coverage_selections: [:category, :uid, :selection])
         end
 	        
