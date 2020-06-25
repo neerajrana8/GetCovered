@@ -5,29 +5,25 @@
 module V2
   module StaffAgency
     class MasterPoliciesController < StaffAgencyController
-
       before_action :set_policy, only: [:update, :show, :show_create]
       before_action :set_substrate, only: [:create]
       
       def index
-        @master_policies = @agency&.policies&.where(policy_type_id: 2) || []
-        if @master_policies.present?
-          render json: @master_policies, status: :ok
-        else
-          render json: { message: 'No master policies' }
-        end
+        @master_policies = Policy.where('policy_type_id = ? AND agency_id = ?', 2, @agency.id) || []
+        render json: @master_policies, status: :ok
       end
       
       def show
-        @master_policies = @agency&.policies&.where(policy_type_id: 3) || []
-        render json: @master_policies, status: :ok
+        @master_policy = Policy.find_by(policy_type_id: 2, id: params[:id])
+        @master_policy_coverages = @master_policy.policies.where('policy_type_id = ? AND agency_id = ?', 3, @agency.id) || []
+        render json: { master_policy: @master_policy, master_policy_coverages: @master_policy_coverages }, status: :ok
       end
 
       def show_create
         policy = Policy.find(params[:id])
-        carrier_agency = CarrierAgency.find_by(params[carrier_id])
+        carrier_agency = CarrierAgency.find_by(params[:carrier_id])
         account = carrier_agency.agency.accounts.find_by(params[:account_id])
-        if insurable = account.insurables.communities.create!(params[:insurable_type_id], params[:title])
+        if insurable = account.insurables.communities.create!(insurable_type_id: params[:insurable_type_id], title: params[:title])
           PolicyInsurable.create!(insurable: insurable, policy_id: policy.id)
           render json: { message: 'Community added' }, status: :ok
         else
@@ -38,18 +34,17 @@ module V2
       
       def create
         if create_allowed?
-          policy_type = PolicyTypes.(policy_type: PolicyType.find(2))
+          policy_type = PolicyType.find(2)
           carrier = Carrier.find(params[:carrier_id])
           carrier_agency = CarrierAgency.find(carrier.id)
           account = carrier_agency.agency.accounts.find(params[:account_id])
-          policy_type = carrier.policy_types.create!(policy_type: PolicyType.find(2))
 
           @policy = @substrate.new(create_params.merge(agency: carrier_agency.agency,
                                    carrier: carrier, account: account, policy_type: policy_type))
           @policy_premium = PolicyPremium.new(create_policy_premium)
           if @policy.errors.none? && @policy_premium.errors.none? && @policy.save && @policy_premium.save
-            AutomaticMasterPolicyInvoiceJob.perform_later(@policy.id)
             render json: { message: 'Master Policy and Policy Premium created' }, status: :created
+            AutomaticMasterPolicyInvoiceJob.perform_later(@policy.id)
           else
             render json: { errors: @policy.errors.merge(@policy_premium.errors) }, status: :unprocessable_entity
           end
@@ -119,7 +114,6 @@ module V2
           :carrier_base
         )
       end
-
     end
   end # module StaffAgency
 end
