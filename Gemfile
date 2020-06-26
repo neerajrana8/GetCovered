@@ -105,8 +105,8 @@ gem 'caxlsx'
 gem 'roo', '~> 2.8.0'
 
 # profilers
-gem 'ruby-prof'
-gem 'memory_profiler'
+gem 'memory_profiler', require: false
+gem 'ruby-prof', require: false
 
 gem 'analytics-ruby', '~> 2.0.0', :require => 'segment/analytics'
 
@@ -121,6 +121,7 @@ group :development, :test, :test_container do
   gem 'rails-controller-testing'
   gem 'rspec-rails'
   gem 'rubocop', '~> 0.63.1', require: false
+  gem 'simplecov', require: false
   # RDoc for Documentation
   gem 'rdoc'
   gem 'fuubar'
