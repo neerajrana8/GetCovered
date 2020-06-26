@@ -39,4 +39,5 @@ dump.rdb
 
 /.idea
 
+.rakeTasks
 /coverage/*
