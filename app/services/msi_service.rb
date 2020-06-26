@@ -158,6 +158,20 @@ class MsiService
           ]
         ]
       }
+    },
+    'MD' => {
+      'water_backup' => {
+        'message' => 'Water backup must be $5000 or equal to Coverage C limit',
+        'code' => ['=', ['value', 'coverage', @@coverage_codes[:WaterBackup][:code]],
+          ['if', ['selected', 'coverage', @@coverage_codes[:CoverageC][:code]],
+            ['|',
+              5000,
+              ['value', 'coverage', @@coverage_codes[:CoverageC][:code]]
+            ],
+            5000
+          ]
+        ]
+      }
     }
   }
   
