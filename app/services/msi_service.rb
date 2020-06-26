@@ -688,7 +688,7 @@ class MsiService
           }
       end)
       # apply universal disablings
-      irc.coverage_options.select{|co| UNIVERSALLY_DISABLED_COVERAGE_OPTIONS.find{|udco| udco['category'] == co['category'] && udco['uid'] == co['uid'] }
+      irc.coverage_options.select{|co| UNIVERSALLY_DISABLED_COVERAGE_OPTIONS.any?{|udco| udco['category'] == co['category'] && udco['uid'] == co['uid'] } }
                           .each{|co| co['enabled'] = false }
       # apply overrides, if any
       (OVERRIDE_SPECIFICATION[use_default_rules_for] || {}).each do |ovrd|
