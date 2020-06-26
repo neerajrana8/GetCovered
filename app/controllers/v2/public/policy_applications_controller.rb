@@ -467,24 +467,6 @@ module V2
             status: :unprocessable_entity
           return
         end
-        if inputs[:effective_date].nil?
-          render json: { error: "effective_date cannot be blank" },
-            status: :unprocessable_entity
-          return
-        else
-          begin
-            Date.parse(inputs[:effective_date])
-          rescue ArgumentError
-            render json: { error: "effective_date must be a valid date" },
-              status: :unprocessable_entity
-            return
-          end
-        end
-        if inputs[:additional_insured].nil?
-          render json: { error: "additional_insured cannot be blank" },
-            status: :unprocessable_entity
-          return
-        end
         unless inputs[:coverage_selections].nil?
           if inputs[:coverage_selections].class != ::Array
             render json: { error: "coverage_selections must be an array of coverage selections" },
@@ -499,15 +481,35 @@ module V2
             end
           end
         end
-        if inputs[:billing_strategy_id].nil?
-          render json: { error: "billing_strategy_id cannot be blank" },
-            status: :unprocessable_entity
-          return
-        end
-        if inputs[:agency_id].nil?
-          render json: { error: "agency_id cannot be blank" },
-            status: :unprocessable_entity
-          return
+        if inputs[:estimate_premium]
+          if inputs[:agency_id].nil?
+            render json: { error: "agency_id cannot be blank" },
+              status: :unprocessable_entity
+            return
+          end
+          if inputs[:effective_date].nil?
+            render json: { error: "effective_date cannot be blank" },
+              status: :unprocessable_entity
+            return
+          else
+            begin
+              Date.parse(inputs[:effective_date])
+            rescue ArgumentError
+              render json: { error: "effective_date must be a valid date" },
+                status: :unprocessable_entity
+              return
+            end
+          end
+          if inputs[:additional_insured].nil?
+            render json: { error: "additional_insured cannot be blank" },
+              status: :unprocessable_entity
+            return
+          end
+          if inputs[:billing_strategy_id].nil?
+            render json: { error: "billing_strategy_id cannot be blank" },
+              status: :unprocessable_entity
+            return
+          end
         end
         # pull unit from db
         unit = Insurable.where(id: inputs[:insurable_id].to_i).take
@@ -527,19 +529,19 @@ module V2
         # grab billing strategy and make sure it's valid
         billing_strategy_code = nil
         billing_strategy = BillingStrategy.where(carrier_id: @msi_id, agency_id: inputs[:agency_id].to_i, policy_type_id: @ho4_policy_type_id).take
-        if billing_strategy.nil?
+        if billing_strategy.nil? && inputs[:estimate_premium]
           render json: { error: "billing strategy must belong to the correct carrier, agency, and HO4 policy type" },
             status: :unprocessable_entity
           return
         else
-          billing_strategy_code = billing_strategy.carrier_code
+          billing_strategy_code = billing_strategy&.carrier_code
         end
         # get coverage options
         results = ::InsurableRateConfiguration.get_coverage_options(
           @msi_id,
           cip,
           inputs[:coverage_selections] || [],
-          Date.parse(inputs[:effective_date]),
+          inputs[:effective_date] ? Date.parse(inputs[:effective_date]) : nil,
           inputs[:additional_insured].to_i,
           billing_strategy_code,
           perform_estimate: inputs[:estimate_premium] ? true : false,

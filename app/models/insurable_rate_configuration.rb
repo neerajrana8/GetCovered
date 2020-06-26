@@ -600,7 +600,7 @@ class InsurableRateConfiguration < ApplicationRecord
                                               plan["MSI_TotalPremiumAmt"]["Amt"]
                                             ]
                                           end.to_h
-          estimated_premium = estimated_premium[billing_strategy_carrier_code].to_d || estimated_premium.values.send(estimate_default_on_billing_strategy_code_failure)
+          estimated_premium = estimated_premium[billing_strategy_carrier_code].to_d || estimated_premium.values.send(estimate_default_on_billing_strategy_code_failure).to_d
         end
       end
     end
