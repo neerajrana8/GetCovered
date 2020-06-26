@@ -3,20 +3,24 @@ module Reports
     NAME = 'DailyPurchaseActivity'.freeze
 
     def to_csv
-      document_title = "#{ reportable.title }-Daily-Report-#{ Time.now.strftime("%B %-d %Y") }.csv".downcase
-                           .gsub(' ', '-')
-      save_path = Rails.root.join('tmp', document_title)
-
-      reported_data = CSV.generate(headers: true) do |csv|
+      CSV.generate(headers: true) do |csv|
         csv << self.data["headers"]
         self.data["rows"].each do |row|
           csv << row
         end
       end
+    end
+
+    def generate_csv
+      document_title = "#{ reportable.title }-Daily-Report-#{ range_start.strftime('%B %-d %Y') }.csv".downcase
+                           .gsub(' ', '-')
+      save_path = Rails.root.join('tmp', document_title)
 
       File.open(save_path, 'wb') do |file|
-        file << reported_data
+        file << to_csv()
       end
+
+      return save_path
     end
 
     def generate
