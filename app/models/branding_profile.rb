@@ -8,6 +8,7 @@ class BrandingProfile < ApplicationRecord
   after_save :check_default
   
   validates_presence_of :title, :url
+  validate :allow_one_profile, on: :create
   
   belongs_to :profileable, polymorphic: true
 
@@ -17,6 +18,11 @@ class BrandingProfile < ApplicationRecord
   scope :default, -> { where(default: true) }
 
   accepts_nested_attributes_for :branding_profile_attributes
+
+  def allow_one_profile
+    errors.add(:profileable, "only one branding profile is allowed") if profileable.branding_profiles.count >= 1
+  end
+
     
   private
   
