@@ -61,6 +61,8 @@ class MsiService
   
   INSTALLMENT_COUNT = { "Annual" => 0, "SemiAnnual" => 1, "Quarterly" => 3, "Monthly" => 10 }
   
+  UNIVERSALLY_DISABLED_COVERAGE_OPTIONS = (1011..1021).map{|uid| { 'category' => 'coverage', 'uid' => uid.to_s } }
+  
   OVERRIDE_SPECIFICATION = {
     'CA' =>           { 'category' => 'deductible', 'uid' => @@coverage_codes[:EarthquakeDeductible][:code].to_s, 'requirement' => 'forbidden' }, # forbid earthquake ded unless earthquake cov selected
     'GA' =>           { 'category' => 'deductible', 'uid' => '5', 'enabled' => 'false' },                                                         # disable WindHail
@@ -685,6 +687,9 @@ class MsiService
             "options_format"=> ded["MSI_DeductibleOptionList"].blank? ? "none" : arrayify(ded["MSI_DeductibleOptionList"]["Deductible"]).first["Amt"] ? "currency" : "percent"
           }
       end)
+      # apply universal disablings
+      irc.coverage_options.select{|co| UNIVERSALLY_DISABLED_COVERAGE_OPTIONS.find{|udco| udco['category'] == co['category'] && udco['uid'] == co['uid'] }
+                          .each{|co| co['enabled'] = false }
       # apply overrides, if any
       (OVERRIDE_SPECIFICATION[use_default_rules_for] || {}).each do |ovrd|
         found = irc.coverage_options.find{|co| co['category'] == ovrd['category'] && co['uid'].to_s == ovrd['uid'].to_s }
