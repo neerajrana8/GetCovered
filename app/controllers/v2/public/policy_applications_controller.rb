@@ -65,7 +65,7 @@ module V2
       end
       
       def create_policy_users
-        error_status = []
+        errors = []
 
         create_policy_users_params[:policy_users_attributes].each_with_index do |policy_user, index|
           if ::User.where(email: policy_user[:user_attributes][:email]).exists?
@@ -105,21 +105,13 @@ module V2
                   zip_code: policy_user[:user_attributes][:address_attributes][:zip_code]
                 )  
               else  
-                tmp_full = policy_user[:user_attributes][:address_attributes].to_unsafe_h
-                  .map do |k, v|
-                  v.to_s unless %w[county country].include?(k)
-                end
-                  .join(' ')
-                  .gsub(/\s+/, ' ')
-                  .gsub(/[^0-9a-z ]/i, '')
-                  .strip
-      
+                tmp_full = Address.new(policy_user[:user_attributes][:address_attributes]).set_full_searchable
+
                 if @user.address.full_searchable != tmp_full
                   render(json: {
                     error: 'Address mismatch',
                     message: 'The mailing address associated with this email is different than the one supplied in the recent request.  To change your address please log in'
-                  }.to_json,
-                         status: 401) && return
+                  }.to_json, status: 401) && return
                   error_status << true
                   break
                 end        

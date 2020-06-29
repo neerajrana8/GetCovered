@@ -53,10 +53,10 @@ module V2
             @application.users << user
           elsif user.present?
             if index.zero?
-              render json: {
+              render(json: {
                 error: 'User Account Exists',
                 message: 'A User has already signed up with this email address.  Please log in to complete your application'
-              }.to_json, status: 401
+              }.to_json, status: 401) && return
 
               error_status << true
               break
