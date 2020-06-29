@@ -5,7 +5,6 @@
 module V2
   module User
     class PolicyApplicationsController < UserController
-
       before_action :set_policy_application,
                     only: [:show]
 
@@ -40,11 +39,12 @@ module V2
 
       def create_policy_users
         error_status = []
-        params[:policy_application][:policy_users_attributes].each_with_index do |policy_user, index|
+        create_policy_users_params[:policy_users_attributes].each_with_index do |policy_user, index|
           user = ::User.where(email: policy_user[:user_attributes][:email]).take
           if user.present? && user == current_user
             user.update(policy_user[:user_attributes])
             user.profile.update(policy_user[:user_attributes][:profile_attributes])
+            user.address.create_or_update(policy_user[:user_attributes][:address_attributes])
 
             @application.users << user
           elsif user.present?
@@ -54,10 +54,10 @@ module V2
                 error_status << false
               else
                 render json: {
-                               error: 'User Account Exists',
-                               message: 'A User has already signed up with this email address.  Please log in to complete your application'
-                             }.to_json,
-                       status: 401
+                  error: 'User Account Exists',
+                  message: 'A User has already signed up with this email address.  Please log in to complete your application'
+                }.to_json, status: 401
+
                 error_status << true
                 break
               end
@@ -73,15 +73,8 @@ module V2
                 email: policy_user[:user_attributes][:email],
                 password: secure_tmp_password,
                 password_confirmation: secure_tmp_password,
-                profile_attributes: {
-                  first_name: policy_user[:user_attributes][:profile_attributes][:first_name],
-                  last_name: policy_user[:user_attributes][:profile_attributes][:last_name],
-                  job_title: policy_user[:user_attributes][:profile_attributes][:job_title],
-                  contact_phone: policy_user[:user_attributes][:profile_attributes][:contact_phone],
-                  birth_date: policy_user[:user_attributes][:profile_attributes][:birth_date],
-                  salutation: policy_user[:user_attributes][:profile_attributes][:salutation],
-                  gender: policy_user[:user_attributes][:profile_attributes][:gender]
-                }
+                profile_attributes: policy_user[:user_attributes][:profile_attributes],
+                address_attributes: policy_user[:user_attributes][:address_attributes]
               }
             )
 
@@ -92,7 +85,6 @@ module V2
       end
 
       def create_rental_guarantee
-
         @application = PolicyApplication.new(create_rental_guarantee_params)
 
         @application.agency = Agency.where(master_agency: true).take if @application.agency.nil?
@@ -115,7 +107,6 @@ module V2
       end
 
       def create_commercial
-
         @application = PolicyApplication.new(create_commercial_params)
         @application.agency = Agency.where(master_agency: true).take
 
@@ -178,7 +169,6 @@ module V2
       end
 
       def create_residential
-
         @application = PolicyApplication.new(create_residential_params)
 
         if @application.agency.nil? &&
@@ -406,6 +396,8 @@ module V2
                       :email, profile_attributes: %i[
                         first_name last_name job_title
                         contact_phone birth_date gender salutation
+                      ], address_attributes: %i[
+                        street_number street_name street_two city state country county zip_code
                       ]
                     ]
                   ])
