@@ -65,8 +65,10 @@ class MsiService
   
   OVERRIDE_SPECIFICATION = {
     'CA' =>           { 'category' => 'deductible', 'uid' => @@coverage_codes[:EarthquakeDeductible][:code].to_s, 'requirement' => 'forbidden' }, # forbid earthquake ded unless earthquake cov selected
-    'GA' =>           { 'category' => 'deductible', 'uid' => '5', 'enabled' => 'false' },                                                         # disable WindHail
-    'GA_COUNTIES' =>  { 'category' => 'deductible', 'uid' => '5', 'enabled' => 'true', 'requirement' => 'required' }                              # enable WindHail & make sure it's required
+    'GA' =>           { 'category' => 'deductible', 'uid' => '5', 'enabled' => false },                                                         # disable WindHail
+    'GA_COUNTIES' =>  { 'category' => 'deductible', 'uid' => '5', 'enabled' => true, 'requirement' => 'required' },                             # enable WindHail & make sure it's required
+    'KY' =>           { 'category' => 'deductible', 'uid' => '2', 'enabled' => false },                                                         # disable theft deductible
+    'NJ' =>           { 'category' => 'deductible', 'uid' => '2', 'enabled' => false },                                                         # disable theft deductible
   }
   
   RULE_SPECIFICATION = {
