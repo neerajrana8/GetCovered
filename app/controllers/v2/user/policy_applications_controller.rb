@@ -44,7 +44,11 @@ module V2
           if user.present? && user == current_user
             user.update(policy_user[:user_attributes])
             user.profile.update(policy_user[:user_attributes][:profile_attributes])
-            user.address.create_or_update(policy_user[:user_attributes][:address_attributes])
+            if user.address.present?
+              user.address.update(policy_user[:user_attributes][:address_attributes])
+            else
+              user.address.create(policy_user[:user_attributes][:address_attributes])
+            end
 
             @application.users << user
           elsif user.present?
