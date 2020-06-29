@@ -53,18 +53,13 @@ module V2
             @application.users << user
           elsif user.present?
             if index.zero?
-              if user.invitation_accepted_at? == false
-                @application.users << user
-                error_status << false
-              else
-                render json: {
-                  error: 'User Account Exists',
-                  message: 'A User has already signed up with this email address.  Please log in to complete your application'
-                }.to_json, status: 401
+              render json: {
+                error: 'User Account Exists',
+                message: 'A User has already signed up with this email address.  Please log in to complete your application'
+              }.to_json, status: 401
 
-                error_status << true
-                break
-              end
+              error_status << true
+              break
             else
               @application.users << @user
             end
@@ -401,7 +396,9 @@ module V2
                         first_name last_name job_title
                         contact_phone birth_date gender salutation
                       ], address_attributes: %i[
-                        street_number street_name street_two city state country county zip_code
+                        city country county id latitude longitude
+                        plus_four state street_name street_number
+                        street_two timezone zip_code
                       ]
                     ]
                   ])
