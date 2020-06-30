@@ -9,7 +9,8 @@ module V2
       
       before_action :set_policy_application,
                     only: %i[update show]
-      
+      before_action :validate_policy_users_params, only: %i[create update]
+
       def show
         if %w[started in_progress
               abandoned more_required].include?(@policy_application.status)
@@ -149,10 +150,27 @@ module V2
             end
             policy_user = @application.policy_users.create!(policy_user_params)
             policy_user.user.invite! if index == 0
-        end
+          end
         end
 
         error_status.include?(true) ? false : true
+      end
+
+      def validate_policy_users_params
+        users_emails =
+          create_policy_users_params[:policy_users_attributes].
+            map{ |policy_user| policy_user[:user_attributes][:email] }.
+            compact
+
+        if users_emails.count > users_emails.uniq.count
+          render(
+            json: {
+              error: :bad_arguments,
+              message: "You can't use the same emails for policy applicants"
+            }.to_json,
+            status: 401
+          ) && return
+        end
       end
       
       def create_rental_guarantee

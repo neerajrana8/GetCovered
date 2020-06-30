@@ -8,6 +8,7 @@ module V2
       before_action :set_policy_application,
                     only: [:show]
 
+      before_action :validate_policy_users_params, only: %i[create update]
       before_action :set_substrate,
                     only: %i[create index]
 
@@ -421,6 +422,23 @@ module V2
         @calling_supported_orders = called_from_orders
         {
         }
+      end
+
+      def validate_policy_users_params
+        users_emails =
+          create_policy_users_params[:policy_users_attributes].
+            map { |policy_user| policy_user[:user_attributes][:email] }.
+            compact
+
+        if users_emails.count > users_emails.uniq.count
+          render(
+            json: {
+                    error: :bad_arguments,
+                    message: "You can't use the same emails for policy applicants"
+                  }.to_json,
+            status: 401
+          ) && return
+        end
       end
 
       def supported_orders
