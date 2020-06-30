@@ -36,7 +36,9 @@ class InsurableGeographicalCategory < ApplicationRecord
       counties = nil
       query = query.where(counties: nil)
     else
-      counties = counties.map{|c| c.upcase }.sort!.uniq!
+      counties = counties.map{|c| c.upcase }
+      counties.sort!
+      counties.uniq!
       query = query.where('counties = ARRAY[?]::varchar[]', counties)
     end
     to_return = query.take
@@ -81,7 +83,11 @@ class InsurableGeographicalCategory < ApplicationRecord
     end
     
     def normalize_counties
-      self.counties.map!{|cty| cty.upcase }.sort!.uniq! unless self.counties.nil?
+      unless self.counties.nil?
+        self.counties.map!{|cty| cty.upcase }
+        self.counties.sort!
+        self.counties.uniq!
+      end
     end
   
     def nonempty_counties_implies_nonempty_state

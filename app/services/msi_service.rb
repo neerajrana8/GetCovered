@@ -66,7 +66,7 @@ class MsiService
   OVERRIDE_SPECIFICATION = {
     'CA' =>           [{ 'category' => 'deductible', 'uid' => @@coverage_codes[:EarthquakeDeductible][:code].to_s, 'requirement' => 'forbidden' }], # forbid earthquake ded unless earthquake cov selected
     'GA' =>           [{ 'category' => 'deductible', 'uid' => @@coverage_codes[:WindHail][:code].to_s, 'enabled' => false }],                                                         # disable WindHail
-    'GA_COUNTIES' =>  [{ 'category' => 'deductible', 'uid' => @@coverage_codes[:WindHail][:code].to_s, 'enabled' => true, 'requirement' => 'required' }],                             # enable WindHail & make sure it's required
+    'GA_COUNTIES' =>  [{ 'category' => 'deductible', 'uid' => @@coverage_codes[:WindHail][:code].to_s, 'enabled' => true, 'requirement' => 'required' }], # enable WindHail & make sure it's required for counties ['Bryan', 'Camden', 'Chatham', 'Glynn', 'Liberty', 'McIntosh']
   }.merge(['AK', 'CO', 'HI', 'KY', 'ME', 'MT', 'NC', 'NJ', 'UT', 'VT', 'WA'].map do |state|
     # disable theft deductibles for selected states
     [
@@ -693,17 +693,17 @@ class MsiService
             "options_format"=> ded["MSI_DeductibleOptionList"].blank? ? "none" : arrayify(ded["MSI_DeductibleOptionList"]["Deductible"]).first["Amt"] ? "currency" : "percent"
           }
       end)
-      # apply universal disablings
-      irc.coverage_options.select{|co| UNIVERSALLY_DISABLED_COVERAGE_OPTIONS.any?{|udco| udco['category'] == co['category'] && udco['uid'] == co['uid'] } }
-                          .each{|co| co['enabled'] = false }
-      # apply overrides, if any
-      (OVERRIDE_SPECIFICATION[use_default_rules_for.to_s] || []).each do |ovrd|
-        found = irc.coverage_options.find{|co| co['category'] == ovrd['category'] && co['uid'].to_s == ovrd['uid'].to_s }
-        if found.nil?
-          irc.coverage_options.push(ovrd)
-        else
-          found.merge!(ovrd)
-        end
+    end
+    # apply universal disablings
+    irc.coverage_options.select{|co| UNIVERSALLY_DISABLED_COVERAGE_OPTIONS.any?{|udco| udco['category'] == co['category'] && udco['uid'] == co['uid'] } }
+                        .each{|co| co['enabled'] = false }
+    # apply overrides, if any
+    (OVERRIDE_SPECIFICATION[use_default_rules_for.to_s] || []).each do |ovrd|
+      found = irc.coverage_options.find{|co| co['category'] == ovrd['category'] && co['uid'].to_s == ovrd['uid'].to_s }
+      if found.nil?
+        irc.coverage_options.push(ovrd)
+      else
+        found.merge!(ovrd)
       end
     end
     # set rules, if any
