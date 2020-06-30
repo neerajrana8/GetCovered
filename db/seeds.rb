@@ -2,7 +2,7 @@
 	  		 'insurable-commercial', 'insurable-cambridge', 'user', 
 	  		 'policy-residential', 'policy-master', 'policy-commercial', 
 	  		 'production', 'staging', 'reset', 'elasticsearch', 'pensio',
-         'msi', 'msi-test-addresses']
+         'msi', 'msi-test-addresses', 'msi-regenerate-ircs']
 
 def display_options()
 	@string = ""
