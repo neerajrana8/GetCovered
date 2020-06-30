@@ -27,6 +27,7 @@ while !addr[0].blank?
     primary: true
   })
   # increment
+  n += 1
   addr = addrs.row(n)
 end
 
@@ -44,7 +45,7 @@ end
   args[:carrier_id] = 5
   # create insurable
   if account.agency.offers_policy_type_in_region(args)
-    @community = account.insurables.new(title: "#{Faker::Movies::LordOfTheRings.location} #{@building_name_options[rand(0..3)]}", 
+    @community = account.insurables.new(title: "#{Faker::Movies::LordOfTheRings.location}-#{Time.current.to_i} #{@building_name_options[rand(0..3)]}", 
                                         insurable_type: @residential_community_insurable_type, 
                                         enabled: true, category: 'property',
                                         addresses_attributes: [ addr ])			
