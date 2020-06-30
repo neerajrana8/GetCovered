@@ -64,12 +64,16 @@ class MsiService
   UNIVERSALLY_DISABLED_COVERAGE_OPTIONS = (1011..1021).map{|uid| { 'category' => 'coverage', 'uid' => uid.to_s } }
   
   OVERRIDE_SPECIFICATION = {
-    'CA' =>           { 'category' => 'deductible', 'uid' => @@coverage_codes[:EarthquakeDeductible][:code].to_s, 'requirement' => 'forbidden' }, # forbid earthquake ded unless earthquake cov selected
-    'GA' =>           { 'category' => 'deductible', 'uid' => '5', 'enabled' => false },                                                         # disable WindHail
-    'GA_COUNTIES' =>  { 'category' => 'deductible', 'uid' => '5', 'enabled' => true, 'requirement' => 'required' },                             # enable WindHail & make sure it's required
-    'KY' =>           { 'category' => 'deductible', 'uid' => '2', 'enabled' => false },                                                         # disable theft deductible
-    'NJ' =>           { 'category' => 'deductible', 'uid' => '2', 'enabled' => false },                                                         # disable theft deductible
-  }
+    'CA' =>           [{ 'category' => 'deductible', 'uid' => @@coverage_codes[:EarthquakeDeductible][:code].to_s, 'requirement' => 'forbidden' }], # forbid earthquake ded unless earthquake cov selected
+    'GA' =>           [{ 'category' => 'deductible', 'uid' => @@coverage_codes[:WindHail][:code].to_s, 'enabled' => false }],                                                         # disable WindHail
+    'GA_COUNTIES' =>  [{ 'category' => 'deductible', 'uid' => @@coverage_codes[:WindHail][:code].to_s, 'enabled' => true, 'requirement' => 'required' }],                             # enable WindHail & make sure it's required
+  }.merge(['AK', 'CO', 'HI', 'KY', 'ME', 'MT', 'NC', 'NJ', 'UT', 'VT', 'WA'].map do |state|
+    # disable theft deductibles for selected states
+    [
+      state,
+      [{ 'category' => 'deductible', 'uid' => @@coverage_codes[:Theft][:code].to_s, 'enabled' => false }]
+    ]
+  end.to_h){|k,a,b| a + b }
   
   RULE_SPECIFICATION = {
     'USA' => {
@@ -693,7 +697,7 @@ class MsiService
       irc.coverage_options.select{|co| UNIVERSALLY_DISABLED_COVERAGE_OPTIONS.any?{|udco| udco['category'] == co['category'] && udco['uid'] == co['uid'] } }
                           .each{|co| co['enabled'] = false }
       # apply overrides, if any
-      (OVERRIDE_SPECIFICATION[use_default_rules_for] || {}).each do |ovrd|
+      (OVERRIDE_SPECIFICATION[use_default_rules_for] || []).each do |ovrd|
         found = irc.coverage_options.find{|co| co['category'] == ovrd['category'] && co['uid'].to_s == ovrd['uid'].to_s }
         if found.nil?
           irc.coverage_options.push(ovrd)
