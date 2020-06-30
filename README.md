@@ -56,14 +56,33 @@ All new errors and if possible old must use the next format:
 
 ```ruby
 {
-  error_type: :short_error_tag, # required
-  error_message: "Long and meaningful message that can be showed to a user", # optional
+  error: :short_error_tag, # required
+  message: "Long and meaningful message that can be showed to a user", # optional
   payload: @user.errors || ['your', :custom, {object: nil}] # optional
 }
 ```
 
-* **error_type** - just a tag to simplify recognize an error in code. _(symbol, snake_case, required)_;
-* error_message - Human-readable message that contains information about what was happened. This message 
+* **error** - just a tag to simplify recognize an error in code. _(symbol, snake_case, required)_;
+* message - Human-readable message that contains information about what was happened. This message 
 can be used in the pop-ups and/or just to clarify an error. _(string, free format, optional)_
 * payload - object that can store absolutely anything. Tne most common usage is to store errors from 
 active record models, parser, external services. _(any object, free format, optional)_
+
+There is a method in the `application_controller` that wraps this hash - `standard_error`. Examples:
+```ruby
+#render full error
+render(
+  json: standard_error(:something_went_wrong, 'Everything goes wrong', @user.errors).to_json, 
+  status: 401
+)
+#render without payload
+render(
+  json: standard_error(:something_went_wrong, 'Everything goes wrong').to_json, 
+  status: 401
+)
+#render without message
+render(
+  json: standard_error(:something_went_wrong, nil, @user.errors).to_json, 
+  status: 401
+)
+```
