@@ -51,3 +51,19 @@ If you want to launch a certain test use the next form:
 
 `docker-compose exec -e "RAILS_ENV=test_container" web bundle exec rspec 'spec/requests/leases/bulk_creation_spec.rb'`
 
+## Errors 
+All new errors and if possible old must use the next format:
+
+```ruby
+{
+  error_type: :short_error_tag, # required
+  error_message: "Long and meaningful message that can be showed to a user", # optional
+  payload: @user.errors || ['your', :custom, {object: nil}] # optional
+}
+```
+
+* **error_type** - just a tag to simplify recognize an error in code. _(symbol, snake_case, required)_;
+* error_message - Human-readable message that contains information about what was happened. This message 
+can be used in the pop-ups and/or just to clarify an error. _(string, free format, optional)_
+* payload - object that can store absolutely anything. Tne most common usage is to store errors from 
+active record models, parser, external services. _(any object, free format, optional)_
