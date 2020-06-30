@@ -697,7 +697,7 @@ class MsiService
       irc.coverage_options.select{|co| UNIVERSALLY_DISABLED_COVERAGE_OPTIONS.any?{|udco| udco['category'] == co['category'] && udco['uid'] == co['uid'] } }
                           .each{|co| co['enabled'] = false }
       # apply overrides, if any
-      (OVERRIDE_SPECIFICATION[use_default_rules_for] || []).each do |ovrd|
+      (OVERRIDE_SPECIFICATION[use_default_rules_for.to_s] || []).each do |ovrd|
         found = irc.coverage_options.find{|co| co['category'] == ovrd['category'] && co['uid'].to_s == ovrd['uid'].to_s }
         if found.nil?
           irc.coverage_options.push(ovrd)
@@ -707,7 +707,7 @@ class MsiService
       end
     end
     # set rules, if any
-    irc.rules = RULE_SPECIFICATION[use_default_rules_for] || {}
+    irc.rules = RULE_SPECIFICATION[use_default_rules_for.to_s] || {}
     return irc
   end
   

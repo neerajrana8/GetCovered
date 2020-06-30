@@ -464,6 +464,8 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
                                                             profile_data: {
                                                               "address_corrected": false,
                                                               "address_correction_data": {},
+                                                              "address_correction_failed": false,
+                                                              "address_correction_errors": nil,
                                                               "registered_with_msi": false,
                                                               "registered_with_msi_on": nil,
                                                               "msi_external_id": nil
@@ -527,7 +529,6 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
         event.response = result[:data]
         event.status = result[:error] ? 'error' : 'success'
         event.save!
-        result = msis.call
         if result[:error]
           pp result[:response]&.parsed_response
           puts ""
@@ -543,7 +544,7 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
         )
         irc.save!
         # build county IRCs if needed
-        if state == 'GA'
+        if state.to_s == 'GA'
           igc = ::InsurableGeographicalCategory.get_for(state: state, counties: ['Bryan', 'Camden', 'Chatham', 'Glynn', 'Liberty', 'McIntosh'])
           irc = msis.extract_insurable_rate_configuration(nil,
             configurer: carrier,

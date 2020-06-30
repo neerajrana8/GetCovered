@@ -81,8 +81,38 @@ module CarrierMsiInsurable
             return ["Successful service call did not return an id"]
           end
           @carrier_profile.update_columns(external_carrier_id: external_id)
-          # handle address corrections MOOSE WARNING: fix up the address and store fixes in profile_data (address_corrected and address_correction_data)
-          # address info: msi_data[:data].dig("MSIACORD", "InsuranceSvcRs", "RenterPolicyQuoteInqRs", "MSI_CommunityInfo", "Addr") # DetailAddr etc
+          # handle address corrections
+          address_data = msi_data[:data].dig("MSIACORD", "InsuranceSvcRs", "RenterPolicyQuoteInqRs", "MSI_CommunityInfo", "Addr")
+          if address_data&.dig("DetailAddr", "MSI_AddressScrubSuccessful")
+            @carrier_profile.data['address_correction_data'] = {}
+            # collect address fixes... WARNING: probably city and state, and possibly the rest (except county and plus four), shouldn't be fixable here...
+            if !address_data["StateProvCd"].blank? && address_data["StateProvCd"].strip.upcase != @address.state
+              @carrier_profile.data['address_correction_data']['state'] = { 'from' => @address.state, 'to' => address_data["StateProvCd"].strip.upcase }
+            end
+            if !address_data["City"].blank? && address_data["City"].downcase.gsub(/[^0-9a-z]/i, '') != @address.city&.downcase&.gsub(/[^0-9a-z]/i, '')
+              @carrier_profile.data['address_correction_data']['city'] = { 'from' => @address.city, 'to' => address_data["City"] }
+            end
+            if !address_data["County"].blank? && address_data["County"].strip.upcase != @address.county&.strip&.upcase
+              @carrier_profile.data['address_correction_data']['county'] = { 'from' => @address.county, 'to' => address_data["County"].strip.upcase }
+            end
+            if !address_data["PostalCode"].blank? && address_data["PostalCode"].gsub(/[^0-9]/i, '')[0..4] != @address.zip_code
+              @carrier_profile.data['address_correction_data']['zip_code'] = { 'from' => @address.zip_code, 'to' => address_data["PostalCode"].gsub(/[^0-9]/i, '')[0..4] }
+            end
+            if !address_data["PostalCode4"].blank? && address_data["PostalCode4"].gsub(/[^0-9]/i, '')[0..3] != @address.plus_four
+              @carrier_profile.data['address_correction_data']['plus_four'] = { 'from' => @address.plus_four, 'to' => address_data["PostalCode4"].gsub(/[^0-9]/i, '')[0..3] }
+            end
+            # fix address
+            if @carrier_profile.data['address_correction_data'].blank?
+              @carrier_profile.data['address_corrected'] = false
+            else
+              @carrier_profile.data['address_corrected'] = true
+              unless @address.update(@carrier_profile.data['address_correction_data'].map{|prop,change| [prop.to_s, change['to']] }.to_h)
+                @carrier_profile.data['address_correction_failed'] = true
+                @carrier_profile.data['address_correction_errors'] = @address.errors.to_h
+              end
+            end
+          end
+          # save sadata
           @carrier_profile.external_carrier_id = external_id
           @carrier_profile.data['msi_external_id'] = external_id
           @carrier_profile.data['registered_with_msi'] = true
