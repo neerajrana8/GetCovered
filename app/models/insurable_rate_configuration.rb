@@ -186,24 +186,29 @@ class InsurableRateConfiguration < ApplicationRecord
       end
     end
     # coverage_options
-    to_return.coverage_options = irc_array.last&.coverage_options || []
-    irc_array.reverse.drop(1).each do |irc|
-      to_return.merge_options!(irc.coverage_options, mutable: mutable, allow_new_coverages: irc.configurer_type.nil? ? mutable : COVERAGE_ADDING_CONFIGURERS.include?(irc.configurer_type))
+    irc_array.each do |irc|
+      to_return.merge_child_options!(irc.coverage_options, mutable: mutable, allow_new_coverages: irc.configurer_type.nil? ? mutable : COVERAGE_ADDING_CONFIGURERS.include?(irc.configurer_type))
     end
     # done
     return to_return
   end
   
   # merge parent options into self.coverage_options (does not save the model)
-  def merge_options!(parent_options, mutable:, allow_new_coverages: mutable)
-    self.coverage_options = self.merge_options(parent_options, mutable: mutable, allow_new_coverages: allow_new_coverages)
+  def merge_parent_options!(parent_options, mutable:, allow_new_coverages: mutable)
+    self.coverage_options = self.merge_options(parent_options, self.coverage_options, mutable: mutable, allow_new_coverages: allow_new_coverages)
+    return self
+  end
+  
+  # merge child options into self.coverage_options (does not save the model)
+  def merge_child_options!(child_options, mutable:, allow_new_coverages: mutable)
+    self.coverage_options = self.merge_options(self.coverage_options, child_options, mutable: mutable, allow_new_coverages: allow_new_coverages)
     return self
   end
   
   # merges parent options into child options
   def merge_options(
     parent_options,
-    child_options = self.coverage_options,
+    child_options,
     mutable:,
     allow_new_coverages: mutable
   )
@@ -523,7 +528,7 @@ class InsurableRateConfiguration < ApplicationRecord
     # for each IRC, apply rules and merge down
     coverage_options = []
     irc_hierarchy.each do |irc|
-      irc.merge_options!(coverage_options, mutable: false, allow_new_coverages: COVERAGE_ADDING_CONFIGURERS.include?(irc.configurer_type))
+      irc.merge_child_options!(coverage_options, mutable: false, allow_new_coverages: COVERAGE_ADDING_CONFIGURERS.include?(irc.configurer_type))
       coverage_options = irc.annotate_options(selections)
     end
     coverage_options.select!{|co| co['enabled'] != false }
