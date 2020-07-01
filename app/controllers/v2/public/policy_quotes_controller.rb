@@ -134,7 +134,8 @@ module V2
 	    	unless @policy_quote.nil?
 		    	@user = ::User.find(accept_policy_quote_params[:id])
 		    	unless @user.nil?
-						result = @user.attach_payment_source(accept_policy_quote_params[:source])
+            # WARNING: this next line overrides the provided token with tok_visa for MSI in development, because we need to use payeezy test cards
+						result = @user.attach_payment_source(Rails.env != 'production' && @policy_quote.policy_application.carrier_id == 5 ? 'tok_visa' : accept_policy_quote_params[:source])
 			    	if result.valid?
               bind_params = []
               # collect bind params for msi
