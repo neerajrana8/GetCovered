@@ -11,7 +11,7 @@ module V2
       before_action :set_substrate, only: [:create, :index, :add_coverage_proof]
       
       def index
-        if current_staff.organizable_id == ::Agency::GET_COVERED_ID
+        if current_staff.getcovered_agent?
           super(:@policies, Policy.all)
         else
           super(:@policies, Policy.where(agency_id: current_staff.organizable_id))
@@ -20,7 +20,7 @@ module V2
 
       def search
         @policies =
-          if current_staff.organizable_id == ::Agency::GET_COVERED_ID
+          if current_staff.getcovered_agent?
             Policy.search(params[:query]).records
           else
             Policy.search(params[:query]).records.where(agency_id: current_staff.organizable_id)
@@ -42,6 +42,11 @@ module V2
           render json: { success: false, errors: ['Unauthorized Access'] },
                  status: :unauthorized
         end
+      end
+
+      def resend_policy_documents
+        ::Policies::SendProofOfCoverageJob.perform_later(params[:id])
+        render json: { message: 'Documents were sent' }
       end
       
       def update
@@ -95,7 +100,7 @@ module V2
         
       def set_policy
         @policy =
-          if current_staff.organizable_id == Agency::GET_COVERED_ID
+          if current_staff.getcovered_agent?
             Policy.find(params[:id])
           else
             current_staff.organizable.policies.find(params[:id])

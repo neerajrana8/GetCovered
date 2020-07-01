@@ -18,7 +18,11 @@ scope module: :public do
     path: "billing-strategies",
     only: [ :index ]
 
-	resources :branding_profiles, only: [:show], path: 'branding-profiles'
+	resources :branding_profiles, only: [:show], path: 'branding-profiles' do
+    member do
+      get :faqs
+    end
+  end
 	get 'branding-profile', to: 'branding_profiles#show_by_subdomain'
 	resources :pages, only: [ :show ]
 

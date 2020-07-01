@@ -36,6 +36,7 @@ scope module: :user, path: "user" do
       get 'bulk_decline'
       get 'render_eoi'
       get 'bulk_accept'
+      get 'resend_policy_documents'
     end
   end
   

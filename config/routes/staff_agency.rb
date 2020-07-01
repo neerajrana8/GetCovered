@@ -50,6 +50,10 @@
             defaults: { recordable_type: Agency }
           get 'branding_profile'
         end
+
+        collection do
+          get :sub_agencies_index
+        end
       end
   
     resources :fees,
@@ -64,7 +68,17 @@
   
     resources :branding_profiles,
       path: "branding-profiles",
-      only: [ :show, :create, :update ]
+      only: [ :show, :create, :update ] do
+        member do
+          get :faqs
+          post :faq_create
+          put :faq_update, path: '/faq_update/faq_id'
+          post :faq_question_create, path: '/faqs/:faq_id/faq_question_create'
+          put :faq_question_update, path: '/faqs/:faq_id/faq_question_update/:faq_question_id'
+          delete :faq_delete, path: '/faqs/:faq_id/faq_delete'
+          delete :faq_question_delete, path: '/faqs/:faq_id/faq_question_delete/:faq_question_id'
+        end
+      end
     
     resources :branding_profile_attributes,
       path: "branding-profile-attributes",
@@ -188,6 +202,7 @@
           to: "histories#index_recordable",
           via: "get",
           defaults: { recordable_type: Policy }
+        get 'resend_policy_documents'
       end
       get "search", to: 'policies#search', on: :collection
     end

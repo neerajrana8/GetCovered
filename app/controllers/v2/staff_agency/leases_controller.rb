@@ -36,7 +36,7 @@ module V2
       end
 
       def bulk_create
-        account = current_staff.organizable.accounts.find_by_id(bulk_create_params[:account_id])
+        account = @agency.accounts.find_by_id(bulk_create_params[:account_id])
 
         unless account.present?
           render json: { success: false, errors: ['account_id should be present and relate to this agency'] },

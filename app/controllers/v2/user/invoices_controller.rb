@@ -5,20 +5,19 @@
 module V2
   module User
     class InvoicesController < UserController
-      
       before_action :set_invoice,
         only: [:show]
       
-      # before_action :set_substrate,
-      #   only: [:index]
+      before_action :set_substrate,
+        only: [:index]
       
       def index
-        if params[:short]
-          @invoices = paginator(Invoice.order(created_at: :desc))
+        if params[:short].present?
+          paginator(Invoice.where('payer_id = ?', current_user.id).order(created_at: :desc))
           render :short, status: :ok
         else
-          @invoices = paginator(Invoice.order(created_at: :desc))
-          render :index, status: :ok
+          @invoices = paginator(Invoice.where('payer_id = ?', current_user.id).order(created_at: :desc))
+          render json: @invoices, status: :ok
         end
       end
       

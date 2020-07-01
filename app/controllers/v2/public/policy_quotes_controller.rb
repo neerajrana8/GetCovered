@@ -155,7 +155,7 @@ module V2
 								::Analytics.track(
 									user_id: @user.id,
 									event: 'Order Completed',
-									properties: { plan: 'Orders' }
+									properties: { category: 'Orders' }
 								)
 							end
 							render json: {

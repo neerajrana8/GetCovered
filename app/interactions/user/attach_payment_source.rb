@@ -34,7 +34,7 @@ class User
             customer.save
 
             payment_profile = PaymentProfile.create(
-              source_id: token_data.card.id,
+              source_id: Rails.env.to_sym == :awsdev ? 'tok_visa' : token_data.card.id, # Dirty hack upon request from the front-end team
               source_type: 'card',
               fingerprint: token_data.card.fingerprint,
               payer: user,
@@ -49,7 +49,7 @@ class User
           ::Analytics.track(
             user_id: user.id,
             event: 'Added Payment Method',
-            properties: { plan: 'Account' }
+            properties: { category: 'Account' }
           )
 
           return true if user.save && make_default

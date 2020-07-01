@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_06_22_190059) do
+ActiveRecord::Schema.define(version: 2020_06_24_060419) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -308,6 +308,23 @@ ActiveRecord::Schema.define(version: 2020_06_22_190059) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "change_requests", force: :cascade do |t|
+    t.text "reason"
+    t.integer "customized_action", default: 0
+    t.string "method"
+    t.string "field"
+    t.string "current_value"
+    t.string "new_value"
+    t.integer "status", default: 0
+    t.datetime "status_changed_on"
+    t.bigint "staff_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["customized_action"], name: "index_change_requests_on_customized_action", unique: true
+    t.index ["staff_id"], name: "index_change_requests_on_staff_id"
+    t.index ["status"], name: "index_change_requests_on_status", unique: true
+  end
+
   create_table "charges", force: :cascade do |t|
     t.integer "status", default: 0
     t.string "status_information"
@@ -433,6 +450,23 @@ ActiveRecord::Schema.define(version: 2020_06_22_190059) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["eventable_type", "eventable_id"], name: "index_events_on_eventable_type_and_eventable_id"
+  end
+
+  create_table "faq_questions", force: :cascade do |t|
+    t.text "question"
+    t.text "answer"
+    t.integer "faq_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["faq_id"], name: "index_faq_questions_on_faq_id"
+  end
+
+  create_table "faqs", force: :cascade do |t|
+    t.string "title"
+    t.integer "branding_profile_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["branding_profile_id"], name: "index_faqs_on_branding_profile_id"
   end
 
   create_table "fees", force: :cascade do |t|
@@ -779,6 +813,11 @@ ActiveRecord::Schema.define(version: 2020_06_22_190059) do
     t.date "next_payment_date"
     t.bigint "policy_group_id"
     t.boolean "declined"
+<<<<<<< HEAD
+=======
+    t.string "address"
+    t.string "out_of_system_carrier_title"
+>>>>>>> master
     t.bigint "policy_id"
     t.string "address"
     t.string "out_of_system_carrier_title"

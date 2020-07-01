@@ -6,14 +6,14 @@ module V2
   module StaffAgency
     class BrandingProfilesController < StaffAgencyController
       
-      before_action :set_branding_profile, only: [:update, :show, :destroy]
+      before_action :set_branding_profile, only: [:update, :show, :destroy, :faqs, :faq_create, :faq_update, :faq_question_create, :faq_question_update]
 
       def show
       end
 
       def create
         if create_allowed?
-          @branding_profile = current_staff.organizable.branding_profiles.new(branding_profile_params)
+          @branding_profile = @agency.branding_profiles.new(branding_profile_params)
           if !@branding_profile.errors.any? && @branding_profile.save
             render :show, status: :created
           else
@@ -24,6 +24,73 @@ module V2
         end
       end
 
+      def faqs
+        @branding_profile = BrandingProfile.includes(:faqs).find(params[:id]) || []
+        render :faqs, status: :ok
+      end
+
+      def faq_create
+        @branding_profile = BrandingProfile.find(params[:id])
+        @faq = @branding_profile.faqs.new(faq_params)
+        if @faq.errors.empty? && @faq.save
+          render json: @faq, status: :created
+        else
+          render json: { message: @faq.errors }, status: :unprocessable_entity
+        end
+      end
+
+      def faq_update
+        @branding_profile = BrandingProfile.find(params[:id])
+        @faq = @branding_profile.faqs.find(params[:faq_id])
+        if @faq.update(faq_params)
+          render json: @faq, status: :created
+        else
+          render json: { message: @faq.errors }, status: :unprocessable_entity
+        end
+      end
+
+      def faq_delete
+        @branding_profile = BrandingProfile.find(params[:id])
+        @faq = @branding_profile.faqs.find(params[:faq_id])
+        if @faq.destroy
+          render json: { message: 'Section deleted' }, status: :ok
+        else
+          render json: { message: @faq.errors }, status: :unprocessable_entity
+        end
+      end
+
+      def faq_question_create
+        @branding_profile = BrandingProfile.find(params[:id])
+        @faq = @branding_profile.faqs.find(params[:faq_id])
+        @faq_question = @faq.faq_questions.new(faq_question_params)
+        if @faq_question.errors.empty? && @faq_question.save
+          render json: @faq_question, status: :created
+        else
+          render json: { message: @faq_question.errors }, status: :unprocessable_entity
+        end
+      end
+
+      def faq_question_update
+        @branding_profile = BrandingProfile.find(params[:id])
+        @faq = @branding_profile.faqs.find(params[:faq_id])
+        @faq_question = @faq.faq_questions.find(params[:faq_question_id])
+        if @faq_question.update(faq_question_params)
+          render json: @faq_question, status: :created
+        else
+          render json: { message: @faq_question.errors }, status: :unprocessable_entity
+        end
+      end
+
+      def faq_question_delete
+        @branding_profile = BrandingProfile.find(params[:id])
+        @faq = @branding_profile.faqs.find(params[:faq_id])
+        @faq_question = @faq.faq_questions.find(params[:faq_question_id])
+        if @faq_question.destroy
+          render json: { message: 'Section deleted' }, status: :ok
+        else
+          render json: { message: @faq_question.errors }, status: :unprocessable_entity
+        end
+      end
       
       def update
         if update_allowed?
@@ -65,7 +132,16 @@ module V2
             styles: {}
           )
         end
-        
+
+        def faq_params
+          return({}) if params.blank?
+          params.permit(:title, :branding_profile_id)
+        end
+
+        def faq_question_params
+          return({}) if params.blank?
+          params.permit(:question, :answer, :faq_id)
+        end
     end
   end # module StaffAgency
 end

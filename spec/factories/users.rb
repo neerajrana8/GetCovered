@@ -5,5 +5,9 @@ FactoryBot.define do
     password_confirmation { 'test1234' }
     association :profile, factory: :profile
     association :address, factory: :address
+
+    trait :accepted do
+      invitation_accepted_at { DateTime.now }
+    end
   end
 end

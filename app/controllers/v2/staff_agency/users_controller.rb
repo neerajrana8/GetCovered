@@ -8,7 +8,7 @@ module V2
       before_action :set_user, only: %i[update show]
 
       def index
-        super(:@users, current_staff.organizable.active_users, :profile)
+        super(:@users, @agency.active_users, :profile)
       end
 
       def search
@@ -74,7 +74,7 @@ module V2
       end
 
       def set_user
-        @user = current_staff.organizable.active_users.find_by(id: params[:id])
+        @user = @agency.active_users.find_by(id: params[:id])
       end
 
       def create_params

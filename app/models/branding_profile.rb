@@ -13,6 +13,7 @@ class BrandingProfile < ApplicationRecord
 
   has_many :branding_profile_attributes
   has_many :pages
+  has_many :faqs
     
   scope :default, -> { where(default: true) }
 

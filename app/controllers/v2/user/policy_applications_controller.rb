@@ -60,7 +60,9 @@ module V2
 					        last_name: policy_user[:user_attributes][:profile_attributes][:last_name], 
 					        job_title: policy_user[:user_attributes][:profile_attributes][:job_title], 
 					      	contact_phone: policy_user[:user_attributes][:profile_attributes][:contact_phone], 
-					      	birth_date: policy_user[:user_attributes][:profile_attributes][:birth_date]                  
+					      	birth_date: policy_user[:user_attributes][:profile_attributes][:birth_date],
+                  salutation: policy_user[:user_attributes][:profile_attributes][:salutation],
+                  gender: policy_user[:user_attributes][:profile_attributes][:gender]
                 }
               }
             )
@@ -68,7 +70,6 @@ module V2
             policy_user.user.invite! if index == 0
             
           end
-          
         end
       end
       
@@ -395,7 +396,7 @@ module V2
 			      							:spouse, user_attributes: [
 				      							:email, profile_attributes: [
 					      							:first_name, :last_name, :job_title, 
-					      							:contact_phone, :birth_date	
+					      							:contact_phone, :birth_date, :gender, :salutation
 				      							]
 			      							]
 			      					  ])  
@@ -423,7 +424,6 @@ module V2
         def supported_orders
           supported_filters(true)
         end
-        
     end
   end
 end

@@ -112,7 +112,10 @@ class Staff < ApplicationRecord
   def active_for_authentication?
     super && (owner || enabled)
   end
-  
+
+  def getcovered_agent?
+    organizable_type == 'Agency' && organizable_id == ::Agency::GET_COVERED_ID
+  end
   
   private
   
