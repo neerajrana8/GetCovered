@@ -813,11 +813,6 @@ ActiveRecord::Schema.define(version: 2020_06_24_060419) do
     t.date "next_payment_date"
     t.bigint "policy_group_id"
     t.boolean "declined"
-<<<<<<< HEAD
-=======
-    t.string "address"
-    t.string "out_of_system_carrier_title"
->>>>>>> master
     t.bigint "policy_id"
     t.string "address"
     t.string "out_of_system_carrier_title"
