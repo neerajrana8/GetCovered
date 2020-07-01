@@ -93,11 +93,13 @@ module V2
                                                               policy_type: @application.policy_type).take
 
         if @application.save
-          if create_policy_users && @application.update(status: 'in_progress')
-            render 'v2/public/policy_applications/show'
-          else
-            render json: @application.errors.to_json,
-                   status: 422
+          if create_policy_users
+            if @application.update(status: 'in_progress')
+              render 'v2/public/policy_applications/show'
+            else
+              render json: @application.errors.to_json,
+                     status: 422
+              end
           end
         else
           # Rental Guarantee Application Save Error
