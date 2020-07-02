@@ -36,7 +36,7 @@
     resources :master_policies,
       only: [ :create, :update, :index, :show ]do
         member do
-          post :show_create
+          post :create
         end
       end
 

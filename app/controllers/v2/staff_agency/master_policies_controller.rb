@@ -9,11 +9,11 @@ module V2
       before_action :set_substrate, only: [:create]
       
       def index
-        @master_policies = Policy.where('policy_type_id = ? AND agency_id = ?', 2, @agency.id) || []
+        @master_policies = Policy.where('policy_type_id = ? AND agency_id = ?', PolicyType::MASTER_ID, @agency.id) || []
       end
       
       def show
-        @master_policy = Policy.find_by(policy_type_id: 2, id: params[:id])
+        @master_policy = Policy.find_by(policy_type_id: PolicyType::MASTER_ID, id: params[:id])
         @master_policy_coverages = @master_policy.policies.where('policy_type_id = ? AND agency_id = ?', 3, @agency.id) || []
       end
 
@@ -28,7 +28,11 @@ module V2
           render json: { errors: @policy.errors.merge(@policy_premium.errors) }, status: :unprocessable_entity
         end
       end
-        
+
+      def communities
+        @master_policy
+      end
+
       
       def create
         if create_allowed?
@@ -108,9 +112,7 @@ module V2
 
       def create_policy_premium
         return({}) if params.blank?
-        params.permit(:base, :total, :calculation_base,
-          :carrier_base
-        )
+        params.permit(:base, :total, :calculation_base, :carrier_base)
       end
     end
   end # module StaffAgency

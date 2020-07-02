@@ -4,7 +4,10 @@
 
 class PolicyType < ApplicationRecord
   include SetSlug
-  
+
+  MASTER_ID = 2
+  MASTER_COVERAGE_ID = 3
+
   after_initialize :initialize_policy_type
   
   # Relationships
