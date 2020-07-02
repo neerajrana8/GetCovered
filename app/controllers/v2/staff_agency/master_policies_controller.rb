@@ -5,34 +5,35 @@
 module V2
   module StaffAgency
     class MasterPoliciesController < StaffAgencyController
-      before_action :set_policy, only: [:update, :show, :show_create]
-      before_action :set_substrate, only: [:create]
+      before_action :set_policy, only: [:update, :show, :communities, :add_insurable]
       
       def index
         @master_policies = Policy.where('policy_type_id = ? AND agency_id = ?', PolicyType::MASTER_ID, @agency.id) || []
       end
       
       def show
-        @master_policy = Policy.find_by(policy_type_id: PolicyType::MASTER_ID, id: params[:id])
         @master_policy_coverages = @master_policy.policies.where('policy_type_id = ? AND agency_id = ?', 3, @agency.id) || []
       end
 
-      def show_create
-        policy = Policy.find(params[:id])
-        carrier_agency = CarrierAgency.find_by(params[:carrier_id])
-        account = carrier_agency.agency.accounts.find_by(params[:account_id])
-        if insurable = account.insurables.communities.create!(insurable_type_id: params[:insurable_type_id], title: params[:title])
-          PolicyInsurable.create!(insurable: insurable, policy_id: policy.id)
+      def communities
+        @insurables = @master_policy.insurables.communities
+        render template: 'v2/staff_agency/insurables/index', status: :ok
+      end
+
+      def add_insurable
+        carrier_agency = CarrierAgency.find(params[:carrier_id])
+        account = carrier_agency.agency.accounts.find(params[:account_id])
+        insurable = account&.insurables&.find(params[:insurable_id])
+
+        if insurable.present?
+          @master_policy.insurables << insurable
+          @master_policy.start_automatic_master_coverage_policy_issue
           render json: { message: 'Community added' }, status: :ok
         else
-          render json: { errors: @policy.errors.merge(@policy_premium.errors) }, status: :unprocessable_entity
+          render json: { error: :insurable_was_not_found, message: "Account doesn't have this insurable" },
+                 status: :unprocessable_entity
         end
       end
-
-      def communities
-        @master_policy
-      end
-
       
       def create
         if create_allowed?
@@ -41,14 +42,14 @@ module V2
           carrier_agency = CarrierAgency.find(carrier.id)
           account = carrier_agency.agency.accounts.find(params[:account_id])
 
-          @policy = @substrate.new(create_params.merge(agency: carrier_agency.agency,
+          @master_policy = Policy.new(create_params.merge(agency: carrier_agency.agency,
                                    carrier: carrier, account: account, policy_type: policy_type))
           @policy_premium = PolicyPremium.new(create_policy_premium)
-          if @policy.errors.none? && @policy_premium.errors.none? && @policy.save && @policy_premium.save
+          if @master_policy.errors.none? && @policy_premium.errors.none? && @master_policy.save && @policy_premium.save
             render json: { message: 'Master Policy and Policy Premium created' }, status: :created
-            AutomaticMasterPolicyInvoiceJob.perform_later(@policy.id)
+            AutomaticMasterPolicyInvoiceJob.perform_later(@master_policy.id)
           else
-            render json: { errors: @policy.errors.merge(@policy_premium.errors) }, status: :unprocessable_entity
+            render json: { errors: @master_policy.errors.merge(@policy_premium.errors) }, status: :unprocessable_entity
           end
         else
           render json: { success: false, errors: ['Unauthorized Access'] },
@@ -58,14 +59,14 @@ module V2
       
       def update
         if update_allowed?
-          @policy.update(cancellation_date_date: params[:date])
-          if @policy.cancellation_date_date.present?
-            AutomaticMasterPolicyInvoiceJob.perform_later(@policy.id)
+          @master_policy.update(cancellation_date_date: params[:date])
+          if @master_policy.cancellation_date_date.present?
+            AutomaticMasterPolicyInvoiceJob.perform_later(@master_policy.id)
             render json: { message: 'Master policy canceled' }, status: :ok
-          elsif @policy.cancellation_date_date.nil?
+          elsif @master_policy.cancellation_date_date.nil?
             render json: { message: 'Master policy not canceled' }, status: :ok
           else
-            render json: @policy.errors, status: :unprocessable_entity
+            render json: @master_policy.errors, status: :unprocessable_entity
           end
         else
           render json: { success: false, errors: ['Unauthorized Access'] },
@@ -84,16 +85,7 @@ module V2
       end
       
       def set_policy
-        @policy = access_model(::Policy, params[:id])
-      end
-      
-      def set_substrate
-        super
-        if @substrate.nil?
-          @substrate = access_model(::Policy)
-        elsif !params[:substrate_association_provided]
-          @substrate = @substrate.policies
-        end
+        @master_policy = Policy.find_by(policy_type_id: PolicyType::MASTER_ID, id: params[:id])
       end
 
       def create_params

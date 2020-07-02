@@ -298,7 +298,7 @@ class Policy < ApplicationRecord
   
   settings index: { number_of_shards: 1 } do
     mappings dynamic: 'false' do
-      indexes :number, type: :string
+      indexes :number, type: :text
     end
   end
 

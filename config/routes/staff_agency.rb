@@ -34,9 +34,10 @@
       end
 
     resources :master_policies,
-      only: [ :create, :update, :index, :show ]do
+      only: [ :create, :update, :index, :show ] do
         member do
-          post :create
+          post :add_insurable
+          get :communities
         end
       end
 

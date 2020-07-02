@@ -6,7 +6,7 @@ class AutomaticMasterCoveragePolicyIssueJob < ApplicationJob
     return if master_policy.nil? || master_policy.policy_type.designation != 'MASTER'
 
     master_policy.insurables.each do |insurable|      
-      insurable.units.each do |unit|        
+      insurable.units&.each do |unit|
         if unit.policies.empty? && unit.leases&.count&.zero?
           unit.policies.create(
             agency: master_policy.agency, 
@@ -22,5 +22,4 @@ class AutomaticMasterCoveragePolicyIssueJob < ApplicationJob
     end
     AutomaticMasterCoveragePolicyIssueJob.set(wait: 1.day).perform_later(policy_id)
   end
-  
 end
