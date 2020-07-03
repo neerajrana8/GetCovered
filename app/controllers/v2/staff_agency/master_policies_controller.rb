@@ -21,9 +21,7 @@ module V2
       end
 
       def add_insurable
-        carrier_agency = CarrierAgency.find(params[:carrier_id])
-        account = carrier_agency.agency.accounts.find(params[:account_id])
-        insurable = account&.insurables&.find(params[:insurable_id])
+        insurable = @master_policy.account.insurables.communities.find_by(id: params[:insurable_id])
 
         if insurable.present?
           @master_policy.insurables << insurable
@@ -31,7 +29,7 @@ module V2
           render json: { message: 'Community added' }, status: :ok
         else
           render json: { error: :insurable_was_not_found, message: "Account doesn't have this insurable" },
-                 status: :unprocessable_entity
+                 status: :not_found
         end
       end
       
