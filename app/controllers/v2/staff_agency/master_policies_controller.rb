@@ -47,7 +47,7 @@ module V2
             render json: { message: 'Master Policy and Policy Premium created' }, status: :created
             AutomaticMasterPolicyInvoiceJob.perform_later(@master_policy.id)
           else
-            render json: { errors: @master_policy.errors.merge(@policy_premium.errors) }, status: :unprocessable_entity
+            render json: { errors: @master_policy.errors.merge!(@policy_premium.errors) }, status: :unprocessable_entity
           end
         else
           render json: { success: false, errors: ['Unauthorized Access'] },
