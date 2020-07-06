@@ -120,6 +120,7 @@ module V2
       
       def set_policy
         @master_policy = Policy.find_by(policy_type_id: PolicyType::MASTER_ID, id: params[:id])
+        render(status: :not_found) if @master_policy.blank?
       end
 
       def create_params
