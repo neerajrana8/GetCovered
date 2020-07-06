@@ -143,7 +143,7 @@ module V2
                 bind_params = [
                   {
                     'payment_method' => accept_policy_quote_payment_params[:payment_method],
-                    'payment_info' => { CreditCardInfo: accept_policy_quote_payment_params[:CreditCardInfo] },
+                    'payment_info' => { CreditCardInfo: accept_policy_quote_payment_params[:CreditCardInfo].to_h },
                     'payment_token' => accept_policy_quote_payment_params[:token]
                   }
                 ]
