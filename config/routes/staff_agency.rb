@@ -38,6 +38,8 @@
         member do
           post :add_insurable
           get :communities
+          get :covered_units
+          post :cover_unit
         end
       end
 
