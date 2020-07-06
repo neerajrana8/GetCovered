@@ -26,7 +26,7 @@ describe 'Master Policies API spec', type: :request do
     end
 
     it 'should return list of included communities' do
-      get "/v2/staff_agency/master_policies/#{master_policy.id}/communities",
+      get "/v2/staff_agency/master-policies/#{master_policy.id}/communities",
           headers: @headers.reverse_merge(base_headers)
 
       expect(response.status).to eq(200)
@@ -38,7 +38,7 @@ describe 'Master Policies API spec', type: :request do
 
     it 'should add a new community' do
       request = lambda do
-        post "/v2/staff_agency/master_policies/#{master_policy.id}/add_insurable",
+        post "/v2/staff_agency/master-policies/#{master_policy.id}/add_insurable",
              params: {
                insurable_id: community_new.id,
                account_id: account.id,

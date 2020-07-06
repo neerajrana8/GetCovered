@@ -33,7 +33,7 @@
         end
       end
 
-    resources :master_policies,
+    resources :master_policies, path: 'master-policies',
       only: [ :create, :update, :index, :show ] do
         member do
           post :add_insurable
