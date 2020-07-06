@@ -6,11 +6,11 @@ module V2
   module StaffAgency
     class MasterPoliciesController < StaffAgencyController
       before_action :set_policy, only: %i[update show communities add_insurable covered_units cover_unit]
-      
+
       def index
         @master_policies = Policy.where('policy_type_id = ? AND agency_id = ?', PolicyType::MASTER_ID, @agency.id) || []
       end
-      
+
       def show
         @master_policy_coverages = @master_policy.policies.where('policy_type_id = ? AND agency_id = ?', 3, @agency.id) || []
       end
@@ -21,7 +21,12 @@ module V2
       end
 
       def add_insurable
-        insurable = @master_policy.account.insurables.communities.find_by(id: params[:insurable_id])
+        insurable =
+          @master_policy.
+            account.
+            insurables.
+            where(insurable_type_id: InsurableType::COMMUNITIES_IDS | InsurableType::BUILDINGS_IDS).
+            find_by(id: params[:insurable_id])
 
         if insurable.present?
           @master_policy.insurables << insurable
@@ -44,11 +49,13 @@ module V2
       def cover_unit
         unit = Insurable.find(params[:insurable_id])
         if unit.policies.empty? && unit.leases&.count&.zero?
+          last_policy_number = @master_policy.policies.pluck(:number).compact.last
           policy = unit.policies.create(
             agency: @master_policy.agency,
             carrier: @master_policy.carrier,
             account: @master_policy.account,
             policy_coverages: @master_policy.policy_coverages,
+            number: "#{@master_policy.number}_#{last_policy_number.present? ? last_policy_number.next : 1}",
             policy_type_id: PolicyType::MASTER_COVERAGE_ID,
             policy: @master_policy,
             effective_date: @master_policy.effective_date,
@@ -58,17 +65,17 @@ module V2
             render json: policy.to_json, status: :ok
           else
             render json: {
-                     error: :policy_creation_problem,
-                     message: 'Policy was not created',
-                     payload: policy.errors.full_messages
-                   }.to_json,
+                           error: :policy_creation_problem,
+                           message: 'Policy was not created',
+                           payload: policy.errors.full_messages
+                         }.to_json,
                    status: :internal_server_error
           end
         else
           render json: { error: :bad_unit, message: 'Unit does not fulfil the requirements' }.to_json, status: :bad_request
         end
       end
-      
+
       def create
         if create_allowed?
           policy_type = PolicyType.find(2)
@@ -80,7 +87,8 @@ module V2
                                                           carrier: carrier, account: account, policy_type: policy_type))
           @policy_premium = PolicyPremium.new(create_policy_premium)
           if @master_policy.errors.none? && @policy_premium.errors.none? && @master_policy.save && @policy_premium.save
-            render json: { message: 'Master Policy and Policy Premium created' }, status: :created
+            render json: { message: 'Master Policy and Policy Premium created', payload: { policy: @master_policy.attributes } },
+                   status: :created
             AutomaticMasterPolicyInvoiceJob.perform_later(@master_policy.id)
           else
             render json: { errors: @master_policy.errors.merge!(@policy_premium.errors) }, status: :unprocessable_entity
@@ -90,7 +98,7 @@ module V2
                  status: :unauthorized
         end
       end
-      
+
       def update
         if update_allowed?
           @master_policy.update(cancellation_date_date: params[:date])
@@ -107,17 +115,17 @@ module V2
                  status: :unauthorized
         end
       end
-      
+
       private
 
       def create_allowed?
         true
       end
-      
+
       def update_allowed?
         true
       end
-      
+
       def set_policy
         @master_policy = Policy.find_by(policy_type_id: PolicyType::MASTER_ID, id: params[:id])
         render(json: { master_policy: 'not found' }, status: :not_found) if @master_policy.blank?
