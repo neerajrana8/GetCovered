@@ -8,7 +8,8 @@ module V2
       before_action :set_policy, only: %i[update show communities add_insurable covered_units cover_unit]
 
       def index
-        @master_policies = Policy.where('policy_type_id = ? AND agency_id = ?', PolicyType::MASTER_ID, @agency.id) || []
+        master_policies_relation = Policy.where('policy_type_id = ? AND agency_id = ?', PolicyType::MASTER_ID, @agency.id) || []
+        @master_policies = master_policies_relation.any? ? paginator(master_policies_relation) : []
       end
 
       def show
@@ -16,7 +17,8 @@ module V2
       end
 
       def communities
-        @insurables = @master_policy.insurables.communities
+        insurables_relation = @master_policy.insurables.communities
+        @insurables = paginator(insurables_relation)
         render template: 'v2/staff_agency/insurables/index', status: :ok
       end
 
@@ -39,10 +41,12 @@ module V2
       end
 
       def covered_units
-        @insurables =
+        insurables_relation =
           Insurable.
             joins(:policies).
             where(policies: { policy: @master_policy }, insurables: { insurable_type: InsurableType::UNITS_IDS })
+
+        @insurables = paginator(insurables_relation)
         render template: 'v2/staff_agency/insurables/index', status: :ok
       end
 
@@ -55,7 +59,7 @@ module V2
             carrier: @master_policy.carrier,
             account: @master_policy.account,
             policy_coverages: @master_policy.policy_coverages,
-            number: "#{@master_policy.number}_#{last_policy_number.present? ? last_policy_number.next : 1}",
+            number: last_policy_number.present? ? last_policy_number.next : "#{@master_policy.number}_1",
             policy_type_id: PolicyType::MASTER_COVERAGE_ID,
             policy: @master_policy,
             effective_date: @master_policy.effective_date,
@@ -64,12 +68,8 @@ module V2
           if policy.errors.blank?
             render json: policy.to_json, status: :ok
           else
-            render json: {
-                           error: :policy_creation_problem,
-                           message: 'Policy was not created',
-                           payload: policy.errors.full_messages
-                         }.to_json,
-                   status: :internal_server_error
+            response = { error: :policy_creation_problem, message: 'Policy was not created', payload: policy.errors }
+            render json: response.to_json, status: :internal_server_error
           end
         else
           render json: { error: :bad_unit, message: 'Unit does not fulfil the requirements' }.to_json, status: :bad_request
