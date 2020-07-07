@@ -64,13 +64,13 @@ module V2
       def cover_unit
         unit = Insurable.find(params[:insurable_id])
         if unit.policies.empty? && unit.leases&.count&.zero?
-          last_policy_number = @master_policy.policies.pluck(:number).compact.last
+          last_policy_number = @master_policy.policies.pluck(:number).compact.max
           policy = unit.policies.create(
             agency: @master_policy.agency,
             carrier: @master_policy.carrier,
             account: @master_policy.account,
             policy_coverages: @master_policy.policy_coverages,
-            number: last_policy_number.present? ? last_policy_number.number.next : "#{@master_policy.number}_1",
+            number: last_policy_number.nil? ? "#{@master_policy.number}_1" : last_policy_number.next,
             policy_type_id: PolicyType::MASTER_COVERAGE_ID,
             policy: @master_policy,
             effective_date: @master_policy.effective_date,
