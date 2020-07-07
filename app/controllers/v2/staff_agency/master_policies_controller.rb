@@ -45,6 +45,12 @@ module V2
         end
       end
 
+      def available_communities
+        insurables_relation
+        @insurables = paginator(insurables_relation)
+        render template: 'v2/staff_agency/insurables/index', status: :ok
+      end
+
       def covered_units
         insurables_relation =
           Insurable.
@@ -86,7 +92,8 @@ module V2
         if create_allowed?
           policy_type = PolicyType.find(2)
           carrier = Carrier.find(params[:carrier_id])
-          carrier_agency = CarrierAgency.find(carrier.id)
+          carrier_agency = CarrierAgency.find_by(carrier_id: carrier.id)
+          render(json: { carrier_agency: 'not found' }, status: :not_found) && return if carrier_agency.blank?
           account = carrier_agency.agency.accounts.find(params[:account_id])
 
           @master_policy = Policy.new(create_params.merge(agency: carrier_agency.agency,
