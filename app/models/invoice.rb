@@ -66,7 +66,7 @@ class Invoice < ApplicationRecord
   scope :paid, -> { where(status: %w[complete]) }
   scope :unpaid, -> { where(status: %w[available missed]) }
   scope :unpaid_past_due, -> { 
-    where(status: %w[available missed]).where('due_date < ?', DateTime.now)
+    where(status: %w[available missed]).where('due_date < ?', Time.current.to_date)
   }
 
   settings index: { number_of_shards: 1 } do

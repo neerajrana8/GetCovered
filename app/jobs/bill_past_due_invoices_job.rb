@@ -15,7 +15,7 @@ class BillPastDueInvoicesJob < ApplicationJob
 
       policies.each do |policy|
 
-        unpaid_invoices = policy.invoices.unpaid.where("due_date < ?", Time.now.to_date)
+        unpaid_invoices = policy.invoices.unpaid_past_due.where(external: false)
 
         unpaid_invoices.each do |invoice|
 
@@ -25,7 +25,9 @@ class BillPastDueInvoicesJob < ApplicationJob
           if charge_attempts < agency.settings['billing_retry_max']
             
             interval_counts.each do |day_count|
-              invoice.pay if (Time.current.to_date - day_count.days) == last_attempt.created_at.to_date 
+              if (Time.current.to_date - day_count.days) == last_attempt.created_at.to_date 
+                break if (invoice.pay(allow_missed: true, stripe_source: :default))[:success]
+              end
             end           
               
           end
