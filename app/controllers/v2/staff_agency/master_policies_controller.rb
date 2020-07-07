@@ -92,11 +92,9 @@ module V2
         if create_allowed?
           policy_type = PolicyType.find(2)
           carrier = Carrier.find(params[:carrier_id])
-          carrier_agency = CarrierAgency.find_by(carrier_id: carrier.id)
-          render(json: { carrier_agency: 'not found' }, status: :not_found) && return if carrier_agency.blank?
-          account = carrier_agency.agency.accounts.find(params[:account_id])
+          account = Account.where(agency_id: carrier.agencies.ids).find(params[:account_id])
 
-          @master_policy = Policy.new(create_params.merge(agency: carrier_agency.agency,
+          @master_policy = Policy.new(create_params.merge(agency: account.agency,
                                                           carrier: carrier, account: account, policy_type: policy_type))
           @policy_premium = PolicyPremium.new(create_policy_premium)
           if @master_policy.errors.none? && @policy_premium.errors.none? && @master_policy.save && @policy_premium.save
