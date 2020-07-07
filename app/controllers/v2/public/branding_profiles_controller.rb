@@ -5,11 +5,16 @@
 module V2
   module Public
     class BrandingProfilesController < PublicController
-      before_action :set_branding_profile, only: [:show]
+      before_action :set_branding_profile, only: [:show, :faqs]
       before_action :set_branding_profile_by_subdomain, only: [:show_by_subdomain]
 
       def show
         render :show, status: :ok
+      end
+
+      def faqs
+        @branding_profile = BrandingProfile.includes(:faqs).find(params[:id]) || []
+        render :faqs, status: :ok
       end
 
       def show_by_subdomain

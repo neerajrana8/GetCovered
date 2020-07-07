@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_06_19_170134) do
+ActiveRecord::Schema.define(version: 2020_06_24_060419) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -450,6 +450,23 @@ ActiveRecord::Schema.define(version: 2020_06_19_170134) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["eventable_type", "eventable_id"], name: "index_events_on_eventable_type_and_eventable_id"
+  end
+
+  create_table "faq_questions", force: :cascade do |t|
+    t.text "question"
+    t.text "answer"
+    t.integer "faq_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["faq_id"], name: "index_faq_questions_on_faq_id"
+  end
+
+  create_table "faqs", force: :cascade do |t|
+    t.string "title"
+    t.integer "branding_profile_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["branding_profile_id"], name: "index_faqs_on_branding_profile_id"
   end
 
   create_table "fees", force: :cascade do |t|
