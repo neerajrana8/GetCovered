@@ -56,7 +56,7 @@ class Policy < ApplicationRecord
   after_create :inherit_policy_coverages, if: -> { policy_type&.designation == 'MASTER-COVERAGE' }
   after_create :schedule_coverage_reminders, if: -> { policy_type&.designation == 'MASTER-COVERAGE' }
   
-  after_save :start_automatic_master_coverage_policy_issue, if: -> { policy_type&.designation == 'MASTER' }
+  # after_save :start_automatic_master_coverage_policy_issue, if: -> { policy_type&.designation == 'MASTER' }
   
   belongs_to :agency, optional: true
   belongs_to :account, optional: true
@@ -195,7 +195,7 @@ class Policy < ApplicationRecord
   end
   
   def start_automatic_master_coverage_policy_issue
-    AutomaticMasterCoveragePolicyIssueJob.perform_later(id)
+    # AutomaticMasterCoveragePolicyIssueJob.perform_later(id)
   end
   
   def status_allowed

@@ -37,7 +37,7 @@ module V2
             @master_policy.insurables << building
           end
 
-          @master_policy.start_automatic_master_coverage_policy_issue
+          # @master_policy.start_automatic_master_coverage_policy_issue
           render json: { message: 'Community added' }, status: :ok
         else
           render json: { error: :insurable_was_not_found, message: "Account doesn't have this insurable" },
@@ -77,7 +77,7 @@ module V2
             expiration_date: @master_policy.expiration_date
           )
           if policy.errors.blank?
-            AutomaticMasterPolicyInvoiceJob.perform_later(@master_policy.id)
+            # AutomaticMasterPolicyInvoiceJob.perform_later(@master_policy.id)
             render json: policy.to_json, status: :ok
           else
             response = { error: :policy_creation_problem, message: 'Policy was not created', payload: policy.errors }
@@ -113,7 +113,7 @@ module V2
         if update_allowed?
           @master_policy.update(cancellation_date_date: params[:date])
           if @master_policy.cancellation_date_date.present?
-            AutomaticMasterPolicyInvoiceJob.perform_later(@master_policy.id)
+            # AutomaticMasterPolicyInvoiceJob.perform_later(@master_policy.id)
             render json: { message: 'Master policy canceled' }, status: :ok
           elsif @master_policy.cancellation_date_date.nil?
             render json: { message: 'Master policy not canceled' }, status: :ok
