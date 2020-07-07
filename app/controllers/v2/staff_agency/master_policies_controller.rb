@@ -32,6 +32,11 @@ module V2
 
         if insurable.present?
           @master_policy.insurables << insurable
+
+          insurable.buildings.each do |building|
+            @master_policy.insurables << building
+          end
+
           @master_policy.start_automatic_master_coverage_policy_issue
           render json: { message: 'Community added' }, status: :ok
         else
@@ -66,6 +71,7 @@ module V2
             expiration_date: @master_policy.expiration_date
           )
           if policy.errors.blank?
+            AutomaticMasterPolicyInvoiceJob.perform_later(@master_policy.id)
             render json: policy.to_json, status: :ok
           else
             response = { error: :policy_creation_problem, message: 'Policy was not created', payload: policy.errors }
@@ -89,7 +95,6 @@ module V2
           if @master_policy.errors.none? && @policy_premium.errors.none? && @master_policy.save && @policy_premium.save
             render json: { message: 'Master Policy and Policy Premium created', payload: { policy: @master_policy.attributes } },
                    status: :created
-            AutomaticMasterPolicyInvoiceJob.perform_later(@master_policy.id)
           else
             render json: { errors: @master_policy.errors.merge!(@policy_premium.errors) }, status: :unprocessable_entity
           end
