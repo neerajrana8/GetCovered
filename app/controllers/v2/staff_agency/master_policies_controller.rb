@@ -64,7 +64,7 @@ module V2
             carrier: @master_policy.carrier,
             account: @master_policy.account,
             policy_coverages: @master_policy.policy_coverages,
-            number: last_policy_number.present? ? last_policy_number.next : "#{@master_policy.number}_1",
+            number: last_policy_number.present? ? last_policy_number.number.next : "#{@master_policy.number}_1",
             policy_type_id: PolicyType::MASTER_COVERAGE_ID,
             policy: @master_policy,
             effective_date: @master_policy.effective_date,
