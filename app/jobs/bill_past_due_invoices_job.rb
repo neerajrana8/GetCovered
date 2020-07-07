@@ -8,10 +8,10 @@ class BillPastDueInvoicesJob < ApplicationJob
       agency.settings['billing_retry_max'].times { |retry_count| interval_counts << (retry_count + 1) * agency.settings['billing_retry_interval'] }      
 
       policies = agency.policies
-                       .in_system?(true)
+                       .policy_in_system(true)
                        .current
                        .unpaid
-                       .where(billing_enabled: true)
+                       .where(auto_pay: true)
 
       policies.each do |policy|
 

@@ -4,18 +4,24 @@ class BillDueInvoicesJob < ApplicationJob
 
   def perform(*_args)
     @invoices.each do |invoice|
-      invoice.pay(allow_upcoming: true, stripe_source: :default) if (invoice.invoiceable_type == 'PolicyQuote' && invoice.invoiceable.policy.billing_enabled && invoice.invoiceable.policy.policy_in_system) ||
-                                                                    (invoice.invoiceable_type == 'PolicyGroupQuote' && invoice.invoiceable.policy_group.billing_enabled)
+      invoice.pay(allow_upcoming: true, stripe_source: :default)
     end
   end
 
   private
 
   def set_invoices
-    @invoices = Invoice.where("due_date <= '#{Time.current.to_date.to_s(:db)}'").where(status: 'available', external: false)
-  
-    #@invoices = Invoice.joins("LEFT JOIN policies ON (policies.id = invoices.invoiceable_id AND invoices.invoiceable_type = 'Policy')")
-    #                   .where(policies: { billing_enabled: true, policy_in_system: true }, due_date: Time.current.to_date)
-    #                   .available # MOOSE WARNING: extend for PolicyGroup when it exists
+    policy_ids = Policy.policy_in_system(true).current.where(auto_pay: true).pluck(:id)
+    policy_group_ids = PolicyGroup.policy_in_system(true).current.where(auto_pay: true).pluck(:id)
+    
+    policy_quote_ids = PolicyQuote.where(status: 'accepted', policy_id: policy_ids).pluck(:id)
+    policy_group_quote_ids = PolicyGroupQuote.where(status: 'accepted', policy_group_id: policy_group_ids).pluck(:id)
+    
+    @invoices = Invoice.where(invoiceable_type: 'PolicyQuote', invoiceable_id: policy_quote_ids)
+                      .or(
+                        Invoice.where(invoiceable_type: 'PolicyGroupQuote', invoiceable_id: policy_group_quote_ids)
+                      )
+                      .where("due_date <= '#{Time.current.to_date.to_s(:db)}'")
+                      .where(status: 'available', external: false)
   end
 end
