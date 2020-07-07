@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_06_24_060419) do
+ActiveRecord::Schema.define(version: 2020_07_07_180153) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -608,6 +608,7 @@ ActiveRecord::Schema.define(version: 2020_06_24_060419) do
     t.boolean "was_missed", default: false, null: false
     t.string "payer_type"
     t.bigint "payer_id"
+    t.boolean "external", default: false, null: false
     t.index ["invoiceable_type", "invoiceable_id"], name: "index_invoices_on_invoiceable"
     t.index ["payer_type", "payer_id"], name: "index_invoices_on_payee"
   end
