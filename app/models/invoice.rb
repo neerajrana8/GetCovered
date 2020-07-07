@@ -52,8 +52,17 @@ class Invoice < ApplicationRecord
 
   # Enums
 
-  enum status: %w[quoted upcoming available processing complete missed canceled]
-
+  enum status: {
+    quoted:               0,
+    upcoming:             1,
+    available:            2,
+    processing:           3,
+    complete:             4,
+    missed:               5,
+    canceled:             6,
+    managed_externally:   7
+  }
+  
   scope :paid, -> { where(status: %w[complete]) }
   scope :unpaid, -> { where(status: %w[available missed]) }
   scope :unpaid_past_due, -> { 
@@ -105,6 +114,7 @@ class Invoice < ApplicationRecord
 
 
   def apply_proration(new_term_last_date, refund_date: nil, to_refund_override: nil, cancel_if_unpaid_override: nil)
+    return false if self.external # we can't apply a proration on an external invoice
     with_lock do
       return false if term_first_date.nil? || term_last_date.nil?
       to_refund = nil
@@ -116,7 +126,7 @@ class Invoice < ApplicationRecord
         proportion_to_refund = new_term_last_date < term_first_date ? 1.to_d :
                                new_term_last_date >= term_last_date ? 0.to_d :
                                (term_last_date - new_term_last_date).to_i.to_d / ((term_last_date - term_first_date) + 1).to_i.to_d
-        # set cancel_if_unpaid
+        # set cancel_if_unpaid to true if invoice hasn't come due yet
         cancel_if_unpaid = (new_term_last_date < term_first_date)
         # calculate how much to refund
         to_refund = line_items.map do |li|
@@ -139,6 +149,7 @@ class Invoice < ApplicationRecord
           }
         end.select{|datum| datum['amount'] > 0 }
       else
+        # use to_refund_override, but make sure it has line item objects rather than ids
         to_refund = to_refund_override
         to_refund.each do |li|
           li['line_item'] = line_items.where(id: li['line_item']).take if li['line_item'].class != ::LineItem
@@ -152,11 +163,13 @@ class Invoice < ApplicationRecord
           # apply a proration adjustment
           # WARNING: if we ever update to allow partial payments, you need to first refund whenever a line item's collected amount exceeds its price
           if cancel_if_unpaid
+            # cancel everything
             line_items.each do |li|
               li.update(proration_reduction: li.price)
             end
             return update(proration_reduction: subtotal, total: 0, status: 'canceled')
           else
+            # calculate the total amount to refund & adjust it in case something's already been refunded
             prored = to_refund.inject(0){|sum,li| sum + li['amount'] }
             if prored > subtotal
               self.reduce_distribution_total(subtotal, :adjustment, to_refund)
@@ -173,6 +186,7 @@ class Invoice < ApplicationRecord
           return true if result[:success]
           return false # WARNING: we discard result[:errors] here
         when 'processing', 'missed'
+          # store the pending refund
           return update(has_pending_refund: true, pending_refund_data: {
             'proration_refund' => to_refund.map{|li| {
               'line_item' => li['line_item'].id,
@@ -191,6 +205,9 @@ class Invoice < ApplicationRecord
             li['line_item'].update(proration_reduction: li['amount'])
           end
           return update(proration_reduction: prored, total: subtotal - prored)
+        when 'managed_externally'
+          # we can't perform a refund on an externally managed invoice...
+          return false
       end
     end
     return false
@@ -199,6 +216,7 @@ class Invoice < ApplicationRecord
 
   # refunds whatever is necessary to ensure the total amount refunded is to_refund cents (if it starts above that, it refunds nothing)
   def ensure_refunded(to_refund, full_reason = nil, stripe_reason = nil, ignore_total: false)
+    return { success: false, errors: "invoice is only a record of an external system's invoice" } if self.external
     with_lock do
       return { success: false, errors: "invoice status must be 'complete' before refunding" } unless status == 'complete'
       # get line item breakdown if provided a scalar number
@@ -233,6 +251,7 @@ class Invoice < ApplicationRecord
   
   # refunds an exact amount, regardless of what has been refunded before; or refunds as much of it as possible and reports what it failed to refund
   def apply_refund(to_refund, full_reason = nil, stripe_reason = nil)
+    return { success: false, errors: "invoice is only a record of an external system's invoice" } if self.external
     errors_encountered = {}
     with_lock do
       return { success: false, errors: "invoice status must be 'complete' before refunding" } unless status == 'complete'
@@ -291,6 +310,12 @@ class Invoice < ApplicationRecord
   #   => { success: true }
 
   def pay(allow_upcoming: false, allow_missed: false, stripe_source: nil, stripe_token: nil) # all optional... stripe_source can be passed as :default instead of a source id string to use the default payment method
+    return {
+      success: false,
+      charge_id: nil,
+      charge_status: nil,
+      error: "invoice is only a record of an external system's invoice"
+    } if self.external
     # set invoice status to processing
     return_error = nil
     with_lock do
@@ -338,7 +363,7 @@ class Invoice < ApplicationRecord
     with_lock do
       if self.status == 'processing'
         # update our status and distribute funds over line items
-        dist = get_fund_distribution(charge.amount, :payment, leave_line_item_models: true)
+        dist = get_fund_distribution(charge&.amount || self.total, :payment, leave_line_item_models: true)
         dist.each do |line_item_payment|
           line_item_payment['line_item'].update!(collected: line_item_payment['line_item'].collected + line_item_payment['amount'])
         end
@@ -388,7 +413,7 @@ class Invoice < ApplicationRecord
   
   # returns a descriptor for charges
   def get_descriptor
-    case(self.invoiceable.nil? ? nil : self.invoiceable_type) # force 'else' case if invoiceable is nil
+    case(self.invoiceable.nil? ? nil : self.invoiceable_type)
       when 'Policy'
         "Policy ##{self.invoiceable.number}"
       when 'PolicyQuote'
@@ -603,7 +628,7 @@ class Invoice < ApplicationRecord
 
 
     def reduce_distribution_total(new_total, mode, distribution)
-      # WARNING: this shouldn't need to get called, so it just does the simplest thing possible..
+      # WARNING: this shouldn't need to get called, so it just does the simplest thing possible...
       # ideally it would act like get_fund_distribution, using line_item_groups and reducing amounts proportionally in each group in sequence
       old_total = distribution.inject(0){|sum,li| sum + li['amount'] }
       while old_total > new_total
