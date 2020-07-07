@@ -62,7 +62,7 @@ module V2
               error_status << true
               break
             else
-              @application.users << @user
+              @application.users << user
             end
           else
             secure_tmp_password = SecureRandom.base64(12)
