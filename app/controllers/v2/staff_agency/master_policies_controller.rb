@@ -17,7 +17,7 @@ module V2
       end
 
       def communities
-        insurables_relation = @master_policy.insurables.communities
+        insurables_relation = @master_policy.insurables
         @insurables = paginator(insurables_relation)
         render template: 'v2/staff_agency/insurables/index', status: :ok
       end
