@@ -66,19 +66,40 @@ module V2
             end
           else
             secure_tmp_password = SecureRandom.base64(12)
-
-            new_policy_user = @application.policy_users.create!(
-              spouse: policy_user[:spouse],
+            policy_user_params = {
+              spouse: policy_user[:spouse] || false,
               user_attributes: {
                 email: policy_user[:user_attributes][:email],
                 password: secure_tmp_password,
                 password_confirmation: secure_tmp_password,
-                profile_attributes: policy_user[:user_attributes][:profile_attributes],
-                address_attributes: policy_user[:user_attributes][:address_attributes]
+                profile_attributes: {
+                  first_name: policy_user[:user_attributes][:profile_attributes][:first_name],
+                  last_name: policy_user[:user_attributes][:profile_attributes][:last_name],
+                  job_title: policy_user[:user_attributes][:profile_attributes][:job_title],
+                  contact_phone: policy_user[:user_attributes][:profile_attributes][:contact_phone],
+                  birth_date: policy_user[:user_attributes][:profile_attributes][:birth_date],
+                  salutation: policy_user[:user_attributes][:profile_attributes][:salutation],
+                  gender: policy_user[:user_attributes][:profile_attributes][:gender]
+                }
               }
-            )
+            }
 
-            new_policy_user.user.invite! if index.zero?
+            if policy_user[:user_attributes][:address_attributes]
+              policy_user_params[:user_attributes][:address_attributes] = {
+                street_number: policy_user[:user_attributes][:address_attributes][:street_number],
+                street_name: policy_user[:user_attributes][:address_attributes][:street_name],
+                street_two: policy_user[:user_attributes][:address_attributes][:street_two],
+                city: policy_user[:user_attributes][:address_attributes][:city],
+                state: policy_user[:user_attributes][:address_attributes][:state],
+                country: policy_user[:user_attributes][:address_attributes][:country],
+                county: policy_user[:user_attributes][:address_attributes][:county],
+                zip_code: policy_user[:user_attributes][:address_attributes][:zip_code]
+              }
+            end
+
+            policy_user = @application.policy_users.create!(policy_user_params)
+
+            policy_user.user.invite! if index.zero?
           end
         end
         error_status.include?(true) ? false : true
