@@ -1,5 +1,7 @@
 # =Policy Billing Cycle Check
 
+# WARNING: deprecated v1 nonsense, I believe; not currently loaded into sidekiq. doesn't actually do what it says it does.
+
 class PolicyBillingCycleCheckJob < ApplicationJob
   
   # Queue: Default

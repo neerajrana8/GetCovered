@@ -68,6 +68,8 @@ class Invoice < ApplicationRecord
   scope :unpaid_past_due, -> { 
     where(status: %w[available missed]).where('due_date < ?', Time.current.to_date)
   }
+  scope :internal, -> { where(external: false) }
+  scope :external, -> { where(external: true) }
 
   settings index: { number_of_shards: 1 } do
     mappings dynamic: 'false' do
@@ -395,9 +397,9 @@ class Invoice < ApplicationRecord
     end
   end
   
-  def payment_missed
+  def payment_missed(unless_processing: false)
     with_lock do
-      if self.status == 'available' || self.status == 'processing' # other statuses mean we were canceled or already paid
+      if self.status == 'available' || (!unless_processing && self.status == 'processing') # other statuses mean we were canceled or already paid
         self.update!(status: 'missed')
         if self.has_pending_refund && self.pending_refund_data.has_key?('proration_refund')
           if apply_proration(nil, to_refund_override: pending_refund_data['proration_refund'].to_i, cancel_if_unpaid_override: pending_refund_data['cancel_if_unpaid'])
@@ -406,7 +408,7 @@ class Invoice < ApplicationRecord
             # WARNING: do nothing on proration application failure... would be a good place for a generalized error to be logged to the db
           end
         end
-        invoiceable.payment_missed(self) if invoiceable.respond_to?(:payment_missed) && !self.reload.status == 'canceled' # just in case apply_proration reduced our total due to 0 and we are now canceled instead of missed
+        invoiceable.payment_missed(self) if invoiceable.respond_to?(:payment_missed) && self.reload.status != 'canceled' # just in case apply_proration reduced our total due to 0 and we are now canceled instead of missed
       end
     end
   end

@@ -113,7 +113,7 @@ class Policy < ApplicationRecord
   
   scope :current, -> { where(status: %i[BOUND BOUND_WITH_WARNING]) }
   scope :policy_in_system, ->(policy_in_system) { where(policy_in_system: policy_in_system) }
-  scope :unpaid, -> { where(billing_dispute_status: ['BEHIND', 'REJECTED']) }
+  scope :unpaid, -> { where(billing_status: ['BEHIND', 'REJECTED']) }
   
   accepts_nested_attributes_for :policy_coverages, :policy_premiums,
   :insurables, :policy_users, :policy_insurables

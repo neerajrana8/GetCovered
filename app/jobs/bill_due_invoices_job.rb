@@ -11,17 +11,11 @@ class BillDueInvoicesJob < ApplicationJob
   private
 
   def set_invoices
-    policy_ids = Policy.policy_in_system(true).current.where(auto_pay: true).pluck(:id)
-    policy_group_ids = PolicyGroup.policy_in_system(true).current.where(auto_pay: true).pluck(:id)
-    
-    policy_quote_ids = PolicyQuote.where(status: 'accepted', policy_id: policy_ids).pluck(:id)
-    policy_group_quote_ids = PolicyGroupQuote.where(status: 'accepted', policy_group_id: policy_group_ids).pluck(:id)
-    
-    @invoices = Invoice.where(invoiceable_type: 'PolicyQuote', invoiceable_id: policy_quote_ids)
-                      .or(
-                        Invoice.where(invoiceable_type: 'PolicyGroupQuote', invoiceable_id: policy_group_quote_ids)
-                      )
-                      .where("due_date <= '#{Time.current.to_date.to_s(:db)}'")
-                      .where(status: 'available', external: false)
+    @invoices = Invoice.where(invoiceable_type: 'PolicyQuote', invoiceable_id: PolicyQuote.select(:id).where(status: 'accepted', policy_id: Policy.select(:id).policy_in_system(true).current.where(auto_pay: true)))
+                       .or(
+                          Invoice.where(invoiceable_type: 'PolicyGroupQuote', invoiceable_id: PolicyGroupQuote.select(:id).where(status: 'accepted', policy_group_id: PolicyGroup.select(:id).policy_in_system(true).current.where(auto_pay: true)))
+                       )
+                       .where("due_date <= '#{Time.current.to_date.to_s(:db)}'")
+                       .where(status: 'available', external: false)
   end
 end

@@ -210,11 +210,12 @@ class PolicyQuote < ApplicationRecord
        policy_premium.calculation_base > 0 &&
        status == "accepted"
 
-      invoices.order("due_date").each_with_index do |invoice, index|
+      invoices.external.update_all status: 'managed_externally'
+      invoices.internal.order("due_date").each_with_index do |invoice, index|
         invoice.update status: index == 0 ? "available" : "upcoming"
       end
 
-      charge_invoice = invoices.order("due_date").first.pay(stripe_source: :default)
+      charge_invoice = invoices.internal.order("due_date").first.pay(stripe_source: :default)
       logger.error "Charge invoice: #{charge_invoice.to_json}" unless charge_invoice[:success]
       if charge_invoice[:success] == true
         return true

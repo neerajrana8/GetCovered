@@ -63,8 +63,14 @@ production:
   bill_due_invoices:
     cron: '0 2 * * *'   # Every day at 2:00 AM
     class: BillDueInvoicesJob
+  make_invoices_missed: # Every day at 3:00 AM
+    cron: '0 3 * * *'
+    class: MakeInvoicesMissedJob
+  make_invoices_available:
+    cron: '0 1 * * *'   # Every day at 1:00 AM
+    class: MakeInvoicesAvailableJob
   handle_unresponsive_charges:
-    cron: '0 4 * * *'   # Every day at 4:00 AM
+    cron: '0 3 * * *'   # Every day at 3:00 AM
     class: HandleUnresponsiveChargesJob
   daily_purchase_activity_reports_job:
     cron: '0 1 * * *'   # Every day at 1:00 AM

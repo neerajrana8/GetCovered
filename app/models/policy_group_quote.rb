@@ -42,10 +42,11 @@ class PolicyGroupQuote < ApplicationRecord
   def start_billing
     if policy_group.nil? && policy_group_premium.calculation_base.positive?
 
-      invoices.order('due_date').each_with_index do |invoice, index|
+      invoices.external.update_all status: 'managed_externally'
+      invoices.internal.order('due_date').each_with_index do |invoice, index|
         invoice.update status: index.zero? ? 'available' : 'upcoming'
       end
-      invoices.order('due_date').first.pay(stripe_source: :default)
+      invoices.internal.order('due_date').first.pay(stripe_source: :default)
     else
       {
         success: false,
