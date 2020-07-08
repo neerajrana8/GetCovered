@@ -1,20 +1,21 @@
 class UserClaimMailer < ApplicationMailer
   before_action { @user = params[:user] }
+  before_action { @claim = params[:claim] }
   before_action :check_user_presence
 
   default to: -> { 'claims@getcoveredllc.com' },
           from: -> { @user.email }
 
   def claim_creation_email
-    @claim = Claim.last
-    if Rails.env.include?('development')
+    @claim = @user.claims.find(@claim.id)
+    if Rails.env.include?('awsdev')
       mail(
         to: ['andreyden@nitka.com', 'roman.filimonchik@nitka.com', 'protchenkopa@gmail.com'],
-        subject: 'CLAIM WAS CREATED'
+        subject: "Claim was created policy number: #{@claim&.policy&.number}"
       )
     else
       mail(
-        :subject => "CLAIM WAS CREATED"
+        subject: "Claim was created policy number: #{@claim&.policy&.number}"
       )
     end
   end

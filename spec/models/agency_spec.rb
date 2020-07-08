@@ -13,14 +13,13 @@ RSpec.describe Agency, elasticsearch: true, type: :model do
     expect(Agency.search('Test').records.length).to eq(0)
   end
   
-  it 'should allow only one branding profile' do
+  it 'should allow more then one branding profile' do
     agency = FactoryBot.create(:agency)
     agency.branding_profiles.create(title: 'new', url: 'new_agency.com')
     expect(agency.branding_profiles.count).to eq(1)
     new_branding = agency.branding_profiles.create(title: 'new2', url: 'new_agency2.com')
-    expect(new_branding.persisted?).to eq(false)
-    expect(new_branding.errors.messages[:profileable]).to include('only one branding profile is allowed')
-    expect(agency.branding_profiles.count).to eq(1)
+    expect(new_branding.persisted?).to eq(true)
+    expect(agency.branding_profiles.count).to eq(2)
   end
   
 end

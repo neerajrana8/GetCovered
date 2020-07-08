@@ -1,13 +1,10 @@
 ClaimCreation#claim_created
-Date of loss: <%= @claim.time_of_loss %>
-Policy id: <%= @claim.policy_id %>
-Type of loss: <%= @claim.type_of_loss %>
-Subject: <%= @claim.subject %>
-Description: <%= @claim.description %>
-Policy type: <%= @claim&.policy&.policy_type&.designation %>
-<% unless @claim.documents.nil? %>
-  <% @claim.documents.each do |doc| %>
-    <%= doc.filename %>
-    <%= link_to_document(doc) %>
-  <% end %>
+Date of loss: <%= @claim&.time_of_loss %>
+Policy number: <%= @claim&.policy&.number %>
+Subject: <%= @claim&.subject %>
+Description: <%= @claim&.description %>
+Policy type: <%= @claim&.policy&.policy_type.present? ? @claim&.policy&.policy_type&.title : 'No policy type' %>
+<% @claim&.documents&.each do |doc| %>
+  <% file_url = "#{Rails.application.routes.url_helpers.rails_blob_url(doc, disposition: 'attachment', host: Rails.application.credentials[:uri][ENV['RAILS_ENV'].to_sym][:api])}" %>
+  <% attachments[doc.filename.to_s] = open(file_url).read %>
 <% end %>

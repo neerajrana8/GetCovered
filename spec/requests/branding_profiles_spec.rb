@@ -53,12 +53,11 @@ describe 'BrandingProfile API spec', type: :request do
       expect(result["id"]).to_not eq(nil)
     end
 
-    it 'should not let create another BrandingProfile' do
+    it 'should let create another BrandingProfile' do
       FactoryBot.create(:branding_profile, title: "New agency", profileable: @agency, url: "new_agency_test.getcovered.com")
       post '/v2/staff_agency/branding-profiles', params: { branding_profile: correct_params }, headers: @headers
       result = JSON.parse response.body
-      expect(response.status).to eq(422)
-      expect(result["profileable"]).to include('only one branding profile is allowed')
+      expect(response.status).to eq(201)
     end
     
     it 'should show BrandingProfile' do
