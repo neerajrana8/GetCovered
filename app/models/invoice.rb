@@ -370,9 +370,9 @@ class Invoice < ApplicationRecord
     end
   end
   
-  def payment_missed
+  def payment_missed(unless_processing: false)
     with_lock do
-      if self.status == 'available' || self.status == 'processing' # other statuses mean we were canceled or already paid
+      if self.status == 'available' || (!unless_processing && self.status == 'processing') # other statuses mean we were canceled or already paid
         self.update!(status: 'missed')
         if self.has_pending_refund && self.pending_refund_data.has_key?('proration_refund')
           if apply_proration(nil, to_refund_override: pending_refund_data['proration_refund'].to_i, cancel_if_unpaid_override: pending_refund_data['cancel_if_unpaid'])
