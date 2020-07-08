@@ -6,6 +6,6 @@ class AutomaticMasterPolicyInvoiceJob < ApplicationJob
     return if master_policy.nil? || master_policy.policy_type.designation != 'MASTER'
 
     master_policy.master_policy_billing
-    #AutomaticMasterCoveragePolicyInvoiceJob.set(wait: 1.month).perform_later(policy_id)
   end
 end
+
