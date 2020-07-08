@@ -86,7 +86,7 @@ module V2
             )
             result = msis.build_request(:get_credit_card_pre_authorization_token,        
               product_id: @policy_quote.carrier_payment_data['product_id'],
-               state: @policy_quote.policy_application.primary_insurable.primary_address.state,
+              state: @policy_quote.policy_application.primary_insurable.primary_address.state,
               line_breaks: true
             )
             event.request = msis.compiled_rxml
@@ -112,8 +112,8 @@ module V2
                 }, status: :unprocessable_entity
               else
                 render json: {
-                  token: data["MSI_PreAuthorizationToken"],
-                  public_key: data["MSI_PreAuthorizationPublicKeyBase64"]
+                  clientToken: data["MSI_PreAuthorizationToken"],
+                  publicKeyBase64: data["MSI_PreAuthorizationPublicKeyBase64"]
                 }, status: :ok
               end
             end
