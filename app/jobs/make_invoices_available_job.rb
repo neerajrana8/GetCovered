@@ -10,5 +10,6 @@ class MakeInvoicesAvailableJob < ApplicationJob
 
     def set_invoices
       @invoices = ::Invoice.where(status: 'upcoming').where("available_date <= '#{Time.current.to_date.to_s(:db)}'")
+      # MOOSE WARNING: check for invoiceable.policy/policy_group billing status criterion?
     end
 end
