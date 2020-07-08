@@ -79,7 +79,7 @@ module InvoiceableQuote
             to_charge.each.with_index do |tc, tci|
               invoices.create!({
                 due_date:         tc[:due_date],
-                available_date:   tc[:due_date] - available_period,
+                available_date:   tci == 0 ? Time.current.to_date : tc[:due_date] - available_period,
                 term_first_date:  tc[:term_first_date],
                 term_last_date:   tc[:term_last_date],
                 payer:            billing_plan[:payer],
