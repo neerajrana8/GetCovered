@@ -381,7 +381,7 @@ class Invoice < ApplicationRecord
             # WARNING: do nothing on proration application failure... would be a good place for a generalized error to be logged to the db
           end
         end
-        invoiceable.payment_missed(self) if invoiceable.respond_to?(:payment_missed) && !self.reload.status == 'canceled' # just in case apply_proration reduced our total due to 0 and we are now canceled instead of missed
+        invoiceable.payment_missed(self) if invoiceable.respond_to?(:payment_missed) && self.reload.status != 'canceled' # just in case apply_proration reduced our total due to 0 and we are now canceled instead of missed
       end
     end
   end
