@@ -51,7 +51,7 @@ module InvoiceableQuote
         # calculate invoice charges
         to_charge = billing_plan[:billing_schedule].map.with_index do |payment, index|
           {
-            due_date:        index == 0 ? status_updated_on : billing_plan[:effective_date] + index.months,
+            due_date:        index == 0 ? billing_plan[:first_due_date] : billing_plan[:effective_date] + index.months,
             term_first_date: billing_plan[:effective_date] + index.months,
             deposit_fees:    (index == 0 ? premium_data[:deposit_fees] : 0),
             amortized_fees:  (premium_data[:amortized_fees] * payment / payment_weight_total).floor,
@@ -152,6 +152,7 @@ module InvoiceableQuote
           billing_schedule: policy_application.billing_strategy.new_business['payments'],
           effective_date: policy_application.effective_date,
           expiration_date: policy_application.expiration_date,
+          first_due_date: status_updated_on,
           payer: policy_application.primary_user
         }
       elsif respond_to?(:policy_application_group)
@@ -159,6 +160,7 @@ module InvoiceableQuote
           billing_schedule: policy_application_group.billing_strategy.new_business['payments'],
           effective_date: policy_application_group.effective_date,
           expiration_date: policy_application_group.expiration_date,
+          first_due_date: policy_application_group.effective_date - (policy_application_group.effective_date == Time.current.to_date ? 0.days : 1.day)
           payer: policy_application_group.account
         }
       else
