@@ -160,7 +160,7 @@ module InvoiceableQuote
           billing_schedule: policy_application_group.billing_strategy.new_business['payments'],
           effective_date: policy_application_group.effective_date,
           expiration_date: policy_application_group.expiration_date,
-          first_due_date: policy_application_group.effective_date - (policy_application_group.effective_date == Time.current.to_date ? 0.days : 1.day)
+          first_due_date: policy_application_group.effective_date - (policy_application_group.effective_date == Time.current.to_date ? 0.days : 1.day),
           payer: policy_application_group.account
         }
       else
