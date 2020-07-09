@@ -75,7 +75,7 @@ module V2
                 
             @user.update(policy_user[:user_attributes])
             @user.profile.update(policy_user[:user_attributes][:profile_attributes])
-                
+
             if index == 0
               if @user.invitation_accepted_at? == false
                 @application.users << @user
@@ -104,9 +104,11 @@ module V2
                   county: policy_user[:user_attributes][:address_attributes][:county],
                   zip_code: policy_user[:user_attributes][:address_attributes][:zip_code]
                 )  
-              else  
+              else
+
                 tmp_full = Address.new(policy_user[:user_attributes][:address_attributes]).set_full_searchable
 
+                ap "DEBUG full_searchable. Address in: |#{tmp_full}|. Address user: |#{@user.address.full_searchable}|"
                 if @user.address.full_searchable != tmp_full
                   render(json: {
                     error: 'Address mismatch',
