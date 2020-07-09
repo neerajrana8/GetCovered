@@ -202,7 +202,8 @@ module Helpers
           },
           address_attributes: {
             street_name: 'Test co-tenant street',
-            street_two: '',
+            street_number: '13',
+            street_two: '12',
             city: 'City 17',
             state: 'DC',
             zip_code: '12222',
