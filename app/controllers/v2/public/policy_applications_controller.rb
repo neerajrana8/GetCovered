@@ -72,9 +72,11 @@ module V2
           if ::User.where(email: policy_user[:user_attributes][:email]).exists?
           
             @user = ::User.find_by_email(policy_user[:user_attributes][:email])
-                
-            @user.update(policy_user[:user_attributes])
-            @user.profile.update(policy_user[:user_attributes][:profile_attributes])
+
+            if @user.invitation_accepted_at? == false
+              @user.update(policy_user[:user_attributes])
+              @user.profile.update(policy_user[:user_attributes][:profile_attributes])
+            end
 
             if index == 0
               if @user.invitation_accepted_at? == false
@@ -108,7 +110,6 @@ module V2
 
                 tmp_full = Address.new(policy_user[:user_attributes][:address_attributes]).set_full_searchable
 
-                ap "DEBUG full_searchable. Address in: |#{tmp_full}|. Address user: |#{@user.address.full_searchable}|"
                 if @user.address.full_searchable != tmp_full
                   render(json: {
                     error: 'Address mismatch',
