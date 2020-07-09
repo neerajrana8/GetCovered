@@ -8,12 +8,13 @@ module V2
       before_action :set_policy, only: %i[update show communities add_insurable covered_units cover_unit]
 
       def index
-        master_policies_relation = Policy.where('policy_type_id = ? AND agency_id = ?', PolicyType::MASTER_ID, @agency.id) || []
-        @master_policies = master_policies_relation.any? ? paginator(master_policies_relation) : []
+        master_policies_relation =
+          Policy.where('policy_type_id = ? AND agency_id = ?', PolicyType::MASTER_ID, @agency.id)
+        @master_policies = paginator(master_policies_relation)
       end
 
       def show
-        @master_policy_coverages = @master_policy.policies.where('policy_type_id = ? AND agency_id = ?', 3, @agency.id) || []
+        @master_policy_coverages = @master_policy.policies.where('policy_type_id = ? AND agency_id = ?', 3, @agency.id)
       end
 
       def communities
