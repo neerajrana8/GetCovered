@@ -8,7 +8,15 @@ describe 'Policy buying' do
       @agency = FactoryBot.create(:agency)
       carrier.agencies << @agency
       FactoryBot.create(:monthly_billing_strategy, agency: @agency, carrier: carrier, policy_type_id: 5)
-      @user = FactoryBot.create(:user, :accepted)
+      address = FactoryBot.create(:address,
+                                  street_name: 'Test co-tenant street',
+                                  street_two: '12',
+                                  street_number: '13',
+                                  city: 'City 17',
+                                  state: 'DC',
+                                  zip_code: '12222',
+                                  country: 'United States')
+      @user = FactoryBot.create(:user, :accepted, address: address)
     end
 
     context 'without logged in user' do
