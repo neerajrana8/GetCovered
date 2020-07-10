@@ -594,7 +594,7 @@ class Invoice < ApplicationRecord
     end
 
     def set_status_changed
-      self.status_changed = Time.now
+      self.status_changed = Time.current
     end
 
     def set_was_missed
