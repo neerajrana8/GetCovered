@@ -244,6 +244,11 @@ class Policy < ApplicationRecord
   
   def cancel
     update_attribute(:status, 'CANCELLED')
+    # Slaughter the invoices
+    cancellation_date = Time.current.to_date
+    self.invoices.each do |invoice|
+      invoice.apply_proration(cancellation_date)
+    end
     # Unearned balance is the remaining unearned amount on an insurance policy that 
     # needs to be deducted from future commissions to recuperate the loss
     commision_amount = premium&.commission&.amount || 0
