@@ -195,7 +195,7 @@ class Policy < ApplicationRecord
   end
   
   def start_automatic_master_coverage_policy_issue
-    # AutomaticMasterCoveragePolicyIssueJob.perform_later(id)
+    AutomaticMasterCoveragePolicyIssueJob.perform_later(id)
   end
   
   def status_allowed
