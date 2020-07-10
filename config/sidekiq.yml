@@ -63,6 +63,9 @@ production:
   bill_due_invoices:
     cron: '0 2 * * *'   # Every day at 2:00 AM
     class: BillDueInvoicesJob
+  bill_past_due_invoices: # Every day at 2:00 AM
+    cron: '0 2 * * *'
+    class: BillPastDueInvoicesJob
   make_invoices_missed: # Every day at 3:00 AM
     cron: '0 3 * * *'
     class: MakeInvoicesMissedJob
