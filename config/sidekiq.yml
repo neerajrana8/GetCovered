@@ -59,6 +59,9 @@ production:
   high_trend_analysis_reports_job:
     cron: '0 2 1 * *'   # Each first day of month at 2:00 AM
     class: Reports::HighLevelTrendAnalysisReportsJob
+  daily_purchase_activity_reports_job:
+    cron: '0 1 * * *'   # Every day at 1:00 AM
+    class: Reports::DailyPurchaseActivityJob
   # Invoices
   bill_due_invoices:
     cron: '0 2 * * *'   # Every day at 2:00 AM
@@ -75,6 +78,3 @@ production:
   handle_unresponsive_charges:
     cron: '0 3 * * *'   # Every day at 3:00 AM
     class: HandleUnresponsiveChargesJob
-  daily_purchase_activity_reports_job:
-    cron: '0 1 * * *'   # Every day at 1:00 AM
-    class: Reports::DailyPurchaseActivityJob
