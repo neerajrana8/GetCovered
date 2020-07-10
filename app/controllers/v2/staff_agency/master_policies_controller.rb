@@ -5,7 +5,7 @@
 module V2
   module StaffAgency
     class MasterPoliciesController < StaffAgencyController
-      before_action :set_policy, only: %i[update show communities add_insurable covered_units cover_unit]
+      before_action :set_policy, only: %i[update show communities add_insurable covered_units cover_unit available_top_insurables]
 
       def index
         master_policies_relation =
@@ -46,8 +46,8 @@ module V2
         end
       end
 
-      def available_communities
-        insurables_relation
+      def available_top_insurables
+        insurables_relation = @master_policy.account.insurables.communities_and_buildings - @master_policy.insurables.communities_and_buildings
         @insurables = paginator(insurables_relation)
         render template: 'v2/staff_agency/insurables/index', status: :ok
       end

@@ -40,6 +40,7 @@
           get :communities
           get :covered_units
           post :cover_unit
+          get :available_top_insurables
         end
       end
 
