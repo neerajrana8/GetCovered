@@ -251,6 +251,7 @@ class Policy < ApplicationRecord
     end
     # Unearned balance is the remaining unearned amount on an insurance policy that 
     # needs to be deducted from future commissions to recuperate the loss
+    premium&.reload
     commision_amount = premium&.commission&.amount || 0
     unearned_premium = premium&.unearned_premium || 0
     balance = (commision_amount * unearned_premium / premium&.base)
