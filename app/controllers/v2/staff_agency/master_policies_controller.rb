@@ -47,7 +47,12 @@ module V2
       end
 
       def available_top_insurables
-        insurables_relation = @master_policy.account.insurables.communities_and_buildings - @master_policy.insurables.communities_and_buildings
+        insurables_relation =
+          @master_policy.
+            account.
+            insurables.
+            communities_and_buildings.
+            where.not(id: @master_policy.insurables.communities_and_buildings.ids)
         @insurables = paginator(insurables_relation)
         render template: 'v2/staff_agency/insurables/index', status: :ok
       end
