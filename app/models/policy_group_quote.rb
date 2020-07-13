@@ -46,7 +46,7 @@ class PolicyGroupQuote < ApplicationRecord
       invoices.internal.order('due_date').each_with_index do |invoice, index|
         invoice.update status: index.zero? ? 'available' : 'upcoming'
       end
-      invoices.internal.order('due_date').first.pay(stripe_source: :default)
+      invoices.internal.order('due_date').first&.pay(stripe_source: :default)
     else
       {
         success: false,

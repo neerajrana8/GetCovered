@@ -85,14 +85,21 @@ class PolicyQuote < ApplicationRecord
       issue_method: "#{ policy_application.carrier.integration_designation }_issue_policy"
     }
 
-    if quoted? || error?
-
+    if !(quoted? || error?)
+      quote_attempt[:message] = "Quote ineligible for acceptance"
+    else
       self.set_qbe_external_reference if policy_application.carrier.id == 1
 
-      if update(status: "accepted") && start_billing()
+      if !(update(status: "accepted") && start_billing())
+        logger.error "Policy quote errors: #{self.errors.to_json}\nQuote attempt: #{quote_attempt}"
+        quote_attempt[:message] = "Quote billing failed, unable to write policy"
+      else
         bind_request = self.send(*([quote_attempt[:bind_method]] + (bind_params.class == ::Array ? bind_params : [bind_params])))
 
-        unless bind_request[:error]
+        if bind_request[:error]
+          logger.error "Bind Failure; Message: #{bind_request[:message]}"
+          quote_attempt[:message] = "Unable to bind policy"
+        else
           if policy_application.policy_type.title == "Residential"
             policy_number = bind_request[:data][:policy_number]
             policy_status = bind_request[:data][:status] == "WARNING" ? "BOUND_WITH_WARNING" : "BOUND"
@@ -162,16 +169,8 @@ class PolicyQuote < ApplicationRecord
             logger.error policy.errors.to_json
             quote_attempt[:message] = "Unable to save policy in system"
           end
-        else
-          logger.error "Bind Failure; Message: #{bind_request[:message]}"
-          quote_attempt[:message] = "Unable to bind policy"
         end
-      else
-        logger.error "Policy quote errors: #{self.errors.to_json}\nQuote attempt: #{quote_attempt}"
-        quote_attempt[:message] = "Quote billing failed, unable to write policy"
       end
-    else
-      quote_attempt[:message] = "Quote ineligible for acceptance"
     end
 
     return quote_attempt
@@ -215,7 +214,9 @@ class PolicyQuote < ApplicationRecord
         invoice.update status: index == 0 ? "available" : "upcoming"
       end
 
-      charge_invoice = invoices.internal.order("due_date").first.pay(stripe_source: :default)
+      to_charge = invoices.internal.order("due_date").first
+      return true if to_charge.nil?
+      charge_invoice = to_charge.pay(stripe_source: :default)
       logger.error "Charge invoice: #{charge_invoice.to_json}" unless charge_invoice[:success]
       if charge_invoice[:success] == true
         return true

@@ -606,6 +606,7 @@ class InsurableRateConfiguration < ApplicationRecord
                                             ]
                                           end.to_h
           estimated_premium = estimated_premium[billing_strategy_carrier_code].to_d || estimated_premium.values.send(estimate_default_on_billing_strategy_code_failure).to_d
+          estimated_premium = (estimated_premium * 100).ceil # put it in cents
         end
       end
     end
