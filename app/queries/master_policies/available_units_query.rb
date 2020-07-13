@@ -11,50 +11,51 @@ module MasterPolicies
     end
 
     def relation
-      insurables.where(without_policies).
-        union(insurables.where(with_not_related_policies)).
-        union(insurables.where(with_not_active_related_policies))
+      Insurable.
+        left_joins(:policy_insurables).
+        units.
+        where(insurables: { account_id: @master_policy.account }).
+        where(condition)
     end
 
     private
 
     def insurables
       Insurable.
-        joins(left_join_policies).
+        left_joins(:policy_insurables).
         units.
-        where(insurables: { account_id: @master_policy.account })
+        where(insurables: { account_id: @master_policy.account }).
+        where(condition)
     end
 
     def condition
-      "#{without_policies} OR #{with_not_related_policies} OR #{with_not_active_related_policies}"
+      <<-SQL
+        #{without_policies} OR insurables.id NOT IN (#{units_with_active_policies})
+      SQL
+
     end
 
     def without_policies
       <<-SQL
-        policies.id IS NULL
+        policy_insurables.policy_id IS NULL
       SQL
     end
 
-    def with_not_related_policies
-      <<-SQL
-        policies.policy_type_id NOT IN (#{related_policy_types})
-      SQL
+    def units_with_active_policies
+      Insurable.
+        joins(:policies).
+        units.
+        where(insurables: { account_id: @master_policy.account }).
+        where(active_policies_condition).
+        select('insurables.id').
+        to_sql
     end
 
-    def with_not_active_related_policies
+    def active_policies_condition
       <<-SQL
-        policies.policy_type_id IN (#{related_policy_types}) AND (
-          policies.expiration_date < '#{Time.zone.now}' OR 
-          policies.cancellation_date_date < '#{Time.zone.now}' OR 
-          policies.status IN (#{not_active_statuses})
-        )
-      SQL
-    end
-
-    def left_join_policies
-      <<-SQL
-        LEFT JOIN policy_insurables ON policy_insurables.insurable_id = insurables.id
-        LEFT JOIN policies ON policies.id = policy_insurables.policy_id
+        policies.policy_type_id IN (#{related_policy_types}) 
+        AND policies.status NOT IN (#{not_active_statuses})
+        AND policies.expiration_date > '#{Time.zone.now}'
       SQL
     end
 
