@@ -41,6 +41,7 @@
           get :covered_units
           post :cover_unit
           get :available_top_insurables
+          get :available_units
         end
       end
 

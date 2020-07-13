@@ -5,7 +5,9 @@
 module V2
   module StaffAgency
     class MasterPoliciesController < StaffAgencyController
-      before_action :set_policy, only: %i[update show communities add_insurable covered_units cover_unit available_top_insurables]
+      before_action :set_policy,
+                    only: %i[update show communities add_insurable covered_units
+                             cover_unit available_top_insurables available_units]
 
       def index
         master_policies_relation = Policy.where(policy_type_id: PolicyType::MASTER_ID, account_id: account_id)
@@ -91,13 +93,13 @@ module V2
             communities_and_buildings.
             where.not(id: @master_policy.insurables.communities_and_buildings.ids)
         @insurables = paginator(insurables_relation)
-        render template: 'v2/staff_agency/insurables/index', status: :ok
+        render template: 'v2/shared/master_policies/insurables', status: :ok
       end
 
       def available_units
         insurables_relation = ::MasterPolicies::AvailableUnitsQuery.call(@master_policy)
         @insurables = paginator(insurables_relation)
-        render template: 'v2/staff_agency/insurables/index', status: :ok
+        render template: 'v2/shared/master_policies/insurables', status: :ok
       end
 
       def covered_units
@@ -107,7 +109,7 @@ module V2
             where(policies: { policy: @master_policy }, insurables: { insurable_type: InsurableType::UNITS_IDS })
 
         @insurables = paginator(insurables_relation)
-        render template: 'v2/staff_agency/insurables/index', status: :ok
+        render template: 'v2/shared/master_policies/insurables', status: :ok
       end
 
       def cover_unit
