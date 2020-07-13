@@ -9,7 +9,8 @@ module V2
       
       before_action :set_policy_application,
                     only: %i[update show]
-      
+      before_action :validate_policy_users_params, only: %i[create update]
+
       def show
         if %w[started in_progress
               abandoned more_required].include?(@policy_application.status)
@@ -87,20 +88,21 @@ module V2
           if ::User.where(email: policy_user[:user_attributes][:email]).exists?
           
             @user = ::User.find_by_email(policy_user[:user_attributes][:email])
-                
-            @user.update(policy_user[:user_attributes])
-            @user.profile.update(policy_user[:user_attributes][:profile_attributes])
-                
+
+            if @user.invitation_accepted_at? == false
+              @user.update(policy_user[:user_attributes])
+              @user.profile.update(policy_user[:user_attributes][:profile_attributes])
+            end
+
             if index == 0
               if @user.invitation_accepted_at? == false
                 @application.users << @user
                 error_status << false
               else
-                render json: {
+                render(json: {
                   error: 'User Account Exists',
                   message: 'A User has already signed up with this email address.  Please log in to complete your application'
-                }.to_json,
-                       status: 401 
+                }.to_json, status: 401) && return
                 error_status << true
                 break      
               end                
@@ -120,22 +122,15 @@ module V2
                   county: policy_user[:user_attributes][:address_attributes][:county],
                   zip_code: policy_user[:user_attributes][:address_attributes][:zip_code]
                 )  
-              else  
-                tmp_full = policy_user[:user_attributes][:address_attributes].to_unsafe_h
-                  .map do |k, v|
-                  v.to_s unless %w[county country].include?(k)
-                end
-                  .join(' ')
-                  .gsub(/\s+/, ' ')
-                  .gsub(/[^0-9a-z ]/i, '')
-                  .strip
-      
+              else
+
+                tmp_full = Address.new(policy_user[:user_attributes][:address_attributes]).set_full_searchable
+
                 if @user.address.full_searchable != tmp_full
                   render(json: {
                     error: 'Address mismatch',
                     message: 'The mailing address associated with this email is different than the one supplied in the recent request.  To change your address please log in'
-                  }.to_json,
-                         status: 401) && return
+                  }.to_json, status: 401) && return
                   error_status << true
                   break
                 end        
@@ -174,10 +169,27 @@ module V2
             end
             policy_user = @application.policy_users.create!(policy_user_params)
             policy_user.user.invite! if index == 0
-        end
+          end
         end
 
         error_status.include?(true) ? false : true
+      end
+
+      def validate_policy_users_params
+        users_emails =
+          create_policy_users_params[:policy_users_attributes].
+            map{ |policy_user| policy_user[:user_attributes][:email] }.
+            compact
+
+        if users_emails.count > users_emails.uniq.count
+          render(
+            json: {
+              error: :bad_arguments,
+              message: "You can't use the same emails for policy applicants"
+            }.to_json,
+            status: 401
+          ) && return
+        end
       end
       
       def create_rental_guarantee
