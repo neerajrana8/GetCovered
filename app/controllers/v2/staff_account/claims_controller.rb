@@ -24,7 +24,7 @@ module V2
           @claim = @substrate.new(create_params)
           if @claim.errors.none? && @claim.save_as(current_staff)
             render :show, status: :created
-            # ClaimSendJob.perform_later(current_staff)
+            ClaimSendJob.perform_later(current_staff, @claim.id)
           else
             render json: @claim.errors,
                    status: :unprocessable_entity

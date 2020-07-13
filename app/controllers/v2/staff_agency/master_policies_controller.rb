@@ -30,8 +30,7 @@ module V2
           render json: { errors: @policy.errors.merge(@policy_premium.errors) }, status: :unprocessable_entity
         end
       end
-        
-      
+
       def create
         if create_allowed?
           policy_type = PolicyType.find(2)
