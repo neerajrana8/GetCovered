@@ -10,7 +10,7 @@ module V2
                              cover_unit available_top_insurables available_units]
 
       def index
-        master_policies_relation = Policy.where(policy_type_id: PolicyType::MASTER_ID, account_id: account_id)
+        master_policies_relation = Policy.where(policy_type_id: PolicyType::MASTER_ID, agency_id: @agency.id)
         @master_policies = paginator(master_policies_relation)
       end
 
