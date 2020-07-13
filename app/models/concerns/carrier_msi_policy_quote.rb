@@ -46,12 +46,12 @@ module CarrierMsiPolicyQuote
       # handle common failure scenarios
       unless policy_application.carrier_id == 5
         @bind_response[:message] = "Carrier must be QBE to bind residential quote"
-        PolicyBindWarningNotificationJob.perform_later(message: @bind_response[:message])
+        #PolicyBindWarningNotificationJob.perform_later(message: @bind_response[:message])
         return @bind_response
       end
 		 	unless accepted? && policy.nil?
 		 		@bind_response[:message] = "Status must be quoted or error to bind quote"
-        PolicyBindWarningNotificationJob.perform_later(message: @bind_response[:message])
+        #PolicyBindWarningNotificationJob.perform_later(message: @bind_response[:message])
         return @bind_response
 		 	end
       # unpack payment info
@@ -61,7 +61,7 @@ module CarrierMsiPolicyQuote
           !payment_params.has_key?('payment_info') || !payment_params.has_key?('payment_token')
         # invalid payment data
         @bind_response[:message] = "Invalid payment data for binding policy"
-        PolicyBindWarningNotificationJob.perform_later(message: @bind_response[:message])
+        #PolicyBindWarningNotificationJob.perform_later(message: @bind_response[:message])
         return @bind_response
       end
       payment_merchant_id = payment_data['merchant_id']
@@ -121,7 +121,7 @@ module CarrierMsiPolicyQuote
       )
       if !result
         @bind_response[:message] = "Failed to build bind request (#{msis.errors.to_s})"
-        PolicyBindWarningNotificationJob.perform_later(message: @bind_response[:message])
+        #PolicyBindWarningNotificationJob.perform_later(message: @bind_response[:message])
         return @bind_response
       end
       event.request = msis.compiled_rxml
@@ -133,7 +133,7 @@ module CarrierMsiPolicyQuote
       event.save
       if result[:error]
         @bind_response[:message] = "MSI bind failure (Event ID: #{event.id || event.errors.to_h})\nMSI Error: #{result[:external_message]}\n#{result[:extended_external_message]}"
-        PolicyBindWarningNotificationJob.perform_later(message: @bind_response[:message])
+        #PolicyBindWarningNotificationJob.perform_later(message: @bind_response[:message])
         return @bind_response
       end
       # handle successful bind
