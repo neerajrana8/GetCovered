@@ -1,42 +1,26 @@
 class BillPastDueInvoicesJob < ApplicationJob
   queue_as :default
-  before_perform :set_agencies
+  before_perform :set_invoices
 
-  def perform(*args)
-    @agencies.each do |agency|
-      interval_counts = []
-      agency.settings['billing_retry_max'].times { |retry_count| interval_counts << (retry_count + 1) * agency.settings['billing_retry_interval'] }      
 
-      policies = agency.policies
-                       .in_system?(true)
-                       .current
-                       .unpaid
-                       .where(billing_enabled: true)
-
-      policies.each do |policy|
-
-        unpaid_invoices = policy.invoices.unpaid.where("due_date < ?", Time.now.to_date)
-
-        unpaid_invoices.each do |invoice|
-
-          charge_attempts = invoice.charges.failed.count
-          last_attempt = invoice.charges.order(:created_at).last
-
-          if charge_attempts < agency.settings['billing_retry_max']
-            
-            interval_counts.each do |day_count|
-              invoice.pay if (Time.current.to_date - day_count.days) == last_attempt.created_at.to_date 
-            end           
-              
-          end
-        end
-      end
+  def perform(*_args)
+    @invoices.each do |invoice|
+      invoice.pay(allow_missed: true, stripe_source: :default) if invoice.charges.failed.count < 3
     end
   end
 
   private
 
-    def set_agencies
-      @agencies = Agency.enabled.all # Invoice.includes(:policy).where(policies: { billing_enabled: true }, due_date: Time.current.to_date).available
+    def set_invoices
+      # WARNING: we take Policies/PolicyGroups which are BEHIND and have been so for 1-29 days... we check each invoice's charges manually to count the number of tries in perform
+      curdate = Time.current.to_date
+      @invoices = Invoice.where(invoiceable_type: 'PolicyQuote', invoiceable_id: PolicyQuote.select(:id).where(status: 'accepted', policy_id: Policy.select(:id).policy_in_system(true).current.where(auto_pay: true, billing_status: 'BEHIND', billing_behind_since: (curdate - 30.days)...(curdate))))
+                         .or(
+                            Invoice.where(invoiceable_type: 'PolicyGroupQuote', invoiceable_id: PolicyGroupQuote.select(:id).where(status: 'accepted', policy_group_id: PolicyGroup.select(:id).policy_in_system(true).current.where(auto_pay: true, billing_status: 'BEHIND', billing_behind_since: (curdate - 30.days)...(curdate))))
+                         )
+                         .where("due_date < '#{curdate.to_s(:db)}'")
+                         .where(status: 'missed')
     end
+
+
 end

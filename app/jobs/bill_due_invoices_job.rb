@@ -3,14 +3,19 @@ class BillDueInvoicesJob < ApplicationJob
   before_perform :set_invoices
 
   def perform(*_args)
-    @invoices.each { |invoice| invoice.pay(allow_upcoming: true, stripe_source: :default) }
+    @invoices.each do |invoice|
+      invoice.pay(stripe_source: :default)
+    end
   end
 
   private
 
-  def set_invoices
-    @invoices = Invoice.joins("LEFT JOIN policies ON (policies.id = invoices.invoiceable_id AND invoices.invoiceable_type = 'Policy')")
-                       .where(policies: { billing_enabled: true, policy_in_system: true }, due_date: Time.current.to_date)
-                       .available # MOOSE WARNING: extend for PolicyGroup when it exists
-  end
+    def set_invoices
+      @invoices = Invoice.where(invoiceable_type: 'PolicyQuote', invoiceable_id: PolicyQuote.select(:id).where(status: 'accepted', policy_id: Policy.select(:id).policy_in_system(true).current.where(auto_pay: true)))
+                         .or(
+                            Invoice.where(invoiceable_type: 'PolicyGroupQuote', invoiceable_id: PolicyGroupQuote.select(:id).where(status: 'accepted', policy_group_id: PolicyGroup.select(:id).policy_in_system(true).current.where(auto_pay: true)))
+                         )
+                         .where("due_date <= '#{Time.current.to_date.to_s(:db)}'")
+                         .where(status: 'available')
+    end
 end

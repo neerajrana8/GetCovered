@@ -112,7 +112,7 @@ class Policy < ApplicationRecord
   
   scope :current, -> { where(status: %i[BOUND BOUND_WITH_WARNING]) }
   scope :policy_in_system, ->(policy_in_system) { where(policy_in_system: policy_in_system) }
-  scope :unpaid, -> { where(billing_dispute_status: ['BEHIND', 'REJECTED']) }
+  scope :unpaid, -> { where(billing_status: ['BEHIND', 'REJECTED']) }
   
   accepts_nested_attributes_for :policy_coverages, :policy_premiums,
   :insurables, :policy_users, :policy_insurables
@@ -244,8 +244,15 @@ class Policy < ApplicationRecord
   
   def cancel
     update_attribute(:status, 'CANCELLED')
+    # TEMPORARILY DISABLED UNTIL FULL CANCELLATION WORKFLOW IS DONE
+    # Slaughter the invoices
+    #cancellation_date = Time.current.to_date
+    #self.invoices.each do |invoice|
+    #  invoice.apply_proration(cancellation_date)
+    #end
     # Unearned balance is the remaining unearned amount on an insurance policy that 
     # needs to be deducted from future commissions to recuperate the loss
+    premium&.reload
     commision_amount = premium&.commission&.amount || 0
     unearned_premium = premium&.unearned_premium || 0
     balance = (commision_amount * unearned_premium / premium&.base)
