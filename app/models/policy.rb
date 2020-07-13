@@ -334,8 +334,10 @@ class Policy < ApplicationRecord
     def correct_document_mime_type
       documents.each do |document|
         if !document.blob.content_type.starts_with?('image/png', 'image/jpeg', 'image/jpg', 'image/svg',
-          'image/gif', 'application/pdf', 'text/plain', 'text/csv',
-          'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+          'image/gif', 'application/pdf', 'text/plain', 'application/msword',
+          'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          'text/comma-separated-values', 'application/vnd.ms-excel'
           )
           errors.add(:documents, 'The document wrong format, only: PDF, DOC, DOCX, XLSX, XLS, CSV, JPG, JPEG, PNG, GIF, SVG, TXT')
         end
