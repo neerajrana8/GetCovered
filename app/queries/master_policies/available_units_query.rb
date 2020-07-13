@@ -11,14 +11,19 @@ module MasterPolicies
     end
 
     def relation
-      Insurable.
-        joins(left_join_policies).
-        units.
-        where(insurables: { account_id: @master_policy.account }).
-        where(condition)
+      insurables.where(without_policies).
+        union(insurables.where(with_not_related_policies)).
+        union(insurables.where(with_not_active_related_policies))
     end
 
     private
+
+    def insurables
+      Insurable.
+        joins(left_join_policies).
+        units.
+        where(insurables: { account_id: @master_policy.account })
+    end
 
     def condition
       "#{without_policies} OR #{with_not_related_policies} OR #{with_not_active_related_policies}"
