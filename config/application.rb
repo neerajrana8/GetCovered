@@ -34,5 +34,6 @@ module GetCovered
 
     # Add folders with ActiveInteraction
     config.autoload_paths += Dir.glob("#{config.root}/app/interactions/*")
+    config.autoload_paths += Dir.glob("#{config.root}/app/queries/*")
   end
 end

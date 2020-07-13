@@ -5,14 +5,49 @@
 module V2
   module StaffAccount
     class MasterPoliciesController < StaffAccountController
+      before_action :set_policy, only: %i[show cover_unit]
+
       def index
         account_id = current_staff.organizable&.id
-        master_policies_relation = Policy.where('policy_type_id = ? AND agency_id = ?', PolicyType::MASTER_ID, account_id)
+        master_policies_relation = Policy.where(policy_type_id: PolicyType::MASTER_ID, account_id: account_id)
         @master_policies = paginator(master_policies_relation)
       end
 
       def show
         @master_policy_coverages = @master_policy.policies.where('policy_type_id = ? AND agency_id = ?', 3, @agency.id)
+      end
+
+      def cover_unit
+        unit = Insurable.find(params[:insurable_id])
+        if unit.policies.empty? && unit.leases&.count&.zero?
+          last_policy_number = @master_policy.policies.maximum('number')
+          policy = unit.policies.create(
+            agency: @master_policy.agency,
+            carrier: @master_policy.carrier,
+            account: @master_policy.account,
+            policy_coverages: @master_policy.policy_coverages,
+            number: last_policy_number.nil? ? "#{@master_policy.number}_1" : last_policy_number.next,
+            policy_type_id: PolicyType::MASTER_COVERAGE_ID,
+            policy: @master_policy,
+            effective_date: @master_policy.effective_date,
+            expiration_date: @master_policy.expiration_date
+          )
+          if policy.errors.blank?
+            render json: policy.to_json, status: :ok
+          else
+            response = { error: :policy_creation_problem, message: 'Policy was not created', payload: policy.errors }
+            render json: response.to_json, status: :internal_server_error
+          end
+        else
+          render json: { error: :bad_unit, message: 'Unit does not fulfil the requirements' }.to_json, status: :bad_request
+        end
+      end
+
+      private
+
+      def set_policy
+        @master_policy = Policy.find_by(policy_type_id: PolicyType::MASTER_ID, id: params[:id])
+        render(json: { master_policy: 'not found' }, status: :not_found) if @master_policy.blank?
       end
     end
   end

@@ -5,8 +5,11 @@
 class PolicyType < ApplicationRecord
   include SetSlug
 
+  RESIDENTIAL_ID = 1
   MASTER_ID = 2
   MASTER_COVERAGE_ID = 3
+  COMMERCIAL_ID = 4
+  RENT_GUARANTEE_ID = 5
 
   after_initialize :initialize_policy_type
   

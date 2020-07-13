@@ -8,13 +8,50 @@ module V2
       before_action :set_policy, only: %i[update show communities add_insurable covered_units cover_unit available_top_insurables]
 
       def index
-        master_policies_relation =
-          Policy.where('policy_type_id = ? AND agency_id = ?', PolicyType::MASTER_ID, @agency.id)
+        master_policies_relation = Policy.where(policy_type_id: PolicyType::MASTER_ID, account_id: account_id)
         @master_policies = paginator(master_policies_relation)
       end
 
       def show
         @master_policy_coverages = @master_policy.policies.where('policy_type_id = ? AND agency_id = ?', 3, @agency.id)
+      end
+
+      def create
+        if create_allowed?
+          policy_type = PolicyType.find(2)
+          carrier = Carrier.find(params[:carrier_id])
+          account = Account.where(agency_id: carrier.agencies.ids).find(params[:account_id])
+
+          @master_policy = Policy.new(create_params.merge(agency: account.agency,
+                                                          carrier: carrier, account: account, policy_type: policy_type))
+          @policy_premium = PolicyPremium.new(create_policy_premium)
+          if @master_policy.errors.none? && @policy_premium.errors.none? && @master_policy.save && @policy_premium.save
+            render json: { message: 'Master Policy and Policy Premium created', payload: { policy: @master_policy.attributes } },
+                   status: :created
+          else
+            render json: { errors: @master_policy.errors.merge!(@policy_premium.errors) }, status: :unprocessable_entity
+          end
+        else
+          render json: { success: false, errors: ['Unauthorized Access'] },
+                 status: :unauthorized
+        end
+      end
+
+      def update
+        if update_allowed?
+          @master_policy.update(cancellation_date_date: params[:date])
+          if @master_policy.cancellation_date_date.present?
+            # AutomaticMasterPolicyInvoiceJob.perform_later(@master_policy.id)
+            render json: { message: 'Master policy canceled' }, status: :ok
+          elsif @master_policy.cancellation_date_date.nil?
+            render json: { message: 'Master policy not canceled' }, status: :ok
+          else
+            render json: @master_policy.errors, status: :unprocessable_entity
+          end
+        else
+          render json: { success: false, errors: ['Unauthorized Access'] },
+                 status: :unauthorized
+        end
       end
 
       def communities
@@ -57,6 +94,12 @@ module V2
         render template: 'v2/staff_agency/insurables/index', status: :ok
       end
 
+      def available_units
+        insurables_relation = ::MasterPolicies::AvailableUnitsQuery.call(@master_policy)
+        @insurables = paginator(insurables_relation)
+        render template: 'v2/staff_agency/insurables/index', status: :ok
+      end
+
       def covered_units
         insurables_relation =
           Insurable.
@@ -90,44 +133,6 @@ module V2
           end
         else
           render json: { error: :bad_unit, message: 'Unit does not fulfil the requirements' }.to_json, status: :bad_request
-        end
-      end
-
-      def create
-        if create_allowed?
-          policy_type = PolicyType.find(2)
-          carrier = Carrier.find(params[:carrier_id])
-          account = Account.where(agency_id: carrier.agencies.ids).find(params[:account_id])
-
-          @master_policy = Policy.new(create_params.merge(agency: account.agency,
-                                                          carrier: carrier, account: account, policy_type: policy_type))
-          @policy_premium = PolicyPremium.new(create_policy_premium)
-          if @master_policy.errors.none? && @policy_premium.errors.none? && @master_policy.save && @policy_premium.save
-            render json: { message: 'Master Policy and Policy Premium created', payload: { policy: @master_policy.attributes } },
-                   status: :created
-          else
-            render json: { errors: @master_policy.errors.merge!(@policy_premium.errors) }, status: :unprocessable_entity
-          end
-        else
-          render json: { success: false, errors: ['Unauthorized Access'] },
-                 status: :unauthorized
-        end
-      end
-
-      def update
-        if update_allowed?
-          @master_policy.update(cancellation_date_date: params[:date])
-          if @master_policy.cancellation_date_date.present?
-            # AutomaticMasterPolicyInvoiceJob.perform_later(@master_policy.id)
-            render json: { message: 'Master policy canceled' }, status: :ok
-          elsif @master_policy.cancellation_date_date.nil?
-            render json: { message: 'Master policy not canceled' }, status: :ok
-          else
-            render json: @master_policy.errors, status: :unprocessable_entity
-          end
-        else
-          render json: { success: false, errors: ['Unauthorized Access'] },
-                 status: :unauthorized
         end
       end
 

@@ -31,6 +31,9 @@ Layout/ParametersAlignment:
 Layout/TrailingWhitespace:
   Enabled: false
 
+Layout/DotPosition:
+  Enabled: false
+
 Layout/MultilineMethodCallIndentation:
   EnforcedStyle: indented
 
