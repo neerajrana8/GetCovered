@@ -152,7 +152,10 @@ module CarrierMsiPolicyApplication
             quote_method = premium.save ? "mark_successful" : "mark_failure"
             quote.send(quote_method)
             if quote.status == 'quoted'
+              # generate internal invoices
               quote.generate_invoices_for_term
+              # generate external invoices
+              
               return true
             else
               puts "\nQuote Save Error\n"
