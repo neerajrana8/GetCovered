@@ -14,7 +14,7 @@ module V2
         if current_staff.getcovered_agent?
           super(:@policies, Policy.all)
         else
-          super(:@policies, Policy.where(agency_id: current_staff.organizable_id))
+          super(:@policies, Policy.where(agency: @agency))
         end
       end
 
@@ -23,7 +23,7 @@ module V2
           if current_staff.getcovered_agent?
             Policy.search(params[:query]).records
           else
-            Policy.search(params[:query]).records.where(agency_id: current_staff.organizable_id)
+            Policy.search(params[:query]).records.where(agency_id: @agency)
           end
         render json: @policies.to_json, status: 200
       end
@@ -103,7 +103,7 @@ module V2
           if current_staff.getcovered_agent?
             Policy.find(params[:id])
           else
-            current_staff.organizable.policies.find(params[:id])
+            @agency.policies.find(params[:id])
           end
       end
         
