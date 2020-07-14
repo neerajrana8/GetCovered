@@ -11,7 +11,7 @@ module V2
       before_action :set_substrate, only: [:create, :index, :add_coverage_proof]
       
       def index
-        if current_staff.getcovered_agent?
+        if current_staff.getcovered_agent? && params[:agency_id].nil?
           super(:@policies, Policy.all)
         else
           super(:@policies, Policy.where(agency: @agency))
@@ -20,7 +20,7 @@ module V2
 
       def search
         @policies =
-          if current_staff.getcovered_agent?
+          if current_staff.getcovered_agent? && params[:agency_id].nil?
             Policy.search(params[:query]).records
           else
             Policy.search(params[:query]).records.where(agency_id: @agency)
