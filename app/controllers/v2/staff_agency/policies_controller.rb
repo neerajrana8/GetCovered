@@ -100,7 +100,7 @@ module V2
         
       def set_policy
         @policy =
-          if current_staff.getcovered_agent?
+          if current_staff.getcovered_agent? && params[:agency_id].nil?
             Policy.find(params[:id])
           else
             @agency.policies.find(params[:id])
