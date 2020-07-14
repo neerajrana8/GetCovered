@@ -7,7 +7,8 @@ module V2
     class MasterPoliciesController < StaffAgencyController
       before_action :set_policy,
                     only: %i[update show communities add_insurable covered_units
-                             cover_unit available_top_insurables available_units historically_coverage_units]
+                             cover_unit available_top_insurables available_units historically_coverage_units
+                             cancel cancel_coverage]
 
       def index
         master_policies_relation = Policy.where(policy_type_id: PolicyType::MASTER_ID, agency_id: @agency.id)
@@ -141,6 +142,29 @@ module V2
       def historically_coverage_units
         @master_policy_coverages = paginator(@master_policy.policies.master_policy_coverages.not_active)
         render template: 'v2/shared/master_policies/master_policy_coverages', status: :ok
+      end
+
+      def cancel
+        MasterCoverageCancelJob.perform_later(@master_policy.id)
+        render json: { message: "Master policy #{@master_policy.number} was successfully cancelled"}
+      end
+
+      def cancel_coverage
+        @master_policy_coverage =
+          @master_policy.policies.master_policy_coverages.find(params[:master_policy_coverage_id])
+
+        @master_policy_coverage.update(status: 'CANCELLED', cancellation_date_date: Time.zone.now)
+
+        if @master_policy_coverage.errors.any?
+          render json: {
+                         error: :server_error,
+                         message: 'Master policy coverage was not cancelled',
+                         payload: @master_policy_coverage.errors.full_messages
+                       }.to_json,
+                 status: :bad_request
+        else
+          render json: { message: "Master policy coverage #{@master_policy_coverage.number} was successfully cancelled" }
+        end
       end
 
       private
