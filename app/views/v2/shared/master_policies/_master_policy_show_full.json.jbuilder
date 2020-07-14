@@ -1,4 +1,4 @@
-json.partial! 'v2/shared/master_policies/master_policy_show_fields.json.jbuilder', master_policy: master_policy
+json.partial! 'v2/shared/policies/fields.json.jbuilder', policy: master_policy
 
 json.carrier master_policy.carrier
 

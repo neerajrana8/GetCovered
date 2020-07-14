@@ -37,15 +37,6 @@
 # +updated_at+:: (DateTime) The last date time model was successfuly edited
 
 class Policy < ApplicationRecord
-  scope :in_system?, ->(in_system) { where(policy_in_system: in_system) }
-  scope :with_missed_invoices, lambda {
-    joins(:invoices).merge(Invoice.unpaid_past_due)
-  }
-  
-  scope :accepted_quote, lambda {
-    joins(:policy_quotes).where(policy_quotes: { status: 'accepted'})
-  }
-  
   # Concerns
   include ElasticsearchSearchable
   include CarrierPensioPolicy
@@ -109,11 +100,22 @@ class Policy < ApplicationRecord
   has_many :histories, as: :recordable
   
   has_many_attached :documents
-  
+
+  # Scopes
   scope :current, -> { where(status: %i[BOUND BOUND_WITH_WARNING]) }
+  scope :not_active, -> { where.not(status: %i[BOUND BOUND_WITH_WARNING]) }
   scope :policy_in_system, ->(policy_in_system) { where(policy_in_system: policy_in_system) }
   scope :unpaid, -> { where(billing_dispute_status: ['BEHIND', 'REJECTED']) }
-  
+  scope :in_system?, ->(in_system) { where(policy_in_system: in_system) }
+  scope :with_missed_invoices, lambda {
+    joins(:invoices).merge(Invoice.unpaid_past_due)
+  }
+
+  scope :accepted_quote, lambda {
+    joins(:policy_quotes).where(policy_quotes: { status: 'accepted'})
+  }
+  scope :master_policy_coverages, -> { where(policy_type_id: PolicyType::MASTER_COVERAGE_ID) }
+
   accepts_nested_attributes_for :policy_coverages, :policy_premiums,
   :insurables, :policy_users, :policy_insurables
   

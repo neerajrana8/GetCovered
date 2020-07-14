@@ -42,6 +42,9 @@
           post :cover_unit
           get :available_top_insurables
           get :available_units
+          get :historically_coverage_units
+          put :cancel
+          put :cancel_unit
         end
       end
 
