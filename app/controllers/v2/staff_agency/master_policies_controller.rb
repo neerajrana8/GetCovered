@@ -8,7 +8,7 @@ module V2
       before_action :set_policy,
                     only: %i[update show communities add_insurable covered_units
                              cover_unit available_top_insurables available_units historically_coverage_units
-                             cancel cancel_coverage]
+                             cancel cancel_coverage master_policy_coverages]
 
       def index
         master_policies_relation = Policy.where(policy_type_id: PolicyType::MASTER_ID, agency_id: @agency.id)
@@ -137,6 +137,11 @@ module V2
         else
           render json: { error: :bad_unit, message: 'Unit does not fulfil the requirements' }.to_json, status: :bad_request
         end
+      end
+
+      def master_policy_coverages
+        @master_policy_coverages = paginator(@master_policy.policies.master_policy_coverages.current)
+        render template: 'v2/shared/master_policies/master_policy_coverages', status: :ok
       end
 
       def historically_coverage_units

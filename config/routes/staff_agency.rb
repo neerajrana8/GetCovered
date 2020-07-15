@@ -36,13 +36,14 @@
     resources :master_policies, path: 'master-policies',
       only: [ :create, :update, :index, :show ] do
         member do
-          post :add_insurable
           get :communities
           get :covered_units
-          post :cover_unit
           get :available_top_insurables
           get :available_units
           get :historically_coverage_units
+          get :master_policy_coverages
+          post :cover_unit
+          post :add_insurable
           put :cancel
           put :cancel_coverage
         end
