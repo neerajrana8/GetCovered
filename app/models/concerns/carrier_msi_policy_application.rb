@@ -157,7 +157,7 @@ module CarrierMsiPolicyApplication
               # generate external invoices
               msi_get_payment_schedule(payment_plan).each.with_index do |dates, ind|
                 quote.invoices.create!(dates.merge({
-                  exernal: true,
+                  external: true,
                   status: "quoted",
                   payer: self.primary_user,
                   line_items_attributes: payment_plan == "Annual" ? [
@@ -224,12 +224,12 @@ module CarrierMsiPolicyApplication
                 due_date: Time.current.to_date,
                 available_date: Time.current.to_date,
                 term_first_date: self.effective_date,
-                term_last_date: self.effective_date + 6.months - 1.day
+                term_last_date: second_due - 1.day
               },
               {
                 due_date: second_due,
                 available_date: second_due - 1.week,
-                term_first_date: self.effective_date + 6.months,
+                term_first_date: second_due,
                 term_last_date: self.expiration_date
               }
             ]
@@ -247,8 +247,8 @@ module CarrierMsiPolicyApplication
               {
                 due_date: dd,
                 available_date: dd - 1.week,
-                term_first_date: self.effective_date + (3 * ind).months,
-                term_last_date: ind == 3 ? self.expiration_date : ((self.effective_date + (3 * ind + 3).months - 1.day)
+                term_first_date: (ind == 0 ? self.effective_date : dd),
+                term_last_date: (ind == 3 ? self.expiration_date : dds[ind + 1] - 1.day)
               }
             end
           when "Monthly"
@@ -261,7 +261,7 @@ module CarrierMsiPolicyApplication
                 due_date: dd,
                 available_date: dd - 1.week,
                 term_first_date: (ind == 0 ? self.effective_date : dd),
-                term_last_date: (ind == 10 ? self.expiration_date : dds[ind + 1] - 1.day
+                term_last_date: (ind == 10 ? self.expiration_date : dds[ind + 1] - 1.day)
               }
             end
           else
