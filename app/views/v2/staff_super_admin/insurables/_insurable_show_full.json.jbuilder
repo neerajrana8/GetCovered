@@ -61,3 +61,5 @@ end
 
 json.buildings_count insurable&.buildings&.count
 json.units_count insurable&.insurables&.where(insurable_type_id: InsurableType::UNITS_IDS)&.count
+
+json.can_be_covered insurable.policies.current.empty?
