@@ -95,7 +95,7 @@ module CarrierMsiPolicyApplication
             policy_data = results[:msi_data][:data].dig("MSIACORD", "InsuranceSvcRs", "RenterPolicyQuoteInqRs", "PersPolicy")
             product_uid = policy_data["CompanyProductCd"]
             msi_policy_fee = policy_data["MSI_PolicyFee"] # not sure how this fits into anything
-            payment_data = policy_data["PaymentPlan"].find{|pp| pp["PaymentPlanCd"] = payment_plan }
+            payment_data = policy_data["PaymentPlan"].find{|ppl| ppl["PaymentPlanCd"] == payment_plan }
             if payment_data.nil?
               puts "MSI FinalPremium PaymentData Nonexistent, Payment Plan Carrier Code: '#{payment_plan}', Event ID: #{ results[:event].id }"
               quote.mark_failure()
@@ -155,7 +155,34 @@ module CarrierMsiPolicyApplication
               # generate internal invoices
               quote.generate_invoices_for_term
               # generate external invoices
-              
+              msi_get_payment_schedule(payment_plan).each.with_index do |dates, ind|
+                quote.invoices.create!(dates.merge({
+                  exernal: true,
+                  status: "quoted",
+                  payer: self.primary_user,
+                  line_items_attributes: payment_plan == "Annual" ? [
+                    {
+                      title: "Premium Down Payment",
+                      price: down_payment,
+                      refundability: 'prorated_refund',
+                      category: 'base_premium'
+                    }
+                  ] : [
+                    {
+                      title: "Premium Installment",
+                      price: premium_installment,
+                      refundability: 'prorated_refund',
+                      category: 'base_premium'
+                    },
+                    {
+                      title: "Installment Fee",
+                      price: fee_installment,
+                      refundability: 'no_refund',
+                      category: 'amortized_fees'
+                    }
+                  ]
+                }))
+              end
               return true
             else
               puts "\nQuote Save Error\n"
@@ -169,6 +196,79 @@ module CarrierMsiPolicyApplication
     end
     
     
+    private
+    
+      def msi_get_payment_schedule(billing_code, installment_day: nil)
+        # set installment day
+        installment_day = Time.current.to_date.day if installment_day.nil?
+        installment_day = 28 if installment_day > 28
+        # go
+        case billing_code
+          when "Annual"
+            # go wild
+            [
+              {
+                due_date: Time.current.to_date,
+                available_date: Time.current.to_date,
+                term_first_date: self.effective_date,
+                term_last_date: self.expiration_date
+              }
+            ]
+          when "SemiAnnual"
+            # add 5 months to effective date and go to next installment day; subtract 1 month if > 165 days
+            second_due = (self.effective_date + 5.months).change({ day: installment_day })
+            second_due = second_due - 1.month if (second_due - self.effective_date).to_i > 165
+            # go wild
+            [
+              {
+                due_date: Time.current.to_date,
+                available_date: Time.current.to_date,
+                term_first_date: self.effective_date,
+                term_last_date: self.effective_date + 6.months - 1.day
+              },
+              {
+                due_date: second_due,
+                available_date: second_due - 1.week,
+                term_first_date: self.effective_date + 6.months,
+                term_last_date: self.expiration_date
+              }
+            ]
+          when "Quarterly"
+            # add 2 months to effective date and go to next installment day; subtract 1 month if > 75 days; then add [2,3] months if left alone, or [3,3] months if subtracted
+            second_due = (self.effective_date + 2.months).change({ day: installment_day })
+            extra_add = 0
+            if (second_due - self.effective_date).to_i > 75
+              second_due = second_due - 1.month
+              extra_add = 1
+            end
+            # go wild
+            dds = [Time.current.to_date, second_due, second_due + (2 + extra_add).months, second_due + (5 + extra_add).months]
+            dds.map.with_index do |dd, ind|
+              {
+                due_date: dd,
+                available_date: dd - 1.week,
+                term_first_date: self.effective_date + (3 * ind).months,
+                term_last_date: ind == 3 ? self.expiration_date : ((self.effective_date + (3 * ind + 3).months - 1.day)
+              }
+            end
+          when "Monthly"
+            # add 1 month to effective date and go to next installment day; subtract 1 month if > 50 days; then add 1 month each time
+            second_due = (self.effective_date + 1.month).change({ day: installment_day })
+            second_due = second_due - 1.month if (second_due - self.effective_date).to_i > 50
+            dds = (0..10).map{|n| (n == 0 ? Time.current.to_date : second_due + (n-1).months) }
+            dds.map.with_index do |dd, ind|
+              {
+                due_date: dd,
+                available_date: dd - 1.week,
+                term_first_date: (ind == 0 ? self.effective_date : dd),
+                term_last_date: (ind == 10 ? self.expiration_date : dds[ind + 1] - 1.day
+              }
+            end
+          else
+            []
+        end
+      end
+      
     
   end
 end
