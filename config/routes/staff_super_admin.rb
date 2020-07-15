@@ -29,9 +29,6 @@
             via: "get"
         end
       end
-
-    resources :master_policies,
-      only: [ :index, :show ]
   
     resources :agencies,
       only: [ :create, :update, :index, :show ],
@@ -124,6 +121,16 @@
     resources :lease_type_policy_types,
       path: "lease-type-policy-types",
       only: [ :create, :update, :index, :show ]
+
+    resources :master_policies, path: 'master-policies', only: [ :index, :show ] do
+      member do
+        get :communities
+        get :covered_units
+        get :available_units
+        get :historically_coverage_units
+        get :master_policy_coverages
+      end
+    end
   
     resources :module_permissions,
       path: "module-permissions",

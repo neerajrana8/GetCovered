@@ -97,7 +97,7 @@ module V2
       private
 
       def set_policy
-        @master_policy = Policy.find_by(policy_type_id: PolicyType::MASTER_ID, id: params[:id])
+        @master_policy = Policy.find_by(policy_type_id: PolicyType::MASTER_ID, id: params[:id], account: @account)
         render(json: { error: :not_found, message: 'Master policy not found' }, status: :not_found) if @master_policy.blank?
       end
     end

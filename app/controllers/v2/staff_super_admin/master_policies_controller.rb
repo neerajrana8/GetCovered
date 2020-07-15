@@ -1,32 +1,61 @@
 ##
-# V2 StaffAgency Master Policies Controller
-# File: app/controllers/v2/staff_agency/master_policies_controller.rb
+# V2 StaffAccount Master Policies Controller
+# File: app/controllers/v2/staff_account/master_policies_controller.rb
 
 module V2
   module StaffSuperAdmin
     class MasterPoliciesController < StaffSuperAdminController
+      before_action :set_policy, only: %i[show communities available_units covered_units
+                                          historically_coverage_units master_policy_coverages]
 
-#       def index
-#         @master_policies = Policy.where(policy_type_id: 2) || []
-#         if @master_policies.present?
-#           render json: @master_policies, status: :ok
-#         else
-#           render json: { message: 'No master policies' }
-#         end
-#       end
-#       
-#       def show
-#         @policy = Policy.where(policy_type_id: 2).find(params[:id])
-#         @master_policy_coverages = @policy.policy_coverages || []
-#         @buildings = @policy.insurables.buildings || []
-#         @communities = @policy.insurables.communities || []
-#         if @master_policy_coverages.present?
-#           render json: { @master_policy_coverages, @buildings, @communities }, status: :ok
-#         else
-#           render json: { message: 'Policy does\'t exist' }
-#         end
-#       end
+      def index
+        master_policies_relation = Policy.where(policy_type_id: PolicyType::MASTER_ID)
+        @master_policies = paginator(master_policies_relation)
+        render template: 'v2/shared/master_policies/index', status: :ok
+      end
 
+      def show
+        render template: 'v2/shared/master_policies/show', status: :ok
+      end
+
+      def communities
+        insurables_relation = @master_policy.insurables
+        @insurables = paginator(insurables_relation)
+        render template: 'v2/shared/master_policies/insurables', status: :ok
+      end
+
+      def covered_units
+        insurables_relation =
+          Insurable.
+            joins(:policies).
+            where(policies: { policy: @master_policy }, insurables: { insurable_type: InsurableType::UNITS_IDS })
+
+        @insurables = paginator(insurables_relation)
+        render template: 'v2/shared/master_policies/insurables', status: :ok
+      end
+
+      def available_units
+        insurables_relation = ::MasterPolicies::AvailableUnitsQuery.call(@master_policy)
+        @insurables = paginator(insurables_relation)
+        render template: 'v2/shared/master_policies/insurables', status: :ok
+      end
+
+      def historically_coverage_units
+        @master_policy_coverages = paginator(@master_policy.policies.master_policy_coverages.not_active)
+        render template: 'v2/shared/master_policies/master_policy_coverages', status: :ok
+      end
+
+      def master_policy_coverages
+        @master_policy_coverages = paginator(@master_policy.policies.master_policy_coverages.current)
+        render template: 'v2/shared/master_policies/master_policy_coverages', status: :ok
+      end
+
+      private
+
+      def set_policy
+        @master_policy = Policy.find_by(policy_type_id: PolicyType::MASTER_ID, id: params[:id])
+        render(json: { error: :not_found, message: 'Master policy not found' }, status: :not_found) if @master_policy.blank?
+      end
     end
-  end # module StaffAgency
+  end
 end
