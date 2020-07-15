@@ -34,7 +34,17 @@
         end
       end
 
-    resources :master_policies, only: [ :index, :show ]
+    resources :master_policies, path: 'master-policies', only: [ :index, :show ] do
+      member do
+        get :communities
+        get :covered_units
+        get :available_units
+        get :historically_coverage_units
+        get :master_policy_coverages
+        post :cover_unit
+        put :cancel_coverage
+      end
+    end
 
     resources :assignments,
       only: [ :create, :update, :destroy, :index, :show ]

@@ -5,16 +5,49 @@
 module V2
   module StaffAccount
     class MasterPoliciesController < StaffAccountController
-      before_action :set_policy, only: %i[show cover_unit]
+      before_action :set_policy, only: %i[show communities available_units covered_units historically_coverage_units
+                                          master_policy_coverages cover_unit cancel_coverage]
 
       def index
-        account_id = current_staff.organizable&.id
-        master_policies_relation = Policy.where(policy_type_id: PolicyType::MASTER_ID, account_id: account_id)
+        master_policies_relation = Policy.where(policy_type_id: PolicyType::MASTER_ID, account: @account)
         @master_policies = paginator(master_policies_relation)
+        render template: 'v2/shared/master_policies/index', status: :ok
       end
 
       def show
-        @master_policy_coverages = @master_policy.policies.where('policy_type_id = ? AND agency_id = ?', 3, @agency.id)
+        render template: 'v2/shared/master_policies/show', status: :ok
+      end
+
+      def communities
+        insurables_relation = @master_policy.insurables
+        @insurables = paginator(insurables_relation)
+        render template: 'v2/shared/master_policies/insurables', status: :ok
+      end
+
+      def covered_units
+        insurables_relation =
+          Insurable.
+            joins(:policies).
+            where(policies: { policy: @master_policy }, insurables: { insurable_type: InsurableType::UNITS_IDS })
+
+        @insurables = paginator(insurables_relation)
+        render template: 'v2/shared/master_policies/insurables', status: :ok
+      end
+
+      def available_units
+        insurables_relation = ::MasterPolicies::AvailableUnitsQuery.call(@master_policy)
+        @insurables = paginator(insurables_relation)
+        render template: 'v2/shared/master_policies/insurables', status: :ok
+      end
+
+      def historically_coverage_units
+        @master_policy_coverages = paginator(@master_policy.policies.master_policy_coverages.not_active)
+        render template: 'v2/shared/master_policies/master_policy_coverages', status: :ok
+      end
+
+      def master_policy_coverages
+        @master_policy_coverages = paginator(@master_policy.policies.master_policy_coverages.current)
+        render template: 'v2/shared/master_policies/master_policy_coverages', status: :ok
       end
 
       def cover_unit
@@ -43,11 +76,29 @@ module V2
         end
       end
 
+      def cancel_coverage
+        @master_policy_coverage =
+          @master_policy.policies.master_policy_coverages.find(params[:master_policy_coverage_id])
+
+        @master_policy_coverage.update(status: 'CANCELLED', cancellation_date_date: Time.zone.now)
+
+        if @master_policy_coverage.errors.any?
+          render json: {
+                         error: :server_error,
+                         message: 'Master policy coverage was not cancelled',
+                         payload: @master_policy_coverage.errors.full_messages
+                       }.to_json,
+                 status: :bad_request
+        else
+          render json: { message: "Master policy coverage #{@master_policy_coverage.number} was successfully cancelled" }
+        end
+      end
+
       private
 
       def set_policy
         @master_policy = Policy.find_by(policy_type_id: PolicyType::MASTER_ID, id: params[:id])
-        render(json: { master_policy: 'not found' }, status: :not_found) if @master_policy.blank?
+        render(json: { error: :not_found, message: 'Master policy not found' }, status: :not_found) if @master_policy.blank?
       end
     end
   end

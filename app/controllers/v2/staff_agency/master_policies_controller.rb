@@ -13,54 +13,33 @@ module V2
       def index
         master_policies_relation = Policy.where(policy_type_id: PolicyType::MASTER_ID, agency_id: @agency.id)
         @master_policies = paginator(master_policies_relation)
+        render template: 'v2/shared/master_policies/index', status: :ok
       end
 
       def show
-        @master_policy_coverages = @master_policy.policies.where('policy_type_id = ? AND agency_id = ?', 3, @agency.id)
+        render template: 'v2/shared/master_policies/show', status: :ok
       end
 
       def create
-        if create_allowed?
-          policy_type = PolicyType.find(2)
-          carrier = Carrier.find(params[:carrier_id])
-          account = Account.where(agency_id: carrier.agencies.ids).find(params[:account_id])
+        policy_type = PolicyType.find(2)
+        carrier = Carrier.find(params[:carrier_id])
+        account = Account.where(agency_id: carrier.agencies.ids).find(params[:account_id])
 
-          @master_policy = Policy.new(create_params.merge(agency: account.agency,
-                                                          carrier: carrier, account: account, policy_type: policy_type))
-          @policy_premium = PolicyPremium.new(create_policy_premium)
-          if @master_policy.errors.none? && @policy_premium.errors.none? && @master_policy.save && @policy_premium.save
-            render json: { message: 'Master Policy and Policy Premium created', payload: { policy: @master_policy.attributes } },
-                   status: :created
-          else
-            render json: { errors: @master_policy.errors.merge!(@policy_premium.errors) }, status: :unprocessable_entity
-          end
+        @master_policy = Policy.new(create_params.merge(agency: account.agency,
+                                                        carrier: carrier, account: account, policy_type: policy_type))
+        @policy_premium = PolicyPremium.new(create_policy_premium)
+        if @master_policy.errors.none? && @policy_premium.errors.none? && @master_policy.save && @policy_premium.save
+          render json: { message: 'Master Policy and Policy Premium created', payload: { policy: @master_policy.attributes } },
+                 status: :created
         else
-          render json: { success: false, errors: ['Unauthorized Access'] },
-                 status: :unauthorized
-        end
-      end
-
-      def update
-        if update_allowed?
-          @master_policy.update(cancellation_date_date: params[:date])
-          if @master_policy.cancellation_date_date.present?
-            # AutomaticMasterPolicyInvoiceJob.perform_later(@master_policy.id)
-            render json: { message: 'Master policy canceled' }, status: :ok
-          elsif @master_policy.cancellation_date_date.nil?
-            render json: { message: 'Master policy not canceled' }, status: :ok
-          else
-            render json: @master_policy.errors, status: :unprocessable_entity
-          end
-        else
-          render json: { success: false, errors: ['Unauthorized Access'] },
-                 status: :unauthorized
+          render json: { errors: @master_policy.errors.merge!(@policy_premium.errors) }, status: :unprocessable_entity
         end
       end
 
       def communities
         insurables_relation = @master_policy.insurables
         @insurables = paginator(insurables_relation)
-        render template: 'v2/staff_agency/insurables/index', status: :ok
+        render template: 'v2/shared/master_policies/insurables', status: :ok
       end
 
       def add_insurable
@@ -174,14 +153,6 @@ module V2
 
       private
 
-      def create_allowed?
-        true
-      end
-
-      def update_allowed?
-        true
-      end
-
       def set_policy
         @master_policy = Policy.find_by(policy_type_id: PolicyType::MASTER_ID, id: params[:id])
         render(json: { master_policy: 'not found' }, status: :not_found) if @master_policy.blank?
@@ -208,5 +179,5 @@ module V2
         params.permit(:base, :total, :calculation_base, :carrier_base)
       end
     end
-  end # module StaffAgency
+  end
 end
