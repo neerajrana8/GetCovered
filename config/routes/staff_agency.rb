@@ -44,7 +44,7 @@
           get :available_units
           get :historically_coverage_units
           put :cancel
-          put :cancel_unit
+          put :cancel_coverage
         end
       end
 
