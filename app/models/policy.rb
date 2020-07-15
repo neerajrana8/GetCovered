@@ -105,7 +105,7 @@ class Policy < ApplicationRecord
   scope :current, -> { where(status: %i[BOUND BOUND_WITH_WARNING]) }
   scope :not_active, -> { where.not(status: %i[BOUND BOUND_WITH_WARNING]) }
   scope :policy_in_system, ->(policy_in_system) { where(policy_in_system: policy_in_system) }
-  scope :unpaid, -> { where(billing_dispute_status: ['BEHIND', 'REJECTED']) }
+  scope :unpaid, -> { where(billing_status: ['BEHIND', 'REJECTED']) }
   scope :in_system?, ->(in_system) { where(policy_in_system: in_system) }
   scope :with_missed_invoices, lambda {
     joins(:invoices).merge(Invoice.unpaid_past_due)
@@ -246,8 +246,15 @@ class Policy < ApplicationRecord
   
   def cancel
     update_attribute(:status, 'CANCELLED')
-    # Unearned balance is the remaining unearned amount on an insurance policy that 
+    # TEMPORARILY DISABLED UNTIL FULL CANCELLATION WORKFLOW IS DONE
+    # Slaughter the invoices
+    #cancellation_date = Time.current.to_date
+    #self.invoices.each do |invoice|
+    #  invoice.apply_proration(cancellation_date)
+    #end
+    # Unearned balance is the remaining unearned amount on an insurance policy that
     # needs to be deducted from future commissions to recuperate the loss
+    premium&.reload
     commision_amount = premium&.commission&.amount || 0
     unearned_premium = premium&.unearned_premium || 0
     balance = (commision_amount * unearned_premium / premium&.base)
@@ -336,8 +343,10 @@ class Policy < ApplicationRecord
     def correct_document_mime_type
       documents.each do |document|
         if !document.blob.content_type.starts_with?('image/png', 'image/jpeg', 'image/jpg', 'image/svg',
-          'image/gif', 'application/pdf', 'text/plain', 'text/csv',
-          'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+          'image/gif', 'application/pdf', 'text/plain', 'application/msword',
+          'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          'text/comma-separated-values', 'application/vnd.ms-excel'
           )
           errors.add(:documents, 'The document wrong format, only: PDF, DOC, DOCX, XLSX, XLS, CSV, JPG, JPEG, PNG, GIF, SVG, TXT')
         end
