@@ -134,12 +134,22 @@ module V2
 	    	unless @policy_quote.nil?
 		    	@user = ::User.find(accept_policy_quote_params[:id])
 		    	unless @user.nil?
-            # WARNING: this next line overrides the provided token with tok_visa for MSI in development, because we need to use payeezy test cards
+            # MOOSE WARNING: this next line overrides the provided token with tok_visa for MSI in development, because we need to use payeezy test cards
 						result = @user.attach_payment_source(Rails.env != 'production' && @policy_quote.policy_application.carrier_id == 5 ? 'tok_visa' : accept_policy_quote_params[:source])
 			    	if result.valid?
               bind_params = []
               # collect bind params for msi
               if @policy_quote.policy_application.carrier_id == 5
+                # validate
+                problem = validate_accept_policy_quote_payment_params
+                unless problem.nil?
+                  render json: {
+                    :error => "Invalid Payment Information",
+                    :message => problem
+                  }, status: 400			   
+                  return
+                end
+                # set bind params
                 bind_params = [
                   {
                     'payment_method' => accept_policy_quote_payment_params[:payment_method],
@@ -214,6 +224,23 @@ module V2
               ]
             ]
           )
+        end
+        
+        def validate_accept_policy_quote_payment_params
+          pars = accept_policy_quote_payment_params
+          return "a valid payment method must be supplied" unless pars[:payment_method] == 'card'
+          return "payment token cannot be blank" if pars[:token].blank?
+          return "Credit Card Info cannot be blank" if pars[:CreditCardInfo].blank?
+          [:CardHolderName, :CardExpirationDate, :CardType, :CreditCardLast4Digits, :Addr].each do |prop|
+            return "#{prop.to_s.titleize} cannot be blank" if pars[:CreditCardInfo][prop].blank?
+          end
+          { Addr1: "Address Line 1", Addr2: "Address Line 2", City: "City", StateProvCd: "State", PostalCode: "Postal Code" }.each do |prop,hr|
+            return "#{hr} cannot be blank" if pars[:CreditCardInfo][:Addr][prop].blank?
+          end
+          unless ::Address::EXTENDED_US_STATE_CODES.include?(pars[:CreditCardInfo][:Addr][:StateProvCd].to_sym)
+            return "State must be a valid US state abbreviation" if pars[:CreditCardInfo][:Addr][prop].blank?
+          end
+          return nil
         end
         
     end
