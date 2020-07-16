@@ -107,7 +107,5 @@ RSpec.describe Policy, elasticsearch: true, type: :model do
       # end
       # expect(residential_unit.policies.count).to eq(1)
     end
-    
   end
-  
 end

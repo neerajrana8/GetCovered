@@ -65,7 +65,7 @@ module MasterPolicies
     def active_policies_condition
       <<-SQL
         policies.policy_type_id IN (#{related_policy_types}) 
-        AND policies.status NOT IN (#{not_active_statuses})
+        AND policies.status IN (#{active_statuses})
         AND policies.expiration_date > '#{Time.zone.now}'
       SQL
     end
@@ -74,8 +74,8 @@ module MasterPolicies
       [PolicyType::MASTER_COVERAGE_ID, PolicyType::RESIDENTIAL_ID].join(', ')
     end
 
-    def not_active_statuses
-      Policy.statuses.values_at('EXPIRED', 'CANCELLED', 'BIND_REJECTED').join(', ')
+    def active_statuses
+      Policy.statuses.values_at('BOUND', 'BOUND_WITH_WARNING').join(', ')
     end
   end
 end

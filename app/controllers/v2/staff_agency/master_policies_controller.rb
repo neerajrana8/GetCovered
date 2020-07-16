@@ -21,12 +21,13 @@ module V2
       end
 
       def create
-        policy_type = PolicyType.find(2)
         carrier = Carrier.find(params[:carrier_id])
         account = Account.where(agency_id: carrier.agencies.ids).find(params[:account_id])
 
         @master_policy = Policy.new(create_params.merge(agency: account.agency,
-                                                        carrier: carrier, account: account, policy_type: policy_type))
+                                                        carrier: carrier,
+                                                        account: account,
+                                                        policy_type_id: PolicyType::MASTER_ID))
         @policy_premium = PolicyPremium.new(create_policy_premium)
         if @master_policy.errors.none? && @policy_premium.errors.none? && @master_policy.save && @policy_premium.save
           render json: { message: 'Master Policy and Policy Premium created', payload: { policy: @master_policy.attributes } },
