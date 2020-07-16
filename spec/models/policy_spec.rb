@@ -101,7 +101,7 @@ RSpec.describe Policy, elasticsearch: true, type: :model do
       master_policy.policy_coverages << PolicyCoverage.create(designation: 'liability_coverage')
       master_policy.insurables << residential_community
       master_policy.save
-      expect(enqueued_jobs.size).to eq(1)
+      expect(enqueued_jobs.size).to eq(0)
       # perform_enqueued_jobs do
       #   AutomaticMasterCoveragePolicyIssueJob.perform_later(master_policy.id)
       # end

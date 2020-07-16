@@ -33,7 +33,7 @@ describe 'Master Policies API spec', type: :request do
       response_json = JSON.parse(response.body)
       response_community_titles = response_json.map { |community| community['title'] }
       expect(response_json.count).to eq(2)
-      expect(response_community_titles).to match_array(%w[2 1])
+      expect(response_community_titles).to match_array([community1.title, community2.title])
     end
 
     it 'should add a new community' do
