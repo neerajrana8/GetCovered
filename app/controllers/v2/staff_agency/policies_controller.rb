@@ -11,19 +11,19 @@ module V2
       before_action :set_substrate, only: [:create, :index, :add_coverage_proof]
       
       def index
-        if current_staff.getcovered_agent?
+        if current_staff.getcovered_agent? && params[:agency_id].nil?
           super(:@policies, Policy.all)
         else
-          super(:@policies, Policy.where(agency_id: current_staff.organizable_id))
+          super(:@policies, Policy.where(agency: @agency))
         end
       end
 
       def search
         @policies =
-          if current_staff.getcovered_agent?
+          if current_staff.getcovered_agent? && params[:agency_id].nil?
             Policy.search(params[:query]).records
           else
-            Policy.search(params[:query]).records.where(agency_id: current_staff.organizable_id)
+            Policy.search(params[:query]).records.where(agency_id: @agency)
           end
         render json: @policies.to_json, status: 200
       end
@@ -100,10 +100,10 @@ module V2
         
       def set_policy
         @policy =
-          if current_staff.getcovered_agent?
+          if current_staff.getcovered_agent? && params[:agency_id].nil?
             Policy.find(params[:id])
           else
-            current_staff.organizable.policies.find(params[:id])
+            @agency.policies.find(params[:id])
           end
       end
         
