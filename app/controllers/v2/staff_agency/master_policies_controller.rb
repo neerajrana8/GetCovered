@@ -27,7 +27,8 @@ module V2
         @master_policy = Policy.new(create_params.merge(agency: account.agency,
                                                         carrier: carrier,
                                                         account: account,
-                                                        policy_type_id: PolicyType::MASTER_ID))
+                                                        policy_type_id: PolicyType::MASTER_ID,
+                                                        status: 'BOUND'))
         @policy_premium = PolicyPremium.new(create_policy_premium)
         if @master_policy.errors.none? && @policy_premium.errors.none? && @master_policy.save && @policy_premium.save
           render json: { message: 'Master Policy and Policy Premium created', payload: { policy: @master_policy.attributes } },
@@ -111,6 +112,7 @@ module V2
             number: last_policy_number.nil? ? "#{@master_policy.number}_1" : last_policy_number.next,
             policy_type_id: PolicyType::MASTER_COVERAGE_ID,
             policy: @master_policy,
+            status: 'BOUND',
             effective_date: @master_policy.effective_date,
             expiration_date: @master_policy.expiration_date
           )

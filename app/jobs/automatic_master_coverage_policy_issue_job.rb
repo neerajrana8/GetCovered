@@ -13,6 +13,7 @@ class AutomaticMasterCoveragePolicyIssueJob < ApplicationJob
             agency: master_policy.agency,
             carrier: master_policy.carrier,
             account: master_policy.account,
+            status: 'BOUND',
             policy_coverages: master_policy.policy_coverages,
             number: last_policy_number.nil? ? "#{master_policy.number}_1" : last_policy_number.next,
             policy_type_id: PolicyType::MASTER_COVERAGE_ID,
