@@ -5,7 +5,7 @@
 module V2
   module StaffSuperAdmin
     class MasterPoliciesController < StaffSuperAdminController
-      before_action :set_policy, only: %i[show communities available_units covered_units
+      before_action :set_policy, only: %i[show communities available_units covered_units available_top_insurables
                                           historically_coverage_units master_policy_coverages]
 
       def index
@@ -30,6 +30,23 @@ module V2
             joins(:policies).
             where(policies: { policy: @master_policy }, insurables: { insurable_type: InsurableType::UNITS_IDS })
 
+        @insurables = paginator(insurables_relation)
+        render template: 'v2/shared/master_policies/insurables', status: :ok
+      end
+
+      def available_top_insurables
+        insurables_type =
+          if %w[communities buildings].include?(params[:insurables_type])
+            params[:insurables_type].to_sym
+          else
+            :communities_and_buildings
+          end
+        insurables_relation =
+          @master_policy.
+            account.
+            insurables.
+            send(insurables_type).
+            where.not(id: @master_policy.insurables.communities_and_buildings.ids)
         @insurables = paginator(insurables_relation)
         render template: 'v2/shared/master_policies/insurables', status: :ok
       end

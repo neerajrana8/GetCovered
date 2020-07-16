@@ -83,7 +83,7 @@ module V2
       end
 
       def available_units
-        insurables_relation = ::MasterPolicies::AvailableUnitsQuery.call(@master_policy)
+        insurables_relation = ::MasterPolicies::AvailableUnitsQuery.call(@master_policy, params[:insurable_id])
         @insurables = paginator(insurables_relation)
         render template: 'v2/shared/master_policies/insurables', status: :ok
       end

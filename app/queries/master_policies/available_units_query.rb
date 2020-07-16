@@ -6,19 +6,30 @@ module MasterPolicies
       new(*args).relation.order(Insurable.arel_table[:created_at].desc)
     end
 
-    def initialize(master_policy)
+    def initialize(master_policy, insurable_id = nil)
       @master_policy = master_policy
+      @insurable_id = insurable_id
     end
 
     def relation
-      Insurable.
-        left_joins(:policy_insurables).
-        units.
-        where(insurables: { account_id: @master_policy.account }).
-        where(condition)
+      result =
+        Insurable.
+          left_joins(:policy_insurables).
+          units.
+          where(insurables: { account_id: @master_policy.account }).
+          where(condition)
+      filters(result)
     end
 
     private
+
+    def filters(relation)
+      if @insurable_id.present?
+        relation.where(insurables: {insurable_id: @insurable_id})
+      else
+        relation
+      end
+    end
 
     def insurables
       Insurable.

@@ -6,7 +6,7 @@ module V2
   module StaffAccount
     class MasterPoliciesController < StaffAccountController
       before_action :set_policy, only: %i[show communities available_units covered_units historically_coverage_units
-                                          master_policy_coverages cover_unit cancel_coverage]
+                                          master_policy_coverages cover_unit cancel_coverage available_top_insurables]
 
       def index
         master_policies_relation = Policy.where(policy_type_id: PolicyType::MASTER_ID, account: @account)
@@ -34,8 +34,25 @@ module V2
         render template: 'v2/shared/master_policies/insurables', status: :ok
       end
 
+      def available_top_insurables
+        insurables_type =
+          if %w[communities buildings].include?(params[:insurables_type])
+            params[:insurables_type].to_sym
+          else
+            :communities_and_buildings
+          end
+        insurables_relation =
+          @master_policy.
+            account.
+            insurables.
+            send(insurables_type).
+            where.not(id: @master_policy.insurables.communities_and_buildings.ids)
+        @insurables = paginator(insurables_relation)
+        render template: 'v2/shared/master_policies/insurables', status: :ok
+      end
+
       def available_units
-        insurables_relation = ::MasterPolicies::AvailableUnitsQuery.call(@master_policy)
+        insurables_relation = ::MasterPolicies::AvailableUnitsQuery.call(@master_policy, params[:insurable_id])
         @insurables = paginator(insurables_relation)
         render template: 'v2/shared/master_policies/insurables', status: :ok
       end
