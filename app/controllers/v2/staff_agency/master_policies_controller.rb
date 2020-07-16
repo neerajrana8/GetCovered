@@ -31,6 +31,7 @@ module V2
                                                         status: 'BOUND'))
         @policy_premium = PolicyPremium.new(create_policy_premium)
         if @master_policy.errors.none? && @policy_premium.errors.none? && @master_policy.save && @policy_premium.save
+          @master_policy.policy_premiums << @policy_premium
           render json: { message: 'Master Policy and Policy Premium created', payload: { policy: @master_policy.attributes } },
                  status: :created
         else
