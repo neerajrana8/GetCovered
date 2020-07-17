@@ -238,9 +238,11 @@ module V2
             return "#{hr} cannot be blank" if pars[:CreditCardInfo][:Addr][prop].blank?
           end
           unless ::Address::EXTENDED_US_STATE_CODES.include?(pars[:CreditCardInfo][:Addr][:StateProvCd].to_sym)
-            return "State must be a valid US state abbreviation" if pars[:CreditCardInfo][:Addr][prop].blank?
+            return "State must be a valid US state abbreviation"
           end
-          # WARNING: zip code validation?
+          unless pars[:CreditCardInfo][:Addr][:PostalCode].to_s.match?(/\A\d{5}-\d{4}|\A\d{5}\z/)
+            return "Postal code must be a valid zip code"
+          end
           return nil
         end
         
