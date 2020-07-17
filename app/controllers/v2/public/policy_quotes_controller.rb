@@ -234,12 +234,13 @@ module V2
           [:CardHolderName, :CardExpirationDate, :CardType, :CreditCardLast4Digits, :Addr].each do |prop|
             return "#{prop.to_s.titleize} cannot be blank" if pars[:CreditCardInfo][prop].blank?
           end
-          { Addr1: "Address Line 1", Addr2: "Address Line 2", City: "City", StateProvCd: "State", PostalCode: "Postal Code" }.each do |prop,hr|
+          { Addr1: "Address Line 1", City: "City", StateProvCd: "State", PostalCode: "Postal Code" }.each do |prop,hr|
             return "#{hr} cannot be blank" if pars[:CreditCardInfo][:Addr][prop].blank?
           end
           unless ::Address::EXTENDED_US_STATE_CODES.include?(pars[:CreditCardInfo][:Addr][:StateProvCd].to_sym)
             return "State must be a valid US state abbreviation" if pars[:CreditCardInfo][:Addr][prop].blank?
           end
+          # WARNING: zip code validation?
           return nil
         end
         
