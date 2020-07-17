@@ -296,47 +296,45 @@ module V2
         end
         
         if @application.save
-          if create_policy_users
-            if @application.update status: 'complete'
-            	# if application.status updated to complete
-            	@application.estimate()
-            	@quote = @application.policy_quotes.order('created_at ASC').last
-    					if @application.status != "quote_failed" || @application.status != "quoted"
-    						# if application quote success or failure
-    						@application.quote(@quote.id) 
-    						@application.reload()
-    						@quote.reload()
-    						
-    						if @quote.status == "quoted"	
-    							
-    							@application.primary_user().set_stripe_id()
-    						  
-    							render json: { 
-  	  							id: @application.id,
-    								quote: { 
-    									id: @quote.id, 
-    									status: @quote.status, 
-    									premium: @quote.policy_premium 
-    								},
-    								invoices: @quote.invoices.order('due_date ASC'),
-    								user: { 
-    									id: @application.primary_user().id,
-    									stripe_id: @application.primary_user().stripe_id
-    								}
-    							}.to_json, status: 200
-    						
-    						else
-    							render json: { error: "Quote Failed", message: "Quote could not be processed at this time" },
-    										 status: 500	
-    						end
-    					else
-    						render json: { error: "Application Unavailable", message: "Application cannot be quoted at this time" },
-    									 status: 400							
-    					end
+          if create_policy_users && @application.update status: 'complete'
+            # if application.status updated to complete
+            @application.estimate()
+            @quote = @application.policy_quotes.order('created_at DESC').limit(1).first
+            if @application.status != "quote_failed" || @application.status != "quoted"
+              # if application quote success or failure
+              @application.quote(@quote.id) 
+              @application.reload
+              @quote.reload
+              
+              if @quote.status == "quoted"	
+                
+                @application.primary_user.set_stripe_id
+                
+                render json: { 
+                  id: @application.id,
+                  quote: { 
+                    id: @quote.id, 
+                    status: @quote.status, 
+                    premium: @quote.policy_premium 
+                  },
+                  invoices: @quote.invoices.order('due_date ASC'),
+                  user: { 
+                    id: @application.primary_user.id,
+                    stripe_id: @application.primary_user.stripe_id
+                  }
+                }.to_json, status: 200
+              
+              else
+                render json: { error: "Quote Failed", message: "Quote could not be processed at this time" },
+                       status: 500	
+              end
             else
-              render json: @application.errors.to_json,
-                     status: 422  
+              render json: { error: "Application Unavailable", message: "Application cannot be quoted at this time" },
+                     status: 400							
             end
+          else
+            render json: @application.errors.to_json,
+                   status: 422  
           end
         else
           render json: @application.errors.to_json,
@@ -368,13 +366,13 @@ module V2
           if @policy_application.update(update_residential_params) && 
              @policy_application.update(status: 'complete')
              
-          	@policy_application.estimate()
-          	@quote = @policy_application.policy_quotes.order("updated_at ASC").last
+          	@policy_application.estimate
+          	@quote = @policy_application.policy_quotes.order("updated_at DESC").limit(1).first
   					if @policy_application.status != "quote_failed" || @policy_application.status != "quoted"
   						# if application quote success or failure
   						@policy_application.quote(@quote.id) 
-  						@policy_application.reload()
-  						@quote.reload()
+  						@policy_application.reload
+  						@quote.reload
   						
   						if @quote.status == "quoted"	
   						  
@@ -404,7 +402,9 @@ module V2
             render json: @policy_application.errors.to_json,
                    status: 422  
           end    
-          
+        else
+          render json: { error: 'Application Unavailable', message: 'Please submit a valid application' },
+                 status: 401
         end
       end
       
