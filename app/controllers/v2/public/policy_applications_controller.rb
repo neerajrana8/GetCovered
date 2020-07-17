@@ -296,7 +296,7 @@ module V2
         end
         
         if @application.save
-          if create_policy_users && @application.update status: 'complete'
+          if create_policy_users && @application.update(status: 'complete')
             # if application.status updated to complete
             @application.estimate()
             @quote = @application.policy_quotes.order('created_at DESC').limit(1).first
