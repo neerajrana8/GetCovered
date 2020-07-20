@@ -3,7 +3,7 @@ class AutomaticMasterCoveragePolicyIssueJob < ApplicationJob
   
   def perform(policy_id)
     master_policy = Policy.find_by(id: policy_id)
-    return if master_policy.nil? || master_policy.policy_type.designation != 'MASTER'
+    return if master_policy.nil? || master_policy.policy_type_id != PolicyType::MASTER_ID
 
     master_policy.insurables.each do |insurable|      
       insurable.units&.each do |unit|
@@ -18,13 +18,11 @@ class AutomaticMasterCoveragePolicyIssueJob < ApplicationJob
             number: last_policy_number.nil? ? "#{master_policy.number}_1" : last_policy_number.next,
             policy_type_id: PolicyType::MASTER_COVERAGE_ID,
             policy: master_policy,
-            effective_date: master_policy.effective_date,
+            effective_date: Time.zone.now,
             expiration_date: master_policy.expiration_date
           )
         end
       end
     end
-
-    AutomaticMasterCoveragePolicyIssueJob.set(wait: 1.day).perform_later(policy_id)
   end
 end

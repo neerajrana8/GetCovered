@@ -147,7 +147,7 @@ module V2
         @master_policy_coverage =
           @master_policy.policies.master_policy_coverages.find(params[:master_policy_coverage_id])
 
-        @master_policy_coverage.update(status: 'CANCELLED', cancellation_date_date: Time.zone.now)
+        @master_policy_coverage.update(status: 'CANCELLED', cancellation_date_date: Time.zone.now, expiration_date: Time.zone.now)
 
         if @master_policy_coverage.errors.any?
           render json: {

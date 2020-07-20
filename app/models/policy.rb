@@ -311,29 +311,6 @@ class Policy < ApplicationRecord
     end
   end
 
-  # Recount every month, so we will get monthly invoice
-  def master_policy_billing
-    billing_started = false
-
-    policy_coverages = policies&.where(policy_type: 3) || ''
-    policy_coverages.each_with_index do |index|
-      amount = policy_premiums&.take.base
-      policy_coverage_number = policies&.where(policy_type: 3).count || 0
-      total_amount = amount * policy_coverage_number
-      next if total_amount == 0
-
-      due_date = index == 0 ? status_updated_on : policy.effective_date + index.months
-      invoice = invoices.new do |inv|
-        inv.due_date        = due_date
-        inv.available_date  = due_date + available_period
-        inv.user            = primary_user
-        inv.amount          = amount
-      end
-      invoice.save
-    end
-    billing_started
-  end
-
   private
       
     def date_order
