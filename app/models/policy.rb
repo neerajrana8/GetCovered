@@ -90,7 +90,7 @@ class Policy < ApplicationRecord
   # has_one :premium, -> { find_by(enabled: true) }, class_name: 'PolicyPremium'
   
   has_many :invoices, through: :policy_quotes
-  
+  has_many :master_policy_invoices, as: :invoiceable, class_name: 'Invoice'
   has_many :charges, through: :invoices
   
   has_many :refunds, through: :charges
