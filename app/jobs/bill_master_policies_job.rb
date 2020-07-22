@@ -6,6 +6,8 @@ class BillMasterPoliciesJob < ApplicationJob
       begin
         invoice = MasterPolicies::GenerateNextInvoice.run!(master_policy: master_policy)
         invoice.pay(stripe_source: :default)
+        ::MasterPolices::NotifyAssignedStaffsJob.perform_later(master_policy.id)
+
       rescue StandardError => exception
         Rails.logger.error "Error during the billing of the master policy with the id #{master_policy.id}. Exception #{exception.to_s}."
       end
