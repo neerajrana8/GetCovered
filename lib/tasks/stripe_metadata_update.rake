@@ -1,8 +1,8 @@
 require 'rake'
 
-namespace :stripe_metadata_update do
+namespace :stripe_metadata do
   desc 'Update all customers stripe metadata'
-  task move_payment_methods: :environment do
+  task update_stripe_meta: :environment do
     Invoice.all.each do |invoice|
       user = User.find(invoice&.payer_id)
       # user = User&.find(invoice&.payer_id)
@@ -22,7 +22,7 @@ namespace :stripe_metadata_update do
           agency: agency_title,
           product: policy_title,
           policy_number: policy_number
-        }
+        }})
     end
   end
 end
