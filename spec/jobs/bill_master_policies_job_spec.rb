@@ -97,7 +97,11 @@ describe 'BillMasterPoliciesJob' do
 
   it 'generates invoice' do
     expect { BillMasterPoliciesJob.perform_now }.to change { master_policy.master_policy_invoices.count }.by(1)
-    ap master_policy.master_policy_invoices.take
-    ap master_policy.master_policy_invoices.take.line_items
+    expect(master_policy.master_policy_invoices.take.total).to eq(30000)
+    expect(master_policy.master_policy_invoices.take.line_items.count).to eq(3)
+  end
+
+  it 'sends email' do
+    expect { BillMasterPoliciesJob.perform_now(); sleep(1) }.to change { ActionMailer::Base.deliveries.size }.by(1)
   end
 end
