@@ -11,10 +11,13 @@ module V2
       
       def index
 	      policy_type = params[:policy_type].presence ? params[:policy_type] : "residential"
-	      agency_id = params[:agency_id].presence ? params[:agency_id] : 1
-	      
 	      billing_strategy_policy_type = PolicyType.find_by_slug(policy_type)
-	      @billing_strategies = billing_strategy_policy_type.billing_strategies.where(agency_id: agency_id)
+        
+        search_params = {
+          agency_id: params[:agency_id].presence ? params[:agency_id].to_i : 1,
+          carrier_id: params[:carrier_id].presence ? params[:carrier_id].to_i : nil
+        }.compact
+	      @billing_strategies = billing_strategy_policy_type.billing_strategies.where(search_params)
       end
       
       
