@@ -11,5 +11,9 @@ FactoryBot.define do
     trait :master do
       policy_type_id { PolicyType::MASTER_ID }
     end
+
+    trait :master_coverage do
+      policy_type_id { PolicyType::MASTER_COVERAGE_ID }
+    end
   end
 end
