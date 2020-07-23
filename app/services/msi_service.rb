@@ -675,7 +675,7 @@ class MsiService
       irc.coverage_options = (coverages.map do |cov|
           {
             "uid"           => cov["CoverageCd"],
-            "title"         => cov["CoverageDescription"], # MOOSE WARNING: better as description?
+            "title"         => cov["CoverageDescription"].titleize, # MOOSE WARNING: better as description?
             "requirement"   => (cov["MSI_IsMandatoryCoverage"] || "").strip == "True" ? 'required' : 'optional',
             "category"      => "coverage",
             "options_type"  => cov["MSI_LimitList"].blank? ? "none" : "multiple_choice",
@@ -685,7 +685,7 @@ class MsiService
         end + deductibles.map do |ded|
           {
             "uid"           => ded["MSI_DeductibleCd"],
-            "title"         => ded["MSI_DeductibleName"],
+            "title"         => ded["MSI_DeductibleName"].titleize,
             "requirement"   => 'required', #MOOSE WARNING: in special cases some are optional, address these
             "category"      => "deductible",
             "options_type"  => ded["MSI_DeductibleOptionList"].blank? ? "none" : "multiple_choice",
