@@ -550,7 +550,7 @@ module V2
           perform_estimate: inputs[:estimate_premium] ? true : false,
           eventable: unit
         )
-        results[:coverage_options] = results[:coverage_options].sort_by(co["title"]).group_by do |co|
+        results[:coverage_options] = results[:coverage_options].sort_by{|co| co["title"] }.group_by do |co|
           if co["category"] == "coverage"
             next co["title"].start_with?("Coverage") ? "base_coverages" : "optional_coverages"
           else
