@@ -15,6 +15,7 @@ class UserClaimMailer < ApplicationMailer
       )
     else
       mail(
+        to: 'claims@getcoveredllc.com',
         subject: "Claim was created policy number: #{@claim&.policy&.number}"
       )
     end
