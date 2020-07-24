@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_06_24_060419) do
+ActiveRecord::Schema.define(version: 2020_07_24_110427) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -137,6 +137,19 @@ ActiveRecord::Schema.define(version: 2020_06_24_060419) do
     t.string "slug"
     t.jsonb "nodes", default: {}
     t.boolean "enabled"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
+  create_table "application_notifications", force: :cascade do |t|
+    t.string "action"
+    t.string "subject"
+    t.integer "status"
+    t.integer "code"
+    t.boolean "read", default: false
+    t.integer "notifiable_id"
+    t.string "notifiable_type"
+    t.string "message"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
   end
@@ -360,6 +373,9 @@ ActiveRecord::Schema.define(version: 2020_06_24_060419) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "type_of_loss", default: 0, null: false
+    t.string "name"
+    t.string "address"
+    t.string "nature_of_claim"
     t.index ["claimant_type", "claimant_id"], name: "index_claims_on_claimant_type_and_claimant_id"
     t.index ["insurable_id"], name: "index_claims_on_insurable_id"
     t.index ["policy_id"], name: "index_claims_on_policy_id"
@@ -503,6 +519,29 @@ ActiveRecord::Schema.define(version: 2020_06_24_060419) do
     t.index ["recordable_type", "recordable_id"], name: "index_histories_on_recordable_type_and_recordable_id"
   end
 
+  create_table "insurable_geographical_categories", force: :cascade do |t|
+    t.integer "state"
+    t.string "counties", array: true
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
+  create_table "insurable_rate_configurations", force: :cascade do |t|
+    t.jsonb "carrier_info", default: {}, null: false
+    t.jsonb "coverage_options", default: [], null: false
+    t.jsonb "rules", default: {}, null: false
+    t.string "configurable_type"
+    t.bigint "configurable_id"
+    t.string "configurer_type"
+    t.bigint "configurer_id"
+    t.bigint "carrier_insurable_type_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["carrier_insurable_type_id"], name: "index_irc_cit"
+    t.index ["configurable_type", "configurable_id"], name: "index_irc_configurable"
+    t.index ["configurer_type", "configurer_id"], name: "index_irc_configurer"
+  end
+
   create_table "insurable_rates", force: :cascade do |t|
     t.string "title"
     t.string "schedule"
@@ -585,6 +624,7 @@ ActiveRecord::Schema.define(version: 2020_06_24_060419) do
     t.boolean "was_missed", default: false, null: false
     t.string "payer_type"
     t.bigint "payer_id"
+    t.boolean "external", default: false, null: false
     t.index ["invoiceable_type", "invoiceable_id"], name: "index_invoices_on_invoiceable"
     t.index ["payer_type", "payer_id"], name: "index_invoices_on_payee"
   end
@@ -789,9 +829,9 @@ ActiveRecord::Schema.define(version: 2020_06_24_060419) do
     t.date "last_payment_date"
     t.date "next_payment_date"
     t.bigint "policy_group_id"
-    t.boolean "declined"
     t.string "address"
     t.string "out_of_system_carrier_title"
+    t.boolean "declined"
     t.bigint "policy_id"
     t.index ["account_id"], name: "index_policies_on_account_id"
     t.index ["agency_id"], name: "index_policies_on_agency_id"
@@ -875,6 +915,7 @@ ActiveRecord::Schema.define(version: 2020_06_24_060419) do
     t.boolean "auto_renew", default: true
     t.boolean "auto_pay", default: true
     t.bigint "policy_application_group_id"
+    t.jsonb "coverage_selections", default: [], null: false
     t.index ["account_id"], name: "index_policy_applications_on_account_id"
     t.index ["agency_id"], name: "index_policy_applications_on_agency_id"
     t.index ["billing_strategy_id"], name: "index_policy_applications_on_billing_strategy_id"
@@ -922,6 +963,8 @@ ActiveRecord::Schema.define(version: 2020_06_24_060419) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.bigint "policy_group_id"
+    t.boolean "only_fees_internal", default: false
+    t.integer "external_fees", default: 0
     t.index ["billing_strategy_id"], name: "index_policy_group_premia_on_billing_strategy_id"
     t.index ["commission_strategy_id"], name: "index_policy_group_premia_on_commission_strategy_id"
     t.index ["policy_group_id"], name: "index_policy_group_premia_on_policy_group_id"
@@ -1021,6 +1064,8 @@ ActiveRecord::Schema.define(version: 2020_06_24_060419) do
     t.integer "special_premium", default: 0
     t.boolean "include_special_premium", default: false
     t.integer "unearned_premium", default: 0
+    t.boolean "only_fees_internal", default: false
+    t.integer "external_fees", default: 0
     t.index ["billing_strategy_id"], name: "index_policy_premia_on_billing_strategy_id"
     t.index ["commission_strategy_id"], name: "index_policy_premia_on_commission_strategy_id"
     t.index ["policy_id"], name: "index_policy_premia_on_policy_id"
@@ -1050,6 +1095,7 @@ ActiveRecord::Schema.define(version: 2020_06_24_060419) do
     t.integer "est_premium"
     t.string "external_id"
     t.bigint "policy_group_quote_id"
+    t.jsonb "carrier_payment_data"
     t.index ["account_id"], name: "index_policy_quotes_on_account_id"
     t.index ["agency_id"], name: "index_policy_quotes_on_agency_id"
     t.index ["external_id"], name: "index_policy_quotes_on_external_id", unique: true
@@ -1239,7 +1285,6 @@ ActiveRecord::Schema.define(version: 2020_06_24_060419) do
     t.string "mailchimp_id"
     t.integer "mailchimp_category", default: 0
     t.string "qbe_id"
-    t.integer "marital_status", default: 0
     t.index ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["invitation_token"], name: "index_users_on_invitation_token", unique: true
