@@ -77,6 +77,18 @@ class MsiService
   
   RULE_SPECIFICATION = {
     'USA' => {
+      'animal_liability_max' => {
+        'message' => 'Animal Liability Buyback cannot exceed Coverage E (Liability) limit',
+        'code' => ['if', ['selected', 'coverage', @@coverage_codes[:CoverageE][:code]],
+          ['=',
+            ['value', 'coverage', @@coverage_codes[:AnimalLiability][:code]],
+            ['[]',
+              0.0,
+              ['value', 'coverage', @@coverage_codes[:CoverageE][:code]]
+            ]
+          ]
+        ]
+      },
       'loss_of_use' => {
         'message' => 'Cov D must be greater of $2000 or 20% of Cov C, unless Additional Protection Added (then 40%)',
         'code' => ['if', ['selected', 'coverage', @@coverage_codes[:CoverageC][:code]],
