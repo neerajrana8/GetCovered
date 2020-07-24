@@ -69,7 +69,6 @@ class User < ApplicationRecord
     _prefix: true
 
   enum mailchimp_category: ['prospect', 'customer']
-  enum marital_status: ['single', 'married']
 
   # VALIDATIONS
   validates :email, uniqueness: true
