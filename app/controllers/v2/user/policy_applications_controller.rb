@@ -193,6 +193,11 @@ module V2
 
       def create_residential
         @application = PolicyApplication.new(create_residential_params)
+        if @application.carrier_id == 5 && !@application.effective_date.nil? && (@application.effective_date >= Time.current.to_date + 90.days || @application.effective_date < Time.current.to_date)
+          render json: { "effective_date" => ["must be within the next 90 days"] }.to_json,
+                 status: 422
+          return
+        end
 
         if @application.agency.nil? && @application.account.nil?
           @application.agency = Agency.where(master_agency: true).take
