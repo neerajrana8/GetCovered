@@ -102,6 +102,6 @@ describe 'BillMasterPoliciesJob' do
   end
 
   it 'sends email' do
-    expect { BillMasterPoliciesJob.perform_now(); sleep(1) }.to change { ActionMailer::Base.deliveries.size }.by(1)
+    expect { BillMasterPoliciesJob.perform_now(); sleep(2) }.to change { ActionMailer::Base.deliveries.size }.by(1)
   end
 end

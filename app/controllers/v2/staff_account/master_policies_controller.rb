@@ -78,6 +78,7 @@ module V2
             policy_coverages: @master_policy.policy_coverages,
             number: last_policy_number.nil? ? "#{@master_policy.number}_1" : last_policy_number.next,
             policy_type_id: PolicyType::MASTER_COVERAGE_ID,
+            status: 'BOUND',
             policy: @master_policy,
             effective_date: @master_policy.effective_date,
             expiration_date: @master_policy.expiration_date
