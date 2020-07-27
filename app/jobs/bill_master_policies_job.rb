@@ -1,12 +1,16 @@
 class BillMasterPoliciesJob < ApplicationJob
   queue_as :default
 
-  def perform
+  def perform(now = false)
     master_policies.each do |master_policy|
       begin
         invoice = MasterPolicies::GenerateNextInvoice.run!(master_policy: master_policy)
         invoice.pay(stripe_source: :default)
-        ::MasterPolicies::NotifyAssignedStaffsJob.perform_later(master_policy.id)
+        if now
+          ::MasterPolicies::NotifyAssignedStaffsJob.perform_now(master_policy.id)
+        else
+          ::MasterPolicies::NotifyAssignedStaffsJob.perform_later(master_policy.id)
+        end
       rescue StandardError => exception
         Rails.logger.error "Error during the billing of the master policy with the id #{master_policy.id}. Exception #{exception.to_s}."
       end
