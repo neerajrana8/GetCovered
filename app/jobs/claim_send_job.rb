@@ -1,5 +1,5 @@
 class ClaimSendJob < ApplicationJob
-  queue_as :mailer
+  queue_as :default
 
   def perform(user, claim_id)
     user = user

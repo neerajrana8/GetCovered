@@ -3,8 +3,7 @@ class UserClaimMailer < ApplicationMailer
   before_action { @claim = params[:claim] }
   before_action :check_user_presence
 
-  default to: -> { 'claims@getcoveredllc.com' },
-          from: -> { @user.email }
+  default from: -> { @user.email }
 
   def attach_document
     # @claim = claim
@@ -23,14 +22,9 @@ class UserClaimMailer < ApplicationMailer
         to: ['andreyden@nitka.com', 'roman.filimonchik@nitka.com', 'protchenkopa@gmail.com'],
         subject: "Claim was created policy number: #{@claim&.policy&.number}"
       )
-    elsif Rails.env.include?('production')
-      mail(
-        to: ['claims@getcoveredllc.com', 'protchenkopa@gmail.com'],
-        subject: "Claim was created policy number: #{@claim&.policy&.number}"
-      )
     else
       mail(
-        to: ['claims@getcoveredllc.com'],
+        to: ['claims@getcoveredllc.com', 'protchenkopa@gmail.com'],
         subject: "Claim was created policy number: #{@claim&.policy&.number}"
       )
     end

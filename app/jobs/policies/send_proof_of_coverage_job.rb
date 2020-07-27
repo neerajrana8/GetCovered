@@ -1,6 +1,6 @@
 module Policies
   class SendProofOfCoverageJob < ApplicationJob
-    queue_as :mailer
+    queue_as :default
 
     def perform(policy_id)
       policy = ::Policy.find_by(id: policy_id)
