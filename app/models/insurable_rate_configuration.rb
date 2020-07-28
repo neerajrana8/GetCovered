@@ -158,18 +158,12 @@ class InsurableRateConfiguration < ApplicationRecord
       rules: {}
     )
     # carrier info
-    #irc_array.each do |irc|
-    #  irc.carrier_info.each do |k,v|
-    #    mv = Marshal.dump(v)
-    #    if to_return.carrier_info.has_key?(k)
-    #      to_return.carrier_info[k] = nil unless to_return.carrier_info[k] == mv
-    #    else
-    #      to_return.carrier_info[k] = v
-    #    end
-    #  end
-    #end
-    #to_return.carrier_info.compact!
-    #to_return.carrier_info.transform_values!{|v| Marshal.load(v) }
+    condemnation = nil # change to something like "__)C0nD3MN3d!!!<>(__" and do a "deep compact" after to avoid ambiguity in the meaning of nils
+    to_return.carrier_info = irc_array.inject({}) do |combined, single|
+      combined.deep_merge(single.carrier_info) do |k, v1, v2|
+        condemnation
+      end
+    end
     # rules
     if mutable
       irc_array.each{|irc| to_return.rules.merge!(irc.rules) }
