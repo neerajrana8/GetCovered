@@ -686,7 +686,7 @@ class MsiService
         "payment_plans"       => payment_plans.map do |plan|
           {
             plan["MSI_PaymentPlanType"] => {
-              plan["MSI_PolicyTermType"] => {
+              (plan["MSI_PolicyTermType"] == 'New' ? 'new_business' : plan["MSI_PolicyTermType"] == 'Renewal' ? 'renewal' : plan["MSI_PolicyTermType"]) => {
                 "down_payment_percent" => (plan["MSI_DownPaymentPct"].to_d * 100.to_d),
                 "installment_fee" => plan["MSI_InstallmentFeeAmt"].to_d
               }

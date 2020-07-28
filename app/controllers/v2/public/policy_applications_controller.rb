@@ -558,7 +558,7 @@ module V2
         #  end 
         #end
         # done
-        render json: results.select{|k,v| k != :errors }.merge(results[:errors] ? { estimated_premium_errors: [results[:errors][:external]].flatten } : {}),
+        render json: results.select{|k,v| [:valid, :coverage_options, :estimated_premium].include?(k) }.merge(results[:errors] ? { estimated_premium_errors: [results[:errors][:external]].flatten } : {}),
           status: 200
       end
       

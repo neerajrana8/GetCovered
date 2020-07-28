@@ -161,6 +161,7 @@ class InsurableRateConfiguration < ApplicationRecord
     condemnation = nil # change to something like "__)C0nD3MN3d!!!<>(__" and do a "deep compact" after to avoid ambiguity in the meaning of nils
     to_return.carrier_info = irc_array.inject({}) do |combined, single|
       combined.deep_merge(single.carrier_info) do |k, v1, v2|
+        # WARNING: no special support for arrays, since they aren't used right now
         condemnation
       end
     end
