@@ -682,7 +682,17 @@ class MsiService
         "underwriter_id"      => product["MSI_UnderwritingCompanyID"],
         "underwriter_name"    => product["MSI_UnderwritingCompanyName"],
         "product_id"          => product["MSI_ProductID"],
-        "product_version_id"  => product["MSI_ProductVersionID"]
+        "product_version_id"  => product["MSI_ProductVersionID"],
+        "payment_plans"       => payment_plans.map do |plan|
+          {
+            plan["MSI_PaymentPlanType"] => {
+              plan["MSI_PolicyTermType"] => {
+                "down_payment_percent" => (plan["MSI_DownPaymentPct"].to_d * 100.to_d),
+                "installment_fee" => plan["MSI_InstallmentFeeAmt"].to_d
+              }
+            }
+          }
+        end.inject({}){|combined,single| combined.deep_merge(single) }
       }
       irc.coverage_options = (coverages.map do |cov|
           {
