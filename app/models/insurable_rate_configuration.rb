@@ -48,6 +48,15 @@ class InsurableRateConfiguration < ApplicationRecord
   
   # Public Methods
   
+  # Returns the ICR inheritance hierarchy for a given carrier_insurable_type anc configurer/configurable pair;
+  #   params:
+  #     carrier_insurable_type: the CIT for which to pull ICRs (normally this will be Residential Unit for MSI)
+  #     configurer:             the most specific configurer we're interested in (Account is more specific than Agency, Agency is more specific than Carrier)
+  #     configurable:           either an InsurableGeographicalCategory or the CarrierInsurableProfile for an insurable (generally a unit)
+  #   returns:
+  #     an array of arrays of ICRs:
+  #       - each inner array contains ICRs for the same configurer, ordered from least to most specific configurable
+  #       - the outer array is ordered from least to most specific configurer
   def self.get_hierarchy(carrier_insurable_type, configurer, configurable)
     # grab classes and ids, build query
     configurer_type = configurer.class.name
@@ -101,6 +110,7 @@ class InsurableRateConfiguration < ApplicationRecord
     return to_return
   end
   
+  # the same as ICR::get_hierarchy, but using self most specific ICR
   def get_parent_hierarchy(include_self: false)
     query = ::InsurableRateConfiguration.joins(:insurable_geographical_category).includes(:insurable_geographical_category).where(carrier_insurable_type_id: carrier_insurable_type_id)
     # add configurer restrictions to query
@@ -146,6 +156,13 @@ class InsurableRateConfiguration < ApplicationRecord
     return to_return
   end
   
+  # merges an array of ircs, applying inheritance properly
+  # params:
+  #   irc_array:    an array of IRCs; should be sorted from least to most specific
+  #   mutable:      true to allow all overrides, false to allow only 'safe' overrides;
+  #                 generally should be true for IRCs with the same configurer and false when only the configurables differ
+  # returns:
+  #   an IRC (not saved in the DB) representing the combined IRC attributes
   def self.merge(irc_array, mutable:)
     # setup
     to_return = InsurableRateConfiguration.new(
