@@ -1,6 +1,13 @@
 require 'sidekiq/web'
 
 Rails.application.routes.draw do
+
+  Sidekiq::Web.use Rack::Auth::Basic do |username, password|
+    username == Rails.application.credentials[:sidekiq_credentials][Rails.env.to_sym][:username] &&
+      password == Rails.application.credentials[:sidekiq_credentials][Rails.env.to_sym][:password]
+  end
+
+  mount Sidekiq::Web, at: '/sidekiq'
   
   mount_devise_token_auth_for 'User',
     at: 'v2/user/auth',
@@ -23,7 +30,6 @@ Rails.application.routes.draw do
     at: 'v2/staff/auth',
     skip: [:invitations],
     controllers: {
-      sessions: 'devise/staffs/sessions',
       token_validations: 'devise/staffs/token_validations',
       passwords: 'devise/staffs/passwords'
     }
