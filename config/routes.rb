@@ -30,6 +30,7 @@ Rails.application.routes.draw do
     at: 'v2/staff/auth',
     skip: [:invitations],
     controllers: {
+      sessions: 'devise/staffs/sessions',
       token_validations: 'devise/staffs/token_validations',
       passwords: 'devise/staffs/passwords'
     }
