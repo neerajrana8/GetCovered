@@ -77,6 +77,26 @@ class MsiService
   
   RULE_SPECIFICATION = {
     'USA' => {
+      'cov_e_300k_max' => { # MOOSE WARNING: after redux, make the option disabled instead of banning it by rule
+        'message' => 'Animal Liability Buyback must be less than $300k',
+        'code' => ['=',
+          ['value', 'coverage', @@coverage_codes[:CoverageE][:code]],
+          ['[)',
+            0,
+            300000
+          ]
+        ]
+      },
+      'animal_liability_300k_max' => { # MOOSE WARNING: after redux, make the option disabled instead of banning it by rule
+        'message' => 'Animal Liability Buyback must be less than $300k',
+        'code' => ['=',
+          ['value', 'coverage', @@coverage_codes[:AnimalLiability][:code]],
+          ['[)',
+            0,
+            300000
+          ]
+        ]
+      },
       'animal_liability_max' => {
         'message' => 'Animal Liability Buyback cannot exceed Coverage E (Liability) limit',
         'code' => ['if', ['selected', 'coverage', @@coverage_codes[:CoverageE][:code]],
