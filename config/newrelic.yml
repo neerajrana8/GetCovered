@@ -58,3 +58,4 @@ awsdev:
 
 production:
   <<: *default_settings
+  attributes.include: job.sidekiq.args.*
