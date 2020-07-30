@@ -35,7 +35,35 @@ module V2
           render json: { message: 'Master Policy and Policy Premium created', payload: { policy: @master_policy.attributes } },
                  status: :created
         else
-          render json: { errors: @master_policy.errors.merge!(@policy_premium.errors) }, status: :unprocessable_entity
+          render json: standard_error(
+                         :master_policy_creation_error,
+                         'Master policy was not created',
+                         @master_policy.errors.merge!(@policy_premium.errors)
+                       ),
+                 status: :unprocessable_entity
+        end
+      end
+
+      def update
+        if @master_policy.policies.any?
+          render json: standard_error(
+                         :master_policy_update_error,
+                         'Master policy has created policies',
+                         @master_policy.errors.merge!(@policy_premium.errors)
+                       ),
+                 status: :unprocessable_entity
+        else
+          if @master_policy.update(update_params)
+            render json: { message: 'Master Policy updated', payload: { policy: @master_policy.attributes } },
+                   status: :created
+          else
+            render json: standard_error(
+                           :master_policy_update_error,
+                           'Master policy was not updated',
+                           @master_policy.errors
+                         ),
+                   status: :unprocessable_entity
+          end
         end
       end
 
@@ -171,16 +199,35 @@ module V2
       def create_params
         return({}) if params[:policy].blank?
 
-        to_return = params.require(:policy).permit(
-          :account_id, :agency_id, :auto_renew, :cancellation_code,
-          :cancellation_date_date, :carrier_id, :effective_date,
-          :expiration_date, :number, :policy_type_id, :status,
-          policy_insurables_attributes: [:insurable_id],
-          policy_users_attributes: [:user_id],
+        permitted_params = params.require(:policy).permit(
+          :account_id, :agency_id, :auto_renew, :carrier_id, :effective_date,
+          :expiration_date, :number,
+          policy_coverages_attributes: %i[policy_application_id limit deductible enabled designation]
+        )
+
+        permitted_params
+      end
+
+      def update_params
+        return({}) if params[:policy].blank?
+
+        permitted_params = params.require(:policy).permit(
+          :account_id, :agency_id, :auto_renew, :carrier_id, :effective_date,
+          :expiration_date, :number,
           policy_coverages_attributes: %i[id policy_application_id policy_id
                                           limit deductible enabled designation]
         )
-        to_return
+
+        existed_ids = permitted_params[:policy_coverages_attributes]&.map { |policy_coverage| policy_coverage[:id] }
+
+        unless existed_ids.nil?
+          (@master_policy.policy_coverages.pluck(:id) - existed_ids).each do |id|
+            permitted_params[:policy_coverages_attributes] <<
+              ActionController::Parameters.new(id: id, _destroy: true).permit(:id, :_destroy)
+          end
+        end
+
+        permitted_params
       end
 
       def create_policy_premium

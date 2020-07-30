@@ -116,9 +116,9 @@ class Policy < ApplicationRecord
   }
   scope :master_policy_coverages, -> { where(policy_type_id: PolicyType::MASTER_COVERAGE_ID) }
 
-  accepts_nested_attributes_for :policy_coverages, :policy_premiums,
+  accepts_nested_attributes_for :policy_premiums,
   :insurables, :policy_users, :policy_insurables
-  
+  accepts_nested_attributes_for :policy_coverages, allow_destroy: true
   #  after_save :update_leases, if: :saved_changes_to_status?
   
   validate :correct_document_mime_type
