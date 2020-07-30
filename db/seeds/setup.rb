@@ -120,6 +120,8 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
   }
 ]
 
+@carriers.select!{|c| c[:integration_designation] != 'msi' } if ENV['skip_msi']
+
 @carriers.each do |c|
   carrier = Carrier.new(c)
   if carrier.save!

@@ -241,6 +241,7 @@ service_fee = {
 
 
 # INSURABLES (insurable-residential.rb equivalent)
+unless ENV['base_only'] # UNLESS BASE ONLY
 
 @created_communities = []
 
@@ -583,3 +584,4 @@ puts "\nOccupancy Rate: #{ (Lease.count.to_f / Insurable.residential_units.count
 end
 
 
+end # END UNLESS BASE ONLY
