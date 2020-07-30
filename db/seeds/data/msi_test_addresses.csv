@@ -5,7 +5,7 @@ Test Address,,,
 301 E 4th St,Leachville,AR,72438
 3950 N Del Mar Ave,Fresno,CA,93704
 1853 26th St,Boulder,CO,80302
-60 State St,Wethersfield,CT,06109
+60 State St,Wethersfield,CT,6109
 970 Rue Madora,Bear,DE,19701
 125 Michigan Ave NE,Washington,DC,20017
 4018 N Riverside Dr,Tampa,FL,33603
@@ -18,9 +18,9 @@ Test Address,,,
 1000 Osage St,Manhattan,KS,66502
 107 Harlan Ave,Louisville,KY,40214
 1 Claremont Pl,Marrero,LA,70072
-1 Green St,Biddeford,ME,04005
+1 Green St,Biddeford,ME,4005
 1009 E Preston St,Baltimore,MD,21202
-10 Lothian Rd,Brighton,MA,02135
+10 Lothian Rd,Brighton,MA,2135
 1008 Beaconsfield Ave,Grosse Pointe,MI,48230
 1006 Randolph Ave,Saint Paul,MN,55102
 1063 Autumn St,Jackson,MS,39212
@@ -28,8 +28,8 @@ Test Address,,,
 1128 E 2nd St,Butte,MT,59701
 4420 N 7th St,Lincoln,NE,68521
 4959 Talbot Ln,Reno,NV,89509
-15 Iron Horse Dr,Bedford,NH,03110
-890 E Walnut Rd,Vineland,NJ,08360
+15 Iron Horse Dr,Bedford,NH,3110
+890 E Walnut Rd,Vineland,NJ,8360
 2600 W Zia Rd,Santa Fe,NM,87505
 353 Chester St,Brooklyn,NY,11212
 107 Grovecrest Way,Greensboro,NC,27406
@@ -38,15 +38,16 @@ Test Address,,,
 3254 S Hudson Ave,Tulsa,OK,74135
 2155 NE 6th St,Bend,OR,97701
 239 E Boundary Ave,York,PA,17403
-30 Hagan St,Providence,RI,02904
+30 Hagan St,Providence,RI,2904
 1223 York St NE,Aiken,SC,29801
 1018 11th St,Rapid City,SD,57701
 430 Harrison Ln,Paris,TN,38242
 8625 Ray White Rd,Keller,TX,76244
 701 N 500 W,Provo,UT,84601
-15 Brook St,Barre,VT,05641
+15 Brook St,Barre,VT,5641
 3857 Flowerfield Rd,Norfolk,VA,23518
 1024 Central Ave N,Kent,WA,98032
 119 Lock Ave,Nitro,WV,25143
 402 Madison St,Marshall,WI,53559
 159 Jefferson St,Lander,WY,82520
+80 McFadden Dr,Pembroke,GA,31321
