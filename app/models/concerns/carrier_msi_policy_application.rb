@@ -155,7 +155,7 @@ module CarrierMsiPolicyApplication
               # generate internal invoices
               quote.generate_invoices_for_term
               # generate external invoices
-              msi_get_payment_schedule(payment_plan).each.with_index do |dates, ind|
+              msi_get_payment_schedule(payment_plan, installment_day: self.fields.find{|f| f['title'] == "Installment Day" }&.[]('value') || 1).each.with_index do |dates, ind|
                 quote.invoices.create!(dates.merge({
                   external: true,
                   status: "quoted",
@@ -202,6 +202,7 @@ module CarrierMsiPolicyApplication
         # set installment day
         installment_day = Time.current.to_date.day if installment_day.nil?
         installment_day = 28 if installment_day > 28
+        installment_day = 1 if installment_day < 1
         # go
         case billing_code
           when "Annual"

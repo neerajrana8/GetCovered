@@ -86,7 +86,7 @@ module CarrierMsiPolicyQuote
       result = msis.build_request(:bind_policy,
         effective_date:   policy_application.effective_date,
         payment_plan:     policy_application.billing_strategy.carrier_code,
-        installment_day:  [28, Time.current.to_date.day].min, # WARNING: or do we prefer to always set it to 1?
+        installment_day:  policy_application.fields.find{|f| f['title'] == "Installment Day" }&.[]('value') || 1,
         community_id:     community.carrier_profile(5).external_carrier_id,
         unit:             unit.title,
         address:          unit.primary_address,

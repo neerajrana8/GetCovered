@@ -591,7 +591,7 @@ module V2
   	      params.require(:policy_application)
   	            .permit(:effective_date, :expiration_date, :auto_pay, 
 		      							:auto_renew, :billing_strategy_id, :account_id, :policy_type_id,
-		      							:carrier_id, :agency_id, fields: [:title, :value, options: []], 
+		      							:carrier_id, :agency_id, fields: [:title, :value, options: []], # MOOSE WARNING: can't the client technically override the available options here?
 		      							questions: [:title, :value, options: []],
                         coverage_selections: [:category, :uid, :selection],
 	                      policy_rates_attributes: [:insurable_rate_id],
