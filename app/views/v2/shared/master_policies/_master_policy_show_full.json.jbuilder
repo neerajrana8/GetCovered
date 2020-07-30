@@ -9,3 +9,5 @@ json.account master_policy.account
 json.policy_coverages master_policy.policy_coverages
 
 json.policy_premium master_policy.policy_premiums.last
+
+json.update_available master_policy.policies.blank?
