@@ -593,7 +593,7 @@ module V2
 		      							:auto_renew, :billing_strategy_id, :account_id, :policy_type_id,
 		      							:carrier_id, :agency_id, fields: [:title, :value, options: []], # MOOSE WARNING: can't the client technically override the available options here?
 		      							questions: [:title, :value, options: []],
-                        coverage_selections: [:category, :uid, :selection],
+                        coverage_selections: [:category, :uid, :selection, selection: [:data_type, :value]],
 	                      policy_rates_attributes: [:insurable_rate_id],
 	                      policy_insurables_attributes: [:insurable_id]) 
   	    end
@@ -645,7 +645,7 @@ module V2
           params.permit(:insurable_id, :agency_id, :billing_strategy_id,
             :effective_date, :additional_insured,
             :estimate_premium,
-            coverage_selections: [:category, :uid, :selection])
+            coverage_selections: [:category, :uid, :selection, selection: [:data_type, :value]])
         end
 	        
 	      def valid_policy_types
