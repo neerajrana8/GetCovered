@@ -10,4 +10,7 @@ json.policy_coverages master_policy.policy_coverages
 
 json.policy_premium master_policy.policy_premiums.last
 
-json.update_available master_policy.policies.blank?
+if master_policy.policy_type_id == PolicyType::MASTER_ID
+  json.update_available master_policy.policies.blank?
+end
+
