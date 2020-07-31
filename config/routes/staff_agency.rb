@@ -46,6 +46,7 @@
           post :add_insurable
           put :cancel
           put :cancel_coverage
+          put :cancel_insurable
         end
       end
 

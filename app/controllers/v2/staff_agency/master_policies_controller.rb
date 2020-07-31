@@ -8,7 +8,7 @@ module V2
       before_action :set_policy,
                     only: %i[update show communities add_insurable covered_units
                              cover_unit available_top_insurables available_units historically_coverage_units
-                             cancel cancel_coverage master_policy_coverages]
+                             cancel cancel_coverage master_policy_coverages cancel_insurable]
 
       def index
         master_policies_relation = Policy.where(policy_type_id: PolicyType::MASTER_ID, agency_id: @agency.id)
@@ -134,7 +134,7 @@ module V2
 
       def cover_unit
         unit = Insurable.find(params[:insurable_id])
-        if unit.policies.empty? && unit.leases&.count&.zero?
+        if unit.policies.current.empty? && unit.leases&.count&.zero?
           last_policy_number = @master_policy.policies.maximum('number')
           policy = unit.policies.create(
             agency: @master_policy.agency,
@@ -172,6 +172,16 @@ module V2
       def cancel
         MasterCoverageCancelJob.perform_later(@master_policy.id)
         render json: { message: "Master policy #{@master_policy.number} was successfully cancelled"}
+      end
+
+      def cancel_insurable
+        @insurable = @master_policy.insurables.find(params[:insurable_id])
+        master_policy.policies.master_policy_coverages.
+          joins(:policy_insurables).
+          where(policy_insurables: { insurable_id: @insurable.units.pluck(:id) }) do |policy|
+          policy.update(status: 'CANCELLED', cancellation_date_date: Time.zone.now, expiration_date: Time.zone.now)
+        end
+        render json: { message: "Master Policy Coverages for #{@insurable.title} cancelled" }, status: :ok
       end
 
       def cancel_coverage
