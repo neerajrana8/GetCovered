@@ -291,6 +291,7 @@ module V2
               cs[:selection] = cs[:selection][:value]
             end
           end
+          @application.coverage_selections.push({ 'category' => 'coverage', 'options_type' => 'none', 'uid' => '1010', 'selection' => true })
         end
 
         if @application.agency.nil? && @application.account.nil?
@@ -540,14 +541,16 @@ module V2
         results                    = ::InsurableRateConfiguration.get_coverage_options(
           @msi_id,
           cip,
-          (inputs[:coverage_selections] || []).map{|cs| { 'category' => cs[:category], 'uid' => cs[:uid].to_s, 'selection' => [ActionController::Parameters, ActiveSupport::HashWithIndifferentAccess, ::Hash].include?(cs[:selection].class) ? (cs[:selection][:data_type] == 'currency' ? (cs[:selection][:value].to_d / 100.to_d) : cs[:selection][:value]) : cs[:selection] } },
+          [{ 'category' => 'coverage', 'options_type' => 'none', 'uid' => '1010', 'selection' => true }] + (
+            (inputs[:coverage_selections] || []).map{|cs| { 'category' => cs[:category], 'uid' => cs[:uid].to_s, 'selection' => [ActionController::Parameters, ActiveSupport::HashWithIndifferentAccess, ::Hash].include?(cs[:selection].class) ? (cs[:selection][:data_type] == 'currency' ? (cs[:selection][:value].to_d / 100.to_d) : cs[:selection][:value]) : cs[:selection] } }
+          ),
           inputs[:effective_date] ? Date.parse(inputs[:effective_date]) : nil,
           inputs[:additional_insured].to_i,
           billing_strategy_code,
           perform_estimate: inputs[:estimate_premium] ? true : false,
           eventable:        unit
         )
-        results[:coverage_options] = results[:coverage_options].map{|co| co['options'].blank? ? co : co.merge({'options' => co['options'].map{|v| { 'value' => v, 'data_type' => co['options_format'] } }.map{|h| h['value'] = (h['value'].to_d * 100).to_i if h['data_type'] == 'currency'; h }}) }
+        results[:coverage_options] = results[:coverage_options].select{|co| co['uid'] != '1010' && co['uid'] != 1010 }.map{|co| co['options'].blank? ? co : co.merge({'options' => co['options'].map{|v| { 'value' => v, 'data_type' => co['options_format'] } }.map{|h| h['value'] = (h['value'].to_d * 100).to_i if h['data_type'] == 'currency'; h }}) }
         results[:installment_fee] = 200
         #results[:coverage_options] = results[:coverage_options].sort_by { |co| co["title"] }.group_by do |co|
         #  if co["category"] == "coverage"
