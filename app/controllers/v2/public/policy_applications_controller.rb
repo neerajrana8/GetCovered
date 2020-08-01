@@ -551,7 +551,6 @@ module V2
           eventable:        unit
         )
         results[:coverage_options] = results[:coverage_options].select{|co| co['uid'] != '1010' && co['uid'] != 1010 }.map{|co| co['options'].blank? ? co : co.merge({'options' => co['options'].map{|v| { 'value' => v, 'data_type' => co['options_format'] } }.map{|h| h['value'] = (h['value'].to_d * 100).to_i if h['data_type'] == 'currency'; h }}) }
-        results[:installment_fee] = 200
         #results[:coverage_options] = results[:coverage_options].sort_by { |co| co["title"] }.group_by do |co|
         #  if co["category"] == "coverage"
         #    next co["title"].start_with?("Coverage") ? "base_coverages" : "optional_coverages"
@@ -560,7 +559,7 @@ module V2
         #  end
         #end
         # done
-        render json:   results.select { |k, v| k != :errors }.merge(results[:errors] ? { estimated_premium_errors: [results[:errors][:external]].flatten } : {}),
+        render json:   results.select{|k, v| k != :errors }.merge(results[:errors] ? { estimated_premium_errors: [results[:errors][:external]].flatten } : {}),
                status: 200
       end
 

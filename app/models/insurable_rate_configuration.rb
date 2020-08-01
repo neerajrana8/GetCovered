@@ -544,6 +544,8 @@ class InsurableRateConfiguration < ApplicationRecord
       coverage_options = irc.annotate_options(selections)
     end
     coverage_options.select!{|co| co['enabled'] != false }
+    # grab installment fee
+    installment_fee = irc_hierarchy.map{|irc| (irc.carrier_info || {}).dig('payment_plans', billing_strategy_carrier_code, 'new_business', 'installment_fee') }.compact.map{|fee| (fee.to_d * 100).to_i }.max || 200
     # validate selections
     estimated_premium = nil
     estimated_premium_error = get_selection_errors(selections, coverage_options)
@@ -627,7 +629,8 @@ class InsurableRateConfiguration < ApplicationRecord
       valid: valid,
       coverage_options: coverage_options,
       estimated_premium: estimated_premium,
-      errors: estimated_premium_error
+      errors: estimated_premium_error,
+      installment_fee: installment_fee,
     }.merge(eventable.class != ::PolicyQuote ? {} : {
       msi_data: result,
       event: event,
