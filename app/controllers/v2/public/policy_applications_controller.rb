@@ -471,8 +471,8 @@ module V2
           return
         end
         unless inputs[:coverage_selections].nil?
-          if inputs[:coverage_selections].class != ::Array
-            render json: { error: "coverage_selections must be an array of coverage selections" },
+          if ![::Array, ::Hash, ActiveSupport::HashWithIndifferentAccess, ActiveController::Parameters].include?(inputs[:coverage_selections].class)
+            render json: { error: "coverage_selections must be an array or a uid-indexed hash of coverage selections" },
               status: :unprocessable_entity
             return
           else
@@ -550,6 +550,9 @@ module V2
           perform_estimate: inputs[:estimate_premium] ? true : false,
           eventable: unit
         )
+        # Convert coverage options to an array:
+        results[:coverage_options].map!{|uid, data| data.merge({ 'uid' => uid }) }
+        # Put coverage options into categories:
         #results[:coverage_options] = results[:coverage_options].sort_by{|co| co["title"] }.group_by do |co|
         #  if co["category"] == "coverage"
         #    next co["title"].start_with?("Coverage") ? "base_coverages" : "optional_coverages"
