@@ -102,6 +102,7 @@ end
 
 # lease/user magic
 
+unless ENV['base_only']
 
 @created_leases = []
 @residential_units = @created_communities.map{|c| c.units.where(insurable_type_id: 4).to_a }.flatten
@@ -158,3 +159,5 @@ end
 end
 
 puts "\nOccupancy Rate: #{ (Lease.count.to_f / Insurable.residential_units.count) * 100 }%\n\n"
+
+end # end base_only restriction
