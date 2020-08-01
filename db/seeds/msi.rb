@@ -148,7 +148,7 @@ if carrier_policy_type.save()
   51.times do |state|
     available = state == 0 || state == 11 ? false : true
     carrier_policy_availability = CarrierPolicyTypeAvailability.create(state: state, available: available, carrier_policy_type: carrier_policy_type)
-    carrier_policy_availability.fees.create(title: "Origination Fee", type: :ORIGINATION, amount: 2500, enabled: true, ownerable: carrier) unless carrier.id == 4
+    carrier_policy_availability.fees.create(title: "Origination Fee", type: :ORIGINATION, amount: 2500, enabled: true, ownerable: carrier) unless carrier.id == 4 || carrier.id = 5 # disabled msi fee
   end      
 else
   pp carrier_policy_type.errors
@@ -202,19 +202,19 @@ service_fee = {
 
 @get_covered.billing_strategies.create!(title: 'Annually', enabled: true, carrier: @msi, 
                                           policy_type: PolicyType.find(1), carrier_code: "Annual",
-                                          fees_attributes: [service_fee])
+                                          fees_attributes: [])
                                   
 @get_covered.billing_strategies.create!(title: 'Bi-Annually', enabled: true,  carrier_code: "SemiAnnual",
                                           new_business: { payments: [100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], #[50, 0, 0, 0, 0, 0, 50, 0, 0, 0, 0, 0], 
                                                           payments_per_term: 2, remainder_added_to_deposit: true },
                                           carrier: @msi, policy_type: PolicyType.find(1), 
-                                          fees_attributes: [service_fee])
+                                          fees_attributes: [])
                                   
 @get_covered.billing_strategies.create!(title: 'Quarterly', enabled: true,  carrier_code: "Quarterly",
                                           new_business: { payments: [100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], #[25, 0, 0, 25, 0, 0, 25, 0, 0, 25, 0, 0], 
                                                           payments_per_term: 4, remainder_added_to_deposit: true },
                                           carrier: @msi, policy_type: PolicyType.find(1), 
-                                          fees_attributes: [service_fee])
+                                          fees_attributes: [])
 # MOOSE WARNING: docs say 20% down payment and 10 monthly payments... wut sense dis make?
 @get_covered.billing_strategies.create!(title: 'Monthly', enabled: true, carrier_code: "Monthly",
                                           new_business: { payments: [100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], #[22.01, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09], 
@@ -222,7 +222,7 @@ service_fee = {
                                           renewal: { payments: [100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], #[8.37, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33], 
                                                           payments_per_term: 12, remainder_added_to_deposit: true },
                                           carrier: @msi, policy_type: PolicyType.find(1), 
-                                          fees_attributes: [service_fee])
+                                          fees_attributes: [])
 
 # MOOSE WARNING: these are just copies of the QBE commission strategies and likely need to be changed
 @get_covered.commission_strategies.create!(title: 'Get Covered / MSI Residential Commission', 
