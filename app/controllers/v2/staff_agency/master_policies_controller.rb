@@ -181,6 +181,7 @@ module V2
           where(policy_insurables: { insurable_id: @insurable.units.pluck(:id) }) do |policy|
           policy.update(status: 'CANCELLED', cancellation_date_date: Time.zone.now, expiration_date: Time.zone.now)
         end
+        @master_policy.policy_insurables.where(insurable: @insurable).destroy_all
         render json: { message: "Master Policy Coverages for #{@insurable.title} cancelled" }, status: :ok
       end
 
