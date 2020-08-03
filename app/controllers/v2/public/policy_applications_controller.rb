@@ -529,7 +529,7 @@ module V2
         end
         # grab billing strategy and make sure it's valid
         billing_strategy_code = nil
-        billing_strategy      = BillingStrategy.where(carrier_id: @msi_id, agency_id: inputs[:agency_id].to_i, policy_type_id: @ho4_policy_type_id).take
+        billing_strategy      = BillingStrategy.where(carrier_id: @msi_id, agency_id: inputs[:agency_id].to_i, policy_type_id: @ho4_policy_type_id, id: inputs[:billing_strategy_id].to_i).take
         if billing_strategy.nil? && inputs[:estimate_premium]
           render json:   { error: "billing strategy must belong to the correct carrier, agency, and HO4 policy type" },
                  status: :unprocessable_entity
