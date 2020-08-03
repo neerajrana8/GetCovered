@@ -381,10 +381,10 @@ class InsurableRateConfiguration < ApplicationRecord
                   category = execute(code[1][1], options, selections).to_s
                   uid = execute(code[1][2], options, selections).to_s
                   value = execute(code[2], options, selections)
-                  if REQUIREMENT_SETS.has_value?(value)
+                  if REQUIREMENT_TYPES.has_value?(value)
                     # do nothing
-                  elsif REQUIREMENT_SETS.has_key?(value)
-                    value = REQUIREMENT_SETS[value]
+                  elsif REQUIREMENT_TYPES.has_key?(value)
+                    value = REQUIREMENT_TYPES[value]
                   else
                     return false
                   end
@@ -423,7 +423,7 @@ class InsurableRateConfiguration < ApplicationRecord
           when '?', 'if'
             execute(code[1], options, selections) ? execute(code[2], options, selections, asserts: asserts) : execute(code[3], options, selections, asserts: asserts)
           when ';'
-            (1...code.length).each{|c| execute(c, options, selections, asserts: asserts) }
+            code.drop(1).each{|c| execute(c, options, selections, asserts: asserts) }
             true
           when '&&'
             (1...code.length).inject(true){|s,i| break false unless execute(code[i], options, selections, asserts: asserts); true }
