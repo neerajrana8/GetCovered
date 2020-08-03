@@ -176,7 +176,7 @@ module V2
 
       def cancel_insurable
         @insurable = @master_policy.insurables.find(params[:insurable_id])
-        master_policy.policies.master_policy_coverages.
+        @master_policy.policies.master_policy_coverages.
           joins(:policy_insurables).
           where(policy_insurables: { insurable_id: @insurable.units.pluck(:id) }) do |policy|
           policy.update(status: 'CANCELLED', cancellation_date_date: Time.zone.now, expiration_date: Time.zone.now)
