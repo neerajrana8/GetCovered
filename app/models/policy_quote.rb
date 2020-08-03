@@ -206,7 +206,7 @@ class PolicyQuote < ApplicationRecord
     billing_started = false
         
     if policy.nil? &&
-       policy_premium.calculation_base > 0 &&
+       policy_premium.total > 0 &&
        status == "accepted"
 
       invoices.external.update_all status: 'managed_externally'
