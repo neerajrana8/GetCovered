@@ -347,7 +347,7 @@ class Invoice < ApplicationRecord
         invoiceable.payment_succeeded(self) if invoiceable.respond_to?(:payment_succeeded)
         # handle pending proration refund if we have one
         if has_pending_refund && pending_refund_data.has_key?('proration_refund')
-          if apply_proration(nil, to_refund_override: pending_refund_data['proration_refund'].to_i, cancel_if_unpaid_override: pending_refund_data['cancel_if_unpaid'])
+          if apply_proration(nil, to_refund_override: pending_refund_data['proration_refund'], cancel_if_unpaid_override: pending_refund_data['cancel_if_unpaid'])
             update_columns(has_pending_refund: false)
           else
             # WARNING: do nothing on proration application failure... would be a good place for a generalized error to be logged to the db
@@ -375,7 +375,7 @@ class Invoice < ApplicationRecord
       if self.status == 'available' || (!unless_processing && self.status == 'processing') # other statuses mean we were canceled or already paid
         self.update!(status: 'missed')
         if self.has_pending_refund && self.pending_refund_data.has_key?('proration_refund')
-          if apply_proration(nil, to_refund_override: pending_refund_data['proration_refund'].to_i, cancel_if_unpaid_override: pending_refund_data['cancel_if_unpaid'])
+          if apply_proration(nil, to_refund_override: pending_refund_data['proration_refund'], cancel_if_unpaid_override: pending_refund_data['cancel_if_unpaid'])
             update!(has_pending_refund: false)
           else
             # WARNING: do nothing on proration application failure... would be a good place for a generalized error to be logged to the db

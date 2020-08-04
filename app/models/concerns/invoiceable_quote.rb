@@ -44,7 +44,8 @@ module InvoiceableQuote
         
         # setup
         roundables = [:deposit_fees, :amortized_fees, :base, :special_premium, :taxes]                              # fields on PolicyPremium to have rounding errors fixed
-        refundabilities = { base: 'prorated_refund', special_premium: 'prorated_refund', taxes: 'prorated_refund' } # fields that can be refunded on cancellation (values are LineItem#refundability values)
+        refval = 
+        refundabilities = { base: billing_plan[:premium_refundability], special_premium: billing_plan[:premium_refundability], taxes: billing_plan[:premium_refundability] } # fields that can be refunded on cancellation (values are LineItem#refundability values)
         line_item_names = { base: "Premium" }                                                                       # fields to rename on the invoice
         line_item_categories = { base: "base_premium", special_premium: "special_premium", taxes: "taxes", deposit_fees: "deposit_fees", amortized_fees: "amortized_fees" }
         
@@ -149,6 +150,7 @@ module InvoiceableQuote
     def get_policy_application_invoice_information
       if respond_to?(:policy_application)
         {
+          premium_refundability: CarrierPolicyGroup.where(policy_type_id: policy_application.policy_type_id, carrier_id: policy_application.carrier_id).take&.premium_refundable == false ? 'no_refund' : 'prorated_refund',
           billing_schedule: policy_application.billing_strategy.new_business['payments'],
           effective_date: policy_application.effective_date,
           expiration_date: policy_application.expiration_date,
@@ -157,6 +159,7 @@ module InvoiceableQuote
         }
       elsif respond_to?(:policy_application_group)
         {
+          premium_refundability: CarrierPolicyGroup.where(policy_type_id: policy_application_group.policy_type_id, carrier_id: policy_application_group.carrier_id).take&.premium_refundable == false ? 'no_refund' : 'prorated_refund',
           billing_schedule: policy_application_group.billing_strategy.new_business['payments'],
           effective_date: policy_application_group.effective_date,
           expiration_date: policy_application_group.expiration_date,

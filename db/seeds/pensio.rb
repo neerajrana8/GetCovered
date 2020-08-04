@@ -6,6 +6,8 @@ carrier_policy_type = CarrierPolicyType.create!(
   carrier: carrier,
   policy_type: policy_type,
 	application_required: true,
+  premium_refundable: false,
+  max_days_for_full_refund: 30,
 	application_fields: {
 		"monthly_rent": 0,
 		"guarantee_option": 3,

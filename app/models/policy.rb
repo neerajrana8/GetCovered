@@ -243,12 +243,14 @@ class Policy < ApplicationRecord
   end
   
   def cancel
-    update_attribute(:status, 'CANCELLED')
     # Slaughter the invoices
-    cancellation_date = Time.current.to_date
+    max_days_for_full_refund = (CarrierPolicyType.where(policy_type_id: self.policy_type_id, carrier_id: self.carrier_id).take&.max_days_for_full_refund || 30).days
+    cancellation_date = (self.created_at + max_days_for_full_refund >= cancellation_date) ? self.created_at - 2.days : Time.current.to_date
     self.invoices.each do |invoice|
-      invoice.apply_proration(cancellation_date)
+      invoice.apply_proration(cancellation_date, refund_date: cancellation_date)
     end
+    # Mark cancelled
+    update_attribute(:status, 'CANCELLED')
     # Unearned balance is the remaining unearned amount on an insurance policy that 
     # needs to be deducted from future commissions to recuperate the loss
     premium&.reload
