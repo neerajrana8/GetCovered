@@ -23,7 +23,8 @@ class CarrierAgencyAuthorization < ApplicationRecord
   
   validates_presence_of :state
   validates_uniqueness_of :state, scope: "carrier_agency_id", message: "record for parent Carrier Policy Type already exists"
-  validate :agency_matches_carrier_agency
+  validate :agency_matches_carrier_agency,
+    unless: Proc.new{|caa| caa.agency_id.nil? || caa.carrier_agency.nil? }
   
   private
   
