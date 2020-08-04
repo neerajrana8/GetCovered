@@ -522,11 +522,12 @@ class InsurableRateConfiguration < ApplicationRecord
   
   def self.get_selection_errors(selections, options)
     options.select{|opt| opt['requirement'] == 'required' }.each do |opt|
-      sel = selections.find{|s| s['category'] == opt['category'] && s['uid'] == opt['uid'] }
+      sel = selections.find{|s| s['category'] == opt['category'] && s['uid'].to_s == opt['uid'].to_s }
       return "#{opt['title']} selection is required" if sel.nil? || !sel['selection']
     end
     selections.select{|sel| sel['selection'] }.each do |sel|
-      opt = options.find{|o| o['category'] == sel['category'] && o['uid'] == sel['uid'] }
+      opt = options.find{|o| o['category'] == sel['category'] && o['uid'].to_s == sel['uid'].to_s }
+      next if opt.nil? # WARNING: for now we just ignore selections that aren't in the options...
       return "#{opt['title']} is not a valid coverage option" if opt['enabled'] == false
       return "#{opt['title']} selection is not allowed" if ['forbidden', 'locked'].include?(opt['requirement'])
       case opt['options_type']
