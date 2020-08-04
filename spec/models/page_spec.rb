@@ -2,10 +2,13 @@ require 'rails_helper'
 
 RSpec.describe Page, :type => :model do
   subject {
+    agency = FactoryBot.create(:agency)
+    branding_profile = FactoryBot.create(:branding_profile)
+    branding_profile.update(agency: agency)
     described_class.new(title: "Anything",
                         content: "Lorem ipsum",
-                        agency: FactoryBot.create(:agency),
-                        branding_profile: FactoryBot.create(:branding_profile))
+                        agency: agency,
+                        branding_profile: branding_profile)
   }
 
   it "is valid with valid attributes" do
