@@ -7,7 +7,7 @@ RSpec.describe Page, :type => :model do
     branding_profile.update(agency: agency)
     described_class.new(title: "Anything",
                         content: "Lorem ipsum",
-                        agency: agency,
+                        profileable: agency,
                         branding_profile: branding_profile)
   }
 
