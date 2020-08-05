@@ -201,7 +201,7 @@
                                         <p class="o_sans o_text-xs o_text-white" style="font-family: Helvetica, Arial, sans-serif;margin-top: 0px;margin-bottom: 0px;font-size: 14px;line-height: 21px;color: #ffffff;"><strong>Amount Due:</strong></p>
                                       </td>
                                       <td width="40%" class="o_pt-xs" align="right" style="padding-top: 8px;">
-                                        <p class="o_sans o_text-xs o_text-success" style="font-family: Helvetica, Arial, sans-serif;margin-top: 0px;margin-bottom: 0px;font-size: 14px;line-height: 21px;color: #0ec06e;"><strong>$&nbsp; <%= sprintf('%.2f', @invoice.total/100.0) %>&nbsp; USD</strong></p>
+                                        <p class="o_sans o_text-xs o_text-success" style="font-family: Helvetica, Arial, sans-serif;margin-top: 0px;margin-bottom: 0px;font-size: 14px;line-height: 21px;color: #0ec06e;"><strong>$<%= sprintf('%.2f', @invoice.total/100.0) %>&nbsp; USD</strong></p>
                                       </td>
                                     </tr>
                                   </tbody>
@@ -314,7 +314,7 @@
                       <!--[if mso]></td><td width="100" align="right" valign="top" style="padding: 0px 8px;"><![endif]-->
                       <div class="o_col o_col-1 o_col-full" style="display: inline-block;vertical-align: top;width: 100%;max-width: 100px;">
                         <div class="o_px-xs o_sans o_text o_right o_xs-left" style="font-family: Helvetica, Arial, sans-serif;margin-top: 0px;margin-bottom: 0px;font-size: 16px;line-height: 24px;text-align: right;padding-left: 8px;padding-right: 8px;">
-                            <p class="o_text-secondary" style="color: #424651;margin-top: 0px;margin-bottom: 0px;"><span class="o_hide-lg" style="display: none;font-size: 0;max-height: 0;width: 0;line-height: 0;overflow: hidden;mso-hide: all;visibility: hidden;">Price:&nbsp; </span><%= sprintf('%.2f', line_item.price/100.0) %> &nbsp;$</p>
+                            <p class="o_text-secondary" style="color: #424651;margin-top: 0px;margin-bottom: 0px;"><span class="o_hide-lg" style="display: none;font-size: 0;max-height: 0;width: 0;line-height: 0;overflow: hidden;mso-hide: all;visibility: hidden;">Price:&nbsp; </span><%= sprintf('%.2f', line_item.price/100.0) %>$</p>
                         </div>
                       </div>
                       <!--[if mso]></td></tr><tr><td colspan="3" style="padding: 0px 8px;"><![endif]-->
@@ -361,7 +361,7 @@
                                       <p class="o_sans o_text o_text-secondary" style="font-family: Helvetica, Arial, sans-serif;margin-top: 0px;margin-bottom: 0px;font-size: 16px;line-height: 24px;color: #424651;"><strong>Total</strong></p>
                                     </td>
                                     <td width="50%" class="o_pt" align="right" style="padding-top: 16px;">
-                                      <p class="o_sans o_text o_text-primary" style="font-family: Helvetica, Arial, sans-serif;margin-top: 0px;margin-bottom: 0px;font-size: 16px;line-height: 24px;color: #126de5;"><strong>$&nbsp; <%= sprintf('%.2f', @invoice.total/100.0) %>&nbsp; USD</strong></p>
+                                      <p class="o_sans o_text o_text-primary" style="font-family: Helvetica, Arial, sans-serif;margin-top: 0px;margin-bottom: 0px;font-size: 16px;line-height: 24px;color: #126de5;"><strong>$<%= sprintf('%.2f', @invoice.total/100.0) %>&nbsp; USD</strong></p>
                                     </td>
                                   </tr>
                                 </tbody>

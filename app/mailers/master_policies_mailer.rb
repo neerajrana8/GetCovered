@@ -6,6 +6,6 @@ class MasterPoliciesMailer < ApplicationMailer
   end
 
   def bill_master_policy
-    mail(to: @staff.email, subject: 'Master policy billing')
+    mail(to: @staff.email, subject: "Master Policy #{@master_policy.number} Invoice")
   end
 end
