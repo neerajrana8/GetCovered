@@ -4,10 +4,9 @@ RSpec.describe Page, :type => :model do
   subject {
     agency = FactoryBot.create(:agency)
     branding_profile = FactoryBot.create(:branding_profile)
-    branding_profile.update(agency: agency)
+    branding_profile.update(profileable: agency)
     described_class.new(title: "Anything",
                         content: "Lorem ipsum",
-                        profileable: agency,
                         branding_profile: branding_profile)
   }
 
