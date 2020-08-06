@@ -49,10 +49,13 @@ test_container:
 staging:
   <<: *default_settings
   app_name: GCV2 STAGING
+  attributes.include: job.sidekiq.args.*
 
 awsdev:
   <<: *default_settings
   app_name: GCV2 AWSDEV
-  
+  attributes.include: job.sidekiq.args.*
+
 production:
   <<: *default_settings
+  attributes.include: job.sidekiq.args.*
