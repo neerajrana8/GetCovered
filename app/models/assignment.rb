@@ -26,13 +26,9 @@ class Assignment < ApplicationRecord
   }
 
   # TODO: need to refactor because stuff has no account_id
-  # validate :staff_and_community_share_account,
-  #  unless: Proc.new { |assignment| 
-  #    assignment.staff.nil? || 
-  #   assignment.assignable.nil? || 
-  #    !assignment.assignable.respond_to?(:account_id) 
-  #  }
-
+  validate :staff_and_community_share_account_or_agency,
+    unless: Proc.new{|assignment| assignment.assignable_type != 'Insurable' || assignment.staff.nil? || !['Account','Agency'].include?(assignment.staff.organizable_type) }
+    
   def related_records_list
     %w[staff assignable]
   end
@@ -77,10 +73,10 @@ class Assignment < ApplicationRecord
     errors.add(:primary, 'one primary per assignable') if primary == true && staff.assignments.count >= 1
   end
 
-  # TODO: need to refactor because stuff has no account_id
-  # def staff_and_community_share_account
-  #  if staff.account_id != assignable.account_id
-  #    errors.add(:staff, "does not have access to this community")
-  #   end
-  # end
+  def staff_and_community_share_account_or_agency
+    for_insurable = self.staff.organizable_type == 'Account' ? assignable.account_id : staff.organizable_type == 'Agency' ? assignable.account&.agency_id : nil
+    for_insurable ||= self.staff.organizable_id # WARNING: just in case the insurable has no account/agency somehow, we'd prefer this to succeed for now; take this line out to make it fail in this case
+    errors.add(:assignable, "must be a community belonging to the same #{self.staff.organizable_type.downcase}") unless for_insurable == self.staff.organizable_id
+  end
+  
 end
