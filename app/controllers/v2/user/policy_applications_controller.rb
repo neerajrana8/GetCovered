@@ -232,8 +232,11 @@ module V2
                     id: @application.primary_user.id,
                     stripe_id: @application.primary_user.stripe_id
                   }
-                }.merge(@application.carrier_id != 5 ? {} : { 'policy_fee' => @quote.carrier_payment_data['policy_fee'] })
-                 .to_json, status: 200
+                }.merge(@application.carrier_id != 5 ? {} : {
+                  'policy_fee' => @quote.carrier_payment_data['policy_fee'],
+                  'installment_fee' => @quote.carrier_payment_data['installment_fee'],
+                  'installment_total' => @quote.carrier_payment_data['installment_total']
+                }).to_json, status: 200
 
               else
                 render json: { error: 'Quote Failed', message: 'Quote could not be processed at this time' },
@@ -300,8 +303,11 @@ module V2
                     id: @policy_application.primary_user.id,
                     stripe_id: @policy_application.primary_user.stripe_id
                   }
-                }.merge(@application.carrier_id != 5 ? {} : { 'policy_fee' => @quote.carrier_payment_data['policy_fee'] })
-                 .to_json, status: 200
+                }.merge(@application.carrier_id != 5 ? {} : {
+                  'policy_fee' => @quote.carrier_payment_data['policy_fee'],
+                  'installment_fee' => @quote.carrier_payment_data['installment_fee'],
+                  'installment_total' => @quote.carrier_payment_data['installment_total']
+                }).to_json, status: 200
 
               else
                 render json: { error: 'Quote Failed', message: 'Quote could not be processed at this time' },
