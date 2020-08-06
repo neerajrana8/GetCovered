@@ -1,16 +1,15 @@
 require 'rails_helper'
 
 describe 'AutomaticMasterCoveragePolicyIssueJob' do
-  let!(:agency)        { FactoryBot.create(:agency) }
-  let!(:account)       { FactoryBot.create(:account, agency: agency) }
-  let!(:agent)         { FactoryBot.create(:staff, role: 'agent', organizable: agency) }
-  let!(:community1)    { FactoryBot.create(:insurable, :residential_community, account: account) }
-  let!(:community2)    { FactoryBot.create(:insurable, :residential_community, account: account) }
-  let!(:unit1)    { FactoryBot.create(:insurable, :residential_unit, account: account, insurable: community1) }
+  let(:agency)        { FactoryBot.create(:agency) }
+  let(:account)       { FactoryBot.create(:account, agency: agency) }
+  let(:community1)    { FactoryBot.create(:insurable, :residential_community, account: account) }
+  let(:community2)    { FactoryBot.create(:insurable, :residential_community, account: account) }
+  let(:unit1)     { FactoryBot.create(:insurable, :residential_unit, account: account, insurable: community1) }
   let!(:unit2)    { FactoryBot.create(:insurable, :residential_unit, account: account, insurable: community2) }
   let!(:unit3)    { FactoryBot.create(:insurable, :residential_unit, account: account, insurable: community2) }
 
-  let!(:master_policy) do
+  let(:master_policy) do
     FactoryBot.create(
       :policy,
       :master,
