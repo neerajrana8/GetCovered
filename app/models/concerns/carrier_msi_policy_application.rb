@@ -160,7 +160,7 @@ module CarrierMsiPolicyApplication
                   external: true,
                   status: "quoted",
                   payer: self.primary_user,
-                  line_items_attributes: payment_plan == "Annual" ? [
+                  line_items_attributes: ind == 0 ? [
                     {
                       title: "Premium Down Payment",
                       price: down_payment,
