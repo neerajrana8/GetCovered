@@ -430,7 +430,7 @@ class InsurableRateConfiguration < ApplicationRecord
           when '||'
             (1...code.length).inject(false){|s,i| break true if execute(code[i], options, selections, asserts: asserts); false }
           when '|'
-            (1...code.length).inject([]){|s,i| temp = execute(code[i], options, selections); s += (temp.class == ::Array ? temp : [temp]) }
+            code.drop(1).inject([]){|s,c| temp = execute(c, options, selections); s.concat(temp.class == ::Array ? temp : [temp]) }
           when '[]', '()', '[)', '(]'
             { 'interval' => code[0], 'start' => num(execute(code[1], options, selections)), 'end' => num(execute(code[2], options, selections)) }
           when '=='

@@ -65,6 +65,7 @@ class MsiService
   
   OVERRIDE_SPECIFICATION = {
     'CA' =>           [{ 'category' => 'deductible', 'uid' => @@coverage_codes[:EarthquakeDeductible][:code].to_s, 'requirement' => 'forbidden' }], # forbid earthquake ded unless earthquake cov selected
+    'FL' =>           [{ 'category' => 'coverage', 'uid' => @@coverage_codes[:WindHailExclusion][:code].to_s, 'requirement' => 'forbidden', 'enabled' => false }], # disable Wind/Hail Exclusion in FL
     'GA' =>           [{ 'category' => 'deductible', 'uid' => @@coverage_codes[:WindHail][:code].to_s, 'enabled' => false }],                                                         # disable WindHail
     'GA_COUNTIES' =>  [{ 'category' => 'deductible', 'uid' => @@coverage_codes[:WindHail][:code].to_s, 'enabled' => true, 'requirement' => 'required' }], # enable WindHail & make sure it's required for counties ['Bryan', 'Camden', 'Chatham', 'Glynn', 'Liberty', 'McIntosh']
   }.merge(['AK', 'CO', 'HI', 'KY', 'ME', 'MT', 'NC', 'NJ', 'UT', 'VT', 'WA'].map do |state|
@@ -74,6 +75,10 @@ class MsiService
       [{ 'category' => 'deductible', 'uid' => @@coverage_codes[:Theft][:code].to_s, 'enabled' => false }]
     ]
   end.to_h){|k,a,b| a + b }
+  
+  TITLE_OVERRIDES = {
+    @@coverage_codes[:ForcedEntryTheft][:code].to_s => "Burglary Limitation Coverage"
+  }
   
   RULE_SPECIFICATION = {
     'USA' => {
@@ -159,7 +164,7 @@ class MsiService
     },
     'CT' => {
       'loss_of_use' => {
-        'message' => 'Cov D must be greater of $2000 or 30% of Cov C, unless Additional Protection Added (then 40%)', # MOOSE WARNING: 40% and $2000 may need to change; check!
+        'message' => 'Cov D must be greater of $3000 or 30% of Cov C, unless Additional Protection Added (then 40%)', # MOOSE WARNING: 40% and $2000 may need to change; check!
         'code' => ['=',
           ['value', 'coverage', @@coverage_codes[:CoverageD][:code]],
           ['max',
@@ -167,7 +172,7 @@ class MsiService
               0.3, #['if', ['selected', ###add_prot###], 0.4, 0.2] # MOOSE WARNING: put coverage stuff here as in USA, and change 40% & 2000 as needed
               ['value', 'coverage', @@coverage_codes[:CoverageC][:code]]
             ],
-            2000
+            3000
           ]
         ]
       }
@@ -195,6 +200,16 @@ class MsiService
               0.025,
               ['value', 'coverage', @@coverage_codes[:CoverageC][:code]]
             ]
+          ]
+        ]
+      },
+      'nonzero_hurricane_deductible' => {
+        'message' => 'Hurricane deductible cannot be zero',
+        'code' => ['=',
+          ['value', 'deductible', @@coverage_codes[:Hurricane][:code]],
+          ['()',
+            0,
+            'Infinity'
           ]
         ]
       }
@@ -717,7 +732,7 @@ class MsiService
       irc.coverage_options = (coverages.map do |cov|
           {
             "uid"           => cov["CoverageCd"],
-            "title"         => cov["CoverageDescription"].titleize, # MOOSE WARNING: better as description?
+            "title"         => TITLE_OVERRIDES[cov["CoverageCd"].to_s] || cov["CoverageDescription"].titleize,
             "requirement"   => (cov["MSI_IsMandatoryCoverage"] || "").strip == "True" ? 'required' : 'optional',
             "category"      => "coverage",
             "options_type"  => cov["MSI_LimitList"].blank? ? "none" : "multiple_choice",
@@ -727,7 +742,7 @@ class MsiService
         end + deductibles.map do |ded|
           {
             "uid"           => ded["MSI_DeductibleCd"],
-            "title"         => ded["MSI_DeductibleName"].titleize,
+            "title"         => TITLE_OVERRIDES[ded["MSI_DeductibleCd"].to_s] || ded["MSI_DeductibleName"].titleize,
             "requirement"   => 'required', #MOOSE WARNING: in special cases some are optional, address these
             "category"      => "deductible",
             "options_type"  => ded["MSI_DeductibleOptionList"].blank? ? "none" : "multiple_choice",
