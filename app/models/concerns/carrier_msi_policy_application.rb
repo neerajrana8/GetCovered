@@ -94,7 +94,7 @@ module CarrierMsiPolicyApplication
             end
             policy_data = results[:msi_data][:data].dig("MSIACORD", "InsuranceSvcRs", "RenterPolicyQuoteInqRs", "PersPolicy")
             product_uid = policy_data["CompanyProductCd"]
-            msi_policy_fee = (policy_data["MSI_PolicyFee"].to_d * 100).ceil
+            msi_policy_fee = ((policy_data["MSI_PolicyFee"]&.('Amt')&.to_d || 0) * 100).ceil
             payment_data = policy_data["PaymentPlan"].find{|ppl| ppl["PaymentPlanCd"] == payment_plan }
             if payment_data.nil?
               puts "MSI FinalPremium PaymentData Nonexistent, Payment Plan Carrier Code: '#{payment_plan}', Event ID: #{ results[:event].id }"
