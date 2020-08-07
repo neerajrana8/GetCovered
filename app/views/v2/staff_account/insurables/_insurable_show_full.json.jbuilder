@@ -62,8 +62,13 @@ json.units_count insurable&.insurables&.where(insurable_type_id: InsurableType::
 
 json.can_be_covered insurable.policies.current.empty?
 json.active_master_policy do
-  if insurable.policies.current.where(policy_type_id: [PolicyType::MASTER_ID, PolicyType::MASTER_COVERAGE_ID]).any?
-    json.partial! 'v2/shared/policies/fields.json.jbuilder',
-                  policy: insurable.policies.current.where(policy_type_id: [PolicyType::MASTER_ID, PolicyType::MASTER_COVERAGE_ID]).take
+  if @master_policy.present?
+    json.partial! 'v2/shared/policies/fields.json.jbuilder', policy: @master_policy
+  end
+end
+
+json.active_master_policy_coverage do
+  if @master_policy_coverage.present?
+    json.partial! 'v2/shared/policies/fields.json.jbuilder', policy: @master_policy_coverage
   end
 end

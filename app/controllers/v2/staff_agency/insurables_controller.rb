@@ -12,6 +12,8 @@ module V2
                            sync_residential_address get_residential_property_info
                            related_insurables]
 
+      before_action :set_master_policies, only: :show
+
       def index
         if params[:short]
           super_index(:@insurables, @agency.insurables)
@@ -194,6 +196,18 @@ module V2
 
       def set_insurable
         @insurable = @agency.insurables.find(params[:id])
+      end
+
+      def set_master_policies
+        if @insurable.unit?
+          @master_policy_coverage =
+            @insurable.policies.current.where(policy_type_id: PolicyType::MASTER_COVERAGE_ID).take
+          @master_policy = @master_policy_coverage&.policy
+        else
+          @master_policy =
+            @insurable.policies.current.where(policy_type_id: PolicyType::MASTER_ID).take
+          @master_policy_coverage = nil
+        end
       end
 
       def insurable_params

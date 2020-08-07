@@ -198,6 +198,10 @@ class Insurable < ApplicationRecord
     end
     authorized
   end
+
+  def unit?
+    InsurableType::UNITS_IDS.include?(insurable_type_id)
+  end
   
   private
 

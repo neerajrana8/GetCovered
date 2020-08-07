@@ -149,6 +149,7 @@ module V2
             expiration_date: @master_policy.expiration_date
           )
           if policy.errors.blank?
+            unit.update(covered: true)
             render json: policy.to_json, status: :ok
           else
             response = { error: :policy_creation_problem, message: 'Policy was not created', payload: policy.errors }
@@ -179,8 +180,9 @@ module V2
         @master_policy.policies.master_policy_coverages.
           joins(:policy_insurables).
           where(policy_insurables: { insurable_id: @insurable.units&.pluck(:id) }) do |policy|
-          policy.update(status: 'CANCELLED', cancellation_date_date: Time.zone.now, expiration_date: Time.zone.now)
-        end
+            policy.update(status: 'CANCELLED', cancellation_date_date: Time.zone.now, expiration_date: Time.zone.now)
+            policy.insurables.take.update(covered: false)
+          end
         @master_policy.policy_insurables.where(insurable: @insurable).destroy_all
         render json: { message: "Master Policy Coverages for #{@insurable.title} cancelled" }, status: :ok
       end
@@ -199,6 +201,7 @@ module V2
                        }.to_json,
                  status: :bad_request
         else
+          @master_policy_coverage.insurables.take.update(covered: false)
           render json: { message: "Master policy coverage #{@master_policy_coverage.number} was successfully cancelled" }
         end
       end

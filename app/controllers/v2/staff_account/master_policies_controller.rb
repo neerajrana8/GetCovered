@@ -84,6 +84,7 @@ module V2
             expiration_date: @master_policy.expiration_date
           )
           if policy.errors.blank?
+            policy.insurables.take.update(covered: true)
             render json: policy.to_json, status: :ok
           else
             response = { error: :policy_creation_problem, message: 'Policy was not created', payload: policy.errors }
@@ -108,6 +109,7 @@ module V2
                        }.to_json,
                  status: :bad_request
         else
+          @master_policy_coverage.insurables.take.update(covered: false)
           render json: { message: "Master policy coverage #{@master_policy_coverage.number} was successfully cancelled" }
         end
       end
