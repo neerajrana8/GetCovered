@@ -343,7 +343,8 @@ class InsurableRateConfiguration < ApplicationRecord
       when 'multiple_choice'
         asserts.each do |assert|
           if assert.class == ::Array
-            options.select!{|opt| assert.include?(opt) }
+            assert.map!{|a| num(a) }
+            options.select!{|opt| assert.include?(num(opt)) }
           elsif assert.class == ::Hash
             case assert['interval']
               when '()'
