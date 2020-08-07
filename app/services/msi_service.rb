@@ -77,7 +77,7 @@ class MsiService
   end.to_h){|k,a,b| a + b }
   
   TITLE_OVERRIDES = {
-    @@coverage_codes[:ForcedEntryTheft][:code].to_s => "Burglary Limitation Coverage"
+    @@coverage_codes[:ForcedEntryTheft][:code].to_s => Proc.new{|region| region == 'NY' ? "Burglary Limitation Coverage" : nil }
   }
   
   RULE_SPECIFICATION = {
@@ -732,7 +732,7 @@ class MsiService
       irc.coverage_options = (coverages.map do |cov|
           {
             "uid"           => cov["CoverageCd"],
-            "title"         => TITLE_OVERRIDES[cov["CoverageCd"].to_s] || cov["CoverageDescription"].titleize,
+            "title"         => TITLE_OVERRIDES[cov["CoverageCd"].to_s].call(use_default_rules_for.to_s) || cov["CoverageDescription"].titleize,
             "requirement"   => (cov["MSI_IsMandatoryCoverage"] || "").strip == "True" ? 'required' : 'optional',
             "category"      => "coverage",
             "options_type"  => cov["MSI_LimitList"].blank? ? "none" : "multiple_choice",
