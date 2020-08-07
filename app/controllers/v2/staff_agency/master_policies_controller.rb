@@ -126,7 +126,8 @@ module V2
         insurables_relation =
           Insurable.
             joins(:policies).
-            where(policies: { policy: @master_policy }, insurables: { insurable_type: InsurableType::UNITS_IDS })
+            where(policies: { policy: @master_policy }, insurables: { insurable_type: InsurableType::UNITS_IDS }).
+            distinct
 
         @insurables = paginator(insurables_relation)
         render template: 'v2/shared/master_policies/insurables', status: :ok
