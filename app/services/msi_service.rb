@@ -281,7 +281,17 @@ class MsiService
     'WA' => {
       'loss_of_use' => LOSS_OF_USE_VARIATIONS[:fourk]
     }
-  }
+  }.deep_merge(["AL", "CA", "DC", "MA", "NJ", "NV", "NY", "PA", "SC", "VA", "WI", "WY"].map do |st|
+    [
+      st,
+      {
+        'no_huge_all_perils_allowed' => {
+          'message' => 'There is no theft deductible large enough to let a $1000 all perils deductible be selected',
+          'code' => ['=', ['value', 'deductible', @@coverage_codes[:AllOtherPeril][:code]], ['[)', 0, 1000]]
+        }
+      }
+    ]
+  end.to_h)
   
   include HTTParty
   include ActiveModel::Validations
