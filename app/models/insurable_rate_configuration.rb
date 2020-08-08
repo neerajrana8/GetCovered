@@ -593,7 +593,7 @@ class InsurableRateConfiguration < ApplicationRecord
                                     {
                                       CoverageCd: sel['uid']
                                     }.merge(sel['selection'] == true ? {} : {
-                                      Deductible: (sel['options_format'] = sel['uid'].to_s == '3' && sel'selection'].to_d == 500 ? 'currency' : sel['options']['options_format'] || 'currency') == 'percent' ? { FormatPct: sel['selection'].to_d / 100.to_d } : { Amt: sel['selection'] }
+                                      Deductible: (sel['options_format'] = sel['uid'].to_s == '3' && sel['selection'].to_d == 500 ? 'currency' : sel['options']['options_format'] || 'currency') == 'percent' ? { FormatPct: sel['selection'].to_d / 100.to_d } : { Amt: sel['selection'] }
                                     })
                                   else
                                     nil
