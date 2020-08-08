@@ -55,6 +55,7 @@ class MsiService
     RentalIncome:                                 { code: 1073, limit: false },
     FungiContents:                                { code: 1074, limit: false },
     ForcedEntryTheft:                             { code: 1076, limit: false },
+    TenantsAdditionalProtection:                  { code: 1077, limit: false },
     FungiLiability:                               { code: 1078, limit: false },
     SelfStorageBuyBack:                           { code: 1081, limit: false }
   }
@@ -65,8 +66,11 @@ class MsiService
   
   OVERRIDE_SPECIFICATION = {
     'CA' =>           [{ 'category' => 'deductible', 'uid' => @@coverage_codes[:EarthquakeDeductible][:code].to_s, 'requirement' => 'forbidden' }], # forbid earthquake ded unless earthquake cov selected
-    'FL' =>           [{ 'category' => 'coverage', 'uid' => @@coverage_codes[:WindHailExclusion][:code].to_s, 'requirement' => 'forbidden', 'enabled' => false }], # disable Wind/Hail Exclusion in FL
-    'GA' =>           [{ 'category' => 'deductible', 'uid' => @@coverage_codes[:WindHail][:code].to_s, 'enabled' => false }],                                                         # disable WindHail
+    'FL' =>           [
+                        { 'category' => 'coverage', 'uid' => @@coverage_codes[:WindHailExclusion][:code].to_s, 'requirement' => 'forbidden', 'enabled' => false },  # disable Wind/Hail Exclusion in FL
+                        { 'category' => 'deductible', 'uid' => @@coverage_codes[:Hurricane][:code].to_s, 'requirement' => 'required' }                              # mandate Hurricane coverage
+                      ],
+    'GA' =>           [{ 'category' => 'deductible', 'uid' => @@coverage_codes[:WindHail][:code].to_s, 'enabled' => false }],                                       # disable WindHail
     'GA_COUNTIES' =>  [{ 'category' => 'deductible', 'uid' => @@coverage_codes[:WindHail][:code].to_s, 'enabled' => true, 'requirement' => 'required' }], # enable WindHail & make sure it's required for counties ['Bryan', 'Camden', 'Chatham', 'Glynn', 'Liberty', 'McIntosh']
   }.merge(['AK', 'CO', 'HI', 'KY', 'ME', 'MT', 'NC', 'NJ', 'UT', 'VT', 'WA'].map do |state|
     # disable theft deductibles for selected states
@@ -78,6 +82,75 @@ class MsiService
   
   TITLE_OVERRIDES = {
     @@coverage_codes[:ForcedEntryTheft][:code].to_s => Proc.new{|region| region == 'NY' ? "Burglary Limitation Coverage" : nil }
+  }
+  
+  LOSS_OF_USE_VARIATIONS = {
+    standard: {
+      'message' => 'Cov D must be greater of $2000 or 20% of Cov C, unless Additional Protection Added (then 40%)',
+      'code' => ['if', ['selected', 'coverage', @@coverage_codes[:CoverageC][:code]],
+        ['=',
+          ['value', 'coverage', @@coverage_codes[:CoverageD][:code]],
+          ['max',
+            ['*', 
+              ['if', ['selected', 'coverage', @@coverage_codes[:TenantsAdditionalProtection][:code]],
+                0.4,
+                0.2
+              ],
+              ['value', 'coverage', @@coverage_codes[:CoverageC][:code]]
+            ],
+            2000
+          ]
+        ]
+      ]
+    },
+    fourk: {
+      'message' => 'Cov D must be greater of $2000 or 20% of Cov C, unless Additional Protection Added (then $4000 or 40%)',
+      'code' => ['if', ['selected', 'coverage', @@coverage_codes[:CoverageC][:code]],
+        ['=',
+          ['value', 'coverage', @@coverage_codes[:CoverageD][:code]],
+          ['if', ['selected', 'coverage', @@coverage_codes[:TenantsAdditionalProtection][:code]],
+            ['max',
+              ['*', 0.4, ['value', 'coverage', @@coverage_codes[:CoverageC][:code]]],
+              4000
+            ],
+            ['max',
+              ['*', 0.2, ['value', 'coverage', @@coverage_codes[:CoverageC][:code]]],
+              2000
+            ]
+          ]
+        ]
+      ]
+    },
+    threek: {
+      'message' => 'Cov D must be greater of $3000 or 30% of Cov C, unless Additional Protection Added (then 40%)',
+      'code' => ['if', ['selected', 'coverage', @@coverage_codes[:CoverageC][:code]],
+        ['=',
+          ['value', 'coverage', @@coverage_codes[:CoverageD][:code]],
+          ['max',
+            ['*', 
+              ['if', ['selected', 'coverage', @@coverage_codes[:TenantsAdditionalProtection][:code]],
+                0.4,
+                0.3
+              ],
+              ['value', 'coverage', @@coverage_codes[:CoverageC][:code]]
+            ],
+            3000
+          ]
+        ]
+      ]
+    },
+    tenpercent: {
+      'message' => 'Cov D must be 10% of Cov C',
+      'code' => ['if', ['selected', 'coverage', @@coverage_codes[:CoverageC][:code]],
+        ['=',
+          ['value', 'coverage', @@coverage_codes[:CoverageD][:code]],
+          ['*',
+            ['value', 'coverage', @@coverage_codes[:CoverageC][:code]],
+            0.1
+          ]
+        ]
+      ]
+    }
   }
   
   RULE_SPECIFICATION = {
@@ -114,21 +187,7 @@ class MsiService
           ]
         ]
       },
-      'loss_of_use' => {
-        'message' => 'Cov D must be greater of $2000 or 20% of Cov C, unless Additional Protection Added (then 40%)',
-        'code' => ['if', ['selected', 'coverage', @@coverage_codes[:CoverageC][:code]],
-          ['=',
-            ['value', 'coverage', @@coverage_codes[:CoverageD][:code]],
-            ['max',
-              ['*', 
-                0.2, #['if', ['selected', ###add_prot###], 0.4, 0.2] # MOOSE WARNING: what is 'additional protection', which coverage letter? find out & replace!
-                ['value', 'coverage', @@coverage_codes[:CoverageC][:code]]
-              ],
-              2000
-            ]
-          ]
-        ]
-      },
+      'loss_of_use' => LOSS_OF_USE_VARIATIONS[:standard],
       'theft_deductible' => {
         'message' => 'Theft deductible cannot be less than the all perils deductible',
         'code' => ['if', ['selected', 'deductible', @@coverage_codes[:AllOtherPeril][:code]],
@@ -162,35 +221,14 @@ class MsiService
         ]
       }
     },
+    'CO' => {
+      'loss_of_use' => LOSS_OF_USE_VARIATIONS[:fourk]
+    },
     'CT' => {
-      'loss_of_use' => {
-        'message' => 'Cov D must be greater of $3000 or 30% of Cov C, unless Additional Protection Added (then 40%)', # MOOSE WARNING: 40% and $2000 may need to change; check!
-        'code' => ['=',
-          ['value', 'coverage', @@coverage_codes[:CoverageD][:code]],
-          ['max',
-            ['*', 
-              0.3, #['if', ['selected', ###add_prot###], 0.4, 0.2] # MOOSE WARNING: put coverage stuff here as in USA, and change 40% & 2000 as needed
-              ['value', 'coverage', @@coverage_codes[:CoverageC][:code]]
-            ],
-            3000
-          ]
-        ]
-      }
+      'loss_of_use' => LOSS_OF_USE_VARIATIONS[:threek]
     },
     'FL' => {
-      'loss_of_use' => {
-        'message' => 'Cov D must be greater of $2000 or 10% of Cov C, unless Additional Protection Added (then 40%)', # MOOSE WARNING: 40% and $2000 may need to change; check!
-        'code' => ['=',
-          ['value', 'coverage', @@coverage_codes[:CoverageD][:code]],
-          ['max',
-            ['*', 
-              0.1, #['if', ['selected', ###add_prot###], 0.4, 0.2] # MOOSE WARNING: put coverage stuff here as in USA, and change 40% & 2000 as needed
-              ['value', 'coverage', @@coverage_codes[:CoverageC][:code]]
-            ],
-            2000
-          ]
-        ]
-      },
+      'loss_of_use' => LOSS_OF_USE_VARIATIONS[:tenpercent],
       'ordinance_or_law' => {
         'message' => 'Ordinance Or Law limit must be 2.5% of Coverage C limit',
         'code' => ['if', ['selected', 'coverage', @@coverage_codes[:CoverageC][:code]],
@@ -214,6 +252,9 @@ class MsiService
         ]
       }
     },
+    'KY' => {
+      'loss_of_use' => LOSS_OF_USE_VARIATIONS[:fourk]
+    },
     'MD' => {
       'water_backup' => {
         'message' => 'Water backup must be $5000 or equal to Coverage C limit',
@@ -227,6 +268,18 @@ class MsiService
           ]
         ]
       }
+    },
+    'ME' => {
+      'loss_of_use' => LOSS_OF_USE_VARIATIONS[:fourk]
+    },
+    'MT' => {
+      'loss_of_use' => LOSS_OF_USE_VARIATIONS[:fourk]
+    },
+    'UT' => {
+      'loss_of_use' => LOSS_OF_USE_VARIATIONS[:fourk]
+    },
+    'WA' => {
+      'loss_of_use' => LOSS_OF_USE_VARIATIONS[:fourk]
     }
   }
   
@@ -732,7 +785,9 @@ class MsiService
       irc.coverage_options = (coverages.map do |cov|
           {
             "uid"           => cov["CoverageCd"],
-            "title"         => TITLE_OVERRIDES[cov["CoverageCd"].to_s].call(use_default_rules_for.to_s) || cov["CoverageDescription"].titleize,
+            "title"         => (TITLE_OVERRIDES[cov["CoverageCd"].to_s].class == ::Proc ?
+              TITLE_OVERRIDES[cov["CoverageCd"].to_s].call(use_default_rules_for.to_s)
+              : TITLE_OVERRIDES[cov["CoverageCd"].to_s]) || cov["CoverageDescription"].titleize,
             "requirement"   => (cov["MSI_IsMandatoryCoverage"] || "").strip == "True" ? 'required' : 'optional',
             "category"      => "coverage",
             "options_type"  => cov["MSI_LimitList"].blank? ? "none" : "multiple_choice",
@@ -742,7 +797,9 @@ class MsiService
         end + deductibles.map do |ded|
           {
             "uid"           => ded["MSI_DeductibleCd"],
-            "title"         => TITLE_OVERRIDES[ded["MSI_DeductibleCd"].to_s] || ded["MSI_DeductibleName"].titleize,
+            "title"         => (TITLE_OVERRIDES[ded["MSI_DeductibleCd"].to_s].class == ::Proc ?
+              TITLE_OVERRIDES[ded["MSI_DeductibleCd"].to_s].call(use_default_rules_for.to_s)
+              : TITLE_OVERRIDES[ded["MSI_DeductibleCd"].to_s]) || ded["MSI_DeductibleName"].titleize,
             "requirement"   => 'required', #MOOSE WARNING: in special cases some are optional, address these
             "category"      => "deductible",
             "options_type"  => ded["MSI_DeductibleOptionList"].blank? ? "none" : "multiple_choice",

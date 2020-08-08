@@ -511,7 +511,7 @@ class InsurableRateConfiguration < ApplicationRecord
         {
           'category' => opt['category'],
           'uid'      => opt['uid'],
-          'selection'=> opt['options_type'] == 'none' ? true : opt['options'].blank? ? false : !sel.nil? && opt['options'].map{|o| o.to_d }.include?(sel['selection'].to_d) ? sel['selection'] : opt['options'][rand(opt['options'].length)]
+          'selection'=> opt['options_type'] == 'none' ? true : opt['options'].blank? ? false : !sel.nil? && sel['selection'] != nil && sel['selection'] != false && opt['options'].map{|o| o.to_d }.include?(sel['selection'].to_d) ? sel['selection'] : opt['options'][rand(opt['options'].length)]
         }
       elsif opt['requirement'] == 'optional'
         next nil # WARNING: no optional coverages for now... randomize it later

@@ -153,7 +153,7 @@ module CarrierMsiPolicyApplication
             quote.send(quote_method)
             if quote.status == 'quoted'
               # generate internal invoices
-              quote.generate_invoices_for_term
+              #quote.generate_invoices_for_term MOOSE WARNING: uncomment if there are ever internal ones...
               # generate external invoices
               msi_get_payment_schedule(payment_plan, installment_day: self.fields.find{|f| f['title'] == "Installment Day" }&.[]('value') || 1).each.with_index do |dates, ind|
                 quote.invoices.create!(dates.merge({
