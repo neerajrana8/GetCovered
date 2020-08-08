@@ -643,7 +643,7 @@ class InsurableRateConfiguration < ApplicationRecord
     }.merge(eventable.class != ::PolicyQuote ? {} : {
       msi_data: result,
       event: event,
-      annotated_selections: selections # for now we just inserted options_format everywhere, we didn't even copy the hash
+      annotated_selections: selections.select{|sel| sel['selection'] } # for now we just inserted options_format everywhere, we didn't even copy the hash
     })
   end
   
