@@ -16,7 +16,7 @@ module CarrierMsiPolicyQuote
     # MSI build coverages
     
     def msi_build_coverages
-      self.policy_application.coverage_selections.select{|covsel| covsel['selection'] != false }.each do |covsel|
+      self.policy_application.coverage_selections.select{|covsel| covsel['selection'] }.each do |covsel|
         self.policy.policy_coverages.create(
           policy_application: self.policy_application,
           title: covsel['title'],
@@ -94,7 +94,7 @@ module CarrierMsiPolicyQuote
         primary_insured:    primary_insured,
         additional_insured: additional_insured,
         additional_interest: [], # MOOSE WARNING: put the Account here somehow!!!!!!
-        coverage_raw: policy_application.coverage_selections.map do |sel|
+        coverage_raw: policy_application.coverage_selections.select{|sel| sel['selection'] }.map do |sel|
           if sel['category'] == 'coverage'
             {
               CoverageCd: sel['uid']
