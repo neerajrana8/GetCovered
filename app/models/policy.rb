@@ -18,7 +18,7 @@
 # +billing_status+:: (Integer)
 # +billing_dispute_count+:: (Integer)
 # +billing_behind_since+:: (Date)
-# +cancellation_code+:: (Integer)
+# +cancellation_reason+:: (Integer)
 # +cancellation_date+:: (Date)
 # +status+:: (Integer)
 # +status_changed_on+:: (DateTime)

@@ -55,11 +55,11 @@ module V2
       
       def update
         if update_allowed?
-          @policy.update(cancellation_date_date: params[:date])
-          if @policy.cancellation_date_date.present?
+          @policy.update(cancellation_date: params[:date])
+          if @policy.cancellation_date.present?
             AutomaticMasterPolicyInvoiceJob.perform_later(@policy.id)
             render json: { message: 'Master policy canceled' }, status: :ok
-          elsif @policy.cancellation_date_date.nil?
+          elsif @policy.cancellation_date.nil?
             render json: { message: 'Master policy not canceled' }, status: :ok
           else
             render json: @policy.errors, status: :unprocessable_entity
@@ -96,8 +96,8 @@ module V2
       def create_params
         return({}) if params[:policy].blank?
         to_return = params.require(:policy).permit(
-          :account_id, :agency_id, :auto_renew, :cancellation_code,
-          :cancellation_date_date, :carrier_id, :effective_date,
+          :account_id, :agency_id, :auto_renew, :cancellation_reason,
+          :cancellation_date, :carrier_id, :effective_date,
           :expiration_date, :number, :policy_type_id, :status,
           policy_insurables_attributes: [ :insurable_id ],
           policy_users_attributes: [ :user_id ],

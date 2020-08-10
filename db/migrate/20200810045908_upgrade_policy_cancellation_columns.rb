@@ -1,5 +1,6 @@
 class UpgradePolicyCancellationColumns < ActiveRecord::Migration[5.2]
   def up
+    rename_column :policies, :cancellation_date_date, :cancellation_date
     add_column :policies, :cancellation_reason, :integer
     # convert cancellation codes to cancellation reasons
     Policy.where.not(cancellation_code: nil).each do |pol|
@@ -14,11 +15,9 @@ class UpgradePolicyCancellationColumns < ActiveRecord::Migration[5.2]
     end
     # done converting
     remove_column :policies, :cancellation_code
-    rename_column :policies, :cancellation_date_date, :cancellation_date
   end
   
   def down
-    rename_column :policies, :cancellation_date, :cancellation_date_date
     add_column :policies, :cancellation_code, :integer
     # convert cancellation reasons to cancellation codes
     Policy.where.not(cancellation_reason: nil).each do |pol|
@@ -33,5 +32,6 @@ class UpgradePolicyCancellationColumns < ActiveRecord::Migration[5.2]
     end
     # done converting
     remove_column :policies, :cancellation_reason
+    rename_column :policies, :cancellation_date, :cancellation_date_date
   end
 end
