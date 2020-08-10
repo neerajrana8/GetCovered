@@ -1,11 +1,11 @@
-class BillPastDueInvoicesJob < ApplicationJob
+class CancelUnpaidPoliciesJob < ApplicationJob
   queue_as :default
   before_perform :set_invoices
 
 
   def perform(*_args)
     @invoices.each do |invoice|
-      invoice.pay(allow_missed: true, stripe_source: :default) if invoice.charges.failed.where("created_at >= ?", invoice.due_date.midnight + 1.day).count < 3
+      invoice.pay(allow_missed: true, stripe_source: :default) if invoice.charges.failed.count < 3
     end
   end
 

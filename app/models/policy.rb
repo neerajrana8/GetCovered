@@ -152,8 +152,14 @@ class Policy < ApplicationRecord
     underwriter_cancellation:   4     # QBE UW
   }
   
+  # Cancellation-related constants
   
+  # cancellation_reasons for which within the first (CarrierInsurableType.max_days_for_full_refund || 30) days a refund will be issued
+  # equivalent to a refund prorated for the day before the policy's effective_date
+  EARLY_REFUND_CANCELLATION_REASONS = ['insured_request']
   
+  # cancellation_reasons for which a prorated refund will generally be issued for the cancellation date
+  PRORATED_REFUND_CANCELLATION_REASONS = ['agent_request', 'insured_request', 'new_application_nonpayment', 'underwriter_cancellation']
   
   
   
@@ -257,24 +263,14 @@ class Policy < ApplicationRecord
     end
   end
   
-    enum cancellation_reason: {
-    nonpayment:                 0,    # QBE AP
-    agent_request:              1,    # QBE AR
-    insured_request:            2,    # QBE IR
-    new_application_nonpayment: 3,    # QBE NP
-    underwriter_cancellation:   4     # QBE UW
-  }
-  
-  EARLY_REFUNDABLE_CANCELLATION_REASONS = ['insured_request']
-  
   # Cancels a policy; returns nil if no errors, otherwise a string explaining the error
   def cancel(reason, cancel_date = Time.current.to_date)
     # Handle reason
     return "Cancellation reason is invalid" unless self.class.cancellation_reasons.has_key?(reason)
     # Slaughter the invoices
     max_days_for_full_refund = (CarrierPolicyType.where(policy_type_id: self.policy_type_id, carrier_id: self.carrier_id).take&.max_days_for_full_refund || 30).days
-    effective_cancel_date = EARLY_REFUNDABLE_CANCELLATION_REASONS.include?(reason) ?
-      ((self.created_at + max_days_for_full_refund >= cancel_date) ? self.created_at - 2.days : cancel_date)
+    effective_cancel_date = EARLY_REFUND_CANCELLATION_REASONS.include?(reason) ?
+      ((self.created_at + max_days_for_full_refund >= cancel_date) ? self.created_at - 2.days : cancel_date) # MOOSE WARNING: but this will cause problems with renewals, no?
       : cancel_date
     self.invoices.each do |invoice|
       invoice.apply_proration(effective_cancel_date, refund_date: effective_cancel_date) # we pass refund_date too just in case someone uses the 'complete_refund_x' refundabilities one day
