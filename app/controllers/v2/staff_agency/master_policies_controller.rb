@@ -71,7 +71,7 @@ module V2
       end
 
       def communities
-        insurables_relation = @master_policy.insurables
+        insurables_relation = @master_policy.insurables.distinct
         @insurables = paginator(insurables_relation)
         render template: 'v2/shared/master_policies/insurables', status: :ok
       end
