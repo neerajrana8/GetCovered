@@ -548,6 +548,14 @@ class QbeService
   # [UW] Cancellation by Underwriter
   # [VN] Vacant/Non-owner Occupied Property *(Currently Unavailable)*
   
+  CANCELLATION_REASON_MAPPING = [
+    { code: 'AP', reason: 'nonpayment' },
+    { code: 'AR', reason: 'agent_request' },
+    { code: 'IR', reason: 'insured_request' },
+    { code: 'NP', reason: 'new_application_nonpayment' },
+    { code: 'UW', reason: 'underwriter_cancellation' }
+  ]
+  
   def cancellation_codes
     %w[AP AR CP CR FC ID IP IR
        IS LU MR NP RE SC SD SR

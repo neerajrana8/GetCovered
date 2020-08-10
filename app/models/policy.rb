@@ -143,6 +143,21 @@ class Policy < ApplicationRecord
     
   enum billing_dispute_status: { UNDISPUTED: 0, DISPUTED: 1, AWAITING_POSTDISPUTE_PROCESSING: 2,
     NOT_REQUIRED: 3 }
+    
+  enum cancellation_reason: {
+    nonpayment: 0,                    # QBE AP
+    agent_request: 1,                 # QBE AR
+    insured_request: 2,               # QBE IR
+    new_application_nonpayment: 3,    # QBE NP
+    underwriter_cancellation: 4       # QBE UW
+  }
+  
+  
+  
+  
+  
+  
+  
       
   def in_system?
     policy_in_system == true
