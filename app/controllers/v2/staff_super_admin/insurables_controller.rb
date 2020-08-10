@@ -8,6 +8,7 @@ module V2
       alias super_index index
 
       before_action :set_insurable, only: [:show, :coverage_report, :policies, :related_insurables]
+      before_action :set_master_policies, only: :show
 
       def index
         super_index(:@insurables, Insurable.all)
@@ -47,6 +48,18 @@ module V2
 
       def set_insurable
         @insurable = Insurable.find(params[:id])
+      end
+
+      def set_master_policies
+        if @insurable.unit?
+          @master_policy_coverage =
+            @insurable.policies.current.where(policy_type_id: PolicyType::MASTER_COVERAGE_ID).take
+          @master_policy = @master_policy_coverage&.policy
+        else
+          @master_policy =
+            @insurable.policies.current.where(policy_type_id: PolicyType::MASTER_ID).take
+          @master_policy_coverage = nil
+        end
       end
 
       def supported_filters(called_from_orders = false)
