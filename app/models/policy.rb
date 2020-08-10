@@ -145,11 +145,11 @@ class Policy < ApplicationRecord
     NOT_REQUIRED: 3 }
     
   enum cancellation_reason: {
-    nonpayment: 0,                    # QBE AP
-    agent_request: 1,                 # QBE AR
-    insured_request: 2,               # QBE IR
+    nonpayment:                 0,    # QBE AP
+    agent_request:              1,    # QBE AR
+    insured_request:            2,    # QBE IR
     new_application_nonpayment: 3,    # QBE NP
-    underwriter_cancellation: 4       # QBE UW
+    underwriter_cancellation:   4     # QBE UW
   }
   
   
@@ -257,15 +257,30 @@ class Policy < ApplicationRecord
     end
   end
   
-  def cancel
+    enum cancellation_reason: {
+    nonpayment:                 0,    # QBE AP
+    agent_request:              1,    # QBE AR
+    insured_request:            2,    # QBE IR
+    new_application_nonpayment: 3,    # QBE NP
+    underwriter_cancellation:   4     # QBE UW
+  }
+  
+  EARLY_REFUNDABLE_CANCELLATION_REASONS = ['insured_request']
+  
+  # Cancels a policy; returns nil if no errors, otherwise a string explaining the error
+  def cancel(reason, cancel_date = Time.current.to_date)
+    # Handle reason
+    return "Cancellation reason is invalid" unless self.class.cancellation_reasons.has_key?(reason)
     # Slaughter the invoices
     max_days_for_full_refund = (CarrierPolicyType.where(policy_type_id: self.policy_type_id, carrier_id: self.carrier_id).take&.max_days_for_full_refund || 30).days
-    cancellation_date = (self.created_at + max_days_for_full_refund >= cancellation_date) ? self.created_at - 2.days : Time.current.to_date
+    effective_cancel_date = EARLY_REFUNDABLE_CANCELLATION_REASONS.include?(reason) ?
+      ((self.created_at + max_days_for_full_refund >= cancel_date) ? self.created_at - 2.days : cancel_date)
+      : cancel_date
     self.invoices.each do |invoice|
-      invoice.apply_proration(cancellation_date, refund_date: cancellation_date) # we pass refund_date too just in case someone uses the 'complete_refund_x' refundabilities one day
+      invoice.apply_proration(effective_cancel_date, refund_date: effective_cancel_date) # we pass refund_date too just in case someone uses the 'complete_refund_x' refundabilities one day
     end
     # Mark cancelled
-    update_attribute(:status, 'CANCELLED')
+    update_columns(status: 'CANCELLED', cancellation_reason: reason, cancellation_date: cancel_date)
     # Unearned balance is the remaining unearned amount on an insurance policy that 
     # needs to be deducted from future commissions to recuperate the loss
     premium&.reload
@@ -276,6 +291,8 @@ class Policy < ApplicationRecord
       unearned_balance: balance, 
       deductee: premium&.commission_strategy&.commissionable
     )
+    # done
+    return nil
   end
   
   def bulk_decline
