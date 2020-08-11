@@ -387,14 +387,18 @@ class Invoice < ApplicationRecord
   end
   
   # returns a descriptor for charges
-  def get_descriptor
-    case(self.invoiceable.nil? ? nil : self.invoiceable_type) # force 'else' case if invoiceable is nil
-      when 'Policy'
-        "Policy ##{self.invoiceable.number}"
-      when 'PolicyQuote'
-        "Policy Quote #{self.invoiceable.external_reference}"
+  def get_descriptor(to_describe = self.invoiceable)
+    case(to_describe)
+      when ::Policy
+        "#{to_describe.policy_type.title}#{to_describe.policy_type.title.end_with?("Policy") || to_describe.policy_type.title.end_with?("Coverage") ? "" : " Policy"} ##{to_describe.number}"
+      when ::PolicyQuote
+        to_describe.policy.nil? ? "Policy Quote ##{to_describe.reference}" : get_descriptor(to_describe.policy)
+      when ::PolicyGroupQuote
+        "#{to_describe.policy_type.title}#{to_describe.policy_type.title.end_with?("Policy") || to_describe.policy_type.title.end_with?("Coverage") ? "" : " Policy"} ##{to_describe.number}"
+      when ::PolicyGroupQuote
+        to_describe.policy_group.nil? ? "Policy Group Quote ##{to_describe.reference}" : get_descriptor(to_describe.policy_group)
       else
-        "Product"
+        "GetCovered Product"
     end
   end
   
