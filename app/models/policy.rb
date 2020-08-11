@@ -149,7 +149,8 @@ class Policy < ApplicationRecord
     agent_request:              1,    # QBE AR
     insured_request:            2,    # QBE IR
     new_application_nonpayment: 3,    # QBE NP
-    underwriter_cancellation:   4     # QBE UW
+    underwriter_cancellation:   4,    # QBE UW
+    disqualification:           5
   }
   
   # Cancellation-related constants
