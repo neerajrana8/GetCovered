@@ -236,7 +236,7 @@ module V2
 
         permitted_params = params.require(:policy).permit(
           :account_id, :agency_id, :auto_renew, :carrier_id, :effective_date,
-          :expiration_date, :number,
+          :expiration_date, :number, system_data: [:landlord_supplemental],
           policy_coverages_attributes: %i[id policy_application_id policy_id
                                           limit deductible enabled designation]
         )
