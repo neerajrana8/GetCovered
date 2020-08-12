@@ -83,7 +83,8 @@ module V2
             status: 'BOUND',
             policy: @master_policy,
             effective_date: @master_policy.effective_date,
-            expiration_date: @master_policy.expiration_date
+            expiration_date: @master_policy.expiration_date,
+            system_data: @master_policy.system_data
           )
           if policy.errors.blank?
             policy.insurables.take.update(covered: true)
