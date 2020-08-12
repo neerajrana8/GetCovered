@@ -386,20 +386,71 @@ class Invoice < ApplicationRecord
     end
   end
   
-  # returns a descriptor for charges
-  def get_descriptor(to_describe = self.invoiceable)
-    case(to_describe)
+  # returns a descriptor for charges to send to stripe, format { description: string, metadata: hash_of_metadata_entries }
+  def get_descriptor(to_describe = self.invoiceable, extra_metadata: {})
+    description = "GetCovered Product"
+    metadata = { product_type: to_describe.class.name, product_id: to_describe.respond_to?(:id) ? to_describe.id : 'N/A' }
+    case to_describe
       when ::Policy
-        "#{to_describe.policy_type.title}#{to_describe.policy_type.title.end_with?("Policy") || to_describe.policy_type.title.end_with?("Coverage") ? "" : " Policy"} ##{to_describe.number}"
+        description = "#{to_describe.policy_type.title}#{to_describe.policy_type.title.end_with?("Policy") || to_describe.policy_type.title.end_with?("Coverage") ? "" : " Policy"} ##{to_describe.number}"
+        metadata[:product] = to_describe.policy_type.title
+        metadata[:agency] = to_describe.agency&.title
+        metadata[:account] = to_describe.account&.title
+        metadata[:policy_number] = to_describe.number
       when ::PolicyQuote
         to_describe.policy.nil? ? "Policy Quote ##{to_describe.reference}" : get_descriptor(to_describe.policy)
+        if to_describe.policy.nil?
+          description = "Policy Quote ##{to_describe.reference}"
+          metadata[:product] = to_describe.policy_application&.policy_type&.title || "Policy"
+          metadata[:agency] = to_describe.agency&.title
+          metadata[:account] = to_describe.account&.title
+          metadata[:policy_quote_reference] = to_describe.reference
+        else
+          return get_descriptor(to_describe.policy_group)
+        end
       when ::PolicyGroupQuote
-        "#{to_describe.policy_type.title}#{to_describe.policy_type.title.end_with?("Policy") || to_describe.policy_type.title.end_with?("Coverage") ? "" : " Policy"} ##{to_describe.number}"
+        description = "#{to_describe.policy_type.title}#{to_describe.policy_type.title.end_with?("Policy") || to_describe.policy_type.title.end_with?("Coverage") ? "" : " Policy"} ##{to_describe.number}"
+        metadata[:product] = to_describe.policy_type.title
+        metadata[:agency] = to_describe.agency&.title
+        metadata[:account] = to_describe.account&.title
+        metadata[:policy_group_number] = to_describe.number
       when ::PolicyGroupQuote
-        to_describe.policy_group.nil? ? "Policy Group Quote ##{to_describe.reference}" : get_descriptor(to_describe.policy_group)
+        if to_describe.policy_group.nil?
+          description = "Policy Group Quote ##{to_describe.reference}"
+          metadata[:product] = to_describe.policy_application_group&.policy_type&.title || "Policy"
+          metadata[:agency] = to_describe.agency&.title
+          metadata[:account] = to_describe.account&.title
+          metadata[:policy_group_quote_reference] = to_describe.reference
+        else
+          return get_descriptor(to_describe.policy_group)
+        end
       else
-        "GetCovered Product"
+        # do nothing
     end
+    return {
+      description: "#{description}, Invoice ##{self.number}",
+      metadata: metadata.merge(get_payer_metdata).merge({ invoice_id: self.id }).merge(extra_metadata)
+    }
+  end
+  
+  def get_payer_metadata
+    to_return = {
+      payer_type: payer.class.name,
+      payer_id: payer.respond_to?(:id) ? payer.id : 'N/A'
+    }
+    case payer
+      when ::User
+        to_return[:payer_first_name] = payer.profile&.first_name,
+        to_return[:payer_last_name] = payer.profile&.last_name,
+        to_return[:payer_phone] = payer.profile&.contact_phone
+      when ::Account
+        to_return[:payer_company_name] = payer.title
+      when ::Agency
+        to_return[:payer_company_name] = payer.title
+      else
+        # do nothing
+    end
+    return to_return
   end
   
   # keep track of number of disputed charges
