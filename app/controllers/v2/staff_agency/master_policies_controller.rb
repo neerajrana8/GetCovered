@@ -151,6 +151,7 @@ module V2
             policy_type_id: PolicyType::MASTER_COVERAGE_ID,
             policy: @master_policy,
             status: 'BOUND',
+            system_data: @master_policy.system_data,
             effective_date: @master_policy.effective_date,
             expiration_date: @master_policy.expiration_date
           )

@@ -19,7 +19,8 @@ class AutomaticMasterCoveragePolicyIssueJob < ApplicationJob
             policy_type_id: PolicyType::MASTER_COVERAGE_ID,
             policy: master_policy,
             effective_date: Time.zone.now,
-            expiration_date: master_policy.expiration_date
+            expiration_date: master_policy.expiration_date,
+            system_data: master_policy.system_data
           )
         end
       end
