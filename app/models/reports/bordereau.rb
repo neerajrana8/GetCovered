@@ -5,7 +5,6 @@ module Reports
 
     def generate
       self.data['rows'] = rows
-      self.data['total'] = total
       self
     end
 
@@ -43,36 +42,54 @@ module Reports
         'unit_id' => 'UnitID',
         'tenant_id' => 'TenantID',
         'tenant_email' => 'TenantEmail',
-        'tenant_name' => 'TenantID',
-        'tenant_address' => 'TenantID',
-        'tenant_unit' => 'TenantID',
-        'tenant_city' => 'TenantID',
+        'tenant_name' => 'TenantName',
+        'tenant_address' => 'TenantAddress',
+        'tenant_unit' => 'TenantUnit',
+        'tenant_city' => 'TenantCity',
         'tenant_state' => 'TenantState',
         'tenant_zip' => 'TenantZipCode',
-        'tenant_zip' => 'TenantZipCode',
-        'tenant_zip' => 'TenantZipCode',
+        'unit_state' => 'Risk_State',
+        'transaction' => 'Transaction',
+        'effective_date' => 'Eff_Date',
+        'expiration_date' => 'Exp_Date',
+        'cancellation_date' => 'Canc_date',
+        'liability_limit' => 'Tenant_Liability_Limit',
+        'coverage_c_limit' => 'Tenant_CovC_Limit',
       }
     end
 
     def headers
-      %w[property_name current_participation last_month_participation change_in_participation
-      participation_trend current_in_system_participation last_month_in_system_participation
-      change_in_system_participation current_3rd_party_participation last_month_3rd_party_participation
-      change_3rd_party_participation total_in_system_active_policies total_3rd_party_active_policies]
+      %w[master_policy_number master_policy_coverage_number agent_id agent_email
+         property_manager_id property_manager_name property_manager_email community_name community_id unit_id tenant_id
+         tenant_email tenant_name tenant_address tenant_unit tenant_city tenant_state tenant_zip unit_state transaction
+         effective_date expiration_date cancellation_date liability_limit coverage_c_limit]
     end
 
     private
 
     def rows
-      communities.map {|community| community_report_data(community)}
+      coverages.map {|community| community_report_data(community)}
     end
 
-    def communities
+    def coverages
+      base_query
+      coverages ||=
+        if reportable.blank?
+            Policies.where(coverages_condition, range_start: range_start, range_end: range_end)
+        elsif reportable.is_a? Account
+          Policies.where(coverages_condition, range_start: range_start, range_end: range_end)
+        elsif reportable.is_a? Agency
+          Policies.where(coverages_condition, range_start: range_start, range_end: range_end, agency)
+        end
       reportable.insurables.communities
     end
 
-    def last_month_report
-      @last_month_report ||= Reports::HighLevelParticipation.where(reportable: reportable).order(created_at: :desc).first
+    def coverages_condition
+      <<-SQL
+        (effective_date >= :range_start AND expiration_date < :range_end) 
+        OR (expiration_date > :range_start AND expiration_date < :range_end) 
+        OR (effective_date >= :range_start AND effective_date < :range_end)
+      SQL
     end
 
     def community_report_data(community)
@@ -136,35 +153,9 @@ module Reports
       end
     end
 
-    def total
-      total_report = ::Reports::Participation.new(reportable: reportable).generate.data
-      {
-        'covered' => total_report['number_covered_units'],
-        'in_system_covered' => total_report['number_covered_in_system'],
-        'uncovered' => total_report['number_uncovered'],
-        'units' => total_report['total_units'],
-        'participation' => total_report['participation_rate'],
-        'in_system_participation' => total_report['in_system_participation_rate'],
-        '3rd_party_participation' => total_report['3rd_party_participation_rate'],
-        'active_in_system_policies' => total_report['number_active_system_policies'],
-        'active_3rd_party_policies' => total_report['number_active_3rd_party_policies']
-      }
-    end
-
     def set_defaults
       self.data ||= {
-        'rows' => [],
-        'total' => {
-          'covered' => 0,
-          'in_system_covered' => 0,
-          'uncovered' => 0,
-          'units' => 0,
-          'participation' => 0,
-          'in_system_participation' => 0,
-          '3rd_party_participation' => 0,
-          'active_in_system_policies' => 0,
-          'active_3rd_party_policies' => 0
-        }
+        'rows' => []
       }
     end
   end
