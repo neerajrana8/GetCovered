@@ -397,6 +397,7 @@ class Invoice < ApplicationRecord
         metadata[:agency] = to_describe.agency&.title
         metadata[:account] = to_describe.account&.title
         metadata[:policy_number] = to_describe.number
+        metadata[:carrier] = to_describe.carrier&.title
       when ::PolicyQuote
         to_describe.policy.nil? ? "Policy Quote ##{to_describe.reference}" : get_descriptor(to_describe.policy)
         if to_describe.policy.nil?
@@ -408,12 +409,13 @@ class Invoice < ApplicationRecord
         else
           return get_descriptor(to_describe.policy_group)
         end
-      when ::PolicyGroupQuote
+      when ::PolicyGroup
         description = "#{to_describe.policy_type.title}#{to_describe.policy_type.title.end_with?("Policy") || to_describe.policy_type.title.end_with?("Coverage") ? "" : " Policy"} ##{to_describe.number}"
         metadata[:product] = to_describe.policy_type.title
         metadata[:agency] = to_describe.agency&.title
         metadata[:account] = to_describe.account&.title
         metadata[:policy_group_number] = to_describe.number
+        metadata[:carrier] = to_describe.carrier&.title
       when ::PolicyGroupQuote
         if to_describe.policy_group.nil?
           description = "Policy Group Quote ##{to_describe.reference}"
@@ -429,7 +431,7 @@ class Invoice < ApplicationRecord
     end
     return {
       description: "#{description}, Invoice ##{self.number}",
-      metadata: metadata.merge(get_payer_metadata).merge({ invoice_id: self.id }).merge(extra_metadata)
+      metadata: metadata.merge(get_payer_metadata).merge({ invoice_id: self.id, invoice_number: self.number }).merge(extra_metadata)
     }
   end
   
