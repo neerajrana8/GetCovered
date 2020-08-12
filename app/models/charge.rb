@@ -288,31 +288,14 @@ class Charge < ApplicationRecord
         end
         # create charge
         begin
-          descriptor = invoice.get_descriptor
-          user = User&.find(invoice&.payer_id)
-          user_name = user&.profile&.first_name
-          user_last_name = user&.profile&.last_name
-          contact_phone = user&.profile&.contact_phone
-          policy_user = PolicyUser.find_by(user_id: user.id)
-          policy = Policy.find_by(id: policy_user.policy_id)
-          agency_title = policy&.agency&.title
-          policy_title = policy&.policy_type&.title
-          policy_number = policy&.number
           stripe_charge = Stripe::Charge.create({
-            amount: amount,
-            currency: 'usd',
-            description: "#{ descriptor }, Invoice ##{invoice.number}",
-            metadata: {
-              first_name: user_name,
-              last_name: user_last_name,
-              phone: contact_phone,
-              agency: agency_title,
-              product: policy_title,
-              policy_number: policy_number
-            },
-            customer: customer_stripe_id,
-            source: stripe_source
-          }.delete_if { |k,v| v.nil? })
+              amount: amount,
+              currency: 'usd',
+              customer: customer_stripe_id,
+              source: stripe_source
+            }.merge(self.invoice.get_descriptor(extra_metadata: { charge_id: self.id })) # provides :description and :metadata
+             .delete_if { |k,v| v.nil? }
+          )
         rescue Stripe::StripeError => e
           pay_attempt_failed(nil, 'unknown', "Payment processor error: #{e.message}")
           remove_instance_variable(:@already_in_on_create)
