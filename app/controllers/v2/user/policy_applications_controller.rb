@@ -193,10 +193,24 @@ module V2
 
       def create_residential
         @application = PolicyApplication.new(create_residential_params)
-        if @application.carrier_id == 5 && !@application.effective_date.nil? && (@application.effective_date >= Time.current.to_date + 90.days || @application.effective_date < Time.current.to_date)
-          render json: { "effective_date" => ["must be within the next 90 days"] }.to_json,
-                 status: 422
-          return
+        if @application.carrier_id == 5 
+          if !@application.effective_date.nil? && (@application.effective_date >= Time.current.to_date + 90.days || @application.effective_date < Time.current.to_date)
+            render json: { "effective_date" => ["must be within the next 90 days"] }.to_json,
+                   status: 422
+            return
+          end
+          unless @application.coverage_selections.blank?
+            @application.coverage_selections.each do |cs|
+              if [ActionController::Parameters, ActiveSupport::HashWithIndifferentAccess, ::Hash].include?(cs['selection'].class)
+                cs['selection']['value'] = cs['selection']['value'].to_d / 100.to_d if cs['selection']['data_type'] == 'currency'
+                cs['selection'] = cs['selection']['value']
+              elsif [ActionController::Parameters, ::Hash].include?(cs[:selection].class)
+                cs[:selection][:value] = cs[:selection][:value].to_d / 100.to_d if cs[:selection][:data_type] == 'currency'
+                cs[:selection] = cs[:selection][:value]
+              end
+            end
+            @application.coverage_selections.push({ 'category' => 'coverage', 'options_type' => 'none', 'uid' => '1010', 'selection' => true })
+          end
         end
 
         if @application.agency.nil? && @application.account.nil?
@@ -402,7 +416,7 @@ module V2
                   :auto_renew, :billing_strategy_id, :account_id, :policy_type_id,
                   :carrier_id, :agency_id, fields: [:title, :value, options: []],
                   questions: [:title, :value, options: []],
-                  coverage_selections: [:category, :uid, :selection],
+                  coverage_selections: [:category, :uid, :selection, selection: [ :data_type, :value ]],
                   policy_rates_attributes: [:insurable_rate_id],
                   policy_insurables_attributes: [:insurable_id])
       end
