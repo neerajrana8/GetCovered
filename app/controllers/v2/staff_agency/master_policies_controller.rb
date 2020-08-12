@@ -85,14 +85,19 @@ module V2
             find_by(id: params[:insurable_id])
 
         if insurable.present?
-          @master_policy.insurables << insurable
+          if @master_policy.insurables.where(id: params[:insurable_id]).any?
+            render json: { error: :insurable_already_added, message: 'Insurable already added' },
+                   status: :bad_request
+          else
+            @master_policy.insurables << insurable
 
-          insurable.buildings.each do |building|
-            @master_policy.insurables << building
-          end
+            insurable.buildings.each do |building|
+              @master_policy.insurables << building
+            end
 
-          @master_policy.start_automatic_master_coverage_policy_issue
-          render json: { message: 'Community added' }, status: :ok
+            @master_policy.start_automatic_master_coverage_policy_issue
+            render json: { message: 'Community added' }, status: :ok
+          end          
         else
           render json: { error: :insurable_was_not_found, message: "Account doesn't have this insurable" },
                  status: :not_found
@@ -173,7 +178,7 @@ module V2
 
       def cancel
         MasterCoverageCancelJob.perform_later(@master_policy.id)
-        render json: { message: "Master policy #{@master_policy.number} was successfully cancelled"}
+        render json: { message: "Master policy #{@master_policy.number} was successfully cancelled" }
       end
 
       def cancel_insurable
@@ -196,10 +201,10 @@ module V2
 
         if @master_policy_coverage.errors.any?
           render json: {
-                         error: :server_error,
-                         message: 'Master policy coverage was not cancelled',
-                         payload: @master_policy_coverage.errors.full_messages
-                       }.to_json,
+            error: :server_error,
+            message: 'Master policy coverage was not cancelled',
+            payload: @master_policy_coverage.errors.full_messages
+          }.to_json,
                  status: :bad_request
         else
           @master_policy_coverage.insurables.take.update(covered: false)
@@ -219,7 +224,7 @@ module V2
 
         permitted_params = params.require(:policy).permit(
           :account_id, :agency_id, :auto_renew, :carrier_id, :effective_date,
-          :expiration_date, :number,
+          :expiration_date, :number, system_data: [:landlord_sumplimental],
           policy_coverages_attributes: %i[policy_application_id limit deductible enabled designation]
         )
 
@@ -231,7 +236,7 @@ module V2
 
         permitted_params = params.require(:policy).permit(
           :account_id, :agency_id, :auto_renew, :carrier_id, :effective_date,
-          :expiration_date, :number,
+          :expiration_date, :number, system_data: [:landlord_sumplimental],
           policy_coverages_attributes: %i[id policy_application_id policy_id
                                           limit deductible enabled designation]
         )
