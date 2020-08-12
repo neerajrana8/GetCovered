@@ -429,7 +429,7 @@ class Invoice < ApplicationRecord
     end
     return {
       description: "#{description}, Invoice ##{self.number}",
-      metadata: metadata.merge(get_payer_metdata).merge({ invoice_id: self.id }).merge(extra_metadata)
+      metadata: metadata.merge(get_payer_metadata).merge({ invoice_id: self.id }).merge(extra_metadata)
     }
   end
   
@@ -440,8 +440,8 @@ class Invoice < ApplicationRecord
     }
     case payer
       when ::User
-        to_return[:payer_first_name] = payer.profile&.first_name,
-        to_return[:payer_last_name] = payer.profile&.last_name,
+        to_return[:payer_first_name] = payer.profile&.first_name
+        to_return[:payer_last_name] = payer.profile&.last_name
         to_return[:payer_phone] = payer.profile&.contact_phone
       when ::Account
         to_return[:payer_company_name] = payer.title
