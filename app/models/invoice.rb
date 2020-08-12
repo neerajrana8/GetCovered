@@ -103,8 +103,19 @@ class Invoice < ApplicationRecord
   #   => true
   
 
-
-  def apply_proration(new_term_last_date, refund_date: nil, to_refund_override: nil, cancel_if_unpaid_override: nil)
+  # params:
+  #   new_term_last_date:         the term end date to be used in calculating the proration (the last day of the term, not the first day of not-the-term)
+  #   refund_date:                the date the refund is initiated, used to calculate whether to refund 'complete_refund_before_term', etc. refundability line items;
+  #                               defaults to Time.current.to_date
+  #   to_refund_override:         an array of { 'line_item' => line_item (or line_item id), 'amount' => number of cents to ensure have been refunded } hashes;
+  #                               defaults to a hash created based on the other parameters which prorates the invoice
+  #   cancel_if_unpaid_override:  true to completely cancel the invoice, rather than only applying the proration, if it is upcoming/available;
+  #                               false to apply the proration as normal;
+  #                               defaults to (new_term_last_date < term_first_date)
+  #   cancel_if_missed_override:  true to completely cancel the invoice, rather than only applying the proration, if it is missed;
+  #                               false to apply the proration as normal;
+  #                               defaults to cancel_if_unpaid_override, if provided, or to its default value if not
+  def apply_proration(new_term_last_date, refund_date: nil, to_refund_override: nil, cancel_if_unpaid_override: nil, cancel_if_missed_override: nil)
     with_lock do
       return false if term_first_date.nil? || term_last_date.nil?
       to_refund = nil
@@ -146,12 +157,13 @@ class Invoice < ApplicationRecord
         end
       end
       cancel_if_unpaid = cancel_if_unpaid_override unless cancel_if_unpaid_override.nil?
+      cancel_if_missed = cancel_if_missed_override.nil? ? cancel_if_unpaid : cancel_if_missed_override
       # apply refund
       case status
-        when 'upcoming', 'available'
+        when 'upcoming', 'available', 'missed'
           # apply a proration adjustment
           # WARNING: if we ever update to allow partial payments, you need to first refund whenever a line item's collected amount exceeds its price
-          if cancel_if_unpaid
+          if (status == 'missed' && cancel_if_missed) || cancel_if_unpaid
             line_items.each do |li|
               li.update(proration_reduction: li.price)
             end
@@ -173,29 +185,32 @@ class Invoice < ApplicationRecord
           result = ensure_refunded(to_refund, "Proration Adjustment", nil)
           return true if result[:success]
           return false # WARNING: we discard result[:errors] here
-        when 'processing', 'missed'
+        when 'processing'
           return update(has_pending_refund: true, pending_refund_data: {
             'proration_refund' => to_refund.map{|li| {
               'line_item' => li['line_item'].id,
               'amount' => li['amount']
             } },
-            'cancel_if_unpaid' => cancel_if_unpaid
+            'cancel_if_unpaid' => cancel_if_unpaid,
+            'cancel_if_missed' => cancel_if_missed
           })
-        when 'missed'
-          if cancel_if_unpaid # treat like an upcoming/available invoice and cancel it
-            line_items.each do |li|
-              li.update(proration_reduction: li.price)
-            end
-            return update(proration_reduction: subtotal, total: 0, status: 'canceled', has_pending_refund: false, pending_refund_data: {})
-          else
-            return update(has_pending_refund: true, pending_refund_data: {
-              'proration_refund' => to_refund.map{|li| {
-                'line_item' => li['line_item'].id,
-                'amount' => li['amount']
-              } },
-              'cancel_if_unpaid' => cancel_if_unpaid
-            })
-          end
+        # Missed has been moved to be treated identically with upcoming & available...
+        #when 'missed'
+        #  if cancel_if_missed # treat like an upcoming/available invoice and cancel it
+        #    line_items.each do |li|
+        #      li.update(proration_reduction: li.price)
+        #    end
+        #    return update(proration_reduction: subtotal, total: 0, status: 'canceled', has_pending_refund: false, pending_refund_data: {})
+        #  else # treat like a processing invoice and mark for post-payment refund
+        #    return update(has_pending_refund: true, pending_refund_data: {
+        #      'proration_refund' => to_refund.map{|li| {
+        #        'line_item' => li['line_item'].id,
+        #        'amount' => li['amount']
+        #      } },
+        #      'cancel_if_unpaid' => cancel_if_unpaid,
+        #      'cancel_if_missed' => cancel_if_missed
+        #    })
+        #  end
         when 'canceled'
           # apply a proration_reduction to the total (might as well keep track of changes even to canceled invoices)
           prored = to_refund.inject(0){|sum,li| sum + li['amount'] }
@@ -363,7 +378,7 @@ class Invoice < ApplicationRecord
         invoiceable.payment_succeeded(self) if invoiceable.respond_to?(:payment_succeeded)
         # handle pending proration refund if we have one
         if has_pending_refund && pending_refund_data.has_key?('proration_refund')
-          if apply_proration(nil, to_refund_override: pending_refund_data['proration_refund'], cancel_if_unpaid_override: pending_refund_data['cancel_if_unpaid'])
+          if apply_proration(nil, to_refund_override: pending_refund_data['proration_refund'], cancel_if_unpaid_override: pending_refund_data['cancel_if_unpaid'], cancel_if_missed_override: pending_refund_data['cancel_if_missed'])
             update_columns(has_pending_refund: false)
           else
             # WARNING: do nothing on proration application failure... would be a good place for a generalized error to be logged to the db
@@ -391,7 +406,7 @@ class Invoice < ApplicationRecord
       if self.status == 'available' || (!unless_processing && self.status == 'processing') # other statuses mean we were canceled or already paid
         self.update!(status: 'missed')
         if self.has_pending_refund && self.pending_refund_data.has_key?('proration_refund')
-          if apply_proration(nil, to_refund_override: pending_refund_data['proration_refund'], cancel_if_unpaid_override: pending_refund_data['cancel_if_unpaid'])
+          if apply_proration(nil, to_refund_override: pending_refund_data['proration_refund'], cancel_if_unpaid_override: pending_refund_data['cancel_if_unpaid'], cancel_if_missed_override: pending_refund_data['cancel_if_missed'])
             update!(has_pending_refund: false)
           else
             # WARNING: do nothing on proration application failure... would be a good place for a generalized error to be logged to the db
