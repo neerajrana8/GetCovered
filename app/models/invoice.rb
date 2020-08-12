@@ -169,6 +169,7 @@ class Invoice < ApplicationRecord
           end
         when 'complete'
           # apply the refund
+          return true if to_refund.blank?
           result = ensure_refunded(to_refund, "Proration Adjustment", nil)
           return true if result[:success]
           return false # WARNING: we discard result[:errors] here
@@ -180,6 +181,21 @@ class Invoice < ApplicationRecord
             } },
             'cancel_if_unpaid' => cancel_if_unpaid
           })
+        when 'missed'
+          if cancel_if_unpaid # treat like an upcoming/available invoice and cancel it
+            line_items.each do |li|
+              li.update(proration_reduction: li.price)
+            end
+            return update(proration_reduction: subtotal, total: 0, status: 'canceled', has_pending_refund: false, pending_refund_data: {})
+          else
+            return update(has_pending_refund: true, pending_refund_data: {
+              'proration_refund' => to_refund.map{|li| {
+                'line_item' => li['line_item'].id,
+                'amount' => li['amount']
+              } },
+              'cancel_if_unpaid' => cancel_if_unpaid
+            })
+          end
         when 'canceled'
           # apply a proration_reduction to the total (might as well keep track of changes even to canceled invoices)
           prored = to_refund.inject(0){|sum,li| sum + li['amount'] }
