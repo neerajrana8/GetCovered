@@ -153,14 +153,15 @@ class Policy < ApplicationRecord
     disqualification:           5
   }
   
-  # Cancellation-related constants
+  # Cancellation reasons with special refund logic; allowed values:
+  #   early_cancellation:       within the first (CarrierInsurableType.max_days_for_full_refund || 30) days a refund will be issued equivalent to a refund prorated for the day before the policy's effective_date
+  #   no_refund:                no refund will be issued, but available/upcoming/missed invoices will be cancelled, and processing invoices will be cancelled if they fail (but not refunded if they succeed)
   
-  # cancellation_reasons for which within the first (CarrierInsurableType.max_days_for_full_refund || 30) days a refund will be issued
-  # equivalent to a refund prorated for the day before the policy's effective_date
-  EARLY_REFUND_CANCELLATION_REASONS = ['insured_request']
+  SPECIAL_CANCELLATION_REFUND_LOGIC = {
+    'insured_request' => :early_cancellation, 
+    'nonpayment'      => :no_refund
+  }
   
-  # cancellation_reasons for which a prorated refund will generally be issued for the cancellation date
-  PRORATED_REFUND_CANCELLATION_REASONS = ['agent_request', 'insured_request', 'new_application_nonpayment', 'underwriter_cancellation']
   
   
   
@@ -269,12 +270,16 @@ class Policy < ApplicationRecord
     # Handle reason
     return "Cancellation reason is invalid" unless self.class.cancellation_reasons.has_key?(reason)
     # Slaughter the invoices
-    max_days_for_full_refund = (CarrierPolicyType.where(policy_type_id: self.policy_type_id, carrier_id: self.carrier_id).take&.max_days_for_full_refund || 30).days
-    effective_cancel_date = EARLY_REFUND_CANCELLATION_REASONS.include?(reason) ?
-      ((self.created_at + max_days_for_full_refund >= cancel_date) ? self.created_at - 2.days : cancel_date) # MOOSE WARNING: but this will cause problems with renewals, no?
-      : cancel_date
-    self.invoices.each do |invoice|
-      invoice.apply_proration(effective_cancel_date, refund_date: effective_cancel_date) # we pass refund_date too just in case someone uses the 'complete_refund_x' refundabilities one day
+    special_logic = SPECIAL_CANCELLATION_REFUND_LOGIC[reason]
+    case special_logic
+      when :early_cancellation
+        max_days_for_full_refund = (CarrierPolicyType.where(policy_type_id: self.policy_type_id, carrier_id: self.carrier_id).take&.max_days_for_full_refund || 30).days
+        effective_cancel_date = ((self.created_at + max_days_for_full_refund >= cancel_date) ? self.created_at - 2.days : cancel_date) # MOOSE WARNING: but this -2.days will cause problems with renewals, no?
+        self.invoices.each{|invoice| invoice.apply_proration(effective_cancel_date, refund_date: effective_cancel_date) }
+      when :no_refund
+        self.invoices.each{|invoice| invoice.apply_proration(cancel_date, refund_date: cancel_date, to_refund_override: {}, cancel_if_unpaid_override: true, cancel_if_missed_override: true) }
+      else
+        self.invoices.each{|invoice| invoice.apply_proration(cancel_date, refund_date: cancel_date) }
     end
     # Mark cancelled
     update_columns(status: 'CANCELLED', cancellation_reason: reason, cancellation_date: cancel_date)
