@@ -56,7 +56,7 @@ module V2
                        ),
                  status: :unprocessable_entity
         else
-          if @master_policy.update(update_params)
+          if @master_policy.update(update_params) && @master_policy.policy_premiums.take.update(create_policy_premium)
             render json: { message: 'Master Policy updated', payload: { policy: @master_policy.attributes } },
                    status: :created
           else
