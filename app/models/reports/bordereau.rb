@@ -44,7 +44,6 @@ module Reports
         'tenant_email' => 'TenantEmail',
         'tenant_name' => 'TenantName',
         'tenant_address' => 'TenantAddress',
-        'tenant_unit' => 'TenantUnit',
         'tenant_city' => 'TenantCity',
         'tenant_state' => 'TenantState',
         'tenant_zip' => 'TenantZipCode',
@@ -61,7 +60,7 @@ module Reports
     def headers
       %w[master_policy_number master_policy_coverage_number agent_id agent_email
          property_manager_id property_manager_name property_manager_email community_name community_id unit_id tenant_id
-         tenant_email tenant_name tenant_address tenant_unit tenant_city tenant_state tenant_zip unit_state transaction
+         tenant_email tenant_name tenant_address tenant_city tenant_state tenant_zip unit_state transaction
          effective_date expiration_date cancellation_date liability_limit coverage_c_limit]
     end
 
@@ -97,93 +96,60 @@ module Reports
     end
 
     def row(coverage)
+      primary_insurable = coverage.primary_insurable
+      tenant = primary_insurable.leases.where(status: 'current').take&.primary_user
+      property_manager = primary_insurable&.staffs&.take
       {
         'master_policy_number' => coverage.number,
         'master_policy_coverage_number' => coverage.policy,
         'agent_id' => coverage.agency.id,
         'agent_email' => coverage.agency,
-        'property_manager_id' => coverage.insurables.take.staffs,
-        'property_manager_name' => ,
-        'property_manager_email' => 'PropMgrEmail',
-        'community_name' => 'CommunityName',
-        'community_id' => 'CommunityID',
-        'unit_id' => 'UnitID',
-        'tenant_id' => 'TenantID',
-        'tenant_email' => 'TenantEmail',
-        'tenant_name' => 'TenantName',
-        'tenant_address' => 'TenantAddress',
-        'tenant_unit' => 'TenantUnit',
-        'tenant_city' => 'TenantCity',
-        'tenant_state' => 'TenantState',
-        'tenant_zip' => 'TenantZipCode',
-        'unit_state' => 'Risk_State',
-        'transaction' => 'Transaction',
-        'effective_date' => 'Eff_Date',
-        'expiration_date' => 'Exp_Date',
-        'cancellation_date' => 'Canc_date',
-        'liability_limit' => 'Tenant_Liability_Limit',
-        'coverage_c_limit' => 'Tenant_CovC_Limit',
+        'property_manager_id' => coverage.account.id,
+        'property_manager_name' => coverage.account.title,
+        'property_manager_email' => primary_insurable.present? ? property_manager.email : coverage.account.contact_info[:contact_email],
+        'community_name' => primary_insurable&.parent_community&.title,
+        'community_id' => primary_insurable&.parent_community&.id,
+        'unit_id' => primary_insurable&.id,
+        'tenant_id' => tenant&.id,
+        'tenant_email' => tenant&.email,
+        'tenant_name' => tenant&.profile&.full_name,
+        'tenant_address' => tenant&.address&.full,
+        'tenant_city' => tenant&.address&.city,
+        'tenant_state' => tenant&.address&.state,
+        'tenant_zip' => tenant&.address&.zip_code,
+        'unit_state' => primary_insurable&.primary_address&.state,
+        'transaction' => coverage_transaction(coverage),
+        'effective_date' => coverage.expiration_date,
+        'expiration_date' => coverage.effective_date,
+        'cancellation_date' => coverage.cancellation_date_date,
+        'liability_limit' => liability_limit(coverage),
+        'coverage_c_limit' => coverage_c_limit(coverage),
       }
     end
 
-    def community_report_data(community)
-      participation_report_data = ::Reports::Participation.new(reportable: community).generate.data
-      last_month_data = last_month_community_data(community)
-
-      {
-        'insurable_id' => community.id,
-        'property_name' => community.primary_address&.full,
-        'current_participation' => participation_report_data['participation_rate'],
-        'last_month_participation' => last_month_data[:participation],
-        'change_in_participation' => participation_report_data['participation_rate'] - last_month_data[:participation].to_f,
-        'participation_trend' => participation_trend(participation_report_data['participation_rate'], last_month_data[:participation]),
-        'current_in_system_participation' => participation_report_data['in_system_participation_rate'],
-        'last_month_in_system_participation' => last_month_data[:in_system],
-        'change_in_system_participation' => participation_report_data['in_system_participation_rate'] - last_month_data[:in_system].to_f,
-        'current_3rd_party_participation' => participation_report_data['3rd_party_participation_rate'],
-        'last_month_3rd_party_participation' => last_month_data[:third_party],
-        'change_3rd_party_participation' => participation_report_data['3rd_party_participation_rate'] - last_month_data[:third_party].to_f,
-        'total_in_system_active_policies' => participation_report_data['number_active_system_policies'],
-        'total_3rd_party_active_policies' => participation_report_data['number_active_3rd_party_policies']
-      }
-    end
-
-    def participation_trend(participation, last_month_participation)
-      if last_month_participation
-        if participation > last_month_participation.to_f.round(2)
-          'up'
-        elsif participation < last_month_participation.to_f.round(2)
-          'down'
-        else
-          'not changed'
-        end
+    def coverage_transaction(coverage)
+      if coverage.effective_date > range_start
+        'New'
+      elsif coverage.cancellation_date_date.present? && coverage.cancellation_date_date.betweet?(range_start, range_end)
+        'Cancelled'
       else
-        nil
+        'Renew'
       end
     end
 
-    def last_month_community_data(community)
-      if last_month_report.present?
-        row_data = last_month_report.data['rows'].detect{ |row| row['insurable_id'] == community.id }
-        if row_data.present?
-          {
-            participation: row_data['current_participation'],
-            in_system: row_data['current_in_system_participation'],
-            third_party: row_data['current_3rd_party_participation']
-          }
-        else
-          {
-            participation: nil,
-            in_system: nil,
-            third_party: nil
-          }
-        end
+    def liability_limit(coverage)
+      if coverage.system_data[:landlord_sumplimental]
+        coverage.policy.policy_coverages.find_by_designation('liability')&.limit
       else
-        {
-          participation: nil,
-          in_system: nil,
-          third_party: nil
-        }
+        ''
+      end
+    end
+
+    def coverage_c_limit(coverage)
+      if coverage.system_data[:landlord_sumplimental]
+        coverage.policy.policy_coverages.find_by_designation('coverage_c')&.limit
+      else
+        ''
       end
     end
 
