@@ -68,20 +68,24 @@ module Reports
     private
 
     def rows
-      coverages.map {|community| community_report_data(community)}
+      coverages.map { |coverage| row(coverage) }
     end
 
     def coverages
-      base_query
-      coverages ||=
+      base_query =
+        Policy.
+          includes(:policy, :insurables, :users, :agency, :account, policy: :insurables).
+          where(policy_type_id: PolicyType::MASTER_COVERAGE_ID).
+          where(coverages_condition, range_start: range_start, range_end: range_end)
+      coverages =
         if reportable.blank?
-            Policies.where(coverages_condition, range_start: range_start, range_end: range_end)
+          base_query
         elsif reportable.is_a? Account
-          Policies.where(coverages_condition, range_start: range_start, range_end: range_end)
+          base_query.where(account: reportable)
         elsif reportable.is_a? Agency
-          Policies.where(coverages_condition, range_start: range_start, range_end: range_end, agency)
+          base_query.where(agency: reportable)
         end
-      reportable.insurables.communities
+      coverages
     end
 
     def coverages_condition
@@ -90,6 +94,36 @@ module Reports
         OR (expiration_date > :range_start AND expiration_date < :range_end) 
         OR (effective_date >= :range_start AND effective_date < :range_end)
       SQL
+    end
+
+    def row(coverage)
+      {
+        'master_policy_number' => coverage.number,
+        'master_policy_coverage_number' => coverage.policy,
+        'agent_id' => coverage.agency.id,
+        'agent_email' => coverage.agency,
+        'property_manager_id' => coverage.insurables.take.staffs,
+        'property_manager_name' => ,
+        'property_manager_email' => 'PropMgrEmail',
+        'community_name' => 'CommunityName',
+        'community_id' => 'CommunityID',
+        'unit_id' => 'UnitID',
+        'tenant_id' => 'TenantID',
+        'tenant_email' => 'TenantEmail',
+        'tenant_name' => 'TenantName',
+        'tenant_address' => 'TenantAddress',
+        'tenant_unit' => 'TenantUnit',
+        'tenant_city' => 'TenantCity',
+        'tenant_state' => 'TenantState',
+        'tenant_zip' => 'TenantZipCode',
+        'unit_state' => 'Risk_State',
+        'transaction' => 'Transaction',
+        'effective_date' => 'Eff_Date',
+        'expiration_date' => 'Exp_Date',
+        'cancellation_date' => 'Canc_date',
+        'liability_limit' => 'Tenant_Liability_Limit',
+        'coverage_c_limit' => 'Tenant_CovC_Limit',
+      }
     end
 
     def community_report_data(community)
