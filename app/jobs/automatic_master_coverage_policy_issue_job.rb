@@ -22,6 +22,7 @@ class AutomaticMasterCoveragePolicyIssueJob < ApplicationJob
             expiration_date: master_policy.expiration_date,
             system_data: master_policy.system_data
           )
+          unit.update(covered: true)
         end
       end
     end
