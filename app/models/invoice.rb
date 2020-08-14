@@ -166,7 +166,7 @@ class Invoice < ApplicationRecord
           result = ensure_refunded(to_refund, "Proration Adjustment", nil)
           return true if result[:success]
           return false # WARNING: we discard result[:errors] here
-        when 'upcoming', 'available', 'missed_keep'
+        when 'upcoming', 'available', 'missed_keep' # WARNING: for missed-and-not-to-be-canceled invoices here we lose information on the original missed amount, retaining only what is actually due now
           # apply a proration adjustment
           prored = to_refund.inject(0){|sum,li| sum + li['amount'] }
           if prored > subtotal
