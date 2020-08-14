@@ -58,7 +58,7 @@ module V2
 
       def update
         if update_allowed?
-          if @insurable.update_as(current_staff, insurable_params)
+          if @insurable.update_as(current_staff, update_params)
             render :show,
                    status: :ok
           else
@@ -190,6 +190,29 @@ module V2
         to_return = params.require(:insurable).permit(
           :category, :covered, :enabled, :insurable_id,
           :insurable_type_id, :title, addresses_attributes: %i[
+            city country county id latitude longitude
+            plus_four state street_name street_number
+            street_two timezone zip_code
+          ]
+        )
+
+        existed_ids = to_return[:addresses_attributes]&.map { |addr| addr[:id] }
+
+        unless @insurable.blank? || existed_ids.nil? || existed_ids.compact.blank?
+          (@insurable.addresses.pluck(:id) - existed_ids).each do |id|
+            to_return[:addresses_attributes] <<
+              ActionController::Parameters.new(id: id, _destroy: true).permit(:id, :_destroy)
+          end
+        end
+        to_return
+      end
+
+      def update_params
+        return({}) if params[:insurable].blank?
+
+        to_return = params.require(:insurable).permit(
+          :covered, :enabled, :insurable_id,
+          :title, addresses_attributes: %i[
             city country county id latitude longitude
             plus_four state street_name street_number
             street_two timezone zip_code
