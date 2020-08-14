@@ -159,60 +159,15 @@ class Invoice < ApplicationRecord
       cancel_if_unpaid = cancel_if_unpaid_override unless cancel_if_unpaid_override.nil?
       cancel_if_missed = cancel_if_missed_override.nil? ? cancel_if_unpaid : cancel_if_missed_override
       # apply refund
-      case status
-        when 'upcoming', 'available', 'missed'
-          # apply a proration adjustment
-          # WARNING: if we ever update to allow partial payments, you need to first refund whenever a line item's collected amount exceeds its price
-          if (status == 'missed' && cancel_if_missed) || cancel_if_unpaid
-            line_items.each do |li|
-              li.update(proration_reduction: li.price)
-            end
-            return update(proration_reduction: subtotal, total: 0, status: 'canceled')
-          else
-            prored = to_refund.inject(0){|sum,li| sum + li['amount'] }
-            if prored > subtotal
-              self.reduce_distribution_total(subtotal, :adjustment, to_refund)
-              prored = subtotal
-            end
-            to_refund.each do |li|
-              li['line_item'].update(proration_reduction: li['amount'])
-            end
-            return update(proration_reduction: prored, total: subtotal - prored) # MOOSE WARNING; would we like to cancel the invoice if total is zero?
-          end
+      case status == 'missed' ? ("missed_#{cancel_if_missed ? 'cancel' : 'keep'}") : status
         when 'complete'
           # apply the refund
           return true if to_refund.blank?
           result = ensure_refunded(to_refund, "Proration Adjustment", nil)
           return true if result[:success]
           return false # WARNING: we discard result[:errors] here
-        when 'processing'
-          return update(has_pending_refund: true, pending_refund_data: {
-            'proration_refund' => to_refund.map{|li| {
-              'line_item' => li['line_item'].id,
-              'amount' => li['amount']
-            } },
-            'cancel_if_unpaid' => cancel_if_unpaid,
-            'cancel_if_missed' => cancel_if_missed
-          })
-        # Missed has been moved to be treated identically with upcoming & available...
-        #when 'missed'
-        #  if cancel_if_missed # treat like an upcoming/available invoice and cancel it
-        #    line_items.each do |li|
-        #      li.update(proration_reduction: li.price)
-        #    end
-        #    return update(proration_reduction: subtotal, total: 0, status: 'canceled', has_pending_refund: false, pending_refund_data: {})
-        #  else # treat like a processing invoice and mark for post-payment refund
-        #    return update(has_pending_refund: true, pending_refund_data: {
-        #      'proration_refund' => to_refund.map{|li| {
-        #        'line_item' => li['line_item'].id,
-        #        'amount' => li['amount']
-        #      } },
-        #      'cancel_if_unpaid' => cancel_if_unpaid,
-        #      'cancel_if_missed' => cancel_if_missed
-        #    })
-        #  end
-        when 'canceled'
-          # apply a proration_reduction to the total (might as well keep track of changes even to canceled invoices)
+        when 'upcoming', 'available', 'missed_keep'
+          # apply a proration adjustment
           prored = to_refund.inject(0){|sum,li| sum + li['amount'] }
           if prored > subtotal
             self.reduce_distribution_total(subtotal, :adjustment, to_refund)
@@ -221,7 +176,21 @@ class Invoice < ApplicationRecord
           to_refund.each do |li|
             li['line_item'].update(proration_reduction: li['amount'])
           end
-          return update(proration_reduction: prored, total: subtotal - prored)
+          return update({ proration_reduction: prored, total: subtotal - prored }.merge(
+            (cancel_if_unpaid && status != 'missed') ? { status: 'canceled' } : {}
+          )
+        when 'processing', 'canceled', 'missed_cancel'
+          return update({
+            has_pending_refund: true,
+            pending_refund_data: {
+              'proration_refund' => to_refund.map{|li| {
+                'line_item' => li['line_item'].id,
+                'amount' => li['amount']
+              } },
+              'cancel_if_unpaid' => cancel_if_unpaid,
+              'cancel_if_missed' => cancel_if_missed
+            }
+          }.merge(status == 'missed' ? { status: 'canceled' } : {}))
       end
     end
     return false
@@ -344,7 +313,7 @@ class Invoice < ApplicationRecord
                        charges.create(amount: total, stripe_id: stripe_source)
                      elsif !stripe_token.nil?  # use token
                        charges.create(amount: total, stripe_id: stripe_token)
-                     else                      # use charge's default behavior (which right now is to fail with an error message, and shall probably remain such)
+                     else                      # use charge's default behavior (which right now this is to succeed if the amount is 0, else to fail with an error message)
                        charges.create(amount: total)
                      end
 
