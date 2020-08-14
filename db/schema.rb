@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_06_24_060419) do
+ActiveRecord::Schema.define(version: 2020_08_10_045908) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -288,6 +288,8 @@ ActiveRecord::Schema.define(version: 2020_06_24_060419) do
     t.bigint "policy_type_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "premium_refundable", default: true, null: false
+    t.integer "max_days_for_full_refund", default: 30
     t.index ["carrier_id"], name: "index_carrier_policy_types_on_carrier_id"
     t.index ["policy_type_id"], name: "index_carrier_policy_types_on_policy_type_id"
   end
@@ -768,8 +770,7 @@ ActiveRecord::Schema.define(version: 2020_06_24_060419) do
     t.integer "billing_status"
     t.integer "billing_dispute_count", default: 0, null: false
     t.date "billing_behind_since"
-    t.integer "cancellation_code"
-    t.string "cancellation_date_date"
+    t.string "cancellation_date"
     t.integer "status"
     t.datetime "status_changed_on"
     t.integer "billing_dispute_status", default: 0, null: false
@@ -793,6 +794,7 @@ ActiveRecord::Schema.define(version: 2020_06_24_060419) do
     t.string "address"
     t.string "out_of_system_carrier_title"
     t.bigint "policy_id"
+    t.integer "cancellation_reason"
     t.index ["account_id"], name: "index_policies_on_account_id"
     t.index ["agency_id"], name: "index_policies_on_agency_id"
     t.index ["carrier_id"], name: "index_policies_on_carrier_id"
