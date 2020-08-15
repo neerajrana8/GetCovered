@@ -92,21 +92,21 @@ module Reports
         (effective_date >= :range_start AND expiration_date < :range_end) 
         OR (expiration_date > :range_start AND expiration_date < :range_end) 
         OR (effective_date >= :range_start AND effective_date < :range_end)
+        OR (effective_date < :range_start AND expiration_date >= :range_end)
       SQL
     end
 
     def row(coverage)
       primary_insurable = coverage.primary_insurable
       tenant = primary_insurable.leases.where(status: 'current').take&.primary_user
-      property_manager = primary_insurable&.staffs&.take
       {
         'master_policy_number' => coverage.number,
-        'master_policy_coverage_number' => coverage.policy,
+        'master_policy_coverage_number' => coverage.policy.number,
         'agent_id' => coverage.agency.id,
-        'agent_email' => coverage.agency,
+        'agent_email' => coverage.agency.contact_info[:contact_email],
         'property_manager_id' => coverage.account.id,
         'property_manager_name' => coverage.account.title,
-        'property_manager_email' => primary_insurable.present? ? property_manager.email : coverage.account.contact_info[:contact_email],
+        'property_manager_email' => coverage.account.contact_info[:contact_email],
         'community_name' => primary_insurable&.parent_community&.title,
         'community_id' => primary_insurable&.parent_community&.id,
         'unit_id' => primary_insurable&.id,
@@ -138,7 +138,7 @@ module Reports
     end
 
     def liability_limit(coverage)
-      if coverage.system_data[:landlord_sumplimental]
+      if coverage.system_data['landlord_sumplimental']
         coverage.policy.policy_coverages.find_by_designation('liability')&.limit
       else
         ''
@@ -146,7 +146,7 @@ module Reports
     end
 
     def coverage_c_limit(coverage)
-      if coverage.system_data[:landlord_sumplimental]
+      if coverage.system_data['landlord_sumplimental']
         coverage.policy.policy_coverages.find_by_designation('coverage_c')&.limit
       else
         ''
