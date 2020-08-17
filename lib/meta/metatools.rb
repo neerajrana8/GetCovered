@@ -108,7 +108,7 @@ def all_models(
         # apply constraints to reflections
         pool = m.reflections.select{|k,v| true } # make copy
         pool.select!{|rn,rd| assoc_data[:name].include?(rn) } unless assoc_data[:name].nil?
-        pool.select!{|rn,rd| assoc_data[:polymorphic] == rd.polymorphic? } unless assoc_data[:polymorphic].nil?
+        pool.select!{|rn,rd| assoc_data[:polymorphic] ? rd.polymorphic? : !rd.polymorphic? } unless assoc_data[:polymorphic].nil?
         pool.select!{|rn,rd| assoc_data[:type].include?(rd.macro) } unless assoc_data[:type].nil?
         pool.select! do |rn,rd|
           next true if !assoc_data[:forbid_multi_targets] && assoc_data[:poly] && rd.polymorphic? # including nil in the target list allows any polymorphic assoc, unless we forbid multi-targets--then it allows any polymorphic assoc with only 1 target
