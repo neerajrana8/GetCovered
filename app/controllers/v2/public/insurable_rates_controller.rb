@@ -14,7 +14,7 @@ module V2
 		  	
         # get the billing period, either from a string or from a BillingStrategy id
         billing_period = "month"
-        if params[:billing_period].presence?
+        unless params[:billing_period].blank?
           billing_strategy = (Integer(params[:billing_period]) rescue 0)
           billing strategy = billing_strategy == 0 ? nil : ::BillingStrategy.where(id: billing_strategy).take
           if billing_strategy.nil?
