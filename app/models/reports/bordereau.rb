@@ -4,24 +4,23 @@ module Reports
     NAME = 'Bordereau'.freeze
 
     def generate
-      self.data['rows'] = rows
+      data['rows'] = rows
       self
     end
 
     def to_csv
       CSV.generate(headers: true) do |csv|
-        total_names.keys.each do |field|
-          csv << [total_names[field], self.data['total'][field]]
-        end
-
-        csv << []
-
-        csv << headers.map{|header| column_names[header]}
+        csv << headers.map { |header| column_names[header] }
         data['rows'].each do |row|
           table_row = []
           headers.each do |attr|
-            ap row["#{attr}"]
-            table_row << row["#{attr}"]
+            table_row <<
+              if %w[liability_limit coverage_c_limit].include?(attr) && row['landlord_sumplimental'].present?
+                value = row[attr.to_s].present? ? format('%.2f', row[attr.to_s].to_i / 100.0) : ''
+                "$#{value}"
+              else
+                row[attr.to_s]
+              end
           end
           csv << table_row
         end
@@ -53,7 +52,7 @@ module Reports
         'expiration_date' => 'Exp_Date',
         'cancellation_date' => 'Canc_date',
         'liability_limit' => 'Tenant_Liability_Limit',
-        'coverage_c_limit' => 'Tenant_CovC_Limit',
+        'coverage_c_limit' => 'Tenant_CovC_Limit'
       }
     end
 
@@ -122,8 +121,9 @@ module Reports
         'effective_date' => coverage.expiration_date,
         'expiration_date' => coverage.effective_date,
         'cancellation_date' => coverage.cancellation_date_date,
+        'landlord_sumplimental' => coverage.system_data['landlord_sumplimental'],
         'liability_limit' => liability_limit(coverage),
-        'coverage_c_limit' => coverage_c_limit(coverage),
+        'coverage_c_limit' => coverage_c_limit(coverage)
       }
     end
 

@@ -94,10 +94,8 @@ describe 'Reports::Bordereau' do
       expect { report }.to change { Report.all.count }.by(1)
     end
 
-    it 'has the one roe' do
-      ap report.data
+    it 'has two rows' do
       expect(report.data['rows'].count).to eq(2)
     end
   end
-
 end
