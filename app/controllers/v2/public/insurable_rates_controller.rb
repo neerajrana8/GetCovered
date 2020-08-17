@@ -16,7 +16,7 @@ module V2
         billing_period = "month"
         unless params[:billing_period].blank?
           billing_strategy = (Integer(params[:billing_period]) rescue 0)
-          billing strategy = billing_strategy == 0 ? nil : ::BillingStrategy.where(id: billing_strategy).take
+          billing_strategy = billing_strategy == 0 ? nil : ::BillingStrategy.where(id: billing_strategy).take
           if billing_strategy.nil?
             billing_period = params[:billing_period].downcase.sub(/ly/, '').gsub('-', '_') if params[:billing_period].class == ::String
           else
