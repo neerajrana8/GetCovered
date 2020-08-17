@@ -118,6 +118,8 @@ if @get_covered.save
 
   @get_covered.billing_strategies.create!(title: 'Annually', enabled: true, carrier: @qbe, 
                                     				policy_type: PolicyType.find(1), carrier_code: "FL",
+                                            new_business: { payments: [100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
+                                                            payments_per_term: 1, remainder_added_to_deposit: true }, 
                                     				fees_attributes: [service_fee])
                                     
   @get_covered.billing_strategies.create!(title: 'Bi-Annually', enabled: true,  carrier_code: "SA",
@@ -165,13 +167,13 @@ if @get_covered.save
                                     
   @get_covered.billing_strategies.create!(title: 'Quarterly', enabled: true,  carrier_code: "F",
 		                                      new_business: { payments: [40, 0, 0, 20, 0, 0, 20, 0, 0, 20, 0, 0], 
-		                                                      payments_per_term: 12, remainder_added_to_deposit: true },
+		                                                      payments_per_term: 4, remainder_added_to_deposit: true },
 		                                      carrier: @crum, policy_type: PolicyType.find(4), 
                                   				fees_attributes: [service_fee])
                                     
   @get_covered.billing_strategies.create!(title: 'Annually', enabled: true,  carrier_code: "A",
 		                                      new_business: { payments: [100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
-		                                                      payments_per_term: 12, remainder_added_to_deposit: true },
+		                                                      payments_per_term: 1, remainder_added_to_deposit: true },
 		                                      carrier: @crum, policy_type: PolicyType.find(4), 
                                   				fees_attributes: [service_fee])
   																						
@@ -200,6 +202,8 @@ if @get_covered.save
   unless ENV['skip_msi']
     @get_covered.billing_strategies.create!(title: 'Annually', enabled: true, carrier: @msi, 
                                               policy_type: PolicyType.find(1), carrier_code: "Annual",
+                                              new_business: { payments: [100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
+                                                              payments_per_term: 1, remainder_added_to_deposit: true }, 
                                               fees_attributes: [service_fee])
                                       
     @get_covered.billing_strategies.create!(title: 'Bi-Annually', enabled: true,  carrier_code: "SemiAnnual",
@@ -352,7 +356,7 @@ end
     
     cambridge_agency.billing_strategies.create!(title: 'Annually', enabled: true, carrier: @qbe, carrier_code: "FL",
       		                                      new_business: { payments: [100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
-      		                                                      payments_per_term: 2, remainder_added_to_deposit: true }, 
+      		                                                      payments_per_term: 1, remainder_added_to_deposit: true }, 
                                       				  policy_type: PolicyType.find(1))
                                       
     cambridge_agency.billing_strategies.create!(title: 'Bi-Annually', enabled: true, carrier_code: "SA", 
@@ -497,7 +501,7 @@ end
     
     gc_qbesub_agency.billing_strategies.create!(title: 'Annually', enabled: true, carrier: @qbe, 
       		                                      new_business: { payments: [100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
-      		                                                      payments_per_term: 2, remainder_added_to_deposit: true },
+      		                                                      payments_per_term: 1, remainder_added_to_deposit: true },
                                       				   carrier_code: "FL", policy_type: PolicyType.find(1))
                                       
     gc_qbesub_agency.billing_strategies.create!(title: 'Bi-Annually', enabled: true, carrier_code: "SA",

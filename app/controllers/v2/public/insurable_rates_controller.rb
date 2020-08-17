@@ -12,9 +12,20 @@ module V2
 		  	@address = @insurable.primary_address()
 		  	@rates = {}
 		  	
+        # get the billing period, either from a string or from a BillingStrategy id
+        billing_period = "month"
+        if params[:billing_period].presence?
+          billing_strategy = (Integer(params[:billing_period]) rescue 0)
+          billing strategy = billing_strategy == 0 ? nil : ::BillingStrategy.where(id: billing_strategy).take
+          if billing_strategy.nil?
+            billing_period = params[:billing_period].downcase.sub(/ly/, '').gsub('-', '_') if params[:billing_period].class == ::String
+          else
+            billing_period = { 1 => "annual", 2 => "bi_annual", 4 => "quarter", 12 => "month" }[billing_strategy.new_business["payments_per_term"]]
+            billing_period = 'month' if billing_period.nil?
+          end
+        end
+        # get other params and go wild
 		  	insured_count = params[:number_insured].presence ? params[:number_insured] : 1
-		  	billing_period = params[:billing_period].presence ? params[:billing_period].downcase.sub(/ly/, '').gsub('-', '_') :
-		  																											"month"
 		  	deductible = params[:deductible].presence ? Integer(params[:deductible]) * 100 : @address.state == "FL" ? 50000 : 25000
 		  	hurricane = params[:hurricane].presence ? Integer(params[:hurricane]) * 100 : @address.state == "FL" ? 50000 : nil
 		  	
