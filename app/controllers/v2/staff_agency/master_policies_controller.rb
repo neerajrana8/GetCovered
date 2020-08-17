@@ -11,7 +11,7 @@ module V2
                              cancel cancel_coverage master_policy_coverages cancel_insurable]
 
       def index
-        master_policies_relation = Policy.where(policy_type_id: PolicyType::MASTER_ID, agency_id: @agency.id)
+        master_policies_relation = Policy.where(policy_type_id: PolicyType::MASTER_ID, agency_id: @agency.id).order(created_at: :desc)
         master_policies_relation = master_policies_relation.where(account_id: params[:account_id]) if params[:account_id].present?
         master_policies_relation = master_policies_relation.where(status: params[:status]) if params[:status].present?
 

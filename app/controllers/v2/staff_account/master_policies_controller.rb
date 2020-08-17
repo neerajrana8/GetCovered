@@ -9,7 +9,7 @@ module V2
                                           master_policy_coverages cover_unit cancel_coverage available_top_insurables]
 
       def index
-        master_policies_relation = Policy.where(policy_type_id: PolicyType::MASTER_ID, account: @account)
+        master_policies_relation = Policy.where(policy_type_id: PolicyType::MASTER_ID, account: @account).order(created_at: :desc)
         master_policies_relation = master_policies_relation.where(status: params[:status]) if params[:status].present?
         @master_policies = paginator(master_policies_relation)
         render template: 'v2/shared/master_policies/index', status: :ok
