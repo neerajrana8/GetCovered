@@ -241,13 +241,22 @@ class MsiService
           ]
         ]
       },
-      'nonzero_hurricane_deductible' => {
-        'message' => 'Hurricane deductible cannot be zero',
+      'five_hundred_only_hurricane_deductible' => {
+        'message' => 'Hurricane deductible must be $500',
         'code' => ['=',
           ['value', 'deductible', @@coverage_codes[:Hurricane][:code]],
-          ['()',
-            0,
-            'Infinity'
+          500
+        ]
+      },
+      'no_1000_all_peril' => {
+        'message' => 'All Perils must be less than $1000',
+        'code' => ['if', ['selected', 'deductible', @@coverage_codes[:AllOtherPeril][:code]],
+          ['=',
+            ['value', 'deductible', @@coverage_codes[:AllOtherPeril][:code]],
+            ['[)',
+              0,
+              1000
+            ]
           ]
         ]
       }
