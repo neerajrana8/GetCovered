@@ -1,7 +1,7 @@
 # pp BrandingProfile.find_by(title: 'GetCovered').faqs.map{|bpa| bpa.attributes.except('id', 'created_at', 'updated_at').merge(faq_questions_attributes: bpa.faq_questions.map{|fpa| fpa.attributes.except('id', 'created_at', 'updated_at', 'faq_id')})}
 
 # Get Covered
-get_covered = Agency.find_by_title('Get Covered')
+agency = Agency.find_by_title('Get Covered')
 params = {
   "title"            => "GetCovered",
   "url"              => "getcoveredinsurance.com",
@@ -28,7 +28,7 @@ params = {
                   "background-repeat" => "no-repeat" },
               ".guarantee_wrap" => { "margin-top" => "0" } } } },
   "profileable_type" => "Agency",
-  "profileable_id"   => get_covered.id,
+  "profileable_id"   => agency.id,
   "logo_url"         =>
     "https://www.getcoveredinsurance.com/assets/logos/logo_blue@2x.png",
   "footer_logo_url"  =>
@@ -119,7 +119,7 @@ pages_attributes = [{"content"=>
                        "<div>  <h2>Contact Us</h2>  <p>We Are Here to Help</p>  <p>Give us a call – <a href=\"tel:917-300-8200\">917-300-8200</a></p>  <p>Send us an – email <a href=\"mailto:info@getcoveredinsurance.com\">info@getcoveredinsurance.com</a></p>\n" +
                          "</div>",
                      "title"=>"contact_us",
-                     "agency_id"=>get_covered.id,
+                     "agency_id"=>agency.id,
                      "branding_profile_id"=>branding_profile.id,
                      "styles"=>nil},
                     {"content"=>
@@ -182,7 +182,7 @@ pages_attributes = [{"content"=>
                          "</ol>\n" +
                          "</div>",
                      "title"=>"faq_page",
-                     "agency_id"=>get_covered.id,
+                     "agency_id"=>agency.id,
                      "branding_profile_id"=>branding_profile.id,
                      "styles"=>nil},
                     {"content"=>
@@ -198,7 +198,7 @@ pages_attributes = [{"content"=>
                          "  </div>\n" +
                          "</div>\n",
                      "title"=>"about_us",
-                     "agency_id"=>get_covered.id,
+                     "agency_id"=>agency.id,
                      "branding_profile_id"=>branding_profile.id,
                      "styles"=>nil}]
 Page.create(pages_attributes)
@@ -407,5 +407,155 @@ faq_attributes = [{"title"=>"Rent Guarantee",
                        "answer"=>
                          "It is simple to report a claim. Please call our claims department and there you will be connected to a live representative that can handle all your claim issues: 1-844-723-2524 (844-QBE-CLAIMS), our 24/7 hotline."}]}]
 Faq.create(faq_attributes)
+
+# Cambridge
+agency = Agency.find_by_title('Cambridge')
+if agency.present?
+  params = {"title"=>"Cambridge Insurance",
+            "url"=>"os.getcoveredinsurance.com",
+            "default"=>false,
+            "styles"=>
+              {"admin"=>
+                 {"colors"=>
+                    {"primary"=>"#000000", "warning"=>"#FF0000", "highlight"=>"#FFFFFF"},
+                  "content"=>{}},
+               "client"=>
+                 {"colors"=>
+                    {"primary"=>"#1B75BA",
+                     "warning"=>"#FF6244",
+                     "highlight"=>"#FFFFFF",
+                     "secondary"=>"#00ABE2"},
+                  "content"=>
+                    {".faq-page a"=>{"color"=>"#ff6244", "font-weight"=>"bold"},
+                     ".rent-pensio"=>{"margin-top"=>"20px"},
+                     ".right-house"=>
+                       {"top"=>"0",
+                        "right"=>"0",
+                        "width"=>"418px",
+                        "height"=>"100%",
+                        "position"=>"absolute",
+                        "background-repeat"=>"no-repeat"},
+                     ".world-insurance-logo"=>{"display"=>"none"},
+                     ".header-content .logo a"=>{"top"=>"15px", "position"=>"relative"},
+                     ".rent-guarantee__notice-link"=>{"display"=>"none"}}}},
+            "profileable_type"=>"Agency",
+            "profileable_id"=>agency.id,
+            "logo_url"=>"https://os.getcoveredinsurance.com/assets/cambridge/logo.png",
+            "footer_logo_url"=>
+              "https://os.getcoveredinsurance.com/assets/cambridge/logo.png",
+            "subdomain"=>"os"}
+
+  branding_profile = BrandingProfile.create(params)
+  branding_profile_attributes_params = [{"name"=>"r_header1",
+                                         "value"=>
+                                           "<p style=\"font-size: 44px;font-weight: 500;color:#000080;\">For those unexpected moments in life</p>",
+                                         "attribute_type"=>"text",
+                                         "branding_profile_id"=>branding_profile.id},
+                                        {"name"=>"r_header2",
+                                         "value"=>
+                                           "<p style=\"margin-top: 15px;font-size: 18px;\">Protect Yourself and Your Belongings </p>",
+                                         "attribute_type"=>"text",
+                                         "branding_profile_id"=>branding_profile.id},
+                                        {"name"=>"contact_address",
+                                         "value"=>
+                                           "<p>We are open Mon-Fri 8 to 4 CST</p>    <p>100 Pearl Street</p>    <p>14th Floor</p>    <p>Hartford, CT 06103</p>",
+                                         "attribute_type"=>"text",
+                                         "branding_profile_id"=>branding_profile.id},
+                                        {"name"=>"available_forms",
+                                         "value"=>"[\"residential\", \"rent_guarantee\"]",
+                                         "attribute_type"=>"text",
+                                         "branding_profile_id"=>branding_profile.id},
+                                        {"name"=>"footerCopyrightText",
+                                         "value"=>
+                                           "<p>This website and its content is copyright of Cambridge Insurance, Llc. (NPN 13554817).</p>          <p>All rights reserved.          Any redistribution or reproduction of part or all of the contents in            any form is prohibited.</p>",
+                                         "attribute_type"=>"text",
+                                         "branding_profile_id"=>branding_profile.id},
+                                        {"name"=>"residential_fee",
+                                         "value"=>"Cambridge Insurance-Occupant Shield",
+                                         "attribute_type"=>"text",
+                                         "branding_profile_id"=>branding_profile.id},
+                                        {"name"=>"faq",
+                                         "value"=>"Occupant Shield",
+                                         "attribute_type"=>"text",
+                                         "branding_profile_id"=>branding_profile.id},
+                                        {"name"=>"faq_phone",
+                                         "value"=>"800-833-3448",
+                                         "attribute_type"=>"text",
+                                         "branding_profile_id"=>branding_profile.id},
+                                        {"name"=>"faq_email",
+                                         "value"=>"CustomerCare@us.qbe.com",
+                                         "attribute_type"=>"text",
+                                         "branding_profile_id"=>branding_profile.id},
+                                        {"name"=>"contact_email",
+                                         "value"=>"customercare@occupantshield.com",
+                                         "attribute_type"=>"text",
+                                         "branding_profile_id"=>branding_profile.id},
+                                        {"name"=>"contact_phone",
+                                         "value"=>"888-209-2023",
+                                         "attribute_type"=>"text",
+                                         "branding_profile_id"=>branding_profile.id},
+                                        {"name"=>"give_back_partner",
+                                         "value"=>"Get Covered",
+                                         "attribute_type"=>"text",
+                                         "branding_profile_id"=>branding_profile.id},
+                                        {"name"=>"term_of_use",
+                                         "value"=>"getcoveredinsurance.com",
+                                         "attribute_type"=>"text",
+                                         "branding_profile_id"=>branding_profile.id},
+                                        {"name"=>"register_account_notice",
+                                         "value"=>
+                                           "Registering for an account with Occupant Shield will allow you to make updates to your account",
+                                         "attribute_type"=>"text",
+                                         "branding_profile_id"=>branding_profile.id},
+                                        {"name"=>"fee_notice_delete",
+                                         "value"=>
+                                           "**There is an annual administrative fee of <b>$35</b> charged by Cambridge Insurance-Occupant Shield to recover the reasonable costs for administrative services provided to your        landlord that are not associated with the sale, solicitation, negotiation and servicing of this policy, including, but not limited to, upkeep of all mandated properties’ compliance,        training and record keeping, tracking and monitoring, as well as risk management and other services not related to the premium or commission received. (this amount is included        in quote above; please note the admin fee is not part of premium cost and will show as a separate charge)",
+                                         "attribute_type"=>"text",
+                                         "branding_profile_id"=>branding_profile.id},
+                                        {"name"=>"fee_notice",
+                                         "value"=>
+                                           "**NOTE: There is an annual administrative fee of <b>${fee}</b> (this amount is included in quote above; please note            the admin fee is not part of premium cost and will show as a separate payment) charged by Cambridge Insurance - Occupant            Shield to recover the reasonable costs for administrative services provided to your landlord that are not associated            with the sale, solicitation, negotiation and servicing of this policy, including, but not limited to, upkeep of all            mandated properties’ compliance, training and record keeping, tracking and monitoring, as well as risk management and            other services not related to the premium or commission received.",
+                                         "attribute_type"=>"text",
+                                         "branding_profile_id"=>branding_profile.id},
+                                        {"name"=>"show_back_button",
+                                         "value"=>"true",
+                                         "attribute_type"=>"boolean",
+                                         "branding_profile_id"=>branding_profile.id},
+                                        {"name"=>"background_right_logo",
+                                         "value"=>
+                                           "https://gc-public-dev.s3-us-west-2.amazonaws.com/uploads/commercial-right.svg",
+                                         "attribute_type"=>"text",
+                                         "branding_profile_id"=>branding_profile.id},
+                                        {"name"=>"to_delete",
+                                         "value"=>"",
+                                         "attribute_type"=>"text",
+                                         "branding_profile_id"=>branding_profile.id},
+                                        {"name"=>"to_delete2",
+                                         "value"=>"",
+                                         "attribute_type"=>"text",
+                                         "branding_profile_id"=>branding_profile.id},
+                                        {"name"=>"social_links",
+                                         "value"=>
+                                           "[{\"type\": \"facebook\",\"url\": \"https://www.facebook.com/occupantshield/\"}, {\"type\": \"twitter\", \"url\": \"https://twitter.com/occupantshield\" }, { \"type\": \"pinterest\", \"url\": \"https://www.pinterest.com/OccupantShield/\" }]",
+                                         "attribute_type"=>"text",
+                                         "branding_profile_id"=>branding_profile.id}]
+
+  BrandingProfileAttribute.create(branding_profile_attributes_params)
+  pages_attributes = [{"content"=>
+                         "<div>  <h2>Contact Us</h2>  <p>We Are Here to Help</p>  <div>    <p>We are open Mon-Fri 8 to 4 CST</p>    <p>100 Pearl Street</p>    <p>14th Floor</p>    <p>Hartford, CT 06103</p>  </div>  <p>Give us a call – <a href=\"tel:8882092023\">888-209-2023</a></p>  <p>Send us an – email <a href=\"mailto:customercare@occupantshield.com\">customercare@occupantshield.com</a></p>\n" +
+                           "</div>",
+                       "title"=>"contact_us",
+                       "agency_id"=>agency.id,
+                       "branding_profile_id"=>branding_profile.id,
+                       "styles"=>nil},
+                      {"content"=>
+                         "<h2>About Us</h2>  <div>    <p>Cambridge Insurance is a strategic insurance leader providing core solutions that enhance liability protection on behalf of both the owner operator as well as the resident.</p>    <p>Our talented team of professionals has over 30 years’ experience in providing risk mitigation programs to owners.</p>    <p>Our goal assisting owner operators in risk mitigation is twofold: we provide the Occupant Shield policy which is one of the most robust renters insurance policies available.  Our property specific platform serves as the platform that monitors and tracks insurance.</p>    <p>We know that renters insurance is a great idea for both owner operators and residents alike; however, not all renters insurance are created equal.</p>    <p>With Occupant Shield, you will enjoy benefits and protections that make acquiring and keeping a rental policy convenient and affordable for residents, while providing protection and customer service that make mandating renters insurance a breeze for your staff.</p>    <p>We provide all the tools required to make mandating renters insurance a success.</p>      <p>This includes hands on training and full assistance implementing our program.</p>    <p>We also provide one on one account management support catered to incorporate Occupant Shield into your current lease process.</p>    <p>Further, we also provide assistance getting your claims paid quickly.</p>  </div>",
+                       "title"=>"about_us",
+                       "agency_id"=>agency.id,
+                       "branding_profile_id"=>branding_profile.id,
+                       "styles"=>nil}]
+
+  Page.create(pages_attributes)
+end
 
 
