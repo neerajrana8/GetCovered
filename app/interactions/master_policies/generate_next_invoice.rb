@@ -42,6 +42,7 @@ module MasterPolicies
         (effective_date >= :range_start AND expiration_date < :range_end) 
         OR (expiration_date > :range_start AND expiration_date < :range_end) 
         OR (effective_date >= :range_start AND effective_date < :range_end)
+        OR (effective_date < :range_start AND expiration_date >= :range_end)
       SQL
     end
 
