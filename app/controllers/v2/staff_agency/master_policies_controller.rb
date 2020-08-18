@@ -96,7 +96,13 @@ module V2
             end
 
             @master_policy.start_automatic_master_coverage_policy_issue
-            render json: { message: 'Community added' }, status: :ok
+            response_json =
+              if ::MasterPolicies::AvailableUnitsQuery.call(@master_policy, insurable.id).any?
+                { message: 'Community added', allow_edit: false }
+              else
+                { message: 'Community added', allow_edit: true }
+              end
+            render json: response_json, status: :ok
           end          
         else
           render json: { error: :insurable_was_not_found, message: "Account doesn't have this insurable" },

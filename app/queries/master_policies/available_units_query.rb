@@ -41,7 +41,7 @@ module MasterPolicies
 
     def condition
       <<-SQL
-        #{without_policies} OR insurables.id NOT IN (#{units_with_active_policies})
+        #{without_policies} OR (insurables.id NOT IN (#{units_with_active_policies}) AND insurables.id NOT IN (#{units_with_current_leases}))
       SQL
 
     end
@@ -52,12 +52,20 @@ module MasterPolicies
       SQL
     end
 
-    def units_with_active_policies
+    def units_with_active_policiesleases
       Insurable.
         joins(:policies).
         units.
         where(insurables: { account_id: @master_policy.account }).
         where(active_policies_condition).
+        select('insurables.id').
+        to_sql
+    end
+
+    def units_with_current_leases
+      Insurable.joins(:leases).
+        units.
+        where(insurables: { account_id: @master_policy.account }, leases: { status: 'current' }).
         select('insurables.id').
         to_sql
     end
