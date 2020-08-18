@@ -52,7 +52,7 @@ module MasterPolicies
       SQL
     end
 
-    def units_with_active_policiesleases
+    def units_with_active_policies
       Insurable.
         joins(:policies).
         units.
