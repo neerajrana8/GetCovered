@@ -43,8 +43,8 @@ describe 'BillMasterPoliciesJob' do
       account: account,
       status: 'BOUND',
       policy: master_policy,
-      effective_date: Time.zone.now - 2.months,
-      expiration_date: Time.zone.now + 2.weeks,
+      effective_date: Time.zone.now - 3.months,
+      expiration_date: Time.zone.now - 2.months,
       number: 'MPC1',
       insurables: [unit1]
     )
