@@ -99,13 +99,13 @@ module CarrierMsiPolicyQuote
             {
               CoverageCd: sel['uid']
             }.merge(sel['selection'] == true ? {} : {
-              Limit: sel['options_format'] == 'percent' ? { FormatPct: sel['selection'].to_d / 100.to_d } : { Amt: sel['selection'] }
+              Limit: sel['options_format'] == 'percent' ? { Amt: sel['selection'].to_d / 100.to_d } : { Amt: sel['selection'] }
             })
           elsif sel['category'] == 'deductible'
             {
               CoverageCd: sel['uid']
             }.merge(sel['selection'] == true ? {} : {
-              Deductible: sel['options_format'] == 'percent' ? { FormatPct: sel['selection'].to_d / 100.to_d } : { Amt: sel['selection'] }
+              Deductible: sel['options_format'] == 'percent' ? { Amt: sel['selection'].to_d / 100.to_d } : { Amt: sel['selection'] }
             })
           else
             nil
