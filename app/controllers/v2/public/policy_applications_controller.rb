@@ -54,7 +54,7 @@ module V2
 
           carrier = Carrier.find(carrier_id)
 
-          @application = PolicyApplication.new(policy_type: policy_type, carrier: carrier)
+          @application = PolicyApplication.new(policy_type: policy_type, carrier: carrier, agency_id: agency_id, account_id: account_id)
           @application.build_from_carrier_policy_type
           @primary_user = ::User.new
           @application.users << @primary_user
