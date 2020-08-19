@@ -5,7 +5,11 @@ scope module: :user, path: "user" do
   resources :claims,
     only: [ :index, :show, :create ] do
       member do
+        post :attach_documents
         delete :delete_documents
+      end
+      collection do
+        post :claim_creation
       end
     end
   
@@ -37,6 +41,7 @@ scope module: :user, path: "user" do
       get 'render_eoi'
       get 'bulk_accept'
       get 'resend_policy_documents'
+      get 'refund_policy'
     end
   end
   

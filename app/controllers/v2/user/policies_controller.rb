@@ -6,7 +6,7 @@ module V2
   module User
     class PoliciesController < UserController
       
-      skip_before_action :authenticate_user!, only: [:bulk_decline, :render_eoi, :bulk_accept]
+      skip_before_action :authenticate_user!, only: [:bulk_decline, :render_eoi, :bulk_accept, :refund_policy]
       
       before_action :user_from_invitation_token, only: [:bulk_decline, :render_eoi, :bulk_accept]
       
@@ -69,6 +69,16 @@ module V2
       def resend_policy_documents
         ::Policies::SendProofOfCoverageJob.perform_later(params[:id])
         render json: { message: 'Documents were sent' }
+      end
+
+      def refund_policy
+        policy = Policy.find(params[:id])
+        change_request = ChangeRequest.new(status: 'pending')
+        if change_request.save
+          render json: { message: 'Refund was successfully sent' }, status: :ok
+        else
+          render json: { message: 'Refund was not successfully sent' }, status: :unprocessable_entity
+        end          
       end
       
       def render_eoi
