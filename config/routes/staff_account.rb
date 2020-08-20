@@ -31,8 +31,17 @@
           get "account_buildings",
             to: "accounts#account_buildings",
             via: "get"
+
+          get 'communities_list',
+            to: 'dashboard#communities_list',
+            via: 'get'
         end
       end
+
+    get :total_dashboard, controller: 'dashboard', path: 'dashboard/:account_id/total_dashboard'
+    get :buildings_communities, controller: 'dashboard', path: 'dashboard/:account_id/buildings_communities'
+    get :communities_list, controller: 'dashboard', path: 'dashboard/:account_id/communities_list'
+    # get :reports, controller: 'dashboard', path: 'dashboard/:account_id/reports'
 
     resources :master_policies, path: 'master-policies', only: [ :index, :show ] do
       member do
