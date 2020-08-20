@@ -104,7 +104,7 @@ module CarrierMsiPolicyApplication
             reading = "MSI_TotalPremiumAmt"
             begin
               reading = "MSI_TotalPremiumAmt"
-              total_paid = (payment_data.dig("MSI_TotalPremiumAmt", "Amt").to_d * 100).ceil                 # the total amount paid to msi
+              total_paid = (payment_data.dig("MSI_TotalPremiumAmt", "Amt").to_d * 100).ceil                 # the total amount paid to msi, excluding the policy fee
               reading = "MSI_InstallmentPaymentAmount"
               total_installment = (payment_data.dig("MSI_InstallmentPaymentAmount", "Amt").to_d * 100).ceil # the total amount paid at each installment, excluding the first
               reading = "MSI_InstallmentFeeAmount"
@@ -155,7 +155,10 @@ module CarrierMsiPolicyApplication
               # generate internal invoices
               #quote.generate_invoices_for_term MOOSE WARNING: uncomment if there are ever internal ones...
               # generate external invoices
-              msi_get_payment_schedule(payment_plan, installment_day: self.fields.find{|f| f['title'] == "Installment Day" }&.[]('value') || 1).each.with_index do |dates, ind|
+              gotten_schedule = msi_get_payment_schedule(payment_plan, installment_day: self.fields.find{|f| f['title'] == "Installment Day" }&.[]('value') || 1)
+              last_premium_installment = premium_installment - (down_payment + (total_installment * gotten_schedule.length - 1)  - total_paid)
+              last_premium_installment = premium_installment if last_premium_installment < 0 # should NEVER EVER happen, but letting a negative in would be much worse than overcharging by a few cents and refunding later
+              gotten_schedule.each.with_index do |dates, ind|
                 quote.invoices.create!(dates.merge({
                   external: true,
                   status: "quoted",
@@ -170,7 +173,7 @@ module CarrierMsiPolicyApplication
                   ] : [
                     {
                       title: "Premium Installment",
-                      price: premium_installment,
+                      price: ind + 1 == gotten_schedule.length ? last_premium_installment : premium_installment,
                       refundability: 'prorated_refund',
                       category: 'base_premium'
                     },
