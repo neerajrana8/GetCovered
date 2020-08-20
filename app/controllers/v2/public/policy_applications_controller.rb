@@ -39,7 +39,7 @@ module V2
               return
             end
             # MOOSE WARNING: eventually, use account_id/agency_id to determine which to select when there are multiple
-            cip        = insurable.carrier_insurable_profiles.where(carrier_id: policy_type.carrier_policy_types.map { |cpt| cpt.id }).order("created_at ASC").take
+            cip        = insurable.carrier_insurable_profiles.where(carrier_id: policy_type.carrier_policy_types.map{|cpt| cpt.carrier_id }).order("created_at ASC").take
             carrier_id = cip&.carrier_id
             if carrier_id.nil?
               render json:   { error: "Invalid unit" },
