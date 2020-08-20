@@ -29,6 +29,10 @@
             via: "get"
         end
       end
+
+    get :total_dashboard, controller: 'dashboard', path: 'dashboard/:super_admin_id/total_dashboard'
+    get :buildings_communities, controller: 'dashboard', path: 'dashboard/:super_admin_id/buildings_communities'
+    get :communities_list, controller: 'dashboard', path: 'dashboard/:super_admin_id/communities_list'
   
     resources :agencies,
       only: [ :create, :update, :index, :show ],
