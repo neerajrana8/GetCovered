@@ -10,6 +10,5 @@ class CreateLeads < ActiveRecord::Migration[5.2]
     end
 
     add_index :leads, :email
-    add_index :leads, :user_id
   end
 end

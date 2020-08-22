@@ -12,11 +12,9 @@ module V2
       def set_lead
         @lead =
           if lead_params[:email].present?
-            Lead.find_by_email(lead_params[:email])
+            Lead.find_by_email(lead_params[:email]) || Lead.create(lead_params)
           elsif lead_params[:identifier].present?
-            Lead.find_by_identifier(lead_params[:identifier])
-          else
-            Lead.create(lead_params)
+            Lead.find_by_identifier(lead_params[:identifier]) || Lead.create(lead_params)
           end
       end
 
@@ -25,7 +23,7 @@ module V2
       end
 
       def event_params
-        params.permit(lead_event_attributes: %i[data latitude longitude])
+        params.require(:lead_event_attributes).permit(%i[data latitude longitude])
       end
     end
   end

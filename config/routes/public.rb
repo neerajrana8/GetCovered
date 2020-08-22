@@ -37,7 +37,9 @@ scope module: :public do
 				path: 'rates',
 				only: [:index]	    
 	  end
-	end
+  end
+
+  resources :lead_events, only: [:create]
   
   resources :policy_applications,
     path: "policy-applications",

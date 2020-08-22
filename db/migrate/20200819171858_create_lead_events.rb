@@ -10,9 +10,5 @@ class CreateLeadEvents < ActiveRecord::Migration[5.2]
 
       t.timestamps
     end
-
-
-    add_index :leads, :email
-    add_index :leads, :lead_id
   end
 end
