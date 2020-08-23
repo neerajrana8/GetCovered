@@ -12,10 +12,16 @@ module V2
       def set_lead
         @lead =
           if lead_params[:email].present?
-            Lead.find_by_email(lead_params[:email]) || Lead.create(lead_params)
+            Lead.find_by_email(lead_params[:email])
           elsif lead_params[:identifier].present?
-            Lead.find_by_identifier(lead_params[:identifier]) || Lead.create(lead_params)
+            Lead.find_by_identifier(lead_params[:identifier])
           end
+
+        if @lead.nil?
+          @lead = Lead.create(lead_params)
+        else
+          @lead.update(lead_params)
+        end
       end
 
       def lead_params

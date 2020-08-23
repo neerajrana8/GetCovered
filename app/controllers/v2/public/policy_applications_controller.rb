@@ -283,6 +283,7 @@ module V2
         
         if @application.save
           if create_policy_users
+            LeadEvents::LinkPolicyApplicationUsers.run!(policy_application: @application)
             if @application.update status: 'complete'
   
               # if application.status updated to complete
