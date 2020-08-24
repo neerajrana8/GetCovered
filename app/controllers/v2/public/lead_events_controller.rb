@@ -29,7 +29,7 @@ module V2
       end
 
       def event_params
-        params.require(:lead_event_attributes).permit(%i[data latitude longitude])
+        params.require(:lead_event_attributes).permit(:tag, :latitude, :longitude, data: [:operation_id])
       end
     end
   end
