@@ -150,7 +150,8 @@ class Policy < ApplicationRecord
     insured_request:            2,    # QBE IR
     new_application_nonpayment: 3,    # QBE NP
     underwriter_cancellation:   4,    # QBE UW
-    disqualification:           5
+    disqualification:           5,    # no qbe code
+    test_policy_cancellation:   6     # no qbe code
   }
   
   # Cancellation reasons with special refund logic; allowed values:
@@ -158,8 +159,9 @@ class Policy < ApplicationRecord
   #   no_refund:                no refund will be issued, but available/upcoming/missed invoices will be cancelled, and processing invoices will be cancelled if they fail (but not refunded if they succeed)
   
   SPECIAL_CANCELLATION_REFUND_LOGIC = {
-    'insured_request' => :early_cancellation, 
-    'nonpayment'      => :no_refund
+    'insured_request' =>          :early_cancellation, 
+    'nonpayment'      =>          :no_refund,
+    'test_policy_cancellation' => :no_refund
   }
   
   
