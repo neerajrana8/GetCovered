@@ -29,7 +29,10 @@ module V2
       end
 
       def event_params
-        params.require(:lead_event_attributes).permit(:tag, :latitude, :longitude, :data).permit!
+        data = params[:lead_event_attributes].delete(:data) if params[:lead_event_attributes][:data]
+        params.require(:lead_event_attributes).permit(:tag, :latitude, :longitude).tap do |whitelisted|
+          whitelisted[:data] = data.permit!
+        end
       end
     end
   end
