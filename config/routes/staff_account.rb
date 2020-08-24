@@ -187,6 +187,7 @@
     resources :staffs,
       only: [ :create, :update, :index, :show ] do
         member do
+          put :re_invite
           get "histories",
             to: "histories#index_recordable",
             via: "get",
