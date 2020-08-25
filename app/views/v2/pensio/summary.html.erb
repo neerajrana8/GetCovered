@@ -888,18 +888,17 @@
       World Insurance Associates LLC, 656 Shrewsbury Avenue, Suite 200, Tinton Falls, NJ 07701;
       <a href="mailto:rentpaid@worldins.net">rentpaid@worldins.net</a>; <a href="www.worldins.net">www.worldins.net</a>;
       telephone <a href="tel:+18888910051">+1 (888) 891-0051</a></p>
-    <p>For all Your inquiries or for You to make a Lease Co-Guarantee claim, contact the Adminstrator.</p>
-    <p>Lease Co-Guarantee terms and conditons as follows:</p>
+    <p>For all Your inquiries or for You to make a Lease Co-Guarantee claim, contact the Administrator.</p>
+    <p>Lease Co-Guarantee terms and conditions as follows:</p>
 
     <h2 class="mar-bot-25">Involuntary Loss of Employment Claim - Rent to be Paid by Us to Your Landlord</h2>
-    <p>For Pensio Tenants (i) who are in good standing pursuant to their residential lease agreement; (ii) who were
-      employed at the time of registration; and (iii) remained employed for a minimum of sixty
-      (60) days after registration, Pensio Tenants will pay Your rent for up to
-      <%= @policy.policy_application&.fields&.[]('guarantee_option') %> months to Your landlord if You:
+    <p>For Pensio Tenants (i) who are in good standing pursuant to their residential lease agreement;
+      (ii) who were employed at the time of registration; and (iii) remained employed for a minimum of sixty (60)
+      days after registration, Pensio Tenants will pay Your rent for up to {{guaranteeFormData.guaranteeOption}} months to Your landlord if You:
     </p>
     <ul class="parent-list-2">
       <li><p>involuntarily lost Your employment and are eligible to collect unemployment insurance following
-        termination of employment from the state in which you reside.</p></li>
+        termination of employment from the state in which you reside;</p></li>
       <li><p>have a Record of Employment and/or a notice of unemployment directly from their former employer that
         clearly indicates the cause of loss of employment, confirming you have worked a minimum of an average of 24
         hours per week for the past 26 weeks prior to involuntary job loss, and clearly indicates the date of
@@ -907,6 +906,20 @@
       </li>
       <li>
         <p>remain unemployed.</p>
+      </li>
+    </ul>
+    <p>For Pensio Tenants (i) who are in good standing pursuant to their residential lease agreement;
+      (ii) who were self-employed at the time of registration; and (iii) remained self-employed for a minimum of sixty
+      (60) days after registration, Pensio Tenants will pay Your rent for up to {{guaranteeFormData.guaranteeOption}} months to Your landlord if You:
+    </p>
+    <ul class="parent-list-2">
+      <li><p>involuntarily lost Your services contract and are eligible to collect unemployment insurance following
+        cancellation of your services contract from the state in which you reside;</p></li>
+      <li><p>provide proof of Your services contract for the full 12 month term of the Lease Co-Guarantee Agreement
+        and proof of payment made by each service client for the past 12 months; </p>
+      </li>
+      <li>
+        <p>have no other active services contracts and Your terminated services contracts remained cancelled.</p>
       </li>
     </ul>
 
