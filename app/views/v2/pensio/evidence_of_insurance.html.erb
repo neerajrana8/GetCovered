@@ -896,7 +896,7 @@
           Lease Co-Guarantee Summary attached hereto as Exhibit A forming part of this Agreement.
         </p>
         <p>
-          You agree to pay a monthly Lease Co-Guarantee Fee of <%= ActionController::Base.helpers.number_to_currency(@policy.premium.total_fees.to_f / 100) %> for a period of twelve months,
+          You agree to pay a monthly Lease Co-Guarantee Fee of <%= ActionController::Base.helpers.number_to_currency((@policy.invoices&.order(:due_date)&.pluck(:total)&.last || 0) / 100) %> for a period of twelve months,
           from the registration and subsequent renewals received from You in writing pursuant to Articles 3 and 4,
           and the Terms and Conditions of this Agreement.
         </p>
