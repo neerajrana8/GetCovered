@@ -144,6 +144,15 @@ class Policy < ApplicationRecord
   enum billing_dispute_status: { UNDISPUTED: 0, DISPUTED: 1, AWAITING_POSTDISPUTE_PROCESSING: 2,
     NOT_REQUIRED: 3 }
     
+  enum cancellation_code: { # WARNING: remove this, it's old
+    AP: 0,
+    AR: 1,
+    IR: 2,
+    NP: 3,
+    UW: 4,
+    TEST: 5
+  }
+    
   enum cancellation_reason: {
     nonpayment:                 0,    # QBE AP
     agent_request:              1,    # QBE AR
@@ -151,7 +160,7 @@ class Policy < ApplicationRecord
     new_application_nonpayment: 3,    # QBE NP
     underwriter_cancellation:   4,    # QBE UW
     disqualification:           5,    # no qbe code
-    test_policy_cancellation:   6     # no qbe code
+    test_policy:                6     # no qbe code
   }
   
   # Cancellation reasons with special refund logic; allowed values:
@@ -161,7 +170,7 @@ class Policy < ApplicationRecord
   SPECIAL_CANCELLATION_REFUND_LOGIC = {
     'insured_request' =>          :early_cancellation, 
     'nonpayment'      =>          :no_refund,
-    'test_policy_cancellation' => :no_refund
+    'test_policy'     =>          :no_refund
   }
   
   
