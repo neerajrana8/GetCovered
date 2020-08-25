@@ -42,34 +42,32 @@ module V2
 
       def communities_list
         community_ids = InsurableType::COMMUNITIES_IDS
-        @communities = Insurable.where(agency_id: @current_agency, insurable_id: community_ids)
+        @communities = Insurable.where(agency_id: @current_agency, insurable_type_id: community_ids)
         render json: { communities: @communities }, status: :ok
       end
 
       def buildings_communities
         @unit_ids = InsurableType::UNITS_IDS
-        @units = Insurable.where(insurable_id: @unit_ids, agency_id: @current_agency).pluck(:id)
+        @units = Insurable.where(insurable_type_id: @unit_ids, agency_id: @current_agency).pluck(:id)
 
         if params[:community_id].present?
           # Later need to add leases
           # units = Insurable.joins(:leases).where(insurable_type_id: params[:community_id].to_i, agency_id: @current_agency)
-          units = Insurable.where(insurable_type_id: @unit_ids, insurable_id: params[:community_id].to_i, agency_id: params[:agency_id])
+          units = Insurable.where(insurable_id: params[:community_id].to_i, agency_id: @current_agency)
           @units_policies = paginator(Policy.joins(:insurables).where(insurables: { id: units.pluck(:id) }).order(created_at: :desc))
           render :buildings_communities, status: :ok
         elsif params[:type] == 'expired'
-          expiration = 30.days.ago
-          @units_policies = paginator(Policy.where('expiration_date < ?', expiration).joins(:insurables).where(insurables: { id: @units.pluck(:id), agency_id: params[:agency_id] }).order(created_at: :desc))
+          expiration = 30.days.from_now
+          @units_policies = paginator(Policy.where('expiration_date < ?', expiration).joins(:insurables).where(insurables: { id: @units }).order(created_at: :desc))
           render :buildings_communities, status: :ok
         elsif params[:type] == 'expired' && params[:community_id].present?
-          expiration = 30.days.ago
-          units = Insurable.where(insurable_id: params[:community_id].to_i, insurable_type_id: @unit_ids).pluck(:id, agency_id: params[:agency_id])
+          expiration = 30.days.from_now
+          units = Insurable.where(insurable_id: params[:community_id].to_i).pluck(:id)
           @units_policies = paginator(Policy.where('expiration_date < ?', expiration).joins(:insurables).where(insurables: { id: units }).order(created_at: :desc))
           render :buildings_communities, status: :ok
         else
           # Later need to add leases
-          # units = Insurable.joins(:leases).where(insurable_type_id: @unit_ids, covered: false, agency_id: @current_agency).order(created_at: :desc)
-          units = Insurable.where(insurable_id: @unit_ids, covered: false, agency_id: @current_agency).order(created_at: :desc)
-          @units_policies = paginator(Policy.joins(:insurables).where(insurables: { id: units.pluck(:id) }).order(created_at: :desc))
+          @units_policies = paginator(Policy.joins(:insurables).where(insurables: { id: @units }).order(created_at: :desc))
           render :buildings_communities, status: :ok
         end
       end

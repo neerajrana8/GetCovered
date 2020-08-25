@@ -46,7 +46,7 @@ module V2
 
       def buildings_communities
         @unit_ids = InsurableType::UNITS_IDS
-        @units = Insurable.where(insurable_id: @unit_ids, account: current_staff.organizable).pluck(:id)
+        @units = Insurable.where(insurable_type_id: @unit_ids, account: current_staff.organizable).pluck(:id)
 
         if params[:community_id].present?
           # Later need to add leases
@@ -55,18 +55,18 @@ module V2
           @units_policies = paginator(Policy.joins(:insurables).where(insurables: { id: units.pluck(:id) }).order(created_at: :desc))
           render :buildings_communities, status: :ok
         elsif params[:type] == 'expired'
-          expiration = 30.days.ago
-          @units_policies = paginator(Policy.joins(:insurables).where(policy_insurables: { insurable_id: @units }).where('policies.expiration_date < ?', expiration).order(created_at: :desc))
+          expiration = 30.days.from_now
+          units = Insurable.where(account: current_staff.organizable).pluck(:id)
+          @units_policies = paginator(Policy.where('policies.expiration_date < ?', expiration).joins(:insurables).where(insurables: { id: units }).order(created_at: :desc))
           render :buildings_communities, status: :ok
         elsif params[:type] == 'expired' && params[:community_id].present?
-          expiration = 30.days.ago
-          units = Insurable.where(insurable_id: params[:community_id].to_i, insurable_type_id: @unit_ids).pluck(:id)
-          @units_policies = paginator(Policy.joins(:insurables).where(policy_insurables: { insurable_id: units }).where('policies.expiration_date < ?', expiration).order(created_at: :desc))
+          expiration = 30.days.from_now
+          units = Insurable.where(insurable_id: params[:community_id].to_i, insurable_type_id: @unit_ids, account: current_staff.organizable).pluck(:id)
+          @units_policies = paginator(Policy.where('policies.expiration_date < ?', expiration).joins(:insurables).where(insurables: { id: units }).order(created_at: :desc))
           render :buildings_communities, status: :ok
         else
-          units = Insurable.where(insurable_type_id: @unit_ids, covered: false, account: current_staff.organizable).order(created_at: :desc)
           # units = Insurable.where(insurable_type_id: @unit_ids, covered: false).order(created_at: :desc)
-          @units_policies = paginator(Policy.joins(:insurables).where(insurables: { id: units.pluck(:id) }).order(created_at: :desc))
+          @units_policies = paginator(Policy.joins(:insurables).where(insurables: { id: @units }).order(created_at: :desc))
           render :buildings_communities, status: :ok
         end
       end
