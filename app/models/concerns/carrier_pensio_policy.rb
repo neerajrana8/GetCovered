@@ -16,7 +16,7 @@ module CarrierPensioPolicy
 
       agreement_pdf = WickedPdf.new.pdf_from_string(
         ActionController::Base.new.render_to_string(
-          "v2/pensio/evidence_of_insurance", 
+          'v2/pensio/evidence_of_insurance',
           locals: { 
             :@policy => self
           }
@@ -24,7 +24,12 @@ module CarrierPensioPolicy
       )
 
       summary_pdf = WickedPdf.new.pdf_from_string(
-        ActionController::Base.new.render_to_string("v2/pensio/summary")
+        ActionController::Base.new.render_to_string(
+          'v2/pensio/summary',
+          locals: {
+            :@policy => self
+          }
+        )
       )
       
       FileUtils::mkdir_p "#{ Rails.root }/tmp/eois"
