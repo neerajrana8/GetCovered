@@ -1,5 +1,5 @@
 ##
-# =Policy Quote Model
+# =Policy Quote Model 
 # file: +app/models/policy_quote.rb+
 # frozen_string_literal: true
 
