@@ -14,7 +14,7 @@ module V2
         @uncovered = Insurable.where(insurable_type_id: unit_ids, covered: false, account: @agency.accounts).count
         @units = @covered + @uncovered
         @communities = Insurable.where(insurable_type_id: community_ids, account: @agency.accounts).count
-        @total_policy = ::Policy.count
+        @total_policy = ::Policy.where(agency: @agency).count
         @total_residential_policies = ::Policy.where(policy_type_id: 1, agency: @agency).count
         @total_master_policies = ::Policy.where(policy_type_id: 2, agency: @agency).count
         @total_master_policy_coverages = ::Policy.where(policy_type_id: 3, agency: @agency).count
