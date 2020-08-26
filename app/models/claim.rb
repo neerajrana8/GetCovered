@@ -31,7 +31,7 @@ class Claim < ApplicationRecord
     unless: proc { |clm| clm.claimant.nil? }
 
   # Enum Options
-  enum status: %i[submitted read completed rejected]
+  enum status: %i[pending approved declined]
 
   enum type_of_loss: { OTHER: 0, FIRE: 1, WATER: 2, THEFT: 3 }
 
@@ -42,6 +42,10 @@ class Claim < ApplicationRecord
       indexes :claimant_type, type: :text, analyzer: 'english'
       indexes :time_of_loss, type: :date
     end
+  end
+
+  def claimant_full_name
+    claimant&.profile&.full_name
   end
 
   private

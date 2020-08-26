@@ -128,6 +128,7 @@
             defaults: { recordable_type: Claim }
 
           delete :delete_documents
+          put :process_claim
         end
       end
   
