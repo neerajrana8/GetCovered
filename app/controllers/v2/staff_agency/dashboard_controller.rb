@@ -10,17 +10,17 @@ module V2
       def total_dashboard
         unit_ids = InsurableType::UNITS_IDS
         community_ids = InsurableType::COMMUNITIES_IDS
-        @covered = Insurable.where(covered: true).count || 0
-        @uncovered = Insurable.where(covered: false).count || 0
+        @covered = Insurable.where(insurable_type_id: unit_ids, covered: true, agency: @agency).count
+        @uncovered = Insurable.where(insurable_type_id: unit_ids, covered: false, agency: @agency).count
         @units = @covered + @uncovered
-        @communities = Insurable.where(insurable_type_id: community_ids).count
+        @communities = Insurable.where(insurable_type_id: community_ids, agency: @agency).count
         @total_policy = ::Policy.count
-        @total_residential_policies = ::Policy.where(policy_type_id: 1).count
-        @total_master_policies = ::Policy.where(policy_type_id: 2).count
-        @total_master_policy_coverages = ::Policy.where(policy_type_id: 3).count
-        @total_commercial_policies = ::Policy.where(policy_type_id: 4).count
-        @total_rent_guarantee_policies = ::Policy.where(policy_type_id: 5).count
-        policy_ids = ::Policy.pluck(:id)
+        @total_residential_policies = ::Policy.where(policy_type_id: 1, agency: @agency).count
+        @total_master_policies = ::Policy.where(policy_type_id: 2, agency: @agency).count
+        @total_master_policy_coverages = ::Policy.where(policy_type_id: 3, agency: @agency).count
+        @total_commercial_policies = ::Policy.where(policy_type_id: 4, agency: @agency).count
+        @total_rent_guarantee_policies = ::Policy.where(policy_type_id: 5, agency: @agency).count
+        policy_ids = ::Policy.where(agency: @agency).pluck(:id)
         @total_commission = PolicyPremium.where(id: policy_ids).pluck(:total).inject(:+) || 0
         @total_premium = PolicyPremium.where(id: policy_ids).pluck(:total_fees).inject(:+) || 0
 
@@ -42,18 +42,18 @@ module V2
 
       def communities_list
         community_ids = InsurableType::COMMUNITIES_IDS
-        @communities = Insurable.where(agency_id: @current_agency, insurable_type_id: community_ids)
+        @communities = Insurable.where(agency_id: @agency, insurable_type_id: community_ids)
         render json: { communities: @communities }, status: :ok
       end
 
       def buildings_communities
         @unit_ids = InsurableType::UNITS_IDS
-        @units = Insurable.where(insurable_type_id: @unit_ids, agency_id: @current_agency).pluck(:id)
+        @units = Insurable.where(insurable_type_id: @unit_ids, agency_id: @agency).pluck(:id)
 
         if params[:community_id].present?
           # Later need to add leases
           # units = Insurable.joins(:leases).where(insurable_type_id: params[:community_id].to_i, agency_id: @current_agency)
-          units = Insurable.where(insurable_id: params[:community_id].to_i, agency_id: @current_agency)
+          units = Insurable.where(insurable_id: params[:community_id].to_i, agency_id: @agency)
           @units_policies = paginator(Policy.joins(:insurables).where(insurables: { id: units.pluck(:id) }).order(created_at: :desc))
           render :buildings_communities, status: :ok
         elsif params[:type] == 'expired'
