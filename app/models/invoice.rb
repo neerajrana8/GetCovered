@@ -36,6 +36,9 @@ class Invoice < ApplicationRecord
   has_many :histories, as: :recordable
   #has_many :notifications, as: :eventable
 
+  scope :internal, -> { where(external: false) }
+  scope :external, -> { where(external: true) }
+
   # Validations
 
   validates :number, presence: true, uniqueness: true
@@ -407,7 +410,7 @@ class Invoice < ApplicationRecord
           metadata[:account] = to_describe.account&.title
           metadata[:policy_quote_reference] = to_describe.reference
         else
-          return get_descriptor(to_describe.policy)
+          return get_descriptor(to_describe.policy_group)
         end
       when ::PolicyGroup
         description = "#{to_describe.policy_type.title}#{to_describe.policy_type.title.end_with?("Policy") || to_describe.policy_type.title.end_with?("Coverage") ? "" : " Policy"} ##{to_describe.number}"

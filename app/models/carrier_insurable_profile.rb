@@ -5,6 +5,9 @@ class CarrierInsurableProfile < ApplicationRecord
   belongs_to :carrier
   belongs_to :insurable
   
+  has_many :insurable_rate_configurations,
+    as: :configurable
+  
   validate :traits_and_data_are_non_nil
   
   private
@@ -26,7 +29,7 @@ class CarrierInsurableProfile < ApplicationRecord
       
       return return_status
       
-    end  
+    end
     
     def traits_and_data_are_non_nil
       # we allow blank, but not nil (because things will break if we call hash methods on nil)

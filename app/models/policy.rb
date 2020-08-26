@@ -42,6 +42,7 @@ class Policy < ApplicationRecord
   include CarrierPensioPolicy
   include CarrierCrumPolicy
   include CarrierQbePolicy
+  include CarrierMsiPolicy
   include RecordChange
   
   after_create :inherit_policy_coverages, if: -> { policy_type&.designation == 'MASTER-COVERAGE' }
@@ -239,6 +240,8 @@ class Policy < ApplicationRecord
       { error: 'No policy issue for QBE Specialty' }
     when 'crum'
       crum_issue_policy
+    when 'msi'
+      msi_issue_policy
     else
       { error: 'Error happened with policy issue' }
     end

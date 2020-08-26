@@ -68,6 +68,8 @@ class User
     def customer
       @customer ||=
         if stripe_id.nil?
+          policy_user = PolicyUser.find_by(user_id: user.id)
+          policy = Policy.find_by(id: policy_user&.policy_id)
           customer = Stripe::Customer.create(
             email: email,
             metadata: {
@@ -75,8 +77,8 @@ class User
               last_name: profile.last_name,
               email: email,
               phone: profile&.contact_phone,
-              agency: policies.take&.agency&.title,
-              product: policies.take&.policy_type&.title
+              agency: policy&.agency&.title,
+              product: policy&.product_type&.title
             }
           )
 
