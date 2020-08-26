@@ -138,7 +138,7 @@ module CarrierMsiPolicyApplication
             quote.update(carrier_payment_data: { 'product_id' => product_uid, 'payment_methods' => payment_methods, 'policy_fee' => msi_policy_fee, 'installment_fee' => fee_installment, 'installment_total' => total_installment })
             # build policy premium
             premium = PolicyPremium.new(
-              base: down_payment + premium_installment * installment_count,
+              base: total_paid - fee_installment * installment_count,
               taxes: 0,
               external_fees: fee_installment * installment_count,
               only_fees_internal: true,
