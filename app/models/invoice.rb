@@ -178,7 +178,7 @@ class Invoice < ApplicationRecord
           end
           return update({ proration_reduction: prored, total: subtotal - prored }.merge(
             (cancel_if_unpaid && status != 'missed') ? { status: 'canceled' } : {}
-          )
+          ))
         when 'processing', 'canceled', 'missed_cancel'
           return update({
             has_pending_refund: true,
