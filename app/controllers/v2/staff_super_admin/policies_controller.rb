@@ -5,8 +5,10 @@
 module V2
   module StaffSuperAdmin
     class PoliciesController < StaffSuperAdminController
+
+      include PoliciesMethods
       
-      before_action :set_policy, only: [:show]
+      before_action :set_policy, only: [:update, :show]
       
       before_action :set_substrate, only: [:index]
       

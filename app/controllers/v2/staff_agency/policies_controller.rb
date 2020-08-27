@@ -5,6 +5,8 @@
 module V2
   module StaffAgency
     class PoliciesController < StaffAgencyController
+
+      include PoliciesMethods
       
       before_action :set_policy, only: %i[update show]
       
@@ -47,19 +49,6 @@ module V2
       def resend_policy_documents
         ::Policies::SendProofOfCoverageJob.perform_later(params[:id])
         render json: { message: 'Documents were sent' }
-      end
-      
-      def update
-        if update_allowed?
-          if @policy.update_as(current_staff, update_params)
-            render :show, status: :ok
-          else
-            render json: @policy.errors, status: :unprocessable_entity
-          end
-        else
-          render json: { success: false, errors: ['Unauthorized Access'] },
-                 status: :unauthorized
-        end
       end
 
       def add_coverage_proof
@@ -148,20 +137,6 @@ module V2
         )
         to_return
       end
-        
-      def update_params
-        return({}) if params[:policy].blank?
-
-        params.require(:policy).permit(
-          :account_id, :agency_id, :auto_renew, :cancellation_code,
-          :cancellation_date_date, :carrier_id, :effective_date,
-          :expiration_date, :number, :policy_type_id, :status,
-          policy_insurables_attributes: [:insurable_id],
-          policy_users_attributes: [:user_id],
-          policy_coverages_attributes: %i[id policy_application_id policy_id
-                                          limit deductible enabled designation]
-        )
-      end
   
       def supported_filters(called_from_orders = false)
         @calling_supported_orders = called_from_orders
@@ -188,3 +163,4 @@ module V2
     end
   end
 end
+

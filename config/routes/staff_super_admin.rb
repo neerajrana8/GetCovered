@@ -144,7 +144,7 @@
       only: [ :index, :show ]
   
     resources :policies,
-      only: [ :index, :show ] do
+      only: [ :update, :index, :show ] do
         member do
           get "histories",
             to: "histories#index_recordable",
