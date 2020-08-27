@@ -103,7 +103,7 @@ class UserCoverageMailer < ApplicationMailer
   end
 
   def policy_in_default
-    @url = BrandingProfiles::FindByObject.run!(object: agency)&.url ||
+    @url = BrandingProfiles::FindByObject.run!(object: @policy.agency)&.url ||
         Rails.application.credentials.uri[ENV['RAILS_ENV'].to_sym][:client]
 
     @missed_invoices = @policy.invoices.missed
