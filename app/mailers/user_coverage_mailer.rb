@@ -102,17 +102,6 @@ class UserCoverageMailer < ApplicationMailer
     )
   end
 
-  private
-
-  def whitelabel_host(agency)
-    BrandingProfiles::FindByObject.run!(object: agency)&.url ||
-      Rails.application.credentials.uri[ENV['RAILS_ENV'].to_sym][:client]
-  end
-
-  def check_user_preference
-    return false if @user.nil?
-  end
-
   def policy_in_default
     @url = BrandingProfiles::FindByObject.run!(object: agency)&.url ||
         Rails.application.credentials.uri[ENV['RAILS_ENV'].to_sym][:client]
@@ -123,5 +112,16 @@ class UserCoverageMailer < ApplicationMailer
     mail(
         :subject => "Policy ##{@policy.number} in default.  Please update Payment information"
     )
+  end
+
+  private
+
+  def whitelabel_host(agency)
+    BrandingProfiles::FindByObject.run!(object: agency)&.url ||
+      Rails.application.credentials.uri[ENV['RAILS_ENV'].to_sym][:client]
+  end
+
+  def check_user_preference
+    return false if @user.nil?
   end
 end
