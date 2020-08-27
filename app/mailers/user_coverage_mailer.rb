@@ -107,7 +107,7 @@ class UserCoverageMailer < ApplicationMailer
         Rails.application.credentials.uri[ENV['RAILS_ENV'].to_sym][:client]
 
     @missed_invoices = @policy.invoices.missed
-    @next_invoice = @policy.invoices.available.order(:due_date).first
+    @next_invoice = @policy.invoices.upcoming.order(:due_date).first
 
     mail(
         :subject => "Policy ##{@policy.number} in default.  Please update Payment information"
