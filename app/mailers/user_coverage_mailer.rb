@@ -112,4 +112,16 @@ class UserCoverageMailer < ApplicationMailer
   def check_user_preference
     return false if @user.nil?
   end
+
+  def policy_in_default
+    @url = BrandingProfiles::FindByObject.run!(object: agency)&.url ||
+        Rails.application.credentials.uri[ENV['RAILS_ENV'].to_sym][:client]
+
+    @missed_invoices = @policy.invoices.missed
+    @next_invoice = @policy.invoices.available.order(:due_date).first
+
+    mail(
+        :subject => "Policy ##{@policy.number} in default.  Please update Payment information"
+    )
+  end
 end
