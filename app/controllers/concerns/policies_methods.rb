@@ -2,7 +2,6 @@ module PoliciesMethods
   extend ActiveSupport::Concern
 
   def update
-    binding.pry
     if @policy.update_as(current_staff, policy_application_merged_attributes)
       render :show, status: :ok
     else
