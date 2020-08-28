@@ -161,7 +161,7 @@ module CarrierMsiPolicyApplication
               #quote.generate_invoices_for_term MOOSE WARNING: uncomment if there are ever internal ones...
               # generate external invoices
               gotten_schedule = msi_get_payment_schedule(payment_plan, installment_day: self.fields.find{|f| f['title'] == "Installment Day" }&.[]('value') || 1)
-              last_premium_installment = total_paid - (down_payment + (total_installment * (installment_count - 1))
+              last_premium_installment = total_paid - (down_payment + premium_installment * (installment_count - 1))
               last_premium_installment = premium_installment if last_premium_installment < 0 || gotten_schedule.length <= 2 # should NEVER EVER happen, but letting a negative in would be much worse than overcharging by a few cents and refunding later
               gotten_schedule.each.with_index do |dates, ind|
                 quote.invoices.create!(dates.merge({
