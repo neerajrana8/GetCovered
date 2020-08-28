@@ -669,7 +669,7 @@ class MsiService
               InsuredOrPrincipalInfo: {
                 InsuredOrPrincipalRoleCd: "ADDITIONALINTEREST"
               },
-              GeneralPartyInfo:               ai.class == ::User ? ai.get_msi_general_party_info : ai
+              GeneralPartyInfo:               [::User, ::Account].include?(ai.class) ? ai.get_msi_general_party_info : ai
             }
           end
         }

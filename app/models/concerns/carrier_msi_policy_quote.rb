@@ -74,6 +74,7 @@ module CarrierMsiPolicyQuote
       address = unit.primary_address
       primary_insured = policy_application.primary_user
       additional_insured = policy_application.users.select{|u| u.id != primary_insured.id }
+      additional_interest = [unit.account || community.account].compact
       # prepare for bind call
       msis = MsiService.new
       event = events.new(
@@ -93,7 +94,7 @@ module CarrierMsiPolicyQuote
         # MOOSE WARNING: mailing address!
         primary_insured:    primary_insured,
         additional_insured: additional_insured,
-        additional_interest: [], # MOOSE WARNING: put the Account here somehow!!!!!!
+        additional_interest: additional_interest,
         coverage_raw: policy_application.coverage_selections.select{|sel| sel['selection'] }.map do |sel|
           if sel['category'] == 'coverage'
             {
