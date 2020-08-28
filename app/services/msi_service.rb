@@ -617,12 +617,13 @@ class MsiService
                 MSI_CommunityID:                community_id,
                 MSI_Unit:                       unit
              })
-            }.compact#,
-            #{
-            #  '': { id: '1' },
-            #  Addr:                             address
-            #}
-          ],
+            }.compact
+          ] + (maddress == address ? [] : [
+            {
+              '': { id: '1' },
+              Addr:                           maddress
+            }
+          ]),
           PersPolicy: {
             ContractTerm: {
               EffectiveDt:                    effective_date.strftime("%m/%d/%Y")
