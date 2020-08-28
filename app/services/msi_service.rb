@@ -617,12 +617,13 @@ class MsiService
                 MSI_CommunityID:                community_id,
                 MSI_Unit:                       unit
              })
-            }.compact#,
-            #{
-            #  '': { id: '1' },
-            #  Addr:                             address
-            #}
-          ],
+            }.compact
+          ] + (maddress == address ? [] : [
+            {
+              '': { id: '1' },
+              Addr:                           maddress
+            }
+          ]),
           PersPolicy: {
             ContractTerm: {
               EffectiveDt:                    effective_date.strftime("%m/%d/%Y")
@@ -669,7 +670,7 @@ class MsiService
               InsuredOrPrincipalInfo: {
                 InsuredOrPrincipalRoleCd: "ADDITIONALINTEREST"
               },
-              GeneralPartyInfo:               ai.class == ::User ? ai.get_msi_general_party_info : ai
+              GeneralPartyInfo:               [::User, ::Account].include?(ai.class) ? ai.get_msi_general_party_info : ai
             }
           end
         }
