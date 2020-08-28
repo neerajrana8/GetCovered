@@ -5,6 +5,8 @@
 module V2
   module StaffAgency
     class StaffsController < StaffAgencyController
+
+      include StaffsMethods
       
       before_action :set_staff, only: %i[update show re_invite toggle_enabled]
             
@@ -56,20 +58,6 @@ module V2
       def search
         @staff = Staff.search(params[:query]).records.where(organizable_id: @agency.id)
         render json: @staff.to_json, status: 200
-      end
-
-      def re_invite
-        if @staff.enabled?
-          render json: { success: false, errors: { staff: 'Already activated' } }, status: :unprocessable_entity
-        else
-          if @staff.invite_as(current_staff)
-            render json: { success: true }, status: :ok
-          else
-            render json: { success: false,
-                           errors: { staff: 'Unable to re-invite Staff', rails_errors: @staff.errors.to_h } },
-                   status: :unprocessable_entity
-          end
-        end
       end
 
       def toggle_enabled

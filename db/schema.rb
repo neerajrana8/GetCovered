@@ -10,10 +10,9 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_08_14_222021) do
+ActiveRecord::Schema.define(version: 2020_07_07_180153) do
 
   # These are extensions that must be enabled in order to support this database
-  enable_extension "citext"
   enable_extension "plpgsql"
 
   create_table "access_tokens", force: :cascade do |t|
@@ -289,8 +288,6 @@ ActiveRecord::Schema.define(version: 2020_08_14_222021) do
     t.bigint "policy_type_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.boolean "premium_refundable", default: true, null: false
-    t.integer "max_days_for_full_refund", default: 30
     t.index ["carrier_id"], name: "index_carrier_policy_types_on_carrier_id"
     t.index ["policy_type_id"], name: "index_carrier_policy_types_on_policy_type_id"
   end
@@ -506,6 +503,29 @@ ActiveRecord::Schema.define(version: 2020_08_14_222021) do
     t.index ["recordable_type", "recordable_id"], name: "index_histories_on_recordable_type_and_recordable_id"
   end
 
+  create_table "insurable_geographical_categories", force: :cascade do |t|
+    t.integer "state"
+    t.string "counties", array: true
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
+  create_table "insurable_rate_configurations", force: :cascade do |t|
+    t.jsonb "carrier_info", default: {}, null: false
+    t.jsonb "coverage_options", default: [], null: false
+    t.jsonb "rules", default: {}, null: false
+    t.string "configurable_type"
+    t.bigint "configurable_id"
+    t.string "configurer_type"
+    t.bigint "configurer_id"
+    t.bigint "carrier_insurable_type_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["carrier_insurable_type_id"], name: "index_irc_cit"
+    t.index ["configurable_type", "configurable_id"], name: "index_irc_configurable"
+    t.index ["configurer_type", "configurer_id"], name: "index_irc_configurer"
+  end
+
   create_table "insurable_rates", force: :cascade do |t|
     t.string "title"
     t.string "schedule"
@@ -588,6 +608,7 @@ ActiveRecord::Schema.define(version: 2020_08_14_222021) do
     t.boolean "was_missed", default: false, null: false
     t.string "payer_type"
     t.bigint "payer_id"
+    t.boolean "external", default: false, null: false
     t.index ["invoiceable_type", "invoiceable_id"], name: "index_invoices_on_invoiceable"
     t.index ["payer_type", "payer_id"], name: "index_invoices_on_payee"
   end
@@ -771,7 +792,8 @@ ActiveRecord::Schema.define(version: 2020_08_14_222021) do
     t.integer "billing_status"
     t.integer "billing_dispute_count", default: 0, null: false
     t.date "billing_behind_since"
-    t.string "cancellation_date"
+    t.integer "cancellation_code"
+    t.string "cancellation_date_date"
     t.integer "status"
     t.datetime "status_changed_on"
     t.integer "billing_dispute_status", default: 0, null: false
@@ -795,7 +817,6 @@ ActiveRecord::Schema.define(version: 2020_08_14_222021) do
     t.string "address"
     t.string "out_of_system_carrier_title"
     t.bigint "policy_id"
-    t.integer "cancellation_reason"
     t.index ["account_id"], name: "index_policies_on_account_id"
     t.index ["agency_id"], name: "index_policies_on_agency_id"
     t.index ["carrier_id"], name: "index_policies_on_carrier_id"
@@ -878,6 +899,7 @@ ActiveRecord::Schema.define(version: 2020_08_14_222021) do
     t.boolean "auto_renew", default: true
     t.boolean "auto_pay", default: true
     t.bigint "policy_application_group_id"
+    t.jsonb "coverage_selections", default: [], null: false
     t.index ["account_id"], name: "index_policy_applications_on_account_id"
     t.index ["agency_id"], name: "index_policy_applications_on_agency_id"
     t.index ["billing_strategy_id"], name: "index_policy_applications_on_billing_strategy_id"
@@ -925,6 +947,8 @@ ActiveRecord::Schema.define(version: 2020_08_14_222021) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.bigint "policy_group_id"
+    t.boolean "only_fees_internal", default: false
+    t.integer "external_fees", default: 0
     t.index ["billing_strategy_id"], name: "index_policy_group_premia_on_billing_strategy_id"
     t.index ["commission_strategy_id"], name: "index_policy_group_premia_on_commission_strategy_id"
     t.index ["policy_group_id"], name: "index_policy_group_premia_on_policy_group_id"
@@ -1024,6 +1048,8 @@ ActiveRecord::Schema.define(version: 2020_08_14_222021) do
     t.integer "special_premium", default: 0
     t.boolean "include_special_premium", default: false
     t.integer "unearned_premium", default: 0
+    t.boolean "only_fees_internal", default: false
+    t.integer "external_fees", default: 0
     t.index ["billing_strategy_id"], name: "index_policy_premia_on_billing_strategy_id"
     t.index ["commission_strategy_id"], name: "index_policy_premia_on_commission_strategy_id"
     t.index ["policy_id"], name: "index_policy_premia_on_policy_id"
@@ -1053,6 +1079,7 @@ ActiveRecord::Schema.define(version: 2020_08_14_222021) do
     t.integer "est_premium"
     t.string "external_id"
     t.bigint "policy_group_quote_id"
+    t.jsonb "carrier_payment_data"
     t.index ["account_id"], name: "index_policy_quotes_on_account_id"
     t.index ["agency_id"], name: "index_policy_quotes_on_agency_id"
     t.index ["external_id"], name: "index_policy_quotes_on_external_id", unique: true
@@ -1214,7 +1241,7 @@ ActiveRecord::Schema.define(version: 2020_08_14_222021) do
     t.datetime "confirmed_at"
     t.datetime "confirmation_sent_at"
     t.string "unconfirmed_email"
-    t.citext "email"
+    t.string "email"
     t.boolean "enabled", default: false, null: false
     t.jsonb "settings", default: {}
     t.jsonb "notification_options", default: {}

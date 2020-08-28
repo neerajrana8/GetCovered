@@ -11,6 +11,18 @@ class Address < ApplicationRecord
                 OH: 35, OK: 36, OR: 37, PA: 38, RI: 39, SC: 40, SD: 41, 
                 TN: 42, TX: 43, UT: 44, VA: 45, VT: 46, WA: 47, WI: 48, 
                 WV: 49, WY: 50 }
+  
+  # A useful list to have around for broader state validations (scan app for uses before removing!)
+  EXTENDED_US_STATE_CODES = { AK: 0, AL: 1, AR: 2, AZ: 3, CA: 4, CO: 5, CT: 6, 
+                DC: 7, DE: 8, FL: 9, GA: 10, HI: 11, IA: 12, ID: 13, 
+                IL: 14, IN: 15, KS: 16, KY: 17, LA: 18, MA: 19, MD: 20, 
+                ME: 21, MI: 22, MN: 23, MO: 24, MS: 25, MT: 26, NC: 27, 
+                ND: 28, NE: 29, NH: 30, NJ: 31, NM: 32, NV: 33, NY: 34, 
+                OH: 35, OK: 36, OR: 37, PA: 38, RI: 39, SC: 40, SD: 41, 
+                TN: 42, TX: 43, UT: 44, VA: 45, VT: 46, WA: 47, WI: 48, 
+                WV: 49, WY: 50,
+                AS: 51, FM: 52, GU: 53, MH: 54, MP: 55, PW: 56, PR: 57,
+                VI: 58, AE: 59, AP: 60, AA: 61 }
 
   include ElasticsearchSearchable
 
@@ -170,5 +182,14 @@ class Address < ApplicationRecord
 	    }
 	  })
 	end
+  
+  def get_msi_addr(include_line2 = true)
+    {
+      Addr1: self.combined_street_address,
+      City: self.city,
+      StateProvCd: self.state,
+      PostalCode: self.zip_code
+    }.merge(include_line2 ? { Addr2: street_two.blank? ? nil : street_two } : {})
+  end
       
 end

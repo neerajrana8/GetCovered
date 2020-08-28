@@ -1,5 +1,5 @@
 ##
-# =Policy Quote Model
+# =Policy Quote Model 
 # file: +app/models/policy_quote.rb+
 # frozen_string_literal: true
 
@@ -8,6 +8,7 @@ class PolicyQuote < ApplicationRecord
   include CarrierPensioPolicyQuote
   include CarrierQbePolicyQuote
   include CarrierCrumPolicyQuote
+  include CarrierMsiPolicyQuote
   include ElasticsearchSearchable
   include InvoiceableQuote
 
@@ -68,12 +69,14 @@ class PolicyQuote < ApplicationRecord
       { error: 'No policy bind for QBE Specialty' }
     when 'crum'
       crum_bind
+    when 'msi'
+      msi_bind
     else
       { error: 'Error happened with policy bind' }
     end
   end
   
-  def accept
+  def accept(bind_params: [])
     
     quote_attempt = {
       success: false,
@@ -82,14 +85,21 @@ class PolicyQuote < ApplicationRecord
       issue_method: "#{ policy_application.carrier.integration_designation }_issue_policy"
     }
 
-    if quoted? || error?
-
+    if !(quoted? || error?)
+      quote_attempt[:message] = "Quote ineligible for acceptance"
+    else
       self.set_qbe_external_reference if policy_application.carrier.id == 1
 
-      if update(status: "accepted") && start_billing()
-        bind_request = self.send(quote_attempt[:bind_method])
+      if !(update(status: "accepted") && start_billing())
+        logger.error "Policy quote errors: #{self.errors.to_json}\nQuote attempt: #{quote_attempt}"
+        quote_attempt[:message] = "Quote billing failed, unable to write policy"
+      else
+        bind_request = self.send(*([quote_attempt[:bind_method]] + (bind_params.class == ::Array ? bind_params : [bind_params])))
 
-        unless bind_request[:error]
+        if bind_request[:error]
+          logger.error "Bind Failure; Message: #{bind_request[:message]}"
+          quote_attempt[:message] = "Unable to bind policy"
+        else
           if policy_application.policy_type.title == "Residential"
             policy_number = bind_request[:data][:policy_number]
             policy_status = bind_request[:data][:status] == "WARNING" ? "BOUND_WITH_WARNING" : "BOUND"
@@ -159,16 +169,8 @@ class PolicyQuote < ApplicationRecord
             logger.error policy.errors.to_json
             quote_attempt[:message] = "Unable to save policy in system"
           end
-        else
-          logger.error "Policy quote errors: #{self.errors.to_json}\nQuote attempt: #{quote_attempt}"
-          quote_attempt[:message] = "Unable to bind policy"
         end
-      else
-        logger.error "Policy quote errors: #{self.errors.to_json}\nQuote attempt: #{quote_attempt}"
-        quote_attempt[:message] = "Quote billing failed, unable to write policy"
       end
-    else
-      quote_attempt[:message] = "Quote ineligible for acceptance"
     end
 
     return quote_attempt
@@ -183,65 +185,19 @@ class PolicyQuote < ApplicationRecord
   end
 
   def build_coverages()
-
-    policy_application.insurable_rates.each do |rate|
-      if rate.schedule == 'liability'
-        liability_coverage = self.policy.policy_coverages.new
-        liability_coverage.policy_application = self.policy_application
-        liability_coverage.designation = 'liability'
-        liability_coverage.limit = rate.coverage_limits['liability']
-        liability_coverage.deductible = rate.deductibles["all_peril"]
-        liability_coverage.special_deductible = rate.deductibles["hurricane"] if rate.deductibles.key?("hurricane")
-        liability_coverage.enabled = true
-
-        medical_coverage = self.policy.policy_coverages.new
-        medical_coverage.policy_application = self.policy_application
-        medical_coverage.designation = 'medical'
-        medical_coverage.limit = rate.coverage_limits['medical']
-        medical_coverage.deductible = rate.deductibles["all_peril"]
-        medical_coverage.special_deductible = rate.deductibles["hurricane"] if rate.deductibles.key?("hurricane")
-        medical_coverage.enabled = true
-
-        liability_coverage.save
-        medical_coverage.save
-      elsif rate.schedule == 'coverage_c'
-        coverage = self.policy.policy_coverages.new
-        coverage.policy_application = self.policy_application
-        coverage.designation = rate.schedule
-        coverage.limit = rate.coverage_limits[rate.schedule]
-        coverage.deductible = rate.deductibles["all_peril"]
-        coverage.special_deductible = rate.deductibles["hurricane"] if rate.deductibles.key?("hurricane")
-        coverage.enabled = true
-
-        coverage_d = self.policy.policy_coverages.new
-        coverage_d.policy_application = self.policy_application
-        coverage_d.designation = "loss_of_use"
-        coverage_d.limit = rate.coverage_limits[rate.schedule] * 0.2
-        coverage_d.deductible = rate.deductibles["all_peril"]
-        coverage_d.special_deductible = rate.deductibles["hurricane"] if rate.deductibles.key?("hurricane")
-        coverage_d.enabled = true
-
-        coverage.save
-        coverage_d.save
-      elsif rate.schedule == 'optional'
-        designation = nil
-
-        if rate.sub_schedule == "policy_fee"
-          designation = "qbe_fee"
-        else
-          designation = rate.sub_schedule
-        end
-
-        coverage = self.policy.policy_coverages.new
-        coverage.policy_application = self.policy_application
-        coverage.designation = designation
-        coverage.limit = rate.coverage_limits["coverage_c"]
-        coverage.deductible = rate.deductibles["all_peril"]
-        coverage.special_deductible = rate.deductibles["hurricane"] if rate.deductibles.key?("hurricane")
-        coverage.enabled = true
-
-        coverage.save
-      end
+    case policy_application.carrier.integration_designation
+      when 'qbe'
+        qbe_build_coverages
+      when 'qbe_specialty' # WARNING: the following aren't really errors... but they also aren't checked anywhere, so it doesn't hurt to leave them for now
+        { error: 'No build coverages for QBE Specialty' }
+      when 'crum'
+        { error: 'No build coverages for Crum' }
+      when 'pensio'
+        { error: 'No build coverages for Pensio' }
+      when 'msi'
+        msi_build_coverages
+      else
+        { error: 'Error happened with build coverages' }
     end
   end
 
@@ -250,14 +206,17 @@ class PolicyQuote < ApplicationRecord
     billing_started = false
         
     if policy.nil? &&
-       policy_premium.calculation_base > 0 &&
+       policy_premium.total > 0 &&
        status == "accepted"
 
-      invoices.order("due_date").each_with_index do |invoice, index|
+      invoices.external.update_all status: 'managed_externally'
+      invoices.internal.order("due_date").each_with_index do |invoice, index|
         invoice.update status: index == 0 ? "available" : "upcoming"
       end
 
-      charge_invoice = invoices.order("due_date").first.pay(stripe_source: :default)
+      to_charge = invoices.internal.order("due_date").first
+      return true if to_charge.nil?
+      charge_invoice = to_charge.pay(stripe_source: :default)
       logger.error "Charge invoice: #{charge_invoice.to_json}" unless charge_invoice[:success]
       if charge_invoice[:success] == true
         return true

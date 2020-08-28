@@ -17,7 +17,9 @@ Updated: 04/12/2019
 
 #### Installation (hopefully)
 Before installing docker and a local pg server should be running and all gems should be installed.  If you have not installed DIRENV, load the local ENV variables from `.envrc`, the difference between `.envrc` & `.env` is where they run with the former running locally and the latter being loaded by Docker.  Once this is complete, the application can be setup by running `rails getcovered:install`.  Additional commands for managing the API on docker locally include: 
-
+Before running these commands make sure that you should have .env file with set RAILS_ENV
+These commands should be run with set RAILS_ENV env variable (usually RAILS_ENV=development)
+If you have an issue with DB such as (cannot translate host db) you can ask for tmp/db dir from current devs as fast solution
 * `rails docker:down` Takes down all docker-compose services
 * `rails docker:build` Builds all docker-compose services
 * `rails docker:up` Starts all docker-compose services

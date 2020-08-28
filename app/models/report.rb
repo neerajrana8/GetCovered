@@ -9,7 +9,7 @@ class Report < ApplicationRecord
   # Relationships
   belongs_to :reportable,
              polymorphic: true,
-             required: true
+             optional: true
 
   enum duration: %w[day range]
 

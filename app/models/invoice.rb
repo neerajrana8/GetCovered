@@ -36,6 +36,9 @@ class Invoice < ApplicationRecord
   has_many :histories, as: :recordable
   #has_many :notifications, as: :eventable
 
+  scope :internal, -> { where(external: false) }
+  scope :external, -> { where(external: true) }
+
   # Validations
 
   validates :number, presence: true, uniqueness: true
