@@ -577,7 +577,7 @@ class InsurableRateConfiguration < ApplicationRecord
       result = msis.build_request(:final_premium,
         effective_date: effective_date, 
         additional_insured_count: additional_insured_count,
-        additional_interest_count: 0, # MOOSE WARNING: or 1, to include prop manager?
+        additional_interest_count: cip.insurable.account_id.nil? && cip.insurable.parent_community&.account_id.nil? ? 0 : 1,
         community_id: cip.external_carrier_id,
         coverages_formatted:  selections.select{|s| s['selection'] }
                                 .map{|s| s['options'] = coverage_options.find{|co| co['category'] == s['category'] && co['uid'] == s['uid'] }; s }
