@@ -91,7 +91,7 @@ module CarrierMsiPolicyQuote
         community_id:     community.carrier_profile(5).external_carrier_id,
         unit:             unit.title,
         address:          unit.primary_address,
-        # MOOSE WARNING: mailing address!
+        maddress:         primary_insured.address || nil,
         primary_insured:    primary_insured,
         additional_insured: additional_insured,
         additional_interest: additional_interest,
