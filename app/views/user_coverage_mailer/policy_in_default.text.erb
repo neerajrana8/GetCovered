@@ -1,0 +1,12 @@
+Dear <%= @policy.primary_user.profile.first_name %>,
+
+You are currently enrolled in the Rent Guarantee program but are currently behind on your monthly dues. Your enrollment will automatically be cancelled if payment is not submitted by <insert cancellation date>.
+
+Your invoice summary is displayed below but can also be accessed using this link <%= @url %>/user/invoices/list. Please update your payment information here <%= @url %>/user/payment-methods or email info@getcoveredllc.com to make your payment or have any other questions.
+
+<% @missed_invoices.each do |invoice| %>
+Invoice #<%= invoice.number %> - <%= invoice.due_date %> for $<%= sprintf('%.2f', (invoice.total.to_f / 100)) %>
+<% end %>
+
+Thank you,
+<%= @policy.agency.title %>
