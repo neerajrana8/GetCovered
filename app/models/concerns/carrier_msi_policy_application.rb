@@ -267,8 +267,8 @@ module CarrierMsiPolicyApplication
             
             # find the next occurrence of installment day after effective date, unless it's within 20 days
             second_due = self.effective_date.change({ day: installment_day })
-            second_due = self.second_due + 1.month if second_due < self.effective_date
-            second_due = self.second_due + 1.month if second_due <= self.effective_date + 20.days
+            second_due = second_due + 1.month if second_due < self.effective_date
+            second_due = second_due + 1.month if second_due <= self.effective_date + 20.days
             
             dds = (0..10).map{|n| (n == 0 ? Time.current.to_date : second_due + (n-1).months) }
             dds.map.with_index do |dd, ind|
