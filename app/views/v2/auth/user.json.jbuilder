@@ -1,4 +1,4 @@
-json.extract! @user, :id, :email, :marital_status
+json.extract! @user, :id, :email
 
 unless @user.profile.blank?
   json.profile_attributes do
