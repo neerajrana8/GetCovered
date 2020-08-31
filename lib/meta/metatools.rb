@@ -1,6 +1,6 @@
 # set configurable globals
 $file_open_command = ENV['RBMETA_FILE_OPEN_COMMAND'] || "(geany '$FILENAME':$LINE_NUMBER:$COLUMN &)"
-$optional_loads = (ENV['RBMETA_OPTIONAL_LOADS'] || "monkey_hash.rb,monkey_array.rb").split(",").select{|str| !str.blank? }
+$optional_loads = (ENV['RBMETA_OPTIONAL_LOADS'] || "monkey_hash.rb,monkey_array.rb,debug_tools.rb").split(",").select{|str| !str.blank? }
 $enable_empirical_polymorphic_reflection_targets = (ENV['RBMETA_EMPIRICAL_POLYMORPHIC_REFLECTION_TARGETS'] || false)
 
 # set things there's no real reason you'd want to configure

@@ -125,21 +125,21 @@ module InvoiceableQuote
     def get_policy_premium_invoice_information
       if respond_to?(:policy_premium)
         {
-          total: policy_premium.total,
+          total: policy_premium.internal_total,
           deposit_fees: policy_premium.deposit_fees,
           amortized_fees: policy_premium.amortized_fees,
-          base: policy_premium.base,
-          special_premium: policy_premium.special_premium,
-          taxes: policy_premium.taxes
+          base: policy_premium.internal_base,
+          special_premium: policy_premium.internal_special_premium,
+          taxes: policy_premium.internal_taxes
         }
       elsif respond_to?(:policy_group_premium)
         {
-          total: policy_group_premium.total,
+          total: policy_group_premium.internal_total,
           deposit_fees: policy_group_premium.deposit_fees,
           amortized_fees: policy_group_premium.amortized_fees,
-          base: policy_group_premium.base,
-          special_premium: policy_group_premium.special_premium,
-          taxes: policy_group_premium.taxes
+          base: policy_group_premium.internal_base,
+          special_premium: policy_group_premium.internal_special_premium,
+          taxes: policy_group_premium.internal_taxes
         }
       else
         nil

@@ -5,6 +5,8 @@
 module V2
   module StaffSuperAdmin
     class StaffsController < StaffSuperAdminController
+
+      include StaffsMethods
       
       before_action :set_staff, only: [:show, :re_invite, :toggle_enabled]
             
@@ -37,16 +39,6 @@ module V2
       def search
         @staff = Staff.search(params[:query]).records
         render json: @staff.to_json, status: 200
-      end
-
-      def re_invite
-        if @staff.invite_as(current_staff)
-          render json: { success: true }, status: :ok
-        else
-          render json: { success: false,
-                         errors: { staff: 'Unable to re-invite Staff', rails_errors: @staff.errors.to_h } },
-                 status: :unprocessable_entity
-        end
       end
 
       def toggle_enabled

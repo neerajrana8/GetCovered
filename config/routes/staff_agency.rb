@@ -33,10 +33,20 @@
         end
       end
 
-    resources :master_policies,
-      only: [ :create, :update, :index, :show ]do
+    resources :master_policies, path: 'master-policies',
+      only: [ :create, :update, :index, :show ] do
         member do
-          post :show_create
+          get :communities
+          get :covered_units
+          get :available_top_insurables
+          get :available_units
+          get :historically_coverage_units
+          get :master_policy_coverages
+          post :cover_unit
+          post :add_insurable
+          put :cancel
+          put :cancel_coverage
+          put :cancel_insurable
         end
       end
 
@@ -55,6 +65,11 @@
           get :sub_agencies_index
         end
       end
+
+    get :total_dashboard, controller: 'dashboard', path: 'dashboard/:agency_id/total_dashboard'
+    get :buildings_communities, controller: 'dashboard', path: 'dashboard/:agency_id/buildings_communities'
+    get :communities_list, controller: 'dashboard', path: 'dashboard/:agency_id/communities_list'
+    # get :reports, controller: 'dashboard', path: 'dashboard/:agency_id/reports'  
   
     resources :fees,
       only: [ :create, :update, :index, :show ]

@@ -5,8 +5,10 @@
 module V2
   module StaffAccount
     class StaffsController < StaffAccountController
+
+      include StaffsMethods
       
-      before_action :set_staff, only: [:update, :show, :toggle_enabled]
+      before_action :set_staff, only: [:update, :show, :toggle_enabled, :re_invite]
             
       def index
         super(:@staffs, current_staff.organizable.staff, :profile)
