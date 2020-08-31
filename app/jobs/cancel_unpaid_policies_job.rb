@@ -17,9 +17,14 @@ class CancelUnpaidPoliciesJob < ApplicationJob
   private
   
     def set_policies
-      cutoff = Time.current.to_date - 30.days
-      @policies = Policy.policy_in_system(true).current.where(billing_status: 'BEHIND').where('billing_behind_since <= ?', cutoff)
-      #@policy_groups = PolicyGroup.policy_in_system(true).current.where(billing_status: 'BEHIND').where('billing_behind_since <= ?', cutoff)
+      # grab all policies that need to be cancelled due to nonpayment
+      @policies = ::Policy.where(id: 0) # guaranteed to have empty result set (we just want to attach .or queries to this)
+      CarrierPolicyType.all.each do |cpt|
+        cutoff = Time.current.to_date - ctp.days_before_late_cancellation
+        @policies = @policies.or(::Policy.where(policy_type_id: cpt.policy_type_id, carrier_id: cpt.carrier_id, billing_status: 'BEHIND').where('billing_behind_since <= ?', cutoff))
+      end
+      @policies = @policies.policy_in_system(true).current
+      # MOOSE WARNING: @policy_group stuff???
     end
 
 

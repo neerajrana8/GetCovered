@@ -1,8 +1,11 @@
 class AddCancellationColumnsToCarrierPolicyType < ActiveRecord::Migration[5.2]
   def up
     add_column :carrier_policy_types, :premium_refundable, :boolean, null: false, default: true
-    add_column :carrier_policy_types, :max_days_for_full_refund, :integer, null: true, default: 30
+    add_column :carrier_policy_types, :max_days_for_full_refund, :integer, null: false, default: 30
+    add_column :carrier_policy_types, :days_late_before_cancellation, :integer, null: false, default: 30
     
+    # set pensio days_late_before_cancellation
+    ::CarrierPolicyType.where(carrier_id: 4).update_all(days_late_before_cancellation: 60)
     # set pensio premium_refundable to false & update all pensio premium line items accordingly
     nonrefundables = [4] # pensio
     ::CarrierPolicyType.where(carrier_id: nonrefundables).update_all(premium_refundable: false)
@@ -16,6 +19,7 @@ class AddCancellationColumnsToCarrierPolicyType < ActiveRecord::Migration[5.2]
   end
   
   def down
+    remove_column :carrier_policy_types, :days_late_before_cancellation
     remove_column :carrier_policy_types, :max_days_for_full_refund
     remove_column :carrier_policy_types, :premium_refundable
   end
