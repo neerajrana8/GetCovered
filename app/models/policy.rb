@@ -289,12 +289,12 @@ class Policy < ApplicationRecord
     special_logic = SPECIAL_CANCELLATION_REFUND_LOGIC[reason]
     case special_logic
       when :early_cancellation
+        # prorate regularly, but with a date set to refund everything that's refundable
         max_days_for_full_refund = (CarrierPolicyType.where(policy_type_id: self.policy_type_id, carrier_id: self.carrier_id).take&.max_days_for_full_refund || 30).days
-        effective_cancel_date = ((self.created_at + max_days_for_full_refund >= cancel_date) ? self.created_at.to_date - 2.days : cancel_date) # MOOSE WARNING: but this -2.days will cause problems with renewals, no? change the term of invoices we pull up...
-        # prorate regularly, but with a date set so as to make the proration absolute
+        effective_cancel_date = ((self.created_at + max_days_for_full_refund >= cancel_date) ? self.created_at.to_date - 2.days : cancel_date) # MOOSE WARNING: but this -2.days will cause problems with renewals, no? when we have renewals, we need to only pull up invoices for the correct term...
         self.invoices.each{|invoice| invoice.apply_proration(effective_cancel_date, refund_date: effective_cancel_date) }
       when :no_refund
-        # override the amount to refund to 0 and cancel everything unpaid or missed
+        # override the amount of refund to 0 and cancel everything unpaid or missed
         self.invoices.each{|invoice| invoice.apply_proration(cancel_date, refund_date: cancel_date, to_refund_override: {}, cancel_if_unpaid_override: true, cancel_if_missed_override: true) }
       else
         # prorate regularly
