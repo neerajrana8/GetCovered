@@ -285,7 +285,7 @@ class Policy < ApplicationRecord
   def cancel(reason, cancel_date = Time.current.to_date)
     # Handle reason
     return "Cancellation reason is invalid" unless self.class.cancellation_reasons.has_key?(reason)
-    # Slaughter the invoices NOTE: apply_proration can be called multiple times with the same arguments, so if something fails we can always just try again
+    # Slaughter the invoices NOTE: we refund before changing status to CANCELED because apply_proration can be called multiple times with the same arguments if something fails
     special_logic = SPECIAL_CANCELLATION_REFUND_LOGIC[reason]
     case special_logic
       when :early_cancellation
@@ -294,7 +294,7 @@ class Policy < ApplicationRecord
         effective_cancel_date = ((self.created_at + max_days_for_full_refund >= cancel_date) ? self.created_at.to_date - 2.days : cancel_date) # MOOSE WARNING: but this -2.days will cause problems with renewals, no? when we have renewals, we need to only pull up invoices for the correct term...
         self.invoices.each{|invoice| invoice.apply_proration(effective_cancel_date, refund_date: effective_cancel_date) }
       when :no_refund
-        # override the amount of refund to 0 and cancel everything unpaid or missed
+        # override the amount to refund to nothing and cancel everything unpaid or missed
         self.invoices.each{|invoice| invoice.apply_proration(cancel_date, refund_date: cancel_date, to_refund_override: {}, cancel_if_unpaid_override: true, cancel_if_missed_override: true) }
       else
         # prorate regularly
