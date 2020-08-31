@@ -50,5 +50,4 @@ class BrandingProfile < ApplicationRecord
                   .update default: false
       end  
     end
-  
 end

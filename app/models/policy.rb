@@ -37,26 +37,18 @@
 # +updated_at+:: (DateTime) The last date time model was successfuly edited
 
 class Policy < ApplicationRecord
-  scope :in_system?, ->(in_system) { where(policy_in_system: in_system) }
-  scope :with_missed_invoices, lambda {
-    joins(:invoices).merge(Invoice.unpaid_past_due)
-  }
-  
-  scope :accepted_quote, lambda {
-    joins(:policy_quotes).where(policy_quotes: { status: 'accepted'})
-  }
-  
   # Concerns
   include ElasticsearchSearchable
   include CarrierPensioPolicy
   include CarrierCrumPolicy
   include CarrierQbePolicy
+  include CarrierMsiPolicy
   include RecordChange
   
   after_create :inherit_policy_coverages, if: -> { policy_type&.designation == 'MASTER-COVERAGE' }
   after_create :schedule_coverage_reminders, if: -> { policy_type&.designation == 'MASTER-COVERAGE' }
   
-  after_save :start_automatic_master_coverage_policy_issue, if: -> { policy_type&.designation == 'MASTER' }
+  # after_save :start_automatic_master_coverage_policy_issue, if: -> { policy_type&.designation == 'MASTER' }
   
   belongs_to :agency, optional: true
   belongs_to :account, optional: true
@@ -99,7 +91,7 @@ class Policy < ApplicationRecord
   # has_one :premium, -> { find_by(enabled: true) }, class_name: 'PolicyPremium'
   
   has_many :invoices, through: :policy_quotes
-  
+  has_many :master_policy_invoices, as: :invoiceable, class_name: 'Invoice'
   has_many :charges, through: :invoices
   
   has_many :refunds, through: :charges
@@ -109,14 +101,25 @@ class Policy < ApplicationRecord
   has_many :histories, as: :recordable
   
   has_many_attached :documents
-  
+
+  # Scopes
   scope :current, -> { where(status: %i[BOUND BOUND_WITH_WARNING]) }
+  scope :not_active, -> { where.not(status: %i[BOUND BOUND_WITH_WARNING]) }
   scope :policy_in_system, ->(policy_in_system) { where(policy_in_system: policy_in_system) }
   scope :unpaid, -> { where(billing_status: ['BEHIND', 'REJECTED']) }
-  
-  accepts_nested_attributes_for :policy_coverages, :policy_premiums,
+  scope :in_system?, ->(in_system) { where(policy_in_system: in_system) }
+  scope :with_missed_invoices, lambda {
+    joins(:invoices).merge(Invoice.unpaid_past_due)
+  }
+
+  scope :accepted_quote, lambda {
+    joins(:policy_quotes).where(policy_quotes: { status: 'accepted'})
+  }
+  scope :master_policy_coverages, -> { where(policy_type_id: PolicyType::MASTER_COVERAGE_ID) }
+
+  accepts_nested_attributes_for :policy_premiums,
   :insurables, :policy_users, :policy_insurables
-  
+  accepts_nested_attributes_for :policy_coverages, allow_destroy: true
   #  after_save :update_leases, if: :saved_changes_to_status?
   
   validate :correct_document_mime_type
@@ -237,6 +240,8 @@ class Policy < ApplicationRecord
       { error: 'No policy issue for QBE Specialty' }
     when 'crum'
       crum_issue_policy
+    when 'msi'
+      msi_issue_policy
     else
       { error: 'Error happened with policy issue' }
     end
@@ -250,7 +255,7 @@ class Policy < ApplicationRecord
     #self.invoices.each do |invoice|
     #  invoice.apply_proration(cancellation_date)
     #end
-    # Unearned balance is the remaining unearned amount on an insurance policy that 
+    # Unearned balance is the remaining unearned amount on an insurance policy that
     # needs to be deducted from future commissions to recuperate the loss
     premium&.reload
     commision_amount = premium&.commission&.amount || 0
@@ -305,31 +310,8 @@ class Policy < ApplicationRecord
   
   settings index: { number_of_shards: 1 } do
     mappings dynamic: 'false' do
-      indexes :number, type: :string
+      indexes :number, type: :text
     end
-  end
-
-  # Recount every month, so we will get monthly invoice
-  def master_policy_billing
-    billing_started = false
-
-    policy_coverages = policies&.where(policy_type: 3) || ''
-    policy_coverages.each_with_index do |index|
-      amount = policy_premiums&.take.base
-      policy_coverage_number = policies&.where(policy_type: 3).count || 0
-      total_amount = amount * policy_coverage_number
-      next if total_amount == 0
-
-      due_date = index == 0 ? status_updated_on : policy.effective_date + index.months
-      invoice = invoices.new do |inv|
-        inv.due_date        = due_date
-        inv.available_date  = due_date + available_period
-        inv.user            = primary_user
-        inv.amount          = amount
-      end
-      invoice.save
-    end
-    billing_started
   end
 
   private

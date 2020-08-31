@@ -1,0 +1,69 @@
+<!doctype html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width" />
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <title>Get Covered | Policy #<%= @policy.number %> in default.  Please update Payment information</title>
+  <link rel="stylesheet" href="<%= Rails.application.credentials.uri[ENV["RAILS_ENV"].to_sym]["api"] %>/assets/mail.css">
+</head>
+<body class="">
+<table border="0" cellpadding="0" cellspacing="0" class="body">
+  <tr>
+    <td>&nbsp;</td>
+    <td class="container">
+      <div class="content">
+
+        <!-- START CENTERED WHITE CONTAINER -->
+        <span class="preheader">Policy #<%= @policy.number %> in default.  Please update Payment information</span>
+        <table class="main">
+
+          <!-- START MAIN CONTENT AREA -->
+          <tr>
+            <td class="wrapper">
+              <table border="0" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td>
+                    <p>Dear <%= @policy.primary_user.profile.first_name %>,</p>
+
+                    <p>You are currently enrolled in the Rent Guarantee program but are currently behind on your monthly dues. Your enrollment will automatically be cancelled if payment is not submitted by <%= @next_invoice.due_date %>.</p>
+
+                    <p>Your invoice summary is displayed below but can also be accessed using this link <a href="<%= @url %>/user/invoices/list" target="_blank"><%= @url %>/user/invoices/list</a>. Please update your payment information here <a href="<%= @url %>/user/payment-methods" target="_blank"><%= @url %>/user/payment-methods</a> or email info@getcoveredllc.com to make your payment or have any other questions.</p>
+
+                    <% @missed_invoices.each do |invoice| %>
+                      <p>Invoice #<%= invoice.number %> - <%= invoice.due_date %> for $<%= sprintf('%.2f', (invoice.total.to_f / 100)) %></p>
+                    <% end %>
+
+                    <p>
+                      Thank you,<br>
+                      <%= @policy.agency.title %>
+                    </p>
+
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- END MAIN CONTENT AREA -->
+        </table>
+
+        <!-- START FOOTER -->
+        <div class="footer">
+          <table border="0" cellpadding="0" cellspacing="0">
+            <tr>
+              <td class="content-block">
+                <span class="apple-link">Get Covered LLC, 265 Canal St, #205, New York, NY, 10013</span>
+              </td>
+            </tr>
+          </table>
+        </div>
+        <!-- END FOOTER -->
+
+        <!-- END CENTERED WHITE CONTAINER -->
+      </div>
+    </td>
+    <td>&nbsp;</td>
+  </tr>
+</table>
+</body>
+</html>

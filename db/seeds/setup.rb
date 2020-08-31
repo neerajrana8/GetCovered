@@ -111,14 +111,16 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
   {
     title: "Millennial Services Insurance",
     integration_designation: 'msi',
-    syncable: false, # MOOSE WARNING: fix these
-    rateable: false,
-    quotable: false,
-    bindable: false,
-    verifiable: false,
+	  syncable: false, 
+	  rateable: true, 
+	  quotable: true, 
+	  bindable: true, 
+	  verifiable: false, 
     enabled: true
   }
 ]
+
+@carriers.select!{|c| c[:integration_designation] != 'msi' } if ENV['skip_msi']
 
 @carriers.each do |c|
   carrier = Carrier.new(c)
@@ -456,7 +458,6 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
       # MSI Insurable Type for Residential Communities
       carrier_insurable_type = CarrierInsurableType.create!(carrier: carrier, insurable_type: InsurableType.find(1),
                                                             enabled: true, profile_traits: {
-                                                              # community name, number of units, address fields, property manager name
                                                               "professionally_managed": true,
                                                               "professionally_managed_year": nil,
                                                               "construction_year": nil,
@@ -465,6 +466,8 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
                                                             profile_data: {
                                                               "address_corrected": false,
                                                               "address_correction_data": {},
+                                                              "address_correction_failed": false,
+                                                              "address_correction_errors": nil,
                                                               "registered_with_msi": false,
                                                               "registered_with_msi_on": nil,
                                                               "msi_external_id": nil
@@ -483,9 +486,84 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
 				  	default_answer: 1,
 				  	value: 1,
 				    options: [1, 2, 3, 4, 5, 6, 7, 8]
-			    }	      																											
+			    },
+          {
+            title: "Installment Day",
+            answer_type: "INTEGER",
+            default_answer: 1,
+            value: 1,
+            options: (1..28).to_a
+          }	  											
 				]     
       )
+      
+      # Set up MSI InsurableRateConfigurations
+      msis = MsiService.new
+      # IRC for US
+      igc = ::InsurableGeographicalCategory.get_for(state: nil)
+      irc = msis.extract_insurable_rate_configuration(nil,
+        configurer: carrier,
+        configurable: igc,
+        carrier_insurable_type: carrier_insurable_type,
+        use_default_rules_for: 'USA'
+      )
+      irc.save!
+      # IRCs for the various states (and special counties)
+      ::InsurableGeographicalCategory::US_STATE_CODES.each do |state, state_code|
+        # make carrier IGC for this state
+        igc = ::InsurableGeographicalCategory.get_for(state: state)
+        # grab rates from MSI for this state
+        result = msis.build_request(:get_product_definition,
+          effective_date: Time.current.to_date + 1.day,
+          state: state
+        )
+        unless result
+          pp msis.errors
+          puts "!!!!!MSI GET RATES FAILURE (#{state})!!!!!"
+          exit
+        end
+        event = ::Event.new(
+          eventable: igc,
+          verb: 'post',
+          format: 'xml',
+          interface: 'REST',
+          endpoint: msis.endpoint_for(:get_product_definition),
+          process: 'msi_get_product_definition'
+        )
+        event.request = msis.compiled_rxml
+        event.save!
+        event.started = Time.now
+        result = msis.call
+        event.completed = Time.now     
+        event.response = result[:data]
+        event.status = result[:error] ? 'error' : 'success'
+        event.save!
+        if result[:error]
+          pp result[:response]&.parsed_response
+          puts ""
+          puts "!!!!!MSI GET RATES FAILURE (#{state})!!!!!"
+          exit
+        end
+        # build IRC for this state
+        irc = msis.extract_insurable_rate_configuration(result[:data],
+          configurer: carrier,
+          configurable: igc,
+          carrier_insurable_type: carrier_insurable_type,
+          use_default_rules_for: state
+        )
+        irc.save!
+        # build county IRCs if needed
+        if state.to_s == 'GA'
+          igc = ::InsurableGeographicalCategory.get_for(state: state, counties: ['Bryan', 'Camden', 'Chatham', 'Glynn', 'Liberty', 'McIntosh'])
+          irc = msis.extract_insurable_rate_configuration(nil,
+            configurer: carrier,
+            configurable: igc,
+            carrier_insurable_type: carrier_insurable_type,
+            use_default_rules_for: 'GA_COUNTIES'
+          )
+          irc.save!
+        end
+      end
 		  
     end
     

@@ -34,5 +34,8 @@ module GetCovered
 
     # Add folders with ActiveInteraction
     config.autoload_paths += Dir.glob("#{config.root}/app/interactions/*")
+    config.autoload_paths += Dir.glob("#{config.root}/app/queries/*")
+
+    config.email_images_url = 'https://gc-public-dev-ww.s3-us-west-2.amazonaws.com/email_images'
   end
 end

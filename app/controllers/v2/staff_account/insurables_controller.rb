@@ -10,6 +10,7 @@ module V2
       before_action :set_insurable,
                     only: %i[update destroy show coverage_report policies
                              sync_address get_property_info related_insurables]
+      before_action :set_master_policies, only: :show
 
       def index
         super_index(:@insurables, current_staff.organizable.insurables)
@@ -58,7 +59,7 @@ module V2
 
       def update
         if update_allowed?
-          if @insurable.update_as(current_staff, insurable_params)
+          if @insurable.update_as(current_staff, update_params)
             render :show,
                    status: :ok
           else
@@ -164,6 +165,18 @@ module V2
         @insurable = current_staff.organizable.insurables.find(params[:id])
       end
 
+      def set_master_policies
+        if @insurable.unit?
+          @master_policy_coverage =
+            @insurable.policies.current.where(policy_type_id: PolicyType::MASTER_COVERAGE_ID).take
+          @master_policy = @master_policy_coverage&.policy
+        else
+          @master_policy =
+            @insurable.policies.current.where(policy_type_id: PolicyType::MASTER_ID).take
+          @master_policy_coverage = nil
+        end
+      end
+
       def insurables_titles
         bulk_create_params[:ranges].reduce([]) do |result, range_string|
           result | Range.new(*range_string.split('..')).to_a
@@ -190,6 +203,29 @@ module V2
         to_return = params.require(:insurable).permit(
           :category, :covered, :enabled, :insurable_id,
           :insurable_type_id, :title, addresses_attributes: %i[
+            city country county id latitude longitude
+            plus_four state street_name street_number
+            street_two timezone zip_code
+          ]
+        )
+
+        existed_ids = to_return[:addresses_attributes]&.map { |addr| addr[:id] }
+
+        unless @insurable.blank? || existed_ids.nil? || existed_ids.compact.blank?
+          (@insurable.addresses.pluck(:id) - existed_ids).each do |id|
+            to_return[:addresses_attributes] <<
+              ActionController::Parameters.new(id: id, _destroy: true).permit(:id, :_destroy)
+          end
+        end
+        to_return
+      end
+
+      def update_params
+        return({}) if params[:insurable].blank?
+
+        to_return = params.require(:insurable).permit(
+          :covered, :enabled, :insurable_id,
+          :title, addresses_attributes: %i[
             city country county id latitude longitude
             plus_four state street_name street_number
             street_two timezone zip_code
