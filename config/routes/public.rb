@@ -43,7 +43,16 @@ scope module: :public do
   
   resources :policy_applications,
     path: "policy-applications",
-    only: [ :create, :update, :show, :new ]
+    only: [ :create, :update, :show ] do
+      collection do
+        post '/new',
+          to: 'policy_applications#new',
+          as: :new
+        post '/get-coverage-options',
+          to: 'policy_applications#get_coverage_options',
+          as: :get_coverage_options
+      end
+    end
 	
 	resources :policy_types, path: 'policy-types', only: [ :index ]	
 	
@@ -53,7 +62,10 @@ scope module: :public do
 		member do
 		  post '/accept', 
 		  	to: 'policy_quotes#accept', 
-		  	as: :accept			
+		  	as: :accept
+      post '/external-payment-auth',
+        to: 'policy_quotes#external_payment_auth',
+        as: :external_payment_auth
 		end  	
 	end
 

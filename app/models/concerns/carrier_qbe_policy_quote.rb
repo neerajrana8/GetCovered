@@ -26,6 +26,70 @@ module CarrierQbePolicyQuote
       
     end
     
+    # QBE build coverages
+    
+    def qbe_build_coverages
+      policy_application.insurable_rates.each do |rate|
+        if rate.schedule == 'liability'
+          liability_coverage = self.policy.policy_coverages.new
+          liability_coverage.policy_application = self.policy_application
+          liability_coverage.designation = 'liability'
+          liability_coverage.limit = rate.coverage_limits['liability']
+          liability_coverage.deductible = rate.deductibles["all_peril"]
+          liability_coverage.special_deductible = rate.deductibles["hurricane"] if rate.deductibles.key?("hurricane")
+          liability_coverage.enabled = true
+
+          medical_coverage = self.policy.policy_coverages.new
+          medical_coverage.policy_application = self.policy_application
+          medical_coverage.designation = 'medical'
+          medical_coverage.limit = rate.coverage_limits['medical']
+          medical_coverage.deductible = rate.deductibles["all_peril"]
+          medical_coverage.special_deductible = rate.deductibles["hurricane"] if rate.deductibles.key?("hurricane")
+          medical_coverage.enabled = true
+
+          liability_coverage.save
+          medical_coverage.save
+        elsif rate.schedule == 'coverage_c'
+          coverage = self.policy.policy_coverages.new
+          coverage.policy_application = self.policy_application
+          coverage.designation = rate.schedule
+          coverage.limit = rate.coverage_limits[rate.schedule]
+          coverage.deductible = rate.deductibles["all_peril"]
+          coverage.special_deductible = rate.deductibles["hurricane"] if rate.deductibles.key?("hurricane")
+          coverage.enabled = true
+
+          coverage_d = self.policy.policy_coverages.new
+          coverage_d.policy_application = self.policy_application
+          coverage_d.designation = "loss_of_use"
+          coverage_d.limit = rate.coverage_limits[rate.schedule] * 0.2
+          coverage_d.deductible = rate.deductibles["all_peril"]
+          coverage_d.special_deductible = rate.deductibles["hurricane"] if rate.deductibles.key?("hurricane")
+          coverage_d.enabled = true
+
+          coverage.save
+          coverage_d.save
+        elsif rate.schedule == 'optional'
+          designation = nil
+
+          if rate.sub_schedule == "policy_fee"
+            designation = "qbe_fee"
+          else
+            designation = rate.sub_schedule
+          end
+
+          coverage = self.policy.policy_coverages.new
+          coverage.policy_application = self.policy_application
+          coverage.designation = designation
+          coverage.limit = rate.coverage_limits["coverage_c"]
+          coverage.deductible = rate.deductibles["all_peril"]
+          coverage.special_deductible = rate.deductibles["hurricane"] if rate.deductibles.key?("hurricane")
+          coverage.enabled = true
+
+          coverage.save
+        end
+      end
+    end
+    
     # QBE Bind
   
     def qbe_bind

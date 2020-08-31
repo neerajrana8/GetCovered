@@ -7,8 +7,8 @@ module V2
     class DashboardController < StaffAccountController
       def total_dashboard
         unit_ids = InsurableType::UNITS_IDS
-        @covered = Insurable.where(covered: true, account: current_staff.organizable).count || 0
-        @uncovered = Insurable.where(covered: false, account: current_staff.organizable).count || 0
+        @covered = Insurable.where(insurable_type_id: unit_ids, covered: true, account: current_staff.organizable).count || 0
+        @uncovered = Insurable.where(insurable_type_id: unit_ids, covered: false, account: current_staff.organizable).count || 0
         @units = @covered + @uncovered
         community_ids = InsurableType::COMMUNITIES_IDS
         @communities = Insurable.where(insurable_type_id: community_ids, account: current_staff.organizable).count

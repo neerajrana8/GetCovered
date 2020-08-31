@@ -69,8 +69,9 @@ describe 'Policy buying' do
         body = JSON.parse(response.body)
         expect(response.status).to eq(401)
         expected_body = {
-          'error' => 'User Account Exists',
-          'message' => 'A User has already signed up with this email address.  Please log in to complete your application'
+          'error' => 'auth_error',
+          'message' => 'A User has already signed up with this email address.  Please log in to complete your application',
+          'payload' => nil
         }
         expect(body).to eq(expected_body)
       end
