@@ -69,10 +69,11 @@ class PolicyApplication < ApplicationRecord
     if: proc { |pol| pol.policy_type.title == "Residential" }
   validate :check_commercial_question_responses,
     if: proc { |pol| pol.policy_type.title == "Commercial" }
-  validates_presence_of :expiration_date, :effective_date
-  
+  validates_presence_of :expiration_date, :effective_date,
+                        unless: proc { |app| %i[started in_progress].include?(app.status) }
+
   validate :date_order, 
-    unless: proc { |pol| pol.effective_date.nil? || pol.expiration_date.nil? }  
+           unless: proc { |pol| pol.effective_date.nil? || pol.expiration_date.nil? }
   
   enum status: { started: 0, in_progress: 1, complete: 2, abandoned: 3, 
                  quote_in_progress: 4, quote_failed: 5, quoted: 6, 
