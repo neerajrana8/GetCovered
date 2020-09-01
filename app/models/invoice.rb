@@ -138,15 +138,13 @@ class Invoice < ApplicationRecord
             'line_item' => li,
             'amount' => case li.refundability
               when 'no_refund'
-                0
+                (li.full_refund_before_date.nil? || li.full_refund_before_date < refund_date) ?
+                  li.price
+                  : 0
               when 'prorated_refund'
-                (li.price * proportion_to_refund).floor
-              when 'complete_refund_before_term'
-                refund_date >= term_first_date ? 0 : li.price
-              when 'complete_refund_during_term'
-                refund_date > term_last_date ? 0 : li.price
-              when 'complete_refund_before_due_date'
-                refund_date >= due_date ? 0 : li.price
+                (li.full_refund_before_date.nil? || li.full_refund_before_date < refund_date) ?
+                  li.price
+                  : (li.price * proportion_to_refund).floor
               else
                 0
             end
@@ -492,17 +490,9 @@ class Invoice < ApplicationRecord
   #   :refund to order from first to refund to last to refund
   #   :adjustment & :max_refund are the same as refund, provided for convenient use by get_fund_distribution
   def line_item_groups(mode = :payment, &block)
-    arr = [
-      [self.due_date, 'complete_refund_before_due_date'],
-      [self.term_first_date || (self.due_date + 1.day), 'complete_refund_before_term'],
-      [(self.term_last_date || (self.due_date + 1.day)) + 1.day, 'complete_refund_during_term']
-    ].sort{|a,b| a[0] <=> b[0] }
-     .map{|x| x[1] }
-    arr.insert(arr.index{|x| x == 'complete_refund_during_term' }, 'prorated_refund')
-    arr.insert(0, 'no_refund')
-    arr.map!{|x| self.line_items.reload.select{|li| li.priced_in && li.refundability == x }.select{|li| block.nil? || block.call(li) } }
-       .select!{|arr| arr.length > 0 }
-    arr.send(mode == :payment ? :itself : :reverse)
+    self.line_items.select{|li| li.priced_in }.sort.slice_when do |a,b|
+      a.refundability != b.refundability || a.full_refund_before_date != b.full_refund_before_date
+    end.to_a.send(mode == :payment ? :iteself : :reverse)
   end
 
   # returns an array of { line_item: $line_item_id, amount: $currency_amount } hashes giving a distribution of dist_amount over the line items
