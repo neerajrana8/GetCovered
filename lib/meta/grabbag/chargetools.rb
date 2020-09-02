@@ -54,7 +54,7 @@ def insert_charges(stripe_charge_hash)
             invoice_id: invoice.id,
             created_at: "'#{DateTime.strptime(charge.created.to_s, '%s').to_s(:db)}'",
             updated_at: "'#{Time.current.to_s(:db)}'",
-            amount: amount,
+            amount: charge.amount,
             invoice_update_failed: 'FALSE',
             invoice_update_error_call: 'NULL',
             invoice_update_error_record: 'NULL',
