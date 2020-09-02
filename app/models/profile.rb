@@ -29,7 +29,7 @@ class Profile < ApplicationRecord
   end
 
   def user_age
-    errors.add(:birth_date, 'User should be over 18 years old.') if profileable && profileable_type == "User" && (birth_date.nil? || birth_date > 18.years.ago)
+    errors.add(:birth_date, 'user should be over 18 years old.') if profileable && profileable_type == "User" && (birth_date.nil? || birth_date > 18.years.ago)
   end
 
   private  

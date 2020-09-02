@@ -69,8 +69,7 @@ class PolicyApplication < ApplicationRecord
     if: proc { |pol| pol.policy_type.title == "Residential" }
   validate :check_commercial_question_responses,
     if: proc { |pol| pol.policy_type.title == "Commercial" }
-  validates_presence_of :expiration_date, :effective_date,
-                        unless: proc { |app| %i[started in_progress].include?(app.status) }
+  validates_presence_of :expiration_date, :effective_date
 
   validate :date_order, 
            unless: proc { |pol| pol.effective_date.nil? || pol.expiration_date.nil? }

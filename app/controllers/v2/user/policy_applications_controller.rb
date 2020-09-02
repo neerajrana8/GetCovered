@@ -97,7 +97,13 @@ module V2
               }
             end
 
-            policy_user = @application.policy_users.create!(policy_user_params)
+            policy_user = @application.policy_users.create(policy_user_params)
+            if policy_user.errors.any?
+              render(
+                json: standard_error(:user_creation_error, "User can't be created", policy_user.errors.full_messages),
+                status: 422
+              ) and return
+            end
 
             policy_user.user.invite! if index.zero?
           end
