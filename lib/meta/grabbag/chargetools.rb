@@ -39,7 +39,7 @@ def insert_charges(stripe_charge_hash)
   stripe_charge_hash.each do |invoice, charges|
     charges.each do |charge|
       to_insert.push(
-        '"' + (
+        '(' + (
           {
             status: ::Charge.statuses[charge.status],
             status_information: 'NULL',
@@ -60,7 +60,7 @@ def insert_charges(stripe_charge_hash)
             invoice_update_error_record: 'NULL',
             invoice_update_error_hash: 'NULL'
           }.values.join(",")
-        ) + '"'
+        ) + ')'
       )
     end
   end
