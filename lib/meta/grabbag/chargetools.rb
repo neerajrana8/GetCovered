@@ -23,10 +23,12 @@ end
 # def get_missing_charges(start_time = nil);   constraints = {};   constraints[:created] = { gte: (start_time.class == ::Date ? start_time.midnight : start_time).to_i } unless start_time.nil?;   response = Stripe::Charge.list(constraints);   retrieved = response["data"];   while response["has_more"];     response = Stripe::Charge.list({ starting_after: retrieved.last.id }.merge(constraints));     retrieved.concat(response["data"]);   end;   present_ids = Charge.where(stripe_id: retrieved.map{|r| r.id }).order(:stripe_id).group(:stripe_id).pluck(:stripe_id);   return retrieved.select{|r| !present_ids.include?(r.id) }; end
 
 
-grouped = charges.group_by{|c| c.description.split("Invoice #")[1] }
-valid = grouped.select{|k,v| !Invoice.where(number: k).take.nil? }
-valid.transform_keys!{|k| Invoice.where(number: k).take }
-
+def get_valid_charge_hash(charges)
+  grouped = charges.group_by{|c| c.description.split("Invoice #")[1] }
+  valid = grouped.select{|k,v| !Invoice.where(number: k).take.nil? }
+  valid.transform_keys!{|k| Invoice.where(number: k).take }
+  return valid
+end
 
 
 
