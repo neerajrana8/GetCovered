@@ -156,13 +156,13 @@ class MsiService
   
   RULE_SPECIFICATION = {
     'USA' => {
-      'cov_e_300k_max' => { # MOOSE WARNING: after redux, make the option disabled instead of banning it by rule
-        'message' => 'Liability limit must be less than $200k',
+      'cov_e_100k_max' => { # MOOSE WARNING: after redux, make the option disabled instead of banning it by rule
+        'message' => 'Liability limit must be at most $100k',
         'code' => ['=',
           ['value', 'coverage', @@coverage_codes[:CoverageE][:code]],
-          ['[)',
+          ['[]',
             0,
-            200000
+            100000
           ]
         ]
       },
