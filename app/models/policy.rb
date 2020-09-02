@@ -280,19 +280,26 @@ class Policy < ApplicationRecord
       { error: 'Error happened with policy issue' }
     end
   end
+
   
   # Cancels a policy; returns nil if no errors, otherwise a string explaining the error
   def cancel(reason, cancel_date = Time.current.to_date)
-    # Handle reason
+    # Flee on invalid data
     return "Cancellation reason is invalid" unless self.class.cancellation_reasons.has_key?(reason)
-    # Slaughter the invoices NOTE: we refund before changing status to CANCELED because apply_proration can be called multiple times with the same arguments if something fails
+    return "Policy is already cancelled" if self.status == 'CANCELLED'
+    # Slaughter the invoices NOTE: we refund before changing status to CANCELLED because apply_proration can be called multiple times with the same arguments if something fails
     special_logic = SPECIAL_CANCELLATION_REFUND_LOGIC[reason]
     case special_logic
       when :early_cancellation
         # prorate as if we'd cancelled immediately if cancellation is early, otherwise prorate regularly
-        max_days_for_full_refund = (CarrierPolicyType.where(policy_type_id: self.policy_type_id, carrier_id: self.carrier_id).take&.max_days_for_full_refund || 30).days
-        effective_cancel_date = ((self.created_at + max_days_for_full_refund >= cancel_date) ? self.created_at.to_date - 2.days : cancel_date) # MOOSE WARNING: but this -2.days will cause problems with renewals, no? when we have renewals, we need to only pull up invoices for the correct term...
-        self.invoices.each{|invoice| invoice.apply_proration(effective_cancel_date, refund_date: effective_cancel_date) }
+        max_days_for_full_refund = (CarrierPolicyType.where(policy_type_id: self.policy_type_id, carrier_id: self.carrier_id).take&.max_days_for_full_refund || 0).days
+        if cancel_date < self.created_at.to_date + max_days_for_full_refund.days
+          self.invoices.each do |invoice|
+            invoice.apply_proration(cancel_date, refund_date: cancel_date, to_ensure_refunded: Proc.new{|li| ['amortized_fees', 'deposit_fees'].include?(li.category) ? 0 : li.price })
+          end
+        else
+          self.invoices.each{|invoice| invoice.apply_proration(cancel_date, refund_date: cancel_date) }
+        end
       when :no_refund
         # override the amount to refund to nothing and cancel everything unpaid or missed
         self.invoices.each{|invoice| invoice.apply_proration(cancel_date, refund_date: cancel_date, to_refund_override: {}, cancel_if_unpaid_override: true, cancel_if_missed_override: true) }

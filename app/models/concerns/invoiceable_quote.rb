@@ -149,8 +149,9 @@ module InvoiceableQuote
   
     def get_policy_application_invoice_information
       if respond_to?(:policy_application)
-        {
-          premium_refundability: CarrierPolicyType.where(policy_type_id: policy_application.policy_type_id, carrier_id: policy_application.carrier_id).take&.premium_refundable == false ? 'no_refund' : 'prorated_refund',
+        cpt = CarrierPolicyType.where(policy_type_id: policy_application.policy_type_id, carrier_id: policy_application.carrier_id).take
+        return {
+          premium_refundability: cpt&.premium_refundable == false ? 'no_refund' : 'prorated_refund',
           billing_schedule: policy_application.billing_strategy.new_business['payments'],
           effective_date: policy_application.effective_date,
           expiration_date: policy_application.expiration_date,
@@ -158,8 +159,9 @@ module InvoiceableQuote
           payer: policy_application.primary_user
         }
       elsif respond_to?(:policy_application_group)
-        {
-          premium_refundability: CarrierPolicyType.where(policy_type_id: policy_application_group.policy_type_id, carrier_id: policy_application_group.carrier_id).take&.premium_refundable == false ? 'no_refund' : 'prorated_refund',
+        CarrierPolicyType.where(policy_type_id: policy_application_group.policy_type_id, carrier_id: policy_application_group.carrier_id).take
+        return {
+          premium_refundability: cpt&.premium_refundable == false ? 'no_refund' : 'prorated_refund',
           billing_schedule: policy_application_group.billing_strategy.new_business['payments'],
           effective_date: policy_application_group.effective_date,
           expiration_date: policy_application_group.expiration_date,
@@ -167,7 +169,7 @@ module InvoiceableQuote
           payer: policy_application_group.account
         }
       else
-        nil
+        return nil
       end
     end
 

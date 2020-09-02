@@ -112,17 +112,21 @@ class Invoice < ApplicationRecord
   #                               defaults to Time.current.to_date
   #   to_refund_override:         an array of { 'line_item' => line_item (or line_item id), 'amount' => number of cents to ensure have been refunded } hashes;
   #                               defaults to a hash created based on the other parameters which prorates the invoice
+  #   to_ensure_refunded:         same as to_refund_override in format; if non-nil, after the to_refund hash has been calculated (or provided by to_refund_override),
+  #                               any line items missing/with a lower refund than specified by to_ensure_refunded will be added/have their refund increased to match to_ensure_refunded;
+  #                               can also pass a proc that takes a LineItem (and optionally the invoice as its second argument) and returns the amount to ensure is refunded
   #   cancel_if_unpaid_override:  true to completely cancel the invoice, rather than only applying the proration, if it is upcoming/available;
   #                               false to apply the proration as normal;
   #                               defaults to (new_term_last_date < term_first_date)
   #   cancel_if_missed_override:  true to completely cancel the invoice, rather than only applying the proration, if it is missed;
   #                               false to apply the proration as normal;
   #                               defaults to cancel_if_unpaid_override, if provided, or to its default value if not
-  def apply_proration(new_term_last_date, refund_date: nil, to_refund_override: nil, cancel_if_unpaid_override: nil, cancel_if_missed_override: nil)
+  def apply_proration(new_term_last_date, refund_date: nil, to_refund_override: nil, to_ensure_refunded: nil, cancel_if_unpaid_override: nil, cancel_if_missed_override: nil)
     with_lock do
       return false if term_first_date.nil? || term_last_date.nil?
       to_refund = nil
       cancel_if_unpaid = false
+      # calculate the to_refund hash
       if to_refund_override.nil?
         # get refund date and proportion-to-refund
         refund_date = Time.current.to_date if refund_date.nil?
@@ -151,12 +155,36 @@ class Invoice < ApplicationRecord
           }
         end.select{|datum| datum['amount'] > 0 }
       else
+        # copy over to to_refund and sanitize line items (in case the user passed ids)
         to_refund = to_refund_override
         to_refund.each do |li|
-          li['line_item'] = line_items.where(id: li['line_item']).take if li['line_item'].class != ::LineItem
+          li['line_item'] = line_items.find{|lim| lim.id == li['line_item'] } if li['line_item'].class != ::LineItem
           return false if li['line_item'].nil?
         end
       end
+      # add to_ensure_refunded to the to_refund hash
+      unless to_ensure_refunded.nil?
+        if to_ensure_refunded.class == ::Proc
+          # expand proc
+          to_ensure_refunded = line_items.map{|li| { 'line_item' => li, 'amount' => to_ensure_refunded.call(li, self) } }.select{|li| li['amount'] && li['amount'] > 0 }
+        else
+          # sanitize line items (in case the user passed ids)
+          to_ensure_refunded.each do |li|
+            li['line_item'] = line_items.find{|lim| lim.id == li['line_item'] } if li['line_item'].class != ::LineItem
+            return false if li['line_item'].nil?
+          end
+        end
+        # merge into to_refund
+        to_ensure_refunded.each do |li|
+          found = to_refund.find{|trli| trli.id == li.id }
+          if found.nil?
+            to_refund.push({ 'line_item' => li, 'amount' => li['amount'] })
+          elsif found['amount'] < li['amount']
+            found['amount'] = li['amount']
+          end
+        end
+      end
+      # set cancel_if settings
       cancel_if_unpaid = cancel_if_unpaid_override unless cancel_if_unpaid_override.nil?
       cancel_if_missed = cancel_if_missed_override.nil? ? cancel_if_unpaid : cancel_if_missed_override
       # apply refund
