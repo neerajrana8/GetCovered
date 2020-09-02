@@ -42,7 +42,7 @@ def insert_charges(stripe_charge_hash)
         '(' + (
           {
             status: ::Charge.statuses[charge.status],
-            status_information: charge.failure_message.blank? ? "NULL" : "'" + "Payment processor reported failure: #{charge.failure_message || 'unknown error'} (code #{charge.failure_code || 'null'})".gsub("'", "\\\\\'") + "'",
+            status_information: (charge.failure_message.blank? ? "NULL" : "'" + "Payment processor reported failure: #{charge.failure_message || 'unknown error'} (code #{charge.failure_code || 'null'})".gsub("'", "\\\\\'") + "'"),
             refund_status: ::Charge.refund_statuses['not_refunded'],
             payment_method: ::Charge.payment_methods[charge.source["object"] == "card" ? "card" : charge.source["object"] == "bank_account" ? "bank_account" : "unknown"],
             amount_returned_via_dispute: 0,
