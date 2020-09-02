@@ -36,31 +36,33 @@ end
 def insert_charges(stripe_charge_hash)
   # go wild
   to_insert = []
-  stripe_charge_hash.each do |invoice, charge|
-    to_insert.push(
-      '"' + (
-        {
-          status: ::Charge.statuses[charge.status],
-          status_information: 'NULL',
-          refund_status: ::Charge.refund_statuses['not_refunded'],
-          payment_method: ::Charge.payment_methods[charge.source["object"] == "card" ? "card" : charge.source["object"] == "bank_account" ? "bank_account" : "unknown"],
-          amount_returned_via_dispute: 0,
-          amount_refunded: 0,
-          amount_lost_to_disputes: 0,
-          amount_in_queued_refunds: 0,
-          dispute_count: 0,
-          stripe_id: "'#{charge.id}'",
-          invoice_id: invoice.id,
-          created_at: "'#{DateTime.strptime(charge.created.to_s, '%s').to_s(:db)}'",
-          updated_at: "'#{Time.current.to_s(:db)}'",
-          amount: amount,
-          invoice_update_failed: 'FALSE',
-          invoice_update_error_call: 'NULL',
-          invoice_update_error_record: 'NULL',
-          invoice_update_error_hash: 'NULL'
-        }.values.join(",")
-      ) + '"'
-    )
+  stripe_charge_hash.each do |invoice, charges|
+    charges.each do |charge|
+      to_insert.push(
+        '"' + (
+          {
+            status: ::Charge.statuses[charge.status],
+            status_information: 'NULL',
+            refund_status: ::Charge.refund_statuses['not_refunded'],
+            payment_method: ::Charge.payment_methods[charge.source["object"] == "card" ? "card" : charge.source["object"] == "bank_account" ? "bank_account" : "unknown"],
+            amount_returned_via_dispute: 0,
+            amount_refunded: 0,
+            amount_lost_to_disputes: 0,
+            amount_in_queued_refunds: 0,
+            dispute_count: 0,
+            stripe_id: "'#{charge.id}'",
+            invoice_id: invoice.id,
+            created_at: "'#{DateTime.strptime(charge.created.to_s, '%s').to_s(:db)}'",
+            updated_at: "'#{Time.current.to_s(:db)}'",
+            amount: amount,
+            invoice_update_failed: 'FALSE',
+            invoice_update_error_call: 'NULL',
+            invoice_update_error_record: 'NULL',
+            invoice_update_error_hash: 'NULL'
+          }.values.join(",")
+        ) + '"'
+      )
+    end
   end
   cols =  'status,status_information,refund_status,payment_method,amount_returned_via_dispute,'
   cols += 'amount_refunded,amount_lost_to_disputes,amount_in_queued_refunds,dispute_count,'
