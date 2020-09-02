@@ -71,7 +71,8 @@ class MsiService
                         { 'category' => 'deductible', 'uid' => @@coverage_codes[:Hurricane][:code].to_s, 'requirement' => 'required' }                              # mandate Hurricane coverage
                       ],
     'GA' =>           [{ 'category' => 'deductible', 'uid' => @@coverage_codes[:WindHail][:code].to_s, 'enabled' => false }],                                       # disable WindHail
-    'GA_COUNTIES' =>  [{ 'category' => 'deductible', 'uid' => @@coverage_codes[:WindHail][:code].to_s, 'enabled' => true, 'requirement' => 'required' }], # enable WindHail & make sure it's required for counties ['Bryan', 'Camden', 'Chatham', 'Glynn', 'Liberty', 'McIntosh']
+    'GA_COUNTIES' =>  [{ 'category' => 'deductible', 'uid' => @@coverage_codes[:WindHail][:code].to_s, 'enabled' => true, 'requirement' => 'required' }],           # enable WindHail & make sure it's required for counties ['Bryan', 'Camden', 'Chatham', 'Glynn', 'Liberty', 'McIntosh']
+    'MD' =>           [{ 'category' => 'coverage', 'uid' => @@coverage_codes[:HomeDayCare][:code].to_s, 'enabled' => false }],                                      # disable HomeDayCare in MD
   }.merge(['AK', 'CO', 'HI', 'KY', 'ME', 'MT', 'NC', 'NJ', 'UT', 'VT', 'WA'].map do |state|
     # disable theft deductibles for selected states
     [
@@ -156,17 +157,17 @@ class MsiService
   RULE_SPECIFICATION = {
     'USA' => {
       'cov_e_300k_max' => { # MOOSE WARNING: after redux, make the option disabled instead of banning it by rule
-        'message' => 'Animal Liability Buyback must be less than $300k',
+        'message' => 'Liability limit must be less than $200k',
         'code' => ['=',
           ['value', 'coverage', @@coverage_codes[:CoverageE][:code]],
           ['[)',
             0,
-            300000
+            200000
           ]
         ]
       },
       'animal_liability_300k_max' => { # MOOSE WARNING: after redux, make the option disabled instead of banning it by rule
-        'message' => 'Animal Liability Buyback must be less than $300k',
+        'message' => 'Animal Liability Buyback limit must be less than $300k',
         'code' => ['=',
           ['value', 'coverage', @@coverage_codes[:AnimalLiability][:code]],
           ['[)',
