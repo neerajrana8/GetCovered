@@ -54,7 +54,7 @@ module RecordChange
   end
 
   def record_change
-    
+    ap self
     author = @author
     changes = {}
 
