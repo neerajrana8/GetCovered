@@ -10,9 +10,10 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_08_10_045908) do
+ActiveRecord::Schema.define(version: 2020_08_25_103919) do
 
   # These are extensions that must be enabled in order to support this database
+  enable_extension "citext"
   enable_extension "plpgsql"
 
   create_table "access_tokens", force: :cascade do |t|
@@ -362,6 +363,7 @@ ActiveRecord::Schema.define(version: 2020_08_10_045908) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "type_of_loss", default: 0, null: false
+    t.text "staff_notes"
     t.index ["claimant_type", "claimant_id"], name: "index_claims_on_claimant_type_and_claimant_id"
     t.index ["insurable_id"], name: "index_claims_on_insurable_id"
     t.index ["policy_id"], name: "index_claims_on_policy_id"
@@ -613,6 +615,28 @@ ActiveRecord::Schema.define(version: 2020_08_10_045908) do
     t.boolean "external", default: false, null: false
     t.index ["invoiceable_type", "invoiceable_id"], name: "index_invoices_on_invoiceable"
     t.index ["payer_type", "payer_id"], name: "index_invoices_on_payee"
+  end
+
+  create_table "lead_events", force: :cascade do |t|
+    t.jsonb "data"
+    t.string "tag"
+    t.float "latitude"
+    t.float "longitude"
+    t.bigint "lead_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["lead_id"], name: "index_lead_events_on_lead_id"
+  end
+
+  create_table "leads", force: :cascade do |t|
+    t.string "email"
+    t.string "identifier"
+    t.bigint "user_id"
+    t.string "labels", array: true
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["email"], name: "index_leads_on_email"
+    t.index ["user_id"], name: "index_leads_on_user_id"
   end
 
   create_table "lease_type_insurable_types", force: :cascade do |t|
@@ -1243,7 +1267,7 @@ ActiveRecord::Schema.define(version: 2020_08_10_045908) do
     t.datetime "confirmed_at"
     t.datetime "confirmation_sent_at"
     t.string "unconfirmed_email"
-    t.string "email"
+    t.citext "email"
     t.boolean "enabled", default: false, null: false
     t.jsonb "settings", default: {}
     t.jsonb "notification_options", default: {}
@@ -1271,7 +1295,6 @@ ActiveRecord::Schema.define(version: 2020_08_10_045908) do
     t.string "mailchimp_id"
     t.integer "mailchimp_category", default: 0
     t.string "qbe_id"
-    t.integer "marital_status", default: 0
     t.index ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["invitation_token"], name: "index_users_on_invitation_token", unique: true

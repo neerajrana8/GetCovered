@@ -302,7 +302,9 @@ module V2
 
         if @application.save
           if create_policy_users
-            if @application.update(status: 'complete')
+            LeadEvents::LinkPolicyApplicationUsers.run!(policy_application: @application)
+            if @application.update status: 'complete'
+  
               # if application.status updated to complete
               @application.estimate()
               @quote = @application.policy_quotes.order('created_at DESC').limit(1).first
