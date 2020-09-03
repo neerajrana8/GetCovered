@@ -4,7 +4,7 @@ RSpec.describe Invoice, elasticsearch: true, type: :model do
 
   before :all do
     invoice = FactoryBot.create(:invoice)
-    invoice.user.attach_payment_source("tok_visa", true)
+    invoice.payer.attach_payment_source("tok_visa", true)
     invoice.update(
       status: 'available',
       number: 'test_invoice',
