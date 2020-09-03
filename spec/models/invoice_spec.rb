@@ -65,11 +65,42 @@ RSpec.describe Invoice, elasticsearch: true, type: :model do
     expect(result[:success]).to eq(true)
     # perform prorated refund
     cancel_date = @invoice.term_first_date + 1.day # proration should refund half of the refundable premium by default
-    result = @invoice.apply_proration(cancel_date, refund_date: cancel_date, to_ensure_refunded: Proc.new{|li| li.title == 'Test Premium Non-Refundable' ? li.price : 0 })
+    result = @invoice.apply_proration(cancel_date, refund_date: cancel_date, to_ensure_refunded: Proc.new{|li| li.title == 'Test Premium Non-Refundable' ? 1000 : 0 })
     expect(result).to eq(true)
     # check that the refunded numbers are correct
     @invoice.reload
-    expect(@invoice.amount_refunded).to eq(15000)
+    expect(@invoice.amount_refunded).to eq(6000)
+    expect(@invoice.status).to eq('complete')
+  end
+  
+  it 'Invoice should not refund extra when proration is applied twice' do
+    # charge our invoice
+    result = @invoice.pay(stripe_source: :default)
+    expect(result[:success]).to eq(true)
+    # perform prorated refund
+    cancel_date = @invoice.term_first_date + 1.day # proration should refund half of the refundable premium by default
+    result = @invoice.apply_proration(cancel_date, refund_date: cancel_date, to_ensure_refunded: Proc.new{|li| li.title == 'Test Premium Non-Refundable' ? 1000 : 0 })
+    expect(result).to eq(true)
+    result = @invoice.apply_proration(cancel_date, refund_date: cancel_date, to_ensure_refunded: Proc.new{|li| li.title == 'Test Premium Non-Refundable' ? 1000 : 0 })
+    expect(result).to eq(true)
+    # check that the refunded numbers are correct
+    @invoice.reload
+    expect(@invoice.amount_refunded).to eq(6000)
+    expect(@invoice.status).to eq('complete')
+  end
+  
+  it 'Invoice should refund nothing when overridden appropriately' do
+    # charge our invoice
+    result = @invoice.pay(stripe_source: :default)
+    expect(result[:success]).to eq(true)
+    # perform prorated refund
+    cancel_date = @invoice.term_first_date + 1.day # proration should refund half of the refundable premium by default
+    result = @invoice.apply_proration(cancel_date, refund_date: cancel_date, to_refund_override: {})
+    expect(result).to eq(true)
+    # check that the refunded numbers are correct
+    @invoice.reload
+    expect(@invoice.amount_refunded).to eq(0)
+    expect(@invoice.status).to eq('complete')
   end
   
   it 'Invoice should handle refunds correctly when processing' do
@@ -81,7 +112,7 @@ RSpec.describe Invoice, elasticsearch: true, type: :model do
     @invoice.line_items.update_all(collected: 0)
     # perform prorated refund
     cancel_date = @invoice.term_first_date + 1.day # proration should refund half of the refundable premium by default
-    result = @invoice.apply_proration(cancel_date, refund_date: cancel_date, to_ensure_refunded: Proc.new{|li| li.title == 'Test Premium Non-Refundable' ? li.price : 0 })
+    result = @invoice.apply_proration(cancel_date, refund_date: cancel_date, to_ensure_refunded: Proc.new{|li| li.title == 'Test Premium Non-Refundable' ? 1000 : 0 })
     expect(result).to eq(true)
     # check that the refunded is pending
     @invoice.reload
@@ -91,27 +122,68 @@ RSpec.describe Invoice, elasticsearch: true, type: :model do
     @invoice.payment_succeeded(@invoice.charges.first)
     @invoice.reload
     expect(@invoice.status).to eq('complete')
-    expect(@invoice.amount_refunded).to eq(15000)
+    expect(@invoice.amount_refunded).to eq(6000)
+    # repeat the proration and ensure nothing else is refunded
+    result = @invoice.apply_proration(cancel_date, refund_date: cancel_date, to_ensure_refunded: Proc.new{|li| li.title == 'Test Premium Non-Refundable' ? 1000 : 0 })
+    expect(result).to eq(true)
+    @invoice.reload
+    expect(@invoice.status).to eq('complete')
+    expect(@invoice.amount_refunded).to eq(6000)
   end
   
-  it 'Available invoice should perform proration adjustment' do
-    # perform prorated refund
+  it 'Available invoice should perform proration adjustment correctly' do
+    # perform proration
     cancel_date = @invoice.term_first_date + 1.day # proration should refund half of the refundable premium by default
-    result = @invoice.apply_proration(cancel_date, refund_date: cancel_date, to_ensure_refunded: Proc.new{|li| li.title == 'Test Premium Non-Refundable' ? li.price : 0 })
+    result = @invoice.apply_proration(cancel_date, refund_date: cancel_date, to_ensure_refunded: Proc.new{|li| li.title == 'Test Premium Non-Refundable' ? 1000 : 0 })
     expect(result).to eq(true)
     # check that the proration adjustment was applied
     @invoice.reload
-    expect(@invoice.proration_reduction).to eq(15000)
-    expect(@invoice.total).to eq(@invoice.subtotal - 15000)
+    expect(@invoice.status).to eq('available')
+    expect(@invoice.amount_refunded).to eq(0)
+    expect(@invoice.proration_reduction).to eq(6000)
+    expect(@invoice.total).to eq(@invoice.subtotal - 6000)
+    expect(@invoice.has_pending_refund).to eq(false)
     @invoice.line_items.each do |li|
       if li.title == "Test Premium Refundable"
         expect(li.proration_reduction).to eq(li.price / 2)
       elsif li.title == "Test Premium Non-Refundable"
-        expect(li.proration_reduction).to eq(li.price)
+        expect(li.proration_reduction).to eq(1000)
       else
         expect(li.proration_reduction).to eq(0)
       end
     end
+    # do it again to make sure it doesn't double-prorate
+    result = @invoice.apply_proration(cancel_date, refund_date: cancel_date, to_ensure_refunded: Proc.new{|li| li.title == 'Test Premium Non-Refundable' ? 1000 : 0 })
+    expect(result).to eq(true)
+    @invoice.reload
+    expect(@invoice.status).to eq('available')
+    expect(@invoice.amount_refunded).to eq(0)
+    expect(@invoice.proration_reduction).to eq(6000)
+    expect(@invoice.total).to eq(@invoice.subtotal - 6000)
+    expect(@invoice.has_pending_refund).to eq(false)
+    @invoice.line_items.each do |li|
+      if li.title == "Test Premium Refundable"
+        expect(li.proration_reduction).to eq(li.price / 2)
+      elsif li.title == "Test Premium Non-Refundable"
+        expect(li.proration_reduction).to eq(1000)
+      else
+        expect(li.proration_reduction).to eq(0)
+      end
+    end
+    # pay the invoice to make sure it charges the correct amount
+    result = @invoice.pay(stripe_source: :default)
+    @invoice.reload
+    expect(result[:success]).to eq(true)
+    expect(@invoice.status).to eq("complete")
+    expect(@invoice.total).to eq(@invoice.subtotal - 6000)
+    expect(@invoice.charges.first.amount).to eq(@invoice.total)
+    # prorate again to make sure nothing changes
+    result = @invoice.apply_proration(cancel_date, refund_date: cancel_date, to_ensure_refunded: Proc.new{|li| li.title == 'Test Premium Non-Refundable' ? 1000 : 0 })
+    expect(result).to eq(true)
+    @invoice.reload
+    expect(@invoice.status).to eq('complete')
+    expect(@invoice.amount_refunded).to eq(0)
+    expect(@invoice.has_pending_refund).to eq(false)
   end
   
   
