@@ -297,7 +297,13 @@ class Charge < ApplicationRecord
              .delete_if { |k,v| v.nil? }
           )
         rescue Stripe::StripeError => e
-          pay_attempt_failed(nil, 'unknown', "Payment processor error: #{e.message}")
+          # try to extract info
+          charge_id = nil
+          error_data = e.respond_to?(:response) ? e.response&.data&[](:error) : nil
+          unless error_data.class != ::Hash
+            charge_id = error_data[:charge]
+          end
+          pay_attempt_failed(charge_id, 'unknown', "Payment processor error: #{e.message}")
           remove_instance_variable(:@already_in_on_create)
           return
         end
