@@ -176,7 +176,7 @@ class Invoice < ApplicationRecord
         end
         # merge into to_refund
         to_ensure_refunded.each do |li|
-          found = to_refund.find{|trli| trli.id == li.id }
+          found = to_refund.find{|trli| trli['line_item'].id == li['line_item'].id }
           if found.nil?
             to_refund.push({ 'line_item' => li, 'amount' => li['amount'] })
           elsif found['amount'] < li['amount']
@@ -520,7 +520,7 @@ class Invoice < ApplicationRecord
   def line_item_groups(mode = :payment, &block)
     self.line_items.select{|li| li.priced_in }.sort.slice_when do |a,b|
       a.refundability != b.refundability || a.full_refund_before_date != b.full_refund_before_date
-    end.to_a.send(mode == :payment ? :iteself : :reverse)
+    end.to_a.send(mode == :payment ? :itself : :reverse)
   end
 
   # returns an array of { line_item: $line_item_id, amount: $currency_amount } hashes giving a distribution of dist_amount over the line items
