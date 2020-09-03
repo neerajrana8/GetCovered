@@ -315,7 +315,7 @@ class QbeService
         result = nil
         
         if action == 'SendPolicyInfo'
-          result = xml_doc.css('MsgStatusCd').children.to_s
+          result = xml_doc&.css('MsgStatusCd')&.children.to_s
           
           unless %w[SUCCESS WARNING].include?(result)
             call_data[:error] = true
@@ -323,7 +323,7 @@ class QbeService
             call_data[:code] = 409
           end
         else
-          result = xml_doc.css('//result').attr('status').value
+          result = xml_doc&.css('//result')&.attr('status')&.value
           
           if result != 'pass'
             call_data[:error] = true
