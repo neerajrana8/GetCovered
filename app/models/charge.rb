@@ -299,7 +299,7 @@ class Charge < ApplicationRecord
         rescue Stripe::StripeError => e
           # try to extract info
           charge_id = nil
-          error_data = e.respond_to?(:response) ? e.response&.data&[](:error) : nil
+          error_data = e.respond_to?(:response) ? e.response&.data&.[](:error) : nil
           unless error_data.class != ::Hash
             charge_id = error_data[:charge]
           end
