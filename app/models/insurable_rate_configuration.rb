@@ -503,7 +503,7 @@ class InsurableRateConfiguration < ApplicationRecord
     configurer_type == 'Carrier'
   end
   
-  def self.automatically_select_options(options, selections = [], rechoose_selection: Proc.new{|option,selection| opt['requirement'] == 'required' ? option['options'].first : nil })
+  def self.automatically_select_options(options, selections = [], rechoose_selection: Proc.new{|option,selection| option['requirement'] == 'required' ? option['options'].map{|opt| opt.to_d }.min : nil })
     options.map do |opt|
       next nil if opt['requirement'] != 'required' && opt['requirement'] != 'forbidden'
       sel = selections.find{|x| x['category'] == opt['category'] && x['uid'] == opt['uid'] }
