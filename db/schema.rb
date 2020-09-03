@@ -10,10 +10,9 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_08_25_103919) do
+ActiveRecord::Schema.define(version: 2020_08_19_171858) do
 
   # These are extensions that must be enabled in order to support this database
-  enable_extension "citext"
   enable_extension "plpgsql"
 
   create_table "access_tokens", force: :cascade do |t|
@@ -290,7 +289,8 @@ ActiveRecord::Schema.define(version: 2020_08_25_103919) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.boolean "premium_refundable", default: true, null: false
-    t.integer "max_days_for_full_refund", default: 30
+    t.integer "max_days_for_full_refund", default: 31, null: false
+    t.integer "days_late_before_cancellation", default: 30, null: false
     t.index ["carrier_id"], name: "index_carrier_policy_types_on_carrier_id"
     t.index ["policy_type_id"], name: "index_carrier_policy_types_on_policy_type_id"
   end
@@ -363,7 +363,6 @@ ActiveRecord::Schema.define(version: 2020_08_25_103919) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "type_of_loss", default: 0, null: false
-    t.text "staff_notes"
     t.index ["claimant_type", "claimant_id"], name: "index_claims_on_claimant_type_and_claimant_id"
     t.index ["insurable_id"], name: "index_claims_on_insurable_id"
     t.index ["policy_id"], name: "index_claims_on_policy_id"
@@ -704,6 +703,7 @@ ActiveRecord::Schema.define(version: 2020_08_25_103919) do
     t.boolean "priced_in", default: false, null: false
     t.integer "collected", default: 0, null: false
     t.integer "proration_reduction", default: 0, null: false
+    t.date "full_refund_before_date"
     t.index ["invoice_id"], name: "index_line_items_on_invoice_id"
   end
 
@@ -1267,7 +1267,7 @@ ActiveRecord::Schema.define(version: 2020_08_25_103919) do
     t.datetime "confirmed_at"
     t.datetime "confirmation_sent_at"
     t.string "unconfirmed_email"
-    t.citext "email"
+    t.string "email"
     t.boolean "enabled", default: false, null: false
     t.jsonb "settings", default: {}
     t.jsonb "notification_options", default: {}
