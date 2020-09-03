@@ -168,6 +168,7 @@ class Invoice < ApplicationRecord
         to_refund = to_refund_override
         to_refund.each do |li|
           li['line_item'] = line_items.find{|lim| lim.id == li['line_item'] } if li['line_item'].class != ::LineItem
+raise "line item nil, #{li['line_item'].class.name}, #{li['line_item'].to_s}" if li['line_item'].nil?
           return false if li['line_item'].nil?
         end
       end
@@ -180,6 +181,7 @@ class Invoice < ApplicationRecord
           # sanitize line items (in case the user passed ids)
           to_ensure_refunded.each do |li|
             li['line_item'] = line_items.find{|lim| lim.id == li['line_item'] } if li['line_item'].class != ::LineItem
+raise "to_ensure_refunded line item nil, #{li['line_item'].class.name}, #{li['line_item'].to_s}" if li['line_item'].nil?
             return false if li['line_item'].nil?
           end
         end
@@ -187,9 +189,11 @@ class Invoice < ApplicationRecord
         to_ensure_refunded.each do |li|
           found = to_refund.find{|trli| trli['line_item'].id == li['line_item'].id }
           if found.nil?
-            to_refund.push({ 'line_item' => li, 'amount' => li['amount'] })
+            to_refund.push({ 'line_item' => li['line_item'], 'amount' => li['amount'] })
           elsif found['amount'] < li['amount']
             found['amount'] = li['amount']
+          else
+            # do nothing; we're already refunding at least the required amount
           end
         end
       end
