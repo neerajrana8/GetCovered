@@ -18,8 +18,8 @@ describe 'PaymentProfile API spec', type: :request do
     end
     
     it 'should create PaymentProfile' do
+      expect(PaymentProfile.count).to eq(0)
       expect { create_profile }.to change { PaymentProfile.count }.by(1)
-      
       expect(PaymentProfile.count).to eq(1)
       result = JSON.parse response.body
       expect(response.status).to eq(201)
