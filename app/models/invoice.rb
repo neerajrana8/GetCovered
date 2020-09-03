@@ -221,10 +221,16 @@ class Invoice < ApplicationRecord
           return update({
             has_pending_refund: true,
             pending_refund_data: {
-              'proration_refund' => to_refund.map{|li| {
+              'proration_refund' => to_refund.map do |li|
+              begin
+              {
                 'line_item' => li['line_item'].id,
                 'amount' => li['amount']
-              } },
+              }
+              rescue
+                raise "Tarzan on the loose! Class #{li['line_item'].class.name}! Data: #{li['line_item'].to_s}"
+              end
+              end,
               'cancel_if_unpaid' => cancel_if_unpaid,
               'cancel_if_missed' => cancel_if_missed
             }
