@@ -168,7 +168,6 @@ class Invoice < ApplicationRecord
         to_refund = to_refund_override
         to_refund.each do |li|
           li['line_item'] = line_items.find{|lim| lim.id == li['line_item'] } if li['line_item'].class != ::LineItem
-raise "line item nil, #{li['line_item'].class.name}, #{li['line_item'].to_s}" if li['line_item'].nil?
           return false if li['line_item'].nil?
         end
       end
@@ -181,7 +180,6 @@ raise "line item nil, #{li['line_item'].class.name}, #{li['line_item'].to_s}" if
           # sanitize line items (in case the user passed ids)
           to_ensure_refunded.each do |li|
             li['line_item'] = line_items.find{|lim| lim.id == li['line_item'] } if li['line_item'].class != ::LineItem
-raise "to_ensure_refunded line item nil, #{li['line_item'].class.name}, #{li['line_item'].to_s}" if li['line_item'].nil?
             return false if li['line_item'].nil?
           end
         end
@@ -225,16 +223,10 @@ raise "to_ensure_refunded line item nil, #{li['line_item'].class.name}, #{li['li
           return update({
             has_pending_refund: true,
             pending_refund_data: {
-              'proration_refund' => to_refund.map do |li|
-              begin
-              {
+              'proration_refund' => to_refund.map {|li| {
                 'line_item' => li['line_item'].id,
                 'amount' => li['amount']
-              }
-              rescue
-                raise "Tarzan on the loose! Class #{li['line_item'].class.name}! Data: #{li['line_item'].to_s}"
-              end
-              end,
+              } },
               'cancel_if_unpaid' => cancel_if_unpaid,
               'cancel_if_missed' => cancel_if_missed
             }
