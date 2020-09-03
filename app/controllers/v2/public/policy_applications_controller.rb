@@ -7,8 +7,7 @@ module V2
   module Public
     class PolicyApplicationsController < PublicController
 
-      before_action :set_policy_application,
-                    only: %i[update show]
+      before_action :set_policy_application, only: %i[update show rent_guarantee_complete]
       before_action :validate_policy_users_params, only: %i[create update]
 
       def show
@@ -76,6 +75,10 @@ module V2
         else
           render json: standard_error(:invalid_policy_type, 'Invalid policy type'), status: 422
         end
+      end
+
+      def rent_guarantee_complete
+        render json: { message: 'Instructions were sent' }
       end
 
       def create_policy_users

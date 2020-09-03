@@ -44,6 +44,9 @@ scope module: :public do
   resources :policy_applications,
     path: "policy-applications",
     only: [ :create, :update, :show ] do
+      member do
+        post :rent_guarantee_complete
+      end
       collection do
         post '/new',
           to: 'policy_applications#new',
