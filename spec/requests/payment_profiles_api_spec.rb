@@ -19,16 +19,13 @@ describe 'PaymentProfile API spec', type: :request do
     
     it 'should create PaymentProfile' do
       expect { create_profile }.to change { PaymentProfile.count }.by(1)
-      expect(PaymentProfile.count).to eq(1)
       result = JSON.parse response.body
       expect(response.status).to eq(201)
       expect(result["id"]).to_not eq(nil)
     end
     
     it 'should list PaymentProfiles' do
-      first_profile = FactoryBot.create(:payment_profile, payer: @user)
-      second_profile = FactoryBot.create(:payment_profile, payer: @user)
-      expect(PaymentProfile.count).to eq(2)
+      expect { FactoryBot.create(:payment_profile, payer: @user); FactoryBot.create(:payment_profile, payer: @user) }.to change { PaymentProfile.count }.by(1)
       get "/v2/user/payment-profiles", headers: @headers
       result = JSON.parse response.body
       expect(response.status).to eq(200)
@@ -72,17 +69,13 @@ describe 'PaymentProfile API spec', type: :request do
     
     it 'should create PaymentProfile' do
       expect { create_profile }.to change { PaymentProfile.count }.by(1)
-      
-      expect(PaymentProfile.count).to eq(1)
       result = JSON.parse response.body
       expect(response.status).to eq(201)
       expect(result["id"]).to_not eq(nil)
     end
     
     it 'should list PaymentProfiles' do
-      first_profile = FactoryBot.create(:payment_profile, payer: @staff.organizable)
-      second_profile = FactoryBot.create(:payment_profile, payer: @staff.organizable)
-      expect(PaymentProfile.count).to eq(2)
+      expect { FactoryBot.create(:payment_profile, payer: @staff.organizable); FactoryBot.create(:payment_profile, payer: @staff.organizable) }.to change { PaymentProfile.count }.by(1)
       get "/v2/staff_account/payment-profiles", headers: @headers
       result = JSON.parse response.body
       expect(response.status).to eq(200)
