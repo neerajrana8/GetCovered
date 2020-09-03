@@ -138,7 +138,7 @@ class Invoice < ApplicationRecord
       # calculate the to_refund hash
       if to_refund_override.nil?
         # get refund date and proportion-to-refund
-        refund_date = Time.current.to_date if refund_date.nil?
+        refund_date = new_term_last_date if refund_date.nil?
         proportion_to_refund = 0
         proportion_to_refund = new_term_last_date < term_first_date ? 1.to_d :
                                new_term_last_date >= term_last_date ? 0.to_d :
@@ -151,13 +151,13 @@ class Invoice < ApplicationRecord
             'line_item' => li,
             'amount' => case li.refundability
               when 'no_refund'
-                (li.full_refund_before_date.nil? || li.full_refund_before_date < refund_date) ?
-                  li.price
-                  : 0
+                (li.full_refund_before_date.nil? || li.full_refund_before_date <= refund_date) ?
+                  0
+                  : li.price
               when 'prorated_refund'
-                (li.full_refund_before_date.nil? || li.full_refund_before_date < refund_date) ?
-                  li.price
-                  : (li.price * proportion_to_refund).floor
+                (li.full_refund_before_date.nil? || li.full_refund_before_date <= refund_date) ?
+                  (li.price * proportion_to_refund).floor
+                  : li.price
               else
                 0
             end
