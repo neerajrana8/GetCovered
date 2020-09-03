@@ -241,6 +241,15 @@ class User < ApplicationRecord
       }
     }
   end
+  
+  def get_deposit_choice_occupant_hash
+    {
+      firstName:        self.profile.first_name,
+      lastName:         self.profile.last_name,
+      email:            self.email,
+      principalPhone:   (self.profile.contact_phone || '').tr('^0-9', '')
+    }
+  end
 
   def identify_segment
     Analytics.identify(
