@@ -503,22 +503,46 @@ class InsurableRateConfiguration < ApplicationRecord
     configurer_type == 'Carrier'
   end
   
-  def self.automatically_select_options(options, selections = [])
+  def self.automatically_select_options(options, selections = [], rechoose_selection: Proc.new{|option,selection| opt['requirement'] == 'required' ? option['options'].first : nil })
     options.map do |opt|
       next nil if opt['requirement'] != 'required' && opt['requirement'] != 'forbidden'
       sel = selections.find{|x| x['category'] == opt['category'] && x['uid'] == opt['uid'] }
       if opt['requirement'] == 'required'
-        {
+        next {
           'category' => opt['category'],
           'uid'      => opt['uid'],
-          'selection'=> opt['options_type'] == 'none' ? true : opt['options'].blank? ? false : !sel.nil? && sel['selection'] != nil && sel['selection'] != false && opt['options'].map{|o| o.to_d }.include?(sel['selection'].to_d) ? sel['selection'] : opt['options'][rand(opt['options'].length)]
+          'selection'=> opt['options_type'] == 'none' ? true : opt['options'].blank? ? false : !sel.nil? && sel['selection'] != nil && sel['selection'] != false && opt['options'].map{|o| o.to_d }.include?(sel['selection'].to_d) ? sel['selection'] : rechoose_selection.call(opt,sel)
         }
       elsif opt['requirement'] == 'optional'
-        next nil # WARNING: no optional coverages for now... randomize it later
+        if sel.nil? || !sel['selection']
+          next nil # WARNING: no optional coverages for now unless they're input by the user... randomize it later if desired
+        elsif opt['options_type'] == 'none'
+          next {
+            'category' => opt['category'],
+            'uid' => opt['uid'],
+            'selection' => true
+          }
+        elsif opt['options_type'] == 'multiple_choice'
+          if opt['options'].include?(sel['selection'])
+            next {
+              'category' => opt['category'],
+              'uid' => opt['uid'],
+              'selection' => sel['selection']
+            }
+          else
+            next {
+              'category' => opt['category'],
+              'uid' => opt['uid'],
+              'selection' => rechoose_selection.call(opt, sel)
+            }
+          end
+        else
+          next nil
+        end
       else
         next nil
       end
-    end.compact
+    end.compact.select{|s| s['selection'] }
   end
   
   def self.get_selection_errors(selections, options)
@@ -564,6 +588,8 @@ class InsurableRateConfiguration < ApplicationRecord
     result = nil
     event = nil
     if perform_estimate
+      # try to modify our selections to a valid configuration if necessary
+      selections = automatically_select_options(coverage_options, selections) unless valid
       # prepare the call
       msis = MsiService.new
       event = ::Event.new(
