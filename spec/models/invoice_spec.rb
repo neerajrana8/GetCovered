@@ -29,7 +29,7 @@ RSpec.describe Invoice, elasticsearch: true, type: :model do
           title: "Test Fee",
           price: 5000,
           refundability: 'no_refund',
-          category: 'amorized_fees'
+          category: 'amortized_fees'
         }
       ]
     )
