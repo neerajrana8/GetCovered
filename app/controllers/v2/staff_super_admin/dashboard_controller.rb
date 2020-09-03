@@ -70,6 +70,14 @@ module V2
         end
       end
 
+      def uninsured_units
+        units_relation = Insurable.where(insurable_type_id: InsurableType::UNITS_IDS, covered: false)
+        units_relation = units_relation.where(insurable_id: params[:insurable_id]) if params[:insurable_id].present?
+        @insurables = paginator(units_relation)
+
+        render template: 'v2/shared/insurables/index', status: :ok
+      end
+
       def reports
         min = params[:start]
         max = params[:end]
