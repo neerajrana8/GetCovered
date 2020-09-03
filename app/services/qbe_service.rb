@@ -323,7 +323,7 @@ class QbeService
             call_data[:code] = 409
           end
         else
-          result = xml_doc.css('//result').attr('status').value
+          result = xml_doc&.css('//result')&.attr('status')&.value
           
           if result != 'pass'
             call_data[:error] = true
