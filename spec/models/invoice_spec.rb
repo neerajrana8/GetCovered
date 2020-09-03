@@ -33,6 +33,7 @@ RSpec.describe Invoice, elasticsearch: true, type: :model do
         }
       ]
     )
+    invoice.save
     invoice.refresh
     invoice.save
     @invoice = invoice
@@ -92,6 +93,29 @@ RSpec.describe Invoice, elasticsearch: true, type: :model do
     expect(@invoice.status).to eq('complete')
     expect(@invoice.amount_refunded).to eq(15000)
   end
+  
+  it 'Available invoice should perform proration adjustment' do
+    # perform prorated refund
+    cancel_date = @invoice.term_first_date + 1.day # proration should refund half of the refundable premium by default
+    result = @invoice.apply_proration(cancel_date, refund_date: cancel_date, to_ensure_refunded: Proc.new{|li| li.title == 'Test Premium Non-Refundable' ? li.price : 0 })
+    expect(result).to eq(true)
+    # check that the proration adjustment was applied
+    @invoice.reload
+    expect(@invoice.proration_reduction).to eq(15000)
+    expect(@invoice.total).to eq(@invoice.subtotal - 15000)
+    @invoice.line_items.each do |li|
+      if li.title == "Test Premium Refundable"
+        expect(li.proration_reduction).to eq(li.price / 2)
+      elsif li.title == "Test Premium Non-Refundable"
+        expect(li.proration_reduction).to eq(li.price)
+      else
+        expect(li.proration_reduction).to eq(0)
+      end
+    end
+  end
+  
+  
+  
 end
 
 
