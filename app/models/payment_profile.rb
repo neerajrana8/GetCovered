@@ -9,12 +9,6 @@ class PaymentProfile < ApplicationRecord
   validates_presence_of :source_id, :source_type
 
   alias_attribute :default, :default_profile
-  
-  before_create :scream
-  
-  def scream
-    raise "OMG OMG PAYMENT PROFILE CREATED!!!"
-  end
 
   def set_default
     succeeded = false

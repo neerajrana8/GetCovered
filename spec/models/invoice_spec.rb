@@ -39,19 +39,19 @@ RSpec.describe Invoice, elasticsearch: true, type: :model do
     @invoice = invoice
   end
 
-  it 'Invoice with number should be indexed' do
+  it 'with number should be indexed' do
     invoice = FactoryBot.create(:invoice)
     Invoice.__elasticsearch__.refresh_index!
     expect(Invoice.search(invoice.number).records.length).to eq(1)
   end
 
-  it 'Invoice with wrong number 100 should not be indexed' do
+  it 'with wrong number 100 should not be indexed' do
     FactoryBot.create(:invoice)
     Invoice.__elasticsearch__.refresh_index!
     expect(Invoice.search('100').records.length).to eq(0)
   end
   
-  it 'Invoice should be chargeable' do
+  it 'should be chargeable' do
     # charge our invoice
     result = @invoice.pay(stripe_source: :default)
     @invoice.reload
@@ -59,7 +59,7 @@ RSpec.describe Invoice, elasticsearch: true, type: :model do
     expect(@invoice.status).to eq("complete")
   end
   
-  it 'Invoice should refund correct amount' do
+  it 'should refund correct amount' do
     # charge our invoice
     result = @invoice.pay(stripe_source: :default)
     expect(result[:success]).to eq(true)
@@ -73,7 +73,7 @@ RSpec.describe Invoice, elasticsearch: true, type: :model do
     expect(@invoice.status).to eq('complete')
   end
   
-  it 'Invoice should not refund extra when proration is applied twice' do
+  it 'should not refund extra when proration is applied twice' do
     # charge our invoice
     result = @invoice.pay(stripe_source: :default)
     expect(result[:success]).to eq(true)
@@ -89,7 +89,7 @@ RSpec.describe Invoice, elasticsearch: true, type: :model do
     expect(@invoice.status).to eq('complete')
   end
   
-  it 'Invoice should refund nothing when overridden appropriately' do
+  it 'should refund nothing when overridden appropriately' do
     # charge our invoice
     result = @invoice.pay(stripe_source: :default)
     expect(result[:success]).to eq(true)
@@ -103,7 +103,7 @@ RSpec.describe Invoice, elasticsearch: true, type: :model do
     expect(@invoice.status).to eq('complete')
   end
   
-  it 'Invoice should handle refunds correctly when processing' do
+  it 'should handle refunds correctly when processing' do
     # charge our invoice
     result = @invoice.pay(stripe_source: :default)
     expect(result[:success]).to eq(true)
@@ -131,7 +131,7 @@ RSpec.describe Invoice, elasticsearch: true, type: :model do
     expect(@invoice.amount_refunded).to eq(6000)
   end
   
-  it 'Available invoice should perform proration adjustment correctly' do
+  it 'with available status should perform proration adjustment correctly' do
     # perform proration
     cancel_date = @invoice.term_first_date + 1.day # proration should refund half of the refundable premium by default
     result = @invoice.apply_proration(cancel_date, refund_date: cancel_date, to_ensure_refunded: Proc.new{|li| li.title == 'Test Premium Non-Refundable' ? 1000 : 0 })
