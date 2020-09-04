@@ -129,8 +129,6 @@ module V2
                     error: :address_mismatch,
                     message: 'The mailing address associated with this email is different than the one supplied in the recent request.  To change your address please log in'
                   }.to_json, status: 401) and return
-                  error_status << true
-                  break
                 end
               end
             end
@@ -174,7 +172,7 @@ module V2
               ) and return
             end
 
-            policy_user.user.invite! if index.zero?
+            policy_user.user.invite! if index.zero? && @application.policy_type_id != PolicyType::RENT_GUARANTEE_ID
           end
         end
 
