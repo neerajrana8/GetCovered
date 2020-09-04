@@ -45,6 +45,10 @@
             defaults: { recordable_type: Agency }
           get 'branding_profile'
         end
+
+        collection do
+          get :sub_agencies_index
+        end
       end
   
     resources :application_modules,
