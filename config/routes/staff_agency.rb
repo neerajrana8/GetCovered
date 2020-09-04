@@ -69,7 +69,7 @@
     get :total_dashboard, controller: 'dashboard', path: 'dashboard/:agency_id/total_dashboard'
     get :buildings_communities, controller: 'dashboard', path: 'dashboard/:agency_id/buildings_communities'
     get :communities_list, controller: 'dashboard', path: 'dashboard/:agency_id/communities_list'
-    # get :reports, controller: 'dashboard', path: 'dashboard/:agency_id/reports'  
+    get :uninsured_units, controller: 'dashboard', path: 'dashboard/:agency_id/uninsured_units'
   
     resources :fees,
       only: [ :create, :update, :index, :show ]
