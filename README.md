@@ -53,9 +53,56 @@ If you want to launch a certain test use the next form:
 
 `docker-compose exec -e "RAILS_ENV=test_container" web bundle exec rspec 'spec/requests/leases/bulk_creation_spec.rb'`
 
+##### Using letter-opener (for MacOS)
+
+1) Add to your gemfile & install bundle
+`gem 'letter_opener'
+ gem 'letter_opener_web', '~> 1.0'
+ gem 'guard'
+ gem 'guard-shell'` 
+
+2) Open development.rb and check that your action_mailer configs as below 
+`config.action_mailer.delivery_method = :letter_opener
+config.action_mailer.perform_deliveries = true
+config.action_mailer.default_options  = {
+   from:  "no-reply <some@test.com>"
+}
+-- if standart port already in use:
+ config.action_mailer.default_url_options = { host: 'localhost', port: 3001 }`
+ 
+3) Open config/routes.rb and add
+ `mount LetterOpenerWeb::Engine, at: "/letter_opener" if Rails.env.development?`
+ 
+4) Open docker-compose.yml and check that at web: volumes looks like below:
+
+ `volumes:
+    - .:/getcovered
+    - ./tmp/letter_opener:/getcovered/tmp/letter_opener/`
+
+4*) Sometimes its more suitable to run sidekiq workers synchronous. To make if like that open development.rb and add: 
+`require 'sidekiq/testing/inline'`
+
+5) docker-compose build & docker-compose up
+
+After that you can open `localhost:3000/letter_opener` and all sent emails will be available for testing. 
+
+Next steps needed if you want automatically open email files in browser (please don't forget to delete old emails from tmp folder, because each  new email will trigger all of them to open)
+6) Open your terminal in folder with project and run
+  `bundle exec guard init`
+  
+7) Open generated file Guard file and add (ex. `subl Guardfile`):
+  `guard :shell do
+     watch(%r{^tmp/letter_opener/*/.+rich\.html}) do |modified_files|
+       `open #{modified_files[0]}`
+      end
+    end` 
+
+8) run in terminal `guard`
+You must see message : "- INFO - Guard is now watching at '/YOU_PROJECT_DIRECTORY/GetCovered-V2'"
+Try to send email and check it in your default browser
+
 ## Errors 
 All new errors and if possible old must use the next format:
-
 ```ruby
 {
   error: :short_error_tag, # required
