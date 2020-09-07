@@ -71,6 +71,45 @@ namespace :docker do
     end
   end
 
+  namespace :development do
+    desc 'Drop dev DB'
+    task drop: :environment do
+      system('docker-compose run -e "RAILS_ENV=development" web bundle exec rake db:drop')
+    end
+
+    desc 'Create dev DB'
+    task create: :environment do
+      system('docker-compose run -e "RAILS_ENV=development" web bundle exec rake db:create')
+    end
+
+    desc 'Migrate dev DB'
+    task migrate: :environment do
+      system('docker-compose run -e "RAILS_ENV=development" web bundle exec rake db:migrate')
+    end
+
+    desc 'Seed dev DB for client apps'
+    task seed: :environment do
+      # Need tbu according to seeds.rb -> @opts
+      opts = %w[setup agency account insurable-commercial user policy-residential policy-master policy-commercial branding-profiles msi msi-test-addresses msi-regenerate-ircs]
+
+      opts.each do |section|
+        puts section
+        Rake::Task["docker:development:seed_section"].invoke(section)
+      end
+    end
+
+    desc 'Seed dev DB by section for client apps'
+    task :seed_section, [:section_name] => [:environment] do |t, arg|
+      puts "Start import #{arg.section_name} section"
+      command_str = 'docker-compose run -e "RAILS_ENV=development" web bundle exec rake db:seed '
+      section_str = "section=#{arg.section_name}"
+      cmd = "#{command_str}#{section_str}"
+      system(cmd)
+      puts "Finished import #{arg.section_name} section"
+    end
+
+  end
+
 	desc "Install from Docker"
 	task install: :environment do
 		Rake::Task['docker:down'].invoke
