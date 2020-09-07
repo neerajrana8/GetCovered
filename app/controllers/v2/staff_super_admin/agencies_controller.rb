@@ -34,6 +34,22 @@ module V2
             status: :unauthorized
         end
       end
+
+      def sub_agencies_index
+        result = []
+        required_fields = %i[id title agency_id]
+
+        Agency.where(agency_id: nil).select(required_fields).each do |agency|
+          sub_agencies = agency.agencies.select(required_fields)
+          result << if sub_agencies.any?
+            agency.attributes.reverse_merge(agencies: sub_agencies.map(&:attributes))
+          else
+            agency.attributes
+          end
+        end
+
+        render json: result.to_json
+      end
       
       def update
         if update_allowed?
