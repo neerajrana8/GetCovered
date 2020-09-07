@@ -39,9 +39,7 @@ class Staff < ApplicationRecord
   has_many :assignments
   
   # has_one relationships
-  has_one :profile,
-  as: :profileable,
-  autosave: true
+  has_one :profile, as: :profileable, autosave: true
   
   has_many :reports, as: :reportable
 
@@ -51,7 +49,7 @@ class Staff < ApplicationRecord
   
   scope :enabled, ->(){ where(enabled: true) }
   
-  accepts_nested_attributes_for :profile
+  accepts_nested_attributes_for :profile, update_only: true
   
   settings index: { number_of_shards: 1 } do
     mappings dynamic: 'false' do
