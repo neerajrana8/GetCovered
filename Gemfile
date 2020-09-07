@@ -140,7 +140,7 @@ group :development do
   gem 'letter_opener_web', '~> 1.0'
   gem 'guard'
   gem 'guard-shell'
-  #rubymine specific debug gems
+  # rubymine specific debug gems
   #gem 'ruby-debug-ide'
   #gem 'debase'
 end
