@@ -9,6 +9,6 @@ class MakeInvoicesAvailableJob < ApplicationJob
   private
 
     def set_invoices
-      @invoices = ::Invoice.where(status: 'upcoming').where("available_date <= '#{Time.current.to_date.to_s(:db)}'")
+      @invoices = ::Invoice.where(status: 'upcoming', external: false).where("available_date <= '#{Time.current.to_date.to_s(:db)}'")
     end
 end

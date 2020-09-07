@@ -41,7 +41,7 @@
     get :total_dashboard, controller: 'dashboard', path: 'dashboard/:super_admin_id/total_dashboard'
     get :buildings_communities, controller: 'dashboard', path: 'dashboard/:super_admin_id/buildings_communities'
     get :communities_list, controller: 'dashboard', path: 'dashboard/:super_admin_id/communities_list'
-    get :reports, controller: 'dashboard', path: 'dashboard/reports'
+    get :uninsured_units, controller: 'dashboard', path: 'dashboard/:super_admin_id/uninsured_units'
 
     resources :agencies,
       only: [ :create, :update, :index, :show ],
@@ -53,8 +53,12 @@
             defaults: { recordable_type: Agency }
           get 'branding_profile'
         end
-      end
 
+        collection do
+          get :sub_agencies_index
+        end
+      end
+  
     resources :application_modules,
       path: "application-modules",
       only: [ :create, :update, :index, :show ]
@@ -188,13 +192,13 @@
         put :accept
       end
     end
-  
+
     resources :policy_quotes,
       path: "policy-quotes",
       only: [ :index, :show ]
   
     resources :staffs,
-      only: [ :create, :index, :show ] do
+      only: [ :create, :index, :show, :update ] do
         member do
           put :re_invite
           put :toggle_enabled

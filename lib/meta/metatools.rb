@@ -1,6 +1,6 @@
 # set configurable globals
 $file_open_command = ENV['RBMETA_FILE_OPEN_COMMAND'] || "(geany '$FILENAME':$LINE_NUMBER:$COLUMN &)"
-$optional_loads = (ENV['RBMETA_OPTIONAL_LOADS'] || "monkey_hash.rb,monkey_array.rb").split(",").select{|str| !str.blank? }
+$optional_loads = (ENV['RBMETA_OPTIONAL_LOADS'] || "monkey_hash.rb,monkey_array.rb,debug_tools.rb").split(",").select{|str| !str.blank? }
 $enable_empirical_polymorphic_reflection_targets = (ENV['RBMETA_EMPIRICAL_POLYMORPHIC_REFLECTION_TARGETS'] || false)
 
 # set things there's no real reason you'd want to configure
@@ -207,6 +207,13 @@ end
 alias migrations_source migration_source
 alias migrations_sources migration_source
 alias migration_sources migration_source
+
+def spec_source(**args)
+  source_from("spec", **({recursive: true, filetypes: ['rb']}.merge(args)))
+end
+alias specs_source spec_source
+alias spec_sources spec_source
+alias specs_source spec_source
 
 # MOOSE WARNING: MISSING MAILERS
 
