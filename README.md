@@ -103,7 +103,6 @@ Try to send email and check it in your default browser
 
 ## Errors 
 All new errors and if possible old must use the next format:
-
 ```ruby
 {
   error: :short_error_tag, # required
