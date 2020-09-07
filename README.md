@@ -145,6 +145,7 @@ can be used in the pop-ups and/or just to clarify an error. _(string, free forma
 active record models, parser, external services. _(any object, free format, optional)_
 
 There is a method in the `application_controller` that wraps this hash - `standard_error`. Examples:
+
 ```ruby
 #render full error
 render(
