@@ -5,17 +5,15 @@
 module V2
   module StaffSuperAdmin
     class StaffsController < StaffSuperAdminController
-
       include StaffsMethods
       
-      before_action :set_staff, only: [:show, :re_invite, :toggle_enabled]
+      before_action :set_staff, only: %i[show update re_invite toggle_enabled]
             
       def index
         super(:@staffs, Staff, :profile)
       end
       
-      def show
-      end
+      def show; end
       
       def create
         if create_allowed?
@@ -23,16 +21,24 @@ module V2
           # remove password issues from errors since this is a Devise model
           @staff.valid? if @staff.errors.blank?
           @staff.errors.messages.except!(:password)
-          if !@staff.errors.any? && @staff.invite_as(current_staff)
+          if @staff.errors.none? && @staff.invite_as(current_staff)
             render :show,
-              status: :created
+                   status: :created
           else
             render json: @staff.errors,
-              status: :unprocessable_entity
+                   status: :unprocessable_entity
           end
         else
           render json: { success: false, errors: ['Unauthorized Access'] },
-            status: :unauthorized
+                 status: :unauthorized
+        end
+      end
+
+      def update
+        if @staff.update_as(current_staff, update_params)
+          render :show, status: :ok
+        else
+          render json: @staff.errors, status: :unprocessable_entity
         end
       end
 
@@ -49,50 +55,61 @@ module V2
       
       private
       
-        def view_path
-          super + "/staffs"
-        end
+      def view_path
+        super + '/staffs'
+      end
         
-        def create_allowed?
-          true
-        end
+      def create_allowed?
+        true
+      end
         
-        def set_staff
-          @staff = access_model(::Staff, params[:id])
-        end
+      def set_staff
+        @staff = access_model(::Staff, params[:id])
+      end
                 
-        def create_params
-          return({}) if params[:staff].blank?
-          to_return = params.require(:staff).permit(
-            :email, :enabled, :organizable_id, :organizable_type, :role,
-            notification_options: {}, settings: {},
-            profile_attributes: [
-              :birth_date, :contact_email, :contact_phone, :first_name,
-              :job_title, :last_name, :middle_name, :suffix, :title
-            ]
-          )
-          return(to_return)
-        end
-        
-        def supported_filters(called_from_orders = false)
-          @calling_supported_orders = called_from_orders
-          {
-            id: [ :scalar, :array ],
-            email: [ :scalar, :array, :like ],
-            permissions: [ :scalar, :array ],
-            organizable_id: [ :scalar, :array ],
-            organizable_type: [ :scalar, :array ],
-            profile: {
-              first_name: [ :scalar, :like ],
-              last_name: [ :scalar, :like ],
-              full_name: [ :scalar, :like ]
-            }
-          }
-        end
+      def create_params
+        return({}) if params[:staff].blank?
 
-        def supported_orders
-          supported_filters(true)
-        end
+        to_return = params.require(:staff).permit(
+          :email, :enabled, :organizable_id, :organizable_type, :role,
+          notification_options: {}, settings: {},
+          profile_attributes: %i[
+            birth_date contact_email contact_phone first_name
+            job_title last_name middle_name suffix title
+          ]
+        )
+        to_return
+      end
+
+      def update_params
+        params.permit(
+          :email, notification_options: {}, settings: {},
+                  profile_attributes: %i[
+                    id birth_date contact_email contact_phone first_name
+                    job_title last_name middle_name suffix title
+                  ]
+        )
+      end
+        
+      def supported_filters(called_from_orders = false)
+        @calling_supported_orders = called_from_orders
+        {
+          id: %i[scalar array],
+          email: %i[scalar array like],
+          permissions: %i[scalar array],
+          organizable_id: %i[scalar array],
+          organizable_type: %i[scalar array],
+          profile: {
+            first_name: %i[scalar like],
+            last_name: %i[scalar like],
+            full_name: %i[scalar like]
+          }
+        }
+      end
+
+      def supported_orders
+        supported_filters(true)
+      end
         
     end
   end # module StaffSuperAdmin

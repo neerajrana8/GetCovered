@@ -170,7 +170,7 @@
       only: [ :index, :show ]
   
     resources :staffs,
-      only: [ :create, :index, :show ] do
+      only: [ :create, :index, :show, :update ] do
         member do
           put :re_invite
           put :toggle_enabled
