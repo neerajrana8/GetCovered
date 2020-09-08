@@ -78,7 +78,7 @@ module V2
       end
 
       def rent_guarantee_complete
-        PolicyApplicationsMailer.with(policy_application: @application).invite_to_pay.deliver_later
+        PolicyApplicationsMailer.with(policy_application: @policy_application).invite_to_pay.deliver_later
         render json: { message: 'Instructions were sent' }
       end
 
