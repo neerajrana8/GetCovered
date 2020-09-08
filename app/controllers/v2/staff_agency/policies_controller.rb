@@ -34,6 +34,7 @@ module V2
         if create_allowed?
           @policy = @substrate.new(create_params)
           if @policy.errors.none? && @policy.save_as(current_staff)
+            Insurables::UpdateCoveredStatus.run!(insurable: @policy.primary_insurable) if @policy.primary_insurable.present?
             render :show, status: :created
           else
             render json: @policy.errors, status: :unprocessable_entity

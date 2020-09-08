@@ -208,6 +208,13 @@ alias migrations_source migration_source
 alias migrations_sources migration_source
 alias migration_sources migration_source
 
+def spec_source(**args)
+  source_from("spec", **({recursive: true, filetypes: ['rb']}.merge(args)))
+end
+alias specs_source spec_source
+alias spec_sources spec_source
+alias specs_source spec_source
+
 # MOOSE WARNING: MISSING MAILERS
 
 # excludes seeds & views

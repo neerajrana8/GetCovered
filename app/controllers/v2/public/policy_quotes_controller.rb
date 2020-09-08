@@ -162,6 +162,9 @@ module V2
 				    	@quote_attempt = @policy_quote.accept(bind_params: bind_params)
 				    	@policy_type_identifier = @policy_quote.policy_application.policy_type_id == 5 ? "Rental Guarantee" : "Policy"
 							if @quote_attempt[:success]
+                insurable = @policy_quote.policy_application.policy&.primary_insurable
+                Insurables::UpdateCoveredStatus.run!(insurable: insurable) if insurable.present?
+
 								::Analytics.track(
 									user_id: @user.id,
 									event: 'Order Completed',

@@ -113,11 +113,82 @@ class Account < ApplicationRecord
       indexes :title, type: :text, analyzer: 'english'
       indexes :call_sign, type: :text, analyzer: 'english'
     end
-  end  
+  end
+  
+  
+  # Get Msi General Party Info
+  #
+  # Get GeneralPartyInfo block for use in MSI requests
+  def get_msi_general_party_info
+    pseudoname = get_pseudoname
+    addr = primary_address.nil? ? nil : primary_address.full[0...50]
+    {
+      NameInfo: {
+        PersonName: {
+          GivenName: pseudoname.first,
+          Surname:   pseudoname.last
+        }.merge(addr.nil? ? {} : { OtherGivenName: addr })
+      },
+      Communications: { # feel free to add phone number here just like we do for user#get_msi_general_party_info
+        EmailInfo: {
+          EmailAddr: self.owner.email # MOOSE WARNING: make this use self.contact_info if we ever start making use of it
+        }
+      }
+    }
+  end
   
   private
     
-  def initialize_agency
-    # Blank for now...
+    def initialize_agency
+      # Blank for now...
+    end
+
+    # get an array [first, last] presenting self.title as if it were a name;
+    # guarantees nonempty first and last with length at most 50 characters;
+    # will separate along space boundaries with the first name as short as possible when it can
+    def get_pseudoname
+    pseudoname = ['','']
+    the_title = self.title.strip
+    space_index = the_title.index(' ')
+    if space_index.nil? || space_index > 50
+      # there are no usable spaces
+      if the_title.length > 50
+        pseudoname[0] = the_title[0...50]
+        pseudoname[1] = the_title[50...100]
+      elsif the_title.length <= 1
+        pseudoname[0] = the_title.blank? ? "NOT APPLICABLE" : the_title
+        pseudoname[1] = "NOT APPLICABLE"
+      else
+        pseudoname[0] = the_title[0..(the_title.length/2)]
+        pseudoname[1] = the_title[((the_title.length/2)+1)..-1]
+      end
+    else
+      pseudoname[0] = the_title[0..space_index] # include the space for now
+      pseudoname[1] = the_title[(space_index+1)..-1]
+      # move words from last name to first name as long as we need to and can
+      while pseudoname.last.length > 50
+        space_index = pseudoname.last.index(' ')
+        if space_index.nil? || pseudoname.first.length + space_index + 1 >= 51
+          # we don't have a space index we can slice at
+          break
+        else
+          # we have a space index we can slice at
+          pseudoname[0] += pseudoname.last[0..space_index]
+          pseudoname[1] = pseudoname.last[(space_index+1)...-1]
+        end
+      end
+      # give up on spaces if we have to do so to fit it all
+      if pseudoname.last.length > 50 && pseudoname.first.length < 50
+        space_index = [pseudoname.last.length - 50, 50 - pseudoname.first.length].min # how many characters we can move
+        pseudoname[0] += pseudoname.last[0...space_index]
+        pseudoname[1] = pseudoname.last[space_index..-1]
+      end
+      # throw away anything excessive
+      pseudoname[0].chomp!(' ')
+      pseudoname[1] = pseudoname.last[0...50]
+    end
+    pseudoname[0].strip!
+    pseudoname[1].strip!
+    return pseudoname
   end
 end

@@ -8,6 +8,7 @@ end
 
 json.insurable do
   if unit_policy.insurables.any?
-    json.insurable unit_policy.insurables.last
+    json.partial! 'v2/staff_account/insurables/insurable_show_full.json.jbuilder',
+                  insurable: unit_policy.insurables.last
   end
 end

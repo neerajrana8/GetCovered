@@ -10,6 +10,9 @@ production:
   - elasticsearch
 
 :schedule:
+  insurables_update_covered_status:
+    cron: '0 0 * * *'   # Every day at 0:00 AM
+    class: Insurables::UpdateCoveredStatusJob
   # Reports
   coverage_reports_job:
     cron: '0 2 * * *'   # Every day at 2:00 AM

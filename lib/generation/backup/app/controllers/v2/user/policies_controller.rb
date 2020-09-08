@@ -192,8 +192,7 @@ module V2
 	      end
 
         def user_params
-          params.require(:user).permit(:marital_status,
-                                       addresses_params: [
+          params.require(:user).permit(addresses_params: [
                                          :id, :street_number, :street_one, 
                                          :street_two, :locality, :county,
                                          :region, :country, :postal_code, :plus_four

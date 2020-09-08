@@ -495,9 +495,9 @@ if @get_covered.save
 	}
 
   @get_covered.billing_strategies.create!(title: 'Annually', enabled: true, carrier: @qbe, 
-  		                                      new_business: { payments: [100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
+  		                                      new_business: { payments: [100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
                                     				policy_type: PolicyType.find(1), carrier_code: "FL",
-                                    				fees_attributes: [service_fee])
+                                    				fees_attributes: [service_fee]})
                                     
   @get_covered.billing_strategies.create!(title: 'Bi-Annually', enabled: true, 
   		                                      new_business: { payments: [50, 0, 0, 0, 0, 0, 50, 0, 0, 0, 0, 0], 
