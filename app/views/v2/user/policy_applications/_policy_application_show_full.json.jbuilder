@@ -30,9 +30,17 @@ json.invoices do
   end
 end
 
-json.policy_quote do
+json.quote do
   if policy_application.policy_quotes.last.present?
     json.partial! 'v2/user/policy_quotes/policy_quote_show_full.json.jbuilder',
                   policy_quote: policy_application.policy_quotes.last
+  end
+end
+
+# primary user
+json.user do
+  if policy_application.primary_user.present?
+    json.partial! 'v2/user/users/user_short_full.json.jbuilder',
+                  user: policy_application.primary_user
   end
 end
