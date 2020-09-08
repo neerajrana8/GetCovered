@@ -13,6 +13,7 @@
 ActiveRecord::Schema.define(version: 2020_08_19_171858) do
 
   # These are extensions that must be enabled in order to support this database
+  enable_extension "citext"
   enable_extension "plpgsql"
 
   create_table "access_tokens", force: :cascade do |t|
@@ -1279,7 +1280,7 @@ ActiveRecord::Schema.define(version: 2020_08_19_171858) do
     t.datetime "confirmed_at"
     t.datetime "confirmation_sent_at"
     t.string "unconfirmed_email"
-    t.string "email"
+    t.citext "email"
     t.boolean "enabled", default: false, null: false
     t.jsonb "settings", default: {}
     t.jsonb "notification_options", default: {}
