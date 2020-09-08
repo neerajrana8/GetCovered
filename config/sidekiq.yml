@@ -8,6 +8,8 @@ production:
   - default
   - stripe
   - elasticsearch
+  - mailer
+  - mailers
 
 :schedule:
   insurables_update_covered_status:
