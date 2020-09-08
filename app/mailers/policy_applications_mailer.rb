@@ -8,7 +8,7 @@ class PolicyApplicationsMailer < ApplicationMailer
     # Initializes the invitation process and creates a token
     @user.tap { |user| user.skip_invitation = true }.invite!(nil, skip_invitation: true)
     token = @user.instance_variable_get(:@raw_invitation_token)
-    auth_params = @user.create_new_auth_token
+    auth_token = EncryptionService.encrypt("User/#{@user.email}")
 
     client_host =
       BrandingProfiles::FindByObject.run!(object: @policy_application)&.url ||
@@ -18,7 +18,7 @@ class PolicyApplicationsMailer < ApplicationMailer
       scheme: 'https',
       host: client_host.split('/').last, # if someone decided to store url with a scheme
       path: 'process_payment',
-      query_values: auth_params.merge!(policy_application_id: @policy_application.id, invitation_token: token)
+      query_values: { policy_application_id: @policy_application.id, invitation_token: token, auth_token: auth_token }
     ).to_s
 
     mail(from: 'support@getcoveredinsurance.com', to: @user.email, subject: 'Policy Invoice')

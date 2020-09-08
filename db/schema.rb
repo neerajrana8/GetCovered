@@ -10,9 +10,10 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_08_19_171858) do
+ActiveRecord::Schema.define(version: 2020_08_25_103919) do
 
   # These are extensions that must be enabled in order to support this database
+  enable_extension "citext"
   enable_extension "plpgsql"
 
   create_table "access_tokens", force: :cascade do |t|
@@ -376,6 +377,7 @@ ActiveRecord::Schema.define(version: 2020_08_19_171858) do
     t.string "name"
     t.string "address"
     t.string "nature_of_claim"
+    t.text "staff_notes"
     t.index ["claimant_type", "claimant_id"], name: "index_claims_on_claimant_type_and_claimant_id"
     t.index ["insurable_id"], name: "index_claims_on_insurable_id"
     t.index ["policy_id"], name: "index_claims_on_policy_id"
@@ -851,10 +853,12 @@ ActiveRecord::Schema.define(version: 2020_08_19_171858) do
     t.date "last_payment_date"
     t.date "next_payment_date"
     t.bigint "policy_group_id"
+    t.boolean "declined"
     t.string "address"
     t.string "out_of_system_carrier_title"
     t.boolean "declined"
     t.bigint "policy_id"
+    t.integer "cancellation_reason"
     t.index ["account_id"], name: "index_policies_on_account_id"
     t.index ["agency_id"], name: "index_policies_on_agency_id"
     t.index ["carrier_id"], name: "index_policies_on_carrier_id"
