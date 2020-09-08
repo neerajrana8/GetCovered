@@ -32,7 +32,7 @@ end
 
 json.policy_quote do
   if policy_application.policy_quotes.last.present?
-    json.partial! 'v2/user/policy_quotes/carrier_show_full.json.jbuilder',
+    json.partial! 'v2/user/policy_quotes/policy_quote_show_full.json.jbuilder',
                   policy_quote: policy_application.policy_quotes.last
   end
 end
