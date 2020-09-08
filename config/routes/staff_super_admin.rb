@@ -45,6 +45,10 @@
             defaults: { recordable_type: Agency }
           get 'branding_profile'
         end
+
+        collection do
+          get :sub_agencies_index
+        end
       end
   
     resources :application_modules,
@@ -166,7 +170,7 @@
       only: [ :index, :show ]
   
     resources :staffs,
-      only: [ :create, :index, :show ] do
+      only: [ :create, :index, :show, :update ] do
         member do
           put :re_invite
           put :toggle_enabled
