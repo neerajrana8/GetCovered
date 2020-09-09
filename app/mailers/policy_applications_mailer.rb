@@ -21,10 +21,12 @@ class PolicyApplicationsMailer < ApplicationMailer
       query_values: { policy_application_id: @policy_application.id, invitation_token: token, auth_token: auth_token }
     ).to_s
 
+    application_holder = @policy_application.account || @policy_application.agency
+
     mail(
       from: 'no-reply@getcoveredinsurance.com',
       to: @user.email,
-      subject: "Finish Registering Your #{@policy_application.account.title} Account - #{@policy_application.policy_type.title} policy"
+      subject: "Finish Registering Your #{application_holder&.title} Account - #{@policy_application.policy_type.title} policy"
     )
   end
 end
