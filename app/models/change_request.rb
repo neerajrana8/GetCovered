@@ -5,9 +5,9 @@ class ChangeRequest < ApplicationRecord
   belongs_to :requestable, 
     polymorphic: true
 
-  belongs_to :staff
+  # belongs_to :staff
 
   # Enum Options
-  enum customized_action: %i[decline approve]
+  enum customized_action: %i[decline approve pending]
   enum status: %i[in_progress]
 end
