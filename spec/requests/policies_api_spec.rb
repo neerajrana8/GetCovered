@@ -16,7 +16,7 @@ describe 'Admin Policy spec', type: :request do
     @account = FactoryBot.create(:account, agency: @agency)
     BillingStrategy.create(title: "Monthly", slug: nil, enabled: true, new_business: {"payments"=>[8.37, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33], "payments_per_term"=>12, "remainder_added_to_deposit"=>true}, renewal: nil, locked: false, agency: @agency, carrier: @carrier, policy_type: @policy_type, carrier_code: nil)
   end
-  
+
   context 'for StaffAccount roles' do
     before :all do
       @staff = FactoryBot.create(:staff, organizable: @account, role: 'staff')
@@ -25,15 +25,15 @@ describe 'Admin Policy spec', type: :request do
       login_staff(@staff)
       @headers = get_auth_headers_from_login_response_headers(response)
     end
-    
-    
+
+
     it 'should add coverage proof' do
       post '/v2/staff_account/policies/add_coverage_proof', params: { policy: coverage_proof_params, users: [user_params] }, headers: @headers
       result = JSON.parse response.body
       expect(result["message"]).to eq("Policy created")
       expect(Policy.last.users.last.email).to eq('yernar.mussin@nitka.com')
     end
-    
+
     it 'should include policy type title in index' do
       FactoryBot.create(:policy, agency: @agency, carrier: @carrier, account: @account, policy_type: @policy_type)
       get '/v2/staff_account/policies', headers: @headers
@@ -43,15 +43,13 @@ describe 'Admin Policy spec', type: :request do
     it 'should filter by policy number' do
       # First Request should return 3 policies belonging to @policy_type
       policy = FactoryBot.create(:policy, number: 'n0909', agency: @agency, carrier: @carrier, account: @account, policy_type: @policy_type)
-      FactoryBot.create(:policy, agency: @agency, carrier: @carrier, account: @account, policy_type: @policy_type)
-      FactoryBot.create(:policy, agency: @agency, carrier: @carrier, account: @account, policy_type: @policy_type)
       get '/v2/staff_account/policies', params: { 'filter[number]' => policy.number }, headers: @headers
       result = JSON.parse response.body
       expect(result.count).to eq(1)
       expect(result.first['number']).to eq(policy.number)
       expect(response.status).to eq(200)
     end
-    
+
     it 'should filter by policy type id' do
       # First Request should return 3 policies belonging to @policy_type
       FactoryBot.create(:policy, agency: @agency, carrier: @carrier, account: @account, policy_type: @policy_type)
@@ -64,7 +62,7 @@ describe 'Admin Policy spec', type: :request do
         expect(policy['policy_type_id']).to eq(@policy_type.id)
       end
       expect(response.status).to eq(200)
-      
+
       # Second Request should return 0 policies belonging to non-existent policy_type
       login_staff(@staff)
       @headers = get_auth_headers_from_login_response_headers(response)
@@ -72,7 +70,7 @@ describe 'Admin Policy spec', type: :request do
       result = JSON.parse response.body
       expect(response.status).to eq(200)
       expect(result.count).to eq(0)
-      
+
       # Third Request should return 1 policy belonging to a new policy_type
       new_policy_type = @carrier.policy_types.create(title: "New Policy Type")
       FactoryBot.create(:policy, agency: @agency, carrier: @carrier, account: @account, policy_type: new_policy_type)
@@ -83,12 +81,10 @@ describe 'Admin Policy spec', type: :request do
       expect(response.status).to eq(200)
       expect(result.count).to eq(1)
     end
-    
+
     it 'should search policies by number' do
       policy = FactoryBot.create(:policy, number: "n0101", agency: @agency, carrier: @carrier, account: @account, policy_type: @policy_type)
-      FactoryBot.create(:policy, agency: @agency, carrier: @carrier, account: @account, policy_type: @policy_type)
-      FactoryBot.create(:policy, agency: @agency, carrier: @carrier, account: @account, policy_type: @policy_type)
-      sleep 1
+      sleep 5
       get '/v2/staff_account/policies/search', params: { 'query' => policy.number }, headers: @headers
       result = JSON.parse response.body
       expect(response.status).to eq(200)
@@ -96,7 +92,7 @@ describe 'Admin Policy spec', type: :request do
       expect(result.first['number']).to eq(policy.number)
     end
   end
-  
+
   context 'for StaffAgency roles' do
     before :all do
       @staff = create_agent_for @agency
@@ -105,8 +101,8 @@ describe 'Admin Policy spec', type: :request do
       login_staff(@staff)
       @headers = get_auth_headers_from_login_response_headers(response)
     end
-    
-    
+
+
     it 'should add coverage proof' do
       post '/v2/staff_agency/policies/add_coverage_proof', params: { policy: coverage_proof_params, users: [user_params] }, headers: @headers
       result = JSON.parse response.body
@@ -125,15 +121,13 @@ describe 'Admin Policy spec', type: :request do
     it 'should filter by policy number' do
       # First Request should return 3 policies belonging to @policy_type
       policy = FactoryBot.create(:policy, number: 'n0909', agency: @agency, carrier: @carrier, account: @account, policy_type: @policy_type)
-      FactoryBot.create(:policy, agency: @agency, carrier: @carrier, account: @account, policy_type: @policy_type)
-      FactoryBot.create(:policy, agency: @agency, carrier: @carrier, account: @account, policy_type: @policy_type)
       get '/v2/staff_agency/policies', params: { 'filter[number]' => policy.number }, headers: @headers
       result = JSON.parse response.body
       expect(result.count).to eq(1)
       expect(result.first['number']).to eq(policy.number)
       expect(response.status).to eq(200)
     end
-    
+
     it 'should filter by policy type id' do
       # First Request should return 3 policies belonging to @policy_type
       FactoryBot.create(:policy, agency: @agency, carrier: @carrier, account: @account, policy_type: @policy_type)
@@ -146,7 +140,7 @@ describe 'Admin Policy spec', type: :request do
         expect(policy['policy_type_id']).to eq(@policy_type.id)
       end
       expect(response.status).to eq(200)
-      
+
       # Second Request should return 0 policies belonging to non-existent policy_type
       login_staff(@staff)
       @headers = get_auth_headers_from_login_response_headers(response)
@@ -154,7 +148,7 @@ describe 'Admin Policy spec', type: :request do
       result = JSON.parse response.body
       expect(response.status).to eq(200)
       expect(result.count).to eq(0)
-      
+
       # Third Request should return 1 policy belonging to a new policy_type
       new_policy_type = @carrier.policy_types.create(title: "New Policy Type")
       FactoryBot.create(:policy, agency: @agency, carrier: @carrier, account: @account, policy_type: new_policy_type)
@@ -165,12 +159,10 @@ describe 'Admin Policy spec', type: :request do
       expect(response.status).to eq(200)
       expect(result.count).to eq(1)
     end
-    
+
     it 'should search policies by number' do
       policy = FactoryBot.create(:policy, number: "nagency0101", agency: @agency, carrier: @carrier, account: @account, policy_type: @policy_type)
-      FactoryBot.create(:policy, agency: @agency, carrier: @carrier, account: @account, policy_type: @policy_type)
-      FactoryBot.create(:policy, agency: @agency, carrier: @carrier, account: @account, policy_type: @policy_type)
-      sleep 1
+      sleep 5
       get '/v2/staff_agency/policies/search', params: { 'query' => policy.number }, headers: @headers
       result = JSON.parse response.body
       expect(response.status).to eq(200)
@@ -178,8 +170,8 @@ describe 'Admin Policy spec', type: :request do
       expect(result.first['number']).to eq(policy.number)
     end
   end
-  
-  
+
+
   def coverage_proof_params
     {
       number: "New policy wiht number: #{SecureRandom.uuid}",
@@ -198,7 +190,7 @@ describe 'Admin Policy spec', type: :request do
       ]
     }
   end
-  
+
   def user_params
     {
       email: "yernar.mussin@nitka.com",
@@ -220,5 +212,5 @@ describe 'Admin Policy spec', type: :request do
       }
     }
   end
-  
+
 end

@@ -9,28 +9,28 @@ require "base64"
 require 'fileutils'
 
 class CrumService
-  
+
   include HTTParty
   include ActiveModel::Validations
   include ActiveModel::Conversion
 	include ActionView::Helpers::NumberHelper
   extend ActiveModel::Naming
-  
+
   attr_accessor :action,
   							:token
 
-  validates :action, 
+  validates :action,
     :presence => true,
-    format: { 
-      with: /quote|bind|/, 
-      message: "must be from approved list" 
+    format: {
+      with: /quote|bind|/,
+      message: "must be from approved list"
     }
-  
+
   # CrumService.get_token
-  # 
-    
+  #
+
   def get_token
-	  
+
 	  call_data = {
       error: false,
       code: 200,
@@ -40,7 +40,7 @@ class CrumService
     }
 
     begin
-      
+
       call_data[:response] = HTTParty.post(Rails.application.credentials.crum[:uri][:token],
                                    				 body: {
 																					    "AuthParameters": {
@@ -54,76 +54,77 @@ class CrumService
 																	 				   "X-Amz-Target" => "AWSCognitoIdentityProviderService.InitiateAuth",
 																	 				   "Content-Type" => "application/x-amz-json-1.1"
                                    				 })
-          
-    rescue => e
-      
+
+		rescue => e
+
       puts "\nERROR\n"
-      
+
       call_data = {
         error: true,
         code: 500,
         message: "Request Timeout",
         response: e
       }
-    
+
     end
-    
+
     unless call_data[:error] == true
     	token_data = JSON.parse(call_data[:response])
     	self.token = token_data['AuthenticationResult']
     end
-    
+
     return call_data
-    
+
 	end
-  
+
   # CrumService.refresh_all_class_codes
-  # 
-	
+  #
+
 	def refresh_all_class_codes
 		states().each do |state|
-			get_class_code(state: state)	
+			get_class_code(state: state)
 		end
 	end
-  
+
   # CrumService.get_class_code
-  # 
-	
+  #
+
 	def get_class_code(state: nil)
-		
+
 		# Find Crum and Forester
 		@carrier = Carrier.find(3)
 		@policy_type = PolicyType.find(3)
-		
+
 		url = Rails.application.credentials.crum[:uri][:class_codes].sub(':product', "BOP")
-		
+
 		if states().include?(state)
-			
+
 			state_url = url.sub(':state', state)
 			error = false
-			
+
       event = Event.new(
-        verb: 'get', 
-        format: 'json', 
+        verb: 'get',
+        format: 'json',
         interface: 'REST',
-        process: 'crum_get_class_codes', 
+        process: 'crum_get_class_codes',
         endpoint: state_url,
         request: '{ "data": null }'
       )
 
 			get_token()
 
-			begin	
+			begin
 	    	request = HTTParty.get(state_url,
 															 headers: {
 																	 "Content-Type": "application/json",
 																	 "Authorization": self.token["IdToken"]
 															 })
+
 	    rescue => e
 	      pp e
 	      error = true
 	    end
-	       
+
 	    unless error
   	    event.response = request
   	    event.status = "success"
@@ -140,45 +141,45 @@ class CrumService
 			  		eqsl: class_code["EQSL"],
 			  		industry_program: class_code["IndustryProgram"],
 			  		naics_code: class_code["NAICSCode"],
-			  		state_code: class_code["StateCode"], 
-			  		enabled: true, 
+			  		state_code: class_code["StateCode"],
+			  		enabled: true,
 			  		policy_type: @policy_type) unless @carrier.carrier_class_codes
-			  																							.exists?(external_id: class_code["id"])					
+			  																							.exists?(external_id: class_code["id"])
 			  end
 		  else
-		    event.status = "error"  
+		    event.status = "error"
 		  end
-		  
+
 		  event.save
-  		
+
 		end
-		
+
 	end
-  
+
   # CrumService.format_phone(number)
-  # 
-  
+  #
+
 	def format_phone(number = nil)
 		raise ArgumentError, 'Argument "number" cannot be nil' if number.nil?
 		modified_number = number.gsub(/\s+/,'')
 		modified_number = modified_number.gsub(/[()-+.]/,'').tr('-', '')
 		modified_number = modified_number.start_with?('1') &&
-										  modified_number.length > 10 ? modified_number[1..-1] : 
+										  modified_number.length > 10 ? modified_number[1..-1] :
 																										modified_number
 		return number_to_phone(modified_number)
-	end 
-	
+	end
+
 	# CrumService.build_request_template
-	# 
-  
+	#
+
   def build_request_template(action = nil, args = {})
-    
+
     request_template = nil
-    
+
     if action == "add_new_quote"
-      
+
       raise ArgumentError, 'Argument "args" must be a PolicyApplication' unless args.is_a?(PolicyApplication)
-      
+
 
 			opts = {
 				"premise" => [
@@ -234,7 +235,7 @@ class CrumService
 					"business_personal_property" => 0
 				}
 			}.merge!(args.fields)
-  		            
+
   		request_template = {
   		  "method": "AddNewUATQuote",
   		  "quoteDetails": {
@@ -382,7 +383,7 @@ class CrumService
   		    }
   		  }
   		}
-			
+
 			opts["premise"].each_with_index do |premise, index|
 	      request_template[:quoteDetails][:policyService][:data][:account][:premises] << {
 	        "locationNumber": "#{ index + 1 }",
@@ -406,19 +407,19 @@ class CrumService
 	        "eligible": ""
 	      }
 	   end
-    
+
     elsif action == "get_document"
-    
+
       request_template = {
         businessFunction: "quote",
         typeofLetter: "proposalLetter",
         businessTransactionId: nil
       }.merge!(args)
-    
+
     elsif action == "bind"
-      
+
       raise ArgumentError, 'Argument "args" must be a PolicyQuote' unless args.is_a?(PolicyQuote)
-      
+
       request_template = {
         quoteId: "#{ args.external_id }",
         effectiveDate: args.policy_application.effective_date.strftime('%Y-%-m-%-d'),
@@ -427,28 +428,28 @@ class CrumService
         paymentTerm: args.policy_application.billing_strategy.carrier_code,
         isTRIAIncluded: "No",
         producerEmail: "brandon@getcoveredllc.com",
-        insuredName: args.policy_application.fields["business"]["contact_name"], 
+        insuredName: args.policy_application.fields["business"]["contact_name"],
         notes: "",
-        notesRequestType:""      
+        notesRequestType:""
       }
-    
+
     end
-    
+
     return request_template
-    
+
   end
-  
+
   # CrumService.add_new_quote(args)
-  # 
-	
+  #
+
 	def add_new_quote(data = {})
 		raise ArgumentError, 'Argument "data" cannot be nil' if data.nil?
-		
+
 		get_token()
-		
+
 		error = false
-		
-		begin	
+
+		begin
     	request = HTTParty.post(Rails.application.credentials.crum[:uri][:add_quote],
     													body: data.to_json,
 															headers: {
@@ -458,25 +459,25 @@ class CrumService
     rescue => e
       error = true
     end
-    
-    return { 
+
+    return {
       error: error,
       data: request
     }
-				
+
 	end
-  
+
   # CrumService.bind(args)
-  # 
-	
+  #
+
 	def bind(data = {})
 		raise ArgumentError, 'Argument "data" cannot be nil' if data.nil?
-		
+
 		get_token()
-		
+
 		error = false
-		
-		begin	
+
+		begin
     	request = HTTParty.post(Rails.application.credentials.crum[:uri][:bind],
     													body: data.to_json,
 															headers: {
@@ -487,25 +488,25 @@ class CrumService
     	puts "ERROR\n".red
       error = true
     end
-    
-    return { 
+
+    return {
       error: error,
       data: request
     }
-    
+
 	end
-	
+
 	# CrumService.get_documents
 	#
-	
+
 	def get_documents(data = {})
 	  raise ArgumentError, 'Argument "data" cannot be nil' if data.nil?
-	  
+
 	  get_token()
-	  
+
 	  error = false
-	  
-		begin	
+
+		begin
     	request = HTTParty.post(Rails.application.credentials.crum[:uri][:documents],
     													body: data.to_json,
 															headers: {
@@ -516,24 +517,24 @@ class CrumService
     	puts "ERROR\n".red
       error = true
     end
-    
-    return { 
+
+    return {
       error: error,
       data: request
     }
-  	  
+
 	end
-  
+
   # CrumService.states
   # method to return an array of state abbrivations
-  
+
   def states
-		return ["AK", "AL", "AR", "AZ", "CA", "CO", "CT", "DC", 
-						"DE", "FL", "GA", "HI", "IA", "ID", "IL", "IN", 
-						"KS", "KY", "LA", "MA", "MD", "ME", "MI", "MN", 
-						"MO", "MS", "MT", "NC", "ND", "NE", "NH", "NJ", 
-						"NM", "NV", "NY", "OH", "OK", "OR", "PA", "RI", 
-						"SC", "SD", "TN", "TX", "UT", "VA", "VT", "WA", 
-						"WI", "WV", "WY"]	  
+		return ["AK", "AL", "AR", "AZ", "CA", "CO", "CT", "DC",
+						"DE", "FL", "GA", "HI", "IA", "ID", "IL", "IN",
+						"KS", "KY", "LA", "MA", "MD", "ME", "MI", "MN",
+						"MO", "MS", "MT", "NC", "ND", "NE", "NH", "NJ",
+						"NM", "NV", "NY", "OH", "OK", "OR", "PA", "RI",
+						"SC", "SD", "TN", "TX", "UT", "VA", "VT", "WA",
+						"WI", "WV", "WY"]
 	end
 end
