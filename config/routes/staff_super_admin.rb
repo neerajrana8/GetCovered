@@ -31,7 +31,7 @@
       end
 
     resources :refunds,
-      only: [ :create, :index ] do
+      only: [ :index, :create, :update] do
         member do
           get :approve
           get :decline

@@ -240,7 +240,7 @@
     end
 
     resources :refunds,
-      only: [ :index ] do
+      only: [ :index, :create, :update] do
         member do
           get :approve
           get :decline
