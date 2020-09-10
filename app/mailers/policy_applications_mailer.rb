@@ -8,7 +8,7 @@ class PolicyApplicationsMailer < ApplicationMailer
     # Initializes the invitation process and creates a token
     @user.tap { |user| user.skip_invitation = true }.invite!(nil, skip_invitation: true)
     token = @user.instance_variable_get(:@raw_invitation_token)
-    auth_token = EncryptionService.encrypt("User/#{@user.email}")
+    auth_token = EncryptionService.encrypt("User/#{@user.email}/#{@user.encrypted_password}")
 
     client_host =
       BrandingProfiles::FindByObject.run!(object: @policy_application)&.url ||

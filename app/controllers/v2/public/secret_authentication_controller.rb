@@ -12,8 +12,8 @@ module V2
 
       def find_object
         decrypted_string = EncryptionService.decrypt(params[:secret_token])
-        type, email = decrypted_string.split('/')
-        @object = type.constantize&.find_by_email(email)
+        type, email, encrypted_password = decrypted_string.split('/')
+        @object = type.constantize&.where(email: email, encrypted_password: encrypted_password)&.take
         if @object.nil?
           render(body: nil, status: :unprocessable_entity) && return
         end
