@@ -110,9 +110,15 @@ class CrumService
         endpoint: state_url,
         request: '{ "data": null }'
       )
-		  
+
+			get_token()
+
 			begin	
-	    	request = HTTParty.get(state_url)
+	    	request = HTTParty.get(state_url,
+															 headers: {
+																	 "Content-Type": "application/json",
+																	 "Authorization": self.token["IdToken"]
+															 })
 	    rescue => e
 	      pp e
 	      error = true
