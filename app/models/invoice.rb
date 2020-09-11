@@ -55,7 +55,16 @@ class Invoice < ApplicationRecord
 
   # Enums
 
-  enum status: %w[quoted upcoming available processing complete missed canceled]
+  enum status: {
+    quoted:             0, 
+    upcoming:           1,
+    available:          2,
+    processing:         3,
+    complete:           4,
+    missed:             5,
+    canceled:           6,
+    managed_externally: 7
+  }
 
   scope :paid, -> { where(status: %w[complete]) }
   scope :unpaid, -> { where(status: %w[available missed]) }
@@ -109,7 +118,7 @@ class Invoice < ApplicationRecord
 
   def apply_proration(new_term_last_date, refund_date: nil, to_refund_override: nil, cancel_if_unpaid_override: nil)
     with_lock do
-      return false if term_first_date.nil? || term_last_date.nil?
+      return false if self.external || term_first_date.nil? || term_last_date.nil?
       to_refund = nil
       cancel_if_unpaid = false
       if to_refund_override.nil?
@@ -194,6 +203,8 @@ class Invoice < ApplicationRecord
             li['line_item'].update(proration_reduction: li['amount'])
           end
           return update(proration_reduction: prored, total: subtotal - prored)
+        when 'managed_externally'
+          return false
       end
     end
     return false
@@ -202,6 +213,7 @@ class Invoice < ApplicationRecord
 
   # refunds whatever is necessary to ensure the total amount refunded is to_refund cents (if it starts above that, it refunds nothing)
   def ensure_refunded(to_refund, full_reason = nil, stripe_reason = nil, ignore_total: false)
+    return { success: false, errors: "invoice is only a record of an external system's invoice" } if self.external
     with_lock do
       return { success: false, errors: "invoice status must be 'complete' before refunding" } unless status == 'complete'
       # get line item breakdown if provided a scalar number
@@ -294,6 +306,12 @@ class Invoice < ApplicationRecord
   #   => { success: true }
 
   def pay(allow_upcoming: false, allow_missed: false, stripe_source: nil, stripe_token: nil) # all optional... stripe_source can be passed as :default instead of a source id string to use the default payment method
+    return {
+      success: false,
+      charge_id: nil,
+      charge_status: nil,
+      error: "invoice is only a record of an external system's invoice"
+    } if self.external
     # set invoice status to processing
     return_error = nil
     with_lock do
