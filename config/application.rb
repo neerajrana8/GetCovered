@@ -31,6 +31,9 @@ module GetCovered
     # Middleware like session, flash, cookies can be added back manually.
     # Skip views, helpers and assets when generating a new resource.
     config.api_only = true
+    
+    # Set Default Timezone
+    config.time_zone = 'Pacific Time (US & Canada)'
 
     # Add folders with ActiveInteraction
     config.autoload_paths += Dir.glob("#{config.root}/app/interactions/*")
