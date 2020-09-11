@@ -183,6 +183,8 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
 	      carrier: carrier,
 	      policy_type: policy_type,
 				application_required: true,
+        premium_refundable: true,
+        max_days_for_full_refund: 30,
 				application_fields: [
 			    {
 				  	title: "Number of Insured",
@@ -242,6 +244,8 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
 	      carrier: carrier,
 	      policy_type: policy_type,
 				application_required: true,
+        premium_refundable: true,
+        max_days_for_full_refund: 30,
 				application_fields: {
           "business": {
           	"number_of_insured": 1,
@@ -401,6 +405,8 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
 	      carrier: carrier,
 	      policy_type: policy_type,
 				application_required: true,
+        premium_refundable: false,
+        max_days_for_full_refund: 30,
 				application_fields: {
   				"monthly_rent": 0,
       		"guarantee_option": 3,
@@ -479,6 +485,8 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
 	      carrier: carrier,
 	      policy_type: policy_type,
 				application_required: true,
+        premium_refundable: true,
+        max_days_for_full_refund: 30,
 				application_fields: [
 			    {
 				  	title: "Number of Insured",

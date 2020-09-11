@@ -70,7 +70,7 @@ module Reports
     end
 
     def renewal?(policy)
-      policy.cancellation_date_date&.between?(range_start, range_end) ||
+      policy.cancellation_date&.between?(range_start, range_end) ||
         policy.billing_behind_since&.between?(range_start, range_end) ||
         (policy.auto_renew == false && policy.expiration_date&.between?(range_start, range_end))
     end

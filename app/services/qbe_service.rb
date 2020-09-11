@@ -315,7 +315,7 @@ class QbeService
         result = nil
         
         if action == 'SendPolicyInfo'
-          result = xml_doc.css('MsgStatusCd').children.to_s
+          result = xml_doc&.css('MsgStatusCd')&.children.to_s
           
           unless %w[SUCCESS WARNING].include?(result)
             call_data[:error] = true
@@ -323,7 +323,7 @@ class QbeService
             call_data[:code] = 409
           end
         else
-          result = xml_doc.css('//result').attr('status').value
+          result = xml_doc&.css('//result')&.attr('status')&.value
           
           if result != 'pass'
             call_data[:error] = true
@@ -547,6 +547,14 @@ class QbeService
   # [UU] Unfavorable Report *(Currently Unavailable)*
   # [UW] Cancellation by Underwriter
   # [VN] Vacant/Non-owner Occupied Property *(Currently Unavailable)*
+  
+  CANCELLATION_REASON_MAPPING = [
+    { code: 'AP', reason: 'nonpayment' },
+    { code: 'AR', reason: 'agent_request' },
+    { code: 'IR', reason: 'insured_request' },
+    { code: 'NP', reason: 'new_application_nonpayment' },
+    { code: 'UW', reason: 'underwriter_cancellation' }
+  ]
   
   def cancellation_codes
     %w[AP AR CP CR FC ID IP IR
