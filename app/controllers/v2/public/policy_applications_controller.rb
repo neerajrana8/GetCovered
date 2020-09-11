@@ -230,6 +230,7 @@ module V2
 
         @application.billing_strategy = BillingStrategy.where(agency:      @application.agency,
                                                               policy_type: @application.policy_type,
+                                                              carrier: @application.carrier,
                                                               title:       'Annually').take
 
         if @application.save

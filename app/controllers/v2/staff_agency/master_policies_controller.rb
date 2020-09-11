@@ -193,7 +193,7 @@ module V2
         @master_policy.policies.master_policy_coverages.
           joins(:policy_insurables).
           where(policy_insurables: { insurable_id: @insurable.units&.pluck(:id) }) do |policy|
-            policy.update(status: 'CANCELLED', cancellation_date_date: Time.zone.now, expiration_date: Time.zone.now)
+            policy.update(status: 'CANCELLED', cancellation_date: Time.zone.now, expiration_date: Time.zone.now)
             policy.insurables.take.update(covered: false)
           end
         @master_policy.policy_insurables.where(insurable: @insurable).destroy_all
@@ -204,7 +204,7 @@ module V2
         @master_policy_coverage =
           @master_policy.policies.master_policy_coverages.find(params[:master_policy_coverage_id])
 
-        @master_policy_coverage.update(status: 'CANCELLED', cancellation_date_date: Time.zone.now, expiration_date: Time.zone.now)
+        @master_policy_coverage.update(status: 'CANCELLED', cancellation_date: Time.zone.now, expiration_date: Time.zone.now)
 
         if @master_policy_coverage.errors.any?
           render json: {

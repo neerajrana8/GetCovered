@@ -86,6 +86,10 @@ production:
   handle_unresponsive_charges:
     cron: '0 3 * * *'   # Every day at 3:00 AM
     class: HandleUnresponsiveChargesJob
+  # Policies
+  cancel_unpaid_policies:
+    cron: '0 1 * * *'   # Every day at 1:00 AM
+    class: CancelUnpaidPoliciesJob
   bill_master_policies:
     cron: '0 4 1 * *'   # Each first day of month at 6:00 AM
     class: BillMasterPoliciesJob

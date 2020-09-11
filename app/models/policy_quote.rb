@@ -209,7 +209,7 @@ class PolicyQuote < ApplicationRecord
        policy_premium.total > 0 &&
        status == "accepted"
 
-      invoices.external.update_all status: 'managed_externally'
+      invoices.external.update_all(status: 'managed_externally')
       invoices.internal.order("due_date").each_with_index do |invoice, index|
         invoice.update status: index == 0 ? "available" : "upcoming"
       end

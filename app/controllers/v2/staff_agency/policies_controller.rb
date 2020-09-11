@@ -139,8 +139,8 @@ module V2
         return({}) if params[:policy].blank?
 
         to_return = params.require(:policy).permit(
-          :account_id, :agency_id, :auto_renew, :cancellation_code,
-          :cancellation_date_date, :carrier_id, :effective_date,
+          :account_id, :agency_id, :auto_renew, :cancellation_reason,
+          :cancellation_date, :carrier_id, :effective_date,
           :expiration_date, :number, :policy_type_id, :status,
           policy_insurables_attributes: [:insurable_id],
           policy_users_attributes: [:user_id],
@@ -154,8 +154,8 @@ module V2
         return({}) if params[:policy].blank?
 
         params.require(:policy).permit(
-          :account_id, :agency_id, :auto_renew, :cancellation_code,
-          :cancellation_date_date, :carrier_id, :effective_date,
+          :account_id, :agency_id, :auto_renew, :cancellation_reason,
+          :cancellation_date, :carrier_id, :effective_date,
           :expiration_date, :number, :policy_type_id, :status,
           policy_insurables_attributes: [:insurable_id],
           policy_users_attributes: [:user_id],
