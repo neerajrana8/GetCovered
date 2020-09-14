@@ -43,7 +43,9 @@ class Carrier < ApplicationRecord
   validates :integration_designation, inclusion: { in: ['qbe', 'qbe_specialty', 'crum', 'pensio', 'msi'], message: "must be valid" }
   
   validates_presence_of :slug, :call_sign
-      
+
+  accepts_nested_attributes_for :carrier_policy_types, update_only: true
+
   settings index: { number_of_shards: 1 } do
     mappings dynamic: 'false' do
       indexes :title, type: :text, analyzer: 'english'

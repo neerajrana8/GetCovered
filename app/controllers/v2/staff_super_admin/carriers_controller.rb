@@ -23,12 +23,11 @@ module V2
       
       def create
         if create_allowed?
-          carrier_create = Carriers::Create.run(carrier_params: create_params.to_h, policy_types_ids: params[:policy_type_ids])
-          if carrier_create.valid?
-            @carrier = carrier_create.result
+          @carrier = Carrier.create(create_params)
+          if @carrier.errors.blank?
             render :show, status: :created
           else
-            render json: standard_error(:carrier_creation_error, nil, carrier_create.errors.full_messages),
+            render json: standard_error(:carrier_creation_error, nil, @carrier.errors.full_messages),
                    status: :unprocessable_entity
           end
         else
@@ -223,7 +222,10 @@ module V2
         to_return = params.require(:carrier).permit(
           :bindable, :call_sign, :enabled, :id,
           :integration_designation, :quotable, :rateable, :syncable,
-          :title, :verifiable, settings: {}
+          :title, :verifiable, settings: {}, 
+                               carrier_policy_types_attributes: [
+                                 :policy_type_id, carrier_policy_type_availabilities_attributes: %i[state available]
+                               ]
         )
         to_return
       end
