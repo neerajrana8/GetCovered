@@ -290,6 +290,9 @@ class Policy < ApplicationRecord
     # Slaughter the invoices NOTE: we refund before changing status to CANCELLED because apply_proration can be called multiple times with the same arguments if something fails
     special_logic = SPECIAL_CANCELLATION_REFUND_LOGIC[reason]
     case special_logic
+      when :prorated_refund
+        # prorate regularly
+        self.invoices.each{|invoice| invoice.apply_proration(cancel_date, refund_date: cancel_date) }
       when :early_cancellation
         # prorate as if we'd cancelled immediately if cancellation is early, otherwise prorate regularly
         max_days_for_full_refund = (CarrierPolicyType.where(policy_type_id: self.policy_type_id, carrier_id: self.carrier_id).take&.max_days_for_full_refund || 0).days
@@ -300,12 +303,9 @@ class Policy < ApplicationRecord
         else
           self.invoices.each{|invoice| invoice.apply_proration(cancel_date, refund_date: cancel_date) }
         end
-      when :no_refund
+      else # :no_refund will end up here; by default we don't refund
         # override the amount to refund to nothing and cancel everything unpaid or missed
         self.invoices.each{|invoice| invoice.apply_proration(cancel_date, refund_date: cancel_date, to_refund_override: {}, cancel_if_unpaid_override: true, cancel_if_missed_override: true) }
-      else
-        # prorate regularly
-        self.invoices.each{|invoice| invoice.apply_proration(cancel_date, refund_date: cancel_date) }
     end
     # Mark cancelled
     update_columns(status: 'CANCELLED', cancellation_reason: reason, cancellation_date: cancel_date)
