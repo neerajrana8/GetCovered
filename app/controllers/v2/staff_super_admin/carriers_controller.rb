@@ -6,18 +6,12 @@ module V2
   module StaffSuperAdmin
     class CarriersController < StaffSuperAdminController
       
-      before_action :set_carrier,
-                    only: %i[update show]
+      before_action :set_carrier, only: %i[update show]
       
-      before_action :set_substrate,
-                    only: %i[create index]
+      before_action :set_substrate, only: %i[create index]
       
       def index
-        if params[:short]
-          super(:@carriers, @substrate)
-        else
-          super(:@carriers, @substrate)
-        end
+        super(:@carriers, @substrate)
       end
 
       def carrier_agencies
