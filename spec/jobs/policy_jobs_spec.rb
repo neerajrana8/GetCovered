@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require 'rails_helper'
-require 'pry'
 
 describe 'Policy jobs spec', type: :request do
 
