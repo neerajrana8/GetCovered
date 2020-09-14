@@ -7,10 +7,10 @@ module V2
     class CarriersController < StaffSuperAdminController
       
       before_action :set_carrier,
-        only: [:update, :show]
+                    only: %i[update show]
       
       before_action :set_substrate,
-        only: [:create, :index]
+                    only: %i[create index]
       
       def index
         if params[:short]
@@ -25,26 +25,21 @@ module V2
         render json: carrier_agencies, status: :ok
       end
       
-      def show
-      end
+      def show; end
       
       def create
         if create_allowed?
-          @carrier = @substrate.new(create_params)
-          policy_types = PolicyType.find(params[:policy_type_ids])
-          if !@carrier.errors.any? && @carrier.save
-            policy_types.each do |pt|
-              @carrier.policy_types << pt
-            end
-            render :show,
-              status: :created
+          carrier_create = Carriers::Create.run(carrier_params: create_params.to_h, policy_types_ids: params[:policy_type_ids])
+          if carrier_create.valid?
+            @carrier = carrier_create.result
+            render :show, status: :created
           else
-            render json: @carrier.errors,
-              status: :unprocessable_entity
+            render json: standard_error(:carrier_creation_error, nil, carrier_create.errors.full_messages),
+                   status: :unprocessable_entity
           end
         else
           render json: { success: false, errors: ['Unauthorized Access'] },
-            status: :unauthorized
+                 status: :unauthorized
         end
       end
 
@@ -59,38 +54,42 @@ module V2
           carrier_agency << agency
           policy_types.each do |policy_type|
             BillingStrategy.create(carrier: carrier, agency: agency,
-                                  title: 'Monthly', enabled: true, policy_type: policy_type,
-                                  new_business: {
-                                    "payments" => [
-                                      8.37, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33],
-                                    "payments_per_term" => 12,
-                                    "remainder_added_to_deposit" => true
-                                })
+                                   title: 'Monthly', enabled: true, policy_type: policy_type,
+                                   new_business: {
+                                     'payments' => [
+                                       8.37, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33
+                                     ],
+                                     'payments_per_term' => 12,
+                                     'remainder_added_to_deposit' => true
+                                   })
             BillingStrategy.create(carrier: carrier, agency: agency,
-                                  title: 'Quarterly', enabled: true, policy_type: policy_type,
-                                  new_business: {
-                                    "payments" => [
-                                      25, 0, 0, 25, 0, 0, 25, 0, 0, 25, 0, 0],
-                                    "payments_per_term" => 4,
-                                    "remainder_added_to_deposit" => true
-                                })
+                                   title: 'Quarterly', enabled: true, policy_type: policy_type,
+                                   new_business: {
+                                     'payments' => [
+                                       25, 0, 0, 25, 0, 0, 25, 0, 0, 25, 0, 0
+                                     ],
+                                     'payments_per_term' => 4,
+                                     'remainder_added_to_deposit' => true
+                                   })
             BillingStrategy.create(carrier: carrier, agency: agency,
-                                  title: 'Annually', enabled: true, policy_type: policy_type,
-                                  new_business: {
-                                    "payments" => [
-                                      100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                                    "payments_per_term" => 1,
-                                    "remainder_added_to_deposit" => true
-                                })
+                                   title: 'Annually', enabled: true, policy_type: policy_type,
+                                   new_business: {
+                                     'payments' => [
+                                       100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+                                     ],
+                                     'payments_per_term' => 1,
+                                     'remainder_added_to_deposit' => true
+                                   })
             BillingStrategy.create(carrier: carrier, agency: agency,
-                                  title: 'Bi-Annually', enabled: true, policy_type: policy_type,
-                                  new_business: {
-                                    "payments" => [
-                                      50, 0, 0, 0, 0, 0, 50, 0, 0, 0, 0, 0],
-                                    "payments_per_term" => 2,
-                                    "remainder_added_to_deposit" => true
-                                })
-            end
+                                   title: 'Bi-Annually', enabled: true, policy_type: policy_type,
+                                   new_business: {
+                                     'payments' => [
+                                       50, 0, 0, 0, 0, 0, 50, 0, 0, 0, 0, 0
+                                     ],
+                                     'payments_per_term' => 2,
+                                     'remainder_added_to_deposit' => true
+                                   })
+          end
           render json: { message: 'Carrier was added to the agency' }, status: :ok
         end
       end
@@ -189,96 +188,95 @@ module V2
             render :show, status: :ok
           else
             render json: @carrier.errors,
-              status: :unprocessable_entity
+                   status: :unprocessable_entity
           end
         else
           render json: { success: false, errors: ['Unauthorized Access'] },
-            status: :unauthorized
+                 status: :unauthorized
         end
       end
       
       private
       
-        def view_path
-          super + "/carriers"
-        end
+      def view_path
+        super + '/carriers'
+      end
         
-        def create_allowed?
-          true
-        end
+      def create_allowed?
+        true
+      end
         
-        def update_allowed?
-          true
-        end
+      def update_allowed?
+        true
+      end
         
-        def set_carrier
-          @carrier = access_model(::Carrier, params[:id])
-        end
+      def set_carrier
+        @carrier = access_model(::Carrier, params[:id])
+      end
         
-        def set_substrate
-          super
-          if @substrate.nil?
-            @substrate = access_model(::Carrier)
-          elsif !params[:substrate_association_provided]
-            @substrate = @substrate.carriers
-          end
+      def set_substrate
+        super
+        if @substrate.nil?
+          @substrate = access_model(::Carrier)
+        elsif !params[:substrate_association_provided]
+          @substrate = @substrate.carriers
         end
+      end
         
-        def create_params
-          return({}) if params[:carrier].blank?
-          to_return = params.require(:carrier).permit(
-            :bindable, :call_sign, :enabled, :id,
-            :integration_designation, :quotable, :rateable, :syncable,
-            :title, :verifiable, settings: {}
-          )
-          return(to_return)
-        end
-        
-        def update_params
-          return({}) if params[:carrier].blank?
-          params.require(:carrier).permit(
-            :bindable, :call_sign, :enabled, :id,
-            :integration_designation, :quotable, :rateable, :syncable,
-            :title, :verifiable, settings: {}, policy_type_ids: []
-          )
-        end
-        
-        def supported_filters(called_from_orders = false)
-          @calling_supported_orders = called_from_orders
-          {
-          }
-        end
+      def create_params
+        return({}) if params[:carrier].blank?
 
-        def supported_orders
-          supported_filters(true)
-        end
+        to_return = params.require(:carrier).permit(
+          :bindable, :call_sign, :enabled, :id,
+          :integration_designation, :quotable, :rateable, :syncable,
+          :title, :verifiable, settings: {}
+        )
+        to_return
+      end
+        
+      def update_params
+        return({}) if params[:carrier].blank?
 
-        def billing_strategy_params
-          params.permit(:agency, :fee,
-            :carrier, :policy_type, :title,
-            :new_business
-          )
-        end
+        params.require(:carrier).permit(
+          :bindable, :call_sign, :enabled, :id,
+          :integration_designation, :quotable, :rateable, :syncable,
+          :title, :verifiable, settings: {}, policy_type_ids: []
+        )
+      end
+        
+      def supported_filters(called_from_orders = false)
+        @calling_supported_orders = called_from_orders
+        {
+        }
+      end
 
-        def fee_params
-          params.permit(:title, :type,
-            :per_payment, :amortize,
-            :amount, :enabled,
-            :ownerable_id, :assignable_id
-          )
-        end
+      def supported_orders
+        supported_filters(true)
+      end
 
-        def commission_params
-          params.permit(:title, :amount,
-            :type, :fulfillment_schedule,
-            :amortize, :per_payment,
-            :enabled, :locked, :house_override,
-            :override_type, :carrier_id,
-            :policy_type_id, :commissionable_type,
-            :commissionable_id, :percentage,
-            :commission_strategy_id
-          )
-        end
+      def billing_strategy_params
+        params.permit(:agency, :fee,
+                      :carrier, :policy_type, :title,
+                      :new_business)
+      end
+
+      def fee_params
+        params.permit(:title, :type,
+                      :per_payment, :amortize,
+                      :amount, :enabled,
+                      :ownerable_id, :assignable_id)
+      end
+
+      def commission_params
+        params.permit(:title, :amount,
+                      :type, :fulfillment_schedule,
+                      :amortize, :per_payment,
+                      :enabled, :locked, :house_override,
+                      :override_type, :carrier_id,
+                      :policy_type_id, :commissionable_type,
+                      :commissionable_id, :percentage,
+                      :commission_strategy_id)
+      end
     end
   end # module StaffSuperAdmin
 end
