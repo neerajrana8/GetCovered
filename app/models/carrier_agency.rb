@@ -9,6 +9,8 @@ class CarrierAgency < ApplicationRecord
   has_many :carrier_agency_authorizations
   
   validate :carrier_agency_assignment_unique
+
+  accepts_nested_attributes_for :carrier_agency_authorizations, update_only: true
   
   private
   

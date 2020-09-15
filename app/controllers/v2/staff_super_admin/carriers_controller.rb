@@ -12,6 +12,7 @@ module V2
       
       def index
         super(:@carriers, @substrate)
+        render template: 'v2/shared/carriers/index', status: :ok
       end
 
       def carrier_agencies
@@ -19,13 +20,15 @@ module V2
         render json: carrier_agencies, status: :ok
       end
       
-      def show; end
+      def show
+        render template: 'v2/shared/carriers/show', status: :ok
+      end
       
       def create
         if create_allowed?
           @carrier = Carrier.create(create_params)
           if @carrier.errors.blank?
-            render :show, status: :created
+            render template: 'v2/shared/carriers/show', status: :created
           else
             render json: standard_error(:carrier_creation_error, nil, @carrier.errors.full_messages),
                    status: :unprocessable_entity
@@ -178,7 +181,7 @@ module V2
       def update
         if update_allowed?
           if @carrier.update(update_params) && @carrier.update(policy_type_ids: params[:policy_type_ids])
-            render :show, status: :ok
+            render template: 'v2/shared/carriers/show', status: :ok
           else
             render json: @carrier.errors,
                    status: :unprocessable_entity
