@@ -588,7 +588,10 @@ module V2
 
       def invite_primary_user(policy_application)
         primary_user = policy_application.primary_user
-        if primary_user.invitation_accepted_at.nil? && (primary_user.invitation_created_at.blank? || primary_user.invitation_created_at < 1.days.ago)
+        if primary_user.invitation_accepted_at.nil? &&
+          (primary_user.invitation_created_at.blank? || primary_user.invitation_created_at < 1.days.ago) &&
+          policy_application.policy_type_id != PolicyType::RENT_GUARANTEE_ID
+
           @application.primary_user.invite!
         end
       end
