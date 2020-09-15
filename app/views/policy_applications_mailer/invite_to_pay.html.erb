@@ -131,7 +131,7 @@
                         <tr>
                           <td class="o_bg-white o_px-md o_py-md o_sans o_text o_text-secondary" align="left" style="font-family: Helvetica, Arial, sans-serif;margin-top: 0px;margin-bottom: 0px;font-size: 16px;line-height: 24px;background-color: #ffffff;color: #424651;padding-left: 24px;padding-right: 24px;padding-top: 24px;padding-bottom: 24px;">
                             <div style="font-size: 24px; line-height: 24px; height: 24px;">&nbsp; </div>
-                            <p class="o_mb-xs" style="margin-top: 0px;margin-bottom: 8px;">Hi <%=@user.profile.first_name %></p>
+                            <p class="o_mb-xs" style="margin-top: 0px;margin-bottom: 8px;">Hi <%=@user.profile.first_name %>,</p>
                             <p class="o_mb-xs" style="margin-top: 0px;margin-bottom: 8px;">Thank you for filling out your application for a <%= @policy_application.policy_type.title %> policy. Please visit <a class="o_text-light o_underline" href="<%= "#{@invite_url}" %>" style="text-decoration: underline;outline: none;color: #126de5;">this page</a> to make your first payment to finish registration. Note that your policy will not be active unless you complete your first payment.</p>
                             <p class="o_mb-xs" style="margin-top: 0px;margin-bottom: 8px;">Thank you.</p>
                             <div style="font-size: 16px; line-height: 16px; height: 16px;">&nbsp; </div>
