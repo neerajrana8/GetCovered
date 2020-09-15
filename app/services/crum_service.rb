@@ -110,9 +110,15 @@ class CrumService
         endpoint: state_url,
         request: '{ "data": null }'
       )
-		  
+
+			get_token()
+
 			begin	
-	    	request = HTTParty.get(state_url)
+	    	request = HTTParty.get(state_url,
+															 headers: {
+																	 "Content-Type": "application/json",
+																	 "Authorization": self.token["IdToken"]
+															 })
 	    rescue => e
 	      pp e
 	      error = true
@@ -286,8 +292,8 @@ class CrumService
   		          "liablityCoverages": {
   		            "liablityOccurence": opts["policy_limits"]["occurence_limit"],
   		            "liablityAggregate": opts["policy_limits"]["aggregate_limit"],
-  		            "liablityBldgLimit": opts["policy_limits"]["building_limit"],
-  		            "liablityPersonalPropertyLimit": opts["policy_limits"]["business_personal_property"]
+  		            "liablityBldgLimit": opts["policy_limits"]["building_limit"].nil? ? 0 : opts["policy_limits"]["building_limit"],
+  		            "liablityPersonalPropertyLimit": opts["policy_limits"]["business_personal_property"].nil? ? 0 : opts["policy_limits"]["business_personal_property"]
   		          },
   		          "policyID": "",
   		          "quoteID": "",
