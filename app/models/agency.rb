@@ -136,7 +136,14 @@ class Agency < ApplicationRecord
       carrier = Carrier.find(opts[:carrier_id])
       if carrier.carrier_policy_types.exists?(policy_type_id: opts[:policy_type_id])
         carrier_availability = carrier.carrier_policy_type_availabilities.where(state: opts[:state], available: true).take
-        agency_availability = carrier.carrier_agency_authorizations.where(agency_id: id, state: opts[:state], available: true).take
+        agency_availability =
+          carrier.
+            carrier_agency_authorizations.
+            joins(:carrier_agency).
+            where(
+              carrier_agencies: { agency_id: id },
+              carrier_agency_authorizations: { state: opts[:state], available: true }
+            ).take
         
         unless carrier_availability.nil? || 
                agency_availability.nil?

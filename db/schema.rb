@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_08_25_103919) do
+ActiveRecord::Schema.define(version: 2020_09_16_113022) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
@@ -142,6 +142,19 @@ ActiveRecord::Schema.define(version: 2020_08_25_103919) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "application_notifications", force: :cascade do |t|
+    t.string "action"
+    t.string "subject"
+    t.integer "status"
+    t.integer "code"
+    t.boolean "read", default: false
+    t.integer "notifiable_id"
+    t.string "notifiable_type"
+    t.string "message"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
   create_table "assignments", force: :cascade do |t|
     t.boolean "primary"
     t.bigint "staff_id"
@@ -214,10 +227,8 @@ ActiveRecord::Schema.define(version: 2020_08_25_103919) do
     t.jsonb "zip_code_blacklist", default: {}
     t.bigint "carrier_agency_id"
     t.bigint "policy_type_id"
-    t.bigint "agency_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["agency_id"], name: "index_carrier_agency_authorizations_on_agency_id"
     t.index ["carrier_agency_id"], name: "index_carrier_agency_authorizations_on_carrier_agency_id"
     t.index ["policy_type_id"], name: "index_carrier_agency_authorizations_on_policy_type_id"
   end
@@ -364,6 +375,9 @@ ActiveRecord::Schema.define(version: 2020_08_25_103919) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "type_of_loss", default: 0, null: false
+    t.string "name"
+    t.string "address"
+    t.string "nature_of_claim"
     t.text "staff_notes"
     t.index ["claimant_type", "claimant_id"], name: "index_claims_on_claimant_type_and_claimant_id"
     t.index ["insurable_id"], name: "index_claims_on_insurable_id"
@@ -840,9 +854,9 @@ ActiveRecord::Schema.define(version: 2020_08_25_103919) do
     t.date "last_payment_date"
     t.date "next_payment_date"
     t.bigint "policy_group_id"
-    t.boolean "declined"
     t.string "address"
     t.string "out_of_system_carrier_title"
+    t.boolean "declined"
     t.bigint "policy_id"
     t.integer "cancellation_reason"
     t.index ["account_id"], name: "index_policies_on_account_id"
