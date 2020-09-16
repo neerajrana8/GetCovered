@@ -7,8 +7,8 @@ class CarrierAgencyAuthorization < ApplicationRecord
   
   belongs_to :carrier_agency
   belongs_to :policy_type
-  belongs_to :agency
 
+  has_one :agency, through: :carrier_agency
   has_one :carrier, through: :carrier_agency
 
   has_many :fees, as: :assignable
@@ -24,7 +24,6 @@ class CarrierAgencyAuthorization < ApplicationRecord
   
   validates_presence_of :state
   validates_uniqueness_of :state, scope: 'carrier_agency_id', message: 'record for parent Carrier Policy Type already exists'
-  validate :agency_matches_carrier_agency, unless: proc { |caa| caa.agency_id.nil? || caa.carrier_agency.nil? }
   
   private
   
