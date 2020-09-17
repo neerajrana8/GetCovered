@@ -1,4 +1,6 @@
 class Devise::Users::PasswordsController < DeviseTokenAuth::PasswordsController
+  skip_after_action :update_auth_header, only: [:create, :edit, :update]
+
   def create
     return render_create_error_missing_email unless resource_params[:email]
 

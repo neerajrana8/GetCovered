@@ -10,9 +10,10 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_08_19_171858) do
+ActiveRecord::Schema.define(version: 2020_08_25_103919) do
 
   # These are extensions that must be enabled in order to support this database
+  enable_extension "citext"
   enable_extension "plpgsql"
 
   create_table "access_tokens", force: :cascade do |t|
@@ -137,19 +138,6 @@ ActiveRecord::Schema.define(version: 2020_08_19_171858) do
     t.string "slug"
     t.jsonb "nodes", default: {}
     t.boolean "enabled"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-  end
-
-  create_table "application_notifications", force: :cascade do |t|
-    t.string "action"
-    t.string "subject"
-    t.integer "status"
-    t.integer "code"
-    t.boolean "read", default: false
-    t.integer "notifiable_id"
-    t.string "notifiable_type"
-    t.string "message"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
   end
@@ -301,6 +289,9 @@ ActiveRecord::Schema.define(version: 2020_08_19_171858) do
     t.bigint "policy_type_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "premium_refundable", default: true, null: false
+    t.integer "max_days_for_full_refund", default: 31, null: false
+    t.integer "days_late_before_cancellation", default: 30, null: false
     t.index ["carrier_id"], name: "index_carrier_policy_types_on_carrier_id"
     t.index ["policy_type_id"], name: "index_carrier_policy_types_on_policy_type_id"
   end
@@ -373,9 +364,7 @@ ActiveRecord::Schema.define(version: 2020_08_19_171858) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "type_of_loss", default: 0, null: false
-    t.string "name"
-    t.string "address"
-    t.string "nature_of_claim"
+    t.text "staff_notes"
     t.index ["claimant_type", "claimant_id"], name: "index_claims_on_claimant_type_and_claimant_id"
     t.index ["insurable_id"], name: "index_claims_on_insurable_id"
     t.index ["policy_id"], name: "index_claims_on_policy_id"
@@ -716,6 +705,7 @@ ActiveRecord::Schema.define(version: 2020_08_19_171858) do
     t.boolean "priced_in", default: false, null: false
     t.integer "collected", default: 0, null: false
     t.integer "proration_reduction", default: 0, null: false
+    t.date "full_refund_before_date"
     t.index ["invoice_id"], name: "index_line_items_on_invoice_id"
   end
 
@@ -830,8 +820,7 @@ ActiveRecord::Schema.define(version: 2020_08_19_171858) do
     t.integer "billing_status"
     t.integer "billing_dispute_count", default: 0, null: false
     t.date "billing_behind_since"
-    t.integer "cancellation_code"
-    t.string "cancellation_date_date"
+    t.string "cancellation_date"
     t.integer "status"
     t.datetime "status_changed_on"
     t.integer "billing_dispute_status", default: 0, null: false
@@ -851,10 +840,11 @@ ActiveRecord::Schema.define(version: 2020_08_19_171858) do
     t.date "last_payment_date"
     t.date "next_payment_date"
     t.bigint "policy_group_id"
+    t.boolean "declined"
     t.string "address"
     t.string "out_of_system_carrier_title"
-    t.boolean "declined"
     t.bigint "policy_id"
+    t.integer "cancellation_reason"
     t.index ["account_id"], name: "index_policies_on_account_id"
     t.index ["agency_id"], name: "index_policies_on_agency_id"
     t.index ["carrier_id"], name: "index_policies_on_carrier_id"
@@ -1279,7 +1269,7 @@ ActiveRecord::Schema.define(version: 2020_08_19_171858) do
     t.datetime "confirmed_at"
     t.datetime "confirmation_sent_at"
     t.string "unconfirmed_email"
-    t.string "email"
+    t.citext "email"
     t.boolean "enabled", default: false, null: false
     t.jsonb "settings", default: {}
     t.jsonb "notification_options", default: {}
