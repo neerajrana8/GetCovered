@@ -6,7 +6,7 @@ class CarrierAgency < ApplicationRecord
   belongs_to :carrier
   belongs_to :agency
   
-  has_many :carrier_agency_authorizations
+  has_many :carrier_agency_authorizations, dependent: :destroy
   
   validate :carrier_agency_assignment_unique
 
@@ -14,9 +14,9 @@ class CarrierAgency < ApplicationRecord
   
   private
   
-    def carrier_agency_assignment_unique
-      if CarrierAgency.where(carrier: carrier, agency: agency).count > 1
-        errors.add(:agency, "assignment to #{ carrier.title } already exists") 
-      end
+  def carrier_agency_assignment_unique
+    if CarrierAgency.where(carrier: carrier, agency: agency).count > 1
+      errors.add(:agency, "assignment to #{carrier.title} already exists") 
     end
+  end
 end

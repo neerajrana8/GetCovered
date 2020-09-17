@@ -59,16 +59,11 @@ module V2
       private
 
       def set_carrier
-        @carrier = access_model(::Carrier, params[:id])
+        @carrier = Carrier.find(params[:id])
       end
 
       def set_substrate
-        super
-        if @substrate.nil?
-          @substrate = access_model(::Carrier)
-        elsif !params[:substrate_association_provided]
-          @substrate = @substrate.carriers
-        end
+        @substrate = Carrier.all
       end
 
       def supported_filters(called_from_orders = false)

@@ -4,7 +4,7 @@ module V2
       before_action :set_carrier_agency, only: %i[show update]
 
       def index
-        super(:@carrier_agencies, CarrierAgency)
+        super(:@carrier_agencies, CarrierAgency.where(agency: @agency))
         render template: 'v2/shared/carrier_agencies/index', status: :ok
       end
 
@@ -32,17 +32,22 @@ module V2
         return({}) if params[:carrier_agency].blank?
 
         to_return = params.require(:carrier_agency).permit(
-          :carrier_id, carrier_agency_authorizations_attributes: %i[state available policy_type_id]
+          :carrier_id, :external_carrier_id,
+          carrier_agency_authorizations_attributes: %i[state available policy_type_id zip_code_blacklist]
         ).merge(agency_id: @agency.id)
         to_return
       end
 
-      def update_params
-        return({}) if params[:carrier_agency].blank?
+      def supported_filters(called_from_orders = false)
+        @calling_supported_orders = called_from_orders
+        {
+          carrier_id: %i[scalar array],
+          agency_id: %i[scalar array]
+        }
+      end
 
-        params.require(:carrier_agency).permit(
-          :created_at, :id
-        )
+      def supported_orders
+        supported_filters(true)
       end
     end
   end
