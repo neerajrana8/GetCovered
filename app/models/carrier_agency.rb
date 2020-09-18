@@ -3,6 +3,8 @@
 # file: +app/models/carrier_agency.rb+
 
 class CarrierAgency < ApplicationRecord
+  include RecordChange
+
   belongs_to :carrier
   belongs_to :agency
   
@@ -10,7 +12,7 @@ class CarrierAgency < ApplicationRecord
   
   validate :carrier_agency_assignment_unique
 
-  accepts_nested_attributes_for :carrier_agency_authorizations, update_only: true
+  accepts_nested_attributes_for :carrier_agency_authorizations, update_only: true, allow_destroy: true
   
   private
   

@@ -26,7 +26,7 @@ module V2
       
       def create
         if create_allowed?
-          @carrier = Carrier.create(create_params)
+          @carrier = Carrier.create_as(current_staff, create_params)
           if @carrier.errors.blank?
             render template: 'v2/shared/carriers/show', status: :created
           else
@@ -180,7 +180,7 @@ module V2
       
       def update
         if update_allowed?
-          if @carrier.update(update_params) && @carrier.update(policy_type_ids: params[:policy_type_ids])
+          if @carrier.update(update_params)
             render template: 'v2/shared/carriers/show', status: :ok
           else
             render json: @carrier.errors,
@@ -236,11 +236,25 @@ module V2
       def update_params
         return({}) if params[:carrier].blank?
 
-        params.require(:carrier).permit(
+        to_return = params.require(:carrier).permit(
           :bindable, :call_sign, :enabled, :id,
           :integration_designation, :quotable, :rateable, :syncable,
-          :title, :verifiable, settings: {}, policy_type_ids: []
+          :title, :verifiable, 
+          settings: {}, carrier_policy_types_attributes: [
+            :id, :policy_type_id,
+            carrier_policy_type_availabilities_attributes: %i[id state available zip_code_blacklist]
+          ]
         )
+
+        existed_ids = to_return[:carrier_policy_types_attributes]&.map { |cpt| cpt[:id] }
+
+        unless @carrier.blank? || existed_ids.nil?
+          (@carrier.carrier_policy_types.pluck(:id) - existed_ids).each do |id|
+            to_return[:carrier_policy_types_attributes] <<
+              ActionController::Parameters.new(id: id, _destroy: true).permit(:id, :_destroy)
+          end
+        end
+        to_return
       end
         
       def supported_filters(called_from_orders = false)

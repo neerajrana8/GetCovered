@@ -108,10 +108,9 @@
         end
         post :assign_agency_to_carrier, path: 'assign-agency-to-carrier'
       end
-  
-    resources :carrier_agencies,
-      path: "carrier-agencies",
-      only: [ :create, :update, :destroy ]
+
+    resources :carrier_agencies, path: "carrier-agencies", only: [ :index, :show, :create, :update, :destroy ]
+    resources :carrier_agency_authorizations, path: "carrier-agency-authorizations", only: [ :update, :index, :show ]
   
     resources :carrier_insurable_types,
       path: "carrier-insurable-types",

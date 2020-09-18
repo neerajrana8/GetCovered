@@ -119,8 +119,6 @@
         end
     end
 
-    resources :carrier_agencies, path: "carrier-agencies", only: [ :index, :show, :create ]
-
     resources :carrier_agency_authorizations,
       path: "carrier-agency-authorizations",
       only: [ :update, :index, :show ]

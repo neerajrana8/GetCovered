@@ -1,4 +1,4 @@
-json.partial! 'v2/shared/carrier_agencies/carrier_agency_show_fields.json.jbuilder', carrier_agency: carrier_agency
+json.partial! 'v2/shared/carrier_agencies/carrier_agency_fields.json.jbuilder', carrier_agency: carrier_agency
 
 json.carrier_agency_authorizations do
   if carrier_agency.carrier_agency_authorizations.any?
