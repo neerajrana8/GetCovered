@@ -43,6 +43,6 @@ class CarrierAgencyAuthorization < ApplicationRecord
         find_by_policy_type_id(policy_type_id).
         carrier_policy_type_availabilities.
         find_by_state(state)
-    errors.add(:carrier_agency, 'policy type should be activated') unless policy_type_availability.activated
+    errors.add(:carrier_agency, 'policy type should be activated') unless policy_type_availability.available?
   end
 end
