@@ -22,7 +22,8 @@ end
   { title: "Master Policy", designation: "MASTER", enabled: true },
   { title: "Master Policy Coverage", designation: "MASTER-COVERAGE", enabled: true },
   { title: "Commercial", designation: "BOP", enabled: true },
-  { title: "Rent Guarantee", designation: "RENT-GUARANTEE", enabled: true }
+  { title: "Rent Guarantee", designation: "RENT-GUARANTEE", enabled: true },
+  { title: "Security Deposit Replacement", designation: "SECURITY-DEPOSIT", enabled: true }
 ]
 
 @policy_types.each do |pt|
