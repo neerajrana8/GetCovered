@@ -105,7 +105,7 @@ module V2
               ) and return
             end
 
-            policy_user.user.invite! if index.zero?
+            policy_user.user.invite! if index.zero? && @application.policy_type_id != PolicyType::RENT_GUARANTEE_ID
           end
         end
         error_status.include?(true) ? false : true
