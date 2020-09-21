@@ -1,5 +1,5 @@
 module Carriers
-  module Fees
+  module FeesMethods
     extend ActiveSupport::Concern
 
     def add_fees
