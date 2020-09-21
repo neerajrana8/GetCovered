@@ -44,6 +44,9 @@ scope module: :public do
   resources :policy_applications,
     path: "policy-applications",
     only: [ :create, :update, :show ] do
+      member do
+        post :rent_guarantee_complete
+      end
       collection do
         post '/new',
           to: 'policy_applications#new',
@@ -71,5 +74,6 @@ scope module: :public do
 
   post 'users/check_email', to: '/v2/check_email#user'
   post 'staffs/check_email', to: '/v2/check_email#staff'
-  
+
+  post 'secret_authentication/:secret_token/authenticate', to: '/v2/public/secret_authentication#authenticate'
 end
