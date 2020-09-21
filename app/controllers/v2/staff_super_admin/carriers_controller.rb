@@ -5,7 +5,8 @@
 module V2
   module StaffSuperAdmin
     class CarriersController < StaffSuperAdminController
-      
+      include Carriers::Fees
+
       before_action :set_carrier, only: %i[update show]
       
       before_action :set_substrate, only: %i[create index]
@@ -26,7 +27,7 @@ module V2
       
       def create
         if create_allowed?
-          @carrier = Carrier.create_as(current_staff, create_params)
+          @carrier = Carrier.create(create_params)
           if @carrier.errors.blank?
             render template: 'v2/shared/carriers/show', status: :created
           else
@@ -110,20 +111,6 @@ module V2
         end
       end
 
-      def add_fees
-        agency = Agency.find_by(id: params[:ownerable_id])
-        billing_strategy = BillingStrategy.find_by(id: params[:assignable_id])
-        if Fee.where(ownerable_id: agency.id, assignable_id: billing_strategy.id).exists?
-          render json: { message: 'Already exists' }, status: :unprocessable_entity
-        elsif !Fee.where(ownerable_id: agency.id, assignable_id: billing_strategy.id).exists?
-          fee = Fee.new(fee_params.merge(ownerable: agency, assignable: billing_strategy))
-          fee.save
-          render json: { message: 'Fee was succesfully created' }, status: :ok
-        else
-          render json: { message: 'Fee was not created' }, status: :unprocessable_entity
-        end
-      end
-
       def add_commissions
         commission_strategy = CommissionStrategy.new(commission_params)
         if commission_strategy.save
@@ -139,16 +126,6 @@ module V2
           render json: { message: 'Commission was successfully updated' }, status: :ok
         else
           render json: { message: 'Commission was not updated' }, status: :unprocessable_entity
-        end
-      end
-
-      def fees_list
-        if params[:carrier_agency_id].present?
-          fees = paginator(Fee.where(ownerable_type: 'Agency', ownerable_id: params[:carrier_agency_id]).order(created_at: :desc))
-          render json: fees, status: :ok
-        else
-          fees = paginator(Fee.where(ownerable_type: 'Agency').order(created_at: :desc))
-          render json: fees, status: :ok
         end
       end
 
@@ -227,7 +204,7 @@ module V2
           :integration_designation, :quotable, :rateable, :syncable,
           :title, :verifiable, settings: {}, 
                                carrier_policy_types_attributes: [
-                                 :policy_type_id, carrier_policy_type_availabilities_attributes: %i[state available]
+                                 :policy_type_id, carrier_policy_type_availabilities_attributes: %i[state available zip_code_blacklist]
                                ]
         )
         to_return

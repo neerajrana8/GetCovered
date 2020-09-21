@@ -6,9 +6,8 @@ class CarrierPolicyTypeAvailability < ApplicationRecord
   include Blacklistable
   
   belongs_to :carrier_policy_type
-  		
-  has_many :fees,
-    as: :assignable
+      
+  has_many :fees, as: :assignable
   
   enum state: { AK: 0, AL: 1, AR: 2, AZ: 3, CA: 4, CO: 5, CT: 6, 
                 DC: 7, DE: 8, FL: 9, GA: 10, HI: 11, IA: 12, ID: 13, 
@@ -20,5 +19,5 @@ class CarrierPolicyTypeAvailability < ApplicationRecord
                 WV: 49, WY: 50 }
   
   validates_presence_of :state
-  validates_uniqueness_of :state, scope: "carrier_policy_type_id", message: "record for parent Carrier Policy Type already exists"
+  validates_uniqueness_of :state, scope: 'carrier_policy_type_id', message: 'record for parent Carrier Policy Type already exists'
 end

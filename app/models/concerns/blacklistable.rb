@@ -62,12 +62,12 @@ module Blacklistable
     toggle_blacklist(zip_code) unless zip_code_blacklist.key?(zip_code)
     
     if zip_code_blacklist[zip_code].include?(plus_four)
-      zip_code_blacklist[zip_code].delete
+      zip_code_blacklist[zip_code].delete(plus_four)
       response[:action] = 'remove'
     else
       zip_code_blacklist[zip_code] << plus_four
       response[:action] = 'add'
-     end
+    end
     
     response[:success] = true if save
     
@@ -88,16 +88,14 @@ module Blacklistable
   #   @carrier_policy_type.on_blacklist?(90034, 5204)
   #   => true / false
 
-  def on_blacklist?(zip_code = nil, plus_four = nil)
-    raise ArgumentError, 'Argument "zip_code" cannot be nil' if zip_code.nil?
-    
+  def on_blacklist?(zip_code, plus_four = nil)
     zip_code = zip_code.to_s # Change Zip Code to string for Json
     plus_four = plus_four.to_s unless plus_four.nil? # Change Plus Four to string for Json
     
     result = false
       
     if zip_code_blacklist.key?(zip_code)
-      if zip_code_blacklist[zip_code].nil?
+      if zip_code_blacklist[zip_code].blank?
         result = true 
       else
         raise ArgumentError, "Argument 'plus_four' required for zip_code: #{zip_code}" if plus_four.nil?
@@ -106,6 +104,6 @@ module Blacklistable
       end  
     end
       
-    result  
+    result
   end
 end
