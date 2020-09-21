@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 class EncryptionService
+
   def self.decrypt(text)
     key = Base64.decode64(Rails.application.credentials.encryption_key)
     crypt = ActiveSupport::MessageEncryptor.new(key)
