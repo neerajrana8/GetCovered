@@ -51,6 +51,9 @@ gem 'devise_invitable', '>= 2.0.1'
 gem 'devise_token_auth', '>= 1.1.3'
 gem 'omniauth'
 
+# openid_connect for deposit choice authentication
+gem 'openid_connect', '1.0.3'
+
 # Getting some knowledge
 gem 'newrelic_rpm'
 
