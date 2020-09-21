@@ -175,8 +175,7 @@ carrier = @msi
   authorization = CarrierAgencyAuthorization.create(state: state, 
                                                     available: available, 
                                                     carrier_agency: CarrierAgency.where(carrier: carrier, agency: @get_covered).take, 
-                                                    policy_type: @policy_type,
-                                                    agency: @get_covered)
+                                                    policy_type: @policy_type)
   Fee.create(title: "Service Fee", 
              type: :MISC, 
              per_payment: false,
