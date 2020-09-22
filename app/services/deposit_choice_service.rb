@@ -238,22 +238,10 @@ class DepositChoiceService
   
     
     
-  private
-  
-    def discover
-      @disco ||= OpenIDConnect::Discovery::Provider::Config.discover! Rails.application.credentials.deposit_choice[:openid_uri][ENV['RAILS_ENV'].to_sym]
-    end
     
-    def init_client
-      @client ||= OpenIDConnect::Client.new(
-        identifier: Rails.application.credentials.deposit_choice[:client_id][ENV['RAILS_ENV'].to_sym],
-        secret: Rails.application.credentials.deposit_choice[:client_secret][ENV['RAILS_ENV'].to_sym],
-        redirect_uri: #### uhhh what? ####,
-        authorization_endpoint: discover.authorization_endpoint,
-        token_endpoint: discover.token_endpoint,
-        userinfo_endpoint: discover.userinfo_endpoint
-      )
-    end
+    
+    
+  
     
     
     
