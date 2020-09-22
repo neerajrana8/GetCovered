@@ -60,7 +60,7 @@ class DepositChoiceService
 
   def build_address(
     address: nil,
-    address1: nil, address2: nil, city: nil, state: nil, zip_code: nil
+    address1: nil, address2: nil, city: nil, state: nil, zip: nil
     **compilation_args
   )
     # make parameters sane
@@ -69,12 +69,12 @@ class DepositChoiceService
       address2 ||= address.street_two
       city ||= address.city
       state ||= address.state
-      zip_code ||= address.zip_code
+      zip ||= address.zip_code
     else
       # MOOSE WARNING: are these all actually optional?
-      nil_fellas = {'address1'=>address1,'city'=>city,'state'=>state,'zip_code'=>zip_code}.select{|k,v| v.blank? }
+      nil_fellas = {'address1'=>address1,'city'=>city,'state'=>state,'zip'=>zip}.select{|k,v| v.blank? }
       if nil_fellas.length == 0
-        ; # we have all the fields we need; do nothing
+        # we have all the fields we need; do nothing
       elsif nil_fellas.length == 4
         raise ArgumentError.new("'address' cannot be blank unless individual address fields are provided")
       else
@@ -90,7 +90,7 @@ class DepositChoiceService
       address2:   address2,
       city:       city,
       stateCode:  state,
-      zipCode:    zip_code
+      zipCode:    zip
     }.compact
     return errors.blank?
   end
