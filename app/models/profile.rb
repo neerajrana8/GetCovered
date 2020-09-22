@@ -5,19 +5,17 @@ class Profile < ApplicationRecord
 
   include ElasticsearchSearchable
 
-  belongs_to :profileable, 
-    polymorphic: true,
-    required: false
-    
+  belongs_to :profileable, polymorphic: true, required: false
+
   before_validation :format_contact_phone
   before_save :set_full_name, :fix_phone_number
   after_commit :update_relations
 
-  # Validations
-  validates_presence_of :first_name, :last_name
-  validate :user_age
+  # Validations(remove validation for profiles for leads)
+  validates_presence_of :first_name, :last_name, unless: -> { [Lead].include?(profileable.class) }
+  validate :user_age,                            unless: -> { [Lead].include?(profileable.class) }
 
-	enum gender: { unspecified: 0, male: 1, female: 2, other: 4 }, _suffix: true
+  enum gender: { unspecified: 0, male: 1, female: 2, other: 4 }, _suffix: true
   enum salutation: { unspecified: 0, mr: 1, mrs: 2, miss: 3, dr: 4, lord: 5 }
 
   settings index: { number_of_shards: 1 } do
