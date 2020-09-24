@@ -9,6 +9,10 @@ require 'fileutils'
 
 class DepositChoiceService
 
+  def self.carrier_id
+    6
+  end
+
   ENDPOINT_DICTIONARY = {
     address: 'Address',
     binder: 'Binder',

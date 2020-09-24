@@ -6,15 +6,44 @@ module CarrierDcInsurable
   extend ActiveSupport::Concern
   
   included do
-    def dc_carrier_id
-      6
+    
+    # should only be called on units; will fail on communities
+    def dc_get_rates(effective_date)
+      unit_profile = self.carrier_profile(DepositChoiceService.carrier_id)
+      # get rates
+      dcs = DepositChoiceService.new
+      dcs.build_request(:rate, { 
+        unit_id: unit_profile.external_carrier_id,
+        effective_date: effective_date
+      }.compact)
+      event = events.new(
+        verb: DepositChoiceService::HTTP_VERB_DICTIONARY[:rate].to_s,
+        format: 'json',
+        interface: 'REST',
+        endpoint: dcs.endpoint_for(:rate),
+        process: 'deposit_choice_rate'
+      )
+      event.request = dcs.message_content
+      event.started = Time.now
+      result = dcs.call
+      event.completed = Time.now
+      event.response = result[:data]
+      event.status = result[:error] ? 'error' : 'success'
+      event.save
+      # make sure we succeeded
+      if result[:error]
+        return { success: false, error: "Deposit Choice rate retrieval unsuccessful", event: event }
+      elsif result[:data]&.[]("rates").nil?
+        return { success: false, error: "Deposit Choice rate retrieval failed", event: event }
+      end
+      # grab dem rates
+      return { success: true, rates: result[:data]["rates"], event: event }
     end
+    
+    
   end
   
   class_methods do
-    def deposit_choice_carrier_id
-      6
-    end
     
     def deposit_choice_address_search(address1:, address2: nil, city:, state:, zip_code:)
       # make the address call
@@ -49,7 +78,7 @@ module CarrierDcInsurable
       allow_insurable_creation: true
     )
       # search for an insurable with the right id
-      community = ::CarrierInsurableProfile.where(carrier_id: deposit_choice_carrier_id, external_carrier_id: response["addressId"]).take
+      community = ::CarrierInsurableProfile.where(carrier_id: DepositChoiceService.carrier_id, external_carrier_id: response["addressId"]).take
       if community.nil?
         # grab address pieces
         line1 = ::Address.separate_street_number(response["address1"])

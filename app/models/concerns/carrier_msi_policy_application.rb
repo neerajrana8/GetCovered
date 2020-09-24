@@ -1,5 +1,5 @@
 # =MSI Policy Application Functions Concern
-# file: +app/models/concerns/carrier_msi_policy.rb+
+# file: +app/models/concerns/carrier_msi_policy_application.rb+
 
 module CarrierMsiPolicyApplication
   extend ActiveSupport::Concern
