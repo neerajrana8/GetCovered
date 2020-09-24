@@ -5,8 +5,6 @@
 module V2
   module StaffAgency
     class DashboardController < StaffAgencyController
-      before_action :set_staff_agency, only: [:communities_list, :buildings_communities]
-
       def total_dashboard
         unit_ids = InsurableType::UNITS_IDS
         community_ids = InsurableType::COMMUNITIES_IDS
@@ -72,14 +70,20 @@ module V2
         end
       end
 
+      def uninsured_units
+        units_relation =
+          Insurable.
+            where(insurable_type_id: InsurableType::UNITS_IDS, covered: false, account: @agency.accounts)
+        units_relation = units_relation.where(insurable_id: params[:insurable_id]) if params[:insurable_id].present?
+        @insurables = paginator(units_relation)
+
+        render template: 'v2/shared/insurables/index', status: :ok
+      end
+
       private
 
       def view_path
         super + '/dashboard'
-      end
-
-      def set_staff_agency
-        @current_agency = current_staff.organizable.id
       end
 
       def supported_filters(called_from_orders = false)

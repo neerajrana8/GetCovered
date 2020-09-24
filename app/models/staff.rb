@@ -39,9 +39,7 @@ class Staff < ApplicationRecord
   has_many :assignments
   
   # has_one relationships
-  has_one :profile,
-  as: :profileable,
-  autosave: true
+  has_one :profile, as: :profileable, autosave: true
   
   has_many :reports, as: :reportable
 
@@ -51,7 +49,7 @@ class Staff < ApplicationRecord
   
   scope :enabled, ->(){ where(enabled: true) }
   
-  accepts_nested_attributes_for :profile
+  accepts_nested_attributes_for :profile, update_only: true
   
   settings index: { number_of_shards: 1 } do
     mappings dynamic: 'false' do
@@ -73,7 +71,7 @@ class Staff < ApplicationRecord
   def as_indexed_json(options = {})
     self.as_json(
       options.merge(
-        only: [:id, :email, :organizable_type, :organizable_id, :role, :created_at, :updated_at],
+        only: %i[id email organizable_type organizable_id role created_at updated_at],
         include: :profile
       )
     )
@@ -118,21 +116,24 @@ class Staff < ApplicationRecord
   end
   
   private
+
+  def history_blacklist
+    %i[tokens sign_in_count current_sign_in_at last_sign_in_at]
+  end
   
-    def initialize_staff
+  def initialize_staff; end
+
+  def proper_role
+    errors.add(:role, "must match organization type") if organizable_type == 'Agency' && role != 'agent'
+
+    errors.add(:role, "must match organization type") if organizable_type == 'Account' && role != 'staff'
+  end
+
+
+  def set_first_as_primary_on_organizable
+    if organizable&.staff&.count&.eql?(1)
+      organizable.update staff_id: id
+      update_attribute(:owner, true)
     end
-    
-    def proper_role
-      errors.add(:role, "must match organization type") if organizable_type == 'Agency' && role != 'agent'
-      
-      errors.add(:role, "must match organization type") if organizable_type == 'Account' && role != 'staff'
-    end
-    
-    
-    def set_first_as_primary_on_organizable
-      if organizable&.staff&.count&.eql?(1)
-        organizable.update staff_id: id
-        update_attribute(:owner, true)
-      end
-    end
+  end
 end

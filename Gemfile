@@ -110,6 +110,7 @@ gem 'roo', '~> 2.8.0'
 gem 'memory_profiler', require: false
 gem 'ruby-prof', require: false
 
+gem 'addressable'
 gem 'analytics-ruby', '~> 2.0.0', :require => 'segment/analytics'
 
 
@@ -135,6 +136,14 @@ group :development do
   gem 'rails-erd'
   gem 'spring'
   gem 'spring-watcher-listen', '~> 2.0.0'
+  #need to open letters in dev_mode
+  gem 'letter_opener'
+  gem 'letter_opener_web', '~> 1.0'
+  gem 'guard'
+  gem 'guard-shell'
+  # rubymine specific debug gems
+  #gem 'ruby-debug-ide'
+  #gem 'debase'
 end
 
 # Windows does not include zoneinfo files, so bundle the tzinfo-data gem

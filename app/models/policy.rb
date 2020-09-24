@@ -18,7 +18,7 @@
 # +billing_status+:: (Integer)
 # +billing_dispute_count+:: (Integer)
 # +billing_behind_since+:: (Date)
-# +cancellation_code+:: (Integer)
+# +cancellation_reason+:: (Integer)
 # +cancellation_date+:: (Date)
 # +status+:: (Integer)
 # +status_changed_on+:: (DateTime)
@@ -146,6 +146,40 @@ class Policy < ApplicationRecord
     
   enum billing_dispute_status: { UNDISPUTED: 0, DISPUTED: 1, AWAITING_POSTDISPUTE_PROCESSING: 2,
     NOT_REQUIRED: 3 }
+    
+  enum cancellation_code: { # WARNING: remove this, it's old
+    AP: 0,
+    AR: 1,
+    IR: 2,
+    NP: 3,
+    UW: 4,
+    TEST: 5
+  }
+    
+  enum cancellation_reason: {
+    nonpayment:                 0,    # QBE AP
+    agent_request:              1,    # QBE AR
+    insured_request:            2,    # QBE IR
+    new_application_nonpayment: 3,    # QBE NP
+    underwriter_cancellation:   4,    # QBE UW
+    disqualification:           5,    # no qbe code
+    test_policy:                6     # no qbe code
+  }
+  
+  # Cancellation reasons with special refund logic; allowed values:
+  #   early_cancellation:       within the first (CarrierInsurableType.max_days_for_full_refund || 30) days a refund will be issued equivalent to a refund prorated for the day before the policy's effective_date
+  #   no_refund:                no refund will be issued, but available/upcoming/missed invoices will be cancelled, and processing invoices will be cancelled if they fail (but not refunded if they succeed)
+  
+  SPECIAL_CANCELLATION_REFUND_LOGIC = {
+    'insured_request' =>          :early_cancellation, 
+    'nonpayment'      =>          :no_refund,
+    'test_policy'     =>          :no_refund
+  }
+  
+  
+  
+  
+  
       
   def in_system?
     policy_in_system == true
@@ -246,16 +280,36 @@ class Policy < ApplicationRecord
       { error: 'Error happened with policy issue' }
     end
   end
+
   
-  def cancel
-    update_attribute(:status, 'CANCELLED')
-    # TEMPORARILY DISABLED UNTIL FULL CANCELLATION WORKFLOW IS DONE
-    # Slaughter the invoices
-    #cancellation_date = Time.current.to_date
-    #self.invoices.each do |invoice|
-    #  invoice.apply_proration(cancellation_date)
-    #end
-    # Unearned balance is the remaining unearned amount on an insurance policy that
+  # Cancels a policy; returns nil if no errors, otherwise a string explaining the error
+  def cancel(reason, cancel_date = Time.current.to_date)
+    # Flee on invalid data
+    return "Cancellation reason is invalid" unless self.class.cancellation_reasons.has_key?(reason)
+    return "Policy is already cancelled" if self.status == 'CANCELLED'
+    # Slaughter the invoices NOTE: we refund before changing status to CANCELLED because apply_proration can be called multiple times with the same arguments if something fails
+    special_logic = SPECIAL_CANCELLATION_REFUND_LOGIC[reason]
+    case special_logic
+      when :prorated_refund
+        # prorate regularly
+        self.invoices.each{|invoice| invoice.apply_proration(cancel_date, refund_date: cancel_date) }
+      when :early_cancellation
+        # prorate as if we'd cancelled immediately if cancellation is early, otherwise prorate regularly
+        max_days_for_full_refund = (CarrierPolicyType.where(policy_type_id: self.policy_type_id, carrier_id: self.carrier_id).take&.max_days_for_full_refund || 0).days
+        if cancel_date < self.created_at.to_date + max_days_for_full_refund.days
+          self.invoices.each do |invoice|
+            invoice.apply_proration(cancel_date, refund_date: cancel_date, to_ensure_refunded: Proc.new{|li| ['amortized_fees', 'deposit_fees'].include?(li.category) ? 0 : li.price })
+          end
+        else
+          self.invoices.each{|invoice| invoice.apply_proration(cancel_date, refund_date: cancel_date) }
+        end
+      else # :no_refund will end up here; by default we don't refund
+        # override the amount to refund to nothing and cancel everything unpaid or missed
+        self.invoices.each{|invoice| invoice.apply_proration(cancel_date, refund_date: cancel_date, to_refund_override: {}, cancel_if_unpaid_override: true, cancel_if_missed_override: true) }
+    end
+    # Mark cancelled
+    update_columns(status: 'CANCELLED', cancellation_reason: reason, cancellation_date: cancel_date)
+    # Unearned balance is the remaining unearned amount on an insurance policy that 
     # needs to be deducted from future commissions to recuperate the loss
     premium&.reload
     commision_amount = premium&.commission&.amount || 0
@@ -265,6 +319,8 @@ class Policy < ApplicationRecord
       unearned_balance: balance, 
       deductee: premium&.commission_strategy&.commissionable
     )
+    # done
+    return nil
   end
   
   def bulk_decline

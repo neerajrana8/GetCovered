@@ -452,8 +452,7 @@ if @get_covered.save
   	  authorization = CarrierAgencyAuthorization.create(state: state, 
   	  																									available: available, 
   	  																									carrier_agency: CarrierAgency.where(carrier: carrier, agency: @get_covered).take, 
-  	  																									policy_type: @policy_type,
-  	  																									agency: @get_covered)
+  	  																									policy_type: @policy_type)
   	  Fee.create(title: "Service Fee", 
   	  					 type: :MISC, 
   	  					 per_payment: false,
@@ -633,8 +632,7 @@ if @cambridge.save
   	  authorization = CarrierAgencyAuthorization.create(state: state, 
   	  																									available: available, 
   	  																									carrier_agency: CarrierAgency.where(carrier: carrier, agency: @cambridge).take, 
-  	  																									policy_type: @policy_type,
-  	  																									agency: @cambridge)
+  	  																									policy_type: @policy_type)
   	  Fee.create(title: "Service Fee", 
   	  					 type: :MISC, 
   	  					 per_payment: false,
@@ -784,8 +782,7 @@ if @cambridge_qbe.save
   	  authorization = CarrierAgencyAuthorization.create(state: state, 
   	  																									available: available, 
   	  																									carrier_agency: CarrierAgency.where(carrier: carrier, agency: @cambridge_qbe).take, 
-  	  																									policy_type: @policy_type,
-  	  																									agency: @cambridge_qbe)
+  	  																									policy_type: @policy_type)
   	  Fee.create(title: "Service Fee", 
   	  					 type: :MISC, 
   	  					 per_payment: false,

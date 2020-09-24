@@ -3,7 +3,7 @@ class Devise::Users::InvitationsController < Devise::InvitationsController
 
   def create
     ::User.invite!(invite_params)
-    render json: { success: true }, 
+    render json: { success: true },
            status: :created
   end
 
@@ -19,7 +19,9 @@ class Devise::Users::InvitationsController < Devise::InvitationsController
       @token = @resource.create_token
       @resource.save!
       update_auth_header
-      render json: { success: ['User updated.'] }, 
+      acct = AccountUser.find_by(user_id: @user.id, account_id: @user.account_users.last.account_id)
+      acct.update(status: 'enabled') if acct.present? && acct.status != 'enabled'
+      render json: { success: ['User updated.'] },
              status: :accepted
     else
       render json: { errors: @user.errors.full_messages },
@@ -40,9 +42,9 @@ class Devise::Users::InvitationsController < Devise::InvitationsController
     end
 
     def accept_invitation_params
-      params.permit(:email, :password, 
-                    :password_confirmation, 
-                    :invitation_token, 
+      params.permit(:email, :password,
+                    :password_confirmation,
+                    :invitation_token,
                     profile_attributes: [:first_name, :last_name, :contact_phone, :birth_date])
     end
 end

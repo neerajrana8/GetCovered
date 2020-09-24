@@ -71,7 +71,8 @@ class MsiService
                         { 'category' => 'deductible', 'uid' => @@coverage_codes[:Hurricane][:code].to_s, 'requirement' => 'required' }                              # mandate Hurricane coverage
                       ],
     'GA' =>           [{ 'category' => 'deductible', 'uid' => @@coverage_codes[:WindHail][:code].to_s, 'enabled' => false }],                                       # disable WindHail
-    'GA_COUNTIES' =>  [{ 'category' => 'deductible', 'uid' => @@coverage_codes[:WindHail][:code].to_s, 'enabled' => true, 'requirement' => 'required' }], # enable WindHail & make sure it's required for counties ['Bryan', 'Camden', 'Chatham', 'Glynn', 'Liberty', 'McIntosh']
+    'GA_COUNTIES' =>  [{ 'category' => 'deductible', 'uid' => @@coverage_codes[:WindHail][:code].to_s, 'enabled' => true, 'requirement' => 'required' }],           # enable WindHail & make sure it's required for counties ['Bryan', 'Camden', 'Chatham', 'Glynn', 'Liberty', 'McIntosh']
+    'MD' =>           [{ 'category' => 'coverage', 'uid' => @@coverage_codes[:HomeDayCare][:code].to_s, 'enabled' => false }],                                      # disable HomeDayCare in MD
   }.merge(['AK', 'CO', 'HI', 'KY', 'ME', 'MT', 'NC', 'NJ', 'UT', 'VT', 'WA'].map do |state|
     # disable theft deductibles for selected states
     [
@@ -155,18 +156,18 @@ class MsiService
   
   RULE_SPECIFICATION = {
     'USA' => {
-      'cov_e_300k_max' => { # MOOSE WARNING: after redux, make the option disabled instead of banning it by rule
-        'message' => 'Animal Liability Buyback must be less than $300k',
+      'cov_e_100k_max' => { # MOOSE WARNING: after redux, make the option disabled instead of banning it by rule
+        'message' => 'Liability limit must be at most $100k',
         'code' => ['=',
           ['value', 'coverage', @@coverage_codes[:CoverageE][:code]],
-          ['[)',
+          ['[]',
             0,
-            300000
+            100000
           ]
         ]
       },
       'animal_liability_300k_max' => { # MOOSE WARNING: after redux, make the option disabled instead of banning it by rule
-        'message' => 'Animal Liability Buyback must be less than $300k',
+        'message' => 'Animal Liability Buyback limit must be less than $300k',
         'code' => ['=',
           ['value', 'coverage', @@coverage_codes[:AnimalLiability][:code]],
           ['[)',
@@ -617,12 +618,13 @@ class MsiService
                 MSI_CommunityID:                community_id,
                 MSI_Unit:                       unit
              })
-            }.compact#,
-            #{
-            #  '': { id: '1' },
-            #  Addr:                             address
-            #}
-          ],
+            }.compact
+          ] + (maddress == address ? [] : [
+            {
+              '': { id: '1' },
+              Addr:                           maddress
+            }
+          ]),
           PersPolicy: {
             ContractTerm: {
               EffectiveDt:                    effective_date.strftime("%m/%d/%Y")
@@ -669,7 +671,7 @@ class MsiService
               InsuredOrPrincipalInfo: {
                 InsuredOrPrincipalRoleCd: "ADDITIONALINTEREST"
               },
-              GeneralPartyInfo:               ai.class == ::User ? ai.get_msi_general_party_info : ai
+              GeneralPartyInfo:               [::User, ::Account].include?(ai.class) ? ai.get_msi_general_party_info : ai
             }
           end
         }
