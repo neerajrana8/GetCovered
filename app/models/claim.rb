@@ -14,7 +14,7 @@ class Claim < ApplicationRecord
 
   belongs_to :insurable, optional: true
 
-  belongs_to :policy
+  belongs_to :policy, touch: true
 
   has_many :histories,
     as: :recordable
