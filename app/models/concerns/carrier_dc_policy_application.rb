@@ -6,7 +6,7 @@ module CarrierDcPolicyApplication
 
   included do
   
-    def cd_estimate(quote_id = nil)
+    def dc_estimate(quote_id = nil)
 		  quote = quote_id.nil? ? policy_quotes.create!(agency: agency, account: account) : 
 		                          policy_quotes.find(quote_id)
       quote.update(status: 'estimated')
