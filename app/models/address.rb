@@ -183,6 +183,12 @@ class Address < ApplicationRecord
 	  })
 	end
   
+  def self.separate_street_number(address_line_one)
+    splat = address_line_one.strip.split(" ").map{|x| x.strip }
+    return false if splat.length == 1
+    [splat[0], splat.drop(1).join(" ")]
+  end
+  
   def get_msi_addr(include_line2 = true)
     {
       Addr1: self.combined_street_address,

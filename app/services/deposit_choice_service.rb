@@ -202,12 +202,15 @@ class DepositChoiceService
           },
           ssl_version: :TLSv1_2 # MOOSE WARNING: here and in get below, we need to add the right headers etc.
         )
+        #### MOOSE WARNING: add error if status error
       else
         call_data[:response] = HTTParty.get(endpoint_for(self.action),
           query: message_content,
           headers: {
           },
           ssl_version: :TLSv1_2
+        )
+        #### MOOSE WARNING: add error if status error
       end 
     rescue StandardError => e
       call_data = {
