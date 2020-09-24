@@ -38,7 +38,7 @@ module CarrierDcPolicyApplication
           return false
         end
         # make sure we've chosen a valid rate
-        chosen = result[:rates].find{|r| r["bondAmount"].to_d == self.coverage_selections&.[]("bondAmount").to_d }
+        chosen = result[:rates].find{|r| r["bondAmount"] == self.coverage_selections&.[]("bondAmount") }
         if chosen.nil?
           puts "Deposit Choice Rate Retrieval Failure (Invalid Bond Amount '#{self.coverage_selections&.[]("bondAmount") || 'N/A'}')"
           quote.mark_failure()
@@ -46,9 +46,9 @@ module CarrierDcPolicyApplication
         end
         # build policy premium
         premium = PolicyPremium.new(
-          base: (chosen["ratedPremium"].to_d * 100).ceil,
+          base: chosen["ratedPremium"],
           taxes: 0,
-          external_fees: (chosen["processingFee"].to_d * 100).ceil,
+          external_fees: chosen["processingFee"],
           only_fees_internal: true,
           billing_strategy: self.billing_strategy,
           policy_quote: quote

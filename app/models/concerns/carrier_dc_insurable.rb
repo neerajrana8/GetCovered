@@ -37,7 +37,14 @@ module CarrierDcInsurable
         return { success: false, error: "Deposit Choice rate retrieval failed", event: event }
       end
       # grab dem rates
-      return { success: true, rates: result[:data]["rates"], event: event }
+      return { success: true, rates: result[:data]["rates"].map{|r| r.transform_values{|v| (v.gsub(/[^\d.]/, '').to_d * 100).ceil } }, event: event }
+      # rates is an array of hashes of the form:
+      #{
+      #  "bondAmount": 100000, #i.e. $1000.00
+      #  "ratedPremium": 17500,
+      #  "processingFee": 569,
+      #  "totalCost": 18069
+      #}
     end
     
     
