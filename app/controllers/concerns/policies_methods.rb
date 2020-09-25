@@ -3,9 +3,11 @@ module PoliciesMethods
 
   def update
     if @policy.update_as(current_staff, policy_application_merged_attributes)
-      user_params[:users].each do |user_param|
-        user = User.find_by(id: user_param[:id])
-        user.update_attributes(user_param)
+      if user_params[:users].is_a? Array
+        user_params[:users].each do |user_param|
+          user = User.find_by(id: user_param[:id])
+          user.update_attributes(user_param)
+        end
       end
       render :show, status: :ok
     else
