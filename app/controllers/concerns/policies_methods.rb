@@ -3,6 +3,10 @@ module PoliciesMethods
 
   def update
     if @policy.update_as(current_staff, policy_application_merged_attributes)
+      user_params[:users].each do |user_param|
+        user = User.find_by(id: user_param[:id])
+        user.update_attributes(user_param)
+      end
       render :show, status: :ok
     else
       render json: @policy.errors, status: :unprocessable_entity
@@ -22,7 +26,13 @@ module PoliciesMethods
         policy_users_attributes: [ :user_id ],
         policy_coverages_attributes: [ :id, :policy_application_id, :policy_id,
                                        :limit, :deductible, :enabled, :designation ],
-        policy_application_attributes: [fields: {}]
+        policy_application_attributes: [fields: {}],
+    )
+  end
+  def user_params
+    params.require(:policy).permit(users: [:id,
+      address_attributes: [ :city, :country, :state, :street_name,
+                            :street_two, :zip_code] ]
     )
   end
 
