@@ -16,33 +16,25 @@ module V2
       def show; end
       
       def create
-        if create_allowed?
-          @carrier_policy_type_availability = @substrate.new(create_params)
-          if @carrier_policy_type_availability.errors.none? && @carrier_policy_type_availability.save
-            render :show,
-                   status: :created
-          else
-            render json: @carrier_policy_type_availability.errors,
-                   status: :unprocessable_entity
-          end
+        @carrier_policy_type_availability = @substrate.new(create_params)
+        if @carrier_policy_type_availability.errors.none? && @carrier_policy_type_availability.save
+          render :show,
+                 status: :created
         else
-          render json: { success: false, errors: ['Unauthorized Access'] },
-                 status: :unauthorized
+          render json: @carrier_policy_type_availability.errors,
+                 status: :unprocessable_entity
         end
       end
       
       def update
-        if update_allowed?
-          if @carrier_policy_type_availability.update(update_params)
-            render :show,
-                   status: :ok
-          else
-            render json: @carrier_policy_type_availability.errors,
-                   status: :unprocessable_entity
-          end
+        @carrier_policy_type_availability.update(update_params)
+        if @carrier_policy_type_availability.update(update_params)
+
+          render :show,
+                 status: :ok
         else
-          render json: { success: false, errors: ['Unauthorized Access'] },
-                 status: :unauthorized
+          render json: @carrier_policy_type_availability.errors,
+                 status: :unprocessable_entity
         end
       end
       
@@ -51,14 +43,6 @@ module V2
       
       def view_path
         super + '/carrier_policy_type_availabilities'
-      end
-        
-      def create_allowed?
-        true
-      end
-        
-      def update_allowed?
-        true
       end
         
       def set_carrier_policy_type_availability

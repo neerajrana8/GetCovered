@@ -6,7 +6,10 @@ class CarrierPolicyTypeAvailability < ApplicationRecord
   include Blacklistable
   
   belongs_to :carrier_policy_type
-      
+
+  has_one :carrier, through: :carrier_policy_type
+  has_one :policy_type, through: :carrier_policy_type
+
   has_many :fees, as: :assignable
   
   enum state: { AK: 0, AL: 1, AR: 2, AZ: 3, CA: 4, CO: 5, CT: 6, 
