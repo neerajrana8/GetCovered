@@ -1,7 +1,7 @@
-# =MSI Policy Quote Functions Concern
-# file: +app/models/concerns/carrier_msi_policy_quote.rb+
+# =DC Policy Quote Functions Concern
+# file: +app/models/concerns/carrier_dc_policy_quote.rb+
 
-module CarrierMsiPolicyQuote
+module CarrierDcPolicyQuote
   extend ActiveSupport::Concern
 
   included do
@@ -13,47 +13,81 @@ module CarrierMsiPolicyQuote
       
     end
     
-    # MSI build coverages
+    # DC build coverages
     
-    def msi_build_coverages
-      self.policy_application.coverage_selections.select{|covsel| covsel['selection'] }.each do |covsel|
-        self.policy.policy_coverages.create(
-          policy_application: self.policy_application,
-          title: covsel['title'],
-          designation: covsel['uid'],
-          limit: covsel['category'] != 'coverage' ? 0 : [nil, true].include?(covsel['selection']) ? 0 : covsel['selection'].to_i,
-          deductible: covsel['category'] != 'deductible' ? 0 : [nil, true].include?(covsel['selection']) ? 0 : covsel['selection'].to_i,
-          enabled: true
-        )
-      end
+    def dc_build_coverages
+      self.policy.policy_coverages.create(
+        policy_application: self.policy_application,
+        title: "Security Deposit Replacement Bond",
+        designation: "secdeprep-bond",
+        limit: self.policy_application.coverage_selections['bond_amount'],
+        deductible: 0,
+        enabled: true
+      )
     end
     
-    # MSI Bind
-  
+    # DC Bind
+
     # payment_params should be a hash of form:
     #   {
-    #     'payment_method' => 'card' or 'ach',
-    #     'payment_info'   => msi format hash of card/bank info,
-    #     'payment_token'  => the token
+    #     'payment_token' = the token
     #   }
-    def msi_bind(payment_params)
-      # MOOSE WARNING: modify qbe bind methods here
+    def dc_bind(payment_params)
       @bind_response = {
         :error => true,
         :message => nil,
         :data => {}  
       }
       # handle common failure scenarios
-      unless policy_application.carrier_id == 5
-        @bind_response[:message] = "Carrier must be QBE to bind residential quote"
-        #PolicyBindWarningNotificationJob.perform_later(message: @bind_response[:message])
+      unless policy_application.carrier_id == DepositChoiceService.carrier_id
+        @bind_response[:message] = "Carrier must be Deposit Choice to bind security deposit replacement quote"
         return @bind_response
       end
 		 	unless accepted? && policy.nil?
 		 		@bind_response[:message] = "Status must be quoted or error to bind quote"
-        #PolicyBindWarningNotificationJob.perform_later(message: @bind_response[:message])
         return @bind_response
 		 	end
+      # get useful variables
+      unit = policy_application.primary_insurable
+      unit_cip = unit.carrier_profile(DepositChoiceService.carrier_id)
+      dcs = DepositChoiceService.new
+      # create insured
+      dcs.build_request(:insured, {
+        
+        
+        
+      
+        unit_id: unit_profile.external_carrier_id,
+        effective_date: effective_date
+      }.compact)
+      event = events.new(
+        verb: DepositChoiceService::HTTP_VERB_DICTIONARY[:rate].to_s,
+        format: 'json',
+        interface: 'REST',
+        endpoint: dcs.endpoint_for(:rate),
+        process: 'deposit_choice_rate'
+      )
+      event.request = dcs.message_content
+      event.started = Time.now
+      result = dcs.call
+      event.completed = Time.now
+      event.response = result[:data]
+      event.status = result[:error] ? 'error' : 'success'
+      event.save
+      # make sure we succeeded
+      if result[:error]
+        return { success: false, error: "Deposit Choice rate retrieval unsuccessful", event: event }
+      elsif result[:data]&.[]("rates").nil?
+        return { success: false, error: "Deposit Choice rate retrieval failed", event: event }
+      end
+      
+      
+      
+      
+      
+      
+      
+      
       # unpack payment info
       payment_data = ((self.carrier_payment_data || {})['payment_methods'] || {})[payment_params['payment_method']]
       if payment_data.nil? || payment_data.class != ::Hash ||

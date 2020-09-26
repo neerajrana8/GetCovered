@@ -102,7 +102,8 @@ class DepositChoiceService
   
   def build_insured(
     address_id:, unit_id:,
-    user: nil, first_name: nil, last_name: nil, email: nil
+    user: nil, first_name: nil, last_name: nil, email: nil,
+    payment_token:
   )
     # fix user params
     if !user.nil?
@@ -127,7 +128,7 @@ class DepositChoiceService
       firstName: first_name,
       lastName: last_name,
       emailAddress: email,
-      # MOOSE WARNING: we need to add card fields here, but that's going to change
+      paymentToken: payment_token
     }
     return errors.blank?
   end
