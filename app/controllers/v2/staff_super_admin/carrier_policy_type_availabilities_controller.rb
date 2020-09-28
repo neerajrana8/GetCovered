@@ -27,13 +27,17 @@ module V2
       end
       
       def update
-        @carrier_policy_type_availability.update(update_params)
-        if @carrier_policy_type_availability.update(update_params)
+        outcome = CarrierPolicyTypeAvailabilities::Update.run(
+          carrier_policy_type_availability: @carrier_policy_type_availability,
+          update_params: update_params.to_h
+        )
+        if outcome.valid?
+          @carrier_policy_type_availability = outcome.result
 
           render :show,
                  status: :ok
         else
-          render json: @carrier_policy_type_availability.errors,
+          render json: standard_error(:update_carrier_policy_type_availability_error, nil, outcome.errors.full_messages),
                  status: :unprocessable_entity
         end
       end

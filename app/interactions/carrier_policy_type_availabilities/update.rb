@@ -12,6 +12,7 @@ module CarrierPolicyTypeAvailabilities
         return
       end
       update_carrier_agency_authorizations
+      carrier_policy_type_availability
     end
 
     private
