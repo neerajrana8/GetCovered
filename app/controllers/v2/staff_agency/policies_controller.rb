@@ -138,29 +138,6 @@ module V2
         )
         to_return
       end
-  
-      def supported_filters(called_from_orders = false)
-        @calling_supported_orders = called_from_orders
-        {
-          id: %i[scalar array],
-          carrier: {
-            id: %i[scalar array],
-            title: %i[scalar like]
-          },
-          number: %i[scalar like],
-          policy_type_id: %i[scalar array],
-          created_at: %i[scalar like],
-          updated_at: %i[scalar like],
-          status: %i[scalar like],
-          policy_in_system: %i[scalar like],
-          effective_date: %i[scalar like],
-          expiration_date: %i[scalar like]
-        }
-      end
-
-      def supported_orders
-        supported_filters(true)
-      end
     end
   end
 end

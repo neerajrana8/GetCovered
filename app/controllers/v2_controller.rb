@@ -126,13 +126,13 @@ exit
     prequery[:where_strings].each do |where_string|
       queriable = queriable.where(where_string[0], where_string[1])
     end
-    prequery[:joins].each do |join_string|
-      queriable = queriable.joins(join_string)
+    prequery[:joins].each_pair do | key ,value|
+      queriable = queriable.joins({key => value})
     end
     prequery[:orders].each do |order_string|
       queriable = queriable.order(order_string)
     end
-    return(queriable)
+    return(queriable.distinct)
   end
 
   def build_prequery(queriable, includes, filters, orders)
@@ -160,6 +160,7 @@ exit
     results = handle_filters(supported_filters, filters, queriable)
     prequery[:includes] = results[:includes]
     prequery[:references] = results[:references]
+    prequery[:joins] = results[:references]
     prequery[:where_hash] = results[:where_hash]
     prequery[:where_strings] = results[:where_strings]
     # put includes into prequery
@@ -482,7 +483,7 @@ exit
             to_return[:hash][key] = (value == '_NULL_' ? nil : value) if forms.include?(:scalar) # MOOSE WARNING: check string, integer, etc independently?
           elsif value.has_key?("like") && value.length == 1
             # like
-            to_return[:string]['$'].push(["$.#{key} LIKE ?", "#{value["like"]}"]) if forms.include?(:like)
+            to_return[:string]['$'].push(["$.#{key} LIKE ?", "#{value["like"]}%"]) if forms.include?(:like)
           elsif value.keys.length == (value.keys & ["start", "end", "before", "after"]).length && (value.keys & ["start", "after"]).length < 2 && (value.keys & ["end", "before"]).length < 2 # WARNING: no support for inverted intervals
             # interval
             if forms.include?(:interval)
