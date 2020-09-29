@@ -16,22 +16,21 @@ module V2
         end
       end
 
-      def show
-      end
+      def show; end
 
       def create
         if create_allowed?
-          @agency = Agency.new(create_params)
-          if !@agency.errors.any? && @agency.save_as(current_staff)
-            render :show,
-              status: :created
+          outcome = Agencies::Create.run(agency_params: create_params.to_h)
+          if outcome.valid?
+            @agency = outcome.result
+            render :show, status: :created
           else
-            render json: @agency.errors,
-              status: :unprocessable_entity
+            render json: standard_error(:agency_creation_error, nil, outcome.errors.full_messages),
+                   status: :unprocessable_entity
           end
         else
           render json: { success: false, errors: ['Unauthorized Access'] },
-            status: :unauthorized
+                 status: :unauthorized
         end
       end
 

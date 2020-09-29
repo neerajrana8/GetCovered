@@ -18,9 +18,9 @@ module V2
 
       private
               
-        def set_branding_profile_attribute
-          @branding_profile_attribute = BrandingProfileAttribute.find(params[:id])
-        end
+      def set_branding_profile_attribute
+        @branding_profile_attribute = BrandingProfileAttribute.find(params[:id])
+      end
                 
     end
   end # module StaffAgency
