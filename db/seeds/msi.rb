@@ -148,7 +148,7 @@ if carrier_policy_type.save()
   51.times do |state|
     available = state == 0 || state == 11 ? false : true
     carrier_policy_availability = CarrierPolicyTypeAvailability.create(state: state, available: available, carrier_policy_type: carrier_policy_type)
-    carrier_policy_availability.fees.create(title: "Origination Fee", type: :ORIGINATION, amount: 2500, enabled: true, ownerable: carrier) unless carrier.id == 4 || carrier.id = 5 # disabled msi fee
+    carrier_policy_availability.fees.create(title: "Origination Fee", type: :ORIGINATION, amount: 2500, enabled: true, ownerable: carrier) unless carrier.id == 4 || carrier.id == 5 # disabled msi fee
   end      
 else
   pp carrier_policy_type.errors
@@ -163,15 +163,11 @@ end
 
 carrier = @msi
 51.times do |state|
-  @policy_type = nil
-  @fee_amount = nil
+  # MOOSE WARNING: testing fee
+  @policy_type = PolicyType.find(1)
+  @fee_amount = nil # WARNING: testing fee disabled 2500
 
-  if carrier.id == 5 # MOOSE WARNING: testing fee
-    @policy_type = PolicyType.find(1)
-    @fee_amount = 2500
-  end
-
-  available = state == 0 || state == 11 ? false : true # we dont do business in Alaska (0) and Hawaii (11)
+  available = state == 0 || state == 11 ? false : true # we don't do business in Alaska (0) and Hawaii (11)
   authorization = CarrierAgencyAuthorization.create(state: state, 
                                                     available: available, 
                                                     carrier_agency: CarrierAgency.where(carrier: carrier, agency: @get_covered).take, 
@@ -187,15 +183,6 @@ carrier = @msi
              ownerable: @get_covered) unless @fee_amount.nil?
 end
 
-service_fee = { 
-  title: "Service Fee", 
-  type: :MISC,
-  amount_type: "PERCENTAGE", 
-  amortize: true,
-  amount: 5, 
-  enabled: true, 
-  ownerable: @get_covered 
-}
 
 # MSI / Get Covered Billing & Commission Strategies
 
