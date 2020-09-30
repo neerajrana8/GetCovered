@@ -126,13 +126,13 @@ exit
     prequery[:where_strings].each do |where_string|
       queriable = queriable.where(where_string[0], where_string[1])
     end
-    prequery[:joins].each_pair do | key ,value|
+    prequery[:joins].each_pair do |key, value|
       queriable = queriable.joins({key => value})
     end
     prequery[:orders].each do |order_string|
       queriable = queriable.order(order_string)
     end
-    return(queriable.distinct)
+    return(queriable)
   end
 
   def build_prequery(queriable, includes, filters, orders)
@@ -160,7 +160,6 @@ exit
     results = handle_filters(supported_filters, filters, queriable)
     prequery[:includes] = results[:includes]
     prequery[:references] = results[:references]
-    prequery[:joins] = results[:references]
     prequery[:where_hash] = results[:where_hash]
     prequery[:where_strings] = results[:where_strings]
     # put includes into prequery
@@ -396,7 +395,7 @@ exit
 
   def convert_where_strings_to_table_names(where_strings, table_names)
     to_return = []
-    to_return.concat(where_strings.delete('$').each{|v| v[0].gsub!('$', table_names['$']) })
+    to_return.concat(where_strings.delete('$').each{|v| v.first.gsub!('$', table_names['$']) }) if where_strings.present? && where_strings['$'].present?
     where_strings.each do |key, value|
       to_return.concat(convert_where_strings_to_table_names(value, table_names[key]))
     end
@@ -471,7 +470,8 @@ exit
               end
               # add where clauses
               to_return[:hash][key] = subresults[:hash] unless subresults[:hash].blank?
-              to_return[:string][key] = subresults[:string] unless subresults[:string]['$'].blank?
+              subresults[:string].delete('$') if subresults[:string]['$'].blank?
+              to_return[:string][key] = subresults[:string]
             end
           end
         else

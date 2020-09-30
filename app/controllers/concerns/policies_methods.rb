@@ -70,7 +70,7 @@ module PoliciesMethods
             id: %i[scalar array],
             email: %i[scalar like],
             profile: {
-                full_name: %i[like],
+                full_name: %i[scalar like],
             }
         }
     }
