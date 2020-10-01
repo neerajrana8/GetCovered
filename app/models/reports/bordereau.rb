@@ -120,7 +120,7 @@ module Reports
         'transaction' => coverage_transaction(coverage),
         'effective_date' => coverage.expiration_date,
         'expiration_date' => coverage.effective_date,
-        'cancellation_date' => coverage.cancellation_date_date,
+        'cancellation_date' => coverage.cancellation_date,
         'landlord_sumplimental' => coverage.system_data['landlord_sumplimental'],
         'liability_limit' => liability_limit(coverage),
         'coverage_c_limit' => coverage_c_limit(coverage)
@@ -130,7 +130,7 @@ module Reports
     def coverage_transaction(coverage)
       if coverage.effective_date > range_start
         'New'
-      elsif coverage.cancellation_date_date.present? && coverage.cancellation_date_date.betweet?(range_start, range_end)
+      elsif coverage.cancellation_date.present? && coverage.cancellation_date.between?(range_start, range_end)
         'Cancelled'
       else
         'Renew'

@@ -34,6 +34,7 @@ module V2
         @policy.policy_in_system = false
         @policy.policy_users.new(user_id: current_user.id)
         if @policy.save
+          Insurables::UpdateCoveredStatus.run!(insurable: @policy.primary_insurable) if @policy.primary_insurable.present?
           render json: { message: 'Policy created' }, status: :created
         else
           render json: { message: 'Policy failed' }, status: :unprocessable_entity

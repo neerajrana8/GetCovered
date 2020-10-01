@@ -470,8 +470,7 @@ if @get_covered.save
   	  authorization = CarrierAgencyAuthorization.create(state: state, 
   	  																									available: available, 
   	  																									carrier_agency: CarrierAgency.where(carrier: carrier, agency: @get_covered).take, 
-  	  																									policy_type: @policy_type,
-  	  																									agency: @get_covered)
+  	  																									policy_type: @policy_type)
   	  Fee.create(title: "Service Fee", 
   	  					 type: :MISC, 
   	  					 per_payment: false,
@@ -495,9 +494,9 @@ if @get_covered.save
 	}
 
   @get_covered.billing_strategies.create!(title: 'Annually', enabled: true, carrier: @qbe, 
-  		                                      new_business: { payments: [100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
+  		                                      new_business: { payments: [100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
                                     				policy_type: PolicyType.find(1), carrier_code: "FL",
-                                    				fees_attributes: [service_fee])
+                                    				fees_attributes: [service_fee]})
                                     
   @get_covered.billing_strategies.create!(title: 'Bi-Annually', enabled: true, 
   		                                      new_business: { payments: [50, 0, 0, 0, 0, 0, 50, 0, 0, 0, 0, 0], 
@@ -629,8 +628,7 @@ if @cambridge.save
   	  authorization = CarrierAgencyAuthorization.create(state: state, 
   	  																									available: available, 
   	  																									carrier_agency: CarrierAgency.where(carrier: carrier, agency: @cambridge).take, 
-  	  																									policy_type: @policy_type,
-  	  																									agency: @cambridge)
+  	  																									policy_type: @policy_type)
   	  Fee.create(title: "Service Fee", 
   	  					 type: :MISC, 
   	  					 per_payment: false,
@@ -822,8 +820,7 @@ if @cambridge_qbe.save
   	  authorization = CarrierAgencyAuthorization.create(state: state, 
   	  																									available: available, 
   	  																									carrier_agency: CarrierAgency.where(carrier: carrier, agency: @cambridge_qbe).take, 
-  	  																									policy_type: @policy_type,
-  	  																									agency: @cambridge_qbe)
+  	  																									policy_type: @policy_type)
   	  Fee.create(title: "Service Fee", 
   	  					 type: :MISC, 
   	  					 per_payment: false,

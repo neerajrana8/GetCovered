@@ -59,18 +59,6 @@
             via: "get",
             defaults: { recordable_type: Agency }
           get 'branding_profile'
-
-          get 'total_dashboard',
-          to: 'dashboard#total_dashboard',
-          via: 'get'
-
-          get 'buildings_communities',
-            to: 'dashboard#buildings_communities',
-            via: 'get'
-
-          get 'communities_list',
-            to: 'dashboard#communities_list',
-            via: 'get'
         end
 
         collection do
@@ -81,8 +69,8 @@
     get :total_dashboard, controller: 'dashboard', path: 'dashboard/:agency_id/total_dashboard'
     get :buildings_communities, controller: 'dashboard', path: 'dashboard/:agency_id/buildings_communities'
     get :communities_list, controller: 'dashboard', path: 'dashboard/:agency_id/communities_list'
-    # get :reports, controller: 'dashboard', path: 'dashboard/:agency_id/reports'
-  
+    get :uninsured_units, controller: 'dashboard', path: 'dashboard/:agency_id/uninsured_units'
+
     resources :fees,
       only: [ :create, :update, :index, :show ]
 
@@ -124,10 +112,6 @@
             to: "histories#index_recordable",
             via: "get",
             defaults: { recordable_type: Carrier }
-          get :billing_strategies_list
-          get :toggle_billing_strategy
-          get :fees_list
-          post :add_fees
         end
       end
   
@@ -218,8 +202,8 @@
     resources :notes,
       only: [ :create, :update, :destroy, :index, :show ]
   
-    resources :application_notifications,
-      only: [ :index ]
+    resources :notifications,
+      only: [ :update, :index, :show ]
   
     resources :payments,
       only: [ :index, :show ]
@@ -252,12 +236,6 @@
     resources :policy_applications,
       path: "policy-applications",
       only: [ :index, :show ]
-
-    resources :policy_application_groups, path: "policy-application-groups" do
-      member do
-        put :accept
-      end
-    end
   
     resources :policy_quotes,
       path: "policy-quotes",
@@ -267,18 +245,15 @@
       only: [ :create, :update, :index, :show ] do
         member do
           put :re_invite
-          # get "histories",
-          #   to: "histories#index_recordable",
-          #   via: "get",
-          #   defaults: { recordable_type: Staff }
+          get "histories",
+            to: "histories#index_recordable",
+            via: "get",
+            defaults: { recordable_type: Staff }
           get "authored-histories",
             to: "histories#index_authorable",
             via: "get",
             defaults: { authorable_type: Staff }
           put :toggle_enabled
-          get "histories",
-            to: "histories#index",
-            via: "get"
         end
         collection do
           get "search", to: 'staffs#search'
@@ -304,3 +279,9 @@
       end
   end
 # end
+
+
+
+
+
+

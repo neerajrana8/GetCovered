@@ -97,9 +97,15 @@ module V2
               }
             end
 
-            policy_user = @application.policy_users.create!(policy_user_params)
+            policy_user = @application.policy_users.create(policy_user_params)
+            if policy_user.errors.any?
+              render(
+                json: standard_error(:user_creation_error, "User can't be created", policy_user.errors.full_messages),
+                status: 422
+              ) and return
+            end
 
-            policy_user.user.invite! if index.zero?
+            policy_user.user.invite! if index.zero? && @application.policy_type_id != PolicyType::RENT_GUARANTEE_ID
           end
         end
         error_status.include?(true) ? false : true
@@ -193,25 +199,40 @@ module V2
 
       def create_residential
         @application = PolicyApplication.new(create_residential_params)
+        if @application.carrier_id == 5 
+          if !@application.effective_date.nil? && (@application.effective_date >= Time.current.to_date + 90.days || @application.effective_date < Time.current.to_date)
+            render json: { "effective_date" => ["must be within the next 90 days"] }.to_json,
+                   status: 422
+            return
+          end
+          unless @application.coverage_selections.blank?
+            @application.coverage_selections.each do |cs|
+              if [ActionController::Parameters, ActiveSupport::HashWithIndifferentAccess, ::Hash].include?(cs['selection'].class)
+                cs['selection']['value'] = cs['selection']['value'].to_d / 100.to_d if cs['selection']['data_type'] == 'currency'
+                cs['selection'] = cs['selection']['value']
+              elsif [ActionController::Parameters, ::Hash].include?(cs[:selection].class)
+                cs[:selection][:value] = cs[:selection][:value].to_d / 100.to_d if cs[:selection][:data_type] == 'currency'
+                cs[:selection] = cs[:selection][:value]
+              end
+            end
+            @application.coverage_selections.push({ 'category' => 'coverage', 'options_type' => 'none', 'uid' => '1010', 'selection' => true })
+          end
+        end
 
-        if @application.agency.nil? &&
-           @application.account.nil?
-
+        if @application.agency.nil? && @application.account.nil?
           @application.agency = Agency.where(master_agency: true).take
         elsif @application.agency.nil?
-
           @application.agency = @application.account.agency
         end
 
         if @application.save
           if create_policy_users && @application.update(status: 'complete')
-
             # if application.status updated to complete
-            @application.qbe_estimate
-            @quote = @application.policy_quotes.last
+            @application.estimate()
+            @quote = @application.policy_quotes.order('created_at DESC').limit(1).first
             if @application.status != 'quote_failed' || @application.status != 'quoted'
               # if application quote success or failure
-              @application.qbe_quote(@quote.id)
+              @application.quote(@quote.id)
               @application.reload
               @quote.reload
 
@@ -231,7 +252,11 @@ module V2
                     id: @application.primary_user.id,
                     stripe_id: @application.primary_user.stripe_id
                   }
-                }.to_json, status: 200
+                }.merge(@application.carrier_id != 5 ? {} : {
+                  'policy_fee' => @quote.carrier_payment_data['policy_fee'],
+                  'installment_fee' => @quote.carrier_payment_data['installment_fee'],
+                  'installment_total' => @quote.carrier_payment_data['installment_total']
+                }).to_json, status: 200
 
               else
                 render json: { error: 'Quote Failed', message: 'Quote could not be processed at this time' },
@@ -266,21 +291,21 @@ module V2
         end
       end
 
-      def update
+      def update_residential
         @policy_application = PolicyApplication.find(params[:id])
 
         if @policy_application.policy_type.title == 'Residential'
 
           @policy_application.policy_rates.destroy_all
 
-          if @policy_application.update(update_params) &&
+          if @policy_application.update(update_residential_params) &&
              @policy_application.update(status: 'complete')
 
-            @policy_application.qbe_estimate
-            @quote = @policy_application.policy_quotes.last
+            @policy_application.estimate
+            @quote = @policy_application.policy_quotes.order("updated_at DESC").limit(1).first
             if @policy_application.status != 'quote_failed' || @policy_application.status != 'quoted'
               # if application quote success or failure
-              @policy_application.qbe_quote(@quote.id)
+              @policy_application.quote(@quote.id)
               @policy_application.reload
               @quote.reload
 
@@ -298,7 +323,11 @@ module V2
                     id: @policy_application.primary_user.id,
                     stripe_id: @policy_application.primary_user.stripe_id
                   }
-                }.to_json, status: 200
+                }.merge(@application.carrier_id != 5 ? {} : {
+                  'policy_fee' => @quote.carrier_payment_data['policy_fee'],
+                  'installment_fee' => @quote.carrier_payment_data['installment_fee'],
+                  'installment_total' => @quote.carrier_payment_data['installment_total']
+                }).to_json, status: 200
 
               else
                 render json: { error: 'Quote Failed', message: 'Quote could not be processed at this time' },
@@ -392,9 +421,10 @@ module V2
           .permit(:effective_date, :expiration_date, :auto_pay,
                   :auto_renew, :billing_strategy_id, :account_id, :policy_type_id,
                   :carrier_id, :agency_id, fields: [:title, :value, options: []],
-                                           questions: [:title, :value, options: []],
-                                           policy_rates_attributes: [:insurable_rate_id],
-                                           policy_insurables_attributes: [:insurable_id])
+                  questions: [:title, :value, options: []],
+                  coverage_selections: [:category, :uid, :selection, selection: [ :data_type, :value ]],
+                  policy_rates_attributes: [:insurable_rate_id],
+                  policy_insurables_attributes: [:insurable_id])
       end
 
       def create_commercial_params
@@ -432,8 +462,8 @@ module V2
         params.require(:policy_application)
           .permit(:effective_date, :expiration_date,
                   :billing_strategy_id, fields: {},
-                                        policy_rates_attributes: [:insurable_rate_id],
-                                        policy_insurables_attributes: [:insurable_id])
+                  policy_rates_attributes: [:insurable_rate_id],
+                  policy_insurables_attributes: [:insurable_id])
       end
 
       def update_rental_guarantee_params

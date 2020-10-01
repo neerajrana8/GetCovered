@@ -32,14 +32,6 @@
             to: "accounts#account_buildings",
             via: "get"
 
-          get 'total_dashboard',
-            to: 'dashboard#total_dashboard',
-            via: 'get'
-
-          get 'buildings_communities',
-            to: 'dashboard#buildings_communities',
-            via: 'get'
-
           get 'communities_list',
             to: 'dashboard#communities_list',
             via: 'get'
@@ -49,7 +41,7 @@
     get :total_dashboard, controller: 'dashboard', path: 'dashboard/:account_id/total_dashboard'
     get :buildings_communities, controller: 'dashboard', path: 'dashboard/:account_id/buildings_communities'
     get :communities_list, controller: 'dashboard', path: 'dashboard/:account_id/communities_list'
-    # get :reports, controller: 'dashboard', path: 'dashboard/:account_id/reports'
+    get :uninsured_units, controller: 'dashboard', path: 'dashboard/:account_id/uninsured_units'
 
     resources :master_policies, path: 'master-policies', only: [ :index, :show ] do
       member do
@@ -149,8 +141,8 @@
     resources :notes,
       only: [ :create, :update, :destroy, :index, :show ]
   
-    resources :application_notifications,
-      only: [ :index ]
+    resources :notifications,
+      only: [ :update, :index, :show ]
 
     resources :payment_profiles, path: "payment-profiles", only: [:index, :create, :update] do
       member do
@@ -204,18 +196,16 @@
     resources :staffs,
       only: [ :create, :update, :index, :show ] do
         member do
-          # get "histories",
-          #   to: "histories#index_recordable",
-          #   via: "get",
-          #   defaults: { recordable_type: Staff }
+          put :re_invite
+          get "histories",
+            to: "histories#index_recordable",
+            via: "get",
+            defaults: { recordable_type: Staff }
           get "authored-histories",
             to: "histories#index_authorable",
             via: "get",
             defaults: { authorable_type: Staff }
           put :toggle_enabled
-          get "histories",
-            to: "histories#index",
-            via: "get"
         end
         collection do
           get "search", to: 'staffs#search'
