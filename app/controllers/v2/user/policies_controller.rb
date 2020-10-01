@@ -77,8 +77,9 @@ module V2
         if change_request.save
           render json: { message: 'Refund was successfully sent' }, status: :ok
         else
-          render json: { message: 'Refund was not successfully sent' }, status: :unprocessable_entity
-        end          
+          render json: standard_error(:refund_policy_error, 'Refund was not successfully sent', change_request.errors.full_messages),
+                 status: :unprocessable_entity
+        end
       end
       
       def render_eoi
