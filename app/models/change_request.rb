@@ -6,5 +6,5 @@ class ChangeRequest < ApplicationRecord
 
   # Enum Options
   enum customized_action: %i[decline approve pending]
-  enum status: %i[in_progress pending approved failed]
+  enum status: %i[in_progress approved failed]
 end
