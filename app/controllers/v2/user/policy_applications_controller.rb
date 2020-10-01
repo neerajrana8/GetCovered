@@ -45,10 +45,13 @@ module V2
           if user.present? && user == current_user
             user.update(policy_user[:user_attributes])
             user.profile.update(policy_user[:user_attributes][:profile_attributes])
-            if user.address.present?
-              user.address.update(policy_user[:user_attributes][:address_attributes])
-            else
-              user.address.create(policy_user[:user_attributes][:address_attributes])
+            address_attributes =policy_user[:user_attributes][:address_attributes]
+            if address_attributes.present?
+              if user.address.present?
+                user.address.update(policy_user[:user_attributes][:address_attributes])
+              else
+                Address.create(policy_user[:user_attributes][:address_attributes].merge(addressable: user))
+              end
             end
 
             @application.users << user
