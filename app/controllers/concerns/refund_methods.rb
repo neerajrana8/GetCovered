@@ -27,9 +27,7 @@ module RefundMethods
   def approve
     change_request = ChangeRequest.find_by(request_id: params[:request_id])
     if change_request.update(status: 'succeeded') && change_request.status == 'succeeded'
-      Stripe::Refund.create({
-                                charge: stripe_id
-                            })
+      Stripe::Refund.create(charge: stripe_id)
       render json: { message: 'Refund was approved' }, status: :ok
     else
       render json: { message: 'Refund was not approved' }, status: :unprocessable_entity
