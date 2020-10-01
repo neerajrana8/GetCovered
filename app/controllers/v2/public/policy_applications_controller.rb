@@ -7,8 +7,7 @@ module V2
   module Public
     class PolicyApplicationsController < PublicController
 
-      before_action :set_policy_application,
-                    only: %i[update show]
+      before_action :set_policy_application, only: %i[update show rent_guarantee_complete]
       before_action :validate_policy_users_params, only: %i[create update]
 
       def show
@@ -78,6 +77,11 @@ module V2
         end
       end
 
+      def rent_guarantee_complete
+        PolicyApplications::RentGuaranteeMailer.with(policy_application: @policy_application).invite_to_pay.deliver_later
+        render json: { message: 'Instructions were sent' }
+      end
+
       def create_policy_users
         error_status = []
 
@@ -126,8 +130,6 @@ module V2
                     error: :address_mismatch,
                     message: 'The mailing address associated with this email is different than the one supplied in the recent request.  To change your address please log in'
                   }.to_json, status: 401) and return
-                  error_status << true
-                  break
                 end
               end
             end
@@ -162,8 +164,16 @@ module V2
                 zip_code:      policy_user[:user_attributes][:address_attributes][:zip_code]
               }
             end
-            policy_user = @application.policy_users.create!(policy_user_params)
-            policy_user.user.invite! if index == 0
+
+            policy_user = @application.policy_users.create(policy_user_params)
+            if policy_user.errors.any?
+              render(
+                json: standard_error(:user_creation_error, "User can't be created", policy_user.errors.full_messages),
+                status: 422
+              ) and return
+            end
+
+            policy_user.user.invite! if index.zero? && @application.policy_type_id != PolicyType::RENT_GUARANTEE_ID
           end
         end
 
@@ -578,7 +588,10 @@ module V2
 
       def invite_primary_user(policy_application)
         primary_user = policy_application.primary_user
-        if primary_user.invitation_accepted_at.nil? && (primary_user.invitation_created_at.blank? || primary_user.invitation_created_at < 1.days.ago)
+        if primary_user.invitation_accepted_at.nil? &&
+          (primary_user.invitation_created_at.blank? || primary_user.invitation_created_at < 1.days.ago) &&
+          policy_application.policy_type_id != PolicyType::RENT_GUARANTEE_ID
+
           @application.primary_user.invite!
         end
       end
