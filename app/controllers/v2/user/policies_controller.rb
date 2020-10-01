@@ -10,7 +10,7 @@ module V2
       
       before_action :user_from_invitation_token, only: [:bulk_decline, :render_eoi, :bulk_accept]
       
-      before_action :set_policy, only: [:show]
+      before_action :set_policy, only: [:show, :refund_policy]
       
       before_action :set_substrate, only: [:index, :add_coverage_proof]
       
@@ -73,8 +73,7 @@ module V2
       end
 
       def refund_policy
-        policy = Policy.find(params[:id])
-        change_request = ChangeRequest.new(status: 'pending')
+        change_request = ChangeRequest.new(status: 'pending', requestable: @policy)
         if change_request.save
           render json: { message: 'Refund was successfully sent' }, status: :ok
         else
