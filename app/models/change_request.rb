@@ -1,5 +1,5 @@
 class ChangeRequest < ApplicationRecord
-  belongs_to :changeable, polymorphic: true
+  belongs_to :changeable, polymorphic: true, optional: :true
   belongs_to :requestable, polymorphic: true
 
   # belongs_to :staff
