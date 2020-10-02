@@ -197,7 +197,7 @@ class Policy < ApplicationRecord
   end
   
   def is_allowed_to_update?
-    errors.add(:policy_in_system, 'Cannot update in system policy') if policy_in_system == true && !rent_garantee?
+    errors.add(:policy_in_system, 'Cannot update in system policy') if policy_in_system == true && !rent_garantee? && !residential?
   end
   
   def residential_account_present    
