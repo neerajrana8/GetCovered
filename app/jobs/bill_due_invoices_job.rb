@@ -12,6 +12,7 @@ class BillDueInvoicesJob < ApplicationJob
         invoiceable_id = invoice.invoiceable_id
         invoiceable_type = invoice.invoiceable_type
         charge_invoice_group(to_charge)
+        to_charge = []
       end
       to_charge.push(invoice)
     end
@@ -25,7 +26,7 @@ class BillDueInvoicesJob < ApplicationJob
       return if invs.blank? || invs.find{|i| i.status == 'available' }.nil?
       # charge the invoices in the group until failure
       invs.each do |invoice|
-        break unless invoice.pay(stripe_source: :default)[:success] # WARNING: remove 'break unless' if you want to keep trying even after a failure
+        break unless invoice.pay(stripe_source: :default, allow_missed: true)[:success] # WARNING: remove 'break unless' if you want to keep trying even after a failure
       end
     end
 
