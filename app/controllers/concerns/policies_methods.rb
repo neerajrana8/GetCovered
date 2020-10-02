@@ -32,9 +32,11 @@ module PoliciesMethods
     )
   end
   def user_params
-    params.require(:policy).permit(users: [:id,
+    params.require(:policy).permit(users: [:id, :email,
       address_attributes: [ :city, :country, :state, :street_name,
-                            :street_two, :zip_code] ]
+                            :street_two, :zip_code],
+      profile_attributes: [ :first_name, :last_name, :contact_phone,
+                            :birth_date, :gender, :salutation]]
     )
   end
 
