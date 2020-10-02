@@ -172,9 +172,8 @@ module V2
 								)
               end
 							render json: {
-								:error => ("#{ @policy_type_identifier } Could Not Be Accepted" unless @quote_attempt[:success]),
-								:message => @quote_attempt[:message].
-                              prepend(("#{ @policy_type_identifier } Accepted. "  if @quote_attempt[:success]).to_s),
+								error: ("#{ @policy_type_identifier } Could Not Be Accepted" unless @quote_attempt[:success]),
+								message: ("#{ @policy_type_identifier } Accepted. " if @quote_attempt[:success]).to_s + @quote_attempt[:message],
                 password_filled: @user.encrypted_password.present?
 							}.compact, status: @quote_attempt[:success] ? 200 : 500
 							
