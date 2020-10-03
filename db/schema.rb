@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_09_16_113022) do
+ActiveRecord::Schema.define(version: 2020_10_01_131848) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
@@ -138,19 +138,6 @@ ActiveRecord::Schema.define(version: 2020_09_16_113022) do
     t.string "slug"
     t.jsonb "nodes", default: {}
     t.boolean "enabled"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-  end
-
-  create_table "application_notifications", force: :cascade do |t|
-    t.string "action"
-    t.string "subject"
-    t.integer "status"
-    t.integer "code"
-    t.boolean "read", default: false
-    t.integer "notifiable_id"
-    t.string "notifiable_type"
-    t.string "message"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
   end
@@ -335,6 +322,10 @@ ActiveRecord::Schema.define(version: 2020_09_16_113022) do
     t.bigint "staff_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "changeable_type"
+    t.integer "requestable_id"
+    t.string "requestable_type"
+    t.integer "changeable_id"
     t.index ["customized_action"], name: "index_change_requests_on_customized_action", unique: true
     t.index ["staff_id"], name: "index_change_requests_on_staff_id"
     t.index ["status"], name: "index_change_requests_on_status", unique: true
@@ -375,9 +366,6 @@ ActiveRecord::Schema.define(version: 2020_09_16_113022) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "type_of_loss", default: 0, null: false
-    t.string "name"
-    t.string "address"
-    t.string "nature_of_claim"
     t.text "staff_notes"
     t.index ["claimant_type", "claimant_id"], name: "index_claims_on_claimant_type_and_claimant_id"
     t.index ["insurable_id"], name: "index_claims_on_insurable_id"
@@ -477,6 +465,7 @@ ActiveRecord::Schema.define(version: 2020_09_16_113022) do
     t.integer "faq_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "question_order", default: 0
     t.index ["faq_id"], name: "index_faq_questions_on_faq_id"
   end
 
@@ -485,6 +474,7 @@ ActiveRecord::Schema.define(version: 2020_09_16_113022) do
     t.integer "branding_profile_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "faq_order", default: 0
     t.index ["branding_profile_id"], name: "index_faqs_on_branding_profile_id"
   end
 
@@ -640,7 +630,11 @@ ActiveRecord::Schema.define(version: 2020_09_16_113022) do
     t.bigint "lead_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "policy_type_id"
+    t.bigint "agency_id"
+    t.index ["agency_id"], name: "index_lead_events_on_agency_id"
     t.index ["lead_id"], name: "index_lead_events_on_lead_id"
+    t.index ["policy_type_id"], name: "index_lead_events_on_policy_type_id"
   end
 
   create_table "leads", force: :cascade do |t|
@@ -650,7 +644,13 @@ ActiveRecord::Schema.define(version: 2020_09_16_113022) do
     t.string "labels", array: true
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "profile_id"
+    t.bigint "address_id"
+    t.integer "status", default: 0
+    t.datetime "las_visit"
+    t.index ["address_id"], name: "index_leads_on_address_id"
     t.index ["email"], name: "index_leads_on_email"
+    t.index ["profile_id"], name: "index_leads_on_profile_id"
     t.index ["user_id"], name: "index_leads_on_user_id"
   end
 
@@ -854,9 +854,9 @@ ActiveRecord::Schema.define(version: 2020_09_16_113022) do
     t.date "last_payment_date"
     t.date "next_payment_date"
     t.bigint "policy_group_id"
+    t.boolean "declined"
     t.string "address"
     t.string "out_of_system_carrier_title"
-    t.boolean "declined"
     t.bigint "policy_id"
     t.integer "cancellation_reason"
     t.index ["account_id"], name: "index_policies_on_account_id"
