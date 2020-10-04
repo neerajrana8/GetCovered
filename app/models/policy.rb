@@ -296,7 +296,7 @@ class Policy < ApplicationRecord
       when :early_cancellation
         # prorate as if we'd cancelled immediately if cancellation is early, otherwise prorate regularly
         max_days_for_full_refund = (CarrierPolicyType.where(policy_type_id: self.policy_type_id, carrier_id: self.carrier_id).take&.max_days_for_full_refund || 0).days
-        if cancel_date < self.created_at.to_date + max_days_for_full_refund.days
+        if cancel_date < self.created_at.to_date + max_days_for_full_refund
           self.invoices.each do |invoice|
             invoice.apply_proration(cancel_date, refund_date: cancel_date, to_ensure_refunded: Proc.new{|li| ['amortized_fees', 'deposit_fees'].include?(li.category) ? 0 : li.price })
           end
