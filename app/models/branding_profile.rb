@@ -6,7 +6,8 @@ class BrandingProfile < ApplicationRecord
   
   after_initialize :initialize_branding_profile
   after_save :check_default
-  
+  after_save :check_global_default
+
   validates_presence_of :title, :url
   
   belongs_to :profileable, polymorphic: true
@@ -18,6 +19,10 @@ class BrandingProfile < ApplicationRecord
   scope :default, -> { where(default: true) }
 
   accepts_nested_attributes_for :branding_profile_attributes
+
+  def self.global_default
+    BrandingProfile.find_by(global_default: true)
+  end
     
   private
   
@@ -49,5 +54,9 @@ class BrandingProfile < ApplicationRecord
         .not(id: id)
         .update default: false
     end
+  end
+
+  def check_global_default
+    BrandingProfile.where(global_default: true).where.not(id: id).update(default: false) if global_default?
   end
 end
