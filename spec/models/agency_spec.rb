@@ -4,6 +4,7 @@ RSpec.describe Agency, elasticsearch: true, type: :model do
   it 'Agency Get Covered should be indexed' do
     FactoryBot.create(:agency)
     Agency.__elasticsearch__.refresh_index!
+    ap Agency.all
     expect(Agency.search('Get Covered').records.length).to eq(1)
   end
   

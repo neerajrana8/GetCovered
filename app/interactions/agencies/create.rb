@@ -2,10 +2,11 @@ module Agencies
   class Create < ActiveInteraction::Base
     hash :agency_params, strip: false
     object :parent_agency, class: Agency, default: nil
+    object :creator, class: ActiveRecord::Base, default: nil
 
     def execute
-      ActiveRecord::Base.transaction(requires_new: true)  do
-        agency = Agency.create(agency_params.merge(agency_id: parent_agency&.id))
+      ActiveRecord::Base.transaction(requires_new: true) do
+        agency = create_agency
         if agency.errors.any?
           errors.merge!(agency.errors)
           return
@@ -18,6 +19,18 @@ module Agencies
         end
 
         agency
+      end
+    end
+
+    private
+
+    def create_agency
+      if creator.present?
+        agency = Agency.new(agency_params.merge(agency_id: parent_agency&.id))
+        agency.save_as(creator)
+        agency
+      else
+        Agency.create(agency_params.merge(agency_id: parent_agency&.id))
       end
     end
   end

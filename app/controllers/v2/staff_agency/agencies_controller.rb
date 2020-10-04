@@ -40,7 +40,11 @@ module V2
 
       def create
         if create_allowed?
-          outcome = Agencies::Create.run(agency_params: create_params.to_h, parent_agency: current_staff.organizable)
+          outcome = Agencies::Create.run(
+            agency_params: create_params.to_h,
+            parent_agency: current_staff.organizable,
+            creator: current_staff
+          )
           if outcome.valid?
             @agency = outcome.result
             render :show, status: :created
