@@ -3,6 +3,8 @@ module BrandingProfiles
     object :agency
 
     def execute
+      return nil if default_branding_profile.nil? # If there is no default branding profile, add nothing
+
       ActiveRecord::Base.transaction(requires_new: true) do
         branding_profile_params =
           default_branding_profile.
