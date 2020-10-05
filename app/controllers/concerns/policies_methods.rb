@@ -3,8 +3,8 @@ module PoliciesMethods
 
   def update
     if @policy.update_as(current_staff, policy_application_merged_attributes)
-      if user_params[:users].is_a? Array
-        user_params[:users].each do |user_param|
+      if update_user_params[:users].is_a? Array
+        update_user_params[:users].each do |user_param|
           user = User.find_by(id: user_param[:id])
           user.update_attributes(user_param)
         end
@@ -54,7 +54,7 @@ module PoliciesMethods
     params.require(:policy).permit(
         :account_id, :agency_id, :auto_renew, :cancellation_code,
         :cancellation_date_date, :carrier_id, :effective_date,
-        :expiration_date, :number, :policy_type_id, :status,
+        :expiration_date, :number, :policy_type_id, :status, :out_of_system_carrier_title,
         documents: [],
         policy_insurables_attributes: [ :insurable_id ],
         policy_users_attributes: [ :user_id ],
@@ -64,12 +64,21 @@ module PoliciesMethods
     )
   end
 
-  def user_params
-    params.require(:policy).permit(users: [:id, :email, :agency_id, :primary,
+  def update_user_params
+    params.require(:policy).permit(users: [:id, :email,
       address_attributes: [ :city, :country, :state, :street_name,
                             :street_two, :zip_code],
       profile_attributes: [ :first_name, :last_name, :contact_phone,
-                            :birth_date, :gender, :salutation, :job_title]]
+                            :birth_date, :gender, :salutation]]
+    )
+  end
+
+  def user_params
+    params.permit(users: [:primary,
+                          :email, :agency_id, profile_attributes: [:birth_date, :contact_phone,
+                                                                   :first_name, :gender, :job_title, :last_name, :salutation],
+                          address_attributes: [ :city, :country, :state, :street_name,
+                                                :street_two, :zip_code] ]
     )
   end
 
