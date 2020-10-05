@@ -150,6 +150,9 @@
   
     resources :policies,
       only: [ :update, :index, :show ] do
+        collection do
+          post :add_coverage_proof
+        end
         member do
           get "histories",
             to: "histories#index_recordable",

@@ -10,7 +10,7 @@ module V2
 
       before_action :set_policy, only: %i[update show]
       
-      before_action :set_substrate, only: [:create, :index, :add_coverage_proof]
+      before_action :set_substrate, only: [:index]
       
       def index
         if current_staff.getcovered_agent? && params[:agency_id].nil?
@@ -31,47 +31,10 @@ module V2
       end
       
       def show; end
-      
-      def create
-        if create_allowed?
-          @policy = @substrate.new(create_params)
-          if @policy.errors.none? && @policy.save_as(current_staff)
-            Insurables::UpdateCoveredStatus.run!(insurable: @policy.primary_insurable) if @policy.primary_insurable.present?
-            render :show, status: :created
-          else
-            render json: @policy.errors, status: :unprocessable_entity
-          end
-        else
-          render json: { success: false, errors: ['Unauthorized Access'] },
-                 status: :unauthorized
-        end
-      end
 
       def resend_policy_documents
         ::Policies::SendProofOfCoverageJob.perform_later(params[:id])
         render json: { message: 'Documents were sent' }
-      end
-
-      def add_coverage_proof
-        @policy = @substrate.new(coverage_proof_params)
-        @policy.policy_in_system = false
-        if @policy.save
-          user_params[:users]&.each do |user_params|
-            user = ::User.find_by(email: user_params[:email])
-            if user.nil?
-              user = ::User.new(user_params)
-              user.password = SecureRandom.base64(12)
-              if user.save
-                user.invite!
-              end
-            end
-            @policy.users << user
-          end
-
-          render json: { message: 'Policy created' }, status: :created
-        else
-          render json: { message: 'Policy failed' }, status: :unprocessable_entity
-        end
       end
       
       private
@@ -138,6 +101,7 @@ module V2
         )
         to_return
       end
+
     end
   end
 end

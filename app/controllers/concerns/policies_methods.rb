@@ -15,6 +15,38 @@ module PoliciesMethods
     end
   end
 
+  def create
+    @policy = Policy.new(create_params)
+    if @policy.save_as(current_staff)
+      Insurables::UpdateCoveredStatus.run!(insurable: @policy.primary_insurable) if @policy.primary_insurable.present?
+      render :show, status: :created
+    else
+      render json: @policy.errors, status: :unprocessable_entity
+    end
+  end
+
+  def add_coverage_proof
+    @policy = Policy.new(create_params)
+    @policy.policy_in_system = false
+    if @policy.save
+      user_params[:users]&.each do |user_params|
+        user = ::User.find_by(email: user_params[:email])
+        if user.nil?
+          user = ::User.new(user_params)
+          user.password = SecureRandom.base64(12)
+          if user.save
+            user.invite!
+          end
+        end
+        @policy.users << user
+      end
+
+      render json: { message: 'Policy created' }, status: :created
+    else
+      render json: { message: 'Policy failed' }, status: :unprocessable_entity
+    end
+  end
+
   private
 
   def update_params
@@ -31,12 +63,13 @@ module PoliciesMethods
         policy_application_attributes: [fields: {}],
     )
   end
+
   def user_params
-    params.require(:policy).permit(users: [:id, :email,
+    params.require(:policy).permit(users: [:id, :email, :agency_id, :primary,
       address_attributes: [ :city, :country, :state, :street_name,
                             :street_two, :zip_code],
       profile_attributes: [ :first_name, :last_name, :contact_phone,
-                            :birth_date, :gender, :salutation]]
+                            :birth_date, :gender, :salutation, :job_title]]
     )
   end
 
@@ -76,6 +109,21 @@ module PoliciesMethods
             }
         }
     }
+  end
+
+  def create_params
+    return({}) if params[:policy].blank?
+    to_return = params.require(:policy).permit(
+        :account_id, :agency_id, :auto_renew, :cancellation_reason,
+        :cancellation_date, :carrier_id, :effective_date,
+        :expiration_date, :number, :policy_type_id, :status,
+        documents: [],
+        policy_insurables_attributes: [ :insurable_id ],
+        policy_users_attributes: [ :user_id ],
+        policy_coverages_attributes: [ :id, :policy_application_id, :policy_id,
+                                       :limit, :deductible, :enabled, :designation ]
+    )
+    return(to_return)
   end
 
   def supported_orders

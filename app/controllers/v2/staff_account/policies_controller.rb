@@ -10,7 +10,7 @@ module V2
 
       before_action :set_policy, only: [:update, :show]
       
-      before_action :set_substrate, only: [:create, :index, :add_coverage_proof]
+      before_action :set_substrate, only: [:index]
       
       def index
         super(:@policies, @substrate)
@@ -23,51 +23,12 @@ module V2
       
       def show
       end
-      
-      def create
-        if create_allowed?
-          @policy = @substrate.new(create_params)
-          if @policy.errors.none? && @policy.save_as(current_staff)
-            Insurables::UpdateCoveredStatus.run!(insurable: @policy.primary_insurable) if @policy.primary_insurable.present?
-            render :show, status: :created
-          else
-            render json: @policy.errors, status: :unprocessable_entity
-          end
-        else
-          render json: { success: false, errors: ['Unauthorized Access'] },
-                 status: :unauthorized
-        end
-      end
 
       def resend_policy_documents
         ::Policies::SendProofOfCoverageJob.perform_later(params[:id])
         render json: { message: 'Documents were sent' }
       end
 
-      def add_coverage_proof
-        @policy = @substrate.new(coverage_proof_params)
-        @policy.policy_in_system = false
-        if @policy.save
-          user_params[:users]&.each do |user_params|
-            user = ::User.find_by(email: user_params[:email])
-            if user.nil?
-              user = ::User.new(user_params)
-              user.password = SecureRandom.base64(12)
-              if user.save
-                user.invite!
-              end
-            end
-            @policy.users << user
-          end
-
-          render json: { message: 'Policy created' }, status: :created
-        else
-          render json: { message: 'Policy failed' }, status: :unprocessable_entity
-        end
-      end
-
-
-      
       private
       
         def view_path
@@ -94,21 +55,6 @@ module V2
             @substrate = @substrate.policies
           end
         end
-        
-        def create_params
-          return({}) if params[:policy].blank?
-          to_return = params.require(:policy).permit(
-            :account_id, :agency_id, :auto_renew, :cancellation_reason,
-            :cancellation_date, :carrier_id, :effective_date,
-            :expiration_date, :number, :policy_type_id, :status, 
-            documents: [],
-            policy_insurables_attributes: [ :insurable_id ],
-            policy_users_attributes: [ :user_id ],
-            policy_coverages_attributes: [ :id, :policy_application_id, :policy_id,
-                                :limit, :deductible, :enabled, :designation ]
-          )
-          return(to_return)
-        end
 
         def coverage_proof_params
           params.require(:policy).permit(:number,
@@ -116,15 +62,6 @@ module V2
             :carrier_id, :effective_date, :expiration_date,
             :out_of_system_carrier_title, :address, documents: [],
             policy_users_attributes: [ :user_id ]
-          )
-        end
-
-        def user_params
-          params.permit(users: [:primary,
-            :email, :agency_id, profile_attributes: [:birth_date, :contact_phone, 
-              :first_name, :gender, :job_title, :last_name, :salutation],
-            address_attributes: [ :city, :country, :state, :street_name, 
-              :street_two, :zip_code] ]
           )
         end
     end
