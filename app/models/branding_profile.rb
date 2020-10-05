@@ -57,6 +57,6 @@ class BrandingProfile < ApplicationRecord
   end
 
   def check_global_default
-    BrandingProfile.where(global_default: true).where.not(id: id).update(default: false) if global_default?
+    BrandingProfile.where(global_default: true).where.not(id: id).update(global_default: false) if global_default?
   end
 end
