@@ -188,7 +188,6 @@ end
                                                           payments_per_term: 4, remainder_added_to_deposit: true },
                                           carrier: @msi, policy_type: PolicyType.find(1), 
                                           fees_attributes: [])
-# MOOSE WARNING: docs say 20% down payment and 10 monthly payments... wut sense dis make?
 @get_covered.billing_strategies.create!(title: 'Monthly', enabled: true, carrier_code: "Monthly",
                                           new_business: { payments: [100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], #[22.01, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09], 
                                                           payments_per_term: 12, remainder_added_to_deposit: true },

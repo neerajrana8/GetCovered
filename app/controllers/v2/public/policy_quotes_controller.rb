@@ -44,7 +44,7 @@ module V2
 							status: @policy_quote.status, 
 							premium: @policy_quote.policy_premium
 						},
-						invoices: @policy_quote.invoices,
+						invoices: @policy_quote.invoices.order("due_date ASC"),
 						user: { 
 							id: @policy_quote.policy_application.primary_user().id,
 							stripe_id: @policy_quote.policy_application.primary_user().stripe_id
