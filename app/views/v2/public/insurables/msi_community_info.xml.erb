@@ -1,0 +1,8 @@
+<Community>
+<% @units.each do |unit| %>
+  <Address>
+    <Street_Address><%= unit.primary_address.full_street_address(disable_plus4: true) %></Street_Address>
+    <Apt_Number><%= unit.title %></Apt_Number>
+  </Address>
+<% end %>
+</Community>

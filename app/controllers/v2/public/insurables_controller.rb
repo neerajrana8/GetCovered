@@ -23,6 +23,32 @@ module V2
       def show
       end
       
+      def msi_community_info
+        # expected input:
+        # <InsuranceSvcRq>
+        #   <RenterPolicyQuoteInqRq>
+        #     <MSI_CommunityAddressRq>
+        #       <MSI_CommunityID>27254</MSI_CommunityID>
+        #     </MSI_CommunityAddressRq>
+        #   </RenterPolicyQuoteInqRq>
+        # </InsuranceSvcRq>
+        received = request.body.read
+        doc = Nokogiri::XML(received)
+        msi_id = doc.xpath("//MSI_CommunityID").text
+        community = CarrierInsurableProfile.where(carrier_id: 5, external_carrier_id: msi_id.to_s).take&.insurable
+        @units = community&.units&.order("title ASC") || []
+        
+        #puts msi_id
+        
+        #puts doc.xpath("//Moose")
+      
+        #puts "Params: #{params}"
+        #puts "Reqbod: #{received}"
+        #puts "Nokogi: #{doc.xpath("//Moose").text}"
+        #puts "----"
+        #@units = []
+      end
+      
       
       private
       
@@ -51,6 +77,14 @@ module V2
 
         def supported_orders
           supported_filters(true)
+        end
+        
+        def msi_community_info_id
+          
+        
+          params.require(:policy_application)
+            .permit(policy_rates_attributes:      [:insurable_rate_id],
+                    policy_insurables_attributes: [:insurable_id])
         end
         
     end
