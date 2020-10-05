@@ -37,13 +37,12 @@ scope module: :public do
 				path: 'rates',
 				only: [:index]	    
 	  end
-    collection do
-      post '/msi-community-info',
-        to: 'insurables#msi_community_info',
-        as: :msi_community_info,
-        defaults: { format: 'xml' }
-    end
   end
+
+  post '/msi/unit-list',
+    to: 'insurables#msi_unit_list',
+    as: :msi_unit_list,
+    defaults: { format: 'xml' }
 
   resources :lead_events, only: [:create]
   

@@ -23,7 +23,7 @@ module V2
       def show
       end
       
-      def msi_community_info
+      def msi_unit_list
         # expected input:
         # <InsuranceSvcRq>
         #   <RenterPolicyQuoteInqRq>
