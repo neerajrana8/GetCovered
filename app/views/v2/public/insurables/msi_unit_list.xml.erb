@@ -1,8 +1,9 @@
 <Community>
 <% @units.each do |unit| %>
   <Address>
-    <Street_Address><%= unit.primary_address.full_street_address(disable_plus4: true) %></Street_Address>
+    <Street_Address><%= [unit.primary_address.street_number, unit.primary_address.street_name].compact.join(" ") %></Street_Address>
     <Apt_Number><%= unit.title %></Apt_Number>
+    <Agency_UnitID><%= unit.id %></Agency_UnitID>
   </Address>
 <% end %>
 </Community>
