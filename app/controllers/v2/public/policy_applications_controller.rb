@@ -173,7 +173,7 @@ module V2
               ) and return
             end
 
-            policy_user.user.invite! if index.zero? && @application.policy_type_id != PolicyType::RENT_GUARANTEE_ID
+            policy_user.user.invite!(nil, policy_application: @application) if index.zero?
           end
         end
 
@@ -592,7 +592,7 @@ module V2
           (primary_user.invitation_created_at.blank? || primary_user.invitation_created_at < 1.days.ago) &&
           policy_application.policy_type_id != PolicyType::RENT_GUARANTEE_ID
 
-          @application.primary_user.invite!
+          @application.primary_user.invite!(nil, policy_application: @application)
         end
       end
 
