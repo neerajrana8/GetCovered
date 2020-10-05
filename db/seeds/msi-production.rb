@@ -89,7 +89,7 @@ irc.save!
   igc = ::InsurableGeographicalCategory.get_for(state: state)
   # grab rates from MSI for this state
   result = msis.build_request(:get_product_definition,
-    effective_date: Time.current.to_date + 1.day,
+    effective_date: Time.current.to_date + 2.days,
     state: state
   )
   unless result
