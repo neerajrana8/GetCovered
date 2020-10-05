@@ -12,7 +12,7 @@ require './db/seeds/functions'
   if occupied_chance > 33
     
     tenant_count = rand(1..5)
-		start_date = (Time.now + rand(0..14).days)
+		start_date = (Time.now + rand(2..16).days)
     end_date = start_date + 1.years
     
     @lease = unit.leases.new(start_date: start_date, end_date: end_date, lease_type: LeaseType.find(1), account: unit.account)
