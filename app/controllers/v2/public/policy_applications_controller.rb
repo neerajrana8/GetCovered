@@ -256,7 +256,7 @@ module V2
                     status: @quote.status,
                     premium: @premium
                   },
-                  invoices: @quote.invoices,
+                  invoices: @quote.invoices.order("due_date ASC"),
                   user:     {
                     id:        @application.primary_user.id,
                     stripe_id: @application.primary_user.stripe_id

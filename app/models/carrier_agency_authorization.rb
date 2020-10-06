@@ -23,10 +23,4 @@ class CarrierAgencyAuthorization < ApplicationRecord
   
   validates_presence_of :state
   validates_uniqueness_of :state, scope: 'carrier_agency_id', message: 'record for parent Carrier Policy Type already exists'
-  
-  private
-  
-  def agency_matches_carrier_agency
-    errors.add(:carrier_agency, 'must be a valid carrier_agency for the selected agency') unless carrier_agency.agency_id == agency_id
-  end
 end

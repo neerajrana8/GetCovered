@@ -44,7 +44,7 @@ class Fee < ApplicationRecord
         when ['CarrierPolicyTypeAvailability', 'Carrier']
           errors.add(:assignable, "must belong to the same carrier") unless self.assignable.carrier_policy_type&.carrier_id == self.ownerable_id
         when ['CarrierAgencyAuthorization', 'Agency']
-          errors.add(:assignable, "must belong to the same agency") unless self.assignable.agency_id == self.ownerable_id
+          errors.add(:assignable, "must belong to the same agency") unless self.assignable.carrier_agency.agency_id == self.ownerable_id
         when ['BillingStrategy', 'Agency']
           errors.add(:assignable, "must belong to the same agency") unless self.assignable.agency_id == self.ownerable_id
         else
