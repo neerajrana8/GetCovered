@@ -53,13 +53,20 @@ module PoliciesMethods
     if @policy.update_as(current_staff, update_coverage_params)
       user_params[:users]&.each do |user_params|
         user = ::User.find_by(email: user_params[:email])
+        if user.nil?
+          user = ::User.new(user_params)
+          user.password = SecureRandom.base64(12)
+          if user.save
+            user.invite!
+          end
+        end
         user.update_attributes(user_params)
       end
       if documents_params.present?
         @policy.documents.attach(documents_params)
       end
 
-      render json: { message: 'Policy updated' }, status: :created
+      render json: { message: 'Policy updated' }, status: :ok
     else
       render json: { message: 'Policy failed' }, status: :unprocessable_entity
     end
