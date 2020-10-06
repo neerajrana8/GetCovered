@@ -166,7 +166,7 @@
             defaults: { recordable_type: Policy }
           get 'resend_policy_documents'
           get :refund_policy
-          patch :update_coverage_proof
+          put :update_coverage_proof
         end
         get "search", to: 'policies#search', on: :collection
       end
