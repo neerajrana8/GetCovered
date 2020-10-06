@@ -48,8 +48,9 @@ module PoliciesMethods
   end
 
   def update_coverage_proof
-    documents_params = create_params.delete(:documents)
-    if @policy.update_as(current_staff, create_params)
+    update_coverage_params = create_params
+    documents_params = update_coverage_params.delete(:documents)
+    if @policy.update_as(current_staff, update_coverage_params)
       user_params[:users]&.each do |user_params|
         user = ::User.find_by(email: user_params[:email])
         user.update_attributes(user_params)
@@ -151,7 +152,7 @@ module PoliciesMethods
     return({}) if params[:policy].blank?
     to_return = params.require(:policy).permit(
         :account_id, :agency_id, :auto_renew, :cancellation_reason,
-        :cancellation_date, :carrier_id, :effective_date,
+        :cancellation_date, :carrier_id, :effective_date, :out_of_system_carrier_title,
         :expiration_date, :number, :policy_type_id, :status,
         documents: [],
         policy_insurables_attributes: [ :insurable_id ],
