@@ -207,7 +207,7 @@
                               Effective Date: <%= @policy.effective_date.strftime("%m/%d/%Y") %><br>
                               Expiration Date: <%= @policy.expiration_date.strftime("%m/%d/%Y") %><br>
                               Rent: $<%= sprintf('%.2f', @policy.policy_application.fields['monthly_rent'].to_f) %>&nbsp; USD<br>
-                              Rent Guarantee Option: <%= @policy.policy_application.fields['guarantee_option']%><br>
+                              Rent Guarantee Option: <%= @policy.policy_application.fields['guarantee_option']%> Months<br>
                               Average Monthly Premium: $<%= sprintf('%.2f', @policy.invoices.last.total/100.0) %>&nbsp; USD<br>
                               Pensio will pay up to: $<%= sprintf('%.2f', @pensio_will_pay) %>&nbsp; USD<br>
                             <p class="o_mb-xs" style="margin-top: 0px;margin-bottom: 8px;"><strong>Address</strong></p>
