@@ -76,6 +76,16 @@ module PoliciesMethods
     end
   end
 
+  def delete_policy_document
+    document = @policy.documents.find(delete_policy_document_params[:document_id])
+    if document.present?
+      document.purge
+      render json: { message: 'Policy Document successfuly deleted' }, status: :ok
+    else
+      render json: { message: 'Policy Document not found' }, status: :unprocessable_entity
+    end
+  end
+
   private
 
   def update_params
@@ -100,6 +110,10 @@ module PoliciesMethods
       profile_attributes: [ :first_name, :last_name, :contact_phone,
                             :birth_date, :gender, :salutation]]
     )
+  end
+
+  def delete_policy_document_params
+    params.permit(:document_id)
   end
 
   def user_params

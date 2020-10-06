@@ -159,6 +159,7 @@
             via: "get",
             defaults: { recordable_type: Policy }
           put :update_coverage_proof
+          delete :delete_policy_document
         end
         get "search", to: 'policies#search', on: :collection
       end

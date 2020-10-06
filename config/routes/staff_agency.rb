@@ -226,6 +226,7 @@
         get 'resend_policy_documents'
         get :refund_policy
         put :update_coverage_proof
+        delete :delete_policy_document
       end
       get "search", to: 'policies#search', on: :collection
     end
