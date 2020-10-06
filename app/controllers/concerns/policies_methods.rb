@@ -26,7 +26,7 @@ module PoliciesMethods
   end
 
   def add_coverage_proof
-    @policy = Policy.new(create_params)
+    @policy = Policy.new(coverage_proof_params)
     @policy.policy_in_system = false
     if @policy.save
       user_params[:users]&.each do |user_params|
@@ -42,6 +42,23 @@ module PoliciesMethods
       end
 
       render json: { message: 'Policy created' }, status: :created
+    else
+      render json: { message: 'Policy failed' }, status: :unprocessable_entity
+    end
+  end
+
+  def update_coverage_proof
+    documents_params = create_params.delete(:documents)
+    if @policy.update_as(current_staff, create_params)
+      user_params[:users]&.each do |user_params|
+        user = ::User.find_by(email: user_params[:email])
+        user.update_attributes(user_params)
+      end
+      if documents_params.present?
+        @policy.documents.attach(documents_params)
+      end
+
+      render json: { message: 'Policy updated' }, status: :created
     else
       render json: { message: 'Policy failed' }, status: :unprocessable_entity
     end
@@ -82,6 +99,15 @@ module PoliciesMethods
     )
   end
 
+  def coverage_proof_params
+    params.require(:policy).permit(:number,
+                                   :account_id, :agency_id, :policy_type_id,
+                                   :carrier_id, :effective_date, :expiration_date,
+                                   :out_of_system_carrier_title, :address, documents: [],
+                                   policy_users_attributes: [ :user_id ]
+    )
+  end
+
   def policy_application_merged_attributes
     @update_params = update_params
     if @update_params[:policy_application_attributes]
@@ -94,6 +120,7 @@ module PoliciesMethods
     end
     @update_params
   end
+
   def supported_filters(called_from_orders = false)
     @calling_supported_orders = called_from_orders
     {

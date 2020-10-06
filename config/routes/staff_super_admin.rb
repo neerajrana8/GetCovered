@@ -158,6 +158,7 @@
             to: "histories#index_recordable",
             via: "get",
             defaults: { recordable_type: Policy }
+          patch :update_coverage_proof
         end
         get "search", to: 'policies#search', on: :collection
       end

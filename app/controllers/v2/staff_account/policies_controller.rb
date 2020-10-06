@@ -8,7 +8,7 @@ module V2
 
       include PoliciesMethods
 
-      before_action :set_policy, only: [:update, :show]
+      before_action :set_policy, only: [:update, :show, :update_coverage_proof]
       
       before_action :set_substrate, only: [:index]
       
@@ -54,15 +54,6 @@ module V2
           elsif !params[:substrate_association_provided]
             @substrate = @substrate.policies
           end
-        end
-
-        def coverage_proof_params
-          params.require(:policy).permit(:number,
-            :account_id, :agency_id, :policy_type_id,
-            :carrier_id, :effective_date, :expiration_date,
-            :out_of_system_carrier_title, :address, documents: [],
-            policy_users_attributes: [ :user_id ]
-          )
         end
     end
   end # module StaffAccount

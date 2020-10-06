@@ -75,6 +75,7 @@
             defaults: { recordable_type: Claim }
 
           delete :delete_documents
+          put :process_claim
         end
       end
   
@@ -164,10 +165,20 @@
             via: "get",
             defaults: { recordable_type: Policy }
           get 'resend_policy_documents'
+          get :refund_policy
+          patch :update_coverage_proof
         end
         get "search", to: 'policies#search', on: :collection
       end
-    
+
+    resources :refunds,
+      only: [ :index, :create, :update] do
+        member do
+          get :approve
+          get :decline
+        end
+      end
+
     resources :policy_coverages, only: [ :update ]
   
     resources :policy_applications,
