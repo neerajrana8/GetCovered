@@ -59,8 +59,12 @@ module PoliciesMethods
           if user.save
             user.invite!
           end
+        else
+          user.update_attributes(user_params)
         end
-        user.update_attributes(user_params)
+        unless @policy.users.include?(user)
+          @policy.users << user
+        end
       end
       if documents_params.present?
         @policy.documents.attach(documents_params)
