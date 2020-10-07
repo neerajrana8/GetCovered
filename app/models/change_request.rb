@@ -5,6 +5,6 @@ class ChangeRequest < ApplicationRecord
   # belongs_to :staff
 
   # Enum Options
-  enum customized_action: %i[decline approve pending]
-  enum status: %i[in_progress approved failed]
+  enum customized_action: %i[decline approve pending cancel]
+  enum status: %i[awaiting_confirmation in_progress approved failed declined]
 end

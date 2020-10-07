@@ -224,6 +224,13 @@
       get "search", to: 'policies#search', on: :collection
     end
 
+    resources :policy_cancellation_requests, only: [ :index, :show ] do
+      member do
+        put :approve
+        put :decline
+      end
+    end
+
     resources :refunds,
       only: [ :index, :create, :update] do
         member do

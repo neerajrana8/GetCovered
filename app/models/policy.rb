@@ -173,14 +173,11 @@ class Policy < ApplicationRecord
   SPECIAL_CANCELLATION_REFUND_LOGIC = {
     'insured_request' =>          :early_cancellation, 
     'nonpayment'      =>          :no_refund,
-    'test_policy'     =>          :no_refund
+    'test_policy'     =>          :no_refund,
+    'manual_cancellation_with_refunds' => :early_cancellation,
+    'manual_cancellation_without_refunds' => :no_refund
   }
-  
-  
-  
-  
-  
-      
+
   def in_system?
     policy_in_system == true
   end

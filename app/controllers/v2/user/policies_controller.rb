@@ -73,7 +73,7 @@ module V2
       end
 
       def refund_policy
-        change_request = ChangeRequest.new(status: 'in_progress', requestable: current_user, changeable: @policy)
+        change_request = ChangeRequest.new(status: 'awaiting_confirmation', requestable: current_user, changeable: @policy, customized_action: 'cancel')
         if change_request.save
           render json: { message: 'Refund was successfully sent' }, status: :ok
         else
