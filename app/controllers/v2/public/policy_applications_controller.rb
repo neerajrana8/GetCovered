@@ -591,8 +591,8 @@ module V2
       def update_policy_user(policy_application)
         user = policy_application.primary_user
 
-        policy_user_params = create_policy_users_params[:policy_users_attributes].last
-
+        policy_user_params = create_policy_users_params[:policy_users_attributes].first
+        ap "User params#{policy_user_params}; User: #{user}"
         if user.present? && policy_user_params.present?
           user.update(create_policy_users_params[:user_attributes])
           return false if user.errors.any?
