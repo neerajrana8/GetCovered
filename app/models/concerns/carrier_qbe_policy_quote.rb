@@ -53,6 +53,7 @@ module CarrierQbePolicyQuote
           coverage = self.policy.policy_coverages.new
           coverage.policy_application = self.policy_application
           coverage.designation = rate.schedule
+          coverage.title = coverage.designation.titleize
           coverage.limit = rate.coverage_limits[rate.schedule]
           coverage.deductible = rate.deductibles["all_peril"]
           coverage.special_deductible = rate.deductibles["hurricane"] if rate.deductibles.key?("hurricane")
@@ -61,6 +62,7 @@ module CarrierQbePolicyQuote
           coverage_d = self.policy.policy_coverages.new
           coverage_d.policy_application = self.policy_application
           coverage_d.designation = "loss_of_use"
+          coverage.title = coverage.designation.titleize
           coverage_d.limit = rate.coverage_limits[rate.schedule] * 0.2
           coverage_d.deductible = rate.deductibles["all_peril"]
           coverage_d.special_deductible = rate.deductibles["hurricane"] if rate.deductibles.key?("hurricane")
@@ -80,6 +82,7 @@ module CarrierQbePolicyQuote
           coverage = self.policy.policy_coverages.new
           coverage.policy_application = self.policy_application
           coverage.designation = designation
+          coverage.title = coverage.designation.titleize
           coverage.limit = rate.coverage_limits["coverage_c"]
           coverage.deductible = rate.deductibles["all_peril"]
           coverage.special_deductible = rate.deductibles["hurricane"] if rate.deductibles.key?("hurricane")
