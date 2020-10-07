@@ -436,6 +436,7 @@ module V2
         if @policy_application.policy_type.title == 'Rent Guarantee'
 
           if @policy_application.update(update_rental_guarantee_params) &&
+            update_policy_user(@policy_application) &&
             @policy_application.update(status: 'complete')
 
             quote_attempt = @policy_application.pensio_quote
@@ -585,6 +586,20 @@ module V2
       end
 
       private
+
+      # Only for fixing the issue with not saving address on the rent guarantee form
+      def update_policy_user(policy_application)
+        user = policy_application.primary_user
+
+        policy_user_params = create_policy_users_params[:policy_users_attributes].last
+
+        if user.present? && policy_user_params.present?
+          user.update(create_policy_users_params[:user_attributes])
+          return false if user.errors.any?
+        end
+
+        true
+      end
 
       def invite_primary_user(policy_application)
         primary_user = policy_application.primary_user
