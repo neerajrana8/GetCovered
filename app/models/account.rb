@@ -131,7 +131,7 @@ class Account < ApplicationRecord
       },
       Communications: { # feel free to add phone number here just like we do for user#get_msi_general_party_info
         EmailInfo: {
-          EmailAddr: self.owner.email # MOOSE WARNING: make this use self.contact_info if we ever start making use of it
+          EmailAddr: self.contact_info&.[]("contact_email") || self.owner&.email || nil
         }
       }
     }
