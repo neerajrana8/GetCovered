@@ -10,7 +10,7 @@ module V2
         only: [:show]
       
       def index
-        super(:@users, ::User.all, :profile)
+        super(:@users, ::User.all, :profile, :accounts, :agencies)
       end
 
       def show
