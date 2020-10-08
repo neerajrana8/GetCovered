@@ -3,28 +3,28 @@ module PolicyCancellationRequestsMethods
 
   def index
     @change_requests = paginator(relation)
-    render json: @change_requests, status: :ok
+    render template: 'v2/shared/change_requests/index', status: :ok
   end
 
   def show
-    render json: @change_request, status: :ok
+    render template: 'v2/shared/change_requests/show', status: :ok
   end
 
   def approve
     @change_request.changeable.cancel('manual_cancellation_with_refunds')
     @change_request.update(status: :approved)
-    render json: @change_request, status: :ok
+    render template: 'v2/shared/change_requests/show', status: :ok
   end
 
   def cancel
     @change_request.changeable.cancel('manual_cancellation_without_refunds')
     @change_request.update(status: :approved)
-    render json: @change_request, status: :ok
+    render template: 'v2/shared/change_requests/show', status: :ok
   end
 
   def decline
     @change_request.update(status: :declined)
-    render json: @change_request, status: :ok
+    render template: 'v2/shared/change_requests/show', status: :ok
   end
 
   private
