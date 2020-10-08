@@ -8,7 +8,7 @@ module V2
       before_action :set_user, only: %i[update show]
 
       def index
-        super(:@users, @agency.active_users, :profile)
+        super(:@users, @agency.active_users, :profile, :accounts, :agencies)
       end
 
       def search
