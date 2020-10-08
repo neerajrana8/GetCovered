@@ -9,7 +9,7 @@ module CarrierMsiPolicyQuote
     # MOOSE WARNING: PolicyQuote#bind_policy should call this boi if necessary
     def set_msi_external_reference
       
-      return_status = true # MOOSE WARNING: change it?
+      return_status = true # MOOSE WARNING: change it? 
       
     end
     
