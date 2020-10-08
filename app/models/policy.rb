@@ -99,6 +99,7 @@ class Policy < ApplicationRecord
   has_many :commission_deductions
   
   has_many :histories, as: :recordable
+  has_many :change_requests, as: :changeable
   
   has_many_attached :documents
 

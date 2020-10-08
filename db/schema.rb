@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_10_01_131848) do
+ActiveRecord::Schema.define(version: 2020_10_08_152234) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
@@ -339,9 +339,7 @@ ActiveRecord::Schema.define(version: 2020_10_01_131848) do
     t.integer "requestable_id"
     t.string "requestable_type"
     t.integer "changeable_id"
-    t.index ["customized_action"], name: "index_change_requests_on_customized_action", unique: true
     t.index ["staff_id"], name: "index_change_requests_on_staff_id"
-    t.index ["status"], name: "index_change_requests_on_status", unique: true
   end
 
   create_table "charges", force: :cascade do |t|
@@ -382,6 +380,7 @@ ActiveRecord::Schema.define(version: 2020_10_01_131848) do
     t.string "name"
     t.string "address"
     t.string "nature_of_claim"
+    t.text "staff_notes"
     t.index ["claimant_type", "claimant_id"], name: "index_claims_on_claimant_type_and_claimant_id"
     t.index ["insurable_id"], name: "index_claims_on_insurable_id"
     t.index ["policy_id"], name: "index_claims_on_policy_id"
