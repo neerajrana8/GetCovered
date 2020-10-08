@@ -227,6 +227,7 @@
     resources :policy_cancellation_requests, only: [ :index, :show ] do
       member do
         put :approve
+        put :cancel
         put :decline
       end
     end

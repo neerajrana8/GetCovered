@@ -163,7 +163,9 @@ class Policy < ApplicationRecord
     new_application_nonpayment: 3,    # QBE NP
     underwriter_cancellation:   4,    # QBE UW
     disqualification:           5,    # no qbe code
-    test_policy:                6     # no qbe code
+    test_policy:                6,     # no qbe code
+    manual_cancellation_with_refunds:     7,     # no qbe code
+    manual_cancellation_without_refunds:  8    # no qbe code
   }
   
   # Cancellation reasons with special refund logic; allowed values:
