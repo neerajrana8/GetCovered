@@ -13,7 +13,7 @@ module V2
       end
 
       def create
-        @carrier_agency = CarrierAgency.new.create_as(current_staff, create_params)
+        @carrier_agency = CarrierAgency.create(create_params)
         if @carrier_agency.errors.blank?
           render template: 'v2/shared/carrier_agencies/show', status: :created
         else
