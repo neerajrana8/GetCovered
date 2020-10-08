@@ -369,22 +369,31 @@ class Policy < ApplicationRecord
     end
   end
 
+  def refund_available_days
+    max_days_for_full_refund =
+      (CarrierPolicyType.where(policy_type_id: self.policy_type_id, carrier_id: self.carrier_id).
+        take&.max_days_for_full_refund || 0).
+        days - 1.day
+    raw_days = (self.created_at.to_date + max_days_for_full_refund - Time.zone.now.to_date).to_i
+    raw_days.negative? ? 0 : raw_days
+  end
+
   private
       
-    def date_order
-      errors.add(:expiration_date, 'expiration date cannot be before effective date.') if expiration_date < effective_date
-    end
+  def date_order
+    errors.add(:expiration_date, 'expiration date cannot be before effective date.') if expiration_date < effective_date
+  end
 
-    def correct_document_mime_type
-      documents.each do |document|
-        if !document.blob.content_type.starts_with?('image/png', 'image/jpeg', 'image/jpg', 'image/svg',
-          'image/gif', 'application/pdf', 'text/plain', 'application/msword',
-          'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-          'text/comma-separated-values', 'application/vnd.ms-excel'
-          )
-          errors.add(:documents, 'The document wrong format, only: PDF, DOC, DOCX, XLSX, XLS, CSV, JPG, JPEG, PNG, GIF, SVG, TXT')
-        end
+  def correct_document_mime_type
+    documents.each do |document|
+      if !document.blob.content_type.starts_with?('image/png', 'image/jpeg', 'image/jpg', 'image/svg',
+        'image/gif', 'application/pdf', 'text/plain', 'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'text/comma-separated-values', 'application/vnd.ms-excel'
+        )
+        errors.add(:documents, 'The document wrong format, only: PDF, DOC, DOCX, XLSX, XLS, CSV, JPG, JPEG, PNG, GIF, SVG, TXT')
       end
     end
+  end
 end
