@@ -78,7 +78,7 @@ module V2
       end
 
       def rent_guarantee_complete
-        PolicyApplicationsMailer.with(policy_application: @policy_application).invite_to_pay.deliver_later
+        PolicyApplications::RentGuaranteeMailer.with(policy_application: @policy_application).invite_to_pay.deliver_later
         render json: { message: 'Instructions were sent' }
       end
 
@@ -173,7 +173,7 @@ module V2
               ) and return
             end
 
-            policy_user.user.invite! if index.zero? && @application.policy_type_id != PolicyType::RENT_GUARANTEE_ID
+            policy_user.user.invite!(nil, policy_application: @application) if index.zero?
           end
         end
 
@@ -256,7 +256,7 @@ module V2
                     status: @quote.status,
                     premium: @premium
                   },
-                  invoices: @quote.invoices,
+                  invoices: @quote.invoices.order("due_date ASC"),
                   user:     {
                     id:        @application.primary_user.id,
                     stripe_id: @application.primary_user.stripe_id
@@ -436,6 +436,7 @@ module V2
         if @policy_application.policy_type.title == 'Rent Guarantee'
 
           if @policy_application.update(update_rental_guarantee_params) &&
+            update_policy_user(@policy_application) &&
             @policy_application.update(status: 'complete')
 
             quote_attempt = @policy_application.pensio_quote
@@ -586,13 +587,27 @@ module V2
 
       private
 
+      # Only for fixing the issue with not saving address on the rent guarantee form
+      def update_policy_user(policy_application)
+        user = policy_application.primary_user
+
+        policy_user_params = create_policy_users_params[:policy_users_attributes].first
+
+        if user.present? && policy_user_params.present?
+          user.update(policy_user_params[:user_attributes])
+          return false if user.errors.any?
+        end
+
+        true
+      end
+
       def invite_primary_user(policy_application)
         primary_user = policy_application.primary_user
         if primary_user.invitation_accepted_at.nil? &&
           (primary_user.invitation_created_at.blank? || primary_user.invitation_created_at < 1.days.ago) &&
           policy_application.policy_type_id != PolicyType::RENT_GUARANTEE_ID
 
-          @application.primary_user.invite!
+          @application.primary_user.invite!(nil, policy_application: @application)
         end
       end
 
