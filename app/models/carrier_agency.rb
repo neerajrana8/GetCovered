@@ -12,7 +12,7 @@ class CarrierAgency < ApplicationRecord
   
   validate :carrier_agency_assignment_unique
 
-  accepts_nested_attributes_for :carrier_agency_authorizations, update_only: true, allow_destroy: true
+  accepts_nested_attributes_for :carrier_agency_authorizations, allow_destroy: true
   
   private
   

@@ -31,18 +31,25 @@ class CarrierAgencyAuthorization < ApplicationRecord
   private
   
   def policy_type_available_for_carrier
-    if carrier.policy_types.ids.exclude?(policy_type_id)
+    if carrier_agency.carrier.policy_types.ids.exclude?(policy_type_id)
       errors.add(:carrier_agency, 'policy type should be supported by the carrier')
     end
   end
 
   def policy_type_available_in_state
-    policy_type_availability =
-      carrier.
+    policy_type_available =
+      carrier_agency.
+        carrier.
         carrier_policy_types.
-        find_by_policy_type_id(policy_type_id).
-        carrier_policy_type_availabilities.
-        find_by_state(state)
-    errors.add(:carrier_agency, 'policy type should be activated') unless policy_type_availability.available?
+        find_by_policy_type_id(policy_type_id)
+    if policy_type_available
+      policy_type_availability =
+        policy_type_available.
+          carrier_policy_type_availabilities.
+          find_by_state(state)
+      errors.add(:carrier_agency, 'policy type should be activated') unless policy_type_availability.try(:available?)
+    else
+      errors.add(:carrier_agency, 'policy type should be available')
+    end
   end
 end
