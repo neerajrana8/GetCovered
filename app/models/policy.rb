@@ -119,7 +119,7 @@ class Policy < ApplicationRecord
   scope :master_policy_coverages, -> { where(policy_type_id: PolicyType::MASTER_COVERAGE_ID) }
 
   accepts_nested_attributes_for :policy_premiums,
-  :insurables, :policy_users, :policy_insurables
+  :insurables, :policy_users, :policy_insurables, :policy_application
   accepts_nested_attributes_for :policy_coverages, allow_destroy: true
   #  after_save :update_leases, if: :saved_changes_to_status?
   
@@ -197,7 +197,7 @@ class Policy < ApplicationRecord
   end
   
   def is_allowed_to_update?
-    errors.add(:policy_in_system, 'Cannot update in system policy') if policy_in_system == true
+    errors.add(:policy_in_system, 'Cannot update in system policy') if policy_in_system == true && !rent_garantee? && !residential?
   end
   
   def residential_account_present    
@@ -362,6 +362,10 @@ class Policy < ApplicationRecord
   
   def residential?
     policy_type == PolicyType.residential
+  end
+
+  def rent_garantee?
+    policy_type == PolicyType.rent_garantee
   end
   
   settings index: { number_of_shards: 1 } do

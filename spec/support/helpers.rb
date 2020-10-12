@@ -8,11 +8,11 @@ module Helpers
   def create_agency
     FactoryBot.create(:agency)
   end
-  
+
   def account_for agency
     FactoryBot.create(:account, agency: agency)
   end
-  
+
   def create_agent_for(agency = nil, attributes = {})
     attributes.reverse_merge!(
       organizable: agency,
@@ -20,23 +20,23 @@ module Helpers
     )
     FactoryBot.create(:staff, attributes)
   end
-  
+
   def create_account_for(agency = nil)
     account = account_for agency
     FactoryBot.create(:staff, organizable: account, role: 'staff')
   end
-  
+
   def login_staff(staff, password: 'test1234')
     post staff_session_path, params: { email: staff.email, password: password }.to_json, headers: base_headers
   end
-  
+
   def get_auth_headers_from_login_response_headers(response)
     client = response.headers['client']
     token = response.headers['access-token']
     expiry = response.headers['expiry']
     token_type = response.headers['token-type']
     uid = response.headers['uid']
-    
+
     auth_headers = {
       'access-token' => token,
       'client' => client,
@@ -46,7 +46,7 @@ module Helpers
     }
     auth_headers
   end
-  
+
   def profile_params
     {
       profile_attributes: {
@@ -57,21 +57,21 @@ module Helpers
       }
     }
   end
-  
+
   # USER
   def create_user
     FactoryBot.create(:user)
   end
-  
+
   def login_user(user, password: 'test1234')
     post user_session_path, params: { email: user.email, password: password }.to_json, headers: base_headers
   end
 
   def insurable_params(account, insurable_type, insurable = nil)
     {
-      category: "property", 
-      covered: "true", 
-      enabled: "true", 
+      category: "property",
+      covered: "true",
+      enabled: "true",
       title: "some new insurable with unique id: #{SecureRandom.uuid}",
       account: account,
       insurable: insurable,
@@ -87,4 +87,14 @@ module Helpers
       ]
     }
   end
+
+  # Super Admin
+
+  def create_super_admin
+    FactoryBot.create(:admin)
+  end
+
+  # def login_super_admin(admin, password: 'test1234')
+  #  post staff_session_path, params: { email: admin.email, password: password }.to_json, headers: base_headers
+  #end
 end

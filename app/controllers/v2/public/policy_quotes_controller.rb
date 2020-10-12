@@ -21,7 +21,7 @@ module V2
             @policy_quote.policy_premium.update include_special_premium: update_policy_quote_params[:tiaPremium]  
           end
           
-          if update_policy_quote_params.key?(:billing_strategy_id) && 
+          if update_policy_quote_params.key?(:billing_strategy_id) &&
              update_policy_quote_params[:billing_strategy_id] != @application.billing_strategy_id
             @application.update billing_strategy: BillingStrategy.find(update_policy_quote_params[:billing_strategy_id])
           end
@@ -38,29 +38,29 @@ module V2
             puts 'No updates for premium & invoices'.red
           end
 
-          response = { 
-            quote: { 
-              id: @policy_quote.id, 
-              status: @policy_quote.status, 
+          response = {
+            quote: {
+              id: @policy_quote.id,
+              status: @policy_quote.status,
               premium: @policy_quote.policy_premium
             },
             invoices: @policy_quote.invoices.order('due_date ASC'),
-            user: { 
+            user: {
               id: @policy_quote.policy_application.primary_user.id,
               stripe_id: @policy_quote.policy_application.primary_user.stripe_id
             },
             billing_strategies: []
           }
-                
+
           if @policy_quote.policy_premium.base >= 500_000
             BillingStrategy.where(agency: @policy_quote.policy_application.agency_id, policy_type: @policy_quote.policy_application.policy_type).each do |bs|
               response[:billing_strategies] << { id: bs.id, title: bs.title }
             end
           end
-                    
+
           render json: response.to_json, status: 200
         else
-          render json: { error: 'Quote Unavailable for Update', message: 'We are unable to update this quote due to it already being accepted or not meeting the policy type requirements.' }, status: 422          
+          render json: { error: 'Quote Unavailable for Update', message: 'We are unable to update this quote due to it already being accepted or not meeting the policy type requirements.' }, status: 422
         end
       end
       
@@ -84,7 +84,7 @@ module V2
             endpoint: msis.endpoint_for(:get_credit_card_pre_authorization_token),
             process: 'msi_get_credit_card_pre_authorization_token'
           )
-          result = msis.build_request(:get_credit_card_pre_authorization_token,        
+          result = msis.build_request(:get_credit_card_pre_authorization_token,
                                       product_id: @policy_quote.carrier_payment_data['product_id'],
                                       state: @policy_quote.policy_application.primary_insurable.primary_address.state,
                                       line_breaks: true)
@@ -130,26 +130,12 @@ module V2
       end
       
       def accept
-        if @policy_quote.nil?
-          
-          render json: {
-            error: 'Not Found',
-            message: "Policy Quote #{params[:id]} counld not be found."
-          }, status: 400
-        
-        else
-          @user = ::User.find(accept_policy_quote_params[:id])
-          if @user.nil?
-            
-            render json: {
-              error: 'Not Found',
-              message: "User #{params[:id]} counld not be found."
-            }, status: 400          
-          
-          else
-            # MOOSE WARNING: this next line overrides the provided token with tok_visa for MSI in development, because we need to use payeezy test cards
-            result = @user.attach_payment_source(Rails.env != 'production' && @policy_quote.policy_application.carrier_id == 5 ? 'tok_visa' : accept_policy_quote_params[:source])
-            if result.valid?
+	    	unless @policy_quote.nil?
+		    	@user = ::User.find(accept_policy_quote_params[:id])
+		    	unless @user.nil?
+            uses_stripe = (@policy_quote.policy_application.carrier_id == 5 ? false : true) # MOOSE WARNING: move this to a configurable field on CarrierPolicyType or something?
+						result = !uses_stripe ? nil : @user.attach_payment_source(accept_policy_quote_params[:source])
+			    	if !uses_stripe || result.valid?
               bind_params = []
               # collect bind params for msi
               if @policy_quote.policy_application.carrier_id == 5
@@ -159,7 +145,7 @@ module V2
                   render json: {
                     error: 'Invalid Payment Information',
                     message: problem
-                  }, status: 400         
+                  }, status: 400
                   return
                 end
                 # set bind params
@@ -177,24 +163,39 @@ module V2
               if @quote_attempt[:success]
                 insurable = @policy_quote.policy_application.policy&.primary_insurable
                 Insurables::UpdateCoveredStatus.run!(insurable: insurable) if insurable.present?
- 
-                ::Analytics.track(
-                  user_id: @user.id,
-                  event: 'Order Completed',
-                  properties: { category: 'Orders' }
-                )
-               end
-              render json: {
-                error: @quote_attempt[:success] ? "#{@policy_type_identifier} Accepted" : "#{@policy_type_identifier} Could Not Be Accepted",
-                message: @quote_attempt[:message]
-              }, status: @quote_attempt[:success] ? 200 : 500
-                 
-            else
-              render json: { error: 'Failure', message: result.errors.full_messages.join(' and ') }.to_json, status: 422
-               end
-          end
-        end  
-      end
+
+								::Analytics.track(
+									user_id: @user.id,
+									event: 'Order Completed',
+									properties: { category: 'Orders' }
+								)
+              end
+							render json: {
+								error: ("#{ @policy_type_identifier } Could Not Be Accepted" unless @quote_attempt[:success]),
+								message: ("#{ @policy_type_identifier } Accepted. " if @quote_attempt[:success]).to_s + @quote_attempt[:message],
+                password_filled: @user.encrypted_password.present?
+							}.compact, status: @quote_attempt[:success] ? 200 : 500
+							
+				    else
+				    	render json: { error: "Failure", message: result.errors.full_messages.join(' and ') }.to_json, status: 422
+			    	end
+			    else
+			    	
+			    	render json: {
+				    	:error => "Not Found",
+				    	:message => "User #{ params[:id] } counld not be found."
+			    	}, status: 400			    
+			    
+			    end
+		    else
+		    	
+		    	render json: {
+			    	:error => "Not Found",
+			    	:message => "Policy Quote #{ params[:id] } counld not be found."
+		    	}, status: 400
+		    
+		    end  
+	    end
       
       private
         
@@ -203,7 +204,7 @@ module V2
       end
         
       def update_policy_quote_params
-        params.require(:policy_quote).permit(:tiaPremium, :billing_strategy_id)  
+        params.require(:policy_quote).permit(:tiaPremium, :billing_strategy_id)
       end
       
       def accept_policy_quote_params

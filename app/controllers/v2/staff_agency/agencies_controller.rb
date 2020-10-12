@@ -40,11 +40,17 @@ module V2
 
       def create
         if create_allowed?
-          @agency = current_staff.organizable.agencies.new(create_params)
-          if @agency.errors.none? && @agency.save_as(current_staff)
+          outcome = Agencies::Create.run(
+            agency_params: create_params.to_h,
+            parent_agency: current_staff.organizable,
+            creator: current_staff
+          )
+          if outcome.valid?
+            @agency = outcome.result
             render :show, status: :created
           else
-            render json: @agency.errors, status: :unprocessable_entity
+            render json: standard_error(:agency_creation_error, nil, outcome.errors.full_messages),
+                   status: :unprocessable_entity
           end
         else
           render json: { success: false, errors: ['Unauthorized Access'] },

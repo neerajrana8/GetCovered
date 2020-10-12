@@ -6,79 +6,63 @@ module V2
   module StaffAgency
     class CarrierAgencyAuthorizationsController < StaffAgencyController
       
-      before_action :set_carrier_agency_authorization,
-        only: [:update, :show]
-      
-      before_action :set_substrate,
-        only: [:index]
+      before_action :set_carrier_agency_authorization, only: %i[update show]
+      before_action :set_substrate, only: [:index]
       
       def index
-        if params[:short]
-          super(:@carrier_agency_authorizations, @substrate)
-        else
-          super(:@carrier_agency_authorizations, @substrate)
-        end
+        super(:@carrier_agency_authorizations, @substrate)
+        render template: 'v2/shared/carrier_agency_authorizations/index', status: :ok
       end
       
       def show
+        render template: 'v2/shared/carrier_agency_authorizations/show', status: :ok
       end
       
       def update
-        if update_allowed?
-          if @carrier_agency_authorization.update(update_params)
-            render :show,
-              status: :ok
-          else
-            render json: @carrier_agency_authorization.errors,
-              status: :unprocessable_entity
-          end
+        if @carrier_agency_authorization.update(update_params)
+          render template: 'v2/shared/carrier_agency_authorizations/show', status: :ok
         else
-          render json: { success: false, errors: ['Unauthorized Access'] },
-            status: :unauthorized
+          render json: standard_error(:update_error, nil, @carrier_agency_authorization.errors),
+                 status: :unprocessable_entity
         end
       end
       
-      
       private
       
-        def view_path
-          super + "/carrier_agency_authorizations"
-        end
+      def view_path
+        super + '/carrier_agency_authorizations'
+      end
         
-        def update_allowed?
-          true
-        end
+      def set_carrier_agency_authorization
+        @carrier_agency_authorization = access_model(::CarrierAgencyAuthorization, params[:id])
+      end
         
-        def set_carrier_agency_authorization
-          @carrier_agency_authorization = access_model(::CarrierAgencyAuthorization, params[:id])
-        end
+      def set_substrate
+        @substrate =
+          CarrierAgencyAuthorization.joins(:carrier_agency).where(carrier_agencies: { agency_id: @agency.id })
+      end
         
-        def set_substrate
-          super
-          if @substrate.nil?
-            @substrate = access_model(::CarrierAgencyAuthorization)
-          elsif !params[:substrate_association_provided]
-            @substrate = @substrate.carrier_agency_authorizations
-          end
-        end
-        
-        def update_params
-          return({}) if params[:carrier_agency_authorization].blank?
-          params.require(:carrier_agency_authorization).permit(
-            :available, zip_code_blacklist: {}
-          )
-        end
-        
-        def supported_filters(called_from_orders = false)
-          @calling_supported_orders = called_from_orders
-          {
-          }
-        end
+      def update_params
+        return({}) if params[:carrier_agency_authorization].blank?
 
-        def supported_orders
-          supported_filters(true)
-        end
-        
+        params.require(:carrier_agency_authorization).permit(
+          :available, zip_code_blacklist: {}
+        )
+      end
+
+      def supported_filters(called_from_orders = false)
+        @calling_supported_orders = called_from_orders
+        {
+          policy_type_id: %i[scalar array],
+          state: %i[scalar array],
+          available: %i[scalar],
+          carrier_agency_id: %i[scalar array]
+        }
+      end
+
+      def supported_orders
+        supported_filters(true)
+      end
     end
   end # module StaffAgency
 end
