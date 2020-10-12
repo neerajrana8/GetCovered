@@ -30,11 +30,7 @@ class UserCoverageMailer < ApplicationMailer
   end
 
   def proof_of_coverage
-
-    @policy.documents.each do |doc|
-      file_url = "#{Rails.application.routes.url_helpers.rails_blob_url(doc, host: Rails.application.credentials[:uri][ENV['RAILS_ENV'].to_sym][:api])}"
-      attachments[doc.filename.to_s] = open(file_url).read
-    end
+    attach_all_documents
 
     is_policy = @policy.policy_type_id == 5 ? false : true
 
@@ -102,7 +98,26 @@ class UserCoverageMailer < ApplicationMailer
     )
   end
 
+  def policy_in_default
+    @url = BrandingProfiles::FindByObject.run!(object: @policy.agency)&.url ||
+        Rails.application.credentials.uri[ENV['RAILS_ENV'].to_sym][:client]
+
+    @missed_invoices = @policy.invoices.missed
+    @next_invoice = @policy.invoices.upcoming.order(:due_date).first
+
+    mail(
+        :subject => "Policy ##{@policy.number} in default.  Please update Payment information"
+    )
+  end
+
   private
+
+  def attach_all_documents
+    @policy.documents.each do |doc|
+      file_url = Rails.application.routes.url_helpers.rails_blob_url(doc, host: Rails.application.credentials[:uri][ENV['RAILS_ENV'].to_sym][:api]).to_s
+      attachments[doc.filename.to_s] = open(file_url).read
+    end
+  end
 
   def whitelabel_host(agency)
     BrandingProfiles::FindByObject.run!(object: agency)&.url ||

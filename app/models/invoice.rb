@@ -36,6 +36,9 @@ class Invoice < ApplicationRecord
   has_many :histories, as: :recordable
   #has_many :notifications, as: :eventable
 
+  scope :internal, -> { where(external: false) }
+  scope :external, -> { where(external: true) }
+
   # Validations
 
   validates :number, presence: true, uniqueness: true
@@ -52,7 +55,16 @@ class Invoice < ApplicationRecord
 
   # Enums
 
-  enum status: %w[quoted upcoming available processing complete missed canceled]
+  enum status: {
+    quoted:             0, 
+    upcoming:           1,
+    available:          2,
+    processing:         3,
+    complete:           4,
+    missed:             5,
+    canceled:           6,
+    managed_externally: 7
+  }
 
   scope :paid, -> { where(status: %w[complete]) }
   scope :unpaid, -> { where(status: %w[available missed]) }
@@ -103,15 +115,30 @@ class Invoice < ApplicationRecord
   #   => true
   
 
-
-  def apply_proration(new_term_last_date, refund_date: nil, to_refund_override: nil, cancel_if_unpaid_override: nil)
+  # params:
+  #   new_term_last_date:         the term end date to be used in calculating the proration (the last day of the term, not the first day of not-the-term)
+  #   refund_date:                the date the refund is initiated, used to calculate whether to refund 'complete_refund_before_term', etc. refundability line items;
+  #                               defaults to Time.current.to_date
+  #   to_refund_override:         an array of { 'line_item' => line_item (or line_item id), 'amount' => number of cents to ensure have been refunded } hashes;
+  #                               defaults to a hash created based on the other parameters which prorates the invoice
+  #   to_ensure_refunded:         same as to_refund_override in format; if non-nil, after the to_refund hash has been calculated (or provided by to_refund_override),
+  #                               any line items missing/with a lower refund than specified by to_ensure_refunded will be added/have their refund increased to match to_ensure_refunded;
+  #                               can also pass a proc that takes a LineItem (and optionally the invoice as its second argument) and returns the amount to ensure is refunded
+  #   cancel_if_unpaid_override:  true to completely cancel the invoice, rather than only applying the proration, if it is upcoming/available;
+  #                               false to apply the proration as normal;
+  #                               defaults to (new_term_last_date < term_first_date)
+  #   cancel_if_missed_override:  true to completely cancel the invoice, rather than only applying the proration, if it is missed;
+  #                               false to apply the proration as normal;
+  #                               defaults to cancel_if_unpaid_override, if provided, or to its default value if not
+  def apply_proration(new_term_last_date, refund_date: nil, to_refund_override: nil, to_ensure_refunded: nil, cancel_if_unpaid_override: nil, cancel_if_missed_override: nil)
     with_lock do
-      return false if term_first_date.nil? || term_last_date.nil?
+      return false if self.external || term_first_date.nil? || term_last_date.nil?
       to_refund = nil
       cancel_if_unpaid = false
+      # calculate the to_refund hash
       if to_refund_override.nil?
         # get refund date and proportion-to-refund
-        refund_date = Time.current.to_date if refund_date.nil?
+        refund_date = new_term_last_date if refund_date.nil?
         proportion_to_refund = 0
         proportion_to_refund = new_term_last_date < term_first_date ? 1.to_d :
                                new_term_last_date >= term_last_date ? 0.to_d :
@@ -124,64 +151,63 @@ class Invoice < ApplicationRecord
             'line_item' => li,
             'amount' => case li.refundability
               when 'no_refund'
-                0
+                (li.full_refund_before_date.nil? || li.full_refund_before_date <= refund_date) ?
+                  0
+                  : li.price
               when 'prorated_refund'
-                (li.price * proportion_to_refund).floor
-              when 'complete_refund_before_term'
-                refund_date >= term_first_date ? 0 : li.price
-              when 'complete_refund_during_term'
-                refund_date > term_last_date ? 0 : li.price
-              when 'complete_refund_before_due_date'
-                refund_date >= due_date ? 0 : li.price
+                (li.full_refund_before_date.nil? || li.full_refund_before_date <= refund_date) ?
+                  (li.price * proportion_to_refund).floor
+                  : li.price
               else
                 0
             end
           }
         end.select{|datum| datum['amount'] > 0 }
       else
+        # copy over to to_refund and sanitize line items (in case the user passed ids)
         to_refund = to_refund_override
         to_refund.each do |li|
-          li['line_item'] = line_items.where(id: li['line_item']).take if li['line_item'].class != ::LineItem
+          li['line_item'] = line_items.find{|lim| lim.id == li['line_item'] } if li['line_item'].class != ::LineItem
           return false if li['line_item'].nil?
         end
       end
-      cancel_if_unpaid = cancel_if_unpaid_override unless cancel_if_unpaid_override.nil?
-      # apply refund
-      case status
-        when 'upcoming', 'available'
-          # apply a proration adjustment
-          # WARNING: if we ever update to allow partial payments, you need to first refund whenever a line item's collected amount exceeds its price
-          if cancel_if_unpaid
-            line_items.each do |li|
-              li.update(proration_reduction: li.price)
-            end
-            return update(proration_reduction: subtotal, total: 0, status: 'canceled')
-          else
-            prored = to_refund.inject(0){|sum,li| sum + li['amount'] }
-            if prored > subtotal
-              self.reduce_distribution_total(subtotal, :adjustment, to_refund)
-              prored = subtotal
-            end
-            to_refund.each do |li|
-              li['line_item'].update(proration_reduction: li['amount'])
-            end
-            return update(proration_reduction: prored, total: subtotal - prored) # MOOSE WARNING; would we like to cancel the invoice if total is zero?
+      # add to_ensure_refunded to the to_refund hash
+      unless to_ensure_refunded.nil?
+        if to_ensure_refunded.class == ::Proc
+          # expand proc
+          to_ensure_refunded = line_items.map{|li| { 'line_item' => li, 'amount' => to_ensure_refunded.call(li, self) } }.select{|li| li['amount'] && li['amount'] > 0 }
+        else
+          # sanitize line items (in case the user passed ids)
+          to_ensure_refunded.each do |li|
+            li['line_item'] = line_items.find{|lim| lim.id == li['line_item'] } if li['line_item'].class != ::LineItem
+            return false if li['line_item'].nil?
           end
+        end
+        # merge into to_refund
+        to_ensure_refunded.each do |li|
+          found = to_refund.find{|trli| trli['line_item'].id == li['line_item'].id }
+          if found.nil?
+            to_refund.push({ 'line_item' => li['line_item'], 'amount' => li['amount'] })
+          elsif found['amount'] < li['amount']
+            found['amount'] = li['amount']
+          else
+            # do nothing; we're already refunding at least the required amount
+          end
+        end
+      end
+      # set cancel_if settings
+      cancel_if_unpaid = cancel_if_unpaid_override unless cancel_if_unpaid_override.nil?
+      cancel_if_missed = cancel_if_missed_override.nil? ? cancel_if_unpaid : cancel_if_missed_override
+      # apply refund
+      case status == 'missed' ? ("missed_#{cancel_if_missed ? 'cancel' : 'keep'}") : status
         when 'complete'
           # apply the refund
+          return true if to_refund.blank?
           result = ensure_refunded(to_refund, "Proration Adjustment", nil)
           return true if result[:success]
           return false # WARNING: we discard result[:errors] here
-        when 'processing', 'missed'
-          return update(has_pending_refund: true, pending_refund_data: {
-            'proration_refund' => to_refund.map{|li| {
-              'line_item' => li['line_item'].id,
-              'amount' => li['amount']
-            } },
-            'cancel_if_unpaid' => cancel_if_unpaid
-          })
-        when 'canceled'
-          # apply a proration_reduction to the total (might as well keep track of changes even to canceled invoices)
+        when 'upcoming', 'available', 'missed_keep' # WARNING: for missed-and-not-to-be-canceled invoices here we lose information on the original missed amount, retaining only what is actually due now
+          # apply a proration adjustment
           prored = to_refund.inject(0){|sum,li| sum + li['amount'] }
           if prored > subtotal
             self.reduce_distribution_total(subtotal, :adjustment, to_refund)
@@ -190,7 +216,23 @@ class Invoice < ApplicationRecord
           to_refund.each do |li|
             li['line_item'].update(proration_reduction: li['amount'])
           end
-          return update(proration_reduction: prored, total: subtotal - prored)
+          return update({ proration_reduction: prored, total: subtotal - prored }.merge(
+            (cancel_if_unpaid && status != 'missed') ? { status: 'canceled' } : {}
+          ))
+        when 'processing', 'canceled', 'missed_cancel'
+          return update({
+            has_pending_refund: true,
+            pending_refund_data: {
+              'proration_refund' => to_refund.map {|li| {
+                'line_item' => li['line_item'].id,
+                'amount' => li['amount']
+              } },
+              'cancel_if_unpaid' => cancel_if_unpaid,
+              'cancel_if_missed' => cancel_if_missed
+            }
+          }.merge(status == 'missed' ? { status: 'canceled' } : {}))
+        when 'managed_externally'
+          return false
       end
     end
     return false
@@ -199,6 +241,7 @@ class Invoice < ApplicationRecord
 
   # refunds whatever is necessary to ensure the total amount refunded is to_refund cents (if it starts above that, it refunds nothing)
   def ensure_refunded(to_refund, full_reason = nil, stripe_reason = nil, ignore_total: false)
+    return { success: false, errors: "invoice is only a record of an external system's invoice" } if self.external
     with_lock do
       return { success: false, errors: "invoice status must be 'complete' before refunding" } unless status == 'complete'
       # get line item breakdown if provided a scalar number
@@ -291,6 +334,12 @@ class Invoice < ApplicationRecord
   #   => { success: true }
 
   def pay(allow_upcoming: false, allow_missed: false, stripe_source: nil, stripe_token: nil) # all optional... stripe_source can be passed as :default instead of a source id string to use the default payment method
+    return {
+      success: false,
+      charge_id: nil,
+      charge_status: nil,
+      error: "invoice is only a record of an external system's invoice"
+    } if self.external
     # set invoice status to processing
     return_error = nil
     with_lock do
@@ -313,7 +362,7 @@ class Invoice < ApplicationRecord
                        charges.create(amount: total, stripe_id: stripe_source)
                      elsif !stripe_token.nil?  # use token
                        charges.create(amount: total, stripe_id: stripe_token)
-                     else                      # use charge's default behavior (which right now is to fail with an error message, and shall probably remain such)
+                     else                      # use charge's default behavior (which right now this is to succeed if the amount is 0, else to fail with an error message)
                        charges.create(amount: total)
                      end
 
@@ -347,7 +396,7 @@ class Invoice < ApplicationRecord
         invoiceable.payment_succeeded(self) if invoiceable.respond_to?(:payment_succeeded)
         # handle pending proration refund if we have one
         if has_pending_refund && pending_refund_data.has_key?('proration_refund')
-          if apply_proration(nil, to_refund_override: pending_refund_data['proration_refund'].to_i, cancel_if_unpaid_override: pending_refund_data['cancel_if_unpaid'])
+          if apply_proration(nil, to_refund_override: pending_refund_data['proration_refund'], cancel_if_unpaid_override: pending_refund_data['cancel_if_unpaid'], cancel_if_missed_override: pending_refund_data['cancel_if_missed'])
             update_columns(has_pending_refund: false)
           else
             # WARNING: do nothing on proration application failure... would be a good place for a generalized error to be logged to the db
@@ -375,7 +424,7 @@ class Invoice < ApplicationRecord
       if self.status == 'available' || (!unless_processing && self.status == 'processing') # other statuses mean we were canceled or already paid
         self.update!(status: 'missed')
         if self.has_pending_refund && self.pending_refund_data.has_key?('proration_refund')
-          if apply_proration(nil, to_refund_override: pending_refund_data['proration_refund'].to_i, cancel_if_unpaid_override: pending_refund_data['cancel_if_unpaid'])
+          if apply_proration(nil, to_refund_override: pending_refund_data['proration_refund'], cancel_if_unpaid_override: pending_refund_data['cancel_if_unpaid'], cancel_if_missed_override: pending_refund_data['cancel_if_missed'])
             update!(has_pending_refund: false)
           else
             # WARNING: do nothing on proration application failure... would be a good place for a generalized error to be logged to the db
@@ -489,17 +538,9 @@ class Invoice < ApplicationRecord
   #   :refund to order from first to refund to last to refund
   #   :adjustment & :max_refund are the same as refund, provided for convenient use by get_fund_distribution
   def line_item_groups(mode = :payment, &block)
-    arr = [
-      [self.due_date, 'complete_refund_before_due_date'],
-      [self.term_first_date || (self.due_date + 1.day), 'complete_refund_before_term'],
-      [(self.term_last_date || (self.due_date + 1.day)) + 1.day, 'complete_refund_during_term']
-    ].sort{|a,b| a[0] <=> b[0] }
-     .map{|x| x[1] }
-    arr.insert(arr.index{|x| x == 'complete_refund_during_term' }, 'prorated_refund')
-    arr.insert(0, 'no_refund')
-    arr.map!{|x| self.line_items.reload.select{|li| li.priced_in && li.refundability == x }.select{|li| block.nil? || block.call(li) } }
-       .select!{|arr| arr.length > 0 }
-    arr.send(mode == :payment ? :itself : :reverse)
+    self.line_items.select{|li| li.priced_in }.sort.slice_when do |a,b|
+      a.refundability != b.refundability || a.full_refund_before_date != b.full_refund_before_date
+    end.to_a.send(mode == :payment ? :itself : :reverse)
   end
 
   # returns an array of { line_item: $line_item_id, amount: $currency_amount } hashes giving a distribution of dist_amount over the line items

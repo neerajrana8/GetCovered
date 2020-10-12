@@ -9,9 +9,9 @@ module V2
       def index
         if params[:search].presence
           @addresses = Address.search_insurables(params[:search])
-          @ids = @addresses.map { |a| a['_source']['addressable_id'] }
+          @ids = @addresses.select{|a| a['_source']['addressable_type'] == 'Insurable' }.map{|a| a['_source']['addressable_id'] }
 
-          @insurables = Insurable.find(@ids)
+          @insurables = Insurable.where(id: @ids)
 
           @response = []
 

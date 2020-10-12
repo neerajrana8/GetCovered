@@ -40,11 +40,17 @@ module V2
 
       def create
         if create_allowed?
-          @agency = current_staff.organizable.agencies.new(create_params)
-          if @agency.errors.none? && @agency.save_as(current_staff)
+          outcome = Agencies::Create.run(
+            agency_params: create_params.to_h,
+            parent_agency: current_staff.organizable,
+            creator: current_staff
+          )
+          if outcome.valid?
+            @agency = outcome.result
             render :show, status: :created
           else
-            render json: @agency.errors, status: :unprocessable_entity
+            render json: standard_error(:agency_creation_error, nil, outcome.errors.full_messages),
+                   status: :unprocessable_entity
           end
         else
           render json: { success: false, errors: ['Unauthorized Access'] },
@@ -116,7 +122,7 @@ module V2
       def update_params
         return({}) if params[:agency].blank?
 
-        params.require(:agency).permit(
+        to_return = params.require(:agency).permit(
           :staff_id, :title, :tos_accepted, :whitelabel,
           contact_info: {}, settings: {}, addresses_attributes: %i[
             city country county id latitude longitude
@@ -124,6 +130,16 @@ module V2
             street_two timezone zip_code
           ]
         )
+
+        existed_ids = to_return[:addresses_attributes]&.map { |addr| addr[:id] }
+
+        unless @agency.blank? || existed_ids.nil? || existed_ids.compact.blank?
+          (@agency.addresses.pluck(:id) - existed_ids).each do |id|
+            to_return[:addresses_attributes] <<
+                ActionController::Parameters.new(id: id, _destroy: true).permit(:id, :_destroy)
+          end
+        end
+        to_return
       end
 
       def supported_filters(called_from_orders = false)

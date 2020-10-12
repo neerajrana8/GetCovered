@@ -20,7 +20,7 @@ module Reports
               'policy_type' => 'H04',
               'policy' => policy.number,
               'cancel_reason' => 'Non Payment',
-              'cancel_date' => policy.cancellation_date_date
+              'cancel_date' => policy.cancellation_date
             }
           end
         end

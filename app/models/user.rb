@@ -62,14 +62,15 @@ class User < ApplicationRecord
   has_many :accounts,
     through: :active_account_users
 
-  accepts_nested_attributes_for :profile, :payment_profiles, :address
+  accepts_nested_attributes_for :payment_profiles, :address
+  accepts_nested_attributes_for :profile, update_only: true
+  accepts_nested_attributes_for :address, update_only: true
 
 
   enum current_payment_method: ['none', 'ach_unverified', 'ach_verified', 'card', 'other'],
     _prefix: true
 
   enum mailchimp_category: ['prospect', 'customer']
-  enum marital_status: ['single', 'married']
 
   # VALIDATIONS
   validates :email, uniqueness: true
@@ -223,6 +224,25 @@ class User < ApplicationRecord
       return "ONLY WORKS IN LOCAL AND DEVELOPMENT ENVIRONMENTS"
     end
   end
+  
+  def get_msi_general_party_info
+    {
+      NameInfo: {
+        PersonName: {
+          GivenName: self.profile.first_name,
+          Surname:   self.profile.last_name
+        }.merge(self.profile.middle_name.blank? ? {} : { OtherGivenName: self.profile.middle_name })
+      },
+      Communications: {
+        PhoneInfo: {
+          PhoneNumber: (self.profile.contact_phone || '').tr('^0-9', '')
+        },
+        EmailInfo: {
+          EmailAddr: self.email
+        }
+      }
+    }
+  end
 
   def identify_segment
     Analytics.identify(
@@ -236,39 +256,42 @@ class User < ApplicationRecord
   end
 
   private
-  
-    def initialize_user
-      self.current_payment_method ||= 'none'
-      self.payment_methods ||= {
-        'default' => nil,
-        'by_id' => {},
-        'fingerprint_index' => {
-          'ach' => {},
-          'card' => {}
-        }
-      }
-      self.tokens ||= {}
-  	end
 
-    def set_qbe_id
-      
-      return_status = false
-      
-      if qbe_id.nil?
-        
-        loop do
-          self.qbe_id = Rails.application.credentials.qbe[:employee_id] + rand(36**7).to_s(36).upcase
-          return_status = true
-          
-          break unless User.exists?(:qbe_id => self.qbe_id)
-        end
+  def history_blacklist
+    %i[tokens]
+  end
+  
+  def initialize_user
+    self.current_payment_method ||= 'none'
+    self.payment_methods ||= {
+      'default' => nil,
+      'by_id' => {},
+      'fingerprint_index' => {
+        'ach' => {},
+        'card' => {}
+      }
+    }
+    self.tokens ||= {}
+  end
+
+  def set_qbe_id
+
+    return_status = false
+
+    if qbe_id.nil?
+
+      loop do
+        self.qbe_id = Rails.application.credentials.qbe[:employee_id] + rand(36**7).to_s(36).upcase
+        return_status = true
+
+        break unless User.exists?(:qbe_id => self.qbe_id)
       end
-      
-      update_column(:qbe_id, self.qbe_id) if return_status == true
-      
-      return return_status
-      
     end
+
+    update_column(:qbe_id, self.qbe_id) if return_status == true
+
+    return return_status
+  end
   
   	def add_to_mailchimp
 #       unless Rails.application.credentials.mailchimp[:list_id][ENV["RAILS_ENV"].to_sym] == "nil"

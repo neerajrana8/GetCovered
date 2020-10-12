@@ -38,10 +38,11 @@ class PolicyPremium < ApplicationRecord
   
   def correct_total
 		errors.add(:total, 'incorrect total') if total != combined_premium() + taxes + total_fees
-		errors.add(:calculation_base, 'incorrect calculation base') if calculation_base != combined_premium() + taxes + amortized_fees
+		errors.add(:calculation_base, 'incorrect calculation base') if calculation_base != combined_premium(internal: true) + internal_taxes + amortized_fees
   end
   
-  def combined_premium
+  def combined_premium(internal: nil)
+    return include_special_premium ? self.internal_base + self.internal_special_premium : self.internal_base if internal
 		return include_special_premium ? self.base + self.special_premium : self.base  
 	end
   
@@ -94,7 +95,7 @@ class PolicyPremium < ApplicationRecord
 			end	
 		end 
 	  
-	  self.total_fees = self.amortized_fees + self.deposit_fees
+	  self.total_fees = self.amortized_fees + self.deposit_fees + self.external_fees
     
     save() if persist
   end
@@ -102,19 +103,41 @@ class PolicyPremium < ApplicationRecord
   def calculate_total(persist = false)
     self.total = self.combined_premium() + self.taxes + self.total_fees
     self.carrier_base = self.combined_premium() + self.taxes
-    self.calculation_base = self.combined_premium() + self.taxes + self.amortized_fees
+    self.calculation_base = self.combined_premium(internal: true) + self.internal_taxes + self.amortized_fees
     save() if self.total > 0 && persist
   end
   
   def update_unearned_premium
-    new_unearned_premium = -self.base +
+    new_unearned_premium = -self.internal_base +
       ::LineItem.all.references(:invoices).includes(:invoice)
         .where(category: 'base_premium', invoices: { invoiceable_type: 'PolicyQuote', invoiceable_id: self.policy_quote_id })
         .inject(0){|sum,li| sum + li.collected }
     # these validations shouldn't be ever necessary, but let's be safe!
     new_unearned_premium =  new_unearned_premium > 0 ? 0 :
-                            new_unearned_premium < -self.base ? -self.base :
+                            new_unearned_premium < -self.internal_base ? -self.internal_base :
                             new_unearned_premium
     self.update(unearned_premium: new_unearned_premium)
+  end
+  
+  # internality methods
+  
+  def internal_fees
+    self.amortized_fees + self.deposit_fees
+  end
+  
+  def internal_base
+    self.only_fees_internal ? 0 : self.base
+  end
+  
+  def internal_special_premium
+    self.only_fees_internal ? 0 : self.special_premium
+  end
+  
+  def internal_taxes
+    self.only_fees_internal ? 0 : self.taxes
+  end
+  
+  def internal_total
+    self.only_fees_internal ? self.internal_fees : self.total - self.external_fees
   end
 end

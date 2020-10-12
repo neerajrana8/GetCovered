@@ -7,10 +7,10 @@ class CarrierAgencyAuthorization < ApplicationRecord
   
   belongs_to :carrier_agency
   belongs_to :policy_type
-  belongs_to :agency
-  		
-  has_many :fees,
-    as: :assignable
+
+  has_one :agency, through: :carrier_agency
+      
+  has_many :fees, as: :assignable
   
   enum state: { AK: 0, AL: 1, AR: 2, AZ: 3, CA: 4, CO: 5, CT: 6, 
                 DC: 7, DE: 8, FL: 9, GA: 10, HI: 11, IA: 12, ID: 13, 
@@ -22,13 +22,5 @@ class CarrierAgencyAuthorization < ApplicationRecord
                 WV: 49, WY: 50 }
   
   validates_presence_of :state
-  validates_uniqueness_of :state, scope: "carrier_agency_id", message: "record for parent Carrier Policy Type already exists"
-  validate :agency_matches_carrier_agency,
-    unless: Proc.new{|caa| caa.agency_id.nil? || caa.carrier_agency.nil? }
-  
-  private
-  
-    def agency_matches_carrier_agency
-      errors.add(:carrier_agency, "must be a valid carrier_agency for the selected agency") unless self.carrier_agency.agency_id == self.agency_id
-    end
+  validates_uniqueness_of :state, scope: 'carrier_agency_id', message: 'record for parent Carrier Policy Type already exists'
 end

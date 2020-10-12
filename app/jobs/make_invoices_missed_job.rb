@@ -9,6 +9,6 @@ class MakeInvoicesMissedJob < ApplicationJob
   private
 
     def set_invoices
-      @invoices = ::Invoice.where(status: 'available').where("due_date < '#{Time.current.to_date.to_s(:db)}'")
+      @invoices = ::Invoice.where(status: 'available', external: false).where("due_date < '#{Time.current.to_date.to_s(:db)}'")
     end
 end

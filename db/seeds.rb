@@ -4,8 +4,9 @@
 
 @opts = ['setup', 'agency', 'account', 'insurable-residential', 
 	  		 'insurable-commercial', 'insurable-cambridge', 'user', 
-	  		 'policy-residential', 'policy-master', 'policy-commercial', 
-	  		 'production', 'staging', 'reset', 'elasticsearch', 'pensio', 'branding-profiles']
+	  		 'policy-residential', 'policy-master', 'policy-commercial',
+	  		 'production', 'staging', 'reset', 'elasticsearch', 'pensio', 'branding-profiles',
+         'msi', 'msi-production', 'msi-test-addresses', 'msi-regenerate-ircs']
 
 def display_options()
 	@string = ""

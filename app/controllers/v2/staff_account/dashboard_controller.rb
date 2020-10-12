@@ -7,8 +7,8 @@ module V2
     class DashboardController < StaffAccountController
       def total_dashboard
         unit_ids = InsurableType::UNITS_IDS
-        @covered = Insurable.where(covered: true, account: current_staff.organizable).count || 0
-        @uncovered = Insurable.where(covered: false, account: current_staff.organizable).count || 0
+        @covered = Insurable.where(insurable_type_id: unit_ids, covered: true, account: current_staff.organizable).count || 0
+        @uncovered = Insurable.where(insurable_type_id: unit_ids, covered: false, account: current_staff.organizable).count || 0
         @units = @covered + @uncovered
         community_ids = InsurableType::COMMUNITIES_IDS
         @communities = Insurable.where(insurable_type_id: community_ids, account: current_staff.organizable).count
@@ -69,6 +69,16 @@ module V2
           @units_policies = paginator(Policy.joins(:insurables).where(insurables: { id: @units }).order(created_at: :desc))
           render :buildings_communities, status: :ok
         end
+      end
+
+      def uninsured_units
+        units_relation =
+          Insurable.
+            where(insurable_type_id: InsurableType::UNITS_IDS, covered: false, account: current_staff.organizable)
+
+        units_relation = units_relation.where(insurable_id: params[:insurable_id]) if params[:insurable_id].present?
+        @insurables = paginator(units_relation)
+        render template: 'v2/shared/insurables/index', status: :ok
       end
 
       private
