@@ -165,7 +165,8 @@
             via: "get",
             defaults: { recordable_type: Policy }
           get 'resend_policy_documents'
-          get :refund_policy
+          put :refund_policy
+          put :cancel_policy
           put :update_coverage_proof
           delete :delete_policy_document
         end

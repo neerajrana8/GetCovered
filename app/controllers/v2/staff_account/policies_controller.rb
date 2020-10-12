@@ -8,7 +8,7 @@ module V2
 
       include PoliciesMethods
 
-      before_action :set_policy, only: [:update, :show, :update_coverage_proof, :delete_policy_document]
+      before_action :set_policy, only: [:update, :show, :update_coverage_proof, :delete_policy_document, :refund_policy, :cancel_policy]
       
       before_action :set_substrate, only: [:index]
       
@@ -27,6 +27,24 @@ module V2
       def resend_policy_documents
         ::Policies::SendProofOfCoverageJob.perform_later(params[:id])
         render json: { message: 'Documents were sent' }
+      end
+
+      def refund_policy
+        @policy.cancel('manual_cancellation_with_refunds', Time.zone.now)
+        if @policy.errors.any?
+          render json: standard_error(:refund_policy_error, nil, @policy.errors.full_messages)
+        else
+          render :show, status: :ok
+        end
+      end
+
+      def cancel_policy
+        @policy.cancel('manual_cancellation_without_refunds', Time.zone.now)
+        if @policy.errors.any?
+          render json: standard_error(:cancel_policy_error, nil, @policy.errors.full_messages)
+        else
+          render :show, status: :ok
+        end
       end
 
       private

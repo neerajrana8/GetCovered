@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_10_04_075351) do
+ActiveRecord::Schema.define(version: 2020_10_08_152234) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
@@ -340,9 +340,7 @@ ActiveRecord::Schema.define(version: 2020_10_04_075351) do
     t.integer "requestable_id"
     t.string "requestable_type"
     t.integer "changeable_id"
-    t.index ["customized_action"], name: "index_change_requests_on_customized_action", unique: true
     t.index ["staff_id"], name: "index_change_requests_on_staff_id"
-    t.index ["status"], name: "index_change_requests_on_status", unique: true
   end
 
   create_table "charges", force: :cascade do |t|
@@ -871,9 +869,9 @@ ActiveRecord::Schema.define(version: 2020_10_04_075351) do
     t.date "last_payment_date"
     t.date "next_payment_date"
     t.bigint "policy_group_id"
-    t.boolean "declined"
     t.string "address"
     t.string "out_of_system_carrier_title"
+    t.boolean "declined"
     t.bigint "policy_id"
     t.integer "cancellation_reason"
     t.index ["account_id"], name: "index_policies_on_account_id"

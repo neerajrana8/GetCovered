@@ -5,12 +5,14 @@
 module V2
   module StaffAgency
     class PoliciesController < StaffAgencyController
+      
+      before_action :set_policy, only: %i[update show refund_policy cancel_policy]
 
       include PoliciesMethods
 
       before_action :set_policy, only: %i[update show update_coverage_proof delete_policy_document]
-      
-      before_action :set_substrate, only: [:index]
+
+      before_action :set_substrate, only: [:create, :index, :add_coverage_proof]
       
       def index
         if current_staff.getcovered_agent? && params[:agency_id].nil?
@@ -36,7 +38,25 @@ module V2
         ::Policies::SendProofOfCoverageJob.perform_later(params[:id])
         render json: { message: 'Documents were sent' }
       end
-      
+
+      def refund_policy
+        @policy.cancel('manual_cancellation_with_refunds', Time.zone.now)
+        if @policy.errors.any?
+          render json: standard_error(:refund_policy_error, nil, @policy.errors.full_messages)
+        else
+          render :show, status: :ok
+        end
+      end
+
+      def cancel_policy
+        @policy.cancel('manual_cancellation_without_refunds', Time.zone.now)
+        if @policy.errors.any?
+          render json: standard_error(:cancel_policy_error, nil, @policy.errors.full_messages)
+        else
+          render :show, status: :ok
+        end
+      end
+
       private
       
       def view_path

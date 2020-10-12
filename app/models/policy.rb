@@ -99,6 +99,7 @@ class Policy < ApplicationRecord
   has_many :commission_deductions
   
   has_many :histories, as: :recordable
+  has_many :change_requests, as: :changeable
   
   has_many_attached :documents
 
@@ -163,7 +164,9 @@ class Policy < ApplicationRecord
     new_application_nonpayment: 3,    # QBE NP
     underwriter_cancellation:   4,    # QBE UW
     disqualification:           5,    # no qbe code
-    test_policy:                6     # no qbe code
+    test_policy:                6,     # no qbe code
+    manual_cancellation_with_refunds:     7,     # no qbe code
+    manual_cancellation_without_refunds:  8    # no qbe code
   }
   
   # Cancellation reasons with special refund logic; allowed values:
@@ -173,14 +176,11 @@ class Policy < ApplicationRecord
   SPECIAL_CANCELLATION_REFUND_LOGIC = {
     'insured_request' =>          :early_cancellation, 
     'nonpayment'      =>          :no_refund,
-    'test_policy'     =>          :no_refund
+    'test_policy'     =>          :no_refund,
+    'manual_cancellation_with_refunds' => :early_cancellation,
+    'manual_cancellation_without_refunds' => :no_refund
   }
-  
-  
-  
-  
-  
-      
+
   def in_system?
     policy_in_system == true
   end
@@ -374,22 +374,31 @@ class Policy < ApplicationRecord
     end
   end
 
+  def refund_available_days
+    max_days_for_full_refund =
+      (CarrierPolicyType.where(policy_type_id: self.policy_type_id, carrier_id: self.carrier_id).
+        take&.max_days_for_full_refund || 0).
+        days - 1.day
+    raw_days = (self.created_at.to_date + max_days_for_full_refund - Time.zone.now.to_date).to_i
+    raw_days.negative? ? 0 : raw_days
+  end
+
   private
       
-    def date_order
-      errors.add(:expiration_date, 'expiration date cannot be before effective date.') if expiration_date < effective_date
-    end
+  def date_order
+    errors.add(:expiration_date, 'expiration date cannot be before effective date.') if expiration_date < effective_date
+  end
 
-    def correct_document_mime_type
-      documents.each do |document|
-        if !document.blob.content_type.starts_with?('image/png', 'image/jpeg', 'image/jpg', 'image/svg',
-          'image/gif', 'application/pdf', 'text/plain', 'application/msword',
-          'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-          'text/comma-separated-values', 'application/vnd.ms-excel'
-          )
-          errors.add(:documents, 'The document wrong format, only: PDF, DOC, DOCX, XLSX, XLS, CSV, JPG, JPEG, PNG, GIF, SVG, TXT')
-        end
+  def correct_document_mime_type
+    documents.each do |document|
+      if !document.blob.content_type.starts_with?('image/png', 'image/jpeg', 'image/jpg', 'image/svg',
+        'image/gif', 'application/pdf', 'text/plain', 'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'text/comma-separated-values', 'application/vnd.ms-excel'
+        )
+        errors.add(:documents, 'The document wrong format, only: PDF, DOC, DOCX, XLSX, XLS, CSV, JPG, JPEG, PNG, GIF, SVG, TXT')
       end
     end
+  end
 end

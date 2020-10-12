@@ -31,7 +31,7 @@
       end
 
     resources :refunds,
-      only: [ :create, :index ] do
+      only: [ :index, :create, :update] do
         member do
           get :approve
           get :decline
@@ -185,9 +185,20 @@
             defaults: { recordable_type: Policy }
           put :update_coverage_proof
           delete :delete_policy_document
+          put :refund_policy
+          put :cancel_policy
         end
+
         get "search", to: 'policies#search', on: :collection
+    end
+
+    resources :policy_cancellation_requests, only: [ :index, :show ] do
+      member do
+        put :approve
+        put :cancel
+        put :decline
       end
+    end
 
     resources :policy_coverages, only: [ :update ]
 

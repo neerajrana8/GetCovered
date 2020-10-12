@@ -224,15 +224,24 @@
           via: "get",
           defaults: { recordable_type: Policy }
         get 'resend_policy_documents'
-        get :refund_policy
+        put :refund_policy
+        put :cancel_policy
         put :update_coverage_proof
         delete :delete_policy_document
       end
       get "search", to: 'policies#search', on: :collection
     end
 
+    resources :policy_cancellation_requests, only: [ :index, :show ] do
+      member do
+        put :approve
+        put :cancel
+        put :decline
+      end
+    end
+
     resources :refunds,
-      only: [ :index ] do
+      only: [ :index, :create, :update] do
         member do
           get :approve
           get :decline

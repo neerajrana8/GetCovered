@@ -7,8 +7,8 @@ module V2
     class PoliciesController < StaffSuperAdminController
 
       include PoliciesMethods
-      
-      before_action :set_policy, only: [:update, :show, :update_coverage_proof, :delete_policy_document]
+
+      before_action :set_policy, only: [:update, :show, :refund_policy, :cancel_policy, :update_coverage_proof, :delete_policy_document]
       
       before_action :set_substrate, only: [:index]
       
@@ -22,6 +22,24 @@ module V2
       def search
         @policies = Policy.search(params[:query]).records
         render json: @policies.to_json, status: 200
+      end
+
+      def refund_policy
+        @policy.cancel('manual_cancellation_with_refunds', Time.zone.now)
+        if @policy.errors.any?
+          render json: standard_error(:refund_policy_error, nil, @policy.errors.full_messages)
+        else
+          render :show, status: :ok
+        end
+      end
+
+      def cancel_policy
+        @policy.cancel('manual_cancellation_without_refunds', Time.zone.now)
+        if @policy.errors.any?
+          render json: standard_error(:cancel_policy_error, nil, @policy.errors.full_messages)
+        else
+          render :show, status: :ok
+        end
       end
 
       private
