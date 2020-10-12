@@ -150,12 +150,17 @@
       only: [ :index, :show ]
 
     resources :policies,
-      only: [ :index, :show ] do
+      only: [ :update, :index, :show ] do
+        collection do
+          post :add_coverage_proof
+        end
         member do
           get "histories",
             to: "histories#index_recordable",
             via: "get",
             defaults: { recordable_type: Policy }
+          put :update_coverage_proof
+          delete :delete_policy_document
         end
         get "search", to: 'policies#search', on: :collection
       end
