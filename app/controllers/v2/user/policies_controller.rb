@@ -10,7 +10,7 @@ module V2
       
       before_action :user_from_invitation_token, only: %i[bulk_decline render_eoi bulk_accept]
       
-      before_action :set_policy, only: %i[show refund_policy]
+      before_action :set_policy, only: %i[show refund_policy cancel_policy]
       
       before_action :set_substrate, only: %i[index add_coverage_proof]
       
