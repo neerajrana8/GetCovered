@@ -90,6 +90,7 @@ describe 'Agency api spec', type: :request do
 
   it 'should create new subagency', perform_enqueued: true do
     sub_agency = create_agency(sub_agency_params)
+
     expect(@agency.agencies.count).to eq(1)
   end
 
@@ -110,7 +111,7 @@ describe 'Agency api spec', type: :request do
   it 'should throw error when parent agency not exist', perform_enqueued: true do
     create_sub_agency(sub_agency_params(rand(1000..1111)))
     expect(response.status).to eq(422)
-    expect(JSON.parse(response.body)["agency"]).to eq(["Parent id incorrect"])
+    expect(JSON.parse(response.body)["payload"]).to eq(["Agency Parent id incorrect"])
   end
 
   it 'should throw error when agency tried to update to sub-agency', perform_enqueued: true do
