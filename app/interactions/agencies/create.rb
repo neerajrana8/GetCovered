@@ -26,11 +26,11 @@ module Agencies
 
     def create_agency
       if creator.present?
-        agency = Agency.new(agency_params.merge(agency_id: parent_agency&.id))
+        agency = Agency.new(agency_params.merge(agency_id: agency_params['agency_id'] || parent_agency&.id))
         agency.save_as(creator)
         agency
       else
-        Agency.create(agency_params.merge(agency_id: parent_agency&.id))
+        Agency.create(agency_params.merge(agency_id: agency_params['agency_id'] || parent_agency&.id))
       end
     end
   end
