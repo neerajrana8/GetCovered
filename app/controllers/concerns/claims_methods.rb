@@ -3,6 +3,7 @@ module ClaimsMethods
 
   def create
     @claim = Claim.new(claim_params)
+    @claim.claimant = current_staff
     if @claim.save_as(current_staff)
       render :show, status: :created
       ClaimSendJob.perform_later(current_staff, @claim.id)
@@ -28,7 +29,7 @@ module ClaimsMethods
 
     to_return = params.require(:claim).permit(
         :description, :insurable_id, :policy_id, :subject,
-        :time_of_loss, :type_of_loss, :claimant_type, :claimant_id, documents: []
+        :time_of_loss, :type_of_loss, documents: []
     )
     to_return
   end
