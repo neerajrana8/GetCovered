@@ -86,6 +86,8 @@ class Agency < ApplicationRecord
   accepts_nested_attributes_for :addresses, allow_destroy: true
 
   scope :enabled, -> { where(enabled: true) }
+  scope :sub_agencies, -> { where.not(agency_id: nil) }
+  scope :main_agencies, -> { where(agency_id: nil) }
 
   # ActiveSupport +pluralize+ method doesn't work correctly for this word(returns staffs). So I added alias for it
   alias staffs staff
@@ -93,6 +95,8 @@ class Agency < ApplicationRecord
   # Validations
 
   validates_presence_of :title, :slug, :call_sign
+  validate :parent_agency_exist, on: [:create, :update]
+  validate :agency_to_sub_disabled, on: :update
 
   GET_COVERED_ID = 1
 
@@ -178,9 +182,25 @@ class Agency < ApplicationRecord
     end
   end
 
+  def parent_agencies_ids
+    @ids ||= Agency.main_agencies.pluck(:id)
+  end
+
   private
 
   def initialize_agency
    # Blank for now...
   end
+
+  def parent_agency_exist
+    unless self.agency_id.nil? || parent_agencies_ids.include?(self.agency_id)
+      errors.add(:agency, "Parent id incorrect")
+    end
+  end
+
+  def agency_to_sub_disabled
+    errors.add(:agency, "Agency can't be updated to sub-agency") if parent_agencies_ids.include?(self.agency_id) &&
+                                                                    parent_agencies_ids.include?(self.id)
+  end
+
 end
