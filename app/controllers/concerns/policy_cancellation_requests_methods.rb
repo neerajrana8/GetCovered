@@ -11,6 +11,7 @@ module PolicyCancellationRequestsMethods
   end
 
   def approve
+    policy = @change_request.changeable
     policy.cancel('manual_cancellation_with_refunds', @change_request.created_at)
     @change_request.update(status: :approved)
     render template: 'v2/shared/change_requests/show', status: :ok
