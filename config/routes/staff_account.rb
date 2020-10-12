@@ -164,7 +164,8 @@
             via: "get",
             defaults: { recordable_type: Policy }
           get 'resend_policy_documents'
-          get :refund_policy
+          put :refund_policy
+          put :cancel_policy
         end
         get "search", to: 'policies#search', on: :collection
       end

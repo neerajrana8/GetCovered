@@ -10,13 +10,8 @@ module V2
       private
 
       def relation
-        result =
-          ChangeRequest.
-            joins('INNER JOIN policies ON (change_requests.changeable_id = policies.id AND change_requests.changeable_type = \'Policy\')').
-            where(customized_action: 'cancel').
-            order(created_at: :desc)
 
-        result = result.where(policies: { agency_id: params[:agency_id] }) if params[:agency_id].present?
+        result = params[:agency_id].present? ? super.where(policies: { agency_id: params[:agency_id] }) : super
         result
       end
     end

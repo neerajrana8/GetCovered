@@ -164,7 +164,10 @@
             to: "histories#index_recordable",
             via: "get",
             defaults: { recordable_type: Policy }
+          put :refund_policy
+          put :cancel_policy
         end
+
         get "search", to: 'policies#search', on: :collection
     end
 

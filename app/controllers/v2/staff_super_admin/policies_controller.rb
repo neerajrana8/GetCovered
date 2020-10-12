@@ -6,7 +6,7 @@ module V2
   module StaffSuperAdmin
     class PoliciesController < StaffSuperAdminController
       
-      before_action :set_policy, only: [:show]
+      before_action :set_policy, only: [:show, :refund_policy, :cancel_policy]
       
       before_action :set_substrate, only: [:index]
       

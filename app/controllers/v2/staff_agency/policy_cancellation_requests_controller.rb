@@ -10,11 +10,7 @@ module V2
       private
 
       def relation
-        ChangeRequest.
-          joins('INNER JOIN policies ON (change_requests.changeable_id = policies.id AND change_requests.changeable_type = \'Policy\')').
-          where(change_requests: { customized_action: 'cancel' }).
-          where(policies: { agency_id: @agency.id }).
-          order(created_at: :desc)
+        super.where(policies: { agency_id: @agency.id })
       end
     end
   end

@@ -206,6 +206,7 @@ ActiveRecord::Schema.define(version: 2020_10_08_152234) do
     t.string "logo_url"
     t.string "footer_logo_url"
     t.string "subdomain"
+    t.boolean "global_default", default: false, null: false
     t.index ["profileable_type", "profileable_id"], name: "index_branding_profiles_on_profileable_type_and_profileable_id"
     t.index ["url"], name: "index_branding_profiles_on_url", unique: true
   end
@@ -644,7 +645,11 @@ ActiveRecord::Schema.define(version: 2020_10_08_152234) do
     t.bigint "lead_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "policy_type_id"
+    t.bigint "agency_id"
+    t.index ["agency_id"], name: "index_lead_events_on_agency_id"
     t.index ["lead_id"], name: "index_lead_events_on_lead_id"
+    t.index ["policy_type_id"], name: "index_lead_events_on_policy_type_id"
   end
 
   create_table "leads", force: :cascade do |t|
@@ -654,7 +659,13 @@ ActiveRecord::Schema.define(version: 2020_10_08_152234) do
     t.string "labels", array: true
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "profile_id"
+    t.bigint "address_id"
+    t.integer "status", default: 0
+    t.datetime "las_visit"
+    t.index ["address_id"], name: "index_leads_on_address_id"
     t.index ["email"], name: "index_leads_on_email"
+    t.index ["profile_id"], name: "index_leads_on_profile_id"
     t.index ["user_id"], name: "index_leads_on_user_id"
   end
 

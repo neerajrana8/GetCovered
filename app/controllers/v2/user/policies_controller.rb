@@ -6,13 +6,13 @@ module V2
   module User
     class PoliciesController < UserController
       
-      skip_before_action :authenticate_user!, only: [:bulk_decline, :render_eoi, :bulk_accept, :refund_policy]
+      skip_before_action :authenticate_user!, only: %i[bulk_decline render_eoi bulk_accept refund_policy cancel_policy]
       
-      before_action :user_from_invitation_token, only: [:bulk_decline, :render_eoi, :bulk_accept]
+      before_action :user_from_invitation_token, only: %i[bulk_decline render_eoi bulk_accept]
       
-      before_action :set_policy, only: [:show, :refund_policy]
+      before_action :set_policy, only: %i[show refund_policy]
       
-      before_action :set_substrate, only: [:index, :add_coverage_proof]
+      before_action :set_substrate, only: %i[index add_coverage_proof]
       
       def index
         if params[:short]
@@ -22,12 +22,11 @@ module V2
         end
       end
       
-      def show
-      end
+      def show; end
       
       def add_coverage_proof
         insurable = Insurable.find_by(id: params[:insurable_id])
-        render json: { message: 'Need Insurable' }, status: :unprocessable_entity and return if insurable.nil?
+        render(json: { message: 'Need Insurable' }, status: :unprocessable_entity) && return if insurable.nil?
 
         @policy = @substrate.new(coverage_proof_params)
         @policy.account = insurable.account
@@ -47,9 +46,9 @@ module V2
       
       def bulk_decline
         @policy = ::Policy.find(params[:id])
-        render json: { errors: ['Unauthorized Access'] }, status: :unauthorized and return unless @policy.primary_user == @user
+        render(json: { errors: ['Unauthorized Access'] }, status: :unauthorized) && return unless @policy.primary_user == @user
         
-        render json: { errors: ["Policy was already #{@policy.declined ? 'declined' : 'accepted'}"] }, status: :not_acceptable and return unless @policy.declined.nil?
+        render(json: { errors: ["Policy was already #{@policy.declined ? 'declined' : 'accepted'}"] }, status: :not_acceptable) && return unless @policy.declined.nil?
         
         @policy.bulk_decline
         render json: { message: 'Policy is declined' }
@@ -57,9 +56,9 @@ module V2
       
       def bulk_accept
         @policy = ::Policy.find(params[:id])
-        render json: { errors: ['Unauthorized Access'] }, status: :unauthorized and return unless @policy.primary_user == @user
+        render(json: { errors: ['Unauthorized Access'] }, status: :unauthorized) && return unless @policy.primary_user == @user
         
-        render json: { errors: ["Policy was already #{@policy.declined ? 'declined' : 'accepted'}"] }, status: :not_acceptable and return unless @policy.declined.nil?
+        render(json: { errors: ["Policy was already #{@policy.declined ? 'declined' : 'accepted'}"] }, status: :not_acceptable) && return unless @policy.declined.nil?
         
         @policy.update_attribute(:declined, false)
         ::Policies::SendProofOfCoverageJob.perform_later(@policy.id)
@@ -73,9 +72,19 @@ module V2
       end
 
       def refund_policy
-        change_request = ChangeRequest.new(requestable: current_user, changeable: @policy, customized_action: 'cancel')
+        change_request = ChangeRequest.new(requestable: current_user, changeable: @policy, customized_action: 'refund')
         if change_request.save
           render json: { message: 'Refund was successfully sent' }, status: :ok
+        else
+          render json: standard_error(:refund_policy_error, 'Refund was not successfully sent', change_request.errors.full_messages),
+                 status: :unprocessable_entity
+        end
+      end
+
+      def cancel_policy
+        change_request = ChangeRequest.new(requestable: current_user, changeable: @policy, customized_action: 'cancel')
+        if change_request.save
+          render json: { message: 'Cancel was successfully sent' }, status: :ok
         else
           render json: standard_error(:refund_policy_error, 'Refund was not successfully sent', change_request.errors.full_messages),
                  status: :unprocessable_entity
@@ -84,13 +93,13 @@ module V2
       
       def render_eoi
         @policy = ::Policy.find(params[:id])
-        render json: { errors: ['Unauthorized Access'] }, status: :unauthorized and return unless @policy.primary_user == @user
+        render(json: { errors: ['Unauthorized Access'] }, status: :unauthorized) && return unless @policy.primary_user == @user
         
-        render json: { errors: ["Policy was already #{@policy.declined ? 'declined' : 'accepted'}"] }, status: :not_acceptable and return unless @policy.declined.nil?
+        render(json: { errors: ["Policy was already #{@policy.declined ? 'declined' : 'accepted'}"] }, status: :not_acceptable) && return unless @policy.declined.nil?
         
         render json: {
-          evidence_of_insurance: render_to_string("/v2/pensio/evidence_of_insurance.html.erb", :layout => false),
-          summary: render_to_string("/v2/pensio/summary.html.erb", :layout => false),
+          evidence_of_insurance: render_to_string('/v2/pensio/evidence_of_insurance.html.erb', layout: false),
+          summary: render_to_string('/v2/pensio/summary.html.erb', layout: false)
         }
       end
       
@@ -98,7 +107,7 @@ module V2
       private
       
       def view_path
-        super + "/policies"
+        super + '/policies'
       end
       
       def set_policy
@@ -126,11 +135,10 @@ module V2
       
       def coverage_proof_params
         params.require(:policy).permit(:number,
-          :account_id, :agency_id, :policy_type_id,
-          :carrier_id, :effective_date, :expiration_date,
-          :out_of_system_carrier_title, :address, documents: [],
-          policy_users_attributes: [ :user_id ]
-        )
+                                       :account_id, :agency_id, :policy_type_id,
+                                       :carrier_id, :effective_date, :expiration_date,
+                                       :out_of_system_carrier_title, :address, documents: [],
+                                                                               policy_users_attributes: [:user_id])
       end
       
     end

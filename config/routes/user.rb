@@ -42,6 +42,7 @@ scope module: :user, path: "user" do
       get 'bulk_accept'
       get 'resend_policy_documents'
       get 'refund_policy'
+      get 'cancel_policy'
     end
   end
   

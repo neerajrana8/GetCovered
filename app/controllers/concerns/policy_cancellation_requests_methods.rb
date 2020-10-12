@@ -35,6 +35,20 @@ module PolicyCancellationRequestsMethods
     @change_request = relation.find(params[:id])
   end
 
+  def relation
+    result =
+      ChangeRequest.
+        joins('INNER JOIN policies ON (change_requests.changeable_id = policies.id AND change_requests.changeable_type = \'Policy\')').
+        order(created_at: :desc)
+    actions =
+      if params[:customized_action].present?
+        params[:customized_action]
+      else
+        %w[cancel refund]
+      end
+    result.where(change_requests: { customized_action: actions })
+  end
+
   included do
     before_action :set_change_request, only: %i[show approve decline cancel]
   end
