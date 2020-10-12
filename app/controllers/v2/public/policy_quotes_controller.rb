@@ -170,11 +170,12 @@ module V2
 									event: 'Order Completed',
 									properties: { category: 'Orders' }
 								)
-							end
+              end
 							render json: {
-								:error => @quote_attempt[:success] ? "#{ @policy_type_identifier } Accepted" : "#{ @policy_type_identifier } Could Not Be Accepted",
-								:message => @quote_attempt[:message]
-							}, status: @quote_attempt[:success] ? 200 : 500
+								error: ("#{ @policy_type_identifier } Could Not Be Accepted" unless @quote_attempt[:success]),
+								message: ("#{ @policy_type_identifier } Accepted. " if @quote_attempt[:success]).to_s + @quote_attempt[:message],
+                password_filled: @user.encrypted_password.present?
+							}.compact, status: @quote_attempt[:success] ? 200 : 500
 							
 				    else
 				    	render json: { error: "Failure", message: result.errors.full_messages.join(' and ') }.to_json, status: 422
