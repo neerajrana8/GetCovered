@@ -118,7 +118,7 @@ class Policy < ApplicationRecord
   scope :master_policy_coverages, -> { where(policy_type_id: PolicyType::MASTER_COVERAGE_ID) }
 
   accepts_nested_attributes_for :policy_premiums,
-  :insurables, :policy_users, :policy_insurables
+  :insurables, :policy_users, :policy_insurables, :policy_application
   accepts_nested_attributes_for :policy_coverages, allow_destroy: true
   #  after_save :update_leases, if: :saved_changes_to_status?
   
@@ -197,7 +197,7 @@ class Policy < ApplicationRecord
   end
   
   def is_allowed_to_update?
-    errors.add(:policy_in_system, 'Cannot update in system policy') if policy_in_system == true
+    errors.add(:policy_in_system, 'Cannot update in system policy') if policy_in_system == true && !rent_garantee? && !residential?
   end
   
   def residential_account_present    
@@ -296,7 +296,7 @@ class Policy < ApplicationRecord
       when :early_cancellation
         # prorate as if we'd cancelled immediately if cancellation is early, otherwise prorate regularly
         max_days_for_full_refund = (CarrierPolicyType.where(policy_type_id: self.policy_type_id, carrier_id: self.carrier_id).take&.max_days_for_full_refund || 0).days
-        if cancel_date < self.created_at.to_date + max_days_for_full_refund.days
+        if cancel_date < self.created_at.to_date + max_days_for_full_refund
           self.invoices.each do |invoice|
             invoice.apply_proration(cancel_date, refund_date: cancel_date, to_ensure_refunded: Proc.new{|li| ['amortized_fees', 'deposit_fees'].include?(li.category) ? 0 : li.price })
           end
@@ -362,6 +362,10 @@ class Policy < ApplicationRecord
   
   def residential?
     policy_type == PolicyType.residential
+  end
+
+  def rent_garantee?
+    policy_type == PolicyType.rent_garantee
   end
   
   settings index: { number_of_shards: 1 } do

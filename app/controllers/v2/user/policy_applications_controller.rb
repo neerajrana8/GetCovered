@@ -45,10 +45,13 @@ module V2
           if user.present? && user == current_user
             user.update(policy_user[:user_attributes])
             user.profile.update(policy_user[:user_attributes][:profile_attributes])
-            if user.address.present?
-              user.address.update(policy_user[:user_attributes][:address_attributes])
-            else
-              user.address.create(policy_user[:user_attributes][:address_attributes])
+            address_attributes =policy_user[:user_attributes][:address_attributes]
+            if address_attributes.present?
+              if user.address.present?
+                user.address.update(policy_user[:user_attributes][:address_attributes])
+              else
+                Address.create(policy_user[:user_attributes][:address_attributes].merge(addressable: user))
+              end
             end
 
             @application.users << user
@@ -164,7 +167,7 @@ module V2
                   status: @quote.status,
                   premium: @premium
                 },
-                invoices: @quote.invoices,
+                invoices: @quote.invoices.order("due_date ASC"),
                 user: {
                   id: @application.primary_user.id,
                   stripe_id: @application.primary_user.stripe_id
@@ -353,6 +356,7 @@ module V2
         if @policy_application.policy_type.title == 'Rent Guarantee'
 
           if @policy_application.update(update_rental_guarantee_params) &&
+             update_policy_user(@policy_application) &&
              @policy_application.update(status: 'complete')
 
             quote_attempt = @policy_application.pensio_quote
@@ -372,7 +376,7 @@ module V2
                   status: @policy_application.status,
                   premium: @premium
                 },
-                invoices: @quote.invoices,
+                invoices: @quote.invoices.order("due_date ASC"),
                 user: {
                   id: @policy_application.primary_user.id,
                   stripe_id: @policy_application.primary_user.stripe_id
@@ -394,6 +398,20 @@ module V2
       end
 
       private
+
+      # Only for fixing the issue with not saving address on the rent guarantee form
+      def update_policy_user(policy_application)
+        user = policy_application.primary_user
+
+        policy_user_params = create_policy_users_params[:policy_users_attributes].first
+
+        if user.present? && policy_user_params.present?
+          user.update(policy_user_params[:user_attributes])
+          return false if user.errors.any?
+        end
+
+        true
+      end
 
       def view_path
         super + '/policy_applications'

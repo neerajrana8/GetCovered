@@ -44,7 +44,7 @@ module V2
 							status: @policy_quote.status, 
 							premium: @policy_quote.policy_premium
 						},
-						invoices: @policy_quote.invoices,
+						invoices: @policy_quote.invoices.order("due_date ASC"),
 						user: { 
 							id: @policy_quote.policy_application.primary_user().id,
 							stripe_id: @policy_quote.policy_application.primary_user().stripe_id
@@ -134,9 +134,9 @@ module V2
 	    	unless @policy_quote.nil?
 		    	@user = ::User.find(accept_policy_quote_params[:id])
 		    	unless @user.nil?
-            # MOOSE WARNING: this next line overrides the provided token with tok_visa for MSI in development, because we need to use payeezy test cards
-						result = @user.attach_payment_source(Rails.env != 'production' && @policy_quote.policy_application.carrier_id == 5 ? 'tok_visa' : accept_policy_quote_params[:source])
-			    	if result.valid?
+            uses_stripe = (@policy_quote.policy_application.carrier_id == 5 ? false : true) # MOOSE WARNING: move this to a configurable field on CarrierPolicyType or something?
+						result = !uses_stripe ? nil : @user.attach_payment_source(accept_policy_quote_params[:source])
+			    	if !uses_stripe || result.valid?
               bind_params = []
               # collect bind params for msi
               if @policy_quote.policy_application.carrier_id == 5
@@ -170,11 +170,12 @@ module V2
 									event: 'Order Completed',
 									properties: { category: 'Orders' }
 								)
-							end
+              end
 							render json: {
-								:error => @quote_attempt[:success] ? "#{ @policy_type_identifier } Accepted" : "#{ @policy_type_identifier } Could Not Be Accepted",
-								:message => @quote_attempt[:message]
-							}, status: @quote_attempt[:success] ? 200 : 500
+								error: ("#{ @policy_type_identifier } Could Not Be Accepted" unless @quote_attempt[:success]),
+								message: ("#{ @policy_type_identifier } Accepted. " if @quote_attempt[:success]).to_s + @quote_attempt[:message],
+                password_filled: @user.encrypted_password.present?
+							}.compact, status: @quote_attempt[:success] ? 200 : 500
 							
 				    else
 				    	render json: { error: "Failure", message: result.errors.full_messages.join(' and ') }.to_json, status: 422

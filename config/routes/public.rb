@@ -39,6 +39,11 @@ scope module: :public do
 	  end
   end
 
+  post '/msi/unit-list',
+    to: 'insurables#msi_unit_list',
+    as: :msi_unit_list,
+    defaults: { format: 'xml' }
+
   resources :lead_events, only: [:create]
   
   resources :policy_applications,

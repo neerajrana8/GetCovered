@@ -5,8 +5,8 @@
 module V2
   module StaffAgency
     class BrandingProfilesController < StaffAgencyController
-      
-      before_action :set_branding_profile, only: [:update, :show, :destroy, :faqs, :faq_create, :faq_update, :faq_question_create, :faq_question_update]
+
+      before_action :set_branding_profile, only: %i[update show destroy faqs faq_create faq_update faq_question_create faq_question_update attach_images]
 
       def show
       end
@@ -31,7 +31,7 @@ module V2
 
       def faq_create
         @branding_profile = BrandingProfile.find(params[:id])
-        @faq = @branding_profile.faqs.new(faq_params)
+        @faq = @branding_profile.faqs.new(faq_params.merge(faq_order_params))
         if @faq.errors.empty? && @faq.save
           render json: @faq, status: :created
         else
@@ -62,7 +62,7 @@ module V2
       def faq_question_create
         @branding_profile = BrandingProfile.find(params[:id])
         @faq = @branding_profile.faqs.find(params[:faq_id])
-        @faq_question = @faq.faq_questions.new(faq_question_params)
+        @faq_question = @faq.faq_questions.new(faq_question_params.merge(question_order_params))
         if @faq_question.errors.empty? && @faq_question.save
           render json: @faq_question, status: :created
         else
@@ -91,7 +91,7 @@ module V2
           render json: { message: @faq_question.errors }, status: :unprocessable_entity
         end
       end
-      
+
       def update
         if update_allowed?
           if @branding_profile.update(branding_profile_params)
@@ -103,9 +103,34 @@ module V2
           render json: { success: false, errors: ['Unauthorized Access'] }, status: :unauthorized
         end
       end
-      
+
+      def attach_images
+        if update_allowed?
+          if attach_images_params[:logo_url].present?
+            @branding_profile.images.attach(attach_images_params[:logo_url])
+            img_url = rails_blob_url(@branding_profile.images.last)
+            if img_url.present? && @branding_profile.update_column(:logo_url, img_url)
+              render json: { success: true }, status: :ok
+            else
+              render json: { success: false }, status: :unprocessable_entity
+            end
+          end
+          if attach_images_params[:footer_logo_url].present?
+            @branding_profile.images.attach(attach_images_params[:footer_logo_url])
+            img_url = rails_blob_url(@branding_profile.images.last)
+            if img_url.present? && @branding_profile.update_column(:footer_logo_url, img_url)
+              render json: { success: true }, status: :ok
+            else
+              render json: { success: false }, status: :unprocessable_entity
+            end
+          end
+        else
+          render json: { success: false, errors: ['Unauthorized Access'] }, status: :unauthorized
+        end
+      end
+
       private
-      
+
         def view_path
           super + "/branding_profiles"
         end
@@ -114,34 +139,47 @@ module V2
           true
         end
 
-        
         def update_allowed?
           true
         end
-        
+
         def set_branding_profile
           @branding_profile = access_model(::BrandingProfile, params[:id])
         end
-        
+
         def branding_profile_params
           return({}) if params[:branding_profile].blank?
           params.require(:branding_profile).permit(
             :default, :profileable_id, :profileable_type, :title,
-            :url, :footer_logo_url, :logo_url, :subdomain, :subdomain_test,
-            branding_profile_attributes_attributes: [ :id, :name, :value, :attribute_type], 
+            :url, :footer_logo_url, :logo_url, :subdomain, :subdomain_test, images: [],
+            branding_profile_attributes_attributes: [ :id, :name, :value, :attribute_type],
             styles: {}
           )
         end
 
         def faq_params
           return({}) if params.blank?
-          params.permit(:title, :branding_profile_id)
+          params.permit(:title, :branding_profile_id, :faq_order)
+        end
+
+        def faq_order_params
+          { faq_order: @branding_profile.faqs.count }
+        end
+
+        def question_order_params
+          { question_order: @faq.faq_questions.count}
         end
 
         def faq_question_params
           return({}) if params.blank?
-          params.permit(:question, :answer, :faq_id)
+          params.permit(:question, :answer, :faq_id, :question_order)
         end
+
+      def attach_images_params
+        return({}) if params.blank?
+        params.require(:images).permit(:logo_url, :footer_logo_url)
+      end
+
     end
   end # module StaffAgency
 end

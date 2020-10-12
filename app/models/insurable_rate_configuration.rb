@@ -606,7 +606,7 @@ class InsurableRateConfiguration < ApplicationRecord
         additional_interest_count: cip.insurable.account_id.nil? && cip.insurable.parent_community&.account_id.nil? ? 0 : 1,
         community_id: cip.external_carrier_id,
         coverages_formatted:  selections.select{|s| s['selection'] }
-                                .map{|s| s['options'] = coverage_options.find{|co| co['category'] == s['category'] && co['uid'] == s['uid'] }; s }
+                                .map{|s| s['options'] = coverage_options.find{|co| co['category'] == s['category'] && co['uid'] == s['uid'] }; s['title'] = s['options']['title'] unless s['options'].blank?; s }
                                 .select{|s| !s['options'].nil? }
                                 .map do |sel|
                                   if sel['category'] == 'coverage'

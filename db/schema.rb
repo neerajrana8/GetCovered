@@ -10,7 +10,9 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_09_16_113022) do
+
+ActiveRecord::Schema.define(version: 2020_10_04_075351) do
+
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
@@ -142,19 +144,6 @@ ActiveRecord::Schema.define(version: 2020_09_16_113022) do
     t.datetime "updated_at", null: false
   end
 
-  create_table "application_notifications", force: :cascade do |t|
-    t.string "action"
-    t.string "subject"
-    t.integer "status"
-    t.integer "code"
-    t.boolean "read", default: false
-    t.integer "notifiable_id"
-    t.string "notifiable_type"
-    t.string "message"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-  end
-
   create_table "assignments", force: :cascade do |t|
     t.boolean "primary"
     t.bigint "staff_id"
@@ -206,6 +195,7 @@ ActiveRecord::Schema.define(version: 2020_09_16_113022) do
     t.string "logo_url"
     t.string "footer_logo_url"
     t.string "subdomain"
+    t.boolean "global_default", default: false, null: false
     t.index ["profileable_type", "profileable_id"], name: "index_branding_profiles_on_profileable_type_and_profileable_id"
     t.index ["url"], name: "index_branding_profiles_on_url", unique: true
   end
@@ -375,9 +365,6 @@ ActiveRecord::Schema.define(version: 2020_09_16_113022) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "type_of_loss", default: 0, null: false
-    t.string "name"
-    t.string "address"
-    t.string "nature_of_claim"
     t.text "staff_notes"
     t.index ["claimant_type", "claimant_id"], name: "index_claims_on_claimant_type_and_claimant_id"
     t.index ["insurable_id"], name: "index_claims_on_insurable_id"
@@ -477,6 +464,7 @@ ActiveRecord::Schema.define(version: 2020_09_16_113022) do
     t.integer "faq_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "question_order", default: 0
     t.index ["faq_id"], name: "index_faq_questions_on_faq_id"
   end
 
@@ -485,6 +473,7 @@ ActiveRecord::Schema.define(version: 2020_09_16_113022) do
     t.integer "branding_profile_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "faq_order", default: 0
     t.index ["branding_profile_id"], name: "index_faqs_on_branding_profile_id"
   end
 
@@ -854,9 +843,9 @@ ActiveRecord::Schema.define(version: 2020_09_16_113022) do
     t.date "last_payment_date"
     t.date "next_payment_date"
     t.bigint "policy_group_id"
+    t.boolean "declined"
     t.string "address"
     t.string "out_of_system_carrier_title"
-    t.boolean "declined"
     t.bigint "policy_id"
     t.integer "cancellation_reason"
     t.index ["account_id"], name: "index_policies_on_account_id"
