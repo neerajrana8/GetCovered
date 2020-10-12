@@ -323,10 +323,6 @@ ActiveRecord::Schema.define(version: 2020_10_04_075351) do
     t.bigint "staff_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.string "changeable_type"
-    t.integer "requestable_id"
-    t.string "requestable_type"
-    t.integer "changeable_id"
     t.index ["customized_action"], name: "index_change_requests_on_customized_action", unique: true
     t.index ["staff_id"], name: "index_change_requests_on_staff_id"
     t.index ["status"], name: "index_change_requests_on_status", unique: true
@@ -367,7 +363,6 @@ ActiveRecord::Schema.define(version: 2020_10_04_075351) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "type_of_loss", default: 0, null: false
-    t.text "staff_notes"
     t.index ["claimant_type", "claimant_id"], name: "index_claims_on_claimant_type_and_claimant_id"
     t.index ["insurable_id"], name: "index_claims_on_insurable_id"
     t.index ["policy_id"], name: "index_claims_on_policy_id"
@@ -631,11 +626,7 @@ ActiveRecord::Schema.define(version: 2020_10_04_075351) do
     t.bigint "lead_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.bigint "policy_type_id"
-    t.bigint "agency_id"
-    t.index ["agency_id"], name: "index_lead_events_on_agency_id"
     t.index ["lead_id"], name: "index_lead_events_on_lead_id"
-    t.index ["policy_type_id"], name: "index_lead_events_on_policy_type_id"
   end
 
   create_table "leads", force: :cascade do |t|
@@ -645,13 +636,7 @@ ActiveRecord::Schema.define(version: 2020_10_04_075351) do
     t.string "labels", array: true
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.bigint "profile_id"
-    t.bigint "address_id"
-    t.integer "status", default: 0
-    t.datetime "las_visit"
-    t.index ["address_id"], name: "index_leads_on_address_id"
     t.index ["email"], name: "index_leads_on_email"
-    t.index ["profile_id"], name: "index_leads_on_profile_id"
     t.index ["user_id"], name: "index_leads_on_user_id"
   end
 

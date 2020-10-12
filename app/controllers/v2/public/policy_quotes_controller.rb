@@ -44,7 +44,7 @@ module V2
 							status: @policy_quote.status, 
 							premium: @policy_quote.policy_premium
 						},
-						invoices: @policy_quote.invoices,
+						invoices: @policy_quote.invoices.order("due_date ASC"),
 						user: { 
 							id: @policy_quote.policy_application.primary_user().id,
 							stripe_id: @policy_quote.policy_application.primary_user().stripe_id
@@ -134,9 +134,9 @@ module V2
 	    	unless @policy_quote.nil?
 		    	@user = ::User.find(accept_policy_quote_params[:id])
 		    	unless @user.nil?
-            # MOOSE WARNING: this next line overrides the provided token with tok_visa for MSI in development, because we need to use payeezy test cards
-						result = @user.attach_payment_source(Rails.env != 'production' && @policy_quote.policy_application.carrier_id == 5 ? 'tok_visa' : accept_policy_quote_params[:source])
-			    	if result.valid?
+            uses_stripe = (@policy_quote.policy_application.carrier_id == 5 ? false : true) # MOOSE WARNING: move this to a configurable field on CarrierPolicyType or something?
+						result = !uses_stripe ? nil : @user.attach_payment_source(accept_policy_quote_params[:source])
+			    	if !uses_stripe || result.valid?
               bind_params = []
               # collect bind params for msi
               if @policy_quote.policy_application.carrier_id == 5

@@ -1,5 +1,5 @@
 @models = [Account, Address, Agency, Carrier, Claim, 
-					 Insurable, Invoice, Lease, PolicyApplication,
+					 Insurable, Invoice, Lease,
 					 PolicyQuote, Policy, Profile, Staff, User]
 					 
 @models.each do |m|

@@ -2,7 +2,7 @@ module V2
   module StaffSuperAdmin
     class BrandingProfilesController < StaffSuperAdminController
 
-      before_action :set_branding_profile, only: %i[update show destroy faqs faq_create faq_update faq_question_create faq_question_update faq_delete faq_question_delete]
+      before_action :set_branding_profile, only: %i[update show destroy faqs faq_create faq_update faq_question_create faq_question_update faq_delete faq_question_delete attach_images]
 
       def index
         super(:@branding_profiles, BrandingProfile)
@@ -112,6 +112,30 @@ module V2
         end
       end
 
+      def attach_images
+        if update_allowed?
+          if attach_images_params[:logo_url].present?
+            @branding_profile.images.attach(attach_images_params[:logo_url])
+            img_url = rails_blob_url(@branding_profile.images.last)
+            if img_url.present? && @branding_profile.update_column(:logo_url, img_url)
+              render json: { success: true }, status: :ok
+            else
+              render json: { success: false }, status: :unprocessable_entity
+            end
+          end
+          if attach_images_params[:footer_logo_url].present?
+            @branding_profile.images.attach(attach_images_params[:footer_logo_url])
+            img_url = rails_blob_url(@branding_profile.images.last)
+            if img_url.present? && @branding_profile.update_column(:footer_logo_url, img_url)
+              render json: { success: true }, status: :ok
+            else
+              render json: { success: false }, status: :unprocessable_entity
+            end
+          end
+        else
+          render json: { success: false, errors: ['Unauthorized Access'] }, status: :unauthorized
+        end
+      end
 
       private
 
@@ -137,7 +161,7 @@ module V2
         params.require(:branding_profile).permit(
           :default, :id, :profileable_id, :profileable_type, :title,
           :url, :footer_logo_url, :logo_url, :subdomain, :subdomain_test, :global_default,
-          branding_profile_attributes_attributes: %i[id name value attribute_type],
+          images: [], branding_profile_attributes_attributes: %i[id name value attribute_type],
           styles: {}
         )
       end
@@ -151,6 +175,7 @@ module V2
         { faq_order: @branding_profile.faqs.count }
       end
 
+
       def question_order_params
         { question_order: @faq.faq_questions.count}
       end
@@ -158,6 +183,11 @@ module V2
       def faq_question_params
         return({}) if params.blank?
         params.permit(:question, :answer, :faq_id, :question_order)
+      end
+
+      def attach_images_params
+        return({}) if params.blank?
+        params.require(:images).permit(:logo_url, :footer_logo_url)
       end
 
     end
