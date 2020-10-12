@@ -14,8 +14,8 @@ class CarrierAgency < ApplicationRecord
 
   accepts_nested_attributes_for :carrier_agency_authorizations, allow_destroy: true
 
-  def carrier_title
-    carrier.try(:title)
+  def agency_title
+    agency.try(:title)
   end
   
   private
