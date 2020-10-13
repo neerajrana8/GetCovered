@@ -1,0 +1,7 @@
+<p>Hi <%= @user.profile.first_name %>,</p>
+<p>Thank you for selecting a <%= @policy.number %> policy from <%= @agency.title %>.</p>
+<p>Your account was successfully charged <%= Money.new(@invoice.total).to_s %> on <%=@charge.created_at.strftime("%Y-%m-%d") %>.</p>
+<p>Click on the following link <a href="<%= "#{@branding_profile.url}/user/invoices/list" %>"><%="#{@branding_profile.url}/user/invoices/list" %></a> to review all of your invoices.</p>
+<p>If you have any questions, please contact <%= @from %>.</p>
+<p>Thank you,</p>
+<p><%= @agency.title %></p>

@@ -13,6 +13,7 @@ module V2
 		  
 			def create
 				if current_user.attach_payment_source(create_params[:source])
+					BillUnpaidInvoicesJob.perform_later(current_user)
 					render json: current_user.payment_profiles.order("created_at").last.to_json,
 								 status: :created
 				else

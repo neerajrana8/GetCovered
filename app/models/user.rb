@@ -1,4 +1,4 @@
-# User model
+  # User model
 # file: app/models/user.rb
 # frozen_string_literal: true
 require 'digest'
@@ -19,7 +19,7 @@ class User < ApplicationRecord
                       :set_qbe_id,
                       :identify_segment
   
-	has_many :invoices
+	has_many :invoices, as: :payer
 
   has_many :authored_histories,
            as: :authorable,

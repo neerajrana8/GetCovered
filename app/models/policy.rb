@@ -146,7 +146,7 @@ class Policy < ApplicationRecord
     
   enum billing_dispute_status: { UNDISPUTED: 0, DISPUTED: 1, AWAITING_POSTDISPUTE_PROCESSING: 2,
     NOT_REQUIRED: 3 }
-    
+
   enum cancellation_code: { # WARNING: remove this, it's old
     AP: 0,
     AR: 1,
@@ -155,7 +155,7 @@ class Policy < ApplicationRecord
     UW: 4,
     TEST: 5
   }
-    
+
   enum cancellation_reason: {
     nonpayment:                 0,    # QBE AP
     agent_request:              1,    # QBE AR
@@ -165,22 +165,22 @@ class Policy < ApplicationRecord
     disqualification:           5,    # no qbe code
     test_policy:                6     # no qbe code
   }
-  
+
   # Cancellation reasons with special refund logic; allowed values:
   #   early_cancellation:       within the first (CarrierInsurableType.max_days_for_full_refund || 30) days a refund will be issued equivalent to a refund prorated for the day before the policy's effective_date
   #   no_refund:                no refund will be issued, but available/upcoming/missed invoices will be cancelled, and processing invoices will be cancelled if they fail (but not refunded if they succeed)
-  
+
   SPECIAL_CANCELLATION_REFUND_LOGIC = {
-    'insured_request' =>          :early_cancellation, 
+    'insured_request' =>          :early_cancellation,
     'nonpayment'      =>          :no_refund,
     'test_policy'     =>          :no_refund
   }
-  
-  
-  
-  
-  
-      
+
+
+
+
+
+
   def in_system?
     policy_in_system == true
   end
@@ -281,7 +281,7 @@ class Policy < ApplicationRecord
     end
   end
 
-  
+
   # Cancels a policy; returns nil if no errors, otherwise a string explaining the error
   def cancel(reason, cancel_date = Time.current.to_date)
     # Flee on invalid data
@@ -309,7 +309,8 @@ class Policy < ApplicationRecord
     end
     # Mark cancelled
     update_columns(status: 'CANCELLED', cancellation_reason: reason, cancellation_date: cancel_date)
-    # Unearned balance is the remaining unearned amount on an insurance policy that 
+    RentGaranteeCancellationEmailJob.perform_later(self) if self.policy_type.slug == 'rent-guarantee'
+    # Unearned balance is the remaining unearned amount on an insurance policy that
     # needs to be deducted from future commissions to recuperate the loss
     premium&.reload
     commision_amount = premium&.commission&.amount || 0
