@@ -25,7 +25,7 @@ module V2
       end
 
       def refund_policy
-        @policy.cancel('manual_cancellation_with_refunds', Time.zone.now)
+        @policy.cancel('manual_cancellation_with_refunds', Time.zone.now.to_date)
         if @policy.errors.any?
           render json: standard_error(:refund_policy_error, nil, @policy.errors.full_messages)
         else
@@ -34,7 +34,7 @@ module V2
       end
 
       def cancel_policy
-        @policy.cancel('manual_cancellation_without_refunds', Time.zone.now)
+        @policy.cancel('manual_cancellation_without_refunds', Time.zone.now.to_date)
         if @policy.errors.any?
           render json: standard_error(:cancel_policy_error, nil, @policy.errors.full_messages)
         else
