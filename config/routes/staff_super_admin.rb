@@ -147,6 +147,8 @@
       end
     end
 
+    resources :leads, only: [:index, :show]
+    
     resources :lease_types,
       path: "lease-types",
       only: [ :create, :update, :index, :show ]
