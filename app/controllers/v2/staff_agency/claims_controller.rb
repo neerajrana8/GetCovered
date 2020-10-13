@@ -73,7 +73,7 @@ module V2
 
         params.require(:claim).permit(
           :description, :insurable_id, :policy_id, :subject,
-          :time_of_loss, :type_of_loss, documents: []
+          :time_of_loss, :type_of_loss, :staff_notes, documents: []
         )
       end
         
