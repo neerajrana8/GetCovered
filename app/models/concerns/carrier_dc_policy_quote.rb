@@ -6,11 +6,8 @@ module CarrierDcPolicyQuote
 
   included do
 
-    # MOOSE WARNING: PolicyQuote#bind_policy should call this boi if necessary
-    def set_msi_external_reference
-      
+    def set_dc_external_reference
       return_status = true # MOOSE WARNING: change it?
-      
     end
     
     # DC build coverages
@@ -52,20 +49,20 @@ module CarrierDcPolicyQuote
       unit_cip = unit.carrier_profile(DepositChoiceService.carrier_id)
       dcs = DepositChoiceService.new
       # create insured
-      dcs.build_request(:insured, {
-        
-        
-        
-      
+      dcs.build_request(:insured,
+        address_id: unit_profile.profile_data["dc_address_id"],
         unit_id: unit_profile.external_carrier_id,
-        effective_date: effective_date
-      }.compact)
+        first_name: policy_application.primary_user.profile.first_name,
+        last_name: policy_application.primary_user.profile.last_name,
+        email_address: policy_application.primary_user.email,
+        payment_token: payment_params['payment_token']
+      )
       event = events.new(
         verb: DepositChoiceService::HTTP_VERB_DICTIONARY[:rate].to_s,
         format: 'json',
         interface: 'REST',
-        endpoint: dcs.endpoint_for(:rate),
-        process: 'deposit_choice_rate'
+        endpoint: dcs.endpoint_for(:insured),
+        process: 'deposit_choice_insured'
       )
       event.request = dcs.message_content
       event.started = Time.now
@@ -75,108 +72,54 @@ module CarrierDcPolicyQuote
       event.status = result[:error] ? 'error' : 'success'
       event.save
       # make sure we succeeded
-      if result[:error]
-        return { success: false, error: "Deposit Choice rate retrieval unsuccessful", event: event }
-      elsif result[:data]&.[]("rates").nil?
-        return { success: false, error: "Deposit Choice rate retrieval failed", event: event }
-      end
-      
-      
-      
-      
-      
-      
-      
-      
-      # unpack payment info
-      payment_data = ((self.carrier_payment_data || {})['payment_methods'] || {})[payment_params['payment_method']]
-      if payment_data.nil? || payment_data.class != ::Hash ||
-          !payment_data.has_key?('method_id') || !payment_data.has_key?('merchant_id') || !payment_data.has_key?('processor_id') ||
-          !payment_params.has_key?('payment_info') || !payment_params.has_key?('payment_token')
-        # invalid payment data
-        @bind_response[:message] = "Invalid payment data for binding policy"
-        #PolicyBindWarningNotificationJob.perform_later(message: @bind_response[:message])
+      if result[:error] || result[:data]["insuredId"].blank?
+		 		@bind_response[:message] = "Bond Creation Failed: Deposit Choice service rejected user information"
         return @bind_response
       end
-      payment_merchant_id = payment_data['merchant_id']
-      payment_processor = payment_data['processor_id']
-      payment_method = payment_data['method_id']
-      # grab useful variables
-      carrier_agency = CarrierAgency.where(agency: account.agency, carrier_id: 5).take
-      unit = policy_application.primary_insurable
-      community = unit.parent_community
-      address = unit.primary_address
-      primary_insured = policy_application.primary_user
-      additional_insured = policy_application.users.select{|u| u.id != primary_insured.id }
-      additional_interest = [unit.account || community.account].compact
-      # prepare for bind call
-      msis = MsiService.new
+      # grab variables
+      insured_id = result[:data]["insuredId"]
+      # perform bind call
+      result = dcs.build_request(:binder,
+        insured_id: insured_id,
+        address_id: unit_profile.profile_data["dc_address_id"],
+        unit_id: unit_profile.external_carrier_id,
+        move_in_date: policy_application.effective_date,
+        primary_occupant: policy_application.primary_user.get_deposit_choice_occupant_hash(primary: true),
+        additional_occupants: policy_application.policy_users.where(primary: false).map do |pu|
+          pu.user.get_deposit_choice_occupant_hash(primary: false)
+        end,
+        bond_amount: (policy_application.coverage_selections["bondAmount"].to_d / 100.to_d).to_s,
+        rated_premium: (policy_application.coverage_selections["ratedPremium"].to_d / 100.to_d).to_s,
+        processing_fee: (policy_application.coverage_selections["processingFee"].to_d / 100.to_d).to_s
+      )
+      if !result
+        @bind_response[:message] = "Failed to build bind request (#{dcs.errors.to_s})"
+        return @bind_response
+      end
       event = events.new(
         verb: 'post',
         format: 'xml',
         interface: 'REST',
-        endpoint: msis.endpoint_for(:bind_policy),
-        process: 'msi_bind_policy'
+        endpoint: msis.endpoint_for(:binder),
+        process: 'deposit_choice_binder'
       )
-      result = msis.build_request(:bind_policy,
-        effective_date:   policy_application.effective_date,
-        payment_plan:     policy_application.billing_strategy.carrier_code,
-        installment_day:  policy_application.fields.find{|f| f['title'] == "Installment Day" }&.[]('value') || 1,
-        community_id:     community.carrier_profile(5).external_carrier_id,
-        unit:             unit.title,
-        address:          unit.primary_address,
-        maddress:         primary_insured.address || nil,
-        primary_insured:    primary_insured,
-        additional_insured: additional_insured,
-        additional_interest: additional_interest,
-        coverage_raw: policy_application.coverage_selections.select{|sel| sel['selection'] }.map do |sel|
-          if sel['category'] == 'coverage'
-            {
-              CoverageCd: sel['uid']
-            }.merge(sel['selection'] == true ? {} : {
-              Limit: sel['options_format'] == 'percent' ? { Amt: sel['selection'].to_d / 100.to_d } : { Amt: sel['selection'] }
-            })
-          elsif sel['category'] == 'deductible'
-            {
-              CoverageCd: sel['uid']
-            }.merge(sel['selection'] == true ? {} : {
-              Deductible: sel['options_format'] == 'percent' ? { Amt: sel['selection'].to_d / 100.to_d } : { Amt: sel['selection'] }
-            })
-          else
-            nil
-          end
-        end.compact,
-        payment_merchant_id:  payment_merchant_id,
-        payment_processor:    payment_processor,
-        payment_method:       payment_method,
-        payment_info:         payment_params['payment_info'],
-        payment_other_id:     payment_params['payment_token'],
-        
-        line_breaks: true
-      )
-      if !result
-        @bind_response[:message] = "Failed to build bind request (#{msis.errors.to_s})"
-        #PolicyBindWarningNotificationJob.perform_later(message: @bind_response[:message])
-        return @bind_response
-      end
-      event.request = msis.compiled_rxml
+      event.request = dcs.message_content
       event.started = Time.now
-      result = msis.call
+      result = dcs.call
       event.completed = Time.now
       event.response = result[:data]
       event.status = result[:error] ? 'error' : 'success'
       event.save
       if result[:error]
-        @bind_response[:message] = "MSI bind failure (Event ID: #{event.id || event.errors.to_h})\nMSI Error: #{result[:external_message]}\n#{result[:extended_external_message]}"
-        #PolicyBindWarningNotificationJob.perform_later(message: @bind_response[:message])
+        @bind_response[:message] = "Deposit Choice bind failure (Event ID: #{event.id || event.errors.to_h})\nMSI Error: #{result[:external_message]}\n#{result[:extended_external_message]}"
         return @bind_response
       end
       # handle successful bind
-      policy_data = result[:data].dig("MSIACORD", "InsuranceSvcRs", "RenterPolicyQuoteInqRs", "PersPolicy")
       @bind_response[:error] = false
       @bind_response[:data][:status] = "SUCCESS"
-      @bind_response[:data][:policy_number] = policy_data["PolicyNumber"]
-      @bind_response[:data][:policy_prefix] = policy_data["MSI_PolicyPrefix"]
+      @bind_response[:data][:policy_number] = result[:data]["policyNumber"]
+      @bind_response[:data][:bond_certificate] = result[:data]["bondCertificate"] # but what do we do with this...?
+      return @bind_response
       return @bind_response
     end
     

@@ -37,13 +37,27 @@ puts "Initializing carrier ##{dc_id}..."
   enabled: true,
   profile_traits: {},
   profile_data: {
-    "dc_external_id": nil
+    "sought_dc_information" => false,
+    "sought_dc_information_on" => nil,
+    "got_dc_information" => false,
+    "dc_information_event_id" => nil,
+    "dc_address_id" => nil,
+    "dc_units_not_in_system" => [],
+    "units_not_in_dc_system" => [],
+    "units_ignored_for_lack_of_cip" => []
   }
 })
 @cit_unit = CarrierInsurableType.where(carrier: @carrier, insurable_type: @residential_unit).take || CarrierInsurableType.create!({
   carrier: @carrier, 
   insurable_type: @residential_unit, 
-  enabled: true
+  enabled: true,
+  profile_traits: {},
+  profile_data: {
+    "got_dc_information" => false,
+    "dc_address_id" => nil,
+    "dc_community_id" => nil,
+    "dc_unit_id" => nil
+  }
 })
 
 # set up policy type stuff

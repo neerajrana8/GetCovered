@@ -79,7 +79,7 @@ module CarrierDcPolicyApplication
               {
                 title: "Premium",
                 price: premium.base,
-                refundability: 'prorated_refund', # MOOSE WARNING: really?
+                refundability: 'no_refund', # MOOSE WARNING: really?
                 category: 'base_premium'
               },
               {
