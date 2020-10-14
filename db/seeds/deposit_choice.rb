@@ -162,37 +162,24 @@ accounts = @carrier.agencies.map{|ag| ag.accounts.to_a }.flatten.map{|acct| { ac
     account = account_data[:account]
     assigned = false
     if account.agency.offers_policy_type_in_region(args)
-      @community = account.insurables.new(
-        title: "#{Faker::Movies::LordOfTheRings.location} Estates",
-        insurable_type: @residential_community,
-        enabled: true, category: 'property',
-        addresses_attributes: [ addr ]
+      # create community from DC's records
+      pad = @community.primary_address
+      result = ::Insurable.deposit_choice_address_search(
+        address1: pad.combined_street_address,
+        address2: pad.street_two.blank? ? nil : pad.street_two,
+        city: pad.city,
+        state: pad.state,
+        zip_code: pad.zip_code
       )
-      unless @community.save
-        pp @community.errors
-      else
+      result = ::Insurable.deposit_choice_create_insurable_from_response(result,
+        account: account
+      )
+      success = (result.class == ::Insurable)
+      if success
         assigned = true
-        # create assignemnts
-        Assignment.create!(staff: account.staff.order("RANDOM()").take, assignable: @community) unless account.staff.count == 0
-        # build profile
-        @community.create_carrier_profile(@dc_id)
-        @profile = @community.carrier_profile(@dc_id)
-        unless @profile.save()
-          puts "\nCommunity Carrier Profile Save Error\n\n"
-          pp @profile.errors.to_json
-        end
-        @created_communities.push(@community)
-        # get info from DC
-        # MOOSE WARNING: if we ever start uploading community info to DC, change this to use the units_per_floor logic like other residential fellas
-        pad = @community.primary_address
-        result = ::Insurable.deposit_choice_address_search(
-          address1: pad.combined_street_address,
-          address2: pad.street_two.blank? ? nil : pad.street_two,
-          city: pad.city,
-          state: pad.state,
-          zip_code: pad.zip_code
-        )
-        
+      else
+        puts "\nCommunity Save Error\n\n"
+        pp result
       end
     end    
     if assigned

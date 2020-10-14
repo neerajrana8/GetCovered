@@ -8,14 +8,14 @@ module CarrierDcInsurable
   included do
     
     # should only be called on communities
-    def obtain_dc_information
+    def obtain_dc_information(query_result_override: nil)
       @carrier_id = DepositChoiceService.carrier_id
       @carrier_profile = carrier_profile(@carrier_id)
       return ["Unable to load carrier profile"] if @carrier_profile.nil?
       # try to get info from dc
       pad = self.primary_address
       return ["Insurable has no primary address"] if pad.nil?
-      result = self.class.deposit_choice_address_search(
+      result = query_result_override || self.class.deposit_choice_address_search(
         address1: pad.combined_street_address,
         address2: pad.street_two.blank? ? nil : pad.street_two,
         city: pad.city,
@@ -219,7 +219,7 @@ module CarrierDcInsurable
       return result
     end
     
-    ########## THIS IS ALL HIDEOUSLY BROKEN. UGH! BUT WE MAY NEVER NEED IT... HERE JUST IN CASE. #################
+    ########## THIS IS HIDEOUSLY BROKEN. UGH! BUT WE MAY NEVER NEED IT... HERE JUST IN CASE. #################
     def deposit_choice_get_insurable_from_response(response, unit_id: nil
       allow_insurable_creation: true
     )
@@ -251,7 +251,95 @@ module CarrierDcInsurable
       end
     end
     
+    # only creates communities with no buildings for now
+    # - result should be the return value from deposit_choice_address_search
+    def deposit_choice_create_insurable_from_response(result,
+      account: nil, account_id: account&.id || nil,
+      agency: nil, agency_id: agency&.id || nil,
+      destroy_on_dc_information_failure: true
+    )
+      return { "Community address" => ["rejected by Deposit Choice"] } if result[:error]
+      response = result[:data]
+      # validate input
+      if !account_id.nil? && !agency_id.nil?
+        account ||= Account.where(id: account_id).take
+        return { "Provided account" => ["is nonexistent"] } if account.nil?
+        return { "Provided account and agency" => ["are not associated"] } if account.agency_id != agency_id
+      end
+      blanks = ["addressId", "address1", "city", "stateCode", "zipCode", "units"].select{|p| response[p].blank? }
+      return { "Deposit Choice community data" => ["is missing required field#{blanks.count == 1 ? "" : "s"}: #{blanks.map{|b| "'#{b}'"}.join(", ")}"] } unless blanks.blank?
+      if response["units"].map{|u| u["communityId"].strip }.uniq.count > 1
+        return { "Deposit Choice community data" => ["indicates address corresponds to multiple communities"] }
+      end
+      # create stuff
+      return_errors = nil
+      community = nil
+      ActiveRecord::Base.transaction do
+        # create community
+        street_number = response["address1"].split(" ")[0]
+        street_name = response["address1"].split(" ").drop(1).join(" ")
+        community = Insurable.new({
+          account_id: account_id,
+          agency_id: agency_id,
+          title: response["units"].first["communityName"], # MOOSE WARNING: this may be a garbage name... trusting the DC data to be correct here could be dangerous
+          insurable_type: InsurablType.where(title: "Residential Community").take,
+          enabled: disable ? false : true,
+          category: 'property',
+          addresses_attributes: [{
+            street_number: street_number,
+            street_name: street_name,
+            city: response["city"],
+            state: response["stateCode"],
+            zip_code: response["zipCode"]
+          }]
+        }.compact)
+        unless community.save
+          return_errors = community.errors.to_h.transform_keys{|k| "Community #{k.to_s}" }
+          raise ActiveRecord::Rollback
+        end
+        begin
+          community.create_carrier_profile(DepositChoiceService.carrier_id)
+        rescue ActiveRecord::RecordInvalid => e
+          return_errors =  e.record.errors.to_h.transform_keys{|k| "Community Profile #{k.to_s}" }
+          raise ActiveRecord::Rollback
+        end
+        # create units
+        unit_insurable_type = InsurableType.where(title: "Residential Unit").take
+        response["units"].each do |unit_entry|
+          unit = community.insurables.new({
+            title: unit_entry["unitValue"],
+            insurable_type: unit_insurable_type,
+            enabled: true,
+            category: 'property',
+            account_id: account_id,
+            agency_id: agency_id
+          }.compact)
+          unless unit.save
+            return_errors = unit.errors.to_h.transform_keys{|k| "Unit #{unit_entry["unitValue"]} #{k.to_s}" }
+            raise ActiveRecord::Rollback
+          end
+          begin
+            unit.create_carrier_profile(DepositChoiceService.carrier_id)
+          rescue ActiveRecord::RecordInvalid => e
+            return_errors =  e.record.errors.to_h.transform_keys{|k| "Unit #{unit_entry["unitValue"]} Profile #{k.to_s}" }
+            raise ActiveRecord::Rollback
+          end
+        end
+        # do the magic, bro
+        odci_errors = community.obtain_dc_information(query_result_override: result)
+        if !odci_errors.blank? && destroy_on_dc_information_failure
+          return_errors = {"Deposit Choice Query Failure" => odci_errors}
+          raise ActiveRecord::Rollback
+        end
+      end
+      # handle errors or return community
+      if !return_errors.blank?
+        return return_errors
+      end
+      return community
+    end
     
-  end
+    
+  end # end class_methods
   
 end
