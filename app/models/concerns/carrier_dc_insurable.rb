@@ -7,7 +7,7 @@ module CarrierDcInsurable
   
   included do
     
-    # should only be called on communities... MOOSE WARNING: do we need to add extra logic for buildings with their own addresses?
+    # should only be called on communities
     def obtain_dc_information
       @carrier_id = DepositChoiceService.carrier_id
       @carrier_profile = carrier_profile(@carrier_id)
@@ -48,6 +48,7 @@ module CarrierDcInsurable
       dc_units_not_in_system = []
       units_not_in_dc_system = []
       entry_unit_ids_used = []
+      unit_dc_ids = result[:data]["units"].map{|u| u["unitId"] }
       self.units.each do |unit|
         cip = unit.carrier_profile(@carrier_id)
         if cip.nil?
@@ -60,7 +61,7 @@ module CarrierDcInsurable
               external_carrier_id: nil,
               profile_data: cip.profile_data.merge({
                 "got_dc_information" => false,
-                "dc_address_id" => result[:data]["addressId"],
+                "dc_address_id" => nil,
                 "dc_community_id" => nil,
                 "dc_unit_id" => nil
               })
@@ -79,12 +80,65 @@ module CarrierDcInsurable
           end
         end
       end
+      # try to use buildings to fill out more unit info
+      building_address_ids = {}
+      buildings = insurables.where(insurable_type_id: 7)
+      buildings.each do |building|
+        # try to get info from dc using building addresses
+        pad = building.primary_address
+        next if pad.nil?
+        result = self.class.deposit_choice_address_search(
+          address1: pad.combined_street_address,
+          address2: pad.street_two.blank? ? nil : pad.street_two,
+          city: pad.city,
+          state: pad.state,
+          zip_code: pad.zip_code
+        )
+        if result[:error]
+          next
+        end
+        building_address_ids[building.id] = result[:data]["addressId"]
+        unit_dc_ids.concat(result[:data]["units"].map{|u| u["unitId"] })
+        # grab extra unit info
+        building.units.each do |unit|
+          cip = unit.carrier_profile(@carrier_id)
+          if cip.nil?
+            units_ignored_for_lack_of_cip.push(unit.id)
+          else
+            entry = result[:data]["units"].find{|ue| ue["unitValue"].strip == unit.title.strip }
+            if entry.nil?
+              units_not_in_dc_system.push(unit.id)
+              cip.update(
+                external_carrier_id: nil,
+                profile_data: cip.profile_data.merge({
+                  "got_dc_information" => false,
+                  "dc_address_id" => nil,
+                  "dc_community_id" => nil,
+                  "dc_unit_id" => nil
+                })
+              )
+            else
+              entry_unit_ids_used.push(entry["unitId"])
+              cip.update(
+                external_carrier_id: entry["unitId"],
+                profile_data: cip.profile_data.merge({
+                  "got_dc_information" => true,
+                  "dc_address_id" => result[:data]["addressId"],
+                  "dc_community_id" => entry["communityId"],
+                  "dc_unit_id" => entry["unitId"]
+                })
+              )
+            end
+          end
+        end
+      end
       # save any missing unit info
       @carrier_profile.update(
         profile_data: @carrier_profile.profile_data.merge({
-          "dc_units_not_in_system" => result[:data]["units"].select{|u| !entry_unit_ids_used.include?(u["unitId"]) }.map{|u| u["unitId"] },
-          "units_not_in_dc_system" => units_not_in_dc_system,
-          "units_ignored_for_lack_of_cip" => units_ignored_for_lack_of_cip
+          "building_address_ids" => building_address_ids,
+          "dc_units_not_in_system" => unit_dc_ids.uniq.select{|u| !entry_unit_ids_used.include?(u["unitId"]) },
+          "units_not_in_dc_system" => units_not_in_dc_system.uniq,
+          "units_ignored_for_lack_of_cip" => units_ignored_for_lack_of_cip.uniq
         })
       )
       # return success
