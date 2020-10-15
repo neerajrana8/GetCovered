@@ -220,7 +220,8 @@ module CarrierDcInsurable
     end
     
     ########## THIS IS HIDEOUSLY BROKEN. UGH! BUT WE MAY NEVER NEED IT... HERE JUST IN CASE. #################
-    def deposit_choice_get_insurable_from_response(response, unit_id: nil
+    def deposit_choice_get_insurable_from_response(response, 
+      unit_id: nil,
       allow_insurable_creation: true
     )
       # search for an insurable with the right id
