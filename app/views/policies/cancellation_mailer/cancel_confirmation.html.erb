@@ -165,8 +165,10 @@
                         <tr>
                           <td class="o_bg-ultra_light o_br o_px o_py o_sans o_text-xs o_text-secondary" align="left" style="font-family: Helvetica, Arial, sans-serif;margin-top: 0px;margin-bottom: 0px;font-size: 14px;line-height: 21px;background-color: #ebf5fa;color: #424651;border-radius: 4px;padding-left: 16px;padding-right: 16px;padding-top: 16px;padding-bottom: 16px;">
                             <h3> Cancellation Confirmation </h3>
+                            <% if @without_request.blank? %>
                             <p class="o_mb-xs" style="margin-top: 0px;margin-bottom: 8px;"><strong>Date of Notice</strong></p>
                             <p class="o_mb-md" style="margin-top: 0px;margin-bottom: 24px;"><%= @request_date&.strftime("%m/%d/%Y") %></p>
+                            <% end %>
                             <p class="o_mb-xs" style="margin-top: 0px;margin-bottom: 8px;"><strong>Policyholder</strong></p>
                             <p style="margin-top: 0px;margin-bottom: 24px;">
                               <%= @user.profile&.full_name%>
@@ -204,7 +206,9 @@
           <td class="o_bg-white o_px-md o_py-md o_sans o_text o_text-secondary" align="left" style="font-family: Helvetica, Arial, sans-serif;margin-top: 0px;margin-bottom: 0px;font-size: 16px;line-height: 24px;background-color: #ffffff;color: #424651;padding-left: 24px;padding-right: 24px;padding-top: 24px;padding-bottom: 24px;">
             <hr style="color: #8c8e8e;">
             <p class="o_mb-xs" style="margin-top: 0px;margin-bottom: 8px;">
+              <% if @without_request.blank? %>
               This policy has been canceled as requested by the policyholder.
+              <% end %>
               <br>
               This cancellation is effective: <%=@policy.cancellation_date&.strftime("%m/%d/%Y") %>
               <br>

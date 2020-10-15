@@ -86,6 +86,32 @@ module PoliciesMethods
     end
   end
 
+  def refund_policy
+    @policy.cancel('manual_cancellation_with_refunds', Time.zone.now)
+    if @policy.errors.any?
+      render json: standard_error(:refund_policy_error, nil, @policy.errors.full_messages)
+    else
+      Policies::CancellationMailer.
+        with(policy: @policy, without_request: true).
+        cancel_request.
+        deliver_later
+      render :show, status: :ok
+    end
+  end
+
+  def cancel_policy
+    @policy.cancel('manual_cancellation_without_refunds', Time.zone.now)
+    if @policy.errors.any?
+      render json: standard_error(:cancel_policy_error, nil, @policy.errors.full_messages)
+    else
+      Policies::CancellationMailer.
+        with(policy: @policy, without_request: true).
+        cancel_request.
+        deliver_later
+      render :show, status: :ok
+    end
+  end
+
   private
 
   def update_params
