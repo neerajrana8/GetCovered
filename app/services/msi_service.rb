@@ -7,6 +7,10 @@ require 'fileutils'
 
 class MsiService
 
+  def self.carrier_id
+    5
+  end
+
   @@coverage_codes = {
     AllOtherPeril:                                { code: 1, limit: true },
     Theft:                                        { code: 2, limit: false },

@@ -38,7 +38,7 @@ module V2
               return
             end
             # MOOSE WARNING: eventually, use account_id/agency_id to determine which to select when there are multiple
-            cip        = insurable.carrier_insurable_profiles.where(carrier_id: policy_type.carrier_policy_types.map{|cpt| cpt.carrier_id }).order("created_at ASC").take
+            cip        = insurable.carrier_insurable_profiles.where(carrier_id: policy_type.carrier_policy_types.map{|cpt| cpt.carrier_id }).order("created_at DESC").limit(1).take
             carrier_id = cip&.carrier_id
             if carrier_id.nil?
               render json:   { error: "Invalid unit" },
@@ -49,6 +49,8 @@ module V2
             carrier_id = 3
           elsif selected_policy_type == 'rent-guarantee'
             carrier_id = 4
+          elsif selected_policy_type == 'security-deposit-replacement'
+            carrier_id = DepositChoiceService.carrier_id
           end
 
           carrier = Carrier.find(carrier_id)
@@ -66,14 +68,16 @@ module V2
 
       def create
         case params[:policy_application][:policy_type_id]
-        when 1
-          create_residential
-        when 4
-          create_commercial
-        when 5
-          create_rental_guarantee
-        else
-          render json: standard_error(:invalid_policy_type, 'Invalid policy type'), status: 422
+          when 1
+            create_residential
+          when 4
+            create_commercial
+          when 5
+            create_rental_guarantee
+          when 6
+            create_security_deposit_replacement
+          else
+            render json: standard_error(:invalid_policy_type, 'Invalid policy type'), status: 422
         end
       end
 
@@ -289,6 +293,63 @@ module V2
         end
       end
 
+      def create_security_deposit_replacement
+        # set up the application
+        @application = PolicyApplication.new(create_security_deposit_replacement_params)
+        if @application.agency.nil? && @application.account.nil?
+          @application.agency = Agency.where(master_agency: true).take
+        elsif @application.agency.nil?
+          @application.agency = @application.account.agency
+        end
+        # try to save
+        unless @application.save
+          render json: standard_error(:policy_application_save_error, nil, @application.errors),
+                 status: 422
+          return
+        end
+        # try to quote application
+        if create_policy_users
+          # update status to complete
+          LeadEvents::LinkPolicyApplicationUsers.run!(policy_application: @application)
+          unless @application.update(status: 'complete')
+            render json: standard_error(:policy_application_save_error, nil, @application.errors),
+                   status: 422
+            return
+          end
+          # create quote
+          @application.estimate()
+          @quote = @application.policy_quotes.order('created_at DESC').limit(1).first
+          unless @application.status != "quote_failed" || @application.status != "quoted" # MOOSE WARNING: we should really fix this 100% pointless if statement... it's also broken in residential...
+            render json: standard_error(:policy_application_unavailable, 'Application cannot be quoted at this time'),
+                   status: 400
+            return
+          end
+          @application.quote(@quote.id)
+          @application.reload
+          @quote.reload
+          unless @quote.status == "quoted"
+            render json: standard_error(:quote_failed, 'Quote could not be processed at this time'),
+                   status: 500
+            return
+          end
+          # return nice stuff
+          render json:  {
+                         id:       @application.id,
+                         quote: {
+                           id:      @quote.id,
+                           status: @quote.status,
+                           premium: @quote.policy_premium
+                         },
+                         invoices: @quote.invoices.order('due_date ASC'),
+                         user:     {
+                           id:        @application.primary_user.id,
+                           stripe_id: @application.primary_user.stripe_id
+                         }
+                       }.to_json, status: 200
+          return
+        end
+      end
+
       def create_residential
 
         @application = PolicyApplication.new(create_residential_params)
@@ -477,14 +538,57 @@ module V2
           end
         end
       end
-
+      
       def get_coverage_options
-        @msi_id                                  = 5
+        case (get_coverage_options_params[:carrier_id] || MsiService.carrier_id).to_i # we set the default to MSI for now since the form doesn't require a carrier_id input yet for this request
+          when MsiService.carrier_id
+            msi_get_coverage_options
+          when DepositChoiceService.carrier_id
+            deposit_choice_get_coverage_options
+          else
+            render json:   { error: "invalid carrier_id/policy_type_id combination #{get_coverage_options_params[:carrier_id] || 'NULL'}/#{get_coverage_options_params[:policy_type_id] || 'NULL'}" },
+                   status: :unprocessable_entity
+        end
+      end
+      
+      def deposit_choice_get_coverage_options
+        # validate params
+        inputs = deposit_choice_get_coverage_options_params
+        if inputs[:insurable_id].nil?
+          render json:   { error: "insurable_id cannot be blank" },
+                 status: :unprocessable_entity
+          return
+        end
+        if inputs[:effective_date].nil?
+          render json:   { error: "effective_date cannot be blank" },
+                 status: :unprocessable_entity
+          return
+        end
+        # pull unit from db
+        unit = Insurable.where(id: inputs[:insurable_id].to_i).take
+        if unit.nil? || unit.insurable_type_id != @residential_unit_insurable_type_id
+          render json:   { error: "unit not found" },
+                 status: :unprocessable_entity
+          return
+        end
+        # get coverage options
+        result = unit.dc_get_rates(Date.parse(inputs[:effective_date]))
+        unless result[:success]
+          render json:   { error: "There are no security deposit replacement plans available for this property (error code #{result[:event]&.id || 0})" },
+                 status: :unprocessable_entity
+          return
+        end
+        render json: { coverage_options: result[:rates] },
+               status: 200
+      end
+
+      def msi_get_coverage_options
+        @msi_id                                  = MsiService.carrier_id
         @residential_community_insurable_type_id = 1
         @residential_unit_insurable_type_id      = 4
         @ho4_policy_type_id                      = 1
         # grab params and validate 'em
-        inputs = get_coverage_options_params
+        inputs = msi_get_coverage_options_params
         if inputs[:insurable_id].nil?
           render json:   { error: "insurable_id cannot be blank" },
                  status: :unprocessable_entity
@@ -651,6 +755,18 @@ module V2
                   :auto_renew, :billing_strategy_id, :account_id, :policy_type_id,
                   :carrier_id, :agency_id, fields: {})
       end
+      
+
+      def create_security_deposit_replacement_params
+        params.require(:policy_application)
+          .permit(:effective_date, :expiration_date, :auto_pay,
+                  :auto_renew, :billing_strategy_id, :account_id, :policy_type_id,
+                  :carrier_id, :agency_id, fields: [:title, :value, options: []],
+                  questions:                       [:title, :value, options: []],
+                  coverage_selections: [:category, :uid, :selection, selection: [ :data_type, :value ]],
+                  policy_rates_attributes:         [:insurable_rate_id],
+                  policy_insurables_attributes:    [:insurable_id])
+      end
 
       def create_policy_users_params
         params.require(:policy_application)
@@ -681,6 +797,14 @@ module V2
       end
 
       def get_coverage_options_params
+        params.permit(:carrier_id, :policy_type_id)
+      end
+      
+      def deposit_choice_get_coverage_options_params
+        params.permit(:insurable_id, :effective_date)
+      end
+
+      def msi_get_coverage_options_params
         params.permit(:insurable_id, :agency_id, :billing_strategy_id,
                       :effective_date, :additional_insured,
                       :estimate_premium,

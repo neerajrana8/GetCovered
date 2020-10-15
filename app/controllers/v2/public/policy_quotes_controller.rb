@@ -134,36 +134,53 @@ module V2
 	    	unless @policy_quote.nil?
 		    	@user = ::User.find(accept_policy_quote_params[:id])
 		    	unless @user.nil?
-            uses_stripe = (@policy_quote.policy_application.carrier_id == 5 ? false : true) # MOOSE WARNING: move this to a configurable field on CarrierPolicyType or something?
+            uses_stripe = ([MsiService.carrier_id, DepositChoiceService.carrier_id].include?(@policy_quote.policy_application.carrier_id) ? false : true) # MOOSE WARNING: move this to a configurable field on CarrierPolicyType or something?
 						result = !uses_stripe ? nil : @user.attach_payment_source(accept_policy_quote_params[:source])
 			    	if !uses_stripe || result.valid?
               bind_params = []
-              # collect bind params for msi
-              if @policy_quote.policy_application.carrier_id == 5
-                # validate
-                problem = validate_accept_policy_quote_payment_params
-                unless problem.nil?
-                  render json: {
-                    :error => "Invalid Payment Information",
-                    :message => problem
-                  }, status: 400			   
-                  return
-                end
-                # set bind params
-                bind_params = [
-                  {
-                    'payment_method' => accept_policy_quote_payment_params[:payment_method],
-                    'payment_info' => { CreditCardInfo: accept_policy_quote_payment_params[:CreditCardInfo].to_h },
-                    'payment_token' => accept_policy_quote_payment_params[:token]
-                  }
-                ]
+              # collect bind params for applicable policy types
+              case @policy_quote.policy_application.carrier_id
+                when DepositChoiceService.carrier_id
+                  # validate
+                  problem = validate_deposit_choice_accept_policy_quote_payment_params
+                  unless problem.nil?
+                    render json: {
+                      :error => "Invalid Payment Information",
+                      :message => problem
+                    }, status: 400			   
+                    return
+                  end
+                  # set bind params
+                  bind_params = [
+                    {
+                      'payment_token' => deposit_choice_accept_policy_quote_payment_params[:token]
+                    }
+                  ]
+                when MsiService.carrier_id
+                  # validate
+                  problem = validate_msi_accept_policy_quote_payment_params
+                  unless problem.nil?
+                    render json: {
+                      :error => "Invalid Payment Information",
+                      :message => problem
+                    }, status: 400			   
+                    return
+                  end
+                  # set bind params
+                  bind_params = [
+                    {
+                      'payment_method' => msi_accept_policy_quote_payment_params[:payment_method],
+                      'payment_info' => { CreditCardInfo: msi_accept_policy_quote_payment_params[:CreditCardInfo].to_h },
+                      'payment_token' => msi_accept_policy_quote_payment_params[:token]
+                    }
+                  ]
               end
               # bind
 				    	@quote_attempt = @policy_quote.accept(bind_params: bind_params)
-				    	@policy_type_identifier = @policy_quote.policy_application.policy_type_id == 5 ? "Rental Guarantee" : "Policy"
+				    	@policy_type_identifier = { 5 => "Rental Guarantee", 6 => "Security Deposit Replacement Bond" }[@policy_quote.policy_application.policy_type_id] || "Policy"
 							if @quote_attempt[:success]
                 insurable = @policy_quote.policy_application.policy&.primary_insurable
-                Insurables::UpdateCoveredStatus.run!(insurable: insurable) if insurable.present?
+                Insurables::UpdateCoveredStatus.run!(insurable: insurable) if insurable.present? # MOOSE WARNING: shouldn't we only be running this on ho4? or, really, shouldn't this entire system be overhauled since it's from the QBE-only days?
 
 								::Analytics.track(
 									user_id: @user.id,
@@ -211,7 +228,11 @@ module V2
 					params.require(:user).permit( :id, :source )
 				end
         
-        def accept_policy_quote_payment_params
+        def deposit_choice_accept_policy_quote_payment_params
+          params.require(:payment).permit(:token)
+        end
+        
+        def msi_accept_policy_quote_payment_params
           params.require(:payment).permit(:payment_method, :token,
             CreditCardInfo: [
               :CardHolderName,
@@ -229,8 +250,13 @@ module V2
           )
         end
         
-        def validate_accept_policy_quote_payment_params
-          pars = accept_policy_quote_payment_params
+        def validate_deposit_choice_accept_policy_quote_payment_params
+          return "payment token cannot be blank" if deposit_choice_accept_policy_quote_payment_params[:token].blank?
+          return nil
+        end
+        
+        def validate_msi_accept_policy_quote_payment_params
+          pars = msi_accept_policy_quote_payment_params
           return "a valid payment method must be supplied" unless pars[:payment_method] == 'card'
           return "payment token cannot be blank" if pars[:token].blank?
           return "Credit Card Info cannot be blank" if pars[:CreditCardInfo].blank?
