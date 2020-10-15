@@ -39,6 +39,10 @@ class PolicyType < ApplicationRecord
     def residential
       find_by!(slug: 'residential')
     end
+
+    def rent_garantee
+      find_by!(slug: 'rent-guarantee')
+    end
   end
 
   private
