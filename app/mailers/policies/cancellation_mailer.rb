@@ -21,7 +21,7 @@ module Policies
 
     def set_variables
       @policy = params[:policy]
-      @request_date = params[:request_date]
+      @request_date = params[:change_request]&.created_at
       @without_request = params[:without_request]
       @user = @policy.primary_user
       @agency = @policy.agency

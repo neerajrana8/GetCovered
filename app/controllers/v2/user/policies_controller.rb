@@ -75,7 +75,7 @@ module V2
         change_request = ChangeRequest.new(requestable: current_user, changeable: @policy, customized_action: 'refund')
         if change_request.save
           Policies::CancellationMailer.
-            with(policy: @policy, request_date: change_request.created_at).
+            with(policy: @policy, change_request: change_request).
             refund_request.
             deliver_later
           render json: { message: 'Refund was successfully sent' }, status: :ok
@@ -89,7 +89,7 @@ module V2
         change_request = ChangeRequest.new(requestable: current_user, changeable: @policy, customized_action: 'cancel')
         if change_request.save
           Policies::CancellationMailer.
-            with(policy: @policy, request_date: change_request.created_at).
+            with(policy: @policy, change_request: change_request).
             cancel_request.
             deliver_later
           render json: { message: 'Cancel was successfully sent' }, status: :ok
