@@ -93,7 +93,7 @@ module PoliciesMethods
     else
       Policies::CancellationMailer.
         with(policy: @policy, without_request: true).
-        cancel_request.
+        cancel_confirmation.
         deliver_later
       render :show, status: :ok
     end
@@ -106,7 +106,7 @@ module PoliciesMethods
     else
       Policies::CancellationMailer.
         with(policy: @policy, without_request: true).
-        cancel_request.
+        cancel_confirmation.
         deliver_later
       render :show, status: :ok
     end
