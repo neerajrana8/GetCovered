@@ -9,6 +9,7 @@ class PolicyQuote < ApplicationRecord
   include CarrierQbePolicyQuote
   include CarrierCrumPolicyQuote
   include CarrierMsiPolicyQuote
+  include CarrierDcPolicyQuote
   include ElasticsearchSearchable
   include InvoiceableQuote
 
@@ -71,6 +72,8 @@ class PolicyQuote < ApplicationRecord
       crum_bind
     when 'msi'
       msi_bind
+    when 'dc'
+      dc_bind
     else
       { error: 'Error happened with policy bind' }
     end
@@ -196,6 +199,8 @@ class PolicyQuote < ApplicationRecord
         { error: 'No build coverages for Pensio' }
       when 'msi'
         msi_build_coverages
+      when 'dc'
+        dc_build_coverages
       else
         { error: 'Error happened with build coverages' }
     end

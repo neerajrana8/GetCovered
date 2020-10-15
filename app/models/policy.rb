@@ -43,6 +43,7 @@ class Policy < ApplicationRecord
   include CarrierCrumPolicy
   include CarrierQbePolicy
   include CarrierMsiPolicy
+  include CarrierDcPolicy
   include RecordChange
   
   after_create :inherit_policy_coverages, if: -> { policy_type&.designation == 'MASTER-COVERAGE' }
@@ -276,6 +277,8 @@ class Policy < ApplicationRecord
       crum_issue_policy
     when 'msi'
       msi_issue_policy
+    when 'dc'
+      dc_issue_policy
     else
       { error: 'Error happened with policy issue' }
     end

@@ -10,6 +10,7 @@ class PolicyApplication < ApplicationRecord
   include CarrierCrumPolicyApplication
   include CarrierQbePolicyApplication
   include CarrierMsiPolicyApplication
+  include CarrierDcPolicyApplication
   
   # Active Record Callbacks
   after_initialize :initialize_policy_application

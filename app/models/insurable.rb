@@ -6,6 +6,7 @@ class Insurable < ApplicationRecord
   include ElasticsearchSearchable
   include CarrierQbeInsurable
   include CarrierMsiInsurable
+  include CarrierDcInsurable
   include CoverageReport # , EarningsReport, RecordChange
   include RecordChange
   include SetSlug
