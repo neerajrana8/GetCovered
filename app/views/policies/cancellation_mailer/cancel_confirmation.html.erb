@@ -210,7 +210,7 @@
               This policy has been canceled as requested by the policyholder.
               <% end %>
               <br>
-              This cancellation is effective: <%=@policy.cancellation_date&.strftime("%m/%d/%Y") %>
+              This cancellation is effective: <%=@policy.cancellation_date&.to_date&.strftime("%m/%d/%Y") %>
               <br>
               Please contact us at <%=@contact_email %> if you have any questions.
             </p>
