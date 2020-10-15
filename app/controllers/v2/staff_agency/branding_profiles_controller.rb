@@ -105,7 +105,6 @@ module V2
       end
 
       def attach_images
-        logo_status, footer_status = "error"
         if update_allowed?
           logo_status = get_image_url(:logo_url) if attach_images_params[:logo_url].present?
           footer_status = get_image_url(:footer_logo_url) if attach_images_params[:footer_logo_url].present?
@@ -171,8 +170,8 @@ module V2
       end
 
       def get_image_url(field_name)
-        @branding_profile.images.attach(attach_images_params[field_name])
-        img_url = rails_blob_url(@branding_profile.images.last)
+        images = @branding_profile.images.attach(attach_images_params[field_name])
+        img_url = rails_blob_url(images.last)
         img_url.present? && @branding_profile.update_column(field_name, img_url) ? img_url : "error"
       end
 
