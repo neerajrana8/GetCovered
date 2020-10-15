@@ -64,7 +64,7 @@ class DepositChoiceService
 
   def build_address(
     address: nil,
-    address1: nil, address2: nil, city: nil, state: nil, zip: nil
+    address1: nil, address2: nil, city: nil, state: nil, zip: nil,
     **compilation_args
   )
     # make parameters sane

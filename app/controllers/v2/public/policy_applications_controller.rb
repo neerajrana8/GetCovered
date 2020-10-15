@@ -812,7 +812,7 @@ module V2
       end
 
       def valid_policy_types
-        return ["residential", "commercial", "rent-guarantee"]
+        return ["residential", "commercial", "rent-guarantee", "security-deposit-replacement"]
       end
 
     end
