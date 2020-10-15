@@ -6,15 +6,15 @@ module Policies
             from: -> { 'no-reply@getcoveredinsurance.com' }
 
     def refund_request
-      mail(subject: "#{@agency.title} - #{@policy.policy_type.title} Refund Request", bcc: @agency.owner&.email)
+      mail(subject: "#{@agency.title} - #{@policy.policy_type.title} Refund Request", bcc: @agency.contact_info['contact_email'])
     end
 
     def cancel_request
-      mail(subject: "#{@agency.title} - #{@policy.policy_type.title} Cancellation Request", bcc: @agency.owner&.email)
+      mail(subject: "#{@agency.title} - #{@policy.policy_type.title} Cancellation Request", bcc: @agency.contact_info['contact_email'])
     end
 
     def cancel_confirmation
-      mail(subject: "#{@agency.title} - #{@policy.policy_type.title} Policy Cancellation", bcc: @agency.owner&.email)
+      mail(subject: "#{@agency.title} - #{@policy.policy_type.title} Policy Cancellation", bcc: @agency.contact_info['contact_email'])
     end
 
     private
