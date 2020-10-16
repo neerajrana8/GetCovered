@@ -200,7 +200,8 @@ module CarrierDcInsurable
         state: state,
         zip_code: zip_code
       )
-      event = events.new(
+      event = Event.new(
+        eventable: nil,
         verb: DepositChoiceService::HTTP_VERB_DICTIONARY[:address].to_s,
         format: 'json',
         interface: 'REST',

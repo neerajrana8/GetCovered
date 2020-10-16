@@ -3,17 +3,17 @@ require 'faker'
 require 'socket'
 
 
-puts "Initializing carrier ##{dc_id}..."
-
-@create_test_insurables = ENV['create_test_insurables'] || false
-@create_test_policies = ENV['create_test_policies'] || false
 
 
 ########################################################################
 ######################## BASIC CARRIER SETUP ###########################
 ########################################################################
 
-@dc_id = 6
+@dc_id = DepositChoiceService.carrier_id
+puts "Initializing carrier ##{@dc_id}..."
+
+@create_test_insurables = ENV['create_test_insurables'] || false
+@create_test_policies = ENV['create_test_policies'] || false
 
 @residential_community = InsurableType.find(1)
 @residential_unit = InsurableType.find(4)
@@ -82,8 +82,6 @@ puts "Initializing carrier ##{dc_id}..."
   available = (state == 0 || state == 11 ? false : true)
   cpa = CarrierPolicyTypeAvailability.create(state: state, available: available, carrier_policy_type: @cpt)
   # WARNING: fee disabled: cpa.fees.create(title: "Origination Fee", type: :ORIGINATION, amount: 2500, enabled: true, ownerable: @carrier) 
-else
-  pp @cpt.errors
 end unless CarrierPolicyTypeAvailability.where(carrier_policy_type: @cpt).limit(1).count > 0
 
 
@@ -91,6 +89,7 @@ end unless CarrierPolicyTypeAvailability.where(carrier_policy_type: @cpt).limit(
 ########################## GC AGENCY SETUP #############################
 ########################################################################
 
+puts "  Initializing DC agencies..."
 
 @get_covered = Agency.where(title: "Get Covered").take
 carrier_agency = CarrierAgency.where(carrier: @carrier, agency: @get_covered).take
@@ -100,13 +99,12 @@ if carrier_agency.nil?
 end
 @fee_amount = nil # change to create service fees for states
 51.times do |state|
-  available = (state == 0 || state = 11 ? false : true)
-  authorization = CarrierAgencyAuthorization.create(
+  available = ((state == 0 || state == 11) ? false : true)
+  authorization = CarrierAgencyAuthorization.where(state: state, available: available, carrier_agency: carrier_agency, policy_type: @policy_type).take || CarrierAgencyAuthorization.create!(
     state: state,
     available: available,
     carrier_agency: carrier_agency,
-    policy_type: @policy_type,
-    agency: @get_covered
+    policy_type: @policy_type
   )
   Fee.create(title: "Service Fee", 
              type: :MISC, 
@@ -137,6 +135,8 @@ end
 ########################################################################
 if @create_test_insurables
 
+puts "  Creating DC test insurables..."
+
 @created_communities = []
 
 @addresses = [{
@@ -145,7 +145,7 @@ if @create_test_insurables
   city: 'Clarkston',
   state: 'GA',
   zip_code: '30021'
-]}
+}]
 
 
 building_name_options = ['Estates', 'Gardens', 'Homes', 'Place']
@@ -163,13 +163,12 @@ accounts = @carrier.agencies.map{|ag| ag.accounts.to_a }.flatten.map{|acct| { ac
     assigned = false
     if account.agency.offers_policy_type_in_region(args)
       # create community from DC's records
-      pad = @community.primary_address
       result = ::Insurable.deposit_choice_address_search(
-        address1: pad.combined_street_address,
-        address2: pad.street_two.blank? ? nil : pad.street_two,
-        city: pad.city,
-        state: pad.state,
-        zip_code: pad.zip_code
+        address1: "#{addr[:street_number]} #{addr[:street_name]}",
+        address2: addr[:street_two] || nil,
+        city: addr[:city],
+        state: addr[:state],
+        zip_code: addr[:zip_code]
       )
       result = ::Insurable.deposit_choice_create_insurable_from_response(result,
         account: account
@@ -201,5 +200,8 @@ end
 
 
 
-end
+end # end test insurables
 
+
+
+puts "  DC seed success!"
