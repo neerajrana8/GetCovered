@@ -52,6 +52,8 @@
             via: "get",
             defaults: { recordable_type: Agency }
           get 'branding_profile'
+
+          put :enable
           put :disable
         end
 

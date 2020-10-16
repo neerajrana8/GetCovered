@@ -5,7 +5,7 @@
 module V2
   module StaffSuperAdmin
     class AgenciesController < StaffSuperAdminController
-      before_action :set_agency, only: %i[update show branding_profile disable]
+      before_action :set_agency, only: %i[update show branding_profile enable disable]
       before_action :default_filter, only: %i[index show]
 
       def index
@@ -76,6 +76,16 @@ module V2
       
       def disable
         result = Agencies::Disable.run(agency: @agency)
+        if result.valid?
+          render :show, status: :ok
+        else
+          render json: standard_error(:disabling_failed, 'Agency was not disabled', result.errors),
+                 status: 422
+        end
+      end
+
+      def enable
+        result = Agencies::Enable.run(agency: @agency)
         if result.valid?
           render :show, status: :ok
         else
