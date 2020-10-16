@@ -135,7 +135,7 @@ class DepositChoiceService
   
   
   def build_rate(
-    :unit_id, :effective_date
+    unit_id:, effective_date:
   )
     self.action = :rate
     self.errors = nil
