@@ -112,6 +112,10 @@ class PolicyQuote < ApplicationRecord
           elsif policy_application.policy_type.title == "Rent Guarantee"
             policy_number = bind_request[:data][:policy_number]
             policy_status = "BOUND"
+          elsif policy_application.policy_type.title == "Security Deposit Replacement"
+            policy_number = bind_request[:data][:policy_number]
+            # MOOSE WARNING certificate stuff
+            policy_status = "BOUND"
           end
 
 
