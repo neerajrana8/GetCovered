@@ -23,6 +23,7 @@ class V2Controller < ApplicationController
 #exit
     prequery = build_prequery(data_source, includes, (params[:filter].nil? ? {} : params[:filter].to_unsafe_h).deep_merge(fixed_filters), params[:sort].nil? ? nil : params[:sort].to_unsafe_h)
     query = build_query(data_source, prequery)
+    binding.pry
 =begin
 puts ''
 puts params
@@ -160,6 +161,7 @@ exit
     results = handle_filters(supported_filters, filters, queriable)
     prequery[:includes] = results[:includes]
     prequery[:references] = results[:references]
+    prequery[:joins] = results[:references]
     prequery[:where_hash] = results[:where_hash]
     prequery[:where_strings] = results[:where_strings]
     # put includes into prequery
