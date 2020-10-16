@@ -120,13 +120,13 @@ end
 
 @get_covered.billing_strategies.create!(title: 'Annually', enabled: true, carrier: @carrier, 
                                           policy_type: @policy_type, carrier_code: "Annual",
-                                          fees_attributes: [])
+                                          fees_attributes: []) unless @get_covered.billing_strategies.where(title: "Annually", carrier_id: @carrier.id).count > 0
 @get_covered.commission_strategies.create!(title: 'Get Covered / Deposit Choice Producer Commission', 
                                             carrier: @carrier,
                                             policy_type: @policy_type, 
                                             amount: 5, 
                                             type: 0, 
-                                            house_override: 0)
+                                            house_override: 0) unless @get_covered.commission_strategies.where(title: 'Get Covered / Deposit Choice Producer Commission', carrier_id: @carrier.id).count > 0
 
 
 
