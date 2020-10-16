@@ -284,7 +284,7 @@ module CarrierDcInsurable
           account_id: account_id,
           agency_id: agency_id,
           title: response["units"].first["communityName"], # MOOSE WARNING: this may be a garbage name... trusting the DC data to be correct here could be dangerous
-          insurable_type: InsurablType.where(title: "Residential Community").take,
+          insurable_type: InsurableType.where(title: "Residential Community").take,
           enabled: disable ? false : true,
           category: 'property',
           addresses_attributes: [{
