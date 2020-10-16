@@ -552,6 +552,7 @@ module V2
       end
       
       def deposit_choice_get_coverage_options
+        @residential_unit_insurable_type_id = 4
         # validate params
         inputs = deposit_choice_get_coverage_options_params
         if inputs[:insurable_id].nil?
