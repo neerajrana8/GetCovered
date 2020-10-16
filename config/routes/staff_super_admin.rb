@@ -52,6 +52,7 @@
             via: "get",
             defaults: { recordable_type: Agency }
           get 'branding_profile'
+          put :disable
         end
 
         collection do
