@@ -23,7 +23,6 @@ class V2Controller < ApplicationController
 #exit
     prequery = build_prequery(data_source, includes, (params[:filter].nil? ? {} : params[:filter].to_unsafe_h).deep_merge(fixed_filters), params[:sort].nil? ? nil : params[:sort].to_unsafe_h)
     query = build_query(data_source, prequery)
-    binding.pry
 =begin
 puts ''
 puts params
