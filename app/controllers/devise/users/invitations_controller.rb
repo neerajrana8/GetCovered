@@ -19,7 +19,7 @@ class Devise::Users::InvitationsController < Devise::InvitationsController
       @token = @resource.create_token
       @resource.save!
       update_auth_header
-      acct = AccountUser.find_by(user_id: @user.id, account_id: @user.account_users.last.account_id)
+      acct = AccountUser.find_by(user_id: @user.id, account_id: @user.account_users.last&.account_id)
       acct.update(status: 'enabled') if acct.present? && acct.status != 'enabled'
       render json: { success: ['User updated.'] },
              status: :accepted
