@@ -54,7 +54,7 @@ module CarrierDcPolicyQuote
         unit_id: unit_cip.external_carrier_id,
         first_name: policy_application.primary_user.profile.first_name,
         last_name: policy_application.primary_user.profile.last_name,
-        email_address: policy_application.primary_user.email,
+        email: policy_application.primary_user.email,
         payment_token: payment_params['payment_token']
       )
       event = events.new(

@@ -153,8 +153,7 @@ class PolicyQuote < ApplicationRecord
             policy_application.policy_rates.update_all policy_id: policy.id
 
             build_coverages() if policy_application.policy_type.title == "Residential"
-
-            if update(policy: policy) &&
+            if update!(policy: policy) &&
                policy_application.update(policy: policy, status: "accepted") &&
                policy_premium.update(policy: policy)
 
@@ -169,6 +168,7 @@ class PolicyQuote < ApplicationRecord
               logger.error policy.errors.to_json
               logger.error policy_application.errors.to_json
               logger.error policy_premium.errors.to_json
+              logger.error self.errors.to_json
               quote_attempt[:message] = "Error attaching policy to system"
               update status: 'error'
             end
