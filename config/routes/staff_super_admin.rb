@@ -30,6 +30,14 @@
         end
       end
 
+    resources :refunds,
+      only: [ :index, :create, :update] do
+        member do
+          get :approve
+          get :decline
+        end
+      end
+
     get :total_dashboard, controller: 'dashboard', path: 'dashboard/:super_admin_id/total_dashboard'
     get :buildings_communities, controller: 'dashboard', path: 'dashboard/:super_admin_id/buildings_communities'
     get :communities_list, controller: 'dashboard', path: 'dashboard/:super_admin_id/communities_list'
@@ -85,10 +93,22 @@
             to: "histories#index_recordable",
             via: "get",
             defaults: { recordable_type: Carrier }
+          get :carrier_agencies
+          get :toggle_billing_strategy
+          get :billing_strategies_list
+          get :fees_list
+          get :commission_list
+          post :assign_agency_to_carrier
+          post :unassign_agency_from_carrier
+          post :add_fees
+          post :add_billing_strategy
+          post :add_fees_to_billing_strategy
+          post :add_commissions
+          put :update_commission
+          get :commission
         end
+        post :assign_agency_to_carrier, path: 'assign-agency-to-carrier'
       end
-
-
     resources :carrier_agencies, path: "carrier-agencies", only: [ :index, :show, :create, :update, :destroy ]
     resources :carrier_agency_authorizations, path: "carrier-agency-authorizations", only: [ :update, :index, :show ]
 
@@ -104,7 +124,11 @@
       path: "carrier-policy-type-availabilities",
       only: [ :create, :update, :index, :show ]
 
-    resources :claims, only: [:index, :show]
+    resources :claims, only: [:index, :show, :create] do
+      member do
+        put :process_claim
+      end
+    end
 
     resources :commissions, only: [:index, :show, :update] do
       member do
@@ -150,21 +174,43 @@
       only: [ :index, :show ]
 
     resources :policies,
-      only: [ :index, :show ] do
+      only: [ :update, :index, :show ] do
+        collection do
+          post :add_coverage_proof
+        end
         member do
           get "histories",
             to: "histories#index_recordable",
             via: "get",
             defaults: { recordable_type: Policy }
+          put :update_coverage_proof
+          delete :delete_policy_document
+          put :refund_policy
+          put :cancel_policy
         end
+
         get "search", to: 'policies#search', on: :collection
+    end
+
+    resources :policy_cancellation_requests, only: [ :index, :show ] do
+      member do
+        put :approve
+        put :cancel
+        put :decline
       end
+    end
 
     resources :policy_coverages, only: [ :update ]
 
     resources :policy_applications,
       path: "policy-applications",
       only: [ :index, :show ]
+
+    resources :policy_application_groups, path: "policy-application-groups" do
+      member do
+        put :accept
+      end
+    end
 
     resources :policy_quotes,
       path: "policy-quotes",

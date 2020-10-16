@@ -700,14 +700,19 @@ class Invoice < ApplicationRecord
     end
 
 
-    def reduce_distribution_total(new_total, mode, distribution)
-      # WARNING: this shouldn't need to get called, so it just does the simplest thing possible..
-      # ideally it would act like get_fund_distribution, using line_item_groups and reducing amounts proportionally in each group in sequence
-      old_total = distribution.inject(0){|sum,li| sum + li['amount'] }
-      while old_total > new_total
-        distribution.find{|d| d['amount'] > 0 }['amount'] -= [d['amount'], old_total - new_total].min
-      end
+  def reduce_distribution_total(new_total, mode, distribution)
+    # WARNING: this shouldn't need to get called, so it just does the simplest thing possible..
+    # ideally it would act like get_fund_distribution, using line_item_groups and reducing amounts proportionally in each group in sequence
+    old_total = distribution.inject(0){|sum,li| sum + li['amount'] }
+    while old_total > new_total
+      distr_elem_index = distribution.find_index { |d| d['amount'] > 0 }
+
+      break if distr_elem_index.nil?
+
+      distribution[distr_elem_index]['amount'] -= [distribution[distr_elem_index]['amount'], old_total - new_total].min
+      old_total = distribution.inject(0){ |sum,li| sum + li['amount'] }
     end
+  end
 
 
     def total_collected_changed

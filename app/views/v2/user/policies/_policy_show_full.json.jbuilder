@@ -62,6 +62,12 @@ json.insurables do
   end
 end
 
+json.change_requests do
+  json.array! policy.change_requests do |change_request|
+    json.partial! 'v2/shared/change_requests/full.json.jbuilder', change_request: change_request
+  end
+end
+
 json.documents policy.documents do |document|
   json.id document.id
   json.filename document.filename

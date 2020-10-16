@@ -8,12 +8,11 @@ module V2
         super(:@branding_profiles, BrandingProfile)
       end
 
-      def show
-      end
+      def show; end
 
       def create
         @branding_profile = BrandingProfile.new(branding_profile_params)
-        if !@branding_profile.errors.any? && @branding_profile.save
+        if @branding_profile.errors.none? && @branding_profile.save
           render :show, status: :created
         else
           render json: @branding_profile.errors, status: :unprocessable_entity
@@ -97,7 +96,7 @@ module V2
           end
         else
           render json: { success: false, errors: ['Unauthorized Access'] },
-            status: :unauthorized
+                 status: :unauthorized
         end
       end
 
@@ -109,7 +108,7 @@ module V2
             render json: { success: false }, status: :unprocessable_entity
           end
         else
-          render json: { success: false, errors: ['Unauthorized Access'] },status: :unauthorized
+          render json: { success: false, errors: ['Unauthorized Access'] }, status: :unauthorized
         end
       end
 
@@ -161,8 +160,8 @@ module V2
 
         params.require(:branding_profile).permit(
           :default, :id, :profileable_id, :profileable_type, :title,
-          :url, :footer_logo_url, :logo_url, :subdomain, :subdomain_test, images: [],
-          branding_profile_attributes_attributes: %i[id name value attribute_type],
+          :url, :footer_logo_url, :logo_url, :subdomain, :subdomain_test, :global_default,
+          images: [], branding_profile_attributes_attributes: %i[id name value attribute_type],
           styles: {}
         )
       end
@@ -191,7 +190,6 @@ module V2
         params.require(:images).permit(:logo_url, :footer_logo_url)
       end
 
-  end
-
+    end
   end
 end

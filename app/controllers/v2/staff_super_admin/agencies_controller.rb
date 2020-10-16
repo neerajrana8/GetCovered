@@ -7,6 +7,7 @@ module V2
     class AgenciesController < StaffSuperAdminController
 
       before_action :set_agency, only: [:update, :show, :branding_profile]
+      before_action :default_filter, only: [:index, :show]
 
       def index
         if params[:short]
@@ -16,22 +17,21 @@ module V2
         end
       end
 
-      def show
-      end
+      def show; end
 
       def create
         if create_allowed?
-          @agency = Agency.new(create_params)
-          if !@agency.errors.any? && @agency.save_as(current_staff)
-            render :show,
-              status: :created
+          outcome = Agencies::Create.run(agency_params: create_params.to_h)
+          if outcome.valid?
+            @agency = outcome.result
+            render :show, status: :created
           else
-            render json: @agency.errors,
-              status: :unprocessable_entity
+            render json: standard_error(:agency_creation_error, nil, outcome.errors.full_messages),
+                   status: :unprocessable_entity
           end
         else
           render json: { success: false, errors: ['Unauthorized Access'] },
-            status: :unauthorized
+                 status: :unauthorized
         end
       end
 
@@ -39,7 +39,7 @@ module V2
         result = []
         required_fields = %i[id title agency_id]
 
-        Agency.where(agency_id: nil).select(required_fields).each do |agency|
+        Agency.where(agency_id: sub_agency_filter_params).select(required_fields).each do |agency|
           sub_agencies = agency.agencies.select(required_fields)
           result << if sub_agencies.any?
             agency.attributes.reverse_merge(agencies: sub_agencies.map(&:attributes))
@@ -75,7 +75,6 @@ module V2
         end
       end
 
-
       private
 
         def view_path
@@ -94,6 +93,15 @@ module V2
           @agency = Agency.find_by(id: params[:id])
         end
 
+        #return only agencies
+        def default_filter
+          params[:filter] = {"agency_id"=> "_NULL_"} if params[:filter].blank?
+        end
+
+        def sub_agency_filter_params
+          params[:agency_id].blank? ? nil : params.require(:agency_id)
+        end
+
         def create_params
           return({}) if params[:agency].blank?
           to_return = params.require(:agency).permit(
@@ -110,7 +118,7 @@ module V2
         def update_params
           return({}) if params[:agency].blank?
           to_return = params.require(:agency).permit(
-            :enabled, :staff_id, :title, :tos_accepted, :whitelabel,
+              :agency_id, :enabled, :staff_id, :title, :tos_accepted, :whitelabel,
             contact_info: {}, settings: {}, addresses_attributes: [
               :city, :country, :county, :id, :latitude, :longitude,
               :plus_four, :state, :street_name, :street_number,
@@ -132,6 +140,8 @@ module V2
         def supported_filters(called_from_orders = false)
           @calling_supported_orders = called_from_orders
           {
+              agency_id: %i[scalar array],
+              id: %i[scalar array]
           }
         end
 
