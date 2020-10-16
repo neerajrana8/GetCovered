@@ -639,6 +639,13 @@ ActiveRecord::Schema.define(version: 2020_10_19_195107) do
     t.string "labels", array: true
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "profile_id"
+    t.bigint "address_id"
+    t.integer "status", default: 0
+    t.datetime "last_visit"
+    t.string "last_page_visited"
+    t.string "campaign_source"
+    t.index ["address_id"], name: "index_leads_on_address_id"
     t.index ["email"], name: "index_leads_on_email"
     t.index ["user_id"], name: "index_leads_on_user_id"
   end
@@ -1259,6 +1266,21 @@ ActiveRecord::Schema.define(version: 2020_10_19_195107) do
     t.index ["reset_password_token"], name: "index_staffs_on_reset_password_token", unique: true
     t.index ["role"], name: "index_staffs_on_role"
     t.index ["uid", "provider"], name: "index_staffs_on_uid_and_provider", unique: true
+  end
+
+  create_table "tracking_urls", force: :cascade do |t|
+    t.string "tracking_url"
+    t.integer "landing_page"
+    t.string "campaign_source"
+    t.string "campaign_medium"
+    t.string "campaign_term"
+    t.text "campaign_content"
+    t.string "campaign_name"
+    t.boolean "deleted", default: false
+    t.bigint "agency_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["agency_id"], name: "index_tracking_urls_on_agency_id"
   end
 
   create_table "users", force: :cascade do |t|

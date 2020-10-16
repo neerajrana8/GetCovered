@@ -281,7 +281,10 @@
         collection do
           get "search", to: 'staffs#search'
         end
-      end
+    end
+
+    resources :tracking_urls,
+      only: [ :create, :index, :show]
 
     resources :users,
       only: [ :create, :update, :index, :show ] do
