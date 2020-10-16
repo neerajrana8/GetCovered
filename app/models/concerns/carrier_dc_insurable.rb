@@ -24,7 +24,7 @@ module CarrierDcInsurable
       )
       # check for errors
       if result[:error]
-        @carrier_profile.update(profile_data: @carrier_profile.profile_data.merge({
+        @carrier_profile.update(data: @carrier_profile.profile_data.merge({
           "sought_dc_information" => true,
           "sought_dc_information_on" => Time.current.to_date.to_s,
           "got_dc_information" => false,
@@ -35,7 +35,7 @@ module CarrierDcInsurable
       # mark success
       @carrier_profile.update(
         external_carrier_id: result[:data]["addressId"],
-        profile_data: @carrier_profile.profile_data.merge({
+        data: @carrier_profile.profile_data.merge({
           "sought_dc_information" => true,
           "sought_dc_information_on" => Time.current.to_date.to_s,
           "got_dc_information" => true,
@@ -59,7 +59,7 @@ module CarrierDcInsurable
             units_not_in_dc_system.push(unit.id)
             cip.update(
               external_carrier_id: nil,
-              profile_data: cip.profile_data.merge({
+              data: cip.profile_data.merge({
                 "got_dc_information" => false,
                 "dc_address_id" => nil,
                 "dc_community_id" => nil,
@@ -70,7 +70,7 @@ module CarrierDcInsurable
             entry_unit_ids_used.push(entry["unitId"])
             cip.update(
               external_carrier_id: entry["unitId"],
-              profile_data: cip.profile_data.merge({
+              data: cip.profile_data.merge({
                 "got_dc_information" => true,
                 "dc_address_id" => result[:data]["addressId"],
                 "dc_community_id" => entry["communityId"],
@@ -110,7 +110,7 @@ module CarrierDcInsurable
               units_not_in_dc_system.push(unit.id)
               cip.update(
                 external_carrier_id: nil,
-                profile_data: cip.profile_data.merge({
+                data: cip.profile_data.merge({
                   "got_dc_information" => false,
                   "dc_address_id" => nil,
                   "dc_community_id" => nil,
@@ -121,7 +121,7 @@ module CarrierDcInsurable
               entry_unit_ids_used.push(entry["unitId"])
               cip.update(
                 external_carrier_id: entry["unitId"],
-                profile_data: cip.profile_data.merge({
+                data: cip.profile_data.merge({
                   "got_dc_information" => true,
                   "dc_address_id" => result[:data]["addressId"],
                   "dc_community_id" => entry["communityId"],
@@ -134,7 +134,7 @@ module CarrierDcInsurable
       end
       # save any missing unit info
       @carrier_profile.update(
-        profile_data: @carrier_profile.profile_data.merge({
+        data: @carrier_profile.profile_data.merge({
           "building_address_ids" => building_address_ids,
           "dc_units_not_in_system" => unit_dc_ids.uniq.select{|u| !entry_unit_ids_used.include?(u["unitId"]) },
           "units_not_in_dc_system" => units_not_in_dc_system.uniq,
