@@ -160,7 +160,7 @@ exit
     results = handle_filters(supported_filters, filters, queriable)
     prequery[:includes] = results[:includes]
     prequery[:references] = results[:references]
-    prequery[:joins] = results[:references]
+    # prequery[:joins] = results[:references]
     prequery[:where_hash] = results[:where_hash]
     prequery[:where_strings] = results[:where_strings]
     # put includes into prequery
