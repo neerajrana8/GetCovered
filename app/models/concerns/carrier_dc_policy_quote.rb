@@ -100,7 +100,7 @@ module CarrierDcPolicyQuote
         verb: 'post',
         format: 'xml',
         interface: 'REST',
-        endpoint: msis.endpoint_for(:binder),
+        endpoint: dcs.endpoint_for(:binder),
         process: 'deposit_choice_binder'
       )
       event.request = dcs.message_content
