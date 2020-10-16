@@ -764,7 +764,7 @@ module V2
                   :auto_renew, :billing_strategy_id, :account_id, :policy_type_id,
                   :carrier_id, :agency_id, fields: [:title, :value, options: []],
                   questions:                       [:title, :value, options: []],
-                  coverage_selections: [:category, :uid, :selection, selection: [ :data_type, :value ]],
+                  coverage_selections: [:bondAmount, :ratedPremium, :processingFee, :totalCost],
                   policy_rates_attributes:         [:insurable_rate_id],
                   policy_insurables_attributes:    [:insurable_id])
       end
