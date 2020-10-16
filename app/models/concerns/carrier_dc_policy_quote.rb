@@ -50,8 +50,8 @@ module CarrierDcPolicyQuote
       dcs = DepositChoiceService.new
       # create insured
       dcs.build_request(:insured,
-        address_id: unit_profile.data["dc_address_id"],
-        unit_id: unit_profile.external_carrier_id,
+        address_id: unit_cip.data["dc_address_id"],
+        unit_id: unit_cip.external_carrier_id,
         first_name: policy_application.primary_user.profile.first_name,
         last_name: policy_application.primary_user.profile.last_name,
         email_address: policy_application.primary_user.email,
@@ -81,8 +81,8 @@ module CarrierDcPolicyQuote
       # perform bind call
       result = dcs.build_request(:binder,
         insured_id: insured_id,
-        address_id: unit_profile.data["dc_address_id"],
-        unit_id: unit_profile.external_carrier_id,
+        address_id: unit_cip.data["dc_address_id"],
+        unit_id: unit_cip.external_carrier_id,
         move_in_date: policy_application.effective_date,
         primary_occupant: policy_application.primary_user.get_deposit_choice_occupant_hash(primary: true),
         additional_occupants: policy_application.policy_users.where(primary: false).map do |pu|
