@@ -14,6 +14,7 @@ puts "Initializing carrier ##{@dc_id}..."
 
 @create_test_insurables = ENV['create_test_insurables'] || false
 @create_test_policies = ENV['create_test_policies'] || false
+@force_id = ENV['force_id'] ? ENV['force_id'].to_i : false
 
 @residential_community = InsurableType.find(1)
 @residential_unit = InsurableType.find(4)
@@ -28,7 +29,7 @@ puts "Initializing carrier ##{@dc_id}..."
   bindable: true,
   verifiable: false,
   enabled: true
-})
+}.merge(@force_id ? { id: @force_id } : {})
 
 # create CITs for communities and units
 @cit_community = CarrierInsurableType.where(carrier: @carrier, insurable_type: @residential_community).take || CarrierInsurableType.create!({
