@@ -14,6 +14,10 @@ module PolicyCancellationRequestsMethods
     policy = @change_request.changeable
     policy.cancel('manual_cancellation_with_refunds', @change_request.created_at)
     @change_request.update(status: :approved)
+    Policies::CancellationMailer.
+      with(policy: policy, change_request: @change_request).
+      cancel_confirmation.
+      deliver_later
     render template: 'v2/shared/change_requests/show', status: :ok
   end
 
@@ -21,6 +25,10 @@ module PolicyCancellationRequestsMethods
     policy = @change_request.changeable
     policy.cancel('manual_cancellation_without_refunds', @change_request.created_at)
     @change_request.update(status: :approved)
+    Policies::CancellationMailer.
+      with(policy: policy, change_request: @change_request).
+      cancel_confirmation.
+      deliver_later
     render template: 'v2/shared/change_requests/show', status: :ok
   end
 
