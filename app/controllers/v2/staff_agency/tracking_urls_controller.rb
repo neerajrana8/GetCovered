@@ -1,9 +1,9 @@
 module V2
   module StaffAgency
     class TrackingUrlsController < StaffAgencyController
-      # before_action :is_owner?, only: :create
+      before_action :is_owner?, only: :create
 
-      before_action :set_tracking_url, only: :show
+      before_action :set_tracking_url, only: [:show, :destroy]
 
       before_action :set_substrate, only: :index
 
@@ -16,6 +16,15 @@ module V2
         else
           render json: @tracking_url.errors,
                  status: :unprocessable_entity
+        end
+      end
+
+      def destroy
+        @tracking_url.deleted = true
+        if @tracking_url.save
+          render json: { success: true}, status: :deleted
+        else
+          render json: @tracking_url.errors, status: :unprocessable_entity
         end
       end
 
@@ -47,6 +56,11 @@ module V2
         if @substrate.nil?
           @substrate = access_model(::TrackingUrl).not_deleted
         end
+      end
+
+      def is_owner?
+        render(json: { success: false, errors: ['Unauthorized Access'] },
+               status: :unauthorized) and return unless current_staff.owner
       end
     end
   end

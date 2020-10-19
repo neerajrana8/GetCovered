@@ -2,6 +2,7 @@ class Lead < ApplicationRecord
   belongs_to :user, optional: true
   has_one :profile, as: :profileable
   has_one :address, as: :addressable
+  belongs_to :tracking_url
 
   has_many :lead_events, dependent: :destroy
 

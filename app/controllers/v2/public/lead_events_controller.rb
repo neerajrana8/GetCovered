@@ -33,7 +33,7 @@ module V2
                 end
 
         tracking_url = TrackingUrl.find_by(tracking_url: params[:tracking_url])
-
+        
         @klaviyo_helper.lead = @lead if @lead.present?
 
         if @lead.nil?
@@ -47,6 +47,7 @@ module V2
           end
 
         else
+
           #need to resolve when come again and profile started to update from fill to blank
           nested_params = {}
           nested_params[:profile_attributes] = lead_profile_attributes if lead_profile_attributes

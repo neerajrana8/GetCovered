@@ -284,7 +284,7 @@
     end
 
     resources :tracking_urls,
-      only: [ :create, :index, :show]
+      only: [ :create, :index, :show, :destroy]
 
     resources :users,
       only: [ :create, :update, :index, :show ] do
