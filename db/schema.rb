@@ -639,13 +639,10 @@ ActiveRecord::Schema.define(version: 2020_10_19_195107) do
     t.string "labels", array: true
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.bigint "profile_id"
-    t.bigint "address_id"
     t.integer "status", default: 0
     t.datetime "last_visit"
-    t.string "last_page_visited"
-    t.string "campaign_source"
-    t.index ["address_id"], name: "index_leads_on_address_id"
+    t.string "last_visited_page"
+    t.integer "tracking_url_id"
     t.index ["email"], name: "index_leads_on_email"
     t.index ["user_id"], name: "index_leads_on_user_id"
   end

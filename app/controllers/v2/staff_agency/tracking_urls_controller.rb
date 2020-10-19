@@ -29,7 +29,7 @@ module V2
       private
 
       def set_tracking_url
-        @tracking_url = TrackingUrl.find(params[:id])
+        @tracking_url = TrackingUrl.not_deleted.find(params[:id])
       end
 
       def create_params
@@ -45,7 +45,7 @@ module V2
       def set_substrate
         super
         if @substrate.nil?
-          @substrate = access_model(::TrackingUrl)
+          @substrate = access_model(::TrackingUrl).not_deleted
         end
       end
     end
