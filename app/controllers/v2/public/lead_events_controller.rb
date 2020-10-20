@@ -65,7 +65,7 @@ module V2
       end
 
       def lead_params
-        params.permit(:email, :identifier, :last_visited_page) #:agency_id
+        params.permit(:email, :identifier, :last_visited_page, :agency_id)
       end
 
       def lead_profile_attributes
