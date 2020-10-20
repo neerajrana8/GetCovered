@@ -113,9 +113,13 @@
             to: "histories#index_recordable",
             via: "get",
             defaults: { recordable_type: Carrier }
+          get :billing_strategies_list
+          get :toggle_billing_strategy
+          get :fees_list
+          post :add_fees
         end
-      end
-  
+    end
+
     resources :carrier_agency_authorizations,
       path: "carrier-agency-authorizations",
       only: [ :update, :index, :show ]
@@ -129,6 +133,7 @@
             defaults: { recordable_type: Claim }
 
           delete :delete_documents
+          put :process_claim
         end
       end
 
@@ -219,16 +224,42 @@
           via: "get",
           defaults: { recordable_type: Policy }
         get 'resend_policy_documents'
+        put :refund_policy
+        put :cancel_policy
+        put :update_coverage_proof
+        delete :delete_policy_document
       end
       get "search", to: 'policies#search', on: :collection
     end
+
+    resources :policy_cancellation_requests, only: [ :index, :show ] do
+      member do
+        put :approve
+        put :cancel
+        put :decline
+      end
+    end
+
+    resources :refunds,
+      only: [ :index, :create, :update] do
+        member do
+          get :approve
+          get :decline
+        end
+      end
 
     resources :policy_coverages, only: [ :update ]
 
     resources :policy_applications,
       path: "policy-applications",
       only: [ :index, :show ]
-  
+
+    resources :policy_application_groups, path: "policy-application-groups" do
+      member do
+        put :accept
+      end
+    end
+
     resources :policy_quotes,
       path: "policy-quotes",
       only: [ :index, :show ]
@@ -270,9 +301,3 @@
       end
   end
 # end
-
-
-
-
-
-

@@ -15,3 +15,6 @@ json.address do
                   address: user.address
   end
 end
+
+json.partial! "v2/shared/users/superadmin_user_fields",
+              user: user

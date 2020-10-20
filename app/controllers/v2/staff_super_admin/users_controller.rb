@@ -10,7 +10,7 @@ module V2
         only: [:show]
       
       def index
-        super(:@users, ::User.all, :profile)
+        super(:@users, ::User.all, :profile, :accounts, :agencies)
       end
 
       def show
@@ -36,6 +36,7 @@ module V2
         {
           created_at: [:scalar, :array, :interval],
           updated_at: [:scalar, :array, :interval],
+          accounts: { agency_id: [:scalar] }
         }
       end
 
