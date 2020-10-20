@@ -126,7 +126,6 @@ class Policy < ApplicationRecord
   validate :correct_document_mime_type
   validate :is_allowed_to_update?, on: :update
   validate :residential_account_present
-  validate :same_agency_as_account
   validate :status_allowed
   validate :carrier_agency
   validate :master_policy, if: -> { policy_type&.designation == 'MASTER-COVERAGE' }
@@ -202,14 +201,6 @@ class Policy < ApplicationRecord
   
   def residential_account_present    
     errors.add(:account, 'Account must be specified') if ![4,5].include?(policy_type_id) && account.nil? 
-  end
-  
-  def same_agency_as_account
-    return unless in_system?
-    
-    if ![4,5].include?(policy_type_id)
-      errors.add(:account, 'policy must belong to the same agency as account') if agency != account&.agency
-    end
   end
   
   def carrier_agency
