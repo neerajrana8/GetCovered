@@ -13,6 +13,7 @@ module V2
           end
         end
 
+
         if %i[awsdev development].include?(Rails.env.to_sym)
           render template: 'v2/shared/leads/full'
         else
@@ -65,7 +66,7 @@ module V2
       end
 
       def initialize_klaviyo
-        @klaviyo_helper ||= KlaviyoConnector.new
+        @klaviyo_helper ||= KlaviyoService.new
       end
 
       def lead_params

@@ -1,8 +1,11 @@
-class KlaviyoConnector
+class KlaviyoService
+
+  include HTTParty
 
   attr_accessor :lead
 
-  EVENTS = ["New Lead", "Became Lead", "New Lead Event", "Created Account", "Updated Account", "Updated Email", "Reset Password", "Invoice Created", "Order Confirmation", "Failed Payment"]
+  EVENTS = ["New Lead", "Became Lead", "New Lead Event", "Created Account", "Updated Account",
+            "Updated Email", "Reset Password", "Invoice Created", "Order Confirmation", "Failed Payment"]
   TEST_TAG = 'test'
 
   #need to disable sending in test env
@@ -19,7 +22,7 @@ class KlaviyoConnector
     begin
       response = yield
 
-      track_event(event_description, event_details)
+      track_event(event_description, event_details) #unless ["local", "development"].include?(ENV["RAILS_ENV"])
 
     rescue Net::OpenTimeout => ex
       Rails.logger.error "LeadEventsController KlaviyoException: #{ex.to_s}."
@@ -27,7 +30,6 @@ class KlaviyoConnector
       #need to check what to return in controller
       response = true
     end
-
 
   end
 
@@ -39,7 +41,6 @@ class KlaviyoConnector
 
   #need to send to lead to prod only in prod
   def track_event(event_description, event_details = {})
-    #return if ["local", "development"].include?(ENV["RAILS_ENV"])
     customer_properties = {}
     if event_description == "New Lead"
       identify_lead("New Lead")
@@ -51,10 +52,11 @@ class KlaviyoConnector
     end
 
     if event_description == "New Lead Event"
-      event_details = @lead.lead_events.last.as_json
+      event_details = @lead.lead_events.last.as_json if @lead.lead_events.count > 1
     end
 
-    if event_description == 'Email Updates'
+    if event_description == 'Updated Email'
+      identify_lead('Became Lead (email)')
       response = HTTParty.get("https://a.klaviyo.com/api/v2/people/search?api_key=#{@private_api_key}&email=#{event_details[:email]}")
       lead_id = JSON.parse(response.body)["id"]
       if lead_id.present?
@@ -93,10 +95,6 @@ class KlaviyoConnector
     end
 
     request
-  end
-
-  def map_data_properties(data_details)
-
   end
 
   def identify_customer_properties(request)

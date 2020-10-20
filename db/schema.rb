@@ -252,8 +252,8 @@ ActiveRecord::Schema.define(version: 2020_10_19_195107) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "external_carrier_id"
-    t.index ["carrier_id", "external_carrier_id"], name: "carrier_external_carrier_id", unique: true
     t.index ["carrier_id"], name: "index_carrier_insurable_profiles_on_carrier_id"
+    t.index ["external_carrier_id"], name: "index_carrier_insurable_profiles_on_external_carrier_id", unique: true
     t.index ["insurable_id"], name: "index_carrier_insurable_profiles_on_insurable_id"
   end
 
@@ -629,7 +629,11 @@ ActiveRecord::Schema.define(version: 2020_10_19_195107) do
     t.bigint "lead_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "policy_type_id"
+    t.bigint "agency_id"
+    t.index ["agency_id"], name: "index_lead_events_on_agency_id"
     t.index ["lead_id"], name: "index_lead_events_on_lead_id"
+    t.index ["policy_type_id"], name: "index_lead_events_on_policy_type_id"
   end
 
   create_table "leads", force: :cascade do |t|
