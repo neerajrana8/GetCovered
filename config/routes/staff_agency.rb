@@ -187,6 +187,8 @@
 
     resources :insurable_types, path: "insurable-types", only: [ :index ]
 
+    resources :leads, only: [:index, :show]
+
     resources :leases,
       only: [ :create, :update, :destroy, :index, :show ] do
         member do
