@@ -8,7 +8,7 @@ module V2
 
       include ClaimsMethods
       
-      before_action :set_claim, only: %i[update show attach_documents delete_documents process_claim]
+      before_action :set_claim, only: %i[update show  delete_documents process_claim]
       before_action :set_substrate, only: %i[index]
       
       def index

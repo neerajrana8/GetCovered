@@ -22,6 +22,16 @@ module ClaimsMethods
     end
   end
 
+  def update
+    if @claim.update_as(current_staff, update_params)
+      render :show,
+             status: :ok
+    else
+      render json: @claim.errors,
+             status: :unprocessable_entity
+    end
+  end
+
   private
 
   def claim_params
@@ -39,5 +49,14 @@ module ClaimsMethods
 
     to_return = params.require(:claim).permit(:status, :staff_notes)
     to_return
+  end
+
+  def update_params
+    return({}) if params[:claim].blank?
+
+    params.require(:claim).permit(
+        :description, :insurable_id, :policy_id, :subject,
+        :time_of_loss, :type_of_loss, :staff_notes, documents: []
+    )
   end
 end
