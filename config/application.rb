@@ -16,6 +16,7 @@ require "action_cable/engine"
 # Require the gems listed in Gemfile, including any gems
 # you've limited to :test, :development, or :production.
 Bundler.require(*Rails.groups)
+ActiveStorage::Engine.config.active_storage.content_types_to_serve_as_binary.delete('image/svg+xml')
 
 module GetCovered
   class Application < Rails::Application

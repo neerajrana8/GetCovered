@@ -127,7 +127,7 @@
       path: "carrier-policy-type-availabilities",
       only: [ :create, :update, :index, :show ]
 
-    resources :claims, only: [:index, :show, :create] do
+    resources :claims, only: [:index, :show, :create, :update] do
       member do
         put :process_claim
       end
