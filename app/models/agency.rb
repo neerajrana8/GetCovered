@@ -22,6 +22,7 @@ class Agency < ApplicationRecord
     optional: true
 
   has_many :agencies
+  has_many :tracking_urls
 
   # has_many relationships
   has_many :carrier_agencies

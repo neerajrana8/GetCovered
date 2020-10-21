@@ -67,15 +67,7 @@ module V2
           @substrate = @substrate.claims
         end
       end
-        
-      def update_params
-        return({}) if params[:claim].blank?
 
-        params.require(:claim).permit(
-          :description, :insurable_id, :policy_id, :subject,
-          :time_of_loss, :type_of_loss, documents: []
-        )
-      end
         
       def supported_filters(called_from_orders = false)
         @calling_supported_orders = called_from_orders
