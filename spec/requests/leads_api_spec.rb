@@ -37,14 +37,14 @@ describe 'Leads API spec', type: :request do
     expect(response.status).to eq(200)
 
     sleep(5)
-    lead_events = result['lead_events_count']
+    lead_events = result['lead_events_count'] || 0
 
     result = create_lead_or_event(test_email,
                                   new_event_params(test_email, result["identifier"], 'Landing Page',
                                                    'fill last name', 'last_name'))
-
+   
     test_lead = Lead.find_by(identifier: result['identifier'])
-    expect(test_lead.lead_events.count).to eq(lead_events+1)
+    expect(test_lead.lead_events.count).to eq(lead_events+2)
   end
 
   it 'should update Lead before create new Lead Event' do
@@ -53,7 +53,7 @@ describe 'Leads API spec', type: :request do
     result = create_lead_or_event(test_email, new_lead_short_params(test_email))
     expect(response.status).to eq(200)
 
-    lead_events = result['lead_events_count']
+    lead_events = result['lead_events_count'] || 0
     identifier  = result["identifier"]
 
     sleep(5)
@@ -64,7 +64,7 @@ describe 'Leads API spec', type: :request do
     result = create_lead_or_event(test_email, new_lead_full_params(test_email, identifier))
 
     test_lead = Lead.find_by(identifier: result['identifier'])
-    expect(test_lead.lead_events.count).to eq(lead_events+2)
+    expect(test_lead.lead_events.count).to eq(lead_events+3)
     expect(test_lead.profile.present?).to eq(true)
     expect(test_lead.address.present?).to eq(true)
   end
