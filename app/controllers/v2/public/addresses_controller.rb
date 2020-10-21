@@ -11,7 +11,7 @@ module V2
           @addresses = Address.search_insurables(params[:search])
           @ids = @addresses.select{|a| a['_source']['addressable_type'] == 'Insurable' }.map{|a| a['_source']['addressable_id'] }
 
-          @insurables = Insurable.where(id: @ids)
+          @insurables = Insurable.where(id: @ids, enabled: true)
 
           @response = []
 
@@ -29,7 +29,7 @@ module V2
                 created_at: i.created_at,
                 updated_at: i.updated_at,
                 addresses: i.addresses,
-                insurables: i.units
+                insurables: i.units.select{|u| u.enabled }
               )
             end
           end

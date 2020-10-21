@@ -21,7 +21,6 @@ describe 'User registraion spec', type: :request do
     expect { create_user(invalid_params) }.to_not change { User.count }
     result = JSON.parse response.body
     expect(response.status).to eq(422)
-    expect(result['status']).to eq('error')
+    expect(result['error']).to eq('user_creation_error')
   end
-
 end

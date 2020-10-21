@@ -9,7 +9,7 @@ module CarrierMsiPolicyQuote
     # MOOSE WARNING: PolicyQuote#bind_policy should call this boi if necessary
     def set_msi_external_reference
       
-      return_status = true # MOOSE WARNING: change it?
+      return_status = true # MOOSE WARNING: change it? 
       
     end
     
@@ -87,7 +87,7 @@ module CarrierMsiPolicyQuote
       result = msis.build_request(:bind_policy,
         effective_date:   policy_application.effective_date,
         payment_plan:     policy_application.billing_strategy.carrier_code,
-        installment_day:  policy_application.fields.find{|f| f['title'] == "Installment Day" }&.[]('value') || 1,
+        installment_day:  policy_application.extra_settings&.[]('installment_day') || policy_application.fields.find{|f| f['title'] == "Installment Day" }&.[]('value') || 1,
         community_id:     community.carrier_profile(5).external_carrier_id,
         unit:             unit.title,
         address:          unit.primary_address,

@@ -633,6 +633,7 @@ module V2
                   :carrier_id, :agency_id, fields: [:title, :value, options: []],
                   questions:                       [:title, :value, options: []],
                   coverage_selections: [:category, :uid, :selection, selection: [ :data_type, :value ]],
+                  extra_settings: [:installment_day],
                   policy_rates_attributes:         [:insurable_rate_id],
                   policy_insurables_attributes:    [:insurable_id])
       end
