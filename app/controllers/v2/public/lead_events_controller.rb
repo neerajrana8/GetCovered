@@ -10,14 +10,8 @@ module V2
             render json: standard_error(:lead_creation_error, nil, @lead.errors.full_messages)
           else
             @lead.lead_events.create(event_params)
+            render template: 'v2/shared/leads/full'
           end
-        end
-
-
-        if %i[awsdev development].include?(Rails.env.to_sym)
-          render template: 'v2/shared/leads/full'
-        else
-          render template: 'v2/shared/leads/short'
         end
       end
 
@@ -32,8 +26,9 @@ module V2
                   Lead.find_by_email(lead_params[:email])
                 end
 
+
         tracking_url = TrackingUrl.find_by(tracking_url: params[:tracking_url])
-        
+
         @klaviyo_helper.lead = @lead if @lead.present?
 
         if @lead.nil?
