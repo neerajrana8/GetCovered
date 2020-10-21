@@ -8,3 +8,20 @@ json.profile_attributes do
       profile: user.profile
   end
 end
+
+json.accounts do
+  if user.accounts
+    json.array! user.accounts do |account|
+      json.partial! "v2/shared/accounts/account_short_fields",
+                    account: account
+    end
+  end
+end
+
+subagencies = user.agencies.map{|agency| agency unless agency.eql?(current_staff.organizable)}.compact
+if subagencies.present?
+  json.subagencies do
+    json.partial! "v2/shared/agencies/agencies",
+                agencies: subagencies
+  end
+end

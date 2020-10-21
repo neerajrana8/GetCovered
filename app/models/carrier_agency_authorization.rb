@@ -23,7 +23,9 @@ class CarrierAgencyAuthorization < ApplicationRecord
                 WV: 49, WY: 50 }
   
   validates_presence_of :state
-  validates_uniqueness_of :state, scope: 'carrier_agency_id', message: 'record for parent Carrier Policy Type already exists'
+  validates_uniqueness_of :state,
+                          scope: %w[carrier_agency_id policy_type_id],
+                          message: 'record for parent Carrier Policy Type already exists'
 
   validate :policy_type_available_for_carrier
   validate :policy_type_available_in_state, if: :available?

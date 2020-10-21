@@ -74,6 +74,10 @@ module V2
       def refund_policy
         change_request = ChangeRequest.new(requestable: current_user, changeable: @policy, customized_action: 'refund')
         if change_request.save
+          Policies::CancellationMailer.
+            with(policy: @policy, change_request: change_request).
+            refund_request.
+            deliver_later
           render json: { message: 'Refund was successfully sent' }, status: :ok
         else
           render json: standard_error(:refund_policy_error, 'Refund was not successfully sent', change_request.errors.full_messages),
@@ -84,6 +88,10 @@ module V2
       def cancel_policy
         change_request = ChangeRequest.new(requestable: current_user, changeable: @policy, customized_action: 'cancel')
         if change_request.save
+          Policies::CancellationMailer.
+            with(policy: @policy, change_request: change_request).
+            cancel_request.
+            deliver_later
           render json: { message: 'Cancel was successfully sent' }, status: :ok
         else
           render json: standard_error(:refund_policy_error, 'Refund was not successfully sent', change_request.errors.full_messages),
