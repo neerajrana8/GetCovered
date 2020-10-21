@@ -5,9 +5,8 @@
 module V2
   module StaffSuperAdmin
     class AgenciesController < StaffSuperAdminController
-
-      before_action :set_agency, only: [:update, :show, :branding_profile]
-      before_action :default_filter, only: [:index, :show]
+      before_action :set_agency, only: %i[update show branding_profile enable disable]
+      before_action :default_filter, only: %i[index show]
 
       def index
         if params[:short]
@@ -36,7 +35,7 @@ module V2
       end
 
       def sub_agencies_index
-        result = []
+        result          = []
         required_fields = %i[id title agency_id]
 
         Agency.where(agency_id: sub_agency_filter_params).select(required_fields).each do |agency|
@@ -55,14 +54,14 @@ module V2
         if update_allowed?
           if @agency.update_as(current_staff, update_params)
             render :show,
-              status: :ok
+                   status: :ok
           else
             render json: @agency.errors,
-              status: :unprocessable_entity
+                   status: :unprocessable_entity
           end
         else
           render json: { success: false, errors: ['Unauthorized Access'] },
-            status: :unauthorized
+                 status: :unauthorized
         end
       end
 
@@ -74,81 +73,102 @@ module V2
           render json: { success: false, errors: ['Agency does not have a branding profile'] }, status: :not_found
         end
       end
+      
+      def disable
+        result = Agencies::Disable.run(agency: @agency)
+        if result.valid?
+          render :show, status: :ok
+        else
+          render json: standard_error(:disabling_failed, 'Agency was not disabled', result.errors),
+                 status: 422
+        end
+      end
+
+      def enable
+        result = Agencies::Enable.run(agency: @agency)
+        if result.valid?
+          render :show, status: :ok
+        else
+          render json: standard_error(:disabling_failed, 'Agency was not disabled', result.errors),
+                 status: 422
+        end
+      end
 
       private
 
-        def view_path
-          super + "/agencies"
-        end
+      def view_path
+        super + '/agencies'
+      end
 
-        def create_allowed?
-          true
-        end
+      def create_allowed?
+        true
+      end
 
-        def update_allowed?
-          true
-        end
+      def update_allowed?
+        true
+      end
 
-        def set_agency
-          @agency = Agency.find_by(id: params[:id])
-        end
+      def set_agency
+        @agency = Agency.find_by(id: params[:id])
+      end
 
-        #return only agencies
-        def default_filter
-          params[:filter] = {"agency_id"=> "_NULL_"} if params[:filter].blank?
-        end
+      # return only agencies
+      def default_filter
+        params[:filter] = { 'agency_id' => '_NULL_' } if params[:filter].blank?
+      end
 
-        def sub_agency_filter_params
-          params[:agency_id].blank? ? nil : params.require(:agency_id)
-        end
+      def sub_agency_filter_params
+        params[:agency_id].blank? ? nil : params.require(:agency_id)
+      end
 
-        def create_params
-          return({}) if params[:agency].blank?
-          to_return = params.require(:agency).permit(
-            :agency_id, :enabled, :staff_id, :title, :tos_accepted,
-            :whitelabel, contact_info: {}, addresses_attributes: [
-              :city, :country, :county, :id, :latitude, :longitude,
-              :plus_four, :state, :street_name, :street_number,
-              :street_two, :timezone, :zip_code
-            ]
-          )
-          return(to_return)
-        end
+      def create_params
+        return({}) if params[:agency].blank?
 
-        def update_params
-          return({}) if params[:agency].blank?
-          to_return = params.require(:agency).permit(
-              :agency_id, :enabled, :staff_id, :title, :tos_accepted, :whitelabel,
-            contact_info: {}, settings: {}, addresses_attributes: [
-              :city, :country, :county, :id, :latitude, :longitude,
-              :plus_four, :state, :street_name, :street_number,
-              :street_two, :timezone, :zip_code
-            ]
-          )
+        to_return = params.require(:agency).permit(
+          :agency_id, :enabled, :staff_id, :title, :tos_accepted,
+          :whitelabel, contact_info: {}, addresses_attributes: %i[
+            city country county id latitude longitude
+            plus_four state street_name street_number
+            street_two timezone zip_code
+          ]
+        )
+        to_return
+      end
 
-          existed_ids = to_return[:addresses_attributes]&.map { |addr| addr[:id] }
+      def update_params
+        return({}) if params[:agency].blank?
 
-          unless @agency.blank? || existed_ids.nil? || existed_ids.compact.blank?
-            (@agency.addresses.pluck(:id) - existed_ids).each do |id|
-              to_return[:addresses_attributes] <<
-                  ActionController::Parameters.new(id: id, _destroy: true).permit(:id, :_destroy)
-            end
+        to_return = params.require(:agency).permit(
+          :agency_id, :enabled, :staff_id, :title, :tos_accepted, :whitelabel,
+          contact_info: {}, settings: {}, addresses_attributes: %i[
+            city country county id latitude longitude
+            plus_four state street_name street_number
+            street_two timezone zip_code
+          ]
+        )
+
+        existed_ids = to_return[:addresses_attributes]&.map { |addr| addr[:id] }
+
+        unless @agency.blank? || existed_ids.nil? || existed_ids.compact.blank?
+          (@agency.addresses.pluck(:id) - existed_ids).each do |id|
+            to_return[:addresses_attributes] <<
+              ActionController::Parameters.new(id: id, _destroy: true).permit(:id, :_destroy)
           end
-          to_return
         end
+        to_return
+      end
 
-        def supported_filters(called_from_orders = false)
-          @calling_supported_orders = called_from_orders
-          {
-              agency_id: %i[scalar array],
-              id: %i[scalar array]
-          }
-        end
+      def supported_filters(called_from_orders = false)
+        @calling_supported_orders = called_from_orders
+        {
+          agency_id: %i[scalar array],
+          id: %i[scalar array]
+        }
+      end
 
-        def supported_orders
-          supported_filters(true)
-        end
-
+      def supported_orders
+        supported_filters(true)
+      end
     end
   end # module StaffSuperAdmin
 end

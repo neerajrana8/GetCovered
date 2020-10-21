@@ -9,7 +9,8 @@ class CarrierAgency < ApplicationRecord
   belongs_to :agency
   
   has_many :carrier_agency_authorizations, dependent: :destroy
-  
+  has_many :histories, as: :recordable
+
   validate :carrier_agency_assignment_unique
 
   accepts_nested_attributes_for :carrier_agency_authorizations, allow_destroy: true
