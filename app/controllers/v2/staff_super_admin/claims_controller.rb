@@ -7,9 +7,8 @@ module V2
     class ClaimsController < StaffSuperAdminController
 
       include ClaimsMethods
-      
-      before_action :set_claim,
-        only: %i[show process_claim]
+
+      before_action :set_claim, only: %i[update show process_claim]
       
       def index
         super(:@claims, Claim.all)
