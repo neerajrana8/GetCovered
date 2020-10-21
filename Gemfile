@@ -112,11 +112,12 @@ gem 'ruby-prof', require: false
 
 gem 'addressable'
 gem 'analytics-ruby', '~> 2.0.0', :require => 'segment/analytics'
-
+gem 'klaviyo'
 
 group :development, :test, :test_container do
   # Call 'byebug' anywhere in the code to stop execution and get a debugger console
   gem 'byebug', platforms: %i[mri mingw x64_mingw]
+  gem 'pry'
   gem 'rspec_junit_formatter'
   gem 'database_cleaner'
   gem 'factory_bot_rails'
@@ -141,9 +142,10 @@ group :development do
   gem 'letter_opener_web', '~> 1.0'
   gem 'guard'
   gem 'guard-shell'
-  # rubymine specific debug gems
-  #gem 'ruby-debug-ide'
-  #gem 'debase'
+  #rubymine specific debug gems
+  gem 'ruby-debug-ide'
+  gem 'debase'
+  gem 'web-console'
 end
 
 # Windows does not include zoneinfo files, so bundle the tzinfo-data gem

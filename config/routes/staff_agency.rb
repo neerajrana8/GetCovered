@@ -187,6 +187,8 @@
 
     resources :insurable_types, path: "insurable-types", only: [ :index ]
 
+    resources :leads, only: [:index, :show]
+
     resources :leases,
       only: [ :create, :update, :destroy, :index, :show ] do
         member do
@@ -281,7 +283,10 @@
         collection do
           get "search", to: 'staffs#search'
         end
-      end
+    end
+
+    resources :tracking_urls,
+      only: [ :create, :index, :show, :destroy]
 
     resources :users,
       only: [ :create, :update, :index, :show ] do
