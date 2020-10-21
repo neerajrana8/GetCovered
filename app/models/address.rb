@@ -72,9 +72,9 @@ class Address < ApplicationRecord
 
   # Address.full_street_address
   # Returns full street address of Address from available variables
-  def full_street_address
+  def full_street_address(disable_plus4: false)
     [combined_street_address(), street_two, 
-     combined_locality_region(), combined_zip_code()].compact
+     combined_locality_region(), disable_plus4 ? zip_code : combined_zip_code()].compact
              .join(', ')
              .gsub(/\s+/, ' ')
              .strip

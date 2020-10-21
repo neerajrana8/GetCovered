@@ -12,7 +12,7 @@ class AddCancellationConfigurationColumns < ActiveRecord::Migration[5.2]
       days_late_before_cancellation: 30
     )
     # Set up commercial policy values
-    ::CarrierPolicyType.where(policy_type_id: PolicyType::RENT_GUARANTEE_ID).update_all(
+    ::CarrierPolicyType.where(policy_type_id: PolicyType::COMMERCIAL_ID).update_all(
       premium_refundable: false,
       max_days_for_full_refund: 0,
       days_late_before_cancellation: 14

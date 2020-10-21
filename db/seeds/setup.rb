@@ -494,14 +494,7 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
 				  	default_answer: 1,
 				  	value: 1,
 				    options: [1, 2, 3, 4, 5, 6, 7, 8]
-			    },
-          {
-            title: "Installment Day",
-            answer_type: "INTEGER",
-            default_answer: 1,
-            value: 1,
-            options: (1..28).to_a
-          }	  											
+			    }									
 				]     
       )
       
@@ -522,7 +515,7 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
         igc = ::InsurableGeographicalCategory.get_for(state: state)
         # grab rates from MSI for this state
         result = msis.build_request(:get_product_definition,
-          effective_date: Time.current.to_date + 1.day,
+          effective_date: Time.current.to_date + 2.days,
           state: state
         )
         unless result

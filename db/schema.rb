@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_09_16_113022) do
+ActiveRecord::Schema.define(version: 2020_10_19_195107) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
@@ -142,19 +142,6 @@ ActiveRecord::Schema.define(version: 2020_09_16_113022) do
     t.datetime "updated_at", null: false
   end
 
-  create_table "application_notifications", force: :cascade do |t|
-    t.string "action"
-    t.string "subject"
-    t.integer "status"
-    t.integer "code"
-    t.boolean "read", default: false
-    t.integer "notifiable_id"
-    t.string "notifiable_type"
-    t.string "message"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-  end
-
   create_table "assignments", force: :cascade do |t|
     t.boolean "primary"
     t.bigint "staff_id"
@@ -206,6 +193,7 @@ ActiveRecord::Schema.define(version: 2020_09_16_113022) do
     t.string "logo_url"
     t.string "footer_logo_url"
     t.string "subdomain"
+    t.boolean "global_default", default: false, null: false
     t.index ["profileable_type", "profileable_id"], name: "index_branding_profiles_on_profileable_type_and_profileable_id"
     t.index ["url"], name: "index_branding_profiles_on_url", unique: true
   end
@@ -264,8 +252,8 @@ ActiveRecord::Schema.define(version: 2020_09_16_113022) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "external_carrier_id"
+    t.index ["carrier_id", "external_carrier_id"], name: "carrier_external_carrier_id", unique: true
     t.index ["carrier_id"], name: "index_carrier_insurable_profiles_on_carrier_id"
-    t.index ["external_carrier_id"], name: "index_carrier_insurable_profiles_on_external_carrier_id", unique: true
     t.index ["insurable_id"], name: "index_carrier_insurable_profiles_on_insurable_id"
   end
 
@@ -335,9 +323,11 @@ ActiveRecord::Schema.define(version: 2020_09_16_113022) do
     t.bigint "staff_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["customized_action"], name: "index_change_requests_on_customized_action", unique: true
+    t.string "changeable_type"
+    t.integer "requestable_id"
+    t.string "requestable_type"
+    t.integer "changeable_id"
     t.index ["staff_id"], name: "index_change_requests_on_staff_id"
-    t.index ["status"], name: "index_change_requests_on_status", unique: true
   end
 
   create_table "charges", force: :cascade do |t|
@@ -375,9 +365,7 @@ ActiveRecord::Schema.define(version: 2020_09_16_113022) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "type_of_loss", default: 0, null: false
-    t.string "name"
-    t.string "address"
-    t.string "nature_of_claim"
+    t.text "staff_notes"
     t.index ["claimant_type", "claimant_id"], name: "index_claims_on_claimant_type_and_claimant_id"
     t.index ["insurable_id"], name: "index_claims_on_insurable_id"
     t.index ["policy_id"], name: "index_claims_on_policy_id"
@@ -476,6 +464,7 @@ ActiveRecord::Schema.define(version: 2020_09_16_113022) do
     t.integer "faq_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "question_order", default: 0
     t.index ["faq_id"], name: "index_faq_questions_on_faq_id"
   end
 
@@ -484,6 +473,7 @@ ActiveRecord::Schema.define(version: 2020_09_16_113022) do
     t.integer "branding_profile_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "faq_order", default: 0
     t.index ["branding_profile_id"], name: "index_faqs_on_branding_profile_id"
   end
 
@@ -941,6 +931,7 @@ ActiveRecord::Schema.define(version: 2020_09_16_113022) do
     t.boolean "auto_pay", default: true
     t.bigint "policy_application_group_id"
     t.jsonb "coverage_selections", default: [], null: false
+    t.jsonb "extra_settings"
     t.index ["account_id"], name: "index_policy_applications_on_account_id"
     t.index ["agency_id"], name: "index_policy_applications_on_agency_id"
     t.index ["billing_strategy_id"], name: "index_policy_applications_on_billing_strategy_id"

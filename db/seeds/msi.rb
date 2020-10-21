@@ -61,13 +61,6 @@ carrier_policy_type = CarrierPolicyType.create!(
       default_answer: 1,
       value: 1,
       options: [1, 2, 3, 4, 5, 6, 7, 8]
-    },
-    {
-      title: "Installment Day",
-      answer_type: "INTEGER",
-      default_answer: 1,
-      value: 1,
-      options: (1..28).to_a
     }	      																											
   ]
 )
@@ -89,7 +82,7 @@ irc.save!
   igc = ::InsurableGeographicalCategory.get_for(state: state)
   # grab rates from MSI for this state
   result = msis.build_request(:get_product_definition,
-    effective_date: Time.current.to_date + 1.day,
+    effective_date: Time.current.to_date + 2.days,
     state: state
   )
   unless result
@@ -148,7 +141,7 @@ if carrier_policy_type.save()
   51.times do |state|
     available = state == 0 || state == 11 ? false : true
     carrier_policy_availability = CarrierPolicyTypeAvailability.create(state: state, available: available, carrier_policy_type: carrier_policy_type)
-    carrier_policy_availability.fees.create(title: "Origination Fee", type: :ORIGINATION, amount: 2500, enabled: true, ownerable: carrier) unless carrier.id == 4 || carrier.id = 5 # disabled msi fee
+    carrier_policy_availability.fees.create(title: "Origination Fee", type: :ORIGINATION, amount: 2500, enabled: true, ownerable: carrier) unless carrier.id == 4 || carrier.id == 5 # disabled msi fee
   end      
 else
   pp carrier_policy_type.errors
@@ -163,15 +156,11 @@ end
 
 carrier = @msi
 51.times do |state|
-  @policy_type = nil
-  @fee_amount = nil
+  # MOOSE WARNING: testing fee
+  @policy_type = PolicyType.find(1)
+  @fee_amount = nil # WARNING: testing fee disabled 2500
 
-  if carrier.id == 5 # MOOSE WARNING: testing fee
-    @policy_type = PolicyType.find(1)
-    @fee_amount = 2500
-  end
-
-  available = state == 0 || state == 11 ? false : true # we dont do business in Alaska (0) and Hawaii (11)
+  available = state == 0 || state == 11 ? false : true # we don't do business in Alaska (0) and Hawaii (11)
   authorization = CarrierAgencyAuthorization.create(state: state, 
                                                     available: available, 
                                                     carrier_agency: CarrierAgency.where(carrier: carrier, agency: @get_covered).take, 
@@ -187,15 +176,6 @@ carrier = @msi
              ownerable: @get_covered) unless @fee_amount.nil?
 end
 
-service_fee = { 
-  title: "Service Fee", 
-  type: :MISC,
-  amount_type: "PERCENTAGE", 
-  amortize: true,
-  amount: 5, 
-  enabled: true, 
-  ownerable: @get_covered 
-}
 
 # MSI / Get Covered Billing & Commission Strategies
 
@@ -372,7 +352,7 @@ end
   if occupied_chance > 33
     
     tenant_count = rand(1..5)
-		start_date = (Time.now + rand(0..14).days)
+		start_date = (Time.now + rand(2..16).days)
     end_date = start_date + 1.years
     
     @lease = unit.leases.new(start_date: start_date, end_date: end_date, lease_type: LeaseType.find(1), account: unit.account)
@@ -490,7 +470,6 @@ puts "\nOccupancy Rate: #{ (Lease.count.to_f / Insurable.residential_units.count
 		# set application fields & add insurable
 		application.build_from_carrier_policy_type()
 		application.fields[0]["value"] = lease.users.count
-    application.fields[1]["value"] = 1 # installment day
 		application.insurables << lease.insurable
     # add lease users
     primary_user = lease.primary_user()

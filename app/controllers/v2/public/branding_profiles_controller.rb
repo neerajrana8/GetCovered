@@ -26,7 +26,7 @@ module V2
       def set_branding_profile_by_subdomain
         request_url = request.headers['origin'] || request.referer
         host = request_url.present? ? URI(request_url).host&.delete_prefix('www.') : nil
-        @branding_profile = BrandingProfile.find_by(url: host) || BrandingProfile.find_by(title: 'GetCovered')
+        @branding_profile = BrandingProfile.find_by(url: host) || BrandingProfile.global_default
       end
       
       def set_branding_profile
