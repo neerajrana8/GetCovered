@@ -29,10 +29,12 @@ module V2
       end
 
       def show
+        render 'v2/shared/tracking_urls/show'
       end
 
       def index
         super(:@tracking_urls, @substrate)
+        render 'v2/shared/tracking_urls/index'
       end
 
       private

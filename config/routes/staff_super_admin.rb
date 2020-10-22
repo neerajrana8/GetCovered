@@ -240,6 +240,8 @@
         end
       end
 
+    resources :tracking_urls, only: [:index, :show]
+
     resources :users,
       only: [ :index, :show ] do
         member do
