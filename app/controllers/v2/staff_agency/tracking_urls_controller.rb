@@ -38,15 +38,15 @@ module V2
       private
 
       def set_tracking_url
-        @tracking_url = TrackingUrl.not_deleted.find(params[:id])
+        @tracking_url = access_model(::TrackingUrl).not_deleted.find(params[:id])
       end
 
       def create_params
         return({}) if params[:tracking_url].blank?
 
         to_return = params.require(:tracking_url).permit(
-            :tracking_url, :landing_page, :campaign_source,
-            :campaign_medium, :campaign_name, :campaign_term, :campaign_content
+            :landing_page, :campaign_source, :campaign_medium,
+            :campaign_name, :campaign_term, :campaign_content
         )
         to_return
       end
