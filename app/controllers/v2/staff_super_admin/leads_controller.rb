@@ -3,7 +3,7 @@ module V2
     class LeadsController < StaffSuperAdminController
 
       def index
-        super(:@leads, Lead.includes(:profile))
+        super(:@leads, Lead.includes(:profile, :tracking_url))
         render 'v2/shared/leads/index'
       end
 
