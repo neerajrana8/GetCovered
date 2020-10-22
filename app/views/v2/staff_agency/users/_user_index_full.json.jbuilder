@@ -12,7 +12,7 @@ end
 json.accounts do
   if user.accounts
     json.array! user.accounts do |account|
-      json.partial! "v2/shared/accounts/account_short_fields",
+      json.partial! "v2/shared/accounts/short_fields",
                     account: account
     end
   end
