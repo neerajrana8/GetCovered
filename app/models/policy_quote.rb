@@ -1,5 +1,5 @@
 ##
-# =Policy Quote Model 
+# =Policy Quote Model
 # file: +app/models/policy_quote.rb+
 # frozen_string_literal: true
 
@@ -38,8 +38,8 @@ class PolicyQuote < ApplicationRecord
 
   accepts_nested_attributes_for :policy_premium
 
-  enum status: { awaiting_estimate: 0, estimated: 1, quoted: 2, 
-                 quote_failed: 3, accepted: 4, declined: 5, 
+  enum status: { awaiting_estimate: 0, estimated: 1, quoted: 2,
+                 quote_failed: 3, accepted: 4, declined: 5,
                  abandoned: 6, expired: 7, error: 8 }
 
   settings index: { number_of_shards: 1 } do
@@ -52,7 +52,7 @@ class PolicyQuote < ApplicationRecord
   def mark_successful
     policy_application.update status: 'quoted' if update status: 'quoted'
   end
-  
+
   def mark_failure
     policy_application.update status: 'quote_failed' if update status: 'quote_failed'
   end
@@ -78,9 +78,9 @@ class PolicyQuote < ApplicationRecord
       { error: 'Error happened with policy bind' }
     end
   end
-  
+
   def accept(bind_params: [])
-    
+
     quote_attempt = {
       success: false,
       message: nil,
@@ -162,6 +162,7 @@ class PolicyQuote < ApplicationRecord
               quote_attempt[:message] = "#{ policy_type_identifier } ##{ policy.number }, has been accepted.  Please check your email for more information."
               quote_attempt[:success] = true
 
+              LeadEvents::UpdateLeadStatus.run!(policy_application: policy_application)
             else
               # If self.policy, policy_application.policy or
               # policy_premium.policy cannot be set correctly
@@ -213,7 +214,7 @@ class PolicyQuote < ApplicationRecord
   def start_billing
 
     billing_started = false
-        
+
     if policy.nil? &&
        policy_premium.total > 0 &&
        status == "accepted"
@@ -233,28 +234,28 @@ class PolicyQuote < ApplicationRecord
     end
 
 #     if !policy.nil? && policy_premium.calculation_base > 0 && status == "accepted"
-# 			     
+#
 # 	    invoices.order("due_date").each_with_index do |invoice, index|
 # 		  	invoice.update status: index == 0 ? "available" : "upcoming",
 # 		  								 policy: policy
 # 		  end
-# 		  
+#
 # 		  charge_invoice = invoices.order("due_date").first.pay(stripe_source: policy_application.primary_user().payment_profiles.first.source_id)
-# 		  
+#
 #       if charge_invoice[:success] == true
 #         policy.update billing_status: "CURRENT"
 #         return true
 #       else
 #         policy.update billing_status: "ERROR"
 #       end
-# 		  
+#
 #     end
-    
+
     billing_started
-  
+
   end
-  
-  
+
+
   # to be invoked by Invoice, not directly; an invoice became disputed or its disputes were all resolved. count_change is 1 if an invoice became disputed, -1 if not
   def modify_disputed_invoice_count(count_change)
     return true if count_change == 0
@@ -270,7 +271,7 @@ class PolicyQuote < ApplicationRecord
     end unless self.policy.nil?
     return true
   end
-  
+
   # to be invoked by Invoice, not directly; an invoice payment attempt was successful
   def payment_succeeded(invoice)
     unless self.policy.nil?
@@ -282,12 +283,12 @@ class PolicyQuote < ApplicationRecord
     end
     # Mailer?
   end
-  
+
   # to be invoked by Invoice, not directly; an invoice payment attempt failed (keep in mind it might not actually have been due yet, and that invoice.status will not yet have been changed to available/missed when this is called!)
   def payment_failed(invoice)
     # Mailer? (will run whenever a charge fails, including before due date or on auto-pay attempts after due date)
   end
-  
+
   # to be invoked by Invoice, not directly; an invoice payment attempt was missed
   #(either a job invoked this on/after the due date, or a payment attempt failed after the due date, in which case payment_failed and then payment_missed will be invoked by the invoice)
   def payment_missed(invoice)

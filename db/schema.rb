@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_10_19_180739) do
+ActiveRecord::Schema.define(version: 2020_10_19_195107) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
@@ -629,7 +629,11 @@ ActiveRecord::Schema.define(version: 2020_10_19_180739) do
     t.bigint "lead_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "policy_type_id"
+    t.bigint "agency_id"
+    t.index ["agency_id"], name: "index_lead_events_on_agency_id"
     t.index ["lead_id"], name: "index_lead_events_on_lead_id"
+    t.index ["policy_type_id"], name: "index_lead_events_on_policy_type_id"
   end
 
   create_table "leads", force: :cascade do |t|
@@ -639,6 +643,10 @@ ActiveRecord::Schema.define(version: 2020_10_19_180739) do
     t.string "labels", array: true
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "status", default: 0
+    t.datetime "last_visit"
+    t.string "last_visited_page"
+    t.integer "tracking_url_id"
     t.index ["email"], name: "index_leads_on_email"
     t.index ["user_id"], name: "index_leads_on_user_id"
   end
@@ -931,6 +939,7 @@ ActiveRecord::Schema.define(version: 2020_10_19_180739) do
     t.boolean "auto_pay", default: true
     t.bigint "policy_application_group_id"
     t.jsonb "coverage_selections", default: [], null: false
+    t.jsonb "extra_settings"
     t.index ["account_id"], name: "index_policy_applications_on_account_id"
     t.index ["agency_id"], name: "index_policy_applications_on_agency_id"
     t.index ["billing_strategy_id"], name: "index_policy_applications_on_billing_strategy_id"
@@ -1258,6 +1267,21 @@ ActiveRecord::Schema.define(version: 2020_10_19_180739) do
     t.index ["reset_password_token"], name: "index_staffs_on_reset_password_token", unique: true
     t.index ["role"], name: "index_staffs_on_role"
     t.index ["uid", "provider"], name: "index_staffs_on_uid_and_provider", unique: true
+  end
+
+  create_table "tracking_urls", force: :cascade do |t|
+    t.string "tracking_url"
+    t.integer "landing_page"
+    t.string "campaign_source"
+    t.string "campaign_medium"
+    t.string "campaign_term"
+    t.text "campaign_content"
+    t.string "campaign_name"
+    t.boolean "deleted", default: false
+    t.bigint "agency_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["agency_id"], name: "index_tracking_urls_on_agency_id"
   end
 
   create_table "users", force: :cascade do |t|

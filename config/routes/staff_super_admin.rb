@@ -52,6 +52,9 @@
             via: "get",
             defaults: { recordable_type: Agency }
           get 'branding_profile'
+
+          put :enable
+          put :disable
         end
 
         collection do
@@ -124,7 +127,7 @@
       path: "carrier-policy-type-availabilities",
       only: [ :create, :update, :index, :show ]
 
-    resources :claims, only: [:index, :show, :create] do
+    resources :claims, only: [:index, :show, :create, :update] do
       member do
         put :process_claim
       end
@@ -144,6 +147,8 @@
       end
     end
 
+    resources :leads, only: [:index, :show]
+    
     resources :lease_types,
       path: "lease-types",
       only: [ :create, :update, :index, :show ]

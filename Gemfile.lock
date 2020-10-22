@@ -849,6 +849,7 @@ GEM
     aws-sigv4 (1.1.0)
       aws-eventstream (~> 1.0, >= 1.0.2)
     bcrypt (3.1.13)
+    bindex (0.8.1)
     bootsnap (1.4.1)
       msgpack (~> 1.0)
     builder (3.2.3)
@@ -867,6 +868,9 @@ GEM
     css_parser (1.7.0)
       addressable
     database_cleaner (1.7.0)
+    debase (0.2.4.1)
+      debase-ruby_core_source (>= 0.10.2)
+    debase-ruby_core_source (0.10.10)
     devise (4.7.1)
       bcrypt (~> 3.0)
       orm_adapter (~> 0.1)
@@ -897,6 +901,7 @@ GEM
       multi_json
     encryptor (3.0.0)
     erubi (1.9.0)
+    escape (0.0.4)
     et-orbi (1.1.7)
       tzinfo
     ethon (0.12.0)
@@ -968,6 +973,10 @@ GEM
       activerecord
       kaminari-core (= 1.1.1)
     kaminari-core (1.1.1)
+    klaviyo (1.0.0)
+      escape
+      json
+      rack
     launchy (2.4.3)
       addressable (~> 2.3)
     letter_opener (1.7.0)
@@ -1133,6 +1142,8 @@ GEM
       rainbow (>= 2.2.2, < 4.0)
       ruby-progressbar (~> 1.7)
       unicode-display_width (~> 1.4.0)
+    ruby-debug-ide (0.7.2)
+      rake (>= 0.8.1)
     ruby-graphviz (1.2.4)
     ruby-prof (1.4.0)
     ruby-progressbar (1.10.0)
@@ -1188,6 +1199,11 @@ GEM
     unicode-display_width (1.4.1)
     warden (1.2.8)
       rack (>= 2.0.6)
+    web-console (3.7.0)
+      actionview (>= 5.0)
+      activemodel (>= 5.0)
+      bindex (>= 0.4.0)
+      railties (>= 5.0)
     websocket-driver (0.7.1)
       websocket-extensions (>= 0.1.0)
     websocket-extensions (0.1.4)
@@ -1212,6 +1228,7 @@ DEPENDENCIES
   caxlsx
   colorize
   database_cleaner
+  debase
   devise (>= 4.7.1)
   devise_invitable (>= 2.0.1)
   devise_token_auth (>= 1.1.3)
@@ -1228,6 +1245,7 @@ DEPENDENCIES
   httparty
   jbuilder (~> 2.5)
   kaminari
+  klaviyo
   letter_opener
   letter_opener_web (~> 1.0)
   listen (>= 3.0.5, < 3.2)
@@ -1254,6 +1272,7 @@ DEPENDENCIES
   rspec-rails
   rspec_junit_formatter
   rubocop (~> 0.63.1)
+  ruby-debug-ide
   ruby-prof
   sidekiq
   sidekiq-scheduler
@@ -1264,6 +1283,7 @@ DEPENDENCIES
   timezone (~> 1.0)
   twilio-ruby (~> 4.11.1)
   tzinfo-data
+  web-console
   wicked_pdf
   wkhtmltopdf-binary
 

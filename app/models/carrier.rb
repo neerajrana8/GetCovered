@@ -31,7 +31,7 @@ class Carrier < ApplicationRecord
   has_many :carrier_insurable_types
   has_many :carrier_insurable_profiles
   has_many :carrier_class_codes
-  
+  has_many :histories, as: :recordable
   has_many :policy_application_fields
 
   has_many :access_tokens,

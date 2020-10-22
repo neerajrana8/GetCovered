@@ -106,23 +106,12 @@ module V2
 
       def attach_images
         if update_allowed?
-          if attach_images_params[:logo_url].present?
-            @branding_profile.images.attach(attach_images_params[:logo_url])
-            img_url = rails_blob_url(@branding_profile.images.last)
-            if img_url.present? && @branding_profile.update_column(:logo_url, img_url)
-              render json: { success: true }, status: :ok
-            else
-              render json: { success: false }, status: :unprocessable_entity
-            end
-          end
-          if attach_images_params[:footer_logo_url].present?
-            @branding_profile.images.attach(attach_images_params[:footer_logo_url])
-            img_url = rails_blob_url(@branding_profile.images.last)
-            if img_url.present? && @branding_profile.update_column(:footer_logo_url, img_url)
-              render json: { success: true }, status: :ok
-            else
-              render json: { success: false }, status: :unprocessable_entity
-            end
+          logo_status = get_image_url(:logo_url) if attach_images_params[:logo_url].present?
+          footer_status = get_image_url(:footer_logo_url) if attach_images_params[:footer_logo_url].present?
+          if logo_status == "error" || footer_status == "error"
+            render json: { success: false }, status: :unprocessable_entity
+          else
+            render json: { logo_url: logo_status, footer_logo_url: footer_status }, status: :ok
           end
         else
           render json: { success: false, errors: ['Unauthorized Access'] }, status: :unauthorized
@@ -178,6 +167,12 @@ module V2
       def attach_images_params
         return({}) if params.blank?
         params.require(:images).permit(:logo_url, :footer_logo_url)
+      end
+
+      def get_image_url(field_name)
+        images = @branding_profile.images.attach(attach_images_params[field_name])
+        img_url = rails_blob_url(images.last)
+        img_url.present? && @branding_profile.update_column(field_name, img_url) ? img_url : "error"
       end
 
     end

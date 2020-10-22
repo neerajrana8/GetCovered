@@ -78,6 +78,10 @@ module V2
       def show_allowed?
         return true if @agency == @staff.organizable
 
+        return true if current_staff.getcovered_agent?
+
+        return true if @agency.agencies.include?(@staff.organizable)
+
         return true if @agency.accounts.include?(@staff.organizable)
 
         false
@@ -85,6 +89,8 @@ module V2
         
       def create_allowed?
         return false if create_params[:role] == 'super_admin'
+
+        return true if current_staff.getcovered_agent?
 
         return true if create_params[:organizable_type] == 'Agency' && (@agency.id == create_params[:organizable_id]&.to_i || @agency.agencies.ids.include?(create_params[:organizable_id]&.to_i))
 

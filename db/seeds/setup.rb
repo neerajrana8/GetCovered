@@ -495,14 +495,7 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
 				  	default_answer: 1,
 				  	value: 1,
 				    options: [1, 2, 3, 4, 5, 6, 7, 8]
-			    },
-          {
-            title: "Installment Day",
-            answer_type: "INTEGER",
-            default_answer: 1,
-            value: 1,
-            options: (1..28).to_a
-          }	  											
+			    }									
 				]     
       )
       
