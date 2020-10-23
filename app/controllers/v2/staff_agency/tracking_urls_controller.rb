@@ -22,7 +22,7 @@ module V2
       def destroy
         @tracking_url.deleted = true
         if @tracking_url.save
-          render json: { success: true}, status: :deleted
+          render json: { success: true}, status: :no_content
         else
           render json: @tracking_url.errors, status: :unprocessable_entity
         end

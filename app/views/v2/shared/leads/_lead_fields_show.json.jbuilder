@@ -11,9 +11,9 @@ if first_event.present? && first_event.policy_type
   json.interested_product first_event.policy_type.title
 end
 
-tracking_url =  lead.tracking_url
-
-if tracking_url.present?
-  json.extract! tracking_url, :campaign_source, :campaign_medium, :campaign_name
+json.tracking_url do
+  if lead.tracking_url.present?
+    json.partial! 'v2/shared/tracking_urls/tracking_url_index_fields.json.jbuilder',
+                  tracking_url: lead.tracking_url
+  end
 end
-
