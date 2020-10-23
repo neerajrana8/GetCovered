@@ -12,7 +12,7 @@ module V2
         @tracking_url = TrackingUrl.new(create_params)
         @tracking_url.agency = current_staff.organizable
         if @tracking_url.save
-          render :show, status: :created
+          render 'v2/shared/tracking_urls/show', status: :created
         else
           render json: @tracking_url.errors,
                  status: :unprocessable_entity

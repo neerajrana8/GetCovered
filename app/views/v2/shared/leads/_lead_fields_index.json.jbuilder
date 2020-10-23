@@ -7,7 +7,7 @@ end
 
 first_event =  lead.lead_events.first
 
-if first_event.present? && first_event.policy_type
+if first_event.present? && first_event.policy_type.present?
   json.interested_product first_event.policy_type.title
 end
 

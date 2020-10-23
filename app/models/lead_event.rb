@@ -1,5 +1,6 @@
 class LeadEvent < ApplicationRecord
   belongs_to :lead
+  belongs_to :policy_type, optional: true
 
   after_create :update_lead_last_visit
   after_create :update_lead_last_visited_page, if: -> {self.data["last_visited_page"].present?}
