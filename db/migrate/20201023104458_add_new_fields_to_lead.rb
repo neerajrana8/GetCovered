@@ -1,7 +1,6 @@
 class AddNewFieldsToLead < ActiveRecord::Migration[5.2]
   def change
-    add_column :leads, :environment, :string
-    add_column :leads, :agency_id, :string
+    add_column :leads, :agency_id, :integer
 
     leads = Lead.pluck(:id)
     leads.each do |lead_id|

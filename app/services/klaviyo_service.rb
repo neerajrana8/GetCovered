@@ -127,7 +127,7 @@ class KlaviyoService
         '$consent': "",
         'status': @lead.status,
         'tag': @lead.lead_events.last.try(:tag),
-        'environment': @lead.environment,
+        'environment': ENV["RAILS_ENV"],
         'agency': @lead.try(:agency).try(:title)
 
     }

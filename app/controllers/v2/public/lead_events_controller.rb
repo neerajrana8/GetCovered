@@ -32,7 +32,7 @@ module V2
 
         if @lead.nil?
           track_status = @klaviyo_helper.process_events("New Lead") do
-            create_params = lead_params.merge(environment: ENV["RAILS_ENV"])
+            create_params = lead_params
             create_params.merge({tracking_url_id: tracking_url.id}) if tracking_url.present?
             @lead = Lead.create(create_params)
             Address.create(lead_address_attributes.merge(addressable: @lead)) if lead_address_attributes
