@@ -52,7 +52,10 @@ class KlaviyoService
     end
 
     if event_description == "New Lead Event"
-      event_details = @lead.lead_events.last.as_json if @lead.lead_events.count > 1
+      if @lead.lead_events.count > 1
+        event_details = @lead.lead_events.last.as_json
+        identify_lead("Became Lead") if @lead.lead_events.last.agency_id.present?
+      end
     end
 
     if event_description == 'Updated Email'
@@ -123,7 +126,10 @@ class KlaviyoService
         '$image': "",
         '$consent': "",
         'status': @lead.status,
-        'tag': @lead.lead_events.last.try(:tag) || TEST_TAG
+        'tag': @lead.lead_events.last.try(:tag) || TEST_TAG,
+        'environment': @lead.environment,
+        'agency': @lead.try(:agency).try(:title)
+
     }
     request
   end

@@ -26,14 +26,13 @@ module V2
                   Lead.find_by_email(lead_params[:email])
                 end
 
-
         tracking_url = TrackingUrl.find_by(tracking_url: params[:tracking_url])
 
         @klaviyo_helper.lead = @lead if @lead.present?
 
         if @lead.nil?
           track_status = @klaviyo_helper.process_events("New Lead") do
-            create_params = lead_params
+            create_params = lead_params.merge(environment: ENV["RAILS_ENV"])
             create_params.merge({tracking_url_id: tracking_url.id}) if tracking_url.present?
             @lead = Lead.create(create_params)
             Address.create(lead_address_attributes.merge(addressable: @lead)) if lead_address_attributes
@@ -66,7 +65,7 @@ module V2
       end
 
       def lead_params
-        params.permit(:email, :identifier, :last_visited_page)
+        params.permit(:email, :identifier, :last_visited_page) #:agency_id
       end
 
       def lead_profile_attributes
@@ -85,6 +84,7 @@ module V2
         end
       end
 
+      # TODO : need to remove agency_id from event and move on ui to lead obj
       def event_params
         data = params[:lead_event_attributes].delete(:data) if params[:lead_event_attributes][:data]
         params.
