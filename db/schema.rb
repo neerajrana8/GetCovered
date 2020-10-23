@@ -647,7 +647,6 @@ ActiveRecord::Schema.define(version: 2020_10_23_104458) do
     t.datetime "last_visit"
     t.string "last_visited_page"
     t.integer "tracking_url_id"
-    t.string "environment"
     t.integer "agency_id"
     t.index ["email"], name: "index_leads_on_email"
     t.index ["user_id"], name: "index_leads_on_user_id"
