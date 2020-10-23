@@ -77,7 +77,7 @@ describe 'Leads API spec', type: :request do
   end
 
   context 'for StaffAgency roles' do
-    before(:each) do
+    before(:all) do
       @staff = FactoryBot.create(:staff, role: :super_admin)
       login_staff(@staff)
       @headers = get_auth_headers_from_login_response_headers(response)

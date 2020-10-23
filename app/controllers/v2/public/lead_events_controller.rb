@@ -26,7 +26,7 @@ module V2
                   Lead.find_by_email(lead_params[:email])
                 end
 
-        agency = Agency.find_by(params[:lead_event_attributes][:agency_id])
+        agency = Agency.find_by(id: params[:lead_event_attributes][:agency_id])
         tracking_url = TrackingUrl.find_by(agency_id: agency&.id)
 
         @klaviyo_helper.lead = @lead if @lead.present?
