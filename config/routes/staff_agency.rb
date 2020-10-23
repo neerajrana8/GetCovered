@@ -86,6 +86,7 @@
       only: [ :show, :create, :update ] do
         member do
           get :faqs
+          get :export
           post :faq_create
           put :faq_update, path: '/faq_update/faq_id'
           post :faq_question_create, path: '/faqs/:faq_id/faq_question_create'
@@ -94,6 +95,7 @@
           delete :faq_question_delete, path: '/faqs/:faq_id/faq_question_delete/:faq_question_id'
           post :attach_images, path: '/attach_images'
         end
+        post :import, on: :collection
       end
 
     resources :branding_profile_attributes,

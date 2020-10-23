@@ -1,8 +1,13 @@
 module V2
   module StaffSuperAdmin
     class BrandingProfilesController < StaffSuperAdminController
+      include BrandingProfilesMethods
 
-      before_action :set_branding_profile, only: %i[update show destroy faqs faq_create faq_update faq_question_create faq_question_update faq_delete faq_question_delete attach_images]
+      before_action :set_branding_profile,
+                    only: %i[update show destroy faqs faq_create faq_update faq_question_create
+                    faq_question_update faq_delete faq_question_delete attach_images export]
+
+      before_action :set_agency, only: [:import]
 
       def index
         super(:@branding_profiles, BrandingProfile)
@@ -142,6 +147,11 @@ module V2
 
       def set_branding_profile
         @branding_profile = access_model(::BrandingProfile, params[:id])
+      end
+
+      def set_agency
+        @agency = Agency.find_by_id(params[:agency_id])
+        render json: standard_error(:agency_was_not_found), status: 422 if @agency.blank?
       end
 
       def branding_profile_params
