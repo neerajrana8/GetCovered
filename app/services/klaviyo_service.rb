@@ -126,7 +126,7 @@ class KlaviyoService
         '$image': "",
         '$consent': "",
         'status': @lead.status,
-        'tag': @lead.lead_events.last.try(:tag) || TEST_TAG,
+        'tag': @lead.lead_events.last.try(:tag),
         'environment': @lead.environment,
         'agency': @lead.try(:agency).try(:title)
 

@@ -1,6 +1,9 @@
 require 'rails_helper'
 include ActionController::RespondWith
 
+# in test and test_container sending to klaviyo disabled, to make it work go to klaviyo_service and disable
+# unless ["test", "test_container"].include?(ENV["RAILS_ENV"])
+# but please don't push it with changes after
 describe 'Leads API spec', type: :request do
 
   TEST_TAG = "test"
