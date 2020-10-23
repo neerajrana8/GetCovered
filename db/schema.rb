@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_10_19_195107) do
+ActiveRecord::Schema.define(version: 2020_10_23_104458) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
@@ -252,8 +252,8 @@ ActiveRecord::Schema.define(version: 2020_10_19_195107) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "external_carrier_id"
+    t.index ["carrier_id", "external_carrier_id"], name: "carrier_external_carrier_id", unique: true
     t.index ["carrier_id"], name: "index_carrier_insurable_profiles_on_carrier_id"
-    t.index ["external_carrier_id"], name: "index_carrier_insurable_profiles_on_external_carrier_id", unique: true
     t.index ["insurable_id"], name: "index_carrier_insurable_profiles_on_insurable_id"
   end
 
@@ -647,6 +647,8 @@ ActiveRecord::Schema.define(version: 2020_10_19_195107) do
     t.datetime "last_visit"
     t.string "last_visited_page"
     t.integer "tracking_url_id"
+    t.string "environment"
+    t.integer "agency_id"
     t.index ["email"], name: "index_leads_on_email"
     t.index ["user_id"], name: "index_leads_on_user_id"
   end

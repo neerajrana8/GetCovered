@@ -1,9 +1,16 @@
 require 'rails_helper'
 include ActionController::RespondWith
 
+# in test and test_container sending to klaviyo disabled, to make it work go to klaviyo_service and disable
+# unless ["test", "test_container"].include?(ENV["RAILS_ENV"])
+# but please don't push it with changes after
 describe 'Leads API spec', type: :request do
 
   TEST_TAG = "test"
+
+  before :all do
+    @agency = FactoryBot.create(:agency)
+  end
 
   it 'should create new Lead from short params' do
     test_email = Faker::Internet.email
@@ -42,7 +49,7 @@ describe 'Leads API spec', type: :request do
     result = create_lead_or_event(test_email,
                                   new_event_params(test_email, result["identifier"], 'Landing Page',
                                                    'fill last name', 'last_name'))
-   
+
     test_lead = Lead.find_by(identifier: result['identifier'])
     expect(test_lead.lead_events.count).to eq(lead_events+2)
   end
@@ -84,7 +91,7 @@ describe 'Leads API spec', type: :request do
             "tag": TEST_TAG,
             "latitude": Faker::Address.latitude,
             "longitude": Faker::Address.longitude,
-            "agency_id":"",
+            "agency_id": @agency.id,
             "policy_type_id":"5",
             "data": { "last_visited_page": last_visited_page,
                       "action_type": "new",
@@ -104,7 +111,7 @@ describe 'Leads API spec', type: :request do
             "tag": TEST_TAG,
             "latitude":"",
             "longitude":"",
-            "agency_id":"",
+            "agency_id": @agency.id,
             "policy_type_id":"5",
             "data": {
                 "last_visited_page": "Landing Page"
@@ -121,7 +128,7 @@ describe 'Leads API spec', type: :request do
             "tag": TEST_TAG,
             "latitude": Faker::Address.latitude,
             "longitude": Faker::Address.longitude,
-            "agency_id":"",
+            "agency_id": @agency.id,
             "policy_type_id":"5",
             "data": { "last_visited_page": "Landing Page",
                       "action_type": "new",
