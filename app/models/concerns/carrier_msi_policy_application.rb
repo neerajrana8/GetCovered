@@ -55,7 +55,7 @@ module CarrierMsiPolicyApplication
         community = unit.parent_community
         community_profile = community.carrier_profile(self.carrier_id)
         address = unit.primary_address
-        carrier_agency = CarrierAgency.where(agency_id: self.account.agency_id, carrier_id: self.carrier_id).take
+        carrier_agency = CarrierAgency.where(agency_id: self.agency_id, carrier_id: self.carrier_id).take
         # call getfinalpremium
         if community_profile.data['registered_with_msi'] == true # MOOSE WARNING: do we also want an ho4_enabled setting for msi after all?
           self.update(status: 'quote_in_progress')

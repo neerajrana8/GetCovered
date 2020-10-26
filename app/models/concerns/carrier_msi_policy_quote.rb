@@ -68,7 +68,7 @@ module CarrierMsiPolicyQuote
       payment_processor = payment_data['processor_id']
       payment_method = payment_data['method_id']
       # grab useful variables
-      carrier_agency = CarrierAgency.where(agency: account.agency, carrier_id: 5).take
+      carrier_agency = CarrierAgency.where(agency: agency, carrier_id: 5).take
       unit = policy_application.primary_insurable
       community = unit.parent_community
       address = unit.primary_address

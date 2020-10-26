@@ -61,9 +61,7 @@ class PolicyApplication < ApplicationRecord
   
   accepts_nested_attributes_for :policy_users, :policy_rates, :policy_insurables
   
-  validate :same_agency_as_account,
-    unless: proc { |pol| pol.account.nil? }
-  validate :billing_strategy_must_have_same_carrier
+  validate :billing_strategy_agency_and_carrier_correct
   validate :billing_strategy_must_be_enabled
   validate :carrier_agency
   validate :check_residential_question_responses,
@@ -141,12 +139,8 @@ class PolicyApplication < ApplicationRecord
     throw :must_be_active if insurable_rate.activated != true
   end
 
-  def same_agency_as_account
-    errors.add(:account, 'policy application must belong to the same agency as account') if agency != account.agency
+  def billing_strategy_agency_and_carrier_correct
 		errors.add(:billing_strategy, 'billing strategy must belong to the same agency as account') if agency != billing_strategy.agency
-  end
-  
-  def billing_strategy_must_have_same_carrier
     errors.add(:billing_strategy, 'must be a valid billing strategy for the current carrier') unless billing_strategy.carrier_id == self.carrier_id
   end
 
