@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_10_19_195107) do
+ActiveRecord::Schema.define(version: 2020_10_23_145742) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
@@ -647,6 +647,7 @@ ActiveRecord::Schema.define(version: 2020_10_19_195107) do
     t.datetime "last_visit"
     t.string "last_visited_page"
     t.integer "tracking_url_id"
+    t.integer "agency_id"
     t.index ["email"], name: "index_leads_on_email"
     t.index ["user_id"], name: "index_leads_on_user_id"
   end
@@ -1270,8 +1271,7 @@ ActiveRecord::Schema.define(version: 2020_10_19_195107) do
   end
 
   create_table "tracking_urls", force: :cascade do |t|
-    t.string "tracking_url"
-    t.integer "landing_page"
+    t.string "landing_page"
     t.string "campaign_source"
     t.string "campaign_medium"
     t.string "campaign_term"

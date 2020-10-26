@@ -22,7 +22,7 @@ class KlaviyoService
     begin
       response = yield
 
-      track_event(event_description, event_details) #unless ["local", "development"].include?(ENV["RAILS_ENV"])
+      track_event(event_description, event_details) unless ["test", "test_container", "local", "development"].include?(ENV["RAILS_ENV"])
 
     rescue Net::OpenTimeout => ex
       Rails.logger.error "LeadEventsController KlaviyoException: #{ex.to_s}."
@@ -52,7 +52,10 @@ class KlaviyoService
     end
 
     if event_description == "New Lead Event"
-      event_details = @lead.lead_events.last.as_json if @lead.lead_events.count > 1
+      if @lead.lead_events.count > 1
+        event_details = @lead.lead_events.last.as_json
+        identify_lead("Became Lead") if @lead.lead_events.last.agency_id.present?
+      end
     end
 
     if event_description == 'Updated Email'
@@ -123,7 +126,10 @@ class KlaviyoService
         '$image': "",
         '$consent': "",
         'status': @lead.status,
-        'tag': @lead.lead_events.last.try(:tag) || TEST_TAG
+        'tag': @lead.lead_events.last.try(:tag),
+        'environment': ENV["RAILS_ENV"],
+        'agency': @lead.try(:agency).try(:title)
+
     }
     request
   end
