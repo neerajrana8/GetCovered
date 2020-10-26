@@ -4,7 +4,7 @@ module BrandingProfiles
     object :agency
 
     def execute
-      update_url if BrandingProfile.where(url: branding_profile_params['url']).exists?
+      update_url if BrandingProfile.exists?(url: branding_profile_params['url'])
       branding_profile = BrandingProfile.create(branding_profile_params.merge(profileable: agency))
       errors.merge!(branding_profile.errors) if branding_profile.errors.present?
       branding_profile

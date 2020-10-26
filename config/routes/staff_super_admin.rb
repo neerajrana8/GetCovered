@@ -74,6 +74,7 @@
         member do
           get :faqs
           get :export
+          post :update_from_file
           post :faq_create
           put :faq_update, path: '/faq_update/:faq_id'
           post :faq_question_create, path: '/faqs/:faq_id/faq_question_create'

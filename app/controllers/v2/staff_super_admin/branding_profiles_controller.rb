@@ -5,7 +5,7 @@ module V2
 
       before_action :set_branding_profile,
                     only: %i[update show destroy faqs faq_create faq_update faq_question_create
-                    faq_question_update faq_delete faq_question_delete attach_images export]
+                    faq_question_update faq_delete faq_question_delete attach_images export update_from_file]
 
       before_action :set_agency, only: [:import]
 

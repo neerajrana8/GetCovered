@@ -14,6 +14,19 @@ module BrandingProfilesMethods
     end
   end
 
+  def update_from_file
+    file = params[:input_file].open
+    branding_profile_update =
+      BrandingProfiles::Update.run(branding_profile: @branding_profile, branding_profile_params: JSON.parse(file.read))
+    if branding_profile_update.valid?
+      @branding_profile = branding_profile_update.result
+      render :show, status: :ok
+    else
+      render json: standard_error(:branding_profile_import_fail, nil, branding_profile_update.errors.full_messages),
+             status: :unprocessable_entity
+    end
+  end
+
   def export
     result = BrandingProfiles::Export.run!(branding_profile: @branding_profile).to_json
     send_data result,
