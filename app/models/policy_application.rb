@@ -140,7 +140,7 @@ class PolicyApplication < ApplicationRecord
   end
 
   def billing_strategy_agency_and_carrier_correct
-		errors.add(:billing_strategy, 'billing strategy must belong to the same agency as account') if agency != billing_strategy.agency
+		errors.add(:billing_strategy, 'billing strategy must belong to the same agency') if agency != billing_strategy.agency
     errors.add(:billing_strategy, 'must be a valid billing strategy for the current carrier') unless billing_strategy.carrier_id == self.carrier_id
   end
 
