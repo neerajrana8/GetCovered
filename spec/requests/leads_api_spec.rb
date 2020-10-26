@@ -76,11 +76,52 @@ describe 'Leads API spec', type: :request do
     expect(test_lead.address.present?).to eq(true)
   end
 
+  context 'for StaffAgency roles' do
+    before(:all) do
+      @staff = FactoryBot.create(:staff, role: :super_admin)
+      login_staff(@staff)
+      @headers = get_auth_headers_from_login_response_headers(response)
+      @test_email1 = Faker::Internet.email
+      @test_email2 = Faker::Internet.email
+      @lead_id1 = create_lead_or_event(@test_email1, new_lead_short_params(@test_email1))['id']
+      @lead_id2 = create_lead_or_event(@test_email2,
+                           new_lead_full_params(@test_email2))['id']
+    end
+
+    it 'should view lead index json' do
+      response = index_admin_leads
+      response_body = JSON.parse response.body
+      expect(response.status).to eq(200)
+      expect(response_body.size).to eq(2)
+    end
+
+    it 'should view lead show json' do
+      response1 = show_admin_leads(@lead_id1)
+      response2 = show_admin_leads(@lead_id2)
+      response_body1 = JSON.parse response1.body
+      response_body2 = JSON.parse response2.body
+      expect([response1, response2].map(&:status)).to eq([200, 200])
+      expect(response_body1['email']).to eq(@test_email1)
+      expect(response_body2['first_name'].present?).to eq(true)
+    end
+
+  end
+
   private
 
   def create_lead_or_event(email, params)
     post '/v2/lead_events', params: params
     JSON.parse response.body
+  end
+
+  def index_admin_leads
+    get '/v2/staff_super_admin/leads', headers: @headers
+    response
+  end
+
+  def show_admin_leads(id)
+    get "/v2/staff_super_admin/leads/#{id}", headers: @headers
+    response
   end
 
   def new_event_params(email, identifier, last_visited_page, lead_step, lead_field_name, lead_step_value = Faker::Name.name)
@@ -157,6 +198,9 @@ describe 'Leads API spec', type: :request do
     }
     }
   end
+
+
+
 
 
 end

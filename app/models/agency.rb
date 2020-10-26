@@ -84,6 +84,8 @@ class Agency < ApplicationRecord
 
   has_many :pages, dependent: :destroy
 
+  has_many :leads
+
   accepts_nested_attributes_for :addresses, allow_destroy: true
 
   scope :enabled, -> { where(enabled: true) }
