@@ -301,9 +301,8 @@ module V2
         elsif @application.agency.nil?
           @application.agency = @application.account.agency
         end
-        if @application.billing_strategy_id.nil?
-          @application.billing_strategy = BillingStrategy.where(carrier_id: DepositChoiceService.carrier_id).take # WARNING: there should only be one (annual) right now
-        end
+        @application.billing_strategy = BillingStrategy.where(carrier_id: DepositChoiceService.carrier_id).take if @application.billing_strategy_id.nil? # WARNING: there should only be one (annual) right now
+        @application.expiration_date = @application.effective_date + 1.year unless @application.effective_date.nil?
         # try to save
         unless @application.save
           render json: standard_error(:policy_application_save_error, nil, @application.errors),
