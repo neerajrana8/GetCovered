@@ -67,7 +67,7 @@ module V2
       end
 
       def create
-        case params[:policy_application][:policy_type_id]
+        case params[:policy_application][:policy_type_id].to_i
           when 1
             create_residential
           when 4
@@ -301,7 +301,7 @@ module V2
         elsif @application.agency.nil?
           @application.agency = @application.account.agency
         end
-        @application.billing_strategy = BillingStrategy.where(carrier_id: DepositChoiceService.carrier_id).take if @application.billing_strategy_id.nil? # WARNING: there should only be one (annual) right now
+        @application.billing_strategy = BillingStrategy.where(carrier_id: DepositChoiceService.carrier_id).take if @application.billing_strategy.nil? # WARNING: there should only be one (annual) right now
         @application.expiration_date = @application.effective_date + 1.year unless @application.effective_date.nil?
         # try to save
         unless @application.save
@@ -430,7 +430,7 @@ module V2
       end
 
       def update
-        case params[:policy_application][:policy_type_id]
+        case params[:policy_application][:policy_type_id].to_i
         when 1
           update_residential
         when 5
