@@ -10,7 +10,7 @@ module BrandingProfiles
           default_branding_profile.
             attributes.
             except('id', 'created_at', 'updated_at').
-            merge(profileable: agency, url: "getcovered-#{agency.id}.com")
+            merge(profileable: agency, url: url)
         @branding_profile = BrandingProfile.create(branding_profile_params)
 
         if @branding_profile.errors.any?
@@ -27,6 +27,14 @@ module BrandingProfiles
     end
 
     private
+
+    def url
+      base_uri = Rails.application.credentials.uri[ENV["RAILS_ENV"].to_sym][:client]
+      uri = URI(base_uri)
+      uri.host = "#{agency.slug}.#{uri.host}"
+      uri.host = "#{agency.slug}-#{Time.zone.now.to_i}.#{URI(base_uri).host}" if BrandingProfiles.exists?(url: uri.to_s)
+      uri.to_s
+    end
 
     def default_branding_profile
       @default_branding_profile ||=
