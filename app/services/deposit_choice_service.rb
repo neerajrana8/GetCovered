@@ -190,7 +190,7 @@ class DepositChoiceService
   
   ##
   def call
-    # try to call
+    # set up call_data
     call_data = {
       error: false,
       code: 200,
@@ -198,33 +198,63 @@ class DepositChoiceService
       response: nil,
       data: nil
     }
-    begin
-      if HTTP_VERB_DICTIONARY[self.action] == :post
-        call_data[:response] = HTTParty.post(endpoint_for(self.action),
-          body: message_content.to_json,
-          headers: {
-            'Content-Type' => 'application/json'
-          },
-          ssl_version: :TLSv1_2 # MOOSE WARNING: here and in get below, we need to add the right headers etc.
-        )
-        #### MOOSE WARNING: add error if status error
-      else
-        call_data[:response] = HTTParty.get(endpoint_for(self.action),
-          query: message_content,
-          headers: {
-          },
-          ssl_version: :TLSv1_2
-        )
-        #### MOOSE WARNING: add error if status error
-      end 
-    rescue StandardError => e
+    # grab authorization
+    access_token = nil
+    auth = acquire_authorization
+    if auth.code == 200 && auth.parsed_response["access_token"]
+      access_token = auth.parsed_response["access_token"]
+    else
       call_data = {
         error: true,
-        code: 500,
-        message: 'Request Timeout',
+        code: auth.code,
+        message: "Authorization Error: #{auth.parsed_response&.[]("error") || "remote server rejected authorization attempt"}",
         response: e
       }
       puts "\nERROR"
+    end
+    # try to call
+    unless access_token.nil?
+      begin
+        # make the call
+        if HTTP_VERB_DICTIONARY[self.action] == :post
+          call_data[:response] = HTTParty.post(endpoint_for(self.action),
+            body: message_content.to_json,
+            headers: {
+              'Content-Type' => 'application/json',
+              'Authorization' => "Bearer #{access_token}",
+              'Referer' => Rails.application.credentials.deposit_choice[:referer][ENV['RAILS_ENV'].to_sym]
+            },
+            ssl_version: :TLSv1_2 # MOOSE WARNING: here and in get below, we need to add the right headers etc.
+          )
+        else # get
+          call_data[:response] = HTTParty.get(endpoint_for(self.action),
+            query: message_content,
+            headers: {
+              'Accept' => 'text/plain',
+              'Authorization' => "Bearer #{access_token}",
+              'Referer' => Rails.application.credentials.deposit_choice[:referer][ENV['RAILS_ENV'].to_sym]
+            },
+            ssl_version: :TLSv1_2
+          )
+        end
+        # handle errors
+        unless [200,201].include?(call_data[:response].code)
+          call_data = {
+            error: true,
+            code: call_data[:response].code,
+            message: "An error occurred on the remote server",
+            response: call_data[:response]
+          }
+        end
+      rescue StandardError => e
+        call_data = {
+          error: true,
+          code: 500,
+          message: 'Request Timeout',
+          response: e
+        }
+        puts "\nERROR"
+      end
     end
     # handle response
     if call_data[:error]
@@ -243,7 +273,18 @@ class DepositChoiceService
   
   
 
-  
+  def acquire_authorization
+    result = HTTParty.post(Rails.application.credentials.deposit_choice[:identity_uri][ENV['RAILS_ENV'].to_sym],
+      body: "grant_type=client_credentials&scope=depositchoice",
+      headers: {
+        'Content-Type' => 'application/x-www-form-urlencoded',
+        'Authorization' => "Basic #{Base64.strict_encode64("#{Rails.application.credentials.deposit_choice[:identity][ENV['RAILS_ENV'].to_sym]}:#{Rails.application.credentials.deposit_choice[:client_secret][ENV['RAILS_ENV'].to_sym]}")}",
+        'Referer' => Rails.application.credentials.deposit_choice[:referer][ENV['RAILS_ENV'].to_sym]
+      },
+      ssl_version: :TLSv1_2
+    )
+    return result
+  end
     
     
     
