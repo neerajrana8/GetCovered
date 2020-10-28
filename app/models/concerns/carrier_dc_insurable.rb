@@ -208,7 +208,7 @@ module CarrierDcInsurable
         endpoint: dcs.endpoint_for(:address),
         process: 'deposit_choice_address'
       )
-      event.request = dcs.message_content
+      event.request = dcs.message_content.to_s
       event.started = Time.now
       result = dcs.call
       event.completed = Time.now
