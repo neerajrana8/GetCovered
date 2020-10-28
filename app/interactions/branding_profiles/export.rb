@@ -14,7 +14,8 @@ module BrandingProfiles
     private
 
     def branding_profile_attributes
-      branding_profile.attributes.except('id', 'created_at', 'updated_at', 'profileable_type', 'profileable_id')
+      branding_profile.attributes.
+        except('id', 'created_at', 'updated_at', 'profileable_type', 'profileable_id', 'global_default')
     end
 
     def branding_profile_attributes_attributes
