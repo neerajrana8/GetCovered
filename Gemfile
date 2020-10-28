@@ -143,9 +143,9 @@ group :development do
   gem 'guard'
   gem 'guard-shell'
   #rubymine specific debug gems
-  gem 'ruby-debug-ide'
-  gem 'debase'
-  gem 'web-console'
+    # gem 'ruby-debug-ide'
+    # gem 'debase'
+    # gem 'web-console'
 end
 
 # Windows does not include zoneinfo files, so bundle the tzinfo-data gem
