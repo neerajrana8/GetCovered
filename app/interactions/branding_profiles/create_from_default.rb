@@ -32,7 +32,7 @@ module BrandingProfiles
       base_uri = Rails.application.credentials.uri[ENV["RAILS_ENV"].to_sym][:client]
       uri = URI(base_uri)
       uri.host = "#{agency.slug}.#{uri.host}"
-      uri.host = "#{agency.slug}-#{Time.zone.now.to_i}.#{URI(base_uri).host}" if BrandingProfiles.exists?(url: uri.to_s)
+      uri.host = "#{agency.slug}-#{Time.zone.now.to_i}.#{URI(base_uri).host}" if BrandingProfile.exists?(url: uri.to_s)
       uri.to_s
     end
 
