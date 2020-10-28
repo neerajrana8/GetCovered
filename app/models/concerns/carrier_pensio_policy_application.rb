@@ -31,6 +31,7 @@ module CarrierPensioPolicyApplication
 			  if quote.save
 				  
 				  guarantee_option = self.fields["guarantee_option"].to_i
+					rent_amount = self.fields["monthly_rent"].to_i
 
 					multiplier =
 						if guarantee_option == 12
@@ -50,7 +51,7 @@ module CarrierPensioPolicyApplication
   				    42000
   				  end
 					
-					unchecked_premium = ((( self.fields["monthly_rent"] * 100 ) * 12 ) * multiplier ).to_i
+					unchecked_premium = ((( rent_amount * 100 ) * 12 ) * multiplier ).to_i
 					checked_premium = unchecked_premium < minimum_premium ? minimum_premium : unchecked_premium
 				  
 				  premium = PolicyPremium.new base: checked_premium, policy_quote: quote, 
