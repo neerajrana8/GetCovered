@@ -65,7 +65,7 @@ module CarrierMsiInsurable
         event.started = Time.now
         msi_data = msi_service.call
         event.completed = Time.now     
-        event.response = msi_data[:data]
+        event.response = msi_data[:response].response.body
         event.status = msi_data[:error] ? 'error' : 'success'
         unless event.save
           return ["Failed to save response to service call status-tracking Event"]

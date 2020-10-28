@@ -129,7 +129,7 @@ module CarrierMsiPolicyQuote
       event.started = Time.now
       result = msis.call
       event.completed = Time.now
-      event.response = result[:data]
+      event.response = result[:response].response.body
       event.status = result[:error] ? 'error' : 'success'
       event.save
       if result[:error]

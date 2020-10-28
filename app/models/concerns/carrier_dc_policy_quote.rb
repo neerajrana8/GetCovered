@@ -68,7 +68,7 @@ module CarrierDcPolicyQuote
       event.started = Time.now
       result = dcs.call
       event.completed = Time.now
-      event.response = result[:data]
+      event.response = result[:response].response.body
       event.status = result[:error] ? 'error' : 'success'
       event.save
       # make sure we succeeded
@@ -107,7 +107,7 @@ module CarrierDcPolicyQuote
       event.started = Time.now
       result = dcs.call
       event.completed = Time.now
-      event.response = result[:data]
+      event.response = result[:data].response.body
       event.status = result[:error] ? 'error' : 'success'
       event.save
       if result[:error]
