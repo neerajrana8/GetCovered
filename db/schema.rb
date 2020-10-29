@@ -252,8 +252,8 @@ ActiveRecord::Schema.define(version: 2020_10_29_181448) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "external_carrier_id"
-    t.index ["carrier_id", "external_carrier_id"], name: "carrier_external_carrier_id", unique: true
     t.index ["carrier_id"], name: "index_carrier_insurable_profiles_on_carrier_id"
+    t.index ["external_carrier_id"], name: "index_carrier_insurable_profiles_on_external_carrier_id", unique: true
     t.index ["insurable_id"], name: "index_carrier_insurable_profiles_on_insurable_id"
   end
 
