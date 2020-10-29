@@ -188,6 +188,7 @@
     resources :insurable_types, path: "insurable-types", only: [ :index ]
 
     resources :leads, only: [:index, :show]
+    resources :leads_dashboard, only: [:index]
 
     resources :leases,
       only: [ :create, :update, :destroy, :index, :show ] do
