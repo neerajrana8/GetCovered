@@ -99,11 +99,9 @@
           get :carrier_agencies
           get :toggle_billing_strategy
           get :billing_strategies_list
-          get :fees_list
           get :commission_list
           post :assign_agency_to_carrier
           post :unassign_agency_from_carrier
-          post :add_fees
           post :add_billing_strategy
           post :add_fees_to_billing_strategy
           post :add_commissions
@@ -124,8 +122,14 @@
       only: [ :create, :update, :index, :show ]
 
     resources :carrier_policy_type_availabilities,
-      path: "carrier-policy-type-availabilities",
-      only: [ :create, :update, :index, :show ]
+              path: "carrier-policy-type-availabilities",
+              only: [ :create, :update, :index, :show ] do
+      member do
+        post :add_fee
+        get :fees
+        delete :destroy_fee
+      end
+    end
 
     resources :claims, only: [:index, :show, :create, :update] do
       member do

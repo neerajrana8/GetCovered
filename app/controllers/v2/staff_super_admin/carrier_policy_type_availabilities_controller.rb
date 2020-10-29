@@ -5,10 +5,12 @@
 module V2
   module StaffSuperAdmin
     class CarrierPolicyTypeAvailabilitiesController < StaffSuperAdminController
-      
-      before_action :set_carrier_policy_type_availability, only: %i[update show]
+      before_action :set_carrier_policy_type_availability, only: %i[update show add_fee fees destroy_fee]
       before_action :set_substrate, only: %i[create index]
-      
+
+      # included after before_action :set_substrate because we should initialize substrate before module's callbacks
+      include FeesMethods
+
       def index
         super(:@carrier_policy_type_availabilities, @substrate)
       end
@@ -18,8 +20,7 @@ module V2
       def create
         @carrier_policy_type_availability = @substrate.new(create_params)
         if @carrier_policy_type_availability.errors.none? && @carrier_policy_type_availability.save
-          render :show,
-                 status: :created
+          render :show, status: :created
         else
           render json: @carrier_policy_type_availability.errors,
                  status: :unprocessable_entity
@@ -41,7 +42,6 @@ module V2
                  status: :unprocessable_entity
         end
       end
-      
       
       private
       
@@ -91,6 +91,14 @@ module V2
 
       def supported_orders
         supported_filters(true)
+      end
+
+      def set_fee_owner
+        @fee_owner = @carrier_policy_type_availability
+      end
+
+      def set_fee_assignable
+        @fee_assignable = @carrier_policy_type_availability.carrier
       end
     end
   end
