@@ -40,7 +40,7 @@ gem 'pry'
 gem 'awesome_print'
 
 # rack cors for api access to application
-gem 'rack-cors', require: 'rack/cors'
+gem 'rack-cors', '>= 1.0.5', require: 'rack/cors'
 
 # attr-encrypted for securing data
 gem 'attr_encrypted', '~> 3.0.0'
