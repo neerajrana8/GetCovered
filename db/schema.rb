@@ -589,6 +589,8 @@ ActiveRecord::Schema.define(version: 2020_10_29_181448) do
     t.index ["agency_id"], name: "index_insurables_on_agency_id"
     t.index ["insurable_id"], name: "index_insurables_on_insurable_id"
     t.index ["insurable_type_id"], name: "index_insurables_on_insurable_type_id"
+    t.index ["policy_type_ids"], name: "insurable_ptids_gin_index", using: :gin
+    t.index ["preferred_ho4"], name: "index_insurables_on_preferred_ho4"
   end
 
   create_table "invoices", force: :cascade do |t|
