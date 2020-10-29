@@ -7,11 +7,12 @@ class KlaviyoService
   EVENTS = ["New Lead", "Became Lead", "New Lead Event", "Created Account", "Updated Account",
             "Updated Email", "Reset Password", "Invoice Created", "Order Confirmation", "Failed Payment"]
   TEST_TAG = 'test'
+  RETRY_LIMIT = 3
 
-  #need to disable sending in test env
   def initialize
     @klaviyo ||= Klaviyo::Client.new(Rails.application.credentials.klaviyo[ENV["RAILS_ENV"].to_sym][:token] || ENV["KLAVIYO_API_TOKEN"])
     @private_api_key ||= Rails.application.credentials.klaviyo[ENV["RAILS_ENV"].to_sym][:private_token]
+    @retries = 0
   end
 
   def process_events(event_description, event_details={}, &block)
@@ -25,7 +26,7 @@ class KlaviyoService
       track_event(event_description, event_details) unless ["test", "test_container", "local", "development"].include?(ENV["RAILS_ENV"])
 
     rescue Net::OpenTimeout => ex
-      Rails.logger.error "LeadEventsController KlaviyoException: #{ex.to_s}."
+      Rails.logger.error("LeadEventsController KlaviyoException: #{ex.to_s}.")
     ensure
       #need to check what to return in controller
       response = true
@@ -70,12 +71,19 @@ class KlaviyoService
     customer_properties[:last_visited_page_url] = map_last_visited_url(event_details) #need to unify for other too
     customer_properties[:last_visited_page] = event_details["data"].present? ? event_details["data"]["last_visited_page"] : "Landing Page"
 
-    #need to add rescue according to prod 500 error
-    @klaviyo.track(event_description,
+    # TODO: check retriable gem?
+    begin
+      @klaviyo.track(event_description,
                    email: @lead.email,
                    properties: prepare_track_properties(event_details),
                    customer_properties: customer_properties
-    )
+      )
+    rescue Klaviyo::KlaviyoError => kl_ex
+      @lead =  Lead.create(email: "no_email_#{rand(999)}@email.com") if @lead.nil?
+      @retries += 1
+      @retries > RETRY_LIMIT ? Rails.logger.error("LeadEventsController KlaviyoException: #{kl_ex.to_s}, lead: #{@lead.as_json}, event_details: #{event_details}.") : retry
+    end
+
   end
 
   #tbd maybe need to separate in module and map from model, like address, profile etc.

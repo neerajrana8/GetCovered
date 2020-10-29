@@ -52,7 +52,7 @@ module V2
           nested_params[:tracking_url_id] = tracking_url.id if tracking_url.present?
           nested_params[:agency_id] = agency.id if agency.present? && @lead.agency_id != agency.id
 
-          if lead_params[:email] != @lead.email
+          if @lead.email.present? && lead_params[:email].present? && lead_params[:email] != @lead.email
             track_status = @klaviyo_helper.process_events("Updated Email", {email: @lead.email, new_email: lead_params[:email]}) do
               @lead.update(email: lead_params[:email])
             end
