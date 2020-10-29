@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_10_29_002832) do
+ActiveRecord::Schema.define(version: 2020_10_29_181448) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
@@ -568,6 +568,7 @@ ActiveRecord::Schema.define(version: 2020_10_29_002832) do
     t.boolean "enabled"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "policy_type_ids", default: [], null: false, array: true
   end
 
   create_table "insurables", force: :cascade do |t|

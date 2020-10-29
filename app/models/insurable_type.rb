@@ -10,6 +10,9 @@ class InsurableType < ApplicationRecord
   RESIDENTIAL_UNITS_IDS = [4].freeze
 
   COMMERCIAL_COMMUNITIES_IDS = [2, 3].freeze
+  
+  after_save :refresh_insurable_policy_type_ids,
+    if: Proc.new{|it| it.saved_change_to_attribute?(:policy_type_ids) }
 
   has_many :insurables
   has_many :carrier_insurable_types
@@ -24,4 +27,8 @@ class InsurableType < ApplicationRecord
                          in: [true, false], message: 'cannot be blank'
 
   enum category: %w[property entity]
+  
+  def refresh_insurable_policy_type_ids
+    RefreshInsurablePolicyTypeIdsJob.perform_later(self.insurables)
+  end
 end

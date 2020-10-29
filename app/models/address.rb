@@ -35,6 +35,9 @@ class Address < ApplicationRecord
 	before_create :set_first_as_primary
 
   after_validation :geocode
+  
+  after_save :refresh_insurable_policy_type_ids,
+    if: Proc.new{|addr| addr.addressable_type == "Insurable" }
 
   belongs_to :addressable,
     polymorphic: true,
@@ -190,6 +193,11 @@ class Address < ApplicationRecord
       StateProvCd: self.state,
       PostalCode: self.zip_code
     }.merge(include_line2 ? { Addr2: street_two.blank? ? nil : street_two } : {})
+  end
+  
+  def refresh_insurable_policy_type_ids
+    # update policy type ids (in case a newly created or changed address alters which policy types an insurable supports)
+    self.addressable&.refresh_policy_type_ids(and_save: true)
   end
 
 end
