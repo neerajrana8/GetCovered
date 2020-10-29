@@ -157,7 +157,7 @@ class PolicyApplication < ApplicationRecord
     errors.add(:carrier, 'carrier agency must exist') unless agency.carriers.include?(carrier)
     # ensure auth
     addr = self.primary_insurable&.primary_address
-    unless addr.nil? # skip validation if there is no address, so that PENSIO hack and potential future addressless insurables don't fail
+    unless addr.nil? # skip validation if there is no address, so that PENSIO hack and potential future addressless insurables don't fail 
       auths = CarrierAgencyAuthorization.references(:carrier_agencies).includes(:carrier_agency)
                                         .where(
                                           carrier_agencies: { carrier_id: self.carrier_id, agency_id: self.agency_id },
