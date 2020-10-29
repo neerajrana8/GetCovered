@@ -5,7 +5,7 @@ module LeadEvents
     delegate :users, to: :policy_application
 
     def execute
-      users.pluck(:id, :email).each do |id, email|
+      users.pluck(:email).each do |email|
         Lead.find_by_email(email)&.update(status: Lead.statuses[:converted])
       end
     end

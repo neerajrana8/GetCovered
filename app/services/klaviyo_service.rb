@@ -54,7 +54,7 @@ class KlaviyoService
     if event_description == "New Lead Event"
       if @lead.lead_events.count > 1
         event_details = @lead.lead_events.last.as_json
-        identify_lead("Became Lead") if @lead.lead_events.last.agency_id.present?
+        identify_lead("Became Lead") if @lead.lead_events.last.agency_id.present? && @lead.agency_id != @lead.lead_events.last.agency_id
       end
     end
 
@@ -70,6 +70,7 @@ class KlaviyoService
     customer_properties[:last_visited_page_url] = map_last_visited_url(event_details) #need to unify for other too
     customer_properties[:last_visited_page] = event_details["data"].present? ? event_details["data"]["last_visited_page"] : "Landing Page"
 
+    #need to add rescue according to prod 500 error
     @klaviyo.track(event_description,
                    email: @lead.email,
                    properties: prepare_track_properties(event_details),
@@ -117,7 +118,7 @@ class KlaviyoService
         '$first_name': @lead.profile.try(:first_name),
         '$last_name': @lead.profile.try(:last_name),
         '$phone_number': @lead.profile.try(:contact_phone),
-        '$title': @lead.profile.try(:salutation),
+        '$title': @lead.profile.try(:job_title),
         '$organization': @lead.profile.try(:title),
         '$city': @lead.address.try(:city),
         '$region': @lead.address.try(:state),
@@ -129,7 +130,6 @@ class KlaviyoService
         'tag': @lead.lead_events.last.try(:tag),
         'environment': ENV["RAILS_ENV"],
         'agency': @lead.try(:agency).try(:title)
-
     }
     request
   end
