@@ -117,7 +117,7 @@ module CarrierMsiInsurable
           @carrier_profile.data['msi_external_id'] = external_id
           @carrier_profile.data['registered_with_msi'] = true
           @carrier_profile.data['registered_with_msi_on'] = Time.current.strftime("%m/%d/%Y %I:%M %p")
-          @carrier_profile.save
+          self.update(preferred_ho4: true) if @carrier_profile.save
         end
       end
       # finished successfully
