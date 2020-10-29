@@ -72,7 +72,7 @@ gem 'timezone', '~> 1.0'
 gem 'twilio-ruby', '~> 4.11.1'
 
 # Kaminari for pagination
-gem 'kaminari'
+gem 'kaminari', '>= 1.2.1'
 
 # Mailing
 gem 'mailgun-ruby', '~>1.1.6'
