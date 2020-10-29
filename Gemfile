@@ -78,7 +78,7 @@ gem 'kaminari', '>= 1.2.1'
 gem 'mailgun-ruby', '~>1.1.6'
 gem 'premailer-rails'
 
-gem 'geocoder'
+gem 'geocoder', '~> 1.6.1'
 gem 'StreetAddress', require: 'street_address'
 
 gem 'elasticsearch-model', github: 'elastic/elasticsearch-rails', branch: '5.x'
