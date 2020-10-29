@@ -99,7 +99,7 @@ class PolicyApplication < ApplicationRecord
   
   def primary_insurable
     policy_insurable = policy_insurables.where(primary: true).take
-    policy_insurable.insurable.nil? ? nil : policy_insurable.insurable  
+    policy_insurable&.insurable 
   end
   
   # PolicyApplication.primary_insurable
