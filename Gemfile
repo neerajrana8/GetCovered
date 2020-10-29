@@ -28,7 +28,7 @@ gem 'redis', '~> 4.0'
 gem 'bootsnap', '>= 1.1.0', require: false
 
 # NokoGiri
-gem 'nokogiri'
+gem 'nokogiri', '>= 1.10.8'
 
 # HTTParty
 gem 'httparty'
