@@ -139,7 +139,7 @@
       end
     end
 
-    resources :insurables, only: [:index, :show ], concerns: :reportable do
+    resources :insurables, only: [:index, :show, :destroy], concerns: :reportable do
       member do
         get :coverage_report
         get :policies
