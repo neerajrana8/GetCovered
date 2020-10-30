@@ -23,6 +23,8 @@ class Claim < ApplicationRecord
 
   # Validations
   validates_presence_of :subject, :description, :time_of_loss, :type_of_loss
+
+  validate :policy_of_claimant
   
   validate :time_of_loss_cannot_be_in_future,
     unless: proc { |clm| clm.time_of_loss.nil? }
@@ -61,5 +63,16 @@ class Claim < ApplicationRecord
 
   def ownership_matches_up
     # TODO: need to refactor
+  end
+
+  def policy_of_claimant
+    policies_ids = []
+    if claimant.is_a?(Staff)
+      return if claimant.role == 'super_admin'
+      policies_ids = claimant.organizable.policies.ids
+    elsif claimant.is_a? User
+      policies_ids = claimant.policies.ids
+    end
+    errors.add(:policy_id, "Policy is not included in claimant's scope") unless policies_ids.include?(policy_id)
   end
 end
