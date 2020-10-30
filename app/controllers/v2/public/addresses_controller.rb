@@ -12,7 +12,7 @@ module V2
           @ids = @addresses.select{|a| a['_source']['addressable_type'] == 'Insurable' }.map{|a| a['_source']['addressable_id'] }
 
           @insurables = Insurable.where(id: @ids, enabled: true)
-                                 .send(*(params[:policy_type_id].blank? ? [:itself] : [:where, { "policy_type_ids @> ARRAY[?]::bigint[]" }, [params[:policy_type_id].to_i]]))
+                                 .send(*(params[:policy_type_id].blank? ? [:itself] : [:where, [ "policy_type_ids @> ARRAY[?]::bigint[]" ], [params[:policy_type_id].to_i]]))
           @response = []
 
           @insurables&.each do |i|
