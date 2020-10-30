@@ -94,11 +94,11 @@ module V2
       end
 
       def set_fee_owner
-        @fee_owner = @carrier_policy_type_availability
+        @fee_owner = @carrier_policy_type_availability.carrier
       end
 
       def set_fee_assignable
-        @fee_assignable = @carrier_policy_type_availability.carrier
+        @fee_assignable = @carrier_policy_type_availability
       end
     end
   end
