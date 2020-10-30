@@ -32,11 +32,12 @@ module V2
         @policy.account = insurable.account
         @policy.policy_in_system = false
         @policy.policy_users.new(user_id: current_user.id)
-        if @policy.save
+        add_error_master_types(@policy.policy_type_id)
+        if @policy.errors.blank? && @policy.save
           Insurables::UpdateCoveredStatus.run!(insurable: @policy.primary_insurable) if @policy.primary_insurable.present?
           render json: { message: 'Policy created' }, status: :created
         else
-          render json: { message: 'Policy failed' }, status: :unprocessable_entity
+          render json: @policy.errors, status: :unprocessable_entity
         end
       end
       
@@ -147,6 +148,10 @@ module V2
                                        :carrier_id, :effective_date, :expiration_date,
                                        :out_of_system_carrier_title, :address, documents: [],
                                                                                policy_users_attributes: [:user_id])
+      end
+
+      def add_error_master_types(type_id)
+        @policy.errors.add(:policy_type_id, 'You cannot add coverage with master policy type') if [2,3].include?(type_id)
       end
       
     end
