@@ -111,6 +111,10 @@ class Agency < ApplicationRecord
     addresses.where(primary: true).take
   end
 
+  def sub_agency?
+    self.agency_id.present?
+  end
+
   # Agent.provides(policy_type_id)
   # checks to see if agent is authorized for a policy type
   # in a state and zipcode

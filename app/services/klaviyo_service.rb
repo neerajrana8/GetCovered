@@ -136,10 +136,22 @@ class KlaviyoService
         '$consent': "",
         'status': @lead.status,
         'tag': @lead.lead_events.last.try(:tag),
-        'environment': ENV["RAILS_ENV"],
-        'agency': @lead.try(:agency).try(:title)
+        'environment': ENV["RAILS_ENV"]
     }
+    setup_agency!(request)
     request
+  end
+
+  def setup_agency!(request)
+    lead_agency = @lead.try(:agency)
+    if lead_agency.present?
+      if lead_agency.sub_agency?
+        request.merge!({'agency': lead_agency.agency.try(:title),
+                        'sub_agency': lead_agency.try(:title)})
+      else
+        request.merge!({'agency': lead_agency.try(:title)})
+      end
+    end
   end
 
   def set_tag
