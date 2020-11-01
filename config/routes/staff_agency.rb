@@ -190,6 +190,8 @@
     resources :leads, only: [:index, :show]
     resources :leads_dashboard, only: [:index]
 
+    get :get_filters, controller: 'leads_dashboard', path: 'leads_dashboard/get_filters'
+
     resources :leases,
       only: [ :create, :update, :destroy, :index, :show ] do
         member do

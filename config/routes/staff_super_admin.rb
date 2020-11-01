@@ -150,6 +150,8 @@
     resources :leads, only: [:index, :show]
     resources :leads_dashboard, only: [:index]
 
+    get :get_filters, controller: 'leads_dashboard', path: 'leads_dashboard/get_filters'
+
     resources :lease_types,
       path: "lease-types",
       only: [ :create, :update, :index, :show ]

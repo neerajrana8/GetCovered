@@ -5,17 +5,41 @@ module V2
       def index
         super(:@leads, Lead, :profile, :tracking_url)
         @stats = {site_visits: site_visits, leads: leads, applications: applications, conversions: conversions}
-        @stats_by = {date: "", stats: {site_visits: site_visits, leads: leads, applications: applications, conversions: conversions}}
+        @stats_by = {}
+
+        start_date = Date.parse(date_params[:start])
+        end_date   = Date.parse(date_params[:end])
+
+        if (end_date.mjd - start_date.mjd) < 31
+          start_date.upto(end_date) do |date|
+            params[:filter][:last_visit] = Date.parse("#{date}").all_day
+            super(:@leads, Lead, :profile, :tracking_url)
+            @stats_by["#{date}"] = {site_visits: site_visits, leads: leads, applications: applications, conversions: conversions}
+          end
+        else
+          while start_date < end_date
+            params[:filter][:last_visit] = Date.parse("#{start_date}").all_month
+            super(:@leads, Lead, :profile, :tracking_url)
+            @stats_by["#{start_date.end_of_month}"] = {site_visits: site_visits, leads: leads, applications: applications, conversions: conversions}
+            start_date += 1.month
+          end
+        end
         render 'v2/shared/leads/dashboard_index'
         #render json: {site_visits: site_visits, leads: leads, applications: applications, conversions: conversions}
         #render 'v2/shared/leads/index'
+      end
+
+      def get_filters
+        render json: {campaign_source: TrackingUrl.pluck(:campaign_source).uniq.as_json,
+                      campaign_name: TrackingUrl.pluck(:campaign_name).uniq.as_json,
+                      campaign_medium: TrackingUrl.pluck(:campaign_medium).uniq.as_json}
       end
 
       def supported_filters(called_from_orders = false)
         @calling_supported_orders = called_from_orders
         {
             agency_id: [:scalar],
-            last_visit: [:interval],
+            last_visit: [:interval, :scalar],
             tracking_url: {
                 campaign_source: [:scalar],
                 campaign_medium: [:scalar],
@@ -28,28 +52,19 @@ module V2
         supported_filters(true)
       end
 
-      #need to add default params for filtering & ordering
-      def lead_params
-        params.permit(:filter, :sort)
-      end
-
+      #need to add validation
       def date_params
-        params[:filter]
+        {start: params[:filter][:last_visit][:start],
+         end: params[:filter][:last_visit][:end]}
       end
 
       private
-
-      def stats_by(date_value)
-
-
-      end
 
       #need to refactor
       def site_visits
         visits = 0
         @leads.each do |lead|
           visits+=lead.lead_events.order("DATE(created_at)").group("DATE(created_at)").count.keys.size
-          #visits+=lead.lead_events.count
         end
         visits
       end
@@ -59,18 +74,12 @@ module V2
       end
 
       def applications
-        @leads.where.not(user_id: nil, status: 'converted').count
+        @leads.where.not(user_id: nil).where(status: "prospect").count
       end
 
       def conversions
         @leads.where(status: 'converted').count
       end
-
-      #def show
-      #  @lead = access_model(::Lead, params[:id])
-      #   render 'v2/shared/leads/show'
-      # end
-
 
     end
   end
