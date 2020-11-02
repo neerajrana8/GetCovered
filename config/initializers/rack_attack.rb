@@ -8,4 +8,8 @@ class Rack::Attack
 
   end
 end
+Rack::Attack.throttled_response = lambda do |request|
+
+  [ 429, {'Content-Type' => 'application/json; charset=utf-8'}, [{error: 'Retry later - Rate Limit exceeded'}.to_json]]
+end
 
