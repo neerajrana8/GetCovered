@@ -13,17 +13,16 @@ module FeesMethods
         render json: standard_error(:fee_was_not_created, nil, @fee.errors.full_messages),
                status: :unprocessable_entity
       end
-      # render json: {}
     end
 
     def fees
-      @fees = @fee_assignable.fees
+      @fees = paginator(@fee_assignable.fees)
       render template: 'v2/shared/fees/index', status: :ok
     end
 
     def destroy_fee
       @fee = @fee_assignable.fees.find(params[:fee_id])
-      if PolicyPremiumFee.where(fee: @fee).any?
+      if PolicyPremiumFee.where(fee: @fee).any? || @fee.locked?
         render json: standard_error(:fee_cant_be_destroyed, 'Fee cant be destroyed'),
                status: :unprocessable_entity
       else
@@ -40,7 +39,7 @@ module FeesMethods
     private
 
     def fee_params
-      require(:fee).permit(
+      params.require(:fee).permit(
         :title, :slug,
         :amount, :amount_type, :type,
         :per_payment, :amortize, :enabled,
