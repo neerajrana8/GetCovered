@@ -1,4 +1,4 @@
-json.extract! lead, :id, :email, :created_at, :last_visited_page
+json.extract! lead, :id, :email, :created_at, :last_visited_page, :last_visit ,:agency_id
 
 profile = lead.profile
 if profile.present?
@@ -7,7 +7,7 @@ end
 
 first_event =  lead.lead_events.first
 
-if first_event.present? && first_event.policy_type
+if first_event.present? && first_event.policy_type.present?
   json.interested_product first_event.policy_type.title
 end
 

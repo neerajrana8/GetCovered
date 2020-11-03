@@ -77,9 +77,13 @@
     resources :assignments,
       only: [ :create, :update, :destroy, :index, :show ]
 
-    resources :billing_strategies,
-      path: "billing-strategies",
-      only: [ :create, :update, :index, :show ]
+    resources :billing_strategies, path: "billing-strategies", only: [ :create, :update, :index, :show ] do
+      member do
+        post :add_fee
+        get :fees
+        delete :destroy_fee
+      end
+    end
 
     resources :branding_profiles,
       path: "branding-profiles",
@@ -123,9 +127,13 @@
         end
     end
 
-    resources :carrier_agency_authorizations,
-      path: "carrier-agency-authorizations",
-      only: [ :update, :index, :show ]
+    resources :carrier_agency_authorizations, path: "carrier-agency-authorizations", only: [ :update, :index, :show ] do
+      member do
+        post :add_fee
+        get :fees
+        delete :destroy_fee
+      end
+    end
 
     resources :claims,
       only: [ :create, :update, :index, :show ] do
@@ -191,6 +199,9 @@
     resources :insurable_types, path: "insurable-types", only: [ :index ]
 
     resources :leads, only: [:index, :show]
+    resources :leads_dashboard, only: [:index]
+
+    get :get_filters, controller: 'leads_dashboard', path: 'leads_dashboard/get_filters'
 
     resources :leases,
       only: [ :create, :update, :destroy, :index, :show ] do

@@ -3,75 +3,64 @@
 # File: app/controllers/v2/staff_agency/billing_strategies_controller.rb
 
 module V2
-  module StaffAgency
-    class BillingStrategiesController < StaffAgencyController
-      
+  module StaffSuperAdmin
+    class BillingStrategiesController < StaffSuperAdminController
       before_action :set_billing_strategy, only: %i[update show add_fee fees destroy_fee]
       before_action :set_substrate, only: %i[create index]
 
       # included after before_action :set_substrate because we should initialize substrate before module's callbacks
       include FeesMethods
-      
+
       def index
-        if params[:short]
-          super(:@billing_strategies, @substrate)
-        else
-          super(:@billing_strategies, @substrate, :agency, :carrier)
-        end
+        super(:@billing_strategies, @substrate, :agency, :carrier)
       end
-      
+
       def show; end
-      
+
       def create
         if create_allowed?
           @billing_strategy = @substrate.new(create_params)
           if @billing_strategy.errors.none? && @billing_strategy.save
-            render :show,
-                   status: :created
+            render :show, status: :created
           else
-            render json: @billing_strategy.errors,
-                   status: :unprocessable_entity
+            render json: @billing_strategy.errors, status: :unprocessable_entity
           end
         else
-          render json: { success: false, errors: ['Unauthorized Access'] },
-                 status: :unauthorized
+          render json: { success: false, errors: ['Unauthorized Access'] }, status: :unauthorized
         end
       end
-      
+
       def update
         if update_allowed?
           if @billing_strategy.update(update_params)
-            render :show,
-                   status: :ok
+            render :show, status: :ok
           else
-            render json: @billing_strategy.errors,
-                   status: :unprocessable_entity
+            render json: @billing_strategy.errors, status: :unprocessable_entity
           end
         else
           render json: { success: false, errors: ['Unauthorized Access'] },
                  status: :unauthorized
         end
       end
-      
-      
+
       private
-      
+
       def view_path
         super + '/billing_strategies'
       end
-        
+
       def create_allowed?
         true
       end
-        
+
       def update_allowed?
         true
       end
-        
+
       def set_billing_strategy
         @billing_strategy = access_model(::BillingStrategy, params[:id])
       end
-        
+
       def set_substrate
         super
         if @substrate.nil?
@@ -80,7 +69,7 @@ module V2
           @substrate = @substrate.billing_strategies
         end
       end
-        
+
       def create_params
         return({}) if params[:billing_strategy].blank?
 
@@ -90,7 +79,7 @@ module V2
         )
         to_return
       end
-        
+
       def update_params
         return({}) if params[:billing_strategy].blank?
 
@@ -99,7 +88,7 @@ module V2
           new_business: {}, renewal: {}
         )
       end
-        
+
       def supported_filters(called_from_orders = false)
         @calling_supported_orders = called_from_orders
         {

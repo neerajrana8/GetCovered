@@ -10,7 +10,7 @@ gem 'pg', '>= 0.18', '< 2.0'
 # Add union queries to the Rails
 gem 'active_record_union'
 # Use Puma as the app server
-gem 'puma', '~> 3.11'
+gem 'puma', '~> 3.12.6'
 # Build JSON APIs with ease. Read more: https://github.com/rails/jbuilder
 gem 'jbuilder', '~> 2.5'
 # Use Redis adapter to run Action Cable in production
@@ -28,7 +28,7 @@ gem 'redis', '~> 4.0'
 gem 'bootsnap', '>= 1.1.0', require: false
 
 # NokoGiri
-gem 'nokogiri'
+gem 'nokogiri', '>= 1.10.8'
 
 # HTTParty
 gem 'httparty'
@@ -40,7 +40,7 @@ gem 'pry'
 gem 'awesome_print'
 
 # rack cors for api access to application
-gem 'rack-cors', require: 'rack/cors'
+gem 'rack-cors', '>= 1.0.5', require: 'rack/cors'
 
 # attr-encrypted for securing data
 gem 'attr_encrypted', '~> 3.0.0'
@@ -72,13 +72,13 @@ gem 'timezone', '~> 1.0'
 gem 'twilio-ruby', '~> 4.11.1'
 
 # Kaminari for pagination
-gem 'kaminari'
+gem 'kaminari', '>= 1.2.1'
 
 # Mailing
 gem 'mailgun-ruby', '~>1.1.6'
 gem 'premailer-rails'
 
-gem 'geocoder'
+gem 'geocoder', '~> 1.6.1'
 gem 'StreetAddress', require: 'street_address'
 
 gem 'elasticsearch-model', github: 'elastic/elasticsearch-rails', branch: '5.x'
@@ -143,9 +143,9 @@ group :development do
   gem 'guard'
   gem 'guard-shell'
   #rubymine specific debug gems
-  gem 'ruby-debug-ide'
-  gem 'debase'
-  gem 'web-console'
+    # gem 'ruby-debug-ide'
+    # gem 'debase'
+    # gem 'web-console'
 end
 
 # Windows does not include zoneinfo files, so bundle the tzinfo-data gem

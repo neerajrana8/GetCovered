@@ -1,8 +1,13 @@
 class Lead < ApplicationRecord
+
+  include ElasticsearchSearchable
+
   belongs_to :user, optional: true
+  belongs_to :tracking_url, optional: true
+  belongs_to :agency, optional: true
+
   has_one :profile, as: :profileable
   has_one :address, as: :addressable
-  belongs_to :tracking_url, optional: true
 
   has_many :lead_events, dependent: :destroy
 
@@ -12,6 +17,10 @@ class Lead < ApplicationRecord
 
   before_create :set_identifier
   before_save :set_status
+
+  def self.date_of_first_lead
+    Lead.pluck(:last_visit).sort.first
+  end
 
   private
 
