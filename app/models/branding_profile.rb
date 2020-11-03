@@ -12,15 +12,17 @@ class BrandingProfile < ApplicationRecord
 
   belongs_to :profileable, polymorphic: true
 
-  has_many :branding_profile_attributes
-  has_many :pages
-  has_many :faqs
+  has_many :branding_profile_attributes, dependent: :destroy
+  has_many :pages, dependent: :destroy
+  has_many :faqs, dependent: :destroy
 
   has_many_attached :images
 
   scope :default, -> { where(default: true) }
 
   accepts_nested_attributes_for :branding_profile_attributes
+  accepts_nested_attributes_for :faqs
+  accepts_nested_attributes_for :pages
 
   def self.global_default
     BrandingProfile.find_by(global_default: true)

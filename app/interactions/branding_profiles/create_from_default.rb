@@ -9,7 +9,7 @@ module BrandingProfiles
         branding_profile_params =
           default_branding_profile.
             attributes.
-            except('id', 'created_at', 'updated_at').
+            except('id', 'created_at', 'updated_at', 'global_default').
             merge(profileable: agency, url: url)
         @branding_profile = BrandingProfile.create(branding_profile_params)
 
