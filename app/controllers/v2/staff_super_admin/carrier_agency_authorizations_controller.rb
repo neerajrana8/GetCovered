@@ -6,9 +6,12 @@ module V2
   module StaffSuperAdmin
     class CarrierAgencyAuthorizationsController < StaffSuperAdminController
       
-      before_action :set_carrier_agency_authorization, only: %i[update show]
+      before_action :set_carrier_agency_authorization, only: %i[update show add_fee fees destroy_fee]
       before_action :set_substrate, only: [:index]
-      
+
+      # included after before_action :set_substrate because we should initialize substrate before module's callbacks
+      include FeesMethods
+
       def index
         super(:@carrier_agency_authorizations, @substrate)
         render template: 'v2/shared/carrier_agency_authorizations/index', status: :ok
@@ -61,6 +64,14 @@ module V2
 
       def supported_orders
         supported_filters(true)
+      end
+
+      def set_fee_owner
+        @fee_owner = @carrier_agency_authorization.agency
+      end
+
+      def set_fee_assignable
+        @fee_assignable = @carrier_agency_authorization
       end
     end
   end # module StaffAgency

@@ -108,7 +108,7 @@ module V2
                                :auth_error,
                                'A User has already signed up with this email address.  Please log in to complete your application'
                              ).to_json, status: 401) && return
-              end                
+              end
             else
               @application.users << @user
             end
@@ -214,10 +214,11 @@ module V2
           if create_policy_users
             if @application.update(status: 'in_progress')
               invite_primary_user(@application)
+              LeadEvents::LinkPolicyApplicationUsers.run!(policy_application: @application)
               render 'v2/public/policy_applications/show'
             else
               render json: standard_error(:policy_application_update_error, nil, @application.errors),
-                     status: 422          
+                     status: 422
             end
           end
         else
@@ -376,9 +377,8 @@ module V2
 
         if @application.save
           if create_policy_users
-            LeadEvents::LinkPolicyApplicationUsers.run!(policy_application: @application)
             if @application.update status: 'complete'
-  
+
               # if application.status updated to complete
               @application.estimate()
               @quote = @application.policy_quotes.order('created_at DESC').limit(1).first
@@ -488,7 +488,7 @@ module V2
             end
           else
             render json: standard_error(:policy_application_update_error, nil, @policy_application.errors),
-                   status: 422  
+                   status: 422
           end
         end
       end

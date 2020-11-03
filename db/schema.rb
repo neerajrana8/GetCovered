@@ -142,6 +142,19 @@ ActiveRecord::Schema.define(version: 2020_10_23_145742) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "application_notifications", force: :cascade do |t|
+    t.string "action"
+    t.string "subject"
+    t.integer "status"
+    t.integer "code"
+    t.boolean "read", default: false
+    t.integer "notifiable_id"
+    t.string "notifiable_type"
+    t.string "message"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
   create_table "assignments", force: :cascade do |t|
     t.boolean "primary"
     t.bigint "staff_id"
@@ -252,8 +265,8 @@ ActiveRecord::Schema.define(version: 2020_10_23_145742) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "external_carrier_id"
-    t.index ["carrier_id", "external_carrier_id"], name: "carrier_external_carrier_id", unique: true
     t.index ["carrier_id"], name: "index_carrier_insurable_profiles_on_carrier_id"
+    t.index ["external_carrier_id"], name: "index_carrier_insurable_profiles_on_external_carrier_id", unique: true
     t.index ["insurable_id"], name: "index_carrier_insurable_profiles_on_insurable_id"
   end
 
@@ -365,6 +378,9 @@ ActiveRecord::Schema.define(version: 2020_10_23_145742) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "type_of_loss", default: 0, null: false
+    t.string "name"
+    t.string "address"
+    t.string "nature_of_claim"
     t.text "staff_notes"
     t.index ["claimant_type", "claimant_id"], name: "index_claims_on_claimant_type_and_claimant_id"
     t.index ["insurable_id"], name: "index_claims_on_insurable_id"
@@ -647,6 +663,7 @@ ActiveRecord::Schema.define(version: 2020_10_23_145742) do
     t.datetime "last_visit"
     t.string "last_visited_page"
     t.integer "tracking_url_id"
+    t.string "environment"
     t.integer "agency_id"
     t.index ["email"], name: "index_leads_on_email"
     t.index ["user_id"], name: "index_leads_on_user_id"
@@ -852,9 +869,9 @@ ActiveRecord::Schema.define(version: 2020_10_23_145742) do
     t.date "last_payment_date"
     t.date "next_payment_date"
     t.bigint "policy_group_id"
-    t.boolean "declined"
     t.string "address"
     t.string "out_of_system_carrier_title"
+    t.boolean "declined"
     t.bigint "policy_id"
     t.integer "cancellation_reason"
     t.index ["account_id"], name: "index_policies_on_account_id"
