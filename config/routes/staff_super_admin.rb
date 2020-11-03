@@ -68,6 +68,14 @@
 
     resources :assignments, only: [ :index, :show ]
 
+    resources :billing_strategies, path: "billing-strategies", only: [ :create, :update, :index, :show ] do
+      member do
+        post :add_fee
+        get :fees
+        delete :destroy_fee
+      end
+    end
+
     resources :branding_profiles,
       path: "branding-profiles",
       only: [ :index, :create, :update, :show, :destroy ] do
@@ -99,21 +107,28 @@
           get :carrier_agencies
           get :toggle_billing_strategy
           get :billing_strategies_list
-          get :fees_list
           get :commission_list
           post :assign_agency_to_carrier
           post :unassign_agency_from_carrier
-          post :add_fees
           post :add_billing_strategy
-          post :add_fees_to_billing_strategy
           post :add_commissions
           put :update_commission
           get :commission
+
+          post :add_fee
+          get :fees
+          delete :destroy_fee
         end
         post :assign_agency_to_carrier, path: 'assign-agency-to-carrier'
       end
     resources :carrier_agencies, path: "carrier-agencies", only: [ :index, :show, :create, :update, :destroy ]
-    resources :carrier_agency_authorizations, path: "carrier-agency-authorizations", only: [ :update, :index, :show ]
+    resources :carrier_agency_authorizations, path: "carrier-agency-authorizations", only: [ :update, :index, :show ] do
+      member do
+        post :add_fee
+        get :fees
+        delete :destroy_fee
+      end
+    end
 
     resources :carrier_insurable_types,
       path: "carrier-insurable-types",
@@ -124,8 +139,14 @@
       only: [ :create, :update, :index, :show ]
 
     resources :carrier_policy_type_availabilities,
-      path: "carrier-policy-type-availabilities",
-      only: [ :create, :update, :index, :show ]
+              path: "carrier-policy-type-availabilities",
+              only: [ :create, :update, :index, :show ] do
+      member do
+        post :add_fee
+        get :fees
+        delete :destroy_fee
+      end
+    end
 
     resources :claims, only: [:index, :show, :create, :update] do
       member do
