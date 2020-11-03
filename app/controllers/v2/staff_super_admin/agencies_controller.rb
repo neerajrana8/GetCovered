@@ -38,7 +38,9 @@ module V2
         result          = []
         required_fields = %i[id title agency_id]
 
-        Agency.where(agency_id: sub_agency_filter_params).select(required_fields).each do |agency|
+        @agencies = paginator(Agency.where(agency_id: sub_agency_filter_params))
+
+        @agencies.select(required_fields).each do |agency|
           sub_agencies = agency.agencies.select(required_fields)
           result << if sub_agencies.any?
             agency.attributes.reverse_merge(agencies: sub_agencies.map(&:attributes))
