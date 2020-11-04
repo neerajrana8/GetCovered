@@ -7,11 +7,12 @@ class KlaviyoService
   EVENTS = ["New Lead", "Became Lead", "New Lead Event", "Created Account", "Updated Account",
             "Updated Email", "Reset Password", "Invoice Created", "Order Confirmation", "Failed Payment"]
   TEST_TAG = 'test'
+  RETRY_LIMIT = 3
 
-  #need to disable sending in test env
   def initialize
     @klaviyo ||= Klaviyo::Client.new(Rails.application.credentials.klaviyo[ENV["RAILS_ENV"].to_sym][:token] || ENV["KLAVIYO_API_TOKEN"])
     @private_api_key ||= Rails.application.credentials.klaviyo[ENV["RAILS_ENV"].to_sym][:private_token]
+    @retries = 0
   end
 
   def process_events(event_description, event_details={}, &block)
@@ -25,7 +26,7 @@ class KlaviyoService
       track_event(event_description, event_details) unless ["test", "test_container", "local", "development"].include?(ENV["RAILS_ENV"])
 
     rescue Net::OpenTimeout => ex
-      Rails.logger.error "LeadEventsController KlaviyoException: #{ex.to_s}."
+      Rails.logger.error("LeadEventsController KlaviyoException: #{ex.to_s}.")
     ensure
       #need to check what to return in controller
       response = true
@@ -54,7 +55,7 @@ class KlaviyoService
     if event_description == "New Lead Event"
       if @lead.lead_events.count > 1
         event_details = @lead.lead_events.last.as_json
-        identify_lead("Became Lead") if @lead.lead_events.last.agency_id.present?
+        identify_lead("Became Lead") if @lead.lead_events.last.agency_id.present? && @lead.agency_id != @lead.lead_events.last.agency_id
       end
     end
 
@@ -70,11 +71,19 @@ class KlaviyoService
     customer_properties[:last_visited_page_url] = map_last_visited_url(event_details) #need to unify for other too
     customer_properties[:last_visited_page] = event_details["data"].present? ? event_details["data"]["last_visited_page"] : "Landing Page"
 
-    @klaviyo.track(event_description,
+    # TODO: check retriable gem?
+    begin
+      @klaviyo.track(event_description,
                    email: @lead.email,
                    properties: prepare_track_properties(event_details),
                    customer_properties: customer_properties
-    )
+      )
+    rescue Klaviyo::KlaviyoError => kl_ex
+      @lead =  Lead.create(email: "no_email_#{rand(999)}@email.com") if @lead.nil?
+      @retries += 1
+      @retries > RETRY_LIMIT ? Rails.logger.error("LeadEventsController KlaviyoException: #{kl_ex.to_s}, lead: #{@lead.as_json}, event_details: #{event_details}.") : retry
+    end
+
   end
 
   #tbd maybe need to separate in module and map from model, like address, profile etc.
@@ -117,7 +126,7 @@ class KlaviyoService
         '$first_name': @lead.profile.try(:first_name),
         '$last_name': @lead.profile.try(:last_name),
         '$phone_number': @lead.profile.try(:contact_phone),
-        '$title': @lead.profile.try(:salutation),
+        '$title': @lead.profile.try(:job_title),
         '$organization': @lead.profile.try(:title),
         '$city': @lead.address.try(:city),
         '$region': @lead.address.try(:state),
@@ -127,11 +136,22 @@ class KlaviyoService
         '$consent': "",
         'status': @lead.status,
         'tag': @lead.lead_events.last.try(:tag),
-        'environment': ENV["RAILS_ENV"],
-        'agency': @lead.try(:agency).try(:title)
-
+        'environment': ENV["RAILS_ENV"]
     }
+    setup_agency!(request)
     request
+  end
+
+  def setup_agency!(request)
+    lead_agency = @lead.try(:agency)
+    if lead_agency.present?
+      if lead_agency.sub_agency?
+        request.merge!({'agency': lead_agency.agency.try(:title),
+                        'sub_agency': lead_agency.try(:title)})
+      else
+        request.merge!({'agency': lead_agency.try(:title)})
+      end
+    end
   end
 
   def set_tag

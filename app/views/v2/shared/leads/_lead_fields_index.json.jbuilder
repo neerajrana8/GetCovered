@@ -1,4 +1,4 @@
-json.extract! lead, :id, :email, :created_at, :last_visited_page, :agency_id
+json.extract! lead, :id, :email, :created_at, :last_visited_page, :last_visit ,:agency_id
 
 profile = lead.profile
 if profile.present?
