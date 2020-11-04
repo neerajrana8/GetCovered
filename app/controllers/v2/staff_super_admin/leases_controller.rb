@@ -20,6 +20,7 @@ module V2
       end
       
       def create
+        raise "error"
         if create_allowed?
           @lease = Lease.new(create_params)
           if !@lease.errors.any? && @lease.save_as(current_staff)
