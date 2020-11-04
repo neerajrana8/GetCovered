@@ -623,13 +623,11 @@ class MsiService
     elsif additional_interest.count > 2
       return ['Additional interest count cannot exceed 2']
     end
+    address = untangle_address_params(**{ address: address, address_line_one: address_line_one, address_line_two: unit.nil? ? (address_line_two || false) : "#{unit_prefix ? unit_prefix.strip + " " : ""}#{unit}", city: city, state: state, zip: zip }.compact)
     # handling distinctive preferred/nonpreferred arguments
     preferred = !community_id.nil?
     if preferred
       return ['Community id cannot be blank'] if community_id.nil? # this can't happen, but for completeness in case we later determine prefered by different means...
-      address = untangle_address_params(**{ address: address, address_line_one: address_line_one, address_line_two: unit.nil? ? false : "#{unit_prefix ? unit_prefix.strip + " " : ""}#{unit}", city: city, state: state, zip: zip }.compact)
-    else
-      address = untangle_address_params(**{ address: address, address_line_one: address_line_one, address_line_two: address_line_two, city: city, state: state, zip: zip }.compact)
     end
     # handling mailing address
     if !maddress.nil? || !maddress_line_one.nil? || !maddress_line_two.nil? || !mcity.nil? || !mstate.nil? || !mzip.nil?
