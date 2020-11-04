@@ -19,6 +19,8 @@ module V2
       def show; end
 
       def create
+
+        raise "error"
         if create_allowed?
           outcome = Agencies::Create.run(agency_params: create_params.to_h)
           if outcome.valid?
