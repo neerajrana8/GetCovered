@@ -625,7 +625,7 @@ class InsurableRateConfiguration < ApplicationRecord
                                   end
                                 end.compact,
         **(cip # passed only for preferred
-          ? { community_id: cip.external_carrier_id },
+          ? { community_id: cip.external_carrier_id }
           : { address: carrier_insurable_profile_or_address }.merge(nonpreferred_final_premium_params.compact)
         ),
         line_breaks: true
