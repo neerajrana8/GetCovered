@@ -564,8 +564,8 @@ class MsiService
           Location: {
             '': { id: '0' },
             Addr: preferred ? {
-              MSI_CommunityID:                  community_id
-            } :                                 address
+              MSI_CommunityID:                community_id
+            } :                               address
           },
           PersPolicy: {
             ContractTerm: {
@@ -597,16 +597,21 @@ class MsiService
   end
   
   def build_bind_policy(
-     effective_date:,
-     payment_plan:, installment_day:,
-     community_id:,
-     unit: nil,
-     unit_prefix: unit.nil? ? nil : "Apartment",
-     address: nil, address_line_one: nil, city: nil, state: nil, zip: nil, # provide EITHER address OR these other params
-     maddress: nil, maddress_line_one: nil, maddress_line_two: nil, mcity: nil, mstate: nil, mzip: nil, # provide EITHER address OR these other params
-     payment_merchant_id:, payment_processor:, payment_method:, payment_info:, payment_other_id:,
-     primary_insured:, additional_insured:, additional_interest:,
-     coverage_raw:, # WARNING: raw msi formatted coverage hash; modify later to accept a nicer format
+    effective_date:,
+    payment_plan:, installment_day:,
+    unit: nil,
+    unit_prefix: unit.nil? ? nil : "Apartment",
+    address: nil, address_line_one: nil, city: nil, state: nil, zip: nil,
+    maddress: nil, maddress_line_one: nil, maddress_line_two: nil, mcity: nil, mstate: nil, mzip: nil,
+    payment_merchant_id:, payment_processor:, payment_method:, payment_info:, payment_other_id:,
+    primary_insured:, additional_insured:, additional_interest:,
+    coverage_raw:, # WARNING: raw msi formatted coverage hash; modify later to accept a nicer format
+    # for preferred
+    community_id: nil,
+    # for non-preferred (the defaults are MSI's defaults, to be passed if we don't get a value)
+    address_line_two: nil,
+    number_of_units: 50, years_professionally_managed: -1, year_built: Time.current.year - 25, gated: false,
+    # comp args 
     **compilation_args
   )
     # set up
@@ -618,7 +623,15 @@ class MsiService
     elsif additional_interest.count > 2
       return ['Additional interest count cannot exceed 2']
     end
-    address = untangle_address_params(**{ address: address, address_line_one: address_line_one, address_line_two: unit.nil? ? false : "#{unit_prefix ? unit_prefix.strip + " " : ""}#{unit}", city: city, state: state, zip: zip }.compact)
+    # handling distinctive preferred/nonpreferred arguments
+    preferred = !community_id.nil?
+    if preferred
+      return ['Community id cannot be blank'] if community_id.nil? # this can't happen, but for completeness in case we later determine prefered by different means...
+      address = untangle_address_params(**{ address: address, address_line_one: address_line_one, address_line_two: unit.nil? ? false : "#{unit_prefix ? unit_prefix.strip + " " : ""}#{unit}", city: city, state: state, zip: zip }.compact)
+    else
+      address = untangle_address_params(**{ address: address, address_line_one: address_line_one, address_line_two: address_line_two, city: city, state: state, zip: zip }.compact)
+    end
+    # handling mailing address
     if !maddress.nil? || !maddress_line_one.nil? || !maddress_line_two.nil? || !mcity.nil? || !mstate.nil? || !mzip.nil?
       maddress = untangle_address_params(**{ address: maddress, address_line_one: maddress_line_one, address_line_two: maddress_line_two || false, city: mcity, state: mstate, zip: mzip }.compact)
     else
@@ -631,10 +644,10 @@ class MsiService
           Location: [
             {
               '': { id: '0' },
-              Addr:                           address.merge({
+              Addr:                           address.merge(preferred ? {
                 MSI_CommunityID:                community_id,
                 MSI_Unit:                       unit
-             })
+             } : {})
             }.compact
           ] + (maddress == address ? [] : [
             {
@@ -660,7 +673,12 @@ class MsiService
             Dwell: {
               :'' => { LocationRef: 0, id: "Dwell1" },
               PolicyTypeCd: 'H04'
-            },
+            }.merge(preferred ? {} : {
+              YearBuilt:                      year_built,
+              IsGated:                        gated,
+              YearsProfManaged:               years_professionally_managed,
+              NumberOfUnits:                  number_of_units,
+            }),
             Coverage: coverage_raw
           },
           InsuredOrPrincipal: [
