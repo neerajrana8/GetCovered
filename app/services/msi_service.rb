@@ -493,7 +493,7 @@ class MsiService
   def build_get_or_create_community(
       effective_date:,
       community_name:, number_of_units:, property_manager_name:, years_professionally_managed:, year_built:, gated:,
-      address: nil, address_line_one: nil, city: nil, state: nil, zip: nil, # provide EITHER address OR these other params
+      address: nil, address_line_one: nil, city: nil, state: nil, zip: nil,
       **compilation_args
   )
     # do some fancy dynamic stuff with parameters
@@ -532,9 +532,14 @@ class MsiService
   end
 
   def build_final_premium(
-     effective_date:, additional_insured_count:, additional_interest_count:,
-     community_id:, #address_line_one:, city:, state:, zip:,
-     coverages_formatted:,
+    effective_date:, additional_insured_count:, additional_interest_count:,
+    coverages_formatted:,
+    # for preferred
+    community_id: nil, #address_line_one:, city:, state:, zip:,
+    # for non-preferred (the defaults are MSI's defaults, to be passed if we don't get a value)
+    number_of_units: 50, years_professionally_managed: -1, year_built: Time.current.year - 25, gated: false,
+    address: nil, address_line_one: nil, address_line_two: nil, city: nil, state: nil, zip: nil,
+    # comp args
     **compilation_args
   )
     self.action = :final_premium
@@ -545,15 +550,22 @@ class MsiService
     elsif additional_interest_count > 2
       return ['Additional interest count cannot exceed 2']
     end
+    # handling distinctive preferred/nonpreferred arguments
+    preferred = !community_id.nil?
+    if preferred
+      return ['Community id cannot be blank'] if community_id.nil? # this can't happen, but for completeness in case we later determine prefered by different means...
+    else
+      address = untangle_address_params(**{ address: address, address_line_one: address_line_one, address_line_two: address_line_two, city: city, state: state, zip: zip }.compact)
+    end
     # go go go
     self.compiled_rxml = compile_xml({
       InsuranceSvcRq: {
         RenterPolicyQuoteInqRq: {
           Location: {
             '': { id: '0' },
-            Addr: {
+            Addr: preferred ? {
               MSI_CommunityID:                  community_id
-            }
+            } :                                 address
           },
           PersPolicy: {
             ContractTerm: {
@@ -564,7 +576,12 @@ class MsiService
             Dwell: {
               :'' => { LocationRef: 0, id: "Dwell1" },
               PolicyTypeCd: 'H04'
-            },
+            }.merge(preferred ? {} : {
+              YearBuilt:                      year_built,
+              IsGated:                        gated,
+              YearsProfManaged:               years_professionally_managed,
+              NumberOfUnits:                  number_of_units,
+            }),
             Coverage:                         coverages_formatted
           },
           InsuredOrPrincipal: [

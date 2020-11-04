@@ -46,7 +46,7 @@ module CarrierMsiPolicyApplication
     
       quote_success = false
       status_check = self.complete? || self.quote_failed?
-      quote = quote_id ? self.policy_quotes.find(quote_id) : self.msi_estimate # MOOSE WARNING: create quote if nil or reinstate: raise ArgumentError, 'Argument "quote_id" cannot be nil' if quote_id.nil?
+      quote = quote_id ? self.policy_quotes.find(quote_id) : self.msi_estimate # WARNING: create quote if nil or reinstate: raise ArgumentError, 'Argument "quote_id" cannot be nil' if quote_id.nil?
     
       if status_check && self.carrier == ::Carrier.find_by_call_sign('MSI')
         # grab some values
@@ -57,153 +57,158 @@ module CarrierMsiPolicyApplication
         address = unit.primary_address
         carrier_agency = CarrierAgency.where(agency_id: self.account.agency_id, carrier_id: self.carrier_id).take
         # call getfinalpremium
-        if community_profile.data['registered_with_msi'] == true # MOOSE WARNING: do we also want an ho4_enabled setting for msi after all?
-          self.update(status: 'quote_in_progress')
-          # validate & make final premium call to msi
-          results = ::InsurableRateConfiguration.get_coverage_options(
-            5, # msi id
-            community_profile,
-            self.coverage_selections,
-            self.effective_date,
-            self.users.count - 1,
-            self.billing_strategy.carrier_code,
-            perform_estimate: true,
-            eventable: quote # by passing a PolicyQuote we ensure results[:msi_data], results[:event], and results[:annotated_selections] get passed back out
-          )
-          # make sure we succeeded
-          if !results[:valid]
-            puts "MSI Coverage Validation Or FinalPremium Request Unsuccessful, Errors: #{ results[:errors][:internal] }, Event ID: #{ results[:event].id }"
+        preferred = (community_profile&.data&.[]('registered_with_msi') == true) # MOOSE WARNING: we don't care about insurable.preferred_ho4 except in the address search... but we might want to use it here at some point
+        self.update(status: 'quote_in_progress')
+        # validate & make final premium call to msi
+        results = ::InsurableRateConfiguration.get_coverage_options(
+          5, # msi id
+          community_profile || address,
+          self.coverage_selections,
+          self.effective_date,
+          self.users.count - 1,
+          self.billing_strategy.carrier_code,
+          nonpreferred_final_premium_params: {
+            number_of_units: self.extra_settings&.[]('number_of_units'),
+            years_professionally_managed: self.extra_settings&.[]('year_professionally_managed'),
+            year_built: self.extra_settings&.[]('year_built'),
+            gated: self.extra_settings&.[]('gated')
+          },
+          perform_estimate: true,
+          eventable: quote # by passing a PolicyQuote we ensure results[:msi_data], results[:event], and results[:annotated_selections] get passed back out
+        )
+        # make sure we succeeded
+        if !results[:valid]
+          puts "MSI Coverage Validation Or FinalPremium Request Unsuccessful, Errors: #{ results[:errors][:internal] }, Event ID: #{ results[:event].id }"
+          quote.mark_failure()
+          return false
+        elsif results[:msi_data][:error] # just in case
+          puts "MSI FinalPremium Request Unsuccessful, Errors: #{ results[:errors][:internal] }, Event ID: #{ results[:event].id }"
+          quote.mark_failure()
+          return false
+        elsif !self.update(coverage_selections: results[:annotated_selections]) # update our coverage selections with any annotations from the get_coverage_options call
+          puts "MSI Selection Annotation Failed, Errors: #{self.errors.to_h.to_s}, Event ID: #{ results[:event].id }"
+          quote.mark_failure()
+          return false
+        else
+          # grab msi payment amounts
+          payment_plan = self.billing_strategy.carrier_code
+          installment_count = MsiService::INSTALLMENT_COUNT[payment_plan]
+          if installment_count.nil?
+            puts "MSI Missing Installment Count, Payment Plan Carrier Code: '#{payment_plan}', Event ID: #{ results[:event].id }"
             quote.mark_failure()
             return false
-          elsif results[:msi_data][:error] # just in case
-            puts "MSI FinalPremium Request Unsuccessful, Errors: #{ results[:errors][:internal] }, Event ID: #{ results[:event].id }"
+          end
+          policy_data = results[:msi_data][:data].dig("MSIACORD", "InsuranceSvcRs", "RenterPolicyQuoteInqRs", "PersPolicy")
+          product_uid = policy_data["CompanyProductCd"]
+          msi_policy_fee = ((policy_data["MSI_PolicyFee"]&.[]('Amt')&.to_d || 0) * 100).ceil
+          payment_data = policy_data["PaymentPlan"].find{|ppl| ppl["PaymentPlanCd"] == payment_plan }
+          if payment_data.nil?
+            puts "MSI FinalPremium PaymentData Nonexistent, Payment Plan Carrier Code: '#{payment_plan}', Event ID: #{ results[:event].id }"
             quote.mark_failure()
             return false
-          elsif !self.update(coverage_selections: results[:annotated_selections]) # update our coverage selections with any annotations from the get_coverage_options call
-            puts "MSI Selection Annotation Failed, Errors: #{self.errors.to_h.to_s}, Event ID: #{ results[:event].id }"
-            quote.mark_failure()
-            return false
-          else
-            # grab msi payment amounts
-            payment_plan = self.billing_strategy.carrier_code
-            installment_count = MsiService::INSTALLMENT_COUNT[payment_plan]
-            if installment_count.nil?
-              puts "MSI Missing Installment Count, Payment Plan Carrier Code: '#{payment_plan}', Event ID: #{ results[:event].id }"
-              quote.mark_failure()
-              return false
-            end
-            policy_data = results[:msi_data][:data].dig("MSIACORD", "InsuranceSvcRs", "RenterPolicyQuoteInqRs", "PersPolicy")
-            product_uid = policy_data["CompanyProductCd"]
-            msi_policy_fee = ((policy_data["MSI_PolicyFee"]&.[]('Amt')&.to_d || 0) * 100).ceil
-            payment_data = policy_data["PaymentPlan"].find{|ppl| ppl["PaymentPlanCd"] == payment_plan }
-            if payment_data.nil?
-              puts "MSI FinalPremium PaymentData Nonexistent, Payment Plan Carrier Code: '#{payment_plan}', Event ID: #{ results[:event].id }"
-              quote.mark_failure()
-              return false
-            end
+          end
+          reading = "MSI_TotalPremiumAmt"
+          total_paid = nil
+          total_installment = nil
+          fee_installment = nil
+          premium_installment = nil
+          down_payment = nil
+          begin
             reading = "MSI_TotalPremiumAmt"
-            total_paid = nil
-            total_installment = nil
-            fee_installment = nil
-            premium_installment = nil
-            down_payment = nil
-            begin
-              reading = "MSI_TotalPremiumAmt"
-              total_paid = (payment_data.dig("MSI_TotalPremiumAmt", "Amt").to_d * 100).ceil                 # the total amount paid to msi, excluding the installment fees
-              reading = "MSI_InstallmentPaymentAmount"
-              total_installment = (payment_data.dig("MSI_InstallmentPaymentAmount", "Amt").to_d * 100).ceil # the total amount paid at each installment, excluding the first
-              reading = "MSI_InstallmentFeeAmount"
-              fee_installment = (payment_data.dig("MSI_InstallmentFeeAmount", "Amt").to_d * 100).ceil       # how much of the installment total is a fee (excluding the first)
-              reading = "MSI_InstallmentAmount"
-              premium_installment = (payment_data.dig("MSI_InstallmentAmount", "Amt").to_d * 100).ceil      # how much of the installment total is not a fee (excluding the first)
-              reading = "MSI_DownPaymentAmount"
-              down_payment = (payment_data.dig("MSI_DownPaymentAmount", "Amt").to_d * 100).ceil             # the total amount of the first payment
-            rescue NoMethodError => e
-              puts "MSI FinalPremium PaymentData Missing Field '#{reading}', Payment Plan Carrier Code: '#{payment_plan}', Event ID: #{ results[:event].id }"
-              quote.mark_failure()
-              return false
+            total_paid = (payment_data.dig("MSI_TotalPremiumAmt", "Amt").to_d * 100).ceil                 # the total amount paid to msi, excluding the installment fees
+            reading = "MSI_InstallmentPaymentAmount"
+            total_installment = (payment_data.dig("MSI_InstallmentPaymentAmount", "Amt").to_d * 100).ceil # the total amount paid at each installment, excluding the first
+            reading = "MSI_InstallmentFeeAmount"
+            fee_installment = (payment_data.dig("MSI_InstallmentFeeAmount", "Amt").to_d * 100).ceil       # how much of the installment total is a fee (excluding the first)
+            reading = "MSI_InstallmentAmount"
+            premium_installment = (payment_data.dig("MSI_InstallmentAmount", "Amt").to_d * 100).ceil      # how much of the installment total is not a fee (excluding the first)
+            reading = "MSI_DownPaymentAmount"
+            down_payment = (payment_data.dig("MSI_DownPaymentAmount", "Amt").to_d * 100).ceil             # the total amount of the first payment
+          rescue NoMethodError => e
+            puts "MSI FinalPremium PaymentData Missing Field '#{reading}', Payment Plan Carrier Code: '#{payment_plan}', Event ID: #{ results[:event].id }"
+            quote.mark_failure()
+            return false
+          end
+          # grab payment processor data
+          payment_methods = {}
+          policy_data["PaymentMethod"].each do |pm|
+            if pm["MethodPaymentCd"] == "CreditDebit"
+              payment_methods['card'] = {
+                'merchant_id' => pm["MSI_PaymentMerchantID"],
+                'processor_id' => pm["MSI_PaymentProcessor"],
+                'method_id' => "CreditDebit"
+              }
+            elsif pm["MethodPaymentCd"] == "ACH"
+              payment_methods['ach'] = {
+                'merchant_id' => pm["MSI_PaymentMerchantID"],
+                'processor_id' => pm["MSI_PaymentProcessor"],
+                'method_id' => "ACH"
+              }
             end
-            # grab payment processor data
-            payment_methods = {}
-            policy_data["PaymentMethod"].each do |pm|
-              if pm["MethodPaymentCd"] == "CreditDebit"
-                payment_methods['card'] = {
-                  'merchant_id' => pm["MSI_PaymentMerchantID"],
-                  'processor_id' => pm["MSI_PaymentProcessor"],
-                  'method_id' => "CreditDebit"
-                }
-              elsif pm["MethodPaymentCd"] == "ACH"
-                payment_methods['ach'] = {
-                  'merchant_id' => pm["MSI_PaymentMerchantID"],
-                  'processor_id' => pm["MSI_PaymentProcessor"],
-                  'method_id' => "ACH"
-                }
-              end
+          end
+          quote.update(carrier_payment_data: { 'product_id' => product_uid, 'payment_methods' => payment_methods, 'policy_fee' => msi_policy_fee, 'installment_fee' => fee_installment, 'installment_total' => total_installment })
+          # build policy premium
+          premium = PolicyPremium.new(
+            base: total_paid,
+            taxes: 0,
+            external_fees: fee_installment * installment_count,
+            only_fees_internal: true,
+            billing_strategy: self.billing_strategy,
+            policy_quote: quote
+          )
+          premium.set_fees
+          premium.calculate_fees(true)
+          premium.calculate_total(true)
+          # woot
+          quote_method = premium.save ? "mark_successful" : "mark_failure"
+          quote.send(quote_method)
+          if quote.status == 'quoted'
+            # generate internal invoices
+            #quote.generate_invoices_for_term MOOSE WARNING: uncomment if there are ever internal ones...
+            # generate external invoices
+            installment_day = self.extra_settings&.[]('installment_day') || self.fields.find{|f| f['title'] == "Installment Day" }&.[]('value') || 1
+            installment_day = 28 if installment_day > 28
+            installment_day = 1 if installment_day < 1
+            if installment_day != self.extra_settings&.[]('installment_day')
+              self.extra_settings = (self.extra_settings || {}).merge({ 'installment_day' => installment_day })
+              self.update_columns(extra_settings: self.extra_settings)
             end
-            quote.update(carrier_payment_data: { 'product_id' => product_uid, 'payment_methods' => payment_methods, 'policy_fee' => msi_policy_fee, 'installment_fee' => fee_installment, 'installment_total' => total_installment })
-            # build policy premium
-            premium = PolicyPremium.new(
-              base: total_paid,
-              taxes: 0,
-              external_fees: fee_installment * installment_count,
-              only_fees_internal: true,
-              billing_strategy: self.billing_strategy,
-              policy_quote: quote
-            )
-            premium.set_fees
-            premium.calculate_fees(true)
-            premium.calculate_total(true)
-            # woot
-            quote_method = premium.save ? "mark_successful" : "mark_failure"
-            quote.send(quote_method)
-            if quote.status == 'quoted'
-              # generate internal invoices
-              #quote.generate_invoices_for_term MOOSE WARNING: uncomment if there are ever internal ones...
-              # generate external invoices
-              installment_day = self.extra_settings&.[]('installment_day') || self.fields.find{|f| f['title'] == "Installment Day" }&.[]('value') || 1
-              installment_day = 28 if installment_day > 28
-              installment_day = 1 if installment_day < 1
-              if installment_day != self.extra_settings&.[]('installment_day')
-                self.extra_settings = (self.extra_settings || {}).merge({ 'installment_day' => installment_day })
-                self.update_columns(extra_settings: self.extra_settings)
-              end
-              gotten_schedule = msi_get_payment_schedule(payment_plan, installment_day: installment_day)
-              last_premium_installment = total_paid - (down_payment + premium_installment * (installment_count - 1))
-              last_premium_installment = premium_installment if last_premium_installment < 0 || gotten_schedule.length <= 2 # should NEVER EVER happen, but letting a negative in would be much worse than overcharging by a few cents and refunding later
-              gotten_schedule.each.with_index do |dates, ind|
-                quote.invoices.create!(dates.merge({
-                  external: true,
-                  status: "quoted",
-                  payer: self.primary_user,
-                  line_items_attributes: ind == 0 ? [
-                    {
-                      title: "Premium Down Payment",
-                      price: down_payment,
-                      refundability: 'prorated_refund',
-                      category: 'base_premium'
-                    }
-                  ] : [
-                    {
-                      title: "Premium Installment",
-                      price: ind + 1 == gotten_schedule.length ? last_premium_installment : premium_installment,
-                      refundability: 'prorated_refund',
-                      category: 'base_premium'
-                    },
-                    {
-                      title: "Installment Fee",
-                      price: fee_installment,
-                      refundability: 'no_refund',
-                      category: 'amortized_fees'
-                    }
-                  ]
-                }))
-              end
-              return true
-            else
-              puts "\nQuote Save Error\n"
-              pp quote.errors
-              return false
+            gotten_schedule = msi_get_payment_schedule(payment_plan, installment_day: installment_day)
+            last_premium_installment = total_paid - (down_payment + premium_installment * (installment_count - 1))
+            last_premium_installment = premium_installment if last_premium_installment < 0 || gotten_schedule.length <= 2 # should NEVER EVER happen, but letting a negative in would be much worse than overcharging by a few cents and refunding later
+            gotten_schedule.each.with_index do |dates, ind|
+              quote.invoices.create!(dates.merge({
+                external: true,
+                status: "quoted",
+                payer: self.primary_user,
+                line_items_attributes: ind == 0 ? [
+                  {
+                    title: "Premium Down Payment",
+                    price: down_payment,
+                    refundability: 'prorated_refund',
+                    category: 'base_premium'
+                  }
+                ] : [
+                  {
+                    title: "Premium Installment",
+                    price: ind + 1 == gotten_schedule.length ? last_premium_installment : premium_installment,
+                    refundability: 'prorated_refund',
+                    category: 'base_premium'
+                  },
+                  {
+                    title: "Installment Fee",
+                    price: fee_installment,
+                    refundability: 'no_refund',
+                    category: 'amortized_fees'
+                  }
+                ]
+              }))
             end
+            return true
+          else
+            puts "\nQuote Save Error\n"
+            pp quote.errors
+            return false
           end
         end
       end
