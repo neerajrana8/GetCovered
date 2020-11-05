@@ -564,11 +564,11 @@ class InsurableRateConfiguration < ApplicationRecord
     return nil
   end
   
-  def self.get_coverage_options(carrier_id, carrier_insurable_profile_or_address, selections, effective_date, additional_insured_count, billing_strategy_carrier_code, perform_estimate: true, insurable_type_id: 4, account: carrier_insurable_profile_or_address.class == ::CarrierInsurableProfile ? carrier_insurable_profile_or_address&.insurable&.account : nil, eventable: nil, estimate_default_on_billing_strategy_code_failure: :min, nonpreferred_final_premium_params: {})
+  def self.get_coverage_options(carrier_id, carrier_insurable_profile_or_address, selections, effective_date, additional_insured_count, billing_strategy_carrier_code, perform_estimate: true, insurable_type_id: 4, agency: nil, account: carrier_insurable_profile_or_address.class == ::CarrierInsurableProfile ? carrier_insurable_profile_or_address&.insurable&.account : nil, eventable: nil, estimate_default_on_billing_strategy_code_failure: :min, nonpreferred_final_premium_params: {})
     cip = (carrier_insurable_profile_or_address.class == ::CarrierInsurableProfile ? carrier_insurable_profile_or_address : nil)
     carrier_insurable_type = CarrierInsurableType.where(carrier_id: carrier_id, insurable_type_id: insurable_type_id).take
     # get IRCs
-    irc_hierarchy = ::InsurableRateConfiguration.get_hierarchy(carrier_insurable_type, account, cip || ::InsurableGeographicalCategory.get_for(state: carrier_insurable_profile_or_address.state, counties: carrier_insurable_profile_or_address.county.blank? ? nil : [carrier_insurable_profile_or_address.county]))
+    irc_hierarchy = ::InsurableRateConfiguration.get_hierarchy(carrier_insurable_type, account || agency || Carrier.find(carrier_id), cip || ::InsurableGeographicalCategory.get_for(state: carrier_insurable_profile_or_address.state, counties: carrier_insurable_profile_or_address.county.blank? ? nil : [carrier_insurable_profile_or_address.county]))
     irc_hierarchy.map!{|ircs| ::InsurableRateConfiguration.merge(ircs, mutable: true) }
     # for each IRC, apply rules and merge down
     coverage_options = []
