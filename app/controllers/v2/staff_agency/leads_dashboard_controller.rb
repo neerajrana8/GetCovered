@@ -6,7 +6,8 @@ module V2
 
       def index
         super(:@leads, @substrate, :profile, :tracking_url)
-        @stats = {site_visits: site_visits, leads: leads, applications: applications, conversions: conversions}
+        @stats = {site_visits: site_visits, leads: leads, applications: applications,
+                  not_finished_applications: not_finished_applications, conversions: conversions}
         @stats_by = {}
 
         start_date = Date.parse(date_params[:start])
@@ -16,7 +17,8 @@ module V2
           start_date.upto(end_date) do |date|
             params[:filter][:last_visit] = Date.parse("#{date}").all_day
             super(:@leads, @substrate, :profile, :tracking_url)
-            @stats_by["#{date}"] = {site_visits: site_visits, leads: leads, applications: applications, conversions: conversions}
+            @stats_by["#{date}"] = {site_visits: site_visits, leads: leads, applications: applications,
+                                    not_finished_applications: not_finished_applications, conversions: conversions}
           end
         else
           while start_date < end_date
@@ -92,11 +94,15 @@ module V2
       end
 
       def applications
-        @leads.where.not(user_id: nil).where(status: "prospect").count
+        @leads.where.not(user_id: nil).where(status: ["prospect","converted"]).count
       end
 
       def conversions
         @leads.where(status: 'converted').count
+      end
+
+      def not_finished_applications
+        @leads.where.not(user_id: nil).where(status: ["prospect"]).count
       end
 
       def set_substrate
