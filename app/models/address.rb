@@ -72,6 +72,22 @@ class Address < ApplicationRecord
   def as_indexed_json(options={})
     as_json(options).merge location: { lat: latitude, lon: longitude }
   end
+  
+  def self.from_string(dat_strang, validate_properties: true)
+    address = Address.new(full: dat_strang)
+    parsed_address = StreetAddress::US.parse(dat_strang)
+    if parsed_address.nil?
+      address.errors.add(:address_string, "could not be parsed; must be a valid address")
+      return address
+    end
+    address.from_full
+    ['street_number', 'street_name', 'city', 'state', 'zip_code'].each do |prop|
+      if address.send(prop).blank?
+        address.errors.add(prop.to_sym, "is invalid")
+      end
+    end
+    return address
+  end
 
   # Address.full_street_address
   # Returns full street address of Address from available variables

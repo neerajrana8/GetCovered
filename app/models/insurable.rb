@@ -61,7 +61,7 @@ class Insurable < ApplicationRecord
   end
   
 
-  def self.find_from_address(addr, extra_query_params = {})
+  def self.find_from_address(address, extra_query_params = {})
     # search for the insurable
     results = Insurable.references(:address).includes(:addresses).where({
       addresses: { primary: true, street_number: address.street_number, street_name: address.street_name, city: address.city, state: address.state, zip_code: address.zip_code }
