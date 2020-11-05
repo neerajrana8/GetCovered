@@ -120,7 +120,7 @@ class Address < ApplicationRecord
             when 'city'
               self.city = parsed_address.city
             when 'state'
-              self.state = parsed_address.city
+              self.state = parsed_address.state
             when 'zip_code'
               self.zip_code = parsed_address.postal_code
             when 'plus_four'

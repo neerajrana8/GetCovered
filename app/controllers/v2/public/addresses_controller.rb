@@ -41,6 +41,48 @@ module V2
                  status: :ok
         end
       end
+      
+      
+      def get_units
+        # get a valid address model if possible
+        parsed_address = StreetAddress::US.parse(params[:address])
+        if parsed_address.nil?
+          render json: standard_error(:invalid_address, 'The submitted address is invalid'),
+                 status: 404
+          return
+        end
+        ['street_number', 'street_name', 'city', 'state', 'zip_code'].each do |prop|
+          if parsed_address[prop].blank?
+            render json: standard_error(:invalid_address, "The submitted address is invalid: #{prop.gsub('_',' ')} required"),
+                   status: 404
+            return
+          end
+        end
+        address = Address.new(full: params[:address])
+        address.from_full
+        unless address.valid?
+          render json: standard_error(:user_creation_error, "Invalid address", address.errors.full_messages),
+                status: 422
+          return
+        end
+        # search for the insurable
+        results = ::Insurable.find_from_address(addr, { enabled: true, preferred_h04: true, insurable_type_ids: ::InsurableType::RESIDENTIAL_COMMUNITIES_IDS | ::InsurableType::RESIDENTIAL_BUILDINGS_IDS })
+        if results.nil?
+          render json: { preferred_ho4: false, units: nil },
+            status: 200
+          return
+        else
+          render json: { preferred_ho4: true, units: ::Insurable.where(insurable_type_id: ::InsurableType::RESIDENTIAL_UNITS_IDS, insurable_id: results.id, enabled: true).map{|u| { id: u.id, title: u.title } } }
+        end
+      end
+      
+      
+      private
+      
+        def get_units_params
+          params.require(:address)
+        end
+      
     end
   end
 end
