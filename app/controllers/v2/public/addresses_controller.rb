@@ -54,8 +54,8 @@ module V2
           return
         end
         # search for the insurable
-        results = ::Insurable.find_from_address(address, { enabled: true, preferred_ho4: true, insurable_type_id: ::InsurableType::RESIDENTIAL_COMMUNITIES_IDS | ::InsurableType::RESIDENTIAL_BUILDINGS_IDS })
-        if results.nil?
+        results = ::Insurable.find_from_address(address, { enabled: true, insurable_type_id: ::InsurableType::RESIDENTIAL_COMMUNITIES_IDS | ::InsurableType::RESIDENTIAL_BUILDINGS_IDS }, allow_multiple: false)
+        if results.nil? || (::InsurableType::RESIDENTIAL_BUILDINGS_IDS.include?(results.insurable_type_id) && (!results.parent_community.preferred_ho4 || !results.parent_community.enabled))
           render json: { id: nil, preferred_ho4: false, units: nil },
             status: 200
           return
@@ -65,7 +65,7 @@ module V2
           id: i.id,
           title: i.title,
           enabled: i.enabled,
-          preferred_ho4: i.preferred_ho4,
+          preferred_ho4: true,
           account_id: i.account_id,
           agency_id: i.account.agency_id,
           insurable_type_id: i.insurable_type_id,

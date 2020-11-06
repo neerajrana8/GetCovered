@@ -61,15 +61,16 @@ class Insurable < ApplicationRecord
   end
   
 
-  def self.find_from_address(address, extra_query_params = {})
+  def self.find_from_address(address, extra_query_params = {}, allow_multiple: true)
     # search for the insurable
     results = Insurable.references(:address).includes(:addresses).where({
       addresses: { primary: true, street_number: address.street_number, street_name: address.street_name, city: address.city, state: address.state, zip_code: address.zip_code }
     }.merge(extra_query_params || {}))
-    results = case results.count; when 0; nil; when 1; results.take; else; results.find{|i| i.primary_address.street_two == address.street_two }; end
+    unless allow_multiple
+      results = case results.count; when 0; nil; when 1; results.take; else; results.find{|i| i.primary_address.street_two == address.street_two }; end
+    end
     return results
   end
-  
   
   settings index: { number_of_shards: 1 } do
     mappings dynamic: 'false' do

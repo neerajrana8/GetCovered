@@ -122,7 +122,7 @@ module CarrierMsiPolicyQuote
         # for non-preferred
         **(preferred ? {} : {
           number_of_units: policy_application.extra_settings&.[]('number_of_units'),
-          years_professionally_managed: policy_application.extra_settings&.[]('year_professionally_managed'),
+          years_professionally_managed: policy_application.extra_settings&.[]('years_professionally_managed'),
           year_built: policy_application.extra_settings&.[]('year_built'),
           gated: policy_application.extra_settings&.[]('gated')
         }.compact),

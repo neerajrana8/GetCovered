@@ -69,7 +69,7 @@ module CarrierMsiPolicyApplication
           self.billing_strategy.carrier_code,
           nonpreferred_final_premium_params: {
             number_of_units: self.extra_settings&.[]('number_of_units'),
-            years_professionally_managed: self.extra_settings&.[]('year_professionally_managed'),
+            years_professionally_managed: self.extra_settings&.[]('years_professionally_managed'),
             year_built: self.extra_settings&.[]('year_built'),
             gated: self.extra_settings&.[]('gated')
           },
