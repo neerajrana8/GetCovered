@@ -94,9 +94,7 @@ module V2
               end
             end
             if insurable.nil?
-              render json:   { error: "Unit not found" },
-                     status: :unprocessable_entity
-              return
+              render(json: standard_error(:unit_not_found, "Unit not found"), status: :unprocessable_entity) and return
             end
             # determine preferred status
             @preferred = insurable.parent_community.preferred_ho4
