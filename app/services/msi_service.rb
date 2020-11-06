@@ -585,7 +585,7 @@ class MsiService
                 YearBuilt:                    year_built,
                 IsGated:                      gated,
                 YearsProfManaged:             years_professionally_managed,
-                NumberOfUnits:                number_of_units,
+                NumberOfUnits:                number_of_units
               }
             }),
             Coverage:                         coverages_formatted
@@ -682,7 +682,7 @@ class MsiService
                 YearBuilt:                    year_built,
                 IsGated:                      gated,
                 YearsProfManaged:             years_professionally_managed,
-                NumberOfUnits:                number_of_units,
+                NumberOfUnits:                number_of_units
               }.compact
             }),
             Coverage: coverage_raw
