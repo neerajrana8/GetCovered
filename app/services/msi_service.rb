@@ -581,10 +581,12 @@ class MsiService
               :'' => { LocationRef: 0, id: "Dwell1" },
               PolicyTypeCd: 'H04'
             }.merge(preferred ? {} : {
-              YearBuilt:                      year_built,
-              IsGated:                        gated,
-              YearsProfManaged:               years_professionally_managed,
-              NumberOfUnits:                  number_of_units,
+              Construction: {
+                YearBuilt:                    year_built,
+                IsGated:                      gated,
+                YearsProfManaged:             years_professionally_managed,
+                NumberOfUnits:                number_of_units,
+              }
             }),
             Coverage:                         coverages_formatted
           },
@@ -676,10 +678,12 @@ class MsiService
               :'' => { LocationRef: 0, id: "Dwell1" },
               PolicyTypeCd: 'H04'
             }.merge(preferred ? {} : {
-              YearBuilt:                      year_built,
-              IsGated:                        gated,
-              YearsProfManaged:               years_professionally_managed,
-              NumberOfUnits:                  number_of_units,
+                Construction: {
+                YearBuilt:                    year_built,
+                IsGated:                      gated,
+                YearsProfManaged:             years_professionally_managed,
+                NumberOfUnits:                number_of_units,
+              }.compact
             }),
             Coverage: coverage_raw
           },
