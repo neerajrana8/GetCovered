@@ -75,6 +75,8 @@ module CarrierMsiPolicyQuote
       primary_insured = policy_application.primary_user
       additional_insured = policy_application.users.select{|u| u.id != primary_insured.id }
       additional_interest = [unit.account || community.account].compact
+      # determine preferred status
+      preferred = !(community.carrier_profile(5)&.external_carrier_id.nil?)
       # prepare for bind call
       msis = MsiService.new
       event = events.new(
@@ -88,7 +90,7 @@ module CarrierMsiPolicyQuote
         effective_date:   policy_application.effective_date,
         payment_plan:     policy_application.billing_strategy.carrier_code,
         installment_day:  policy_application.extra_settings&.[]('installment_day') || policy_application.fields.find{|f| f['title'] == "Installment Day" }&.[]('value') || 1,
-        community_id:     community.carrier_profile(5).external_carrier_id,
+        community_id:     preferred ? community.carrier_profile(5).external_carrier_id : nil,
         unit:             unit.title,
         address:          unit.primary_address,
         maddress:         primary_insured.address || nil,
@@ -117,7 +119,14 @@ module CarrierMsiPolicyQuote
         payment_method:       payment_method,
         payment_info:         payment_params['payment_info'],
         payment_other_id:     payment_params['payment_token'],
-        
+        # for non-preferred
+        **(preferred ? {} : {
+          number_of_units: policy_application.extra_settings&.[]('number_of_units'),
+          years_professionally_managed: policy_application.extra_settings&.[]('years_professionally_managed'),
+          year_built: policy_application.extra_settings&.[]('year_built'),
+          gated: policy_application.extra_settings&.[]('gated')
+        }.compact),
+        # format params
         line_breaks: true
       )
       if !result

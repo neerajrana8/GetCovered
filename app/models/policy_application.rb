@@ -98,7 +98,7 @@ class PolicyApplication < ApplicationRecord
   
   def primary_insurable
     policy_insurable = policy_insurables.where(primary: true).take
-    policy_insurable.insurable.nil? ? nil : policy_insurable.insurable  
+    policy_insurable&.insurable 
   end
   
   # PolicyApplication.primary_insurable
@@ -150,6 +150,18 @@ class PolicyApplication < ApplicationRecord
 
   def carrier_agency
     errors.add(:carrier, 'carrier agency must exist') unless agency.carriers.include?(carrier)
+    # ensure auth
+    addr = self.primary_insurable&.primary_address
+    unless addr.nil? # skip validation if there is no address, so that PENSIO hack and potential future addressless insurables don't fail 
+      auths = CarrierAgencyAuthorization.references(:carrier_agencies).includes(:carrier_agency)
+                                        .where(
+                                          carrier_agencies: { carrier_id: self.carrier_id, agency_id: self.agency_id },
+                                          policy_type_id: self.policy_type_id,
+                                          state: addr.state,
+                                          available: true
+                                        ) # MOOSE WARNING: add zip_code_blacklist checks?
+      errors.add(:policy_type, 'is not available for this carrier/agency combination') if auths.blank?
+    end
   end
   
   def check_residential_question_responses

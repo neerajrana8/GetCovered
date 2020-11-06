@@ -64,7 +64,7 @@ module CarrierMsiInsurable
         # execute & log
         event.started = Time.now
         msi_data = msi_service.call
-        event.completed = Time.now     
+        event.completed = Time.now
         event.response = msi_data[:response].response.body
         event.status = msi_data[:error] ? 'error' : 'success'
         unless event.save
@@ -72,7 +72,7 @@ module CarrierMsiInsurable
         end
         # handle response
         if msi_data[:error]
-          return ["Service call resulted in error"] # MOOSE WARNING: make service store easily-accessible error message & pull it here
+          return ["Service call resulted in error"]
         else
           # grab the id
           external_id = msi_data[:data].dig("MSIACORD", "InsuranceSvcRs", "RenterPolicyQuoteInqRs", "MSI_CommunityInfo", "MSI_CommunityID")
@@ -84,7 +84,7 @@ module CarrierMsiInsurable
           address_data = msi_data[:data].dig("MSIACORD", "InsuranceSvcRs", "RenterPolicyQuoteInqRs", "MSI_CommunityInfo", "Addr")
           if address_data&.dig("DetailAddr", "MSI_AddressScrubSuccessful")
             @carrier_profile.data['address_correction_data'] = {}
-            # collect address fixes... WARNING: probably city and state, and possibly the rest (except county and plus four), shouldn't be fixable here...
+            # collect address fixes... WARNING: probably city and state, and possibly the rest (except county and plus four), shouldn't be fixable here...? depends on what fields we trust MSI to "fix"
             if !address_data["StateProvCd"].blank? && address_data["StateProvCd"].strip.upcase != @address.state
               @carrier_profile.data['address_correction_data']['state'] = { 'from' => @address.state, 'to' => address_data["StateProvCd"].strip.upcase }
             end
@@ -116,7 +116,7 @@ module CarrierMsiInsurable
           @carrier_profile.data['msi_external_id'] = external_id
           @carrier_profile.data['registered_with_msi'] = true
           @carrier_profile.data['registered_with_msi_on'] = Time.current.strftime("%m/%d/%Y %I:%M %p")
-          @carrier_profile.save
+          self.update(preferred_ho4: true) if @carrier_profile.save
         end
       end
       # finished successfully

@@ -11,6 +11,8 @@ class Insurable < ApplicationRecord
   include RecordChange
   include SetSlug
   
+  before_save :refresh_policy_type_ids
+  
   after_commit :create_profile_by_carrier,
     on: :create
   
@@ -57,6 +59,18 @@ class Insurable < ApplicationRecord
     %w[Community Unit].each do |minor_type|
       scope "#{major_type.downcase}_#{minor_type.downcase.pluralize}".to_sym, -> { joins(:insurable_type).where("insurable_types.title = '#{major_type} #{minor_type}'") }
     end
+  end
+  
+
+  def self.find_from_address(address, extra_query_params = {}, allow_multiple: true)
+    # search for the insurable
+    results = Insurable.references(:address).includes(:addresses).where({
+      addresses: { primary: true, street_number: address.street_number, street_name: address.street_name, city: address.city, state: address.state, zip_code: address.zip_code }
+    }.merge(extra_query_params || {}))
+    unless allow_multiple
+      results = case results.count; when 0; nil; when 1; results.take; else; results.find{|i| i.primary_address.street_two == address.street_two }; end
+    end
+    return results
   end
   
   settings index: { number_of_shards: 1 } do
@@ -109,7 +123,7 @@ class Insurable < ApplicationRecord
   end
   
   def units
-		to_return = nil
+		to_return = []
 		
 		unless insurable_type.title.include? "Unit"
 			if insurables.count > 0
@@ -203,6 +217,21 @@ class Insurable < ApplicationRecord
   def unit?
     InsurableType::UNITS_IDS.include?(insurable_type_id)
   end
+  
+  def refresh_policy_type_ids(and_save: false)
+    my_own_little_agency = (self.agency_id ? ::Agency.where(id: self.agency_id).take : nil) || self.account&.agency || nil
+    if my_own_little_agency.nil? || self.primary_address.nil?
+      self.policy_type_ids = []
+    else
+      self.policy_type_ids = CarrierAgencyAuthorization.where(carrier_agency: my_own_little_agency.carrier_agencies, state: self.primary_address&.state, available: true)
+                                                       .order("policy_type_id").group("policy_type_id").pluck("policy_type_id")
+      self.policy_type_ids &= self.insurable_type.policy_type_ids
+    end
+    if and_save
+      self.save
+    end
+  end
+  
   
   private
 
