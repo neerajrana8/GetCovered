@@ -172,7 +172,7 @@ module V2
                   event: 'Order Completed',
                   properties: { category: 'Orders' }
                 )
-                invite_primary_user(@policy_quote.policy_application.primary_user)
+                invite_primary_user(@policy_quote.policy_application)
               end
               render json: {
                 error: ("#{@policy_type_identifier} Could Not Be Accepted" unless @quote_attempt[:success]),
@@ -189,7 +189,8 @@ module V2
 
       private
 
-      def invite_primary_user(primary_user)
+      def invite_primary_user(policy_application)
+        primary_user = policy_application.primary_user
         if primary_user.invitation_accepted_at.nil? &&
           (primary_user.invitation_created_at.blank? || primary_user.invitation_created_at < 1.days.ago)
 
