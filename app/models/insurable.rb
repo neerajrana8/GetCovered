@@ -122,7 +122,7 @@ class Insurable < ApplicationRecord
   end
   
   def units
-		to_return = nil
+		to_return = []
 		
 		unless insurable_type.title.include? "Unit"
 			if insurables.count > 0

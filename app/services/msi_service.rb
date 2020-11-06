@@ -631,7 +631,7 @@ class MsiService
     end
     # handling mailing address
     if !maddress.nil? || !maddress_line_one.nil? || !maddress_line_two.nil? || !mcity.nil? || !mstate.nil? || !mzip.nil?
-      maddress = untangle_address_params(**{ address: maddress, address_line_one: maddress_line_one, address_line_two: maddress_line_two || false, city: mcity, state: mstate, zip: mzip }.compact)
+      maddress = untangle_address_params(**{ address: maddress, address_line_one: maddress_line_one, address_line_two: maddress_line_two || nil, city: mcity, state: mstate, zip: mzip }.compact)
     else
       maddress = address
     end

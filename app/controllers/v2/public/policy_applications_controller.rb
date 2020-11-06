@@ -66,8 +66,9 @@ module V2
                   title: address.combined_street_address,
                   insurable_type: ::InsurableType.where(title: "Residential Community").take,
                   enabled: true, preferred_ho4: false, category: 'property',
-                  addresses: [ address ]
-                ) # MOOSE WARNING: account
+                  addresses: [ address ],
+                  account_id: account_id # MOOSE WARNING: change this behavior, account_id will probably be nil
+                )
                 unless community.save
                   render json: standard_error(:invalid_community, 'Unable to create community from address', community.errors.full_messages),
                          status: 422
@@ -77,7 +78,7 @@ module V2
               end
               # find or create the unit
               insurable = found_insurable.units.find{|u| u.title.downcase == new_residential_params[:unit_title].strip.downcase }
-              if insurable.nil? && !(found_insurable.parent_commmunity || found_insurable).preferred_ho4
+              if insurable.nil? && !(found_insurable.parent_community || found_insurable).preferred_ho4
                 # create the unit
                 insurable = found_insurable.insurables.new(
                   title: new_residential_params[:unit_title].strip,
@@ -97,9 +98,11 @@ module V2
                      status: :unprocessable_entity
               return
             end
+            # determine preferred status
+            @preferred = insurable.parent_community.preferred_ho4
             # get the carrier_id
             carrier_id = nil
-            if insurable.parent_community.preferred_ho4
+            if @preferred
               # MOOSE WARNING: eventually, use account_id/agency_id to determine which to select when there are multiple
               cip        = insurable.carrier_insurable_profiles.where(carrier_id: policy_type.carrier_policy_types.map{|cpt| cpt.carrier_id }).order("created_at ASC").take
               carrier_id = cip&.carrier_id
@@ -123,6 +126,7 @@ module V2
           @application.build_from_carrier_policy_type
           @primary_user = ::User.new
           @application.users << @primary_user
+          @application.insurables << insurable
 
         else
           render json:   standard_error(:invalid_policy_type, 'Invalid policy type'),
@@ -607,10 +611,10 @@ module V2
                  status: :unprocessable_entity
           return
         end
-        # grab community and make sure it's registered with msi
+        # grab community
         community = unit.parent_community
-        cip       = CarrierInsurableProfile.where(carrier_id: @msi_id, insurable_id: community&.id).take
-        if cip.nil? || cip.external_carrier_id.nil?
+        cip       = CarrierInsurableProfile.where(carrier_id: @msi_id, insurable_id: community&.id).take # possibly nil, for non-preferred
+        if community.nil?
           render json:   { error: "community not found" },
                  status: :unprocessable_entity
           return
@@ -628,7 +632,7 @@ module V2
         # get coverage options
         results                    = ::InsurableRateConfiguration.get_coverage_options(
           @msi_id,
-          cip,
+          cip || unit.primary_address,
           [{ 'category' => 'coverage', 'options_type' => 'none', 'uid' => '1010', 'selection' => true }] + (
             (inputs[:coverage_selections] || []).map{|cs| { 'category' => cs[:category], 'uid' => cs[:uid].to_s, 'selection' => [ActionController::Parameters, ActiveSupport::HashWithIndifferentAccess, ::Hash].include?(cs[:selection].class) ? (cs[:selection][:data_type] == 'currency' ? (cs[:selection][:value].to_d / 100.to_d) : cs[:selection][:value]) : cs[:selection] } }
           ),
@@ -636,7 +640,15 @@ module V2
           inputs[:additional_insured].to_i,
           billing_strategy_code,
           perform_estimate: inputs[:estimate_premium] ? true : false,
-          eventable:        unit
+          eventable:        unit,
+          **(cip ? {} : {
+            nonpreferred_final_premium_params: {
+              number_of_units: inputs[:number_of_units].to_i,
+              years_professionally_managed: inputs[:years_professionally_managed].to_i,
+              year_built: inputs[:year_built].to_i,
+              gated: inputs[:gated].nil? ? nil : inputs[:gated] ? true : false
+            }.compact
+          })
         )
         results[:coverage_options] = results[:coverage_options].select{|co| co['uid'] != '1010' && co['uid'] != 1010 }.map{|co| co['options'].blank? ? co : co.merge({'options' => co['options'].map{|v| { 'value' => v, 'data_type' => co['uid'].to_s == '3' && v.to_d == 500 ? 'currency' : co['options_format'] } }.map{|h| h['value'] = (h['value'].to_d * 100).to_i if h['data_type'] == 'currency'; h }}) }
         #results[:coverage_options] = results[:coverage_options].sort_by { |co| co["title"] }.group_by do |co|
@@ -689,10 +701,8 @@ module V2
       def new_residential_params
         params.require(:policy_application)
           .permit(:agency_id, :account_id, :policy_type_id,
-                  # for preferred
-                  policy_insurables_attributes: [:id],
-                  # for non-preferred
-                  :address_string, :unit_title)
+                  :address_string, :unit_title, # for non-preferred
+                  policy_insurables_attributes: [:id]) # for preferred
       end
 
       def create_residential_params
@@ -704,7 +714,7 @@ module V2
                   coverage_selections: [:category, :uid, :selection, selection: [ :data_type, :value ]],
                   extra_settings: [
                     # for MSI
-                    :installment_day, :number_of_units, :year_professionally_managed, :year_built, :gated
+                    :installment_day, :number_of_units, :years_professionally_managed, :year_built, :gated
                   ],
                   policy_rates_attributes:         [:insurable_rate_id],
                   policy_insurables_attributes:    [:insurable_id])
@@ -757,6 +767,7 @@ module V2
         params.permit(:insurable_id, :agency_id, :billing_strategy_id,
                       :effective_date, :additional_insured,
                       :estimate_premium,
+                      :number_of_units, :years_professionally_managed, :year_built, :gated, # nonpreferred stuff
                       coverage_selections: [:category, :uid, :selection, selection: [ :data_type, :value ]])
       end
 
