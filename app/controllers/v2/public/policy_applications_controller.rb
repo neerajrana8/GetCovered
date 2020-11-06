@@ -126,8 +126,10 @@ module V2
           @application.build_from_carrier_policy_type
           @primary_user = ::User.new
           @application.users << @primary_user
-          @application.insurables << insurable
 
+          if selected_policy_type == "residential"
+            @application.insurables << insurable
+          end
         else
           render json:   standard_error(:invalid_policy_type, 'Invalid policy type'),
                  status: :unprocessable_entity
