@@ -87,7 +87,6 @@ module V2
 
         create_policy_users_params[:policy_users_attributes].each_with_index do |policy_user, index|
           if ::User.where(email: policy_user[:user_attributes][:email]).exists?
-
             @user = ::User.find_by_email(policy_user[:user_attributes][:email])
 
             if @user.invitation_accepted_at? == false
@@ -172,8 +171,6 @@ module V2
                 status: 422
               ) and return
             end
-
-            policy_user.user.invite!(nil, policy_application: @application) if index.zero?
           end
         end
 
@@ -209,7 +206,6 @@ module V2
         if @application.save
           if create_policy_users
             if @application.update(status: 'in_progress')
-              invite_primary_user(@application)
               LeadEvents::LinkPolicyApplicationUsers.run!(policy_application: @application)
               render 'v2/public/policy_applications/show'
             else
@@ -237,9 +233,6 @@ module V2
         if @application.save
           if create_policy_users
             if @application.update(status: 'complete')
-              # Commercial Application Saved
-              invite_primary_user(@application)
-
               quote_attempt = @application.crum_quote
 
               if quote_attempt[:success] == true
@@ -599,16 +592,6 @@ module V2
         end
 
         true
-      end
-
-      def invite_primary_user(policy_application)
-        primary_user = policy_application.primary_user
-        if primary_user.invitation_accepted_at.nil? &&
-          (primary_user.invitation_created_at.blank? || primary_user.invitation_created_at < 1.days.ago) &&
-          policy_application.policy_type_id != PolicyType::RENT_GUARANTEE_ID
-
-          @application.primary_user.invite!(nil, policy_application: @application)
-        end
       end
 
       def view_path
