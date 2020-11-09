@@ -5,7 +5,7 @@ json.extract! @application, :reference, :external_reference,
 
 
 json.policy_rates_attributes []
-json.policy_insurables_attributes (@preferred ? [] : @application.policy_insurables.map do |pi|
+json.policy_insurables_attributes @application.policy_insurables.map do |pi|
   addr = pi.insurable.primary_address
   {
     primary: pi.primary || (@application.policy_insurables.count == 1),
@@ -23,7 +23,7 @@ json.policy_insurables_attributes (@preferred ? [] : @application.policy_insurab
       }
     }
   }
-end)
+end
 json.policy_users_attributes [
 	{ 
 		primary: true, 
