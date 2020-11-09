@@ -6,6 +6,10 @@ class KlaviyoService
 
   EVENTS = ["New Lead", "Became Lead", "New Lead Event", "Created Account", "Updated Account",
             "Updated Email", "Reset Password", "Invoice Created", "Order Confirmation", "Failed Payment"]
+
+  PAGES = ['Landing Page', 'Eligibility Requirements Page', 'Basic Info Page', 'Eligibility Page', 'Address Page', 'Employer Page',
+           'Landlord Page', 'Confirmation Page', 'Terms&Conditions Page', 'Payment Page']
+
   TEST_TAG = 'test'
   RETRY_LIMIT = 3
 
@@ -23,7 +27,7 @@ class KlaviyoService
     begin
       response = yield
 
-      track_event(event_description, event_details) unless ["test", "test_container", "local", "development"].include?(ENV["RAILS_ENV"])
+      track_event(event_description, event_details) #unless ["test", "test_container", "local", "development"].include?(ENV["RAILS_ENV"])
 
     rescue Net::OpenTimeout => ex
       Rails.logger.error("LeadEventsController KlaviyoException: #{ex.to_s}.")
@@ -83,7 +87,6 @@ class KlaviyoService
       @retries += 1
       @retries > RETRY_LIMIT ? Rails.logger.error("LeadEventsController KlaviyoException: #{kl_ex.to_s}, lead: #{@lead.as_json}, event_details: #{event_details}.") : retry
     end
-
   end
 
   #tbd maybe need to separate in module and map from model, like address, profile etc.
@@ -162,6 +165,7 @@ class KlaviyoService
     end
   end
 
+  #url должен быть разный в зависимости от брендингов? как получить
   def map_last_visited_url(event_details)
     return "https://www.getcoveredinsurance.com/rentguarantee" if event_details.blank?
     if event_details['policy_type_id']==5
