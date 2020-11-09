@@ -1,5 +1,9 @@
+##
+# V2 StaffAgency Fees Controller
+# File: app/controllers/v2/staff_agency/fees_controller.rb
+
 module V2
-  module StaffAgency
+  module StaffSuperAdmin
     class FeesController < StaffSuperAdminController
       before_action :set_fee, only: %i[show update]
 
