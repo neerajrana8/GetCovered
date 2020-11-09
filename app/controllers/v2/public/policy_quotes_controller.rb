@@ -5,36 +5,35 @@
 module V2
   module Public
     class PolicyQuotesController < PublicController
-      
       before_action :set_policy_quote
-      
+
       def update
         @application = @policy_quote.policy_application
-        
-        if @policy_quote.quoted? && 
+
+        if @policy_quote.quoted? &&
            @application.policy_type_id == 4
-          
+
           logger.debug "\nAVAILABLE FOR UPDATE\n".green
-          
+
           # Blank for now
           if update_policy_quote_params.key?(:tiaPremium)
-            @policy_quote.policy_premium.update include_special_premium: update_policy_quote_params[:tiaPremium]  
+            @policy_quote.policy_premium.update include_special_premium: update_policy_quote_params[:tiaPremium]
           end
-          
+
           if update_policy_quote_params.key?(:billing_strategy_id) &&
              update_policy_quote_params[:billing_strategy_id] != @application.billing_strategy_id
             @application.update billing_strategy: BillingStrategy.find(update_policy_quote_params[:billing_strategy_id])
           end
-          
+
           if update_policy_quote_params.key?(:tiaPremium) ||
              update_policy_quote_params.key?(:billing_strategy_id)
-            
+
             puts 'Updating for premium & invoices'.green
-            
+
             @policy_quote.policy_premium.reset_premium
             @policy_quote.generate_invoices_for_term(false, true)
           else
-            
+
             puts 'No updates for premium & invoices'.red
           end
 
@@ -63,7 +62,7 @@ module V2
           render json: { error: 'Quote Unavailable for Update', message: 'We are unable to update this quote due to it already being accepted or not meeting the policy type requirements.' }, status: 422
         end
       end
-      
+
       # requires param 'payment_method' to be 'card' or 'ach'
       def external_payment_auth
         unless @policy_quote.policy_application.carrier_id == 5 && @policy_quote.status == 'quoted' && @policy_quote.carrier_payment_data && @policy_quote.carrier_payment_data['product_id']
@@ -128,14 +127,18 @@ module V2
           }, status: :unprocessable_entity
         end
       end
-      
+
       def accept
-	    	unless @policy_quote.nil?
-		    	@user = ::User.find(accept_policy_quote_params[:id])
-		    	unless @user.nil?
-            uses_stripe = ([MsiService.carrier_id, DepositChoiceService.carrier_id].include?(@policy_quote.policy_application.carrier_id) ? false : true) # MOOSE WARNING: move this to a configurable field on CarrierPolicyType or something?
-						result = !uses_stripe ? nil : @user.attach_payment_source(accept_policy_quote_params[:source])
-			    	if !uses_stripe || result.valid?
+        if @policy_quote.nil?
+          render json: { error: 'Not Found', message: "Policy Quote #{params[:id]} counld not be found." }, status: 400
+        else
+          @user = ::User.find(accept_policy_quote_params[:id])
+          if @user.nil?
+            render json: { error: 'Not Found', message: "User #{params[:id]} could not be found." }, status: 400
+          else
+            uses_stripe =([MsiService.carrier_id, DepositChoiceService.carrier_id].include?(@policy_quote.policy_application.carrier_id) ? false : true) # MOOSE WARNING: move this to a configurable field on CarrierPolicyType or something?
+            result = !uses_stripe ? nil : @user.attach_payment_source(accept_policy_quote_params[:source])
+            if !uses_stripe || result.valid?
               bind_params = []
               # collect bind params for applicable policy types
               case @policy_quote.policy_application.carrier_id
@@ -181,53 +184,49 @@ module V2
                 insurable = @policy_quote.policy_application.policy&.primary_insurable
                 Insurables::UpdateCoveredStatus.run!(insurable: insurable) if insurable.present? # MOOSE WARNING: shouldn't we only be running this on ho4? or, really, shouldn't this entire system be overhauled since it's from the QBE-only days?
 
-								::Analytics.track(
-									user_id: @user.id,
-									event: 'Order Completed',
-									properties: { category: 'Orders' }
-								)
+                ::Analytics.track(
+                  user_id: @user.id,
+                  event: 'Order Completed',
+                  properties: { category: 'Orders' }
+                )
+                invite_primary_user(@policy_quote.policy_application)
               end
-							render json: {
-								error: ("#{ @policy_type_identifier } Could Not Be Accepted" unless @quote_attempt[:success]),
-								message: ("#{ @policy_type_identifier } Accepted. " if @quote_attempt[:success]).to_s + @quote_attempt[:message],
+              render json: {
+                error: ("#{@policy_type_identifier} Could Not Be Accepted" unless @quote_attempt[:success]),
+                message: ("#{@policy_type_identifier} Accepted. " if @quote_attempt[:success]).to_s + @quote_attempt[:message],
                 password_filled: @user.encrypted_password.present?
-							}.compact, status: @quote_attempt[:success] ? 200 : 500
-							
-				    else
-				    	render json: { error: "Failure", message: result.errors.full_messages.join(' and ') }.to_json, status: 422
-			    	end
-			    else
-			    	
-			    	render json: {
-				    	:error => "Not Found",
-				    	:message => "User #{ params[:id] } counld not be found."
-			    	}, status: 400			    
-			    
-			    end
-		    else
-		    	
-		    	render json: {
-			    	:error => "Not Found",
-			    	:message => "Policy Quote #{ params[:id] } counld not be found."
-		    	}, status: 400
-		    
-		    end  
-	    end
-      
+              }.compact, status: @quote_attempt[:success] ? 200 : 500
+ 
+            else
+              render json: { error: 'Failure', message: result.errors.full_messages.join(' and ') }.to_json, status: 422
+             end
+          end
+        end
+      end
+
       private
-        
+
+        def invite_primary_user(policy_application)
+          primary_user = policy_application.primary_user
+          if primary_user.invitation_accepted_at.nil? &&
+            (primary_user.invitation_created_at.blank? || primary_user.invitation_created_at < 1.days.ago)
+
+            primary_user.invite!(nil, policy_application: policy_application)
+          end
+        end
+
         def set_policy_quote
           @policy_quote = PolicyQuote.find(params[:id])
         end
-          
+
         def update_policy_quote_params
           params.require(:policy_quote).permit(:tiaPremium, :billing_strategy_id)
         end
-        
+
         def accept_policy_quote_params
           params.require(:user).permit(:id, :source)
         end
-        
+
         def deposit_choice_accept_policy_quote_payment_params
           params.require(:payment).permit(:token)
         end
