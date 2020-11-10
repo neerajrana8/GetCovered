@@ -101,6 +101,8 @@ gem 'wkhtmltopdf-binary'
 gem 'wicked_pdf'
 gem "docraptor"
 gem "pdf-reader"
+gem "prawn"
+gem "combine_pdf"
 
 # xlsx file generation
 gem 'caxlsx'

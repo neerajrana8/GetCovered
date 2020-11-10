@@ -863,6 +863,8 @@ GEM
     choice (0.2.0)
     coderay (1.1.2)
     colorize (0.8.1)
+    combine_pdf (1.0.19)
+      ruby-rc4 (>= 0.1.5)
     concurrent-ruby (1.1.5)
     connection_pool (2.2.2)
     crass (1.0.5)
@@ -1035,6 +1037,7 @@ GEM
     parallel (1.17.0)
     parser (2.6.2.1)
       ast (~> 2.4.0)
+    pdf-core (0.8.1)
     pdf-reader (2.4.1)
       Ascii85 (~> 1.0.0)
       afm (~> 0.2.1)
@@ -1047,6 +1050,9 @@ GEM
       faraday_middleware
       hashie (>= 3.4.3)
     powerpack (0.1.2)
+    prawn (2.3.0)
+      pdf-core (~> 0.8.1)
+      ttfunk (~> 1.6)
     premailer (1.11.1)
       addressable
       css_parser (>= 1.6.0)
@@ -1228,6 +1234,7 @@ DEPENDENCIES
   byebug
   caxlsx
   colorize
+  combine_pdf
   database_cleaner
   devise (>= 4.7.1)
   devise_invitable (>= 2.0.1)
@@ -1260,6 +1267,7 @@ DEPENDENCIES
   pdf-reader
   pg (>= 0.18, < 2.0)
   plaid
+  prawn
   premailer-rails
   pry
   puma (~> 3.12.6)
