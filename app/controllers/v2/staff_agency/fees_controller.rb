@@ -7,7 +7,7 @@ module V2
       before_action :validate_ownerable, only: %i[create update]
 
       def index
-        super(:fees, Fee.all)
+        super(:@fees, Fee.all)
         render template: 'v2/shared/fees/index', status: :ok
       end
 
