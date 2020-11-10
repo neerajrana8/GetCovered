@@ -82,7 +82,7 @@ class PolicyUser < ApplicationRecord
 			policy_type_check = ref_model.policy_type == PolicyType.find_by(id: 4) || 
                           ref_model.policy_type == PolicyType.find_by(id: 5)
                           
-      unless policy_type_check && ref_model.account.nil?
+      unless ref_model.account.nil? # commented out so we can support insurables without accounts: && policy_type_check
         acct = AccountUser.where(user_id: user.id, account_id: ref_model.account_id).take
         if acct.nil?
           AccountUser.create!(user: user, account: ref_model.account)

@@ -29,13 +29,12 @@ module CarrierMsiInsurable
         endpoint: msi_service.endpoint_for(:get_or_create_community),
         process: 'msi_get_or_create_community'
       )
-      # MOOSE WARNING figure out what to do with CarrierAgency external id
       succeeded = msi_service.build_request(:get_or_create_community,
         effective_date:                 Time.current.to_date + 1.day,
         
         community_name:                 self.title,
         number_of_units:                units.count,
-        property_manager_name:          account.title, # MOOSE WARNING: should this instead be in the carrier insurable profile?
+        property_manager_name:          account.title,
         years_professionally_managed:   (@carrier_profile.traits['professionally_managed'] != false) ?
                                           (@carrier_profile.traits['professionally_managed_year'].nil? ?
                                             6 :
@@ -45,7 +44,7 @@ module CarrierMsiInsurable
         year_built:                     @carrier_profile.traits['construction_year'],
         gated:                          @carrier_profile.traits['gated'],
         
-        address_line_one:               @address.combined_street_address, # yes?
+        address_line_one:               @address.combined_street_address,
         city:                           @address.city,
         state:                          @address.state,
         zip:                            @address.zip_code
@@ -65,15 +64,15 @@ module CarrierMsiInsurable
         # execute & log
         event.started = Time.now
         msi_data = msi_service.call
-        event.completed = Time.now     
-        event.response = msi_data[:data]
+        event.completed = Time.now
+        event.response = msi_data[:response].response.body
         event.status = msi_data[:error] ? 'error' : 'success'
         unless event.save
           return ["Failed to save response to service call status-tracking Event"]
         end
         # handle response
         if msi_data[:error]
-          return ["Service call resulted in error"] # MOOSE WARNING: make service store easily-accessible error message & pull it here
+          return ["Service call resulted in error"]
         else
           # grab the id
           external_id = msi_data[:data].dig("MSIACORD", "InsuranceSvcRs", "RenterPolicyQuoteInqRs", "MSI_CommunityInfo", "MSI_CommunityID")
@@ -85,7 +84,7 @@ module CarrierMsiInsurable
           address_data = msi_data[:data].dig("MSIACORD", "InsuranceSvcRs", "RenterPolicyQuoteInqRs", "MSI_CommunityInfo", "Addr")
           if address_data&.dig("DetailAddr", "MSI_AddressScrubSuccessful")
             @carrier_profile.data['address_correction_data'] = {}
-            # collect address fixes... WARNING: probably city and state, and possibly the rest (except county and plus four), shouldn't be fixable here...
+            # collect address fixes... WARNING: probably city and state, and possibly the rest (except county and plus four), shouldn't be fixable here...? depends on what fields we trust MSI to "fix"
             if !address_data["StateProvCd"].blank? && address_data["StateProvCd"].strip.upcase != @address.state
               @carrier_profile.data['address_correction_data']['state'] = { 'from' => @address.state, 'to' => address_data["StateProvCd"].strip.upcase }
             end
@@ -117,7 +116,7 @@ module CarrierMsiInsurable
           @carrier_profile.data['msi_external_id'] = external_id
           @carrier_profile.data['registered_with_msi'] = true
           @carrier_profile.data['registered_with_msi_on'] = Time.current.strftime("%m/%d/%Y %I:%M %p")
-          @carrier_profile.save
+          self.update(preferred_ho4: true) if @carrier_profile.save
         end
       end
       # finished successfully
