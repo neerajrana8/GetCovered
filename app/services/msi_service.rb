@@ -333,6 +333,16 @@ class MsiService
     self.errors = nil
   end
   
+  def event_params
+    {
+      verb: 'post',
+      format: 'xml',
+      interface: 'REST',
+      endpoint: self.endpoint_for(self.action),
+      process: "msi_#{self.action}"
+    }
+  end
+  
   # Valid action names:
   #   get_or_create_community
   #   final_premium
@@ -546,6 +556,7 @@ class MsiService
     # comp args
     **compilation_args
   )
+    # setup
     self.action = :final_premium
     self.errors = nil
     # arguing with arguments
@@ -556,6 +567,7 @@ class MsiService
     end
     # handling distinctive preferred/nonpreferred arguments
     preferred = !community_id.nil?
+    self.action = :final_premium_spot unless preferred
     if preferred
       return ['Community id cannot be blank'] if community_id.nil? # this can't happen, but for completeness in case we later determine prefered by different means...
     else
@@ -632,6 +644,7 @@ class MsiService
     address = untangle_address_params(**{ address: address, address_line_one: address_line_one, address_line_two: unit.nil? ? (address_line_two || false) : "#{unit_prefix ? unit_prefix.strip + " " : ""}#{unit}", city: city, state: state, zip: zip }.compact)
     # handling distinctive preferred/nonpreferred arguments
     preferred = !community_id.nil?
+    self.action = :bind_policy_spot unless preferred
     if preferred
       return ['Community id cannot be blank'] if community_id.nil? # this can't happen, but for completeness in case we later determine prefered by different means...
     end

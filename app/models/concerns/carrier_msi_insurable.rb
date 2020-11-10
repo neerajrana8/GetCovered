@@ -22,13 +22,6 @@ module CarrierMsiInsurable
 	    return ["Community lacks a primary address"] if @address.nil?
       # try to build the request
       msi_service = MsiService.new
-      event = events.new(
-        verb: 'post',
-        format: 'xml',
-        interface: 'REST',
-        endpoint: msi_service.endpoint_for(:get_or_create_community),
-        process: 'msi_get_or_create_community'
-      )
       succeeded = msi_service.build_request(:get_or_create_community,
         effective_date:                 Time.current.to_date + 1.day,
         
@@ -56,6 +49,7 @@ module CarrierMsiInsurable
           return msi_service.errors.map{|err| "GetOrCreateCommunity service call error: #{err}" }
         end
       end
+      event = events.new(msis.event_params)
       event.request = msi_service.compiled_rxml
       # try to execute the request
       if !event.save
