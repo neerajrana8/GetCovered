@@ -71,8 +71,6 @@
     get :communities_list, controller: 'dashboard', path: 'dashboard/:agency_id/communities_list'
     get :uninsured_units, controller: 'dashboard', path: 'dashboard/:agency_id/uninsured_units'
 
-    resources :fees,
-      only: [ :create, :update, :index, :show ]
 
     resources :assignments,
       only: [ :create, :update, :destroy, :index, :show ]
@@ -154,6 +152,8 @@
     resources :commission_strategies,
       path: "commission-strategies",
       only: [ :create, :update, :index, :show ]
+
+    resources :fees, only: [:index, :show, :create, :update]
 
     resources :histories,
       only: [ :index ]

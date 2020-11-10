@@ -163,6 +163,8 @@
       end
     end
 
+    resources :fees, only: [:index, :show, :create, :update]
+
     resources :insurables, only: [:index, :show ], concerns: :reportable do
       member do
         get :coverage_report

@@ -1,7 +1,10 @@
 module V2
   module StaffAgency
-    class FeesController < StaffSuperAdminController
+    class FeesController < StaffAgencyController
       before_action :set_fee, only: %i[show update]
+      before_action :validate_assignable, only: %i[create update]
+      before_action :set_ownerable, only: %i[create update]
+      before_action :validate_ownerable, only: %i[create update]
 
       def index
         super_index(:fees, Fee.all)
@@ -9,15 +12,11 @@ module V2
       end
 
       def show
-        if @fee.present?
-          render json: @fee, status: :ok
-        else
-          render json: { message: 'No fee' }
-        end
+        render json: @fee, status: :ok
       end
 
       def create
-        @fee = Fee.new(fee_params)
+        @fee = Fee.new(fee_params.merge(ownerable_id: @ownerable.id, ownerable_type: @ownerable.class.to_s))
         if @fee.save && @fee.errors.none?
           render json: @fee, status: :created
         else
@@ -26,7 +25,8 @@ module V2
       end
 
       def update
-        if @fee.update(fee_params) && @fee.errors.none?
+        if @fee.update(fee_params.merge(ownerable_id: @ownerable.id, ownerable_type: @ownerable.class.to_s)) &&
+           @fee.errors.none?
           render json: { message: 'Fee updated' }, status: :created
         else
           render json: @fee.errors, status: :unprocessable_entity
@@ -67,6 +67,32 @@ module V2
             :assignable_id, :ownerable_type,
             :ownerable_id
           )
+      end
+
+      def set_ownerable
+        @ownerable =
+          case params[:assignable_type]
+          when 'CarrierAgencyAuthorization'
+            CarrierAgencyAuthorization.find(params[:assignable_id]).agency
+          when 'BillingStrategy'
+            BillingStrategy.find(params[:assignable_id]).agency
+          end
+      end
+
+      def validate_ownerable
+        if @ownerable.agency != @agency
+          render json: standard_error(:bad_ownerable, 'Assignable should be in the same agency like an agent'),
+                 status: 422
+        end
+      end
+
+      def validate_assignable
+        unless params[:assignable_type].present? &&
+               %w[CarrierAgencyAuthorization BillingStrategy].include?(params[:assignable_type]) &&
+               params[:assignable_id].present? &&
+               params[:assignable_type].constantize.find(params[:assignable_id])
+          render(json: standard_error(:bad_assignable, 'Bad assignable'), status: 422)
+        end
       end
     end
   end
