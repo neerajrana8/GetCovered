@@ -197,7 +197,7 @@ module V2
       def create_rental_guarantee
 
         @application        = PolicyApplication.new(create_rental_guarantee_params)
-
+        @application.expiration_date = @application.effective_date&.send(:+, 1.year)
         @application.agency = Agency.where(master_agency: true).take if @application.agency.nil?
 
         @application.billing_strategy = BillingStrategy.where(agency:      @application.agency,
@@ -223,6 +223,7 @@ module V2
       def create_commercial
 
         @application        = PolicyApplication.new(create_commercial_params)
+        @application.expiration_date = @application.effective_date&.send(:+, 1.year)
         @application.agency = Agency.where(master_agency: true).take if @application.agency.nil?
 
         @application.billing_strategy = BillingStrategy.where(agency:      @application.agency,
@@ -284,8 +285,9 @@ module V2
       end
 
       def create_residential
-
         @application = PolicyApplication.new(create_residential_params)
+        @application.expiration_date = @application.effective_date&.send(:+, 1.year)
+
         unless @application.coverage_selections.blank?
           @application.coverage_selections.each do |cs|
             if [ActionController::Parameters, ActiveSupport::HashWithIndifferentAccess, ::Hash].include?(cs['selection'].class)
@@ -376,7 +378,9 @@ module V2
         if @policy_application.policy_type.title == 'Residential'
 
           @policy_application.policy_rates.destroy_all
-
+          if update_residential_params[:effective_date].present?
+            @policy_application.expiration_date = update_residential_params[:effective_date].to_date&.send(:+, 1.year)
+          end
           if @policy_application.update(update_residential_params) &&
             @policy_application.update(status: 'complete')
 
@@ -427,7 +431,9 @@ module V2
         @policy_application = PolicyApplication.find(params[:id])
 
         if @policy_application.policy_type.title == 'Rent Guarantee'
-
+          if update_residential_params[:effective_date].present?
+            @policy_application.expiration_date = update_residential_params[:effective_date].to_date&.send(:+, 1.year)
+          end
           if @policy_application.update(update_rental_guarantee_params) &&
             update_policy_user(@policy_application) &&
             @policy_application.update(status: 'complete')
@@ -611,7 +617,7 @@ module V2
 
       def create_residential_params
         params.require(:policy_application)
-          .permit(:effective_date, :expiration_date, :auto_pay,
+          .permit(:effective_date, :auto_pay,
                   :auto_renew, :billing_strategy_id, :account_id, :policy_type_id,
                   :carrier_id, :agency_id, fields: [:title, :value, options: []],
                   questions:                       [:title, :value, options: []],
@@ -623,7 +629,7 @@ module V2
 
       def create_commercial_params
         params.require(:policy_application)
-          .permit(:effective_date, :expiration_date, :auto_pay,
+          .permit(:effective_date, :auto_pay,
                   :auto_renew, :billing_strategy_id, :account_id, :policy_type_id,
                   :carrier_id, :agency_id, fields: {},
                   questions:                       [:text, :value, :questionId, options: [], questions: [:text, :value, :questionId, options: []]])
@@ -631,7 +637,7 @@ module V2
 
       def create_rental_guarantee_params
         params.require(:policy_application)
-          .permit(:effective_date, :expiration_date, :auto_pay,
+          .permit(:effective_date, :auto_pay,
                   :auto_renew, :billing_strategy_id, :account_id, :policy_type_id,
                   :carrier_id, :agency_id, fields: {})
       end
