@@ -661,13 +661,13 @@ module V2
 
       def update_residential_params
         params.require(:policy_application)
-          .permit(:effective_date, :expiration_date, policy_rates_attributes:      [:insurable_rate_id],
+          .permit(:effective_date, policy_rates_attributes:      [:insurable_rate_id],
                   policy_insurables_attributes: [:insurable_id])
       end
 
       def update_rental_guarantee_params
         params.require(:policy_application)
-          .permit(:effective_date, :expiration_date, :fields, fields: {})
+          .permit(:effective_date, :fields, fields: {})
       end
 
       def get_coverage_options_params

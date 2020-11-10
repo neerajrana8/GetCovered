@@ -480,7 +480,7 @@ module V2
 
       def update_residential_params
         params.require(:policy_application)
-          .permit(:effective_date, :expiration_date,
+          .permit(:effective_date,
                   :billing_strategy_id, fields: {},
                   policy_rates_attributes: [:insurable_rate_id],
                   policy_insurables_attributes: [:insurable_id])
@@ -488,7 +488,7 @@ module V2
 
       def update_rental_guarantee_params
         params.require(:policy_application)
-          .permit(:fields, :effective_date, :expiration_date, fields: {})
+          .permit(:fields, :effective_date, fields: {})
       end
 
       def supported_filters(called_from_orders = false)
