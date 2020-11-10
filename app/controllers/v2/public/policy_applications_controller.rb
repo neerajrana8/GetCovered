@@ -65,7 +65,7 @@ module V2
       end
 
       def create
-        if request.headers.key?("security-key") && request.headers.key?("security-secret")
+        if request.headers.key?("token-key") && request.headers.key?("token-secret")
 
           if check_api_access()
             if params[:policy_application][:policy_type_id] == 1 ||
@@ -639,8 +639,8 @@ module V2
       private
 
       def check_api_access
-        key = request.headers["security-key"]
-        secret = request.headers["security-secret"]
+        key = request.headers["token-key"]
+        secret = request.headers["token-secret"]
         pass = false
 
         unless key.nil? || secret.nil?
