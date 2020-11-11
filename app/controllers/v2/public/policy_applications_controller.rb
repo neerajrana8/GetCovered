@@ -137,7 +137,20 @@ module V2
       end
 
       def create
-        case params[:policy_application][:policy_type_id].to_i
+        if request.headers.key?("token-key") && request.headers.key?("token-secret")
+
+          if check_api_access()
+            if params[:policy_application][:policy_type_id] == 1 ||
+               params[:policy_application][:policy_type_id] == 5
+              create_from_external
+            else
+              render json: standard_error(:invalid_policy_type, 'Invalid policy type'), status: 422
+            end
+          else
+            render json: standard_error(:authentication, 'Invalid Auth Key'), status: 401
+          end
+        else
+          case params[:policy_application][:policy_type_id]
           when 1
             create_residential
           when 4
@@ -148,6 +161,7 @@ module V2
             create_security_deposit_replacement
           else
             render json: standard_error(:invalid_policy_type, 'Invalid policy type'), status: 422
+          end
         end
       end
 
@@ -282,6 +296,50 @@ module V2
             if @application.update(status: 'in_progress')
               LeadEvents::LinkPolicyApplicationUsers.run!(policy_application: @application)
               render 'v2/public/policy_applications/show'
+            else
+              render json: standard_error(:policy_application_update_error, nil, @application.errors),
+                     status: 422
+            end
+          end
+        else
+          # Rental Guarantee Application Save Error
+          render json: standard_error(:policy_application_update_error, nil, @application.errors),
+                 status: 422
+        end
+      end
+
+      def create_from_external
+        place_holder_date = Time.now + 1.day
+        policy_type = params[:policy_application][:policy_type_id]
+        init_hash = {
+            :agency => @access_token.bearer,
+            :policy_type => PolicyType.find(policy_type),
+            :carrier => policy_type == 1 ? Carrier.find(5) : Carrier.find(4),
+            :account => policy_type == 1 ? Account.first : nil,
+            :effective_date => place_holder_date,
+            :expiration_date => place_holder_date + 1.year
+        }
+
+        site = Rails.application.credentials[:uri][Rails.env.to_sym][:client]
+        program = policy_type == 1 ? "residential" : "rentguarantee"
+
+        @application = PolicyApplication.new(init_hash)
+        @application.build_from_carrier_policy_type
+        @application.billing_strategy = BillingStrategy.where(agency:      @application.agency,
+                                                              policy_type: @application.policy_type,
+                                                              carrier: @application.carrier).take
+
+        if policy_type == 5
+          params["policy_application"]["fields"].keys.each do |key|
+            @application.fields[key] = params["policy_application"]["fields"][key]
+          end
+        end
+
+        if @application.save
+          @redirect_url = "#{ site }/#{program}/#{ @application.id }"
+          if create_policy_users
+            if @application.update(status: 'in_progress')
+              render 'v2/public/policy_applications/show_external'
             else
               render json: standard_error(:policy_application_update_error, nil, @application.errors),
                      status: 422
@@ -764,6 +822,22 @@ module V2
       end
 
       private
+
+      def check_api_access
+        key = request.headers["token-key"]
+        secret = request.headers["token-secret"]
+        pass = false
+
+        unless key.nil? || secret.nil?
+          @access_token = AccessToken.find_by_key(key)
+          if !@access_token.nil? &&
+              @access_token.check_secret(secret)
+            pass = true
+          end
+        end
+
+        return pass
+      end
 
       # Only for fixing the issue with not saving address on the rent guarantee form
       def update_policy_user(policy_application)
