@@ -592,14 +592,6 @@ class InsurableRateConfiguration < ApplicationRecord
       selections = automatically_select_options(coverage_options, selections) unless valid
       # prepare the call
       msis = MsiService.new
-      event = ::Event.new(
-        eventable: eventable,
-        verb: 'post',
-        format: 'xml',
-        interface: 'REST',
-        endpoint: msis.endpoint_for(:final_premium),
-        process: 'msi_final_premium'
-      )
       result = msis.build_request(:final_premium,
         effective_date: effective_date, 
         additional_insured_count: additional_insured_count,
@@ -630,6 +622,7 @@ class InsurableRateConfiguration < ApplicationRecord
         ),
         line_breaks: true
       )
+      event = ::Event.new(msis.event_params.merge(eventable: eventable))
       selections.each{|sel| sel.delete('options') } # remove the options we inserted for convenience (but leave the options_format string we inserted)
       if !result
         # failed to get final premium
