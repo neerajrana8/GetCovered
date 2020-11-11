@@ -142,8 +142,7 @@ class PolicyQuote < ApplicationRecord
           )
 
           if policy.save
-            policy.reload
-            # Add documents to policy
+            # Add documents to policy, if applicable
             needing_signature = []
             (policy_documents || []).each do |doc|
               # set up document
@@ -159,11 +158,11 @@ class PolicyQuote < ApplicationRecord
               end
               # mark for signing if needed
               needing_signature.push(doc_id) if doc[:needs_signature]
-  logger.error "NEEDS SIG? #{doc[:needs_signature] ? "Y" : "N"}"
             end
-            policy.update(unsigned_documents: needing_signature) unless needing_signature.blank?
-  logger.error("NEEDING_SIGS BLANK? #{needing_signature.blank? ? "Y" : "N"}");
-  logger.error("NEEDING SIGS: #{needing_signature}");
+            policy.update_columns(unsigned_documents: needing_signature) unless needing_signature.blank?
+            
+            # reload policy
+            policy.reload
             
             # Add users to policy
             policy_application.policy_users
