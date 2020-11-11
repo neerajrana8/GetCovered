@@ -79,13 +79,6 @@ module CarrierMsiPolicyQuote
       preferred = !(community.carrier_profile(5)&.external_carrier_id.nil?)
       # prepare for bind call
       msis = MsiService.new
-      event = events.new(
-        verb: 'post',
-        format: 'xml',
-        interface: 'REST',
-        endpoint: msis.endpoint_for(:bind_policy),
-        process: 'msi_bind_policy'
-      )
       result = msis.build_request(:bind_policy,
         effective_date:   policy_application.effective_date,
         payment_plan:     policy_application.billing_strategy.carrier_code,
@@ -134,6 +127,7 @@ module CarrierMsiPolicyQuote
         #PolicyBindWarningNotificationJob.perform_later(message: @bind_response[:message])
         return @bind_response
       end
+      event = events.new(msis.event_params)
       event.request = msis.compiled_rxml
       event.started = Time.now
       result = msis.call
