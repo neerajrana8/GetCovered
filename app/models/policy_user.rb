@@ -5,8 +5,7 @@ class PolicyUser < ApplicationRecord
   
   # Callbacks
   before_create :set_first_as_primary
-  after_create :set_account_user, 
-    if: Proc.new { |pol_usr| !pol_usr.user.nil? }
+  after_create :set_account_user, if: proc { |pol_usr| !pol_usr.user.nil? }
   
   belongs_to :policy_application, optional: true
   belongs_to :policy, optional: true
@@ -20,13 +19,14 @@ class PolicyUser < ApplicationRecord
   enum dispute_status: { undisputed: 0, in_process: 1, resolved: 2 }
   
   def dispute
-    return update(status: "disputed", disputed_at: Time.now, dispute_status: "in_process") ? true : false
+    update(status: 'disputed', disputed_at: Time.now, dispute_status: 'in_process') ? true : false
   end
   
   def resolve_dispute(remove = nil)
     raise ArgumentError, 'Must indicate if removal is necessary' if remove.nil?
-    update_status = remove ? "removed" : "accepted"
-    return update(status: update_status, dispute_status: "resolved") ? true : false
+
+    update_status = remove ? 'removed' : 'accepted'
+    update(status: update_status, dispute_status: 'resolved') ? true : false
   end
   
   def invite
@@ -46,11 +46,11 @@ class PolicyUser < ApplicationRecord
         dispute: "#{client_host_link}/dispute-policy"
       }
       
-      UserCoverageMailer.with(policy: policy, user: user, links: links).added_to_policy().deliver
+      UserCoverageMailer.with(policy: policy, user: user, links: links).added_to_policy.deliver
       invite_sent = true
     end
     
-    return invite_sent
+    invite_sent
   end
   
   def accept(email = nil)
@@ -59,45 +59,44 @@ class PolicyUser < ApplicationRecord
     acceptance_status = false
     
     if user.email == email
-      if update(status: "accepted")
-        UserCoverageMailer.with(policy: policy, user: user).proof_of_coverage().deliver_later
+      if update(status: 'accepted')
+        UserCoverageMailer.with(policy: policy, user: user).proof_of_coverage.deliver_later
         acceptance_status = true 
       end
     end
     
-    return acceptance_status
+    acceptance_status
   end
   
   private
-    def set_first_as_primary
-      ref_model = policy.nil? ? policy_application : policy
-      if ref_model.policy_users.count == 0
-        self.primary = true  
-        self.status = "accepted"
-      end  
-    end
+
+  def set_first_as_primary
+    ref_model = policy.nil? ? policy_application : policy
+    if ref_model.policy_users.count == 0
+      self.primary = true  
+      self.status = 'accepted'
+    end  
+  end
      
-    def set_account_user
-      ref_model = policy.nil? ? policy_application : policy
-			policy_type_check = ref_model.policy_type == PolicyType.find_by(id: 4) || 
-                          ref_model.policy_type == PolicyType.find_by(id: 5)
-                          
-      unless policy_type_check && ref_model.account.nil?
-        acct = AccountUser.where(user_id: user.id, account_id: ref_model.account_id).take
-        if acct.nil?
-          AccountUser.create!(user: user, account: ref_model.account)
-        elsif acct.status != 'enabled'
-          acct.update(status: 'enabled')
-        else
-          # do nothing
-        end
+  def set_account_user
+    ref_model = policy.nil? ? policy_application : policy
+    policy_type_check = ref_model.policy_type == PolicyType.find_by(id: 4) || 
+                        ref_model.policy_type == PolicyType.find_by(id: 5)
+                        
+    unless policy_type_check && ref_model.account.nil?
+      acct = AccountUser.where(user_id: user.id, account_id: ref_model.account_id).take
+      if acct.nil?
+        AccountUser.create!(user: user, account: ref_model.account)
+      elsif acct.status != 'enabled'
+        acct.update(status: 'enabled')
       end
     end
+  end
     
-    def user_listed_once
-      if policy_application
-        user_ids = policy_application.users.map(&:id)
-        errors.add(:user, "Already included on policy or policy application") if user_ids.count(user.id) > 1  
-      end
+  def user_listed_once
+    if policy_application
+      user_ids = policy_application.users.map(&:id)
+      errors.add(:user, 'Already included on policy or policy application') if user_ids.count(user.id) > 1  
     end
+  end
 end

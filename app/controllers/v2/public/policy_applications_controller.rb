@@ -306,7 +306,13 @@ module V2
         end
 
         if @application.save
-          if create_policy_users
+          update_users_outcome =
+            PolicyApplications::UpdateUsers.run(
+              policy_application: @application,
+              policy_users_params: create_policy_users_params[:policy_users_attributes].to_h
+            )
+
+          if update_users_outcome.valid?
             if @application.update status: 'complete'
 
               # if application.status updated to complete
@@ -352,6 +358,9 @@ module V2
               render json: standard_error(:policy_application_save_error, nil, @application.errors),
                      status: 422
             end
+          else
+            render json: standard_error(:user_error, nil, update_users_outcome.errors.full_messages),
+                   status: 422
           end
         else
           render json: standard_error(:policy_application_save_error, nil, @application.errors),
