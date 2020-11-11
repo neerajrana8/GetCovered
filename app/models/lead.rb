@@ -17,7 +17,7 @@ class Lead < ApplicationRecord
 
   before_create :set_identifier
   before_save :set_status
-  
+
   def self.date_of_first_lead
     Lead.pluck(:last_visit).sort.first
   end
