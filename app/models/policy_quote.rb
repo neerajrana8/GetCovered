@@ -99,6 +99,10 @@ class PolicyQuote < ApplicationRecord
       else
         bind_request = self.send(*([quote_attempt[:bind_method]] + (bind_params.class == ::Array ? bind_params : [bind_params])))
 
+        policy_number = nil
+        policy_status = nil
+        policy_documents = nil
+        
         if bind_request[:error]
           logger.error "Bind Failure; Message: #{bind_request[:message]}"
           quote_attempt[:message] = "Unable to bind policy"
@@ -114,8 +118,8 @@ class PolicyQuote < ApplicationRecord
             policy_status = "BOUND"
           elsif policy_application.policy_type.title == "Security Deposit Replacement"
             policy_number = bind_request[:data][:policy_number]
-            # MOOSE WARNING certificate stuff
             policy_status = "BOUND"
+            policy_documents = bind_request[:data][:documents] || nil
           end
 
 
@@ -139,6 +143,28 @@ class PolicyQuote < ApplicationRecord
 
           if policy.save
             policy.reload
+            # Add documents to policy
+            needing_signature = []
+            (policy_documents || []).each do |doc|
+              # set up document
+              doc_id = nil
+              case doc[:source]
+                when ::ActiveStorage::Attachment
+                  # move from PQ to P
+                  doc[:source].update(record_type: "Policy", record_id: policy.id)
+                  doc_id = doc[:source].id
+                else
+                  logger.error "Invalid document source type '#{doc[:source].class.name}'"
+                  next
+              end
+              # mark for signing if needed
+              needing_signature.push(doc_id) if doc[:needs_signature]
+  logger.error "NEEDS SIG? #{doc[:needs_signature] ? "Y" : "N"}"
+            end
+            policy.update(unsigned_documents: needing_signature) unless needing_signature.blank?
+  logger.error("NEEDING_SIGS BLANK? #{needing_signature.blank? ? "Y" : "N"}");
+  logger.error("NEEDING SIGS: #{needing_signature}");
+            
             # Add users to policy
             policy_application.policy_users
                               .each do |pu|

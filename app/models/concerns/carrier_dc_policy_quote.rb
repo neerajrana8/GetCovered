@@ -114,12 +114,19 @@ module CarrierDcPolicyQuote
         @bind_response[:message] = "Deposit Choice bind failure (Event ID: #{event.id || event.errors.to_h})\nMSI Error: #{result[:external_message]}\n#{result[:extended_external_message]}"
         return @bind_response
       end
+      # save the bond certificate
+      io = StringIO.new(Base64.decode64(result[:data]["bondCertificate"]))
+      attached = self.documents.attach(io: io, filename: 'unsigned_bond_certificate.pdf', content_type: 'application/pdf')
       # handle successful bind
       @bind_response[:error] = false
       @bind_response[:data][:status] = "SUCCESS"
       @bind_response[:data][:policy_number] = result[:data]["policyNumber"]
-      @bind_response[:data][:bond_certificate] = result[:data]["bondCertificate"] # but what do we do with this...?
-      return @bind_response
+      @bind_response[:data][:documents] = attached.map do |doc|
+        {
+          source: doc,
+          needs_signature: true
+        }
+      end
       return @bind_response
     end
     
