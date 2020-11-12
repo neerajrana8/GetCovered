@@ -77,15 +77,21 @@
     resources :assignments,
       only: [ :create, :update, :destroy, :index, :show ]
 
-    resources :billing_strategies,
-      path: "billing-strategies",
-      only: [ :create, :update, :index, :show ]
+    resources :billing_strategies, path: "billing-strategies", only: [ :create, :update, :index, :show ] do
+      member do
+        post :add_fee
+        get :fees
+        delete :destroy_fee
+      end
+    end
 
     resources :branding_profiles,
       path: "branding-profiles",
       only: [ :show, :create, :update ] do
         member do
           get :faqs
+          get :export
+          post :update_from_file
           post :faq_create
           put :faq_update, path: '/faq_update/faq_id'
           post :faq_question_create, path: '/faqs/:faq_id/faq_question_create'
@@ -94,6 +100,7 @@
           delete :faq_question_delete, path: '/faqs/:faq_id/faq_question_delete/:faq_question_id'
           post :attach_images, path: '/attach_images'
         end
+        post :import, on: :collection
       end
 
     resources :branding_profile_attributes,
@@ -120,9 +127,13 @@
         end
     end
 
-    resources :carrier_agency_authorizations,
-      path: "carrier-agency-authorizations",
-      only: [ :update, :index, :show ]
+    resources :carrier_agency_authorizations, path: "carrier-agency-authorizations", only: [ :update, :index, :show ] do
+      member do
+        post :add_fee
+        get :fees
+        delete :destroy_fee
+      end
+    end
 
     resources :claims,
       only: [ :create, :update, :index, :show ] do
@@ -188,6 +199,9 @@
     resources :insurable_types, path: "insurable-types", only: [ :index ]
 
     resources :leads, only: [:index, :show]
+    resources :leads_dashboard, only: [:index]
+
+    get :get_filters, controller: 'leads_dashboard', path: 'leads_dashboard/get_filters'
 
     resources :leases,
       only: [ :create, :update, :destroy, :index, :show ] do

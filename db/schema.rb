@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_10_23_145742) do
+ActiveRecord::Schema.define(version: 2020_10_29_181448) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
@@ -568,6 +568,7 @@ ActiveRecord::Schema.define(version: 2020_10_23_145742) do
     t.boolean "enabled"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "policy_type_ids", default: [], null: false, array: true
   end
 
   create_table "insurables", force: :cascade do |t|
@@ -582,10 +583,14 @@ ActiveRecord::Schema.define(version: 2020_10_23_145742) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.bigint "agency_id"
+    t.bigint "policy_type_ids", default: [], null: false, array: true
+    t.boolean "preferred_ho4", default: false, null: false
     t.index ["account_id"], name: "index_insurables_on_account_id"
     t.index ["agency_id"], name: "index_insurables_on_agency_id"
     t.index ["insurable_id"], name: "index_insurables_on_insurable_id"
     t.index ["insurable_type_id"], name: "index_insurables_on_insurable_type_id"
+    t.index ["policy_type_ids"], name: "insurable_ptids_gin_index", using: :gin
+    t.index ["preferred_ho4"], name: "index_insurables_on_preferred_ho4"
   end
 
   create_table "invoices", force: :cascade do |t|

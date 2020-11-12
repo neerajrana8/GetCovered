@@ -20,8 +20,10 @@ module V2
         result = []
         required_fields = %i[id title agency_id]
 
+        @agencies = paginator(Agency.where(agency_id: nil))
+
         if current_staff.getcovered_agent?
-          Agency.where(agency_id: nil).select(required_fields).each do |agency|
+          @agencies.select(required_fields).each do |agency|
             sub_agencies = agency.agencies.select(required_fields)
             result << if sub_agencies.any?
               agency.attributes.reverse_merge(agencies: sub_agencies.map(&:attributes))
@@ -30,7 +32,7 @@ module V2
             end
           end
         else
-          result = current_staff.organizable.agencies.select(required_fields).map(&:attributes)
+          result = paginator(current_staff.organizable.agencies).select(required_fields).map(&:attributes)
         end
 
         render json: result.to_json

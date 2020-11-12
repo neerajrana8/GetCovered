@@ -5,8 +5,10 @@
 module V2
   module StaffAgency
     class BrandingProfilesController < StaffAgencyController
-
-      before_action :set_branding_profile, only: %i[update show destroy faqs faq_create faq_update faq_question_create faq_question_update attach_images]
+      include BrandingProfilesMethods
+      before_action :set_branding_profile,
+                    only: %i[update show destroy faqs faq_create faq_update
+                            faq_question_create faq_question_update attach_images export update_from_file]
 
       def show
       end
