@@ -81,7 +81,7 @@ module V2
         if @application.save
           update_users_result =
             PolicyApplications::UpdateUsers.run!(
-              policy_application: @policy_application,
+              policy_application: @application,
               policy_users_params: create_policy_users_params[:policy_users_attributes]
             )
           if update_users_result.success?
@@ -172,7 +172,7 @@ module V2
         if @application.save
           update_users_result =
             PolicyApplications::UpdateUsers.run!(
-              policy_application: @policy_application,
+              policy_application: @application,
               policy_users_params: create_policy_users_params[:policy_users_attributes]
             )
           if update_users_result.success?
