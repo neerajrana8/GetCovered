@@ -402,7 +402,7 @@ module V2
       def create_policy_users_params
         params.require(:policy_application)
           .permit(policy_users_attributes: [
-                    :spouse, user_attributes: [
+                    :spouse, :primary, user_attributes: [
                       :email, profile_attributes: %i[
                         first_name last_name job_title
                         contact_phone birth_date gender salutation
