@@ -195,23 +195,17 @@ module V2
       end
 
       def create_rental_guarantee
-
         @application        = PolicyApplication.new(create_rental_guarantee_params)
-
         @application.agency = Agency.where(master_agency: true).take if @application.agency.nil?
-
         @application.billing_strategy = BillingStrategy.where(agency:      @application.agency,
                                                               policy_type: @application.policy_type).take
-
         if @application.save
-          if create_policy_users
-            if @application.update(status: 'in_progress')
-              LeadEvents::LinkPolicyApplicationUsers.run!(policy_application: @application)
-              render 'v2/public/policy_applications/show'
-            else
-              render json: standard_error(:policy_application_update_error, nil, @application.errors),
-                     status: 422
-            end
+          if @application.update(status: 'in_progress')
+            LeadEvents::LinkPolicyApplicationUsers.run!(policy_application: @application)
+            render 'v2/public/policy_applications/show'
+          else
+            render json: standard_error(:policy_application_update_error, nil, @application.errors),
+                   status: 422
           end
         else
           # Rental Guarantee Application Save Error
@@ -284,8 +278,8 @@ module V2
       end
 
       def create_residential
-
         @application = PolicyApplication.new(create_residential_params)
+
         unless @application.coverage_selections.blank?
           @application.coverage_selections.each do |cs|
             if [ActionController::Parameters, ActiveSupport::HashWithIndifferentAccess, ::Hash].include?(cs['selection'].class)
@@ -306,13 +300,13 @@ module V2
         end
 
         if @application.save
-          update_users_outcome =
-            PolicyApplications::UpdateUsers.run(
+          update_users_result =
+            PolicyApplications::UpdateUsers.run!(
               policy_application: @application,
               policy_users_params: create_policy_users_params[:policy_users_attributes].to_h
             )
 
-          if update_users_outcome.valid?
+          if update_users_result.success?
             if @application.update status: 'complete'
 
               # if application.status updated to complete
@@ -359,7 +353,7 @@ module V2
                      status: 422
             end
           else
-            render json: standard_error(:user_error, nil, update_users_outcome.errors.full_messages),
+            render json: update_users_result.failure,
                    status: 422
           end
         else
@@ -434,13 +428,13 @@ module V2
 
       def update_rental_guarantee
         @policy_application = PolicyApplication.find(params[:id])
-
-        if @policy_application.policy_type.title == 'Rent Guarantee'
-
-          if @policy_application.update(update_rental_guarantee_params) &&
-            update_policy_user(@policy_application) &&
-            @policy_application.update(status: 'complete')
-
+        if @policy_application.update(update_rental_guarantee_params) && @policy_application.update(status: 'complete')
+          update_users_result =
+            PolicyApplications::UpdateUsers.run!(
+              policy_application: @policy_application,
+              policy_users_params: create_policy_users_params[:policy_users_attributes].to_h
+            )
+          if update_users_result.success?
             quote_attempt = @policy_application.pensio_quote
 
             if quote_attempt[:success] == true
@@ -472,11 +466,13 @@ module V2
               render json: standard_error(:quote_attempt_failed, quote_attempt[:message]),
                      status: 422
             end
-
           else
-            render json:   standard_error(:policy_application_update_error, nil, @policy_application.errors),
+            render json: update_users_result.failure,
                    status: 422
           end
+        else
+          render json:   standard_error(:policy_application_update_error, nil, @policy_application.errors),
+                 status: 422
         end
       end
 
