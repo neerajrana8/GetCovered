@@ -104,6 +104,15 @@ module V2
         @application.agency = Agency.where(master_agency: true).take if @application.agency.nil?
         @application.billing_strategy = BillingStrategy.where(agency:      @application.agency,
                                                               policy_type: @application.policy_type).take
+
+        validate_applicant_result =
+          PolicyApplications::ValidateApplicantsParameters.run!(
+            policy_users_params: create_policy_users_params[:policy_users_attributes]
+          )
+        if validate_applicant_result.failure?
+          render(json: validate_applicant_result.failure, status: 401) && return
+        end
+
         if @application.save
           if @application.update(status: 'in_progress')
             LeadEvents::LinkPolicyApplicationUsers.run!(policy_application: @application)

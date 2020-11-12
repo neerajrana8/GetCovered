@@ -46,6 +46,15 @@ module V2
         @application.billing_strategy = BillingStrategy.where(agency: @application.agency,
                                                               policy_type: @application.policy_type).take
 
+        validate_applicant_result =
+          PolicyApplications::ValidateApplicantsParameters.run!(
+            policy_users_params: create_policy_users_params[:policy_users_attributes],
+            current_user_email: current_user.email
+          )
+        if validate_applicant_result.failure?
+          render(json: validate_applicant_result.failure, status: 401) && return
+        end
+
         if @application.save
           update_users_result =
             PolicyApplications::UpdateUsers.run!(

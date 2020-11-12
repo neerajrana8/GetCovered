@@ -19,10 +19,10 @@ module PolicyApplications
     private
 
     def validate_primary_user_params
-      primary_users_count = policy_users_params.count { |policy_user_params| policy_user_params[:primary] }
-      return Success() if primary_users_count == 1
-
-      Failure(standard_error(:bad_policy_users_arguments, 'Parameters must have only one primary user'))
+      PolicyApplications::ValidateApplicantsParameters.run!(
+        policy_users_params: policy_users_params,
+        current_user_email: current_user_email
+      )
     end
 
     def remove_policy_users
@@ -47,9 +47,8 @@ module PolicyApplications
 
       # will be the same as the +policy_user.user+ if the +policy_user+ present
       user = User.find_by_email(policy_user_params[:user_attributes][:email])
-      if policy_user_params[:primary] && user.present? && user.invitation_accepted_at? && (user.email != current_user_email)
-        return Failure(standard_error(:auth_error, 'A User has already signed up with this email address.  Please log in to complete your application'))
-      elsif policy_user.present? # user exists and already added as a policy user
+
+      if policy_user.present? # user exists and already added as a policy user
         yield update_policy_user(policy_user, policy_user_params.slice(:primary, :spouse))
         yield update_user(user, policy_user_params[:user_attributes])
         yield update_user_address(user, policy_user_params[:user_attributes][:address_attributes])
