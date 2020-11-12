@@ -169,6 +169,18 @@ class Policy < ApplicationRecord
     manual_cancellation_without_refunds:  8    # no qbe code
   }
   
+  def self.active_statuses
+    ['BOUND', 'BOUND_WITH_WARNING', 'RENEWING', 'RENEWED', 'REINSTATED']
+  end
+  
+  def is_active?
+    self.class.active_statuses.include?(self.status)
+  end
+  
+  def was_active?
+    self.class.active_statuses.include?(self.attribute_before_last_save('status'))
+  end
+  
   # Cancellation reasons with special refund logic; allowed values:
   #   early_cancellation:       within the first (CarrierInsurableType.max_days_for_full_refund || 30) days a refund will be issued equivalent to a refund prorated for the day before the policy's effective_date
   #   no_refund:                no refund will be issued, but available/upcoming/missed invoices will be cancelled, and processing invoices will be cancelled if they fail (but not refunded if they succeed)
