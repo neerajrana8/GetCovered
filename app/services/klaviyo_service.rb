@@ -10,6 +10,8 @@ class KlaviyoService
   PAGES = ['Landing Page', 'Eligibility Page', 'Basic Info Page', 'Eligibility Requirements Page', 'Address Page', 'Employer Page',
            'Landlord Page', 'Confirmation Page', 'Terms&Conditions Page', 'Payment Page']
 
+  PAGES_RENT_GUARANTEE = ['Basic Info Section', 'Insurance Info Section', 'Coverage Limits Section', 'Insured Details Section', 'Payment Section']
+
   TEST_TAG = 'test'
   RETRY_LIMIT = 3
 
@@ -74,7 +76,7 @@ class KlaviyoService
     end
 
     customer_properties[:last_visited_page_url] = map_last_visited_url(event_details) #need to unify for other too
-    customer_properties[:last_visited_page] = map_last_visited_page(event_details)
+    customer_properties[:last_visited_page] = map_last_visited_page(event_details) if event_details['last_visited_page'].present?
 
     # TODO: check retriable gem?
     begin
@@ -175,11 +177,17 @@ class KlaviyoService
 
   #check default for residential
   def map_last_visited_page(event_details)
-    default = "Landing Page"
-    if event_details["data"].present? && page_further?(event_details["data"]["last_visited_page"])
+    #need to put in another method
+    if @lead.lead_events.&last.&policy_type_id==5
+      default = "Landing Page"
+      if event_details["data"].present? && page_further?(event_details["data"]["last_visited_page"])
         event_details["data"]["last_visited_page"]
+      else
+        @lead.last_visited_page || default
+      end
+
     else
-      @lead.last_visited_page || default
+      event_details["data"]["last_visited_page"] if event_details["data"].present?
     end
   end
 
