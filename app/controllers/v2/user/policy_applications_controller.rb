@@ -50,7 +50,8 @@ module V2
           update_users_result =
             PolicyApplications::UpdateUsers.run!(
               policy_application: @application,
-              policy_users_params: create_policy_users_params[:policy_users_attributes]
+              policy_users_params: create_policy_users_params[:policy_users_attributes],
+              current_user_email: current_user.email
             )
 
           if update_users_result.success?
@@ -82,7 +83,8 @@ module V2
           update_users_result =
             PolicyApplications::UpdateUsers.run!(
               policy_application: @application,
-              policy_users_params: create_policy_users_params[:policy_users_attributes]
+              policy_users_params: create_policy_users_params[:policy_users_attributes],
+              current_user_email: current_user.email
             )
           if update_users_result.success?
             if @application.update(status: 'complete')
@@ -173,7 +175,8 @@ module V2
           update_users_result =
             PolicyApplications::UpdateUsers.run!(
               policy_application: @application,
-              policy_users_params: create_policy_users_params[:policy_users_attributes]
+              policy_users_params: create_policy_users_params[:policy_users_attributes],
+              current_user_email: current_user.email
             )
           if update_users_result.success?
             if @application.update(status: 'complete')
@@ -307,7 +310,9 @@ module V2
 
           if @policy_application.update(update_rental_guarantee_params) && @policy_application.update(status: 'complete')
             update_users_result = PolicyApplications::UpdateUsers.run!(
-              policy_application: @policy_application, policy_users_params: create_policy_users_params[:policy_users_attributes]
+              policy_application: @policy_application,
+              policy_users_params: create_policy_users_params[:policy_users_attributes],
+              current_user_email: current_user.email
             )
             if update_users_result.success?
               quote_attempt = @policy_application.pensio_quote
