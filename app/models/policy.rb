@@ -113,6 +113,7 @@ class Policy < ApplicationRecord
   scope :with_missed_invoices, lambda {
     joins(:invoices).merge(Invoice.unpaid_past_due)
   }
+  scope :with_unsigned_documents, -> { where("cardinality(unsigned_documents) > 0") }
 
   scope :accepted_quote, lambda {
     joins(:policy_quotes).where(policy_quotes: { status: 'accepted'})
