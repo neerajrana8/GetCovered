@@ -3,6 +3,7 @@ class LeadsStatusUpdateJob < ApplicationJob
   before_perform :set_lost_leads
   before_perform :set_return_leads
 
+  #need to add klaviyo batch update
   def perform(*_args)
     @lost_leads.update_all(status: 'lost')
     #@return_leads.update_all(status: 'return')
