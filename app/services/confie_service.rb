@@ -6,6 +6,10 @@ require 'base64'
 require 'fileutils'
 
 class ConfieService
+
+  def self.agency_id
+    # MOOSE WARNING: do this
+  end
   
   include HTTParty
   include ActiveModel::Validations
