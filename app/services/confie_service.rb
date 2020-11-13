@@ -49,8 +49,8 @@ class ConfieService
     return self.errors.blank?
   end
   
-  def endpoint_for(which_call) # MOOSE WARNING: fix it up
-    Rails.application.credentials.confie[:uri][ENV['RAILS_ENV'].to_sym] + "/#{which_call.to_s.camelize}"
+  def endpoint_for(which_call) # MOOSE WARNING: apparently the endpoint is constant
+    Rails.application.credentials.confie[:uri][ENV['RAILS_ENV'].to_sym]
   end
   
   def call
@@ -67,7 +67,8 @@ class ConfieService
       call_data[:response] = HTTParty.post(endpoint_for(self.action),
         body: compiled_rxml,
         headers: {
-          'Content-Type' => 'text/xml'
+          'Content-Type' => 'text/xml',
+          'Authorization' => "Basic #{Rails.application.credentials.confie[:auth][ENV['RAILS_ENV'].to_sym]}"
         },
         ssl_version: :TLSv1_2
       )
@@ -113,9 +114,42 @@ class ConfieService
   end
   
   
-
-  
-  
+  def build_online_policy_sale(
+    policy:,
+    **compilation_args
+  )
+    # we need:
+    #   the LOBCd and LOBSubCd
+    #   the InsuredOrPrincipalRoleCd for primary insured & additional insured & additional interest
+    
+    # put the request together
+    self.action = :online_policy_sale
+    self.errors = nil
+    lobcd = get_lobcd_for_policy_type(policy.policy_type_id)
+    if lobcd.nil?
+      # MOOSE WARNING: add error
+    end
+    self.compiled_rxml = compile_xml({
+      "com.a1_PolicyQuoteInqRq": {
+        RqUID: get_unique_identifier,
+        TransactionRequestDt: Time.current.to_date.to_s,
+        LOBCd: lobcd[0],
+        LOBSubCd: lobcd[1],
+        InsuredOrPrincipal: (
+          policy.policy_users.map do |pu|
+            get_insured_or_principal_for(pu.user, pu.primary ? "MOOSE WARNING" : "MOOSE WARNING")
+          end + (policy.policy_type_id == ::PolicyType::RESIDENTIAL_ID && policy.carrier_id == MsiService.carrier_id && !policy.account.nil? ?
+            [get_insured_or_principal_for(policy.account, "MOOSE WARNING: ADDTL INTERST")]
+            : []
+          )
+        ),
+        "com.a1_Policy": {
+        }
+        
+      }
+    }, **compilation_args)
+    return errors.blank?
+  end
   
   
   
@@ -125,6 +159,49 @@ class ConfieService
   
   
 private
+
+    def get_insured_or_principal_for(obj, rolecd)
+      case obj
+        when ::User
+          return {
+            "com.a1_ExternalId":  "user-#{obj.id}",
+            GeneralPartyInfo:     obj.get_confie_general_party_info,
+            InsuredOrPrincipalInfo: {
+              InsuredOrPrincipalRoleCd: rolecd,
+              PersonInfo: {
+                BirthDt: obj.profile.birth_date&.to_s,
+                GenderCd: {"male" => "M", "female" => "F" }[obj.profile.gender]
+                # no further info for you, greedy confie
+              }
+            }
+          }
+        when ::Account
+          return {
+            "com.a1_ExternalId":  "account-#{obj.id}",
+            GeneralPartyInfo:     obj.get_confie_general_party_info,
+            InsuredOrPrincipalInfo: {
+              InsuredOrPrincipalRoleCd: rolecd,
+              PersonInfo: {}
+            }
+          }
+      end
+      return nil
+    end
+
+    # returns [lobcd, lobsubcd] or nil if none
+    def get_lobcd_for_policy_type(policy_type_id)
+      case policy_type_id
+        when ::PolicyType::RENT_GUARANTEE_ID
+          return [nil,nil]
+        when ::PolicyType::RESIDENTIAL_ID
+          return [nil,nil]
+      end
+      return nil
+    end
+
+    def get_unique_identifier
+      "#{Time.current.to_i.to_s}-#{rand(2**32)}"
+    end
 
     def arrayify(val, nil_as_object: false)
       val.class == ::Array ? val : val.nil? && !nil_as_object ? [] : [val]
@@ -195,17 +272,12 @@ private
     end
   
     def compile_xml(obj, line_breaks: false, **other_args)
-      #"<?xml version=\"1.0\" encoding=\"UTF-8\"?>#{line_breaks ? "\n" : ""}" + json_to_xml({
-      #  MSIACORD: {
-      #    '': {
-      #      'xmlns:xsd': 'http://www.w3.org/2001/XMLSchema',
-      #      'xmlns:xsi': 'http://www.w3.org/2001/XMLSchema-instance'
-      #    }
-      #  }.merge(get_auth_json).merge(obj)
-      #},
-      #  line_breaks: line_breaks,
-      #  **other_args
-      #)
+      json_to_xml({
+        ACORD: obj
+      },
+        line_breaks: line_breaks,
+        **other_args
+      )
     end
     
     
