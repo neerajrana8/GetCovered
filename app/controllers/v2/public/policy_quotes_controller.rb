@@ -136,7 +136,7 @@ module V2
           if @user.nil?
             render json: { error: 'Not Found', message: "User #{params[:id]} could not be found." }, status: 400
           else
-            uses_stripe =([MsiService.carrier_id, DepositChoiceService.carrier_id].include?(@policy_quote.policy_application.carrier_id) ? false : true) # MOOSE WARNING: move this to a configurable field on CarrierPolicyType or something?
+            uses_stripe = @policy_quote.policy_application.carrier.uses_stripe?
             result = !uses_stripe ? nil : @user.attach_payment_source(accept_policy_quote_params[:source])
             if !uses_stripe || result.valid?
               bind_params = []

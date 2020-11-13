@@ -113,6 +113,31 @@ class ConfieService
     return call_data
   end
   
+  def build_lead_info(
+    policy_application:,
+    lob_override: nil,
+    **compilation_args
+  )
+    # put the request together
+    self.action = :lead_info
+    self.errors = nil
+    lobcd = get_lobcd_for_policy_type(policy_application.policy_type_id) || lob_override
+    if lobcd.nil?
+      self.errors = ["Confie does not support policy type '#{policy.policy_type.title}'"]
+    end
+    self.compiled_rxml = compile_xml({
+      "com.a1_LeadInfo": {
+        RqUID: get_unique_identifier,
+        TransactionRequestDt: Time.current.to_date.to_s,
+        LOBCd: lobcd[0],
+        LOBSubCd: lobcd[1],
+        InsuredOrPrincipal: policy_application.policy_users.map do |pu|
+          get_insured_or_principal_for(pu.user, pu.primary ? "MOOSE WARNING" : "MOOSE WARNING")
+        end
+      }
+    }, **compilation_args)
+    return errors.blank?
+  end
   
   def build_online_policy_sale(
     policy:,
@@ -127,8 +152,9 @@ class ConfieService
     self.errors = nil
     lobcd = get_lobcd_for_policy_type(policy.policy_type_id)
     if lobcd.nil?
-      # MOOSE WARNING: add error
+      self.errors = ["Confie does not support policy type '#{policy.policy_type.title}'"]
     end
+    first_invoice = policy.invoices.order("due_date asc").limit(1).take
     self.compiled_rxml = compile_xml({
       "com.a1_PolicyQuoteInqRq": {
         RqUID: get_unique_identifier,
@@ -144,8 +170,33 @@ class ConfieService
           )
         ),
         "com.a1_Policy": {
-        }
-        
+          # no NAICCd, whatever that is
+          ContractTerm: {
+            EffectiveDt: policy.effective_date.to_s,
+            ExpirationDt: policy.expiration_date.to_s
+            # MOOSE WARNING: DurationPeriod???
+          },
+          LanguageCd: "EN",
+          PolicyNumber: policy.policy_number,
+          CurrentTermAmt: {
+            Amt: (first_invoice.total.to_d / 100.to_d).to_s
+          },
+          FullTermAmt: {
+            Amt: (policy.policy_quotes.accepted.order("created_at desc").limit(1).take.policy_premium.total / 100.to_d).to_s
+          },
+          "com.a1_Payment": payment_info(
+            policy.carrier.uses_stripe? ?
+              first_invoice.charges.succeeded.take
+              : first_invoice.nil? ?
+                nil
+              : { MethodPaymentCd: "CreditCard", Amount: { Amt: (first_invoice.total.to_d / 100.to_d).to_s } }
+          ),
+          "com.a1_OnlineSalesFee": {
+            Amt: "0.00"
+          }
+        },
+        "com.a1_LeadNotes": ""
+        # leaving out CarrierDocument and InternalDocument...
       }
     }, **compilation_args)
     return errors.blank?
@@ -160,6 +211,42 @@ class ConfieService
   
 private
 
+    def payment_info(charge)
+      ch = Stripe::Charge.retrieve(charge.stripe_id)
+      #cust = Stripe::Customer.retrieve(ch.customer)
+      case ch.source.object
+        when "card"
+          return {
+            MethodPaymentCd: "CreditCard",
+            Amount:  { Amt: (ch.amount.to_d / 100.to_d).to_s }, # don't know what a CurCd is, says it's optional
+            "com.a1_CreditCardInfo": {
+              # no credit card numbers for you, confie
+              "com.a1_CardHolder": { # MOOSE WARNING: stripe doesn't seem to have credit card name info, so pulling this from user right now
+                FirstName: charge.invoice.payer.profile.first_name,
+                LastName: charge.invoice.payer.profile.last_name
+              },
+              BillingAddress: address_from_stripe_source(ch.source)
+            }
+          }
+      end
+      return nil
+    end
+    
+    def address_from_stripe_source(source)
+      if source.address_city && source.address_line1 && source.address_state && source.address_zip
+        {
+          AddrTypeCd: "BillingAddress",
+          # docs have "Street"... what the heck
+          Addr1: source.address_line1,
+          Addr2: source.address_line2.blank? ? nil : source.address_line2,
+          City: source.address_city,
+          StateProvCd: source.address_state, # MOOSE WARNING: comes as code right???
+          PostalCode: source.address_zip
+        }.compact
+      end
+      return nil
+    end
+
     def get_insured_or_principal_for(obj, rolecd)
       case obj
         when ::User
@@ -170,7 +257,7 @@ private
               InsuredOrPrincipalRoleCd: rolecd,
               PersonInfo: {
                 BirthDt: obj.profile.birth_date&.to_s,
-                GenderCd: {"male" => "M", "female" => "F" }[obj.profile.gender]
+                GenderCd: {"male" => "M", "female" => "F", "unspecified" => "U", "other" => "U" }[obj.profile.gender]
                 # no further info for you, greedy confie
               }
             }
@@ -181,7 +268,7 @@ private
             GeneralPartyInfo:     obj.get_confie_general_party_info,
             InsuredOrPrincipalInfo: {
               InsuredOrPrincipalRoleCd: rolecd,
-              PersonInfo: {}
+              PersonInfo: nil
             }
           }
       end

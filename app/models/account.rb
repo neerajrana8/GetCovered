@@ -143,7 +143,7 @@ class Account < ApplicationRecord
     {
       NameInfo: {
         CommlName: {
-          CommercialName: self.title.strip#,
+          CommercialName: self.title.strip,
           SupplementaryNameInfo: nil #{
             #SupplementaryNameCd: "DBA",
             #SupplementaryName: self.title.strip
