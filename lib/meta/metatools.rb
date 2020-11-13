@@ -50,7 +50,8 @@ def all_models(
                           #   forbid_extra_targets: (true to forbid poly assocs with targets outside the provided list, or provide an array of models/model names to forbid assocs with targets outside that list instead of the targets list),
                           #   forbid_multi_targets: (true to forbid multiple targets, even if all entries are in the list)
                           # }, or an array of such parameters (a model satisfying at least one entry in the array satisfies)
-  association_hash: nil   # if you pass a hash, it will be cleared & filled with a map from the returned models to the associations that satisfied association; if you pass true, this function will return such a hash instead of the usual array of models
+  association_hash: nil,  # if you pass a hash, it will be cleared & filled with a map from the returned models to the associations that satisfied association; if you pass true, this function will return such a hash instead of the usual array of models
+  return_reflections: false
 )
   to_return = all_model_names.map{|mn| "::#{mn}".constantize }.select{|m| !m.abstract_class }
   # concern filter
@@ -71,6 +72,7 @@ def all_models(
       # process assoc into standardized assoc_data
       assoc_data = {
         name: nil,        # allowed names
+        source: nil,      # allowed source classes
         target: nil,      # allowed target classes
         poly: false,      # accept polymorphic assoc in lieu of target satisfaction
         polymorphic: nil, # true to require assocs be polymorphic, false to require they not be
@@ -84,6 +86,12 @@ def all_models(
         # name
         assoc_data[:name] = assoc[:name].map{|n| n.to_s } if assoc[:name].class == ::Array
         assoc_data[:name] = [assoc[:name].to_s] if assoc[:name].class == ::String || assoc[:name].class == ::Symbol
+        # source
+        unless assoc[:source].blank?
+          assoc_data[:source] = (assoc[:source].class == ::Array ? assoc[:source] : [assoc[:source]])
+          assoc_data[:source].flatten!
+          assoc_data[:source].map!{|ad| ad.class == ::String || ad.class == ::Symbol ? "::#{ad}".constantize : ad }
+        end
         # target
         unless assoc[:target].nil?
           assoc_data[:target] = (assoc[:target].class == ::Array ? assoc[:target] : [assoc[:target]])
@@ -105,6 +113,8 @@ def all_models(
       end
       # go wild
       to_return.select do |m|
+        # filter by source if necessary
+        next false unless assoc_data[:source].blank? || assoc_data[:source].include?(m)
         # apply constraints to reflections
         pool = m.reflections.select{|k,v| true } # make copy
         pool.select!{|rn,rd| assoc_data[:name].include?(rn) } unless assoc_data[:name].nil?
@@ -124,15 +134,24 @@ def all_models(
         # see if any reflections worked
         next false if pool.blank?
         unless association_hash.nil?
-          association_hash[m.name] = [] unless association_hash.has_key?(m.name)
-          association_hash[m.name] += pool.keys
-          association_hash[m.name].uniq!
+          if return_reflections
+            association_hash[m.name] = {} unless association_hash.has_key?(m.name)
+            association_hash[m.name].merge!(pool)
+          else
+            association_hash[m.name] = [] unless association_hash.has_key?(m.name)
+            association_hash[m.name] += pool.keys
+            association_hash[m.name].uniq!
+          end
         end
         true
       end
     end.flatten.uniq
   end
   return should_return_association_hash ? association_hash : to_return
+end
+
+def assocs(*caribou, **meese)
+  all_models(*caribou, **(meese.merge(association_hash: true)))
 end
 
 def subfolders_of(reldir)

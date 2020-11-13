@@ -73,30 +73,32 @@ class PolicyUser < ApplicationRecord
   def set_first_as_primary
     ref_model = policy.nil? ? policy_application : policy
     if ref_model.policy_users.count == 0
-      self.primary = true  
+      self.primary = true
       self.status = 'accepted'
-    end  
-  end
-     
-  def set_account_user
-    ref_model = policy.nil? ? policy_application : policy
-    policy_type_check = ref_model.policy_type == PolicyType.find_by(id: 4) || 
-                        ref_model.policy_type == PolicyType.find_by(id: 5)
-                        
-    unless policy_type_check && ref_model.account.nil?
-      acct = AccountUser.where(user_id: user.id, account_id: ref_model.account_id).take
-      if acct.nil?
-        AccountUser.create!(user: user, account: ref_model.account)
-      elsif acct.status != 'enabled'
-        acct.update(status: 'enabled')
-      end
     end
   end
+     
+    def set_account_user
+      ref_model = policy.nil? ? policy_application : policy
+			policy_type_check = ref_model.policy_type == PolicyType.find_by(id: 4) || 
+                          ref_model.policy_type == PolicyType.find_by(id: 5)
+                          
+      unless ref_model.account.nil? # commented out so we can support insurables without accounts: && policy_type_check
+        acct = AccountUser.where(user_id: user.id, account_id: ref_model.account_id).take
+        if acct.nil?
+          AccountUser.create!(user: user, account: ref_model.account)
+        elsif acct.status != 'enabled'
+          acct.update(status: 'enabled')
+        else
+          # do nothing
+        end
+      end
+    end
     
   def user_listed_once
     if policy_application
       user_ids = policy_application.users.map(&:id)
-      errors.add(:user, 'Already included on policy or policy application') if user_ids.count(user.id) > 1  
+      errors.add(:user, 'Already included on policy or policy application') if user_ids.count(user.id) > 1
     end
   end
 end
