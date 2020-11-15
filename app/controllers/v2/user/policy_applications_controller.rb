@@ -315,52 +315,50 @@ module V2
       def update_rental_guarantee
         @policy_application = PolicyApplication.find(params[:id])
 
-        if @policy_application.policy_type.title == 'Rent Guarantee'
+        return if @policy_application.policy_type.title != 'Rent Guarantee'
 
-          if @policy_application.update(update_rental_guarantee_params) && @policy_application.update(status: 'complete')
-            update_users_result = PolicyApplications::UpdateUsers.run!(
-              policy_application: @policy_application,
-              policy_users_params: create_policy_users_params[:policy_users_attributes],
-              current_user_email: current_user.email
-            )
-            if update_users_result.success?
-              quote_attempt = @policy_application.pensio_quote
+        if @policy_application.update(update_rental_guarantee_params) && @policy_application.update(status: 'complete')
+          update_users_result = PolicyApplications::UpdateUsers.run!(
+            policy_application: @policy_application,
+            policy_users_params: create_policy_users_params[:policy_users_attributes],
+            current_user_email: current_user.email
+          )
+          if update_users_result.success?
+            quote_attempt = @policy_application.pensio_quote
 
-              if quote_attempt[:success] == true
+            if quote_attempt[:success] == true
 
-                @policy_application.primary_user.set_stripe_id
+              @policy_application.primary_user.set_stripe_id
 
-                @quote = @policy_application.policy_quotes.last
-                results = @quote.generate_invoices_for_term
-                @premium = @quote.policy_premium
+              @quote         = @policy_application.policy_quotes.last
+              invoice_errors = @quote.generate_invoices_for_term
+              @premium       = @quote.policy_premium
 
-                response = {
-                  id: @policy_application.id,
-                  quote: {
-                    id: @policy_application.id,
-                    status: @policy_application.status,
-                    premium: @premium
-                  },
-                  invoices: @quote.invoices.order("due_date ASC"),
-                  user: {
-                    id: @policy_application.primary_user.id,
-                    stripe_id: @policy_application.primary_user.stripe_id
-                  }
+              response = {
+                id: @policy_application.id,
+                quote: {
+                  id: @quote.id,
+                  status: @quote.status,
+                  premium: @premium
+                },
+                invoice_errors: invoice_errors,
+                invoices: @quote.invoices,
+                user: {
+                  id: @policy_application.primary_user.id,
+                  stripe_id: @policy_application.primary_user.stripe_id
                 }
+              }
 
-                render json: response.to_json, status: 200
-              else
-                render json: { error: 'Quote Failed', message: quote_attempt[:message] },
-                       status: 422
-              end
+              render json: response.to_json, status: 200
             else
-              render json: update_users_result.failure, status: 422
+              render json: standard_error(:quote_attempt_failed, quote_attempt[:message]), status: 422
             end
           else
-            render json: @policy_application.errors.to_json,
-                   status: 422
+            render json: update_users_result.failure, status: 422
           end
-         end
+        else
+          render json: @policy_application.errors.to_json, status: 422
+        end
       end
 
       private
