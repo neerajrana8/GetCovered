@@ -19,7 +19,7 @@ class User < ApplicationRecord
                       :set_qbe_id,
                       :identify_segment
   
-	has_many :invoices
+  has_many :invoices, as: :payer
 
   has_many :authored_histories,
            as: :authorable,
@@ -243,6 +243,16 @@ class User < ApplicationRecord
           EmailAddr: self.email
         }
       }
+    }
+  end
+  
+  def get_deposit_choice_occupant_hash(primary: false)
+    {
+      firstName:          self.profile.first_name,
+      lastName:           self.profile.last_name,
+      email:              self.email,
+      principalPhone:     (self.profile.contact_phone || '').tr('^0-9', ''),
+      isPrimaryOccupant:  primary
     }
   end
 

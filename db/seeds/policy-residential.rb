@@ -191,7 +191,7 @@
 		# set application fields & add insurable
 		application.build_from_carrier_policy_type()
 		application.fields[0]["value"] = lease.users.count
-    application.fields[1]["value"] = 1 # installment day
+    application.extra_settings = { "installment_day" => 1 }
 		application.insurables << lease.insurable
     # add lease users
     primary_user = lease.primary_user()

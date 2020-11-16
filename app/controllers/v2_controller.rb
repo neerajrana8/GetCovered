@@ -51,7 +51,9 @@ exit
 
   #private
 
-  def paginator(query)
+  def paginator(data_source, *includes)
+    prequery = build_prequery(data_source, includes, (params[:filter].nil? ? {} : params[:filter].to_unsafe_h).deep_merge(fixed_filters), params[:sort].nil? ? nil : params[:sort].to_unsafe_h)
+    query = build_query(data_source, prequery)
     count = query.count
     per = (params.has_key?(:pagination) && params[:pagination].has_key?(:per)) ? params[:pagination][:per].to_i : default_pagination_per
     per = default_pagination_per if per <= 0 || per > maximum_pagination_per
