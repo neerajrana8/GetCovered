@@ -1,3 +1,5 @@
+#require 'lib/klaviyo/redis_client'
+
 module V2
   module Public
     class LeadEventsController < PublicController
@@ -36,6 +38,7 @@ module V2
             create_params = lead_params
             create_params.merge({tracking_url_id: tracking_url.id}) if tracking_url.present?
             create_params.merge({agency_id: agency.id}) if agency.present?
+
             @lead = Lead.create(create_params)
             Address.create(lead_address_attributes.merge(addressable: @lead)) if lead_address_attributes
             Profile.create(lead_profile_attributes.merge(profileable: @lead)) if lead_profile_attributes
@@ -51,7 +54,8 @@ module V2
           nested_params[:tracking_url_id] = tracking_url.id if tracking_url.present?
           nested_params[:agency_id] = agency.id if agency.present? && @lead.agency_id != agency.id
 
-          if lead_params[:email] != @lead.email
+          @lead.check_identifier
+          if @lead.email.present? && lead_params[:email].present? && lead_params[:email] != @lead.email
             track_status = @klaviyo_helper.process_events("Updated Email", {email: @lead.email, new_email: lead_params[:email]}) do
               @lead.update(email: lead_params[:email])
             end
@@ -68,7 +72,7 @@ module V2
       end
 
       def lead_params
-        params.permit(:email, :identifier, :last_visited_page)
+        params.permit(:email, :identifier, :last_visited_page, :agency_id)
       end
 
       def lead_profile_attributes
@@ -87,14 +91,13 @@ module V2
         end
       end
 
-      # TODO : need to remove agency_id from event and move on ui to lead obj
       def event_params
         data = params[:lead_event_attributes].delete(:data) if params[:lead_event_attributes][:data]
         params.
             require(:lead_event_attributes).
             permit(:tag, :latitude, :longitude, :agency_id, :policy_type_id).tap do |whitelisted|
-          whitelisted[:data] = data.permit!
-        end
+              whitelisted[:data] = data.permit!
+            end
       end
 
     end

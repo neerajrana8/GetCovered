@@ -9,6 +9,7 @@ class PolicyQuote < ApplicationRecord
   include CarrierQbePolicyQuote
   include CarrierCrumPolicyQuote
   include CarrierMsiPolicyQuote
+  include CarrierDcPolicyQuote
   include ElasticsearchSearchable
   include InvoiceableQuote
 
@@ -71,6 +72,8 @@ class PolicyQuote < ApplicationRecord
       crum_bind
     when 'msi'
       msi_bind
+    when 'dc'
+      dc_bind
     else
       { error: 'Error happened with policy bind' }
     end
@@ -109,6 +112,10 @@ class PolicyQuote < ApplicationRecord
           elsif policy_application.policy_type.title == "Rent Guarantee"
             policy_number = bind_request[:data][:policy_number]
             policy_status = "BOUND"
+          elsif policy_application.policy_type.title == "Security Deposit Replacement"
+            policy_number = bind_request[:data][:policy_number]
+            # MOOSE WARNING certificate stuff
+            policy_status = "BOUND"
           end
 
 
@@ -146,8 +153,7 @@ class PolicyQuote < ApplicationRecord
             policy_application.policy_rates.update_all policy_id: policy.id
 
             build_coverages() if policy_application.policy_type.title == "Residential"
-
-            if update(policy: policy) &&
+            if update!(policy: policy) &&
                policy_application.update(policy: policy, status: "accepted") &&
                policy_premium.update(policy: policy)
 
@@ -163,6 +169,7 @@ class PolicyQuote < ApplicationRecord
               logger.error policy.errors.to_json
               logger.error policy_application.errors.to_json
               logger.error policy_premium.errors.to_json
+              logger.error self.errors.to_json
               quote_attempt[:message] = "Error attaching policy to system"
               update status: 'error'
             end
@@ -197,6 +204,8 @@ class PolicyQuote < ApplicationRecord
         { error: 'No build coverages for Pensio' }
       when 'msi'
         msi_build_coverages
+      when 'dc'
+        dc_build_coverages
       else
         { error: 'Error happened with build coverages' }
     end

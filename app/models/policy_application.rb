@@ -10,6 +10,7 @@ class PolicyApplication < ApplicationRecord
   include CarrierCrumPolicyApplication
   include CarrierQbePolicyApplication
   include CarrierMsiPolicyApplication
+  include CarrierDcPolicyApplication
   
   # Active Record Callbacks
   after_initialize :initialize_policy_application
@@ -60,9 +61,7 @@ class PolicyApplication < ApplicationRecord
   
   accepts_nested_attributes_for :policy_users, :policy_rates, :policy_insurables
   
-  validate :same_agency_as_account,
-    unless: proc { |pol| pol.account.nil? }
-  validate :billing_strategy_must_have_same_carrier
+  validate :billing_strategy_agency_and_carrier_correct
   validate :billing_strategy_must_be_enabled
   validate :carrier_agency
   validate :check_residential_question_responses,
@@ -99,7 +98,7 @@ class PolicyApplication < ApplicationRecord
   
   def primary_insurable
     policy_insurable = policy_insurables.where(primary: true).take
-    policy_insurable.insurable.nil? ? nil : policy_insurable.insurable  
+    policy_insurable&.insurable 
   end
   
   # PolicyApplication.primary_insurable
@@ -140,12 +139,8 @@ class PolicyApplication < ApplicationRecord
     throw :must_be_active if insurable_rate.activated != true
   end
 
-  def same_agency_as_account
-    errors.add(:account, 'policy application must belong to the same agency as account') if agency != account.agency
-		errors.add(:billing_strategy, 'billing strategy must belong to the same agency as account') if agency != billing_strategy.agency
-  end
-  
-  def billing_strategy_must_have_same_carrier
+  def billing_strategy_agency_and_carrier_correct
+		errors.add(:billing_strategy, 'billing strategy must belong to the same agency') if agency != billing_strategy.agency
     errors.add(:billing_strategy, 'must be a valid billing strategy for the current carrier') unless billing_strategy.carrier_id == self.carrier_id
   end
 
@@ -155,6 +150,18 @@ class PolicyApplication < ApplicationRecord
 
   def carrier_agency
     errors.add(:carrier, 'carrier agency must exist') unless agency.carriers.include?(carrier)
+    # ensure auth
+    addr = self.primary_insurable&.primary_address
+    unless addr.nil? # skip validation if there is no address, so that PENSIO hack and potential future addressless insurables don't fail 
+      auths = CarrierAgencyAuthorization.references(:carrier_agencies).includes(:carrier_agency)
+                                        .where(
+                                          carrier_agencies: { carrier_id: self.carrier_id, agency_id: self.agency_id },
+                                          policy_type_id: self.policy_type_id,
+                                          state: addr.state,
+                                          available: true
+                                        ) # MOOSE WARNING: add zip_code_blacklist checks?
+      errors.add(:policy_type, 'is not available for this carrier/agency combination') if auths.blank?
+    end
   end
   
   def check_residential_question_responses
