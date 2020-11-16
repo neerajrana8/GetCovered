@@ -4,6 +4,9 @@ class PolicyGroupQuote < ApplicationRecord
 
   belongs_to :policy_application_group
   belongs_to :policy_group, optional: true
+  belongs_to :account, optional: true
+  belongs_to :agency, optional: true
+
   has_one :policy_group_premium
   has_many :policy_applications, through: :policy_application_group
   has_many :policy_quotes

@@ -6,6 +6,7 @@ params = {
   "title"            => "GetCovered",
   "url"              => "getcoveredinsurance.com",
   "default"          => false,
+  "global_default"   => true,
   "styles"           =>
     { "admin"  =>
         { "colors"  =>

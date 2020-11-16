@@ -43,6 +43,7 @@ class Policy < ApplicationRecord
   include CarrierCrumPolicy
   include CarrierQbePolicy
   include CarrierMsiPolicy
+  include CarrierDcPolicy
   include RecordChange
   
   after_create :inherit_policy_coverages, if: -> { policy_type&.designation == 'MASTER-COVERAGE' }
@@ -126,7 +127,6 @@ class Policy < ApplicationRecord
   validate :correct_document_mime_type
   validate :is_allowed_to_update?, on: :update
   validate :residential_account_present
-  validate :same_agency_as_account
   validate :status_allowed
   validate :carrier_agency
   validate :master_policy, if: -> { policy_type&.designation == 'MASTER-COVERAGE' }
@@ -204,14 +204,6 @@ class Policy < ApplicationRecord
     errors.add(:account, 'Account must be specified') if ![4,5].include?(policy_type_id) && account.nil? 
   end
   
-  def same_agency_as_account
-    return unless in_system?
-    
-    if ![4,5].include?(policy_type_id)
-      errors.add(:account, 'policy must belong to the same agency as account') if agency != account&.agency
-    end
-  end
-  
   def carrier_agency
     return unless in_system?
 
@@ -276,6 +268,8 @@ class Policy < ApplicationRecord
       crum_issue_policy
     when 'msi'
       msi_issue_policy
+    when 'dc'
+      dc_issue_policy
     else
       { error: 'Error happened with policy issue' }
     end

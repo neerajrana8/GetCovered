@@ -31,24 +31,93 @@ module V2
             agency_id    = new_residential_params[:agency_id].to_i
             account_id   = new_residential_params[:account_id].to_i
             insurable_id = ((new_residential_params[:policy_insurables_attributes] || []).first || { id: nil })[:id]
-            insurable    = Insurable.where(id: insurable_id).take
-            if insurable.nil?
-              render json:   { error: "Unit not found" },
-                     status: :unprocessable_entity
-              return
+            insurable = nil
+            if !insurable_id.nil? # preferred; grab the insurable
+              insurable    = Insurable.where(id: insurable_id, insurable_type_id: ::InsurableType::RESIDENTIAL_UNITS_IDS, enabled: true).take
+            else # possibly non-preferred; grab or create the insurable
+              # validate inputs
+              if new_residential_params[:address_string].blank?
+                render json: { error: "Insurable id or address string must be provided" },
+                  status: :unprocessable_entity
+                return
+              elsif new_residential_params[:unit_title].blank?
+                render json: { error: "Insurable id or unit title must be provided" },
+                  status: :unprocessable_entity
+              end
+              # grab address
+              address = ::Address.from_string(new_residential_params[:address_string].strip, validate_properties: true)
+              unless address.errors.blank?
+                render json: standard_error(:invalid_address, 'Invalid address value', address.errors.full_messages),
+                       status: 422
+                return
+              end
+              # find or create community/building with the given address
+              found_insurable = ::Insurable.find_from_address(address, { enabled: true, insurable_type_id: ::InsurableType::RESIDENTIAL_COMMUNITIES_IDS | ::InsurableType::RESIDENTIAL_BUILDINGS_IDS }, allow_multiple: true)
+              if found_insurable.count > 1
+                # we prefer a building if there is one, because it's conceivable that a multi-building community could have multiple units with the same title
+                found_insurable = found_insurable.find{|fi| ::InsurableType::RESIDENTIAL_BUILDINGS_IDS.include?(fi.insurable_type_id) } || found_insurable.take
+              else
+                found_insurable = found_insurable.take
+              end
+              if found_insurable.nil?
+                # create the community
+                address.primary = true
+                community = ::Insurable.new(
+                  title: address.combined_street_address,
+                  insurable_type: ::InsurableType.where(title: "Residential Community").take,
+                  enabled: true, preferred_ho4: false, category: 'property',
+                  addresses: [ address ],
+                  account_id: account_id # MOOSE WARNING: change this behavior, account_id will probably be nil
+                )
+                unless community.save
+                  render json: standard_error(:invalid_community, 'Unable to create community from address', community.errors.full_messages),
+                         status: 422
+                  return
+                end
+                found_insurable = community
+              end
+              # find or create the unit
+              insurable = found_insurable.units.find{|u| u.title.downcase == new_residential_params[:unit_title].strip.downcase }
+              if insurable.nil? && !(found_insurable.parent_community || found_insurable).preferred_ho4
+                # create the unit
+                insurable = found_insurable.insurables.new(
+                  title: new_residential_params[:unit_title].strip,
+                  insurable_type: ::InsurableType.where(title: "Residential Unit").take,
+                  enabled: true, category: 'property', preferred_ho4: false,
+                  account: found_insurable.account
+                )
+                unless insurable.save
+                  render json: standard_error(:invalid_unit, 'Unable to create unit from address', insurable.errors.full_messages),
+                         status: 422
+                  return
+                end
+              end
             end
-            # MOOSE WARNING: eventually, use account_id/agency_id to determine which to select when there are multiple
-            cip        = insurable.carrier_insurable_profiles.where(carrier_id: policy_type.carrier_policy_types.map{|cpt| cpt.carrier_id }).order("created_at ASC").take
-            carrier_id = cip&.carrier_id
-            if carrier_id.nil?
-              render json:   { error: "Invalid unit" },
-                     status: :unprocessable_entity
-              return
+            if insurable.nil?
+              render(json: standard_error(:unit_not_found, "Unit not found"), status: :unprocessable_entity) and return
+            end
+            # determine preferred status
+            @preferred = insurable.parent_community.preferred_ho4
+            # get the carrier_id
+            carrier_id = nil
+            if @preferred
+              # MOOSE WARNING: eventually, use account_id/agency_id to determine which to select when there are multiple
+              cip        = insurable.carrier_insurable_profiles.where(carrier_id: policy_type.carrier_policy_types.map{|cpt| cpt.carrier_id }).order("created_at DESC").limit(1).take
+              carrier_id = cip&.carrier_id
+              if carrier_id.nil?
+                render json:   { error: "Invalid unit" },
+                       status: :unprocessable_entity
+                return
+              end
+            else
+              carrier_id = 5
             end
           elsif selected_policy_type == "commercial"
             carrier_id = 3
           elsif selected_policy_type == 'rent-guarantee'
             carrier_id = 4
+          elsif selected_policy_type == 'security-deposit-replacement'
+            carrier_id = DepositChoiceService.carrier_id
           end
 
           carrier = Carrier.find(carrier_id)
@@ -58,6 +127,9 @@ module V2
           @primary_user = ::User.new
           @application.users << @primary_user
 
+          if selected_policy_type == "residential"
+            @application.insurables << insurable
+          end
         else
           render json:   standard_error(:invalid_policy_type, 'Invalid policy type'),
                  status: :unprocessable_entity
@@ -65,119 +137,37 @@ module V2
       end
 
       def create
-        case params[:policy_application][:policy_type_id]
-        when 1
-          create_residential
-        when 4
-          create_commercial
-        when 5
-          create_rental_guarantee
+        if request.headers.key?("token-key") && request.headers.key?("token-secret")
+
+          if check_api_access()
+            if params[:policy_application][:policy_type_id] == 1 ||
+               params[:policy_application][:policy_type_id] == 5
+              create_from_external
+            else
+              render json: standard_error(:invalid_policy_type, 'Invalid policy type'), status: 422
+            end
+          else
+            render json: standard_error(:authentication, 'Invalid Auth Key'), status: 401
+          end
         else
-          render json: standard_error(:invalid_policy_type, 'Invalid policy type'), status: 422
+          case params[:policy_application][:policy_type_id]
+          when 1
+            create_residential
+          when 4
+            create_commercial
+          when 5
+            create_rental_guarantee
+          when 6
+            create_security_deposit_replacement
+          else
+            render json: standard_error(:invalid_policy_type, 'Invalid policy type'), status: 422
+          end
         end
       end
 
       def rent_guarantee_complete
         PolicyApplications::RentGuaranteeMailer.with(policy_application: @policy_application).invite_to_pay.deliver_later
         render json: { message: 'Instructions were sent' }
-      end
-
-      def create_policy_users
-        error_status = []
-
-        create_policy_users_params[:policy_users_attributes].each_with_index do |policy_user, index|
-          if ::User.where(email: policy_user[:user_attributes][:email]).exists?
-
-            @user = ::User.find_by_email(policy_user[:user_attributes][:email])
-
-            if @user.invitation_accepted_at? == false
-              @user.update(policy_user[:user_attributes])
-              @user.profile.update(policy_user[:user_attributes][:profile_attributes])
-            end
-
-            if index == 0
-              if @user.invitation_accepted_at? == false
-                @application.users << @user
-                error_status << false
-              else
-                render(json: standard_error(
-                               :auth_error,
-                               'A User has already signed up with this email address.  Please log in to complete your application'
-                             ).to_json, status: 401) && return
-              end                
-            else
-              @application.users << @user
-            end
-
-            if policy_user[:user_attributes][:address_attributes]
-              if @user.address.nil?
-                @user.create_address(
-                  street_number: policy_user[:user_attributes][:address_attributes][:street_number],
-                  street_name:   policy_user[:user_attributes][:address_attributes][:street_name],
-                  street_two:    policy_user[:user_attributes][:address_attributes][:street_two],
-                  city:          policy_user[:user_attributes][:address_attributes][:city],
-                  state:         policy_user[:user_attributes][:address_attributes][:state],
-                  country:       policy_user[:user_attributes][:address_attributes][:country],
-                  county:        policy_user[:user_attributes][:address_attributes][:county],
-                  zip_code:      policy_user[:user_attributes][:address_attributes][:zip_code]
-                )
-              else
-
-                tmp_full = Address.new(policy_user[:user_attributes][:address_attributes]).set_full_searchable
-
-                if @user.address.full_searchable != tmp_full
-                  render(json: {
-                    error: :address_mismatch,
-                    message: 'The mailing address associated with this email is different than the one supplied in the recent request.  To change your address please log in'
-                  }.to_json, status: 401) and return
-                end
-              end
-            end
-          else
-            secure_tmp_password = SecureRandom.base64(12)
-            policy_user_params  = {
-              spouse:          policy_user[:spouse] || false,
-              user_attributes: {
-                email:                 policy_user[:user_attributes][:email],
-                password: secure_tmp_password,
-                password_confirmation: secure_tmp_password,
-                profile_attributes:    {
-                  first_name:    policy_user[:user_attributes][:profile_attributes][:first_name],
-                  last_name:  policy_user[:user_attributes][:profile_attributes][:last_name],
-                  job_title:  policy_user[:user_attributes][:profile_attributes][:job_title],
-                  contact_phone: policy_user[:user_attributes][:profile_attributes][:contact_phone],
-                  birth_date:    policy_user[:user_attributes][:profile_attributes][:birth_date],
-                  salutation:    policy_user[:user_attributes][:profile_attributes][:salutation],
-                  gender:        policy_user[:user_attributes][:profile_attributes][:gender]
-                }
-              }
-            }
-            if policy_user[:user_attributes][:address_attributes]
-              policy_user_params[:user_attributes][:address_attributes] = {
-                street_number: policy_user[:user_attributes][:address_attributes][:street_number],
-                street_name:   policy_user[:user_attributes][:address_attributes][:street_name],
-                street_two:    policy_user[:user_attributes][:address_attributes][:street_two],
-                city:          policy_user[:user_attributes][:address_attributes][:city],
-                state:         policy_user[:user_attributes][:address_attributes][:state],
-                country:       policy_user[:user_attributes][:address_attributes][:country],
-                county:        policy_user[:user_attributes][:address_attributes][:county],
-                zip_code:      policy_user[:user_attributes][:address_attributes][:zip_code]
-              }
-            end
-
-            policy_user = @application.policy_users.create(policy_user_params)
-            if policy_user.errors.any?
-              render(
-                json: standard_error(:user_creation_error, "User can't be created", policy_user.errors.full_messages),
-                status: 422
-              ) and return
-            end
-
-            policy_user.user.invite!(nil, policy_application: @application) if index.zero?
-          end
-        end
-
-        error_status.include?(true) ? false : true
       end
 
       def validate_policy_users_params
@@ -198,22 +188,70 @@ module V2
       end
 
       def create_rental_guarantee
-
         @application        = PolicyApplication.new(create_rental_guarantee_params)
-
+        @application.expiration_date = @application.effective_date&.send(:+, 1.year)
         @application.agency = Agency.where(master_agency: true).take if @application.agency.nil?
-
         @application.billing_strategy = BillingStrategy.where(agency:      @application.agency,
                                                               policy_type: @application.policy_type).take
 
+        validate_applicant_result =
+          PolicyApplications::ValidateApplicantsParameters.run!(
+            policy_users_params: create_policy_users_params[:policy_users_attributes]
+          )
+        if validate_applicant_result.failure?
+          render(json: validate_applicant_result.failure, status: 401) && return
+        end
+
         if @application.save
+          if @application.update(status: 'in_progress')
+            LeadEvents::LinkPolicyApplicationUsers.run!(policy_application: @application)
+            render 'v2/public/policy_applications/show'
+          else
+            render json: standard_error(:policy_application_update_error, nil, @application.errors),
+                   status: 422
+          end
+        else
+          # Rental Guarantee Application Save Error
+          render json: standard_error(:policy_application_update_error, nil, @application.errors),
+                 status: 422
+        end
+      end
+
+      def create_from_external
+        place_holder_date = Time.now + 1.day
+        policy_type = params[:policy_application][:policy_type_id]
+        init_hash = {
+            :agency => @access_token.bearer,
+            :policy_type => PolicyType.find(policy_type),
+            :carrier => policy_type == 1 ? Carrier.find(5) : Carrier.find(4),
+            :account => policy_type == 1 ? Account.first : nil,
+            :effective_date => place_holder_date,
+            :expiration_date => place_holder_date + 1.year
+        }
+
+        site = Rails.application.credentials[:uri][Rails.env.to_sym][:client]
+        program = policy_type == 1 ? "residential" : "rentguarantee"
+
+        @application = PolicyApplication.new(init_hash)
+        @application.build_from_carrier_policy_type
+        @application.billing_strategy = BillingStrategy.where(agency:      @application.agency,
+                                                              policy_type: @application.policy_type,
+                                                              carrier: @application.carrier).take
+
+        if policy_type == 5
+          params["policy_application"]["fields"].keys.each do |key|
+            @application.fields[key] = params["policy_application"]["fields"][key]
+          end
+        end
+
+        if @application.save
+          @redirect_url = "#{ site }/#{program}/#{ @application.id }"
           if create_policy_users
             if @application.update(status: 'in_progress')
-              invite_primary_user(@application)
-              render 'v2/public/policy_applications/show'
+              render 'v2/public/policy_applications/show_external'
             else
               render json: standard_error(:policy_application_update_error, nil, @application.errors),
-                     status: 422          
+                     status: 422
             end
           end
         else
@@ -224,8 +262,8 @@ module V2
       end
 
       def create_commercial
-
         @application        = PolicyApplication.new(create_commercial_params)
+        @application.expiration_date = @application.effective_date&.send(:+, 1.year)
         @application.agency = Agency.where(master_agency: true).take if @application.agency.nil?
 
         @application.billing_strategy = BillingStrategy.where(agency:      @application.agency,
@@ -234,11 +272,13 @@ module V2
                                                               title:       'Annually').take
 
         if @application.save
-          if create_policy_users
+          update_users_result =
+            PolicyApplications::UpdateUsers.run!(
+              policy_application: @application,
+              policy_users_params: create_policy_users_params[:policy_users_attributes]
+            )
+          if update_users_result.success?
             if @application.update(status: 'complete')
-              # Commercial Application Saved
-              invite_primary_user(@application)
-
               quote_attempt = @application.crum_quote
 
               if quote_attempt[:success] == true
@@ -280,6 +320,8 @@ module V2
               render json:   standard_error(:policy_application_update_error, nil, @application.errors),
                      status: 422
             end
+          else
+            render json: update_users_result.failure, status: 422
           end
         else
           # Commercial Application Save Error
@@ -289,9 +331,69 @@ module V2
         end
       end
 
-      def create_residential
+      def create_security_deposit_replacement
+        # set up the application
+        @application = PolicyApplication.new(create_security_deposit_replacement_params)
+        if @application.agency.nil? && @application.account.nil?
+          @application.agency = Agency.where(master_agency: true).take
+        elsif @application.agency.nil?
+          @application.agency = @application.account.agency
+        end
+        @application.billing_strategy = BillingStrategy.where(carrier_id: DepositChoiceService.carrier_id).take if @application.billing_strategy.nil? # WARNING: there should only be one (annual) right now
+        @application.expiration_date = @application.effective_date + 1.year unless @application.effective_date.nil?
+        # try to save
+        unless @application.save
+          render json: standard_error(:policy_application_save_error, nil, @application.errors),
+                 status: 422
+          return
+        end
+        # try to quote application
+        if create_policy_users
+          # update status to complete
+          LeadEvents::LinkPolicyApplicationUsers.run!(policy_application: @application)
+          unless @application.update(status: 'complete')
+            render json: standard_error(:policy_application_save_error, nil, @application.errors),
+                   status: 422
+            return
+          end
+          # create quote
+          @application.estimate()
+          @quote = @application.policy_quotes.order('created_at DESC').limit(1).first
+          unless @application.status != "quote_failed" || @application.status != "quoted" # MOOSE WARNING: we should really fix this 100% pointless if statement... it's also broken in residential...
+            render json: standard_error(:policy_application_unavailable, 'Application cannot be quoted at this time'),
+                   status: 400
+            return
+          end
+          @application.quote(@quote.id)
+          @application.reload
+          @quote.reload
+          unless @quote.status == "quoted"
+            render json: standard_error(:quote_failed, 'Quote could not be processed at this time'),
+                   status: 500
+            return
+          end
+          # return nice stuff
+          render json:  {
+                         id:       @application.id,
+                         quote: {
+                           id:      @quote.id,
+                           status: @quote.status,
+                           premium: @quote.policy_premium
+                         },
+                         invoices: @quote.invoices.order('due_date ASC'),
+                         user:     {
+                           id:        @application.primary_user.id,
+                           stripe_id: @application.primary_user.stripe_id
+                         }
+                       }.to_json, status: 200
+          return
+        end
+      end
 
+      def create_residential
         @application = PolicyApplication.new(create_residential_params)
+        @application.expiration_date = @application.effective_date&.send(:+, 1.year)
+
         unless @application.coverage_selections.blank?
           @application.coverage_selections.each do |cs|
             if [ActionController::Parameters, ActiveSupport::HashWithIndifferentAccess, ::Hash].include?(cs['selection'].class)
@@ -312,10 +414,15 @@ module V2
         end
 
         if @application.save
-          if create_policy_users
-            LeadEvents::LinkPolicyApplicationUsers.run!(policy_application: @application)
+          update_users_result =
+            PolicyApplications::UpdateUsers.run!(
+              policy_application: @application,
+              policy_users_params: create_policy_users_params[:policy_users_attributes]
+            )
+
+          if update_users_result.success?
             if @application.update status: 'complete'
-  
+
               # if application.status updated to complete
               @application.estimate()
               @quote = @application.policy_quotes.order('created_at DESC').limit(1).first
@@ -359,6 +466,8 @@ module V2
               render json: standard_error(:policy_application_save_error, nil, @application.errors),
                      status: 422
             end
+          else
+            render json: update_users_result.failure, status: 422
           end
         else
           render json: standard_error(:policy_application_save_error, nil, @application.errors),
@@ -367,7 +476,7 @@ module V2
       end
 
       def update
-        case params[:policy_application][:policy_type_id]
+        case params[:policy_application][:policy_type_id].to_i
         when 1
           update_residential
         when 5
@@ -383,7 +492,9 @@ module V2
         if @policy_application.policy_type.title == 'Residential'
 
           @policy_application.policy_rates.destroy_all
-
+          if update_residential_params[:effective_date].present?
+            @policy_application.expiration_date = update_residential_params[:effective_date].to_date&.send(:+, 1.year)
+          end
           if @policy_application.update(update_residential_params) &&
             @policy_application.update(status: 'complete')
 
@@ -425,20 +536,23 @@ module V2
             end
           else
             render json: standard_error(:policy_application_update_error, nil, @policy_application.errors),
-                   status: 422  
+                   status: 422
           end
         end
       end
 
       def update_rental_guarantee
         @policy_application = PolicyApplication.find(params[:id])
-
-        if @policy_application.policy_type.title == 'Rent Guarantee'
-
-          if @policy_application.update(update_rental_guarantee_params) &&
-            update_policy_user(@policy_application) &&
-            @policy_application.update(status: 'complete')
-
+        if update_residential_params[:effective_date].present?
+          @policy_application.expiration_date = update_residential_params[:effective_date].to_date&.send(:+, 1.year)
+        end
+        if @policy_application.update(update_rental_guarantee_params) && @policy_application.update(status: 'complete')
+          update_users_result =
+            PolicyApplications::UpdateUsers.run!(
+              policy_application: @policy_application,
+              policy_users_params: create_policy_users_params[:policy_users_attributes]
+            )
+          if update_users_result.success?
             quote_attempt = @policy_application.pensio_quote
 
             if quote_attempt[:success] == true
@@ -470,21 +584,66 @@ module V2
               render json: standard_error(:quote_attempt_failed, quote_attempt[:message]),
                      status: 422
             end
-
           else
-            render json:   standard_error(:policy_application_update_error, nil, @policy_application.errors),
-                   status: 422
+            render json: update_users_result.failure, status: 422
           end
+        else
+          render json:   standard_error(:policy_application_update_error, nil, @policy_application.errors),
+                 status: 422
         end
       end
 
       def get_coverage_options
-        @msi_id                                  = 5
+        case (get_coverage_options_params[:carrier_id] || MsiService.carrier_id).to_i # we set the default to MSI for now since the form doesn't require a carrier_id input yet for this request
+          when MsiService.carrier_id
+            msi_get_coverage_options
+          when DepositChoiceService.carrier_id
+            deposit_choice_get_coverage_options
+          else
+            render json:   { error: "invalid carrier_id/policy_type_id combination #{get_coverage_options_params[:carrier_id] || 'NULL'}/#{get_coverage_options_params[:policy_type_id] || 'NULL'}" },
+                   status: :unprocessable_entity
+        end
+      end
+
+      def deposit_choice_get_coverage_options
+        @residential_unit_insurable_type_id = 4
+        # validate params
+        inputs = deposit_choice_get_coverage_options_params
+        if inputs[:insurable_id].nil?
+          render json:   { error: "insurable_id cannot be blank" },
+                 status: :unprocessable_entity
+          return
+        end
+        if inputs[:effective_date].nil?
+          render json:   { error: "effective_date cannot be blank" },
+                 status: :unprocessable_entity
+          return
+        end
+        # pull unit from db
+        unit = Insurable.where(id: inputs[:insurable_id].to_i).take
+        if unit.nil? || unit.insurable_type_id != @residential_unit_insurable_type_id
+          render json:   { error: "unit not found" },
+                 status: :unprocessable_entity
+          return
+        end
+        # get coverage options
+        result = unit.dc_get_rates(Date.parse(inputs[:effective_date]))
+        unless result[:success]
+          render json:   { error: "There are no security deposit replacement plans available for this property (error code #{result[:event]&.id || 0})" },
+                 status: :unprocessable_entity
+          return
+        end
+        render json: { coverage_options: result[:rates] },
+               status: 200
+      end
+
+      def msi_get_coverage_options
+        @msi_id                                  = MsiService.carrier_id
         @residential_community_insurable_type_id = 1
         @residential_unit_insurable_type_id      = 4
         @ho4_policy_type_id                      = 1
         # grab params and validate 'em
-        inputs = get_coverage_options_params
+        inputs = msi_get_coverage_options_params
         if inputs[:insurable_id].nil?
           render json:   { error: "insurable_id cannot be blank" },
                  status: :unprocessable_entity
@@ -541,10 +700,10 @@ module V2
                  status: :unprocessable_entity
           return
         end
-        # grab community and make sure it's registered with msi
+        # grab community
         community = unit.parent_community
-        cip       = CarrierInsurableProfile.where(carrier_id: @msi_id, insurable_id: community&.id).take
-        if cip.nil? || cip.external_carrier_id.nil?
+        cip       = CarrierInsurableProfile.where(carrier_id: @msi_id, insurable_id: community&.id).take # possibly nil, for non-preferred
+        if community.nil?
           render json:   { error: "community not found" },
                  status: :unprocessable_entity
           return
@@ -562,7 +721,7 @@ module V2
         # get coverage options
         results                    = ::InsurableRateConfiguration.get_coverage_options(
           @msi_id,
-          cip,
+          cip || unit.primary_address,
           [{ 'category' => 'coverage', 'options_type' => 'none', 'uid' => '1010', 'selection' => true }] + (
             (inputs[:coverage_selections] || []).map{|cs| { 'category' => cs[:category], 'uid' => cs[:uid].to_s, 'selection' => [ActionController::Parameters, ActiveSupport::HashWithIndifferentAccess, ::Hash].include?(cs[:selection].class) ? (cs[:selection][:data_type] == 'currency' ? (cs[:selection][:value].to_d / 100.to_d) : cs[:selection][:value]) : cs[:selection] } }
           ),
@@ -570,7 +729,15 @@ module V2
           inputs[:additional_insured].to_i,
           billing_strategy_code,
           perform_estimate: inputs[:estimate_premium] ? true : false,
-          eventable:        unit
+          eventable:        unit,
+          **(cip ? {} : {
+            nonpreferred_final_premium_params: {
+              number_of_units: inputs[:number_of_units].to_i,
+              years_professionally_managed: inputs[:years_professionally_managed].to_i,
+              year_built: inputs[:year_built].to_i,
+              gated: inputs[:gated].nil? ? nil : inputs[:gated] ? true : false
+            }.compact
+          })
         )
         results[:coverage_options] = results[:coverage_options].select{|co| co['uid'] != '1010' && co['uid'] != 1010 }.map{|co| co['options'].blank? ? co : co.merge({'options' => co['options'].map{|v| { 'value' => v, 'data_type' => co['uid'].to_s == '3' && v.to_d == 500 ? 'currency' : co['options_format'] } }.map{|h| h['value'] = (h['value'].to_d * 100).to_i if h['data_type'] == 'currency'; h }}) }
         #results[:coverage_options] = results[:coverage_options].sort_by { |co| co["title"] }.group_by do |co|
@@ -587,28 +754,20 @@ module V2
 
       private
 
-      # Only for fixing the issue with not saving address on the rent guarantee form
-      def update_policy_user(policy_application)
-        user = policy_application.primary_user
+      def check_api_access
+        key = request.headers["token-key"]
+        secret = request.headers["token-secret"]
+        pass = false
 
-        policy_user_params = create_policy_users_params[:policy_users_attributes].first
-
-        if user.present? && policy_user_params.present?
-          user.update(policy_user_params[:user_attributes])
-          return false if user.errors.any?
+        unless key.nil? || secret.nil?
+          @access_token = AccessToken.find_by_key(key)
+          if !@access_token.nil? &&
+            @access_token.check_secret(secret)
+            pass = true
+          end
         end
 
-        true
-      end
-
-      def invite_primary_user(policy_application)
-        primary_user = policy_application.primary_user
-        if primary_user.invitation_accepted_at.nil? &&
-          (primary_user.invitation_created_at.blank? || primary_user.invitation_created_at < 1.days.ago) &&
-          policy_application.policy_type_id != PolicyType::RENT_GUARANTEE_ID
-
-          @application.primary_user.invite!(nil, policy_application: @application)
-        end
+        return pass
       end
 
       def view_path
@@ -623,24 +782,28 @@ module V2
       def new_residential_params
         params.require(:policy_application)
           .permit(:agency_id, :account_id, :policy_type_id,
-                  policy_insurables_attributes: [:id])
+                  :address_string, :unit_title, # for non-preferred
+                  policy_insurables_attributes: [:id]) # for preferred
       end
 
       def create_residential_params
         params.require(:policy_application)
-          .permit(:effective_date, :expiration_date, :auto_pay,
+          .permit(:effective_date, :auto_pay,
                   :auto_renew, :billing_strategy_id, :account_id, :policy_type_id,
                   :carrier_id, :agency_id, fields: [:title, :value, options: []],
                   questions:                       [:title, :value, options: []],
                   coverage_selections: [:category, :uid, :selection, selection: [ :data_type, :value ]],
-                  extra_settings: [:installment_day],
+                  extra_settings: [
+                    # for MSI
+                    :installment_day, :number_of_units, :years_professionally_managed, :year_built, :gated
+                  ],
                   policy_rates_attributes:         [:insurable_rate_id],
                   policy_insurables_attributes:    [:insurable_id])
       end
 
       def create_commercial_params
         params.require(:policy_application)
-          .permit(:effective_date, :expiration_date, :auto_pay,
+          .permit(:effective_date, :auto_pay,
                   :auto_renew, :billing_strategy_id, :account_id, :policy_type_id,
                   :carrier_id, :agency_id, fields: {},
                   questions:                       [:text, :value, :questionId, options: [], questions: [:text, :value, :questionId, options: []]])
@@ -648,9 +811,21 @@ module V2
 
       def create_rental_guarantee_params
         params.require(:policy_application)
-          .permit(:effective_date, :expiration_date, :auto_pay,
+          .permit(:effective_date, :auto_pay,
                   :auto_renew, :billing_strategy_id, :account_id, :policy_type_id,
                   :carrier_id, :agency_id, fields: {})
+      end
+
+
+      def create_security_deposit_replacement_params
+        params.require(:policy_application)
+          .permit(:effective_date, :expiration_date, :auto_pay,
+                  :auto_renew, :billing_strategy_id, :account_id, :policy_type_id,
+                  :carrier_id, :agency_id, fields: [:title, :value, options: []],
+                  questions:                       [:title, :value, options: []],
+                  coverage_selections: [:bondAmount, :ratedPremium, :processingFee, :totalCost],
+                  policy_rates_attributes:         [:insurable_rate_id],
+                  policy_insurables_attributes:    [:insurable_id])
       end
 
       def create_policy_users_params
@@ -672,24 +847,33 @@ module V2
 
       def update_residential_params
         params.require(:policy_application)
-          .permit(policy_rates_attributes:      [:insurable_rate_id],
+          .permit(:effective_date, policy_rates_attributes:      [:insurable_rate_id],
                   policy_insurables_attributes: [:insurable_id])
       end
 
       def update_rental_guarantee_params
         params.require(:policy_application)
-          .permit(:fields, fields: {})
+          .permit(:effective_date, :fields, fields: {})
       end
 
       def get_coverage_options_params
+        params.permit(:carrier_id, :policy_type_id)
+      end
+
+      def deposit_choice_get_coverage_options_params
+        params.permit(:insurable_id, :effective_date)
+      end
+
+      def msi_get_coverage_options_params
         params.permit(:insurable_id, :agency_id, :billing_strategy_id,
                       :effective_date, :additional_insured,
                       :estimate_premium,
+                      :number_of_units, :years_professionally_managed, :year_built, :gated, # nonpreferred stuff
                       coverage_selections: [:category, :uid, :selection, selection: [ :data_type, :value ]])
       end
 
       def valid_policy_types
-        return ["residential", "commercial", "rent-guarantee"]
+        return ["residential", "commercial", "rent-guarantee", "security-deposit-replacement"]
       end
 
     end

@@ -10,6 +10,7 @@ class PolicyType < ApplicationRecord
   MASTER_COVERAGE_ID = 3
   COMMERCIAL_ID = 4
   RENT_GUARANTEE_ID = 5
+  SECURITY_DEPOSIT_REPLACEMENT_ID = 6
 
   after_initialize :initialize_policy_type
   
