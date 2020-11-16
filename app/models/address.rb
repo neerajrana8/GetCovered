@@ -35,6 +35,9 @@ class Address < ApplicationRecord
 	before_create :set_first_as_primary
 
   after_validation :geocode
+  
+  after_save :refresh_insurable_policy_type_ids,
+    if: Proc.new{|addr| addr.addressable_type == "Insurable" }
 
   belongs_to :addressable,
     polymorphic: true,
@@ -68,6 +71,22 @@ class Address < ApplicationRecord
 
   def as_indexed_json(options={})
     as_json(options).merge location: { lat: latitude, lon: longitude }
+  end
+  
+  def self.from_string(dat_strang, validate_properties: true)
+    address = Address.new(full: dat_strang)
+    parsed_address = StreetAddress::US.parse(dat_strang)
+    if parsed_address.nil?
+      address.errors.add(:address_string, "could not be parsed; must be a valid address")
+      return address
+    end
+    address.from_full
+    ['street_number', 'street_name', 'city', 'state', 'zip_code'].each do |prop|
+      if address.send(prop).blank?
+        address.errors.add(prop.to_sym, "is invalid")
+      end
+    end
+    return address
   end
 
   # Address.full_street_address
@@ -117,7 +136,7 @@ class Address < ApplicationRecord
             when 'city'
               self.city = parsed_address.city
             when 'state'
-              self.state = parsed_address.city
+              self.state = parsed_address.state
             when 'zip_code'
               self.zip_code = parsed_address.postal_code
             when 'plus_four'
@@ -182,7 +201,13 @@ class Address < ApplicationRecord
 	    }
 	  })
 	end
-
+  
+  def self.separate_street_number(address_line_one)
+    splat = address_line_one.strip.split(" ").map{|x| x.strip }
+    return false if splat.length == 1
+    [splat[0], splat.drop(1).join(" ")]
+  end
+  
   def get_msi_addr(include_line2 = true)
     {
       Addr1: self.combined_street_address,
@@ -190,6 +215,11 @@ class Address < ApplicationRecord
       StateProvCd: self.state,
       PostalCode: self.zip_code
     }.merge(include_line2 ? { Addr2: street_two.blank? ? nil : street_two } : {})
+  end
+  
+  def refresh_insurable_policy_type_ids
+    # update policy type ids (in case a newly created or changed address alters which policy types an insurable supports)
+    self.addressable&.refresh_policy_type_ids(and_save: true)
   end
 
 end

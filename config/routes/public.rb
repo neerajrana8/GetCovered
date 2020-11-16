@@ -12,7 +12,13 @@ post 'qbe/communities/show',
 scope module: :public do
 
   resources :addresses,
-  	only: [:index]
+  	only: [:index] do
+      collection do
+        post '/get-units',
+          to: 'addresses#get_units',
+          as: :get_units
+      end
+    end
 
   resources :billing_strategies,
     path: "billing-strategies",

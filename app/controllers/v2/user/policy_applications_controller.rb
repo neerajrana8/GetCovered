@@ -38,82 +38,6 @@ module V2
         end
       end
 
-      def create_policy_users
-        error_status = []
-        create_policy_users_params[:policy_users_attributes].each_with_index do |policy_user, index|
-          user = ::User.where(email: policy_user[:user_attributes][:email]).take
-          if user.present? && user == current_user
-            user.update(policy_user[:user_attributes])
-            user.profile.update(policy_user[:user_attributes][:profile_attributes])
-            address_attributes =policy_user[:user_attributes][:address_attributes]
-            if address_attributes.present?
-              if user.address.present?
-                user.address.update(policy_user[:user_attributes][:address_attributes])
-              else
-                Address.create(policy_user[:user_attributes][:address_attributes].merge(addressable: user))
-              end
-            end
-
-            @application.users << user
-          elsif user.present?
-            if index.zero?
-              render(json: {
-                error: 'User Account Exists',
-                message: 'A User has already signed up with this email address.  Please log in to complete your application'
-              }.to_json, status: 401) && return
-
-              error_status << true
-              break
-            else
-              @application.users << user
-            end
-          else
-            secure_tmp_password = SecureRandom.base64(12)
-            policy_user_params = {
-              spouse: policy_user[:spouse] || false,
-              user_attributes: {
-                email: policy_user[:user_attributes][:email],
-                password: secure_tmp_password,
-                password_confirmation: secure_tmp_password,
-                profile_attributes: {
-                  first_name: policy_user[:user_attributes][:profile_attributes][:first_name],
-                  last_name: policy_user[:user_attributes][:profile_attributes][:last_name],
-                  job_title: policy_user[:user_attributes][:profile_attributes][:job_title],
-                  contact_phone: policy_user[:user_attributes][:profile_attributes][:contact_phone],
-                  birth_date: policy_user[:user_attributes][:profile_attributes][:birth_date],
-                  salutation: policy_user[:user_attributes][:profile_attributes][:salutation],
-                  gender: policy_user[:user_attributes][:profile_attributes][:gender]
-                }
-              }
-            }
-
-            if policy_user[:user_attributes][:address_attributes]
-              policy_user_params[:user_attributes][:address_attributes] = {
-                street_number: policy_user[:user_attributes][:address_attributes][:street_number],
-                street_name: policy_user[:user_attributes][:address_attributes][:street_name],
-                street_two: policy_user[:user_attributes][:address_attributes][:street_two],
-                city: policy_user[:user_attributes][:address_attributes][:city],
-                state: policy_user[:user_attributes][:address_attributes][:state],
-                country: policy_user[:user_attributes][:address_attributes][:country],
-                county: policy_user[:user_attributes][:address_attributes][:county],
-                zip_code: policy_user[:user_attributes][:address_attributes][:zip_code]
-              }
-            end
-
-            policy_user = @application.policy_users.create(policy_user_params)
-            if policy_user.errors.any?
-              render(
-                json: standard_error(:user_creation_error, "User can't be created", policy_user.errors.full_messages),
-                status: 422
-              ) and return
-            end
-
-            policy_user.user.invite! if index.zero? && @application.policy_type_id != PolicyType::RENT_GUARANTEE_ID
-          end
-        end
-        error_status.include?(true) ? false : true
-      end
-
       def create_rental_guarantee
         @application = PolicyApplication.new(create_rental_guarantee_params)
 
@@ -122,14 +46,32 @@ module V2
         @application.billing_strategy = BillingStrategy.where(agency: @application.agency,
                                                               policy_type: @application.policy_type).take
 
+        validate_applicant_result =
+          PolicyApplications::ValidateApplicantsParameters.run!(
+            policy_users_params: create_policy_users_params[:policy_users_attributes],
+            current_user_email: current_user.email
+          )
+        if validate_applicant_result.failure?
+          render(json: validate_applicant_result.failure, status: 401) && return
+        end
+
         if @application.save
-          if create_policy_users
+          update_users_result =
+            PolicyApplications::UpdateUsers.run!(
+              policy_application: @application,
+              policy_users_params: create_policy_users_params[:policy_users_attributes],
+              current_user_email: current_user.email
+            )
+
+          if update_users_result.success?
             if @application.update(status: 'in_progress')
               render 'v2/public/policy_applications/show'
             else
               render json: @application.errors.to_json,
                      status: 422
-              end
+            end
+          else
+            render json: update_users_result.failure, status: 422
           end
         else
           # Rental Guarantee Application Save Error
@@ -147,45 +89,55 @@ module V2
                                                               title: 'Annually').take
 
         if @application.save
-          if create_policy_users && @application.update(status: 'complete')
-            # Commercial Application Saved
+          update_users_result =
+            PolicyApplications::UpdateUsers.run!(
+              policy_application: @application,
+              policy_users_params: create_policy_users_params[:policy_users_attributes],
+              current_user_email: current_user.email
+            )
+          if update_users_result.success?
+            if @application.update(status: 'complete')
+              # Commercial Application Saved
 
-            quote_attempt = @application.crum_quote
+              quote_attempt = @application.crum_quote
 
-            if quote_attempt[:success] == true
+              if quote_attempt[:success] == true
 
-              @application.primary_user.set_stripe_id
+                @application.primary_user.set_stripe_id
 
-              @quote = @application.policy_quotes.last
-              @quote.generate_invoices_for_term
-              @premium = @quote.policy_premium
+                @quote = @application.policy_quotes.last
+                @quote.generate_invoices_for_term
+                @premium = @quote.policy_premium
 
-              response = {
-                id: @application.id,
-                quote: {
-                  id: @quote.id,
-                  status: @quote.status,
-                  premium: @premium
-                },
-                invoices: @quote.invoices.order("due_date ASC"),
-                user: {
-                  id: @application.primary_user.id,
-                  stripe_id: @application.primary_user.stripe_id
-                },
-                billing_strategies: []
-              }
+                response = {
+                  id: @application.id,
+                  quote: {
+                    id: @quote.id,
+                    status: @quote.status,
+                    premium: @premium
+                  },
+                  invoices: @quote.invoices.order("due_date ASC"),
+                  user: {
+                    id: @application.primary_user.id,
+                    stripe_id: @application.primary_user.stripe_id
+                  },
+                  billing_strategies: []
+                }
 
-              if @premium.base >= 500_000
-                BillingStrategy.where(agency: @application.agency_id, policy_type: @application.policy_type).each do |bs|
-                  response[:billing_strategies] << { id: bs.id, title: bs.title }
+                if @premium.base >= 500_000
+                  BillingStrategy.where(agency: @application.agency_id, policy_type: @application.policy_type).each do |bs|
+                    response[:billing_strategies] << { id: bs.id, title: bs.title }
+                  end
                 end
+
+                render json: response.to_json, status: 200
+
+              else
+                render json: { error: 'Quote Failed', message: quote_attempt[:message] },
+                       status: 422
               end
-
-              render json: response.to_json, status: 200
-
             else
-              render json: { error: 'Quote Failed', message: quote_attempt[:message] },
-                     status: 422
+              render json: update_users_result.failure, status: 422
             end
           else
             render json: @application.errors.to_json,
@@ -202,7 +154,8 @@ module V2
 
       def create_residential
         @application = PolicyApplication.new(create_residential_params)
-        if @application.carrier_id == 5 
+        @application.expiration_date = @application.effective_date&.send(:+, 1.year)
+        if @application.carrier_id == 5
           if !@application.effective_date.nil? && (@application.effective_date >= Time.current.to_date + 90.days || @application.effective_date < Time.current.to_date)
             render json: { "effective_date" => ["must be within the next 90 days"] }.to_json,
                    status: 422
@@ -229,50 +182,60 @@ module V2
         end
 
         if @application.save
-          if create_policy_users && @application.update(status: 'complete')
-            # if application.status updated to complete
-            @application.estimate()
-            @quote = @application.policy_quotes.order('created_at DESC').limit(1).first
-            if @application.status != 'quote_failed' || @application.status != 'quoted'
-              # if application quote success or failure
-              @application.quote(@quote.id)
-              @application.reload
-              @quote.reload
+          update_users_result =
+            PolicyApplications::UpdateUsers.run!(
+              policy_application: @application,
+              policy_users_params: create_policy_users_params[:policy_users_attributes],
+              current_user_email: current_user.email
+            )
+          if update_users_result.success?
+            if @application.update(status: 'complete')
+              # if application.status updated to complete
+              @application.estimate()
+              @quote = @application.policy_quotes.order('created_at DESC').limit(1).first
+              if @application.status != 'quote_failed' || @application.status != 'quoted'
+                # if application quote success or failure
+                @application.quote(@quote.id)
+                @application.reload
+                @quote.reload
 
-              if @quote.status == 'quoted'
+                if @quote.status == 'quoted'
 
-                @application.primary_user.set_stripe_id
+                  @application.primary_user.set_stripe_id
 
-                render json: {
-                  id: @application.id,
-                  quote: {
-                    id: @quote.id,
-                    status: @quote.status,
-                    premium: @quote.policy_premium
-                  },
-                  invoices: @quote.invoices.order('due_date ASC'),
-                  user: {
-                    id: @application.primary_user.id,
-                    stripe_id: @application.primary_user.stripe_id
-                  }
-                }.merge(@application.carrier_id != 5 ? {} : {
-                  'policy_fee' => @quote.carrier_payment_data['policy_fee'],
-                  'installment_fee' => @quote.carrier_payment_data['installment_fee'],
-                  'installment_total' => @quote.carrier_payment_data['installment_total']
-                }).to_json, status: 200
+                  render json: {
+                    id: @application.id,
+                    quote: {
+                      id: @quote.id,
+                      status: @quote.status,
+                      premium: @quote.policy_premium
+                    },
+                    invoices: @quote.invoices.order('due_date ASC'),
+                    user: {
+                      id: @application.primary_user.id,
+                      stripe_id: @application.primary_user.stripe_id
+                    }
+                  }.merge(@application.carrier_id != 5 ? {} : {
+                    'policy_fee' => @quote.carrier_payment_data['policy_fee'],
+                    'installment_fee' => @quote.carrier_payment_data['installment_fee'],
+                    'installment_total' => @quote.carrier_payment_data['installment_total']
+                  }).to_json, status: 200
 
+                else
+                  render json: { error: 'Quote Failed', message: 'Quote could not be processed at this time' },
+                         status: 500
+                end
               else
-                render json: { error: 'Quote Failed', message: 'Quote could not be processed at this time' },
-                       status: 500
+                render json: { error: 'Application Unavailable', message: 'Application cannot be quoted at this time' },
+                       status: 400
               end
-            else
-              render json: { error: 'Application Unavailable', message: 'Application cannot be quoted at this time' },
-                     status: 400
-            end
 
+            else
+              render json: @application.errors.to_json,
+                     status: 422
+            end
           else
-            render json: @application.errors.to_json,
-                   status: 422
+            render json: update_users_result.failure, status: 422
           end
         else
           render json: @application.errors.to_json,
@@ -300,7 +263,9 @@ module V2
         if @policy_application.policy_type.title == 'Residential'
 
           @policy_application.policy_rates.destroy_all
-
+          if update_residential_params[:effective_date].present?
+            @policy_application.expiration_date = update_residential_params[:effective_date].to_date&.send(:+, 1.year)
+          end
           if @policy_application.update(update_residential_params) &&
              @policy_application.update(status: 'complete')
 
@@ -353,30 +318,34 @@ module V2
       def update_rental_guarantee
         @policy_application = PolicyApplication.find(params[:id])
 
-        if @policy_application.policy_type.title == 'Rent Guarantee'
+        return if @policy_application.policy_type.title != 'Rent Guarantee'
 
-          if @policy_application.update(update_rental_guarantee_params) &&
-             update_policy_user(@policy_application) &&
-             @policy_application.update(status: 'complete')
-
+        if @policy_application.update(update_rental_guarantee_params) && @policy_application.update(status: 'complete')
+          update_users_result = PolicyApplications::UpdateUsers.run!(
+            policy_application: @policy_application,
+            policy_users_params: create_policy_users_params[:policy_users_attributes],
+            current_user_email: current_user.email
+          )
+          if update_users_result.success?
             quote_attempt = @policy_application.pensio_quote
 
             if quote_attempt[:success] == true
 
               @policy_application.primary_user.set_stripe_id
 
-              @quote = @policy_application.policy_quotes.last
-              results = @quote.generate_invoices_for_term
-              @premium = @quote.policy_premium
+              @quote         = @policy_application.policy_quotes.last
+              invoice_errors = @quote.generate_invoices_for_term
+              @premium       = @quote.policy_premium
 
               response = {
                 id: @policy_application.id,
                 quote: {
-                  id: @policy_application.id,
-                  status: @policy_application.status,
+                  id: @quote.id,
+                  status: @quote.status,
                   premium: @premium
                 },
-                invoices: @quote.invoices.order("due_date ASC"),
+                invoice_errors: invoice_errors,
+                invoices: @quote.invoices,
                 user: {
                   id: @policy_application.primary_user.id,
                   stripe_id: @policy_application.primary_user.stripe_id
@@ -384,34 +353,18 @@ module V2
               }
 
               render json: response.to_json, status: 200
-
             else
-              render json: { error: 'Quote Failed', message: quote_attempt[:message] },
-                     status: 422
+              render json: standard_error(:quote_attempt_failed, quote_attempt[:message]), status: 422
             end
-
           else
-            render json: @policy_application.errors.to_json,
-                   status: 422
+            render json: update_users_result.failure, status: 422
           end
-         end
+        else
+          render json: @policy_application.errors.to_json, status: 422
+        end
       end
 
       private
-
-      # Only for fixing the issue with not saving address on the rent guarantee form
-      def update_policy_user(policy_application)
-        user = policy_application.primary_user
-
-        policy_user_params = create_policy_users_params[:policy_users_attributes].first
-
-        if user.present? && policy_user_params.present?
-          user.update(policy_user_params[:user_attributes])
-          return false if user.errors.any?
-        end
-
-        true
-      end
 
       def view_path
         super + '/policy_applications'
@@ -464,7 +417,7 @@ module V2
       def create_policy_users_params
         params.require(:policy_application)
           .permit(policy_users_attributes: [
-                    :spouse, user_attributes: [
+                    :spouse, :primary, user_attributes: [
                       :email, profile_attributes: %i[
                         first_name last_name job_title
                         contact_phone birth_date gender salutation
@@ -479,7 +432,7 @@ module V2
 
       def update_residential_params
         params.require(:policy_application)
-          .permit(:effective_date, :expiration_date,
+          .permit(:effective_date,
                   :billing_strategy_id, fields: {},
                   policy_rates_attributes: [:insurable_rate_id],
                   policy_insurables_attributes: [:insurable_id])
@@ -487,7 +440,7 @@ module V2
 
       def update_rental_guarantee_params
         params.require(:policy_application)
-          .permit(:fields, fields: {})
+          .permit(:fields, :effective_date, fields: {})
       end
 
       def supported_filters(called_from_orders = false)

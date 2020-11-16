@@ -30,25 +30,25 @@ class Fee < ApplicationRecord
 			base = base * payment_count
 		end
 
-		return base
+    base
   end
   
   private
     
-    def prevent_amortize_of_per_payment_fees
-      errors.add(:amortize, "cannot be selected for a fee charged on every payment") if per_payment? && amortize? 
-    end
+  def prevent_amortize_of_per_payment_fees
+    errors.add(:amortize, 'cannot be selected for a fee charged on every payment') if per_payment? && amortize? 
+  end
     
-    def ownerable_and_assignable_match_up
-      case [self.assignable_type, self.ownerable_type]
-        when ['CarrierPolicyTypeAvailability', 'Carrier']
-          errors.add(:assignable, "must belong to the same carrier") unless self.assignable.carrier_policy_type&.carrier_id == self.ownerable_id
-        when ['CarrierAgencyAuthorization', 'Agency']
-          errors.add(:assignable, "must belong to the same agency") unless self.assignable.carrier_agency.agency_id == self.ownerable_id
-        when ['BillingStrategy', 'Agency']
-          errors.add(:assignable, "must belong to the same agency") unless self.assignable.agency_id == self.ownerable_id
-        else
-          # WARNING: do nothing for now, but maybe throw an error for an invalid type selection if sure no other combinations are allowed
-      end
+  def ownerable_and_assignable_match_up
+    case [assignable_type, ownerable_type]
+    when %w[CarrierPolicyTypeAvailability Carrier]
+      errors.add(:assignable, 'must belong to the same carrier') unless assignable.carrier_policy_type&.carrier_id == ownerable_id
+    when %w[CarrierAgencyAuthorization Agency]
+      errors.add(:assignable, 'must belong to the same agency') unless assignable.carrier_agency.agency_id == ownerable_id
+    when %w[BillingStrategy Agency]
+      errors.add(:assignable, 'must belong to the same agency') unless assignable.agency_id == ownerable_id
+    else
+      # WARNING: do nothing for now, but maybe throw an error for an invalid type selection if sure no other combinations are allowed
     end
+  end
 end

@@ -5,6 +5,8 @@
 class CarrierAgencyAuthorization < ApplicationRecord
   include Blacklistable
   
+  after_save :refresh_insurable_policy_type_ids
+  
   belongs_to :carrier_agency
   belongs_to :policy_type
 
@@ -49,9 +51,20 @@ class CarrierAgencyAuthorization < ApplicationRecord
         policy_type_available.
           carrier_policy_type_availabilities.
           find_by_state(state)
-      errors.add(:carrier_agency, 'policy type should be activated') unless policy_type_availability.try(:available?)
+      errors.add(:carrier_agency, "policy type should be activated") unless policy_type_availability.try(:available?)
     else
       errors.add(:carrier_agency, 'policy type should be available')
+    end
+  end
+  
+  def refresh_insurable_policy_type_ids
+    # get addresses for insurables that may need updating and update them
+    query_base = ::Address.joins("INNER JOIN insurables ON insurables.id = addresses.addressable_id")
+    query_base.where(insurables: { account_id: ::Account.where(agency_id: self.carrier_agency.agency_id).order(:id).group(:id).pluck(:id) })
+              .or(query_base.where.not(insurables: { agency_id: self.carrier_agency.agency_id }))
+              .where(state: self.state, addressable_type: "Insurable")
+              .each do |addr|
+      addr.refresh_insurable_policy_type_ids
     end
   end
 end

@@ -9,7 +9,7 @@ Retrieve an array of models targed by a given reflection (`belongs_to :staff` ta
   reflection_targets(Profile.reflections["profileable"])                # returns array of all the models which have an association as: :profileable
   reflection_targets("Profile#profileable")                             # you can also pass a string
 
-Retrieve a { model_name => [association_name,...] } hash of all associations satisfying criteria:
+Retrieve a { model_name => [association_name,...] } hash of all associations satisfying criteria (replace the returned array with a hash whose keys are the association names and whose values are the corresponding rails reflection objects by passing return_reflections: true):
 
   all_models(association: "profileable", association_hash: true)                                      # associations called "profileable"
   all_models(association: { name: "profileable" }, association_hash: true)                            # also associations called "profileable"
@@ -27,6 +27,10 @@ The association_hash: true option causes all_models to return an association has
 
   all_models(association: { polymorphic: true })                                                      # return array of models which have the desired association, don't bother making an association hash
   h = {}; all_models(association: { polymorphic: true }, association_hash: h)                         # return array of models which have the desired association, store the association hash in h
+
+There is an alias to all_models with association_hash: true; call 'assocs' instead:
+
+  assocs(association: "profileable")                                                                  # associations called "profileable"
 
 Find files/lines where a given condition is satisfied (have your block return an integer to specify a column, or any truthy value to just say the line satisfied your constraints):
 
