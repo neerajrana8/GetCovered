@@ -11,6 +11,7 @@ class Staff < ApplicationRecord
   include RecordChange
   include DeviseTokenAuth::Concerns::User
   include ElasticsearchSearchable
+  include SessionRecordable
   
   enum role: { staff: 0, agent: 1, owner: 2, super_admin: 3 }
   
