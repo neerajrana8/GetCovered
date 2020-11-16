@@ -200,6 +200,7 @@ module V2
 
       def create_residential
         @application = PolicyApplication.new(create_residential_params)
+        @application.expiration_date = @application.effective_date&.send(:+, 1.year)
         if @application.carrier_id == 5 
           if !@application.effective_date.nil? && (@application.effective_date >= Time.current.to_date + 90.days || @application.effective_date < Time.current.to_date)
             render json: { "effective_date" => ["must be within the next 90 days"] }.to_json,
@@ -298,7 +299,9 @@ module V2
         if @policy_application.policy_type.title == 'Residential'
 
           @policy_application.policy_rates.destroy_all
-
+          if update_residential_params[:effective_date].present?
+            @policy_application.expiration_date = update_residential_params[:effective_date].to_date&.send(:+, 1.year)
+          end
           if @policy_application.update(update_residential_params) &&
              @policy_application.update(status: 'complete')
 
@@ -477,7 +480,7 @@ module V2
 
       def update_residential_params
         params.require(:policy_application)
-          .permit(:effective_date, :expiration_date,
+          .permit(:effective_date,
                   :billing_strategy_id, fields: {},
                   policy_rates_attributes: [:insurable_rate_id],
                   policy_insurables_attributes: [:insurable_id])
@@ -485,7 +488,7 @@ module V2
 
       def update_rental_guarantee_params
         params.require(:policy_application)
-          .permit(:fields, fields: {})
+          .permit(:fields, :effective_date, fields: {})
       end
 
       def supported_filters(called_from_orders = false)
