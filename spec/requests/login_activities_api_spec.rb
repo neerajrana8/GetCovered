@@ -9,6 +9,7 @@ describe 'Login Activities API spec', type: :request do
   context 'for Staff roles' do
     before(:all) do
       @staff = FactoryBot.create(:staff, role: :super_admin)
+      LoginActivity.all.destroy_all
     end
 
     it 'should view login activities index json' do
