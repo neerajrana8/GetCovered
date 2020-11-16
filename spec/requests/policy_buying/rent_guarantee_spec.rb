@@ -232,7 +232,7 @@ describe 'Policy buying' do
         expect(policy_application.status).to eq('in_progress')
 
         # Update Policy
-        put("/v2/policy-applications/#{policy_application_id}", params: params[:update_policy_application], headers: headers)
+        put("/v2/user/policy-applications/#{policy_application_id}", params: params[:update_policy_application], headers: headers.merge(@auth_headers))
         expect(response.status).to eq(200)
         response_json      = JSON.parse(response.body)
         policy_application = PolicyApplication.find(policy_application_id)

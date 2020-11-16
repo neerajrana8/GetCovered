@@ -170,101 +170,6 @@ module V2
         render json: { message: 'Instructions were sent' }
       end
 
-      def create_policy_users
-        error_status = []
-
-        create_policy_users_params[:policy_users_attributes].each_with_index do |policy_user, index|
-          if ::User.where(email: policy_user[:user_attributes][:email]).exists?
-            @user = ::User.find_by_email(policy_user[:user_attributes][:email])
-
-            if @user.invitation_accepted_at? == false
-              @user.update(policy_user[:user_attributes])
-              @user.profile.update(policy_user[:user_attributes][:profile_attributes])
-            end
-
-            if index == 0
-              if @user.invitation_accepted_at? == false
-                @application.users << @user
-                error_status << false
-              else
-                render(json: standard_error(
-                               :auth_error,
-                               'A User has already signed up with this email address.  Please log in to complete your application'
-                             ).to_json, status: 401) && return
-              end
-            else
-              @application.users << @user
-            end
-
-            if policy_user[:user_attributes][:address_attributes]
-              if @user.address.nil?
-                @user.create_address(
-                  street_number: policy_user[:user_attributes][:address_attributes][:street_number],
-                  street_name:   policy_user[:user_attributes][:address_attributes][:street_name],
-                  street_two:    policy_user[:user_attributes][:address_attributes][:street_two],
-                  city:          policy_user[:user_attributes][:address_attributes][:city],
-                  state:         policy_user[:user_attributes][:address_attributes][:state],
-                  country:       policy_user[:user_attributes][:address_attributes][:country],
-                  county:        policy_user[:user_attributes][:address_attributes][:county],
-                  zip_code:      policy_user[:user_attributes][:address_attributes][:zip_code]
-                )
-              else
-
-                tmp_full = Address.new(policy_user[:user_attributes][:address_attributes]).set_full_searchable
-
-                if @user.address.full_searchable != tmp_full
-                  render(json: {
-                    error: :address_mismatch,
-                    message: 'The mailing address associated with this email is different than the one supplied in the recent request.  To change your address please log in'
-                  }.to_json, status: 401) and return
-                end
-              end
-            end
-          else
-            secure_tmp_password = SecureRandom.base64(12)
-            policy_user_params  = {
-              spouse:          policy_user[:spouse] || false,
-              user_attributes: {
-                email:                 policy_user[:user_attributes][:email],
-                password: secure_tmp_password,
-                password_confirmation: secure_tmp_password,
-                profile_attributes:    {
-                  first_name:    policy_user[:user_attributes][:profile_attributes][:first_name],
-                  last_name:  policy_user[:user_attributes][:profile_attributes][:last_name],
-                  job_title:  policy_user[:user_attributes][:profile_attributes][:job_title],
-                  contact_phone: policy_user[:user_attributes][:profile_attributes][:contact_phone],
-                  birth_date:    policy_user[:user_attributes][:profile_attributes][:birth_date],
-                  salutation:    policy_user[:user_attributes][:profile_attributes][:salutation],
-                  gender:        policy_user[:user_attributes][:profile_attributes][:gender]
-                }
-              }
-            }
-            if policy_user[:user_attributes][:address_attributes]
-              policy_user_params[:user_attributes][:address_attributes] = {
-                street_number: policy_user[:user_attributes][:address_attributes][:street_number],
-                street_name:   policy_user[:user_attributes][:address_attributes][:street_name],
-                street_two:    policy_user[:user_attributes][:address_attributes][:street_two],
-                city:          policy_user[:user_attributes][:address_attributes][:city],
-                state:         policy_user[:user_attributes][:address_attributes][:state],
-                country:       policy_user[:user_attributes][:address_attributes][:country],
-                county:        policy_user[:user_attributes][:address_attributes][:county],
-                zip_code:      policy_user[:user_attributes][:address_attributes][:zip_code]
-              }
-            end
-
-            policy_user = @application.policy_users.create(policy_user_params)
-            if policy_user.errors.any?
-              render(
-                json: standard_error(:user_creation_error, "User can't be created", policy_user.errors.full_messages),
-                status: 422
-              ) and return
-            end
-          end
-        end
-
-        error_status.include?(true) ? false : true
-      end
-
       def validate_policy_users_params
         users_emails =
           create_policy_users_params[:policy_users_attributes].
@@ -283,23 +188,27 @@ module V2
       end
 
       def create_rental_guarantee
-
         @application        = PolicyApplication.new(create_rental_guarantee_params)
         @application.expiration_date = @application.effective_date&.send(:+, 1.year)
         @application.agency = Agency.where(master_agency: true).take if @application.agency.nil?
-
         @application.billing_strategy = BillingStrategy.where(agency:      @application.agency,
                                                               policy_type: @application.policy_type).take
 
+        validate_applicant_result =
+          PolicyApplications::ValidateApplicantsParameters.run!(
+            policy_users_params: create_policy_users_params[:policy_users_attributes]
+          )
+        if validate_applicant_result.failure?
+          render(json: validate_applicant_result.failure, status: 401) && return
+        end
+
         if @application.save
-          if create_policy_users
-            if @application.update(status: 'in_progress')
-              LeadEvents::LinkPolicyApplicationUsers.run!(policy_application: @application)
-              render 'v2/public/policy_applications/show'
-            else
-              render json: standard_error(:policy_application_update_error, nil, @application.errors),
-                     status: 422
-            end
+          if @application.update(status: 'in_progress')
+            LeadEvents::LinkPolicyApplicationUsers.run!(policy_application: @application)
+            render 'v2/public/policy_applications/show'
+          else
+            render json: standard_error(:policy_application_update_error, nil, @application.errors),
+                   status: 422
           end
         else
           # Rental Guarantee Application Save Error
@@ -353,7 +262,6 @@ module V2
       end
 
       def create_commercial
-
         @application        = PolicyApplication.new(create_commercial_params)
         @application.expiration_date = @application.effective_date&.send(:+, 1.year)
         @application.agency = Agency.where(master_agency: true).take if @application.agency.nil?
@@ -364,7 +272,12 @@ module V2
                                                               title:       'Annually').take
 
         if @application.save
-          if create_policy_users
+          update_users_result =
+            PolicyApplications::UpdateUsers.run!(
+              policy_application: @application,
+              policy_users_params: create_policy_users_params[:policy_users_attributes]
+            )
+          if update_users_result.success?
             if @application.update(status: 'complete')
               quote_attempt = @application.crum_quote
 
@@ -407,6 +320,8 @@ module V2
               render json:   standard_error(:policy_application_update_error, nil, @application.errors),
                      status: 422
             end
+          else
+            render json: update_users_result.failure, status: 422
           end
         else
           # Commercial Application Save Error
@@ -499,7 +414,13 @@ module V2
         end
 
         if @application.save
-          if create_policy_users
+          update_users_result =
+            PolicyApplications::UpdateUsers.run!(
+              policy_application: @application,
+              policy_users_params: create_policy_users_params[:policy_users_attributes]
+            )
+
+          if update_users_result.success?
             if @application.update status: 'complete'
 
               # if application.status updated to complete
@@ -545,6 +466,8 @@ module V2
               render json: standard_error(:policy_application_save_error, nil, @application.errors),
                      status: 422
             end
+          else
+            render json: update_users_result.failure, status: 422
           end
         else
           render json: standard_error(:policy_application_save_error, nil, @application.errors),
@@ -620,15 +543,16 @@ module V2
 
       def update_rental_guarantee
         @policy_application = PolicyApplication.find(params[:id])
-
-        if @policy_application.policy_type.title == 'Rent Guarantee'
-          if update_residential_params[:effective_date].present?
-            @policy_application.expiration_date = update_residential_params[:effective_date].to_date&.send(:+, 1.year)
-          end
-          if @policy_application.update(update_rental_guarantee_params) &&
-            update_policy_user(@policy_application) &&
-            @policy_application.update(status: 'complete')
-
+        if update_residential_params[:effective_date].present?
+          @policy_application.expiration_date = update_residential_params[:effective_date].to_date&.send(:+, 1.year)
+        end
+        if @policy_application.update(update_rental_guarantee_params) && @policy_application.update(status: 'complete')
+          update_users_result =
+            PolicyApplications::UpdateUsers.run!(
+              policy_application: @policy_application,
+              policy_users_params: create_policy_users_params[:policy_users_attributes]
+            )
+          if update_users_result.success?
             quote_attempt = @policy_application.pensio_quote
 
             if quote_attempt[:success] == true
@@ -660,14 +584,15 @@ module V2
               render json: standard_error(:quote_attempt_failed, quote_attempt[:message]),
                      status: 422
             end
-
           else
-            render json:   standard_error(:policy_application_update_error, nil, @policy_application.errors),
-                   status: 422
+            render json: update_users_result.failure, status: 422
           end
+        else
+          render json:   standard_error(:policy_application_update_error, nil, @policy_application.errors),
+                 status: 422
         end
       end
-      
+
       def get_coverage_options
         case (get_coverage_options_params[:carrier_id] || MsiService.carrier_id).to_i # we set the default to MSI for now since the form doesn't require a carrier_id input yet for this request
           when MsiService.carrier_id
@@ -679,7 +604,7 @@ module V2
                    status: :unprocessable_entity
         end
       end
-      
+
       def deposit_choice_get_coverage_options
         @residential_unit_insurable_type_id = 4
         # validate params
@@ -837,26 +762,12 @@ module V2
         unless key.nil? || secret.nil?
           @access_token = AccessToken.find_by_key(key)
           if !@access_token.nil? &&
-              @access_token.check_secret(secret)
+            @access_token.check_secret(secret)
             pass = true
           end
         end
 
         return pass
-      end
-
-      # Only for fixing the issue with not saving address on the rent guarantee form
-      def update_policy_user(policy_application)
-        user = policy_application.primary_user
-
-        policy_user_params = create_policy_users_params[:policy_users_attributes].first
-
-        if user.present? && policy_user_params.present?
-          user.update(policy_user_params[:user_attributes])
-          return false if user.errors.any?
-        end
-
-        true
       end
 
       def view_path
@@ -904,7 +815,7 @@ module V2
                   :auto_renew, :billing_strategy_id, :account_id, :policy_type_id,
                   :carrier_id, :agency_id, fields: {})
       end
-      
+
 
       def create_security_deposit_replacement_params
         params.require(:policy_application)
@@ -948,7 +859,7 @@ module V2
       def get_coverage_options_params
         params.permit(:carrier_id, :policy_type_id)
       end
-      
+
       def deposit_choice_get_coverage_options_params
         params.permit(:insurable_id, :effective_date)
       end
