@@ -114,6 +114,7 @@ gem 'ruby-prof', require: false
 gem 'addressable'
 gem 'analytics-ruby', '~> 2.0.0', :require => 'segment/analytics'
 gem 'klaviyo'
+gem 'dry-monads'
 
 group :development, :test, :test_container do
   # Call 'byebug' anywhere in the code to stop execution and get a debugger console
