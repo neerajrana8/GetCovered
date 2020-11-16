@@ -3,7 +3,7 @@ class LeadEvent < ApplicationRecord
   belongs_to :policy_type, optional: true
 
   after_create :update_lead_last_visit
-  after_create :update_lead_last_visited_page, if: -> {self.data["last_visited_page"].present?}
+  after_create :update_lead_last_visited_page, if: -> {self.data["last_visited_page"].present? && self.data["last_visited_page"] != self.lead.last_visited_page}
   after_create :update_lead_agency, if: -> { self.agency_id.present? && self.agency_id != self.lead.agency_id }
   after_create :update_lead_phone, if: -> {self.data["phone"].present? && self.data["phone"] != self.lead.profile.contact_phone}
   after_create :update_lead_organization, if: -> {self.data["employer_name"].present? && self.data["employer_name"] != self.lead.profile.title}
