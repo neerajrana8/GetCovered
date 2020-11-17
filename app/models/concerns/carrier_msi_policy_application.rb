@@ -68,6 +68,7 @@ module CarrierMsiPolicyApplication
           self.users.count - 1,
           self.billing_strategy.carrier_code,
           nonpreferred_final_premium_params: {
+            address_line_two: "Unit #{unit.title}",
             number_of_units: self.extra_settings&.[]('number_of_units'),
             years_professionally_managed: self.extra_settings&.[]('years_professionally_managed'),
             year_built: self.extra_settings&.[]('year_built'),

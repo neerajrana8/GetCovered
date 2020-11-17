@@ -61,8 +61,9 @@ module V2
           create_if_ambiguous: get_or_create_params[:create_if_ambiguous],
           disallow_creation: get_or_create_params[:disallow_creation],
           communities_only: get_or_create_params[:communities_only],
-          diagnostics: diagnostics
-          # Omitted params: created_community_title, account_id
+          diagnostics: diagnostics,
+          
+          account_id: Account.where(slug: 'nonpreferred-residential').take&.id # MOOSE WARNING: fix this if we aren't sticking with this weird dummy account
         }.compact)
         case result
           when ::NilClass

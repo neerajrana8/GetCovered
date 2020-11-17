@@ -294,7 +294,7 @@ class Insurable < ApplicationRecord
             title: unit_title,
             insurable_type: ::InsurableType.where(title: "Residential Unit").take,
             enabled: true, category: 'property', preferred_ho4: false,
-            account_id: result.account_id || community.account_id || nil # MOOSE WARNING: nil account id allowed?
+            account_id: account_id || result.account_id || community.account_id || nil # MOOSE WARNING: nil account id allowed?
           )
           unless unit.save
             return { error_type: :invalid_unit, message: "Unable to create unit", details: unit.errors.full_messages }
@@ -407,7 +407,7 @@ class Insurable < ApplicationRecord
               insurable_type: ::InsurableType.where(title: "Residential Community").take,
               enabled: true, preferred_ho4: false, category: 'property',
               addresses: [ address ],
-              account_id: nil # MOOSE WARNING: nil account_id???
+              account_id: account_id # MOOSE WARNING: nil account_id???
             )
             unless parent.save
              return { error_type: :invalid_community, message: "Unable to create community from address", details: parent.errors.full_messages }
@@ -422,7 +422,7 @@ class Insurable < ApplicationRecord
             title: unit_title,
             insurable_type: ::InsurableType.where(title: "Residential Unit").take,
             enabled: true, category: 'property', preferred_ho4: false,
-            account_id: parent.account_id || nil # MOOSE WARNING: nil account id allowed?
+            account_id: account_id || parent.account_id || nil # MOOSE WARNING: nil account id allowed?
           )
           unless unit.save
             return { error_type: :invalid_unit, message: "Unable to create unit", details: unit.errors.full_messages }
@@ -495,11 +495,11 @@ class Insurable < ApplicationRecord
           address.id = nil
           address.primary = true
           created = ::Insurable.new(
-              title: created_created_title || address.combined_street_address,
+              title: created_community_title || address.combined_street_address,
               insurable_type: ::InsurableType.where(title: parent.nil? ? "Residential Community" : "Residential Building").take,
               enabled: true, preferred_ho4: false, category: 'property',
               addresses: [ address ],
-              account_id: parent&.account_id || nil # MOOSE WARNING: nil account_id???
+              account_id: account_id || parent&.account_id || nil # MOOSE WARNING: nil account_id???
             )
           unless created.save
            return { error_type: :"invalid_#{parent.nil? ? 'community' : 'building'}", message: "Unable to create #{parent.nil? ? 'community' : 'building'} from address", details: created.errors.full_messages }
