@@ -50,6 +50,43 @@ module V2
       end
       
       
+      
+            
+      def get_or_create
+        diagnostics = {}
+        result = ::Insurable.get_or_create(**{
+          address: get_or_create_params[:address],
+          unit: get_or_create_params[:unit],
+          insurable_id: get_or_create_params[:insurable_id].to_i == 0 ? nil : get_or_create_params[:insurable_id].to_i,
+          create_if_ambiguous: get_or_create_params[:create_if_ambiguous],
+          disallow_creation: get_or_create_params[:disallow_creation],
+          communities_only: get_or_create_params[:communities_only],
+          diagnostics: diagnostics,
+          
+          account_id: Account.where(slug: 'nonpreferred-residential').take&.id # MOOSE WARNING: fix this if we aren't sticking with this weird dummy account
+        }.compact)
+        case result
+          when ::NilClass
+            render json: {
+              results_type: 'no_match',
+              results: nil
+            }, status: 200
+          when ::Insurable
+            render json: {
+              results_type: 'confirmed_match',
+              results: insurable_prejson(result)
+            }, status: 200
+          when ::Array
+            render json: {
+              results_type: 'possible_match',
+              results: result.map{|r| insurable_prejson(r) }
+            }, status: 200
+          when ::Hash
+            render json: standard_error(result[:error_type], result[:message], result[:details]),
+              status: 422
+        end
+      end
+      
       private
       
         def view_path
@@ -85,6 +122,55 @@ module V2
           params.require(:policy_application)
             .permit(policy_rates_attributes:      [:insurable_rate_id],
                     policy_insurables_attributes: [:insurable_id])
+        end
+        
+        def get_or_create_params
+          params.permit(:address, :unit, :insurable_id, :create_if_ambiguous, :disallow_creation, :communities_only)
+        end
+        
+        # output stuff with essentially the same format as in the Address search
+        def insurable_prejson(ins, short_mode: false)
+          case ins
+            when ::Insurable
+              if ::InsurableType::RESIDENTIAL_UNITS_IDS.include?(ins.insurable_type_id)
+                com = ins.parent_community unless short_mode
+                return {
+                  id: ins.id, title: ins.title,
+                  account_id: ins.account_id, agency_id: ins.agency_id, insurable_type_id: ins.insurable_type_id
+                }.merge(short_mode ? {} : {
+                  enabled: ins.enabled, preferred_ho4: com&.preferred_ho4 || false,
+                  category: ins.category, primary_address: insurable_prejson(ins.primary_address),
+                  community: insurable_prejson(com, short_mode: true)
+                }).compact
+              elsif ::InsurableType::RESIDENTIAL_COMMUNITIES_IDS.include?(ins.insurable_type_id)
+                return {
+                  id: ins.id, title: ins.title, enabled: ins.enabled, preferred_ho4: ins.preferred_ho4,
+                  account_id: ins.account_id, agency_id: ins.agency_id, insurable_type_id: ins.insurable_type_id
+                }.merge(short_mode ? {} : {
+                  category: ins.category, primary_address: insurable_prejson(ins.primary_address),
+                  units: ins.preferred_ho4 ? ins.units.select{|u| u.enabled }.map{|u| { id: u.id, title: u.title } } : nil
+                }).compact
+              elsif ::InsurableType::RESIDENTIAL_BUILDINGS_IDS.include?(ins.insurable_type_id)
+                com = ins.parent_community
+                return {
+                  id: ins.id, title: ins.title,
+                  account_id: ins.account_id, agency_id: ins.agency_id, insurable_type_id: ins.insurable_type_id,
+                }.merge(short_mode ? {} : {
+                  enabled: ins.enabled, preferred_ho4: com&.preferred_ho4 || false,
+                  category: ins.category, primary_address: insurable_prejson(ins.primary_address),
+                  units: com&.preferred_ho4 ? ins.units.select{|u| u.enabled }.map{|u| { id: u.id, title: u.title } } : nil, # WARNING: we don't bother recursing with short mode here
+                  community: insurable_prejson(com, short_mode: true)
+                }).compact
+              else
+                return nil
+              end
+            when ::Address
+              return {
+                full: ins.full, street_number: ins.street_number, street_name: ins.street_name, street_two: ins.street_two, city: ins.city, state: ins.state, zip_code: ins.zip_code
+              }
+            else
+              return nil
+          end
         end
         
     end

@@ -246,6 +246,25 @@ class User < ApplicationRecord
     }
   end
   
+  def get_confie_general_party_info
+    {
+      NameInfo: {
+        PersonName: {
+          GivenName:  self.profile.first_name,
+          Surname:    self.profile.last_name
+        }
+      },
+      Communications: {
+        PhoneInfo: { # WARNING: do we need CommunicationUseCd or the other nonsense we don't have?
+          PhoneNumber: (self.profile.contact_phone || '').tr('^0-9', '')
+        },
+        EmailInfo: {
+          EmailAddr: self.email
+        }
+      } # WARNING: should we add an address?
+    }
+  end
+  
   def get_deposit_choice_occupant_hash(primary: false)
     {
       firstName:          self.profile.first_name,

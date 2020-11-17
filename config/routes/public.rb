@@ -12,13 +12,7 @@ post 'qbe/communities/show',
 scope module: :public do
 
   resources :addresses,
-  	only: [:index] do
-      collection do
-        post '/get-units',
-          to: 'addresses#get_units',
-          as: :get_units
-      end
-    end
+  	only: [:index]
 
   resources :billing_strategies,
     path: "billing-strategies",
@@ -43,6 +37,11 @@ scope module: :public do
 				path: 'rates',
 				only: [:index]
 	  end
+    collection do
+      post '/get-or-create',
+        to: 'insurables#get_or_create',
+        as: :get_or_create
+    end
   end
 
   post '/msi/unit-list',

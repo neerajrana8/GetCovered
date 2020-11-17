@@ -139,6 +139,25 @@ class Account < ApplicationRecord
     }
   end
   
+  def get_confie_general_party_info
+    {
+      NameInfo: {
+        CommlName: {
+          CommercialName: self.title.strip,
+          SupplementaryNameInfo: nil #{
+            #SupplementaryNameCd: "DBA",
+            #SupplementaryName: self.title.strip
+          #} # enable if needed
+        }.compact
+      },
+      Communications: { # feel free to add phone number here just like we do for user#get_confie_general_party_info
+        EmailInfo: {
+          EmailAddr: gotten_email
+        }
+      }
+    }
+  end
+  
   private
     
     def initialize_agency

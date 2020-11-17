@@ -1,5 +1,5 @@
 # Msi Service Model
-# file: app/models/msi_service.rb
+# file: app/services/msi_service.rb
 #
 
 require 'base64'

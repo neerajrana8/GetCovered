@@ -31,73 +31,13 @@ module V2
             agency_id    = new_residential_params[:agency_id].to_i
             account_id   = new_residential_params[:account_id].to_i
             insurable_id = ((new_residential_params[:policy_insurables_attributes] || []).first || { id: nil })[:id]
-            insurable = nil
-            if !insurable_id.nil? # preferred; grab the insurable
-              insurable    = Insurable.where(id: insurable_id, insurable_type_id: ::InsurableType::RESIDENTIAL_UNITS_IDS, enabled: true).take
-            else # possibly non-preferred; grab or create the insurable
-              # validate inputs
-              if new_residential_params[:address_string].blank?
-                render json: { error: "Insurable id or address string must be provided" },
-                  status: :unprocessable_entity
-                return
-              elsif new_residential_params[:unit_title].blank?
-                render json: { error: "Insurable id or unit title must be provided" },
-                  status: :unprocessable_entity
-              end
-              # grab address
-              address = ::Address.from_string(new_residential_params[:address_string].strip, validate_properties: true)
-              unless address.errors.blank?
-                render json: standard_error(:invalid_address, 'Invalid address value', address.errors.full_messages),
-                       status: 422
-                return
-              end
-              # find or create community/building with the given address
-              found_insurable = ::Insurable.find_from_address(address, { enabled: true, insurable_type_id: ::InsurableType::RESIDENTIAL_COMMUNITIES_IDS | ::InsurableType::RESIDENTIAL_BUILDINGS_IDS }, allow_multiple: true)
-              if found_insurable.count > 1
-                # we prefer a building if there is one, because it's conceivable that a multi-building community could have multiple units with the same title
-                found_insurable = found_insurable.find{|fi| ::InsurableType::RESIDENTIAL_BUILDINGS_IDS.include?(fi.insurable_type_id) } || found_insurable.take
-              else
-                found_insurable = found_insurable.take
-              end
-              if found_insurable.nil?
-                # create the community
-                address.primary = true
-                community = ::Insurable.new(
-                  title: address.combined_street_address,
-                  insurable_type: ::InsurableType.where(title: "Residential Community").take,
-                  enabled: true, preferred_ho4: false, category: 'property',
-                  addresses: [ address ],
-                  account_id: account_id # MOOSE WARNING: change this behavior, account_id will probably be nil
-                )
-                unless community.save
-                  render json: standard_error(:invalid_community, 'Unable to create community from address', community.errors.full_messages),
-                         status: 422
-                  return
-                end
-                found_insurable = community
-              end
-              # find or create the unit
-              insurable = found_insurable.units.find{|u| u.title.downcase == new_residential_params[:unit_title].strip.downcase }
-              if insurable.nil? && !(found_insurable.parent_community || found_insurable).preferred_ho4
-                # create the unit
-                insurable = found_insurable.insurables.new(
-                  title: new_residential_params[:unit_title].strip,
-                  insurable_type: ::InsurableType.where(title: "Residential Unit").take,
-                  enabled: true, category: 'property', preferred_ho4: false,
-                  account: found_insurable.account
-                )
-                unless insurable.save
-                  render json: standard_error(:invalid_unit, 'Unable to create unit from address', insurable.errors.full_messages),
-                         status: 422
-                  return
-                end
-              end
-            end
+            insurable    = nil
+            insurable    = Insurable.where(id: insurable_id, insurable_type_id: ::InsurableType::RESIDENTIAL_UNITS_IDS, enabled: true).take
             if insurable.nil?
               render(json: standard_error(:unit_not_found, "Unit not found"), status: :unprocessable_entity) and return
             end
             # determine preferred status
-            @preferred = insurable.parent_community.preferred_ho4
+            @preferred = (insurable.parent_community || insurable).preferred_ho4
             # get the carrier_id
             carrier_id = nil
             if @preferred
@@ -126,10 +66,6 @@ module V2
           @application.build_from_carrier_policy_type
           @primary_user = ::User.new
           @application.users << @primary_user
-
-          if selected_policy_type == "residential"
-            @application.insurables << insurable
-          end
         else
           render json:   standard_error(:invalid_policy_type, 'Invalid policy type'),
                  status: :unprocessable_entity

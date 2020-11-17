@@ -53,6 +53,10 @@ class Carrier < ApplicationRecord
       indexes :call_sign, type: :text, analyzer: 'english'
     end
   end
+  
+  def uses_stripe?
+    return(![5,6].include?(self.id))
+  end
 
   private
   
