@@ -247,7 +247,7 @@ class Insurable < ApplicationRecord
     disallow_creation: false,     # pass true to ONLY query, NOT create
     created_community_title: nil, # optionally pass the title for the community in case we have to create it (defaults to combined_street_address)
     account_id: nil,              # optionally, the account id to use if we create anything
-    communities_only: false,      # if true, in unit mode searches only for units of the right title whose community has the right address (no buildings); out of unit mode, searches only for communities with the address (no buildings)
+    communities_only: false,      # if true, in unit mode does nothing; out of unit mode, searches only for communities with the address (no buildings)
     diagnostics: nil              # pass a hash to get diagnostics; these will be the following fields, though applicable to code not encountered may be nil:
                                   #   address_used:               true if address used, false if we didn't need it
                                   #   title_derivation_tried:     true if we tried to derive a unit title from address line 2
@@ -268,7 +268,9 @@ class Insurable < ApplicationRecord
                                   #     target_created:           true if we created a community/building
   )
     # validate params
-    if address.nil? && ([true,false,nil].include?(unit) || insurable_id.nil?)
+    if address.blank? && !unit && !insurable_id.nil?
+      return Insurable.where(id: insurable_id).take
+    elsif address.blank? && ([true,false,nil].include?(unit) || insurable_id.nil?)
       raise ArgumentError.new("either 'address' or 'insurable_id' and a string 'unit' must be provided")
     end
     # if we have a unit title and an insurable id, get or create the unit without dealing with address nonsense
@@ -344,6 +346,7 @@ class Insurable < ApplicationRecord
     end
     # search for the insurable
     if seeking_unit # we want a unit
+      communities_only = false # WARNING: we just hack this to false here to prevent weird behavior, remove hack to make the default for this "ignore buildings and consider only community-attached units"
       if unit_title.nil?
         return { error_type: :invalid_address_line_two, message: "Unable to deduce unit title from address", details: "'#{address.line_two}' is not a standard format (e.g. 'Apartment #2, Unit 3, #5, etc.)" }
       end

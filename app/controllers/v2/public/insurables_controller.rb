@@ -59,7 +59,7 @@ module V2
           unit: get_or_create_params[:unit],
           insurable_id: get_or_create_params[:insurable_id].to_i == 0 ? nil : get_or_create_params[:insurable_id].to_i,
           create_if_ambiguous: get_or_create_params[:create_if_ambiguous],
-          disallow_creation: get_or_create_params[:disallow_creation],
+          disallow_creation: (get_or_create_params[:allow_creation] != true),
           communities_only: get_or_create_params[:communities_only],
           diagnostics: diagnostics,
           
@@ -117,15 +117,13 @@ module V2
         end
         
         def msi_community_info_id
-          
-        
           params.require(:policy_application)
             .permit(policy_rates_attributes:      [:insurable_rate_id],
                     policy_insurables_attributes: [:insurable_id])
         end
         
         def get_or_create_params
-          params.permit(:address, :unit, :insurable_id, :create_if_ambiguous, :disallow_creation, :communities_only)
+          params.permit(:address, :unit, :insurable_id, :create_if_ambiguous, :allow_creation, :communities_only)
         end
         
         # output stuff with essentially the same format as in the Address search
