@@ -45,6 +45,21 @@ class Devise::Users::RegistrationsController < DeviseTokenAuth::RegistrationsCon
 
   protected
 
+  def build_resource
+    @resource            = resource_class.new(sign_up_params)
+    @resource.provider   = provider
+
+    # honor devise configuration for case_insensitive_keys
+    @resource.email =
+      if resource_class.case_insensitive_keys.include?(:email)
+        sign_up_params[:email].try(:downcase)
+      else
+        sign_up_params[:email]
+      end
+
+    @resource.invitation_accepted_at = Time.zone.now
+  end
+
   def render_create_error
     render json: standard_error(:user_creation_error, nil, @resource.errors.full_messages), status: 422
   end
