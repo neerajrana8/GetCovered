@@ -67,8 +67,8 @@ class ConfieService
       call_data[:response] = HTTParty.post(endpoint_for(self.action),
         body: compiled_rxml,
         headers: {
-          'Content-Type' => 'text/xml',
-          'Authorization' => "Basic #{Rails.application.credentials.confie[:auth][ENV['RAILS_ENV'].to_sym]}"
+          'Content-Type' => 'text/xml'#,
+          #'Authorization' => "Basic #{Rails.application.credentials.confie[:auth][ENV['RAILS_ENV'].to_sym]}"
         },
         ssl_version: :TLSv1_2
       )
@@ -251,7 +251,7 @@ private
       case obj
         when ::User
           return {
-            "com.a1_ExternalId":  "user-#{obj.id}",
+            "com.a1_ExternalId":  "#{get_unique_identifier}", # MOOSE WARNING: using auth instead of user-#{obj.id}",
             GeneralPartyInfo:     obj.get_confie_general_party_info,
             InsuredOrPrincipalInfo: {
               InsuredOrPrincipalRoleCd: rolecd,
@@ -264,7 +264,7 @@ private
           }
         when ::Account
           return {
-            "com.a1_ExternalId":  "account-#{obj.id}",
+            "com.a1_ExternalId":  "#{get_unique_identifier}", # MOOSE WARNING: using auth instead of "account-#{obj.id}",
             GeneralPartyInfo:     obj.get_confie_general_party_info,
             InsuredOrPrincipalInfo: {
               InsuredOrPrincipalRoleCd: rolecd,
@@ -287,7 +287,8 @@ private
     end
 
     def get_unique_identifier
-      "#{Time.current.to_i.to_s}-#{rand(2**32)}"
+      #"#{Time.current.to_i.to_s}-#{rand(2**32)}"
+      Rails.application.credentials.confie[:auth][ENV['RAILS_ENV'].to_sym].to_s
     end
 
     def arrayify(val, nil_as_object: false)
