@@ -248,10 +248,11 @@ class Insurable < ApplicationRecord
     created_community_title: nil, # optionally pass the title for the community in case we have to create it (defaults to combined_street_address)
     account_id: nil,              # optionally, the account id to use if we create anything
     communities_only: false,      # if true, in unit mode searches only for units of the right title whose community has the right address (no buildings); out of unit mode, searches only for communities with the address (no buildings)
-    diagnostics: nil              # pass a hash to get diagnostics (:address_used, :title_derivation_tried, :title_derivation_succeeded, :unit_mode, :unit_count, :parent_count, :parent_created, :unit_created, :parent
+    diagnostics: nil              # pass a hash to get diagnostics; these will be the following fields, though applicable to code not encountered may be nil:
                                   #   address_used:               true if address used, false if we didn't need it
                                   #   title_derivation_tried:     true if we tried to derive a unit title from address line 2
                                   #   title_derivation_succeeded: true if we successfully got a title from address line 2
+                                  #   title_as_derived:           string containing derived title, if there was one
                                   #   unit_mode:                  true if we searched for a unit, false if for a building/community
                                   #   IF UNIT_MODE:
                                   #     unit_count:               # of units found
@@ -309,7 +310,7 @@ class Insurable < ApplicationRecord
     # get a valid address model if possible
     if address.class == ::Address
       unless address.valid?
-        return { error_type: :invalid_address, message: "Invalid address value", details: address.errors.full_messages }
+        return { error_type: :invalid_address, message: "Invalid address", details: address.errors.full_messages }
       end
     else
       address = ::Address.from_string(address)
@@ -330,11 +331,14 @@ class Insurable < ApplicationRecord
                                       'apartment', 'apt', 'unit',
                                       'flat', 'room', 'office',
                                       'no', 'number'
-                                    ].include?(strang.lcase)
+                                    ].include?(strang.downcase)
                                   end
         if splat.size == 1
-          diagnostics[:title_derivation_succeeded] = true if diagnostics
           unit_title = splat[0]
+          if diagnostics
+            diagnostics[:title_derivation_succeeded] = true 
+            diagnostics[:title_as_derived] = unit_title
+          end
         end
       end
     end
@@ -414,7 +418,7 @@ class Insurable < ApplicationRecord
             end
           end
           # create the unit
-          unit = results.insurables.new(
+          unit = parent.insurables.new(
             title: unit_title,
             insurable_type: ::InsurableType.where(title: "Residential Unit").take,
             enabled: true, category: 'property', preferred_ho4: false,
@@ -449,7 +453,7 @@ class Insurable < ApplicationRecord
       )
       diagnostics[:parent_count] = results.count if diagnostics
       unless address.street_two.blank?
-        with_street_two = results.select{|res| res.primary_address.street_two.strip == address.street_two.strip }
+        with_street_two = results.select{|res| res.primary_address.street_two&.strip == address.street_two.strip }
         if diagnostics
           diagnostics[:tried_street_two_match] = true
           diagnostics[:street_two_match_count] = with_street_two.count
