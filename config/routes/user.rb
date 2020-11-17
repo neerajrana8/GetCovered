@@ -48,7 +48,7 @@ scope module: :user, path: "user" do
   
   resources :policy_applications,
     path: "policy-applications",
-    only: [ :create, :index, :show ]
+    only: [ :create, :index, :show, :update ]
   
   resources :policy_quotes,
     path: "policy-quotes",

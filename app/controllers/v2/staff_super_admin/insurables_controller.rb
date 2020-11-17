@@ -7,7 +7,7 @@ module V2
     class InsurablesController < StaffSuperAdminController
       alias super_index index
 
-      before_action :set_insurable, only: [:show, :coverage_report, :policies, :related_insurables]
+      before_action :set_insurable, only: [:show, :coverage_report, :policies, :related_insurables, :destroy]
       before_action :set_master_policies, only: :show
 
       def index
@@ -18,6 +18,16 @@ module V2
 
       def coverage_report
         render json: @insurable.coverage_report
+      end
+
+      def destroy
+        if @insurable.destroy
+          render json: { success: true },
+                 status: :ok
+        else
+          render json: { success: false },
+                 status: :unprocessable_entity
+        end
       end
 
       def policies

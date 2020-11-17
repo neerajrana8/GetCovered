@@ -22,6 +22,10 @@ class Lead < ApplicationRecord
     Lead.pluck(:last_visit).sort.first
   end
 
+  def check_identifier
+    set_identifier
+  end
+
   private
 
   def set_identifier
