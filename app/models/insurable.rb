@@ -234,7 +234,11 @@ class Insurable < ApplicationRecord
 
 
       
-            
+  # RETURNS EITHER:
+  #   nil:                      no match was found and creation wasn't allowed
+  #   an insurable:             a match was found or created
+  #   an array of insurables:   multiple potential matches were found
+  #   a hash:                   an error occurred; will have keys [:error_type, :message, :details], with :details optional
   def self.get_or_create(
     address: nil,                 # an address string (required unless unit title and insurable_id provided)
     unit: nil,                    # true to search for units, false to search for buildings/communities, a string to search for a specific unit title; nil means search for a unit if address has line 2 and a community otherwise
@@ -242,7 +246,25 @@ class Insurable < ApplicationRecord
     create_if_ambiguous: false,   # pass true to force insurable creation if there's any ambiguity (example: if you've already called this and got 'multiple' type results, none of which were what you wanted)
     disallow_creation: false,     # pass true to ONLY query, NOT create
     created_community_title: nil, # optionally pass the title for the community in case we have to create it (defaults to combined_street_address)
-    account_id: nil               # optionally, the account id to use if we create anything
+    account_id: nil,              # optionally, the account id to use if we create anything
+    communities_only: false,      # if true, in unit mode searches only for units of the right title whose community has the right address (no buildings); out of unit mode, searches only for communities with the address (no buildings)
+    diagnostics: nil              # pass a hash to get diagnostics (:address_used, :title_derivation_tried, :title_derivation_succeeded, :unit_mode, :unit_count, :parent_count, :parent_created, :unit_created, :parent
+                                  #   address_used:               true if address used, false if we didn't need it
+                                  #   title_derivation_tried:     true if we tried to derive a unit title from address line 2
+                                  #   title_derivation_succeeded: true if we successfully got a title from address line 2
+                                  #   unit_mode:                  true if we searched for a unit, false if for a building/community
+                                  #   IF UNIT_MODE:
+                                  #     unit_count:               # of units found
+                                  #     parent_count:             # of compatible parent communities/buildings found (before cull for non-ho4)
+                                  #     parent_created:           true if we created a parent
+                                  #     parent:                   the parent object itself
+                                  #     target_created:           true if we created a unit
+                                  #   IF NOT UNIT MODE:
+                                  #     parent_count:             # of compatible parent communities found
+                                  #     parent:                   the parent community of our found/created building (or, usually, nil)
+                                  #     tried_street_two_match:   true if we had a non-nil street two which we tried to match
+                                  #     street_two_match_count:   # of successful matches for street 2
+                                  #     target_created:           true if we created a community/building
   )
     # validate params
     if address.nil? && ([true,false,nil].include?(unit) || insurable_id.nil?)
@@ -251,6 +273,10 @@ class Insurable < ApplicationRecord
     # if we have a unit title and an insurable id, get or create the unit without dealing with address nonsense
     unit_title = [true,false,nil].include?(unit) ? nil : unit
     if !unit_title.blank? && !insurable_id.nil?
+      if diagnostics
+        diagnostics[:unit_mode] = true
+        diagnostics[:address_used] = false
+      end
       results = ::Insurable.where(title: unit_title, insurable_id: insurable_id, insurable_type_id: ::InsurableType::RESIDENTIAL_UNITS_IDS)
       case results.count
         when 0
@@ -279,6 +305,7 @@ class Insurable < ApplicationRecord
           return results.to_a
       end
     end
+    diagnostics[:address_used] = true if diagnostics
     # get a valid address model if possible
     if address.class == ::Address
       unless address.valid?
@@ -292,8 +319,10 @@ class Insurable < ApplicationRecord
     end
     # try to figure out unit title if applicable
     seeking_unit = unit ? true : unit.nil? ? !address.street_two.blank? : false
+    diagnostics[:unit_mode] = seeking_unit if diagnostics
     if seeking_unit
       if unit_title.blank? && !address.street_two.blank?
+        diagnostics[:title_derivation_tried] = true if diagnostics
         splat = address.street_two.gsub('#', ' ').gsub('.', ' ')
                                   .gsub(/\s+/m, ' ').gsub(/^\s+|\s+$/m, '')
                                   .split(" ").select do |strang|
@@ -304,6 +333,7 @@ class Insurable < ApplicationRecord
                                     ].include?(strang.lcase)
                                   end
         if splat.size == 1
+          diagnostics[:title_derivation_succeeded] = true if diagnostics
           unit_title = splat[0]
         end
       end
@@ -324,7 +354,7 @@ class Insurable < ApplicationRecord
             state: address.state,
             zip_code: address.zip_code
           },
-          insurable_type_id: ::InsurableType::RESIDENTIAL_COMMUNITIES_IDS | ::InsurableType::RESIDENTIAL_BUILDINGS_IDS | ::InsurableType::RESIDENTIAL_UNITS_IDS
+          insurable_type_id: ::InsurableType::RESIDENTIAL_COMMUNITIES_IDS | (communities_only ? [] : (::InsurableType::RESIDENTIAL_BUILDINGS_IDS | ::InsurableType::RESIDENTIAL_UNITS_IDS))
         }
       ).order(:id).group(:id).pluck(:id)
       results = nil
@@ -347,12 +377,14 @@ class Insurable < ApplicationRecord
         }))
       end
       # handle the units returned by the query
+      diagnostics[:unit_count] = results.count if diagnostics
       case results.count
         when 0
           # unit does not exist; find a parent we can create on
           return nil if disallow_creation
-          parents = ::Insurable.where(id: parent_ids, insurable_type_id: ::InsurableType::RESIDENTIAL_COMMUNITIES_IDS | ::InsurableType::RESIDENTIAL_BUILDINGS_IDS)
+          parents = ::Insurable.where(id: parent_ids, insurable_type_id: ::InsurableType::RESIDENTIAL_COMMUNITIES_IDS | (communities_only ? [] : ::InsurableType::RESIDENTIAL_BUILDINGS_IDS))
           parent = parents.select{|p| (p.parent_community || p).preferred_ho4 == false }.sort{|a,b| (::InsurableType::RESIDENTIAL_BUILDINGS_IDS.include?(a) ? -1 : 1) <=> (::InsurableType::RESIDENTIAL_BUILDINGS_IDS.include?(b) ? -1 : 1) }.first
+          diagnostics[:parent_count] = parents.count if diagnostics
           if parent.nil?
             # flee if prevented from creating community
             if disallow_creation
@@ -376,6 +408,10 @@ class Insurable < ApplicationRecord
             unless parent.save
              return { error_type: :invalid_community, message: "Unable to create community from address", details: parent.errors.full_messages }
             end
+            if diagnostics
+              diagnostics[:parent_created] = true
+              diagnostics[:parent] = parent
+            end
           end
           # create the unit
           unit = results.insurables.new(
@@ -387,6 +423,7 @@ class Insurable < ApplicationRecord
           unless unit.save
             return { error_type: :invalid_unit, message: "Unable to create unit", details: unit.errors.full_messages }
           end
+          diagnostics[:target_created] = true if diagnostics
           return unit
         when 1
           # we found the unit
@@ -406,12 +443,17 @@ class Insurable < ApplicationRecord
             state: address.state,
             zip_code: address.zip_code
           },
-          insurable_type_id: ::InsurableType::RESIDENTIAL_COMMUNITIES_IDS | ::InsurableType::RESIDENTIAL_BUILDINGS_IDS,
+          insurable_type_id: ::InsurableType::RESIDENTIAL_COMMUNITIES_IDS | (communities_only ? [] : ::InsurableType::RESIDENTIAL_BUILDINGS_IDS),
           insurable_id: insurable_id
         }.compact
       )
+      diagnostics[:parent_count] = results.count if diagnostics
       unless address.street_two.blank?
         with_street_two = results.select{|res| res.primary_address.street_two.strip == address.street_two.strip }
+        if diagnostics
+          diagnostics[:tried_street_two_match] = true
+          diagnostics[:street_two_match_count] = with_street_two.count
+        end
         case with_street_two.count
           when 0
             # we can create a community with the exact specified line 2, or we can drop back to the blank street two block and return the partial matches
@@ -444,6 +486,7 @@ class Insurable < ApplicationRecord
               end
             end
           end
+          diagnostics[:parent] = parent if diagnostics
           # create community (or building, if there was a parent provided)
           address.id = nil
           address.primary = true
@@ -457,6 +500,7 @@ class Insurable < ApplicationRecord
           unless created.save
            return { error_type: :"invalid_#{parent.nil? ? 'community' : 'building'}", message: "Unable to create #{parent.nil? ? 'community' : 'building'} from address", details: created.errors.full_messages }
           end
+          diagnostics[:target_created] = true if diagnostics
           return created
         when 1
           return results.first
