@@ -68,23 +68,20 @@ module V2
           when ::NilClass
             render json: {
               results_type: 'no_match',
-              results: nil,
-diagnostics: diagnostics
+              results: nil
             }, status: 200
           when ::Insurable
             render json: {
               results_type: 'confirmed_match',
-              results: insurable_prejson(result),
-diagnostics: diagnostics
+              results: insurable_prejson(result)
             }, status: 200
           when ::Array
             render json: {
               results_type: 'possible_match',
-              results: result.map{|r| insurable_prejson(r) },
-diagnostics: diagnostics
+              results: result.map{|r| insurable_prejson(r) }
             }, status: 200
           when ::Hash
-            render json: standard_error(result[:error_type], result[:message], { err: result[:details], diagnostics: diagnostics }),
+            render json: standard_error(result[:error_type], result[:message], result[:details]),
               status: 422
         end
       end
