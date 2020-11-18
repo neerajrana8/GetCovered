@@ -174,9 +174,13 @@ module V2
                                                               
         address_string = params["policy_application"]["fields"]["address"]
         @application.resolver_info = { "address_string" => address_string }
+        
+        @application.resolver_info['debug_policy_type'] = policy_type
         case policy_type
           when 1 # residential
+            @application.resolver_info['debug_in'] = true
             unit = ::Insurable.get_or_create(address: address_string, unit: true)
+            @application.resolver_info['debug'] = (unit.class == ::Hash ? unit : unit.class.name)
             if unit.class == ::Insurable
               @application.insurables << unit
             end
