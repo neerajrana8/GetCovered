@@ -246,7 +246,8 @@ class Insurable < ApplicationRecord
     create_if_ambiguous: false,   # pass true to force insurable creation if there's any ambiguity (example: if you've already called this and got 'multiple' type results, none of which were what you wanted)
     disallow_creation: false,     # pass true to ONLY query, NOT create
     created_community_title: nil, # optionally pass the title for the community in case we have to create it (defaults to combined_street_address)
-    account_id: nil,              # optionally, the account id to use if we create anything
+    account_id: ::Account.where(slug: 'nonpreferred-residential').take&.id, # MOOSE WARNING: fix this if we aren't sticking with this weird dummy account
+                  # optionally, the account id to use if we create anything
     communities_only: false,      # if true, in unit mode does nothing; out of unit mode, searches only for communities with the address (no buildings)
     diagnostics: nil              # pass a hash to get diagnostics; these will be the following fields, though applicable to code not encountered may be nil:
                                   #   address_used:               true if address used, false if we didn't need it
