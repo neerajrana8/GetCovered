@@ -67,12 +67,12 @@ module V2
           when ::NilClass
             render json: {
               results_type: 'no_match',
-              results: nil
+              results: []
             }, status: 200
           when ::Insurable
             render json: {
               results_type: 'confirmed_match',
-              results: insurable_prejson(result)
+              results: [insurable_prejson(result)]
             }, status: 200
           when ::Array
             render json: {
