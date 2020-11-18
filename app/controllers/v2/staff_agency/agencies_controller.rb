@@ -20,8 +20,10 @@ module V2
         result = []
         required_fields = %i[id title agency_id]
 
+        @agencies = paginator(Agency.where(agency_id: nil))
+
         if current_staff.getcovered_agent?
-          Agency.where(agency_id: nil).select(required_fields).each do |agency|
+          @agencies.select(required_fields).each do |agency|
             sub_agencies = agency.agencies.select(required_fields)
             result << if sub_agencies.any?
               agency.attributes.reverse_merge(agencies: sub_agencies.map(&:attributes))
@@ -30,7 +32,7 @@ module V2
             end
           end
         else
-          result = current_staff.organizable.agencies.select(required_fields).map(&:attributes)
+          result = paginator(current_staff.organizable.agencies).select(required_fields).map(&:attributes)
         end
 
         render json: result.to_json
@@ -40,11 +42,17 @@ module V2
 
       def create
         if create_allowed?
-          @agency = current_staff.organizable.agencies.new(create_params)
-          if @agency.errors.none? && @agency.save_as(current_staff)
+          outcome = Agencies::Create.run(
+            agency_params: create_params.to_h,
+            parent_agency: current_staff.organizable,
+            creator: current_staff
+          )
+          if outcome.valid?
+            @agency = outcome.result
             render :show, status: :created
           else
-            render json: @agency.errors, status: :unprocessable_entity
+            render json: standard_error(:agency_creation_error, nil, outcome.errors.full_messages),
+                   status: :unprocessable_entity
           end
         else
           render json: { success: false, errors: ['Unauthorized Access'] },

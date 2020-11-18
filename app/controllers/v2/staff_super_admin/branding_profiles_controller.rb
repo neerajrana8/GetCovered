@@ -1,19 +1,23 @@
 module V2
   module StaffSuperAdmin
     class BrandingProfilesController < StaffSuperAdminController
+      include BrandingProfilesMethods
 
-      before_action :set_branding_profile, only: %i[update show destroy faqs faq_create faq_update faq_question_create faq_question_update faq_delete faq_question_delete attach_images]
+      before_action :set_branding_profile,
+                    only: %i[update show destroy faqs faq_create faq_update faq_question_create
+                    faq_question_update faq_delete faq_question_delete attach_images export update_from_file]
+
+      before_action :set_agency, only: [:import]
 
       def index
         super(:@branding_profiles, BrandingProfile)
       end
 
-      def show
-      end
+      def show; end
 
       def create
         @branding_profile = BrandingProfile.new(branding_profile_params)
-        if !@branding_profile.errors.any? && @branding_profile.save
+        if @branding_profile.errors.none? && @branding_profile.save
           render :show, status: :created
         else
           render json: @branding_profile.errors, status: :unprocessable_entity
@@ -97,7 +101,7 @@ module V2
           end
         else
           render json: { success: false, errors: ['Unauthorized Access'] },
-            status: :unauthorized
+                 status: :unauthorized
         end
       end
 
@@ -109,29 +113,18 @@ module V2
             render json: { success: false }, status: :unprocessable_entity
           end
         else
-          render json: { success: false, errors: ['Unauthorized Access'] },status: :unauthorized
+          render json: { success: false, errors: ['Unauthorized Access'] }, status: :unauthorized
         end
       end
 
       def attach_images
         if update_allowed?
-          if attach_images_params[:logo_url].present?
-            @branding_profile.images.attach(attach_images_params[:logo_url])
-            img_url = rails_blob_url(@branding_profile.images.last)
-            if img_url.present? && @branding_profile.update_column(:logo_url, img_url)
-              render json: { success: true }, status: :ok
-            else
-              render json: { success: false }, status: :unprocessable_entity
-            end
-          end
-          if attach_images_params[:footer_logo_url].present?
-            @branding_profile.images.attach(attach_images_params[:footer_logo_url])
-            img_url = rails_blob_url(@branding_profile.images.last)
-            if img_url.present? && @branding_profile.update_column(:footer_logo_url, img_url)
-              render json: { success: true }, status: :ok
-            else
-              render json: { success: false }, status: :unprocessable_entity
-            end
+          logo_status = get_image_url(:logo_url) if attach_images_params[:logo_url].present?
+          footer_status = get_image_url(:footer_logo_url) if attach_images_params[:footer_logo_url].present?
+          if logo_status == "error" || footer_status == "error"
+            render json: { success: false }, status: :unprocessable_entity
+          else
+            render json: { logo_url: logo_status, footer_logo_url: footer_status }, status: :ok
           end
         else
           render json: { success: false, errors: ['Unauthorized Access'] }, status: :unauthorized
@@ -156,13 +149,18 @@ module V2
         @branding_profile = access_model(::BrandingProfile, params[:id])
       end
 
+      def set_agency
+        @agency = Agency.find_by_id(params[:agency_id])
+        render json: standard_error(:agency_was_not_found), status: 422 if @agency.blank?
+      end
+
       def branding_profile_params
         return({}) if params[:branding_profile].blank?
 
         params.require(:branding_profile).permit(
           :default, :id, :profileable_id, :profileable_type, :title,
-          :url, :footer_logo_url, :logo_url, :subdomain, :subdomain_test, images: [],
-          branding_profile_attributes_attributes: %i[id name value attribute_type],
+          :url, :footer_logo_url, :logo_url, :subdomain, :subdomain_test, :global_default,
+          images: [], branding_profile_attributes_attributes: %i[id name value attribute_type],
           styles: {}
         )
       end
@@ -191,7 +189,12 @@ module V2
         params.require(:images).permit(:logo_url, :footer_logo_url)
       end
 
-  end
+      def get_image_url(field_name)
+        images = @branding_profile.images.attach(attach_images_params[field_name])
+        img_url = rails_blob_url(images.last)
+        img_url.present? && @branding_profile.update_column(field_name, img_url) ? img_url : "error"
+      end
 
+    end
   end
 end

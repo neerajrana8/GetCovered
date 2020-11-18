@@ -1,5 +1,5 @@
 # =MSI Policy Quote Functions Concern
-# file: +app/models/concerns/carrier_qbe_policy.rb+
+# file: +app/models/concerns/carrier_msi_policy_quote.rb+
 
 module CarrierMsiPolicyQuote
   extend ActiveSupport::Concern
@@ -9,7 +9,7 @@ module CarrierMsiPolicyQuote
     # MOOSE WARNING: PolicyQuote#bind_policy should call this boi if necessary
     def set_msi_external_reference
       
-      return_status = true # MOOSE WARNING: change it?
+      return_status = true # MOOSE WARNING: change it? 
       
     end
     
@@ -68,27 +68,22 @@ module CarrierMsiPolicyQuote
       payment_processor = payment_data['processor_id']
       payment_method = payment_data['method_id']
       # grab useful variables
-      carrier_agency = CarrierAgency.where(agency: account.agency, carrier_id: 5).take
+      carrier_agency = CarrierAgency.where(agency: agency, carrier_id: 5).take
       unit = policy_application.primary_insurable
       community = unit.parent_community
       address = unit.primary_address
       primary_insured = policy_application.primary_user
       additional_insured = policy_application.users.select{|u| u.id != primary_insured.id }
       additional_interest = [unit.account || community.account].compact
+      # determine preferred status
+      preferred = !(community.carrier_profile(5)&.external_carrier_id.nil?)
       # prepare for bind call
       msis = MsiService.new
-      event = events.new(
-        verb: 'post',
-        format: 'xml',
-        interface: 'REST',
-        endpoint: msis.endpoint_for(:bind_policy),
-        process: 'msi_bind_policy'
-      )
       result = msis.build_request(:bind_policy,
         effective_date:   policy_application.effective_date,
         payment_plan:     policy_application.billing_strategy.carrier_code,
-        installment_day:  policy_application.fields.find{|f| f['title'] == "Installment Day" }&.[]('value') || 1,
-        community_id:     community.carrier_profile(5).external_carrier_id,
+        installment_day:  policy_application.extra_settings&.[]('installment_day') || policy_application.fields.find{|f| f['title'] == "Installment Day" }&.[]('value') || 1,
+        community_id:     preferred ? community.carrier_profile(5).external_carrier_id : nil,
         unit:             unit.title,
         address:          unit.primary_address,
         maddress:         primary_insured.address || nil,
@@ -117,7 +112,14 @@ module CarrierMsiPolicyQuote
         payment_method:       payment_method,
         payment_info:         payment_params['payment_info'],
         payment_other_id:     payment_params['payment_token'],
-        
+        # for non-preferred
+        **(preferred ? {} : {
+          number_of_units: policy_application.extra_settings&.[]('number_of_units'),
+          years_professionally_managed: policy_application.extra_settings&.[]('years_professionally_managed'),
+          year_built: policy_application.extra_settings&.[]('year_built'),
+          gated: policy_application.extra_settings&.[]('gated')
+        }.compact),
+        # format params
         line_breaks: true
       )
       if !result
@@ -125,11 +127,12 @@ module CarrierMsiPolicyQuote
         #PolicyBindWarningNotificationJob.perform_later(message: @bind_response[:message])
         return @bind_response
       end
+      event = events.new(msis.event_params)
       event.request = msis.compiled_rxml
       event.started = Time.now
       result = msis.call
       event.completed = Time.now
-      event.response = result[:data]
+      event.response = result[:response].response.body
       event.status = result[:error] ? 'error' : 'success'
       event.save
       if result[:error]

@@ -38,6 +38,9 @@ module ModelParams
   
   def claim_params(agency)
     user = FactoryBot.create(:user)
+    policy = FactoryBot.create(:policy, agency: agency)
+    user.policies = [policy]
+    user.save
     {
       subject: 'New subject claim',
       type_of_loss: "FIRE",
@@ -45,7 +48,7 @@ module ModelParams
       claimant_type: "User",
       description: "New claim",
       insurable_id: FactoryBot.create(:insurable).id,
-      policy_id: FactoryBot.create(:policy, agency: agency).id
+      policy_id: policy.id
     }
   end
   

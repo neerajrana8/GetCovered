@@ -77,15 +77,21 @@
     resources :assignments,
       only: [ :create, :update, :destroy, :index, :show ]
 
-    resources :billing_strategies,
-      path: "billing-strategies",
-      only: [ :create, :update, :index, :show ]
+    resources :billing_strategies, path: "billing-strategies", only: [ :create, :update, :index, :show ] do
+      member do
+        post :add_fee
+        get :fees
+        delete :destroy_fee
+      end
+    end
 
     resources :branding_profiles,
       path: "branding-profiles",
       only: [ :show, :create, :update ] do
         member do
           get :faqs
+          get :export
+          post :update_from_file
           post :faq_create
           put :faq_update, path: '/faq_update/faq_id'
           post :faq_question_create, path: '/faqs/:faq_id/faq_question_create'
@@ -94,6 +100,7 @@
           delete :faq_question_delete, path: '/faqs/:faq_id/faq_question_delete/:faq_question_id'
           post :attach_images, path: '/attach_images'
         end
+        post :import, on: :collection
       end
 
     resources :branding_profile_attributes,
@@ -113,12 +120,20 @@
             to: "histories#index_recordable",
             via: "get",
             defaults: { recordable_type: Carrier }
+          get :billing_strategies_list
+          get :toggle_billing_strategy
+          get :fees_list
+          post :add_fees
         end
+    end
+
+    resources :carrier_agency_authorizations, path: "carrier-agency-authorizations", only: [ :update, :index, :show ] do
+      member do
+        post :add_fee
+        get :fees
+        delete :destroy_fee
       end
-  
-    resources :carrier_agency_authorizations,
-      path: "carrier-agency-authorizations",
-      only: [ :update, :index, :show ]
+    end
 
     resources :claims,
       only: [ :create, :update, :index, :show ] do
@@ -129,6 +144,7 @@
             defaults: { recordable_type: Claim }
 
           delete :delete_documents
+          put :process_claim
         end
       end
 
@@ -182,6 +198,11 @@
 
     resources :insurable_types, path: "insurable-types", only: [ :index ]
 
+    resources :leads, only: [:index, :show]
+    resources :leads_dashboard, only: [:index]
+
+    get :get_filters, controller: 'leads_dashboard', path: 'leads_dashboard/get_filters'
+
     resources :leases,
       only: [ :create, :update, :destroy, :index, :show ] do
         member do
@@ -219,16 +240,42 @@
           via: "get",
           defaults: { recordable_type: Policy }
         get 'resend_policy_documents'
+        put :refund_policy
+        put :cancel_policy
+        put :update_coverage_proof
+        delete :delete_policy_document
       end
       get "search", to: 'policies#search', on: :collection
     end
+
+    resources :policy_cancellation_requests, only: [ :index, :show ] do
+      member do
+        put :approve
+        put :cancel
+        put :decline
+      end
+    end
+
+    resources :refunds,
+      only: [ :index, :create, :update] do
+        member do
+          get :approve
+          get :decline
+        end
+      end
 
     resources :policy_coverages, only: [ :update ]
 
     resources :policy_applications,
       path: "policy-applications",
       only: [ :index, :show ]
-  
+
+    resources :policy_application_groups, path: "policy-application-groups" do
+      member do
+        put :accept
+      end
+    end
+
     resources :policy_quotes,
       path: "policy-quotes",
       only: [ :index, :show ]
@@ -250,7 +297,10 @@
         collection do
           get "search", to: 'staffs#search'
         end
-      end
+    end
+
+    resources :tracking_urls,
+      only: [ :create, :index, :show, :destroy]
 
     resources :users,
       only: [ :create, :update, :index, :show ] do
@@ -270,9 +320,3 @@
       end
   end
 # end
-
-
-
-
-
-

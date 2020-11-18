@@ -11,6 +11,7 @@ class User < ApplicationRecord
   include RecordChange
   include DeviseTokenAuth::Concerns::User
   include ElasticsearchSearchable
+  include SessionRecordable
 
   # Active Record Callbacks
   after_initialize :initialize_user
@@ -66,6 +67,7 @@ class User < ApplicationRecord
 
   accepts_nested_attributes_for :payment_profiles, :address
   accepts_nested_attributes_for :profile, update_only: true
+  accepts_nested_attributes_for :address, update_only: true
 
 
   enum current_payment_method: ['none', 'ach_unverified', 'ach_verified', 'card', 'other'],
@@ -242,6 +244,35 @@ class User < ApplicationRecord
           EmailAddr: self.email
         }
       }
+    }
+  end
+
+  def get_confie_general_party_info
+    {
+      NameInfo: {
+        PersonName: {
+          GivenName:  self.profile.first_name,
+          Surname:    self.profile.last_name
+        }
+      },
+      Communications: {
+        PhoneInfo: { # WARNING: do we need CommunicationUseCd or the other nonsense we don't have?
+          PhoneNumber: (self.profile.contact_phone || '').tr('^0-9', '')
+        },
+        EmailInfo: {
+          EmailAddr: self.email
+        }
+      } # WARNING: should we add an address?
+    }
+  end
+
+  def get_deposit_choice_occupant_hash(primary: false)
+    {
+      firstName:          self.profile.first_name,
+      lastName:           self.profile.last_name,
+      email:              self.email,
+      principalPhone:     (self.profile.contact_phone || '').tr('^0-9', ''),
+      isPrimaryOccupant:  primary
     }
   end
 

@@ -5,9 +5,11 @@
 module V2
   module StaffAccount
     class ClaimsController < StaffAccountController
+
+      include ClaimsMethods
       
-      before_action :set_claim, only: %i[update show attach_documents delete_documents]
-      before_action :set_substrate, only: %i[create index]
+      before_action :set_claim, only: %i[update show  delete_documents process_claim]
+      before_action :set_substrate, only: %i[index]
       
       def index
         if params[:short]
@@ -18,22 +20,6 @@ module V2
       end
       
       def show; end
-      
-      def create
-        if create_allowed?
-          @claim = @substrate.new(create_params)
-          if @claim.errors.none? && @claim.save_as(current_staff)
-            render :show, status: :created
-            ClaimSendJob.perform_later(current_staff, @claim.id)
-          else
-            render json: @claim.errors,
-                   status: :unprocessable_entity
-          end
-        else
-          render json: { success: false, errors: ['Unauthorized Access'] },
-                 status: :unauthorized
-        end
-      end
 
       def delete_documents
         @claim.documents.where(id: params.permit(documents_ids: [])[:documents_ids]).purge
@@ -66,28 +52,20 @@ module V2
         end
       end
         
-      def create_params
-        return({}) if params[:claim].blank?
-
-        to_return = params.require(:claim).permit(
-          :claimant_id, :claimant_type, :description, :insurable_id,
-          :policy_id, :subject, :time_of_loss, :type_of_loss, documents: []
-        )
-        to_return
-      end
-        
       def update_params
         return({}) if params[:claim].blank?
 
         params.require(:claim).permit(
           :description, :insurable_id, :policy_id, :subject,
-          :time_of_loss, :type_of_loss, documents: []
+          :time_of_loss, :type_of_loss, :staff_notes, documents: []
         )
       end
         
       def supported_filters(called_from_orders = false)
         @calling_supported_orders = called_from_orders
         {
+          created_at: [:scalar, :array, :interval],
+          time_of_loss: [:scalar, :array, :interval]
         }
       end
 

@@ -3,23 +3,23 @@
 
 class Address < ApplicationRecord
 
-  US_STATE_CODES = { AK: 0, AL: 1, AR: 2, AZ: 3, CA: 4, CO: 5, CT: 6, 
-                DC: 7, DE: 8, FL: 9, GA: 10, HI: 11, IA: 12, ID: 13, 
-                IL: 14, IN: 15, KS: 16, KY: 17, LA: 18, MA: 19, MD: 20, 
-                ME: 21, MI: 22, MN: 23, MO: 24, MS: 25, MT: 26, NC: 27, 
-                ND: 28, NE: 29, NH: 30, NJ: 31, NM: 32, NV: 33, NY: 34, 
-                OH: 35, OK: 36, OR: 37, PA: 38, RI: 39, SC: 40, SD: 41, 
-                TN: 42, TX: 43, UT: 44, VA: 45, VT: 46, WA: 47, WI: 48, 
+  US_STATE_CODES = { AK: 0, AL: 1, AR: 2, AZ: 3, CA: 4, CO: 5, CT: 6,
+                DC: 7, DE: 8, FL: 9, GA: 10, HI: 11, IA: 12, ID: 13,
+                IL: 14, IN: 15, KS: 16, KY: 17, LA: 18, MA: 19, MD: 20,
+                ME: 21, MI: 22, MN: 23, MO: 24, MS: 25, MT: 26, NC: 27,
+                ND: 28, NE: 29, NH: 30, NJ: 31, NM: 32, NV: 33, NY: 34,
+                OH: 35, OK: 36, OR: 37, PA: 38, RI: 39, SC: 40, SD: 41,
+                TN: 42, TX: 43, UT: 44, VA: 45, VT: 46, WA: 47, WI: 48,
                 WV: 49, WY: 50 }
-  
+
   # A useful list to have around for broader state validations (scan app for uses before removing!)
-  EXTENDED_US_STATE_CODES = { AK: 0, AL: 1, AR: 2, AZ: 3, CA: 4, CO: 5, CT: 6, 
-                DC: 7, DE: 8, FL: 9, GA: 10, HI: 11, IA: 12, ID: 13, 
-                IL: 14, IN: 15, KS: 16, KY: 17, LA: 18, MA: 19, MD: 20, 
-                ME: 21, MI: 22, MN: 23, MO: 24, MS: 25, MT: 26, NC: 27, 
-                ND: 28, NE: 29, NH: 30, NJ: 31, NM: 32, NV: 33, NY: 34, 
-                OH: 35, OK: 36, OR: 37, PA: 38, RI: 39, SC: 40, SD: 41, 
-                TN: 42, TX: 43, UT: 44, VA: 45, VT: 46, WA: 47, WI: 48, 
+  EXTENDED_US_STATE_CODES = { AK: 0, AL: 1, AR: 2, AZ: 3, CA: 4, CO: 5, CT: 6,
+                DC: 7, DE: 8, FL: 9, GA: 10, HI: 11, IA: 12, ID: 13,
+                IL: 14, IN: 15, KS: 16, KY: 17, LA: 18, MA: 19, MD: 20,
+                ME: 21, MI: 22, MN: 23, MO: 24, MS: 25, MT: 26, NC: 27,
+                ND: 28, NE: 29, NH: 30, NJ: 31, NM: 32, NV: 33, NY: 34,
+                OH: 35, OK: 36, OR: 37, PA: 38, RI: 39, SC: 40, SD: 41,
+                TN: 42, TX: 43, UT: 44, VA: 45, VT: 46, WA: 47, WI: 48,
                 WV: 49, WY: 50,
                 AS: 51, FM: 52, GU: 53, MH: 54, MP: 55, PW: 56, PR: 57,
                 VI: 58, AE: 59, AP: 60, AA: 61 }
@@ -27,7 +27,7 @@ class Address < ApplicationRecord
   include ElasticsearchSearchable
 
   geocoded_by :full
-    
+
   before_save :set_full,
               :set_full_searchable,
               :from_full
@@ -35,15 +35,18 @@ class Address < ApplicationRecord
 	before_create :set_first_as_primary
 
   after_validation :geocode
-    
-  belongs_to :addressable, 
+  
+  after_save :refresh_insurable_policy_type_ids,
+    if: Proc.new{|addr| addr.addressable_type == "Insurable" }
+
+  belongs_to :addressable,
     polymorphic: true,
     required: false
 
   enum state: US_STATE_CODES
-  
+
   # scope :residential_communities, -> { joins(:insurable).where() }
-  validates :state, inclusion: { in: US_STATE_CODES.keys.map(&:to_s), message: "%{value} is not a valid state" }
+  validates :state, inclusion: { in: US_STATE_CODES.keys.map(&:to_s), message: "%{value} is not a valid state" }, unless: -> { [Lead].include?(addressable.class) }
   settings index: { number_of_shards: 1 } do
     mappings dynamic: 'false' do
       indexes :street_number, type: :text, analyzer: 'english'
@@ -69,36 +72,52 @@ class Address < ApplicationRecord
   def as_indexed_json(options={})
     as_json(options).merge location: { lat: latitude, lon: longitude }
   end
+  
+  def self.from_string(dat_strang, validate_properties: true)
+    address = Address.new(full: dat_strang)
+    parsed_address = StreetAddress::US.parse(dat_strang)
+    if parsed_address.nil?
+      address.errors.add(:address_string, "could not be parsed; must be a valid address")
+      return address
+    end
+    address.from_full
+    ['street_number', 'street_name', 'city', 'state', 'zip_code'].each do |prop|
+      if address.send(prop).blank?
+        address.errors.add(prop.to_sym, "is invalid")
+      end
+    end
+    return address
+  end
 
   # Address.full_street_address
   # Returns full street address of Address from available variables
   def full_street_address(disable_plus4: false)
-    [combined_street_address(), street_two, 
+    [combined_street_address(), street_two,
      combined_locality_region(), disable_plus4 ? zip_code : combined_zip_code()].compact
              .join(', ')
              .gsub(/\s+/, ' ')
              .strip
   end
-  
+
   # Address.set_full
   # Sets full field with the result of full_street_address()
   def set_full
-    self.full = full_street_address()  
+    self.full = full_street_address()
   end
- 
+
   # Address.from_full
   # Attempts to fill out nil fields in street address by using StreetAddress gem
   def from_full
-    street_address = { 
+    street_address = {
       street_number: street_number,
       street_name: street_name,
       street_two: street_two,
       city: city,
       state: state,
       zip_code: zip_code,
-      plus_four: plus_four 
+      plus_four: plus_four
     }
-    
+
     if street_address.values.any?(nil) &&
        !full.nil?
       parsed_address = StreetAddress::US.parse(full)
@@ -117,7 +136,7 @@ class Address < ApplicationRecord
             when 'city'
               self.city = parsed_address.city
             when 'state'
-              self.state = parsed_address.city
+              self.state = parsed_address.state
             when 'zip_code'
               self.zip_code = parsed_address.postal_code
             when 'plus_four'
@@ -128,38 +147,38 @@ class Address < ApplicationRecord
       end
     end
   end
-  
+
   # Address.set_full_searchable
   # Sets full_searchable field with the full street address minus any punctuation
   def set_full_searchable
-    self.full_searchable = [combined_street_address(), street_two, 
-                            combined_locality_region(), 
+    self.full_searchable = [combined_street_address(), street_two,
+                            combined_locality_region(),
                             combined_zip_code()].compact
                                     .join(' ')
                                     .gsub(/\s+/, ' ')
                                     .gsub(/[^0-9a-z ]/i, '')
                                     .strip
   end
-  
+
   def combined_street_address
     [street_number, street_name].compact
                                .join(' ')
                                .gsub(/\s+/, ' ')
-                               .strip  
+                               .strip
   end
 
   def combined_zip_code
     return plus_four.nil? ? zip_code : "#{zip_code}-#{plus_four}"
   end
-  
+
   def combined_locality_region
-    return "#{city}, #{state}"  
-  end 
-  
+    return "#{city}, #{state}"
+  end
+
   def set_first_as_primary
 		unless addressable.nil?
 			self.primary = true if self.addressable.respond_to?("addresses") && self.addressable.addresses.count == 0
-		end  
+		end
 	end
 
 	def self.search_insurables(query)
@@ -183,6 +202,12 @@ class Address < ApplicationRecord
 	  })
 	end
   
+  def self.separate_street_number(address_line_one)
+    splat = address_line_one.strip.split(" ").map{|x| x.strip }
+    return false if splat.length == 1
+    [splat[0], splat.drop(1).join(" ")]
+  end
+  
   def get_msi_addr(include_line2 = true)
     {
       Addr1: self.combined_street_address,
@@ -191,5 +216,10 @@ class Address < ApplicationRecord
       PostalCode: self.zip_code
     }.merge(include_line2 ? { Addr2: street_two.blank? ? nil : street_two } : {})
   end
-      
+  
+  def refresh_insurable_policy_type_ids
+    # update policy type ids (in case a newly created or changed address alters which policy types an insurable supports)
+    self.addressable&.refresh_policy_type_ids(and_save: true)
+  end
+
 end

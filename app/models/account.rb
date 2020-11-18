@@ -121,6 +121,8 @@ class Account < ApplicationRecord
   # Get GeneralPartyInfo block for use in MSI requests
   def get_msi_general_party_info
     pseudoname = get_pseudoname
+    gotten_email = self.contact_info&.[]("contact_email") 
+    gotten_email = self.owner&.email || nil if gotten_email.blank?
     addr = primary_address.nil? ? nil : primary_address.full[0...50]
     {
       NameInfo: {
@@ -131,7 +133,26 @@ class Account < ApplicationRecord
       },
       Communications: { # feel free to add phone number here just like we do for user#get_msi_general_party_info
         EmailInfo: {
-          EmailAddr: self.owner.email # MOOSE WARNING: make this use self.contact_info if we ever start making use of it
+          EmailAddr: gotten_email
+        }
+      }
+    }
+  end
+  
+  def get_confie_general_party_info
+    {
+      NameInfo: {
+        CommlName: {
+          CommercialName: self.title.strip,
+          SupplementaryNameInfo: nil #{
+            #SupplementaryNameCd: "DBA",
+            #SupplementaryName: self.title.strip
+          #} # enable if needed
+        }.compact
+      },
+      Communications: { # feel free to add phone number here just like we do for user#get_confie_general_party_info
+        EmailInfo: {
+          EmailAddr: gotten_email
         }
       }
     }

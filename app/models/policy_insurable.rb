@@ -16,11 +16,11 @@ class PolicyInsurable < ApplicationRecord
   validate :same_account
   
   def same_account
-    if policy_application && insurable.account != policy_application.account
+    if policy_application&.account && insurable&.account && insurable.account != policy_application.account
       errors.add(:insurable, 'insurable must belong to same account as policy application')
     end
     
-    if policy && policy.account != insurable.account
+    if policy&.account && insurable&.account && policy.account != insurable.account
       errors.add(:insurable, 'insurable must belong to same account as policy')
     end
   end

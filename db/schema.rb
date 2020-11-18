@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_10_01_131848) do
+ActiveRecord::Schema.define(version: 2020_11_12_154331) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
@@ -142,6 +142,19 @@ ActiveRecord::Schema.define(version: 2020_10_01_131848) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "application_notifications", force: :cascade do |t|
+    t.string "action"
+    t.string "subject"
+    t.integer "status"
+    t.integer "code"
+    t.boolean "read", default: false
+    t.integer "notifiable_id"
+    t.string "notifiable_type"
+    t.string "message"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
   create_table "assignments", force: :cascade do |t|
     t.boolean "primary"
     t.bigint "staff_id"
@@ -193,6 +206,7 @@ ActiveRecord::Schema.define(version: 2020_10_01_131848) do
     t.string "logo_url"
     t.string "footer_logo_url"
     t.string "subdomain"
+    t.boolean "global_default", default: false, null: false
     t.index ["profileable_type", "profileable_id"], name: "index_branding_profiles_on_profileable_type_and_profileable_id"
     t.index ["url"], name: "index_branding_profiles_on_url", unique: true
   end
@@ -251,8 +265,8 @@ ActiveRecord::Schema.define(version: 2020_10_01_131848) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "external_carrier_id"
+    t.index ["carrier_id", "external_carrier_id"], name: "carrier_external_carrier_id", unique: true
     t.index ["carrier_id"], name: "index_carrier_insurable_profiles_on_carrier_id"
-    t.index ["external_carrier_id"], name: "index_carrier_insurable_profiles_on_external_carrier_id", unique: true
     t.index ["insurable_id"], name: "index_carrier_insurable_profiles_on_insurable_id"
   end
 
@@ -322,9 +336,11 @@ ActiveRecord::Schema.define(version: 2020_10_01_131848) do
     t.bigint "staff_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["customized_action"], name: "index_change_requests_on_customized_action", unique: true
+    t.string "changeable_type"
+    t.integer "requestable_id"
+    t.string "requestable_type"
+    t.integer "changeable_id"
     t.index ["staff_id"], name: "index_change_requests_on_staff_id"
-    t.index ["status"], name: "index_change_requests_on_status", unique: true
   end
 
   create_table "charges", force: :cascade do |t|
@@ -362,6 +378,10 @@ ActiveRecord::Schema.define(version: 2020_10_01_131848) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "type_of_loss", default: 0, null: false
+    t.string "name"
+    t.string "address"
+    t.string "nature_of_claim"
+    t.text "staff_notes"
     t.index ["claimant_type", "claimant_id"], name: "index_claims_on_claimant_type_and_claimant_id"
     t.index ["insurable_id"], name: "index_claims_on_insurable_id"
     t.index ["policy_id"], name: "index_claims_on_policy_id"
@@ -564,6 +584,7 @@ ActiveRecord::Schema.define(version: 2020_10_01_131848) do
     t.boolean "enabled"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "policy_type_ids", default: [], null: false, array: true
   end
 
   create_table "insurables", force: :cascade do |t|
@@ -578,10 +599,14 @@ ActiveRecord::Schema.define(version: 2020_10_01_131848) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.bigint "agency_id"
+    t.bigint "policy_type_ids", default: [], null: false, array: true
+    t.boolean "preferred_ho4", default: false, null: false
     t.index ["account_id"], name: "index_insurables_on_account_id"
     t.index ["agency_id"], name: "index_insurables_on_agency_id"
     t.index ["insurable_id"], name: "index_insurables_on_insurable_id"
     t.index ["insurable_type_id"], name: "index_insurables_on_insurable_type_id"
+    t.index ["policy_type_ids"], name: "insurable_ptids_gin_index", using: :gin
+    t.index ["preferred_ho4"], name: "index_insurables_on_preferred_ho4"
   end
 
   create_table "invoices", force: :cascade do |t|
@@ -625,7 +650,11 @@ ActiveRecord::Schema.define(version: 2020_10_01_131848) do
     t.bigint "lead_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "policy_type_id"
+    t.bigint "agency_id"
+    t.index ["agency_id"], name: "index_lead_events_on_agency_id"
     t.index ["lead_id"], name: "index_lead_events_on_lead_id"
+    t.index ["policy_type_id"], name: "index_lead_events_on_policy_type_id"
   end
 
   create_table "leads", force: :cascade do |t|
@@ -635,6 +664,11 @@ ActiveRecord::Schema.define(version: 2020_10_01_131848) do
     t.string "labels", array: true
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "status", default: 0
+    t.datetime "last_visit"
+    t.string "last_visited_page"
+    t.integer "tracking_url_id"
+    t.integer "agency_id"
     t.index ["email"], name: "index_leads_on_email"
     t.index ["user_id"], name: "index_leads_on_user_id"
   end
@@ -706,6 +740,32 @@ ActiveRecord::Schema.define(version: 2020_10_01_131848) do
     t.integer "proration_reduction", default: 0, null: false
     t.date "full_refund_before_date"
     t.index ["invoice_id"], name: "index_line_items_on_invoice_id"
+  end
+
+  create_table "login_activities", force: :cascade do |t|
+    t.string "scope"
+    t.string "strategy"
+    t.string "identity"
+    t.boolean "success"
+    t.string "failure_reason"
+    t.string "user_type"
+    t.bigint "user_id"
+    t.string "context"
+    t.string "ip"
+    t.text "user_agent"
+    t.text "referrer"
+    t.string "city"
+    t.string "region"
+    t.string "country"
+    t.float "latitude"
+    t.float "longitude"
+    t.datetime "created_at"
+    t.string "client"
+    t.integer "expiry"
+    t.boolean "active", default: true
+    t.index ["identity"], name: "index_login_activities_on_identity"
+    t.index ["ip"], name: "index_login_activities_on_ip"
+    t.index ["user_type", "user_id"], name: "index_login_activities_on_user_type_and_user_id"
   end
 
   create_table "model_errors", force: :cascade do |t|
@@ -927,6 +987,7 @@ ActiveRecord::Schema.define(version: 2020_10_01_131848) do
     t.boolean "auto_pay", default: true
     t.bigint "policy_application_group_id"
     t.jsonb "coverage_selections", default: [], null: false
+    t.jsonb "extra_settings"
     t.index ["account_id"], name: "index_policy_applications_on_account_id"
     t.index ["agency_id"], name: "index_policy_applications_on_agency_id"
     t.index ["billing_strategy_id"], name: "index_policy_applications_on_billing_strategy_id"
@@ -1254,6 +1315,20 @@ ActiveRecord::Schema.define(version: 2020_10_01_131848) do
     t.index ["reset_password_token"], name: "index_staffs_on_reset_password_token", unique: true
     t.index ["role"], name: "index_staffs_on_role"
     t.index ["uid", "provider"], name: "index_staffs_on_uid_and_provider", unique: true
+  end
+
+  create_table "tracking_urls", force: :cascade do |t|
+    t.string "landing_page"
+    t.string "campaign_source"
+    t.string "campaign_medium"
+    t.string "campaign_term"
+    t.text "campaign_content"
+    t.string "campaign_name"
+    t.boolean "deleted", default: false
+    t.bigint "agency_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["agency_id"], name: "index_tracking_urls_on_agency_id"
   end
 
   create_table "users", force: :cascade do |t|

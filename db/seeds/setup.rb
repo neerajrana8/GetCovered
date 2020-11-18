@@ -22,7 +22,8 @@ end
   { title: "Master Policy", designation: "MASTER", enabled: true },
   { title: "Master Policy Coverage", designation: "MASTER-COVERAGE", enabled: true },
   { title: "Commercial", designation: "BOP", enabled: true },
-  { title: "Rent Guarantee", designation: "RENT-GUARANTEE", enabled: true }
+  { title: "Rent Guarantee", designation: "RENT-GUARANTEE", enabled: true },
+  { title: "Security Deposit Replacement", designation: "SECURITY-DEPOSIT", enabled: true }
 ]
 
 @policy_types.each do |pt|
@@ -494,14 +495,7 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
 				  	default_answer: 1,
 				  	value: 1,
 				    options: [1, 2, 3, 4, 5, 6, 7, 8]
-			    },
-          {
-            title: "Installment Day",
-            answer_type: "INTEGER",
-            default_answer: 1,
-            value: 1,
-            options: (1..28).to_a
-          }	  											
+			    }									
 				]     
       )
       

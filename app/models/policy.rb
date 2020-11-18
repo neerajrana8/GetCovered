@@ -43,6 +43,7 @@ class Policy < ApplicationRecord
   include CarrierCrumPolicy
   include CarrierQbePolicy
   include CarrierMsiPolicy
+  include CarrierDcPolicy
   include RecordChange
   
   after_create :inherit_policy_coverages, if: -> { policy_type&.designation == 'MASTER-COVERAGE' }
@@ -99,7 +100,8 @@ class Policy < ApplicationRecord
   has_many :commission_deductions
   
   has_many :histories, as: :recordable
-  
+  has_many :change_requests, as: :changeable
+
   has_many_attached :documents
 
   # Scopes
@@ -118,14 +120,13 @@ class Policy < ApplicationRecord
   scope :master_policy_coverages, -> { where(policy_type_id: PolicyType::MASTER_COVERAGE_ID) }
 
   accepts_nested_attributes_for :policy_premiums,
-  :insurables, :policy_users, :policy_insurables
+  :insurables, :policy_users, :policy_insurables, :policy_application
   accepts_nested_attributes_for :policy_coverages, allow_destroy: true
   #  after_save :update_leases, if: :saved_changes_to_status?
   
   validate :correct_document_mime_type
   validate :is_allowed_to_update?, on: :update
   validate :residential_account_present
-  validate :same_agency_as_account
   validate :status_allowed
   validate :carrier_agency
   validate :master_policy, if: -> { policy_type&.designation == 'MASTER-COVERAGE' }
@@ -163,8 +164,22 @@ class Policy < ApplicationRecord
     new_application_nonpayment: 3,    # QBE NP
     underwriter_cancellation:   4,    # QBE UW
     disqualification:           5,    # no qbe code
-    test_policy:                6     # no qbe code
+    test_policy:                6,     # no qbe code
+    manual_cancellation_with_refunds:     7,     # no qbe code
+    manual_cancellation_without_refunds:  8    # no qbe code
   }
+
+  def self.active_statuses
+    ['BOUND', 'BOUND_WITH_WARNING', 'RENEWING', 'RENEWED', 'REINSTATED']
+  end
+
+  def is_active?
+    self.class.active_statuses.include?(self.status)
+  end
+
+  def was_active?
+    self.class.active_statuses.include?(self.attribute_before_last_save('status'))
+  end
 
   # Cancellation reasons with special refund logic; allowed values:
   #   early_cancellation:       within the first (CarrierInsurableType.max_days_for_full_refund || 30) days a refund will be issued equivalent to a refund prorated for the day before the policy's effective_date
@@ -173,13 +188,10 @@ class Policy < ApplicationRecord
   SPECIAL_CANCELLATION_REFUND_LOGIC = {
     'insured_request' =>          :early_cancellation,
     'nonpayment'      =>          :no_refund,
-    'test_policy'     =>          :no_refund
+    'test_policy'     =>          :no_refund,
+    'manual_cancellation_with_refunds' => :early_cancellation,
+    'manual_cancellation_without_refunds' => :no_refund
   }
-
-
-
-
-
 
   def in_system?
     policy_in_system == true
@@ -197,21 +209,13 @@ class Policy < ApplicationRecord
   end
   
   def is_allowed_to_update?
-    errors.add(:policy_in_system, 'Cannot update in system policy') if policy_in_system == true
+    errors.add(:policy_in_system, 'Cannot update in system policy') if policy_in_system == true && !rent_garantee? && !residential?
   end
   
   def residential_account_present    
     errors.add(:account, 'Account must be specified') if ![4,5].include?(policy_type_id) && account.nil? 
   end
-  
-  def same_agency_as_account
-    return unless in_system?
-    
-    if ![4,5].include?(policy_type_id)
-      errors.add(:account, 'policy must belong to the same agency as account') if agency != account&.agency
-    end
-  end
-  
+
   def carrier_agency
     return unless in_system?
 
@@ -276,6 +280,8 @@ class Policy < ApplicationRecord
       crum_issue_policy
     when 'msi'
       msi_issue_policy
+    when 'dc'
+      dc_issue_policy
     else
       { error: 'Error happened with policy issue' }
     end
@@ -364,29 +370,42 @@ class Policy < ApplicationRecord
   def residential?
     policy_type == PolicyType.residential
   end
-  
+
+  def rent_garantee?
+    policy_type == PolicyType.rent_garantee
+  end
+
   settings index: { number_of_shards: 1 } do
     mappings dynamic: 'false' do
       indexes :number, type: :text
     end
   end
 
+  def refund_available_days
+    max_days_for_full_refund =
+      (CarrierPolicyType.where(policy_type_id: self.policy_type_id, carrier_id: self.carrier_id).
+        take&.max_days_for_full_refund || 0).
+        days - 1.day
+    raw_days = (self.created_at.to_date + max_days_for_full_refund - Time.zone.now.to_date).to_i
+    raw_days.negative? ? 0 : raw_days
+  end
+
   private
       
-    def date_order
-      errors.add(:expiration_date, 'expiration date cannot be before effective date.') if expiration_date < effective_date
-    end
+  def date_order
+    errors.add(:expiration_date, 'expiration date cannot be before effective date.') if expiration_date < effective_date
+  end
 
-    def correct_document_mime_type
-      documents.each do |document|
-        if !document.blob.content_type.starts_with?('image/png', 'image/jpeg', 'image/jpg', 'image/svg',
-          'image/gif', 'application/pdf', 'text/plain', 'application/msword',
-          'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-          'text/comma-separated-values', 'application/vnd.ms-excel'
-          )
-          errors.add(:documents, 'The document wrong format, only: PDF, DOC, DOCX, XLSX, XLS, CSV, JPG, JPEG, PNG, GIF, SVG, TXT')
-        end
+  def correct_document_mime_type
+    documents.each do |document|
+      if !document.blob.content_type.starts_with?('image/png', 'image/jpeg', 'image/jpg', 'image/svg',
+        'image/gif', 'application/pdf', 'text/plain', 'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'text/comma-separated-values', 'application/vnd.ms-excel'
+        )
+        errors.add(:documents, 'The document wrong format, only: PDF, DOC, DOCX, XLSX, XLS, CSV, JPG, JPEG, PNG, GIF, SVG, TXT')
       end
     end
+  end
 end

@@ -32,7 +32,12 @@ namespace :docker do
 	  desc "Migrate DB"
 		task migrate: :environment do
 			system("docker-compose run web rails db:migrate")
-		end
+    end
+
+    desc "Rollback DB"
+    task rollback: :environment do
+      system("docker-compose run web rails db:rollback")
+    end
 
   end
 

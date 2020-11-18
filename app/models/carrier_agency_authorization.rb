@@ -5,11 +5,14 @@
 class CarrierAgencyAuthorization < ApplicationRecord
   include Blacklistable
   
+  after_save :refresh_insurable_policy_type_ids
+  
   belongs_to :carrier_agency
   belongs_to :policy_type
 
   has_one :agency, through: :carrier_agency
-      
+  has_one :carrier, through: :carrier_agency
+
   has_many :fees, as: :assignable
   
   enum state: { AK: 0, AL: 1, AR: 2, AZ: 3, CA: 4, CO: 5, CT: 6, 
@@ -22,5 +25,46 @@ class CarrierAgencyAuthorization < ApplicationRecord
                 WV: 49, WY: 50 }
   
   validates_presence_of :state
-  validates_uniqueness_of :state, scope: 'carrier_agency_id', message: 'record for parent Carrier Policy Type already exists'
+  validates_uniqueness_of :state,
+                          scope: %w[carrier_agency_id policy_type_id],
+                          message: 'record for parent Carrier Policy Type already exists'
+
+  validate :policy_type_available_for_carrier
+  validate :policy_type_available_in_state, if: :available?
+
+  private
+  
+  def policy_type_available_for_carrier
+    if carrier_agency.carrier.policy_types.ids.exclude?(policy_type_id)
+      errors.add(:carrier_agency, 'policy type should be supported by the carrier')
+    end
+  end
+
+  def policy_type_available_in_state
+    policy_type_available =
+      carrier_agency.
+        carrier.
+        carrier_policy_types.
+        find_by_policy_type_id(policy_type_id)
+    if policy_type_available
+      policy_type_availability =
+        policy_type_available.
+          carrier_policy_type_availabilities.
+          find_by_state(state)
+      errors.add(:carrier_agency, "policy type should be activated") unless policy_type_availability.try(:available?)
+    else
+      errors.add(:carrier_agency, 'policy type should be available')
+    end
+  end
+  
+  def refresh_insurable_policy_type_ids
+    # get addresses for insurables that may need updating and update them
+    query_base = ::Address.joins("INNER JOIN insurables ON insurables.id = addresses.addressable_id")
+    query_base.where(insurables: { account_id: ::Account.where(agency_id: self.carrier_agency.agency_id).order(:id).group(:id).pluck(:id) })
+              .or(query_base.where.not(insurables: { agency_id: self.carrier_agency.agency_id }))
+              .where(state: self.state, addressable_type: "Insurable")
+              .each do |addr|
+      addr.refresh_insurable_policy_type_ids
+    end
+  end
 end

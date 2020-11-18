@@ -10,7 +10,7 @@ gem 'pg', '>= 0.18', '< 2.0'
 # Add union queries to the Rails
 gem 'active_record_union'
 # Use Puma as the app server
-gem 'puma', '~> 3.11'
+gem 'puma', '~> 3.12.6'
 # Build JSON APIs with ease. Read more: https://github.com/rails/jbuilder
 gem 'jbuilder', '~> 2.5'
 # Use Redis adapter to run Action Cable in production
@@ -24,11 +24,12 @@ gem 'redis', '~> 4.0'
 # Use Capistrano for deployment
 # gem 'capistrano-rails', group: :development
 
+gem 'authtrail'
 # Reduces boot times through caching; required in config/boot.rb
 gem 'bootsnap', '>= 1.1.0', require: false
 
 # NokoGiri
-gem 'nokogiri'
+gem 'nokogiri', '>= 1.10.8'
 
 # HTTParty
 gem 'httparty'
@@ -40,7 +41,7 @@ gem 'pry'
 gem 'awesome_print'
 
 # rack cors for api access to application
-gem 'rack-cors', require: 'rack/cors'
+gem 'rack-cors', '>= 1.0.5', require: 'rack/cors'
 
 # attr-encrypted for securing data
 gem 'attr_encrypted', '~> 3.0.0'
@@ -72,13 +73,13 @@ gem 'timezone', '~> 1.0'
 gem 'twilio-ruby', '~> 4.11.1'
 
 # Kaminari for pagination
-gem 'kaminari'
+gem 'kaminari', '>= 1.2.1'
 
 # Mailing
 gem 'mailgun-ruby', '~>1.1.6'
 gem 'premailer-rails'
 
-gem 'geocoder'
+gem 'geocoder', '~> 1.6.1'
 gem 'StreetAddress', require: 'street_address'
 
 gem 'elasticsearch-model', github: 'elastic/elasticsearch-rails', branch: '5.x'
@@ -112,11 +113,14 @@ gem 'ruby-prof', require: false
 
 gem 'addressable'
 gem 'analytics-ruby', '~> 2.0.0', :require => 'segment/analytics'
-
+gem 'klaviyo'
+gem 'rack-attack'
+gem 'dry-monads'
 
 group :development, :test, :test_container do
   # Call 'byebug' anywhere in the code to stop execution and get a debugger console
   gem 'byebug', platforms: %i[mri mingw x64_mingw]
+  gem 'pry'
   gem 'rspec_junit_formatter'
   gem 'database_cleaner'
   gem 'factory_bot_rails'
@@ -141,9 +145,10 @@ group :development do
   gem 'letter_opener_web', '~> 1.0'
   gem 'guard'
   gem 'guard-shell'
-  # rubymine specific debug gems
-  #gem 'ruby-debug-ide'
-  #gem 'debase'
+  #rubymine specific debug gems
+    # gem 'ruby-debug-ide'
+    # gem 'debase'
+    # gem 'web-console'
 end
 
 # Windows does not include zoneinfo files, so bundle the tzinfo-data gem

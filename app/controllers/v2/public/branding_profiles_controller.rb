@@ -26,7 +26,16 @@ module V2
       def set_branding_profile_by_subdomain
         request_url = request.headers['origin'] || request.referer
         host = request_url.present? ? URI(request_url).host&.delete_prefix('www.') : nil
-        @branding_profile = BrandingProfile.find_by(url: host) || BrandingProfile.find_by(title: 'GetCovered')
+
+        @branding_profile =
+          if host.present? && Rails.env.to_sym != :production
+            agency_prefix = host.split('.').first
+            agency = Agency.find_by_slug(agency_prefix)
+            agency&.branding_profiles&.take
+          end
+
+        # if there is no agency with that slug or it is the production, finds by the host or uses the default profile
+        @branding_profile ||= (BrandingProfile.find_by_url(host) || BrandingProfile.global_default)
       end
       
       def set_branding_profile

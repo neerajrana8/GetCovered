@@ -36,6 +36,7 @@ module V2
         {
           created_at: [:scalar, :array, :interval],
           updated_at: [:scalar, :array, :interval],
+          accounts: { agency_id: [:scalar] }
         }
       end
 
