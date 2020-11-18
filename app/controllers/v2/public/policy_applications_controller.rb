@@ -11,13 +11,11 @@ module V2
       before_action :validate_policy_users_params, only: %i[create update]
 
       def show
-        if %w[started in_progress
+        unless %w[started in_progress
               abandoned more_required].include?(@policy_application.status)
-
-        else
-
           render json:   standard_error(:policy_application_not_found, 'Policy Application is not found or no longer available'),
                  status: 404
+          return
         end
       end
 
@@ -157,12 +155,12 @@ module V2
         place_holder_date = Time.now + 1.day
         policy_type = params[:policy_application][:policy_type_id]
         init_hash = {
-            :agency => @access_token.bearer,
-            :policy_type => PolicyType.find(policy_type),
-            :carrier => policy_type == 1 ? Carrier.find(5) : Carrier.find(4),
-            :account => policy_type == 1 ? Account.first : nil,
-            :effective_date => place_holder_date,
-            :expiration_date => place_holder_date + 1.year
+          :agency => @access_token.bearer,
+          :policy_type => PolicyType.find(policy_type),
+          :carrier => policy_type == 1 ? Carrier.find(5) : Carrier.find(4),
+          :account => policy_type == 1 ? Account.first : nil,
+          :effective_date => place_holder_date,
+          :expiration_date => place_holder_date + 1.year
         }
 
         site = Rails.application.credentials[:uri][Rails.env.to_sym][:client]
@@ -173,11 +171,19 @@ module V2
         @application.billing_strategy = BillingStrategy.where(agency:      @application.agency,
                                                               policy_type: @application.policy_type,
                                                               carrier: @application.carrier).take
-
-        if policy_type == 5
-          params["policy_application"]["fields"].keys.each do |key|
-            @application.fields[key] = params["policy_application"]["fields"][key]
-          end
+                                                              
+        address_string = params["policy_application"]["fields"]["address"]
+        @application.resolver_info = { "address_string" => address_string }
+        case policy_type
+          when 1 # residential
+            unit = ::Insurable.get_or_create(address: address_string, unit: true)
+            if unit.class == ::Insurable
+              @application.insurables << unit
+            end
+          when 5 # rent guarantee
+            params["policy_application"]["fields"].keys.each do |key|
+              @application.fields[key] = params["policy_application"]["fields"][key]
+            end
         end
 
         if @application.save
@@ -712,7 +718,7 @@ module V2
 
       def set_policy_application
         puts "SET POLICY APPLICATION RUNNING ID: #{params[:id]}"
-        @policy_application = access_model(::PolicyApplication, params[:id])
+        @application = @policy_application = access_model(::PolicyApplication, params[:id])
       end
 
       def new_residential_params

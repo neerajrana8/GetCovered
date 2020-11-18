@@ -274,7 +274,7 @@ class Insurable < ApplicationRecord
       raise ArgumentError.new("either 'address' or 'insurable_id' and a string 'unit' must be provided")
     end
     # if we have a unit title and an insurable id, get or create the unit without dealing with address nonsense
-    unit_title = [true,false,nil].include?(unit) ? nil : unit
+    unit_title = [true,false,nil].include?(unit) ? nil : clean_unit_title(unit)
     if !unit_title.blank? && !insurable_id.nil?
       if diagnostics
         diagnostics[:unit_mode] = true
@@ -326,17 +326,9 @@ class Insurable < ApplicationRecord
     if seeking_unit
       if unit_title.blank? && !address.street_two.blank?
         diagnostics[:title_derivation_tried] = true if diagnostics
-        splat = address.street_two.gsub('#', ' ').gsub('.', ' ')
-                                  .gsub(/\s+/m, ' ').gsub(/^\s+|\s+$/m, '')
-                                  .split(" ").select do |strang|
-                                    ![
-                                      'apartment', 'apt', 'unit',
-                                      'flat', 'room', 'office',
-                                      'no', 'number'
-                                    ].include?(strang.downcase)
-                                  end
-        if splat.size == 1
-          unit_title = splat[0]
+        cleaned = clean_unit_title(address.street_two)
+        unless cleaned.nil?
+          unit_title = cleaned
           if diagnostics
             diagnostics[:title_derivation_succeeded] = true 
             diagnostics[:title_as_derived] = unit_title
@@ -522,12 +514,12 @@ class Insurable < ApplicationRecord
   
   private
 
-  def title_uniqueness
-    return if insurable.nil?
-    if insurable.insurables.where(title: title, insurable_type: insurable_type).any?
-      errors.add(:title, 'should be uniq inside group')
+    def title_uniqueness
+      return if insurable.nil?
+      if insurable.insurables.where(title: title, insurable_type: insurable_type).any?
+        errors.add(:title, 'should be uniq inside group')
+      end
     end
-  end
     
     def create_profile_by_carrier
       if insurable_type.title.include? "Residential"
@@ -535,6 +527,19 @@ class Insurable < ApplicationRecord
       else
         carrier_profile(3)
       end  
+    end
+    
+    def self.clean_unit_title(unit_title)
+      splat = address.street_two.gsub('#', ' ').gsub('.', ' ')
+                                .gsub(/\s+/m, ' ').gsub(/^\s+|\s+$/m, '')
+                                .split(" ").select do |strang|
+                                  ![
+                                    'apartment', 'apt', 'unit',
+                                    'flat', 'room', 'office',
+                                    'no', 'number'
+                                  ].include?(strang.downcase)
+                                end
+      return(splat.size == 1 ? splat[0] : nil)
     end
     
 end

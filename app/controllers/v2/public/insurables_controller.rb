@@ -164,7 +164,11 @@ module V2
               end
             when ::Address
               return {
-                full: ins.full, street_number: ins.street_number, street_name: ins.street_name, street_two: ins.street_two, city: ins.city, state: ins.state, zip_code: ins.zip_code
+                full: ins.full,
+                street_number: ins.street_number, street_name: ins.street_name,
+                street_two: ins.street_two,
+                city: ins.city, state: ins.state, zip_code: ins.zip_code,
+                county: ins.county, country: ins.country
               }
             else
               return nil
