@@ -530,15 +530,15 @@ class Insurable < ApplicationRecord
     end
     
     def self.clean_unit_title(unit_title)
-      splat = address.street_two.gsub('#', ' ').gsub('.', ' ')
-                                .gsub(/\s+/m, ' ').gsub(/^\s+|\s+$/m, '')
-                                .split(" ").select do |strang|
-                                  ![
-                                    'apartment', 'apt', 'unit',
-                                    'flat', 'room', 'office',
-                                    'no', 'number'
-                                  ].include?(strang.downcase)
-                                end
+      splat = unit_title.gsub('#', ' ').gsub('.', ' ')
+                        .gsub(/\s+/m, ' ').gsub(/^\s+|\s+$/m, '')
+                        .split(" ").select do |strang|
+                          ![
+                            'apartment', 'apt', 'unit',
+                            'flat', 'room', 'office',
+                            'no', 'number'
+                          ].include?(strang.downcase)
+                        end
       return(splat.size == 1 ? splat[0] : nil)
     end
     
