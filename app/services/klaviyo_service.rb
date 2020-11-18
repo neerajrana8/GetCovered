@@ -7,11 +7,6 @@ class KlaviyoService
   EVENTS = ["New Lead", "Became Lead", "New Lead Event", "Created Account", "Updated Account",
             "Updated Email", "Reset Password", "Invoice Created", "Order Confirmation", "Failed Payment"]
 
-  PAGES = ['Landing Page', 'Eligibility Page', 'Basic Info Page', 'Eligibility Requirements Page', 'Address Page', 'Employer Page',
-           'Landlord Page', 'Confirmation Page', 'Terms&Conditions Page', 'Payment Page']
-
-  PAGES_RENT_GUARANTEE = ['Basic Info Section', 'Insurance Info Section', 'Coverage Limits Section', 'Insured Details Section', 'Payment Section']
-
   TEST_TAG = 'test'
   RETRY_LIMIT = 3
 
@@ -75,8 +70,8 @@ class KlaviyoService
       end
     end
 
-    customer_properties[:last_visited_page_url] = map_last_visited_url(event_details) #need to unify for other too
-    customer_properties[:last_visited_page] = map_last_visited_page(event_details) if event_details['last_visited_page'].present?
+    customer_properties[:last_visited_page_url] = map_last_visited_url(event_details)
+    customer_properties[:last_visited_page]     = map_last_visited_page(event_details) if page_set?(event_details)
 
     # TODO: check retriable gem?
     begin
@@ -127,7 +122,9 @@ class KlaviyoService
         '$consent': "",
         'status': @lead.status,
         'tag': @lead.lead_events.last.try(:tag),
-        'environment': ENV["RAILS_ENV"]
+        'environment': ENV["RAILS_ENV"],
+        'last_visited_page': @lead.last_visited_page,
+        'policy_type': @lead.last_event&.policy_type&.slug
     }
     setup_profile!(request)
     setup_address!(request)
@@ -175,36 +172,29 @@ class KlaviyoService
     end
   end
 
-  #check default for residential
-  def map_last_visited_page(event_details)
-    #need to put in another method
-    if @lead.lead_events.&last.&policy_type_id==5
-      default = "Landing Page"
-      if event_details["data"].present? && page_further?(event_details["data"]["last_visited_page"])
-        event_details["data"]["last_visited_page"]
-      else
-        @lead.last_visited_page || default
-      end
+  def page_set?(event_details)
+    event_details['last_visited_page'] || (event_details["data"] && event_details["data"]["last_visited_page"])
+  end
 
+  def map_last_visited_page(event_details)
+    default = @lead.last_event.policy_type.rent_guarantee? ? Lead::PAGES_RENT_GUARANTEE[0] : Lead::PAGES_RESIDENTIAL[0]
+    if event_details["data"].present? && @lead.page_further?(event_details["data"]["last_visited_page"])
+      event_details["data"]["last_visited_page"]
     else
-      event_details["data"]["last_visited_page"] if event_details["data"].present?
+      @lead.last_visited_page || default
     end
   end
 
-  def page_further?(last_visited_page)
-    PAGES.index(last_visited_page) > PAGES.index(@lead.last_visited_page)
-  end
-
-  #url должен быть разный в зависимости от брендингов? как получить
   def map_last_visited_url(event_details)
-    return "https://www.getcoveredinsurance.com/rentguarantee" if event_details.blank?
-    if event_details['policy_type_id']==5
-      "https://www.getcoveredinsurance.com/rentguarantee"
-    elsif event_details['policy_type_id']==1
-      "https://www.getcoveredinsurance.com/residential"
+    return "" if event_details.blank?
+    branding_url = @lead.agency.branding_profiles.take.url
+    if @lead.last_event.policy_type.rent_guarantee?
+      "https://www.#{branding_url}/rentguarantee"
+    elsif @lead.last_event.policy_type.residential?
+      "https://www.#{branding_url}/residential"
     else
       #tbd for other forms
-      "https://www.getcoveredinsurance.com/rentguarantee"
+      ""
     end
   end
 
