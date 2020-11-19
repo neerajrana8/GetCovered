@@ -10,8 +10,8 @@ class PaymentMadeMailer < ApplicationMailer
       @branding_profile = BrandingProfile.first if @branding_profile['styles']['use_gc_email_templates']
       @agency = @invoice.invoiceable.agency
       @policy = @invoice.invoiceable.is_a?(Policy) ? @invoice.invoiceable : @invoice.invoiceable.policy_group_quote.policy_group
-      @from= 'support@' + @branding_profile.url
-      mail(from: @from, to: @user.email, subject: "#{@agency.title} - #{@policy.number} Premium Payment Made")
+      @from = 'support@' + @branding_profile.url
+      mail(from: @from, to: @user.email, subject: "#{@agency.title} - #{@policy.policy_type.title} Premium Payment Made")
     end
   end
 end

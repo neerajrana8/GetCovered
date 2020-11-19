@@ -1,9 +1,15 @@
-<p>Dear <%= @name %>,</p>
-<p>Thank you for using <%= @branding_profile.title %> for your <%= @policy.number %> Policy.</p>
-<p>The credit card listed in your account is soon to expire.</p>
-<p>Please login to <%= @branding_profile.title %> at the link below to update your credit card information to avoid interruption of coverage.</p>
-<p><a href="<%="#{@branding_profile.url}/user/payment-methods" %>"><%="#{@branding_profile.url}/user/payment-methods" %></a></p>
-<p>Feel free to contact us at <%= @from %></p>
-<p>If you have any questions.</p>
-<p>Thank you,</p>
-<p><%= @branding_profile.title %></p>
+<td class="o_bg-white o_px-md o_py-md o_sans o_text o_text-secondary" align="left" style="font-family: Helvetica, Arial, sans-serif;margin-top: 0px;margin-bottom: 0px;font-size: 16px;line-height: 24px;background-color: #ffffff;color: #424651;padding-left: 24px;padding-right: 24px;padding-top: 24px;padding-bottom: 24px;">
+  <div style="font-size: 24px; line-height: 24px; height: 24px;">&nbsp; </div>
+  <p class="o_mb-xs" style="margin-top: 0px;margin-bottom: 8px;">Dear <%= @name %>,</p>
+  <p class="o_mb-xs" style="margin-top: 0px;margin-bottom: 8px;">
+    Thank you for using <%= @branding_profile.title %> for your <%= @policy.policy_type.title %> Policy.
+    The credit card listed in your account is soon to expire.
+    Please login to <%= @branding_profile.title %> at the link below to update your credit
+    card information to avoid interruption of coverage.
+    <a href="<%="#{@branding_profile.url}/user/payment-methods" %>"><%="#{@branding_profile.url}/user/payment-methods" %></a>
+  </p>
+  <p class="o_mb-xs" style="margin-top: 0px;margin-bottom: 8px;">Feel free to contact us at <%= @from %> If you have any questions.</p>
+  <p class="o_mb-xs" style="margin-top: 0px;margin-bottom: 8px;">Thank you,</p>
+  <p class="o_mb-xs" style="margin-top: 0px;margin-bottom: 8px;"><%= @branding_profile.title %></p>
+  <div style="font-size: 16px; line-height: 16px; height: 16px;">&nbsp; </div>
+</td>
