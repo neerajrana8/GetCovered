@@ -9,7 +9,8 @@ describe 'Leads API spec', type: :request do
   TEST_TAG = "test"
 
   before :all do
-    @agency = FactoryBot.create(:agency)
+    branding = FactoryBot.create(:branding_profile)
+    @agency = branding.profileable #FactoryBot.create(:agency)
   end
 
   it 'should create new Lead from short params' do
@@ -198,9 +199,4 @@ describe 'Leads API spec', type: :request do
     }
     }
   end
-
-
-
-
-
 end
