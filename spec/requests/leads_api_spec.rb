@@ -9,8 +9,8 @@ describe 'Leads API spec', type: :request do
   TEST_TAG = "test"
 
   before :all do
-    branding = FactoryBot.create(:branding_profile)
-    @agency = branding.profileable #FactoryBot.create(:agency)
+    @agency = FactoryBot.create(:agency)
+    @branding_profile = FactoryBot.create(:branding_profile, profileable: @agency)
   end
 
   it 'should create new Lead from short params' do
