@@ -132,7 +132,7 @@ class ConfieService
         LOBCd: lobcd[0],
         LOBSubCd: lobcd[1],
         InsuredOrPrincipal: policy_application.policy_users.map do |pu|
-          get_insured_or_principal_for(pu.user, pu.primary ? "MOOSE WARNING" : "MOOSE WARNING")
+          get_insured_or_principal_for(pu.user, pu.primary ? code_for_primary_insured : code_for_additional_insured)
         end
       }
     }, **compilation_args)
@@ -163,9 +163,9 @@ class ConfieService
         LOBSubCd: lobcd[1],
         InsuredOrPrincipal: (
           policy.policy_users.map do |pu|
-            get_insured_or_principal_for(pu.user, pu.primary ? "MOOSE WARNING" : "MOOSE WARNING")
+            get_insured_or_principal_for(pu.user, pu.primary ? code_for_primary_insured : code_for_additional_insured)
           end + (policy.policy_type_id == ::PolicyType::RESIDENTIAL_ID && policy.carrier_id == MsiService.carrier_id && !policy.account.nil? ?
-            [get_insured_or_principal_for(policy.account, "MOOSE WARNING: ADDTL INTERST")]
+            [get_insured_or_principal_for(policy.account, code_for_additional_interest)] # MOOSE WARNING: is policy.account the right place to check? should we check for preferred_ho4 status first?
             : []
           )
         ),
@@ -194,8 +194,9 @@ class ConfieService
           "com.a1_OnlineSalesFee": {
             Amt: "0.00"
           }
-        },
-        "com.a1_LeadNotes": ""
+        }.merge(get_a1_policy_codes_for_policy_type(policy_type_id)),
+        "com.a1_LeadNotes": "",
+        "com.a1_OrganizationCd": "OLBT"
         # leaving out CarrierDocument and InternalDocument...
       }
     }, **compilation_args)
@@ -210,6 +211,18 @@ class ConfieService
   
   
 private
+
+    def code_for_primary_insured
+      "PRIMARY"
+    end
+
+    def code_for_additional_insured
+      "AI"
+    end
+    
+    def code_for_additional_interest
+      "AI" # MOOSE WARNING: there's no way this is right
+    end
 
     def payment_info(charge)
       ch = Stripe::Charge.retrieve(charge.stripe_id)
@@ -251,7 +264,7 @@ private
       case obj
         when ::User
           return {
-            "com.a1_ExternalId":  "#{get_unique_identifier}", # MOOSE WARNING: using auth instead of user-#{obj.id}",
+            # Optional: "com.a1_ExternalId":  "#{get_unique_identifier}", # MOOSE WARNING: using auth instead of user-#{obj.id}",
             GeneralPartyInfo:     obj.get_confie_general_party_info,
             InsuredOrPrincipalInfo: {
               InsuredOrPrincipalRoleCd: rolecd,
@@ -264,7 +277,7 @@ private
           }
         when ::Account
           return {
-            "com.a1_ExternalId":  "#{get_unique_identifier}", # MOOSE WARNING: using auth instead of "account-#{obj.id}",
+            # Optional: "com.a1_ExternalId":  "#{get_unique_identifier}", # MOOSE WARNING: using auth instead of "account-#{obj.id}",
             GeneralPartyInfo:     obj.get_confie_general_party_info,
             InsuredOrPrincipalInfo: {
               InsuredOrPrincipalRoleCd: rolecd,
@@ -275,20 +288,35 @@ private
       return nil
     end
 
+    def get_a1_policy_codes_for_policy_type(policy_type_id)
+      case policy_type_id
+        when ::PolicyType::RENT_GUARANTEE_ID        
+          return {
+            "com.a1_CarrierCd": "RE",
+            "com.a1_ProgramCd": "NGU"
+          }
+        when ::PolicyType::RESIDENTIAL_ID        
+          return {
+            "com.a1_CarrierCd": "GC",
+            "com.a1_ProgramCd": "REN"
+          }
+      end
+      return {}
+    end
+
     # returns [lobcd, lobsubcd] or nil if none
     def get_lobcd_for_policy_type(policy_type_id)
       case policy_type_id
         when ::PolicyType::RENT_GUARANTEE_ID
-          return [nil,nil]
+          return ["HOME", "OTP"]
         when ::PolicyType::RESIDENTIAL_ID
-          return [nil,nil]
+          return ["HOME", "OTP"]
       end
       return nil
     end
 
     def get_unique_identifier
-      #"#{Time.current.to_i.to_s}-#{rand(2**32)}"
-      Rails.application.credentials.confie[:auth][ENV['RAILS_ENV'].to_sym].to_s
+      "#{Time.current.to_i.to_s}-#{rand(2**32)}"
     end
 
     def arrayify(val, nil_as_object: false)

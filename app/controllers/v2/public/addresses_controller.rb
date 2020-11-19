@@ -9,7 +9,7 @@ module V2
       def index
         if params[:search].presence
           @addresses = Address.search_insurables(params[:search])
-          @ids = @addresses.select{|a| a['_source']['addressable_type'] == 'Insurable' && a['_source']['enabled'] }.map{|a| a['_source']['addressable_id'] }
+          @ids = @addresses.select{|a| a['_source']['addressable_type'] == 'Insurable' }.map{|a| a['_source']['addressable_id'] }
 
           @insurables = Insurable.where(id: @ids, enabled: true)
                                  .send(*(params[:policy_type_id].blank? ? [:itself] : [:where, "policy_type_ids @> ARRAY[?]::bigint[]", params[:policy_type_id].to_i]))
