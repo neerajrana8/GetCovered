@@ -592,14 +592,7 @@ class MsiService
             Dwell: {
               :'' => { LocationRef: 0, id: "Dwell1" },
               PolicyTypeCd: 'H04'
-            }.merge(preferred ? {} : {
-              Construction: {
-                YearBuilt:                    year_built,
-                IsGated:                      gated,
-                YearsProfManaged:             years_professionally_managed,
-                NumberOfUnits:                number_of_units
-              }
-            }),
+            },
             Coverage:                         coverages_formatted
           },
           InsuredOrPrincipal: [
@@ -608,7 +601,14 @@ class MsiService
             }
           ] + (0...additional_insured_count).map{|n| { InsuredOrPrincipalInfo: { InsuredOrPrincipalRoleCd: "OTHERNAMEDINSURED" } } } +
               (0...additional_interest_count).map{|n| { InsuredOrPrincipalInfo: { InsuredOrPrincipalRoleCd: "ADDITIONALINTEREST" } } }
-        }
+        }.merge(preferred ? {} : {
+          MSI_CommunityInfo: {
+            MSI_CommunityYearBuilt:           year_built,
+            MSI_CommunityIsGated:             gated ? "True" : "False",
+            MSI_CommunityYearsProfManaged:    years_professionally_managed,
+            MSI_NumberOfUnits:                number_of_units
+          }
+        })
       }
     }, **compilation_args)
     return errors.blank?
@@ -690,14 +690,7 @@ class MsiService
             Dwell: {
               :'' => { LocationRef: 0, id: "Dwell1" },
               PolicyTypeCd: 'H04'
-            }.merge(preferred ? {} : {
-                Construction: {
-                YearBuilt:                    year_built,
-                IsGated:                      gated,
-                YearsProfManaged:             years_professionally_managed,
-                NumberOfUnits:                number_of_units
-              }.compact
-            }),
+            },
             Coverage: coverage_raw
           },
           InsuredOrPrincipal: [
@@ -728,7 +721,14 @@ class MsiService
               GeneralPartyInfo:               [::User, ::Account].include?(ai.class) ? ai.get_msi_general_party_info : ai
             }
           end
-        }
+        }.merge(preferred ? {} : {
+          MSI_CommunityInfo: {
+            MSI_CommunityYearBuilt:           year_built,
+            MSI_CommunityIsGated:             gated ? "True" : "False",
+            MSI_CommunityYearsProfManaged:    years_professionally_managed,
+            MSI_NumberOfUnits:                number_of_units
+          }
+        })
       }
     }, **compilation_args)
     return errors.blank?
