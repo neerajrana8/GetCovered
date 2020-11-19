@@ -343,10 +343,6 @@ class MsiService
     }
   end
   
-  # Valid action names:
-  #   get_or_create_community
-  #   final_premium
-  #   
   def build_request(action_name, **args)
     self.action = action_name
     self.errors = nil
@@ -362,7 +358,7 @@ class MsiService
     Rails.application.credentials.msi[:uri][ENV['RAILS_ENV'].to_sym] + "/#{which_call.to_s.camelize}"
   end
   
-  ##
+
   def call
     # try to call
     call_data = {
@@ -381,7 +377,6 @@ class MsiService
         },
         ssl_version: :TLSv1_2
       )
-      #MOOSE WARNING: doc example in crazy .net lingo also has: 'Content-Length' => compiled_rxml.length, timeout 15000, cache policy new RequestCachePolicy(RequestCacheLevel.BypassCache)
           
     rescue StandardError => e
       call_data = {

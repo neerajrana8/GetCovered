@@ -67,8 +67,8 @@ class ConfieService
       call_data[:response] = HTTParty.post(endpoint_for(self.action),
         body: compiled_rxml,
         headers: {
-          'Content-Type' => 'text/xml'#,
-          #'Authorization' => "Basic #{Rails.application.credentials.confie[:auth][ENV['RAILS_ENV'].to_sym]}"
+          'Content-Type' => 'text/xml',
+          'SOAPAction' => "http://appone.onesystemsinc.com/services/IInsuranceSubmissionService/SubmitPolicy"
         },
         ssl_version: :TLSv1_2
       )
@@ -388,15 +388,39 @@ private
     end
   
     def compile_xml(obj, line_breaks: false, **other_args)
-      json_to_xml({
+      xml_data = json_to_xml({
         ACORD: obj
       },
         line_breaks: line_breaks,
         **other_args
       )
+      apply_soap_wrapper(xml_data, line_breaks: line_breaks)
     end
     
-    
+    def apply_soap_wrapper(some_xml, line_breaks: true)
+      json_to_xml({
+        "s:Envelope": {
+          '': {
+            'xmlns:s': "http://schemas.xmlsoap.org/soap/envelope/"
+          },
+          "s:Body": {
+            "SubmitPolicy": {
+              '': {
+                'xmlns': "http://appone.onesystemsinc.com/services"
+              },
+              "request": {
+                '': {
+                  'xmlns:a': "http://appone.onesystemsinc.com/services/messages",
+                  'xmlns:i': "http://www.w3.org/2001/XMLSchema-instance"
+                },
+                'a:AuthenticationKey': Rails.application.credentials.confie[:auth][ENV['RAILS_ENV'].to_sym].to_s,
+                'a:Payload': some_xml.encode(xml: :text)
+              }
+            }
+          }
+        }
+      }, line_breaks: line_breaks)
+    end
     
     
     
