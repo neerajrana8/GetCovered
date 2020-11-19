@@ -341,7 +341,7 @@ class Insurable < ApplicationRecord
     if seeking_unit # we want a unit
       communities_only = false # WARNING: we just hack this to false here to prevent weird behavior, remove hack to make the default for this "ignore buildings and consider only community-attached units"
       if unit_title.nil?
-        return { error_type: :invalid_address_line_two, message: "Unable to deduce unit title from address", details: "'#{address.line_two}' is not a standard format (e.g. 'Apartment #2, Unit 3, #5, etc.)" }
+        return { error_type: :invalid_address_line_two, message: "Unable to deduce unit title from address", details: "'#{address.street_two}' is not a standard format (e.g. 'Apartment #2, Unit 3, #5, etc.)" }
       end
       # query for units of the appropriate title, address, and, if provided, insurable_id
       parent_ids = ::Insurable.references(:address).includes(:addresses).where(
