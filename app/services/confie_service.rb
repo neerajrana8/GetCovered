@@ -350,7 +350,7 @@ private
           # handle properties to pass back up to our caller
           if obj.has_key?(:'')
             prop_string = obj[:''].blank? ? "" : obj[:''].class == ::String ? obj[:''] :
-              obj[:''].map{|k,v| "#{k}=\"#{v.to_s.gsub('"', '&quot;').gsub('&', '&amp;').gsub('<', '&lt;')}\"" }.join(" ")
+              obj[:''].map{|k,v| "#{k}=\"#{v.to_s.gsub('&', '&amp;').gsub('"', '&quot;').gsub('<', '&lt;')}\"" }.join(" ")
             prop_string = " #{prop_string}" unless prop_string.blank?
             obj = obj.select{|k,v| k != :'' }
           end
@@ -379,7 +379,7 @@ private
         when ::NilClass
           child_string = nil
         else
-          child_string = obj.to_s.gsub("<", "&lt;").gsub("<", "&gt;").gsub("&", "&amp;").split("\n").join("#{indent}\n")
+          child_string = obj.to_s.gsub("&", "&amp;").gsub("<", "&lt;").gsub(">", "&gt;").split("\n").join("#{indent}\n")
       end
       internal ? {
         prop_string: prop_string,
@@ -414,7 +414,7 @@ private
                   'xmlns:i': "http://www.w3.org/2001/XMLSchema-instance"
                 },
                 'a:AuthenticationKey': Rails.application.credentials.confie[:auth][ENV['RAILS_ENV'].to_sym].to_s,
-                'a:Payload': some_xml.encode(xml: :text)
+                'a:Payload': some_xml#.gsub('<', '&lt;').gsub('>', '&gt;')
               }
             }
           }
