@@ -173,11 +173,14 @@ class ConfieService
           # no NAICCd, whatever that is
           ContractTerm: {
             EffectiveDt: policy.effective_date.to_s,
-            ExpirationDt: policy.expiration_date.to_s
+            ExpirationDt: policy.expiration_date.to_s,
+            DurationPeriod: {
+              NumUnits: 12
+            }
             # MOOSE WARNING: DurationPeriod???
           },
           LanguageCd: "EN",
-          PolicyNumber: policy.policy_number,
+          PolicyNumber: policy.number,
           CurrentTermAmt: {
             Amt: (first_invoice.total.to_d / 100.to_d).to_s
           },
@@ -186,15 +189,13 @@ class ConfieService
           },
           "com.a1_Payment": payment_info(
             policy.carrier.uses_stripe? ?
-              first_invoice.charges.succeeded.take
-              : first_invoice.nil? ?
-                nil
-              : { MethodPaymentCd: "CreditCard", Amount: { Amt: (first_invoice.total.to_d / 100.to_d).to_s } }
-          ),
+              first_invoice&.charges&.succeeded&.take
+              : nil 
+          ) || { MethodPaymentCd: "CreditCard", Amount: { Amt: (first_invoice.total.to_d / 100.to_d).to_s } },
           "com.a1_OnlineSalesFee": {
             Amt: "0.00"
           }
-        }.merge(get_a1_policy_codes_for_policy_type(policy_type_id)),
+        }.merge(get_a1_policy_codes_for_policy_type(policy.policy_type_id)),
         "com.a1_LeadNotes": "",
         "com.a1_OrganizationCd": "OLBT"
         # leaving out CarrierDocument and InternalDocument...
@@ -213,7 +214,7 @@ class ConfieService
 private
 
     def code_for_primary_insured
-      "PRIMARY"
+      "Principal"
     end
 
     def code_for_additional_insured
@@ -225,9 +226,9 @@ private
     end
 
     def payment_info(charge)
-      ch = Stripe::Charge.retrieve(charge.stripe_id)
+      ch = Stripe::Charge.retrieve(charge.stripe_id) rescue nil
       #cust = Stripe::Customer.retrieve(ch.customer)
-      case ch.source.object
+      case ch&.source&.object
         when "card"
           return {
             MethodPaymentCd: "CreditCard",
@@ -308,9 +309,9 @@ private
     def get_lobcd_for_policy_type(policy_type_id)
       case policy_type_id
         when ::PolicyType::RENT_GUARANTEE_ID
-          return ["HOME", "OTP"]
+          return ["HOME", "OLT"] #MOOSE WARNING: they said OTP for both of these...
         when ::PolicyType::RESIDENTIAL_ID
-          return ["HOME", "OTP"]
+          return ["HOME", "OLT"]
       end
       return nil
     end
