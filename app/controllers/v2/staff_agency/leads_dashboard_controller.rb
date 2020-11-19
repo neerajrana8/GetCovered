@@ -73,7 +73,7 @@ module V2
       private
 
       def filter_by_day?(start_date, end_date)
-        (((end_date - 1.month) == start_date ) || ((end_date - 1.week) == start_date ))
+        (((end_date - 1.month) == start_date ) || ((end_date - 1.week) == start_date )) || (end_date.mjd - start_date.mjd < 31)
       end
 
       #data for last_month or last_year of from the begginning of the year
