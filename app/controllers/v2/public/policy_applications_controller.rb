@@ -173,7 +173,11 @@ module V2
                                                               carrier: @application.carrier).take
                                                               
         address_string = params["policy_application"]["fields"]["address"]
-        @application.resolver_info = { "address_string" => address_string }
+        @application.resolver_info = {
+          "address_string" => address_string,
+          "insurable_id" => nil,
+          "parent_insurable_id" => nil
+        }
 
         case policy_type
           when 1 # residential
@@ -181,6 +185,13 @@ module V2
             if unit.class == ::Insurable
               @application.insurables << unit
               @application.policy_insurables.first.primary = true
+              @application.resolver_info["insurable_id"] = unit.id
+              @application.resolver_info["parent_insurable_id"] = unit.insurable_id
+            else
+              parent = ::Insurable.get_or_create(address: address_string, unit: false, ignore_street_two: true)
+              if parent.class == ::Insurable
+                @application.resolver_info["parent_insurable_id"] = parent.id
+              end
             end
           when 5 # rent guarantee
             params["policy_application"]["fields"].keys.each do |key|
