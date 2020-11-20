@@ -93,6 +93,7 @@ module V2
 
       def event_params
         data = params[:lead_event_attributes].delete(:data) if params[:lead_event_attributes][:data]
+        data["policy_type_id"] = params[:policy_type_id] if data
         params.
             require(:lead_event_attributes).
             permit(:tag, :latitude, :longitude, :agency_id, :policy_type_id).tap do |whitelisted|

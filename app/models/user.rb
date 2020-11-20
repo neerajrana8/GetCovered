@@ -11,6 +11,7 @@ class User < ApplicationRecord
   include RecordChange
   include DeviseTokenAuth::Concerns::User
   include ElasticsearchSearchable
+  include SessionRecordable
 
   # Active Record Callbacks
   after_initialize :initialize_user

@@ -29,7 +29,7 @@ module V2
       
       def create
         if create_allowed?
-          @staff = Staff.new(create_params)
+          @staff = ::Staff.new(create_params)
           # remove password issues from errors since this is a Devise model
           @staff.valid? if @staff.errors.blank?
           @staff.errors.messages.except!(:password)
@@ -56,7 +56,7 @@ module V2
       end
       
       def search
-        @staff = Staff.search(params[:query]).records.where(organizable_id: @agency.id)
+        @staff = ::Staff.search(params[:query]).records.where(organizable_id: @agency.id)
         render json: @staff.to_json, status: 200
       end
 
@@ -104,7 +104,7 @@ module V2
       end
         
       def set_staff
-        @staff = Staff.find(params[:id])
+        @staff = ::Staff.find(params[:id])
       end
                 
       def create_params

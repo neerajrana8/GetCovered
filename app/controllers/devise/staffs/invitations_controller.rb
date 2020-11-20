@@ -4,7 +4,7 @@ class Devise::Staffs::InvitationsController < Devise::InvitationsController
   before_action :resource_from_invitation_token, only: [:update]
 
   def create
-    Staff.invite!(invite_params, current_staff)
+    ::Staff.invite!(invite_params, current_staff)
     render json: { success: ['Staff created.'] }, 
            status: :created
   end
