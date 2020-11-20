@@ -592,7 +592,9 @@ class MsiService
             Dwell: {
               :'' => { LocationRef: 0, id: "Dwell1" },
               PolicyTypeCd: 'H04'
-            },
+            }.merge(preferred ? {} : {
+              Construction: { YearBuilt:      year_built }
+            }),
             Coverage:                         coverages_formatted
           },
           InsuredOrPrincipal: [
@@ -696,7 +698,9 @@ class MsiService
             Dwell: {
               :'' => { LocationRef: 0, id: "Dwell1" },
               PolicyTypeCd: 'H04'
-            },
+            }.merge(preferred ? {} : {
+              Construction: { YearBuilt:      year_built }
+            }),
             Coverage: coverage_raw
           },
           InsuredOrPrincipal: [
