@@ -27,7 +27,7 @@ module CarrierMsiInsurable
         
         community_name:                 self.title,
         number_of_units:                residential_units.confirmed.count,
-        property_manager_name:          account.title,
+        property_manager_name:          account&.title,
         years_professionally_managed:   (@carrier_profile.traits['professionally_managed'] != false) ?
                                           (@carrier_profile.traits['professionally_managed_year'].nil? ?
                                             6 :

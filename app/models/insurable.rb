@@ -17,6 +17,7 @@ class Insurable < ApplicationRecord
     on: :create
   
   belongs_to :account, optional: true
+  belongs_to :agency, optional: true
   belongs_to :insurable, optional: true
   belongs_to :insurable_type
   
@@ -119,7 +120,6 @@ class Insurable < ApplicationRecord
   
   def must_belong_to_same_account_if_parent_insurable
     return if insurable.nil?
-    
     errors.add(:account, 'must belong to same account as parent') if insurable.account && account && insurable.account != account
   end
   
@@ -225,7 +225,7 @@ class Insurable < ApplicationRecord
     return to_return
   end
   
-  def authorized_to_provide_for_address?(carrier_id, policy_type_id)
+  def authorized_to_provide_for_address?(carrier_id, policy_type_id, agency: nil)
     authorized = false
     addresses.each do |address|
       return true if authorized == true
@@ -237,7 +237,7 @@ class Insurable < ApplicationRecord
         zip_code: address.zip_code,
         plus_four: address.plus_four
       }
-      authorized = account.agency.offers_policy_type_in_region(args)
+      authorized = (agency || self.agency || account.agency)&.offers_policy_type_in_region(args)
     end
     authorized
   end
@@ -316,12 +316,13 @@ class Insurable < ApplicationRecord
           return nil if disallow_creation
           results = ::Insurable.where(id: insurable_id, insurable_type_id: ::InsurableType::RESIDENTIAL_COMMUNITIES_IDS | ::InsurableType::RESIDENTIAL_BUILDINGS_IDS).take
           if results.blank?
-            return { error_type: :invalid_community, message: "The requested residential building/community id does not exist" }
+            return { error_type: :invalid_community, message: "The requested residential building/community does not exist" }
           end
           community = (results.parent_community || results)
-          if community.preferred_ho4
-            return { error_type: :invalid_unit, message: "The requested unit does not exist" }
-          end
+          # commented out to support new confirmed/unconfirmed insurable setup
+          #if community.preferred_ho4
+          #  return { error_type: :invalid_unit, message: "The requested unit does not exist" }
+          #end
           unit = results.insurables.new(
             title: unit_title,
             insurable_type: ::InsurableType.where(title: "Residential Unit").take,
@@ -415,7 +416,9 @@ class Insurable < ApplicationRecord
           # unit does not exist; find a parent we can create on
           return nil if disallow_creation
           parents = ::Insurable.where(id: parent_ids, insurable_type_id: ::InsurableType::RESIDENTIAL_COMMUNITIES_IDS | (communities_only ? [] : ::InsurableType::RESIDENTIAL_BUILDINGS_IDS))
-          parent = parents.select{|p| (p.parent_community || p).preferred_ho4 == false }.sort{|a,b| (::InsurableType::RESIDENTIAL_BUILDINGS_IDS.include?(a) ? -1 : 1) <=> (::InsurableType::RESIDENTIAL_BUILDINGS_IDS.include?(b) ? -1 : 1) }.first
+          # commented out because we are allowing creation on preferred_ho4 now
+          #parent = parents.select{|p| (p.parent_community || p).preferred_ho4 == false }.sort{|a,b| (::InsurableType::RESIDENTIAL_BUILDINGS_IDS.include?(a) ? -1 : 1) <=> (::InsurableType::RESIDENTIAL_BUILDINGS_IDS.include?(b) ? -1 : 1) }.first
+          parent = parents.sort{|a,b| (::InsurableType::RESIDENTIAL_BUILDINGS_IDS.include?(a) ? -1 : 1) <=> (::InsurableType::RESIDENTIAL_BUILDINGS_IDS.include?(b) ? -1 : 1) }.first
           diagnostics[:parent_count] = parents.count if diagnostics
           if parent.nil?
             # flee if prevented from creating community
@@ -511,8 +514,9 @@ class Insurable < ApplicationRecord
             parent = ::Insurable.where(id: insurable_id, insurable_type_id: ::InsurableType::RESIDENTIAL_COMMUNITIES_IDS).take
             if parent.nil?
               return { error_type: :invalid_building, message: "Requested parent community does not exist" }
-            elsif parent.preferred_ho4
-              return { error_type: :invalid_building, message: "Requested building does not exist" }
+            # commented out since we're allowing creation on preferred communities now
+            #elsif parent.preferred_ho4
+            #  return { error_type: :invalid_building, message: "Requested building does not exist" }
             else
               parent_address = parent&.primary_address
               if parent_address.state != address.state || parent_address.zip_code != address.zip_code || parent_address.city != address.city
