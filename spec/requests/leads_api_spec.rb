@@ -10,6 +10,7 @@ describe 'Leads API spec', type: :request do
 
   before :all do
     @agency = FactoryBot.create(:agency)
+    @branding_profile = FactoryBot.create(:branding_profile, profileable: @agency)
   end
 
   it 'should create new Lead from short params' do
@@ -198,9 +199,4 @@ describe 'Leads API spec', type: :request do
     }
     }
   end
-
-
-
-
-
 end

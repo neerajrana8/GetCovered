@@ -2,6 +2,12 @@ class Lead < ApplicationRecord
 
   include ElasticsearchSearchable
 
+  #TODO: move to config file
+  PAGES_RENT_GUARANTEE = ['Landing Page', 'Eligibility Page', 'Basic Info Page', 'Eligibility Requirements Page', 'Address Page', 'Employer Page',
+           'Landlord Page', 'Confirmation Page', 'Terms&Conditions Page', 'Payment Page']
+
+  PAGES_RESIDENTIAL = ['Basic Info Section', 'Insurance Info Section', 'Coverage Limits Section', 'Insured Details Section', 'Payment Section']
+
   belongs_to :user, optional: true
   belongs_to :tracking_url, optional: true
   belongs_to :agency, optional: true
@@ -19,11 +25,21 @@ class Lead < ApplicationRecord
   before_save :set_status
 
   def self.date_of_first_lead
-    Lead.pluck(:last_visit).sort.first
+    Lead.pluck(:last_visit).select(&:present?).sort.first
   end
 
   def check_identifier
     set_identifier
+  end
+
+  def last_event
+    self.lead_events.try(:last)
+  end
+
+  #TODO: need to be updated according new pages
+  def page_further?(current_page)
+    pages = self.last_event.policy_type.rent_guarantee? ? PAGES_RENT_GUARANTEE : PAGES_RESIDENTIAL
+    pages.index(current_page) > (pages.index(self.last_visited_page) || 0)
   end
 
   private

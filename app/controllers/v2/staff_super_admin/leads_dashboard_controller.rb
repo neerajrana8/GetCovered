@@ -22,7 +22,8 @@ module V2
           while start_date < end_date
             params[:filter][:last_visit] = Date.parse("#{start_date}").all_month
             super(:@leads, Lead, :profile, :tracking_url)
-            @stats_by["#{start_date.end_of_month}"] = {site_visits: site_visits, leads: leads, applications: applications, conversions: conversions}
+            @stats_by["#{start_date.end_of_month}"] = {site_visits: site_visits, leads: leads, applications: applications,
+                                                       not_finished_applications: not_finished_applications, conversions: conversions}
             start_date += 1.month
           end
         end
@@ -62,7 +63,7 @@ module V2
         else
           params["filter"] = {}
           {
-              start: Lead.date_of_first_lead.to_s,
+              start: Lead.date_of_first_lead.to_s || Time.now.beginning_of_year,
               end: Time.now.to_s
           }
         end
@@ -71,10 +72,10 @@ module V2
       private
 
       def filter_by_day?(start_date, end_date)
-        (((end_date - 1.month) == start_date ) || ((end_date - 1.week) == start_date ))
+        (((end_date - 1.month) == start_date ) || ((end_date - 1.week) == start_date )) || (end_date.mjd - start_date.mjd < 31)
       end
 
-      #data for last_month or last_year of from the begginning of the year
+      #data for last_month or last_year of from the begining of the year
       def filter_by_month?(start_date, end_date)
          ((end_date - 1.year) == start_date) || (start_date == end_date.beginning_of_year) || (end_date.mjd - start_date.mjd > 31)
       end
