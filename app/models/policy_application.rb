@@ -77,6 +77,11 @@ class PolicyApplication < ApplicationRecord
                  quote_in_progress: 4, quote_failed: 5, quoted: 6, 
                  more_required: 7, accepted: 8, rejected: 9 }
   
+  # get tags
+  def tags
+    ::Tag.where(id: self.tag_ids)
+  end
+  
   # PolicyApplication.estimate()
                
   def estimate(args = [])
