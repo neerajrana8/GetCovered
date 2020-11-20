@@ -278,7 +278,7 @@ class Insurable < ApplicationRecord
                   # optionally, the account id to use if we create anything
     communities_only: false,      # if true, in unit mode does nothing; out of unit mode, searches only for communities with the address (no buildings)
     ignore_street_two: false,     # if true, will strip out street_two address data
-    diagnostics: nil              # pass a hash to get diagnostics; these will be the following fields, though applicable to code not encountered may be nil:
+    diagnostics: nil              # pass a hash to get diagnostics; these will be the following fields, though those applicable to code not encountered may be nil:
                                   #   address_used:               true if address used, false if we didn't need it
                                   #   title_derivation_tried:     true if we tried to derive a unit title from address line 2
                                   #   title_derivation_succeeded: true if we successfully got a title from address line 2
