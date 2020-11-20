@@ -545,8 +545,8 @@ class MsiService
     coverages_formatted:,
     # for preferred
     community_id: nil, #address_line_one:, city:, state:, zip:,
-    # for non-preferred (the defaults are MSI's defaults, to be passed if we don't get a value)
-    number_of_units: 50, years_professionally_managed: -1, year_built: Time.current.year - 25, gated: false,
+    # for non-preferred
+    number_of_units: nil, years_professionally_managed: nil, year_built: nil, gated: nil,
     address: nil, address_line_one: nil, address_line_two: nil, city: nil, state: nil, zip: nil,
     # comp args
     **compilation_args
@@ -565,6 +565,11 @@ class MsiService
     self.action = :final_premium_spot unless preferred
     if preferred
       return ['Community id cannot be blank'] if community_id.nil? # this can't happen, but for completeness in case we later determine prefered by different means...
+      # applying defaults (we don't do this in the args themselves because nil might be passed)
+      number_of_units ||= 50
+      years_professionally_managed ||= -1
+      year_built ||= Time.current.year - 25
+      gated = false unless gated == true
     else
       address = untangle_address_params(**{ address: address, address_line_one: address_line_one, address_line_two: address_line_two, city: city, state: state, zip: zip }.compact)
     end
@@ -621,9 +626,9 @@ class MsiService
     coverage_raw:, # WARNING: raw msi formatted coverage hash; modify later to accept a nicer format
     # for preferred
     community_id: nil,
-    # for non-preferred (the defaults are MSI's defaults, to be passed if we don't get a value)
+    # for non-preferred
     address_line_two: nil,
-    number_of_units: 50, years_professionally_managed: -1, year_built: Time.current.year - 25, gated: false,
+    number_of_units: nil, years_professionally_managed: nil, year_built: nil, gated: nil,
     # comp args 
     **compilation_args
   )
@@ -642,6 +647,11 @@ class MsiService
     self.action = :bind_policy_spot unless preferred
     if preferred
       return ['Community id cannot be blank'] if community_id.nil? # this can't happen, but for completeness in case we later determine prefered by different means...
+      # applying defaults (we don't do this in the args themselves because nil might be passed)
+      number_of_units ||= 50
+      years_professionally_managed ||= -1
+      year_built ||= Time.current.year - 25
+      gated = false unless gated == true
     end
     # handling mailing address
     if !maddress.nil? || !maddress_line_one.nil? || !maddress_line_two.nil? || !mcity.nil? || !mstate.nil? || !mzip.nil?
