@@ -16,7 +16,7 @@ class Insurable < ApplicationRecord
   after_commit :create_profile_by_carrier,
     on: :create
   
-  belongs_to :account
+  belongs_to :account, optional: true
   belongs_to :insurable, optional: true
   belongs_to :insurable_type
   
@@ -119,7 +119,7 @@ class Insurable < ApplicationRecord
   def must_belong_to_same_account_if_parent_insurable
     return if insurable.nil?
     
-    errors.add(:account, 'must belong to same account as parent') if insurable.account != account
+    errors.add(:account, 'must belong to same account as parent') if insurable.account && account && insurable.account != account
   end
   
   def units
