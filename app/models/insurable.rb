@@ -123,20 +123,27 @@ class Insurable < ApplicationRecord
   end
   
   def units
-		to_return = []
-		
-		unless insurable_type.title.include? "Unit"
-			if insurables.count > 0
-				if insurables.where(insurable_type_id: [4,5]).count > 0
-					to_return = insurables
-				elsif insurables.where(insurable_type_id: 7).count > 0
-					to_return = []
-					insurables.each { |i| to_return.push(*i.insurables) }
-				end
-			end
-		end  
-		
-		return to_return
+    unit_type_ids = [4,5]
+    # special logic in case we haven't been saved yet
+    if self.id.nil?
+      nonunit_parents = []
+      found = [self]
+      while !found.blank?
+        nonunit_parents.concat(found)
+        found = found.map{|fi| fi.insurables.select{|i| !unit_type_ids.include?(i.insurable_type_id) } }.flatten
+      end
+      return nonunit_parents.map{|fi| fi.insurables.select{|i| unit_type_ids.include?(i.insurable_type_id) } }.flatten
+    end
+    # WARNING: at some point, we can use an activerecord callback to store all nonunit child insurable ids in a field and thus skip the loop
+    # get ids of self and child insurables that might hold units
+    nonunit_parent_ids = []
+    found = [self.id]
+    while !found.blank?
+      nonunit_parent_ids.concat(found)
+      found = ::Insurable.where(insurable_id: found).where.not(id: nonunit_parent_ids).where.not(insurable_type_id: unit_type_ids).order(:id).group(:id).pluck(:id)
+    end
+    # return the units
+    return ::Insurable.where(insurable_type_id: unit_type_ids, insurable_id: nonunit_parent_ids)
   end
   
   def buildings
@@ -298,7 +305,8 @@ class Insurable < ApplicationRecord
             title: unit_title,
             insurable_type: ::InsurableType.where(title: "Residential Unit").take,
             enabled: true, category: 'property', preferred_ho4: false,
-            account_id: account_id || result.account_id || community.account_id || nil # MOOSE WARNING: nil account id allowed?
+            account_id: account_id || nil,
+            confirmed: false
           )
           unless unit.save
             return { error_type: :invalid_unit, message: "Unable to create unit", details: unit.errors.full_messages }
@@ -406,7 +414,8 @@ class Insurable < ApplicationRecord
               insurable_type: ::InsurableType.where(title: "Residential Community").take,
               enabled: true, preferred_ho4: false, category: 'property',
               addresses: [ address ],
-              account_id: account_id # MOOSE WARNING: nil account_id???
+              account_id: account_id || nil,
+              confirmed: false
             )
             unless parent.save
              return { error_type: :invalid_community, message: "Unable to create community from address", details: parent.errors.full_messages }
@@ -421,7 +430,8 @@ class Insurable < ApplicationRecord
             title: unit_title,
             insurable_type: ::InsurableType.where(title: "Residential Unit").take,
             enabled: true, category: 'property', preferred_ho4: false,
-            account_id: account_id || parent.account_id || nil # MOOSE WARNING: nil account id allowed?
+            account_id: account_id || nil,
+            confirmed: false
           )
           unless unit.save
             return { error_type: :invalid_unit, message: "Unable to create unit", details: unit.errors.full_messages }
@@ -498,7 +508,8 @@ class Insurable < ApplicationRecord
               insurable_type: ::InsurableType.where(title: parent.nil? ? "Residential Community" : "Residential Building").take,
               enabled: true, preferred_ho4: false, category: 'property',
               addresses: [ address ],
-              account_id: account_id || parent&.account_id || nil # MOOSE WARNING: nil account_id???
+              account_id: account_id || nil,
+              confirmed: false
             )
           unless created.save
            return { error_type: :"invalid_#{parent.nil? ? 'community' : 'building'}", message: "Unable to create #{parent.nil? ? 'community' : 'building'} from address", details: created.errors.full_messages }
