@@ -3,8 +3,8 @@
   <p class="o_mb-xs" style="margin-top: 0px;margin-bottom: 8px;">Hi <%= @user.profile.first_name %>,</p>
   <p class="o_mb-xs" style="margin-top: 0px;margin-bottom: 8px;">
     Thank you for selecting a <%= @policy.number %> policy from <%= @agency.title %>.
-    Your account was successfully charged <%= Money.new(@invoice.total).to_s %> on <%=@charge.created_at.strftime("%Y-%m-%d") %>.
-    Click on the following link <a href="<%= "#{@branding_profile.url}/user/invoices/list" %>"><%="#{@branding_profile.url}/user/invoices/list" %></a>
+    Your account was successfully charged $<%= Money.new(@invoice.total).to_s %> on <%=@charge.created_at.strftime("%Y-%m-%d") %>.
+    Click on the following link <a href="https://<%= "#{@branding_profile.url}/user/invoices/list" %>"><%="#{@branding_profile.url}/user/invoices/list" %></a>
     to review all of your invoices. If you have any questions, please contact <%= @from %>.
   </p>
   <p class="o_mb-xs" style="margin-top: 0px;margin-bottom: 8px;">Thank you,</p>

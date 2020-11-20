@@ -14,9 +14,9 @@
   <p><b>Date of Notice</b></p><p><%= Time.now.strftime("%Y-%m-%d") %></p>
   <p><b>Policyholder</b></p><p><%= @user.profile.full_name %></p><p><%=@user.address.full_street_address %></p>
   <p><b>Product</b></p><p><%= @policy.policy_type.title %></p><p><%= @policy.number %></p>
-  <p><b>Company</b></p><p><%= @agency.title %></p><p><%= @agency.primary_address %></p>
+  <p><b>Company</b></p><p><%= @agency.title %></p><p><%= @agency.primary_address.full_street_address %></p>
   <p>This policy has been canceled as requested by the policyholder.</p>
-  <p>This cancellation is effective: <%= @policy.cancellation_date_date %></p>
+  <p>This cancellation is effective: <%= @policy.cancellation_date %></p>
   <p>Please contact us at <%= @agency_email %> if you have any questions.</p>
   <div style="font-size: 16px; line-height: 16px; height: 16px;">&nbsp; </div>
 </td>
