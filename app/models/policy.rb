@@ -213,7 +213,7 @@ class Policy < ApplicationRecord
   end
   
   def residential_account_present    
-    errors.add(:account, 'Account must be specified') if ![4,5].include?(policy_type_id) && account.nil? 
+    errors.add(:account, 'Account must be specified') if ![4,5].include?(policy_type_id) && account.nil? && !self.primary_insurable&.account.nil?
   end
   
   def carrier_agency

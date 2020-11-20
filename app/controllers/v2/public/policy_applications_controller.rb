@@ -26,8 +26,8 @@ module V2
           policy_type = PolicyType.find_by_slug(selected_policy_type)
 
           if selected_policy_type == "residential"
-            agency_id    = new_residential_params[:agency_id].to_i
-            account_id   = new_residential_params[:account_id].to_i
+            agency_id    = new_residential_params[:agency_id].to_i == 0 ? nil : new_residential_params[:agency_id].to_i
+            account_id   = new_residential_params[:account_id].to_i == 0 ? nil : new_residential_params[:account_id].to_i
             insurable_id = ((new_residential_params[:policy_insurables_attributes] || []).first || { id: nil })[:id]
             insurable    = nil
             insurable    = Insurable.where(id: insurable_id, insurable_type_id: ::InsurableType::RESIDENTIAL_UNITS_IDS, enabled: true).take
@@ -158,7 +158,7 @@ module V2
           :agency => @access_token.bearer,
           :policy_type => PolicyType.find(policy_type),
           :carrier => policy_type == 1 ? Carrier.find(5) : Carrier.find(4),
-          :account => policy_type == 1 ? Account.first : nil,
+          :account => policy_type == 1 ? Account.first : nil, # MOOSE WARNING: we should be grabbing the primary insurable's account id (or nil if it lacks one), but we don't have that yet
           :effective_date => place_holder_date,
           :expiration_date => place_holder_date + 1.year
         }
@@ -361,6 +361,8 @@ module V2
           end
           @application.coverage_selections.push({ 'category' => 'coverage', 'options_type' => 'none', 'uid' => '1010', 'selection' => true })
         end
+        
+        @application.account_id = @application.primary_insurable&.account_id
 
         if @application.agency.nil? && @application.account.nil?
           @application.agency = Agency.where(master_agency: true).take
@@ -376,7 +378,7 @@ module V2
             )
 
           if update_users_result.success?
-            if @application.update status: 'complete'
+            if @application.update(status: 'complete')
 
               # if application.status updated to complete
               @application.estimate()
@@ -451,7 +453,7 @@ module V2
             @policy_application.expiration_date = update_residential_params[:effective_date].to_date&.send(:+, 1.year)
           end
           if @policy_application.update(update_residential_params) &&
-            @policy_application.update(status: 'complete')
+            @policy_application.update(account_id: @policy_application.primary_insurable&.account_id, status: 'complete')
 
             @policy_application.estimate
             @quote = @policy_application.policy_quotes.order("updated_at DESC").limit(1).first
