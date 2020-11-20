@@ -565,13 +565,13 @@ class MsiService
     self.action = :final_premium_spot unless preferred
     if preferred
       return ['Community id cannot be blank'] if community_id.nil? # this can't happen, but for completeness in case we later determine prefered by different means...
+    else
+      address = untangle_address_params(**{ address: address, address_line_one: address_line_one, address_line_two: address_line_two, city: city, state: state, zip: zip }.compact)
       # applying defaults (we don't do this in the args themselves because nil might be passed)
       number_of_units ||= 50
       years_professionally_managed ||= -1
       year_built ||= Time.current.year - 25
       gated = false unless gated == true
-    else
-      address = untangle_address_params(**{ address: address, address_line_one: address_line_one, address_line_two: address_line_two, city: city, state: state, zip: zip }.compact)
     end
     # go go go
     self.compiled_rxml = compile_xml({
@@ -647,6 +647,7 @@ class MsiService
     self.action = :bind_policy_spot unless preferred
     if preferred
       return ['Community id cannot be blank'] if community_id.nil? # this can't happen, but for completeness in case we later determine prefered by different means...
+    else
       # applying defaults (we don't do this in the args themselves because nil might be passed)
       number_of_units ||= 50
       years_professionally_managed ||= -1
