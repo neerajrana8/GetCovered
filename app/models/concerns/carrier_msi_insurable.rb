@@ -14,7 +14,7 @@ module CarrierMsiInsurable
     def register_with_msi
       # load the stuff we need
       return ["Insurable must be a residential community"] if self.insurable_type.title != "Residential Community"
-	    @carrier = Carrier.where(title: 'Millennial Services Insurance').take
+	    @carrier = Carrier.where(id: msi_carrier_id).take
       return ["Unable to load carrier information"] if @carrier.nil?
 	    @carrier_profile = carrier_profile(@carrier.id)
       return ["Unable to load carrier profile"] if @carrier_profile.nil?
@@ -26,7 +26,7 @@ module CarrierMsiInsurable
         effective_date:                 Time.current.to_date + 1.day,
         
         community_name:                 self.title,
-        number_of_units:                units.count,
+        number_of_units:                residential_units.confirmed.count,
         property_manager_name:          account.title,
         years_professionally_managed:   (@carrier_profile.traits['professionally_managed'] != false) ?
                                           (@carrier_profile.traits['professionally_managed_year'].nil? ?
@@ -110,7 +110,9 @@ module CarrierMsiInsurable
           @carrier_profile.data['msi_external_id'] = external_id
           @carrier_profile.data['registered_with_msi'] = true
           @carrier_profile.data['registered_with_msi_on'] = Time.current.strftime("%m/%d/%Y %I:%M %p")
-          self.update(preferred_ho4: true) if @carrier_profile.save
+          if @carrier_profile.save
+            self.query_for_full_hierarchy.where(insurable_type_id: ::InsurableType::RESIDENTIAL_IDS).confirmed.update_all(preferred_ho4: true)
+          end
         end
       end
       # finished successfully

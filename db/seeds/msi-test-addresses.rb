@@ -158,6 +158,6 @@ unless ENV['base_only']
   end
 end
 
-puts "\nOccupancy Rate: #{ (Lease.count.to_f / Insurable.residential_units.count) * 100 }%\n\n"
+#puts "\nOccupancy Rate: #{ (Lease.count.to_f / Insurable.residential_units.count) * 100 }%\n\n"
 
 end # end base_only restriction

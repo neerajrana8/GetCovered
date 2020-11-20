@@ -50,6 +50,7 @@ class Insurable < ApplicationRecord
   validate :title_uniqueness, on: :create
 
   scope :covered, -> { where(covered: true) }
+  scope :confirmed, -> { where(confirmed: true) }
   scope :units, -> { where(insurable_type_id: InsurableType::UNITS_IDS) }
   scope :communities, -> { where(insurable_type_id: InsurableType::COMMUNITIES_IDS) }
   scope :buildings, -> { where(insurable_type_id: InsurableType::BUILDINGS_IDS) }
@@ -122,8 +123,15 @@ class Insurable < ApplicationRecord
     errors.add(:account, 'must belong to same account as parent') if insurable.account && account && insurable.account != account
   end
   
-  def units
-    unit_type_ids = [4,5]
+  def residential_units
+    units(unit_type_ids: [4])
+  end
+  
+  def commercial_units
+    units(unit_type_ids: [5])
+  end
+  
+  def units(unit_type_ids: [4,5])
     # special logic in case we haven't been saved yet
     if self.id.nil?
       nonunit_parents = []
@@ -143,7 +151,20 @@ class Insurable < ApplicationRecord
       found = ::Insurable.where(insurable_id: found).where.not(id: nonunit_parent_ids).where.not(insurable_type_id: unit_type_ids).order(:id).group(:id).pluck(:id)
     end
     # return the units
-    return ::Insurable.where(insurable_type_id: unit_type_ids, insurable_id: nonunit_parent_ids)
+    return ::Insurable.where(insurable_type_id: unit_type_ids, insurable_id: nonunit_parent_ids) # WARNING: some code (msi insurable concern) expects query rather than array output here (uses scopes on this call)
+  end
+  
+  def query_for_full_hierarchy
+    # WARNING: at some point, we can use an activerecord callback to store all nonunit child insurable ids in a field and thus skip the loop
+    # loopy schloopy
+    ids = []
+    found = [self.id]
+    while !found.blank?
+      ids.concat(found)
+      found = ::Insurable.where(insurable_id: found).where.not(id: ids).where.order(:id).group(:id).pluck(:id)
+    end
+    # return everything
+    return ::Insurable.where(id: ids)
   end
   
   def buildings

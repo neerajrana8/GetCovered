@@ -29,14 +29,9 @@ module CoverageReport
   # select only commercial and residential units in children and base insurables
   def insurables_units
     if self.class == ::Insurable
-      units_ids = units&.pluck(:id)
-      if units_ids.present?
-        Insurable.where(id: units_ids)
-      else
-        Insurable.none
-      end
+      units.confirmed
     else # in other cases it's a relation insurables that contains units, buildings and communities
-      insurables.units
+      insurables.units.confirmed
     end
   end
 
