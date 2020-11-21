@@ -21,8 +21,8 @@ module CarrierMsiInsurable
 	    @address = primary_address()
 	    return ["Community lacks a primary address"] if @address.nil?
       # try to build the request
-      msi_service = MsiService.new
-      succeeded = msi_service.build_request(:get_or_create_community,
+      msis = MsiService.new
+      succeeded = msis.build_request(:get_or_create_community,
         effective_date:                 Time.current.to_date + 1.day,
         
         community_name:                 self.title,
@@ -43,21 +43,21 @@ module CarrierMsiInsurable
         zip:                            @address.zip_code
       )
       if !succeeded
-        if msi_service.errors.blank?
+        if msis.errors.blank?
           return ["Building GetOrCreateCommunity request failed"]
         else
-          return msi_service.errors.map{|err| "GetOrCreateCommunity service call error: #{err}" }
+          return msis.errors.map{|err| "GetOrCreateCommunity service call error: #{err}" }
         end
       end
       event = events.new(msis.event_params)
-      event.request = msi_service.compiled_rxml
+      event.request = msis.compiled_rxml
       # try to execute the request
       if !event.save
         return ["Failed to save service call status-tracking Event: #{event.errors.to_h}"]
       else
         # execute & log
         event.started = Time.now
-        msi_data = msi_service.call
+        msi_data = msis.call
         event.completed = Time.now
         event.response = msi_data[:response].response.body
         event.status = msi_data[:error] ? 'error' : 'success'

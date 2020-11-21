@@ -889,8 +889,6 @@ ActiveRecord::Schema.define(version: 2020_11_20_224827) do
     t.string "out_of_system_carrier_title"
     t.bigint "policy_id"
     t.integer "cancellation_reason"
-    t.bigint "unsigned_documents", default: [], null: false, array: true
-    t.index "cardinality(unsigned_documents), status, carrier_id", name: "policies_unsigned_documents_index"
     t.index ["account_id"], name: "index_policies_on_account_id"
     t.index ["agency_id"], name: "index_policies_on_agency_id"
     t.index ["carrier_id"], name: "index_policies_on_carrier_id"

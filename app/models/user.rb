@@ -256,14 +256,19 @@ class User < ApplicationRecord
         }
       },
       Communications: {
-        PhoneInfo: { # WARNING: do we need CommunicationUseCd or the other nonsense we don't have?
-          PhoneNumber: (self.profile.contact_phone || '').tr('^0-9', '')
-        },
         EmailInfo: {
-          EmailAddr: self.email
+          EmailAddr: self.email,
+          DoNotContactInd: 0
         }
-      } # WARNING: should we add an address?
-    }
+      }.merge(self.profile.contact_phone.blank? ? {} : {
+        PhoneInfo: {
+          PhoneNumber: (self.profile.contact_phone || '').tr('^0-9', ''),
+          PhoneTypeCd: "Phone"
+        }
+      })
+    }.merge(self.address.blank? ? {} : {
+      Addr: get_confie_addr(true, address_type: "MailingAddress")
+    })
   end
   
   def get_deposit_choice_occupant_hash(primary: false)

@@ -161,7 +161,7 @@ class Insurable < ApplicationRecord
     found = [self.id]
     while !found.blank?
       ids.concat(found)
-      found = ::Insurable.where(insurable_id: found).where.not(id: ids).where.order(:id).group(:id).pluck(:id)
+      found = ::Insurable.where(insurable_id: found).where.not(id: ids).order(:id).group(:id).pluck(:id)
     end
     # return everything
     return ::Insurable.where(id: ids)

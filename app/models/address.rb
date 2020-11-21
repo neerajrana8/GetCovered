@@ -220,6 +220,20 @@ class Address < ApplicationRecord
     }.merge(include_line2 ? { Addr2: street_two.blank? ? nil : street_two } : {})
   end
   
+  def get_confie_addr(include_line2 = true, address_type: "MailingAddress")
+    {
+      AddrTypeCd: address_type,
+      Addr1: self.combined_street_address,
+      City: self.city,
+      StateProvCd: self.state,
+      PostalCode: self.zip_code,
+      County: self.county.blank? ? nil : self.county # MOOSE WARNING: do we really need this?
+    }.compact.merge(!include_line2 ? {} :
+      include_line2 == true ? { Addr2: street_two.blank? ? nil : street_two } :
+      { Addr2: include_line2 }
+    )
+  end
+  
   def refresh_insurable_policy_type_ids
     # update policy type ids (in case a newly created or changed address alters which policy types an insurable supports)
     self.addressable&.refresh_policy_type_ids(and_save: true)
