@@ -359,7 +359,7 @@ module V2
               cs[:selection] = cs[:selection][:value]
             end
           end
-          @application.coverage_selections.push({ 'category' => 'coverage', 'options_type' => 'none', 'uid' => '1010', 'selection' => true })
+          @application.coverage_selections.push({ 'category' => 'coverage', 'options_type' => 'none', 'uid' => '1010', 'selection' => true }) unless @application.coverage_selections.any?{|cs| cs['uid'] == '1010' }
         end
         
         @application.account_id = @application.primary_insurable&.account_id
