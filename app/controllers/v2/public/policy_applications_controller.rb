@@ -456,52 +456,62 @@ module V2
           elsif @policy_application.agency.nil?
             @policy_application.agency = @policy_application.account.agency
           end
-          # woot woot, try to save
-          if !@policy_application.save
-            render json: standard_error(:policy_application_save_error, nil, @policy_application.errors),
-                   status: 422
+          # woot woot, try to update users and save
+          update_users_result = update_policy_users_params.blank? ? true :
+            PolicyApplications::UpdateUsers.run!(
+              policy_application: @policy_application,
+              policy_users_params: update_policy_users_params[:policy_users_attributes]
+            )
+          if !(update_users_result == true || update_users_result.sucess? &&)
+            render json: update_users_result.failure,
+              status: 422
           else
-            if @policy_application.update(status: 'complete')
+            if !@policy_application.save
+              render json: standard_error(:policy_application_save_error, nil, @policy_application.errors),
+                     status: 422
+            else
+              if @policy_application.update(status: 'complete')
 
-              @policy_application.estimate
-              @quote = @policy_application.policy_quotes.order("updated_at DESC").limit(1).first
-              if @policy_application.status != "quote_failed" || @policy_application.status != "quoted"
-                # if application quote success or failure
-                @policy_application.quote(@quote.id)
-                @policy_application.reload
-                @quote.reload
+                @policy_application.estimate
+                @quote = @policy_application.policy_quotes.order("updated_at DESC").limit(1).first
+                if @policy_application.status != "quote_failed" || @policy_application.status != "quoted"
+                  # if application quote success or failure
+                  @policy_application.quote(@quote.id)
+                  @policy_application.reload
+                  @quote.reload
 
-                if @quote.status == "quoted"
+                  if @quote.status == "quoted"
 
-                  render json:                    {
-                                 id:       @policy_application.id,
-                                 quote: {
-                                   id:      @quote.id,
-                                   status: @quote.status,
-                                   premium: @quote.policy_premium
-                                 },
-                                 invoices: @quote.invoices.order('due_date ASC'),
-                                 user:     {
-                                   id:        @policy_application.primary_user().id,
-                                   stripe_id: @policy_application.primary_user().stripe_id
-                                 }
-                               }.merge(@application.carrier_id != 5 ? {} : {
-                                 'policy_fee' => @quote.carrier_payment_data['policy_fee'],
-                                 'installment_fee' => @quote.carrier_payment_data['installment_fee'],
-                                 'installment_total' => @quote.carrier_payment_data['installment_total']
-                               }).to_json, status: 200
+                    render json:                    {
+                                   id:       @policy_application.id,
+                                   quote: {
+                                     id:      @quote.id,
+                                     status: @quote.status,
+                                     premium: @quote.policy_premium
+                                   },
+                                   invoices: @quote.invoices.order('due_date ASC'),
+                                   user:     {
+                                     id:        @policy_application.primary_user().id,
+                                     stripe_id: @policy_application.primary_user().stripe_id
+                                   }
+                                 }.merge(@application.carrier_id != 5 ? {} : {
+                                   'policy_fee' => @quote.carrier_payment_data['policy_fee'],
+                                   'installment_fee' => @quote.carrier_payment_data['installment_fee'],
+                                   'installment_total' => @quote.carrier_payment_data['installment_total']
+                                 }).to_json, status: 200
 
+                  else
+                    render json: standard_error(:quote_failed, 'Quote could not be processed at this time'),
+                           status: 500
+                  end
                 else
-                  render json: standard_error(:quote_failed, 'Quote could not be processed at this time'),
-                         status: 500
+                  render json: standard_error(:policy_application_unavailable, 'Application cannot be quoted at this time'),
+                         status: 400
                 end
               else
-                render json: standard_error(:policy_application_unavailable, 'Application cannot be quoted at this time'),
-                       status: 400
+                render json: standard_error(:policy_application_update_error, nil, @policy_application.errors),
+                       status: 422
               end
-            else
-              render json: standard_error(:policy_application_update_error, nil, @policy_application.errors),
-                     status: 422
             end
           end
         end
@@ -809,6 +819,10 @@ module V2
                                                                                                                                       ]
                                                                                  ]
                                            ])
+      end
+      
+      def update_policy_users_params
+        return create_policy_users_params
       end
 
       def update_residential_params
