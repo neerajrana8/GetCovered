@@ -3,7 +3,7 @@ module V2
     class LeadsDashboardController < StaffSuperAdminController
 
       def index
-        super(:@leads, Lead, :profile, :tracking_url)
+        super(:@leads, Lead.presented, :profile, :tracking_url)
         @stats = {site_visits: site_visits, leads: leads, applications: applications,
                   not_finished_applications: not_finished_applications, conversions: conversions}
         @stats_by = {}
@@ -94,15 +94,15 @@ module V2
       end
 
       def applications
-        @leads.where.not(user_id: nil).where(status: ["prospect","converted"]).count
+        @leads.where(status: ["prospect","converted"]).count
       end
 
       def not_finished_applications
-        @leads.where.not(user_id: nil).where(status: ["prospect"]).count
+        applications - conversions#@leads.with_user.prospected.count
       end
 
       def conversions
-        @leads.where(status: 'converted').count
+        @leads.converted.count
       end
 
     end

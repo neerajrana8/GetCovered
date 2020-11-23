@@ -5,10 +5,10 @@ if profile.present?
   json.extract!  profile, :first_name, :last_name
 end
 
-first_event =  lead.lead_events.first
+last_event =  lead.last_event
 
-if first_event.present? && first_event.policy_type.present?
-  json.interested_product first_event.policy_type.title
+if last_event.present? && last_event.policy_type.present?
+  json.interested_product last_event.policy_type.title
 end
 
 tracking_url =  lead.tracking_url

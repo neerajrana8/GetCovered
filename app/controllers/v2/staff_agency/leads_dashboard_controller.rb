@@ -95,21 +95,21 @@ module V2
       end
 
       def applications
-        @leads.where.not(user_id: nil).where(status: ["prospect","converted"]).count
+        @leads.where(status: ["prospect","converted"]).count
       end
 
       def conversions
-        @leads.where(status: 'converted').count
+        @leads.converted.count
       end
 
       def not_finished_applications
-        @leads.where.not(user_id: nil).where(status: ["prospect"]).count
+        applications - conversions#@leads.with_user.prospected.count
       end
 
       def set_substrate
         super
         if @substrate.nil?
-          @substrate = access_model(::Lead).includes(:profile, :tracking_url)
+          @substrate = access_model(::Lead).presented.includes(:profile, :tracking_url)
         end
       end
     end

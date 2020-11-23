@@ -80,10 +80,13 @@ class KlaviyoService
                    properties: prepare_track_properties(event_details),
                    customer_properties: customer_properties
       )
-    rescue Klaviyo::KlaviyoError => kl_ex
-      @lead =  Lead.create(email: "no_email_#{rand(999)}@email.com") if @lead.nil?
-      @retries += 1
-      @retries > RETRY_LIMIT ? Rails.logger.error("LeadEventsController KlaviyoException: #{kl_ex.to_s}, lead: #{@lead.as_json}, event_details: #{event_details}.") : retry
+      Rails.logger.info("LeadEventsController KlaviyoTrack: desc: #{event_description},result: #{result.to_s}, lead: #{@lead.as_json}, event_details: #{event_details}, properties: #{prepare_track_properties(event_details)}, customer_properties: #{customer_properties}, last_event: #{@lead.lead_events.last.as_json}.")
+    rescue => kl_ex
+      #rescue Klaviyo::KlaviyoError => kl_ex
+      Rails.logger.error("LeadEventsController KlaviyoException: #{kl_ex.to_s}, lead: #{@lead.as_json}, event_details: #{event_details}, properties: #{prepare_track_properties(event_details)}, customer_properties: #{customer_properties}.")
+      #@lead =  Lead.create(email: "no_email_#{rand(999)}@email.com") if @lead.nil?
+      #@retries += 1
+      #@retries > RETRY_LIMIT ? Rails.logger.error("LeadEventsController KlaviyoException: #{kl_ex.to_s}, lead: #{@lead.as_json}, event_details: #{event_details}.") : retry
     end
   end
 
@@ -188,9 +191,9 @@ class KlaviyoService
   def map_last_visited_url(event_details)
     return "" if event_details.blank?
     branding_url = @lead.agency.branding_profiles.take.url
-    if @lead.last_event.policy_type.rent_guarantee?
+    if @lead.last_event.policy_type&.rent_guarantee?
       "https://www.#{branding_url}/rentguarantee"
-    elsif @lead.last_event.policy_type.residential?
+    elsif @lead.last_event.policy_type&.residential?
       "https://www.#{branding_url}/residential"
     else
       #tbd for other forms
