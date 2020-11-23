@@ -214,17 +214,18 @@ class ConfieService
       self.errors = ["Confie does not support policy type '#{policy.policy_type.title}'"]
     end
     first_invoice = policy.invoices.order("due_date asc").limit(1).take
+    rquid = get_unique_identifier
     self.compiled_rxml = compile_xml({
       PersAutoPolicyQuoteInqRq: {
-        RqUID: get_unique_identifier,
+        RqUID: rquid,
         TransactionRequestDt: Time.current.to_date.to_s,
         LOBCd: lobcd[0],
         LOBSubCd: lobcd[1],
         InsuredOrPrincipal: (
           policy.policy_users.map do |pu|
-            get_insured_or_principal_for(pu.user, pu.primary ? code_for_primary_insured : code_for_additional_insured)
+            get_insured_or_principal_for(pu.user, pu.primary ? code_for_primary_insured : code_for_additional_insured).merge({ 'com.a1_ExternalId': rquid })
           end + (policy.policy_type_id == ::PolicyType::RESIDENTIAL_ID && policy.carrier_id == MsiService.carrier_id && !policy.account.nil? ?
-            [get_insured_or_principal_for(policy.account, code_for_additional_interest)] # MOOSE WARNING: is policy.account the right place to check? should we check for preferred_ho4 status first?
+            [get_insured_or_principal_for(policy.account, code_for_additional_interest).merge({ 'com.a1_ExternalId': rquid })] # MOOSE WARNING: is policy.account the right place to check? should we check for preferred_ho4 status first?
             : []
           )
         ),
@@ -358,27 +359,36 @@ private
         when ::User
           return {
             # Optional: "com.a1_ExternalId":  "#{get_unique_identifier}", # MOOSE WARNING: using auth instead of user-#{obj.id}",
-            'com.a1_ExternalId': "user-#{obj.id}",
+            #'com.a1_ExternalId': "user-#{obj.id}",
             'com.a1_DriverLicenseNumber': 'NA',
             GeneralPartyInfo:     obj.get_confie_general_party_info,
-            InsuredOrPrincipalInfo: {
-              InsuredOrPrincipalRoleCd: rolecd,
-              PersonInfo: {
-                BirthDt: obj.profile.birth_date&.to_s,
-                GenderCd: {"male" => "M", "female" => "F", "unspecified" => "U", "other" => "U" }[obj.profile.gender],
-                MaritalStatusCd: 'Unknown'
-                # no further info for you, greedy confie
-              }
+
+            PersonInfo: {
+              BirthDt: obj.profile.birth_date&.to_s,
+              GenderCd: {"male" => "M", "female" => "F", "unspecified" => "U", "other" => "U" }[obj.profile.gender],
+              MaritalStatusCd: 'Unknown'
+              # no further info for you, greedy confie
             }
+            
+            
+            #InsuredOrPrincipalInfo: {
+            #  InsuredOrPrincipalRoleCd: rolecd,
+            #  PersonInfo: {
+            #    BirthDt: obj.profile.birth_date&.to_s,
+            #    GenderCd: {"male" => "M", "female" => "F", "unspecified" => "U", "other" => "U" }[obj.profile.gender],
+            #    MaritalStatusCd: 'Unknown'
+            #    # no further info for you, greedy confie
+            #  }
+            #}
           }
         when ::Account
           return {
             # Optional: "com.a1_ExternalId":  "#{get_unique_identifier}", # MOOSE WARNING: using auth instead of "account-#{obj.id}",
-            GeneralPartyInfo:     obj.get_confie_general_party_info,
-            InsuredOrPrincipalInfo: {
-              InsuredOrPrincipalRoleCd: rolecd,
-              PersonInfo: nil
-            }
+            GeneralPartyInfo:     obj.get_confie_general_party_info#,
+            #InsuredOrPrincipalInfo: {
+            #  InsuredOrPrincipalRoleCd: rolecd,
+            #  PersonInfo: nil
+            #}
           }
       end
       return nil
