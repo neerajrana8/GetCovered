@@ -10,14 +10,14 @@ module V2
       before_action :set_staff, only: %i[show update re_invite toggle_enabled]
             
       def index
-        super(:@staffs, Staff, :profile)
+        super(:@staffs, ::Staff, :profile)
       end
       
       def show; end
       
       def create
         if create_allowed?
-          @staff = Staff.new(create_params)
+          @staff = ::Staff.new(create_params)
           # remove password issues from errors since this is a Devise model
           @staff.valid? if @staff.errors.blank?
           @staff.errors.messages.except!(:password)
@@ -43,7 +43,7 @@ module V2
       end
 
       def search
-        @staff = Staff.search(params[:query]).records
+        @staff = ::Staff.search(params[:query]).records
         render json: @staff.to_json, status: 200
       end
 

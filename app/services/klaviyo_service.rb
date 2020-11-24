@@ -7,9 +7,6 @@ class KlaviyoService
   EVENTS = ["New Lead", "Became Lead", "New Lead Event", "Created Account", "Updated Account",
             "Updated Email", "Reset Password", "Invoice Created", "Order Confirmation", "Failed Payment"]
 
-  PAGES = ['Landing Page', 'Eligibility Page', 'Basic Info Page', 'Eligibility Requirements Page', 'Address Page', 'Employer Page',
-           'Landlord Page', 'Confirmation Page', 'Terms&Conditions Page', 'Payment Page']
-
   TEST_TAG = 'test'
   RETRY_LIMIT = 3
 
@@ -73,8 +70,8 @@ class KlaviyoService
       end
     end
 
-    customer_properties[:last_visited_page_url] = map_last_visited_url(event_details) #need to unify for other too
-    customer_properties[:last_visited_page] = map_last_visited_page(event_details)
+    customer_properties[:last_visited_page_url] = map_last_visited_url(event_details)
+    customer_properties[:last_visited_page]     = map_last_visited_page(event_details) if page_set?(event_details)
 
     # TODO: check retriable gem?
     begin
@@ -83,10 +80,13 @@ class KlaviyoService
                    properties: prepare_track_properties(event_details),
                    customer_properties: customer_properties
       )
-    rescue Klaviyo::KlaviyoError => kl_ex
-      @lead =  Lead.create(email: "no_email_#{rand(999)}@email.com") if @lead.nil?
-      @retries += 1
-      @retries > RETRY_LIMIT ? Rails.logger.error("LeadEventsController KlaviyoException: #{kl_ex.to_s}, lead: #{@lead.as_json}, event_details: #{event_details}.") : retry
+      Rails.logger.info("LeadEventsController KlaviyoTrack: desc: #{event_description},result: #{result.to_s}, lead: #{@lead.as_json}, event_details: #{event_details}, properties: #{prepare_track_properties(event_details)}, customer_properties: #{customer_properties}, last_event: #{@lead.lead_events.last.as_json}.")
+    rescue => kl_ex
+      #rescue Klaviyo::KlaviyoError => kl_ex
+      Rails.logger.error("LeadEventsController KlaviyoException: #{kl_ex.to_s}, lead: #{@lead.as_json}, event_details: #{event_details}, properties: #{prepare_track_properties(event_details)}, customer_properties: #{customer_properties}.")
+      #@lead =  Lead.create(email: "no_email_#{rand(999)}@email.com") if @lead.nil?
+      #@retries += 1
+      #@retries > RETRY_LIMIT ? Rails.logger.error("LeadEventsController KlaviyoException: #{kl_ex.to_s}, lead: #{@lead.as_json}, event_details: #{event_details}.") : retry
     end
   end
 
@@ -125,7 +125,9 @@ class KlaviyoService
         '$consent': "",
         'status': @lead.status,
         'tag': @lead.lead_events.last.try(:tag),
-        'environment': ENV["RAILS_ENV"]
+        'environment': ENV["RAILS_ENV"],
+        'last_visited_page': @lead.last_visited_page,
+        'policy_type': @lead.last_event&.policy_type&.slug
     }
     setup_profile!(request)
     setup_address!(request)
@@ -173,30 +175,29 @@ class KlaviyoService
     end
   end
 
-  #check default for residential
+  def page_set?(event_details)
+    event_details['last_visited_page'] || (event_details["data"] && event_details["data"]["last_visited_page"])
+  end
+
   def map_last_visited_page(event_details)
-    default = "Landing Page"
-    if event_details["data"].present? && page_further?(event_details["data"]["last_visited_page"])
-        event_details["data"]["last_visited_page"]
+    default = @lead.last_event.policy_type.rent_guarantee? ? Lead::PAGES_RENT_GUARANTEE[0] : Lead::PAGES_RESIDENTIAL[0]
+    if event_details["data"].present? && @lead.page_further?(event_details["data"]["last_visited_page"])
+      event_details["data"]["last_visited_page"]
     else
       @lead.last_visited_page || default
     end
   end
 
-  def page_further?(last_visited_page)
-    PAGES.index(last_visited_page) > PAGES.index(@lead.last_visited_page)
-  end
-
-  #url должен быть разный в зависимости от брендингов? как получить
   def map_last_visited_url(event_details)
-    return "https://www.getcoveredinsurance.com/rentguarantee" if event_details.blank?
-    if event_details['policy_type_id']==5
-      "https://www.getcoveredinsurance.com/rentguarantee"
-    elsif event_details['policy_type_id']==1
-      "https://www.getcoveredinsurance.com/residential"
+    return "" if event_details.blank?
+    branding_url = @lead.agency.branding_profiles.take.url
+    if @lead.last_event.policy_type&.rent_guarantee?
+      "https://www.#{branding_url}/rentguarantee"
+    elsif @lead.last_event.policy_type&.residential?
+      "https://www.#{branding_url}/residential"
     else
       #tbd for other forms
-      "https://www.getcoveredinsurance.com/rentguarantee"
+      ""
     end
   end
 
