@@ -246,7 +246,7 @@ class User < ApplicationRecord
     }
   end
   
-  def get_confie_general_party_info(extra_address: nil)
+  def get_confie_general_party_info(for_insurable: nil)
     {
       NameInfo: {
         PersonName: {
@@ -264,10 +264,18 @@ class User < ApplicationRecord
           PhoneNumber: (self.profile.contact_phone || '').tr('^0-9', ''),
           PhoneTypeCd: "Phone"
         }
-      })
-    }.merge(self.address.blank? ? {} : {
-      Addr: ([self.address.get_confie_addr(true, address_type: "MailingAddress")] + (extra_address.nil? ? [] : [extra_address]))
-    })
+      }),
+      Addr: (
+        for_insurable.blank? ? (self.address.blank? ? nil : self.address.get_confie_addr(true, address_type: "MailingAddress"))
+        : [
+          for_insurable.primary_address.get_confie_addr(::InsurableType::RESIDENTIAL_UNITS_IDS.include?(for_insurable.insurable_type_id) ? "Unit #{for_insurable.title}" : true, address_type: "StreetAddress"),
+          self.address.blank? ?
+            for_insurable.primary_address.get_confie_addr(::InsurableType::RESIDENTIAL_UNITS_IDS.include?(for_insurable.insurable_type_id) ? "Unit #{for_insurable.title}" : true, address_type: "MailingAddress")
+            : self.address.get_confie_addr(true, address_type: "MailingAddress")
+          
+        ]
+      )
+    }.compact
   end
   
   def get_deposit_choice_occupant_hash(primary: false)

@@ -222,18 +222,29 @@ class ConfieService
         LOBCd: lobcd[0],
         LOBSubCd: lobcd[1],
         InsuredOrPrincipal: (
-          policy.policy_users.map do |pu|
-            get_insured_or_principal_for(
-              pu.user,
-              pu.primary ? code_for_primary_insured : code_for_additional_insured,
-              extra_address: !pu.primary ? nil : policy.primary_insurable.primary_address.get_confie_addr("Unit #{policy.primary_insurable.title}", address_type: "StreetAddress")
-            ).merge({ 'com.a1_ExternalId': rquid })
-          end + (policy.policy_type_id == ::PolicyType::RESIDENTIAL_ID && policy.carrier_id == MsiService.carrier_id && !policy.account.nil? ?
-            [get_insured_or_principal_for(policy.account, code_for_additional_interest)
-              .merge({ 'com.a1_ExternalId': rquid })] # MOOSE WARNING: is policy.account the right place to check? should we check for preferred_ho4 status first?
-            : []
-          )
+          {
+            'com.a1_ExternalId': rquid
+          }.merge(get_insured_or_principal_for(
+            policy.primary_user,
+            nil,
+            for_insurable: policy.primary_insurable
+          ))
         ),
+        
+        
+         #(
+         # policy.policy_users.map do |pu|
+         #   get_insured_or_principal_for(
+         #     pu.user,
+         #     pu.primary ? code_for_primary_insured : code_for_additional_insured,
+         #     extra_address: !pu.primary ? nil : policy.primary_insurable.primary_address.get_confie_addr("Unit #{policy.primary_insurable.title}", address_type: "StreetAddress")
+         #   ).merge({ 'com.a1_ExternalId': rquid })
+         # end + (policy.policy_type_id == ::PolicyType::RESIDENTIAL_ID && policy.carrier_id == MsiService.carrier_id && !policy.account.nil? ?
+         #   [get_insured_or_principal_for(policy.account, code_for_additional_interest)
+         #     .merge({ 'com.a1_ExternalId': rquid })] # MOOSE WARNING: is policy.account the right place to check? should we check for preferred_ho4 status first?
+         #   : []
+         # )
+        #),
         "com.a1_Policy": {
           NAICCd: 'undefined', # no NAICCd, whatever that is
           ContractTerm: {
@@ -263,7 +274,7 @@ class ConfieService
         #"com.a1_LeadNotes": "",
         "com.a1_OrganizationCd": "OLBT",
         "com.a1_InternalDocument": { URL: "NA" },
-        # leaving out CarrierDocument and InternalDocument...
+        # leaving out CarrierDocument...
         #PersAutoLineBusiness: {
         #  PersDriver: (
         #    policy.policy_users.map do |pu|
@@ -278,7 +289,17 @@ class ConfieService
         #  '': { id: '1' },
         #  Addr: policy.primary_insurable.primary_address.get_confie_addr("Unit #{policy.primary_insurable.title}", address_type: "StreetAddress")
         #}
-      }
+      }.merge({
+        primary_insured: policy.primary_user.profile.full_name,
+        additional_insured: policy.policy_users.select{|pu| !pu.primary }.map do |pu|
+          pu.user.profile.full_name
+        end,
+        additional_interest: ((policy.policy_type_id == ::PolicyType::RESIDENTIAL_ID && policy.carrier_id == MsiService.carrier_id && !policy.account.nil?) ?
+          policy.account.title
+          : nil
+        )
+      }.transform_values{|v| v.blank? ? nil : v }.compact)
+      
     }, **compilation_args)
     return errors.blank?
   end
@@ -386,14 +407,14 @@ private
       }
     end
 
-    def get_insured_or_principal_for(obj, rolecd, extra_address: nil)
+    def get_insured_or_principal_for(obj, rolecd = nil, for_insurable: nil)
       case obj.class.name
         when 'User'
           return {
             # Optional: "com.a1_ExternalId":  "#{get_unique_identifier}", # MOOSE WARNING: using auth instead of user-#{obj.id}",
             #'com.a1_ExternalId': "user-#{obj.id}",
             'com.a1_DriverLicenseNumber': 'NA',
-            GeneralPartyInfo:     obj.get_confie_general_party_info(extra_address: extra_address),
+            GeneralPartyInfo:     obj.get_confie_general_party_info(for_insurable: for_insurable),
 
             PersonInfo: {
               BirthDt: obj.profile.birth_date&.to_s,
