@@ -112,7 +112,7 @@ class ConfieService
     elsif self.action == :lead_info
       begin
         call_data[:response] = HTTParty.post(endpoint_for(self.action),
-          body: message_content.to_json,
+          body: message_content,
           headers: {
             'Content-Type' => 'application/json'
           },
@@ -127,13 +127,24 @@ class ConfieService
         }
         puts "\nERROR\n"
       end
-        # handle response
-        if call_data[:error]
-          puts 'ERROR ERROR ERROR'.red
-          pp call_data
-        else
-          
+      # handle response
+      if call_data[:error]
+        puts 'ERROR ERROR ERROR'.red
+        pp call_data
+      else
+        call_data[:code] = call_data[:response].code
+        if call_data[:code] != 200
+          call_data[:error] = true
+          call_data[:message] = "Request failed externally"
+          call_data[:external_message] = case call_data[:response].code
+            when 404;   "Lead not found"
+            when 422;   "Mediacode is invalid"
+            when 1001;  "Lead update contains invalid data"
+            when 1003;  "Lead outside updateable time range"
+            else;       "Unknown Error"
+          end
         end
+      end
     end
     # scream to the console for the benefit of any watchers
     display_status = call_data[:error] ? 'ERROR' : 'SUCCESS'
@@ -144,28 +155,23 @@ class ConfieService
   end
   
   def build_lead_info(
-    policy_application:,
-    lob_override: nil,
+    id:,
+    mediacode:,
+    status:,
     **compilation_args
   )
     # put the request together
     self.action = :lead_info
     self.errors = nil
-    lobcd = get_lobcd_for_policy_type(policy_application.policy_type_id) || lob_override
-    if lobcd.nil?
-      self.errors = ["Confie does not support policy type '#{policy.policy_type.title}'"]
-    end
-    self.compiled_rxml = compile_xml({
-      "com.a1_LeadInfo": {
-        RqUID: get_unique_identifier,
-        TransactionRequestDt: Time.current.to_date.to_s,
-        LOBCd: lobcd[0],
-        LOBSubCd: lobcd[1],
-        InsuredOrPrincipal: policy_application.policy_users.map do |pu|
-          get_insured_or_principal_for(pu.user, pu.primary ? code_for_primary_insured : code_for_additional_insured)
-        end
+    self.message_content = {
+      id: id.to_s,
+      mediacode: mediacode.to_s,
+      data: {
+        lead: {
+          gc_status: status.to_s
+        }
       }
-    }, **compilation_args)
+    }.merge(get_auth_json).to_json
     return errors.blank?
   end
   
@@ -369,18 +375,10 @@ private
     end
 
     def get_auth_json
-      #{
-      #  SignonRq: {
-      #    SignonPswd: {
-      #      CustId: {
-      #        CustLoginId: Rails.application.credentials.msi[:un][ENV['RAILS_ENV'].to_sym]
-      #      },
-      #      CustPswd: {
-      #        Pswd: Rails.application.credentials.msi[:pw][ENV['RAILS_ENV'].to_sym]
-      #      }
-      #    }
-      #  }
-      #}
+      {
+        user_name: Rails.application.credentials.confie[:lead_username][ENV['RAILS_ENV'].to_sym],
+        api_key: Rails.application.credentials.confie[:lead_key][ENV['RAILS_ENV'].to_sym]
+      }
     end
     
     def json_to_xml(obj, abbreviate_nils: true, closeless: false,  indent: nil, line_breaks: false, internal: false)
