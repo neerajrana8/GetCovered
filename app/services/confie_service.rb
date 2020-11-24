@@ -139,14 +139,10 @@ class ConfieService
     return errors.blank?
   end
   
-  def build_online_policy_sale(
+  def build_online_policy_sale_old(
     policy:,
     **compilation_args
   )
-    # we need:
-    #   the LOBCd and LOBSubCd
-    #   the InsuredOrPrincipalRoleCd for primary insured & additional insured & additional interest
-    
     # put the request together
     self.action = :online_policy_sale
     self.errors = nil
@@ -205,6 +201,87 @@ class ConfieService
   end
   
   
+
+  def build_online_policy_sale(
+    policy:,
+    **compilation_args
+  )
+    # put the request together
+    self.action = :online_policy_sale
+    self.errors = nil
+    lobcd = get_lobcd_for_policy_type(policy.policy_type_id)
+    if lobcd.nil?
+      self.errors = ["Confie does not support policy type '#{policy.policy_type.title}'"]
+    end
+    first_invoice = policy.invoices.order("due_date asc").limit(1).take
+    rquid = get_unique_identifier
+    self.compiled_rxml = compile_xml({
+      PersAutoPolicyQuoteInqRq: {
+        RqUID: rquid,
+        TransactionRequestDt: Time.current.to_date.to_s,
+        LOBCd: lobcd[0],
+        LOBSubCd: lobcd[1],
+        InsuredOrPrincipal: (
+          policy.policy_users.map do |pu|
+            get_insured_or_principal_for(
+              pu.user,
+              pu.primary ? code_for_primary_insured : code_for_additional_insured,
+              extra_address: !pu.primary ? nil : policy.primary_insurable.primary_address.get_confie_addr("Unit #{policy.primary_insurable.title}", address_type: "StreetAddress")
+            ).merge({ 'com.a1_ExternalId': rquid })
+          end + (policy.policy_type_id == ::PolicyType::RESIDENTIAL_ID && policy.carrier_id == MsiService.carrier_id && !policy.account.nil? ?
+            [get_insured_or_principal_for(policy.account, code_for_additional_interest)
+              .merge({ 'com.a1_ExternalId': rquid })] # MOOSE WARNING: is policy.account the right place to check? should we check for preferred_ho4 status first?
+            : []
+          )
+        ),
+        "com.a1_Policy": {
+          NAICCd: 'undefined', # no NAICCd, whatever that is
+          ContractTerm: {
+            EffectiveDt: policy.effective_date.to_s,
+            ExpirationDt: policy.expiration_date.to_s,
+            DurationPeriod: {
+              NumUnits: 12
+            }
+          },
+          LanguageCd: "EN",
+          PolicyNumber: policy.number,
+          CurrentTermAmt: {
+            Amt: (first_invoice.total.to_d / 100.to_d).to_s
+          },
+          FullTermAmt: {
+            Amt: (policy.policy_quotes.accepted.order("created_at desc").limit(1).take.policy_premium.total / 100.to_d).to_s
+          },
+          "com.a1_Payment": payment_info(
+            policy.carrier.uses_stripe? ?
+              first_invoice&.charges&.succeeded&.take
+              : first_invoice
+          ) || { MethodPaymentCd: "CreditCard", Amount: { Amt: (first_invoice.total.to_d / 100.to_d).to_s } },
+          "com.a1_OnlineSalesFee": {
+            Amt: "0.00"
+          }
+        }.merge(get_a1_policy_codes_for_policy_type(policy.policy_type_id)),
+        #"com.a1_LeadNotes": "",
+        "com.a1_OrganizationCd": "OLBT",
+        "com.a1_InternalDocument": { URL: "NA" },
+        # leaving out CarrierDocument and InternalDocument...
+        #PersAutoLineBusiness: {
+        #  PersDriver: (
+        #    policy.policy_users.map do |pu|
+        #      get_driver_info_for(pu.user, pu.primary ? code_for_primary_insured(driver_version: true) : code_for_additional_insured(driver_version: true))
+        #    end
+        #  )
+        #},
+        #PersPolicy: {
+        #  Coverage: nil
+        #},
+        #Location: {
+        #  '': { id: '1' },
+        #  Addr: policy.primary_insurable.primary_address.get_confie_addr("Unit #{policy.primary_insurable.title}", address_type: "StreetAddress")
+        #}
+      }
+    }, **compilation_args)
+    return errors.blank?
+  end
   
   
   
@@ -213,35 +290,64 @@ class ConfieService
   
 private
 
-    def code_for_primary_insured
-      "Principal"
+    def code_for_primary_insured(driver_version: false)
+      driver_version ? "PA" : "Principal" # MOOSE WARNING: I doubt PA is right
     end
 
-    def code_for_additional_insured
-      "AI"
+    def code_for_additional_insured(driver_version: false)
+      "AI" # MOOSE WARNING: same for driver version, maybe. also additional interest below
     end
     
-    def code_for_additional_interest
+    def code_for_additional_interest(driver_version: false)
       "AI" # MOOSE WARNING: there's no way this is right
     end
 
     def payment_info(charge)
-      ch = Stripe::Charge.retrieve(charge.stripe_id) rescue nil
-      #cust = Stripe::Customer.retrieve(ch.customer)
-      case ch&.source&.object
-        when "card"
-          return {
-            MethodPaymentCd: "CreditCard",
-            Amount:  { Amt: (ch.amount.to_d / 100.to_d).to_s }, # don't know what a CurCd is, says it's optional
-            "com.a1_CreditCardInfo": {
-              # no credit card numbers for you, confie
-              "com.a1_CardHolder": { # MOOSE WARNING: stripe doesn't seem to have credit card name info, so pulling this from user right now
-                FirstName: charge.invoice.payer.profile.first_name,
-                LastName: charge.invoice.payer.profile.last_name
-              },
-              BillingAddress: address_from_stripe_source(ch.source)
-            }
+      if charge.class.name == 'Invoice'
+        return {
+          MethodPaymentCd: "CreditCard",
+          Amount: { Amt: (charge.total.to_d / 100.to_d).to_s },
+          "com.a1_CreditCardInfo": {
+            Number: 'NoData',
+            "com.a1_CardHolder": {
+              FirstName: charge.payer.profile.first_name,
+              LastName: charge.payer.profile.last_name
+            },
+            BillingAddress: 'NoData' #{
+            #  AddrTypeCd: 'BillingAddress',
+            #  Street: "101 Main St",
+            #  City: "Blacksburg",
+            ##  StateProvCd: "VA",
+             # PostalCode: "24060",
+             # County: "Montgomery"
+            #}
           }
+        }
+      else
+        ch = Stripe::Charge.retrieve(charge.stripe_id) rescue nil
+        #cust = Stripe::Customer.retrieve(ch.customer)
+        case ch&.source&.object
+          when "card"
+            ba = address_from_stripe_source(ch.source)
+            return {
+              MethodPaymentCd: "CreditCard",
+              Amount:  { Amt: (ch.amount.to_d / 100.to_d).to_s }, # don't know what a CurCd is, says it's optional
+              "com.a1_CreditCardInfo": {
+                # no credit card numbers for you, confie
+                Number: 'NoData',
+                "com.a1_CardHolder": { # MOOSE WARNING: stripe doesn't seem to have credit card name info, so pulling this from user right now
+                  FirstName: charge&.invoice&.payer&.profile&.first_name || 'NoData',
+                  LastName: charge&.invoice&.payer&.profile&.last_name || 'NoData'
+                },
+                #ExpirationYear: 'NoData',
+                #ExpirationMonth: 'NoData'
+              }.merge(ba.blank? ? {
+                BillingAddress: 'NoData'
+              } : {
+                BillingAddress: ba
+              })
+            }
+        end
       end
       return nil
     end
@@ -261,29 +367,60 @@ private
       return nil
     end
 
-    def get_insured_or_principal_for(obj, rolecd)
-      case obj
-        when ::User
+    def get_driver_info_for(obj, relcd) # users only
+      return {
+        GeneralPartyInfo: obj.get_confie_general_party_info,
+        DriverInfo: {
+          PersonInfo: {
+            BirthDt: obj.profile.birth_date&.to_s,
+            GenderCd: {"male" => "M", "female" => "F", "unspecified" => "U", "other" => "U" }[obj.profile.gender],
+            MaritalStatusCd: 'Unknown'
+            # no DriversLicense block
+            # no CreditScoreInfo
+            # no QuestionAnswer
+          }
+        },
+        PersDriverInfo: {
+          DriverRelationshipToApplicantCd: relcd
+        }
+      }
+    end
+
+    def get_insured_or_principal_for(obj, rolecd, extra_address: nil)
+      case obj.class.name
+        when 'User'
           return {
             # Optional: "com.a1_ExternalId":  "#{get_unique_identifier}", # MOOSE WARNING: using auth instead of user-#{obj.id}",
-            GeneralPartyInfo:     obj.get_confie_general_party_info,
-            InsuredOrPrincipalInfo: {
-              InsuredOrPrincipalRoleCd: rolecd,
-              PersonInfo: {
-                BirthDt: obj.profile.birth_date&.to_s,
-                GenderCd: {"male" => "M", "female" => "F", "unspecified" => "U", "other" => "U" }[obj.profile.gender]
-                # no further info for you, greedy confie
-              }
+            #'com.a1_ExternalId': "user-#{obj.id}",
+            'com.a1_DriverLicenseNumber': 'NA',
+            GeneralPartyInfo:     obj.get_confie_general_party_info(extra_address: extra_address),
+
+            PersonInfo: {
+              BirthDt: obj.profile.birth_date&.to_s,
+              GenderCd: {"male" => "M", "female" => "F", "unspecified" => "U", "other" => "U" }[obj.profile.gender],
+              MaritalStatusCd: 'Unknown'
+              # no further info for you, greedy confie
             }
+            
+            
+            #InsuredOrPrincipalInfo: {
+            #  InsuredOrPrincipalRoleCd: rolecd,
+            #  PersonInfo: {
+            #    BirthDt: obj.profile.birth_date&.to_s,
+            #    GenderCd: {"male" => "M", "female" => "F", "unspecified" => "U", "other" => "U" }[obj.profile.gender],
+            #    MaritalStatusCd: 'Unknown'
+            #    # no further info for you, greedy confie
+            #  }
+            #}
           }
-        when ::Account
+        when 'Account'
           return {
             # Optional: "com.a1_ExternalId":  "#{get_unique_identifier}", # MOOSE WARNING: using auth instead of "account-#{obj.id}",
-            GeneralPartyInfo:     obj.get_confie_general_party_info,
-            InsuredOrPrincipalInfo: {
-              InsuredOrPrincipalRoleCd: rolecd,
-              PersonInfo: nil
-            }
+            GeneralPartyInfo:     obj.get_confie_general_party_info#,
+            #InsuredOrPrincipalInfo: {
+            #  InsuredOrPrincipalRoleCd: rolecd,
+            #  PersonInfo: nil
+            #}
           }
       end
       return nil
@@ -317,7 +454,7 @@ private
     end
 
     def get_unique_identifier
-      "#{Time.current.to_i.to_s}-#{rand(2**32)}"
+      "GC-#{Time.current.to_i.to_s}-#{rand(2**32)}"
     end
 
     def arrayify(val, nil_as_object: false)
@@ -365,10 +502,10 @@ private
               # return our fancy little text block
               case line_mode
                 when :none, :inline
-                  "<#{k}#{subxml[:prop_string]}" + ((abbreviate_nils && subxml[:child_string].nil?) ? "/>"
+                  "<#{k}#{subxml[:prop_string]}" + ((abbreviate_nils && subxml[:child_string].nil?) ? " />"
                     : (">#{subxml[:child_string].to_s}" + (closeless ? "" : "</#{k}>")))
                 when :block
-                  "<#{k}#{subxml[:prop_string]}" + ((abbreviate_nils && subxml[:child_string].nil?) ? "/>"
+                  "<#{k}#{subxml[:prop_string]}" + ((abbreviate_nils && subxml[:child_string].nil?) ? " />"
                     : (">\n#{indent}  #{subxml[:child_string].to_s}" + (closeless ? "" : "\n#{indent}</#{k}>")))
                 when :cancel
                   nil
