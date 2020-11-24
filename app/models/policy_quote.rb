@@ -163,6 +163,7 @@ class PolicyQuote < ApplicationRecord
               quote_attempt[:success] = true
 
               LeadEvents::UpdateLeadStatus.run!(policy_application: policy_application)
+              policy.run_postbind_hooks
             else
               # If self.policy, policy_application.policy or
               # policy_premium.policy cannot be set correctly

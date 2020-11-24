@@ -44,6 +44,7 @@ class Policy < ApplicationRecord
   include CarrierQbePolicy
   include CarrierMsiPolicy
   include CarrierDcPolicy
+  include AgencyConfiePolicy
   include RecordChange
   
   after_create :inherit_policy_coverages, if: -> { policy_type&.designation == 'MASTER-COVERAGE' }
@@ -387,6 +388,10 @@ class Policy < ApplicationRecord
         days - 1.day
     raw_days = (self.created_at.to_date + max_days_for_full_refund - Time.zone.now.to_date).to_i
     raw_days.negative? ? 0 : raw_days
+  end
+  
+  def run_postbind_hooks # do not remove this; concerns add functionality to it by overriding it and calling super
+    nil
   end
 
   private

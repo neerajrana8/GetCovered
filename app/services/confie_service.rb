@@ -16,7 +16,7 @@ class ConfieService
   include ActiveModel::Conversion
   extend ActiveModel::Naming
   
-  attr_accessor :compiled_rxml,
+  attr_accessor :compiled_rxml, :message_content,
     :errors,
     :request,
     :action,
@@ -31,10 +31,11 @@ class ConfieService
   def event_params
     {
       verb: 'post',
-      format: 'xml',
+      format: self.action == :online_policy_sale ? 'xml' : 'json',
       interface: 'REST',
       endpoint: self.endpoint_for(self.action),
-      process: "confie_#{self.action}"
+      process: "confie_#{self.action}",
+      request: self.action == :online_policy_sale ? self.compiled_rxml : self.message_content
     }
   end
   
@@ -50,7 +51,11 @@ class ConfieService
   end
   
   def endpoint_for(which_call) # MOOSE WARNING: apparently the endpoint is constant
-    Rails.application.credentials.confie[:uri][ENV['RAILS_ENV'].to_sym]
+    if which_call == :online_policy_sale
+      Rails.application.credentials.confie[:uri][ENV['RAILS_ENV'].to_sym]
+    else # :lead_info
+      Rails.application.credentials.confie[:lead_uri][ENV['RAILS_ENV'].to_sym]
+    end
   end
   
   def call
@@ -62,48 +67,73 @@ class ConfieService
       response: nil,
       data: nil
     }
-    begin
-      
-      call_data[:response] = HTTParty.post(endpoint_for(self.action),
-        body: compiled_rxml,
-        headers: {
-          'Content-Type' => 'text/xml',
-          'SOAPAction' => "http://appone.onesystemsinc.com/services/IInsuranceSubmissionService/SubmitPolicy"
-        },
-        ssl_version: :TLSv1_2
-      )
-    rescue StandardError => e
-      call_data = {
-        error: true,
-        code: 500,
-        message: 'Request Timeout',
-        response: e
-      }
-      puts "\nERROR\n"
-      #ActionMailer::Base.mail(from: 'info@getcoveredinsurance.com', to: 'dev@getcoveredllc.com', subject: "Confie #{ action } error", body: call_data.to_json).deliver
-    end
-    # handle response
-    if call_data[:error]
-      puts 'ERROR ERROR ERROR'.red
-      pp call_data
-    else
-      call_data[:data] = call_data[:response].parsed_response
-      #case call_data[:data].dig("MSIACORD", "InsuranceSvcRs", "MsgStatus", "MsgStatusCd")
-      #  when 'SUCCESS'
-      #    # it worked! huzzah!
-      #  when 'ERROR'
-      #    call_data[:error] = true
-      #    call_data[:message] = "Request failed externally"
-      #    call_data[:external_message] = call_data[:data].dig("MSIACORD", "InsuranceSvcRs", "MsgStatus", "MsgStatusDesc").to_s
-      #    call_data[:extended_external_message] = [call_data[:data].dig("MSIACORD", "InsuranceSvcRs", "MsgStatus", "ExtendedStatus")].flatten.compact
-      #      .map{|el| "#{el["ExtendedStatusCd"]}: #{el["ExtendedStatusDesc"]}" }.join("\n")
-      #    call_data[:code] = 409
-      #  when nil
-      #    call_data[:error] = true
-      #    call_data[:message] = "Request failed externally"
-      #    call_data[:external_message] = "No status message received"
-      #    call_data[:code] = 409
-      #end
+    if self.action == :online_policy_sale
+      begin
+        call_data[:response] = HTTParty.post(endpoint_for(self.action),
+          body: compiled_rxml,
+          headers: {
+            'Content-Type' => 'text/xml',
+            'SOAPAction' => "http://appone.onesystemsinc.com/services/IInsuranceSubmissionService/SubmitPolicy"
+          },
+          ssl_version: :TLSv1_2
+        )
+      rescue StandardError => e
+        call_data = {
+          error: true,
+          code: 500,
+          message: 'Request Timeout',
+          response: e
+        }
+        puts "\nERROR\n"
+      end
+      # handle response
+      if call_data[:error]
+        puts 'ERROR ERROR ERROR'.red
+        pp call_data
+      else
+        call_data[:data] = call_data[:response].parsed_response
+        # Bad result:   {"Envelope"=>{"Body"=>{"SubmitPolicyResponse"=>{"SubmitPolicyResult"=>{"ExternalId"=>nil, "SubmissionState"=>"UnexpectedError", "SubmissionStateDescription"=>"An error has occurred during parsing policy data", "PolicyId"=>nil}}}}}
+        # Good result:  {"Envelope"=>{"Body"=>{"SubmitPolicyResponse"=>{"SubmitPolicyResult"=>{"ExternalId"=>"GC-1606249897-219099128", "SubmissionState"=>"Scheduled", "SubmissionStateDescription"=>"Policy has been scheduled for Import.", "PolicyId"=>nil}}}}}
+        case call_data[:data].dig("Envelope", "Body", "SubmitPolicyResponse", "SubmitPolicyResult", "SubmissionState")
+          when 'Scheduled'
+            # it worked! yay and hooray! let the jubilation begin!!!
+          when 'UnexpectedError'
+            call_data[:error] = true
+            call_data[:message] = "Request failed externally"
+            call_data[:external_message] = call_data[:data].dig("Envelope", "Body", "SubmitPolicyResponse", "SubmitPolicyResult", "SubmissionStateDescription")
+            call_data[:code] = 400 # the actual Response object gives code 200, what the heck?
+          else
+            call_data[:error] = true
+            call_data[:message] = "Request failed externally"
+            call_data[:external_message] = "No state description submitted"
+            call_data[:code] = 400
+        end
+      end
+    elsif self.action == :lead_info
+      begin
+        call_data[:response] = HTTParty.post(endpoint_for(self.action),
+          body: message_content.to_json,
+          headers: {
+            'Content-Type' => 'application/json'
+          },
+          ssl_version: :TLSv1_2
+        )
+      rescue StandardError => e
+        call_data = {
+          error: true,
+          code: 500,
+          message: 'Request Timeout',
+          response: e
+        }
+        puts "\nERROR\n"
+      end
+        # handle response
+        if call_data[:error]
+          puts 'ERROR ERROR ERROR'.red
+          pp call_data
+        else
+          
+        end
     end
     # scream to the console for the benefit of any watchers
     display_status = call_data[:error] ? 'ERROR' : 'SUCCESS'
@@ -139,68 +169,6 @@ class ConfieService
     return errors.blank?
   end
   
-  def build_online_policy_sale_old(
-    policy:,
-    **compilation_args
-  )
-    # put the request together
-    self.action = :online_policy_sale
-    self.errors = nil
-    lobcd = get_lobcd_for_policy_type(policy.policy_type_id)
-    if lobcd.nil?
-      self.errors = ["Confie does not support policy type '#{policy.policy_type.title}'"]
-    end
-    first_invoice = policy.invoices.order("due_date asc").limit(1).take
-    self.compiled_rxml = compile_xml({
-      "com.a1_PolicyQuoteInqRq": {
-        RqUID: get_unique_identifier,
-        TransactionRequestDt: Time.current.to_date.to_s,
-        LOBCd: lobcd[0],
-        LOBSubCd: lobcd[1],
-        InsuredOrPrincipal: (
-          policy.policy_users.map do |pu|
-            get_insured_or_principal_for(pu.user, pu.primary ? code_for_primary_insured : code_for_additional_insured)
-          end + (policy.policy_type_id == ::PolicyType::RESIDENTIAL_ID && policy.carrier_id == MsiService.carrier_id && !policy.account.nil? ?
-            [get_insured_or_principal_for(policy.account, code_for_additional_interest)] # MOOSE WARNING: is policy.account the right place to check? should we check for preferred_ho4 status first?
-            : []
-          )
-        ),
-        "com.a1_Policy": {
-          # no NAICCd, whatever that is
-          ContractTerm: {
-            EffectiveDt: policy.effective_date.to_s,
-            ExpirationDt: policy.expiration_date.to_s,
-            DurationPeriod: {
-              NumUnits: 12
-            }
-            # MOOSE WARNING: DurationPeriod???
-          },
-          LanguageCd: "EN",
-          PolicyNumber: policy.number,
-          CurrentTermAmt: {
-            Amt: (first_invoice.total.to_d / 100.to_d).to_s
-          },
-          FullTermAmt: {
-            Amt: (policy.policy_quotes.accepted.order("created_at desc").limit(1).take.policy_premium.total / 100.to_d).to_s
-          },
-          "com.a1_Payment": payment_info(
-            policy.carrier.uses_stripe? ?
-              first_invoice&.charges&.succeeded&.take
-              : nil 
-          ) || { MethodPaymentCd: "CreditCard", Amount: { Amt: (first_invoice.total.to_d / 100.to_d).to_s } },
-          "com.a1_OnlineSalesFee": {
-            Amt: "0.00"
-          }
-        }.merge(get_a1_policy_codes_for_policy_type(policy.policy_type_id)),
-        "com.a1_LeadNotes": "",
-        "com.a1_OrganizationCd": "OLBT"
-        # leaving out CarrierDocument and InternalDocument...
-      }
-    }, **compilation_args)
-    return errors.blank?
-  end
-  
-  
 
   def build_online_policy_sale(
     policy:,
@@ -230,23 +198,8 @@ class ConfieService
             for_insurable: policy.primary_insurable
           ))
         ),
-        
-        
-         #(
-         # policy.policy_users.map do |pu|
-         #   get_insured_or_principal_for(
-         #     pu.user,
-         #     pu.primary ? code_for_primary_insured : code_for_additional_insured,
-         #     extra_address: !pu.primary ? nil : policy.primary_insurable.primary_address.get_confie_addr("Unit #{policy.primary_insurable.title}", address_type: "StreetAddress")
-         #   ).merge({ 'com.a1_ExternalId': rquid })
-         # end + (policy.policy_type_id == ::PolicyType::RESIDENTIAL_ID && policy.carrier_id == MsiService.carrier_id && !policy.account.nil? ?
-         #   [get_insured_or_principal_for(policy.account, code_for_additional_interest)
-         #     .merge({ 'com.a1_ExternalId': rquid })] # MOOSE WARNING: is policy.account the right place to check? should we check for preferred_ho4 status first?
-         #   : []
-         # )
-        #),
         "com.a1_Policy": {
-          NAICCd: 'undefined', # no NAICCd, whatever that is
+          NAICCd: 'undefined',
           ContractTerm: {
             EffectiveDt: policy.effective_date.to_s,
             ExpirationDt: policy.expiration_date.to_s,
@@ -271,24 +224,8 @@ class ConfieService
             Amt: "0.00"
           }
         }.merge(get_a1_policy_codes_for_policy_type(policy.policy_type_id)),
-        #"com.a1_LeadNotes": "",
         "com.a1_OrganizationCd": "OLBT",
-        "com.a1_InternalDocument": { URL: "NA" },
-        # leaving out CarrierDocument...
-        #PersAutoLineBusiness: {
-        #  PersDriver: (
-        #    policy.policy_users.map do |pu|
-        #      get_driver_info_for(pu.user, pu.primary ? code_for_primary_insured(driver_version: true) : code_for_additional_insured(driver_version: true))
-        #    end
-        #  )
-        #},
-        #PersPolicy: {
-        #  Coverage: nil
-        #},
-        #Location: {
-        #  '': { id: '1' },
-        #  Addr: policy.primary_insurable.primary_address.get_confie_addr("Unit #{policy.primary_insurable.title}", address_type: "StreetAddress")
-        #}
+        "com.a1_InternalDocument": { URL: "NA" }
       }.merge({
         primary_insured: policy.primary_user.profile.full_name,
         additional_insured: policy.policy_users.select{|pu| !pu.primary }.map do |pu|
@@ -310,18 +247,6 @@ class ConfieService
   
   
 private
-
-    def code_for_primary_insured(driver_version: false)
-      driver_version ? "PA" : "Principal" # MOOSE WARNING: I doubt PA is right
-    end
-
-    def code_for_additional_insured(driver_version: false)
-      "AI" # MOOSE WARNING: same for driver version, maybe. also additional interest below
-    end
-    
-    def code_for_additional_interest(driver_version: false)
-      "AI" # MOOSE WARNING: there's no way this is right
-    end
 
     def payment_info(charge)
       if charge.class.name == 'Invoice'
@@ -377,71 +302,32 @@ private
       if source.address_city && source.address_line1 && source.address_state && source.address_zip
         {
           AddrTypeCd: "BillingAddress",
-          # docs have "Street"... what the heck
           Addr1: source.address_line1,
           Addr2: source.address_line2.blank? ? nil : source.address_line2,
           City: source.address_city,
-          StateProvCd: source.address_state, # MOOSE WARNING: comes as code right???
+          StateProvCd: source.address_state,
           PostalCode: source.address_zip
         }.compact
       end
       return nil
     end
 
-    def get_driver_info_for(obj, relcd) # users only
-      return {
-        GeneralPartyInfo: obj.get_confie_general_party_info,
-        DriverInfo: {
-          PersonInfo: {
-            BirthDt: obj.profile.birth_date&.to_s,
-            GenderCd: {"male" => "M", "female" => "F", "unspecified" => "U", "other" => "U" }[obj.profile.gender],
-            MaritalStatusCd: 'Unknown'
-            # no DriversLicense block
-            # no CreditScoreInfo
-            # no QuestionAnswer
-          }
-        },
-        PersDriverInfo: {
-          DriverRelationshipToApplicantCd: relcd
-        }
-      }
-    end
-
     def get_insured_or_principal_for(obj, rolecd = nil, for_insurable: nil)
       case obj.class.name
         when 'User'
           return {
-            # Optional: "com.a1_ExternalId":  "#{get_unique_identifier}", # MOOSE WARNING: using auth instead of user-#{obj.id}",
-            #'com.a1_ExternalId': "user-#{obj.id}",
             'com.a1_DriverLicenseNumber': 'NA',
             GeneralPartyInfo:     obj.get_confie_general_party_info(for_insurable: for_insurable),
-
             PersonInfo: {
               BirthDt: obj.profile.birth_date&.to_s,
               GenderCd: {"male" => "M", "female" => "F", "unspecified" => "U", "other" => "U" }[obj.profile.gender],
               MaritalStatusCd: 'Unknown'
               # no further info for you, greedy confie
             }
-            
-            
-            #InsuredOrPrincipalInfo: {
-            #  InsuredOrPrincipalRoleCd: rolecd,
-            #  PersonInfo: {
-            #    BirthDt: obj.profile.birth_date&.to_s,
-            #    GenderCd: {"male" => "M", "female" => "F", "unspecified" => "U", "other" => "U" }[obj.profile.gender],
-            #    MaritalStatusCd: 'Unknown'
-            #    # no further info for you, greedy confie
-            #  }
-            #}
           }
-        when 'Account'
+        when 'Account' # this isn't actually ever going to come up anymore
           return {
-            # Optional: "com.a1_ExternalId":  "#{get_unique_identifier}", # MOOSE WARNING: using auth instead of "account-#{obj.id}",
-            GeneralPartyInfo:     obj.get_confie_general_party_info#,
-            #InsuredOrPrincipalInfo: {
-            #  InsuredOrPrincipalRoleCd: rolecd,
-            #  PersonInfo: nil
-            #}
+            GeneralPartyInfo:     obj.get_confie_general_party_info
           }
       end
       return nil
@@ -467,7 +353,7 @@ private
     def get_lobcd_for_policy_type(policy_type_id)
       case policy_type_id
         when ::PolicyType::RENT_GUARANTEE_ID
-          return ["HOME", "OLT"] #MOOSE WARNING: they said OTP for both of these...
+          return ["HOME", "OLT"]
         when ::PolicyType::RESIDENTIAL_ID
           return ["HOME", "OLT"]
       end
@@ -573,7 +459,7 @@ private
                   'xmlns:i': "http://www.w3.org/2001/XMLSchema-instance"
                 },
                 'a:AuthenticationKey': Rails.application.credentials.confie[:auth][ENV['RAILS_ENV'].to_sym].to_s,
-                'a:Payload': some_xml#.gsub('<', '&lt;').gsub('>', '&gt;')
+                'a:Payload': some_xml#.gsub('<', '&lt;').gsub('>', '&gt;') (already done by json_to_xml, because I'm far too clever)
               }
             }
           }
