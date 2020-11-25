@@ -8,7 +8,7 @@ module Reports
       cs = ConfieService.new
       @policy_applications.each do |pa|
         next if pa.tagging_data.nil? || pa.tagging_data['confie_mediacode'].nil?
-        if cs.build_request(:online_policy_sale,
+        if cs.build_request(:lead_info,
           id: pa.id,
           status: pa.status,
           mediacode: pa.tagging_data['confie_mediacode']
