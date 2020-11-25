@@ -66,6 +66,8 @@ class Policy < ApplicationRecord
   has_many :policies
   has_many :claims
   
+  has_many :events, as: :eventable
+  
   has_many :policy_quotes
   has_one :policy_application
   

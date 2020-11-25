@@ -11,6 +11,19 @@ class ConfieService
     @agency_id ||= ::Agency.where(slug: "confie").take&.id
   end
   
+  STATUS_MAP = {
+    'started' => 'in_progress',
+    'in_progress' => 'in_progress',
+    'complete' => 'quoted',
+    'abandoned' => 'quoted',
+    'quote_in_progress' => 'in_progress',
+    'quote_failed' => 'in_progress',
+    'quoted' => 'quoted',
+    'more_required' => 'in_progress',
+    'accepted' => 'accepted',
+    'rejected' => 'quoted'
+  }
+  
   include HTTParty
   include ActiveModel::Validations
   include ActiveModel::Conversion
@@ -168,7 +181,7 @@ class ConfieService
       mediacode: mediacode.to_s,
       data: {
         lead: {
-          gc_status: status.to_s
+          gc_status: ConfieService::STATUS_MAP[status]
         }
       }
     }.merge(get_auth_json).to_json
