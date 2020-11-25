@@ -162,6 +162,14 @@ module V2
           :effective_date => place_holder_date,
           :expiration_date => place_holder_date + 1.year
         }
+        if @access_token.bearer_type == 'Agency'
+          if @access_token.bearer_id == ::ConfieService.agency_id
+            unless params[:mediacode].blank?
+              init_hash[:tagging_data] ||= {}
+              init_hash[:tagging_data]['confie_mediacode'] = params.require(:mediacode).to_s
+            end
+          end
+        end
 
         site = Rails.application.credentials[:uri][Rails.env.to_sym][:client]
         program = policy_type == 1 ? "residential" : "rentguarantee"
