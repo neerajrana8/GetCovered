@@ -157,7 +157,7 @@ class CrumService
 			  		state_code: class_code["StateCode"],
 			  		enabled: true,
 			  		policy_type: @policy_type) unless @carrier.carrier_class_codes
-			  																							.exists?(external_id: class_code&.[]("id"))
+			  																							.exists?(external_id: class_code&.[]("id").to_i)
 			  end
 		  else
 		    event.status = "error"
