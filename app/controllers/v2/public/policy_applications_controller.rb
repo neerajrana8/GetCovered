@@ -470,7 +470,7 @@ module V2
               policy_application: @policy_application,
               policy_users_params: update_policy_users_params[:policy_users_attributes]
             )
-          if !(update_users_result == true || update_users_result.sucess? &&)
+          if !(update_users_result == true || update_users_result.sucess?)
             render json: update_users_result.failure,
               status: 422
           else
