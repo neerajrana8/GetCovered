@@ -122,19 +122,21 @@ class CrumService
         request: '{ "data": null }'
       )
 
-			get_token()
+			error = true if get_token()[:error]
 
-			begin
-	    	request = HTTParty.get(state_url,
-															 headers: {
-																	 "Content-Type": "application/json",
-																	 "Authorization": self.token["IdToken"]
-															 })
+      unless error
+        begin
+          request = HTTParty.get(state_url,
+                                 headers: {
+                                     "Content-Type": "application/json",
+                                     "Authorization": self.token["IdToken"]
+                                 })
 
-	    rescue => e
-	      pp e
-	      error = true
-	    end
+        rescue => e
+          pp e
+          error = true
+        end
+      end
 
 	    unless error
   	    event.response = request
@@ -155,7 +157,7 @@ class CrumService
 			  		state_code: class_code["StateCode"],
 			  		enabled: true,
 			  		policy_type: @policy_type) unless @carrier.carrier_class_codes
-			  																							.exists?(external_id: class_code["id"])
+			  																							.exists?(external_id: class_code&.[]("id"))
 			  end
 		  else
 		    event.status = "error"
