@@ -8,7 +8,7 @@ require 'fileutils'
 class ConfieService
 
   def self.agency_id
-    # MOOSE WARNING: do this
+    @agency_id ||= ::Agency.where(slug: "confie").take&.id
   end
   
   include HTTParty
