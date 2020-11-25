@@ -250,7 +250,7 @@ class ConfieService
         additional_insured: policy.policy_users.select{|pu| !pu.primary }.map do |pu|
           pu.user.profile.full_name
         end,
-        additional_interest: ((policy.policy_type_id == ::PolicyType::RESIDENTIAL_ID && policy.carrier_id == MsiService.carrier_id && !policy.account.nil?) ?
+        additional_interest: ((policy.policy_type_id == ::PolicyType::RESIDENTIAL_ID && policy.carrier_id == MsiService.carrier_id && !policy.account.nil? && policy.account.title != "Nonpreferred Residential") ?
           policy.account.title
           : nil
         )
