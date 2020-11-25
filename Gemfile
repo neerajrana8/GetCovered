@@ -114,7 +114,7 @@ gem 'ruby-prof', require: false
 gem 'addressable'
 gem 'analytics-ruby', '~> 2.0.0', :require => 'segment/analytics'
 
-gem 'klaviyo', git: 'https://github.com/getcoveredllc/ruby-klaviyo.git'
+gem 'klaviyo'
 gem 'rack-attack'
 gem 'dry-monads'
 
