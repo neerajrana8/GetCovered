@@ -69,8 +69,19 @@ class CrumService
     end
 
     unless call_data[:error] == true
-    	token_data = JSON.parse(call_data[:response]) rescue nil
-    	self.token = token_data['AuthenticationResult']
+      begin
+        token_data = JSON.parse(call_data[:response])
+        self.token = token_data['AuthenticationResult']
+      rescue
+        token_data = nil
+        self.token = nil
+        call_data = {
+          error: true,
+          code: 500,
+          message: "Request Timeout",
+          response: e
+        }
+      end
     end
 
     return call_data
