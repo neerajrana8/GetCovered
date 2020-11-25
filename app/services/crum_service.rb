@@ -69,7 +69,7 @@ class CrumService
     end
 
     unless call_data[:error] == true
-    	token_data = JSON.parse(call_data[:response])
+    	token_data = JSON.parse(call_data[:response]) rescue nil
     	self.token = token_data['AuthenticationResult']
     end
 
