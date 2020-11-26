@@ -11,9 +11,9 @@ module Reports
         if cs.build_request(:lead_info,
           id: pa.id,
           status: pa.status,
-          mediacode: pa.tagging_data['confie_mediacode']
+          mediacode: pa.tagging_data['confie_mediacode'],
           line_breaks: true
-        )
+        )1
           event = pa.events.new(cs.event_params)
           event.started = Time.now
           result = cs.call
