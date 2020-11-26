@@ -1,7 +1,7 @@
 # Confie Service Model
 # file: app/services/confie_service.rb
 #
-
+ 
 require 'base64'
 require 'fileutils'
 
