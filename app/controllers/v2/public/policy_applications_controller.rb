@@ -76,8 +76,8 @@ module V2
         if request.headers.key?("token-key") && request.headers.key?("token-secret")
 
           if check_api_access()
-            if params[:policy_application][:policy_type_id] == 1 ||
-               params[:policy_application][:policy_type_id] == 5
+            if params[:policy_application][:policy_type_id].to_i == 1 ||
+               params[:policy_application][:policy_type_id].to_i == 5
               create_from_external
             else
               render json: standard_error(:invalid_policy_type, 'Invalid policy type'), status: 422
@@ -96,7 +96,7 @@ module V2
           when 6
             create_security_deposit_replacement
           else
-            render json: standard_error(:invalid_policy_type, 'Invalid policy type'), status: 422
+            render json: standard_error(:invalid_policy_type, 'Invalid policy type '), status: 422
           end
         end
       end
@@ -155,7 +155,7 @@ module V2
 
       def create_from_external
         place_holder_date = Time.now + 1.day
-        policy_type = params[:policy_application][:policy_type_id]
+        policy_type = params[:policy_application][:policy_type_id].to_i
         init_hash = {
             :agency => @access_token.bearer,
             :policy_type => PolicyType.find(policy_type),
