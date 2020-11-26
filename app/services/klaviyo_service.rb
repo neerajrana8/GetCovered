@@ -11,8 +11,8 @@ class KlaviyoService
   RETRY_LIMIT = 3
 
   def initialize
-    @klaviyo ||= Klaviyo::Client.new(Rails.application.credentials.klaviyo[ENV["RAILS_ENV"].to_sym][:token] || ENV["KLAVIYO_API_TOKEN"])
-    @private_api_key ||= Rails.application.credentials.klaviyo[ENV["RAILS_ENV"].to_sym][:private_token]
+    Klaviyo.public_api_key = Rails.application.credentials.klaviyo[ENV["RAILS_ENV"].to_sym][:token] || ENV["KLAVIYO_API_TOKEN"]
+    Klaviyo.private_api_key = Rails.application.credentials.klaviyo[ENV["RAILS_ENV"].to_sym][:private_token]
     @retries = 0
   end
 
@@ -24,7 +24,11 @@ class KlaviyoService
     begin
       response = yield
 
-      track_event(event_description, event_details) unless ["test", "test_container", "local", "development"].include?(ENV["RAILS_ENV"])
+      if event_description == "Became Lead" && event_details.blank?
+
+      else
+        track_event(event_description, event_details) unless ["test", "test_container", "local", "development"].include?(ENV["RAILS_ENV"])
+      end
 
     rescue Net::OpenTimeout => ex
       Rails.logger.error("LeadEventsController KlaviyoException: #{ex.to_s}.")
@@ -38,35 +42,24 @@ class KlaviyoService
   private
 
   def identify_lead(event_description, event_details = {})
-    @klaviyo.identify(email: @lead.email, id: @lead.identifier, properties: identify_properties,
+    Klaviyo::Public.identify(email: @lead.email, id: @lead.identifier, properties: identify_properties,
                       customer_properties: identify_customer_properties(identify_properties))
   end
 
   #need to send to lead to prod only in prod
   def track_event(event_description, event_details = {})
     customer_properties = {}
-    if event_description == "New Lead"
-      identify_lead("New Lead")
-      customer_properties[:email] = @lead.email
-    end
+    identify_lead(event_description)
 
-    if event_description == "Became Lead"
-      identify_lead("Became Lead")
-    end
+    customer_properties[:email] = @lead.email if event_description == "New Lead"
 
-    if event_description == "New Lead Event"
-      #if @lead.lead_events.count > 1
-        event_details = @lead.lead_events.last.as_json
-        identify_lead("Became Lead") if is_agency_updated?
-      #end
-    end
+    event_details = @lead.lead_events.last.as_json if event_description == "New Lead Event" && @lead.lead_events.count > 0
 
     if event_description == 'Updated Email'
-      identify_lead('Became Lead (email)')
-      response = HTTParty.get("https://a.klaviyo.com/api/v2/people/search?api_key=#{@private_api_key}&email=#{event_details[:email]}")
+      response = HTTParty.get("https://a.klaviyo.com/api/v2/people/search?api_key=#{Klaviyo.private_api_key}&email=#{event_details[:email]}")
       lead_id = JSON.parse(response.body)["id"]
       if lead_id.present?
-        HTTParty.put("https://a.klaviyo.com/api/v1/person/#{lead_id}?api_key=#{@private_api_key}&email=#{event_details[:new_email]}")
+        HTTParty.put("https://a.klaviyo.com/api/v1/person/#{lead_id}?api_key=#{Klaviyo.private_api_key}&email=#{event_details[:new_email]}")
       end
     end
 
@@ -75,18 +68,16 @@ class KlaviyoService
 
     # TODO: check retriable gem?
     begin
-      @klaviyo.track(event_description,
+      result = Klaviyo::Public.track(event_description,
                    email: @lead.email,
                    properties: prepare_track_properties(event_details),
                    customer_properties: customer_properties
       )
       Rails.logger.info("LeadEventsController KlaviyoTrack: desc: #{event_description},result: #{result.to_s}, lead: #{@lead.as_json}, event_details: #{event_details}, properties: #{prepare_track_properties(event_details)}, customer_properties: #{customer_properties}, last_event: #{@lead.lead_events.last.as_json}.")
     rescue => kl_ex
-      #rescue Klaviyo::KlaviyoError => kl_ex
       Rails.logger.error("LeadEventsController KlaviyoException: #{kl_ex.to_s}, lead: #{@lead.as_json}, event_details: #{event_details}, properties: #{prepare_track_properties(event_details)}, customer_properties: #{customer_properties}.")
-      #@lead =  Lead.create(email: "no_email_#{rand(999)}@email.com") if @lead.nil?
-      #@retries += 1
-      #@retries > RETRY_LIMIT ? Rails.logger.error("LeadEventsController KlaviyoException: #{kl_ex.to_s}, lead: #{@lead.as_json}, event_details: #{event_details}.") : retry
+      @retries += 1
+      @retries > RETRY_LIMIT ? Rails.logger.error("LeadEventsController KlaviyoException after retries: #{kl_ex.to_s}, lead: #{@lead.as_json}, event_details: #{event_details}.") : retry
     end
   end
 

@@ -7,13 +7,13 @@ module V2
       before_action :set_lead, only: :create
 
       def create
-        track_status = @klaviyo_helper.process_events("New Lead Event", @lead) do
           if @lead.errors.any?
             render json: standard_error(:lead_creation_error, nil, @lead.errors.full_messages)
           else
-            @lead.lead_events.create(event_params)
+            track_status = @klaviyo_helper.process_events("New Lead Event", @lead) do
+              @lead.lead_events.create(event_params)
+            end
             render template: 'v2/shared/leads/full'
-          end
         end
       end
 
@@ -72,7 +72,10 @@ module V2
       end
 
       def lead_params
-        params.permit(:email, :identifier, :last_visited_page, :agency_id)
+        permitted = params.permit(:email, :identifier, :last_visited_page, :agency_id)
+        permitted[:last_visited_page] = params[:lead_event_attributes][:data][:last_visited_page] if params[:lead_event_attributes] &&
+            params[:lead_event_attributes][:data] && permitted[:last_visited_page].blank?
+        permitted
       end
 
       def lead_profile_attributes
@@ -98,11 +101,11 @@ module V2
         else
           data = {policy_type_id: params[:policy_type_id]}
         end
-        params.
+        permitted ||= params.
             require(:lead_event_attributes).
             permit(:tag, :latitude, :longitude, :agency_id, :policy_type_id).tap do |whitelisted|
               whitelisted[:data] = data.permit!
-            end
+        end
       end
 
     end
