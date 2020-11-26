@@ -14,14 +14,14 @@ module V2
         if filter_by_day?(start_date, end_date)
           start_date.upto(end_date) do |date|
             params[:filter][:last_visit] = Date.parse("#{date}").all_day
-            super(:@leads, Lead, :profile, :tracking_url)
+            super(:@leads, Lead.presented, :profile, :tracking_url)
             @stats_by["#{date}"] = {site_visits: site_visits, leads: leads, applications: applications,
                                     not_finished_applications: not_finished_applications, conversions: conversions}
           end
         else
           while start_date < end_date
             params[:filter][:last_visit] = Date.parse("#{start_date}").all_month
-            super(:@leads, Lead, :profile, :tracking_url)
+            super(:@leads, Lead.presented, :profile, :tracking_url)
             @stats_by["#{start_date.end_of_month}"] = {site_visits: site_visits, leads: leads, applications: applications,
                                                        not_finished_applications: not_finished_applications, conversions: conversions}
             start_date += 1.month
