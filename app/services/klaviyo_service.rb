@@ -23,7 +23,7 @@ class KlaviyoService
     self.lead = event_details  if event_details.is_a?(Lead)
     begin
       response = yield
-
+      
       if event_description == "Became Lead" && event_details.blank?
 
       else
