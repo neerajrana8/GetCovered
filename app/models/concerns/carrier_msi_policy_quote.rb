@@ -75,7 +75,7 @@ module CarrierMsiPolicyQuote
       primary_insured = policy_application.primary_user
       additional_insured = policy_application.users.select{|u| u.id != primary_insured.id }
       additional_interest = [unit.account || community.account].compact
-      additional_interest = nil if policy.account.title == "Nonpreferred Residential"
+      additional_interest = nil if additional_interest&.title == "Nonpreferred Residential"
       # determine preferred status
       preferred = !(community.carrier_profile(5)&.external_carrier_id.nil?)
       # prepare for bind call
