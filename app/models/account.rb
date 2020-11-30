@@ -140,14 +140,16 @@ class Account < ApplicationRecord
   end
   
   def get_confie_general_party_info
+    gotten_email = self.contact_info&.[]("contact_email") 
+    gotten_email = self.owner&.email || nil if gotten_email.blank?
     {
       NameInfo: {
         CommlName: {
           CommercialName: self.title.strip,
-          SupplementaryNameInfo: nil #{
-            #SupplementaryNameCd: "DBA",
-            #SupplementaryName: self.title.strip
-          #} # enable if needed
+          SupplementarynameInfo: {
+            SupplementaryNameCd: "DBA",
+            SupplementaryName: self.title.strip
+          }
         }.compact
       },
       Communications: { # feel free to add phone number here just like we do for user#get_confie_general_party_info

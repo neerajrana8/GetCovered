@@ -61,20 +61,18 @@ module V2
           create_if_ambiguous: get_or_create_params[:create_if_ambiguous],
           disallow_creation: (get_or_create_params[:allow_creation] != true),
           communities_only: get_or_create_params[:communities_only],
-          diagnostics: diagnostics,
-          
-          account_id: Account.where(slug: 'nonpreferred-residential').take&.id # MOOSE WARNING: fix this if we aren't sticking with this weird dummy account
+          diagnostics: diagnostics
         }.compact)
         case result
           when ::NilClass
             render json: {
               results_type: 'no_match',
-              results: nil
+              results: []
             }, status: 200
           when ::Insurable
             render json: {
               results_type: 'confirmed_match',
-              results: insurable_prejson(result)
+              results: [insurable_prejson(result)]
             }, status: 200
           when ::Array
             render json: {
@@ -164,7 +162,11 @@ module V2
               end
             when ::Address
               return {
-                full: ins.full, street_number: ins.street_number, street_name: ins.street_name, street_two: ins.street_two, city: ins.city, state: ins.state, zip_code: ins.zip_code
+                full: ins.full,
+                street_number: ins.street_number, street_name: ins.street_name,
+                street_two: ins.street_two,
+                city: ins.city, state: ins.state, zip_code: ins.zip_code,
+                county: ins.county, country: ins.country
               }
             else
               return nil

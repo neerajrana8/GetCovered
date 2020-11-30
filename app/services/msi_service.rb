@@ -343,10 +343,6 @@ class MsiService
     }
   end
   
-  # Valid action names:
-  #   get_or_create_community
-  #   final_premium
-  #   
   def build_request(action_name, **args)
     self.action = action_name
     self.errors = nil
@@ -362,7 +358,7 @@ class MsiService
     Rails.application.credentials.msi[:uri][ENV['RAILS_ENV'].to_sym] + "/#{which_call.to_s.camelize}"
   end
   
-  ##
+
   def call
     # try to call
     call_data = {
@@ -381,7 +377,6 @@ class MsiService
         },
         ssl_version: :TLSv1_2
       )
-      #MOOSE WARNING: doc example in crazy .net lingo also has: 'Content-Length' => compiled_rxml.length, timeout 15000, cache policy new RequestCachePolicy(RequestCacheLevel.BypassCache)
           
     rescue StandardError => e
       call_data = {
@@ -550,8 +545,8 @@ class MsiService
     coverages_formatted:,
     # for preferred
     community_id: nil, #address_line_one:, city:, state:, zip:,
-    # for non-preferred (the defaults are MSI's defaults, to be passed if we don't get a value)
-    number_of_units: 50, years_professionally_managed: -1, year_built: Time.current.year - 25, gated: false,
+    # for non-preferred
+    number_of_units: nil, years_professionally_managed: nil, year_built: nil, gated: nil,
     address: nil, address_line_one: nil, address_line_two: nil, city: nil, state: nil, zip: nil,
     # comp args
     **compilation_args
@@ -572,6 +567,11 @@ class MsiService
       return ['Community id cannot be blank'] if community_id.nil? # this can't happen, but for completeness in case we later determine prefered by different means...
     else
       address = untangle_address_params(**{ address: address, address_line_one: address_line_one, address_line_two: address_line_two, city: city, state: state, zip: zip }.compact)
+      # applying defaults (we don't do this in the args themselves because nil might be passed)
+      number_of_units ||= 50
+      years_professionally_managed ||= -1
+      year_built ||= Time.current.year - 25
+      gated = false unless gated == true
     end
     # go go go
     self.compiled_rxml = compile_xml({
@@ -593,12 +593,7 @@ class MsiService
               :'' => { LocationRef: 0, id: "Dwell1" },
               PolicyTypeCd: 'H04'
             }.merge(preferred ? {} : {
-              Construction: {
-                YearBuilt:                    year_built,
-                IsGated:                      gated,
-                YearsProfManaged:             years_professionally_managed,
-                NumberOfUnits:                number_of_units
-              }
+              Construction: { YearBuilt:      year_built }
             }),
             Coverage:                         coverages_formatted
           },
@@ -608,7 +603,14 @@ class MsiService
             }
           ] + (0...additional_insured_count).map{|n| { InsuredOrPrincipalInfo: { InsuredOrPrincipalRoleCd: "OTHERNAMEDINSURED" } } } +
               (0...additional_interest_count).map{|n| { InsuredOrPrincipalInfo: { InsuredOrPrincipalRoleCd: "ADDITIONALINTEREST" } } }
-        }
+        }.merge(preferred ? {} : {
+          MSI_CommunityInfo: {
+            MSI_CommunityYearBuilt:           year_built,
+            MSI_CommunityIsGated:             gated ? "True" : "False",
+            MSI_CommunityYearsProfManaged:    years_professionally_managed,
+            MSI_NumberOfUnits:                number_of_units
+          }
+        })
       }
     }, **compilation_args)
     return errors.blank?
@@ -626,9 +628,9 @@ class MsiService
     coverage_raw:, # WARNING: raw msi formatted coverage hash; modify later to accept a nicer format
     # for preferred
     community_id: nil,
-    # for non-preferred (the defaults are MSI's defaults, to be passed if we don't get a value)
+    # for non-preferred
     address_line_two: nil,
-    number_of_units: 50, years_professionally_managed: -1, year_built: Time.current.year - 25, gated: false,
+    number_of_units: nil, years_professionally_managed: nil, year_built: nil, gated: nil,
     # comp args 
     **compilation_args
   )
@@ -647,6 +649,12 @@ class MsiService
     self.action = :bind_policy_spot unless preferred
     if preferred
       return ['Community id cannot be blank'] if community_id.nil? # this can't happen, but for completeness in case we later determine prefered by different means...
+    else
+      # applying defaults (we don't do this in the args themselves because nil might be passed)
+      number_of_units ||= 50
+      years_professionally_managed ||= -1
+      year_built ||= Time.current.year - 25
+      gated = false unless gated == true
     end
     # handling mailing address
     if !maddress.nil? || !maddress_line_one.nil? || !maddress_line_two.nil? || !mcity.nil? || !mstate.nil? || !mzip.nil?
@@ -691,12 +699,7 @@ class MsiService
               :'' => { LocationRef: 0, id: "Dwell1" },
               PolicyTypeCd: 'H04'
             }.merge(preferred ? {} : {
-                Construction: {
-                YearBuilt:                    year_built,
-                IsGated:                      gated,
-                YearsProfManaged:             years_professionally_managed,
-                NumberOfUnits:                number_of_units
-              }.compact
+              Construction: { YearBuilt:      year_built }
             }),
             Coverage: coverage_raw
           },
@@ -728,7 +731,14 @@ class MsiService
               GeneralPartyInfo:               [::User, ::Account].include?(ai.class) ? ai.get_msi_general_party_info : ai
             }
           end
-        }
+        }.merge(preferred ? {} : {
+          MSI_CommunityInfo: {
+            MSI_CommunityYearBuilt:           year_built,
+            MSI_CommunityIsGated:             gated ? "True" : "False",
+            MSI_CommunityYearsProfManaged:    years_professionally_managed,
+            MSI_NumberOfUnits:                number_of_units
+          }
+        })
       }
     }, **compilation_args)
     return errors.blank?
@@ -940,7 +950,7 @@ private
           # handle properties to pass back up to our caller
           if obj.has_key?(:'')
             prop_string = obj[:''].blank? ? "" : obj[:''].class == ::String ? obj[:''] :
-              obj[:''].map{|k,v| "#{k}=\"#{v.to_s.gsub('"', '&quot;').gsub('&', '&amp;').gsub('<', '&lt;')}\"" }.join(" ")
+              obj[:''].map{|k,v| "#{k}=\"#{v.to_s.gsub('&', '&amp;').gsub('"', '&quot;').gsub('<', '&lt;')}\"" }.join(" ")
             prop_string = " #{prop_string}" unless prop_string.blank?
             obj = obj.select{|k,v| k != :'' }
           end
@@ -969,7 +979,7 @@ private
         when ::NilClass
           child_string = nil
         else
-          child_string = obj.to_s.gsub("<", "&lt;").gsub("<", "&gt;").gsub("&", "&amp;").split("\n").join("#{indent}\n")
+          child_string = obj.to_s.gsub("&", "&amp;").gsub("<", "&lt;").gsub(">", "&gt;").split("\n").join("#{indent}\n")
       end
       internal ? {
         prop_string: prop_string,

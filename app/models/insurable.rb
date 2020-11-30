@@ -246,8 +246,10 @@ class Insurable < ApplicationRecord
     create_if_ambiguous: false,   # pass true to force insurable creation if there's any ambiguity (example: if you've already called this and got 'multiple' type results, none of which were what you wanted)
     disallow_creation: false,     # pass true to ONLY query, NOT create
     created_community_title: nil, # optionally pass the title for the community in case we have to create it (defaults to combined_street_address)
-    account_id: nil,              # optionally, the account id to use if we create anything
+    account_id: ::Account.where(slug: 'nonpreferred-residential').take&.id, # MOOSE WARNING: fix this if we aren't sticking with this weird dummy account
+                  # optionally, the account id to use if we create anything
     communities_only: false,      # if true, in unit mode does nothing; out of unit mode, searches only for communities with the address (no buildings)
+    ignore_street_two: false,     # if true, will strip out street_two address data
     diagnostics: nil              # pass a hash to get diagnostics; these will be the following fields, though applicable to code not encountered may be nil:
                                   #   address_used:               true if address used, false if we didn't need it
                                   #   title_derivation_tried:     true if we tried to derive a unit title from address line 2
@@ -274,7 +276,7 @@ class Insurable < ApplicationRecord
       raise ArgumentError.new("either 'address' or 'insurable_id' and a string 'unit' must be provided")
     end
     # if we have a unit title and an insurable id, get or create the unit without dealing with address nonsense
-    unit_title = [true,false,nil].include?(unit) ? nil : unit
+    unit_title = [true,false,nil].include?(unit) ? nil : clean_unit_title(unit)
     if !unit_title.blank? && !insurable_id.nil?
       if diagnostics
         diagnostics[:unit_mode] = true
@@ -320,23 +322,17 @@ class Insurable < ApplicationRecord
         return { error_type: :invalid_address, message: "Invalid address value", details: address.errors.full_messages }
       end
     end
+    address.id = nil
+    address.street_two = nil if ignore_street_two
     # try to figure out unit title if applicable
     seeking_unit = unit ? true : unit.nil? ? !address.street_two.blank? : false
     diagnostics[:unit_mode] = seeking_unit if diagnostics
     if seeking_unit
       if unit_title.blank? && !address.street_two.blank?
         diagnostics[:title_derivation_tried] = true if diagnostics
-        splat = address.street_two.gsub('#', ' ').gsub('.', ' ')
-                                  .gsub(/\s+/m, ' ').gsub(/^\s+|\s+$/m, '')
-                                  .split(" ").select do |strang|
-                                    ![
-                                      'apartment', 'apt', 'unit',
-                                      'flat', 'room', 'office',
-                                      'no', 'number'
-                                    ].include?(strang.downcase)
-                                  end
-        if splat.size == 1
-          unit_title = splat[0]
+        cleaned = clean_unit_title(address.street_two)
+        unless cleaned.nil?
+          unit_title = cleaned
           if diagnostics
             diagnostics[:title_derivation_succeeded] = true 
             diagnostics[:title_as_derived] = unit_title
@@ -348,7 +344,7 @@ class Insurable < ApplicationRecord
     if seeking_unit # we want a unit
       communities_only = false # WARNING: we just hack this to false here to prevent weird behavior, remove hack to make the default for this "ignore buildings and consider only community-attached units"
       if unit_title.nil?
-        return { error_type: :invalid_address_line_two, message: "Unable to deduce unit title from address", details: "'#{address.line_two}' is not a standard format (e.g. 'Apartment #2, Unit 3, #5, etc.)" }
+        return { error_type: :invalid_address_line_two, message: "Unable to deduce unit title from address", details: "'#{address.street_two}' is not a standard format (e.g. 'Apartment #2, Unit 3, #5, etc.)" }
       end
       # query for units of the appropriate title, address, and, if provided, insurable_id
       parent_ids = ::Insurable.references(:address).includes(:addresses).where(
@@ -522,12 +518,12 @@ class Insurable < ApplicationRecord
   
   private
 
-  def title_uniqueness
-    return if insurable.nil?
-    if insurable.insurables.where(title: title, insurable_type: insurable_type).any?
-      errors.add(:title, 'should be uniq inside group')
+    def title_uniqueness
+      return if insurable.nil?
+      if insurable.insurables.where(title: title, insurable_type: insurable_type).any?
+        errors.add(:title, 'should be uniq inside group')
+      end
     end
-  end
     
     def create_profile_by_carrier
       if insurable_type.title.include? "Residential"
@@ -535,6 +531,19 @@ class Insurable < ApplicationRecord
       else
         carrier_profile(3)
       end  
+    end
+    
+    def self.clean_unit_title(unit_title)
+      splat = unit_title.gsub('#', ' ').gsub('.', ' ')
+                        .gsub(/\s+/m, ' ').gsub(/^\s+|\s+$/m, '')
+                        .split(" ").select do |strang|
+                          ![
+                            'apartment', 'apt', 'unit',
+                            'flat', 'room', 'office',
+                            'no', 'number'
+                          ].include?(strang.downcase)
+                        end
+      return(splat.size == 1 ? splat[0] : nil)
     end
     
 end
