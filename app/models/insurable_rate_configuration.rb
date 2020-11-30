@@ -597,8 +597,12 @@ class InsurableRateConfiguration < ApplicationRecord
         additional_insured_count: additional_insured_count,
         additional_interest_count: cip&.insurable&.account_id.nil? && cip&.insurable&.parent_community&.account_id.nil? ? 0 : 1,
         coverages_formatted:  selections.select{|s| s['selection'] }
-                                .map{|s| s['options'] = coverage_options.find{|co| co['category'] == s['category'] && co['uid'] == s['uid'] }; s['title'] = s['options']['title'] unless s['options'].blank?; s }
-                                .select{|s| !s['options'].nil? }
+                                .map do |s|
+                                  s['options'] = coverage_options.find{|co| co['category'] == s['category'] && co['uid'] == s['uid'] }
+                                  s['title'] = s['options']['title'] unless s['options'].blank?
+                                  s['description'] = s['options']['description'] if s['description'].blank? && !s['options']['description'].blank?
+                                  s
+                                end.select{|s| !s['options'].nil? }
                                 .map do |sel|
                                   if sel['category'] == 'coverage'
                                     {
