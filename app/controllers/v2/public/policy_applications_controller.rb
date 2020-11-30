@@ -444,8 +444,6 @@ module V2
               render json: standard_error(:policy_application_save_error, nil, @application.errors),
                      status: 422
             end
-          else
-            render json: update_users_result.failure, status: 422
           end
         else
           render json: standard_error(:policy_application_save_error, nil, @application.errors),
