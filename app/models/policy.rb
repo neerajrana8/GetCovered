@@ -393,7 +393,7 @@ class Policy < ApplicationRecord
   end
   
   def run_postbind_hooks # do not remove this; concerns add functionality to it by overriding it and calling super
-    nil
+    super if defined?(super)
   end
 
   private

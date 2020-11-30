@@ -8,7 +8,7 @@ module AgencyConfiePolicy
   
   def run_postbind_hooks
     super if defined?(super)
-    inform_confie_of_policy if pol.agency_id == ConfieService.agency_id && pol.is_active?
+    inform_confie_of_policy if self.agency_id == ConfieService.agency_id && self.is_active?
   end
 
   def inform_confie_of_policy

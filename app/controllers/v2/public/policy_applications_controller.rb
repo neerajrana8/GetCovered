@@ -139,6 +139,7 @@ module V2
         if @application.save
           if @application.update(status: 'in_progress')
             LeadEvents::LinkPolicyApplicationUsers.run!(policy_application: @application)
+            @policy_application = @application
             render 'v2/public/policy_applications/show'
           else
             render json: standard_error(:policy_application_update_error, nil, @application.errors),
@@ -209,13 +210,20 @@ module V2
 
         if @application.save
           @redirect_url = "#{ site }/#{program}/#{ @application.id }"
-          if create_policy_users
+          update_users_result =
+            PolicyApplications::UpdateUsers.run!(
+              policy_application: @application,
+              policy_users_params: create_policy_users_params[:policy_users_attributes]
+            )
+          if update_users_result.success?
             if @application.update(status: 'in_progress')
               render 'v2/public/policy_applications/show_external'
             else
               render json: standard_error(:policy_application_update_error, nil, @application.errors),
                      status: 422
             end
+          else
+            render json: update_users_result.failure, status: 422
           end
         else
           # Rental Guarantee Application Save Error
@@ -311,7 +319,12 @@ module V2
           return
         end
         # try to quote application
-        if create_policy_users
+        update_users_result =
+          PolicyApplications::UpdateUsers.run!(
+            policy_application: @application,
+            policy_users_params: create_policy_users_params[:policy_users_attributes]
+          )
+        if update_users_result.success?
           # update status to complete
           LeadEvents::LinkPolicyApplicationUsers.run!(policy_application: @application)
           unless @application.update(status: 'complete')
@@ -383,7 +396,9 @@ module V2
               policy_users_params: create_policy_users_params[:policy_users_attributes]
             )
 
-          if update_users_result.success?
+          unless update_users_result.success?
+            render json: update_users_result.failure, status: 422
+          else
             if @application.update status: 'complete'
 
               # if application.status updated to complete
@@ -429,8 +444,6 @@ module V2
               render json: standard_error(:policy_application_save_error, nil, @application.errors),
                      status: 422
             end
-          else
-            render json: update_users_result.failure, status: 422
           end
         else
           render json: standard_error(:policy_application_save_error, nil, @application.errors),

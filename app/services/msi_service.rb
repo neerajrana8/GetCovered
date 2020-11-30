@@ -89,6 +89,22 @@ class MsiService
     @@coverage_codes[:ForcedEntryTheft][:code].to_s => Proc.new{|region| region == 'NY' ? "Burglary Limitation Coverage" : nil }
   }
   
+  DESCRIPTIONS = {
+    '1003' => 'Personal property coverage protects your personal belongings and property.',
+    '1005' => 'Liability coverage protects you in an event of negligent damage to your apartment, the community, or other residents.',
+    '1008' => 'This option covers your personal property in the event there is water/sewer back-up in your covered dwelling that begins off premises.',
+    '1010' => 'This option provides coverage on a replacement cost basis instead of actual cash value.',
+    '1076' => 'This option provides a discount by changing theft coverage to require physical evidence of forced entry and may require a police report.',
+    '1007' => 'This option covers up to $500 for accidental damage caused by a pet such as stained carpet or chewed baseboards.',
+    '1060' => 'This option provides an increase in the amount of liability protection afforded to the insured in the case where an insured can be held liability for damages by a pet.',
+    '1065' => 'This option provides coverage up to $5,000 for expenses incurred by an insured as a direct result of identity fraud.',
+    '1075' => 'This option provides coverage to treat, remediate and eliminate a bed bug infestation in the residence.',
+    '1072' => 'This option provides up to $500 coverage for loss of covered property stored in freezers or refrigerators caused by power service interruption or mechanical failure.',
+    '1081' => 'This option allows the insured to buy back additional limits for personal property that is stored.',
+    '1082' => 'The policy may be endorsed to insure against loss by theft when all or part of the residence.',
+    '1061' => 'This option covers your personal property (up to $5,000) in the event of an earthquake.'
+  }
+  
   LOSS_OF_USE_VARIATIONS = {
     standard: {
       'message' => 'Cov D must be greater of $2000 or 20% of Cov C, unless Additional Protection Added (then 40%)',
@@ -893,6 +909,8 @@ class MsiService
           }
       end)
     end
+    # apply descriptions
+    irc.coverage_options.each{|co| co['description'] = DESCRIPTIONS[co['uid'].to_s] unless DESCRIPTIONS[co['uid'].to_s].blank? }
     # apply universal disablings
     irc.coverage_options.select{|co| UNIVERSALLY_DISABLED_COVERAGE_OPTIONS.any?{|udco| udco['category'] == co['category'] && udco['uid'] == co['uid'] } }
                         .each{|co| co['enabled'] = false }
