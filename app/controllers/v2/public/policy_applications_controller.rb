@@ -172,7 +172,9 @@ module V2
           end
         end
 
-        site = Rails.application.credentials[:uri][Rails.env.to_sym][:client]
+        # Warning to remember to fix this for agencies that have multiple branding profiles in the future.
+        site = @access_token.bearer.branding_profiles.count > 0 ? "https://#{@access_token.bearer.branding_profiles.first.url}" :
+                                                                  Rails.application.credentials[:uri][Rails.env.to_sym][:client]
         program = policy_type == 1 ? "residential" : "rentguarantee"
 
         @application = PolicyApplication.new(init_hash)
