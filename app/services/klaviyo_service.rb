@@ -24,7 +24,7 @@ class KlaviyoService
     begin
       response = yield
 
-      track_event(event_description, event_details) #unless ["test", "test_container", "local", "development"].include?(ENV["RAILS_ENV"])
+      track_event(event_description, event_details) unless ["test", "test_container", "local", "development"].include?(ENV["RAILS_ENV"])
 
     rescue Net::OpenTimeout => ex
       Rails.logger.error("LeadEventsController KlaviyoException: #{ex.to_s}.")
