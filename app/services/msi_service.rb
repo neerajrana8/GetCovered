@@ -105,6 +105,18 @@ class MsiService
     '1061' => 'This option covers your personal property (up to $5,000) in the event of an earthquake.'
   }
   
+  def self.renew_descriptions
+    ::InsurableRateConfiguration.where(configurer_type: "Carrier", configurer_id: self.carrier_id).each do |irc|
+      next if irc.coverage_options.blank?
+      irc.coverage_options.each do |co|
+        unless !co['description'].blank? || co['uid'].blank? || MsiService::DESCRIPTIONS[co['uid']].blank?
+          irc.coverage_options.each{|co| co['description'] = MsiService::DESCRIPTIONS[co['uid']] }
+          irc.save
+        end
+      end
+    end
+  end
+  
   LOSS_OF_USE_VARIATIONS = {
     standard: {
       'message' => 'Cov D must be greater of $2000 or 20% of Cov C, unless Additional Protection Added (then 40%)',
