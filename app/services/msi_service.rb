@@ -10,6 +10,13 @@ class MsiService
   def self.carrier_id
     5
   end
+  
+  def self.displayable_error_for(msg, extended_msg = nil)
+    if msg&.start_with?("ADDR16")
+      return "Please enter a valid address"
+    end
+    return nil
+  end
 
   @@coverage_codes = {
     AllOtherPeril:                                { code: 1, limit: true },

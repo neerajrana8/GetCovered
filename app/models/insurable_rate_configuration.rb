@@ -645,7 +645,13 @@ class InsurableRateConfiguration < ApplicationRecord
         # handle the result
         if result[:error]
           valid = false
-          estimated_premium_error = { internal: result[:external_message].to_s, external: "Error calculating premium" } if estimated_premium_error.blank?
+          if estimated_premium_error.blank?
+            msg = result[:external_message].to_s
+            estimated_premium_error = {
+              internal: "#{result[:external_message].to_s}#{result[:extended_external_message].blank? ? "" : "\n\n #{result[:extended_external_message]}"}",
+              external: MsiService.displayable_error_for(result[:external_message].to_s, result[:extended_external_message]) || "Error calculating premium"
+            }
+          end
         else
           estimated_premium = [result[:data].dig("MSIACORD", "InsuranceSvcRs", "RenterPolicyQuoteInqRs", "PersPolicy", "PaymentPlan")].flatten
                                           .map do |plan|
