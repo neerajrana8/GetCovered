@@ -341,7 +341,7 @@ module V2
             render json: standard_error(:policy_application_unavailable, @application.error_message || 'Application cannot be quoted at this time'),
                    status: 400
             return
-          elsif @application.status != "quoted"
+          elsif @application.status == "quoted"
             render json: standard_error(:policy_application_unavailable, 'Application cannot be quoted at this time'),
                    status: 400
             return
@@ -392,7 +392,7 @@ module V2
               cs[:selection] = cs[:selection][:value]
             end
           end
-          @application.coverage_selections.push({ 'category' => 'coverage', 'options_type' => 'none', 'uid' => '1010', 'selection' => true })
+          @application.coverage_selections.push({ 'category' => 'coverage', 'options_type' => 'none', 'uid' => '1010', 'selection' => true }) unless @application.coverage_selections.any?{|co| co['uid'] == '1010' }
         end
 
         if @application.agency.nil? && @application.account.nil?
@@ -419,7 +419,7 @@ module V2
               if @application.status == "quote_failed"
                 render json: standard_error(:policy_application_unavailable, @application.error_message || 'Application cannot be quoted at this time'),
                        status: 400
-              elsif @application.status != "quoted"
+              elsif @application.status == "quoted"
                 render json: standard_error(:policy_application_unavailable, 'Application cannot be quoted at this time'),
                        status: 400
               else
@@ -528,7 +528,7 @@ module V2
                 if @application.status == "quote_failed"
                   render json: standard_error(:policy_application_unavailable, @application.error_message || 'Application cannot be quoted at this time'),
                          status: 400
-                elsif @application.status != "quoted"
+                elsif @application.status == "quoted"
                   render json: standard_error(:policy_application_unavailable, 'Application cannot be quoted at this time'),
                          status: 400
                 else

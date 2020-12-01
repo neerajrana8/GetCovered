@@ -12,8 +12,12 @@ class MsiService
   end
   
   def self.displayable_error_for(msg, extended_msg = nil)
-    if msg&.start_with?("ADDR16")
+    return nil if msg.nil?
+    if msg.start_with?("ADDR16") # address was invalid
       return "Please enter a valid address"
+    elsif msg.start_with?("ACS24 - ") # effective date was invalid (returns something like 'Effective Date 11/29/2020 is invalid.  Date must be between 12/2/2020 - 3/1/2021.')
+      tr = msg.split("ACS24 - ")&.[](1)
+      return tr.blank? ? nil : tr
     end
     return nil
   end
