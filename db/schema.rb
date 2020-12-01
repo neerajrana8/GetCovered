@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_11_25_184118) do
+ActiveRecord::Schema.define(version: 2020_12_01_230744) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
@@ -976,6 +976,7 @@ ActiveRecord::Schema.define(version: 2020_11_25_184118) do
     t.jsonb "resolver_info"
     t.bigint "tag_ids", default: [], null: false, array: true
     t.jsonb "tagging_data"
+    t.string "error_message"
     t.index ["account_id"], name: "index_policy_applications_on_account_id"
     t.index ["agency_id"], name: "index_policy_applications_on_agency_id"
     t.index ["billing_strategy_id"], name: "index_policy_applications_on_billing_strategy_id"
