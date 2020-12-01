@@ -28,8 +28,11 @@ module V2
                   Lead.find_by_email(lead_params[:email])
                 end
 
-        agency = Agency.find_by(id: params[:lead_event_attributes][:agency_id])
-        tracking_url = TrackingUrl.find_by(agency_id: agency&.id)
+        agency = Agency.find(params[:agency_id])
+        tracking_url = TrackingUrl.find_by(landing_page: tracking_url_params["landing_page"], campaign_source: tracking_url_params["campaign_source"],
+                            campaign_medium: tracking_url_params["campaign_medium"], campaign_term: tracking_url_params["campaign_term"],
+                            campaign_content: tracking_url_params["campaign_content"], campaign_name: tracking_url_params["campaign_name"],
+                                           agency_id: agency.id) if tracking_url_params.present?
 
         @klaviyo_helper.lead = @lead if @lead.present?
 
@@ -105,6 +108,14 @@ module V2
             require(:lead_event_attributes).
             permit(:tag, :latitude, :longitude, :agency_id, :policy_type_id).tap do |whitelisted|
               whitelisted[:data] = data.permit!
+        end
+      end
+
+      def tracking_url_params
+        if params[:tracking_url].present?
+          params.
+              require(:tracking_url).
+              permit(%i[landing_page campaign_source campaign_medium campaign_term campaign_content campaign_name])
         end
       end
 
