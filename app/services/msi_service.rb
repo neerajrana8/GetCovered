@@ -91,18 +91,25 @@ class MsiService
   
   DESCRIPTIONS = {
     '1003' => 'Personal property coverage protects your personal belongings and property.',
+    '1004' => 'Coverage reimburses you for the cost of maintaining a comparable standard of living following a covered loss that exceeds your normal expenses prior to the loss, up to the policy limits.',
     '1005' => 'Liability coverage protects you in an event of negligent damage to your apartment, the community, or other residents.',
+    '1006' => 'Coverage designed to pay for medical expenses to others who are accidentally injured on an insured location or by the activities of an insured, resident employee, or an animal owned by or in the care of an insured, up to the policy limits.',
     '1008' => 'This option covers your personal property in the event there is water/sewer back-up in your covered dwelling that begins off premises.',
     '1010' => 'This option provides coverage on a replacement cost basis instead of actual cash value.',
     '1076' => 'This option provides a discount by changing theft coverage to require physical evidence of forced entry and may require a police report.',
+    '1' => 'The amount the insurer will deduct from a loss resulting from other peril not already listed (such as theft, hurricane or wind) before paying up to its policy limits.',
     '1007' => 'This option covers up to $500 for accidental damage caused by a pet such as stained carpet or chewed baseboards.',
     '1060' => 'This option provides an increase in the amount of liability protection afforded to the insured in the case where an insured can be held liability for damages by a pet.',
     '1065' => 'This option provides coverage up to $5,000 for expenses incurred by an insured as a direct result of identity fraud.',
     '1075' => 'This option provides coverage to treat, remediate and eliminate a bed bug infestation in the residence.',
+    '2' => 'The amount the insurer will deduct from a loss resulting from theft before paying up to its policy limits.',
+    '5' => 'The amount the insurer will deduct from a loss resulting from wind or hail before paying up to its policy limits.',
     '1072' => 'This option provides up to $500 coverage for loss of covered property stored in freezers or refrigerators caused by power service interruption or mechanical failure.',
     '1081' => 'This option allows the insured to buy back additional limits for personal property that is stored.',
     '1082' => 'The policy may be endorsed to insure against loss by theft when all or part of the residence.',
-    '1061' => 'This option covers your personal property (up to $5,000) in the event of an earthquake.'
+    '1061' => 'This option covers your personal property (up to $5,000) in the event of an earthquake.',
+    '6' => 'The amount the insurer will deduct from a loss resulting from an earthquake before paying up to its policy limits.',
+    '3' => 'The amount the insurer will deduct from a loss resulting from a hurricane before paying up to its policy limits.'
   }
   
   def self.renew_descriptions
