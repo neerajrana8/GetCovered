@@ -742,9 +742,9 @@ module V2
           eventable:        unit,
           **(cip ? {} : {
             nonpreferred_final_premium_params: {
-              number_of_units: inputs[:number_of_units].to_i,
-              years_professionally_managed: inputs[:years_professionally_managed].to_i,
-              year_built: inputs[:year_built].to_i,
+              number_of_units: inputs[:number_of_units].to_i == 0 ? nil : inputs[:number_of_units].to_i,
+              years_professionally_managed: inputs[:years_professionally_managed].blank? ? nil : inputs[:years_professionally_managed].to_i,
+              year_built: inputs[:year_built].to_i == 0 ? nil : inputs[:year_built].to_i,
               gated: inputs[:gated].nil? ? nil : inputs[:gated] ? true : false
             }.compact
           })
