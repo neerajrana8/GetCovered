@@ -337,7 +337,11 @@ module V2
           # create quote
           @application.estimate()
           @quote = @application.policy_quotes.order('created_at DESC').limit(1).first
-          unless @application.status != "quote_failed" || @application.status != "quoted" # MOOSE WARNING: we should really fix this 100% pointless if statement... it's also broken in residential...
+          if @application.status == "quote_failed"
+            render json: standard_error(:policy_application_unavailable, @application.error_message || 'Application cannot be quoted at this time'),
+                   status: 400
+            return
+          elsif @application.status == "quoted"
             render json: standard_error(:policy_application_unavailable, 'Application cannot be quoted at this time'),
                    status: 400
             return
@@ -346,9 +350,15 @@ module V2
           @application.reload
           @quote.reload
           unless @quote.status == "quoted"
-            render json: standard_error(:quote_failed, 'Quote could not be processed at this time'),
-                   status: 500
-            return
+            if @application.status == "quote_failed"
+              render json: standard_error(:quote_failed, @application.error_message || 'Quote could not be processed at this time'),
+                     status: 500
+              return
+            else
+              render json: standard_error(:quote_failed, 'Quote could not be processed at this time'),
+                     status: 500
+              return
+            end
           end
           # return nice stuff
           render json:  {
@@ -382,7 +392,7 @@ module V2
               cs[:selection] = cs[:selection][:value]
             end
           end
-          @application.coverage_selections.push({ 'category' => 'coverage', 'options_type' => 'none', 'uid' => '1010', 'selection' => true })
+          @application.coverage_selections.push({ 'category' => 'coverage', 'options_type' => 'none', 'uid' => '1010', 'selection' => true }) unless @application.coverage_selections.any?{|co| co['uid'] == '1010' }
         end
 
         if @application.agency.nil? && @application.account.nil?
@@ -406,13 +416,22 @@ module V2
               # if application.status updated to complete
               @application.estimate()
               @quote = @application.policy_quotes.order('created_at DESC').limit(1).first
-              if @application.status != "quote_failed" || @application.status != "quoted"
+              if @application.status == "quote_failed"
+                render json: standard_error(:policy_application_unavailable, @application.error_message || 'Application cannot be quoted at this time'),
+                       status: 400
+              elsif @application.status == "quoted"
+                render json: standard_error(:policy_application_unavailable, 'Application cannot be quoted at this time'),
+                       status: 400
+              else
                 # if application quote success or failure
                 @application.quote(@quote.id)
                 @application.reload
                 @quote.reload
 
-                if @quote.status == "quoted"
+                if @application.status == "quote_failed"
+                  render json: standard_error(:quote_failed, @application.error_message || 'Quote could not be processed at this time'),
+                         status: 500
+                elsif @quote.status == "quoted"
 
                   @application.primary_user.set_stripe_id
 
@@ -438,9 +457,6 @@ module V2
                   render json: standard_error(:quote_failed, 'Quote could not be processed at this time'),
                          status: 500
                 end
-              else
-                render json: standard_error(:policy_application_unavailable, 'Application cannot be quoted at this time'),
-                       status: 400
               end
             else
               render json: standard_error(:policy_application_save_error, nil, @application.errors),
@@ -508,13 +524,23 @@ module V2
 
                 @policy_application.estimate
                 @quote = @policy_application.policy_quotes.order("updated_at DESC").limit(1).first
-                if @policy_application.status != "quote_failed" || @policy_application.status != "quoted"
+                
+                if @application.status == "quote_failed"
+                  render json: standard_error(:policy_application_unavailable, @application.error_message || 'Application cannot be quoted at this time'),
+                         status: 400
+                elsif @application.status == "quoted"
+                  render json: standard_error(:policy_application_unavailable, 'Application cannot be quoted at this time'),
+                         status: 400
+                else
                   # if application quote success or failure
                   @policy_application.quote(@quote.id)
                   @policy_application.reload
                   @quote.reload
 
-                  if @quote.status == "quoted"
+                  if @application.status == "quote_failed"
+                    render json: standard_error(:quote_failed, @application.error_message || 'Quote could not be processed at this time'),
+                           status: 500
+                  elsif @quote.status == "quoted"
 
                     render json:                    {
                                    id:       @policy_application.id,
@@ -538,9 +564,6 @@ module V2
                     render json: standard_error(:quote_failed, 'Quote could not be processed at this time'),
                            status: 500
                   end
-                else
-                  render json: standard_error(:policy_application_unavailable, 'Application cannot be quoted at this time'),
-                         status: 400
                 end
               else
                 render json: standard_error(:policy_application_update_error, nil, @policy_application.errors),
@@ -742,9 +765,9 @@ module V2
           eventable:        unit,
           **(cip ? {} : {
             nonpreferred_final_premium_params: {
-              number_of_units: inputs[:number_of_units].to_i,
-              years_professionally_managed: inputs[:years_professionally_managed].to_i,
-              year_built: inputs[:year_built].to_i,
+              number_of_units: inputs[:number_of_units].to_i == 0 ? nil : inputs[:number_of_units].to_i,
+              years_professionally_managed: inputs[:years_professionally_managed].blank? ? nil : inputs[:years_professionally_managed].to_i,
+              year_built: inputs[:year_built].to_i == 0 ? nil : inputs[:year_built].to_i,
               gated: inputs[:gated].nil? ? nil : inputs[:gated] ? true : false
             }.compact
           })
