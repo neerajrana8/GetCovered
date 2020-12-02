@@ -498,7 +498,7 @@ module V2
                 cs[:selection] = cs[:selection][:value]
               end
             end
-            @policy_application.coverage_selections.push({ 'category' => 'coverage', 'options_type' => 'none', 'uid' => '1010', 'selection' => true })
+            @policy_application.coverage_selections.push({ 'category' => 'coverage', 'options_type' => 'none', 'uid' => '1010', 'selection' => true }) unless @policy_application.coverage_selections.any?{|co| co['uid'] == '1010' }
           end
           # fix agency if needed
           if @policy_application.agency.nil? && @policy_application.account.nil?
