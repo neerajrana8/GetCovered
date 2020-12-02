@@ -16,6 +16,7 @@ class Agency < ApplicationRecord
 
   # Active Record Callbacks
   after_initialize :initialize_agency
+  after_create :setup_branding
 
   # belongs_to relationships
   belongs_to :agency,
@@ -197,6 +198,14 @@ class Agency < ApplicationRecord
 
   def initialize_agency
    # Blank for now...
+  end
+
+  def setup_branding
+    unless self.id == 1
+      self.branding_profiles.create!(url: "#{agency.slug}.getcoveredinsurance.com",
+                                     logo_url: "https://api-dev-v2.getcoveredinsurance.com/rails/active_storage/blobs/eyJfcmFpbHMiOnsibWVzc2FnZSI6IkJBaHBBaklEIiwiZXhwIjpudWxsLCJwdXIiOiJibG9iX2lkIn19--2fda682360b6769f2fec265aa46082cde45ce9ad/logo.svg",
+                                     footer_logo_url: "https://api-dev-v2.getcoveredinsurance.com/rails/active_storage/blobs/eyJfcmFpbHMiOnsibWVzc2FnZSI6IkJBaHBBaklEIiwiZXhwIjpudWxsLCJwdXIiOiJibG9iX2lkIn19--2fda682360b6769f2fec265aa46082cde45ce9ad/logo.svg")
+    end
   end
 
   def parent_agency_exist
