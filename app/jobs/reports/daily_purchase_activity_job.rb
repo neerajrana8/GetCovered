@@ -2,7 +2,7 @@ module Reports
   class DailyPurchaseActivityJob < ApplicationJob
     queue_as :default
 
-    def perform(target_date: )
+    def perform(target_date: nil)
 
       report_date = target_date.nil? ? (Time.now - 1.days) : target_date
       trash_can = []
