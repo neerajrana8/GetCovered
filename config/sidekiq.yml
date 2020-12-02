@@ -71,7 +71,7 @@ production:
     cron: '0 6 1 * *'   # Each first day of month at 6:00 AM
     class: Reports::BordereauJob
   confie_report:
-    cron: '5 * * * *' # Every hour, five minutes in
+    cron: '35 * * * *' # Every hour, thirty-five minutes in
     class: Reports::ConfieReportJob
   # Invoices
   bill_due_invoices:
