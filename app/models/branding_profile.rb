@@ -71,19 +71,17 @@ class BrandingProfile < ApplicationRecord
   end
 
   def set_up_from_master
-    # Warning: i can't remember if we still use master: true on get covered's agency.  if we do lets
-    # switch to that
-    @gc = Agency.where(master_agency: true).order("id asc").limit(1).take
-    @gc_branding = @gc.branding_profiles.first
-    @gc_branding.pages.each do |pg|
-      new_pg = pg.dup
-      new_pg.branding_profile = self
-      new_pg.save
-    end
-    @gc_branding.branding_profile_attributes.each do |bpa|
-      new_bpa = bpa.dup
-      new_bpa.branding_profile = self
-      new_bpa.save
-    end
+    #@gc = Agency.where(master_agency: true).order("id asc").limit(1).take
+    #@gc_branding = @gc.branding_profiles.first
+    #@gc_branding.pages.each do |pg|
+    #  new_pg = pg.dup
+    #  new_pg.branding_profile = self
+    #  new_pg.save
+    #end
+    #@gc_branding.branding_profile_attributes.each do |bpa|
+    #  new_bpa = bpa.dup
+    #  new_bpa.branding_profile = self
+    #  new_bpa.save
+    #end
   end
 end
