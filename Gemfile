@@ -114,7 +114,9 @@ gem 'ruby-prof', require: false
 gem 'addressable'
 gem 'analytics-ruby', '~> 2.0.0', :require => 'segment/analytics'
 
-gem 'klaviyo'
+gem 'klaviyo', :github => 'getcoveredllc/ruby-klaviyo'
+gem 'minuteman'
+
 gem 'rack-attack'
 gem 'dry-monads'
 
@@ -147,8 +149,8 @@ group :development do
   gem 'guard'
   gem 'guard-shell'
   #rubymine specific debug gems
-  #gem 'ruby-debug-ide' #, '0.7.0'
-  #gem 'debase' #, '0.2.4'
+  #gem 'ruby-debug-ide'
+  #gem 'debase' , '0.2.4'
   #gem 'web-console'
 end
 
