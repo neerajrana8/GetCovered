@@ -615,8 +615,8 @@ class MsiService
       address = untangle_address_params(**{ address: address, address_line_one: address_line_one, address_line_two: address_line_two, city: city, state: state, zip: zip }.compact)
       # applying defaults (we don't do this in the args themselves because nil might be passed)
       number_of_units ||= 50
-      years_professionally_managed ||= -1
-      year_built ||= Time.current.year - 25
+      years_professionally_managed ||= 6
+      year_built ||= 2002
       gated = false unless gated == true
     end
     # go go go
@@ -698,8 +698,8 @@ class MsiService
     else
       # applying defaults (we don't do this in the args themselves because nil might be passed)
       number_of_units ||= 50
-      years_professionally_managed ||= -1
-      year_built ||= Time.current.year - 25
+      years_professionally_managed ||= 6
+      year_built ||= 2002
       gated = false unless gated == true
     end
     # handling mailing address
