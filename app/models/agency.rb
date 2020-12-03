@@ -202,7 +202,8 @@ class Agency < ApplicationRecord
 
   def setup_branding
     unless self.id == 1
-      self.branding_profiles.create!(url: "#{ slug }.getcoveredinsurance.com",
+      self.branding_profiles.create!(title: "#{ title } Branding",
+                                     url: "#{ slug }.getcoveredinsurance.com",
                                      logo_url: "https://api-dev-v2.getcoveredinsurance.com/rails/active_storage/blobs/eyJfcmFpbHMiOnsibWVzc2FnZSI6IkJBaHBBaklEIiwiZXhwIjpudWxsLCJwdXIiOiJibG9iX2lkIn19--2fda682360b6769f2fec265aa46082cde45ce9ad/logo.svg",
                                      footer_logo_url: "https://api-dev-v2.getcoveredinsurance.com/rails/active_storage/blobs/eyJfcmFpbHMiOnsibWVzc2FnZSI6IkJBaHBBaklEIiwiZXhwIjpudWxsLCJwdXIiOiJibG9iX2lkIn19--2fda682360b6769f2fec265aa46082cde45ce9ad/logo.svg")
     end
