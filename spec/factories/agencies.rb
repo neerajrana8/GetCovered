@@ -1,6 +1,7 @@
 FactoryBot.define do
   factory :agency do
     title { "Get Covered" }
+    master_agency { true }
     carriers { [Carrier.first] }
   end
 
