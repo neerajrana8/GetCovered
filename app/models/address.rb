@@ -226,10 +226,10 @@ class Address < ApplicationRecord
       Addr1: self.combined_street_address,
       City: self.city,
       StateProvCd: self.state,
-      PostalCode: self.zip_code,
-      County: self.county.blank? ? nil : self.county # MOOSE WARNING: do we really need this?
+      PostalCode: self.zip_code#,
+      #County: self.county.blank? ? nil : self.county # MOOSE WARNING: do we really need this?
     }.compact.merge(!include_line2 ? {} :
-      include_line2 == true ? { Addr2: street_two.blank? ? nil : street_two } :
+      include_line2 == true ? (street_two.blank? ? nil : { Addr2: street_two }) :
       { Addr2: include_line2 }
     )
   end

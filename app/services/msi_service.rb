@@ -10,6 +10,17 @@ class MsiService
   def self.carrier_id
     5
   end
+  
+  def self.displayable_error_for(msg, extended_msg = nil)
+    return nil if msg.nil?
+    if msg.start_with?("ADDR16") # address was invalid
+      return "Please enter a valid address"
+    elsif msg.start_with?("ACS24 - ") # effective date was invalid (returns something like 'Effective Date 11/29/2020 is invalid.  Date must be between 12/2/2020 - 3/1/2021.')
+      tr = msg.split("ACS24 - ")&.[](1)
+      return tr.blank? ? nil : tr
+    end
+    return nil
+  end
 
   @@coverage_codes = {
     AllOtherPeril:                                { code: 1, limit: true },
@@ -88,6 +99,41 @@ class MsiService
   TITLE_OVERRIDES = {
     @@coverage_codes[:ForcedEntryTheft][:code].to_s => Proc.new{|region| region == 'NY' ? "Burglary Limitation Coverage" : nil }
   }
+  
+  DESCRIPTIONS = {
+    '1003' => 'Personal property coverage protects your personal belongings and property.',
+    '1004' => 'Coverage reimburses you for the cost of maintaining a comparable standard of living following a covered loss that exceeds your normal expenses prior to the loss, up to the policy limits.',
+    '1005' => 'Liability coverage protects you in an event of negligent damage to your apartment, the community, or other residents.',
+    '1006' => 'Coverage designed to pay for medical expenses to others who are accidentally injured on an insured location or by the activities of an insured, resident employee, or an animal owned by or in the care of an insured, up to the policy limits.',
+    '1008' => 'This option covers your personal property in the event there is water/sewer back-up in your covered dwelling that begins off premises.',
+    '1010' => 'This option provides coverage on a replacement cost basis instead of actual cash value.',
+    '1076' => 'This option provides a discount by changing theft coverage to require physical evidence of forced entry and may require a police report.',
+    '1' => 'The amount the insurer will deduct from a loss resulting from other peril not already listed (such as theft, hurricane or wind) before paying up to its policy limits.',
+    '1007' => 'This option covers up to $500 for accidental damage caused by a pet such as stained carpet or chewed baseboards.',
+    '1060' => 'This option provides an increase in the amount of liability protection afforded to the insured in the case where an insured can be held liability for damages by a pet.',
+    '1065' => 'This option provides coverage up to $5,000 for expenses incurred by an insured as a direct result of identity fraud.',
+    '1075' => 'This option provides coverage to treat, remediate and eliminate a bed bug infestation in the residence.',
+    '2' => 'The amount the insurer will deduct from a loss resulting from theft before paying up to its policy limits.',
+    '5' => 'The amount the insurer will deduct from a loss resulting from wind or hail before paying up to its policy limits.',
+    '1072' => 'This option provides up to $500 coverage for loss of covered property stored in freezers or refrigerators caused by power service interruption or mechanical failure.',
+    '1081' => 'This option allows the insured to buy back additional limits for personal property that is stored.',
+    '1082' => 'The policy may be endorsed to insure against loss by theft when all or part of the residence.',
+    '1061' => 'This option covers your personal property (up to $5,000) in the event of an earthquake.',
+    '6' => 'The amount the insurer will deduct from a loss resulting from an earthquake before paying up to its policy limits.',
+    '3' => 'The amount the insurer will deduct from a loss resulting from a hurricane before paying up to its policy limits.'
+  }
+  
+  def self.renew_descriptions
+    ::InsurableRateConfiguration.where(configurer_type: "Carrier", configurer_id: self.carrier_id).each do |irc|
+      next if irc.coverage_options.blank?
+      irc.coverage_options.each do |co|
+        unless !co['description'].blank? || co['uid'].blank? || MsiService::DESCRIPTIONS[co['uid']].blank?
+          irc.coverage_options.each{|co| co['description'] = MsiService::DESCRIPTIONS[co['uid']] }
+          irc.save
+        end
+      end
+    end
+  end
   
   LOSS_OF_USE_VARIATIONS = {
     standard: {
@@ -569,8 +615,8 @@ class MsiService
       address = untangle_address_params(**{ address: address, address_line_one: address_line_one, address_line_two: address_line_two, city: city, state: state, zip: zip }.compact)
       # applying defaults (we don't do this in the args themselves because nil might be passed)
       number_of_units ||= 50
-      years_professionally_managed ||= -1
-      year_built ||= Time.current.year - 25
+      years_professionally_managed ||= 6
+      year_built ||= 2002
       gated = false unless gated == true
     end
     # go go go
@@ -652,8 +698,8 @@ class MsiService
     else
       # applying defaults (we don't do this in the args themselves because nil might be passed)
       number_of_units ||= 50
-      years_professionally_managed ||= -1
-      year_built ||= Time.current.year - 25
+      years_professionally_managed ||= 6
+      year_built ||= 2002
       gated = false unless gated == true
     end
     # handling mailing address
@@ -893,6 +939,8 @@ class MsiService
           }
       end)
     end
+    # apply descriptions
+    irc.coverage_options.each{|co| co['description'] = DESCRIPTIONS[co['uid'].to_s] unless DESCRIPTIONS[co['uid'].to_s].blank? }
     # apply universal disablings
     irc.coverage_options.select{|co| UNIVERSALLY_DISABLED_COVERAGE_OPTIONS.any?{|udco| udco['category'] == co['category'] && udco['uid'] == co['uid'] } }
                         .each{|co| co['enabled'] = false }

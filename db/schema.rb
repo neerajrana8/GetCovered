@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_11_20_224827) do
+ActiveRecord::Schema.define(version: 2020_12_02_212554) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
@@ -127,8 +127,10 @@ ActiveRecord::Schema.define(version: 2020_11_20_224827) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.bigint "staff_id"
+    t.string "integration_designation"
     t.index ["agency_id"], name: "index_agencies_on_agency_id"
     t.index ["call_sign"], name: "index_agencies_on_call_sign", unique: true
+    t.index ["integration_designation"], name: "index_agencies_on_integration_designation", unique: true
     t.index ["staff_id"], name: "index_agencies_on_staff_id"
     t.index ["stripe_id"], name: "index_agencies_on_stripe_id", unique: true
   end
@@ -975,6 +977,8 @@ ActiveRecord::Schema.define(version: 2020_11_20_224827) do
     t.jsonb "extra_settings"
     t.jsonb "resolver_info"
     t.bigint "tag_ids", default: [], null: false, array: true
+    t.jsonb "tagging_data"
+    t.string "error_message"
     t.index ["account_id"], name: "index_policy_applications_on_account_id"
     t.index ["agency_id"], name: "index_policy_applications_on_agency_id"
     t.index ["billing_strategy_id"], name: "index_policy_applications_on_billing_strategy_id"

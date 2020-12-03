@@ -129,6 +129,7 @@ describe 'Leads API spec', type: :request do
     {
         "email": email,
         "identifier": "",
+        "agency_id": @agency.id,
         "lead_event_attributes": {
             "tag": TEST_TAG,
             "latitude": Faker::Address.latitude,
@@ -149,6 +150,7 @@ describe 'Leads API spec', type: :request do
     {
         "email": email,
         "identifier": identifier,
+        "agency_id": @agency.id,
         "lead_event_attributes": {
             "tag": TEST_TAG,
             "latitude":"",
@@ -166,6 +168,7 @@ describe 'Leads API spec', type: :request do
     {
         "email": email,
         "identifier": identifier,
+        "agency_id": @agency.id,
         "lead_event_attributes": {
             "tag": TEST_TAG,
             "latitude": Faker::Address.latitude,
@@ -196,7 +199,15 @@ describe 'Leads API spec', type: :request do
         "street_name": Faker::Address.street_name,
         "street_two": Faker::Address.secondary_address,
         "zip_code": Faker::Address.zip_code
-    }
+    },
+        "tracking_url": {
+            "campaign_content": "ccc",
+            "campaign_medium": "mmm",
+            "campaign_name": "nnn",
+            "campaign_source": "sss",
+            "campaign_term": "ttt",
+            "landing_page": "rentguarantee"
+        }
     }
   end
 end
