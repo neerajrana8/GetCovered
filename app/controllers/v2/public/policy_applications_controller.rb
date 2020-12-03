@@ -182,7 +182,7 @@ module V2
         @application.billing_strategy = BillingStrategy.where(agency:      @application.agency,
                                                               policy_type: @application.policy_type,
                                                               carrier: @application.carrier).take
-                                                              
+
         address_string = params["policy_application"]["fields"]["address"]
         @application.resolver_info = {
           "address_string" => address_string,
@@ -412,7 +412,7 @@ module V2
             render json: update_users_result.failure, status: 422
           else
             if @application.update status: 'complete'
-
+              LeadEvents::LinkPolicyApplicationUsers.run!(policy_application: @application)
               # if application.status updated to complete
               @application.estimate()
               @quote = @application.policy_quotes.order('created_at DESC').limit(1).first
@@ -524,7 +524,7 @@ module V2
 
                 @policy_application.estimate
                 @quote = @policy_application.policy_quotes.order("updated_at DESC").limit(1).first
-                
+
                 if @application.status == "quote_failed"
                   render json: standard_error(:policy_application_unavailable, @application.error_message || 'Application cannot be quoted at this time'),
                          status: 400
@@ -877,7 +877,7 @@ module V2
                                                                                  ]
                                            ])
       end
-      
+
       def update_policy_users_params
         return create_policy_users_params
       end
