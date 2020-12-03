@@ -8,7 +8,12 @@ require 'fileutils'
 class ConfieService
 
   def self.agency_id
-    @agency_id ||= ::Agency.where(slug: "confie").take&.id
+    @agency ||= ::Agency.where(integration_designation: "confie").take
+    @agency_id ||= @agency&.id
+  end
+  
+  def self.agency
+    @agency ||= ::Agency.where(integration_designation: "confie").take
   end
   
   STATUS_MAP = {
