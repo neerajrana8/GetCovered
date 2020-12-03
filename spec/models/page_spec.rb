@@ -3,6 +3,7 @@ require 'rails_helper'
 RSpec.describe Page, :type => :model do
   subject {
     agency = FactoryBot.create(:agency)
+    agency.update(id: 1)
     branding_profile = FactoryBot.create(:branding_profile)
     branding_profile.update(profileable: agency)
     described_class.new(title: "Anything",
