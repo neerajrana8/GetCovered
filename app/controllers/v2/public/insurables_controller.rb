@@ -36,7 +36,7 @@ module V2
         doc = Nokogiri::XML(received)
         msi_id = doc.xpath("//MSI_CommunityID").text
         community = CarrierInsurableProfile.where(carrier_id: 5, external_carrier_id: msi_id.to_s).take&.insurable
-        @units = community&.units&.order("title ASC") || []
+        @units = community&.units&.confirmed&.order("title ASC") || []
         
         #puts msi_id
         
@@ -134,7 +134,7 @@ module V2
                   id: ins.id, title: ins.title,
                   account_id: ins.account_id, agency_id: ins.agency_id, insurable_type_id: ins.insurable_type_id
                 }.merge(short_mode ? {} : {
-                  enabled: ins.enabled, preferred_ho4: com&.preferred_ho4 || false,
+                  enabled: ins.enabled, preferred_ho4: ins.preferred_ho4 || false,
                   category: ins.category, primary_address: insurable_prejson(ins.primary_address),
                   community: insurable_prejson(com, short_mode: true)
                 }).compact
@@ -144,7 +144,7 @@ module V2
                   account_id: ins.account_id, agency_id: ins.agency_id, insurable_type_id: ins.insurable_type_id
                 }.merge(short_mode ? {} : {
                   category: ins.category, primary_address: insurable_prejson(ins.primary_address),
-                  units: ins.preferred_ho4 ? ins.units.select{|u| u.enabled }.map{|u| { id: u.id, title: u.title } } : nil
+                  units: ins.preferred_ho4 ? ins.units.confirmed.select{|u| u.enabled }.map{|u| insurable_prejson(u, short_mode: true) } : nil
                 }).compact
               elsif ::InsurableType::RESIDENTIAL_BUILDINGS_IDS.include?(ins.insurable_type_id)
                 com = ins.parent_community
@@ -152,9 +152,9 @@ module V2
                   id: ins.id, title: ins.title,
                   account_id: ins.account_id, agency_id: ins.agency_id, insurable_type_id: ins.insurable_type_id,
                 }.merge(short_mode ? {} : {
-                  enabled: ins.enabled, preferred_ho4: com&.preferred_ho4 || false,
+                  enabled: ins.enabled, preferred_ho4: ins.preferred_ho4 || false,
                   category: ins.category, primary_address: insurable_prejson(ins.primary_address),
-                  units: com&.preferred_ho4 ? ins.units.select{|u| u.enabled }.map{|u| { id: u.id, title: u.title } } : nil, # WARNING: we don't bother recursing with short mode here
+                  units: ins.preferred_ho4 ? ins.units.confirmed.select{|u| u.enabled }.map{|u| insurable_prejson(u, short_mode: true) } : nil, # WARNING: we don't bother recursing with short mode here
                   community: insurable_prejson(com, short_mode: true)
                 }).compact
               else

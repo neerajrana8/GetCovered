@@ -274,8 +274,7 @@ class Insurable < ApplicationRecord
     create_if_ambiguous: false,   # pass true to force insurable creation if there's any ambiguity (example: if you've already called this and got 'multiple' type results, none of which were what you wanted)
     disallow_creation: false,     # pass true to ONLY query, NOT create
     created_community_title: nil, # optionally pass the title for the community in case we have to create it (defaults to combined_street_address)
-    account_id: ::Account.where(slug: 'nonpreferred-residential').take&.id, # MOOSE WARNING: fix this if we aren't sticking with this weird dummy account
-                  # optionally, the account id to use if we create anything
+    account_id: nil,              # optionally, the account id to use if we create anything
     communities_only: false,      # if true, in unit mode does nothing; out of unit mode, searches only for communities with the address (no buildings)
     ignore_street_two: false,     # if true, will strip out street_two address data
     diagnostics: nil              # pass a hash to get diagnostics; these will be the following fields, though those applicable to code not encountered may be nil:
@@ -319,10 +318,6 @@ class Insurable < ApplicationRecord
             return { error_type: :invalid_community, message: "The requested residential building/community does not exist" }
           end
           community = (results.parent_community || results)
-          # commented out to support new confirmed/unconfirmed insurable setup
-          #if community.preferred_ho4
-          #  return { error_type: :invalid_unit, message: "The requested unit does not exist" }
-          #end
           unit = results.insurables.new(
             title: unit_title,
             insurable_type: ::InsurableType.where(title: "Residential Unit").take,
@@ -416,8 +411,6 @@ class Insurable < ApplicationRecord
           # unit does not exist; find a parent we can create on
           return nil if disallow_creation
           parents = ::Insurable.where(id: parent_ids, insurable_type_id: ::InsurableType::RESIDENTIAL_COMMUNITIES_IDS | (communities_only ? [] : ::InsurableType::RESIDENTIAL_BUILDINGS_IDS))
-          # commented out because we are allowing creation on preferred_ho4 now
-          #parent = parents.select{|p| (p.parent_community || p).preferred_ho4 == false }.sort{|a,b| (::InsurableType::RESIDENTIAL_BUILDINGS_IDS.include?(a) ? -1 : 1) <=> (::InsurableType::RESIDENTIAL_BUILDINGS_IDS.include?(b) ? -1 : 1) }.first
           parent = parents.sort{|a,b| (::InsurableType::RESIDENTIAL_BUILDINGS_IDS.include?(a) ? -1 : 1) <=> (::InsurableType::RESIDENTIAL_BUILDINGS_IDS.include?(b) ? -1 : 1) }.first
           diagnostics[:parent_count] = parents.count if diagnostics
           if parent.nil?
@@ -426,7 +419,7 @@ class Insurable < ApplicationRecord
               return nil
             elsif !insurable_id.nil?
               return { error_type: :invalid_community, message: "The requested residential building/community id does not exist" }
-            elsif parents.count > 0 # if parents.count > 0, we found the community/building but it was preferred
+            elsif parents.count > 0 # this no longer happens, but if we ever forbid creating on preferred communities/buildings again, the "parent =" line above should be changed so that this will execute
               return { error_type: :invalid_unit, message: "The requested unit does not exist" }
             end
             # create community
@@ -514,9 +507,6 @@ class Insurable < ApplicationRecord
             parent = ::Insurable.where(id: insurable_id, insurable_type_id: ::InsurableType::RESIDENTIAL_COMMUNITIES_IDS).take
             if parent.nil?
               return { error_type: :invalid_building, message: "Requested parent community does not exist" }
-            # commented out since we're allowing creation on preferred communities now
-            #elsif parent.preferred_ho4
-            #  return { error_type: :invalid_building, message: "Requested building does not exist" }
             else
               parent_address = parent&.primary_address
               if parent_address.state != address.state || parent_address.zip_code != address.zip_code || parent_address.city != address.city
