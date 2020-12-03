@@ -73,7 +73,7 @@ class BrandingProfile < ApplicationRecord
   def set_up_from_master
     # Warning: i can't remember if we still use master: true on get covered's agency.  if we do lets
     # switch to that
-    @gc = Agency.find(1)
+    @gc = Agency.where(master_agency: true).order("id asc").limit(1).take
     @gc_branding = @gc.branding_profiles.first
     @gc_branding.pages.each do |pg|
       new_pg = pg.dup
