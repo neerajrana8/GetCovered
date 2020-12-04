@@ -393,7 +393,6 @@ class Policy < ApplicationRecord
   end
 
   def run_postbind_hooks # do not remove this; concerns add functionality to it by overriding it and calling super
-    notify_the_idiots() if ENV["RAILS_ENV"] == "production"
     super if defined?(super)
   end
 
