@@ -51,11 +51,11 @@ module PolicyApplications
       if policy_user.present? # user exists and already added as a policy user
         yield update_policy_user(policy_user, policy_user_params.slice(:primary, :spouse))
         yield update_user(user, policy_user_params[:user_attributes])
-        yield update_user_address(user, policy_user_params[:user_attributes][:address_attributes])
+        yield update_user_address(user, policy_user_params[:user_attributes][:address_attributes]) unless policy_user_params[:user_attributes][:address_attributes].blank?
       elsif user.present? # user exists but not added as a policy user
         yield add_policy_user(user, policy_user_params.slice(:primary, :spouse))
         yield update_user(user, policy_user_params[:user_attributes])
-        yield update_user_address(user, policy_user_params[:user_attributes][:address_attributes])
+        yield update_user_address(user, policy_user_params[:user_attributes][:address_attributes]) unless policy_user_params[:user_attributes][:address_attributes].blank?
       else # user does not exist
         user = yield create_user(policy_user_params[:user_attributes])
         yield add_policy_user(user, policy_user_params.slice(:primary, :spouse))
