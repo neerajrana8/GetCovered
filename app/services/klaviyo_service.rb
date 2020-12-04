@@ -183,9 +183,9 @@ class KlaviyoService
     return "" if event_details.blank?
     branding_url = @lead.agency.branding_profiles.take.url
     if @lead.last_event.policy_type&.rent_guarantee?
-      "https://www.#{branding_url}/rentguarantee"
+      "https://#{branding_url}/rentguarantee"
     elsif @lead.last_event.policy_type&.residential?
-      "https://www.#{branding_url}/residential"
+      "https://#{branding_url}/residential"
     else
       #tbd for other forms
       ""
