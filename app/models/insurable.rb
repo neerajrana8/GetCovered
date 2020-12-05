@@ -273,7 +273,7 @@ class Insurable < ApplicationRecord
     # validate params
     if address.blank? && !unit && !insurable_id.nil?
       return Insurable.where(id: insurable_id).take
-    elsif address.blank? && ([true,false,nil].include?(unit) || insurable_id.nil?)
+    elsif address.blank? && (([true,false,nil].include?(unit) && !titleless) || insurable_id.nil?)
       raise ArgumentError.new("either 'address' or 'insurable_id' and a string 'unit' must be provided")
     end
     # if we have a unit title and an insurable id, get or create the unit without dealing with address nonsense

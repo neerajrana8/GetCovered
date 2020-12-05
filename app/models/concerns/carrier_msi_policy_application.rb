@@ -68,12 +68,12 @@ module CarrierMsiPolicyApplication
           self.users.count - 1,
           self.billing_strategy.carrier_code,
           nonpreferred_final_premium_params: {
-            address_line_two: "Unit #{unit.title}",
+            address_line_two: unit.title.nil? ? nil : "Unit #{unit.title}",
             number_of_units: self.extra_settings&.[]('number_of_units'),
             years_professionally_managed: self.extra_settings&.[]('years_professionally_managed'),
             year_built: self.extra_settings&.[]('year_built'),
             gated: self.extra_settings&.[]('gated')
-          },
+          }.compact,
           perform_estimate: true,
           eventable: quote # by passing a PolicyQuote we ensure results[:msi_data], results[:event], and results[:annotated_selections] get passed back out
         )
