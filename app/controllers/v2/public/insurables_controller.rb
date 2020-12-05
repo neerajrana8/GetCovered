@@ -61,6 +61,7 @@ module V2
           create_if_ambiguous: get_or_create_params[:create_if_ambiguous],
           disallow_creation: (get_or_create_params[:allow_creation] != true),
           communities_only: get_or_create_params[:communities_only],
+          titleless: get_or_create_params[:titleless] ? true : false,
           diagnostics: diagnostics
         }.compact)
         case result
@@ -121,7 +122,7 @@ module V2
         end
         
         def get_or_create_params
-          params.permit(:address, :unit, :insurable_id, :create_if_ambiguous, :allow_creation, :communities_only)
+          params.permit(:address, :unit, :insurable_id, :create_if_ambiguous, :allow_creation, :communities_only, :titleless)
         end
         
         # output stuff with essentially the same format as in the Address search
@@ -137,7 +138,7 @@ module V2
                   enabled: ins.enabled, preferred_ho4: com&.preferred_ho4 || false,
                   category: ins.category, primary_address: insurable_prejson(ins.primary_address),
                   community: insurable_prejson(com, short_mode: true)
-                }).compact
+                }.compact)
               elsif ::InsurableType::RESIDENTIAL_COMMUNITIES_IDS.include?(ins.insurable_type_id)
                 return {
                   id: ins.id, title: ins.title, enabled: ins.enabled, preferred_ho4: ins.preferred_ho4,
@@ -145,7 +146,7 @@ module V2
                 }.merge(short_mode ? {} : {
                   category: ins.category, primary_address: insurable_prejson(ins.primary_address),
                   units: ins.preferred_ho4 ? ins.units.select{|u| u.enabled }.map{|u| { id: u.id, title: u.title } } : nil
-                }).compact
+                }.compact)
               elsif ::InsurableType::RESIDENTIAL_BUILDINGS_IDS.include?(ins.insurable_type_id)
                 com = ins.parent_community
                 return {
@@ -156,7 +157,7 @@ module V2
                   category: ins.category, primary_address: insurable_prejson(ins.primary_address),
                   units: com&.preferred_ho4 ? ins.units.select{|u| u.enabled }.map{|u| { id: u.id, title: u.title } } : nil, # WARNING: we don't bother recursing with short mode here
                   community: insurable_prejson(com, short_mode: true)
-                }).compact
+                }.compact)
               else
                 return nil
               end

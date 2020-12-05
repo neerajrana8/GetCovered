@@ -45,7 +45,7 @@ class Insurable < ApplicationRecord
   
   enum category: %w[property entity]
   
-  validates_presence_of :title, :slug
+  #validates_presence_of :title, :slug MOOSE WARNING: RESTORE ME WHEN YOU CAN! THIS IS DISABLED TO ALLOW TITLELESS NONPREFERRED UNITS!
   validate :must_belong_to_same_account_if_parent_insurable
   validate :title_uniqueness, on: :create
 
@@ -250,6 +250,7 @@ class Insurable < ApplicationRecord
                   # optionally, the account id to use if we create anything
     communities_only: false,      # if true, in unit mode does nothing; out of unit mode, searches only for communities with the address (no buildings)
     ignore_street_two: false,     # if true, will strip out street_two address data
+    titleless: false,             # if true and unit is true, will seek a unit without a title
     diagnostics: nil              # pass a hash to get diagnostics; these will be the following fields, though applicable to code not encountered may be nil:
                                   #   address_used:               true if address used, false if we didn't need it
                                   #   title_derivation_tried:     true if we tried to derive a unit title from address line 2
@@ -277,12 +278,13 @@ class Insurable < ApplicationRecord
     end
     # if we have a unit title and an insurable id, get or create the unit without dealing with address nonsense
     unit_title = [true,false,nil].include?(unit) ? nil : clean_unit_title(unit)
+    unit_title = :titleless if titleless
     if !unit_title.blank? && !insurable_id.nil?
       if diagnostics
         diagnostics[:unit_mode] = true
         diagnostics[:address_used] = false
       end
-      results = ::Insurable.where(title: unit_title, insurable_id: insurable_id, insurable_type_id: ::InsurableType::RESIDENTIAL_UNITS_IDS)
+      results = ::Insurable.where(title: unit_title == :titleless ? nil : unit_title, insurable_id: insurable_id, insurable_type_id: ::InsurableType::RESIDENTIAL_UNITS_IDS)
       case results.count
         when 0
           return nil if disallow_creation
@@ -295,7 +297,7 @@ class Insurable < ApplicationRecord
             return { error_type: :invalid_unit, message: "The requested unit does not exist" }
           end
           unit = results.insurables.new(
-            title: unit_title,
+            title: unit_title == :titleless ? nil : unit_title,
             insurable_type: ::InsurableType.where(title: "Residential Unit").take,
             enabled: true, category: 'property', preferred_ho4: false,
             account_id: account_id || result.account_id || community.account_id || nil # MOOSE WARNING: nil account id allowed?
@@ -344,7 +346,7 @@ class Insurable < ApplicationRecord
     if seeking_unit # we want a unit
       communities_only = false # WARNING: we just hack this to false here to prevent weird behavior, remove hack to make the default for this "ignore buildings and consider only community-attached units"
       if unit_title.nil?
-        return { error_type: :invalid_address_line_two, message: "Unable to deduce unit title from address", details: "'#{address.street_two}' is not a standard format (e.g. 'Apartment #2, Unit 3, #5, etc.)" }
+        return { error_type: :invalid_address_line_two, message: "Unable to deduce unit title from address", details: "'#{address.street_two}' is not a standard format (e.g. 'Apartment #2, Unit 3, #5, Apt 7, etc.)" }
       end
       # query for units of the appropriate title, address, and, if provided, insurable_id
       parent_ids = ::Insurable.references(:address).includes(:addresses).where(
@@ -364,18 +366,18 @@ class Insurable < ApplicationRecord
       if !insurable_id.nil?
         parent_ids = parent_ids & [insurable_id]
         results = ::Insurable.where({
-          title: unit_title,
+          title: unit_title == :titleless ? nil : unit_title,
           insurable_type_id: ::InsurableType::RESIDENTIAL_UNITS_IDS,
           insurable_id: parent_ids
         })
       else
         results = ::Insurable.where({
-          title: unit_title,
+          title: unit_title == :titleless ? nil : unit_title,
           insurable_type_id: ::InsurableType::RESIDENTIAL_UNITS_IDS,
           insurable_id: parent_ids
         }).or(::Insurable.where({ # gotta account for the possibility that a standalone-addressed unit came up in our initial query
           id: parent_ids,
-          title: unit_title,
+          title: unit_title == :titleless ? nil : unit_title,
           insurable_type_id: ::InsurableType::RESIDENTIAL_UNITS_IDS
         }))
       end
@@ -418,7 +420,7 @@ class Insurable < ApplicationRecord
           end
           # create the unit
           unit = parent.insurables.new(
-            title: unit_title,
+            title: unit_title == :titleless ? nil : unit_title,
             insurable_type: ::InsurableType.where(title: "Residential Unit").take,
             enabled: true, category: 'property', preferred_ho4: false,
             account_id: account_id || parent.account_id || nil # MOOSE WARNING: nil account id allowed?
