@@ -229,7 +229,7 @@ class Address < ApplicationRecord
       PostalCode: self.zip_code#,
       #County: self.county.blank? ? nil : self.county # MOOSE WARNING: do we really need this?
     }.compact.merge(!include_line2 ? {} :
-      include_line2 == true ? (street_two.blank? ? nil : { Addr2: street_two }) :
+      include_line2 == true ? (street_two.blank? ? {} : { Addr2: street_two }) :
       { Addr2: include_line2 }
     )
   end
