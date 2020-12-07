@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_11_11_224256) do
+ActiveRecord::Schema.define(version: 2020_12_02_212554) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
@@ -127,8 +127,10 @@ ActiveRecord::Schema.define(version: 2020_11_11_224256) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.bigint "staff_id"
+    t.string "integration_designation"
     t.index ["agency_id"], name: "index_agencies_on_agency_id"
     t.index ["call_sign"], name: "index_agencies_on_call_sign", unique: true
+    t.index ["integration_designation"], name: "index_agencies_on_integration_designation", unique: true
     t.index ["staff_id"], name: "index_agencies_on_staff_id"
     t.index ["stripe_id"], name: "index_agencies_on_stripe_id", unique: true
   end
@@ -585,6 +587,7 @@ ActiveRecord::Schema.define(version: 2020_11_11_224256) do
     t.bigint "agency_id"
     t.bigint "policy_type_ids", default: [], null: false, array: true
     t.boolean "preferred_ho4", default: false, null: false
+    t.boolean "confirmed", default: true, null: false
     t.index ["account_id"], name: "index_insurables_on_account_id"
     t.index ["agency_id"], name: "index_insurables_on_agency_id"
     t.index ["insurable_id"], name: "index_insurables_on_insurable_id"
@@ -724,6 +727,32 @@ ActiveRecord::Schema.define(version: 2020_11_11_224256) do
     t.integer "proration_reduction", default: 0, null: false
     t.date "full_refund_before_date"
     t.index ["invoice_id"], name: "index_line_items_on_invoice_id"
+  end
+
+  create_table "login_activities", force: :cascade do |t|
+    t.string "scope"
+    t.string "strategy"
+    t.string "identity"
+    t.boolean "success"
+    t.string "failure_reason"
+    t.string "user_type"
+    t.bigint "user_id"
+    t.string "context"
+    t.string "ip"
+    t.text "user_agent"
+    t.text "referrer"
+    t.string "city"
+    t.string "region"
+    t.string "country"
+    t.float "latitude"
+    t.float "longitude"
+    t.datetime "created_at"
+    t.string "client"
+    t.integer "expiry"
+    t.boolean "active", default: true
+    t.index ["identity"], name: "index_login_activities_on_identity"
+    t.index ["ip"], name: "index_login_activities_on_ip"
+    t.index ["user_type", "user_id"], name: "index_login_activities_on_user_type_and_user_id"
   end
 
   create_table "model_errors", force: :cascade do |t|
@@ -948,6 +977,10 @@ ActiveRecord::Schema.define(version: 2020_11_11_224256) do
     t.bigint "policy_application_group_id"
     t.jsonb "coverage_selections", default: [], null: false
     t.jsonb "extra_settings"
+    t.jsonb "resolver_info"
+    t.bigint "tag_ids", default: [], null: false, array: true
+    t.jsonb "tagging_data"
+    t.string "error_message"
     t.index ["account_id"], name: "index_policy_applications_on_account_id"
     t.index ["agency_id"], name: "index_policy_applications_on_agency_id"
     t.index ["billing_strategy_id"], name: "index_policy_applications_on_billing_strategy_id"
@@ -955,6 +988,7 @@ ActiveRecord::Schema.define(version: 2020_11_11_224256) do
     t.index ["policy_application_group_id"], name: "index_policy_applications_on_policy_application_group_id"
     t.index ["policy_id"], name: "index_policy_applications_on_policy_id"
     t.index ["policy_type_id"], name: "index_policy_applications_on_policy_type_id"
+    t.index ["tag_ids"], name: "policy_application_tag_ids_index", using: :gin
   end
 
   create_table "policy_coverages", force: :cascade do |t|
@@ -1275,6 +1309,14 @@ ActiveRecord::Schema.define(version: 2020_11_11_224256) do
     t.index ["reset_password_token"], name: "index_staffs_on_reset_password_token", unique: true
     t.index ["role"], name: "index_staffs_on_role"
     t.index ["uid", "provider"], name: "index_staffs_on_uid_and_provider", unique: true
+  end
+
+  create_table "tags", force: :cascade do |t|
+    t.string "title"
+    t.text "description"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["title"], name: "index_tags_on_title", unique: true
   end
 
   create_table "tracking_urls", force: :cascade do |t|

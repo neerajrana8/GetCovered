@@ -6,18 +6,24 @@ module V2
   module StaffSuperAdmin
     class StaffsController < StaffSuperAdminController
       include StaffsMethods
-      
+
       before_action :set_staff, only: %i[show update re_invite toggle_enabled]
-            
+
       def index
-        super(:@staffs, Staff, :profile)
+        super(:@staffs, ::Staff, :profile)
+        @staffs = filter_by_agency_id if params["agency_id"].present?
       end
-      
+
+      def filter_by_agency_id
+        @staffs.joins("left join agencies on agencies.id = staffs.organizable_id and staffs.organizable_type='Agency'").
+            where("agencies.id=#{params["agency_id"]}")
+      end
+
       def show; end
-      
+
       def create
         if create_allowed?
-          @staff = Staff.new(create_params)
+          @staff = ::Staff.new(create_params)
           # remove password issues from errors since this is a Devise model
           @staff.valid? if @staff.errors.blank?
           @staff.errors.messages.except!(:password)
@@ -43,7 +49,7 @@ module V2
       end
 
       def search
-        @staff = Staff.search(params[:query]).records
+        @staff = ::Staff.search(params[:query]).records
         render json: @staff.to_json, status: 200
       end
 
@@ -52,21 +58,21 @@ module V2
         render json: { success: true }, status: :ok
       end
 
-      
+
       private
-      
+
       def view_path
         super + '/staffs'
       end
-        
+
       def create_allowed?
         true
       end
-        
+
       def set_staff
         @staff = access_model(::Staff, params[:id])
       end
-                
+
       def create_params
         return({}) if params[:staff].blank?
 
@@ -90,7 +96,7 @@ module V2
                   ]
         )
       end
-        
+
       def supported_filters(called_from_orders = false)
         @calling_supported_orders = called_from_orders
         {
@@ -110,7 +116,7 @@ module V2
       def supported_orders
         supported_filters(true)
       end
-        
+
     end
   end # module StaffSuperAdmin
 end

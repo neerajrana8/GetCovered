@@ -100,6 +100,7 @@ class Agency < ApplicationRecord
   validates_presence_of :title, :slug, :call_sign
   validate :parent_agency_exist, on: [:create, :update]
   validate :agency_to_sub_disabled, on: :update
+  validates :integration_designation, uniqueness: { allow_nil: true }
 
   GET_COVERED_ID = 1
 

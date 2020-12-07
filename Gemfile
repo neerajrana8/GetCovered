@@ -24,6 +24,7 @@ gem 'redis', '~> 4.0'
 # Use Capistrano for deployment
 # gem 'capistrano-rails', group: :development
 
+gem 'authtrail'
 # Reduces boot times through caching; required in config/boot.rb
 gem 'bootsnap', '>= 1.1.0', require: false
 
@@ -115,12 +116,17 @@ gem 'ruby-prof', require: false
 
 gem 'addressable'
 gem 'analytics-ruby', '~> 2.0.0', :require => 'segment/analytics'
-gem 'klaviyo'
+
+gem 'klaviyo', :github => 'getcoveredllc/ruby-klaviyo'
+gem 'minuteman'
+
+gem 'rack-attack'
+gem 'dry-monads'
 
 group :development, :test, :test_container do
   # Call 'byebug' anywhere in the code to stop execution and get a debugger console
   gem 'byebug', platforms: %i[mri mingw x64_mingw]
-  gem 'pry'
+  #gem 'pry'
   gem 'rspec_junit_formatter'
   gem 'database_cleaner'
   gem 'factory_bot_rails'
@@ -146,9 +152,9 @@ group :development do
   gem 'guard'
   gem 'guard-shell'
   #rubymine specific debug gems
-    # gem 'ruby-debug-ide'
-    # gem 'debase'
-    # gem 'web-console'
+  #gem 'ruby-debug-ide'
+  #gem 'debase' , '0.2.4'
+  #gem 'web-console'
 end
 
 # Windows does not include zoneinfo files, so bundle the tzinfo-data gem

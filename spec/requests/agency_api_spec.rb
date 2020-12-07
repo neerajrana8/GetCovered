@@ -24,9 +24,9 @@ describe 'Agency invitation spec', type: :request do
     expect { create_agency(agency_params) }.to change { Agency.count }.by(1)
     expect(Agency.last.agency).to eq(@agency)
 
-    expect { create_staff(staff_params(Agency.last)) }.to change { Staff.count }.by(1)
+    expect { create_staff(staff_params(Agency.last)) }.to change { ::Staff.count }.by(1)
 
-    expect(Staff.last.owner).to eq(true)
+    expect(::Staff.last.owner).to eq(true)
   end
 
   def agency_params

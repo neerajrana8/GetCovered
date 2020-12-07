@@ -53,8 +53,8 @@ class PolicyQuote < ApplicationRecord
     policy_application.update status: 'quoted' if update status: 'quoted'
   end
 
-  def mark_failure
-    policy_application.update status: 'quote_failed' if update status: 'quote_failed'
+  def mark_failure(error_message = nil)
+    policy_application.update(status: 'quote_failed', error_message: error_message) if update status: 'quote_failed'
   end
 
   def available_period
@@ -188,6 +188,7 @@ class PolicyQuote < ApplicationRecord
               quote_attempt[:success] = true
 
               LeadEvents::UpdateLeadStatus.run!(policy_application: policy_application)
+              policy.run_postbind_hooks
             else
               # If self.policy, policy_application.policy or
               # policy_premium.policy cannot be set correctly

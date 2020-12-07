@@ -54,6 +54,16 @@ Rails.application.routes.draw do
       end
     end
 
+    scope module: :staff, path: "staff" do
+      resources :login_activities,
+                path: "login-activities",
+                only: [:index] do
+        collection do
+          get :close_all_sessions
+        end
+      end
+    end
+
     draw :user
     draw :staff_account
     draw :staff_agency

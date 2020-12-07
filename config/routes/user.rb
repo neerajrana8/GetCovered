@@ -12,7 +12,16 @@ scope module: :user, path: "user" do
         post :claim_creation
       end
     end
-  
+
+  resources :login_activities,
+            path: "login-activities",
+            only: [:index] do
+    collection do
+      get :close_all_sessions
+    end
+  end
+
+
   resources :invoices,
     only: [ :index, :show ]
   
@@ -48,7 +57,7 @@ scope module: :user, path: "user" do
   
   resources :policy_applications,
     path: "policy-applications",
-    only: [ :create, :index, :show ]
+    only: [ :create, :index, :show, :update ]
   
   resources :policy_quotes,
     path: "policy-quotes",

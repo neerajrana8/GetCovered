@@ -6,12 +6,13 @@ class KlaviyoService
 
   EVENTS = ["New Lead", "Became Lead", "New Lead Event", "Created Account", "Updated Account",
             "Updated Email", "Reset Password", "Invoice Created", "Order Confirmation", "Failed Payment"]
+
   TEST_TAG = 'test'
   RETRY_LIMIT = 3
 
   def initialize
-    @klaviyo ||= Klaviyo::Client.new(Rails.application.credentials.klaviyo[ENV["RAILS_ENV"].to_sym][:token] || ENV["KLAVIYO_API_TOKEN"])
-    @private_api_key ||= Rails.application.credentials.klaviyo[ENV["RAILS_ENV"].to_sym][:private_token]
+    Klaviyo.public_api_key = Rails.application.credentials.klaviyo[ENV["RAILS_ENV"].to_sym][:token] || ENV["KLAVIYO_API_TOKEN"]
+    Klaviyo.private_api_key = Rails.application.credentials.klaviyo[ENV["RAILS_ENV"].to_sym][:private_token]
     @retries = 0
   end
 
@@ -23,7 +24,11 @@ class KlaviyoService
     begin
       response = yield
 
-      track_event(event_description, event_details) unless ["test", "test_container", "local", "development"].include?(ENV["RAILS_ENV"])
+      if event_description == "Became Lead" && event_details.blank?
+
+      else
+        track_event(event_description, event_details) unless ["test", "test_container", "local", "development"].include?(ENV["RAILS_ENV"])
+      end
 
     rescue Net::OpenTimeout => ex
       Rails.logger.error("LeadEventsController KlaviyoException: #{ex.to_s}.")
@@ -37,73 +42,57 @@ class KlaviyoService
   private
 
   def identify_lead(event_description, event_details = {})
-    @klaviyo.identify(email: @lead.email, id: @lead.identifier, properties: identify_properties, customer_properties: identify_customer_properties(identify_properties))
+    Klaviyo::Public.identify(email: @lead.email, id: @lead.identifier, properties: identify_properties,
+                      customer_properties: identify_customer_properties(identify_properties))
   end
 
   #need to send to lead to prod only in prod
   def track_event(event_description, event_details = {})
     customer_properties = {}
-    if event_description == "New Lead"
-      identify_lead("New Lead")
-      customer_properties[:email] = @lead.email
-    end
+    identify_lead(event_description)
 
-    if event_description == "Became Lead"
-      identify_lead("Became Lead")
-    end
+    customer_properties[:email] = @lead.email if event_description == "New Lead"
 
-    if event_description == "New Lead Event"
-      if @lead.lead_events.count > 1
-        event_details = @lead.lead_events.last.as_json
-        identify_lead("Became Lead") if @lead.lead_events.last.agency_id.present? && @lead.agency_id != @lead.lead_events.last.agency_id
-      end
-    end
+    event_details = @lead.lead_events.last.as_json if event_description == "New Lead Event" && @lead.lead_events.count > 0
 
     if event_description == 'Updated Email'
-      identify_lead('Became Lead (email)')
-      response = HTTParty.get("https://a.klaviyo.com/api/v2/people/search?api_key=#{@private_api_key}&email=#{event_details[:email]}")
+      response = HTTParty.get("https://a.klaviyo.com/api/v2/people/search?api_key=#{Klaviyo.private_api_key}&email=#{event_details[:email]}")
       lead_id = JSON.parse(response.body)["id"]
       if lead_id.present?
-        HTTParty.put("https://a.klaviyo.com/api/v1/person/#{lead_id}?api_key=#{@private_api_key}&email=#{event_details[:new_email]}")
+        HTTParty.put("https://a.klaviyo.com/api/v1/person/#{lead_id}?api_key=#{Klaviyo.private_api_key}&email=#{event_details[:new_email]}")
       end
     end
 
-    customer_properties[:last_visited_page_url] = map_last_visited_url(event_details) #need to unify for other too
-    customer_properties[:last_visited_page] = event_details["data"].present? ? event_details["data"]["last_visited_page"] : "Landing Page"
+    customer_properties[:last_visited_page_url] = map_last_visited_url(event_details)
+    customer_properties[:last_visited_page]     = map_last_visited_page(event_details) if page_set?(event_details)
 
     # TODO: check retriable gem?
     begin
-      @klaviyo.track(event_description,
+      result = Klaviyo::Public.track(event_description,
                    email: @lead.email,
                    properties: prepare_track_properties(event_details),
                    customer_properties: customer_properties
       )
-    rescue Klaviyo::KlaviyoError => kl_ex
-      @lead =  Lead.create(email: "no_email_#{rand(999)}@email.com") if @lead.nil?
+      Rails.logger.info("LeadEventsController KlaviyoTrack: desc: #{event_description},result: #{result.to_s}, lead: #{@lead.as_json}, event_details: #{event_details}, properties: #{prepare_track_properties(event_details)}, customer_properties: #{customer_properties}, last_event: #{@lead.lead_events.last.as_json}.")
+    rescue => kl_ex
+      Rails.logger.error("LeadEventsController KlaviyoException: #{kl_ex.to_s}, lead: #{@lead.as_json}, event_details: #{event_details}, properties: #{prepare_track_properties(event_details)}, customer_properties: #{customer_properties}.")
       @retries += 1
-      @retries > RETRY_LIMIT ? Rails.logger.error("LeadEventsController KlaviyoException: #{kl_ex.to_s}, lead: #{@lead.as_json}, event_details: #{event_details}.") : retry
+      @retries > RETRY_LIMIT ? Rails.logger.error("LeadEventsController KlaviyoException after retries: #{kl_ex.to_s}, lead: #{@lead.as_json}, event_details: #{event_details}.") : retry
     end
-
   end
 
   #tbd maybe need to separate in module and map from model, like address, profile etc.
   def prepare_track_properties(event_details)
     request = { status: @lead.status,
                 uuid: @lead.identifier
-                #last_visited_page: event_details["data"]["last_visited_page"]
-    }
+              }
     if event_details.present?
       request['$event_id'] = event_details["id"]
-      if event_details["data"].present?
-        request.merge!(event_details["data"])
-      end
-      if event_details[:profile_attributes].present?
-        identify_customer_properties(request)
-      end
-      if event_details[:address_attributes].present?
-        identify_customer_properties(request)
-      end
 
+      request.merge!(event_details["data"]) if event_details["data"].present?
+      if event_details[:profile_attributes].present? || event_details[:address_attributes].present?
+        identify_customer_properties(request)
+      end
     end
 
     request
@@ -123,23 +112,38 @@ class KlaviyoService
     request = {
         '$id': @lead.identifier,
         '$email': @lead.email,
-        '$first_name': @lead.profile.try(:first_name),
-        '$last_name': @lead.profile.try(:last_name),
-        '$phone_number': @lead.profile.try(:contact_phone),
-        '$title': @lead.profile.try(:job_title),
-        '$organization': @lead.profile.try(:title),
-        '$city': @lead.address.try(:city),
-        '$region': @lead.address.try(:state),
-        '$country': @lead.address.try(:country),
-        '$zip': @lead.address.try(:zip_code),
         '$image': "",
         '$consent': "",
         'status': @lead.status,
         'tag': @lead.lead_events.last.try(:tag),
-        'environment': ENV["RAILS_ENV"]
+        'environment': ENV["RAILS_ENV"],
+        'last_visited_page': @lead.last_visited_page,
+        'policy_type': @lead.last_event&.policy_type&.slug
     }
+    setup_profile!(request)
+    setup_address!(request)
     setup_agency!(request)
     request
+  end
+
+  def setup_address!(request)
+    if @lead.address.present?
+      request.merge!({'$city': @lead.address.try(:city),
+       '$region': @lead.address.try(:state),
+       '$country': @lead.address.try(:country),
+       '$zip': @lead.address.try(:zip_code)})
+    end
+  end
+
+  def setup_profile!(request)
+    if @lead.profile.present?
+      request.merge!({'$first_name': @lead.profile.try(:first_name),
+       '$last_name': @lead.profile.try(:last_name),
+       '$phone_number': @lead.profile.try(:contact_phone),
+       '$title': @lead.profile.try(:job_title),
+       '$organization': @lead.profile.try(:title)})
+    end
+
   end
 
   def setup_agency!(request)
@@ -162,14 +166,34 @@ class KlaviyoService
     end
   end
 
+  def page_set?(event_details)
+    event_details['last_visited_page'] || (event_details["data"] && event_details["data"]["last_visited_page"])
+  end
+
+  def map_last_visited_page(event_details)
+    default = @lead.last_event.policy_type.rent_guarantee? ? Lead::PAGES_RENT_GUARANTEE[0] : Lead::PAGES_RESIDENTIAL[0]
+    if event_details["data"].present? && @lead.page_further?(event_details["data"]["last_visited_page"])
+      event_details["data"]["last_visited_page"]
+    else
+      @lead.last_visited_page || default
+    end
+  end
+
   def map_last_visited_url(event_details)
-    return "https://www.getcoveredinsurance.com/rentguarantee" if event_details.blank?
-    if event_details['policy_type_id']==5
-      "https://www.getcoveredinsurance.com/rentguarantee"
+    return "" if event_details.blank?
+    branding_url = @lead.agency.branding_profiles.take.url
+    if @lead.last_event.policy_type&.rent_guarantee?
+      "https://#{branding_url}/rentguarantee"
+    elsif @lead.last_event.policy_type&.residential?
+      "https://#{branding_url}/residential"
     else
       #tbd for other forms
-      "https://www.getcoveredinsurance.com/rentguarantee"
+      ""
     end
+  end
+
+  def is_agency_updated?
+    @lead.lead_events.last.agency_id.present? && @lead.agency_id != @lead.lead_events.last.agency_id
   end
 
 end

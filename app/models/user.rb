@@ -11,6 +11,7 @@ class User < ApplicationRecord
   include RecordChange
   include DeviseTokenAuth::Concerns::User
   include ElasticsearchSearchable
+  include SessionRecordable
 
   # Active Record Callbacks
   after_initialize :initialize_user
@@ -244,6 +245,38 @@ class User < ApplicationRecord
         }
       }
     }
+  end
+  
+  def get_confie_general_party_info(for_insurable: nil)
+    {
+      NameInfo: {
+        PersonName: {
+          GivenName:  self.profile.first_name,
+          Surname:    self.profile.last_name
+        }
+      },
+      Communications: {
+        EmailInfo: {
+          EmailAddr: self.email,
+          DoNotContactInd: 0
+        }
+      }.merge(self.profile.contact_phone.blank? ? {} : {
+        PhoneInfo: {
+          PhoneNumber: (self.profile.contact_phone || '').tr('^0-9', ''),
+          PhoneTypeCd: "Phone"
+        }
+      }),
+      Addr: (
+        for_insurable.blank? ? (self.address.blank? ? nil : self.address.get_confie_addr(true, address_type: "MailingAddress"))
+        : [
+          for_insurable.primary_address.get_confie_addr(::InsurableType::RESIDENTIAL_UNITS_IDS.include?(for_insurable.insurable_type_id) ? "Unit #{for_insurable.title}" : true, address_type: "StreetAddress"),
+          self.address.blank? ?
+            for_insurable.primary_address.get_confie_addr(::InsurableType::RESIDENTIAL_UNITS_IDS.include?(for_insurable.insurable_type_id) ? "Unit #{for_insurable.title}" : true, address_type: "MailingAddress")
+            : self.address.get_confie_addr(true, address_type: "MailingAddress")
+          
+        ]
+      )
+    }.compact
   end
   
   def get_deposit_choice_occupant_hash(primary: false)
