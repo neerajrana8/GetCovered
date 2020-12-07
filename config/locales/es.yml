@@ -1,0 +1,203 @@
+# Files in the config/locales directory are used for internationalization
+# and are automatically loaded by Rails. If you want to use locales other
+# than English, add the necessary files in this directory.
+#
+# To use the locales, use `I18n.t`:
+#
+#     I18n.t 'hello'
+#
+# In views, this is aliased to just `t`:
+#
+#     <%= t('hello') %>
+#
+# To use a different locale, set it with `I18n.locale`:
+#
+#     I18n.locale = :es
+#
+# This would use the information in config/locales/es.yml.
+#
+# The following keys must be escaped otherwise they will not be retrieved by
+# the default I18n backend:
+#
+# true, false, on, off, yes, no
+#
+# Instead, surround them with single quotes.
+#
+# en:
+#   'true': 'foo'
+#
+# To learn more, please read the Rails Internationalization guide
+# available at http://guides.rubyonrails.org/i18n.html.
+
+es:
+  hello: "Hello world"
+
+  devise_token_auth:
+    sessions:
+      not_confirmed: "Your account is deactivated"
+  policy_application_contr:
+    show:
+      policy_application_not_found: "La aplicación de política no se encuentra o ya no está disponible"
+    new:
+      unit_not_found: "Unidad no encontrada"
+      invalid_unit: "Unidad inválida"
+      invalid_policy_type: "Tipo de póliza no válido"
+    create:
+      invalid_auth_key: "Clave de autenticación no válida"
+    rentguarantee_complete:
+      inistructions_were_sent: "Se enviaron instrucciones"
+    validate_policy_users_params:
+      bad_arguments: "No puede utilizar los mismos correos electrónicos para los solicitantes de políticas"
+    create_security_deposit_replacement:
+      policy_application_unavailable: "La aplicación no se puede cotizar en este momento"
+      quote_failed: "La cotización no se pudo procesar en este momento"
+    get_coverage_options:
+      invalid_combination: "Combinación de carrier_id / policy_type_id no válida"
+    deposit_choice_get_coverage_options:
+      insurable_id_cannot_be_blank: "insurable_id no puede estar en blanco"
+      effective_date_cannot_be_blank: "Effective_date no puede estar en blanco"
+      no_security_deposit_replacement: "No hay planes de reemplazo de depósito de seguridad disponibles para esta propiedad (código de error"
+    msi_get_coverage_options:
+      coverage_selections_must_be_array: "Cobertura_selecciones debe ser un conjunto de selecciones de cobertura."
+      must_include_category_and_uid: "todas las entradas de las selecciones de cobertura deben incluir una categoría y un uid"
+      agency_cannot_be_blank: "agency_id no puede estar en blanco"
+      effective_date_must_be_valid_date: "Effective_date debe ser una fecha válida"
+      additional_insured_cannot_be_blank: "additional_insured no puede dejarse en blanco"
+      billing_strategy_id_cannot_be_blank: "billing_strategy_id no puede estar en blanco"
+      community_not_found: "comunidad no encontrada"
+      billing_strategy_must_belong_to_carrier: "La estrategia de facturación debe pertenecer al operador, la agencia y el tipo de política HO4 correctos."
+    validate_applicants:
+      must_have_only_one_primary_user: "Los parámetros deben tener un solo usuario principal"
+      already_signup_with_this_email: "Un usuario ya se ha registrado con esta dirección de correo electrónico. Inicie sesión para completar su solicitud"
+    update_users:
+      cant_unbound_policy_user: "No se puede desvincular al usuario de la política"
+      cant_update_policy_user: "No se puede actualizar el usuario de la política"
+      cant_add_policy_user: "No puedo agregar el usuario de la política"
+      cant_update_user: "No se puede actualizar el usuario"
+      cant_create_user: "No se puede crear un usuario"
+      cant_update_address: "No se puede actualizar la dirección"
+  policy_app_model:
+    billing_strategy_must_belong: "la estrategia de facturación debe pertenecer a la misma agencia"
+    billing_strategy_must_be_valid: "debe ser una estrategia de facturación válida para el operador actual"
+    billing_strategy_must_be_enabled: "la estrategia de facturación debe estar habilitada"
+    carrier_agency_must_exist: "la agencia de transporte debe existir"
+    is_not_available_for_this_carrier: "no está disponible para esta combinación de operador / agencia"
+    cannot_be_true_with_liability_limit: "no puede ser cierto con un límite de responsabilidad de $ 300,000"
+    cannot_be_greater_than: "no puede ser mayor que 0 para recibir cobertura"
+    cannot_be_true: "no puede ser 'verdadero' para recibir cobertura"
+    expiration_date_cannot_be_before_effective: "la fecha de vencimiento no puede ser anterior a la fecha de vigencia."
+    pensio:
+      policy_quote_failed_to_return: "La cotización de la política no se devolvió"
+      application_unavailable: "Aplicación no disponible para cotizar"
+    crum:
+      event_failed: "No se pudo guardar el evento"
+    qbe:
+      rates_cannot_be_nil: "Las 'tasas' de argumento no pueden ser nulas"
+      rates_must_be_array: "El argumento 'tarifas' debe ser una matriz"
+      quote_id_cannot_be_nil: "El argumento 'quote_id' no puede ser nulo"
+  agency_model:
+    parent_id_incorrect: "Identificación de padre incorrecta"
+    agency_cannot_be_updated: "La agencia no se puede actualizar a sub-agencia"
+  policy_model:
+    cannot_update: "No se puede actualizar en la política del sistema"
+    account_must_be_specified: "Se debe especificar la cuenta"
+    carrier_agency_must_exist: "la agencia de transporte debe existir"
+    must_belong_to_coverage: "debe pertenecer a la cobertura de la póliza BOUND"
+    must_have_paid_invoice: "debe tener al menos una factura pagada para cambiar el estado"
+    no_policy_issue_for_qbe: "No hay problema de política para QBE Specialty"
+    error_with_policy: "Se produjo un error con el problema de la política"
+    cancellation_reason_invalid: "El motivo de la cancelación no es válido"
+    policy_is_already_cancelled: "La política ya está cancelada"
+    document_wrong_format: "El formato del documento es incorrecto, solo: PDF, DOC, DOCX, XLSX, XLS, CSV, JPG, JPEG, PNG, GIF, SVG, TXT"
+  billing_strategy_model:
+    must_be_assigned_to_carrier: "debe asignarse al transportista:"
+  policy_user_model:
+    must_indicate_removal: "Debe indicar si es necesario retirarlo"
+    email_must_be_present: "El correo electrónico debe estar presente para verificar la aceptación"
+    already_included_on_policy: "Ya incluido en la política o la aplicación de la política"
+  insurable_type_model:
+    cannot_be_blank: "no puede estar en blanco"
+  address_model:
+    is_not_a_valid_state: "no es un estado válido"
+    must_be_valid_address: "no se pudo analizar; debe ser una dirección válida"
+    is_invalid: "no es válido"
+  carrier_insurable_type_model:
+    cannot_be_null: "no puede ser nulo"
+  insurable_model:
+    must_belong_to_same_account: "debe pertenecer a la misma cuenta que el padre"
+    either_address_must_be_provided: "se debe proporcionar 'dirección' o 'insurable_id' y una cadena 'unidad'"
+    building_doesnot_exist: "El ID de comunidad o edificio residencial solicitado no existe"
+    unit_doesnot_exist: "La unidad solicitada no existe"
+    unable_create_unit: "No se pudo crear la unidad"
+    invalid_address: "Dirección inválida"
+    invalid_address_value: "Valor de dirección no válido"
+    unable_deduce_unit: "No se puede deducir el título de la unidad de la dirección"
+    not_standart_format: "no es un formato estándar (por ejemplo, 'Apartamento n. ° 2, Unidad 3, n. ° 5, etc.)"
+    request_residential_build_not_exist: "El ID de comunidad o edificio residencial solicitado no existe"
+    unable_create_community_from_address: "No se pudo crear una comunidad desde la dirección"
+    parent_community_not_exist: "La comunidad de padres solicitada no existe"
+    parent_community_not_the_same: "La comunidad de padres solicitada no se encuentra en el mismo estado / código postal / ciudad"
+    unable_to_create_from_address: "No se pudo crear una comunidad desde la dirección"
+    unable_to_create_building_from_address: "No se puede crear el edificio desde la dirección"
+    internal_error_occured: "Se produjo un error interno"
+    should_be_uniq_inside_group: "debe ser uniq dentro del grupo"
+  policy_quote_model:
+    no_policy_for_qbe: "No policy bind for QBE Specialty"
+    error_with_policy_bund: "Error happened with policy bind"
+    quote_ineligible: "Quote ineligible for acceptance"
+    quote_billing_failed: "Quote billing failed, unable to write policy"
+    unable_to_bind_policy: "Unable to bind policy"
+    rent_guarantee_has_been_accepted: "Rental Guarantee has been accepted.  Please check your email for more information."
+    policy_has_been:accepted: "Policy has been accepted.  Please check your email for more information."
+    error_attaching_policy: "Error attaching policy to system"
+    unable_to_save_policy: "Unable to save policy in system"
+    no_build_coverages_for_qbe: "No build coverages for QBE Specialty"
+    no_build_coverages_for_crum: 'No build coverages for Crum'
+    no_build_coverages_for_pensio: 'No build coverages for Pensio'
+    error_with_build_coverages: 'Error happened with build coverages'
+    policy_bind_warning_notification_job:
+      get_covered_bind_warning: "Get Covered Bind Warning"
+      qbe_bind_failure: "QBE Bind Failure"
+      carrier_must_be_qbe: "Carrier must be QBE to bind residential quote"
+      status_must_be_quoted_or_error: "Status must be quoted or error to bind quote"
+    crum_policy_quote:
+      quote_documents_recieved: "Quote documents recieved"
+      quote_inneligable_to_download: "Quote inneligable to download documents"
+    msi_policy_quote:
+      invalid_payment_data: "Invalid payment data for binding policy"
+      failed_to_build_bind_request: "Failed to build bind request"
+      msi_bind_failure: "MSI bind failure (Event ID:"
+      msi_error: "MSI Error:"
+    dc_policy_quote:
+      security_deposit_replacement: "Security Deposit Replacement Bond"
+      carrier_must_be_deposit_choice: "Carrier must be Deposit Choice to bind security deposit replacement quote"
+      bond_creation_failed: "Bond Creation Failed: Deposit Choice service rejected user information"
+      deposit_choise_bind_failure: "Deposit Choice bind failure (Event ID:"
+    invoiceable_quote:
+      error_during_invoice_generation: "encountered an error during invoice generation"
+      error_during_invoice_creation: "encountered an error during invoice creation"
+    policy_quote_controller:
+      quote_unavailable_update: "Quote Unavailable for Update"
+      unable_to_update_quote: "We are unable to update this quote due to it already being accepted or not meeting the policy type requirements."
+      not_applicable: "Not applicable"
+      external_payment_not_applicable: "External payment authorization is not applicable to this policy quote"
+      system_error: 'System error'
+      remote system_failed: "Remote system failed to provide authorization"
+      invalid_payment_method: 'Invalid payment method'
+      ach_support_not_applicable: 'ACH support not applicable'
+      payment_method_must_be_card: "Payment method must be 'card' or 'ach'; received"
+      policy_quote_not_found: "Policy Quote could not be found."
+      user_could_not_be_found: "User  could not be found."
+      invalid_payment_info: "Invalid Payment Information"
+      could_not_be_accepted: "Could Not Be Accepted"
+      accepted: "Accepted"
+      failure: 'Failure'
+      payment_token_cannot_be_blank: "payment token cannot be blank"
+      valid_payment_method_must_supplied: "a valid payment method must be supplied"
+      credit_card_info_cannot_be_blank: "Credit Card Info cannot be blank"
+      address_line_1: "Address Line 1"
+      city: "City"
+      state: "State"
+      postel_code: "Postal Code"
+      state_must_be_valid_us: "State must be a valid US state abbreviation"
+      postal_code_must_be_valid: "Postal code must be a valid zip code"

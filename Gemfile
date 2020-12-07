@@ -120,6 +120,8 @@ gem 'minuteman'
 gem 'rack-attack'
 gem 'dry-monads'
 
+gem 'rails-i18n', '~> 5.1'
+
 group :development, :test, :test_container do
   # Call 'byebug' anywhere in the code to stop execution and get a debugger console
   gem 'byebug', platforms: %i[mri mingw x64_mingw]
@@ -149,7 +151,7 @@ group :development do
   gem 'guard'
   gem 'guard-shell'
   #rubymine specific debug gems
-  #gem 'ruby-debug-ide'
+  #gem 'ruby-debug-ide' #, '0.7.0'
   #gem 'debase' , '0.2.4'
   #gem 'web-console'
 end
