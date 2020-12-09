@@ -15,6 +15,20 @@ class AccessToken < ApplicationRecord
                     
   belongs_to :bearer, 
              polymorphic: true
+             
+  enum access_type: {
+    agency_integration: 0,
+    carrier_integration: 1,
+    user_document_signature: 2
+  }
+  
+  self.from_urlparam(par)
+    AccessToken.where(key: par).take
+  end
+  
+  def to_urlparam
+    "#{key}" # we just ignore the secret_salt and secret_hash in this case, for now
+  end
   
   def check_secret(public_secret)
     public_secret.to_s.crypt(secret_salt) == secret_hash && enabled?

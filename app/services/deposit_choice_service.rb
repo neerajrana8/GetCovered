@@ -12,6 +12,10 @@ class DepositChoiceService
   def self.carrier_id
     6
   end
+  
+  def self.unsigned_document_filename
+    'unsigned_bond_certificate.pdf'
+  end
 
   ENDPOINT_DICTIONARY = {
     address: 'Address',

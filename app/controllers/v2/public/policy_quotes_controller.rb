@@ -180,6 +180,7 @@ module V2
               # bind
 				    	@quote_attempt = @policy_quote.accept(bind_params: bind_params)
 				    	@policy_type_identifier = { 5 => "Rental Guarantee", 6 => "Security Deposit Replacement Bond" }[@policy_quote.policy_application.policy_type_id] || "Policy"
+              @signature_access_token = nil
 							if @quote_attempt[:success]
                 insurable = @policy_quote.policy_application.policy&.primary_insurable
                 Insurables::UpdateCoveredStatus.run!(insurable: insurable) if insurable.present? # MOOSE WARNING: shouldn't we only be running this on ho4? or, really, shouldn't this entire system be overhauled since it's from the QBE-only days?
@@ -190,13 +191,27 @@ module V2
                   properties: { category: 'Orders' }
                 )
                 invite_primary_user(@policy_quote.policy_application)
+                
+                if @policy_quote.policy_application.carrier_id == DepositChoiceService.carrier_id
+                  @signature_access_token = @policy_quote.policy_application.policy.create_document_signature_access_token(
+                    filename: DepositChoiceService.unsigned_document_filename
+                  )
+                end
               end
+              unless @quote_attempt[:success]
+                render json: {
+                    error: "#{@policy_type_identifier} Could Not Be Accepted",
+                    message: @quote_attempt[:message],
+                    password_filled: @user.encrypted_password.present?
+                  }.compact, status: 500
+                return
+              end
+              
               render json: {
-                error: ("#{@policy_type_identifier} Could Not Be Accepted" unless @quote_attempt[:success]),
-                message: ("#{@policy_type_identifier} Accepted. " if @quote_attempt[:success]).to_s + @quote_attempt[:message],
-                password_filled: @user.encrypted_password.present?
-              }.compact, status: @quote_attempt[:success] ? 200 : 500
- 
+                  message: "#{@policy_type_identifier} Accepted. #{@quote_attempt[:message]}",
+                  password_filled: @user.encrypted_password.present?,
+                  signature_access_token: @signature_access_token&.to_urlparam
+                }.compact, status: 200
             else
               render json: { error: 'Failure', message: result.errors.full_messages.join(' and ') }.to_json, status: 422
              end

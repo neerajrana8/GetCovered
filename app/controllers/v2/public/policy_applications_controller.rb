@@ -795,6 +795,7 @@ module V2
         unless key.nil? || secret.nil?
           @access_token = AccessToken.find_by_key(key)
           if !@access_token.nil? &&
+            @access_token.access_type == 'agency_integration' &&
             @access_token.check_secret(secret)
             pass = true
           end

@@ -392,6 +392,27 @@ class Policy < ApplicationRecord
     raw_days = (self.created_at.to_date + max_days_for_full_refund - Time.zone.now.to_date).to_i
     raw_days.negative? ? 0 : raw_days
   end
+  
+  def create_document_signature_access_token(filename: nil, attachment_id: nil, user: nil)
+    # get the attachment
+    attachment = nil
+    if filename.nil? && attachment_id.nil?
+      raise ArgumentError.new("either 'filename' or 'attachment_id' parameter must be provided")
+    elsif !attachment_id.nil?
+      attachment = self.documents.where(id: attachment_id).take
+    elsif !filename.nil?
+      attachment = self.documents.includes(:blob).references(:blob).where(active_storage_blobs: { filename: filename }).take
+    end
+    # get the default user
+    user = self.primary_user if user.nil?
+    # flee on failure
+    return nil if attachment.nil? || user.nil?
+    # create the access token
+    returnAccessToken.create(bearer: user, access_type: 'user_document_signature', access_data: {
+      'policy_id' => self.id,
+      'document_id' => attachment.id
+    })
+  end
 
   def run_postbind_hooks # do not remove this; concerns add functionality to it by overriding it and calling super
     super if defined?(super)
@@ -399,27 +420,27 @@ class Policy < ApplicationRecord
 
   private
 
-  def notify_the_idiots
-    # this method is a critical joke.  touch it at your own expense - dylan.
-    the_idiots = ["brandon@getcoveredllc.com", "dylan@getcoveredllc.com", "ryan@getcoveredllc.com"]
-    their_message = "Bray out!  a policy hath been sold.  'i  this message thou shall find details that might be of interest.\n\nname: #{primary_user.profile.full_name}\nagency: #{agency.title}\npolicy type: #{policy_type.title}\npremium: $#{ sprintf "%.2f", @policy.policy_premiums.first.total.to_f / 100 }"
-    ActionMailer::Base.mail(from: 'purchase-notifier@getcoveredinsurance.com', to: the_idiots, subject: "A Policy has Sold!", body: their_message).deliver
-  end
+    def notify_the_idiots
+      # this method is a critical joke.  touch it at your own expense - dylan.
+      the_idiots = ["brandon@getcoveredllc.com", "dylan@getcoveredllc.com", "ryan@getcoveredllc.com"]
+      their_message = "Bray out!  a policy hath been sold.  'i  this message thou shall find details that might be of interest.\n\nname: #{primary_user.profile.full_name}\nagency: #{agency.title}\npolicy type: #{policy_type.title}\npremium: $#{ sprintf "%.2f", @policy.policy_premiums.first.total.to_f / 100 }"
+      ActionMailer::Base.mail(from: 'purchase-notifier@getcoveredinsurance.com', to: the_idiots, subject: "A Policy has Sold!", body: their_message).deliver
+    end
 
-  def date_order
-    errors.add(:expiration_date, 'expiration date cannot be before effective date.') if expiration_date < effective_date
-  end
+    def date_order
+      errors.add(:expiration_date, 'expiration date cannot be before effective date.') if expiration_date < effective_date
+    end
 
-  def correct_document_mime_type
-    documents.each do |document|
-      if !document.blob.content_type.starts_with?('image/png', 'image/jpeg', 'image/jpg', 'image/svg',
-        'image/gif', 'application/pdf', 'text/plain', 'application/msword',
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        'text/comma-separated-values', 'application/vnd.ms-excel'
-        )
-        errors.add(:documents, 'The document wrong format, only: PDF, DOC, DOCX, XLSX, XLS, CSV, JPG, JPEG, PNG, GIF, SVG, TXT')
+    def correct_document_mime_type
+      documents.each do |document|
+        if !document.blob.content_type.starts_with?('image/png', 'image/jpeg', 'image/jpg', 'image/svg',
+          'image/gif', 'application/pdf', 'text/plain', 'application/msword',
+          'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          'text/comma-separated-values', 'application/vnd.ms-excel'
+          )
+          errors.add(:documents, 'The document wrong format, only: PDF, DOC, DOCX, XLSX, XLS, CSV, JPG, JPEG, PNG, GIF, SVG, TXT')
+        end
       end
     end
-  end
 end

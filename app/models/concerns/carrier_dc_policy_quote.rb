@@ -116,7 +116,7 @@ module CarrierDcPolicyQuote
       end
       # save the bond certificate
       io = StringIO.new(Base64.decode64(result[:data]["bondCertificate"]))
-      attached = self.documents.attach(io: io, filename: 'unsigned_bond_certificate.pdf', content_type: 'application/pdf')
+      attached = self.documents.attach(io: io, filename: DepositChoiceService.unsigned_document_filename, content_type: 'application/pdf')
       # handle successful bind
       @bind_response[:error] = false
       @bind_response[:data][:status] = "SUCCESS"
