@@ -1,0 +1,51 @@
+es:
+  devise:
+    failure:
+      invited: "Tienes una invitación pendiente, acéptala para acabar de crear tu cuenta."
+    invitations:
+      send_instructions: "Se ha enviado una invitación a %{email}."
+      invitation_token_invalid: "¡La invitación no es válida!"
+      updated: "Se ha configurado su contraseña y ha ingresado al sistema"
+      updated_not_active: "Su contraseña se ha configurado correctamente."
+      no_invitations_remaining: "No quedan invitaciones"
+      invitation_removed: "Se ha retirado su invitación"
+      new:
+        header: "Enviar Invitación"
+        submit_button: "Envía una invitación"
+      edit:
+        header: "Establecer contraseña"
+        submit_button: "Guardar mi contraseña"
+    mailer:
+      shared:
+        hi_there: "Estimada/o  %{name}"
+        help_center: "Centro de ayuda"
+        this_page: "esta página"
+        thank_you: "Gracias"
+      invitation_instructions:
+        subject: "Instruciones de la invitación"
+        title: "Get Covered | Invitación"
+        hello: "Estimada/o %{email}"
+        someone_invited_you: "Has sido invitado a %{url}, puedes aceptarlo siguiendo el siguiente enlace"
+        accept: "Aceptar la invitación"
+        accept_until: "Esta invitación expirará en %{due_date}."
+        ignore: "Si no le interesa esta invitación, simplemente ignore este correo. No se creará tu cuenta hasta que accedas al enlace anterior y crees una contraseña."
+      product_invitation_instruction:
+        subject: "Termine de registrar su cuenta de %{agency_title} - %{policy_type_title}"
+        header: "Invitación a pagar"
+        hi: "Hola %{name}"
+        text_html: "Gracias por registrarse para una política de %{policy_type_title}. Visite %{href} para terminar de configurar su cuenta. Podrá realizar un seguimiento de los próximos pagos junto con la presentación de un reclamo a través de nuestro portal"
+      reset_password_instructions:
+        title: "Get Covered | Password Reset"
+        preheader: "Someone has requested a link to change your password. You can do this through the link below."
+        someone_requested: "Someone has requested a link to change your password. You can do this through the link below."
+        reset_password: "Reset password"
+        ignore_email: "If you didn't request this, please ignore this email."
+        info: "Your password won't change until you access the link above and create a new one."
+
+
+  time:
+    formats:
+      devise:
+        mailer:
+          invitation_instructions:
+            accept_until_format: "%B %d, %Y %I:%M %p"
