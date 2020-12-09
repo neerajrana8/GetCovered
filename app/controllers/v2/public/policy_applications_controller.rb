@@ -487,6 +487,16 @@ module V2
           # try to update
           @policy_application.assign_attributes(update_residential_params)
           @policy_application.expiration_date = @policy_application.effective_date&.send(:+, 1.year)
+          # remove duplicate pis
+          @replacement_policy_insurables = nil
+          @policy_application.policy_insurables = pa.policy_insurables.to_a
+          saved_pis = @policy_application.policy_insurables.select{|pi| pi.id }
+          @policy_application.policy_insurables.select!{|pi| pi.id || (pi.insurable_id && saved_pis.find{|spi| spi.insurable_id == pi.insurable_id }.nil?) }
+          unsaved_pis = @policy_application.policy_insurables.select{|pi| pi.id.nil? }.uniq{|pi| pi.insurable_id }
+          unless unsaved_pis.blank?
+            unsaved_pis.first.primary = true if unsaved_pis.find{|pi| pi.primary }.nil?
+            @replacement_policy_insurables = unsaved_pis
+          end
           # fix coverage options if needed
           unless @policy_application.coverage_selections.blank?
             @policy_application.coverage_selections.each do |cs|
@@ -516,7 +526,16 @@ module V2
             render json: update_users_result.failure,
               status: 422
           else
+            @policy_insurables_to_restore = nil
+            unless @replacement_policy_insurables.blank?
+              @policy_insurables_to_restore = @policy_application.policy_insurables.select{|pi| pi.id }
+              @policy_application.policy_insurables.clear
+            end
             if !@policy_application.save
+              unless @policy_insurables_to_restore.blank?
+                @policy_application.policy_insurables.clear
+                @policy_insurables_to_restore.update_all(policy_application_id: @policy_application.id)
+              end
               render json: standard_error(:policy_application_save_error, nil, @policy_application.errors),
                      status: 422
             else
