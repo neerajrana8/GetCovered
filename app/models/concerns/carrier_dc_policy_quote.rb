@@ -9,9 +9,9 @@ module CarrierDcPolicyQuote
     def set_dc_external_reference
       return_status = true # MOOSE WARNING: change it?
     end
-    
+
     # DC build coverages
-    
+
     def dc_build_coverages
       self.policy.policy_coverages.create(
         policy_application: self.policy_application,
@@ -22,7 +22,7 @@ module CarrierDcPolicyQuote
         enabled: true
       )
     end
-    
+
     # DC Bind
 
     # payment_params should be a hash of form:
@@ -33,15 +33,15 @@ module CarrierDcPolicyQuote
       @bind_response = {
         :error => true,
         :message => nil,
-        :data => {}  
+        :data => {}
       }
       # handle common failure scenarios
       unless policy_application.carrier_id == DepositChoiceService.carrier_id
-        @bind_response[:message] = "Carrier must be Deposit Choice to bind security deposit replacement quote"
+        @bind_response[:message] = I18n.t('dc_policy_quote.carrier_must_be_deposit_choice')
         return @bind_response
       end
 		 	unless accepted? && policy.nil?
-		 		@bind_response[:message] = "Status must be quoted or error to bind quote"
+		 		@bind_response[:message] = I18n.t('qbe_policy_quote.status_must_be_quoted_or_error')
         return @bind_response
 		 	end
       # get useful variables
@@ -73,7 +73,7 @@ module CarrierDcPolicyQuote
       event.save
       # make sure we succeeded
       if result[:error] || result[:data]["insuredId"].blank?
-		 		@bind_response[:message] = "Bond Creation Failed: Deposit Choice service rejected user information"
+		 		@bind_response[:message] = I18n.t('dc_policy_quote.bond_creation_failed')
         return @bind_response
       end
       # grab variables
@@ -93,7 +93,7 @@ module CarrierDcPolicyQuote
         processing_fee: (policy_application.coverage_selections["processingFee"].to_d / 100.to_d).to_s
       )
       if !result
-        @bind_response[:message] = "Failed to build bind request (#{dcs.errors.to_s})"
+        @bind_response[:message] = "#{I18n.t('msi_policy_quote.failed_to_build_bind_request')} (#{dcs.errors.to_s})"
         return @bind_response
       end
       event = events.new(
@@ -111,7 +111,7 @@ module CarrierDcPolicyQuote
       event.status = result[:error] ? 'error' : 'success'
       event.save
       if result[:error]
-        @bind_response[:message] = "Deposit Choice bind failure (Event ID: #{event.id || event.errors.to_h})\nMSI Error: #{result[:external_message]}\n#{result[:extended_external_message]}"
+        @bind_response[:message] = "#{I18n.t('dc_policy_quote.deposit_choise_bind_failure')} #{event.id || event.errors.to_h})\n#{I18n.t('msi_policy_quote.msi_error')} #{result[:external_message]}\n#{result[:extended_external_message]}"
         return @bind_response
       end
       # handle successful bind
@@ -122,6 +122,6 @@ module CarrierDcPolicyQuote
       return @bind_response
       return @bind_response
     end
-    
+
   end
 end
