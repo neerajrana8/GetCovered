@@ -18,7 +18,7 @@ module V2
         end
         if @policy_application.carrier_id == MsiService.carrier_id
           @policy_application.coverage_selections.each do |cs|
-            if Float(cs['selection']) rescue false
+            if (Float(cs['selection']) rescue false)
               cs['selection'] = { 'data_type' => 'currency', 'selection' => (cs['selection'].to_d * 100.to_d).to_i }
             end
           end
