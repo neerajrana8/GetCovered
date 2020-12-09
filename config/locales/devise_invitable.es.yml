@@ -17,23 +17,23 @@ es:
         submit_button: "Guardar mi contraseña"
     mailer:
       shared:
-        hi_there: "Estimada/o  %{name}"
+        hi_there: "Hola, %{name}"
         help_center: "Centro de ayuda"
         this_page: "esta página"
         thank_you: "Gracias"
       invitation_instructions:
         subject: "Instruciones de la invitación"
-        title: "Get Covered | Invitación"
-        hello: "Estimada/o %{email}"
-        someone_invited_you: "Has sido invitado a %{url}, puedes aceptarlo siguiendo el siguiente enlace"
+        title: "Obtenga cobertura | Invitación"
+        hello: "Hola %{email}"
+        someone_invited_you: "Ha sido invitado a %{url}, puede aceptarlo a través del enlace a continuación."
         accept: "Aceptar la invitación"
-        accept_until: "Esta invitación expirará en %{due_date}."
-        ignore: "Si no le interesa esta invitación, simplemente ignore este correo. No se creará tu cuenta hasta que accedas al enlace anterior y crees una contraseña."
+        accept_until: "Esta invitación vence el %{due_date}."
+        ignore: "Si no desea aceptar la invitación, ignore este correo electrónico. Su cuenta no se creará hasta que acceda al enlace anterior y configure su contraseña."
       product_invitation_instruction:
         subject: "Termine de registrar su cuenta de %{agency_title} - %{policy_type_title}"
         header: "Invitación a pagar"
         hi: "Hola %{name}"
-        text_html: "Gracias por registrarse para una política de %{policy_type_title}. Visite %{href} para terminar de configurar su cuenta. Podrá realizar un seguimiento de los próximos pagos junto con la presentación de un reclamo a través de nuestro portal"
+        text_html: "Gracias por registrarse en una política de %{policy_type_title}. Visite %{link} para terminar de configurar su cuenta. Podrá realizar un seguimiento de los próximos pagos junto con la presentación de un reclamo a través de nuestro portal."
       reset_password_instructions:
         title: "Get Covered | Password Reset"
         preheader: "Someone has requested a link to change your password. You can do this through the link below."
