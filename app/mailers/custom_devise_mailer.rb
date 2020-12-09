@@ -1,11 +1,8 @@
 class CustomDeviseMailer < Devise::Mailer
   helper MailerHelper
-  before_action do
-    I18n.locale = @resource.profile&.language || I18n.default_locale
-    ap @resource
-  end
 
   def invitation_instructions(record, token, opts = {})
+    set_locale(record)
     if opts[:policy_application].present?
       @policy_application = opts[:policy_application]
       client_host = headers['client_host'] || Rails.application.credentials.uri[ENV["RAILS_ENV"].to_sym][:client]
@@ -18,5 +15,16 @@ class CustomDeviseMailer < Devise::Mailer
     end
 
     super
+  end
+
+  def reset_password_instructions(record, token, opts={})
+    set_locale(record)
+    super
+  end
+
+  private
+
+  def set_locale(record)
+    I18n.locale = record&.profile&.language if record&.profile&.language&.present?
   end
 end
