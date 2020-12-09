@@ -22,7 +22,7 @@ module V2
               cs['selection'] = { 'data_type' => 'currency', 'value' => (cs['selection'].to_d * 100.to_d).to_i }
             end
           end
-          @policy_application.coverage_selections.select!{|cs| cs['uid'] != '1010' }
+          @policy_application.coverage_selections = @policy_application.coverage_selections.select{|cs| cs['uid'] != '1010' && cs['uid'] != 1010 }
         end
       end
 
