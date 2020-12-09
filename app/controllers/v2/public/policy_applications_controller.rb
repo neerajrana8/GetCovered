@@ -16,6 +16,13 @@ module V2
                  status: 404
           return
         end
+        if @policy_application.carrier_id == MsiService.carrier_id
+          @policy_application.coverage_selections.each do |cs|
+            if Float(cs['selection']) rescue false
+              cs['selection'] = { 'data_type' => 'currency', 'selection' => (cs['selection'].to_d * 100.to_d).to_i }
+            end
+          end
+        end
       end
 
       def new
@@ -392,6 +399,7 @@ module V2
               cs[:selection] = cs[:selection][:value]
             end
           end
+          @application.coverage_selections.select!{|cs| cs['selection'] || cs[:selection] }
           @application.coverage_selections.push({ 'category' => 'coverage', 'options_type' => 'none', 'uid' => '1010', 'selection' => true }) unless @application.coverage_selections.any?{|co| co['uid'] == '1010' }
         end
 
