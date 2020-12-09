@@ -836,7 +836,7 @@ module V2
       end
 
       def set_policy_application
-        puts "SET POLICY APPLICATION RUNNING ID: #{params[:id]}"
+        #puts "SET POLICY APPLICATION RUNNING ID: #{params[:id]}"
         @application = @policy_application = access_model(::PolicyApplication, params[:id])
       end
 
