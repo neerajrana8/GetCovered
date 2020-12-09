@@ -26,6 +26,7 @@ module V2
         end
         # return the document
         ## MOOSE WARNING: render something!!!
+        redirect_to document.service_url
       end
       
       

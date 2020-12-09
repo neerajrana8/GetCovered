@@ -22,7 +22,7 @@ class AccessToken < ApplicationRecord
     user_document_signature: 2
   }
   
-  self.from_urlparam(par)
+  def self.from_urlparam(par)
     AccessToken.where(key: par).take
   end
   

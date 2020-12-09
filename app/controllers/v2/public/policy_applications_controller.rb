@@ -198,6 +198,7 @@ module V2
               @application.policy_insurables.first.primary = true
               @application.resolver_info["insurable_id"] = unit.id
               @application.resolver_info["parent_insurable_id"] = unit.insurable_id
+              @application.resolver_info["unit_title"] = unit.title
             else
               parent = ::Insurable.get_or_create(address: address_string, unit: false, ignore_street_two: true)
               if parent.class == ::Insurable

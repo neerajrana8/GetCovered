@@ -81,6 +81,19 @@ scope module: :public do
         as: :external_payment_auth
 		end
 	end
+  
+  resources :policies,
+    path: "policies",
+    only: [] do
+    collection do
+      get '/get-unsigned-document/:token',
+        to: 'policies#get_unsigned_document',
+        as: :get_unsigned_document
+      post '/sign-document/:token',
+        to: 'policies#sign_document',
+        as: :sign_document
+    end
+  end
 
   post 'users/check_email', to: '/v2/check_email#user'
   post 'staffs/check_email', to: '/v2/check_email#staff'

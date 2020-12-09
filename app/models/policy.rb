@@ -408,7 +408,7 @@ class Policy < ApplicationRecord
     # flee on failure
     return nil if attachment.nil? || user.nil?
     # create the access token
-    returnAccessToken.create(bearer: user, access_type: 'user_document_signature', access_data: {
+    return AccessToken.create(bearer: user, access_type: 'user_document_signature', access_data: {
       'policy_id' => self.id,
       'document_id' => attachment.id
     })
