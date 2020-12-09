@@ -11,8 +11,7 @@ module V2
       before_action :validate_policy_users_params, only: %i[create update]
 
       def show
-        unless %w[started in_progress
-              abandoned more_required].include?(@policy_application.status)
+        if @policy_application.status == 'accepted'
           render json:   standard_error(:policy_application_not_found, 'Policy Application is not found or no longer available'),
                  status: 404
           return
@@ -198,6 +197,7 @@ module V2
               @application.policy_insurables.first.primary = true
               @application.resolver_info["insurable_id"] = unit.id
               @application.resolver_info["parent_insurable_id"] = unit.insurable_id
+              @application.resolver_info["unit_title"] = unit.title
             else
               parent = ::Insurable.get_or_create(address: address_string, unit: false, ignore_street_two: true)
               if parent.class == ::Insurable
