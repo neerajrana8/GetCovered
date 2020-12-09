@@ -489,7 +489,7 @@ module V2
           @policy_application.expiration_date = @policy_application.effective_date&.send(:+, 1.year)
           # remove duplicate pis
           @replacement_policy_insurables = nil
-          @policy_application.policy_insurables = pa.policy_insurables.to_a
+          @policy_application.policy_insurables = @policy_application.policy_insurables.to_a
           saved_pis = @policy_application.policy_insurables.select{|pi| pi.id }
           @policy_application.policy_insurables.select!{|pi| pi.id || (pi.insurable_id && saved_pis.find{|spi| spi.insurable_id == pi.insurable_id }.nil?) }
           unsaved_pis = @policy_application.policy_insurables.select{|pi| pi.id.nil? }.uniq{|pi| pi.insurable_id }
