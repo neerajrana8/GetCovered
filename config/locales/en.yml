@@ -148,7 +148,7 @@ en:
     quote_billing_failed: "Quote billing failed, unable to write policy"
     unable_to_bind_policy: "Unable to bind policy"
     rent_guarantee_has_been_accepted: "Rental Guarantee has been accepted.  Please check your email for more information."
-    policy_has_been:accepted: "Policy has been accepted.  Please check your email for more information."
+    policy_has_been_accepted: "Policy has been accepted.  Please check your email for more information."
     error_attaching_policy: "Error attaching policy to system"
     unable_to_save_policy: "Unable to save policy in system"
     no_build_coverages_for_qbe: "No build coverages for QBE Specialty"
@@ -157,6 +157,7 @@ en:
     error_with_build_coverages: 'Error happened with build coverages'
   policy_bind_warning_notification_job:
     get_covered_bind_warning: "Get Covered Bind Warning"
+  qbe_policy_quote:
     qbe_bind_failure: "QBE Bind Failure"
     carrier_must_be_qbe: "Carrier must be QBE to bind residential quote"
     status_must_be_quoted_or_error: "Status must be quoted or error to bind quote"
@@ -182,10 +183,12 @@ en:
     not_applicable: "Not applicable"
     external_payment_not_applicable: "External payment authorization is not applicable to this policy quote"
     system_error: 'System error'
-    remote system_failed: "Remote system failed to provide authorization"
+    remote_system_failed: "Remote system failed to provide authorization"
+    # I18n.t('policy_quote_controller.postal_code_must_be_valid')
     invalid_payment_method: 'Invalid payment method'
     ach_support_not_applicable: 'ACH support not applicable'
     payment_method_must_be_card: "Payment method must be 'card' or 'ach'; received"
+    not_found: "not found"
     policy_quote_not_found: "Policy Quote could not be found."
     user_could_not_be_found: "User  could not be found."
     invalid_payment_info: "Invalid Payment Information"
@@ -198,7 +201,7 @@ en:
     address_line_1: "Address Line 1"
     city: "City"
     state: "State"
-    postel_code: "Postal Code"
+    postal_code: "Postal Code"
     state_must_be_valid_us: "State must be a valid US state abbreviation"
     postal_code_must_be_valid: "Postal code must be a valid zip code"
 
