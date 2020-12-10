@@ -205,3 +205,71 @@ es:
       postal_code_must_be_valid: "El código postal debe ser un código postal válido"
     insurable_geographical_category:
       cannot_be_blank_if_counties_are_specified: "cannot be blank if counties are specified"
+    user_controller:
+      invalid_token: "Invalid token."
+    user_policy_application_controller:
+      policy_type_not_recognized: "Policy Type not Recognized"
+      policy_type_is_not_residential_or_commercial: "Policy Type is not residential or commercial.  Please select a supported Policy Type"
+      quote_failed: "Quote Failed"
+      must_be_within_the_next_90_days: "must be within the next 90 days"
+      application_unavailable: "Application Unavailable"
+      policy_or_guarantee_not_recognized: 'Policy or Guarantee Type Not Recognized'
+      only_residential_available_to_update: 'Only Residential Policies and Rental Guaranatees are available for update from this screen'
+      please_login_to_update_policy: 'Please log in to update a commercial policy application'
+      you_cant_use_same_emails: "You can't use the same emails for policy applicants"
+    user_users_controler:
+      unauthorized_access: "Unauthorized Access"
+      invalid_login_credentials: "Invalid login credentials"
+    user_policies_controller:
+      need_insurable: 'Need Insurable'
+      policy_created: 'Policy created'
+      policy_is_declined: 'Policy is declined'
+      policy_was_already_declined: "Policy was already declined"
+      policy_was_already_accepted: "Policy was already accepted"
+      policy_is_accepted: 'Policy is accepted. An email sent with attached Policy'
+      documents_were_sent: 'Documents were sent'
+      refund_was_sent: 'Refund was successfully sent'
+      refund_was_successfully_sent: 'Refund was not successfully sent'
+      cancel_was_successfully_sent: 'Cancel was successfully sent'
+      refund_was_not_successfully_sent: 'Refund was not successfully sent'
+      you_cannot_add_coverage_with_master: 'You cannot add coverage with master policy type'
+      unable_to_attach_payment: "Unable to attach payment source to user"
+    coverage_options:
+      coverage_c: 'Cobertura C Contenido'
+      personal_property_coverage_desc: 'La cobertura de propiedad personal protege sus pertenencias y propiedades personales.'
+      coverage_d: 'Cobertura D Pérdida de uso'
+      coverage_reimburses: 'La cobertura le reembolsa el costo de mantener un nivel de vida comparable después de una pérdida cubierta que excede sus gastos normales antes de la pérdida, hasta los límites de la póliza.'
+      coverage_e: 'Cobertura E Responsabilidad'
+      liability_coverage_protects_you: 'La cobertura de responsabilidad lo protege en caso de daños por negligencia en su apartamento, la comunidad u otros residentes.'
+      coverage_f: 'Pago de cobertura F Med'
+      coverage_designed_to_pay: 'Cobertura diseñada para pagar los gastos médicos de otras personas que resulten lesionadas accidentalmente en un lugar asegurado o por las actividades de un asegurado, un empleado residente o un animal propiedad de un asegurado o al cuidado de este, hasta los límites de la póliza.'
+      pet_damage: 'Daño de mascota'
+      this_option_covers: 'Esta opción cubre hasta $ 500 por daños accidentales causados por una mascota, como una alfombra manchada o zócalos masticados.'
+      water_backup: 'Respaldo de agua'
+      this_option_covers_your_personal: 'Esta opción cubre su propiedad personal en caso de que haya un respaldo de agua / alcantarillado en su vivienda cubierta que comience fuera de las instalaciones.'
+      animal_liability: 'Recompra de responsabilidad animal'
+      this_option_provides_increase: 'Esta opción proporciona un aumento en la cantidad de protección de responsabilidad otorgada al asegurado en el caso de que un asegurado pueda ser considerado responsable de los daños causados por una mascota.'
+      identity_fraud: 'Fraude de identidad'
+      this_option_provides_coverage_up: 'Esta opción brinda cobertura de hasta $ 5,000 para los gastos incurridos por un asegurado como resultado directo de un fraude de identidad.'
+      bed_bug: 'Ácaro'
+      this_option_provides_coverage_to_treat: 'Esta opción brinda cobertura para tratar, remediar y eliminar una infestación de chinches en la residencia.'
+      forced_entry_theft: 'Robo por entrada forzada'
+      hiss_option_provides: 'Esta opción proporciona un descuento al cambiar la cobertura de robo para requerir evidencia física de entrada forzada y puede requerir un informe policial.'
+      tenants_additional_protection: 'Protección adicional para inquilinos'
+      this_option_covers_personal: 'Esta opción cubre su propiedad personal (hasta $ 5,000) en caso de un terremoto.'
+      workers_compensation: 'Compensación de trabajadores'
+      all_other_peril: 'Todos los demás peligros'
+      the_amount_insurer_deduct: 'La cantidad que la aseguradora deducirá de una pérdida que resulte de otro peligro que no se haya mencionado (como robo, huracán o viento) antes de pagar hasta los límites de su póliza.'
+      theft: 'Robo'
+      the_amount_insurer_deduct2: 'La cantidad que la aseguradora deducirá de una pérdida resultante de un robo antes de pagar hasta los límites de su póliza.'
+      wind_hall: 'Granizo de viento'
+      the_amount_insurer_deduct3: 'El monto que la aseguradora deducirá de una pérdida resultante de viento o granizo antes de pagar hasta los límites de su póliza.'
+      earthquake: 'Terremoto'
+      the_amount_insurer_deduct4: 'La cantidad que la aseguradora deducirá de una pérdida resultante de un terremoto antes de pagar hasta los límites de su póliza.'
+      coverage_c_required: 'Cobertura C Se requiere selección de contenido'
+      cannot_be_blank_counties: "no puede dejarse en blanco si se especifican condados"
+      bound: 'UNIDO'
+      bound_with_warning: 'BOUND_WITH_WARNING'
+      renewing: 'RENOVANDO'
+      renewed: 'REINSTADO'
+      reinstated: 'REINSTATED'
