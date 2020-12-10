@@ -27,8 +27,19 @@ en:
         to us at %{contact_email}. It has been a pleasure to do business with you."
 
   user_coverage_mailer:
-
-
+    all_documents:
+      rent_guarantee_title: 'Rent Guarantee'
+      rent_guarantee_documents: 'Your Rent Guarantee documents have been attached to this email.<br>'
+      rent_guarantee_text: "Hello %{user_name},<br><br>Thank you for choosing Pensio Tenants.<br>﻿Your Rent Guarantee registration
+                                              has been accepted on %{accepted_on}.<br>%{documents}
+                                              Please log in to <a href=\"%{site}\">our site</a> for more information.<br><br>Kind Regards,<br>
+                                              Pensio Tenants Corp & the Get Covered Team<br><br>Keeping You At Home!"
+      other_title: 'Insurance Policy'
+      other_documents: "Your policy documents have been attached to this email."
+      other_text: "Hello, %{user_name}<br><br>Your policy
+                                     has been accepted on %{accepted_on}. %{documents}
+                                     Please log in to <a href=\"%{site}\">our site</a>
+                                     for more information."
 
 
 
