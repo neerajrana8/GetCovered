@@ -152,19 +152,19 @@ es:
     rent_guarantee: 'Garantía de alquiler'
     security_deposit_replacement: 'Este Insoranke'
   policy_quote_model:
-    no_policy_for_qbe: "No policy bind for QBE Specialty"
-    error_with_policy_bund: "Error happened with policy bind"
-    quote_ineligible: "Quote ineligible for acceptance"
-    quote_billing_failed: "Quote billing failed, unable to write policy"
-    unable_to_bind_policy: "Unable to bind policy"
-    rent_guarantee_has_been_accepted: "Rental Guarantee has been accepted.  Please check your email for more information."
-    policy_has_been_accepted: "Policy has been accepted.  Please check your email for more information."
-    error_attaching_policy: "Error attaching policy to system"
-    unable_to_save_policy: "Unable to save policy in system"
-    no_build_coverages_for_qbe: "No build coverages for QBE Specialty"
-    no_build_coverages_for_crum: 'No build coverages for Crum'
-    no_build_coverages_for_pensio: 'No build coverages for Pensio'
-    error_with_build_coverages: 'Error happened with build coverages'
+    no_policy_for_qbe: "Ninguna política vinculante para QBE Specialty"
+    error_with_policy_bund: "Se produjo un error con la vinculación de la política"
+    quote_ineligible: "Cita no apta para aceptación"
+    quote_billing_failed: "Error en la facturación de la cotización, no se puede escribir la política"
+    unable_to_bind_policy: "No se puede vincular la política"
+    rent_guarantee_has_been_accepted: "Se ha aceptado la garantía de alquiler. Consulte su correo electrónico para obtener más información."
+    policy_has_been_accepted: "La política ha sido aceptada. Consulte su correo electrónico para obtener más información.."
+    error_attaching_policy: "Error al adjuntar la política al sistema"
+    unable_to_save_policy: "No se puede guardar la política en el sistema"
+    no_build_coverages_for_qbe: "No hay coberturas de construcción para QBE Specialty"
+    no_build_coverages_for_crum: 'No hay coberturas de construcción para Crum'
+    no_build_coverages_for_pensio: 'No hay coberturas de construcción para Pensio'
+    error_with_build_coverages: 'Se produjo un error con las coberturas de compilación'
     policy_bind_warning_notification_job:
       get_covered_bind_warning: "Obtenga una advertencia de enlace cubierto"
     qbe_policy_quote:
@@ -213,3 +213,5 @@ es:
       postal_code: "Código postal"
       state_must_be_valid_us: "El estado debe ser una abreviatura válida del estado de EE. UU."
       postal_code_must_be_valid: "El código postal debe ser un código postal válido"
+    insurable_geographical_category:
+      cannot_be_blank_if_counties_are_specified: "cannot be blank if counties are specified"
