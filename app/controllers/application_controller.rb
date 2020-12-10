@@ -9,21 +9,15 @@ class ApplicationController < ActionController::API
     redirect_to 'https://api-dev-v2.getcoveredinsurance.com/v2/'
   end
 
-  def switch_locale(&action)
-    begin
-      locale = extract_locale_from_accept_language_header
-      I18n.with_locale(locale, &action)
-    rescue  I18n::InvalidLocale => ex
-      I18n.with_locale("en", &action)
-    ensure
-      I18n.with_locale("en", &action) if locale.nil?
-    end
-  end
-
   private
 
+  def switch_locale(&action)
+    locale = extract_locale_from_accept_language_header
+    I18n.with_locale(locale, &action)
+  end
+
   def extract_locale_from_accept_language_header
-    request.env['HTTP_ACCEPT_LANGUAGE']&.scan(/^[a-z]{2}/)&.first
+    request.env['HTTP_ACCEPT_LANGUAGE']&.scan(/^[a-z]{2}/)&.first || "en"
   end
 
 end
