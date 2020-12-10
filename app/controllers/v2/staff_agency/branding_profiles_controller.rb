@@ -27,7 +27,7 @@ module V2
       end
 
       def faqs
-        @branding_profile = BrandingProfile.includes(:faqs).find(params[:id]) || []
+        @faqs = params['language'].present? ? BrandingProfile.find(params[:id]).faqs.where(language: params['language']) : BrandingProfile.find(params[:id]).faqs
         render :faqs, status: :ok
       end
 

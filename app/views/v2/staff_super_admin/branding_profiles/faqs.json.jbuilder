@@ -1,4 +1,4 @@
-json.array! @branding_profile.faqs do |faq|
+json.array! @faqs do |faq|
   json.id faq.id
   json.title faq.title
   json.branding_profile_id faq.branding_profile_id
