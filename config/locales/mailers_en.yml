@@ -1,0 +1,31 @@
+en:
+  cancellation_mailer:
+    refund_request:
+      subject: "%{agency_policy_type} Refund Request"
+      title: "Refund Request"
+    cancel_request:
+      subject: "%{agency_policy_type} Cancellation Request"
+      title: "Cancellation Request"
+    cancel_confirmation:
+      subject: "%{agency_policy_type} Policy Cancellation"
+      title: "Cancellation confirmation"
+      text: "This email is to confirm that your policy has been cancelled. Please keep this email for your records.
+        We are sorry to see you go! We appreciate and value any feedback
+        you may have on our %{policy_type} Policy product and service. If there’s something that
+        we could have done to make your experience with %{agency_title}  better, please reach out
+        to us at %{contact_email}. It has been a pleasure to do business with you."
+
+  user_coverage_mailer:
+
+
+
+
+
+
+
+
+
+
+
+
+
