@@ -11,11 +11,18 @@ module V2
       before_action :validate_policy_users_params, only: %i[create update]
 
       def show
-        unless %w[started in_progress
-              abandoned more_required].include?(@policy_application.status)
+        if @policy_application.status == 'accepted'
           render json:   standard_error(:policy_application_not_found, 'Policy Application is not found or no longer available'),
                  status: 404
           return
+        end
+        if @policy_application.carrier_id == MsiService.carrier_id
+          @policy_application.coverage_selections.each do |cs|
+            if (Float(cs['selection']) rescue false)
+              cs['selection'] = { 'data_type' => 'currency', 'value' => (cs['selection'].to_d * 100.to_d).to_i }
+            end
+          end
+          @policy_application.coverage_selections = @policy_application.coverage_selections.select{|cs| cs['uid'] != '1010' && cs['uid'] != 1010 }
         end
       end
 
@@ -393,6 +400,7 @@ module V2
               cs[:selection] = cs[:selection][:value]
             end
           end
+          @application.coverage_selections.select!{|cs| cs['selection'] || cs[:selection] }
           @application.coverage_selections.push({ 'category' => 'coverage', 'options_type' => 'none', 'uid' => '1010', 'selection' => true }) unless @application.coverage_selections.any?{|co| co['uid'] == '1010' }
         end
 
@@ -488,6 +496,15 @@ module V2
           # try to update
           @policy_application.assign_attributes(update_residential_params)
           @policy_application.expiration_date = @policy_application.effective_date&.send(:+, 1.year)
+          # remove duplicate pis
+          @replacement_policy_insurables = nil
+          saved_pis = @policy_application.policy_insurables.select{|pi| pi.id }
+          @policy_application.policy_insurables = @policy_application.policy_insurables.select{|pi| pi.id || (pi.insurable_id && saved_pis.find{|spi| spi.insurable_id == pi.insurable_id }.nil?) }
+          unsaved_pis = @policy_application.policy_insurables.select{|pi| pi.id.nil? }.uniq{|pi| pi.insurable_id }
+          unless unsaved_pis.blank?
+            unsaved_pis.first.primary = true if unsaved_pis.find{|pi| pi.primary }.nil?
+            @replacement_policy_insurables = unsaved_pis
+          end
           # fix coverage options if needed
           unless @policy_application.coverage_selections.blank?
             @policy_application.coverage_selections.each do |cs|
@@ -499,6 +516,7 @@ module V2
                 cs[:selection] = cs[:selection][:value]
               end
             end
+            @policy_application.coverage_selections = @policy_application.coverage_selections.select{|cs| cs['selection'] || cs[:selection] }
             @policy_application.coverage_selections.push({ 'category' => 'coverage', 'options_type' => 'none', 'uid' => '1010', 'selection' => true }) unless @policy_application.coverage_selections.any?{|co| co['uid'] == '1010' }
           end
           # fix agency if needed
@@ -517,7 +535,16 @@ module V2
             render json: update_users_result.failure,
               status: 422
           else
+            @policy_insurables_to_restore = nil
+            unless @replacement_policy_insurables.blank?
+              @policy_insurables_to_restore = @policy_application.policy_insurables.select{|pi| pi.id }
+              @policy_application.policy_insurables.clear
+            end
             if !@policy_application.save
+              unless @policy_insurables_to_restore.blank?
+                @policy_application.policy_insurables.clear
+                @policy_insurables_to_restore.update_all(policy_application_id: @policy_application.id)
+              end
               render json: standard_error(:policy_application_save_error, nil, @policy_application.errors),
                      status: 422
             else
@@ -810,7 +837,7 @@ module V2
       end
 
       def set_policy_application
-        puts "SET POLICY APPLICATION RUNNING ID: #{params[:id]}"
+        #puts "SET POLICY APPLICATION RUNNING ID: #{params[:id]}"
         @application = @policy_application = access_model(::PolicyApplication, params[:id])
       end
 
