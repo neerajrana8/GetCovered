@@ -215,28 +215,74 @@ en:
     postal_code_must_be_valid: "Postal code must be a valid zip code"
   insurable_geographical_category:
     cannot_be_blank_if_counties_are_specified: "cannot be blank if counties are specified"
-    # I18n.t('insurable_geographical_category.cannot_be_blank_if_counties_are_specified')
-  policies_controller:
+  user_controller:
+    invalid_token: "Invalid token."
+  user_policy_application_controller:
+    policy_type_not_recognized: "Policy Type not Recognized"
+    policy_type_is_not_residential_or_commercial: "Policy Type is not residential or commercial.  Please select a supported Policy Type"
+    quote_failed: "Quote Failed"
+    must_be_within_the_next_90_days: "must be within the next 90 days"
+    application_unavailable: "Application Unavailable"
+    policy_or_guarantee_not_recognized: 'Policy or Guarantee Type Not Recognized'
+    only_residential_available_to_update: 'Only Residential Policies and Rental Guaranatees are available for update from this screen'
+    please_login_to_update_policy: 'Please log in to update a commercial policy application'
+    you_cant_use_same_emails: "You can't use the same emails for policy applicants"
+  user_users_controler:
+    unauthorized_access: "Unauthorized Access"
+    invalid_login_credentials: "Invalid login credentials"
+  user_policies_controller:
+    need_insurable: 'Need Insurable'
+    policy_created: 'Policy created'
+    policy_is_declined: 'Policy is declined'
+    policy_was_already_declined: "Policy was already declined"
+    policy_was_already_accepted: "Policy was already accepted"
+    policy_is_accepted: 'Policy is accepted. An email sent with attached Policy'
+    documents_were_sent: 'Documents were sent'
+    refund_was_sent: 'Refund was successfully sent'
+    refund_was_successfully_sent: 'Refund was not successfully sent'
+    cancel_was_successfully_sent: 'Cancel was successfully sent'
+    refund_was_not_successfully_sent: 'Refund was not successfully sent'
+    you_cannot_add_coverage_with_master: 'You cannot add coverage with master policy type'
+    unable_to_attach_payment: "Unable to attach payment source to user"
+  coverage_options:
+    coverage_c: 'Coverage C   Contents'
+    personal_property_coverage_desc: 'Personal property coverage protects your personal belongings and property.'
+    coverage_d: 'Coverage D   Loss Of Use'
+    coverage_reimburses: 'Coverage reimburses you for the cost of maintaining a comparable standard of living following a covered loss that exceeds your normal expenses prior to the loss, up to the policy limits.'
+    coverage_e: 'Coverage E   Liability'
+    liability_coverage_protects_you: 'Liability coverage protects you in an event of negligent damage to your apartment, the community, or other residents.'
+    coverage_f: 'Coverage F   Med Payment'
+    coverage_designed_to_pay: 'Coverage designed to pay for medical expenses to others who are accidentally injured on an insured location or by the activities of an insured, resident employee, or an animal owned by or in the care of an insured, up to the policy limits.'
+    pet_damage: 'Pet Damage'
+    this_option_covers: 'This option covers up to $500 for accidental damage caused by a pet such as stained carpet or chewed baseboards.'
+    water_backup: 'Water Backup'
+    this_option_covers_your_personal: 'This option covers your personal property in the event there is water/sewer back-up in your covered dwelling that begins off premises.'
+    animal_liability: 'Animal Liability Buy Back'
+    this_option_provides_increase: 'This option provides an increase in the amount of liability protection afforded to the insured in the case where an insured can be held liability for damages by a pet.'
+    identity_fraud: 'Identity Fraud'
+    this_option_provides_coverage_up: 'This option provides coverage up to $5,000 for expenses incurred by an insured as a direct result of identity fraud.'
+    bed_bug: 'Bed Bug'
+    this_option_provides_coverage_to_treat: 'This option provides coverage to treat, remediate and eliminate a bed bug infestation in the residence.'
+    forced_entry_theft: 'Forced Entry Theft'
+    hiss_option_provides: 'his option provides a discount by changing theft coverage to require physical evidence of forced entry and may require a police report.'
+    tenants_additional_protection: 'Tenants Additional Protection'
+    this_option_covers_personal: 'This option covers your personal property (up to $5,000) in the event of an earthquake.'
+    workers_compensation: 'Workers Compensation'
+    all_other_peril: 'All Other Peril'
+    the_amount_insurer_deduct: 'The amount the insurer will deduct from a loss resulting from other peril not already listed (such as theft, hurricane or wind) before paying up to its policy limits.'
+    theft: 'Theft'
+    the_amount_insurer_deduct2: 'The amount the insurer will deduct from a loss resulting from theft before paying up to its policy limits.'
+    wind_hall: 'Wind Hail'
+    the_amount_insurer_deduct3: 'The amount the insurer will deduct from a loss resulting from wind or hail before paying up to its policy limits.'
+    earthquake: 'Earthquake'
+    the_amount_insurer_deduct4: 'The amount the insurer will deduct from a loss resulting from an earthquake before paying up to its policy limits.'
+    coverage_c_required: 'Coverage C   Contents selection is required'
+    cannot_be_blank_counties: "cannot be blank if counties are specified"
+    bound: 'BOUND'
+    bound_with_warning: 'BOUND_WITH_WARNING'
+    renewing: 'RENEWING'
+    renewed: 'RENEWED'
+    reinstated: 'REINSTATED'
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+# I18n.t('user_users_controler.unauthorized_access')
 # I18n.t('policy_application_contr.new.unit_not_found')
