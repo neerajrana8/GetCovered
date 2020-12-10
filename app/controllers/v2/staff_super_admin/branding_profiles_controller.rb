@@ -167,7 +167,7 @@ module V2
 
       def faq_params
         return({}) if params.blank?
-        params.permit(:title, :branding_profile_id, :faq_order)
+        params.permit(:title, :branding_profile_id, :faq_order, :language)
       end
 
       def faq_order_params
