@@ -33,6 +33,7 @@ class UserCoverageMailer < ApplicationMailer
     attach_all_documents
 
     @user_name = @user&.profile&.full_name
+    I18n.locale = @user&.profile&.language if @user&.profile&.language&.present?
     @accepted_on = Time.current.strftime('%m/%d/%y')
     @site = whitelabel_host(@policy.agency)
 
@@ -70,6 +71,7 @@ class UserCoverageMailer < ApplicationMailer
     unless @policy.nil? || @user.nil?
 
       @user_name = @user&.profile&.full_name
+      I18n.locale = @user&.profile&.language if @user&.profile&.language&.present?
       @accepted_on = Time.current.strftime('%m/%d/%y')
       @site = whitelabel_host(@policy.agency)
 
