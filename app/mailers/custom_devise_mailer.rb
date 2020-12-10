@@ -10,7 +10,8 @@ class CustomDeviseMailer < Devise::Mailer
 
       opts[:subject] = t('devise.mailer.product_invitation_instruction.subject',
                          agency_title: '@policy_application.agency&.title',
-                         policy_type_title: @policy_application.policy_type.title)
+                         policy_type_title: @policy_application.policy_type.title,
+                         link: @accept_link)
       opts[:template_name] = 'product_invitation_instructions'
     end
 
