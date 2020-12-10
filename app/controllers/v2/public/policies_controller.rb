@@ -24,9 +24,25 @@ module V2
             status: 401
           return
         end
+        # read the document
+        pages = nil
+        begin
+          if doc.size < 1048576 # MOOSE WARNING: store a constant for reasonable byte size cutoff somewhere
+            pages = Policy.read_pdf(StringIO.new(doc.download))
+          else
+            tmp = Tempfile.new(encoding: 'ascii-8bit')
+            tmp.write(doc.download)
+            pages = Policy.read_pdf(tmp)
+            tmp.unlink
+          end
+        rescue
+          pages = nil
+        end
         # return the document
         ## MOOSE WARNING: render something!!!
-        redirect_to document.service_url
+        render json: {
+          document_url: document.service_url
+        }, status: 200
       end
       
       

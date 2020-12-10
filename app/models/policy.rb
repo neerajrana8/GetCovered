@@ -46,6 +46,7 @@ class Policy < ApplicationRecord
   include CarrierDcPolicy
   include AgencyConfiePolicy
   include RecordChange
+  include AnalyzePdf
 
   after_create :inherit_policy_coverages, if: -> { policy_type&.designation == 'MASTER-COVERAGE' }
   after_create :schedule_coverage_reminders, if: -> { policy_type&.designation == 'MASTER-COVERAGE' }
