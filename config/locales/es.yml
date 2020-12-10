@@ -31,6 +31,9 @@
 
 es:
   hello: "Hello world"
+  shared:
+    best: "Mejor"
+    accepted: 'Aceptado'
 
   devise_token_auth:
     sessions:

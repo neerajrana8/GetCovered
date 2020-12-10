@@ -1,1 +1,40 @@
 es:
+  cancellation_mailer:
+    refund_request:
+      subject: "%{agency_policy_type} Petición para reembolso"
+      title: "Petición para reembolso"
+      text: "Hemos recibido una solicitud de reembolso por su póliza %{policy_type} de garantía de alquiler %{policy_number} el %{request_date}.
+              Nuestro equipo revisará la solicitud tan pronto como podamos. Recibirá una actualización una vez que
+              hayamos procesado su solicitud. Si se aprueba,
+              sus fondos se transferirán nuevamente dentro de 1-3 días hábiles.
+              Si ha realizado esta solicitud por error, comuníquese con nosotros a%{contact_email} lo antes posible."
+    cancel_request:
+      subject: "%{agency_policy_type} Cancelación de su póliza"
+      title: "Cancelación de su póliza"
+      text: "Hemos recibido una solicitud de cancelación de su póliza %{policy_type} de garantía de alquiler  %{policy_number} el %{request_date}.
+              Nuestro equipo revisará la solicitud tan pronto como podamos. Recibirá una actualización una vez que hayamos procesado su solicitud. Si ha realizado esta solicitud por error, comuníquese con nosotros a
+              %{contact_email} lo antes posible."
+    cancel_confirmation:
+      subject: "%{agency_policy_type} Cancelación de póliza"
+      title: "Confirmación de cancelación"
+      text: "Este correo electrónico es para confirmar que su póliza ha sido cancelada.
+             Conserve este correo electrónico para sus registros.
+             ¡Lamentamos verte marchar! Apreciamos y valoramos cualquier comentario que pueda tener
+             sobre nuestro producto y servicio de %{policy_type} Policy product and service. Si hay algo que podríamos
+             haber hecho para mejorar su experiencia con %{agency_title} comuníquese con nosotros en %{contact_email}.
+             Ha sido un placer hacer negocios con usted."
+
+  user_coverage_mailer:
+    all_documents:
+      rent_guarantee_title: 'Registro de Garantía'
+      rent_guarantee_documents: 'Sus documentos de Garantía de alquiler se han adjuntado a este correo electrónico.<br>'
+      rent_guarantee_text: "Hola  %{user_name},<br><br>Gracias por elegir Pensio Tenants.<br>﻿Su registro
+                            de garantía de alquiler ha sido aceptado el  %{accepted_on}.<br>%{documents}
+                                              Inicie sesión en nuestro  <a href=\"%{site}\">sitio</a> para
+                                              obtener más información.<br><br>Saludos cordiales,<br>
+                                              Pensio Tenants Corp y el equipo Get Covered<br><br>¡Manteniéndote en casa!"
+      other_title: 'Póliza de seguros'
+      other_documents: "Los documentos de su política se han adjuntado a este correo electrónico."
+      other_text: "Hola,  %{user_name}<br><br>Su póliza ha sido aceptada el %{accepted_on}. %{documents}
+                                     Inicie sesión en nuestro<a href=\"%{site}\">sitio</a>
+                                     para obtener más información."
