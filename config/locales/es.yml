@@ -203,3 +203,5 @@ es:
       postal_code: "Código postal"
       state_must_be_valid_us: "El estado debe ser una abreviatura válida del estado de EE. UU."
       postal_code_must_be_valid: "El código postal debe ser un código postal válido"
+    insurable_geographical_category:
+      cannot_be_blank_if_counties_are_specified: "cannot be blank if counties are specified"
