@@ -15,7 +15,7 @@ module V2
     def user_from_invitation_token
       @user = ::User.find_by_invitation_token(params[:invitation_token], true)
       return if params[:invitation_token] && @user
-      render json: { errors: ['Invalid token.'] }, status: :not_acceptable
+      render json: { errors: [ I18n.t('user_controller.invalid_token')] }, status: :not_acceptable
     end
 
     # this method returns:
