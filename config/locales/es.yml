@@ -34,6 +34,7 @@ es:
   shared:
     best: "Mejor"
     accepted: 'Aceptado'
+    thank_you: "Gracias"
 
   devise_token_auth:
     sessions:
