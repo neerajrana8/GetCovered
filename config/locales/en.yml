@@ -184,7 +184,6 @@ en:
     external_payment_not_applicable: "External payment authorization is not applicable to this policy quote"
     system_error: 'System error'
     remote_system_failed: "Remote system failed to provide authorization"
-    # I18n.t('policy_quote_controller.postal_code_must_be_valid')
     invalid_payment_method: 'Invalid payment method'
     ach_support_not_applicable: 'ACH support not applicable'
     payment_method_must_be_card: "Payment method must be 'card' or 'ach'; received"
@@ -204,6 +203,11 @@ en:
     postal_code: "Postal Code"
     state_must_be_valid_us: "State must be a valid US state abbreviation"
     postal_code_must_be_valid: "Postal code must be a valid zip code"
+  insurable_geographical_category:
+    cannot_be_blank_if_counties_are_specified: "cannot be blank if counties are specified"
+    # I18n.t('insurable_geographical_category.cannot_be_blank_if_counties_are_specified')
+  policies_controller:
+
 
 
 
