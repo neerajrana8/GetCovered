@@ -23,7 +23,7 @@ es:
         thank_you: "Gracias"
       invitation_instructions:
         subject: "Instruciones de la invitación"
-        title: "Obtenga cobertura | Invitación"
+        title: "Get Covered | Invitación"
         hello: "Hola %{email}"
         someone_invited_you: "Ha sido invitado a %{url}, puede aceptarlo a través del enlace a continuación."
         accept: "Aceptar la invitación"
@@ -35,12 +35,12 @@ es:
         hi: "Hola %{name}"
         text_html: "Gracias por registrarse en una política de %{policy_type_title}. Visite %{link} para terminar de configurar su cuenta. Podrá realizar un seguimiento de los próximos pagos junto con la presentación de un reclamo a través de nuestro portal."
       reset_password_instructions:
-        title: "Get Covered | Password Reset"
-        preheader: "Someone has requested a link to change your password. You can do this through the link below."
-        someone_requested: "Someone has requested a link to change your password. You can do this through the link below."
-        reset_password: "Reset password"
-        ignore_email: "If you didn't request this, please ignore this email."
-        info: "Your password won't change until you access the link above and create a new one."
+        title: "Get Covered | Restablecimiento de contraseña"
+        preheader: "Alguien ha solicitado un enlace para cambiar su contraseña. Puede hacerlo a través del siguiente enlace."
+        someone_requested: "Alguien ha solicitado un enlace para cambiar su contraseña. Puede hacerlo a través del siguiente enlace."
+        reset_password: "Restablecer la contraseña"
+        ignore_email: "Si no solicitó esto, ignore este correo electrónico."
+        info: "Su contraseña no cambiará hasta que acceda al enlace anterior y cree una nueva."
 
 
   time:
