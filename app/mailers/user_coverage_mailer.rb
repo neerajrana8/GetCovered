@@ -32,14 +32,38 @@ class UserCoverageMailer < ApplicationMailer
   def proof_of_coverage
     attach_all_documents
 
-    is_policy = @policy.policy_type_id == 5 ? false : true
+    @user_name = @user&.profile&.full_name
+    @accepted_on = Time.current.strftime('%m/%d/%y')
+    @site = whitelabel_host(@policy.agency)
 
-    @content = {
-      :title => is_policy ? 'Insurance Policy' : 'Rent Guarantee',
-      :text => is_policy ? "Hello, #{ @user.profile.full_name }<br><br>Your policy has been accepted on #{ Time.current.strftime('%m/%d/%y') }.  Your policy documents have been attached to this email.  Please log in to <a href=\"#{ whitelabel_host(@policy.agency) }\">our site</a> for more information." : "Hello #{ @user.profile.full_name },<br><br>Thank you for choosing Pensio Tenants.<br>﻿Your Rent Guarantee registration has been accepted on #{ Time.current.strftime('%m/%d/%y') }.<br>Your Rent Guarantee documents have been attached to this email.<br>Please log in to <a href=\"#{ whitelabel_host(@policy.agency) }\">our site</a> for more information.<br><br>Kind Regards,<br>Pensio Tenants Corp & the Get Covered Team<br><br>Keeping You At Home!"
-    }
+    @content =
+      if @policy.policy_type_id == 5
+        documents =
+          if @policy&.documents&.any?
+            I18n.t('user_coverage_mailer.all_documents.rent_guarantee_documents')
+          else
+            ''
+          end
+        {
+          subject: I18n.t('user_coverage_mailer.all_documents.rent_guarantee_title'),
+          text: I18n.t('user_coverage_mailer.all_documents.rent_guarantee_text',
+                       site: @site, accepted_on: @accepted_on, documents: documents, user_name: @user_name)
+        }
+      else
+        documents =
+          if @policy&.documents&.any?
+            I18n.t('user_coverage_mailer.all_documents.other_documents')
+          else
+            ''
+          end
+        {
+          subject: I18n.t('user_coverage_mailer.all_documents.other_title'),
+          text: I18n.t('user_coverage_mailer.all_documents.other_text',
+                       site: @site, accepted_on: @accepted_on, documents: documents, user_name: @user_name)
+        }
+      end
 
-    mail(:subject => "Your New #{ @content[:title] }")
+    mail(:subject => @content[:subject])
   end
   
   def all_documents
