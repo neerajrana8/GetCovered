@@ -1,0 +1,53 @@
+en:
+  cancellation_mailer:
+    refund_request:
+      subject: "%{agency_policy_type} Refund Request"
+      title: "Refund Request"
+      text: "We have received a refund request for your %{policy_type} policy %{policy_number} on %{request_date}.
+              Our team will review the request as soon as we can.
+              You will receive an update once we have processed your request.
+              If approved, your funds will be transferred back within 1-3 business days.
+              If you have made this request in error,
+              please reach out to us a %{contact_email} as soon as possible."
+    cancel_request:
+      subject: "%{agency_policy_type} Cancellation Request"
+      title: "Cancel request"
+      text: "We have received a cancellation request for your %{policy_type} policy %{policy_number} on %{request_date}.
+              Our team will review the request as soon as we can.
+              You will receive an update once we have processed your request.
+              If you have made this request in error,
+              please reach out to us at %{contact_email}. as soon as possible."
+    cancel_confirmation:
+      subject: "%{agency_policy_type} Policy Cancellation"
+      title: "Cancellation confirmation"
+      text: "This email is to confirm that your policy has been cancelled. Please keep this email for your records.
+        We are sorry to see you go! We appreciate and value any feedback
+        you may have on our %{policy_type} Policy product and service. If there’s something that
+        we could have done to make your experience with %{agency_title}  better, please reach out
+        to us at %{contact_email}. It has been a pleasure to do business with you."
+
+  user_coverage_mailer:
+    all_documents:
+      rent_guarantee_title: 'Rent Guarantee'
+      rent_guarantee_documents: 'Your Rent Guarantee documents have been attached to this email.<br>'
+      rent_guarantee_text: "Hello %{user_name},<br><br>Thank you for choosing Pensio Tenants.<br>﻿Your Rent Guarantee registration
+                                              has been accepted on %{accepted_on}.<br>%{documents}
+                                              Please log in to <a href=\"%{site}\">our site</a> for more information.<br><br>Kind Regards,<br>
+                                              Pensio Tenants Corp & the Get Covered Team<br><br>Keeping You At Home!"
+      other_title: 'Insurance Policy'
+      other_documents: "Your policy documents have been attached to this email."
+      other_text: "Hello, %{user_name}<br><br>Your policy
+                                     has been accepted on %{accepted_on}. %{documents}
+                                     Please log in to <a href=\"%{site}\">our site</a>
+                                     for more information."
+
+
+
+
+
+
+
+
+
+
+

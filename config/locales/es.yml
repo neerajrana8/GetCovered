@@ -32,6 +32,9 @@
 es:
   hello: "Hello world"
 
+  shared:
+    best: "Mejor"
+    accepted: 'Aceptado'
   devise_token_auth:
     sessions:
       not_confirmed: "Your account is deactivated"
@@ -141,6 +144,13 @@ es:
     unable_to_create_building_from_address: "No se puede crear el edificio desde la dirección"
     internal_error_occured: "Se produjo un error interno"
     should_be_uniq_inside_group: "debe ser uniq dentro del grupo"
+  policy_type_model:
+    residential: 'El seguro para inquilinos'
+    master_policy: 'Master Policy'
+    master_policy_coverage: 'Master Policy Coverage'
+    commercial: 'Política de propietarios de empresas'
+    rent_guarantee: 'Garantía de alquiler'
+    security_deposit_replacement: 'Este Insoranke'
   policy_quote_model:
     no_policy_for_qbe: "Ninguna política vinculante para QBE Specialty"
     error_with_policy_bund: "Se produjo un error con la vinculación de la política"
