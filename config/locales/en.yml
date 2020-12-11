@@ -129,8 +129,8 @@ en:
     building_doesnot_exist: "The requested residential building/community id does not exist"
     unit_doesnot_exist: "The requested unit does not exist"
     unable_create_unit: "Unable to create unit"
-    invalid_address: "Invalid address"
-    invalid_address_value: "Invalid address value"
+    invalid_address: "Please enter an existing address"
+    invalid_address_value: "Address not yet in system, please try again later"
     unable_deduce_unit: "Unable to deduce unit title from address"
     not_standart_format: "is not a standard format (e.g. 'Apartment #2, Unit 3, #5, etc.)"
     request_residential_build_not_exist: "The requested residential building/community id does not exist"
@@ -274,5 +274,5 @@ en:
     renewed: 'RENEWED'
     reinstated: 'REINSTATED'
 
-# I18n.t('user_users_controler.unauthorized_access')
+# I18n.t('coverage_options.personal_property_coverage_desc')
 # I18n.t('policy_application_contr.new.unit_not_found')
