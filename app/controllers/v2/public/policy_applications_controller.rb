@@ -11,7 +11,7 @@ module V2
       before_action :validate_policy_users_params, only: %i[create update]
 
       def show
-        if @policy_application.status == 'accepted')
+        if @policy_application.status == 'accepted'
           render json:   standard_error(:policy_application_not_found, I18n.t('policy_application_contr.show.policy_application_not_found')),
                  status: 404
           return
