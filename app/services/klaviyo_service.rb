@@ -162,7 +162,7 @@ class KlaviyoService
     if @lead.email.include?('test')
       TEST_TAG
     else
-      @lead.lead_events.last.try(:tag)
+      @lead.lead_events&.last&.try(:tag)
     end
   end
 
@@ -182,9 +182,9 @@ class KlaviyoService
   def map_last_visited_url(event_details)
     return "" if event_details.blank?
     branding_url = @lead.agency.branding_profiles.take.url
-    if @lead.last_event.policy_type&.rent_guarantee?
+    if @lead.last_event&.policy_type&.rent_guarantee?
       "https://#{branding_url}/rentguarantee"
-    elsif @lead.last_event.policy_type&.residential?
+    elsif @lead.last_event&.policy_type&.residential?
       "https://#{branding_url}/residential"
     else
       #tbd for other forms
