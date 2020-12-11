@@ -170,7 +170,7 @@ module CarrierMsiPolicyApplication
             # generate internal invoices
             #quote.generate_invoices_for_term MOOSE WARNING: uncomment if there are ever internal ones...
             # generate external invoices
-            installment_day = self.extra_settings&.[]('installment_day') || self.fields.find{|f| f['title'] == "Installment Day" }&.[]('value') || 1
+            installment_day = (self.extra_settings&.[]('installment_day') || self.fields.find{|f| f['title'] == "Installment Day" }&.[]('value') || 1).to_i
             installment_day = 28 if installment_day > 28
             installment_day = 1 if installment_day < 1
             if installment_day != self.extra_settings&.[]('installment_day')

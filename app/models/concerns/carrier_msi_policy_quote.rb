@@ -82,7 +82,7 @@ module CarrierMsiPolicyQuote
       result = msis.build_request(:bind_policy,
         effective_date:   policy_application.effective_date,
         payment_plan:     policy_application.billing_strategy.carrier_code,
-        installment_day:  policy_application.extra_settings&.[]('installment_day') || policy_application.fields.find{|f| f['title'] == "Installment Day" }&.[]('value') || 1,
+        installment_day:  (policy_application.extra_settings&.[]('installment_day') || policy_application.fields.find{|f| f['title'] == "Installment Day" }&.[]('value') || 1).to_i,
         community_id:     preferred ? community.carrier_profile(5).external_carrier_id : nil,
         unit:             unit.title,
         address:          unit.primary_address,

@@ -31,10 +31,10 @@
 
 es:
   hello: "Hello world"
+
   shared:
     best: "Mejor"
     accepted: 'Aceptado'
-
   devise_token_auth:
     sessions:
       not_confirmed: "Your account is deactivated"
@@ -214,36 +214,36 @@ es:
       state_must_be_valid_us: "El estado debe ser una abreviatura válida del estado de EE. UU."
       postal_code_must_be_valid: "El código postal debe ser un código postal válido"
     insurable_geographical_category:
-      cannot_be_blank_if_counties_are_specified: "cannot be blank if counties are specified"
+      cannot_be_blank_if_counties_are_specified: "no puede dejarse en blanco si se especifican condados"
     user_controller:
-      invalid_token: "Invalid token."
+      invalid_token: "Simbolo no valido."
     user_policy_application_controller:
-      policy_type_not_recognized: "Policy Type not Recognized"
-      policy_type_is_not_residential_or_commercial: "Policy Type is not residential or commercial.  Please select a supported Policy Type"
-      quote_failed: "Quote Failed"
-      must_be_within_the_next_90_days: "must be within the next 90 days"
-      application_unavailable: "Application Unavailable"
-      policy_or_guarantee_not_recognized: 'Policy or Guarantee Type Not Recognized'
-      only_residential_available_to_update: 'Only Residential Policies and Rental Guaranatees are available for update from this screen'
-      please_login_to_update_policy: 'Please log in to update a commercial policy application'
-      you_cant_use_same_emails: "You can't use the same emails for policy applicants"
+      policy_type_not_recognized: "Tipo de política no reconocido"
+      policy_type_is_not_residential_or_commercial: "El tipo de póliza no es residencial ni comercial. Seleccione un tipo de política compatible"
+      quote_failed: "Cotización fallida"
+      must_be_within_the_next_90_days: "debe ser dentro de los próximos 90 días"
+      application_unavailable: "Aplicación no disponible"
+      policy_or_guarantee_not_recognized: 'Tipo de póliza o garantía no reconocido '
+      only_residential_available_to_update: 'Solo las políticas residenciales y los guaranátees de alquiler están disponibles para actualizar desde esta pantalla '
+      please_login_to_update_policy: 'Inicie sesión para actualizar una solicitud de política comercial'
+      you_cant_use_same_emails: "No puede utilizar los mismos correos electrónicos para los solicitantes de políticas"
     user_users_controler:
-      unauthorized_access: "Unauthorized Access"
-      invalid_login_credentials: "Invalid login credentials"
+      unauthorized_access: "Acceso no autorizado"
+      invalid_login_credentials: "Credenciales de acceso invalidos"
     user_policies_controller:
-      need_insurable: 'Need Insurable'
-      policy_created: 'Policy created'
-      policy_is_declined: 'Policy is declined'
-      policy_was_already_declined: "Policy was already declined"
-      policy_was_already_accepted: "Policy was already accepted"
-      policy_is_accepted: 'Policy is accepted. An email sent with attached Policy'
-      documents_were_sent: 'Documents were sent'
-      refund_was_sent: 'Refund was successfully sent'
-      refund_was_successfully_sent: 'Refund was not successfully sent'
-      cancel_was_successfully_sent: 'Cancel was successfully sent'
-      refund_was_not_successfully_sent: 'Refund was not successfully sent'
-      you_cannot_add_coverage_with_master: 'You cannot add coverage with master policy type'
-      unable_to_attach_payment: "Unable to attach payment source to user"
+      need_insurable: 'Necesita asegurable'
+      policy_created: 'Política creada'
+      policy_is_declined: 'Política rechazada'
+      policy_was_already_declined: "La política ya fue rechazada"
+      policy_was_already_accepted: "La política ya fue aceptada"
+      policy_is_accepted: 'Se acepta la política. Un correo electrónico enviado con la Política adjunta '
+      documents_were_sent: 'Se enviaron documentos'
+      refund_was_sent: 'El reembolso se envió correctamente'
+      refund_was_successfully_sent: 'El reembolso no se envió correctamente'
+      cancel_was_successfully_sent: 'Cancelar se envió con éxito'
+      refund_was_not_successfully_sent: 'El reembolso no se envió correctamente'
+      you_cannot_add_coverage_with_master: 'No puede agregar cobertura con el tipo de póliza maestra'
+      unable_to_attach_payment: "No se puede adjuntar la fuente de pago al usuario"
     coverage_options:
       coverage_c: 'Cobertura C Contenido'
       personal_property_coverage_desc: 'La cobertura de propiedad personal protege sus pertenencias y propiedades personales.'
