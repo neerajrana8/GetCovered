@@ -210,8 +210,10 @@
               <% end %>
               <br>
               This cancellation is effective: <%=@policy.cancellation_date&.to_date&.strftime("%m/%d/%Y") %>
+              <%= t('cancellation_mailer.cancel_confirmation.cancellation_is_effective',cancellation_date: @policy.cancellation_date&.to_date&.strftime("%m/%d/%Y")) %>
               <br>
               Please contact us at <%=@contact_email %> if you have any questions.
+              <%= t('cancellation_mailer.cancel_confirmation.contact_us', contact_email: @contact_email) %>
             </p>
           </td>
         </tr>

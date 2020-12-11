@@ -131,9 +131,9 @@
               <tr>
                 <td class="o_bg-white o_px-md o_py-md o_sans o_text o_text-secondary" align="left" style="font-family: Helvetica, Arial, sans-serif;margin-top: 0px;margin-bottom: 0px;font-size: 16px;line-height: 24px;background-color: #ffffff;color: #424651;padding-left: 24px;padding-right: 24px;padding-top: 24px;padding-bottom: 24px;">
                   <div style="font-size: 24px; line-height: 24px; height: 24px;">&nbsp; </div>
-                  <p class="o_mb-xs" style="margin-top: 0px;margin-bottom: 8px;"><%= t('devise.mailer.shared.hi_there', name: @user.profile.full_name) %>,</p>
+                  <p class="o_mb-xs" style="margin-top: 0px;margin-bottom: 8px;"><%= t('devise.mailer.shared.hi_there', name: @user.profile.full_name) %></p>
                   <p class="o_mb-xs" style="margin-top: 0px;margin-bottom: 8px;"><%= t('user_coverage_mailer.rent_guarantee.proof_of_coverage.thank_you') %></p>
-                  <p class="o_mb-xs" style="margin-top: 0px;margin-bottom: 8px;"><%= t('user_coverage_mailer.rent_guarantee.proof_of_coverage.please_log_in', login_url: @login_url) %></p>
+                  <p class="o_mb-xs" style="margin-top: 0px;margin-bottom: 8px;"><%= raw(t('user_coverage_mailer.rent_guarantee.proof_of_coverage.please_log_in', login_url: @login_url)) %></p>
                   <p class="o_mb-xs" style="margin-top: 0px;margin-bottom: 8px;"><%= t('user_coverage_mailer.rent_guarantee.proof_of_coverage.contact_us', contact_email: @contact_email) %></p>
                   <p class="o_mb-xs" style="margin-top: 0px;margin-bottom: 8px;"><%= t('shared.thank_you') %></p>
                   <p class="o_mb-xs" style="margin-top: 0px;margin-bottom: 8px;"><%= @policy.agency.title %></p>

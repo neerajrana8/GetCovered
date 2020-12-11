@@ -23,6 +23,8 @@ es:
              sobre nuestro producto y servicio de %{policy_type} Policy product and service. Si hay algo que podríamos
              haber hecho para mejorar su experiencia con %{agency_title} comuníquese con nosotros en %{contact_email}.
              Ha sido un placer hacer negocios con usted."
+      cancellation_is_effective: "Esta cancelación es efectiva: %{cancellation_date}"
+      contact_us: "Por favor contáctenos en %{contact_email} si tiene alguna pregunta."
 
   user_coverage_mailer:
     all_documents:
