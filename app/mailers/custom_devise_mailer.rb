@@ -6,11 +6,11 @@ class CustomDeviseMailer < Devise::Mailer
     if opts[:policy_application].present?
       @policy_application = opts[:policy_application]
       client_host = headers['client_host'] || Rails.application.credentials.uri[ENV["RAILS_ENV"].to_sym][:client]
-      @accept_link = "#{client_host}/auth/accept-invitation/#{@token}"
+      @accept_link = "#{client_host}/auth/accept-invitation/#{token}"
 
       opts[:subject] = t('devise.mailer.product_invitation_instruction.subject',
                          agency_title: @policy_application.agency&.title,
-                         policy_type_title: @policy_application.policy_type.title)
+                         policy_type_title: @policy_type_title)
       opts[:template_name] = 'product_invitation_instructions'
     end
 
