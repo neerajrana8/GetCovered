@@ -24,7 +24,7 @@ module V2
             status: 401
           return
         end
-        # read the document
+        # read the document MOOSE WARNING: move AnalyzePdf out of a concern and remove from Policy, it doesn't need to be there
         pages = nil
         begin
           if doc.size < 1048576 # MOOSE WARNING: store a constant for reasonable byte size cutoff somewhere
