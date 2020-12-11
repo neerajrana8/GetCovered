@@ -539,6 +539,7 @@ module V2
             unless @replacement_policy_insurables.blank?
               @policy_insurables_to_restore = @policy_application.policy_insurables.select{|pi| pi.id }
               @policy_application.policy_insurables.clear
+              @policy_application.policy_insurables = @replacement_policy_insurables
             end
             if !@policy_application.save
               unless @policy_insurables_to_restore.blank?
@@ -548,7 +549,10 @@ module V2
               render json: standard_error(:policy_application_save_error, nil, @policy_application.errors),
                      status: 422
             else
-              if @policy_application.update(status: 'complete')
+              if @policy_application.primary_insurable.nil?
+                  render json: standard_error(:invalid_address, 'Please enter a valid address'),
+                         status: 400
+              elsif @policy_application.update(status: 'complete')
 
                 @policy_application.estimate
                 @quote = @policy_application.policy_quotes.order("updated_at DESC").limit(1).first
