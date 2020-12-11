@@ -557,11 +557,11 @@ module V2
                 @policy_application.estimate
                 @quote = @policy_application.policy_quotes.order("updated_at DESC").limit(1).first
 
-                if @application.status == "quote_failed"
-                  render json: standard_error(:policy_application_unavailable, @application.error_message || 'Application cannot be quoted at this time'),
+                if @policy_application.status == "quote_failed"
+                  render json: standard_error(:policy_application_unavailable, @policy_application.error_message || 'Application cannot be quoted at this time  '),
                          status: 400
-                elsif @application.status == "quoted"
-                  render json: standard_error(:policy_application_unavailable, 'Application cannot be quoted at this time'),
+                elsif @policy_application.status == "quoted"
+                  render json: standard_error(:policy_application_unavailable, 'Application cannot be quoted at this time '),
                          status: 400
                 else
                   # if application quote success or failure
@@ -569,8 +569,8 @@ module V2
                   @policy_application.reload
                   @quote.reload
 
-                  if @application.status == "quote_failed"
-                    render json: standard_error(:quote_failed, @application.error_message || 'Quote could not be processed at this time'),
+                  if @policy_application.status == "quote_failed"
+                    render json: standard_error(:quote_failed, @policy_application.error_message || 'Quote could not be processed at this time'),
                            status: 500
                   elsif @quote.status == "quoted"
 
@@ -586,7 +586,7 @@ module V2
                                      id:        @policy_application.primary_user().id,
                                      stripe_id: @policy_application.primary_user().stripe_id
                                    }
-                                 }.merge(@application.carrier_id != 5 ? {} : {
+                                 }.merge(@policy_application.carrier_id != 5 ? {} : {
                                    'policy_fee' => @quote.carrier_payment_data['policy_fee'],
                                    'installment_fee' => @quote.carrier_payment_data['installment_fee'],
                                    'installment_total' => @quote.carrier_payment_data['installment_total']
