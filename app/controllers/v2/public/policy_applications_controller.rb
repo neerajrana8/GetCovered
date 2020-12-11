@@ -558,10 +558,10 @@ module V2
                 @quote = @policy_application.policy_quotes.order("updated_at DESC").limit(1).first
 
                 if @application.status == "quote_failed"
-                  render json: standard_error(:policy_application_unavailable, @application.error_message || 'Application cannot be quoted at this time'),
+                  render json: standard_error(:policy_application_unavailable, @application.error_message || 'Application cannot be quoted at this time  '),
                          status: 400
                 elsif @application.status == "quoted"
-                  render json: standard_error(:policy_application_unavailable, 'Application cannot be quoted at this time'),
+                  render json: standard_error(:policy_application_unavailable, 'Application cannot be quoted at this time '),
                          status: 400
                 else
                   # if application quote success or failure
