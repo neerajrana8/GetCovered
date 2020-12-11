@@ -23,6 +23,8 @@ es:
              sobre nuestro producto y servicio de %{policy_type} Policy product and service. Si hay algo que podríamos
              haber hecho para mejorar su experiencia con %{agency_title} comuníquese con nosotros en %{contact_email}.
              Ha sido un placer hacer negocios con usted."
+      cancellation_is_effective: "Esta cancelación es efectiva: %{cancellation_date}"
+      contact_us: "Por favor contáctenos en %{contact_email} si tiene alguna pregunta."
 
   user_coverage_mailer:
     all_documents:
@@ -38,3 +40,10 @@ es:
       other_text: "Hola,  %{user_name}<br><br>Su póliza ha sido aceptada el %{accepted_on}. %{documents}
                                      Inicie sesión en nuestro<a href=\"%{site}\">sitio</a>
                                      para obtener más información."
+
+    rent_guarantee:
+      proof_of_coverage:
+        subject: 'Felicitaciones por su nueva política de garantía de alquiler'
+        thank_you: 'Gracias por registrarse para una póliza de garantía de alquiler. A continuación se encuentran los detalles de su póliza junto con el acuerdo adjunto y el resumen para sus registros.'
+        please_log_in: 'Inicie sesión en nuestro sitio <a class="o_text-light o_underline" href="<%= %{login_url}" style="text-decoration: underline;outline: none;color: #126de5;">esta página</a>  para obtener más información.'
+        contact_us: 'Por favor contáctenos en %{contact_email} si tiene alguna pregunta'

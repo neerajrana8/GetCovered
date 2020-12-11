@@ -9,7 +9,7 @@ class CustomDeviseMailer < Devise::Mailer
       @accept_link = "#{client_host}/auth/accept-invitation/#{@token}"
 
       opts[:subject] = t('devise.mailer.product_invitation_instruction.subject',
-                         agency_title: '@policy_application.agency&.title',
+                         agency_title: @policy_application.agency&.title,
                          policy_type_title: @policy_application.policy_type.title)
       opts[:template_name] = 'product_invitation_instructions'
     end
