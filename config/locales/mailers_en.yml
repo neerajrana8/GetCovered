@@ -47,7 +47,7 @@ en:
       proof_of_coverage:
         subject: 'Congratulations on Your New Rent Guarantee Policy'
         thank_you: 'Thank you for registering for a Rent Guarantee policy. Below are the details of your policy along with the attached agreement and summary for your records.'
-        please_log_in: 'Please log in to our site <a class="o_text-light o_underline" href="<%= %{login_url}" style="text-decoration: underline;outline: none;color: #126de5;">this page</a> for more information.'
+        please_log_in: 'Please log in to our site <a class="o_text-light o_underline" href="%{login_url}" style="text-decoration: underline;outline: none;color: #126de5;">this page</a> for more information.'
         contact_us: 'Please contact us at %{contact_email} if you have any questions'
 
 
