@@ -27,7 +27,7 @@ class KlaviyoService
       if event_description == "Became Lead" && event_details.blank?
 
       else
-        track_event(event_description, event_details) unless ["test", "test_container", "local", "development"].include?(ENV["RAILS_ENV"])
+        track_event(event_description, event_details) #unless ["test", "test_container", "local", "development"].include?(ENV["RAILS_ENV"])
       end
 
     rescue Net::OpenTimeout => ex
@@ -120,10 +120,17 @@ class KlaviyoService
         'last_visited_page': @lead.last_visited_page,
         'policy_type': @lead.last_event&.policy_type&.slug
     }
+    setup_locale!(request)
     setup_profile!(request)
     setup_address!(request)
     setup_agency!(request)
     request
+  end
+
+  def setup_locale!(request)
+    if @lead.last_event&.data.present?
+      request.merge!({'locale': @lead.last_event&.data['locale']})
+    end
   end
 
   def setup_address!(request)
@@ -162,7 +169,7 @@ class KlaviyoService
     if @lead.email.include?('test')
       TEST_TAG
     else
-      @lead.lead_events.last.try(:tag)
+      @lead.lead_events&.last&.try(:tag)
     end
   end
 
@@ -182,9 +189,9 @@ class KlaviyoService
   def map_last_visited_url(event_details)
     return "" if event_details.blank?
     branding_url = @lead.agency.branding_profiles.take.url
-    if @lead.last_event.policy_type&.rent_guarantee?
+    if @lead.last_event&.policy_type&.rent_guarantee?
       "https://#{branding_url}/rentguarantee"
-    elsif @lead.last_event.policy_type&.residential?
+    elsif @lead.last_event&.policy_type&.residential?
       "https://#{branding_url}/residential"
     else
       #tbd for other forms

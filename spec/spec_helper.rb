@@ -111,6 +111,10 @@ RSpec.configure do |config|
 
   ES_CLASSES = %w[Account Address Agency Carrier Insurable Invoice Lease Policy PolicyApplication PolicyQuote Profile Staff User].freeze
 
+  config.before :each, type: :controller do
+    request.env['HTTP_ACCEPT_LANGUAGE'] = "en"
+  end
+
   config.around :each, elasticsearch: true do |example|
     ES_CLASSES.each do |esc|
       klass = esc.constantize

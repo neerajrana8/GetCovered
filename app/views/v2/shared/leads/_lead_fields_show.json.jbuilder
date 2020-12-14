@@ -1,14 +1,17 @@
 json.extract! lead, :id, :email, :created_at, :last_visited_page, :agency_id
+
+json.agency_name lead&.agency&.title
+
 # Coverage Option, Quote
 profile = lead.profile
 if profile.present?
   json.extract!  profile, :first_name, :last_name
 end
 
-first_event =  lead.lead_events.first
+last_event =  lead.last_event
 
-if first_event.present? && first_event.policy_type
-  json.interested_product first_event.policy_type.title
+if last_event.present? && last_event.policy_type.present?
+  json.interested_product last_event.policy_type.title
 end
 
 json.tracking_url do

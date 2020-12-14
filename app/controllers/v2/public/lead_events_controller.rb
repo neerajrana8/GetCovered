@@ -101,6 +101,7 @@ module V2
         data = params[:lead_event_attributes].delete(:data) if params[:lead_event_attributes][:data]
         if data.present?
           data[:policy_type_id] = params[:policy_type_id]
+          data[:locale] = "#{I18n.locale}"
         else
           data = {policy_type_id: params[:policy_type_id]}
         end

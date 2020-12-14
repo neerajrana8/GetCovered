@@ -6,6 +6,7 @@ class UpdateLeadsData < ActiveRecord::Migration[5.2]
 
     LeadEvent.all.each do |lead_event|
       data = lead_event.data
+      next if data.blank?
 
       if data["policy_type_id"].blank?
         data["policy_type_id"] = lead_event.lead.last_visited_page.include?('Section') ? 1 : 5

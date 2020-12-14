@@ -58,6 +58,7 @@ class Devise::Users::RegistrationsController < DeviseTokenAuth::RegistrationsCon
       end
 
     @resource.invitation_accepted_at = Time.zone.now
+    @resource.profile.language = I18n.locale if @resource&.profile&.present?
   end
 
   def render_create_error
@@ -67,7 +68,7 @@ class Devise::Users::RegistrationsController < DeviseTokenAuth::RegistrationsCon
   # If you have extra params to permit, append them to the sanitizer.
   def configure_sign_up_params
     devise_parameter_sanitizer.permit(:sign_up, keys: [:email, :password, :password_confirmation, profile_attributes: %i[
-                                        first_name middle_name last_name contact_email contact_phone birth_date
+                                        first_name middle_name last_name contact_email contact_phone birth_date language
                                       ]])
   end
 

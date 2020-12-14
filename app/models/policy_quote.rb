@@ -67,7 +67,7 @@ class PolicyQuote < ApplicationRecord
       set_qbe_external_reference
       qbe_bind
     when 'qbe_specialty'
-      { error: 'No policy bind for QBE Specialty' }
+      { error: I18n.t('policy_quote_model.no_policy_for_qbe') }
     when 'crum'
       crum_bind
     when 'msi'
@@ -75,7 +75,7 @@ class PolicyQuote < ApplicationRecord
     when 'dc'
       dc_bind
     else
-      { error: 'Error happened with policy bind' }
+      { error: I18n.t('policy_quote_model.error_with_policy_bund') }
     end
   end
 
@@ -89,13 +89,13 @@ class PolicyQuote < ApplicationRecord
     }
 
     if !(quoted? || error?)
-      quote_attempt[:message] = "Quote ineligible for acceptance"
+      quote_attempt[:message] = I18n.t('policy_quote_model.quote_ineligible')
     else
       self.set_qbe_external_reference if policy_application.carrier.id == 1
 
       if !(update(status: "accepted") && start_billing())
         logger.error "Policy quote errors: #{self.errors.to_json}\nQuote attempt: #{quote_attempt}"
-        quote_attempt[:message] = "Quote billing failed, unable to write policy"
+        quote_attempt[:message] = I18n.t('policy_quote_model.quote_billing_failed')
       else
         bind_request = self.send(*([quote_attempt[:bind_method]] + (bind_params.class == ::Array ? bind_params : [bind_params])))
 
@@ -105,7 +105,7 @@ class PolicyQuote < ApplicationRecord
         
         if bind_request[:error]
           logger.error "Bind Failure; Message: #{bind_request[:message]}"
-          quote_attempt[:message] = "Unable to bind policy"
+          quote_attempt[:message] = I18n.t('policy_quote_model.unable_to_bind_policy')
         else
           if policy_application.policy_type.title == "Residential"
             policy_number = bind_request[:data][:policy_number]
@@ -184,7 +184,8 @@ class PolicyQuote < ApplicationRecord
 
               PolicyQuoteStartBillingJob.perform_later(policy: policy, issue: quote_attempt[:issue_method])
               policy_type_identifier = policy_application.policy_type_id == 5 ? "Rental Guarantee" : "Policy"
-              quote_attempt[:message] = "#{ policy_type_identifier } ##{ policy.number }, has been accepted.  Please check your email for more information."
+              policy_msg = policy_application.policy_type_id == 5 ? I18n.t('policy_quote_model.rent_guarantee_has_been_accepted') : I18n.t('policy_quote_model.policy_has_been_accepted')
+              quote_attempt[:message] = "##{ policy.number } #{ policy_msg }"
               quote_attempt[:success] = true
 
               LeadEvents::UpdateLeadStatus.run!(policy_application: policy_application)
@@ -196,12 +197,12 @@ class PolicyQuote < ApplicationRecord
               logger.error policy_application.errors.to_json
               logger.error policy_premium.errors.to_json
               logger.error self.errors.to_json
-              quote_attempt[:message] = "Error attaching policy to system"
+              quote_attempt[:message] = I18n.t('policy_quote_model.error_attaching_policy')
               update status: 'error'
             end
           else
             logger.error policy.errors.to_json
-            quote_attempt[:message] = "Unable to save policy in system"
+            quote_attempt[:message] = I18n.t('policy_quote_model.unable_to_save_policy')
           end
         end
       end
@@ -223,17 +224,17 @@ class PolicyQuote < ApplicationRecord
       when 'qbe'
         qbe_build_coverages
       when 'qbe_specialty' # WARNING: the following aren't really errors... but they also aren't checked anywhere, so it doesn't hurt to leave them for now
-        { error: 'No build coverages for QBE Specialty' }
+        { error: I18n.t('policy_quote_model.no_build_coverages_for_qbe') }
       when 'crum'
-        { error: 'No build coverages for Crum' }
+        { error: I18n.t('policy_quote_model.no_build_coverages_for_crum') }
       when 'pensio'
-        { error: 'No build coverages for Pensio' }
+        { error: I18n.t('policy_quote_model.no_build_coverages_for_pensio') }
       when 'msi'
         msi_build_coverages
       when 'dc'
         dc_build_coverages
       else
-        { error: 'Error happened with build coverages' }
+        { error: I18n.t('policy_quote_model.error_with_build_coverages') }
     end
   end
 

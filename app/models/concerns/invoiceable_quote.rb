@@ -13,42 +13,42 @@ module InvoiceableQuote
   #  get_policy_premium_invoice_information and get_policy_application_invoice_information
 	def generate_invoices_for_term(renewal = false, refresh = false)
     errors = {}
-    
+
     unless renewal
-	    
+
 	    invoices.destroy_all if refresh
-	    
+
       # get info from policy premium
       premium_data = get_policy_premium_invoice_information
       if premium_data.nil?
         puts "Invoiceable Quote cannot generate invoices without an associated policy premium"
-        errors[:policy_premium] = "cannot be blank"
+        errors[:policy_premium] = I18n.t('insurable_type_model.cannot_be_blank')
         return errors
       end
-      
-	  	if premium_data[:total] > 0 && 
-		  	 status == "quoted" && 
+
+	  	if premium_data[:total] > 0 &&
+		  	 status == "quoted" &&
 		  	 invoices.count == 0
-        
+
         # get info from policy application
         billing_plan = get_policy_application_invoice_information
         if billing_plan.nil?
           puts "Invoiceable Quote cannot generate invoices without an associated policy application"
-          errors[:policy_application] = "cannot be blank"
+          errors[:policy_application] = I18n.t('insurable_type_model.cannot_be_blank')
           return errors
         end
-        
+
         # calculate sum of weights (should be 100, but just in case it's 33+33+33 or something)
         payment_weight_total = billing_plan[:billing_schedule].inject(0){|sum,p| sum + p }.to_d
         payment_weight_total = 100.to_d if payment_weight_total <= 0 # this can never happen unless someone fills new_business with 0s invalidly, but you can't be too careful
-        
+
         # setup
         roundables = [:deposit_fees, :amortized_fees, :base, :special_premium, :taxes]                              # fields on PolicyPremium to have rounding errors fixed
-        refval = 
+        refval =
         refundabilities = { base: billing_plan[:premium_refundability], special_premium: billing_plan[:premium_refundability], taxes: billing_plan[:premium_refundability] } # fields that can be refunded on cancellation (values are LineItem#refundability values)
         line_item_names = { base: "Premium" }                                                                       # fields to rename on the invoice
         line_item_categories = { base: "base_premium", special_premium: "special_premium", taxes: "taxes", deposit_fees: "deposit_fees", amortized_fees: "amortized_fees" }
-        
+
         # calculate invoice charges
         to_charge = billing_plan[:billing_schedule].map.with_index do |payment, index|
           {
@@ -85,7 +85,7 @@ module InvoiceableQuote
                 term_last_date:   tc[:term_last_date],
                 payer:            billing_plan[:payer],
                 status:           "quoted",
-                
+
                 total:            tc[:total], # subtotal & total are calculated automatically from line items, but if we pass one manually validations will fail if it doesn't match the calculation
                 line_items_attributes: (roundables + [:additional_fees]).map do |roundable|
                   {
@@ -103,25 +103,25 @@ module InvoiceableQuote
           errors = e.record.errors.to_h
         rescue StandardError => e
           puts "Error during invoice creation! #{e}"
-          errors[:server] = "encountered an error during invoice generation #{e}"
+          errors[:server] = "#{ I18n.t('invoiceable_quote.error_during_invoice_generation')} #{e}"
         rescue
           puts "Unknown error during invoice creation!"
-          errors[:server] = "encountered an error during invoice creation"
+          errors[:server] = I18n.t('invoiceable_quote.error_during_invoice_creation')
         end
-				
+
 		  end
 	  else
       ap '============================================================='
 	  end
-    
+
     return errors
-    
+
   end
 
 
   private
-  
-  
+
+
     def get_policy_premium_invoice_information
       if respond_to?(:policy_premium)
         {
@@ -145,8 +145,8 @@ module InvoiceableQuote
         nil
       end
     end
-    
-  
+
+
     def get_policy_application_invoice_information
       if respond_to?(:policy_application)
         cpt = CarrierPolicyType.where(policy_type_id: policy_application.policy_type_id, carrier_id: policy_application.carrier_id).take
