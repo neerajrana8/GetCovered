@@ -32,8 +32,8 @@ module V2
           create_rental_guarantee
         else
           render json: {
-            title: 'Policy Type not Recognized',
-            message: 'Policy Type is not residential or commercial.  Please select a supported Policy Type'
+            title: I18n.t('user_policy_application_controller.policy_type_not_recognized'),
+            message: I18n.t('user_policy_application_controller.policy_type_is_not_residential_or_commercial')
           }, status: 422
         end
       end
@@ -133,7 +133,7 @@ module V2
                 render json: response.to_json, status: 200
 
               else
-                render json: { error: 'Quote Failed', message: quote_attempt[:message] },
+                render json: { error: I18n.t('user_policy_application_controller.quote_failed'), message: quote_attempt[:message] },
                        status: 422
               end
             else
@@ -157,7 +157,7 @@ module V2
         @application.expiration_date = @application.effective_date&.send(:+, 1.year)
         if @application.carrier_id == 5
           if !@application.effective_date.nil? && (@application.effective_date >= Time.current.to_date + 90.days || @application.effective_date < Time.current.to_date)
-            render json: { "effective_date" => ["must be within the next 90 days"] }.to_json,
+            render json: { "effective_date" => [I18n.t('user_policy_application_controller.must_be_within_the_next_90_days')] }.to_json,
                    status: 422
             return
           end
@@ -222,11 +222,11 @@ module V2
                   }).to_json, status: 200
 
                 else
-                  render json: { error: 'Quote Failed', message: 'Quote could not be processed at this time' },
+                  render json: { error: I18n.t('user_policy_application_controller.quote_failed'), message: I18n.t('policy_application_contr.create_security_deposit_replacement.quote_failed') },
                          status: 500
                 end
               else
-                render json: { error: 'Application Unavailable', message: 'Application cannot be quoted at this time' },
+                render json: { error: I18n.t('user_policy_application_controller.application_unavailable'), message: I18n.t('policy_application_contr.create_security_deposit_replacement.policy_application_unavailable') },
                        status: 400
               end
 
@@ -251,8 +251,8 @@ module V2
           update_rental_guarantee
         else
           render json: {
-            title: 'Policy or Guarantee Type Not Recognized',
-            message: 'Only Residential Policies and Rental Guaranatees are available for update from this screen'
+            title: I18n.t('user_policy_application_controller.policy_or_guarantee_not_recognized'),
+            message: I18n.t('user_policy_application_controller.only_residential_available_to_update')
           }, status: 422
         end
       end
@@ -298,11 +298,11 @@ module V2
                 }).to_json, status: 200
 
               else
-                render json: { error: 'Quote Failed', message: 'Quote could not be processed at this time' },
+                render json: { error: I18n.t('user_policy_application_controller.quote_failed'), message: I18n.t('policy_application_contr.create_security_deposit_replacement.quote_failed') },
                        status: 500
               end
             else
-              render json: { error: 'Application Unavailable', message: 'Application cannot be quoted at this time' },
+              render json: { error: I18n.t('user_policy_application_controller.application_unavailable'), message: I18n.t('policy_application_contr.create_security_deposit_replacement.policy_application_unavailable') },
                      status: 400
             end
           else
@@ -310,7 +310,7 @@ module V2
                    status: 422
           end
         else
-          render json: { error: 'Application Unavailable', message: 'Please log in to update a commercial policy application' },
+          render json: { error: I18n.t('user_policy_application_controller.application_unavailable'), message: I18n.t('user_policy_application_controller.please_login_to_update_policy') },
                  status: 401
         end
       end
@@ -459,7 +459,7 @@ module V2
           render(
             json: {
                     error: :bad_arguments,
-                    message: "You can't use the same emails for policy applicants"
+                    message: I18n.t('user_policy_application_controller.you_cant_use_same_emails')
                   }.to_json,
             status: 401
           ) && return

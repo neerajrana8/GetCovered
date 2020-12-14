@@ -5,13 +5,13 @@
 module V2
   module Public
     class InsurablesController < PublicController
-      
+
       before_action :set_insurable,
         only: [:show]
-      
+
       before_action :set_substrate,
         only: [:index]
-      
+
       def index
         if params[:short]
           super(:@insurables, @substrate)
@@ -19,10 +19,10 @@ module V2
           super(:@insurables, @substrate)
         end
       end
-      
+
       def show
       end
-      
+
       def msi_unit_list
         # expected input:
         # <InsuranceSvcRq>
@@ -37,21 +37,18 @@ module V2
         msi_id = doc.xpath("//MSI_CommunityID").text
         community = CarrierInsurableProfile.where(carrier_id: 5, external_carrier_id: msi_id.to_s).take&.insurable
         @units = community&.units&.order("title ASC") || []
-        
+
         #puts msi_id
-        
+
         #puts doc.xpath("//Moose")
-      
+
         #puts "Params: #{params}"
         #puts "Reqbod: #{received}"
         #puts "Nokogi: #{doc.xpath("//Moose").text}"
         #puts "----"
         #@units = []
       end
-      
-      
-      
-            
+
       def get_or_create
         diagnostics = {}
         result = ::Insurable.get_or_create(**{
@@ -85,17 +82,17 @@ module V2
               status: 422
         end
       end
-      
+
       private
-      
+
         def view_path
           super + "/insurables"
         end
-        
+
         def set_insurable
           @insurable = access_model(::Insurable, params[:id])
         end
-        
+
         def set_substrate
           super
           if @substrate.nil?
@@ -104,7 +101,7 @@ module V2
             @substrate = @substrate.insurables
           end
         end
-        
+
         def supported_filters(called_from_orders = false)
           @calling_supported_orders = called_from_orders
           {
@@ -114,17 +111,17 @@ module V2
         def supported_orders
           supported_filters(true)
         end
-        
+
         def msi_community_info_id
           params.require(:policy_application)
             .permit(policy_rates_attributes:      [:insurable_rate_id],
                     policy_insurables_attributes: [:insurable_id])
         end
-        
+
         def get_or_create_params
           params.permit(:address, :unit, :insurable_id, :create_if_ambiguous, :allow_creation, :communities_only, :titleless)
         end
-        
+
         # output stuff with essentially the same format as in the Address search
         def insurable_prejson(ins, short_mode: false)
           case ins
@@ -173,7 +170,7 @@ module V2
               return nil
           end
         end
-        
+
     end
   end # module Public
 end

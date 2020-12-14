@@ -1,6 +1,7 @@
-json.array! @branding_profile.faqs do |faq|
+json.array! @faqs do |faq|
   json.id faq.id
   json.title faq.title
+  json.language faq.language
   json.branding_profile_id faq.branding_profile_id
   json.faq_order faq.faq_order
   json.questions faq.faq_questions do |faq_question|
@@ -10,4 +11,3 @@ json.array! @branding_profile.faqs do |faq|
     json.question_order faq_question.question_order
   end
 end
-
