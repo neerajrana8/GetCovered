@@ -27,6 +27,7 @@ en:
         to us at %{contact_email}. It has been a pleasure to do business with you."
       cancellation_is_effective: "This cancellation is effective: %{cancellation_date}"
       contact_us: "Please contact us at %{contact_email} if you have any questions."
+      canceled_by_user: "This policy has been canceled as requested by the policyholder."
 
   user_coverage_mailer:
     all_documents:
@@ -47,7 +48,7 @@ en:
       proof_of_coverage:
         subject: 'Congratulations on Your New Rent Guarantee Policy'
         thank_you: 'Thank you for registering for a Rent Guarantee policy. Below are the details of your policy along with the attached agreement and summary for your records.'
-        please_log_in: 'Please log in to our site <a class="o_text-light o_underline" href="<%= %{login_url}" style="text-decoration: underline;outline: none;color: #126de5;">this page</a> for more information.'
+        please_log_in: 'Please log in to our site <a class="o_text-light o_underline" href="%{login_url}" style="text-decoration: underline;outline: none;color: #126de5;">this page</a> for more information.'
         contact_us: 'Please contact us at %{contact_email} if you have any questions'
 
 
