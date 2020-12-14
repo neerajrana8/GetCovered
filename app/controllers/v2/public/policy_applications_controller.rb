@@ -813,11 +813,25 @@ module V2
         #  end
         #end
         # done
-        render json:   results.select{|k, v| k != :errors }.merge(results[:errors] ? { estimated_premium_errors: [results[:errors][:external]].flatten } : {}),
+        
+        response_tr = results.select{|k, v| k != :errors }.merge(results[:errors] ? { estimated_premium_errors: [results[:errors][:external]].flatten } : {})
+        use_translations_for_msi_coverage_options!(response_tr)
+
+        render json: response_tr,
                status: 200
       end
 
       private
+
+      def use_translations_for_msi_coverage_options!(response_tr)
+        response_tr[:coverage_options].each do |coverage_opt|
+          uid = coverage_opt["uid"]
+          title = I18n.t("coverage_options.#{uid}_title")
+          description = I18n.t("coverage_options.#{uid}_desc")
+          coverage_opt["description"] = description unless description.include?('translation missing')
+          coverage_opt["title"] = title unless description.include?('translation missing')
+        end
+      end
 
       def check_api_access
         key = request.headers["token-key"]
