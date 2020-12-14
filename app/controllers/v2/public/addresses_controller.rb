@@ -5,7 +5,6 @@
 module V2
   module Public
     class AddressesController < PublicController
-
       def index
         if params[:search].presence
           @addresses = Address.search_insurables(params[:search])
@@ -43,7 +42,6 @@ module V2
                  status: :ok
         end
       end
-      
     end
   end
 end

@@ -12,7 +12,7 @@ module V2
 
       def show
         if @policy_application.status == 'accepted'
-          render json:   standard_error(:policy_application_not_found, 'Policy Application is not found or no longer available'),
+          render json:   standard_error(:policy_application_not_found, I18n.t('policy_application_contr.show.policy_application_not_found')),
                  status: 404
           return
         end
@@ -39,7 +39,7 @@ module V2
             insurable    = nil
             insurable    = Insurable.where(id: insurable_id, insurable_type_id: ::InsurableType::RESIDENTIAL_UNITS_IDS, enabled: true).take
             if insurable.nil?
-              render(json: standard_error(:unit_not_found, "Unit not found"), status: :unprocessable_entity) and return
+              render(json: standard_error(:unit_not_found, I18n.t('policy_application_contr.new.unit_not_found')), status: :unprocessable_entity) and return
             end
             # determine preferred status
             @preferred = (insurable.parent_community || insurable).preferred_ho4
@@ -50,7 +50,7 @@ module V2
               cip        = insurable.carrier_insurable_profiles.where(carrier_id: policy_type.carrier_policy_types.map{|cpt| cpt.carrier_id }).order("created_at DESC").limit(1).take
               carrier_id = cip&.carrier_id
               if carrier_id.nil?
-                render json:   { error: "Invalid unit" },
+                render json:   { error: I18n.t('policy_application_contr.new.invalid_unit') },
                        status: :unprocessable_entity
                 return
               end
@@ -72,7 +72,7 @@ module V2
           @primary_user = ::User.new
           @application.users << @primary_user
         else
-          render json:   standard_error(:invalid_policy_type, 'Invalid policy type'),
+          render json:   standard_error(:invalid_policy_type, I18n.t('policy_application_contr.new.invalid_policy_type')),
                  status: :unprocessable_entity
         end
       end
@@ -85,10 +85,10 @@ module V2
                params[:policy_application][:policy_type_id].to_i == 5
               create_from_external
             else
-              render json: standard_error(:invalid_policy_type, 'Invalid policy type'), status: 422
+              render json: standard_error(:invalid_policy_type, I18n.t('policy_application_contr.new.invalid_policy_type')), status: 422
             end
           else
-            render json: standard_error(:authentication, 'Invalid Auth Key'), status: 401
+            render json: standard_error(:authentication, I18n.t('policy_application_contr.create.invalid_auth_key')), status: 401
           end
         else
           case params[:policy_application][:policy_type_id]
@@ -101,14 +101,14 @@ module V2
           when 6
             create_security_deposit_replacement
           else
-            render json: standard_error(:invalid_policy_type, 'Invalid policy type '), status: 422
+            render json: standard_error(:invalid_policy_type, I18n.t('policy_application_contr.new.invalid_policy_type')), status: 422
           end
         end
       end
 
       def rent_guarantee_complete
         PolicyApplications::RentGuaranteeMailer.with(policy_application: @policy_application).invite_to_pay.deliver_later
-        render json: { message: 'Instructions were sent' }
+        render json: { message: I18n.t('policy_application_contr.rentguarantee_complete.inistructions_were_sent') }
       end
 
       def validate_policy_users_params
@@ -121,7 +121,7 @@ module V2
           render(
             json:   {
                     error:   :bad_arguments,
-                    message: "You can't use the same emails for policy applicants"
+                    message: I18n.t('policy_application_contr.validate_policy_users_params.bad_arguments')
                   }.to_json,
             status: 401
           ) and return
@@ -346,11 +346,11 @@ module V2
           @application.estimate()
           @quote = @application.policy_quotes.order('created_at DESC').limit(1).first
           if @application.status == "quote_failed"
-            render json: standard_error(:policy_application_unavailable, @application.error_message || 'Application cannot be quoted at this time'),
+            render json: standard_error(:policy_application_unavailable, @application.error_message || I18n.t('policy_application_contr.create_security_deposit_replacement.policy_application_unavailable')),
                    status: 400
             return
           elsif @application.status == "quoted"
-            render json: standard_error(:policy_application_unavailable, 'Application cannot be quoted at this time'),
+            render json: standard_error(:policy_application_unavailable, I18n.t('policy_application_contr.create_security_deposit_replacement.policy_application_unavailable')),
                    status: 400
             return
           end
@@ -359,11 +359,11 @@ module V2
           @quote.reload
           unless @quote.status == "quoted"
             if @application.status == "quote_failed"
-              render json: standard_error(:quote_failed, @application.error_message || 'Quote could not be processed at this time'),
+              render json: standard_error(:quote_failed, @application.error_message || I18n.t('policy_application_contr.create_security_deposit_replacement.quote_failed')),
                      status: 500
               return
             else
-              render json: standard_error(:quote_failed, 'Quote could not be processed at this time'),
+              render json: standard_error(:quote_failed, I18n.t('policy_application_contr.create_security_deposit_replacement.quote_failed')),
                      status: 500
               return
             end
@@ -426,10 +426,10 @@ module V2
               @application.estimate()
               @quote = @application.policy_quotes.order('created_at DESC').limit(1).first
               if @application.status == "quote_failed"
-                render json: standard_error(:policy_application_unavailable, @application.error_message || 'Application cannot be quoted at this time'),
+                render json: standard_error(:policy_application_unavailable, @application.error_message || I18n.t('policy_application_contr.create_security_deposit_replacement.policy_application_unavailable')),
                        status: 400
               elsif @application.status == "quoted"
-                render json: standard_error(:policy_application_unavailable, 'Application cannot be quoted at this time'),
+                render json: standard_error(:policy_application_unavailable, I18n.t('policy_application_contr.create_security_deposit_replacement.policy_application_unavailable')),
                        status: 400
               else
                 # if application quote success or failure
@@ -438,7 +438,7 @@ module V2
                 @quote.reload
 
                 if @application.status == "quote_failed"
-                  render json: standard_error(:quote_failed, @application.error_message || 'Quote could not be processed at this time'),
+                  render json: standard_error(:quote_failed, @application.error_message || I18n.t('policy_application_contr.create_security_deposit_replacement.quote_failed')),
                          status: 500
                 elsif @quote.status == "quoted"
 
@@ -463,7 +463,7 @@ module V2
                                }).to_json, status: 200
 
                 else
-                  render json: standard_error(:quote_failed, 'Quote could not be processed at this time'),
+                  render json: standard_error(:quote_failed, I18n.t('policy_application_contr.create_security_deposit_replacement.quote_failed')),
                          status: 500
                 end
               end
@@ -485,7 +485,7 @@ module V2
         when 5
           update_rental_guarantee
         else
-          render json: standard_error(:invalid_policy_type, 'Invalid policy type'), status: 422
+          render json: standard_error(:invalid_policy_type, I18n.t('policy_application_contr.new.invalid_policy_type')), status: 422
         end
       end
 
@@ -557,11 +557,11 @@ module V2
                 @policy_application.estimate
                 @quote = @policy_application.policy_quotes.order("updated_at DESC").limit(1).first
 
-                if @policy_application.status == "quote_failed"
-                  render json: standard_error(:policy_application_unavailable, @policy_application.error_message || 'Application cannot be quoted at this time  '),
+                if @application.status == "quote_failed"
+                  render json: standard_error(:policy_application_unavailable, @application.error_message || I18n.t('policy_application_contr.create_security_deposit_replacement.policy_application_unavailable')),
                          status: 400
-                elsif @policy_application.status == "quoted"
-                  render json: standard_error(:policy_application_unavailable, 'Application cannot be quoted at this time '),
+                elsif @application.status == "quoted"
+                  render json: standard_error(:policy_application_unavailable, I18n.t('policy_application_contr.create_security_deposit_replacement.policy_application_unavailable')),
                          status: 400
                 else
                   # if application quote success or failure
@@ -569,8 +569,8 @@ module V2
                   @policy_application.reload
                   @quote.reload
 
-                  if @policy_application.status == "quote_failed"
-                    render json: standard_error(:quote_failed, @policy_application.error_message || 'Quote could not be processed at this time'),
+                  if @application.status == "quote_failed"
+                    render json: standard_error(:quote_failed, @application.error_message || I18n.t('policy_application_contr.create_security_deposit_replacement.quote_failed')),
                            status: 500
                   elsif @quote.status == "quoted"
 
@@ -593,7 +593,7 @@ module V2
                                  }).to_json, status: 200
 
                   else
-                    render json: standard_error(:quote_failed, 'Quote could not be processed at this time'),
+                    render json: standard_error(:quote_failed, I18n.t('policy_application_contr.create_security_deposit_replacement.quote_failed')),
                            status: 500
                   end
                 end
@@ -665,7 +665,7 @@ module V2
           when DepositChoiceService.carrier_id
             deposit_choice_get_coverage_options
           else
-            render json:   { error: "invalid carrier_id/policy_type_id combination #{get_coverage_options_params[:carrier_id] || 'NULL'}/#{get_coverage_options_params[:policy_type_id] || 'NULL'}" },
+            render json:   { error: "#{I18n.t('policy_application_contr.get_coverage_options.invalid_combination')} #{get_coverage_options_params[:carrier_id] || 'NULL'}/#{get_coverage_options_params[:policy_type_id] || 'NULL'}" },
                    status: :unprocessable_entity
         end
       end
@@ -675,26 +675,26 @@ module V2
         # validate params
         inputs = deposit_choice_get_coverage_options_params
         if inputs[:insurable_id].nil?
-          render json:   { error: "insurable_id cannot be blank" },
+          render json:   { error: I18n.t('policy_application_contr.deposit_choice_get_coverage_options.insurable_id_cannot_be_blank') },
                  status: :unprocessable_entity
           return
         end
         if inputs[:effective_date].nil?
-          render json:   { error: "effective_date cannot be blank" },
+          render json:   { error: I18n.t('policy_application_contr.deposit_choice_get_coverage_options.effective_date_cannot_be_blank') },
                  status: :unprocessable_entity
           return
         end
         # pull unit from db
         unit = Insurable.where(id: inputs[:insurable_id].to_i).take
         if unit.nil? || unit.insurable_type_id != @residential_unit_insurable_type_id
-          render json:   { error: "unit not found" },
+          render json:   { error: I18n.t('policy_application_contr.new.unit_not_found') },
                  status: :unprocessable_entity
           return
         end
         # get coverage options
         result = unit.dc_get_rates(Date.parse(inputs[:effective_date]))
         unless result[:success]
-          render json:   { error: "There are no security deposit replacement plans available for this property (error code #{result[:event]&.id || 0})" },
+          render json:   { error: "#{ I18n.t('policy_application_contr.deposit_choice_get_coverage_options.no_security_deposit_replacement')} #{result[:event]&.id || 0})" },
                  status: :unprocessable_entity
           return
         end
@@ -710,19 +710,19 @@ module V2
         # grab params and validate 'em
         inputs = msi_get_coverage_options_params
         if inputs[:insurable_id].nil?
-          render json:   { error: "insurable_id cannot be blank" },
+          render json:   { error: I18n.t('policy_application_contr.deposit_choice_get_coverage_options.insurable_id_cannot_be_blank') },
                  status: :unprocessable_entity
           return
         end
         unless inputs[:coverage_selections].nil?
           if inputs[:coverage_selections].class != ::Array
-            render json:   { error: "coverage_selections must be an array of coverage selections" },
+            render json:   { error: I18n.t('policy_application_contr.msi_get_coverage_options.coverage_selections_must_be_array') },
                    status: :unprocessable_entity
             return
           else
             broken = inputs[:coverage_selections].select { |cs| cs[:category].blank? || cs[:uid].blank? }
             unless broken.length == 0
-              render json:   { error: "all entries of coverage_selections must include a category and uid" },
+              render json:   { error: I18n.t('policy_application_contr.msi_get_coverage_options.must_include_category_and_uid') },
                      status: :unprocessable_entity
               return
             end
@@ -730,30 +730,30 @@ module V2
         end
         if inputs[:estimate_premium]
           if inputs[:agency_id].nil?
-            render json:   { error: "agency_id cannot be blank" },
+            render json:   { error: I18n.t('policy_application_contr.msi_get_coverage_options.agency_cannot_be_blank') },
                    status: :unprocessable_entity
             return
           end
           if inputs[:effective_date].nil?
-            render json:   { error: "effective_date cannot be blank" },
+            render json:   { error: I18n.t('policy_application_contr.deposit_choice_get_coverage_options.effective_date_cannot_be_blank') },
                    status: :unprocessable_entity
             return
           else
             begin
               Date.parse(inputs[:effective_date])
             rescue ArgumentError
-              render json:   { error: "effective_date must be a valid date" },
+              render json:   { error: I18n.t('policy_application_contr.msi_get_coverage_options.effective_date_must_be_valid_date') },
                      status: :unprocessable_entity
               return
             end
           end
           if inputs[:additional_insured].nil?
-            render json:   { error: "additional_insured cannot be blank" },
+            render json:   { error: I18n.t('policy_application_contr.msi_get_coverage_options.additional_insured_cannot_be_blank') },
                    status: :unprocessable_entity
             return
           end
           if inputs[:billing_strategy_id].nil?
-            render json:   { error: "billing_strategy_id cannot be blank" },
+            render json:   { error: I18n.t('policy_application_contr.msi_get_coverage_options.billing_strategy_id_cannot_be_blank') },
                    status: :unprocessable_entity
             return
           end
@@ -761,7 +761,7 @@ module V2
         # pull unit from db
         unit = Insurable.where(id: inputs[:insurable_id].to_i).take
         if unit.nil? || unit.insurable_type_id != @residential_unit_insurable_type_id
-          render json:   { error: "unit not found" },
+          render json:   { error: I18n.t('policy_application_contr.new.unit_not_found') },
                  status: :unprocessable_entity
           return
         end
@@ -769,7 +769,7 @@ module V2
         community = unit.parent_community
         cip       = CarrierInsurableProfile.where(carrier_id: @msi_id, insurable_id: community&.id).take # possibly nil, for non-preferred
         if community.nil?
-          render json:   { error: "community not found" },
+          render json:   { error: I18n.t('policy_application_contr.msi_get_coverage_options.community_not_found') },
                  status: :unprocessable_entity
           return
         end
@@ -777,7 +777,7 @@ module V2
         billing_strategy_code = nil
         billing_strategy      = BillingStrategy.where(carrier_id: @msi_id, agency_id: inputs[:agency_id].to_i, policy_type_id: @ho4_policy_type_id, id: inputs[:billing_strategy_id].to_i).take
         if billing_strategy.nil? && inputs[:estimate_premium]
-          render json:   { error: "billing strategy must belong to the correct carrier, agency, and HO4 policy type" },
+          render json:   { error: I18n.t('policy_application_contr.msi_get_coverage_options.billing_strategy_must_belong_to_carrier') },
                  status: :unprocessable_entity
           return
         else

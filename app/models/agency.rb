@@ -202,12 +202,12 @@ class Agency < ApplicationRecord
 
   def parent_agency_exist
     unless self.agency_id.nil? || parent_agencies_ids.include?(self.agency_id)
-      errors.add(:agency, "Parent id incorrect")
+      errors.add(:agency, I18n.t('agency_model.parent_id_incorrect'))
     end
   end
 
   def agency_to_sub_disabled
-    errors.add(:agency, "Agency can't be updated to sub-agency") if parent_agencies_ids.include?(self.agency_id) &&
+    errors.add(:agency, I18n.t('agency_model.agency_cannot_be_updated')) if parent_agencies_ids.include?(self.agency_id) &&
                                                                     parent_agencies_ids.include?(self.id)
   end
 

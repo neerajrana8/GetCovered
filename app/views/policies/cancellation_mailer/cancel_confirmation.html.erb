@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
   <meta name="x-apple-disable-message-reformatting">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <title>Invoice</title>
+  <title><%=t('cancellation_mailer.cancel_confirmation.title') %></title>
   <style type="text/css">
       a { text-decoration: none; outline: none; }
       @media (max-width: 649px) {
@@ -73,7 +73,7 @@
 <table width="100%" cellspacing="0" cellpadding="0" border="0" role="presentation">
   <tbody>
   <tr>
-    <td class="o_hide" align="center" style="display: none;font-size: 0;max-height: 0;width: 0;line-height: 0;overflow: hidden;mso-hide: all;visibility: hidden;">Cancellation confirmation</td>
+    <td class="o_hide" align="center" style="display: none;font-size: 0;max-height: 0;width: 0;line-height: 0;overflow: hidden;mso-hide: all;visibility: hidden;"><%=t('cancellation_mailer.cancel_confirmation.title') %></td>
   </tr>
   </tbody>
 </table>
@@ -131,16 +131,15 @@
               <tr>
                 <td class="o_bg-white o_px-md o_py-md o_sans o_text o_text-secondary" align="left" style="font-family: Helvetica, Arial, sans-serif;margin-top: 0px;margin-bottom: 0px;font-size: 16px;line-height: 24px;background-color: #ffffff;color: #424651;padding-left: 24px;padding-right: 24px;padding-top: 24px;padding-bottom: 24px;">
                   <div style="font-size: 24px; line-height: 24px; height: 24px;">&nbsp; </div>
-                  <p class="o_mb-xs" style="margin-top: 0px;margin-bottom: 8px;">Hi <%=@user.profile.first_name %>,</p>
+                  <p class="o_mb-xs" style="margin-top: 0px;margin-bottom: 8px;"><%= t("devise.mailer.shared.hi_there", name: @user.profile.first_name) %>,</p>
                   <p class="o_mb-xs" style="margin-top: 0px;margin-bottom: 8px;">
-                    This email is to confirm that your policy has been cancelled. Please keep this email for your records.
-                    We are sorry to see you go! We appreciate and value any feedback
-                    you may have on our <%=@policy.policy_type.title %> Policy product and service. If there’s something that
-                    we could have done to make your experience with <%= @agency.title %>  better, please reach out
-                    to us at <%=@contact_email %>. It has been a pleasure to do business with you.
+                    <%= t("cancellation_mailer.cancel_confirmation.text",
+                          policy_type: @policy_type_title,
+                          agency_title: @agency.title,
+                          contact_email: @contact_email) %>
                   </p>
-                  <p class="o_mb-xs" style="margin-top: 0px;margin-bottom: 8px;">Best,</p>
-                  <p class="o_mb-xs" style="margin-top: 0px;margin-bottom: 8px;"><%=@agency.title %></p>
+                  <p class="o_mb-xs" style="margin-top: 0px;margin-bottom: 8px;"><%= t('shared.best') %>,</p>
+                  <p class="o_mb-xs" style="margin-top: 0px;margin-bottom: 8px;"><%= @agency.title %></p>
                   <div style="font-size: 16px; line-height: 16px; height: 16px;">&nbsp; </div>
                 </td>
               </tr>
@@ -207,12 +206,12 @@
             <hr style="color: #8c8e8e;">
             <p class="o_mb-xs" style="margin-top: 0px;margin-bottom: 8px;">
               <% if @without_request.blank? %>
-              This policy has been canceled as requested by the policyholder.
+                <%= t('cancellation_mailer.cancel_confirmation.canceled_by_user') %>
               <% end %>
               <br>
-              This cancellation is effective: <%=@policy.cancellation_date&.to_date&.strftime("%m/%d/%Y") %>
+              <%= t('cancellation_mailer.cancel_confirmation.cancellation_is_effective',cancellation_date: @policy.cancellation_date&.to_date&.strftime("%m/%d/%Y")) %>
               <br>
-              Please contact us at <%=@contact_email %> if you have any questions.
+              <%= t('cancellation_mailer.cancel_confirmation.contact_us', contact_email: @contact_email) %>
             </p>
           </td>
         </tr>
@@ -243,7 +242,7 @@
               <div class="o_px-xs o_sans o_text-xs o_text-light o_left o_xs-center" style="font-family: Helvetica, Arial, sans-serif;margin-top: 0px;margin-bottom: 0px;font-size: 14px;line-height: 21px;color: #82899a;text-align: left;padding-left: 8px;padding-right: 8px;">
                 <p class="o_mb-xs" style="margin-top: 0px;margin-bottom: 8px;">Get Covered LLC, 270 Lafayette St, New York, NY 10012</p>
                 <p style="margin-top: 0px;margin-bottom: 0px;">
-                  <a class="o_text-light o_underline" href="https://www.getcoveredinsurance.com/faq" style="text-decoration: underline;outline: none;color: #82899a;">Help Center</a>
+                  <a class="o_text-light o_underline" href="https://www.getcoveredinsurance.com/faq" style="text-decoration: underline;outline: none;color: #82899a;"><%= I18n.t('devise.mailer.shared.help_center') %></a>
                 </p>
               </div>
             </div>

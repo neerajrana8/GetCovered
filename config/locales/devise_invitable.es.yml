@@ -1,0 +1,51 @@
+es:
+  devise:
+    failure:
+      invited: "Tienes una invitación pendiente, acéptala para acabar de crear tu cuenta."
+    invitations:
+      send_instructions: "Se ha enviado una invitación a %{email}."
+      invitation_token_invalid: "¡La invitación no es válida!"
+      updated: "Se ha configurado su contraseña y ha ingresado al sistema"
+      updated_not_active: "Su contraseña se ha configurado correctamente."
+      no_invitations_remaining: "No quedan invitaciones"
+      invitation_removed: "Se ha retirado su invitación"
+      new:
+        header: "Enviar Invitación"
+        submit_button: "Envía una invitación"
+      edit:
+        header: "Establecer contraseña"
+        submit_button: "Guardar mi contraseña"
+    mailer:
+      shared:
+        hi_there: "Hola, %{name}"
+        help_center: "Centro de ayuda"
+        this_page: "esta página"
+        thank_you: "Gracias"
+      invitation_instructions:
+        subject: "Instruciones de la invitación"
+        title: "Get Covered | Invitación"
+        hello: "Hola %{email}"
+        someone_invited_you: "Ha sido invitado a %{url}, puede aceptarlo a través del enlace a continuación."
+        accept: "Aceptar la invitación"
+        accept_until: "Esta invitación vence el %{due_date}."
+        ignore: "Si no desea aceptar la invitación, ignore este correo electrónico. Su cuenta no se creará hasta que acceda al enlace anterior y configure su contraseña."
+      product_invitation_instruction:
+        subject: "Termine de registrar su cuenta de %{agency_title} - %{policy_type_title}"
+        header: "Invitación a pagar"
+        hi: "Hola %{name}"
+        text_html: "Gracias por registrarse en una política de %{policy_type_title}. Visite %{link} para terminar de configurar su cuenta. Podrá realizar un seguimiento de los próximos pagos junto con la presentación de un reclamo a través de nuestro portal."
+      reset_password_instructions:
+        title: "Get Covered | Restablecimiento de contraseña"
+        preheader: "Alguien ha solicitado un enlace para cambiar su contraseña. Puede hacerlo a través del siguiente enlace."
+        someone_requested: "Alguien ha solicitado un enlace para cambiar su contraseña. Puede hacerlo a través del siguiente enlace."
+        reset_password: "Restablecer la contraseña"
+        ignore_email: "Si no solicitó esto, ignore este correo electrónico."
+        info: "Su contraseña no cambiará hasta que acceda al enlace anterior y cree una nueva."
+
+
+  time:
+    formats:
+      devise:
+        mailer:
+          invitation_instructions:
+            accept_until_format: "%B %d, %Y %I:%M %p"

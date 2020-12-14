@@ -8,6 +8,7 @@ module PolicyApplications
     string :current_user_email, default: nil
 
     def execute
+      yield add_profile_language
       yield validate_primary_user_params
       yield remove_policy_users
       policy_users_params.each do |policy_user_params|
@@ -17,6 +18,15 @@ module PolicyApplications
     end
 
     private
+
+    def add_profile_language
+      policy_users_params.each do |policy_user_params|
+        next if policy_user_params[:user_attributes][:profile_attributes].blank?
+
+        policy_user_params[:user_attributes][:profile_attributes][:language] = I18n.locale
+      end
+      Success()
+    end
 
     def validate_primary_user_params
       PolicyApplications::ValidateApplicantsParameters.run!(
@@ -31,7 +41,7 @@ module PolicyApplications
       policy_application.policy_users.includes(:user).each do |policy_user|
         policy_user.destroy if users_emails.exclude?(policy_user.user&.email)
         if policy_user.errors.any?
-          return Failure(standard_error(:unbound_policy_user_fail, 'Cant unbound the policy user', policy_user.errors.full_messages))
+          return Failure(standard_error(:unbound_policy_user_fail, I18n.t('policy_application_contr.update_users.cant_unbound_policy_user'), policy_user.errors.full_messages))
         end
       end
 
@@ -68,7 +78,7 @@ module PolicyApplications
       if policy_user.errors.empty?
         Success(policy_user)
       else
-        Failure(standard_error(:policy_user_updating_failed, 'Cant update the policy user', policy_user.errors.full_messages))
+        Failure(standard_error(:policy_user_updating_failed, I18n.t('policy_application_contr.update_users.cant_update_policy_user'), policy_user.errors.full_messages))
       end
     end
 
@@ -77,7 +87,7 @@ module PolicyApplications
       if policy_user.errors.empty?
         Success(policy_user)
       else
-        Failure(standard_error(:policy_user_adding_failed, 'Cant add the policy user', policy_user.errors.full_messages))
+        Failure(standard_error(:policy_user_adding_failed, I18n.t('policy_application_contr.update_users.cant_add_policy_user'), policy_user.errors.full_messages))
       end
     end
 
@@ -89,7 +99,7 @@ module PolicyApplications
       if user.errors.empty?
         Success(user)
       else
-        Failure(standard_error(:user_updation_failed, 'Cant update user', user.errors.full_messages))
+        Failure(standard_error(:user_updation_failed, I18n.t('policy_application_contr.update_users.cant_update_user'), user.errors.full_messages))
       end
     end
 
@@ -99,7 +109,7 @@ module PolicyApplications
       if user.errors.empty?
         Success(user)
       else
-        Failure(standard_error(:user_creation_failed, 'Cant create user', user.errors.full_messages))
+        Failure(standard_error(:user_creation_failed, I18n.t('policy_application_contr.update_users.cant_create_user'), user.errors.full_messages))
       end
     end
 
@@ -115,7 +125,7 @@ module PolicyApplications
       if address.errors.empty?
         Success(address)
       else
-        Failure(standard_error(:user_address_update_failed, 'Cant update address', address.errors.full_messages))
+        Failure(standard_error(:user_address_update_failed, I18n.t('policy_application_contr.update_users.cant_update_address'), address.errors.full_messages))
       end
     end
   end

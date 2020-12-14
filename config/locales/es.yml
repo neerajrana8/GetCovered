@@ -1,0 +1,287 @@
+# Files in the config/locales directory are used for internationalization
+# and are automatically loaded by Rails. If you want to use locales other
+# than English, add the necessary files in this directory.
+#
+# To use the locales, use `I18n.t`:
+#
+#     I18n.t 'hello'
+#
+# In views, this is aliased to just `t`:
+#
+#     <%= t('hello') %>
+#
+# To use a different locale, set it with `I18n.locale`:
+#
+#     I18n.locale = :es
+#
+# This would use the information in config/locales/es.yml.
+#
+# The following keys must be escaped otherwise they will not be retrieved by
+# the default I18n backend:
+#
+# true, false, on, off, yes, no
+#
+# Instead, surround them with single quotes.
+#
+# en:
+#   'true': 'foo'
+#
+# To learn more, please read the Rails Internationalization guide
+# available at http://guides.rubyonrails.org/i18n.html.
+
+es:
+  hello: "Hello world"
+
+  shared:
+    best: "Mejor"
+    accepted: 'Aceptado'
+    thank_you: "Gracias"
+
+  devise_token_auth:
+    sessions:
+      not_confirmed: "Your account is deactivated"
+  policy_application_contr:
+    show:
+      policy_application_not_found: "La aplicación de política no se encuentra o ya no está disponible"
+    new:
+      unit_not_found: "Unidad no encontrada"
+      invalid_unit: "Unidad inválida"
+      invalid_policy_type: "Tipo de póliza no válido"
+    create:
+      invalid_auth_key: "Clave de autenticación no válida"
+    rentguarantee_complete:
+      inistructions_were_sent: "Se enviaron instrucciones"
+    validate_policy_users_params:
+      bad_arguments: "No puede utilizar los mismos correos electrónicos para los solicitantes de políticas"
+    create_security_deposit_replacement:
+      policy_application_unavailable: "La aplicación no se puede cotizar en este momento"
+      quote_failed: "La cotización no se pudo procesar en este momento"
+    get_coverage_options:
+      invalid_combination: "Combinación de carrier_id / policy_type_id no válida"
+    deposit_choice_get_coverage_options:
+      insurable_id_cannot_be_blank: "insurable_id no puede estar en blanco"
+      effective_date_cannot_be_blank: "Effective_date no puede estar en blanco"
+      no_security_deposit_replacement: "No hay planes de reemplazo de depósito de seguridad disponibles para esta propiedad (código de error"
+    msi_get_coverage_options:
+      coverage_selections_must_be_array: "Cobertura_selecciones debe ser un conjunto de selecciones de cobertura."
+      must_include_category_and_uid: "todas las entradas de las selecciones de cobertura deben incluir una categoría y un uid"
+      agency_cannot_be_blank: "agency_id no puede estar en blanco"
+      effective_date_must_be_valid_date: "Effective_date debe ser una fecha válida"
+      additional_insured_cannot_be_blank: "additional_insured no puede dejarse en blanco"
+      billing_strategy_id_cannot_be_blank: "billing_strategy_id no puede estar en blanco"
+      community_not_found: "comunidad no encontrada"
+      billing_strategy_must_belong_to_carrier: "La estrategia de facturación debe pertenecer al operador, la agencia y el tipo de política HO4 correctos."
+    validate_applicants:
+      must_have_only_one_primary_user: "Los parámetros deben tener un solo usuario principal"
+      already_signup_with_this_email: "Un usuario ya se ha registrado con esta dirección de correo electrónico. Inicie sesión para completar su solicitud"
+    update_users:
+      cant_unbound_policy_user: "No se puede desvincular al usuario de la política"
+      cant_update_policy_user: "No se puede actualizar el usuario de la política"
+      cant_add_policy_user: "No puedo agregar el usuario de la política"
+      cant_update_user: "No se puede actualizar el usuario"
+      cant_create_user: "No se puede crear un usuario"
+      cant_update_address: "No se puede actualizar la dirección"
+  policy_app_model:
+    billing_strategy_must_belong: "la estrategia de facturación debe pertenecer a la misma agencia"
+    billing_strategy_must_be_valid: "debe ser una estrategia de facturación válida para el operador actual"
+    billing_strategy_must_be_enabled: "la estrategia de facturación debe estar habilitada"
+    carrier_agency_must_exist: "la agencia de transporte debe existir"
+    is_not_available_for_this_carrier: "no está disponible para esta combinación de operador / agencia"
+    cannot_be_true_with_liability_limit: "no puede ser cierto con un límite de responsabilidad de $ 300,000"
+    cannot_be_greater_than: "no puede ser mayor que 0 para recibir cobertura"
+    cannot_be_true: "no puede ser 'verdadero' para recibir cobertura"
+    expiration_date_cannot_be_before_effective: "la fecha de vencimiento no puede ser anterior a la fecha de vigencia."
+    pensio:
+      policy_quote_failed_to_return: "La cotización de la política no se devolvió"
+      application_unavailable: "Aplicación no disponible para cotizar"
+    crum:
+      event_failed: "No se pudo guardar el evento"
+    qbe:
+      rates_cannot_be_nil: "Las 'tasas' de argumento no pueden ser nulas"
+      rates_must_be_array: "El argumento 'tarifas' debe ser una matriz"
+      quote_id_cannot_be_nil: "El argumento 'quote_id' no puede ser nulo"
+  agency_model:
+    parent_id_incorrect: "Identificación de padre incorrecta"
+    agency_cannot_be_updated: "La agencia no se puede actualizar a sub-agencia"
+  policy_model:
+    cannot_update: "No se puede actualizar en la política del sistema"
+    account_must_be_specified: "Se debe especificar la cuenta"
+    carrier_agency_must_exist: "la agencia de transporte debe existir"
+    must_belong_to_coverage: "debe pertenecer a la cobertura de la póliza BOUND"
+    must_have_paid_invoice: "debe tener al menos una factura pagada para cambiar el estado"
+    no_policy_issue_for_qbe: "No hay problema de política para QBE Specialty"
+    error_with_policy: "Se produjo un error con el problema de la política"
+    cancellation_reason_invalid: "El motivo de la cancelación no es válido"
+    policy_is_already_cancelled: "La política ya está cancelada"
+    document_wrong_format: "El formato del documento es incorrecto, solo: PDF, DOC, DOCX, XLSX, XLS, CSV, JPG, JPEG, PNG, GIF, SVG, TXT"
+  billing_strategy_model:
+    must_be_assigned_to_carrier: "debe asignarse al transportista:"
+  policy_user_model:
+    must_indicate_removal: "Debe indicar si es necesario retirarlo"
+    email_must_be_present: "El correo electrónico debe estar presente para verificar la aceptación"
+    already_included_on_policy: "Ya incluido en la política o la aplicación de la política"
+  insurable_type_model:
+    cannot_be_blank: "no puede estar en blanco"
+  address_model:
+    is_not_a_valid_state: "no es un estado válido"
+    must_be_valid_address: "no se pudo analizar; debe ser una dirección válida"
+    is_invalid: "no es válido"
+  carrier_insurable_type_model:
+    cannot_be_null: "no puede ser nulo"
+  insurable_model:
+    must_belong_to_same_account: "debe pertenecer a la misma cuenta que el padre"
+    either_address_must_be_provided: "se debe proporcionar 'dirección' o 'insurable_id' y una cadena 'unidad'"
+    building_doesnot_exist: "El ID de comunidad o edificio residencial solicitado no existe"
+    unit_doesnot_exist: "La unidad solicitada no existe"
+    unable_create_unit: "No se pudo crear la unidad"
+    invalid_address: "Dirección inválida"
+    invalid_address_value: "Valor de dirección no válido"
+    unable_deduce_unit: "No se puede deducir el título de la unidad de la dirección"
+    not_standart_format: "no es un formato estándar (por ejemplo, 'Apartamento n. ° 2, Unidad 3, n. ° 5, etc.)"
+    request_residential_build_not_exist: "El ID de comunidad o edificio residencial solicitado no existe"
+    unable_create_community_from_address: "No se pudo crear una comunidad desde la dirección"
+    parent_community_not_exist: "La comunidad de padres solicitada no existe"
+    parent_community_not_the_same: "La comunidad de padres solicitada no se encuentra en el mismo estado / código postal / ciudad"
+    unable_to_create_from_address: "No se pudo crear una comunidad desde la dirección"
+    unable_to_create_building_from_address: "No se puede crear el edificio desde la dirección"
+    internal_error_occured: "Se produjo un error interno"
+    should_be_uniq_inside_group: "debe ser uniq dentro del grupo"
+  policy_type_model:
+    residential: 'El seguro para inquilinos'
+    master_policy: 'Master Policy'
+    master_policy_coverage: 'Master Policy Coverage'
+    commercial: 'Política de propietarios de empresas'
+    rent_guarantee: 'Garantía de alquiler'
+    security_deposit_replacement: 'Este Insoranke'
+  policy_quote_model:
+    no_policy_for_qbe: "Ninguna política vinculante para QBE Specialty"
+    error_with_policy_bund: "Se produjo un error con la vinculación de la política"
+    quote_ineligible: "Cita no apta para aceptación"
+    quote_billing_failed: "Error en la facturación de la cotización, no se puede escribir la política"
+    unable_to_bind_policy: "No se puede vincular la política"
+    rent_guarantee_has_been_accepted: "Se ha aceptado la garantía de alquiler. Consulte su correo electrónico para obtener más información."
+    policy_has_been_accepted: "La política ha sido aceptada. Consulte su correo electrónico para obtener más información.."
+    error_attaching_policy: "Error al adjuntar la política al sistema"
+    unable_to_save_policy: "No se puede guardar la política en el sistema"
+    no_build_coverages_for_qbe: "No hay coberturas de construcción para QBE Specialty"
+    no_build_coverages_for_crum: 'No hay coberturas de construcción para Crum'
+    no_build_coverages_for_pensio: 'No hay coberturas de construcción para Pensio'
+    error_with_build_coverages: 'Se produjo un error con las coberturas de compilación'
+    policy_bind_warning_notification_job:
+      get_covered_bind_warning: "Obtenga una advertencia de enlace cubierto"
+    qbe_policy_quote:
+      qbe_bind_failure: "QBE Bind Failure"
+      carrier_must_be_qbe: "El transportista debe ser QBE para vincular la cotización residencial"
+      status_must_be_quoted_or_error: "El estado debe estar entre comillas o error para vincular la cita"
+    crum_policy_quote:
+      quote_documents_recieved: "Documentos de cotización recibidos"
+      quote_inneligable_to_download: "Cita inneligable para descargar documentos"
+    msi_policy_quote:
+      invalid_payment_data: "Datos de pago no válidos para la política vinculante"
+      failed_to_build_bind_request: "Error al compilar la solicitud de vinculación"
+      msi_bind_failure: "Error de enlace de MSI (ID de evento:"
+      msi_error: "Error de MSI:"
+    dc_policy_quote:
+      security_deposit_replacement: "Fianza de reemplazo de depósito de seguridad"
+      carrier_must_be_deposit_choice: "El transportista debe ser Deposit Choice para vincular la cotización de reemplazo del depósito de seguridad"
+      bond_creation_failed: "Falló la creación de bonos: el servicio Deposit Choice rechazó la información del usuario"
+      deposit_choise_bind_failure: "Error de vinculación de opción de depósito (ID de evento:"
+    invoiceable_quote:
+      error_during_invoice_generation: "encontró un error durante la generación de la factura"
+      error_during_invoice_creation: "encontró un error durante la creación de la factura"
+    policy_quote_controller:
+      quote_unavailable_update: "Presupuesto no disponible para actualización"
+      unable_to_update_quote: "No podemos actualizar esta cotización porque ya se ha aceptado o porque no cumple con los requisitos del tipo de política."
+      not_applicable: "No aplica"
+      external_payment_not_applicable: "La autorización de pago externo no se aplica a esta cotización de política"
+      system_error: "Error del sistema'"
+      remote_system_failed: "El sistema remoto no pudo proporcionar la autorización"
+      invalid_payment_method: "Método de pago no válido"
+      ach_support_not_applicable: "Soporte ACH no aplicable"
+      payment_method_must_be_card: "El método de pago debe ser 'tarjeta' o 'ach'; recibido"
+      not_found: "no encontrada"
+      policy_quote_not_found: "No se ha encontrado la cotización de la política."
+      user_could_not_be_found: "No se pudo encontrar el usuario."
+      invalid_payment_info: "Información de pago no válida"
+      could_not_be_accepted: "No se pudo aceptar"
+      accepted: "Aceptado"
+      failure: "Fracaso"
+      payment_token_cannot_be_blank: "el token de pago no puede estar en blanco"
+      valid_payment_method_must_supplied: "se debe proporcionar un método de pago válido"
+      credit_card_info_cannot_be_blank: "La información de la tarjeta de crédito no puede estar en blanco"
+      address_line_1: "Dirección Línea 1"
+      city: "Ciudad"
+      state: "Estado"
+      postal_code: "Código postal"
+      state_must_be_valid_us: "El estado debe ser una abreviatura válida del estado de EE. UU."
+      postal_code_must_be_valid: "El código postal debe ser un código postal válido"
+    insurable_geographical_category:
+      cannot_be_blank_if_counties_are_specified: "no puede dejarse en blanco si se especifican condados"
+    user_controller:
+      invalid_token: "Simbolo no valido."
+    user_policy_application_controller:
+      policy_type_not_recognized: "Tipo de política no reconocido"
+      policy_type_is_not_residential_or_commercial: "El tipo de póliza no es residencial ni comercial. Seleccione un tipo de política compatible"
+      quote_failed: "Cotización fallida"
+      must_be_within_the_next_90_days: "debe ser dentro de los próximos 90 días"
+      application_unavailable: "Aplicación no disponible"
+      policy_or_guarantee_not_recognized: 'Tipo de póliza o garantía no reconocido '
+      only_residential_available_to_update: 'Solo las políticas residenciales y los guaranátees de alquiler están disponibles para actualizar desde esta pantalla '
+      please_login_to_update_policy: 'Inicie sesión para actualizar una solicitud de política comercial'
+      you_cant_use_same_emails: "No puede utilizar los mismos correos electrónicos para los solicitantes de políticas"
+    user_users_controler:
+      unauthorized_access: "Acceso no autorizado"
+      invalid_login_credentials: "Credenciales de acceso invalidos"
+    user_policies_controller:
+      need_insurable: 'Necesita asegurable'
+      policy_created: 'Política creada'
+      policy_is_declined: 'Política rechazada'
+      policy_was_already_declined: "La política ya fue rechazada"
+      policy_was_already_accepted: "La política ya fue aceptada"
+      policy_is_accepted: 'Se acepta la política. Un correo electrónico enviado con la Política adjunta '
+      documents_were_sent: 'Se enviaron documentos'
+      refund_was_sent: 'El reembolso se envió correctamente'
+      refund_was_successfully_sent: 'El reembolso no se envió correctamente'
+      cancel_was_successfully_sent: 'Cancelar se envió con éxito'
+      refund_was_not_successfully_sent: 'El reembolso no se envió correctamente'
+      you_cannot_add_coverage_with_master: 'No puede agregar cobertura con el tipo de póliza maestra'
+      unable_to_attach_payment: "No se puede adjuntar la fuente de pago al usuario"
+    coverage_options:
+      coverage_c: 'Cobertura C Contenido'
+      personal_property_coverage_desc: 'La cobertura de propiedad personal protege sus pertenencias y propiedades personales.'
+      coverage_d: 'Cobertura D Pérdida de uso'
+      coverage_reimburses: 'La cobertura le reembolsa el costo de mantener un nivel de vida comparable después de una pérdida cubierta que excede sus gastos normales antes de la pérdida, hasta los límites de la póliza.'
+      coverage_e: 'Cobertura E Responsabilidad'
+      liability_coverage_protects_you: 'La cobertura de responsabilidad lo protege en caso de daños por negligencia en su apartamento, la comunidad u otros residentes.'
+      coverage_f: 'Pago de cobertura F Med'
+      coverage_designed_to_pay: 'Cobertura diseñada para pagar los gastos médicos de otras personas que resulten lesionadas accidentalmente en un lugar asegurado o por las actividades de un asegurado, un empleado residente o un animal propiedad de un asegurado o al cuidado de este, hasta los límites de la póliza.'
+      pet_damage: 'Daño de mascota'
+      this_option_covers: 'Esta opción cubre hasta $ 500 por daños accidentales causados por una mascota, como una alfombra manchada o zócalos masticados.'
+      water_backup: 'Respaldo de agua'
+      this_option_covers_your_personal: 'Esta opción cubre su propiedad personal en caso de que haya un respaldo de agua / alcantarillado en su vivienda cubierta que comience fuera de las instalaciones.'
+      animal_liability: 'Recompra de responsabilidad animal'
+      this_option_provides_increase: 'Esta opción proporciona un aumento en la cantidad de protección de responsabilidad otorgada al asegurado en el caso de que un asegurado pueda ser considerado responsable de los daños causados por una mascota.'
+      identity_fraud: 'Fraude de identidad'
+      this_option_provides_coverage_up: 'Esta opción brinda cobertura de hasta $ 5,000 para los gastos incurridos por un asegurado como resultado directo de un fraude de identidad.'
+      bed_bug: 'Ácaro'
+      this_option_provides_coverage_to_treat: 'Esta opción brinda cobertura para tratar, remediar y eliminar una infestación de chinches en la residencia.'
+      forced_entry_theft: 'Robo por entrada forzada'
+      hiss_option_provides: 'Esta opción proporciona un descuento al cambiar la cobertura de robo para requerir evidencia física de entrada forzada y puede requerir un informe policial.'
+      tenants_additional_protection: 'Protección adicional para inquilinos'
+      this_option_covers_personal: 'Esta opción cubre su propiedad personal (hasta $ 5,000) en caso de un terremoto.'
+      workers_compensation: 'Compensación de trabajadores'
+      all_other_peril: 'Todos los demás peligros'
+      the_amount_insurer_deduct: 'La cantidad que la aseguradora deducirá de una pérdida que resulte de otro peligro que no se haya mencionado (como robo, huracán o viento) antes de pagar hasta los límites de su póliza.'
+      theft: 'Robo'
+      the_amount_insurer_deduct2: 'La cantidad que la aseguradora deducirá de una pérdida resultante de un robo antes de pagar hasta los límites de su póliza.'
+      wind_hall: 'Granizo de viento'
+      the_amount_insurer_deduct3: 'El monto que la aseguradora deducirá de una pérdida resultante de viento o granizo antes de pagar hasta los límites de su póliza.'
+      earthquake: 'Terremoto'
+      the_amount_insurer_deduct4: 'La cantidad que la aseguradora deducirá de una pérdida resultante de un terremoto antes de pagar hasta los límites de su póliza.'
+      coverage_c_required: 'Cobertura C Se requiere selección de contenido'
+      cannot_be_blank_counties: "no puede dejarse en blanco si se especifican condados"
+      bound: 'UNIDO'
+      bound_with_warning: 'BOUND_WITH_WARNING'
+      renewing: 'RENOVANDO'
+      renewed: 'REINSTADO'
+      reinstated: 'REINSTATED'
