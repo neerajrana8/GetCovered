@@ -17,7 +17,7 @@ es:
         submit_button: "Guardar mi contraseña"
     mailer:
       shared:
-        hi_there: "Hola, %{name}"
+        hi_there: "Hola %{name},"
         help_center: "Centro de ayuda"
         this_page: "esta página"
         thank_you: "Gracias"
@@ -32,7 +32,7 @@ es:
       product_invitation_instruction:
         subject: "Termine de registrar su cuenta de %{agency_title} - %{policy_type_title}"
         header: "Invitación a pagar"
-        hi: "Hola %{name}"
+        hi: "Hola %{name},"
         text_html: "Gracias por registrarse en una política de %{policy_type_title}. Visite %{link} para terminar de configurar su cuenta. Podrá realizar un seguimiento de los próximos pagos junto con la presentación de un reclamo a través de nuestro portal."
       reset_password_instructions:
         title: "Get Covered | Restablecimiento de contraseña"

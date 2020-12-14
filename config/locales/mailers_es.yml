@@ -45,6 +45,6 @@ es:
     rent_guarantee:
       proof_of_coverage:
         subject: 'Felicitaciones por su nueva política de garantía de alquiler'
-        thank_you: 'Gracias por registrarse para una póliza de garantía de alquiler. A continuación se encuentran los detalles de su póliza junto con el acuerdo adjunto y el resumen para sus registros.'
+        thank_you: 'Gracias, por registrarse para una póliza de garantía de alquiler. A continuación se encuentran los detalles de su póliza junto con el acuerdo adjunto y el resumen para sus registros.'
         please_log_in: 'Inicie sesión en nuestro sitio <a class="o_text-light o_underline" href="%{login_url}" style="text-decoration: underline;outline: none;color: #126de5;">esta página</a>  para obtener más información.'
-        contact_us: 'Por favor contáctenos en %{contact_email} si tiene alguna pregunta'
+        contact_us: 'Por favor contáctenos en %{contact_email} si tiene alguna pregunta.'
