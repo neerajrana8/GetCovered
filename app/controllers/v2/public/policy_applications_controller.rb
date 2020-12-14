@@ -557,10 +557,10 @@ module V2
                 @policy_application.estimate
                 @quote = @policy_application.policy_quotes.order("updated_at DESC").limit(1).first
 
-                if @application.status == "quote_failed"
-                  render json: standard_error(:policy_application_unavailable, @application.error_message || I18n.t('policy_application_contr.create_security_deposit_replacement.policy_application_unavailable')),
+                if @policy_application.status == "quote_failed"
+                  render json: standard_error(:policy_application_unavailable, @policy_application.error_message || I18n.t('policy_application_contr.create_security_deposit_replacement.policy_application_unavailable')),
                          status: 400
-                elsif @application.status == "quoted"
+                elsif @policy_application.status == "quoted"
                   render json: standard_error(:policy_application_unavailable, I18n.t('policy_application_contr.create_security_deposit_replacement.policy_application_unavailable')),
                          status: 400
                 else
@@ -568,9 +568,9 @@ module V2
                   @policy_application.quote(@quote.id)
                   @policy_application.reload
                   @quote.reload
-
-                  if @application.status == "quote_failed"
-                    render json: standard_error(:quote_failed, @application.error_message || I18n.t('policy_application_contr.create_security_deposit_replacement.quote_failed')),
+                  
+                  if @policy_application.status == "quote_failed"
+                    render json: standard_error(:quote_failed, @policy_application.error_message || I18n.t('policy_application_contr.create_security_deposit_replacement.quote_failed')),
                            status: 500
                   elsif @quote.status == "quoted"
 
@@ -813,11 +813,25 @@ module V2
         #  end
         #end
         # done
-        render json:   results.select{|k, v| k != :errors }.merge(results[:errors] ? { estimated_premium_errors: [results[:errors][:external]].flatten } : {}),
+        
+        response_tr = results.select{|k, v| k != :errors }.merge(results[:errors] ? { estimated_premium_errors: [results[:errors][:external]].flatten } : {})
+        use_translations_for_msi_coverage_options!(response_tr)
+
+        render json: response_tr,
                status: 200
       end
 
       private
+
+      def use_translations_for_msi_coverage_options!(response_tr)
+        response_tr[:coverage_options].each do |coverage_opt|
+          uid = coverage_opt["uid"]
+          title = I18n.t("coverage_options.#{uid}_title")
+          description = I18n.t("coverage_options.#{uid}_desc")
+          coverage_opt["description"] = description unless description.include?('translation missing')
+          coverage_opt["title"] = title unless description.include?('translation missing')
+        end
+      end
 
       def check_api_access
         key = request.headers["token-key"]
