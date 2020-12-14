@@ -58,7 +58,7 @@ class Devise::Users::RegistrationsController < DeviseTokenAuth::RegistrationsCon
       end
 
     @resource.invitation_accepted_at = Time.zone.now
-    @resource.profile.language = I18n.locale
+    @resource.profile.language = I18n.locale if @resource&.profile&.present?
   end
 
   def render_create_error
