@@ -39,7 +39,7 @@ es:
       other_title: 'Póliza de seguros'
       other_documents: "Los documentos de su política se han adjuntado a este correo electrónico."
       other_text: "Hola,  %{user_name}<br><br>Su póliza ha sido aceptada el %{accepted_on}. %{documents}
-                                     Inicie sesión en nuestro<a href=\"%{site}\">sitio</a>
+                                     Inicie sesión en nuestro <a href=\"%{site}\">sitio</a>
                                      para obtener más información."
 
     rent_guarantee:
