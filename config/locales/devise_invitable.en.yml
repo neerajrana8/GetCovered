@@ -33,7 +33,7 @@ en:
         subject: "Finish Registering Your %{agency_title} Account - %{policy_type_title}"
         header: "Invitation to pay"
         hi: "Hi %{name}"
-        text_html: "Thank you for registering for a %{policy_type_title} policy. Please visit %{href} to finish setting up your account. You will be able to keep track of upcoming payments along with submitting a claim through our portal."
+        text_html: "Thank you for registering for a %{policy_type_title} policy. Please visit %{link} to finish setting up your account. You will be able to keep track of upcoming payments along with submitting a claim through our portal."
 
       reset_password_instructions:
         title: "Get Covered | Password Reset"
