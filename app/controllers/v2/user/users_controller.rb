@@ -58,7 +58,7 @@ module V2
           notification_options: {},
           settings: {},
           profile_attributes: %i[
-            birth_date contact_email contact_phone first_name
+            birth_date contact_email contact_phone first_name language
             job_title last_name middle_name suffix title gender salutation
           ]
         )
