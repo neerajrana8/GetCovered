@@ -9,7 +9,7 @@ module V2
         if date_params[:start] == date_params[:end]
           params[:filter][:last_visit] = start_date.all_day
         else
-          params[:filter][:last_visit] = (start_date.all_day.first..end_date.all_day.last)
+          params[:filter][:last_visit] = (start_date.all_day.first...end_date.all_day.last)
         end
 
         #check duplicates in totals?
@@ -71,10 +71,10 @@ module V2
               end: params[:filter][:last_visit][:end]
           }
         else
-          params["filter"] = {}
+          params[:filter] = {}
           {
-              start: Lead.date_of_first_lead.to_s || Time.now.beginning_of_year,
-              end: Time.now.to_s
+              start: Lead.date_of_first_lead || Time.now.beginning_of_year,
+              end: Time.now
           }
         end
       end
@@ -113,6 +113,10 @@ module V2
 
       def conversions(leads)
         leads.converted.count
+      end
+
+      def default_pagination_per
+        9998
       end
 
     end

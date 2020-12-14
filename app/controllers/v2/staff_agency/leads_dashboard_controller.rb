@@ -123,6 +123,10 @@ module V2
           @substrate = access_model(::Lead).presented.includes(:profile, :tracking_url)
         end
       end
+
+      def default_pagination_per
+        9998
+      end
     end
   end
 end
