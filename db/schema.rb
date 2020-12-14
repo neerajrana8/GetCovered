@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_12_09_091255) do
+ActiveRecord::Schema.define(version: 2020_12_10_150554) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
@@ -492,6 +492,7 @@ ActiveRecord::Schema.define(version: 2020_12_09_091255) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "faq_order", default: 0
+    t.integer "language", default: 0
     t.index ["branding_profile_id"], name: "index_faqs_on_branding_profile_id"
   end
 
