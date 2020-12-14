@@ -135,8 +135,8 @@
                   <p class="o_mb-xs" style="margin-top: 0px;margin-bottom: 8px;">
                     <%= t(
                           "devise.mailer.product_invitation_instruction.text_html",
-                          policy_type_title: @resource.profile.first_name,
-                          href: "<a class=\"o_text-light o_underline\" href=\"#{@accept_link}\"  style=\"text-decoration: underline;outline: none;color: #126de5;\">#{t("devise.mailer.shared.this_page")}</a>".html_safe
+                          policy_type_title: @policy_type_title,
+                          link: "<a class=\"o_text-light o_underline\" href=\"#{@accept_link}\"  style=\"text-decoration: underline;outline: none;color: #126de5;\">#{t("devise.mailer.shared.this_page")}</a>".html_safe
                         ) %>
                   </p>
                   <p class="o_mb-xs" style="margin-top: 0px;margin-bottom: 8px;"><%= t("devise.mailer.shared.thank_you") %></p>
