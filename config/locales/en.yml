@@ -31,6 +31,10 @@
 
 en:
   hello: "Hello world"
+  shared:
+    best: "Best"
+    accepted: 'Accepted'
+    thank_you: 'Thank you'
 
   devise_token_auth:
     sessions:
@@ -155,6 +159,13 @@ en:
     no_build_coverages_for_crum: 'No build coverages for Crum'
     no_build_coverages_for_pensio: 'No build coverages for Pensio'
     error_with_build_coverages: 'Error happened with build coverages'
+  policy_type_model:
+    residential: 'Residential'
+    master_policy: 'Master Policy'
+    master_policy_coverage: 'Master Policy Coverage'
+    commercial: 'Commercial'
+    rent_guarantee: 'Rent Guarantee'
+    security_deposit_replacement: 'Security Deposit Replacement'
   policy_bind_warning_notification_job:
     get_covered_bind_warning: "Get Covered Bind Warning"
   qbe_policy_quote:

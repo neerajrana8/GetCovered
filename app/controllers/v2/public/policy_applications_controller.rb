@@ -568,7 +568,7 @@ module V2
                   @policy_application.quote(@quote.id)
                   @policy_application.reload
                   @quote.reload
-
+                  
                   if @policy_application.status == "quote_failed"
                     render json: standard_error(:quote_failed, @policy_application.error_message || I18n.t('policy_application_contr.create_security_deposit_replacement.quote_failed')),
                            status: 500

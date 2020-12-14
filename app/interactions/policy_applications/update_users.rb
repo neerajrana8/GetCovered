@@ -8,6 +8,7 @@ module PolicyApplications
     string :current_user_email, default: nil
 
     def execute
+      yield add_profile_language
       yield validate_primary_user_params
       yield remove_policy_users
       policy_users_params.each do |policy_user_params|
@@ -17,6 +18,15 @@ module PolicyApplications
     end
 
     private
+
+    def add_profile_language
+      policy_users_params.each do |policy_user_params|
+        next if policy_user_params[:user_attributes][:profile_attributes].blank?
+
+        policy_user_params[:user_attributes][:profile_attributes][:language] = I18n.locale
+      end
+      Success()
+    end
 
     def validate_primary_user_params
       PolicyApplications::ValidateApplicantsParameters.run!(
