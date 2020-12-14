@@ -28,6 +28,7 @@ module V2
         {
             created_at: [:scalar, :array, :interval],
             email: [:scalar, :like],
+            agency_id: [:scalar, :interval]
         }
       end
 
