@@ -34,6 +34,8 @@ class SignableDocument < ApplicationRecord
     },
     unknown_error: {
     },
+    error_while_signing: {
+    },
     deposit_choice_upload_failed: {
     }
   }
@@ -170,7 +172,15 @@ class SignableDocument < ApplicationRecord
           combined.rewind
           # attach signed document
           self.signed_document.attach(io: combined, filename: DepositChoiceService.signed_document_filename, content_type: 'application/pdf')
-        rescue
+        rescue StandardError => error
+          self.update({
+            errored: true,
+            error_data: {
+              error: 'error_while_signing',
+              error_class: error.class.name,
+              error_message: error.message
+            }
+          })
           return false
         end
         self.update(status: 'signed')

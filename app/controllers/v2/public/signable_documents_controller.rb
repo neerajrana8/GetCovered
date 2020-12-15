@@ -14,7 +14,7 @@ module V2
         token = ::AccessToken.from_urlparam(params[:token])
         doc = token.nil? || token.access_type != 'document_signature' ? nil : ::SignableDocument.where(id: token.access_data&.[]('signable_document_id')).take
         if doc.nil? || !doc.signable?
-          render json: standard_error(:document_not_found, 'Document not found'), # MOOSE WARNING: translate!!!!
+          render json: standard_error(:document_not_found, I18n.t('signable_documents_controller.document_not_found')),
             status: 401
           return
         end
@@ -29,7 +29,7 @@ module V2
         token = ::AccessToken.from_urlparam(params[:token])
         doc = token.nil? || token.access_type != 'document_signature' ? nil : ::SignableDocument.where(id: token.access_data&.[]('signable_document_id')).take
         if doc.nil? || doc.signable?
-          render json: standard_error(:document_not_found, 'Document not found'), # MOOSE WARNING: translate!!!!
+          render json: standard_error(:document_not_found, I18n.t('signable_documents_controller.document_not_found')),
             status: 401
           return
         end
@@ -38,7 +38,7 @@ module V2
         # MOOSE WARNING: validate file type? validate dimensions?
         result = doc.sign_document(signature_image)
         unless result
-          render standard_error(:signing_failed, "An error occurred while trying to apply your signature; please try again later"), # MOOSE WARNING: translate!!! use I18n.t('signable_document_contr.sign_document.signing_failed')),
+          render standard_error(:signing_failed, I18n.t('signable_documents_controller.signing_failed')),
             status: 400
           return
         end
