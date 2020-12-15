@@ -51,4 +51,8 @@ es:
 
   payment_made_mailer:
     send_successful_payment_notification:
-      subject: "%{agency_title} - %{policy_type} Premium Payment Made"
+      subject: "%{agency_title} - %{policy_type} Pago de prima realizado"
+      thank_you: "Gracias por seleccionar una política %{policy_number} de %{agency_title}."
+      account_was_charged: "Su cuenta se cargó correctamente $%{total} el %{charge_date}."
+      click_link_html: "Haga clic en el siguiente enlace <a href=\"https://%{link}\">%{link}</a> para revisar todas sus facturas.
+                            Si tiene alguna pregunta, comuníquese con %{from}."

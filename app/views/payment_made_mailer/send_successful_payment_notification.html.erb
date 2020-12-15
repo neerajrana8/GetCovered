@@ -1,13 +1,16 @@
 <td class="o_bg-white o_px-md o_py-md o_sans o_text o_text-secondary" align="left" style="font-family: Helvetica, Arial, sans-serif;margin-top: 0px;margin-bottom: 0px;font-size: 16px;line-height: 24px;background-color: #ffffff;color: #424651;padding-left: 24px;padding-right: 24px;padding-top: 24px;padding-bottom: 24px;">
   <div style="font-size: 24px; line-height: 24px; height: 24px;">&nbsp; </div>
-  <p class="o_mb-xs" style="margin-top: 0px;margin-bottom: 8px;">Hi <%= @user.profile.first_name %>,</p>
+  <p class="o_mb-xs" style="margin-top: 0px;margin-bottom: 8px;"><%= t('shared.hi_there', name: @user.profile.first_name) %></p>
   <p class="o_mb-xs" style="margin-top: 0px;margin-bottom: 8px;">
-    Thank you for selecting a <%= @policy.number %> policy from <%= @agency.title %>.
-    Your account was successfully charged $<%= Money.new(@invoice.total).to_s %> on <%=@charge.created_at.strftime("%Y-%m-%d") %>.
-    Click on the following link <a href="https://<%= "#{@branding_profile.url}/user/invoices/list" %>"><%="#{@branding_profile.url}/user/invoices/list" %></a>
-    to review all of your invoices. If you have any questions, please contact <%= @from %>.
+    <%= t('payment_made_mailer.send_successful_payment_notification.thank_you',
+          policy_number: @policy.number,
+          agency_title: @agency.title) %>
+    <%= t('payment_made_mailer.send_successful_payment_notification.account_was_charged',
+          total: Money.new(@invoice.total).to_s,
+          charge_date: @charge.created_at.strftime("%Y-%m-%d")) %>
+    <%= raw(t('payment_made_mailer.send_successful_payment_notification.click_link_html', link: "#{@branding_profile.url}/user/invoices/list", from: @from)) %>
   </p>
-  <p class="o_mb-xs" style="margin-top: 0px;margin-bottom: 8px;">Thank you,</p>
+  <p class="o_mb-xs" style="margin-top: 0px;margin-bottom: 8px;"><%= t('shared.thank_you') %></p>
   <p class="o_mb-xs" style="margin-top: 0px;margin-bottom: 8px;"><%= @agency.title %></p>
   <div style="font-size: 16px; line-height: 16px; height: 16px;">&nbsp; </div>
 </td>

@@ -54,6 +54,10 @@ en:
   payment_made_mailer:
     send_successful_payment_notification:
       subject: "%{agency_title} - %{policy_type} Premium Payment Made"
+      thank_you: "Thank you for selecting a %{policy_number} policy from %{agency_title}."
+      account_was_charged: "Your account was successfully charged $%{total} on %{charge_date}."
+      click_link_html: "Click on the following link <a href=\"https://%{link}\">%{link}</a> to review all of your invoices.
+                        If you have any questions, please contact %{from}."
 
 
 

@@ -33,6 +33,9 @@ es:
   hello: "Hello world"
 
   shared:
+    hi_there: "Hola %{name},"
+    help_center: "Centro de ayuda"
+    this_page: "esta página"
     best: "Mejor"
     accepted: 'Aceptado'
     thank_you: "Gracias"
