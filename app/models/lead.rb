@@ -1,6 +1,6 @@
 class Lead < ApplicationRecord
 
-  include ElasticsearchSearchable
+  #include ElasticsearchSearchable
 
   #TODO: move to config file
   PAGES_RENT_GUARANTEE = ['Landing Page', 'Eligibility Page', 'Basic Info Page', 'Eligibility Requirements Page', 'Address Page', 'Employer Page',
