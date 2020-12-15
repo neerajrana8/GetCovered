@@ -38,7 +38,7 @@ module V2
         # MOOSE WARNING: validate file type? validate dimensions?
         result = doc.sign_document(signature_image)
         unless result
-          render standard_error(:signing_failed, I18n.t('signable_documents_controller.signing_failed')),
+          render json: standard_error(:signing_failed, I18n.t('signable_documents_controller.signing_failed')),
             status: 400
           return
         end

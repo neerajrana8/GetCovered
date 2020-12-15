@@ -171,7 +171,8 @@ class SignableDocument < ApplicationRecord
           combined.save(unsigned_template)
           unsigned_template.rewind
           # attach signed document
-          self.signed_document.attach(io: combined, filename: DepositChoiceService.signed_document_filename, content_type: 'application/pdf')
+          self.signed_document.attach(io: unsigned_template, filename: DepositChoiceService.signed_document_filename, content_type: 'application/pdf')
+          unsigned_template.rewind
         rescue StandardError => error
           self.update({
             errored: true,
@@ -185,7 +186,7 @@ class SignableDocument < ApplicationRecord
         end
         self.update(status: 'signed')
         # try to upload
-        self.try_deposit_choice_upload(pdf_base64: Base64.strict_encode64(combined.read)) rescue self.update({ errored: true, error_data: { error: 'deposit_choice_upload_failed', failed_at: Time.current.to_s } })
+        self.try_deposit_choice_upload(pdf_base64: Base64.strict_encode64(unsigned_template.read)) rescue self.update({ errored: true, error_data: { error: 'deposit_choice_upload_failed', failed_at: Time.current.to_s } })
         # return success
         return true
     end
