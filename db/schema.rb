@@ -26,8 +26,9 @@ ActiveRecord::Schema.define(version: 2020_12_14_221818) do
     t.bigint "bearer_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.integer "access_type"
+    t.integer "access_type", default: 0, null: false
     t.jsonb "access_data"
+    t.datetime "expires_at"
     t.index ["bearer_type", "bearer_id"], name: "index_access_tokens_on_bearer_type_and_bearer_id"
   end
 

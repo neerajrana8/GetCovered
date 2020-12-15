@@ -17,9 +17,10 @@ class AccessToken < ApplicationRecord
              polymorphic: true
              
   enum access_type: {
-    agency_integration: 0,
-    carrier_integration: 1,
-    document_signature: 2
+    generic: 0
+    agency_integration: 1,
+    carrier_integration: 2,
+    document_signature: 3
   }
   
   def self.from_urlparam(par)
