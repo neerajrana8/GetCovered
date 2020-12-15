@@ -5,13 +5,20 @@ class PaymentMadeMailer < ApplicationMailer
     @charge = charge
     @invoice = @charge.invoice
     @user = @invoice.payer
-    if @user.is_a? User
-      @branding_profile = @invoice.invoiceable.agency.branding_profiles.first
-      @branding_profile = BrandingProfile.first if @branding_profile['styles']['use_gc_email_templates']
-      @agency = @invoice.invoiceable.agency
-      @policy = @invoice.invoiceable.is_a?(Policy) ? @invoice.invoiceable : @invoice.invoiceable.policy
-      @from = 'support@' + @branding_profile.url
-      mail(from: @from, to: @user.email, subject: "#{@agency.title} - #{@policy.policy_type} Premium Payment Made")
-    end
+
+    return unless @user.is_a? User
+
+    set_locale(@user.profile&.language)
+
+    @branding_profile = @invoice.invoiceable.agency.branding_profiles.first
+    @branding_profile = BrandingProfile.first if @branding_profile['styles']['use_gc_email_templates']
+    @agency = @invoice.invoiceable.agency
+    @policy = @invoice.invoiceable.is_a?(Policy) ? @invoice.invoiceable : @invoice.invoiceable.policy
+    @from = 'support@' + @branding_profile.url
+    @policy_type_title = I18n.t("policy_type_model.#{@policy.policy_type.title.parameterize.underscore}")
+    subject = I18n.t("policy_type_model",
+                     agency_title: @agency.title,
+                     policy_type: @policy_type_title)
+    mail(from: @from, to: @user.email, subject: subject)
   end
 end

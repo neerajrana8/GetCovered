@@ -51,8 +51,9 @@ en:
         please_log_in: 'Please log in to our site <a class="o_text-light o_underline" href="%{login_url}" style="text-decoration: underline;outline: none;color: #126de5;">this page</a> for more information.'
         contact_us: 'Please contact us at %{contact_email} if you have any questions'
 
-
-
+  payment_made_mailer:
+    send_successful_payment_notification:
+      subject: "%{agency_title} - %{policy_type} Premium Payment Made"
 
 
 
