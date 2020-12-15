@@ -17,6 +17,6 @@ class CreateSignableDocuments < ActiveRecord::Migration[5.2]
       t.timestamps
     end
     
-    add_index :signable_documents, [:signed, :referent_type, :referent_id], name: "signable_documents_signed_index"
+    add_index :signable_documents, [:status, :referent_type, :referent_id], name: "signable_documents_signed_index"
   end
 end

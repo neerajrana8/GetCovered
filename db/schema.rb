@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_12_08_220737) do
+ActiveRecord::Schema.define(version: 2020_12_14_221818) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
@@ -478,6 +478,7 @@ ActiveRecord::Schema.define(version: 2020_12_08_220737) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "faq_order", default: 0
+    t.integer "language", default: 0
     t.index ["branding_profile_id"], name: "index_faqs_on_branding_profile_id"
   end
 
@@ -1226,6 +1227,7 @@ ActiveRecord::Schema.define(version: 2020_12_08_220737) do
     t.datetime "updated_at", null: false
     t.integer "gender", default: 0
     t.integer "salutation", default: 0
+    t.integer "language", default: 0
     t.index ["profileable_type", "profileable_id"], name: "index_profiles_on_profileable_type_and_profileable_id"
   end
 
@@ -1261,6 +1263,25 @@ ActiveRecord::Schema.define(version: 2020_12_08_220737) do
     t.string "type"
     t.index ["reportable_type", "reportable_id", "created_at"], name: "reports_index"
     t.index ["reportable_type", "reportable_id"], name: "index_reports_on_reportable_type_and_reportable_id"
+  end
+
+  create_table "signable_documents", force: :cascade do |t|
+    t.string "title", null: false
+    t.integer "document_type", null: false
+    t.jsonb "document_data"
+    t.integer "status", default: 0, null: false
+    t.boolean "errored", default: false, null: false
+    t.jsonb "error_data"
+    t.datetime "signed_at"
+    t.string "signer_type"
+    t.bigint "signer_id"
+    t.string "referent_type"
+    t.bigint "referent_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["referent_type", "referent_id"], name: "index_signable_documents_on_referent_type_and_referent_id"
+    t.index ["signer_type", "signer_id"], name: "index_signable_documents_on_signer_type_and_signer_id"
+    t.index ["status", "referent_type", "referent_id"], name: "signable_documents_signed_index"
   end
 
   create_table "staffs", force: :cascade do |t|
