@@ -6,7 +6,9 @@ class CreateSignableDocuments < ActiveRecord::Migration[5.2]
       t.integer :document_type, null: false
       t.jsonb :document_data
       # signing data
-      t.boolean :signed, null: false, default: false
+      t.integer :status, null: false, default: 0
+      t.boolean :errored, null: false, default: false
+      t.jsonb :error_data
       t.datetime :signed_at
       # associations
       t.references :signer, polymorphic: true

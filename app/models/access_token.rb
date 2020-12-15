@@ -19,7 +19,7 @@ class AccessToken < ApplicationRecord
   enum access_type: {
     agency_integration: 0,
     carrier_integration: 1,
-    user_document_signature: 2
+    document_signature: 2
   }
   
   def self.from_urlparam(par)

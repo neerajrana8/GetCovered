@@ -82,15 +82,15 @@ scope module: :public do
 		end
 	end
   
-  resources :policies,
-    path: "policies",
+  resources :signable_documents,
+    path: "signable-documents",
     only: [] do
     collection do
       get '/get-unsigned-document/:token',
-        to: 'policies#get_unsigned_document',
+        to: 'signable_documents#get_unsigned_document',
         as: :get_unsigned_document
       post '/sign-document/:token',
-        to: 'policies#sign_document',
+        to: 'signable_documents#sign_document',
         as: :sign_document
     end
   end

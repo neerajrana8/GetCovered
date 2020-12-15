@@ -93,7 +93,9 @@ class PDFTextProcessor
           end
         end
         # consistent indexing with pages param and reader.pages selection
-        processed_pages << {page: page.number, lines: lines}
+        processed_pages << {page: page.number, lines: lines, info: {
+          media_box: page.attributes[:MediaBox] # [0,0,612,792] or something like that (x1,y1,x2,y2)
+        }}
       end
     end
     processed_pages
@@ -110,6 +112,35 @@ module AnalyzePdf
   
     def read_pdf(file)
       PDFTextProcessor.process(file)
+    end
+
+
+    def find_in_pdf(pages, with_previous_y: false, &query)
+      pages.each do |page|
+        # page number: page[:page]
+        prev_line = {
+          y: page[:info][:media_box][3],
+          text_groups: []
+        }
+        (page[:lines] || []).each do |line|
+          # line y: line[:y]
+          (line[:text_groups] || []).each do |text_group|
+            if query.call(text_group[:text])
+              return {
+                page_number: page[:page],
+                y: line[:y],
+                x: text_group[:x],
+                width: text_group[:width],
+                text: text_group[:text]
+              }.merge(!with_previous_y ? {} : {
+                previous_y: prev_line[:y]
+              })
+            end
+          end
+          prev_line = line
+        end
+      end
+      return nil
     end
   
   end
