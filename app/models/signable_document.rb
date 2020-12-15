@@ -115,7 +115,7 @@ class SignableDocument < ApplicationRecord
           status: 'unsigned',
           document_data: {
             'signature_overlay_page' => signature_block[:page_number],
-            'date_label' => date_label, {
+            'date_label' => {
               'x' => date_label[:x] + date_label[:width],
               'y' => date_label[:y]
             },
