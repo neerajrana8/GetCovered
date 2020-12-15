@@ -169,7 +169,7 @@ class SignableDocument < ApplicationRecord
           combined = CombinePDF.load(unsigned_template.path)
           combined.pages[dd['signature_overlay_page'] - 1] << overlay
           combined.save(unsigned_template)
-          combined.rewind
+          unsigned_template.rewind
           # attach signed document
           self.signed_document.attach(io: combined, filename: DepositChoiceService.signed_document_filename, content_type: 'application/pdf')
         rescue StandardError => error
