@@ -108,7 +108,7 @@ module AnalyzePdf
   extend ActiveSupport::Concern
 
 
-  class_methods do
+  included do
   
     def read_pdf(file)
       PDFTextProcessor.process(file)
