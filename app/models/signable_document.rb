@@ -70,14 +70,14 @@ class SignableDocument < ApplicationRecord
           return {
             document_type: 'deposit_choice_bond',
             title: self.title,
-            document_url: URI::escape(self.unsigned_document.service_url),
+            document_url: self.unsigned_document.service_url,
             geometry: self.document_data['geometry_for_client']
           }
         elsif self.status == 'signed'
           return {
             document_type: 'deposit_choice_bond',
             title: self.title,
-            document_url: URI::escape(self.signed_document.service_url)
+            document_url: self.signed_document.service_url
           }
         end
     end
