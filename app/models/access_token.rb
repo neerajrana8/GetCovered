@@ -17,7 +17,7 @@ class AccessToken < ApplicationRecord
              polymorphic: true
              
   enum access_type: {
-    generic: 0
+    generic: 0,
     agency_integration: 1,
     carrier_integration: 2,
     document_signature: 3
