@@ -45,7 +45,7 @@ class DepositChoiceService
       format: 'json',
       interface: 'REST',
       endpoint: self.endpoint_for(self.action),
-      process: "deposit_choice_#{self.action.to_s}"
+      process: "deposit_choice_#{self.action.to_s}",
       request: self.message_content.to_json
     }
   end
