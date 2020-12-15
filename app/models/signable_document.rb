@@ -229,7 +229,7 @@ class SignableDocument < ApplicationRecord
       doc = (for_signed_document ? self.signed_document : self.unsigned_document)
       file_to_return = nil
       begin
-        if !force_tempfile && doc.size < SignableDocument::MIN_PDF_BYTE_COUNT_FOR_TEMP_FILE
+        if !force_tempfile && doc.byte_size < SignableDocument::MIN_PDF_BYTE_COUNT_FOR_TEMP_FILE
           file_to_return = StringIO.new(doc.download)
         else
           tmp = Tempfile.new(encoding: 'ascii-8bit')
@@ -246,7 +246,7 @@ class SignableDocument < ApplicationRecord
       doc = (for_signed_document ? self.signed_document : self.unsigned_document)
       pages = nil
       begin
-        if doc.size < SignableDocument::MIN_PDF_BYTE_COUNT_FOR_TEMP_FILE
+        if doc.byte_size < SignableDocument::MIN_PDF_BYTE_COUNT_FOR_TEMP_FILE
           pages = self.read_pdf(StringIO.new(doc.download))
         else
           tmp = Tempfile.new(encoding: 'ascii-8bit')
