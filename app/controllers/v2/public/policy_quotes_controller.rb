@@ -193,15 +193,14 @@ module V2
                 invite_primary_user(@policy_quote.policy_application)
                 
                 if @policy_quote.policy_application.carrier_id == DepositChoiceService.carrier_id
-                  @signature_access_token = @policy_quote.policy_application.policy.create_document_signature_access_token(
-                    filename: DepositChoiceService.unsigned_document_filename
-                  )
+                  dcb = @policy_quote.policy.signable_documents.deposit_choice_bond.take
+                  @signature_access_token = dcb.create_access_token unless dcb.nil? # should  never be nil...
                 end
               end
               unless @quote_attempt[:success]
                 render json: {
-                    error: "#{@policy_type_identifier} Could Not Be Accepted",
-                    message: @quote_attempt[:message],
+                    error: "#{@policy_type_identifier} #{I18n.t('policy_quote_controller.could_not_be_accepted')}",
+                    message: @quote_attempt[:message], # MOOSE WARNING: translation???
                     password_filled: @user.encrypted_password.present?
                   }.compact, status: 500
                 return
@@ -211,7 +210,9 @@ module V2
                 error: ("#{@policy_type_identifier} #{I18n.t('policy_quote_controller.could_not_be_accepted')}" unless @quote_attempt[:success]),
                 message: ("#{@policy_type_identifier} #{I18n.t('policy_quote_controller.accepted')} " if @quote_attempt[:success]).to_s + @quote_attempt[:message],
                 password_filled: @user.encrypted_password.present?
-              }.compact, status: @quote_attempt[:success] ? 200 : 500
+              }.compact.merge(@signature_access_token.nil? ? {} : {
+                document_token: @signature_access_token.to_urlparam
+              }), status: @quote_attempt[:success] ? 200 : 500
             else
               render json: { error: I18n.t('policy_quote_controller.failure'), message: result.errors.full_messages.join(' and ') }.to_json, status: 422
              end

@@ -101,7 +101,7 @@ class PolicyQuote < ApplicationRecord
 
         policy_number = nil
         policy_status = nil
-        policy_documents = nil
+        policy_signable_documents = nil
         
         if bind_request[:error]
           logger.error "Bind Failure; Message: #{bind_request[:message]}"
@@ -119,7 +119,7 @@ class PolicyQuote < ApplicationRecord
           elsif policy_application.policy_type.title == "Security Deposit Replacement"
             policy_number = bind_request[:data][:policy_number]
             policy_status = "BOUND"
-            policy_documents = bind_request[:data][:documents] || nil
+            policy_signable_documents = bind_request[:data][:signable_documents] || nil
           end
 
 
@@ -143,23 +143,9 @@ class PolicyQuote < ApplicationRecord
 
           if policy.save
             # Add documents to policy, if applicable
-            needing_signature = []
-            (policy_documents || []).each do |doc|
-              # set up document
-              doc_id = nil
-              case doc[:source]
-                when ::ActiveStorage::Attachment
-                  # move from PQ to P
-                  doc[:source].update(record_type: "Policy", record_id: policy.id)
-                  doc_id = doc[:source].id
-                else
-                  logger.error "Invalid document source type '#{doc[:source].class.name}'"
-                  next
-              end
-              # mark for signing if needed
-              needing_signature.push(doc_id) if doc[:needs_signature]
+            (policy_signable_documents || []).each do |doc|
+              doc.update(referent: policy)
             end
-            policy.update_columns(unsigned_documents: needing_signature) unless needing_signature.blank?
             
             # reload policy
             policy.reload

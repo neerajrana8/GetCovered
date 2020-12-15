@@ -1,15 +1,20 @@
 class CreateSignableDocuments < ActiveRecord::Migration[5.2]
   def change
     create_table :signable_documents do |t|
-      t.string :title
-      t.enum :document_type
+      # basic data
+      t.string :title, null: false
+      t.integer :document_type, null: false
       t.jsonb :document_data
-      t.boolean :signed
+      # signing data
+      t.boolean :signed, null: false, default: false
       t.datetime :signed_at
+      # associations
       t.references :signer, polymorphic: true
       t.references :referent, polymorphic: true
 
       t.timestamps
     end
+    
+    add_index :signable_documents, [:signed, :referent_type, :referent_id], name: "signable_documents_signed_index"
   end
 end

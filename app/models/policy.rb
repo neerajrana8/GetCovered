@@ -46,7 +46,6 @@ class Policy < ApplicationRecord
   include CarrierDcPolicy
   include AgencyConfiePolicy
   include RecordChange
-  include AnalyzePdf
 
   after_create :inherit_policy_coverages, if: -> { policy_type&.designation == 'MASTER-COVERAGE' }
   after_create :schedule_coverage_reminders, if: -> { policy_type&.designation == 'MASTER-COVERAGE' }
@@ -105,6 +104,8 @@ class Policy < ApplicationRecord
 
   has_many :histories, as: :recordable
   has_many :change_requests, as: :changeable
+  
+  has_many :signable_documents, as: :referent
 
   has_many_attached :documents
 
@@ -117,7 +118,6 @@ class Policy < ApplicationRecord
   scope :with_missed_invoices, lambda {
     joins(:invoices).merge(Invoice.unpaid_past_due)
   }
-  scope :with_unsigned_documents, -> { where("cardinality(unsigned_documents) > 0") }
 
   scope :accepted_quote, lambda {
     joins(:policy_quotes).where(policy_quotes: { status: 'accepted'})
@@ -392,27 +392,6 @@ class Policy < ApplicationRecord
         days - 1.day
     raw_days = (self.created_at.to_date + max_days_for_full_refund - Time.zone.now.to_date).to_i
     raw_days.negative? ? 0 : raw_days
-  end
-  
-  def create_document_signature_access_token(filename: nil, attachment_id: nil, user: nil)
-    # get the attachment
-    attachment = nil
-    if filename.nil? && attachment_id.nil?
-      raise ArgumentError.new("either 'filename' or 'attachment_id' parameter must be provided")
-    elsif !attachment_id.nil?
-      attachment = self.documents.where(id: attachment_id).take
-    elsif !filename.nil?
-      attachment = self.documents.includes(:blob).references(:blob).where(active_storage_blobs: { filename: filename }).take
-    end
-    # get the default user
-    user = self.primary_user if user.nil?
-    # flee on failure
-    return nil if attachment.nil? || user.nil?
-    # create the access token
-    return AccessToken.create(bearer: user, access_type: 'user_document_signature', access_data: {
-      'policy_id' => self.id,
-      'document_id' => attachment.id
-    })
   end
 
   def run_postbind_hooks # do not remove this; concerns add functionality to it by overriding it and calling super
