@@ -13,18 +13,6 @@ class PolicyInsurable < ApplicationRecord
   validate :one_primary_per_insurable
   validate :residential_unit_coverage_for_master_coverage_policy
   
-  validate :same_account
-  
-  def same_account
-    if policy_application&.account && insurable&.account && insurable.account != policy_application.account
-      errors.add(:insurable, 'insurable must belong to same account as policy application')
-    end
-    
-    if policy&.account && insurable&.account && policy.account != insurable.account
-      errors.add(:insurable, 'insurable must belong to same account as policy')
-    end
-  end
-  
   def residential_unit_coverage_for_master_coverage_policy
     if policy&.policy_type&.designation == 'MASTER-COVERAGE' && primary == true
       if  insurable&.insurable_type&.id != 4

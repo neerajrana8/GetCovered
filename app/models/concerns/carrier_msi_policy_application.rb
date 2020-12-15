@@ -68,27 +68,27 @@ module CarrierMsiPolicyApplication
           self.users.count - 1,
           self.billing_strategy.carrier_code,
           nonpreferred_final_premium_params: {
-            address_line_two: "Unit #{unit.title}",
+            address_line_two: unit.title.nil? ? nil : "Unit #{unit.title}",
             number_of_units: self.extra_settings&.[]('number_of_units'),
             years_professionally_managed: self.extra_settings&.[]('years_professionally_managed'),
             year_built: self.extra_settings&.[]('year_built'),
             gated: self.extra_settings&.[]('gated')
-          },
+          }.compact,
           perform_estimate: true,
           eventable: quote # by passing a PolicyQuote we ensure results[:msi_data], results[:event], and results[:annotated_selections] get passed back out
         )
         # make sure we succeeded
         if !results[:valid]
-          puts "MSI Coverage Validation Or FinalPremium Request Unsuccessful, Errors: #{ results[:errors][:internal] }, Event ID: #{ results[:event].id }"
-          quote.mark_failure()
+          puts "MSI Coverage Validation Or FinalPremium Request Unsuccessful, Errors: #{ results[:errors][:internal].gsub("\n", "; ") }, Event ID: #{ results[:event].id }"
+          quote.mark_failure(results[:errors][:external])
           return false
         elsif results[:msi_data][:error] # just in case
-          puts "MSI FinalPremium Request Unsuccessful, Errors: #{ results[:errors][:internal] }, Event ID: #{ results[:event].id }"
-          quote.mark_failure()
+          puts "MSI FinalPremium Request Unsuccessful, Errors: #{ results[:errors][:internal].gsub("\n", "; ") }, Event ID: #{ results[:event].id }"
+          quote.mark_failure(results[:errors][:external])
           return false
         elsif !self.update(coverage_selections: results[:annotated_selections]) # update our coverage selections with any annotations from the get_coverage_options call
           puts "MSI Selection Annotation Failed, Errors: #{self.errors.to_h.to_s}, Event ID: #{ results[:event].id }"
-          quote.mark_failure()
+          quote.mark_failure("Internal Error (786)")
           return false
         else
           # grab msi payment amounts
@@ -96,7 +96,7 @@ module CarrierMsiPolicyApplication
           installment_count = MsiService::INSTALLMENT_COUNT[payment_plan]
           if installment_count.nil?
             puts "MSI Missing Installment Count, Payment Plan Carrier Code: '#{payment_plan}', Event ID: #{ results[:event].id }"
-            quote.mark_failure()
+            quote.mark_failure("Internal Error (504)")
             return false
           end
           policy_data = results[:msi_data][:data].dig("MSIACORD", "InsuranceSvcRs", "RenterPolicyQuoteInqRs", "PersPolicy")
@@ -105,7 +105,7 @@ module CarrierMsiPolicyApplication
           payment_data = policy_data["PaymentPlan"].find{|ppl| ppl["PaymentPlanCd"] == payment_plan }
           if payment_data.nil?
             puts "MSI FinalPremium PaymentData Nonexistent, Payment Plan Carrier Code: '#{payment_plan}', Event ID: #{ results[:event].id }"
-            quote.mark_failure()
+            quote.mark_failure("Internal Error (782)")
             return false
           end
           reading = "MSI_TotalPremiumAmt"
@@ -127,7 +127,7 @@ module CarrierMsiPolicyApplication
             down_payment = (payment_data.dig("MSI_DownPaymentAmount", "Amt").to_d * 100).ceil             # the total amount of the first payment
           rescue NoMethodError => e
             puts "MSI FinalPremium PaymentData Missing Field '#{reading}', Payment Plan Carrier Code: '#{payment_plan}', Event ID: #{ results[:event].id }"
-            quote.mark_failure()
+            quote.mark_failure("Internal Error (13)")
             return false
           end
           # grab payment processor data
@@ -161,13 +161,16 @@ module CarrierMsiPolicyApplication
           premium.calculate_fees(true)
           premium.calculate_total(true)
           # woot
-          quote_method = premium.save ? "mark_successful" : "mark_failure"
-          quote.send(quote_method)
+          if premium.save
+            quote.mark_successful
+          else
+            quote.mark_failure("Internal Error (47)");
+          end
           if quote.status == 'quoted'
             # generate internal invoices
             #quote.generate_invoices_for_term MOOSE WARNING: uncomment if there are ever internal ones...
             # generate external invoices
-            installment_day = self.extra_settings&.[]('installment_day') || self.fields.find{|f| f['title'] == "Installment Day" }&.[]('value') || 1
+            installment_day = (self.extra_settings&.[]('installment_day') || self.fields.find{|f| f['title'] == "Installment Day" }&.[]('value') || 1).to_i
             installment_day = 28 if installment_day > 28
             installment_day = 1 if installment_day < 1
             if installment_day != self.extra_settings&.[]('installment_day')

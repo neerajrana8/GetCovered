@@ -8,13 +8,13 @@ module CarrierMsiPolicyQuote
 
     # MOOSE WARNING: PolicyQuote#bind_policy should call this boi if necessary
     def set_msi_external_reference
-      
-      return_status = true # MOOSE WARNING: change it? 
-      
+
+      return_status = true # MOOSE WARNING: change it?
+
     end
-    
+
     # MSI build coverages
-    
+
     def msi_build_coverages
       self.policy_application.coverage_selections.select{|covsel| covsel['selection'] }.each do |covsel|
         self.policy.policy_coverages.create(
@@ -27,9 +27,9 @@ module CarrierMsiPolicyQuote
         )
       end
     end
-    
+
     # MSI Bind
-  
+
     # payment_params should be a hash of form:
     #   {
     #     'payment_method' => 'card' or 'ach',
@@ -41,16 +41,16 @@ module CarrierMsiPolicyQuote
       @bind_response = {
         :error => true,
         :message => nil,
-        :data => {}  
+        :data => {}
       }
       # handle common failure scenarios
       unless policy_application.carrier_id == 5
-        @bind_response[:message] = "Carrier must be QBE to bind residential quote"
+        @bind_response[:message] = I18n.t('qbe_policy_quote.carrier_must_be_qbe')
         #PolicyBindWarningNotificationJob.perform_later(message: @bind_response[:message])
         return @bind_response
       end
 		 	unless accepted? && policy.nil?
-		 		@bind_response[:message] = "Status must be quoted or error to bind quote"
+		 		@bind_response[:message] = I18n.t('qbe_policy_quote.status_must_be_quoted_or_error')
         #PolicyBindWarningNotificationJob.perform_later(message: @bind_response[:message])
         return @bind_response
 		 	end
@@ -60,7 +60,7 @@ module CarrierMsiPolicyQuote
           !payment_data.has_key?('method_id') || !payment_data.has_key?('merchant_id') || !payment_data.has_key?('processor_id') ||
           !payment_params.has_key?('payment_info') || !payment_params.has_key?('payment_token')
         # invalid payment data
-        @bind_response[:message] = "Invalid payment data for binding policy"
+        @bind_response[:message] = I18n.t('msi_policy_quote.invalid_payment_data')
         #PolicyBindWarningNotificationJob.perform_later(message: @bind_response[:message])
         return @bind_response
       end
@@ -74,7 +74,7 @@ module CarrierMsiPolicyQuote
       address = unit.primary_address
       primary_insured = policy_application.primary_user
       additional_insured = policy_application.users.select{|u| u.id != primary_insured.id }
-      additional_interest = [unit.account || community.account].compact
+      additional_interest = [unit.account || community.account].compact.select{|ai| ai&.title != "Nonpreferred Residential" }
       # determine preferred status
       preferred = !(community.carrier_profile(5)&.external_carrier_id.nil?)
       # prepare for bind call
@@ -82,7 +82,7 @@ module CarrierMsiPolicyQuote
       result = msis.build_request(:bind_policy,
         effective_date:   policy_application.effective_date,
         payment_plan:     policy_application.billing_strategy.carrier_code,
-        installment_day:  policy_application.extra_settings&.[]('installment_day') || policy_application.fields.find{|f| f['title'] == "Installment Day" }&.[]('value') || 1,
+        installment_day:  (policy_application.extra_settings&.[]('installment_day') || policy_application.fields.find{|f| f['title'] == "Installment Day" }&.[]('value') || 1).to_i,
         community_id:     preferred ? community.carrier_profile(5).external_carrier_id : nil,
         unit:             unit.title,
         address:          unit.primary_address,
@@ -123,7 +123,7 @@ module CarrierMsiPolicyQuote
         line_breaks: true
       )
       if !result
-        @bind_response[:message] = "Failed to build bind request (#{msis.errors.to_s})"
+        @bind_response[:message] = "#{I18n.t('msi_policy_quote.failed_to_build_bind_request')} (#{msis.errors.to_s})"
         #PolicyBindWarningNotificationJob.perform_later(message: @bind_response[:message])
         return @bind_response
       end
@@ -136,7 +136,7 @@ module CarrierMsiPolicyQuote
       event.status = result[:error] ? 'error' : 'success'
       event.save
       if result[:error]
-        @bind_response[:message] = "MSI bind failure (Event ID: #{event.id || event.errors.to_h})\nMSI Error: #{result[:external_message]}\n#{result[:extended_external_message]}"
+        @bind_response[:message] = "#{I18n.t('msi_policy_quote.msi_bind_failure')} #{event.id || event.errors.to_h})\n#{I18n.t('msi_policy_quote.msi_error')} #{result[:external_message]}\n#{result[:extended_external_message]}"
         #PolicyBindWarningNotificationJob.perform_later(message: @bind_response[:message])
         return @bind_response
       end
@@ -148,6 +148,6 @@ module CarrierMsiPolicyQuote
       @bind_response[:data][:policy_prefix] = policy_data["MSI_PolicyPrefix"]
       return @bind_response
     end
-    
+
   end
 end

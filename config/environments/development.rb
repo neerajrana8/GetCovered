@@ -63,6 +63,8 @@ Rails.application.configure do
   config.file_watcher = ActiveSupport::EventedFileUpdateChecker
 
   config.action_mailer.default_url_options = { host: 'localhost', port: 3001 }
+  config.i18n.default_locale = :en
+  config.i18n.available_locales = [:en, :es]
 
   #config.web_console.whitelisted_ips = '172.21.0.1'
 

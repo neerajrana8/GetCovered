@@ -5,11 +5,10 @@
 module V2
   module Public
     class AddressesController < PublicController
-
       def index
         if params[:search].presence
           @addresses = Address.search_insurables(params[:search])
-          @ids = @addresses.select{|a| a['_source']['addressable_type'] == 'Insurable'}.map{|a| a['_source']['addressable_id'] }
+          @ids = @addresses.select{|a| a['_source']['addressable_type'] == 'Insurable' }.map{|a| a['_source']['addressable_id'] }
 
           @insurables = Insurable.where(id: @ids, enabled: true)
                                  .send(*(params[:policy_type_id].blank? ? [:itself] : [:where, "policy_type_ids @> ARRAY[?]::bigint[]", params[:policy_type_id].to_i]))
@@ -43,7 +42,6 @@ module V2
                  status: :ok
         end
       end
-      
     end
   end
 end

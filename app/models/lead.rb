@@ -24,6 +24,13 @@ class Lead < ApplicationRecord
   before_create :set_identifier
   before_save :set_status
 
+  validates :email, presence: true
+
+  scope :presented, -> { where.not(email: [nil, ''])}
+  scope :converted, -> { where(status: 'converted')}
+  scope :prospected, -> { where(status: 'prospect')}
+  scope :with_user, -> { where.not(user_id: nil) }
+
   def self.date_of_first_lead
     Lead.pluck(:last_visit).select(&:present?).sort.first
   end

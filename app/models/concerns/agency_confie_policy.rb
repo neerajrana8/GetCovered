@@ -5,12 +5,22 @@
 module AgencyConfiePolicy
   extend ActiveSupport::Concern
 
-  included do
-    after_save :inform_confie_of_policy,
-      if: Proc.new{|obj| obj.saved_change_to_attribute?('status') && obj.is_active? && !obj.was_active? && obj.agency_id == ConfieService.agency_id }
+  
+  def run_postbind_hooks
+    super if defined?(super)
+    inform_confie_of_policy if self.agency_id == ConfieService.agency_id && self.is_active?
   end
 
   def inform_confie_of_policy
+    cs = ConfieService.new
+    cs.build_request(:online_policy_sale, policy: self, line_breaks: true)
+    event = self.events.new(cs.event_params)
+    event.started = Time.now
+    result = cs.call
+    event.completed = Time.now
+    event.response = result[:response].response.body
+    event.status = result[:error] ? 'error' : 'success'
+    event.save
   end
   
 end
