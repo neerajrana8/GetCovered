@@ -13,6 +13,10 @@ class DepositChoiceService
     6
   end
   
+  def self.policy_type_id
+    @ptid ||= PolicyType.where(designation: 'SECURITY-DEPOSIT').take&.id
+  end
+  
   def self.unsigned_document_filename
     'unsigned_bond_certificate.pdf'
   end
