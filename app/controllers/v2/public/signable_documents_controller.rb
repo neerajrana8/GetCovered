@@ -43,7 +43,7 @@ module V2
             status: 400
           return
         end
-        render JSON::dump(doc.client_view),
+        render plain: JSON::dump(doc.client_view),
           content_type: "application/json",
           status: 200
       end
