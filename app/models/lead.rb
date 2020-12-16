@@ -35,9 +35,9 @@ class Lead < ApplicationRecord
   end
 
   def self.presented
-    columns_distinct = [:identifier, :email]
-    distinct_ids = Lead.select("MIN(id) as id").group(columns_distinct).map(&:id)
-    Lead.where.not(id: distinct_ids, email: [nil, ''])
+    columns_distinct = [:email]
+    distinct_ids = Lead.select("MAX(id) as id").group(columns_distinct).map(&:id)
+    Lead.where.not(email: [nil, '']).where(id: distinct_ids)
   end
 
   def check_identifier
