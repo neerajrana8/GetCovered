@@ -1,6 +1,7 @@
 class Lead < ApplicationRecord
 
   include ElasticsearchSearchable
+  include RecordChange
 
   #TODO: move to config file
   PAGES_RENT_GUARANTEE = ['Landing Page', 'Eligibility Page', 'Basic Info Page', 'Eligibility Requirements Page', 'Address Page', 'Employer Page',
@@ -19,7 +20,7 @@ class Lead < ApplicationRecord
 
   accepts_nested_attributes_for :address, :profile, update_only: true
 
-  enum status: %i[prospect return converted lost]
+  enum status: %i[prospect return converted lost archived]
 
   before_create :set_identifier, if: -> { identifier.blank? }
   before_save :set_status
@@ -28,6 +29,7 @@ class Lead < ApplicationRecord
 
   scope :converted, -> { where(status: 'converted')}
   scope :prospected, -> { where(status: 'prospect')}
+  scope :archived, -> { where(status: 'archived')}
   scope :with_user, -> { where.not(user_id: nil) }
 
   def self.date_of_first_lead

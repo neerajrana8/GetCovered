@@ -1,6 +1,7 @@
 class LeadEvent < ApplicationRecord
 
   include ElasticsearchSearchable
+  include RecordChange
 
   belongs_to :lead
   belongs_to :policy_type, optional: true
