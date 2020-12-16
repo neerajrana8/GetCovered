@@ -21,18 +21,23 @@ class Lead < ApplicationRecord
 
   enum status: %i[prospect return converted lost]
 
-  before_create :set_identifier
+  before_create :set_identifier, if: -> { identifier.blank? }
   before_save :set_status
 
   validates :email, presence: true
 
-  scope :presented, -> { where.not(email: [nil, ''])}
   scope :converted, -> { where(status: 'converted')}
   scope :prospected, -> { where(status: 'prospect')}
   scope :with_user, -> { where.not(user_id: nil) }
 
   def self.date_of_first_lead
     Lead.pluck(:last_visit).select(&:present?).sort.first
+  end
+
+  def self.presented
+    columns_distinct = [:email]
+    distinct_ids = Lead.select("MAX(id) as id").group(columns_distinct).map(&:id)
+    Lead.where.not(email: [nil, '']).where(id: distinct_ids)
   end
 
   def check_identifier
@@ -52,7 +57,9 @@ class Lead < ApplicationRecord
   private
 
   def set_identifier
-    self.identifier = Digest::MD5.hexdigest(fields_for_identifier) if self.identifier.blank?
+    new_uid = Digest::MD5.hexdigest(fields_for_identifier)
+    old_uid = self.identifier
+    self.identifier = new_uid if identifier.nil? && new_uid != old_uid
   end
 
   #can be extended if needed, but need to be sure about old ones

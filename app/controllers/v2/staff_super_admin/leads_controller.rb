@@ -3,7 +3,7 @@ module V2
     class LeadsController < StaffSuperAdminController
 
       def index
-        super(:@leads, Lead.presented.includes(:profile, :tracking_url).where.not(email: [nil, '']))
+        super(:@leads, Lead.presented.includes(:profile, :tracking_url))
         render 'v2/shared/leads/index'
       end
 
