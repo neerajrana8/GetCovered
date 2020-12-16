@@ -26,7 +26,7 @@ class Lead < ApplicationRecord
   before_save :set_status
 
   validates :email, presence: true
-
+  
   scope :converted, -> { where(status: 'converted')}
   scope :prospected, -> { where(status: 'prospect')}
   scope :archived, -> { where(status: 'archived')}
