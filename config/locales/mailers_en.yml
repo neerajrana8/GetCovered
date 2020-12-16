@@ -86,7 +86,11 @@ en:
 
   warn_upcoming_charge_mailer:
     send_warn_upcoming_invoice:
-      subject:
+      subject: "%{agency_title} - %{policy_number} Upcoming Premium Payment"
+      text_html: "Thank you for selecting a %{policy_type} policy from %{agency_title}.
+                 For your upcoming premium payment, your account will be charged $%{charged} on %{due_date}.
+                 Click on the following  <a href=\"%{link}\">link</a> to review all of your invoices."
+      contact_us: "Feel free to contact us at %{contact_email} if you have any questions."
 
   warn_user_before_expire_card_mailer:
     send_warn_expire_card:
