@@ -81,3 +81,13 @@ es:
              Please login to %{agency_title} at the link below to update your credit
              card information to avoid interruption of coverage."
       contact_us: "Feel free to contact us at %{contact_email} If you have any questions."
+
+  warn_user_before_expire_card_mailer:
+    send_warn_expire_card:
+      subject: "%{agency_title} - Credit Card Expiring"
+      text: "Thank you for using the Get Covered Pay. According to our records,
+                   a credit card that you have listed with the GCpay service will soon expire.
+                   Please login to GCpay  at the link below to update your credit card information
+                   to avoid interruption of coverage "
+      contact_us: "Feel free to contact us at %{contact_email} if you have any questions."
+      thank_you: "Thank you again for using GCpay."

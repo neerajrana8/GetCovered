@@ -3,10 +3,14 @@ class WarnUserBeforeExpireCardMailer < ApplicationMailer
 
   def send_warn_expire_card(payment_profile)
     @user = payment_profile.payer
-    if @user.is_a? User
-      @agency = Agency.first
-      @branding_profile = @agency.branding_profiles.first
-      mail(from: 'support@' + @branding_profile.url, to: @user.email, subject: "#{@agency.title} - Credit Card Expiring")
-    end
+    return unless @user.is_a? User
+
+    set_locale(@user.profile&.language)
+    @agency = Agency.first
+    @branding_profile = @agency.branding_profiles.first
+    @contact_email = @branding_profile.contact_email
+    subject = t('warn_user_before_expire_card_mailer.send_warn_expire_card.subject', agency_title: @agency.title)
+
+    mail(from: 'support@' + @branding_profile.url, to: @user.email, subject: subject)
   end
 end
