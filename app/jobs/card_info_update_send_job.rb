@@ -6,7 +6,7 @@ class CardInfoUpdateSendJob < ApplicationJob
     if user.is_a? User
       policy = charge.invoice.invoiceable
 
-      CardInfoUpdateMailer.please_update_card_info(email: user.email, name: user.profile.full_name, policy: policy).deliver
+      CardInfoUpdateMailer.please_update_card_info(user: user, policy: policy).deliver
     end
   end
 end

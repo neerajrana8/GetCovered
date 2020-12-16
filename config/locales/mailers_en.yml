@@ -75,7 +75,11 @@ en:
       cancellation_is_effective: "This cancellation is effective: %{cancellation_date}"
       contact_us: "Please contact us at %{agency_email} if you have any questions."
 
-
-
-
-
+  card_info_update_mailer:
+    please_update_card_info:
+      subject: "%{agency_title} - %{policy_number} Update Payment Information"
+      text: "Thank you for using %{agency_title} for your %{policy_type} Policy.
+             The credit card listed in your account is soon to expire.
+             Please login to %{agency_title} at the link below to update your credit
+             card information to avoid interruption of coverage."
+      contact_us: "Feel free to contact us at %{contact_email} If you have any questions."

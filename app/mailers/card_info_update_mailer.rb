@@ -1,13 +1,18 @@
 class CardInfoUpdateMailer < ApplicationMailer
   layout 'agency_styled_mail'
 
-  def please_update_card_info(email:, name:, policy:)
-    @name = name
+  def please_update_card_info(user:, policy:)
+    set_locale(user.profile&.language)
+
+    @user = user
     @policy = policy
     @agency = policy.agency
     @branding_profile = @agency.branding_profiles&.sample
-    @branding_profile = BrandingProfile.first if @branding_profile['styles']['use_gc_email_templates']
+    @branding_profile = BrandingProfile.global_default if @branding_profile['styles']['use_gc_email_templates']
     @from = 'support@' + (@branding_profile&.url || 'getcoveredinsurance.com')
-    mail(from: @from, to: email, subject: "#{@branding_profile.title} - #{@policy.number} Update Payment Information")
+    subject = t('card_info_update_mailer.please_update_card_info.subject',
+                agency_title: @agency.title,
+                policy_number: @policy.number)
+    mail(from: @from, to: user.email, subject: subject)
   end
 end
