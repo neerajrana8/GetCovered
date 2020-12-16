@@ -1,22 +1,22 @@
 <td class="o_bg-white o_px-md o_py-md o_sans o_text o_text-secondary" align="left" style="font-family: Helvetica, Arial, sans-serif;margin-top: 0px;margin-bottom: 0px;font-size: 16px;line-height: 24px;background-color: #ffffff;color: #424651;padding-left: 24px;padding-right: 24px;padding-top: 24px;padding-bottom: 24px;">
   <div style="font-size: 24px; line-height: 24px; height: 24px;">&nbsp; </div>
-  <p class="o_mb-xs" style="margin-top: 0px;margin-bottom: 8px;">Hey <%= @user.profile.first_name %>,</p>
+  <p class="o_mb-xs" style="margin-top: 0px;margin-bottom: 8px;"><%=t('shared.hi_there', name: @user.profile.first_name) %></p>
   <p class="o_mb-xs" style="margin-top: 0px;margin-bottom: 8px;">
-    We are sorry to see you go! We appreciate and value any feedback you may
-    have on our <%= @policy.policy_type.title %> product and service. If there’s something that we could
-    have done to make your experience with <%= @agency.title %> better,
-    please reach out to us at <%= @agency_email %>. It has been a pleasure to do business with you.
+    <%= t('rent_guarantee_cancellation_mailer.send_cancellation_email.sorry',
+          policy_type: t("policy_type_model.#{@policy.policy_type.title.parameterize.underscore}"),
+          agency_title: @agency.title,
+          agency_email: @agency_email) %>
   </p>
-  <p class="o_mb-xs" style="margin-top: 0px;margin-bottom: 8px;">Best,</p>
+  <p class="o_mb-xs" style="margin-top: 0px;margin-bottom: 8px;"><%= t('shared.best') %>,</p>
   <p class="o_mb-xs" style="margin-top: 0px;margin-bottom: 8px;"><%= @agency.title %></p>
 
-  <p class="o_mb-xs" style="margin-top: 0px;margin-bottom: 8px;"><b>Cancellation Confirmation</b></p>
-  <p><b>Date of Notice</b></p><p><%= Time.now.strftime("%Y-%m-%d") %></p>
-  <p><b>Policyholder</b></p><p><%= @user.profile.full_name %></p><p><%=@user.address.full_street_address %></p>
-  <p><b>Product</b></p><p><%= @policy.policy_type.title %></p><p><%= @policy.number %></p>
-  <p><b>Company</b></p><p><%= @agency.title %></p><p><%= @agency.primary_address.full_street_address %></p>
-  <p>This policy has been canceled as requested by the policyholder.</p>
-  <p>This cancellation is effective: <%= @policy.cancellation_date %></p>
-  <p>Please contact us at <%= @agency_email %> if you have any questions.</p>
+  <p class="o_mb-xs" style="margin-top: 0px;margin-bottom: 8px;"><b><%= t('rent_guarantee_cancellation_mailer.send_cancellation_email.title')%></b></p>
+  <p><b><%= t('rent_guarantee_cancellation_mailer.send_cancellation_email.date_of_notice')%></b></p><p><%= Time.now.strftime('%m/%d/%y') %></p>
+  <p><b><%= t('rent_guarantee_cancellation_mailer.send_cancellation_email.policyholder')%></b></p><p><%= @user.profile.full_name %></p><p><%=@user.address.full_street_address %></p>
+  <p><b><%= t('rent_guarantee_cancellation_mailer.send_cancellation_email.product')%></b></p><p><%= @policy.policy_type.title %></p><p><%= @policy.number %></p>
+  <p><b><%= t('rent_guarantee_cancellation_mailer.send_cancellation_email.company')%></b></p><p><%= @agency.title %></p><p><%= @agency.primary_address.full_street_address %></p>
+  <p><%= t('rent_guarantee_cancellation_mailer.send_cancellation_email.policy_was_cancelled')%></p>
+  <p><%= t('rent_guarantee_cancellation_mailer.send_cancellation_email.cancellation_is_effective', cancellation_date: @policy.cancellation_date.strftime('%m/%d/%y'))%></p>
+  <p><%= t('rent_guarantee_cancellation_mailer.send_cancellation_email.contact_us', agency_email: @agency_email)%></p>
   <div style="font-size: 16px; line-height: 16px; height: 16px;">&nbsp; </div>
 </td>

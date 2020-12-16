@@ -16,7 +16,7 @@ class PaymentMadeMailer < ApplicationMailer
     @policy = @invoice.invoiceable.is_a?(Policy) ? @invoice.invoiceable : @invoice.invoiceable.policy
     @from = 'support@' + @branding_profile.url
     @policy_type_title = I18n.t("policy_type_model.#{@policy.policy_type.title.parameterize.underscore}")
-    subject = I18n.t("policy_type_model",
+    subject = I18n.t("payment_made_mailer.send_successful_payment_notification.subject",
                      agency_title: @agency.title,
                      policy_type: @policy_type_title)
     mail(from: @from, to: @user.email, subject: subject)
