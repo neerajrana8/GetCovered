@@ -31,7 +31,260 @@
 
 en:
   hello: "Hello world"
+  shared:
+    best: "Best"
+    accepted: 'Accepted'
+    thank_you: 'Thank you'
 
   devise_token_auth:
     sessions:
       not_confirmed: "Your account is deactivated"
+  policy_application_contr:
+    show:
+      policy_application_not_found: "Policy Application is not found or no longer available"
+    new:
+      unit_not_found: "Unit not found"
+      invalid_unit: "Invalid unit"
+      invalid_policy_type: "Invalid policy type"
+    create:
+      invalid_auth_key: "Invalid Auth Key"
+    rentguarantee_complete:
+      inistructions_were_sent: "Instructions were sent"
+    validate_policy_users_params:
+      bad_arguments: "You can't use the same emails for policy applicants"
+    create_security_deposit_replacement:
+      policy_application_unavailable: "Application cannot be quoted at this time"
+      quote_failed: "Quote could not be processed at this time"
+    get_coverage_options:
+      invalid_combination: "Invalid carrier_id/policy_type_id combination"
+    deposit_choice_get_coverage_options:
+      insurable_id_cannot_be_blank: "insurable_id cannot be blank"
+      effective_date_cannot_be_blank:  "effective_date cannot be blank"
+      no_security_deposit_replacement: "There are no security deposit replacement plans available for this property (error code"
+    msi_get_coverage_options:
+      coverage_selections_must_be_array: "coverage_selections must be an array of coverage selections"
+      must_include_category_and_uid:  "all entries of coverage_selections must include a category and uid"
+      agency_cannot_be_blank:  "agency_id cannot be blank"
+      effective_date_must_be_valid_date:  "effective_date must be a valid date"
+      additional_insured_cannot_be_blank:  "additional_insured cannot be blank"
+      billing_strategy_id_cannot_be_blank: "billing_strategy_id cannot be blank"
+      community_not_found: "community not found"
+      billing_strategy_must_belong_to_carrier: "billing strategy must belong to the correct carrier, agency, and HO4 policy type"
+    validate_applicants:
+      must_have_only_one_primary_user: "Parameters must have only one primary user"
+      already_signup_with_this_email: "A User has already signed up with this email address.  Please log in to complete your application"
+    update_users:
+      cant_unbound_policy_user: "Can't unbound the policy user"
+      cant_update_policy_user: "Can't update the policy user"
+      cant_add_policy_user: "Can't add the policy user"
+      cant_update_user: "Can't update user"
+      cant_create_user: "Can't create user"
+      cant_update_address: "Can't update address"
+  policy_app_model:
+    billing_strategy_must_belong: "billing strategy must belong to the same agency"
+    billing_strategy_must_be_valid: "must be a valid billing strategy for the current carrier"
+    billing_strategy_must_be_enabled: "billing strategy must be enabled"
+    carrier_agency_must_exist: "carrier agency must exist"
+    is_not_available_for_this_carrier: "is not available for this carrier/agency combination"
+    cannot_be_true_with_liability_limit: "cannot be true with a liability limit of $300,000"
+    cannot_be_greater_than: "cannot be greater than 0 to recieve coverage"
+    cannot_be_true: "cannot be 'true' to recieve coverage"
+    expiration_date_cannot_be_before_effective: "expiration date cannot be before effective date."
+    pensio:
+      policy_quote_failed_to_return: "Policy Quote failed to return"
+      application_unavailable: "Application unavailable to be quoted"
+    crum:
+      event_failed: "Event failed to save"
+    qbe:
+      rates_cannot_be_nil: "Argument 'rates' cannot be nil"
+      rates_must_be_array: "Argument 'rates' must be an array"
+      quote_id_cannot_be_nil: "Argument 'quote_id' cannot be nil"
+  agency_model:
+    parent_id_incorrect: "Parent id incorrect"
+    agency_cannot_be_updated: "Agency can't be updated to sub-agency"
+  policy_model:
+     cannot_update: "Cannot update in system policy"
+     account_must_be_specified: "Account must be specified"
+     carrier_agency_must_exist: "carrier agency must exist"
+     must_belong_to_coverage: "must belong to BOUND Policy Coverage"
+     must_have_paid_invoice: "must have at least one paid invoice to change status"
+     no_policy_issue_for_qbe: "No policy issue for QBE Specialty"
+     error_with_policy: "Error happened with policy issue"
+     cancellation_reason_invalid: "Cancellation reason is invalid"
+     policy_is_already_cancelled: "Policy is already cancelled"
+     document_wrong_format: "The document wrong format, only: PDF, DOC, DOCX, XLSX, XLS, CSV, JPG, JPEG, PNG, GIF, SVG, TXT"
+  billing_strategy_model:
+    must_be_assigned_to_carrier: "must be assigned to carrier:"
+  policy_user_model:
+    must_indicate_removal: "Must indicate if removal is necessary"
+    email_must_be_present: "Email must be present to verify acceptance"
+    already_included_on_policy: "Already included on policy or policy application"
+  insurable_type_model:
+    cannot_be_blank: "cannot be blank"
+  address_model:
+    is_not_a_valid_state: "is not a valid state"
+    must_be_valid_address: "could not be parsed; must be a valid address"
+    is_invalid: "is invalid"
+  carrier_insurable_type_model:
+    cannot_be_null: "cannot be null"
+  insurable_model:
+    must_belong_to_same_account: "must belong to same account as parent"
+    either_address_must_be_provided: "either 'address' or 'insurable_id' and a string 'unit' must be provided"
+    building_doesnot_exist: "The requested residential building/community id does not exist"
+    unit_doesnot_exist: "The requested unit does not exist"
+    unable_create_unit: "Unable to create unit"
+    invalid_address: "Please enter an existing address"
+    invalid_address_value: "Address not yet in system, please try again later"
+    unable_deduce_unit: "Unable to deduce unit title from address"
+    not_standart_format: "is not a standard format (e.g. 'Apartment #2, Unit 3, #5, etc.)"
+    request_residential_build_not_exist: "The requested residential building/community does not exist"
+    unable_create_community_from_address: "Unable to create community from address"
+    parent_community_not_exist: "Requested parent community does not exist"
+    parent_community_not_the_same: "Requested parent community is not in the same state/zip/city"
+    unable_to_create_from_address: "Unable to create community from address"
+    unable_to_create_building_from_address: "Unable to create building from address"
+    internal_error_occured: "Internal error occurred"
+    should_be_uniq_inside_group: "should be uniq inside group"
+  policy_quote_model:
+    no_policy_for_qbe: "No policy bind for QBE Specialty"
+    error_with_policy_bund: "Error happened with policy bind"
+    quote_ineligible: "Quote ineligible for acceptance"
+    quote_billing_failed: "Quote billing failed, unable to write policy"
+    unable_to_bind_policy: "Unable to bind policy"
+    rent_guarantee_has_been_accepted: "Rental Guarantee has been accepted.  Please check your email for more information."
+    policy_has_been_accepted: "Policy has been accepted.  Please check your email for more information."
+    error_attaching_policy: "Error attaching policy to system"
+    unable_to_save_policy: "Unable to save policy in system"
+    no_build_coverages_for_qbe: "No build coverages for QBE Specialty"
+    no_build_coverages_for_crum: 'No build coverages for Crum'
+    no_build_coverages_for_pensio: 'No build coverages for Pensio'
+    error_with_build_coverages: 'Error happened with build coverages'
+  policy_type_model:
+    residential: 'Residential'
+    master_policy: 'Master Policy'
+    master_policy_coverage: 'Master Policy Coverage'
+    commercial: 'Commercial'
+    rent_guarantee: 'Rent Guarantee'
+    security_deposit_replacement: 'Security Deposit Replacement'
+  policy_bind_warning_notification_job:
+    get_covered_bind_warning: "Get Covered Bind Warning"
+  qbe_policy_quote:
+    qbe_bind_failure: "QBE Bind Failure"
+    carrier_must_be_qbe: "Carrier must be QBE to bind residential quote"
+    status_must_be_quoted_or_error: "Status must be quoted or error to bind quote"
+  crum_policy_quote:
+    quote_documents_recieved: "Quote documents recieved"
+    quote_inneligable_to_download: "Quote inneligable to download documents"
+  msi_policy_quote:
+    invalid_payment_data: "Invalid payment data for binding policy"
+    failed_to_build_bind_request: "Failed to build bind request"
+    msi_bind_failure: "MSI bind failure (Event ID:"
+    msi_error: "MSI Error:"
+  dc_policy_quote:
+    security_deposit_replacement: "Security Deposit Replacement Bond"
+    carrier_must_be_deposit_choice: "Carrier must be Deposit Choice to bind security deposit replacement quote"
+    bond_creation_failed: "Bond Creation Failed: Deposit Choice service rejected user information"
+    deposit_choise_bind_failure: "Deposit Choice bind failure (Event ID:"
+  invoiceable_quote:
+    error_during_invoice_generation: "encountered an error during invoice generation"
+    error_during_invoice_creation: "encountered an error during invoice creation"
+  policy_quote_controller:
+    quote_unavailable_update: "Quote Unavailable for Update"
+    unable_to_update_quote: "We are unable to update this quote due to it already being accepted or not meeting the policy type requirements."
+    not_applicable: "Not applicable"
+    external_payment_not_applicable: "External payment authorization is not applicable to this policy quote"
+    system_error: 'System error'
+    remote_system_failed: "Remote system failed to provide authorization"
+    invalid_payment_method: 'Invalid payment method'
+    ach_support_not_applicable: 'ACH support not applicable'
+    payment_method_must_be_card: "Payment method must be 'card' or 'ach'; received"
+    not_found: "not found"
+    policy_quote_not_found: "Policy Quote could not be found."
+    user_could_not_be_found: "User  could not be found."
+    invalid_payment_info: "Invalid Payment Information"
+    could_not_be_accepted: "Could Not Be Accepted"
+    accepted: "Accepted"
+    failure: 'Failure'
+    payment_token_cannot_be_blank: "payment token cannot be blank"
+    valid_payment_method_must_supplied: "a valid payment method must be supplied"
+    credit_card_info_cannot_be_blank: "Credit Card Info cannot be blank"
+    address_line_1: "Address Line 1"
+    city: "City"
+    state: "State"
+    postal_code: "Postal Code"
+    state_must_be_valid_us: "State must be a valid US state abbreviation"
+    postal_code_must_be_valid: "Postal code must be a valid zip code"
+  insurable_geographical_category:
+    cannot_be_blank_if_counties_are_specified: "cannot be blank if counties are specified"
+  user_controller:
+    invalid_token: "Invalid token."
+  user_policy_application_controller:
+    policy_type_not_recognized: "Policy Type not Recognized"
+    policy_type_is_not_residential_or_commercial: "Policy Type is not residential or commercial.  Please select a supported Policy Type"
+    quote_failed: "Quote Failed"
+    must_be_within_the_next_90_days: "must be within the next 90 days"
+    application_unavailable: "Application Unavailable"
+    policy_or_guarantee_not_recognized: 'Policy or Guarantee Type Not Recognized'
+    only_residential_available_to_update: 'Only Residential Policies and Rental Guaranatees are available for update from this screen'
+    please_login_to_update_policy: 'Please log in to update a commercial policy application'
+    you_cant_use_same_emails: "You can't use the same emails for policy applicants"
+  user_users_controler:
+    unauthorized_access: "Unauthorized Access"
+    invalid_login_credentials: "Invalid login credentials"
+  user_policies_controller:
+    need_insurable: 'Need Insurable'
+    policy_created: 'Policy created'
+    policy_is_declined: 'Policy is declined'
+    policy_was_already_declined: "Policy was already declined"
+    policy_was_already_accepted: "Policy was already accepted"
+    policy_is_accepted: 'Policy is accepted. An email sent with attached Policy'
+    documents_were_sent: 'Documents were sent'
+    refund_was_sent: 'Refund was successfully sent'
+    refund_was_successfully_sent: 'Refund was not successfully sent'
+    cancel_was_successfully_sent: 'Cancel was successfully sent'
+    refund_was_not_successfully_sent: 'Refund was not successfully sent'
+    you_cannot_add_coverage_with_master: 'You cannot add coverage with master policy type'
+    unable_to_attach_payment: "Unable to attach payment source to user"
+  coverage_options:
+    1003_title: 'Coverage C   Contents'
+    1003_desc: 'Personal property coverage protects your personal belongings and property.'
+    1004_title: 'Coverage D   Loss Of Use'
+    1004_desc: 'Coverage reimburses you for the cost of maintaining a comparable standard of living following a covered loss that exceeds your normal expenses prior to the loss, up to the policy limits.'
+    1005_title: 'Coverage E   Liability'
+    1005_desc: 'Liability coverage protects you in an event of negligent damage to your apartment, the community, or other residents.'
+    1006_title: 'Coverage F   Med Payment'
+    1006_desc: 'Coverage designed to pay for medical expenses to others who are accidentally injured on an insured location or by the activities of an insured, resident employee, or an animal owned by or in the care of an insured, up to the policy limits.'
+    1007_title: 'Pet Damage'
+    1007_desc: 'This option covers up to $500 for accidental damage caused by a pet such as stained carpet or chewed baseboards.'
+    1008_title: 'Water Backup'
+    1008_desc: 'This option covers your personal property in the event there is water/sewer back-up in your covered dwelling that begins off premises.'
+    1060_title: 'Animal Liability Buy Back'
+    1060_desc: 'This option provides an increase in the amount of liability protection afforded to the insured in the case where an insured can be held liability for damages by a pet.'
+    1065_title: 'Identity Fraud'
+    1065_desc: 'This option provides coverage up to $5,000 for expenses incurred by an insured as a direct result of identity fraud.'
+    1075_title: 'Bed Bug'
+    1075_desc: 'This option provides coverage to treat, remediate and eliminate a bed bug infestation in the residence.'
+    1076_title: 'Forced Entry Theft'
+    1076_desc: 'his option provides a discount by changing theft coverage to require physical evidence of forced entry and may require a police report.'
+    1077_title: 'Tenants Additional Protection'
+    1077_desc: 'This option covers your personal property (up to $5,000) in the event of an earthquake.'
+    1062_title: 'Workers Compensation'
+    1062_desc: ""
+    1_title: 'All Other Peril'
+    1_desc: 'The amount the insurer will deduct from a loss resulting from other peril not already listed (such as theft, hurricane or wind) before paying up to its policy limits.'
+    2_title: 'Theft'
+    2_desc: 'The amount the insurer will deduct from a loss resulting from theft before paying up to its policy limits.'
+    5_title: 'Wind Hail'
+    5_desc: 'The amount the insurer will deduct from a loss resulting from wind or hail before paying up to its policy limits.'
+    6_title: 'Earthquake'
+    6_desc: 'The amount the insurer will deduct from a loss resulting from an earthquake before paying up to its policy limits.'
+    estimated_premium_errors: 'Coverage C   Contents selection is required'
+    cannot_be_blank_counties: "cannot be blank if counties are specified"
+    bound: 'BOUND'
+    bound_with_warning: 'BOUND_WITH_WARNING'
+    renewing: 'RENEWING'
+    renewed: 'RENEWED'
+    reinstated: 'REINSTATED'
+
+# I18n.t('coverage_options.1003_title')
+# I18n.t('policy_application_contr.new.unit_not_found')

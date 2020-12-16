@@ -6,7 +6,7 @@ module V2
     private
 
     def is_staff?
-      render json: { error: "Unauthorized access" }, status: :unauthorized unless current_staff.present?
+      render json: { error: I18n.t('user_users_controler.unauthorized_access') }, status: :unauthorized unless current_staff.present?
     end
   end
 end

@@ -25,7 +25,7 @@ module V2
       end
 
       def faqs
-        @branding_profile = BrandingProfile.includes(:faqs).find(params[:id]) || []
+        @faqs = params['language'].present? ? BrandingProfile.find(params[:id]).faqs.where(language: params['language']) : BrandingProfile.find(params[:id]).faqs
         render :faqs, status: :ok
       end
 
@@ -167,7 +167,7 @@ module V2
 
       def faq_params
         return({}) if params.blank?
-        params.permit(:title, :branding_profile_id, :faq_order)
+        params.permit(:title, :branding_profile_id, :faq_order, :language)
       end
 
       def faq_order_params

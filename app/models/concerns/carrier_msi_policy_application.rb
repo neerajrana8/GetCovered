@@ -68,12 +68,12 @@ module CarrierMsiPolicyApplication
           self.users.count - 1,
           self.billing_strategy.carrier_code,
           nonpreferred_final_premium_params: {
-            address_line_two: "Unit #{unit.title}",
+            address_line_two: unit.title.nil? ? nil : "Unit #{unit.title}",
             number_of_units: self.extra_settings&.[]('number_of_units'),
             years_professionally_managed: self.extra_settings&.[]('years_professionally_managed'),
             year_built: self.extra_settings&.[]('year_built'),
             gated: self.extra_settings&.[]('gated')
-          },
+          }.compact,
           perform_estimate: true,
           eventable: quote # by passing a PolicyQuote we ensure results[:msi_data], results[:event], and results[:annotated_selections] get passed back out
         )
@@ -170,7 +170,7 @@ module CarrierMsiPolicyApplication
             # generate internal invoices
             #quote.generate_invoices_for_term MOOSE WARNING: uncomment if there are ever internal ones...
             # generate external invoices
-            installment_day = self.extra_settings&.[]('installment_day') || self.fields.find{|f| f['title'] == "Installment Day" }&.[]('value') || 1
+            installment_day = (self.extra_settings&.[]('installment_day') || self.fields.find{|f| f['title'] == "Installment Day" }&.[]('value') || 1).to_i
             installment_day = 28 if installment_day > 28
             installment_day = 1 if installment_day < 1
             if installment_day != self.extra_settings&.[]('installment_day')

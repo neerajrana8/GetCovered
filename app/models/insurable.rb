@@ -10,32 +10,33 @@ class Insurable < ApplicationRecord
   include CoverageReport # , EarningsReport, RecordChange
   include RecordChange
   include SetSlug
-  
+
   before_save :refresh_policy_type_ids
-  
+
   after_commit :create_profile_by_carrier,
     on: :create
   
   belongs_to :account, optional: true
   belongs_to :agency, optional: true
+  
   belongs_to :insurable, optional: true
   belongs_to :insurable_type
-  
+
   has_many :insurables
   has_many :carrier_insurable_profiles
   has_many :insurable_rates
-  
+
   has_many :policy_insurables
   has_many :policies, through: :policy_insurables
   has_many :policy_applications, through: :policy_insurables
-  
+
   has_many :events, as: :eventable
-  
+
   has_many :assignments, as: :assignable
   has_many :staffs, through: :assignments
-  
+
   has_many :leases
-  
+
   has_many :addresses, as: :addressable, autosave: true
 
   has_many :reports, as: :reportable
@@ -43,10 +44,11 @@ class Insurable < ApplicationRecord
   has_many :histories, as: :recordable
 
   accepts_nested_attributes_for :addresses, allow_destroy: true
-  
+
   enum category: %w[property entity]
-  
-  validates_presence_of :title, :slug
+
+  #validates_presence_of :title, :slug MOOSE WARNING: RESTORE ME WHEN YOU CAN! THIS IS DISABLED TO ALLOW TITLELESS NONPREFERRED UNITS!
+
   validate :must_belong_to_same_account_if_parent_insurable
   validate :title_uniqueness, on: :create
 
@@ -62,7 +64,7 @@ class Insurable < ApplicationRecord
       scope "#{major_type.downcase}_#{minor_type.downcase.pluralize}".to_sym, -> { joins(:insurable_type).where("insurable_types.title = '#{major_type} #{minor_type}'") }
     end
   end
-  
+
 
   def self.find_from_address(address, extra_query_params = {}, allow_multiple: true)
     # search for the insurable
@@ -74,7 +76,7 @@ class Insurable < ApplicationRecord
     end
     return results
   end
-  
+
   settings index: { number_of_shards: 1 } do
     mappings dynamic: 'false' do
       indexes :title, type: :text, analyzer: 'english'
@@ -82,7 +84,7 @@ class Insurable < ApplicationRecord
   end
   # Insurable.primary_address
   #
-  
+
   def primary_address
     if addresses.count.zero?
       return insurable.primary_address unless insurable.nil?
@@ -90,18 +92,18 @@ class Insurable < ApplicationRecord
       addresses.find_by(primary: true)
     end
   end
-  
+
   # Insurable.primary_staff
   #
-  
+
   def primary_staff
     assignment = assignments.find_by(primary: true)
     assignment.staff.nil? ? nil : assignment.staff
   end
-  
+
   # Insurable.create_carrier_profile(carrier_id)
   #
-  
+
   def create_carrier_profile(carrier_id)
     cit = CarrierInsurableType.where(carrier_id: carrier_id, insurable_type_id: insurable_type_id).take
     unless cit.nil?
@@ -110,17 +112,17 @@ class Insurable < ApplicationRecord
                                          carrier_id: carrier_id)
     end
   end
-  
+
   # Insurable.carrier_profile(carrier_id)
   #
-  
+
   def carrier_profile(carrier_id)
     return carrier_insurable_profiles.where(carrier_id: carrier_id).take unless carrier_id.nil?
   end
-  
+
   def must_belong_to_same_account_if_parent_insurable
     return if insurable.nil?
-    errors.add(:account, 'must belong to same account as parent') if insurable.account && account && insurable.account != account
+    errors.add(:account, I18n.t('insurable_model.must_belong_to_same_account')) if insurable.account && account && insurable.account != account
   end
   
   def residential_units
@@ -166,14 +168,14 @@ class Insurable < ApplicationRecord
     # return everything
     return ::Insurable.where(id: ids)
   end
-  
+
   def buildings
     insurables.where(insurable_type_id: InsurableType::BUILDINGS_IDS)
   end
-	
+
 	def parent_community
 		to_return = nil
-		
+
 		unless insurable.nil?
       if insurable_type.title.include? "Unit"
         if insurable.insurable_type.title.include? "Building"
@@ -181,9 +183,9 @@ class Insurable < ApplicationRecord
         else
           to_return = insurable
         end
-      end	
+      end
 		end
-		
+
 		return to_return
   end
 
@@ -210,27 +212,26 @@ class Insurable < ApplicationRecord
       insurable
     end
   end
-	
+
 	def community_with_buildings
     to_return = false
-    
+
     if insurable_type.title.include? "Community"
       if insurables.count > 0
         if insurables.where(insurable_type_id: 7).count > 0
-          to_return = true  
-        end  
-      end  
+          to_return = true
+        end
+      end
     end
-    
+
     return to_return
   end
   
   def authorized_to_provide_for_address?(carrier_id, policy_type_id, agency: nil)
-    authorized = false
     addresses.each do |address|
       return true if authorized == true
 
-      args = { 
+      args = {
         carrier_id: carrier_id,
         policy_type_id: policy_type_id,
         state: address.state,
@@ -245,7 +246,7 @@ class Insurable < ApplicationRecord
   def unit?
     InsurableType::UNITS_IDS.include?(insurable_type_id)
   end
-  
+
   def refresh_policy_type_ids(and_save: false)
     my_own_little_agency = (self.agency_id ? ::Agency.where(id: self.agency_id).take : nil) || self.account&.agency || nil
     if my_own_little_agency.nil? || self.primary_address.nil?
@@ -261,7 +262,7 @@ class Insurable < ApplicationRecord
   end
 
 
-      
+
   # RETURNS EITHER:
   #   nil:                      no match was found and creation wasn't allowed
   #   an insurable:             a match was found or created
@@ -277,7 +278,8 @@ class Insurable < ApplicationRecord
     account_id: nil,              # optionally, the account id to use if we create anything
     communities_only: false,      # if true, in unit mode does nothing; out of unit mode, searches only for communities with the address (no buildings)
     ignore_street_two: false,     # if true, will strip out street_two address data
-    diagnostics: nil              # pass a hash to get diagnostics; these will be the following fields, though those applicable to code not encountered may be nil:
+    titleless: false,             # if true and unit is true, will seek a unit without a title
+    diagnostics: nil              # pass a hash to get diagnostics; these will be the following fields, though applicable to code not encountered may be nil:
                                   #   address_used:               true if address used, false if we didn't need it
                                   #   title_derivation_tried:     true if we tried to derive a unit title from address line 2
                                   #   title_derivation_succeeded: true if we successfully got a title from address line 2
@@ -300,16 +302,17 @@ class Insurable < ApplicationRecord
     if address.blank? && !unit && !insurable_id.nil?
       return Insurable.where(id: insurable_id).take
     elsif address.blank? && ([true,false,nil].include?(unit) || insurable_id.nil?)
-      raise ArgumentError.new("either 'address' or 'insurable_id' and a string 'unit' must be provided")
+      raise ArgumentError.new(I18n.t('insurable_model.either_address_must_be_provided'))
     end
     # if we have a unit title and an insurable id, get or create the unit without dealing with address nonsense
     unit_title = [true,false,nil].include?(unit) ? nil : clean_unit_title(unit)
+    unit_title = :titleless if titleless
     if !unit_title.blank? && !insurable_id.nil?
       if diagnostics
         diagnostics[:unit_mode] = true
         diagnostics[:address_used] = false
       end
-      results = ::Insurable.where(title: unit_title, insurable_id: insurable_id, insurable_type_id: ::InsurableType::RESIDENTIAL_UNITS_IDS)
+      results = ::Insurable.where(title: unit_title == :titleless ? nil : unit_title, insurable_id: insurable_id, insurable_type_id: ::InsurableType::RESIDENTIAL_UNITS_IDS)
       case results.count
         when 0
           return nil if disallow_creation
@@ -319,14 +322,14 @@ class Insurable < ApplicationRecord
           end
           community = (results.parent_community || results)
           unit = results.insurables.new(
-            title: unit_title,
+            title: unit_title == :titleless ? nil : unit_title,
             insurable_type: ::InsurableType.where(title: "Residential Unit").take,
             enabled: true, category: 'property', preferred_ho4: false,
             account_id: account_id || nil,
             confirmed: false
           )
           unless unit.save
-            return { error_type: :invalid_unit, message: "Unable to create unit", details: unit.errors.full_messages }
+            return { error_type: :invalid_unit, message: I18n.t('insurable_model.unable_create_unit'), details: unit.errors.full_messages }
           end
           return unit
         when 1
@@ -339,12 +342,12 @@ class Insurable < ApplicationRecord
     # get a valid address model if possible
     if address.class == ::Address
       unless address.valid?
-        return { error_type: :invalid_address, message: "Invalid address", details: address.errors.full_messages }
+        return { error_type: :invalid_address, message: I18n.t('insurable_model.invalid_address'), details: address.errors.full_messages }
       end
     else
       address = ::Address.from_string(address)
       unless address.errors.blank?
-        return { error_type: :invalid_address, message: "Invalid address value", details: address.errors.full_messages }
+        return { error_type: :invalid_address, message: I18n.t('insurable_model.invalid_address_value'), details: address.errors.full_messages }
       end
     end
     address.id = nil
@@ -359,7 +362,7 @@ class Insurable < ApplicationRecord
         unless cleaned.nil?
           unit_title = cleaned
           if diagnostics
-            diagnostics[:title_derivation_succeeded] = true 
+            diagnostics[:title_derivation_succeeded] = true
             diagnostics[:title_as_derived] = unit_title
           end
         end
@@ -369,13 +372,13 @@ class Insurable < ApplicationRecord
     if seeking_unit # we want a unit
       communities_only = false # WARNING: we just hack this to false here to prevent weird behavior, remove hack to make the default for this "ignore buildings and consider only community-attached units"
       if unit_title.nil?
-        return { error_type: :invalid_address_line_two, message: "Unable to deduce unit title from address", details: "'#{address.street_two}' is not a standard format (e.g. 'Apartment #2, Unit 3, #5, etc.)" }
+        return { error_type: :invalid_address_line_two, message: I18n.t('insurable_model.unable_deduce_unit'), details: "'#{address.street_two}' #{I18n.t('insurable_model.not_standart_format')}" }
       end
       # query for units of the appropriate title, address, and, if provided, insurable_id
       parent_ids = ::Insurable.references(:address).includes(:addresses).where(
         {
           addresses: {
-            primary: true, 
+            primary: true,
             street_number: address.street_number,
             street_name: address.street_name,
             city: address.city,
@@ -389,18 +392,18 @@ class Insurable < ApplicationRecord
       if !insurable_id.nil?
         parent_ids = parent_ids & [insurable_id]
         results = ::Insurable.where({
-          title: unit_title,
+          title: unit_title == :titleless ? nil : unit_title,
           insurable_type_id: ::InsurableType::RESIDENTIAL_UNITS_IDS,
           insurable_id: parent_ids
         })
       else
         results = ::Insurable.where({
-          title: unit_title,
+          title: unit_title == :titleless ? nil : unit_title,
           insurable_type_id: ::InsurableType::RESIDENTIAL_UNITS_IDS,
           insurable_id: parent_ids
         }).or(::Insurable.where({ # gotta account for the possibility that a standalone-addressed unit came up in our initial query
           id: parent_ids,
-          title: unit_title,
+          title: unit_title == :titleless ? nil : unit_title,
           insurable_type_id: ::InsurableType::RESIDENTIAL_UNITS_IDS
         }))
       end
@@ -418,9 +421,9 @@ class Insurable < ApplicationRecord
             if disallow_creation
               return nil
             elsif !insurable_id.nil?
-              return { error_type: :invalid_community, message: "The requested residential building/community id does not exist" }
+              return { error_type: :invalid_community, message: I18n.t('insurable_model.request_residential_build_not_exist') }
             elsif parents.count > 0 # this no longer happens, but if we ever forbid creating on preferred communities/buildings again, the "parent =" line above should be changed so that this will execute
-              return { error_type: :invalid_unit, message: "The requested unit does not exist" }
+              return { error_type: :invalid_unit, message:  I18n.t('insurable_model.unit_doesnot_exist') }
             end
             # create community
             address.id = nil
@@ -435,7 +438,7 @@ class Insurable < ApplicationRecord
               confirmed: false
             )
             unless parent.save
-             return { error_type: :invalid_community, message: "Unable to create community from address", details: parent.errors.full_messages }
+             return { error_type: :invalid_community, message: I18n.t('insurable_model.unable_create_community_from_address'), details: parent.errors.full_messages }
             end
             if diagnostics
               diagnostics[:parent_created] = true
@@ -444,14 +447,14 @@ class Insurable < ApplicationRecord
           end
           # create the unit
           unit = parent.insurables.new(
-            title: unit_title,
+            title: unit_title == :titleless ? nil : unit_title,
             insurable_type: ::InsurableType.where(title: "Residential Unit").take,
             enabled: true, category: 'property', preferred_ho4: false,
             account_id: account_id || nil,
             confirmed: false
           )
           unless unit.save
-            return { error_type: :invalid_unit, message: "Unable to create unit", details: unit.errors.full_messages }
+            return { error_type: :invalid_unit, message: I18n.t('insurable_model.unable_create_unit'), details: unit.errors.full_messages }
           end
           diagnostics[:target_created] = true if diagnostics
           return unit
@@ -466,7 +469,7 @@ class Insurable < ApplicationRecord
       results = ::Insurable.references(:address).includes(:addresses).where(
         {
           addresses: {
-            primary: true, 
+            primary: true,
             street_number: address.street_number,
             street_name: address.street_name,
             city: address.city,
@@ -506,11 +509,11 @@ class Insurable < ApplicationRecord
           unless insurable_id.nil?
             parent = ::Insurable.where(id: insurable_id, insurable_type_id: ::InsurableType::RESIDENTIAL_COMMUNITIES_IDS).take
             if parent.nil?
-              return { error_type: :invalid_building, message: "Requested parent community does not exist" }
+              return { error_type: :invalid_building, message: I18n.t('insurable_model.parent_community_not_exist') }
             else
               parent_address = parent&.primary_address
               if parent_address.state != address.state || parent_address.zip_code != address.zip_code || parent_address.city != address.city
-                return { error_type: :invalid_building, message: "Requested parent community is not in the same state/zip/city" }
+                return { error_type: :invalid_building, message: I18n.t('insurable_model.parent_community_not_the_same') }
               end
             end
           end
@@ -527,7 +530,10 @@ class Insurable < ApplicationRecord
               confirmed: false
             )
           unless created.save
-           return { error_type: :"invalid_#{parent.nil? ? 'community' : 'building'}", message: "Unable to create #{parent.nil? ? 'community' : 'building'} from address", details: created.errors.full_messages }
+            message = parent.nil? ? I18n.t('insurable_model.unable_to_create_from_address') : I18n.t('insurable_model.unable_to_create_building_from_address')
+           return { error_type: :"invalid_#{parent.nil? ? 'community' : 'building'}",
+                    message: message,
+                    details: created.errors.full_messages }
           end
           diagnostics[:target_created] = true if diagnostics
           return created
@@ -538,38 +544,39 @@ class Insurable < ApplicationRecord
       end
     end
     # every possible case resulted in a return already
-    return { error_type: :internal_error, message: "Internal error occurred" }
+    return { error_type: :internal_error, message: I18n.t('insurable_model.internal_error_occured') }
   end
-      
-  
+
+
   private
 
     def title_uniqueness
       return if insurable.nil?
       if insurable.insurables.where(title: title, insurable_type: insurable_type).any?
-        errors.add(:title, 'should be uniq inside group')
+        errors.add(:title, I18n.t('insurable_model.should_be_uniq_inside_group'))
       end
     end
-    
+
     def create_profile_by_carrier
       if insurable_type.title.include? "Residential"
         carrier_profile(1)
       else
         carrier_profile(3)
-      end  
+      end
     end
-    
+
     def self.clean_unit_title(unit_title)
       splat = unit_title.gsub('#', ' ').gsub('.', ' ')
                         .gsub(/\s+/m, ' ').gsub(/^\s+|\s+$/m, '')
                         .split(" ").select do |strang|
                           ![
-                            'apartment', 'apt', 'unit',
-                            'flat', 'room', 'office',
-                            'no', 'number'
+                            'apartment', 'apt', 'ap', 'unit',
+                            'fl', 'flt', 'flat', 'rm', 'room',
+                            'no', 'number', 'ste', 'suite',
+                            'ofc', 'office'
                           ].include?(strang.downcase)
                         end
       return(splat.size == 1 ? splat[0] : nil)
     end
-    
+
 end

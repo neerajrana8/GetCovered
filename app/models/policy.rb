@@ -212,21 +212,21 @@ class Policy < ApplicationRecord
   end
 
   def is_allowed_to_update?
-    errors.add(:policy_in_system, 'Cannot update in system policy') if policy_in_system == true && !rent_garantee? && !residential?
+    errors.add(:policy_in_system, I18n.t('policy_model.cannot_update')) if policy_in_system == true && !rent_garantee? && !residential?
   end
-  
-  def residential_account_present    
-    errors.add(:account, 'Account must be specified') if ![4,5].include?(policy_type_id) && account.nil? && !self.primary_insurable&.account.nil?
+
+  def residential_account_present
+    errors.add(:account, I18n.t('policy_model.account_must_be_specified')) if ![4,5].include?(policy_type_id) && account.nil? && !self.primary_insurable&.account.nil?
   end
 
   def carrier_agency
     return unless in_system?
 
-    errors.add(:carrier, 'carrier agency must exist') unless agency&.carriers&.include?(carrier)
+    errors.add(:carrier, I18n.t('policy_model.carrier_agency_must_exist')) unless agency&.carriers&.include?(carrier)
   end
 
   def master_policy
-    errors.add(:policy, 'must belong to BOUND Policy Coverage') unless policy&.policy_type&.master_policy? && policy&.BOUND?
+    errors.add(:policy, I18n.t('policy_model.must_belong_to_coverage')) unless policy&.policy_type&.master_policy? && policy&.BOUND?
   end
 
   def inherit_policy_coverages
@@ -245,7 +245,7 @@ class Policy < ApplicationRecord
   def status_allowed
     if in_system?
       if (AWAITING_PAYMENT? || AWAITING_ACH?) && invoices.paid.count.zero?
-        errors.add(:status, 'must have at least one paid invoice to change status')
+        errors.add(:status, I18n.t('policy_model.must_have_paid_invoice'))
       end
     end
   end
@@ -278,7 +278,7 @@ class Policy < ApplicationRecord
     when 'qbe'
       qbe_issue_policy
     when 'qbe_specialty'
-      { error: 'No policy issue for QBE Specialty' }
+      { error: I18n.t('policy_model.no_policy_issue_for_qbe') }
     when 'crum'
       crum_issue_policy
     when 'msi'
@@ -286,7 +286,7 @@ class Policy < ApplicationRecord
     when 'dc'
       dc_issue_policy
     else
-      { error: 'Error happened with policy issue' }
+      { error: I18n.t('policy_model.error_with_policy')  }
     end
   end
 
@@ -294,8 +294,8 @@ class Policy < ApplicationRecord
   # Cancels a policy; returns nil if no errors, otherwise a string explaining the error
   def cancel(reason, cancel_date = Time.current.to_date)
     # Flee on invalid data
-    return "Cancellation reason is invalid" unless self.class.cancellation_reasons.has_key?(reason)
-    return "Policy is already cancelled" if self.status == 'CANCELLED'
+    return I18n.t('policy_model.cancellation_reason_invalid') unless self.class.cancellation_reasons.has_key?(reason)
+    return I18n.t('policy_model.policy_is_already_cancelled') if self.status == 'CANCELLED'
     # Slaughter the invoices NOTE: we refund before changing status to CANCELLED because apply_proration can be called multiple times with the same arguments if something fails
     special_logic = SPECIAL_CANCELLATION_REFUND_LOGIC[reason]
     case special_logic
@@ -393,7 +393,6 @@ class Policy < ApplicationRecord
   end
 
   def run_postbind_hooks # do not remove this; concerns add functionality to it by overriding it and calling super
-    notify_the_idiots() if ENV["RAILS_ENV"] == "production"
     super if defined?(super)
   end
 
@@ -407,7 +406,7 @@ class Policy < ApplicationRecord
   end
 
   def date_order
-    errors.add(:expiration_date, 'expiration date cannot be before effective date.') if expiration_date < effective_date
+    errors.add(:expiration_date, I18n.t('policy_app_model.expiration_date_cannot_be_before_effective')) if expiration_date < effective_date
   end
 
   def correct_document_mime_type
@@ -418,7 +417,7 @@ class Policy < ApplicationRecord
         'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         'text/comma-separated-values', 'application/vnd.ms-excel'
         )
-        errors.add(:documents, 'The document wrong format, only: PDF, DOC, DOCX, XLSX, XLS, CSV, JPG, JPEG, PNG, GIF, SVG, TXT')
+        errors.add(:documents, I18n.t('policy_model.document_wrong_format'))
       end
     end
   end
