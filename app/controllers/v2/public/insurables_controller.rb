@@ -37,15 +37,6 @@ module V2
         msi_id = doc.xpath("//MSI_CommunityID").text
         community = CarrierInsurableProfile.where(carrier_id: 5, external_carrier_id: msi_id.to_s).take&.insurable
         @units = community&.units&.confirmed&.order("title ASC") || []
-        #puts msi_id
-
-        #puts doc.xpath("//Moose")
-
-        #puts "Params: #{params}"
-        #puts "Reqbod: #{received}"
-        #puts "Nokogi: #{doc.xpath("//Moose").text}"
-        #puts "----"
-        #@units = []
       end
 
       def get_or_create

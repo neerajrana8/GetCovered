@@ -111,7 +111,9 @@ module CarrierMsiInsurable
           @carrier_profile.data['registered_with_msi'] = true
           @carrier_profile.data['registered_with_msi_on'] = Time.current.strftime("%m/%d/%Y %I:%M %p")
           if @carrier_profile.save
-            self.query_for_full_hierarchy.where(insurable_type_id: ::InsurableType::RESIDENTIAL_IDS).confirmed.update_all(preferred_ho4: true)
+            subinsurables = self.query_for_full_hierarchy.where(insurable_type_id: ::InsurableType::RESIDENTIAL_IDS).confirmed
+            subinsurables.update_all(preferred_ho4: true)
+            subinsurables.each{|si| si.create_carrier_profile(5) }
           end
         end
       end

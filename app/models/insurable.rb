@@ -104,11 +104,11 @@ class Insurable < ApplicationRecord
   # Insurable.create_carrier_profile(carrier_id)
   #
 
-  def create_carrier_profile(carrier_id)
+  def create_carrier_profile(carrier_id, data: nil, traits: nil)
     cit = CarrierInsurableType.where(carrier_id: carrier_id, insurable_type_id: insurable_type_id).take
     unless cit.nil?
-      carrier_insurable_profiles.create!(traits: cit.profile_traits,
-                                         data: cit.profile_data,
+      carrier_insurable_profiles.create!(traits: cit.profile_traits&.send(*(traits.blank? ? [:itself] : [:merge, traits]))
+                                         data: cit.profile_data&.merge(*(data.blank? ? [:itself] : [:merge, data])),
                                          carrier_id: carrier_id)
     end
   end
