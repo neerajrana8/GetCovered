@@ -16,7 +16,7 @@ module V2
       def update
         if update_allowed?
           if @lead.update_as(current_staff, update_params)
-            render :show, status: :ok
+            render 'v2/shared/leads/show', status: :ok
           else
             render json: @lead.errors, status: :unprocessable_entity
           end
