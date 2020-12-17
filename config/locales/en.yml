@@ -286,5 +286,5 @@ en:
     renewed: 'RENEWED'
     reinstated: 'REINSTATED'
 
-# I18n.t('coverage_options.1003_title')
+# I18n.t('user_users_controler.unauthorized_access')
 # I18n.t('policy_application_contr.new.unit_not_found')

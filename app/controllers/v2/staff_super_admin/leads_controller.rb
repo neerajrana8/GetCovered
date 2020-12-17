@@ -21,7 +21,7 @@ module V2
             render json: @lead.errors, status: :unprocessable_entity
           end
         else
-          render json: { success: false, errors: ['Unauthorized Access'] },
+          render json: { success: false, errors: [I18n.t('user_users_controler.unauthorized_access')] },
                  status: :unauthorized
         end
       end
@@ -43,7 +43,8 @@ module V2
         {
             created_at: [:scalar, :array, :interval],
             email: [:scalar, :like],
-            agency_id: [:scalar, :interval]
+            agency_id: [:scalar, :interval],
+            status: [:scalar]
         }
       end
 
