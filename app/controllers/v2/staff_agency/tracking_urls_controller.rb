@@ -7,7 +7,6 @@ module V2
 
       before_action :set_substrate, only: :index
 
-
       def create
         @tracking_url = TrackingUrl.new(create_params)
         @tracking_url.agency = current_staff.organizable
@@ -61,7 +60,7 @@ module V2
       end
 
       def is_owner?
-        render(json: { success: false, errors: ['Unauthorized Access'] },
+        render(json: { success: false, errors: [I18n.t('user_users_controler.unauthorized_access')] },
                status: :unauthorized) and return unless current_staff.owner
       end
     end
