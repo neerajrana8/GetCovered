@@ -1,8 +1,5 @@
 class Lead < ApplicationRecord
 
-  include ElasticsearchSearchable
-  include RecordChange
-
   #TODO: move to config file
   PAGES_RENT_GUARANTEE = ['Landing Page', 'Eligibility Page', 'Basic Info Page', 'Eligibility Requirements Page', 'Address Page', 'Employer Page',
            'Landlord Page', 'Confirmation Page', 'Terms&Conditions Page', 'Payment Page']
