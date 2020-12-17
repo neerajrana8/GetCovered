@@ -24,11 +24,11 @@ class AccessToken < ApplicationRecord
   }
   
   def self.from_urlparam(par)
-    AccessToken.where(key: par).take
+    AccessToken.where(key: CGI.unescape(par)).take
   end
   
   def to_urlparam
-    "#{key}" # we just ignore the secret_salt and secret_hash in this case, for now
+    "#{CGI.escape(key)}" # we just ignore the secret_salt and secret_hash in this case, for now
   end
   
   def check_secret(public_secret)
