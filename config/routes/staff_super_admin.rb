@@ -171,8 +171,9 @@
       end
     end
 
-    resources :leads, only: [:index, :show]
+    resources :leads, only: [:index, :show, :update]
     resources :leads_dashboard, only: [:index]
+    resources :leads_dashboard_tracking_url, only: [:index]
 
     get :get_filters, controller: 'leads_dashboard', path: 'leads_dashboard/get_filters'
 
