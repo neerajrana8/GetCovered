@@ -16,7 +16,7 @@
   <p><b><%= t('rent_guarantee_cancellation_mailer.send_cancellation_email.product')%></b></p><p><%= @policy.policy_type.title %></p><p><%= @policy.number %></p>
   <p><b><%= t('rent_guarantee_cancellation_mailer.send_cancellation_email.company')%></b></p><p><%= @agency.title %></p><p><%= @agency.primary_address.full_street_address %></p>
   <p><%= t('rent_guarantee_cancellation_mailer.send_cancellation_email.policy_was_cancelled')%></p>
-  <p><%= t('rent_guarantee_cancellation_mailer.send_cancellation_email.cancellation_is_effective', cancellation_date: @policy.cancellation_date.strftime('%m/%d/%y'))%></p>
+  <p><%= t('rent_guarantee_cancellation_mailer.send_cancellation_email.cancellation_is_effective', cancellation_date: @policy.cancellation_date&.to_date&.strftime('%m/%d/%y'))%></p>
   <p><%= t('rent_guarantee_cancellation_mailer.send_cancellation_email.contact_us', agency_email: @agency_email)%></p>
   <div style="font-size: 16px; line-height: 16px; height: 16px;">&nbsp; </div>
 </td>
