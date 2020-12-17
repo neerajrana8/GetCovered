@@ -5,6 +5,7 @@ class LeadEvent < ApplicationRecord
 
   belongs_to :lead
   belongs_to :policy_type, optional: true
+  has_many :histories, as: :recordable
 
   after_create :update_policy_type, if: -> {self.data["policy_type_id"].present? && self.data["policy_type_id"] != self.policy_type_id}
   after_create :update_lead_last_visit
@@ -17,32 +18,32 @@ class LeadEvent < ApplicationRecord
   private
 
   def update_lead_last_visit
-    self.lead.update(last_visit: self.created_at)
+    self.lead.update_as(current_staff, last_visit: self.created_at)
   end
 
   def update_lead_last_visited_page
-    self.lead.update(last_visited_page: self.data["last_visited_page"])
+    self.lead.update_as(current_staff, last_visited_page: self.data["last_visited_page"])
   end
 
   # TODO : need to be removed after moving agency on ui
   def update_lead_agency
-    self.lead.update(agency_id: self.agency_id)
+    self.lead.update_as(current_staff, agency_id: self.agency_id)
   end
 
   #check - seems that delayed on klaviyo on one event
   def update_lead_phone
-    self.lead.profile.update(contact_phone: self.data["phone"])
+    self.lead.profile.update_as(current_staff, contact_phone: self.data["phone"])
   end
 
   def update_lead_organization
-    self.lead.profile.update(title: self.data["employer_name"])
+    self.lead.profile.update_as(current_staff, title: self.data["employer_name"])
   end
 
   def update_lead_job_title
-    self.lead.profile.update(job_title: self.data["employment_description"])
+    self.lead.profile.update_as(current_staff, job_title: self.data["employment_description"])
   end
 
   def update_policy_type
-    self.update(policy_type_id: self.data["policy_type_id"])
+    self.update_as(current_staff, policy_type_id: self.data["policy_type_id"])
   end
 end

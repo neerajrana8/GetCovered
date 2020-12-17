@@ -17,6 +17,7 @@ class Lead < ApplicationRecord
   has_one :address, as: :addressable
 
   has_many :lead_events, dependent: :destroy
+  has_many :histories, as: :recordable
 
   accepts_nested_attributes_for :address, :profile, update_only: true
 
@@ -26,7 +27,7 @@ class Lead < ApplicationRecord
   before_save :set_status
 
   validates :email, presence: true
-  
+
   scope :converted, -> { where(status: 'converted')}
   scope :prospected, -> { where(status: 'prospect')}
   scope :archived, -> { where(status: 'archived')}
