@@ -182,6 +182,7 @@ class Charge < ApplicationRecord
 
     def pay_attempt_succeeded(stripe_charge_id, the_payment_method, message = nil)
       update_columns(status: 'succeeded', stripe_id: stripe_charge_id, payment_method: the_payment_method, status_information: message)
+      PaymentMadeEmailJob.perform_later(self)
       begin
         invoice.payment_succeeded(self)
         update_columns(invoice_update_failed: false, invoice_update_error_call: nil, invoice_update_error_record: nil, invoice_update_error_hash: nil)
@@ -194,6 +195,7 @@ class Charge < ApplicationRecord
 
     def pay_attempt_failed(stripe_charge_id, the_payment_method, message = nil)
       update_columns(status: 'failed', stripe_id: stripe_charge_id, payment_method: the_payment_method, status_information: message)
+      CardInfoUpdateSendJob.perform_later(self)
       begin
         invoice.payment_failed(self)
         update_columns(invoice_update_failed: false, invoice_update_error_call: nil, invoice_update_error_record: nil, invoice_update_error_hash: nil)

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_12_10_150554) do
+ActiveRecord::Schema.define(version: 2020_12_16_160521) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
@@ -209,6 +209,7 @@ ActiveRecord::Schema.define(version: 2020_12_10_150554) do
     t.string "footer_logo_url"
     t.string "subdomain"
     t.boolean "global_default", default: false, null: false
+    t.string "logo_jpeg_url"
     t.index ["profileable_type", "profileable_id"], name: "index_branding_profiles_on_profileable_type_and_profileable_id"
     t.index ["url"], name: "index_branding_profiles_on_url", unique: true
   end

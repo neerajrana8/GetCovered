@@ -318,6 +318,7 @@ class Policy < ApplicationRecord
     end
     # Mark cancelled
     update_columns(status: 'CANCELLED', cancellation_reason: reason, cancellation_date: cancel_date)
+    RentGaranteeCancellationEmailJob.perform_later(self) if self.policy_type.slug == 'rent-guarantee'
     # Unearned balance is the remaining unearned amount on an insurance policy that
     # needs to be deducted from future commissions to recuperate the loss
     premium&.reload

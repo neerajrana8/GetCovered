@@ -8,8 +8,7 @@ class Invoice < ApplicationRecord
 
   include ElasticsearchSearchable
 
-  before_validation :calculate_subtotal,
-    on: :create
+  before_validation :calculate_subtotal, on: :create
     
   before_validation :calculate_total
 
