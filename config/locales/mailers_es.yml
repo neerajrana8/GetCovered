@@ -53,49 +53,48 @@ es:
     send_successful_payment_notification:
       subject: "%{agency_title} - %{policy_type} Pago de prima realizado"
       thank_you: "Gracias por seleccionar una política %{policy_number} de %{agency_title}."
-      account_was_charged: "Su cuenta se cargó correctamente $%{total} el %{charge_date}."
+      account_was_charged: "Su cuenta se cargó con éxito $%{total} el %{charge_date}."
       click_link_html: "Haga clic en el siguiente enlace <a href=\"https://%{link}\">%{link}</a> para revisar todas sus facturas.
                             Si tiene alguna pregunta, comuníquese con %{from}."
 
   rent_guarantee_cancellation_mailer:
     send_cancellation_email:
-      subject: "%{agency_title} - %{policy_number} Policy Cancellation"
-      sorry: "We are sorry to see you go! We appreciate and value any feedback you may
-                have on our %{policy_type} product and service. If there’s something that we could
-                have done to make your experience with %{agency_title} better,
-                please reach out to us at %{agency_email}. It has been a pleasure to do business with you."
-      title: "Cancellation Confirmation"
-      date_of_notice: "Date of Notice"
-      policyholder: "Policyholder"
-      product: "Product"
-      company: "Company"
-      policy_was_cancelled: "This policy has been canceled as requested by the policyholder."
-      cancellation_is_effective: "This cancellation is effective: %{cancellation_date}"
-      contact_us: "Please contact us at %{agency_email} if you have any questions."
+      subject: "%{agency_title} - %{policy_number} Confirmación de cancelación"
+      sorry: "¡Lamentamos que te vayas! Apreciamos y valoramos cualquier comentario que pueda tener
+                sobre nuestro producto y servicio de %{policy_type}. Si hay algo que podríamos haber hecho para
+                mejorar su experiencia con %{agency_title},
+                comuníquese con nosotros en %{agency_email}.  Ha sido un placer hacer negocios con usted."
+      title: "Confirmación de cancelación"
+      date_of_notice: "Fecha de notificación"
+      policyholder: "Tenedor de una póliza"
+      product: "Producto"
+      company: "Empresa"
+      policy_was_cancelled: "Esta póliza ha sido cancelada según lo solicitado por el asegurado."
+      cancellation_is_effective: "Esta cancelación es efectiva: %{cancellation_date}"
+      contact_us: "Póngase en contacto con nosotros en %{agency_email} si tiene alguna pregunta."
 
   card_info_update_mailer:
     please_update_card_info:
-      subject: "%{agency_title} - %{policy_number} Update Payment Information"
-      text: "Thank you for using %{agency_title} for your %{policy_type} Policy.
-             The credit card listed in your account is soon to expire.
-             Please login to %{agency_title} at the link below to update your credit
-             card information to avoid interruption of coverage."
-      contact_us: "Feel free to contact us at %{contact_email} If you have any questions."
+      subject: "%{agency_title} - %{policy_number} Actualizar la información de pago"
+      text: "Gracias por utilizar %{agency_title} para su póliza de %{policy_type}.
+              La tarjeta de crédito que figura en su cuenta vencerá pronto. Inicie sesión en
+              %{agency_title} en el enlace a continuación para actualizar la información de su tarjeta
+              de crédito y evitar la interrupción de la cobertura."
+      contact_us: "No dude en contactarnos en %{contact_email} si tiene alguna pregunta."
 
   warn_upcoming_charge_mailer:
     send_warn_upcoming_invoice:
-      subject: "%{agency_title} - %{policy_number} Upcoming Premium Payment"
-      text_html: "Thank you for selecting a %{policy_type} policy from %{agency_title}.
-                   For your upcoming premium payment, your account will be charged $%{charged} on %{due_date}.
-                   Click on the following  <a href=\"%{link}\">link</a> to review all of your invoices."
-      contact_us: "Feel free to contact us at %{contact_email} if you have any questions."
+      subject: "%{agency_title} - %{policy_number} Próximo pago de la prima"
+      text_html: "Gracias por seleccionar una póliza de %{policy_type} de %{agency_title}.
+                   Para el próximo pago de su prima, se le cobrará a su cuenta  $%{charged} el %{due_date}.
+                   Haga clic en el <a href=\"%{link}\">siguiente</a> enlace para revisar todas sus facturas."
+      contact_us: "No dude en contactarnos %{contact_email} al si tiene alguna pregunta."
 
   warn_user_before_expire_card_mailer:
     send_warn_expire_card:
-      subject: "%{agency_title} - Credit Card Expiring"
-      text: "Thank you for using the Get Covered Pay. According to our records,
-                   a credit card that you have listed with the GCpay service will soon expire.
-                   Please login to GCpay  at the link below to update your credit card information
-                   to avoid interruption of coverage "
-      contact_us: "Feel free to contact us at %{contact_email} if you have any questions."
-      thank_you: "Thank you again for using GCpay."
+      subject: "%{agency_title} - Caducidad de la tarjeta de crédito"
+      text: "Gracias por utilizar el pago Get Covered Pay. Según nuestros registros, una tarjeta de crédito que
+             haya incluido en el servicio GCpay caducará pronto. Inicie sesión en GCpay en el enlace a
+             continuación para actualizar la información de su tarjeta de crédito y evitar la interrupción de la cobertura "
+      contact_us: "No dude en contactarnos en %{contact_email} si tiene alguna pregunta."
+      thank_you: "Gracias nuevamente por usar GCpay."
