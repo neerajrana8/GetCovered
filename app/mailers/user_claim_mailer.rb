@@ -17,17 +17,11 @@ class UserClaimMailer < ApplicationMailer
 
   def claim_creation_email
     @claim = @user.claims.find(@claim.id)
-    if Rails.env.include?('awsdev')
-      mail(
-        to: ['andreyden@nitka.com', 'roman.filimonchik@nitka.com', 'protchenkopa@gmail.com'],
-        subject: "Claim was created policy number: #{@claim&.policy&.number}"
-      )
-    else
-      mail(
-        to: ['claims@getcoveredllc.com', 'protchenkopa@gmail.com'],
-        subject: "Claim was created policy number: #{@claim&.policy&.number}"
-      )
-    end
+
+    mail(
+      to: ['claims@getcoveredllc.com'],
+      subject: "Claim was created policy number: #{@claim&.policy&.number}"
+    )
   end
 
   private
