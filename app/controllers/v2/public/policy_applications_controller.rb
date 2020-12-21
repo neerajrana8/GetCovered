@@ -221,9 +221,9 @@ module V2
 
         if @application.save
           # get token
-          token = @application.create_access_token
+          new_access_token = @application.create_access_token
           # get redirect and update users
-          @redirect_url = "#{site}/#{program}/#{@token.to_urlparam}"
+          @redirect_url = "#{site}/#{program}/#{new_access_token.to_urlparam}"
           update_users_result =
             PolicyApplications::UpdateUsers.run!(
               policy_application: @application,
