@@ -291,7 +291,7 @@ module V2
                     id: @policy_application.primary_user.id,
                     stripe_id: @policy_application.primary_user.stripe_id
                   }
-                }.merge(@application.carrier_id != 5 ? {} : {
+                }.merge(@policy_application.carrier_id != 5 ? {} : {
                   'policy_fee' => @quote.carrier_payment_data['policy_fee'],
                   'installment_fee' => @quote.carrier_payment_data['installment_fee'],
                   'installment_total' => @quote.carrier_payment_data['installment_total']

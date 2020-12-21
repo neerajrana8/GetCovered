@@ -1,6 +1,6 @@
 class LeadEvent < ApplicationRecord
 
-  include ElasticsearchSearchable
+  #include ElasticsearchSearchable
 
   belongs_to :lead
   belongs_to :policy_type, optional: true
