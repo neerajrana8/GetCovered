@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_12_14_221818) do
+ActiveRecord::Schema.define(version: 2020_12_18_220825) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
@@ -30,6 +30,8 @@ ActiveRecord::Schema.define(version: 2020_12_14_221818) do
     t.jsonb "access_data"
     t.datetime "expires_at"
     t.index ["bearer_type", "bearer_id"], name: "index_access_tokens_on_bearer_type_and_bearer_id"
+    t.index ["expires_at"], name: "access_tokens_expires_at_index"
+    t.index ["key"], name: "access_tokens_key_index"
   end
 
   create_table "account_users", force: :cascade do |t|
