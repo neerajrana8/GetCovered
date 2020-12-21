@@ -684,7 +684,7 @@ class InsurableRateConfiguration < ApplicationRecord
                                             .map do |plan|
                                               [
                                                 plan["PaymentPlanCd"],
-                                                plan["MSI_TotalPremiumAmt"]["Amt"]
+                                                plan["MSI_DownPaymentAmount"]["Amt"]
                                               ]
                                             end.to_h
             estimated_first_payment = estimated_first_payment[billing_strategy_carrier_code].to_d || estimated_first_payment.values.send(estimate_default_on_billing_strategy_code_failure).to_d
