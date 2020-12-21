@@ -674,7 +674,7 @@ class InsurableRateConfiguration < ApplicationRecord
                                             .map do |plan|
                                               [
                                                 plan["PaymentPlanCd"],
-                                                plan["MSI_InstallmentPaymentAmount"]["Amt"]
+                                                plan["MSI_InstallmentAmount"]["Amt"]
                                               ]
                                             end.to_h
             estimated_installment = estimated_installment[billing_strategy_carrier_code].to_d || estimated_installment.values.send(estimate_default_on_billing_strategy_code_failure).to_d
