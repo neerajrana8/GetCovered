@@ -192,15 +192,17 @@ module V2
                                                               carrier: @application.carrier).take
 
         address_string = params["policy_application"]["fields"]["address"]
+        unit_string = params["policy_application"]["fields"]["unit"]
         @application.resolver_info = {
           "address_string" => address_string,
+          "unit_string" => unit_string,
           "insurable_id" => nil,
           "parent_insurable_id" => nil
         }
 
         case policy_type
           when 1 # residential
-            unit = ::Insurable.get_or_create(address: address_string, unit: true)
+            unit = ::Insurable.get_or_create(address: address_string, unit: unit_string.blank? ? true : unit_string)
             if unit.class == ::Insurable
               @application.insurables << unit
               @application.policy_insurables.first.primary = true
