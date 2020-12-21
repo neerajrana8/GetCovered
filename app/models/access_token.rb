@@ -20,8 +20,13 @@ class AccessToken < ApplicationRecord
     generic: 0,
     agency_integration: 1,
     carrier_integration: 2,
-    document_signature: 3
+    document_signature: 3,
+    application_access: 4
   }
+  
+  def expired?
+    return(self.expires_at && Time.current > self.expires_at)
+  end
   
   def self.from_urlparam(par)
     AccessToken.where(key: par.gsub('_s','/').gsub('_e','=')).take #CGI.unescape(par.gsub('_','%'))

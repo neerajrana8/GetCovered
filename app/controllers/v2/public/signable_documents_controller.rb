@@ -12,7 +12,7 @@ module V2
       def get_unsigned_document
         # get the document
         token = ::AccessToken.from_urlparam(params[:token])
-        doc = token.nil? || token.access_type != 'document_signature' ? nil : ::SignableDocument.where(id: token.access_data&.[]('signable_document_id')).take
+        doc = token.nil? || token.access_type != 'document_signature' || token.expired? ? nil : ::SignableDocument.where(id: token.access_data&.[]('signable_document_id')).take
         if doc.nil? || !doc.signable?
           render json: standard_error(:document_not_found, I18n.t('signable_documents_controller.document_not_found')),
             status: 401
@@ -28,7 +28,7 @@ module V2
       def sign_document
         # get the document
         token = ::AccessToken.from_urlparam(params[:token])
-        doc = token.nil? || token.access_type != 'document_signature' ? nil : ::SignableDocument.where(id: token.access_data&.[]('signable_document_id')).take
+        doc = token.nil? || token.access_type != 'document_signature' || token.expired? ? nil : ::SignableDocument.where(id: token.access_data&.[]('signable_document_id')).take
         if doc.nil? || !doc.signable?
           render json: standard_error(:document_not_found, I18n.t('signable_documents_controller.document_not_found')),
             status: 401

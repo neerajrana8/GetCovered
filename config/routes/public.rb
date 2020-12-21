@@ -53,11 +53,14 @@ scope module: :public do
   
   resources :policy_applications,
     path: "policy-applications",
-    only: [ :create, :update, :show ] do
+    only: [ :create, :update ] do
       member do
         post :rent_guarantee_complete
       end
       collection do
+        get '/:token', # define manually on collection to get :token instead of :id
+          to: 'policy_applications#show',
+          as: :show
         post '/new',
           to: 'policy_applications#new',
           as: :new

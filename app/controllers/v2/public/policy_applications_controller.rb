@@ -7,7 +7,8 @@ module V2
   module Public
     class PolicyApplicationsController < PublicController
 
-      before_action :set_policy_application, only: %i[update show rent_guarantee_complete]
+      before_action :set_policy_application, only: %i[update rent_guarantee_complete]
+      before_action :set_policy_application_from_token, only: %i[show]
       before_action :validate_policy_users_params, only: %i[create update]
 
       def show
@@ -219,7 +220,10 @@ module V2
         end
 
         if @application.save
-          @redirect_url = "#{ site }/#{program}/#{ @application.id }"
+          # get token
+          token = @application.create_access_token
+          # get redirect and update users
+          @redirect_url = "#{site}/#{program}/#{@token.to_urlparam}"
           update_users_result =
             PolicyApplications::UpdateUsers.run!(
               policy_application: @application,
@@ -855,8 +859,13 @@ module V2
       end
 
       def set_policy_application
-        #puts "SET POLICY APPLICATION RUNNING ID: #{params[:id]}"
         @application = @policy_application = access_model(::PolicyApplication, params[:id])
+      end
+      
+      def set_policy_application_from_token
+        token = ::AccessTokenparams.from_urlparam(params[:token])
+        pa_id = token.nil? || token.access_type != 'application_access' || token.expired? ? nil : token.access_data&[]('policy_application_id')
+        @application = @policy_application = access_model(::PolicyApplication, pa_id)
       end
 
       def new_residential_params
