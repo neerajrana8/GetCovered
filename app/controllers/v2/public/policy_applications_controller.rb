@@ -220,10 +220,7 @@ module V2
         end
 
         if @application.save
-          # get token
-          new_access_token = @application.create_access_token
-          # get redirect and update users
-          @redirect_url = "#{site}/#{program}/#{new_access_token.to_urlparam}"
+          # update users
           update_users_result =
             PolicyApplications::UpdateUsers.run!(
               policy_application: @application,
@@ -231,6 +228,10 @@ module V2
             )
           if update_users_result.success?
             if @application.update(status: 'in_progress')
+              # get token and redirect url
+              new_access_token = @application.create_access_token
+              @redirect_url = "#{site}/#{program}/#{new_access_token.to_urlparam}"
+              # done
               render 'v2/public/policy_applications/show_external'
             else
               render json: standard_error(:policy_application_update_error, nil, @application.errors),
@@ -554,7 +555,7 @@ module V2
                      status: 422
             else
               if @policy_application.primary_insurable.nil?
-                  render json: standard_error(:invalid_address, 'Please enter a valid address'),
+                  render json: standard_error(:invalid_address, I18n.t('policy_application_contr.update_residential.invalid_address')),
                          status: 400
               elsif @policy_application.update(status: 'complete')
 

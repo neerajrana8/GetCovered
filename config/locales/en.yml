@@ -48,6 +48,8 @@ en:
       invalid_policy_type: "Invalid policy type"
     create:
       invalid_auth_key: "Invalid Auth Key"
+    update_residential:
+      invalid_address: "Please enter a valid address"
     rentguarantee_complete:
       inistructions_were_sent: "Instructions were sent"
     validate_policy_users_params:
@@ -249,6 +251,9 @@ en:
   signable_documents_controller:
     signing_failed: 'An error occurred while trying to apply your signature; please try again later'
     document_not_found: 'Document not found'
+  msi_service:
+    invalid_address: "Please enter a valid address"
+    invalid_effective_date: "The effective date is invalid"
   coverage_options:
     1003_title: 'Coverage C   Contents'
     1003_desc: 'Personal property coverage protects your personal belongings and property.'
