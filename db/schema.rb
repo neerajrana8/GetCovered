@@ -818,7 +818,7 @@ ActiveRecord::Schema.define(version: 2020_12_21_054522) do
 
   create_table "notification_settings", force: :cascade do |t|
     t.string "action"
-    t.boolean "enabled", default: true, null: false
+    t.boolean "enabled", default: false, null: false
     t.string "notifyable_type"
     t.bigint "notifyable_id"
     t.datetime "created_at", null: false
