@@ -103,6 +103,7 @@ es:
   agency_model:
     parent_id_incorrect: "Identificación de padre incorrecta"
     agency_cannot_be_updated: "La agencia no se puede actualizar a sub-agencia"
+    no_branding: "Sin marca para agencia"
   policy_model:
     cannot_update: "No se puede actualizar en la política del sistema"
     account_must_be_specified: "Se debe especificar la cuenta"
