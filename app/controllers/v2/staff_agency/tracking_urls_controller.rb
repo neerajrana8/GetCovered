@@ -1,7 +1,7 @@
 module V2
   module StaffAgency
     class TrackingUrlsController < StaffAgencyController
-      #before_action :is_owner?, only: :create
+  
       before_action :set_tracking_url, only: [:show, :destroy]
       before_action :set_substrate, only: :index
 
