@@ -194,6 +194,11 @@ class Agency < ApplicationRecord
     @ids ||= Agency.main_agencies.pluck(:id)
   end
 
+  def branding_url
+    branding_url = self.branding_profiles&.last&.url
+    branding_url.present? ?  "https://#{branding_url}" : I18n.t('agency_model.no_branding')
+  end
+
   private
 
   def initialize_agency

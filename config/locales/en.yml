@@ -102,6 +102,7 @@ en:
   agency_model:
     parent_id_incorrect: "Parent id incorrect"
     agency_cannot_be_updated: "Agency can't be updated to sub-agency"
+    no_branding: "No branding for agency"
   policy_model:
      cannot_update: "Cannot update in system policy"
      account_must_be_specified: "Account must be specified"
@@ -286,5 +287,5 @@ en:
     renewed: 'RENEWED'
     reinstated: 'REINSTATED'
 
-# I18n.t('user_users_controler.unauthorized_access')
+# I18n.t('agency_model.no_branding')
 # I18n.t('policy_application_contr.new.unit_not_found')
