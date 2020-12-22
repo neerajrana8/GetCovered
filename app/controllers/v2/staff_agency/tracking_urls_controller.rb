@@ -19,11 +19,10 @@ module V2
         result          = []
         required_fields = %i[id title agency_id]
 
-        @agencies = current_staff.organizable #paginator(Agency.main_agencies)
+        agency = Agency.select(required_fields).find(current_staff.organizable.id) #paginator(Agency.main_agencies)
+        sub_agencies = agency.agencies.select(required_fields)
 
-        @agencies.select(required_fields).each do |agency|
-          sub_agencies = agency.agencies.select(required_fields)
-          result << if sub_agencies.any?
+        result << if sub_agencies.any?
                       sub_agencies_attr = sub_agencies.map{|el| el.attributes.merge("branding_url"=> el.branding_url)}
                       agency_attr = agency.attributes.reverse_merge("agencies"=> sub_agencies_attr)
                       agency_attr.merge("branding_url"=> agency.branding_url)
@@ -31,8 +30,7 @@ module V2
                       agency_attr = agency.attributes
                       agency_attr.merge("branding_url"=> agency.branding_url)
                     end
-        end
-
+        
         render json: result.to_json
       end
 
