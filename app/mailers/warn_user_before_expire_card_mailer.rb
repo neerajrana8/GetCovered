@@ -4,6 +4,7 @@ class WarnUserBeforeExpireCardMailer < ApplicationMailer
   def send_warn_expire_card(payment_profile)
     @user = payment_profile.payer
     return unless @user.is_a? User
+    return unless permitted?(@user, 'update_credit_card')
 
     set_locale(@user.profile&.language)
     @agency = Agency.first

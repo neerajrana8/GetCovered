@@ -4,6 +4,7 @@ class WarnUpcomingChargeMailer < ApplicationMailer
   def send_warn_upcoming_invoice(invoice)
     @user = invoice.payer
     return unless @user.is_a? User
+    return unless permitted?(@user, 'upcoming_invoice')
 
     set_locale(@user.profile&.language)
     @branding_profile = invoice.invoiceable.agency.branding_profiles.first
