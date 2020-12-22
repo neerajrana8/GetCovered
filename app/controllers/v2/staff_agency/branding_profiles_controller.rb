@@ -109,7 +109,7 @@ module V2
       def attach_images
         if update_allowed?
           logo_status = get_image_url(:logo_url) if attach_images_params[:logo_url].present?
-          logo_jpeg_status = get_image_url(:logo_jpeg_url) if attach_images_params[:logo_jpeg_url].presen
+          logo_jpeg_status = get_image_url(:logo_jpeg_url) if attach_images_params[:logo_jpeg_url].present?
           footer_status = get_image_url(:footer_logo_url) if attach_images_params[:footer_logo_url].present?
           if logo_status == "error" || logo_jpeg_status == "error" || footer_status == "error"
             render json: { success: false }, status: :unprocessable_entity
