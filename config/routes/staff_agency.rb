@@ -300,6 +300,7 @@
         end
     end
 
+    get :agency_filters, controller: 'tracking_urls', path: 'tracking_urls/agency_filters', to: "tracking_urls#agency_filters"
     resources :tracking_urls,
       only: [ :create, :index, :show, :destroy]
 
