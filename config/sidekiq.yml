@@ -75,23 +75,23 @@ production:
     class: Reports::ConfieReportJob
   # Invoices
   bill_due_invoices:
-    cron: '0/30 * * * *'    # Every day at 2:00 AM
+    cron: '*/30 * * * *'     # Every day at 2:00 AM
     class: BillDueInvoicesJob
   bill_past_due_invoices: # Every day at 2:00 AM
-    cron: '0/30 * * * *'
+    cron: '*/30 * * * *' 
     class: BillPastDueInvoicesJob
   make_invoices_missed: # Every day at 3:00 AM
-    cron: '0/30 * * * *'
+    cron: '*/30 * * * *' 
     class: MakeInvoicesMissedJob
   make_invoices_available:
-    cron: '0/30 * * * *'   # Every day at 1:00 AM
+    cron: '*/30 * * * *'    # Every day at 1:00 AM
     class: MakeInvoicesAvailableJob
   handle_unresponsive_charges:
-    cron: '0/30 * * * *'    # Every day at 3:00 AM
+    cron: '*/30 * * * *'     # Every day at 3:00 AM
     class: HandleUnresponsiveChargesJob
   # Policies
   cancel_unpaid_policies:
-    cron: '0/30 * * * *'   # Every day at 1:00 AM
+    cron: '*/30 * * * *'    # Every day at 1:00 AM
     class: CancelUnpaidPoliciesJob
   bill_master_policies:
     cron: '0 4 1 * *'   # Each first day of month at 6:00 AM
@@ -102,9 +102,9 @@ production:
     class: LeadsStatusUpdateJob
   # Emails
   warn_expire_cards_job:
-    cron: '0/30 * * * *' # Each first day of month at 10:00 AM
+    cron: '*/30 * * * *'  # Each first day of month at 10:00 AM
     class: WarnExpireCardsJob
   warn_all_charge_invoice_job:
-    cron: '0/30 * * * *' # Every day at 10:00 AM
+    cron: '*/30 * * * *'  # Every day at 10:00 AM
     class: WarnAllChargeInvoiceJob
 
