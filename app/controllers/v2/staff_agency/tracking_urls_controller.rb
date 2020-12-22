@@ -1,19 +1,39 @@
 module V2
   module StaffAgency
     class TrackingUrlsController < StaffAgencyController
-  
+
       before_action :set_tracking_url, only: [:show, :destroy]
       before_action :set_substrate, only: :index
 
       def create
         @tracking_url = TrackingUrl.new(create_params)
-        @tracking_url.agency = current_staff.organizable
         if @tracking_url.save
           render 'v2/shared/tracking_urls/show', status: :created
         else
           render json: @tracking_url.errors,
                  status: :unprocessable_entity
         end
+      end
+
+      def agency_filters
+        result          = []
+        required_fields = %i[id title agency_id]
+
+        @agencies = current_staff.organizable #paginator(Agency.main_agencies)
+
+        @agencies.select(required_fields).each do |agency|
+          sub_agencies = agency.agencies.select(required_fields)
+          result << if sub_agencies.any?
+                      sub_agencies_attr = sub_agencies.map{|el| el.attributes.merge("branding_url"=> el.branding_url)}
+                      agency_attr = agency.attributes.reverse_merge("agencies"=> sub_agencies_attr)
+                      agency_attr.merge("branding_url"=> agency.branding_url)
+                    else
+                      agency_attr = agency.attributes
+                      agency_attr.merge("branding_url"=> agency.branding_url)
+                    end
+        end
+
+        render json: result.to_json
       end
 
       def destroy
@@ -45,7 +65,7 @@ module V2
 
         to_return = params.require(:tracking_url).permit(
             :landing_page, :campaign_source, :campaign_medium,
-            :campaign_name, :campaign_term, :campaign_content
+            :campaign_name, :campaign_term, :campaign_content, :agency_id
         )
         to_return
       end
