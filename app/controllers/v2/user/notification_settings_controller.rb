@@ -7,7 +7,8 @@ module V2
         result_json =
           NotificationSetting::USERS_NOTIFICATIONS.map do |action|
             {
-              title: I18n.t("notification_settings.action.#{action}"),
+              title: I18n.t("notification_settings.title.#{action}"),
+              description: I18n.t("notification_settings.description.#{action}"),
               action: action,
               enabled: notification_settings[action].nil? ? true : notification_settings[action]
             }
@@ -16,18 +17,18 @@ module V2
       end
 
       def switch
-        notification_setting = current_user.notification_settings.find_by_action(params[:action])
+        notification_setting = current_user.notification_settings.find_by_action(params[:notification_action])
 
         if notification_setting.present? && !notification_setting.enabled?
           notification_setting.destroy!
         elsif notification_setting.present? && notification_setting.enabled?
           notification_setting.update(enabled: false)
         else # if notification_setting doesnt exist, it's mean that is action is enabled, so create a setting with default enabled false
-          notification_setting = current_user.notification_settings.create(action: params[:action])
+          notification_setting = current_user.notification_settings.create(action: params[:notification_action])
         end
 
         if notification_setting.errors.any?
-          render json: standard_error(:fee_cant_be_destroyed, nil, notification_setting.errors.full_messages),
+          render json: standard_error(:cant_change_setting, nil, notification_setting.errors.full_messages),
                  status: :unprocessable_entity
         else
           render json: { success: true, message: 'Setting was switched' }
