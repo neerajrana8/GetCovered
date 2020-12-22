@@ -581,6 +581,8 @@ class InsurableRateConfiguration < ApplicationRecord
     installment_fee = irc_hierarchy.map{|irc| (irc.carrier_info || {}).dig('payment_plans', billing_strategy_carrier_code, 'new_business', 'installment_fee') }.compact.map{|fee| (fee.to_d * 100).to_i }.max || 200
     # validate selections
     estimated_premium = nil
+    estimated_installment = nil
+    estimated_first_payment = nil
     estimated_premium_error = get_selection_errors(selections, coverage_options)
     valid = estimated_premium_error.nil?
     estimated_premium_error = { internal: estimated_premium_error, external: estimated_premium_error } unless estimated_premium_error.nil?
@@ -653,6 +655,7 @@ class InsurableRateConfiguration < ApplicationRecord
             }
           end
         else
+          # total premium
           estimated_premium = [result[:data].dig("MSIACORD", "InsuranceSvcRs", "RenterPolicyQuoteInqRs", "PersPolicy", "PaymentPlan")].flatten
                                           .map do |plan|
                                             [
@@ -662,6 +665,31 @@ class InsurableRateConfiguration < ApplicationRecord
                                           end.to_h
           estimated_premium = estimated_premium[billing_strategy_carrier_code].to_d || estimated_premium.values.send(estimate_default_on_billing_strategy_code_failure).to_d
           estimated_premium = (estimated_premium * 100).ceil # put it in cents
+          if(billing_strategy_carrier_code == 'Annual')
+            estimated_installment = estimated_premium
+            estimated_first_payment = 0
+          else
+            # installment
+            estimated_installment = [result[:data].dig("MSIACORD", "InsuranceSvcRs", "RenterPolicyQuoteInqRs", "PersPolicy", "PaymentPlan")].flatten
+                                            .map do |plan|
+                                              [
+                                                plan["PaymentPlanCd"],
+                                                plan["MSI_InstallmentAmount"]["Amt"]
+                                              ]
+                                            end.to_h
+            estimated_installment = estimated_installment[billing_strategy_carrier_code].to_d || estimated_installment.values.send(estimate_default_on_billing_strategy_code_failure).to_d
+            estimated_installment = (estimated_installment * 100).ceil # put it in cents
+            # first payment
+            estimated_first_payment = [result[:data].dig("MSIACORD", "InsuranceSvcRs", "RenterPolicyQuoteInqRs", "PersPolicy", "PaymentPlan")].flatten
+                                            .map do |plan|
+                                              [
+                                                plan["PaymentPlanCd"],
+                                                plan["MSI_DownPaymentAmount"]["Amt"]
+                                              ]
+                                            end.to_h
+            estimated_first_payment = estimated_first_payment[billing_strategy_carrier_code].to_d || estimated_first_payment.values.send(estimate_default_on_billing_strategy_code_failure).to_d
+            estimated_first_payment = (estimated_first_payment * 100).ceil # put it in cents
+          end
         end
       end
     end
@@ -670,6 +698,8 @@ class InsurableRateConfiguration < ApplicationRecord
       valid: valid,
       coverage_options: coverage_options,
       estimated_premium: estimated_premium,
+      estimated_installment: estimated_installment,
+      estimated_first_payment: estimated_first_payment,
       errors: estimated_premium_error,
       installment_fee: installment_fee,
     }.merge(eventable.class != ::PolicyQuote ? {} : {

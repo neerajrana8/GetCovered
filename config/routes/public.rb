@@ -53,11 +53,14 @@ scope module: :public do
   
   resources :policy_applications,
     path: "policy-applications",
-    only: [ :create, :update, :show ] do
+    only: [ :create, :update ] do
       member do
         post :rent_guarantee_complete
       end
       collection do
+        get '/:token', # define manually on collection to get :token instead of :id
+          to: 'policy_applications#show',
+          as: :show
         post '/new',
           to: 'policy_applications#new',
           as: :new
@@ -81,6 +84,19 @@ scope module: :public do
         as: :external_payment_auth
 		end
 	end
+  
+  resources :signable_documents,
+    path: "signable-documents",
+    only: [] do
+    collection do
+      get '/get-unsigned-document/:token',
+        to: 'signable_documents#get_unsigned_document',
+        as: :get_unsigned_document
+      post '/sign-document/:token',
+        to: 'signable_documents#sign_document',
+        as: :sign_document
+    end
+  end
 
   post 'users/check_email', to: '/v2/check_email#user'
   post 'staffs/check_email', to: '/v2/check_email#staff'

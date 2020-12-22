@@ -100,5 +100,9 @@ production:
   leads_status_update_job:
     cron: '0 6 * * *' # Every day at 6:00 AM
     class: LeadsStatusUpdateJob
+  # Access Tokens
+  remove_expired_access_tokens_job:
+    cron: '0 0 * * *' # Every day at midnight
+    class: RemoveExpiredAccessTokensJob
 
 

@@ -248,14 +248,18 @@ class Insurable < ApplicationRecord
   end
 
   def refresh_policy_type_ids(and_save: false)
-    my_own_little_agency = (self.agency_id ? ::Agency.where(id: self.agency_id).take : nil) || self.account&.agency || nil
-    if my_own_little_agency.nil? || self.primary_address.nil?
-      self.policy_type_ids = []
-    else
-      self.policy_type_ids = CarrierAgencyAuthorization.where(carrier_agency: my_own_little_agency.carrier_agencies, state: self.primary_address&.state, available: true)
-                                                       .order("policy_type_id").group("policy_type_id").pluck("policy_type_id")
-      self.policy_type_ids &= self.insurable_type.policy_type_ids
-    end
+    self.policy_type_ids = self.carrier_insurable_profiles.any?{|cip| cip.carrier_id == DepositChoiceService.carrier_id } ? [DepositChoiceService.policy_type_id] : []
+    
+    
+    # THIS IS TURNED OFF FOR NOW, IT'S GOTTEN INSANELY MORE COMPLICATED SO WE'RE RESTRICTING TO DEPOSIT CHOICE:
+    #my_own_little_agency = (self.agency_id ? ::Agency.where(id: self.agency_id).take : nil) || self.account&.agency || nil
+    #if my_own_little_agency.nil? || self.primary_address.nil?
+    #  self.policy_type_ids = []
+    #else
+    #  self.policy_type_ids = CarrierAgencyAuthorization.where(carrier_agency: my_own_little_agency.carrier_agencies, state: self.primary_address&.state, available: true)
+    #                                                   .order("policy_type_id").group("policy_type_id").pluck("policy_type_id")
+    #  self.policy_type_ids &= self.insurable_type.policy_type_ids
+    #end
     if and_save
       self.save
     end

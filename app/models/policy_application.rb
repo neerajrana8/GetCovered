@@ -206,6 +206,19 @@ class PolicyApplication < ApplicationRecord
       end
     end
   end
+  
+
+  # call this to get an access token to allow accessing an existing application
+  def create_access_token
+    return AccessToken.create({
+      expires_at: Time.current + 2.weeks,
+      bearer: self.primary_user,
+      access_type: 'application_access',
+      access_data: {
+        'policy_application_id' => self.id
+      }
+    })
+  end
 
   private
 

@@ -48,6 +48,8 @@ en:
       invalid_policy_type: "Invalid policy type"
     create:
       invalid_auth_key: "Invalid Auth Key"
+    update_residential:
+      invalid_address: "Please enter a valid address"
     rentguarantee_complete:
       inistructions_were_sent: "Instructions were sent"
     validate_policy_users_params:
@@ -102,6 +104,7 @@ en:
   agency_model:
     parent_id_incorrect: "Parent id incorrect"
     agency_cannot_be_updated: "Agency can't be updated to sub-agency"
+    no_branding: "No branding for agency"
   policy_model:
      cannot_update: "Cannot update in system policy"
      account_must_be_specified: "Account must be specified"
@@ -245,6 +248,12 @@ en:
     refund_was_not_successfully_sent: 'Refund was not successfully sent'
     you_cannot_add_coverage_with_master: 'You cannot add coverage with master policy type'
     unable_to_attach_payment: "Unable to attach payment source to user"
+  signable_documents_controller:
+    signing_failed: 'An error occurred while trying to apply your signature; please try again later'
+    document_not_found: 'Document not found'
+  msi_service:
+    invalid_address: "Please enter a valid address"
+    invalid_effective_date: "The effective date is invalid"
   coverage_options:
     1003_title: 'Coverage C   Contents'
     1003_desc: 'Personal property coverage protects your personal belongings and property.'
@@ -286,5 +295,5 @@ en:
     renewed: 'RENEWED'
     reinstated: 'REINSTATED'
 
-# I18n.t('coverage_options.1003_title')
+# I18n.t('agency_model.no_branding')
 # I18n.t('policy_application_contr.new.unit_not_found')
