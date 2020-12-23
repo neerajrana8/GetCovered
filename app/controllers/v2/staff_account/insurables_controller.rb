@@ -21,6 +21,7 @@ module V2
       def create
         if create_allowed?
           @insurable = current_staff.organizable.insurables.new(insurable_params)
+          @insurable.confirmed = true
           if @insurable.errors.none? && @insurable.save_as(current_staff)
             render :show,
                    status: :created
