@@ -30,6 +30,10 @@ class BrandingProfile < ApplicationRecord
     BrandingProfile.find_by(global_default: true)
   end
 
+  def contact_email
+    branding_profile_attributes.find_by_name('contact_email')&.value
+  end
+
   private
 
   def initialize_branding_profile

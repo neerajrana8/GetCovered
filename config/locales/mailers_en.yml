@@ -51,11 +51,53 @@ en:
         please_log_in: 'Please log in to our site <a class="o_text-light o_underline" href="%{login_url}" style="text-decoration: underline;outline: none;color: #126de5;">this page</a> for more information.'
         contact_us: 'Please contact us at %{contact_email} if you have any questions'
 
+  payment_made_mailer:
+    send_successful_payment_notification:
+      subject: "%{agency_title} - %{policy_type} Premium Payment Made"
+      thank_you: "Thank you for selecting a %{policy_number} policy from %{agency_title}."
+      account_was_charged: "Your account was successfully charged $%{total} on %{charge_date}."
+      click_link_html: "Click on the following link <a href=\"https://%{link}\">%{link}</a> to review all of your invoices.
+                        If you have any questions, please contact %{from}."
 
+  rent_guarantee_cancellation_mailer:
+    send_cancellation_email:
+      subject: "%{agency_title} - %{policy_number} Policy Cancellation"
+      sorry: "We are sorry to see you go! We appreciate and value any feedback you may
+              have on our %{policy_type} product and service. If there’s something that we could
+              have done to make your experience with %{agency_title} better,
+              please reach out to us at %{agency_email}. It has been a pleasure to do business with you."
+      title: "Cancellation Confirmation"
+      date_of_notice: "Date of Notice"
+      policyholder: "Policyholder"
+      product: "Product"
+      company: "Company"
+      policy_was_cancelled: "This policy has been canceled as requested by the policyholder."
+      cancellation_is_effective: "This cancellation is effective: %{cancellation_date}"
+      contact_us: "Please contact us at %{agency_email} if you have any questions."
 
+  card_info_update_mailer:
+    please_update_card_info:
+      subject: "%{agency_title} - %{policy_number} Update Payment Information"
+      text: "Thank you for using %{agency_title} for your %{policy_type} Policy.
+             The credit card listed in your account is soon to expire.
+             Please login to %{agency_title} at the link below to update your credit
+             card information to avoid interruption of coverage."
+      contact_us: "Feel free to contact us at %{contact_email} If you have any questions."
 
+  warn_upcoming_charge_mailer:
+    send_warn_upcoming_invoice:
+      subject: "%{agency_title} - %{policy_number} Upcoming Premium Payment"
+      text_html: "Thank you for selecting a %{policy_type} policy from %{agency_title}.
+                 For your upcoming premium payment, your account will be charged $%{charged} on %{due_date}.
+                 Click on the following  <a href=\"%{link}\">link</a> to review all of your invoices."
+      contact_us: "Feel free to contact us at %{contact_email} if you have any questions."
 
-
-
-
-
+  warn_user_before_expire_card_mailer:
+    send_warn_expire_card:
+      subject: "%{agency_title} - Credit Card Expiring"
+      text: "Thank you for using the Get Covered Pay. According to our records,
+                 a credit card that you have listed with the GCpay service will soon expire.
+                 Please login to GCpay  at the link below to update your credit card information
+                 to avoid interruption of coverage "
+      contact_us: "Feel free to contact us at %{contact_email} if you have any questions."
+      thank_you: "Thank you again for using GCpay."

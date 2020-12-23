@@ -100,6 +100,13 @@ production:
   leads_status_update_job:
     cron: '0 6 * * *' # Every day at 6:00 AM
     class: LeadsStatusUpdateJob
+  # Emails
+  warn_expire_cards_job:
+    cron: '0 10 1 * *'  # Each first day of month at 10:00 AM
+    class: WarnExpireCardsJob
+  warn_all_charge_invoice_job:
+    cron: '0 10 * * *'  # Every day at 10:00 AM
+    class: WarnAllChargeInvoiceJob
   # Access Tokens
   remove_expired_access_tokens_job:
     cron: '0 0 * * *' # Every day at midnight
