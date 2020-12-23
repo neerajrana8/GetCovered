@@ -83,10 +83,14 @@ module V2
 
       def lead_profile_attributes
         if params[:profile_attributes].present?
-          params.
+          permitted_params = params.
               require(:profile_attributes).
               permit(%i[birth_date contact_phone first_name gender job_title middle_name last_name salutation])
+          if params[:lead_event_attributes].present? && params[:lead_event_attributes][:data].present?
+            permitted_params[:contact_phone] = params[:lead_event_attributes][:data][:contact_phone] if params[:lead_event_attributes][:data][:contact_phone].present?
+          end
         end
+        permitted_params
       end
 
       def lead_address_attributes

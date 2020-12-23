@@ -107,4 +107,9 @@ production:
   warn_all_charge_invoice_job:
     cron: '0 10 * * *'  # Every day at 10:00 AM
     class: WarnAllChargeInvoiceJob
+  # Access Tokens
+  remove_expired_access_tokens_job:
+    cron: '0 0 * * *' # Every day at midnight
+    class: RemoveExpiredAccessTokensJob
+
 

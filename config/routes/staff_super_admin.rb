@@ -171,8 +171,9 @@
       end
     end
 
-    resources :leads, only: [:index, :show]
+    resources :leads, only: [:index, :show, :update]
     resources :leads_dashboard, only: [:index]
+    resources :leads_dashboard_tracking_url, only: [:index]
 
     get :get_filters, controller: 'leads_dashboard', path: 'leads_dashboard/get_filters'
 
@@ -267,7 +268,9 @@
         end
       end
 
-    resources :tracking_urls, only: [:index, :show]
+    get :agency_filters, controller: 'tracking_urls', path: 'tracking_urls/agency_filters', to: "tracking_urls#agency_filters"
+    resources :tracking_urls,
+              only: [ :create, :index, :show, :destroy ]
 
     resources :users,
       only: [ :index, :show ] do

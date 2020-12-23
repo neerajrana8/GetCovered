@@ -99,6 +99,10 @@ class PolicyQuote < ApplicationRecord
       else
         bind_request = self.send(*([quote_attempt[:bind_method]] + (bind_params.class == ::Array ? bind_params : [bind_params])))
 
+        policy_number = nil
+        policy_status = nil
+        policy_signable_documents = nil
+        
         if bind_request[:error]
           logger.error "Bind Failure; Message: #{bind_request[:message]}"
           quote_attempt[:message] = I18n.t('policy_quote_model.unable_to_bind_policy')
@@ -114,8 +118,8 @@ class PolicyQuote < ApplicationRecord
             policy_status = "BOUND"
           elsif policy_application.policy_type.title == "Security Deposit Replacement"
             policy_number = bind_request[:data][:policy_number]
-            # MOOSE WARNING certificate stuff
             policy_status = "BOUND"
+            policy_signable_documents = bind_request[:data][:signable_documents] || nil
           end
 
 
@@ -138,7 +142,14 @@ class PolicyQuote < ApplicationRecord
           )
 
           if policy.save
+            # Add documents to policy, if applicable
+            (policy_signable_documents || []).each do |doc|
+              doc.update(referent: policy)
+            end
+            
+            # reload policy
             policy.reload
+            
             # Add users to policy
             policy_application.policy_users
                               .each do |pu|

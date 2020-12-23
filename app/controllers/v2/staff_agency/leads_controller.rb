@@ -3,6 +3,7 @@ module V2
     class LeadsController < StaffAgencyController
 
       before_action :set_substrate, only: :index
+      before_action :set_lead, only: [:update, :show]
 
       def index
         super(:@leads, @substrate)
@@ -10,16 +11,38 @@ module V2
       end
 
       def show
-        @lead = access_model(::Lead, params[:id])
         render 'v2/shared/leads/show'
+      end
+
+      def update
+        if update_allowed?
+          if @lead.update_as(current_staff, update_params)
+            render 'v2/shared/leads/show', status: :ok
+          else
+            render json: @lead.errors, status: :unprocessable_entity
+          end
+        else
+          render json: { success: false, errors: [I18n.t('user_users_controler.unauthorized_access')] },
+                 status: :unauthorized
+        end
       end
 
       private
 
+      def set_lead
+        @lead = access_model(::Lead, params[:id])
+      end
+
+      def update_params
+        return({}) if params[:lead].blank?
+
+        params.require(:lead).permit( :status)
+      end
+
       def set_substrate
         super
         if @substrate.nil?
-          @substrate = access_model(::Lead).includes(:profile, :tracking_url).presented
+          @substrate = access_model(::Lead).presented.includes(:profile, :tracking_url)
         end
       end
 
@@ -28,7 +51,8 @@ module V2
         {
             created_at: [:scalar, :array, :interval],
             email: [:scalar, :like],
-            agency_id: [:scalar, :interval]
+            agency_id: [:scalar, :interval],
+            status: [:scalar]
         }
       end
 

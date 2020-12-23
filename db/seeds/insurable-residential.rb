@@ -100,7 +100,7 @@ require 'faker'
     city: "Louisville",
     county: "JEFFERSON",
     state: "KY",
-    zip_code: "40219",
+    zip_code: "40228",
     plus_four: "3078",
     primary: true
   },
