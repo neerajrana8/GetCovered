@@ -7,7 +7,7 @@ class WarnUserBeforeExpireCardMailer < ApplicationMailer
     return unless permitted?(@user, 'update_credit_card')
 
     set_locale(@user.profile&.language)
-    @agency = Agency.first
+    @agency = Agency.get_covered
     @branding_profile = @agency.branding_profiles.first
     @contact_email = @branding_profile.contact_email
     subject = t('warn_user_before_expire_card_mailer.send_warn_expire_card.subject', agency_title: @agency.title)

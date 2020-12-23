@@ -104,6 +104,14 @@ class Agency < ApplicationRecord
 
   GET_COVERED_ID = 1
 
+  def self.get_covered
+    Agency.find(GET_COVERED_ID)
+  end
+
+  def default_branding_profile
+    branding_profiles.default.take
+  end
+
   def owner
     staff.where(id: staff_id).take
   end
