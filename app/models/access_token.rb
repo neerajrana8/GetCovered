@@ -15,6 +15,26 @@ class AccessToken < ApplicationRecord
                     
   belongs_to :bearer, 
              polymorphic: true
+             
+  enum access_type: {
+    generic: 0,
+    agency_integration: 1,
+    carrier_integration: 2,
+    document_signature: 3,
+    application_access: 4
+  }
+  
+  def expired?
+    return(self.expires_at && Time.current > self.expires_at)
+  end
+  
+  def self.from_urlparam(par)
+    AccessToken.where(key: par.gsub('_s','/').gsub('_e','=')).take #CGI.unescape(par.gsub('_','%'))
+  end
+  
+  def to_urlparam
+    "#{self.key.gsub('/','_s').gsub('=','_e')}" # we just ignore the secret_salt and secret_hash in this case, for now # CGI.escape(key).gsub('%','_')
+  end
   
   def check_secret(public_secret)
     public_secret.to_s.crypt(secret_salt) == secret_hash && enabled?

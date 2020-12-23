@@ -104,6 +104,8 @@ class Policy < ApplicationRecord
 
   has_many :histories, as: :recordable
   has_many :change_requests, as: :changeable
+  
+  has_many :signable_documents, as: :referent
 
   has_many_attached :documents
 
@@ -399,27 +401,27 @@ class Policy < ApplicationRecord
 
   private
 
-  def notify_the_idiots
-    # this method is a critical joke.  touch it at your own expense - dylan.
-    the_idiots = ["brandon@getcoveredllc.com", "dylan@getcoveredllc.com", "ryan@getcoveredllc.com"]
-    their_message = "Bray out!  a policy hath been sold.  'i  this message thou shall find details that might be of interest.\n\nname: #{primary_user.profile.full_name}\nagency: #{agency.title}\npolicy type: #{policy_type.title}\npremium: $#{ sprintf "%.2f", @policy.policy_premiums.first.total.to_f / 100 }"
-    ActionMailer::Base.mail(from: 'purchase-notifier@getcoveredinsurance.com', to: the_idiots, subject: "A Policy has Sold!", body: their_message).deliver
-  end
+    def notify_the_idiots
+      # this method is a critical joke.  touch it at your own expense - dylan.
+      the_idiots = ["brandon@getcoveredllc.com", "dylan@getcoveredllc.com", "ryan@getcoveredllc.com"]
+      their_message = "Bray out!  a policy hath been sold.  'i  this message thou shall find details that might be of interest.\n\nname: #{primary_user.profile.full_name}\nagency: #{agency.title}\npolicy type: #{policy_type.title}\npremium: $#{ sprintf "%.2f", @policy.policy_premiums.first.total.to_f / 100 }"
+      ActionMailer::Base.mail(from: 'purchase-notifier@getcoveredinsurance.com', to: the_idiots, subject: "A Policy has Sold!", body: their_message).deliver
+    end
 
-  def date_order
-    errors.add(:expiration_date, I18n.t('policy_app_model.expiration_date_cannot_be_before_effective')) if expiration_date < effective_date
-  end
+    def date_order
+      errors.add(:expiration_date, I18n.t('policy_app_model.expiration_date_cannot_be_before_effective')) if expiration_date < effective_date
+    end
 
-  def correct_document_mime_type
-    documents.each do |document|
-      if !document.blob.content_type.starts_with?('image/png', 'image/jpeg', 'image/jpg', 'image/svg',
-        'image/gif', 'application/pdf', 'text/plain', 'application/msword',
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        'text/comma-separated-values', 'application/vnd.ms-excel'
-        )
-        errors.add(:documents, I18n.t('policy_model.document_wrong_format'))
+    def correct_document_mime_type
+      documents.each do |document|
+        if !document.blob.content_type.starts_with?('image/png', 'image/jpeg', 'image/jpg', 'image/svg',
+          'image/gif', 'application/pdf', 'text/plain', 'application/msword',
+          'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          'text/comma-separated-values', 'application/vnd.ms-excel'
+          )
+          errors.add(:documents, I18n.t('policy_model.document_wrong_format'))
+        end
       end
     end
-  end
 end

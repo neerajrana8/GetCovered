@@ -114,12 +114,22 @@ module CarrierDcPolicyQuote
         @bind_response[:message] = "#{I18n.t('dc_policy_quote.deposit_choise_bind_failure')} #{event.id || event.errors.to_h})\n#{I18n.t('msi_policy_quote.msi_error')} #{result[:external_message]}\n#{result[:extended_external_message]}"
         return @bind_response
       end
+      # save the bond certificate
+      sd = SignableDocument.create(
+        signer: self.policy_application.primary_user,
+        referent: self,
+        title: "Individual Resident Lease Deposit Bond",
+        document_type: 'deposit_choice_bond',
+        document_data: {}
+      )
+      io = StringIO.new(Base64.decode64(result[:data]["bondCertificate"]))
+      sd.unsigned_document.attach(io: io, filename: DepositChoiceService.unsigned_document_filename, content_type: 'application/pdf')
+      sd.process_unsigned_document
       # handle successful bind
       @bind_response[:error] = false
       @bind_response[:data][:status] = "SUCCESS"
       @bind_response[:data][:policy_number] = result[:data]["policyNumber"]
-      @bind_response[:data][:bond_certificate] = result[:data]["bondCertificate"] # but what do we do with this...?
-      return @bind_response
+      @bind_response[:data][:signable_documents] = [sd]
       return @bind_response
     end
 

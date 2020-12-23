@@ -26,7 +26,12 @@ ActiveRecord::Schema.define(version: 2020_12_21_054522) do
     t.bigint "bearer_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "access_type", default: 0, null: false
+    t.jsonb "access_data"
+    t.datetime "expires_at"
     t.index ["bearer_type", "bearer_id"], name: "index_access_tokens_on_bearer_type_and_bearer_id"
+    t.index ["expires_at"], name: "access_tokens_expires_at_index"
+    t.index ["key"], name: "access_tokens_key_index"
   end
 
   create_table "account_users", force: :cascade do |t|
@@ -140,19 +145,6 @@ ActiveRecord::Schema.define(version: 2020_12_21_054522) do
     t.string "slug"
     t.jsonb "nodes", default: {}
     t.boolean "enabled"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-  end
-
-  create_table "application_notifications", force: :cascade do |t|
-    t.string "action"
-    t.string "subject"
-    t.integer "status"
-    t.integer "code"
-    t.boolean "read", default: false
-    t.integer "notifiable_id"
-    t.string "notifiable_type"
-    t.string "message"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
   end
@@ -381,9 +373,6 @@ ActiveRecord::Schema.define(version: 2020_12_21_054522) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "type_of_loss", default: 0, null: false
-    t.string "name"
-    t.string "address"
-    t.string "nature_of_claim"
     t.text "staff_notes"
     t.index ["claimant_type", "claimant_id"], name: "index_claims_on_claimant_type_and_claimant_id"
     t.index ["insurable_id"], name: "index_claims_on_insurable_id"
@@ -605,6 +594,7 @@ ActiveRecord::Schema.define(version: 2020_12_21_054522) do
     t.bigint "agency_id"
     t.bigint "policy_type_ids", default: [], null: false, array: true
     t.boolean "preferred_ho4", default: false, null: false
+    t.boolean "confirmed", default: true, null: false
     t.index ["account_id"], name: "index_insurables_on_account_id"
     t.index ["agency_id"], name: "index_insurables_on_agency_id"
     t.index ["insurable_id"], name: "index_insurables_on_insurable_id"
@@ -1004,6 +994,7 @@ ActiveRecord::Schema.define(version: 2020_12_21_054522) do
     t.jsonb "coverage_selections", default: [], null: false
     t.jsonb "extra_settings"
     t.jsonb "resolver_info"
+    t.bigint "tag_ids", default: [], null: false, array: true
     t.jsonb "tagging_data"
     t.string "error_message"
     t.index ["account_id"], name: "index_policy_applications_on_account_id"
@@ -1013,6 +1004,7 @@ ActiveRecord::Schema.define(version: 2020_12_21_054522) do
     t.index ["policy_application_group_id"], name: "index_policy_applications_on_policy_application_group_id"
     t.index ["policy_id"], name: "index_policy_applications_on_policy_id"
     t.index ["policy_type_id"], name: "index_policy_applications_on_policy_type_id"
+    t.index ["tag_ids"], name: "policy_application_tag_ids_index", using: :gin
   end
 
   create_table "policy_coverages", force: :cascade do |t|
@@ -1288,6 +1280,25 @@ ActiveRecord::Schema.define(version: 2020_12_21_054522) do
     t.index ["reportable_type", "reportable_id"], name: "index_reports_on_reportable_type_and_reportable_id"
   end
 
+  create_table "signable_documents", force: :cascade do |t|
+    t.string "title", null: false
+    t.integer "document_type", null: false
+    t.jsonb "document_data"
+    t.integer "status", default: 0, null: false
+    t.boolean "errored", default: false, null: false
+    t.jsonb "error_data"
+    t.datetime "signed_at"
+    t.string "signer_type"
+    t.bigint "signer_id"
+    t.string "referent_type"
+    t.bigint "referent_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["referent_type", "referent_id"], name: "index_signable_documents_on_referent_type_and_referent_id"
+    t.index ["signer_type", "signer_id"], name: "index_signable_documents_on_signer_type_and_signer_id"
+    t.index ["status", "referent_type", "referent_id"], name: "signable_documents_signed_index"
+  end
+
   create_table "staffs", force: :cascade do |t|
     t.string "provider", default: "email", null: false
     t.string "uid", default: "", null: false
@@ -1334,6 +1345,14 @@ ActiveRecord::Schema.define(version: 2020_12_21_054522) do
     t.index ["reset_password_token"], name: "index_staffs_on_reset_password_token", unique: true
     t.index ["role"], name: "index_staffs_on_role"
     t.index ["uid", "provider"], name: "index_staffs_on_uid_and_provider", unique: true
+  end
+
+  create_table "tags", force: :cascade do |t|
+    t.string "title"
+    t.text "description"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["title"], name: "index_tags_on_title", unique: true
   end
 
   create_table "tracking_urls", force: :cascade do |t|

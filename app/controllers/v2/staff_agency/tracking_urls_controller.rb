@@ -1,15 +1,12 @@
 module V2
   module StaffAgency
     class TrackingUrlsController < StaffAgencyController
-      before_action :is_owner?, only: :create
 
       before_action :set_tracking_url, only: [:show, :destroy]
-
       before_action :set_substrate, only: :index
 
       def create
         @tracking_url = TrackingUrl.new(create_params)
-        @tracking_url.agency = current_staff.organizable
         if @tracking_url.save
           render 'v2/shared/tracking_urls/show', status: :created
         else
@@ -18,10 +15,29 @@ module V2
         end
       end
 
+      def agency_filters
+        result          = []
+        required_fields = %i[id title agency_id]
+
+        agency = Agency.select(required_fields).find(current_staff.organizable.id) #paginator(Agency.main_agencies)
+        sub_agencies = agency.agencies.select(required_fields)
+
+        result << if sub_agencies.any?
+                      sub_agencies_attr = sub_agencies.map{|el| el.attributes.merge("branding_url"=> el.branding_url)}
+                      agency_attr = agency.attributes.reverse_merge("agencies"=> sub_agencies_attr)
+                      agency_attr.merge("branding_url"=> agency.branding_url)
+                    else
+                      agency_attr = agency.attributes
+                      agency_attr.merge("branding_url"=> agency.branding_url)
+                    end
+        
+        render json: result.to_json
+      end
+
       def destroy
         @tracking_url.deleted = true
         if @tracking_url.save
-          render json: { success: true}, status: :no_content
+          render json: { success: true }, status: :no_content
         else
           render json: @tracking_url.errors, status: :unprocessable_entity
         end
@@ -47,7 +63,7 @@ module V2
 
         to_return = params.require(:tracking_url).permit(
             :landing_page, :campaign_source, :campaign_medium,
-            :campaign_name, :campaign_term, :campaign_content
+            :campaign_name, :campaign_term, :campaign_content, :agency_id
         )
         to_return
       end
@@ -59,10 +75,6 @@ module V2
         end
       end
 
-      def is_owner?
-        render(json: { success: false, errors: [I18n.t('user_users_controler.unauthorized_access')] },
-               status: :unauthorized) and return unless current_staff.owner
-      end
     end
   end
 end
