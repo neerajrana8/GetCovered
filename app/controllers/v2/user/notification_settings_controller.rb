@@ -19,11 +19,9 @@ module V2
       def switch
         notification_setting = current_user.notification_settings.find_by_action(params[:notification_action])
 
-        if notification_setting.present? && !notification_setting.enabled?
-          notification_setting.destroy!
-        elsif notification_setting.present? && notification_setting.enabled?
-          notification_setting.update(enabled: false)
-        else # if notification_setting doesnt exist, it's mean that is action is enabled, so create a setting with default enabled false
+        if notification_setting.present?
+          notification_setting.enabled? ? notification_setting.update(enabled: false) : notification_setting.destroy!
+        else
           notification_setting = current_user.notification_settings.create(action: params[:notification_action])
         end
 
