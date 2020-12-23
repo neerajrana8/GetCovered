@@ -1,0 +1,10 @@
+es:
+  notification_settings:
+    title:
+      upcoming_invoice: 'Próxima factura'
+      update_credit_card: 'Actualizar tarjeta de crédito'
+      warning_emails: 'Correos electrónicos de advertencia'
+    description:
+      upcoming_invoice: 'Estos correos electrónicos proporcionarán una notificación antes de una próxima factura.'
+      update_credit_card: 'Estos correos electrónicos proporcionarán una notificación cuando una tarjeta de crédito esté a punto de caducar, lo que requerirá que se guarde un nuevo método de pago en la cuenta.'
+      warning_emails: 'Estos correos electrónicos proporcionarán una notificación cuando un usuario esté en peligro de incumplir su política de garantía de alquiler ya que está atrasado en el pago.'

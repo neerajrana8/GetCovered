@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_12_18_220825) do
+ActiveRecord::Schema.define(version: 2020_12_21_054522) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
@@ -804,6 +804,17 @@ ActiveRecord::Schema.define(version: 2020_12_18_220825) do
     t.datetime "updated_at", null: false
     t.index ["noteable_type", "noteable_id"], name: "index_notes_on_noteable_type_and_noteable_id"
     t.index ["staff_id"], name: "index_notes_on_staff_id"
+  end
+
+  create_table "notification_settings", force: :cascade do |t|
+    t.string "action"
+    t.boolean "enabled", default: false, null: false
+    t.string "notifyable_type"
+    t.bigint "notifyable_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["action"], name: "index_notification_settings_on_action"
+    t.index ["notifyable_type", "notifyable_id"], name: "notification_settings_notifyable_index"
   end
 
   create_table "notifications", force: :cascade do |t|

@@ -64,6 +64,7 @@ class User < ApplicationRecord
     through: :active_account_users
 
   has_many :agencies, through: :accounts
+  has_many :notification_settings, as: :notifyable
 
   accepts_nested_attributes_for :payment_profiles, :address
   accepts_nested_attributes_for :profile, update_only: true

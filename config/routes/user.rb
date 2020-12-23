@@ -30,6 +30,11 @@ scope module: :user, path: "user" do
   
   resources :notifications,
     only: [ :update, :index, :show ]
+  resources :notification_settings, only: [:index] do
+    collection do
+      post :switch
+    end
+  end
   
   resources :payment_profiles, path: "payment-profiles", only: [:index, :create, :update] do
     member do
