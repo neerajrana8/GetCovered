@@ -438,7 +438,7 @@ module V2
 
       def update_rental_guarantee_params
         params.require(:policy_application)
-          .permit(:fields, :effective_date, fields: {})
+          .permit(:fields, :billing_strategy_id, :effective_date, fields: {})
       end
 
       def supported_filters(called_from_orders = false)

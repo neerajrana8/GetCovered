@@ -950,7 +950,7 @@ module V2
 
       def update_rental_guarantee_params
         params.require(:policy_application)
-          .permit(:effective_date, :fields, fields: {})
+          .permit(:effective_date, :billing_strategy_id,  :fields, fields: {})
       end
 
       def get_coverage_options_params
