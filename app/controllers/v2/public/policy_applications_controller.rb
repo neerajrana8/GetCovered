@@ -7,7 +7,8 @@ module V2
   module Public
     class PolicyApplicationsController < PublicController
 
-      before_action :set_policy_application, only: %i[update show rent_guarantee_complete]
+      before_action :set_policy_application, only: %i[update rent_guarantee_complete]
+      before_action :set_policy_application_from_token, only: %i[show]
       before_action :validate_policy_users_params, only: %i[create update]
 
       def show
@@ -191,15 +192,17 @@ module V2
                                                               carrier: @application.carrier).take
 
         address_string = params["policy_application"]["fields"]["address"]
+        unit_string = params["policy_application"]["fields"]["unit"]
         @application.resolver_info = {
           "address_string" => address_string,
+          "unit_string" => unit_string,
           "insurable_id" => nil,
           "parent_insurable_id" => nil
         }
 
         case policy_type
           when 1 # residential
-            unit = ::Insurable.get_or_create(address: address_string, unit: true)
+            unit = ::Insurable.get_or_create(address: address_string, unit: unit_string.blank? ? true : unit_string)
             if unit.class == ::Insurable
               @application.insurables << unit
               @application.policy_insurables.first.primary = true
@@ -219,7 +222,7 @@ module V2
         end
 
         if @application.save
-          @redirect_url = "#{ site }/#{program}/#{ @application.id }"
+          # update users
           update_users_result =
             PolicyApplications::UpdateUsers.run!(
               policy_application: @application,
@@ -227,6 +230,10 @@ module V2
             )
           if update_users_result.success?
             if @application.update(status: 'in_progress')
+              # get token and redirect url
+              new_access_token = @application.create_access_token
+              @redirect_url = "#{site}/#{program}/#{new_access_token.to_urlparam}"
+              # done
               render 'v2/public/policy_applications/show_external'
             else
               render json: standard_error(:policy_application_update_error, nil, @application.errors),
@@ -550,7 +557,7 @@ module V2
                      status: 422
             else
               if @policy_application.primary_insurable.nil?
-                  render json: standard_error(:invalid_address, 'Please enter a valid address'),
+                  render json: standard_error(:invalid_address, I18n.t('policy_application_contr.update_residential.invalid_address')),
                          status: 400
               elsif @policy_application.update(status: 'complete')
 
@@ -841,6 +848,7 @@ module V2
         unless key.nil? || secret.nil?
           @access_token = AccessToken.find_by_key(key)
           if !@access_token.nil? &&
+            @access_token.access_type == 'agency_integration' &&
             @access_token.check_secret(secret)
             pass = true
           end
@@ -854,8 +862,13 @@ module V2
       end
 
       def set_policy_application
-        #puts "SET POLICY APPLICATION RUNNING ID: #{params[:id]}"
         @application = @policy_application = access_model(::PolicyApplication, params[:id])
+      end
+      
+      def set_policy_application_from_token
+        token = ::AccessToken.from_urlparam(params[:token])
+        pa_id = token.nil? || token.access_type != 'application_access' || token.expired? ? nil : token.access_data&.[]('policy_application_id')
+        @application = @policy_application = access_model(::PolicyApplication, pa_id)
       end
 
       def new_residential_params

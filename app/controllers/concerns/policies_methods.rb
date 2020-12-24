@@ -202,7 +202,8 @@ module PoliciesMethods
             profile: {
                 full_name: %i[scalar like],
             }
-        }
+        },
+        agency_id: %i[scalar]
     }
   end
 

@@ -33,6 +33,9 @@ es:
   hello: "Hello world"
 
   shared:
+    hi_there: "Hola %{name},"
+    help_center: "Centro de ayuda"
+    this_page: "esta página"
     best: "Mejor"
     accepted: 'Aceptado'
     thank_you: "Gracias"
@@ -44,11 +47,13 @@ es:
     show:
       policy_application_not_found: "La aplicación de política no se encuentra o ya no está disponible"
     new:
-      unit_not_found: "Unidad no encontrada"
+      unit_not_found: "Por favor introduce una dirección válida"
       invalid_unit: "Unidad inválida"
       invalid_policy_type: "Tipo de póliza no válido"
     create:
       invalid_auth_key: "Clave de autenticación no válida"
+    update_residential:
+      invalid_address: "Please enter a valid address"
     rentguarantee_complete:
       inistructions_were_sent: "Se enviaron instrucciones"
     validate_policy_users_params:
@@ -103,6 +108,7 @@ es:
   agency_model:
     parent_id_incorrect: "Identificación de padre incorrecta"
     agency_cannot_be_updated: "La agencia no se puede actualizar a sub-agencia"
+    no_branding: "Sin marca para agencia"
   policy_model:
     cannot_update: "No se puede actualizar en la política del sistema"
     account_must_be_specified: "Se debe especificar la cuenta"
@@ -246,6 +252,12 @@ es:
     refund_was_not_successfully_sent: 'El reembolso no se envió correctamente'
     you_cannot_add_coverage_with_master: 'No puede agregar cobertura con el tipo de póliza maestra'
     unable_to_attach_payment: "No se puede adjuntar la fuente de pago al usuario"
+  signable_documents_controller:
+    signing_failed: 'Se produjo un error al intentar aplicar su firma; Por favor, inténtelo de nuevo más tarde'
+    document_not_found: 'Documento no encontrado'
+  msi_service:
+    invalid_address: "Por favor introduce una dirección válida"
+    invalid_effective_date: "La fecha de vigencia no es válida"
   coverage_options:
     1003_title: 'Cobertura C Contenido'
     1003_desc: 'La cobertura de propiedad personal protege sus pertenencias y propiedades personales.'

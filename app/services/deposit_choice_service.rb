@@ -12,13 +12,26 @@ class DepositChoiceService
   def self.carrier_id
     6
   end
+  
+  def self.policy_type_id
+    @ptid ||= PolicyType.where(designation: 'SECURITY-DEPOSIT').take&.id
+  end
+  
+  def self.unsigned_document_filename
+    'unsigned_bond_certificate.pdf'
+  end
+  
+  def self.signed_document_filename
+    'signed_bond_certificate.pdf'
+  end
 
   ENDPOINT_DICTIONARY = {
     address: 'Address',
     binder: 'Binder',
     insured: 'Insured',
     rate: 'Rate',
-    all_rates: 'Rate/GetAll'
+    all_rates: 'Rate/GetAll',
+    upload: 'UploadSignedApplication'
   }
   
   HTTP_VERB_DICTIONARY = {
@@ -26,8 +39,20 @@ class DepositChoiceService
     binder: :post,
     insured: :post,
     rate: :get,
-    all_rates: :get
+    all_rates: :get,
+    upload: :post
   }
+  
+  def event_params
+    {
+      verb: HTTP_VERB_DICTIONARY[self.action],
+      format: 'json',
+      interface: 'REST',
+      endpoint: self.endpoint_for(self.action),
+      process: "deposit_choice_#{self.action.to_s}",
+      request: self.message_content.to_json
+    }
+  end
 
   include HTTParty
   include ActiveModel::Validations
@@ -183,7 +208,23 @@ class DepositChoiceService
     return errors.blank?
   end
   
-  
+  def build_upload(
+    policy_number:,
+    pdf_base64:,
+    filename: DepositChoiceService.signed_document_filename,
+    description: "Signed bond certificate"
+  )
+    # w00t w00t!!! off we gooooo!
+    self.action = :upload
+    self.errors = nil
+    self.message_content = {
+      policyNumber: policy_number,
+      base64FileData: pdf_base64,
+      fileNameWithExtension: filename,
+      description: description
+    }
+    return errors.blank?
+  end
   
   
   
