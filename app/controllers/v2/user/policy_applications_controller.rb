@@ -9,8 +9,7 @@ module V2
                     only: [:show]
 
       before_action :validate_policy_users_params, only: %i[create update]
-      before_action :set_substrate,
-                    only: %i[create index]
+      before_action :set_substrate, only: %i[create index]
 
       def index
         if params[:short]
@@ -43,8 +42,7 @@ module V2
 
         @application.agency = Agency.where(master_agency: true).take if @application.agency.nil?
 
-        @application.billing_strategy = BillingStrategy.where(agency: @application.agency,
-                                                              policy_type: @application.policy_type).take
+        @application.billing_strategy = BillingStrategy.where(agency: @application.agency, policy_type: @application.policy_type).take if @application.billing_strategy.nil?
 
         validate_applicant_result =
           PolicyApplications::ValidateApplicantsParameters.run!(
