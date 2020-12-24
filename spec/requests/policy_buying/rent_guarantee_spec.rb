@@ -181,7 +181,7 @@ describe 'Policy buying' do
 
       it 'a new user' do
         # Create policy application
-        params = Helpers::RentGuaranteeFormParamsGenerator.run!(agency_id: @agency.id)
+        params = Helpers::RentGuaranteeFormParamsGenerator.run!(agency_id: @agency.id, billing_strategy_id: @billing_strategy.id)
         post('/v2/user/policy-applications', params: params[:create_policy_application], headers: headers.merge(@auth_headers))
         expect(response.status).to eq(200)
         response_json = JSON.parse(response.body)

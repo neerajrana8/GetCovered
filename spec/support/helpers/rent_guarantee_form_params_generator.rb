@@ -78,7 +78,6 @@ module Helpers
           policy_type_id: 5,
           agency_id: agency_id,
           account_id: nil,
-          billing_strategy_id: nil,
           policy_rates_attributes: [],
           policy_insurables_attributes: [],
           policy_users_attributes: policy_users_attributes
@@ -148,7 +147,6 @@ module Helpers
         policy_type_id: 5,
         agency_id: agency_id,
         account_id: nil,
-        billing_strategy_id: nil,
         policy_rates_attributes: [],
         policy_insurables_attributes: [],
         policy_users_attributes: policy_users_attributes
