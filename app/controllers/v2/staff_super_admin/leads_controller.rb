@@ -5,7 +5,7 @@ module V2
       before_action :set_lead, only: [:update, :show]
 
       def index
-        super(:@leads, Lead.presented.includes(:profile, :tracking_url))
+        super(:@leads, Lead.presented.not_converted.includes(:profile, :tracking_url))
         render 'v2/shared/leads/index'
       end
 

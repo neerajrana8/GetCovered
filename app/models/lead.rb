@@ -26,6 +26,7 @@ class Lead < ApplicationRecord
   validates :email, presence: true
 
   scope :converted, -> { where(status: 'converted')}
+  scope :not_converted, -> { where.not(status: 'converted') }
   scope :prospected, -> { where(status: 'prospect')}
   scope :archived, -> { where(status: 'archived')}
   scope :with_user, -> { where.not(user_id: nil) }
