@@ -2,6 +2,7 @@ module Helpers
   class RentGuaranteeFormParamsGenerator < ActiveInteraction::Base
     string :applicant_email, default: 'applicant@email.com'
     integer :agency_id
+    integer :billing_strategy_id
     hash :co_tenant, default: nil do
       string :email, default: 'co-tenant@email.com'
     end
@@ -20,6 +21,7 @@ module Helpers
         policy_application: {
           reference: nil,
           external_reference: nil,
+          billing_strategy_id: billing_strategy_id,
           effective_date: DateTime.now + 2.days,
           expiration_date: DateTime.now + 1.year + 2.days,
           status: 'started',
@@ -90,6 +92,7 @@ module Helpers
         external_reference: nil,
         effective_date: DateTime.now + 2.days,
         expiration_date: DateTime.now + 1.year + 2.days,
+        billing_strategy_id: billing_strategy_id,
         status: 'started',
         status_updated_on: nil,
         fields: {
