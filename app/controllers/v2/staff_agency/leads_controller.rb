@@ -42,7 +42,7 @@ module V2
       def set_substrate
         super
         if @substrate.nil?
-          @substrate = access_model(::Lead).presented.includes(:profile, :tracking_url)
+          @substrate = access_model(::Lead).presented.not_converted.includes(:profile, :tracking_url)
         end
       end
 
