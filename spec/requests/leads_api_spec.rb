@@ -108,10 +108,25 @@ describe 'Leads API spec', type: :request do
 
   end
 
+  it 'should create new Lead from external api call' do
+    test_email = Faker::Internet.email
+
+    result = external_api_call(external_api_call_params(test_email), get_external_access_token_headers)
+
+    expect(response.status).to eq(200)
+    expect(result['reference']).to_not eq(nil)
+    expect(Lead.find_by(email: test_email)).to eq(test_email)
+  end
+
   private
 
   def create_lead_or_event(email, params)
     post '/v2/lead_events', params: params
+    JSON.parse response.body
+  end
+
+  def external_api_call(params, headers)
+    post '/v2/policy-applications', header: headers, params: params
     JSON.parse response.body
   end
 
@@ -207,6 +222,31 @@ describe 'Leads API spec', type: :request do
             "campaign_source": "sss",
             "campaign_term": "ttt",
             "landing_page": "rentguarantee"
+        }
+    }
+  end
+
+  def external_api_call_params(test_email)
+    {
+        "policy_application":{
+            "policy_type_id":1,
+            "fields":{
+                "address":"45 Midland Rd, Staten Island, NY 10308"
+            },
+            "policy_users_attributes":[
+                {
+                    "primary":true,
+                    "user_attributes":{
+                        "email": test_email,
+                        "profile_attributes":{
+                            "first_name":Faker::Name.name,
+                            "last_name":Faker::Name.name,
+                            "contact_phone":Faker::PhoneNumber.cell_phone,
+                            "birth_date":Faker::Date.birthday
+                        }
+                    }
+                }
+            ]
         }
     }
   end

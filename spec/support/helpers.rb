@@ -47,6 +47,15 @@ module Helpers
     auth_headers
   end
 
+  def get_external_access_token_headers
+    access_token = FactoryBot.create(:access_token)
+    access_headers = {
+        'token-key' => access_token.key,
+        'token-secret' => access_token.secret
+    }
+    access_headers
+  end
+
   def profile_params
     {
       profile_attributes: {
