@@ -1,4 +1,4 @@
-class RentGaranteeCancellationMailer < ApplicationMailer
+class RentGuaranteeCancellationMailer < ApplicationMailer
   layout 'agency_styled_mail'
 
   def send_cancellation_email(policy)
