@@ -134,7 +134,7 @@ module V2
         @application.expiration_date = @application.effective_date&.send(:+, 1.year)
         @application.agency = Agency.where(master_agency: true).take if @application.agency.nil?
         @application.billing_strategy = BillingStrategy.where(agency:      @application.agency,
-                                                              policy_type: @application.policy_type).take
+                                                              policy_type: @application.policy_type).take if @application.billing_strategy.nil?
 
         validate_applicant_result =
           PolicyApplications::ValidateApplicantsParameters.run!(
@@ -950,7 +950,7 @@ module V2
 
       def update_rental_guarantee_params
         params.require(:policy_application)
-          .permit(:effective_date, :fields, fields: {})
+          .permit(:effective_date, :billing_strategy_id,  :fields, fields: {})
       end
 
       def get_coverage_options_params
