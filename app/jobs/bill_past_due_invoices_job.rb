@@ -39,9 +39,9 @@ class BillPastDueInvoicesJob < ApplicationJob
 
     case unpaid_invoices_count
     when 1
-      RentGuaranteeNotificationsMailer.first_nonpayment_warning(invoice: invoice).deliver_late
+      RentGuaranteeNotificationsMailer.first_nonpayment_warning(invoice: invoice).deliver_later
     when 2
-      RentGuaranteeNotificationsMailer.second_nonpayment_warning(invoice: invoice).deliver_late
+      RentGuaranteeNotificationsMailer.second_nonpayment_warning(invoice: invoice).deliver_later
     end
   end
 end
