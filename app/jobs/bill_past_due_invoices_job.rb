@@ -6,11 +6,11 @@ class BillPastDueInvoicesJob < ApplicationJob
 
   def perform(*_args)
     @invoices.each do |invoice|
-      invoice.pay(allow_missed: true, stripe_source: :default) if invoice.charges.failed.where('created_at >= ?', invoice.due_date.midnight + 1.day).count < PAYMENT_ATTEMPTS
-      invoice.reload
-      next unless rent_guarantee_notify?(invoice)
-
-      rent_guarantee_notify(invoice)
+      if invoice.charges.failed.where('created_at >= ?', invoice.due_date.midnight + 1.day).count < PAYMENT_ATTEMPTS
+        invoice.pay(allow_missed: true, stripe_source: :default) if invoice.charges.failed.where('created_at >= ?', invoice.due_date.midnight + 1.day).count < PAYMENT_ATTEMPTS
+        invoice.reload
+        rent_guarantee_notify(invoice) if rent_guarantee_notify?(invoice)
+      end
     end
   end
 
