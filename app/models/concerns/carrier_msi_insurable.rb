@@ -26,7 +26,7 @@ module CarrierMsiInsurable
         effective_date:                 Time.current.to_date + 1.day,
         
         community_name:                 self.title,
-        number_of_units:                units.count,
+        number_of_units:                units.where(preferred_ho4: true).count,
         property_manager_name:          account.title,
         years_professionally_managed:   (@carrier_profile.traits['professionally_managed'] != false) ?
                                           (@carrier_profile.traits['professionally_managed_year'].nil? ?
@@ -49,7 +49,7 @@ module CarrierMsiInsurable
           return msi_service.errors.map{|err| "GetOrCreateCommunity service call error: #{err}" }
         end
       end
-      event = events.new(msis.event_params)
+      event = events.new(msi_service.event_params)
       event.request = msi_service.compiled_rxml
       # try to execute the request
       if !event.save

@@ -719,7 +719,7 @@ class MsiService
               Addr:                           address.merge(preferred ? {
                 MSI_CommunityID:                community_id,
                 MSI_Unit:                       unit
-             } : {})
+             }.compact : {})
             }.compact
           ] + (maddress == address ? [] : [
             {

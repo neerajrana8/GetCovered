@@ -276,7 +276,7 @@ while @addresses.length > 0
               units_per_floor.times do |unit_num|
                 mailing_id = floor_id + (unit_num + 1)
                 @unit = @community.insurables.new(title: mailing_id, insurable_type: @residential_unit_insurable_type,
-                                                     enabled: true, category: 'property', account: account)
+                                                     enabled: true, category: 'property', account: account, preferred_ho4: true)
                 if @unit.save
                   @unit.create_carrier_profile(5)
                 else
