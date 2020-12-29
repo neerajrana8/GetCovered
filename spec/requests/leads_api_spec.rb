@@ -110,12 +110,20 @@ describe 'Leads API spec', type: :request do
 
   it 'should create new Lead from external api call' do
     test_email = Faker::Internet.email
+    agency_partner = FactoryBot.create(:random_agency)
+    branding_profile = FactoryBot.create(:branding_profile, profileable: agency_partner)
+    billing_strategy = FactoryBot.create(:monthly_billing_strategy_with_carrier, agency: agency_partner)
+    agency_partner.billing_strategies = [ billing_strategy ]
 
-    result = external_api_call(external_api_call_params(test_email), get_external_access_token_headers)
+    PolicyApplication.any_instance.stub(:billing_strategy_agency_and_carrier_correct){ true }
+    PolicyApplication.any_instance.stub(:billing_strategy){ billing_strategy }
+    PolicyApplication.any_instance.stub(:agency){ agency_partner }
 
+    result = external_api_call(external_api_call_params(test_email), get_external_access_token_headers(agency_partner))
     expect(response.status).to eq(200)
     expect(result['reference']).to_not eq(nil)
-    expect(Lead.find_by(email: test_email)).to eq(test_email)
+    expect(Lead.find_by(email: test_email)).to_not eq(nil)
+    expect(Lead.find_by(email: test_email).email).to eq(test_email)
   end
 
   private

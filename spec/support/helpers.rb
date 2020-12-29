@@ -9,7 +9,7 @@ module Helpers
     FactoryBot.create(:agency)
   end
 
-  def account_for agency
+  def account_for(agency)
     FactoryBot.create(:account, agency: agency)
   end
 
@@ -47,8 +47,8 @@ module Helpers
     auth_headers
   end
 
-  def get_external_access_token_headers
-    access_token = FactoryBot.create(:access_token)
+  def get_external_access_token_headers(agency)
+    access_token = FactoryBot.create(:access_token, bearer: agency)
     access_headers = {
         'token-key' => access_token.key,
         'token-secret' => access_token.secret
