@@ -98,3 +98,23 @@ es:
              continuación para actualizar la información de su tarjeta de crédito y evitar la interrupción de la cobertura "
       contact_us: "No dude en contactarnos en %{contact_email} si tiene alguna pregunta."
       thank_you: "Gracias nuevamente por usar GCpay."
+
+  rent_guarantee_notifications_mailer:
+    first_nonpayment_warning:
+      subject: "%{agency_title} - Garantía de alquiler - Advertencia predeterminada"
+      thank_you: "Gracias por utilizar %{agency_title} para su Política de garantía de alquiler. Nuestros
+        registros muestran que no realizó su último pago el %{due_date} por $%{amount_due}. Tenga en cuenta que su
+        La póliza se cancelará si no realiza dos pagos consecutivos."
+      please_login: "Inicie sesión en %{agency_title} en el enlace siguiente para actualizar la información de su tarjeta de crédito a
+                             evitar la interrupción de la cobertura."
+      contact_us: "Feel free to contact us at %{contact_email} if you have any questions."
+    second_nonpayment_warning:
+      subject: "%{agency_title}  - Garantía de alquiler - AVISO FINAL predeterminado"
+      thank_you:
+        "Gracias por utilizar %{agency_title} para su Política de garantía de alquiler. Nuestros registros
+         muestran que no realizó su segundo pago el %{due_date} por $%{amount_due}. Tenga en cuenta que su
+         La póliza se cancelará si no paga antes del %{calculated_cancellation_date}."
+      please_login:
+        "Inicie sesión en %{agency_title} en el enlace siguiente para actualizar la información de su tarjeta de crédito a
+         evitar la interrupción de la cobertura."
+      contact_us: "No dude en contactarnos al %{contact_email} si tiene alguna pregunta."

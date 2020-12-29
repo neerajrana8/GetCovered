@@ -38,6 +38,7 @@ en:
     best: "Best"
     accepted: 'Accepted'
     thank_you: 'Thank you'
+    dear: "Dear %{name}"
 
   devise_token_auth:
     sessions:

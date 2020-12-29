@@ -1,18 +1,20 @@
 <td class="o_bg-white o_px-md o_py-md o_sans o_text o_text-secondary" align="left" style="font-family: Helvetica, Arial, sans-serif;margin-top: 0px;margin-bottom: 0px;font-size: 16px;line-height: 24px;background-color: #ffffff;color: #424651;padding-left: 24px;padding-right: 24px;padding-top: 24px;padding-bottom: 24px;">
   <div style="font-size: 24px; line-height: 24px; height: 24px;">&nbsp; </div>
-  <p class="o_mb-xs" style="margin-top: 0px;margin-bottom: 8px;"><%= t('shared.hi_there', name: @user.profile.first_name) %></p>
+  <p class="o_mb-xs" style="margin-top: 0px;margin-bottom: 8px;"><%= t('shared.dear', name: @user.profile.first_name) %></p>
   <p class="o_mb-xs" style="margin-top: 0px;margin-bottom: 8px;">
     <%= raw(
-          t('warn_upcoming_charge_mailer.send_warn_upcoming_invoice.text_html',
+          t('rent_guarantee_notifications_mailer.first_nonpayment_warning.thank_you',
             policy_type: @policy_type_title,
             agency_title: @agency.title,
-            charged: Money.new(@invoice.total).to_s,
-            due_date: @invoice.due_date,
-            link: "https://#{@branding_profile.url}/user/invoices/list"))
+            amount_due: Money.new(@invoice.total).to_s,
+            due_date: @invoice.due_date.strftime("%m/%d/%Y")))
     %>
   </p>
-  <p class="o_mb-xs" style="margin-top: 0px;margin-bottom: 8px;"><%= t('warn_upcoming_charge_mailer.send_warn_upcoming_invoice.contact_us', contact_email: @contact_email) %></p>
-
+  <p class="o_mb-xs" style="margin-top: 0px;margin-bottom: 8px;">
+    <%= t('rent_guarantee_notifications_mailer.first_nonpayment_warning.please_login', agency_title: @agency.title) %>
+    <a href="https://<%="#{@branding_profile.url}/user/payment-methods" %>">https://<%="#{@branding_profile.url}/user/payment-methods" %></a>
+  </p>
+  <p class="o_mb-xs" style="margin-top: 0px;margin-bottom: 8px;"><%= t('rent_guarantee_notifications_mailer.first_nonpayment_warning.contact_us', contact_email: @contact_email) %></p>
   <p class="o_mb-xs" style="margin-top: 0px;margin-bottom: 8px;"><%= t('shared.thank_you') %></p>
   <p class="o_mb-xs" style="margin-top: 0px;margin-bottom: 8px;"><%= @agency.title %></p>
   <div style="font-size: 16px; line-height: 16px; height: 16px;">&nbsp; </div>
