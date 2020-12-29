@@ -15,9 +15,7 @@ module V2
 
       def calculate_counts
         @tracking_urls.each do |tr_url|
-          lead_events_count = 0
-          tr_url.leads.each{|el| lead_events_count+=el.lead_events.count}
-          @tracking_url_counts[tr_url.id] = { leads_count: tr_url.leads.count, lead_events_count: lead_events_count }
+          @tracking_url_counts[tr_url.id] = { leads_count: tr_url.leads.count, converted: tr_url.leads.converted.count }
         end
       end
 
