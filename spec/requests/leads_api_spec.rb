@@ -125,8 +125,8 @@ describe 'Leads API spec', type: :request do
     JSON.parse response.body
   end
 
-  def external_api_call(params, headers)
-    post '/v2/policy-applications', header: headers, params: params
+  def external_api_call(params, headers_token)
+    post '/v2/policy-applications', headers: headers_token, params: params
     JSON.parse response.body
   end
 
