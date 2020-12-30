@@ -2,7 +2,6 @@ module Leads
   module CreateMethods
     extend ActiveSupport::Concern
 
-
     private
 
     def create_lead_event
@@ -146,13 +145,18 @@ module Leads
                       "years_professionally_managed":""
                   },
                   "address": residential_address_params[:fields][:address],
-                  "last_visited_page": "Basic Info Section"
+                  "policy_type_id": application.policy_type_id,
+                  "last_visited_page": application.policy_type_id==1 ? "Basic Info Section" : "Landing Page"
               }
           },
           "profile_attributes":{
               "first_name": user_attr[:profile_attributes][:first_name],
               "last_name": user_attr[:profile_attributes][:last_name],
-              "birth_date": Date.parse(user_attr[:profile_attributes][:birth_date] ).to_s
+              "birth_date": Date.parse(user_attr[:profile_attributes][:birth_date] ).to_s,
+              "contact_phone": user_attr[:profile_attributes][:contact_phone]
+          },
+          "address_attributes":{
+              "street_name": residential_address_params[:fields][:address]
           },
           "policy_type_id": application.policy_type_id,
           "agency_id": application.agency_id
