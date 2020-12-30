@@ -101,3 +101,22 @@ en:
                  to avoid interruption of coverage "
       contact_us: "Feel free to contact us at %{contact_email} if you have any questions."
       thank_you: "Thank you again for using GCpay."
+  rent_guarantee_notifications_mailer:
+    first_nonpayment_warning:
+      subject: "%{agency_title} - Rent Guarantee - Warning Default"
+      thank_you: "Thank you for using %{agency_title} for your Rent Guarantee Policy. Our records show that
+        you have missed your last payment on %{due_date} for $%{amount_due}. Please note that your
+        policy will be cancelled if you miss two consecutive payments."
+      please_login: "Please login to %{agency_title} at the link below to update your credit card information to
+        avoid interruption of coverage."
+      contact_us: "Feel free to contact us at %{contact_email} if you have any questions."
+    second_nonpayment_warning:
+      subject: "%{agency_title} - Rent Guarantee - Default FINAL NOTICE"
+      thank_you:
+        "Thank you for using %{agency_title}  for your Rent Guarantee Policy. Our records show that
+        you have missed your second payment on %{due_date}  for $%{amount_due} Please note that your
+        policy will be cancelled if you do not pay by %{calculated_cancellation_date}."
+      please_login:
+        "Please login to %{agency_title} at the link below to update your credit card information
+        to avoid interruption of coverage."
+      contact_us: "Feel free to contact us at %{contact_email} if you have any questions."

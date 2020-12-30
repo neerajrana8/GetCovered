@@ -39,6 +39,7 @@ es:
     best: "Mejor"
     accepted: 'Aceptado'
     thank_you: "Gracias"
+    dear: "Estimado %{name}"
 
   devise_token_auth:
     sessions:
