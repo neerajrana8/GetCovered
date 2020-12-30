@@ -80,9 +80,15 @@ module V2
       def supported_filters(called_from_orders = false)
         @calling_supported_orders = called_from_orders
         {
-            agency_id: %i[scalar array]
+            agency_id: %i[scalar array],
+            created_at: %i[scalar interval]
         }
       end
+
+      def supported_orders
+        supported_filters(true)
+      end
+
     end
   end
 end
