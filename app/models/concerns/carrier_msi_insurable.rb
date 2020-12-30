@@ -26,7 +26,7 @@ module CarrierMsiInsurable
         effective_date:                 Time.current.to_date + 1.day,
         
         community_name:                 self.title,
-        number_of_units:                units.where(preferred_ho4: true).count,
+        number_of_units:                units.where(preferred_ho4: true, account_id: self.account_id).count,
         property_manager_name:          account.title,
         years_professionally_managed:   (@carrier_profile.traits['professionally_managed'] != false) ?
                                           (@carrier_profile.traits['professionally_managed_year'].nil? ?
