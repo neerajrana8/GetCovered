@@ -30,7 +30,7 @@ module V2
                       agency_attr = agency.attributes
                       agency_attr.merge("branding_url"=> agency.branding_url)
                     end
-        
+
         render json: result.to_json
       end
 
@@ -73,6 +73,18 @@ module V2
         if @substrate.nil?
           @substrate = access_model(::TrackingUrl).not_deleted
         end
+      end
+
+      def supported_filters(called_from_orders = false)
+        @calling_supported_orders = called_from_orders
+        {
+            agency_id: %i[scalar array],
+            created_at: %i[scalar interval]
+        }
+      end
+
+      def supported_orders
+        supported_filters(true)
       end
 
     end

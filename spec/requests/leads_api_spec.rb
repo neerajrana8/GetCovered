@@ -108,10 +108,33 @@ describe 'Leads API spec', type: :request do
 
   end
 
+  it 'should create new Lead from external api call' do
+    test_email = Faker::Internet.email
+    agency_partner = FactoryBot.create(:random_agency)
+    branding_profile = FactoryBot.create(:branding_profile, profileable: agency_partner)
+    billing_strategy = FactoryBot.create(:monthly_billing_strategy_with_carrier, agency: agency_partner)
+    agency_partner.billing_strategies = [ billing_strategy ]
+
+    PolicyApplication.any_instance.stub(:billing_strategy_agency_and_carrier_correct){ true }
+    PolicyApplication.any_instance.stub(:billing_strategy){ billing_strategy }
+    PolicyApplication.any_instance.stub(:agency){ agency_partner }
+
+    result = external_api_call(external_api_call_params(test_email), get_external_access_token_headers(agency_partner))
+    expect(response.status).to eq(200)
+    expect(result['reference']).to_not eq(nil)
+    expect(Lead.find_by(email: test_email)).to_not eq(nil)
+    expect(Lead.find_by(email: test_email).email).to eq(test_email)
+  end
+
   private
 
   def create_lead_or_event(email, params)
     post '/v2/lead_events', params: params
+    JSON.parse response.body
+  end
+
+  def external_api_call(params, headers_token)
+    post '/v2/policy-applications', headers: headers_token, params: params
     JSON.parse response.body
   end
 
@@ -207,6 +230,31 @@ describe 'Leads API spec', type: :request do
             "campaign_source": "sss",
             "campaign_term": "ttt",
             "landing_page": "rentguarantee"
+        }
+    }
+  end
+
+  def external_api_call_params(test_email)
+    {
+        "policy_application":{
+            "policy_type_id":1,
+            "fields":{
+                "address":"45 Midland Rd, Staten Island, NY 10308"
+            },
+            "policy_users_attributes":[
+                {
+                    "primary":true,
+                    "user_attributes":{
+                        "email": test_email,
+                        "profile_attributes":{
+                            "first_name":Faker::Name.name,
+                            "last_name":Faker::Name.name,
+                            "contact_phone":Faker::PhoneNumber.cell_phone,
+                            "birth_date":Faker::Date.birthday
+                        }
+                    }
+                }
+            ]
         }
     }
   end
