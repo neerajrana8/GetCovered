@@ -3,9 +3,10 @@ module V2
     class LeadsController < StaffSuperAdminController
 
       before_action :set_lead, only: [:update, :show]
+      before_action :set_substrate, only: :index
 
       def index
-        super(:@leads, Lead.presented.not_converted.includes(:profile, :tracking_url))
+        super(:@leads, @substrate)
         render 'v2/shared/leads/index'
       end
 
@@ -35,7 +36,17 @@ module V2
       def update_params
         return({}) if params[:lead].blank?
 
-        params.require(:lead).permit( :status)
+        permitted = params.require(:lead).permit( :status)
+        permitted[:archived] = permitted[:status] == 'archived' ? true : false
+        permitted.delete(:status)
+
+        permitted
+      end
+
+      def set_substrate
+        if @substrate.nil?
+          @substrate = access_model(::Lead).presented.not_converted.includes(:profile, :tracking_url)
+        end
       end
 
       def supported_filters(called_from_orders = false)
@@ -44,7 +55,8 @@ module V2
             created_at: [:scalar, :array, :interval],
             email: [:scalar, :like],
             agency_id: [:scalar, :interval],
-            status: [:scalar]
+            status: [:scalar],
+            archived: [:scalar]
         }
       end
 
