@@ -13,7 +13,7 @@ ActiveRecord::Base.transaction do
 
 # create communities/units from spreadsheet
 puts "Importing properties from spreadsheet..."
-lines = Roo::Spreadsheet.open(Rails.root.join('lib/utilities/scripts/importers/bandb/test.csv').to_s)
+lines = Roo::Spreadsheet.open(Rails.root.join('lib/utilities/scripts/importers/bandb/bandb.csv').to_s)
 n = 2
 line = lines.row(n)
 while !line[0].blank?
