@@ -36,7 +36,12 @@ module V2
       def update_params
         return({}) if params[:lead].blank?
 
-        params.require(:lead).permit( :status)
+        #need to remove after update on ui
+        permitted = params.require(:lead).permit( :status)
+        permitted[:archived] = permitted[:status] == 'archived' ? true : false
+        permitted.delete(:status)
+
+        permitted
       end
 
       def set_substrate
@@ -52,7 +57,8 @@ module V2
             created_at: [:scalar, :array, :interval],
             email: [:scalar, :like],
             agency_id: [:scalar, :interval],
-            status: [:scalar]
+            status: [:scalar],
+            archived: [:scalar]
         }
       end
 
