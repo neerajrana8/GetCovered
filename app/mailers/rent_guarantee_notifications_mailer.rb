@@ -8,7 +8,6 @@ class RentGuaranteeNotificationsMailer < ApplicationMailer
 
     set_locale(@user.profile&.language)
     @branding_profile = invoice.invoiceable.agency.branding_profiles.first
-    @branding_profile = BrandingProfile.first if @branding_profile['styles']['use_gc_email_templates']
     @invoice = invoice
     @agency = @invoice.invoiceable.agency
     @policy = @invoice.invoiceable.is_a?(Policy) ? @invoice.invoiceable : @invoice.invoiceable.policy

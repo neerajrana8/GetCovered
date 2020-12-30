@@ -8,7 +8,6 @@ class CardInfoUpdateMailer < ApplicationMailer
     @policy = policy
     @agency = policy.agency
     @branding_profile = @agency.branding_profiles&.sample
-    @branding_profile = BrandingProfile.global_default if @branding_profile['styles']['use_gc_email_templates']
     @from = 'support@' + (@branding_profile&.url || 'getcoveredinsurance.com')
     subject = t('card_info_update_mailer.please_update_card_info.subject',
                 agency_title: @agency.title,
