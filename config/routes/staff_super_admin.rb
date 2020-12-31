@@ -94,9 +94,12 @@
         post :import, on: :collection
       end
 
-    resources :branding_profile_attributes,
-      path: "branding-profile-attributes",
-      only: [ :destroy ]
+    resources :branding_profile_attributes, path: "branding-profile-attributes", only: [ :destroy ] do
+      collection do
+        post :copy
+        post :force_copy
+      end
+    end
 
     resources :pages
 
