@@ -259,13 +259,13 @@ en:
     invalid_address: "Please enter a valid address"
     invalid_effective_date: "The effective date is invalid"
   coverage_options:
-    1003_title: 'Coverage C   Contents'
+    1003_title: 'Contents'
     1003_desc: 'Personal property coverage protects your personal belongings and property.'
-    1004_title: 'Coverage D   Loss Of Use'
+    1004_title: 'Loss Of Use'
     1004_desc: 'Coverage reimburses you for the cost of maintaining a comparable standard of living following a covered loss that exceeds your normal expenses prior to the loss, up to the policy limits.'
-    1005_title: 'Coverage E   Liability'
+    1005_title: 'Liability'
     1005_desc: 'Liability coverage protects you in an event of negligent damage to your apartment, the community, or other residents.'
-    1006_title: 'Coverage F   Med Payment'
+    1006_title: 'Med Payment'
     1006_desc: 'Coverage designed to pay for medical expenses to others who are accidentally injured on an insured location or by the activities of an insured, resident employee, or an animal owned by or in the care of an insured, up to the policy limits.'
     1007_title: 'Pet Damage'
     1007_desc: 'This option covers up to $500 for accidental damage caused by a pet such as stained carpet or chewed baseboards.'
@@ -291,7 +291,7 @@ en:
     5_desc: 'The amount the insurer will deduct from a loss resulting from wind or hail before paying up to its policy limits.'
     6_title: 'Earthquake'
     6_desc: 'The amount the insurer will deduct from a loss resulting from an earthquake before paying up to its policy limits.'
-    estimated_premium_errors: 'Coverage C   Contents selection is required'
+    estimated_premium_errors: 'Contents selection is required'
     cannot_be_blank_counties: "cannot be blank if counties are specified"
     bound: 'BOUND'
     bound_with_warning: 'BOUND_WITH_WARNING'
