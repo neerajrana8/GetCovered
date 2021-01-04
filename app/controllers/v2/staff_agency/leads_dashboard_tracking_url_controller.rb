@@ -45,8 +45,14 @@ module V2
 
       def set_substrate
         super
+        #need to delete after fix on ui
         if @substrate.nil?
           @substrate = access_model(::TrackingUrl).not_deleted
+          if params[:filter].present? && params[:filter][:archived]
+            @substrate = access_model(::TrackingUrl).deleted
+          elsif params[:filter].nil? || !!params[:filter][:archived]
+            @substrate = access_model(::TrackingUrl).not_deleted
+          end
         end
       end
 
