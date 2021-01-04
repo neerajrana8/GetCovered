@@ -31,6 +31,7 @@ class Lead < ApplicationRecord
   scope :not_converted, -> { where.not(status: 'converted') }
   scope :prospected, -> { where(status: 'prospect')}
   scope :archived, -> { where(archived: true)}
+  scope :not_archived, -> { where(archived: false)}
   scope :with_user, -> { where.not(user_id: nil) }
 
   def self.date_of_first_lead

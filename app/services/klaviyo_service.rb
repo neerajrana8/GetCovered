@@ -158,9 +158,10 @@ class KlaviyoService
     if lead_agency.present?
       if lead_agency.sub_agency?
         request.merge!({'agency': lead_agency.agency.try(:title),
-                        'sub_agency': lead_agency.try(:title)})
+                        'sub_agency': lead_agency.try(:title) })
       else
-        request.merge!({'agency': lead_agency.try(:title)})
+        request.merge!({'agency': lead_agency.try(:title),
+                        'sub_agency': 'No Sub Agency'})
       end
     end
   end
