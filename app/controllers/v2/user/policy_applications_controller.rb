@@ -29,6 +29,8 @@ module V2
           create_commercial
         when 5
           create_rental_guarantee
+        when 6
+          create_security_deposit_replacement
         else
           render json: {
             title: I18n.t('user_policy_application_controller.policy_type_not_recognized'),
@@ -150,6 +152,81 @@ module V2
         end
       end
 
+      def create_security_deposit_replacement
+        # set up the application
+        @application = PolicyApplication.new(create_security_deposit_replacement_params)
+        if @application.agency.nil? && @application.account.nil?
+          @application.agency = Agency.where(master_agency: true).take
+        elsif @application.agency.nil?
+          @application.agency = @application.account.agency
+        end
+        @application.billing_strategy = BillingStrategy.where(carrier_id: DepositChoiceService.carrier_id).take if @application.billing_strategy.nil? # WARNING: there should only be one (annual) right now
+        @application.expiration_date = @application.effective_date + 1.year unless @application.effective_date.nil?
+        # try to save
+        unless @application.save
+          render json: standard_error(:policy_application_save_error, nil, @application.errors),
+                 status: 422
+          return
+        end
+        # try to quote application
+        update_users_result =
+          PolicyApplications::UpdateUsers.run!(
+            policy_application: @application,
+            policy_users_params: create_policy_users_params[:policy_users_attributes],
+            current_user_email: current_user.email
+          )
+        if update_users_result.success?
+          # update status to complete
+          LeadEvents::LinkPolicyApplicationUsers.run!(policy_application: @application)
+          unless @application.update(status: 'complete')
+            render json: standard_error(:policy_application_save_error, nil, @application.errors),
+                   status: 422
+            return
+          end
+          # create quote
+          @application.estimate()
+          @quote = @application.policy_quotes.order('created_at DESC').limit(1).first
+          if @application.status == "quote_failed"
+            render json: standard_error(:policy_application_unavailable, @application.error_message || I18n.t('policy_application_contr.create_security_deposit_replacement.policy_application_unavailable')),
+                   status: 400
+            return
+          elsif @application.status == "quoted"
+            render json: standard_error(:policy_application_unavailable, I18n.t('policy_application_contr.create_security_deposit_replacement.policy_application_unavailable')),
+                   status: 400
+            return
+          end
+          @application.quote(@quote.id)
+          @application.reload
+          @quote.reload
+          unless @quote.status == "quoted"
+            if @application.status == "quote_failed"
+              render json: standard_error(:quote_failed, @application.error_message || I18n.t('policy_application_contr.create_security_deposit_replacement.quote_failed')),
+                     status: 500
+              return
+            else
+              render json: standard_error(:quote_failed, I18n.t('policy_application_contr.create_security_deposit_replacement.quote_failed')),
+                     status: 500
+              return
+            end
+          end
+          # return nice stuff
+          render json:  {
+                         id:       @application.id,
+                         quote: {
+                           id:      @quote.id,
+                           status: @quote.status,
+                           premium: @quote.policy_premium
+                         },
+                         invoices: @quote.invoices.order('due_date ASC'),
+                         user:     {
+                           id:        @application.primary_user.id,
+                           stripe_id: @application.primary_user.stripe_id
+                         }
+                       }.to_json, status: 200
+          return
+        end
+      end
+
       def create_residential
         @application = PolicyApplication.new(create_residential_params)
         @application.expiration_date = @application.effective_date&.send(:+, 1.year)
@@ -169,7 +246,7 @@ module V2
                 cs[:selection] = cs[:selection][:value]
               end
             end
-            @application.coverage_selections.push({ 'category' => 'coverage', 'options_type' => 'none', 'uid' => '1010', 'selection' => true })
+            @application.coverage_selections.push({ 'category' => 'coverage', 'options_type' => 'none', 'uid' => '1010', 'selection' => true }) unless @application.coverage_selections.any?{|co| co['uid'] == '1010' }
           end
         end
 
@@ -392,7 +469,10 @@ module V2
                   :carrier_id, :agency_id, fields: [:title, :value, options: []],
                   questions: [:title, :value, options: []],
                   coverage_selections: [:category, :uid, :selection, selection: [ :data_type, :value ]],
-                  extra_settings: [:installment_day],
+                  extra_settings: [
+                    # for MSI
+                    :installment_day, :number_of_units, :years_professionally_managed, :year_built, :gated
+                  ],
                   policy_rates_attributes: [:insurable_rate_id],
                   policy_insurables_attributes: [:insurable_id])
       end
@@ -410,6 +490,17 @@ module V2
           .permit(:effective_date, :expiration_date, :auto_pay,
                   :auto_renew, :billing_strategy_id, :account_id, :policy_type_id,
                   :carrier_id, :agency_id, fields: {})
+      end
+
+      def create_security_deposit_replacement_params
+        params.require(:policy_application)
+          .permit(:effective_date, :expiration_date, :auto_pay,
+                  :auto_renew, :billing_strategy_id, :account_id, :policy_type_id,
+                  :carrier_id, :agency_id, fields: [:title, :value, options: []],
+                  questions:                       [:title, :value, options: []],
+                  coverage_selections: [:bondAmount, :ratedPremium, :processingFee, :totalCost],
+                  policy_rates_attributes:         [:insurable_rate_id],
+                  policy_insurables_attributes:    [:insurable_id])
       end
 
       def create_policy_users_params
