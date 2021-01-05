@@ -124,7 +124,7 @@ class SignableDocument < ApplicationRecord
             'signature_block' => {
               'x' => signature_block[:x],
               'y' => signature_block[:y],
-              'width' => sig_width
+              'width' => sig_width,
               'height' => signature_block[:previous_y] - signature_block[:y]
             },
             'geometry_for_client' => {
