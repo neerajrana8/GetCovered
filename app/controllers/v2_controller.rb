@@ -39,7 +39,11 @@ exit
     else
       count = query.count
       per = (params.has_key?(:pagination) && params[:pagination].has_key?(:per)) ? params[:pagination][:per].to_i : default_pagination_per
-      per = default_pagination_per if per <= 0 || per > maximum_pagination_per
+      if per <= 0
+        per = default_pagination_per
+      elsif per > maximum_pagination_per
+        per = maximum_pagination_per
+      end
       page_count = count == 0 ? 1 : (count.to_f / per).ceil
       page = (params.has_key?(:pagination) && params[:pagination].has_key?(:page)) ? params[:pagination][:page].to_i : 0
       response.headers['current-page'] = page.to_s
