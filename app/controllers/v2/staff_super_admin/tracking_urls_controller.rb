@@ -77,7 +77,9 @@ module V2
       def set_substrate
         super
         if @substrate.nil?
-          @substrate = TrackingUrl.not_deleted
+          @substrate = access_model(::TrackingUrl)
+          params[:filter][:deleted] = params[:filter][:archived] if params[:filter].present? && params[:filter][:archived].present?
+          params[:filter].delete(:archived)
         end
       end
 
@@ -85,7 +87,8 @@ module V2
         @calling_supported_orders = called_from_orders
         {
             agency_id: %i[scalar array],
-            created_at: %i[scalar interval]
+            created_at: %i[scalar interval],
+            deleted: [:scalar]
         }
       end
 
