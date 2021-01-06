@@ -1,7 +1,7 @@
 module V2
   module StaffSuperAdmin
     class TrackingUrlsController < StaffSuperAdminController
-      before_action :set_tracking_url, only: [:show, :destroy]
+      before_action :set_tracking_url, only: [:show, :destroy, :get_leads]
       before_action :set_substrate, only: :index
 
       def create
@@ -53,6 +53,10 @@ module V2
         render 'v2/shared/tracking_urls/index'
       end
 
+      def get_leads
+        @leads = @tracking_url.leads
+        render 'v2/shared/leads/index'
+      end
 
       private
 
