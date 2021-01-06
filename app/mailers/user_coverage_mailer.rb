@@ -119,6 +119,7 @@ class UserCoverageMailer < ApplicationMailer
   end
 
   def policy_expiring
+
     mail(
       :subject => 'Your policy is expiring'
     )

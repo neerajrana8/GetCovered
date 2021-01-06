@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_12_18_220825) do
+ActiveRecord::Schema.define(version: 2020_12_23_134111) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
@@ -201,6 +201,7 @@ ActiveRecord::Schema.define(version: 2020_12_18_220825) do
     t.string "footer_logo_url"
     t.string "subdomain"
     t.boolean "global_default", default: false, null: false
+    t.string "logo_jpeg_url"
     t.index ["profileable_type", "profileable_id"], name: "index_branding_profiles_on_profileable_type_and_profileable_id"
     t.index ["url"], name: "index_branding_profiles_on_url", unique: true
   end
@@ -593,7 +594,6 @@ ActiveRecord::Schema.define(version: 2020_12_18_220825) do
     t.bigint "agency_id"
     t.bigint "policy_type_ids", default: [], null: false, array: true
     t.boolean "preferred_ho4", default: false, null: false
-    t.boolean "confirmed", default: true, null: false
     t.index ["account_id"], name: "index_insurables_on_account_id"
     t.index ["agency_id"], name: "index_insurables_on_agency_id"
     t.index ["insurable_id"], name: "index_insurables_on_insurable_id"
@@ -662,6 +662,7 @@ ActiveRecord::Schema.define(version: 2020_12_18_220825) do
     t.string "last_visited_page"
     t.integer "tracking_url_id"
     t.integer "agency_id"
+    t.boolean "archived", default: false
     t.index ["email"], name: "index_leads_on_email"
     t.index ["user_id"], name: "index_leads_on_user_id"
   end
@@ -803,6 +804,17 @@ ActiveRecord::Schema.define(version: 2020_12_18_220825) do
     t.datetime "updated_at", null: false
     t.index ["noteable_type", "noteable_id"], name: "index_notes_on_noteable_type_and_noteable_id"
     t.index ["staff_id"], name: "index_notes_on_staff_id"
+  end
+
+  create_table "notification_settings", force: :cascade do |t|
+    t.string "action"
+    t.boolean "enabled", default: false, null: false
+    t.string "notifyable_type"
+    t.bigint "notifyable_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["action"], name: "index_notification_settings_on_action"
+    t.index ["notifyable_type", "notifyable_id"], name: "notification_settings_notifyable_index"
   end
 
   create_table "notifications", force: :cascade do |t|
@@ -982,9 +994,9 @@ ActiveRecord::Schema.define(version: 2020_12_18_220825) do
     t.jsonb "coverage_selections", default: [], null: false
     t.jsonb "extra_settings"
     t.jsonb "resolver_info"
-    t.bigint "tag_ids", default: [], null: false, array: true
     t.jsonb "tagging_data"
     t.string "error_message"
+    t.bigint "tag_ids", default: [], null: false, array: true
     t.index ["account_id"], name: "index_policy_applications_on_account_id"
     t.index ["agency_id"], name: "index_policy_applications_on_agency_id"
     t.index ["billing_strategy_id"], name: "index_policy_applications_on_billing_strategy_id"

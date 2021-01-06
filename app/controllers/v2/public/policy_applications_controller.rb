@@ -7,6 +7,8 @@ module V2
   module Public
     class PolicyApplicationsController < PublicController
 
+      include Leads::CreateMethods
+
       before_action :set_policy_application, only: %i[update rent_guarantee_complete]
       before_action :set_policy_application_from_token, only: %i[show]
       before_action :validate_policy_users_params, only: %i[create update]
@@ -134,7 +136,7 @@ module V2
         @application.expiration_date = @application.effective_date&.send(:+, 1.year)
         @application.agency = Agency.where(master_agency: true).take if @application.agency.nil?
         @application.billing_strategy = BillingStrategy.where(agency:      @application.agency,
-                                                              policy_type: @application.policy_type).take
+                                                              policy_type: @application.policy_type).take if @application.billing_strategy.nil?
 
         validate_applicant_result =
           PolicyApplications::ValidateApplicantsParameters.run!(
@@ -191,8 +193,8 @@ module V2
                                                               policy_type: @application.policy_type,
                                                               carrier: @application.carrier).take
 
-        address_string = params["policy_application"]["fields"]["address"]
-        unit_string = params["policy_application"]["fields"]["unit"]
+        address_string = residential_address_params[:fields][:address]
+        unit_string = residential_address_params[:fields][:unit]
         @application.resolver_info = {
           "address_string" => address_string,
           "unit_string" => unit_string,
@@ -221,6 +223,8 @@ module V2
             end
         end
 
+        map_params_and_create_lead
+
         if @application.save
           # update users
           update_users_result =
@@ -247,6 +251,11 @@ module V2
           render json: standard_error(:policy_application_update_error, nil, @application.errors),
                  status: 422
         end
+      end
+
+      def map_params_and_create_lead
+        set_lead(external_api_call_params(@application))
+        create_lead_event
       end
 
       def create_commercial
@@ -578,7 +587,7 @@ module V2
                   @policy_application.quote(@quote.id)
                   @policy_application.reload
                   @quote.reload
-                  
+
                   if @policy_application.status == "quote_failed"
                     render json: standard_error(:quote_failed, @policy_application.error_message || I18n.t('policy_application_contr.create_security_deposit_replacement.quote_failed')),
                            status: 500
@@ -823,7 +832,7 @@ module V2
         #  end
         #end
         # done
-        
+
         response_tr = results.select{|k, v| k != :errors }.merge(results[:errors] ? { estimated_premium_errors: [results[:errors][:external]].flatten } : {})
         use_translations_for_msi_coverage_options!(response_tr)
 
@@ -867,11 +876,15 @@ module V2
       def set_policy_application
         @application = @policy_application = access_model(::PolicyApplication, params[:id])
       end
-      
+
       def set_policy_application_from_token
         token = ::AccessToken.from_urlparam(params[:token])
         pa_id = token.nil? || token.access_type != 'application_access' || token.expired? ? nil : token.access_data&.[]('policy_application_id')
         @application = @policy_application = access_model(::PolicyApplication, pa_id)
+      end
+
+      def residential_address_params
+        params.require(:policy_application).permit(fields: [:address, :unit])
       end
 
       def new_residential_params
@@ -953,7 +966,7 @@ module V2
 
       def update_rental_guarantee_params
         params.require(:policy_application)
-          .permit(:effective_date, :fields, fields: {})
+          .permit(:effective_date, :billing_strategy_id,  :fields, fields: {})
       end
 
       def get_coverage_options_params

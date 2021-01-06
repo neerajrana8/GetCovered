@@ -37,7 +37,6 @@ module CarrierMsiPolicyQuote
     #     'payment_token'  => the token
     #   }
     def msi_bind(payment_params)
-      # MOOSE WARNING: modify qbe bind methods here
       @bind_response = {
         :error => true,
         :message => nil,

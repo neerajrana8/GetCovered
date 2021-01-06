@@ -33,9 +33,13 @@ es:
   hello: "Hello world"
 
   shared:
+    hi_there: "Hola %{name},"
+    help_center: "Centro de ayuda"
+    this_page: "esta página"
     best: "Mejor"
     accepted: 'Aceptado'
     thank_you: "Gracias"
+    dear: "Estimado %{name}"
 
   devise_token_auth:
     sessions:
@@ -256,13 +260,13 @@ es:
     invalid_address: "Por favor introduce una dirección válida"
     invalid_effective_date: "La fecha de vigencia no es válida"
   coverage_options:
-    1003_title: 'Cobertura C Contenido'
+    1003_title: 'Contenido'
     1003_desc: 'La cobertura de propiedad personal protege sus pertenencias y propiedades personales.'
-    1004_title: 'Cobertura D Pérdida de uso'
+    1004_title: 'Pérdida de uso'
     1004_desc: 'La cobertura le reembolsa el costo de mantener un nivel de vida comparable después de una pérdida cubierta que excede sus gastos normales antes de la pérdida, hasta los límites de la póliza.'
-    1005_title: 'Cobertura E Responsabilidad'
+    1005_title: 'Responsabilidad'
     1005_desc: 'La cobertura de responsabilidad lo protege en caso de daños por negligencia en su apartamento, la comunidad u otros residentes.'
-    1006_title: 'Pago de cobertura F Med'
+    1006_title: 'Med'
     1006_desc: 'Cobertura diseñada para pagar los gastos médicos de otras personas que resulten lesionadas accidentalmente en un lugar asegurado o por las actividades de un asegurado, un empleado residente o un animal propiedad de un asegurado o al cuidado de este, hasta los límites de la póliza.'
     1007_title: 'Daño de mascota'
     1007_desc: 'Esta opción cubre hasta $ 500 por daños accidentales causados por una mascota, como una alfombra manchada o zócalos masticados.'
@@ -288,7 +292,7 @@ es:
     5_desc: 'El monto que la aseguradora deducirá de una pérdida resultante de viento o granizo antes de pagar hasta los límites de su póliza.'
     6_title: 'Terremoto'
     6_desc: 'La cantidad que la aseguradora deducirá de una pérdida resultante de un terremoto antes de pagar hasta los límites de su póliza.'
-    estimated_premium_errors: 'Cobertura C Se requiere selección de contenido'
+    estimated_premium_errors: 'Se requiere selección de contenido'
     cannot_be_blank_counties: "no puede dejarse en blanco si se especifican condados"
     bound: 'UNIDO'
     bound_with_warning: 'BOUND_WITH_WARNING'

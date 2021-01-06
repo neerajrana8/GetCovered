@@ -48,3 +48,73 @@ es:
         thank_you: 'Gracias, por registrarse para una póliza de garantía de alquiler. A continuación se encuentran los detalles de su póliza junto con el acuerdo adjunto y el resumen para sus registros.'
         please_log_in: 'Inicie sesión en nuestro sitio <a class="o_text-light o_underline" href="%{login_url}" style="text-decoration: underline;outline: none;color: #126de5;">esta página</a>  para obtener más información.'
         contact_us: 'Por favor contáctenos en %{contact_email} si tiene alguna pregunta.'
+
+  payment_made_mailer:
+    send_successful_payment_notification:
+      subject: "%{agency_title} - %{policy_type} Pago de prima realizado"
+      thank_you: "Gracias por seleccionar una política %{policy_number} de %{agency_title}."
+      account_was_charged: "Su cuenta se cargó con éxito $%{total} el %{charge_date}."
+      click_link_html: "Haga clic en el siguiente enlace <a href=\"https://%{link}\">%{link}</a> para revisar todas sus facturas.
+                            Si tiene alguna pregunta, comuníquese con %{from}."
+
+  rent_guarantee_cancellation_mailer:
+    send_cancellation_email:
+      subject: "%{agency_title} - %{policy_number} Confirmación de cancelación"
+      sorry: "¡Lamentamos que te vayas! Apreciamos y valoramos cualquier comentario que pueda tener
+                sobre nuestro producto y servicio de %{policy_type}. Si hay algo que podríamos haber hecho para
+                mejorar su experiencia con %{agency_title},
+                comuníquese con nosotros en %{agency_email}.  Ha sido un placer hacer negocios con usted."
+      title: "Confirmación de cancelación"
+      date_of_notice: "Fecha de notificación"
+      policyholder: "Tenedor de una póliza"
+      product: "Producto"
+      company: "Empresa"
+      policy_was_cancelled: "Esta póliza ha sido cancelada según lo solicitado por el asegurado."
+      cancellation_is_effective: "Esta cancelación es efectiva: %{cancellation_date}"
+      contact_us: "Póngase en contacto con nosotros en %{agency_email} si tiene alguna pregunta."
+
+  card_info_update_mailer:
+    please_update_card_info:
+      subject: "%{agency_title} - %{policy_number} Actualizar la información de pago"
+      text: "Gracias por utilizar %{agency_title} para su póliza de %{policy_type}.
+              La tarjeta de crédito que figura en su cuenta vencerá pronto. Inicie sesión en
+              %{agency_title} en el enlace a continuación para actualizar la información de su tarjeta
+              de crédito y evitar la interrupción de la cobertura."
+      contact_us: "No dude en contactarnos en %{contact_email} si tiene alguna pregunta."
+
+  warn_upcoming_charge_mailer:
+    send_warn_upcoming_invoice:
+      subject: "%{agency_title} - %{policy_number} Próximo pago de la prima"
+      text_html: "Gracias por seleccionar una póliza de %{policy_type} de %{agency_title}.
+                   Para el próximo pago de su prima, se le cobrará a su cuenta  $%{charged} el %{due_date}.
+                   Haga clic en el <a href=\"%{link}\">siguiente</a> enlace para revisar todas sus facturas."
+      contact_us: "No dude en contactarnos %{contact_email} al si tiene alguna pregunta."
+
+  warn_user_before_expire_card_mailer:
+    send_warn_expire_card:
+      subject: "%{agency_title} - Caducidad de la tarjeta de crédito"
+      text: "Gracias por utilizar el pago Get Covered Pay. Según nuestros registros, una tarjeta de crédito que
+             haya incluido en el servicio GCpay caducará pronto. Inicie sesión en GCpay en el enlace a
+             continuación para actualizar la información de su tarjeta de crédito y evitar la interrupción de la cobertura "
+      contact_us: "No dude en contactarnos en %{contact_email} si tiene alguna pregunta."
+      thank_you: "Gracias nuevamente por usar GCpay."
+
+  rent_guarantee_notifications_mailer:
+    first_nonpayment_warning:
+      subject: "%{agency_title} - Garantía de alquiler - Advertencia predeterminada"
+      thank_you: "Gracias por utilizar %{agency_title} para su Política de garantía de alquiler. Nuestros
+        registros muestran que no realizó su último pago el %{due_date} por $%{amount_due}. Tenga en cuenta que su
+        La póliza se cancelará si no realiza dos pagos consecutivos."
+      please_login: "Inicie sesión en %{agency_title} en el enlace siguiente para actualizar la información de su tarjeta de crédito a
+                             evitar la interrupción de la cobertura."
+      contact_us: "Feel free to contact us at %{contact_email} if you have any questions."
+    second_nonpayment_warning:
+      subject: "%{agency_title}  - Garantía de alquiler - AVISO FINAL predeterminado"
+      thank_you:
+        "Gracias por utilizar %{agency_title} para su Política de garantía de alquiler. Nuestros registros
+         muestran que no realizó su segundo pago el %{due_date} por $%{amount_due}. Tenga en cuenta que su
+         La póliza se cancelará si no paga antes del %{calculated_cancellation_date}."
+      please_login:
+        "Inicie sesión en %{agency_title} en el enlace siguiente para actualizar la información de su tarjeta de crédito a
+         evitar la interrupción de la cobertura."
+      contact_us: "No dude en contactarnos al %{contact_email} si tiene alguna pregunta."

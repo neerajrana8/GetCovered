@@ -1,5 +1,7 @@
 class Lead < ApplicationRecord
 
+  include RecordChange
+
   #TODO: move to config file
   PAGES_RENT_GUARANTEE = ['Landing Page', 'Eligibility Page', 'Basic Info Page', 'Eligibility Requirements Page', 'Address Page', 'Employer Page',
            'Landlord Page', 'Confirmation Page', 'Terms&Conditions Page', 'Payment Page']
@@ -26,8 +28,10 @@ class Lead < ApplicationRecord
   validates :email, presence: true
 
   scope :converted, -> { where(status: 'converted')}
+  scope :not_converted, -> { where.not(status: 'converted') }
   scope :prospected, -> { where(status: 'prospect')}
-  scope :archived, -> { where(status: 'archived')}
+  scope :archived, -> { where(archived: true)}
+  scope :not_archived, -> { where(archived: false)}
   scope :with_user, -> { where.not(user_id: nil) }
 
   def self.date_of_first_lead

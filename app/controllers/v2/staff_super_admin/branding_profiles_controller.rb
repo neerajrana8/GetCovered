@@ -120,11 +120,12 @@ module V2
       def attach_images
         if update_allowed?
           logo_status = get_image_url(:logo_url) if attach_images_params[:logo_url].present?
+          logo_jpeg_status = get_image_url(:logo_jpeg_url) if attach_images_params[:logo_jpeg_url].present?
           footer_status = get_image_url(:footer_logo_url) if attach_images_params[:footer_logo_url].present?
-          if logo_status == "error" || footer_status == "error"
+          if logo_status == "error" || logo_jpeg_status == "error" || footer_status == "error"
             render json: { success: false }, status: :unprocessable_entity
           else
-            render json: { logo_url: logo_status, footer_logo_url: footer_status }, status: :ok
+            render json: { logo_url: logo_status, logo_jpeg_url: logo_jpeg_status, footer_logo_url: footer_status }, status: :ok
           end
         else
           render json: { success: false, errors: ['Unauthorized Access'] }, status: :unauthorized
@@ -186,7 +187,7 @@ module V2
 
       def attach_images_params
         return({}) if params.blank?
-        params.require(:images).permit(:logo_url, :footer_logo_url)
+        params.require(:images).permit(:logo_url, :logo_jpeg_url, :footer_logo_url)
       end
 
       def get_image_url(field_name)
@@ -194,7 +195,6 @@ module V2
         img_url = rails_blob_url(images.last)
         img_url.present? && @branding_profile.update_column(field_name, img_url) ? img_url : "error"
       end
-
     end
   end
 end

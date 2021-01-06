@@ -1,4 +1,4 @@
-# User model
+  # User model
 # file: app/models/user.rb
 # frozen_string_literal: true
 require 'digest'
@@ -20,7 +20,7 @@ class User < ApplicationRecord
                       :set_qbe_id,
                       :identify_segment
   
-  has_many :invoices, as: :payer
+	has_many :invoices, as: :payer
 
   has_many :authored_histories,
            as: :authorable,
@@ -64,6 +64,7 @@ class User < ApplicationRecord
     through: :active_account_users
 
   has_many :agencies, through: :accounts
+  has_many :notification_settings, as: :notifyable
 
   accepts_nested_attributes_for :payment_profiles, :address
   accepts_nested_attributes_for :profile, update_only: true
@@ -273,12 +274,12 @@ class User < ApplicationRecord
           self.address.blank? ?
             for_insurable.primary_address.get_confie_addr(::InsurableType::RESIDENTIAL_UNITS_IDS.include?(for_insurable.insurable_type_id) ? "Unit #{for_insurable.title}" : true, address_type: "MailingAddress")
             : self.address.get_confie_addr(true, address_type: "MailingAddress")
-          
+
         ]
       )
     }.compact
   end
-  
+
   def get_deposit_choice_occupant_hash(primary: false)
     {
       firstName:          self.profile.first_name,

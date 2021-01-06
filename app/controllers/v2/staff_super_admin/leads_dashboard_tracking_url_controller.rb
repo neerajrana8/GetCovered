@@ -2,8 +2,10 @@ module V2
   module StaffSuperAdmin
     class LeadsDashboardTrackingUrlController < StaffSuperAdminController
 
+      before_action :set_substrate, only: :index
+
       def index
-        super(:@tracking_urls, TrackingUrl, :leads)
+        super(:@tracking_urls, @substrate, :leads)
         @tracking_url_counts = {}
         calculate_counts
         render 'v2/shared/tracking_urls/index'
@@ -13,14 +15,8 @@ module V2
 
       def calculate_counts
         @tracking_urls.each do |tr_url|
-          lead_events_count = 0
-          tr_url.leads.each{|el| lead_events_count+=el.lead_events.count}
-          @tracking_url_counts[tr_url.id] = { leads_count: tr_url.leads.count, lead_events_count: lead_events_count }
+          @tracking_url_counts[tr_url.id] = { leads_count: tr_url.leads.count, converted: tr_url.leads.converted.count }
         end
-      end
-
-      def define_params
-
       end
 
       def supported_filters(called_from_orders = false)
@@ -41,6 +37,18 @@ module V2
 
       def supported_orders
         supported_filters(true)
+      end
+
+      def set_substrate
+        #need to delete after fix on ui
+        if @substrate.nil?
+          @substrate = access_model(::TrackingUrl).not_deleted
+          if params[:filter].present? && params[:filter][:archived]
+            @substrate = access_model(::TrackingUrl).deleted
+          elsif params[:filter].nil? || !!params[:filter][:archived]
+            @substrate = access_model(::TrackingUrl).not_deleted
+          end
+        end
       end
 
     end
