@@ -70,6 +70,10 @@ module V2
       def supported_orders
         supported_filters(true)
       end
+
+      def update_allowed?
+        true
+      end
     end
   end
 end
