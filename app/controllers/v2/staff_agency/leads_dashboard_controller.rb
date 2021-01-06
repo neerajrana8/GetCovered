@@ -2,6 +2,8 @@ module V2
   module StaffAgency
     class LeadsDashboardController < StaffAgencyController
 
+      include Leads::LeadsDashboardCalculations
+
       before_action :set_substrate, only: :index
 
       def index
@@ -42,91 +44,13 @@ module V2
         render 'v2/shared/leads/dashboard_index'
       end
 
-      def get_filters
-        render json: {campaign_source: TrackingUrl.not_deleted.pluck(:campaign_source).uniq.as_json,
-                      campaign_name: TrackingUrl.not_deleted.pluck(:campaign_name).uniq.as_json,
-                      campaign_medium: TrackingUrl.not_deleted.pluck(:campaign_medium).uniq.as_json}
-      end
-
-      def supported_filters(called_from_orders = false)
-        @calling_supported_orders = called_from_orders
-        {
-            agency_id: [:scalar],
-            last_visit: [:interval, :scalar],
-            tracking_url: {
-                campaign_source: [:scalar],
-                campaign_medium: [:scalar],
-                campaign_name: [:scalar]
-            }
-        }
-      end
-
-      def supported_orders
-        supported_filters(true)
-      end
-
-      #need to add validation
-      def date_params
-        if params[:filter].present?
-          {
-              start: params[:filter][:last_visit][:start],
-              end: params[:filter][:last_visit][:end]
-          }
-        else
-          params["filter"] = {}
-          {
-              start: Lead.date_of_first_lead.to_s || Time.now.beginning_of_year,
-              end: Time.now.to_s
-          }
-        end
-      end
-
-      private
-
-      def filter_by_day?(start_date, end_date)
-        (((end_date - 1.month) == start_date ) || ((end_date - 1.week) == start_date )) || (end_date.mjd - start_date.mjd < 31)
-      end
-
-      #data for last_month or last_year of from the begining of the year
-      def filter_by_month?(start_date, end_date)
-        ((end_date - 1.year) == start_date) || (start_date == end_date.beginning_of_year) || (end_date.mjd - start_date.mjd > 31)
-      end
-
-      #need to refactor
-      def site_visits(leads)
-        visits = 0
-        leads.each do |lead|
-          visits+=lead.lead_events.order("DATE(created_at)").group("DATE(created_at)").count.keys.size
-        end
-        visits
-      end
-
-      def leads(leads)
-        leads.count
-      end
-
-      def applications(leads)
-        leads.where(status: ["prospect","converted"]).count
-      end
-
-      def not_finished_applications(leads)
-        applications(leads) - conversions(leads)#@leads.with_user.prospected.count
-      end
-
-      def conversions(leads)
-        leads.converted.count
-      end
-
       def set_substrate
         super
         if @substrate.nil?
-          @substrate = access_model(::Lead).presented.includes(:profile, :tracking_url)
+          @substrate = access_model(::Lead).presented.not_archived.includes(:profile, :tracking_url)
         end
       end
 
-      def default_pagination_per
-        9998
-      end
     end
   end
 end
