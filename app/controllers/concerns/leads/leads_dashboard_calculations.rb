@@ -46,21 +46,21 @@ module Leads
     end
 
     def leads(leads)
-      leads.not_archived.where(last_visited_page: [Lead::PAGES_RENT_GUARANTEE[0], Lead::PAGES_RESIDENTIAL[0]]).count
+      leads.where(last_visited_page: [Lead::PAGES_RENT_GUARANTEE[0], Lead::PAGES_RESIDENTIAL[0]]).count
     end
 
     def applications(leads)
-      leads.not_archived.where.not(last_visited_page: [Lead::PAGES_RENT_GUARANTEE[0], Lead::PAGES_RESIDENTIAL[0]]).count
+      leads.where.not(last_visited_page: [Lead::PAGES_RENT_GUARANTEE[0], Lead::PAGES_RESIDENTIAL[0]]).count
     end
 
     def not_finished_applications(leads)
-      leads.not_archived.where(last_visited_page: [Lead::PAGES_RENT_GUARANTEE.last, Lead::PAGES_RESIDENTIAL.last]).count
+      leads.where(last_visited_page: [Lead::PAGES_RENT_GUARANTEE.last, Lead::PAGES_RESIDENTIAL.last]).count
       #applications(leads) - conversions(leads)
       #@leads.with_user.prospected.count
     end
 
     def conversions(leads)
-      leads.not_archived.converted.count
+      leads.converted.count
     end
 
     def default_pagination_per
