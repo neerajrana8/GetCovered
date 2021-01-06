@@ -25,6 +25,14 @@ module Leads
       supported_filters(true)
     end
 
+    def default_pagination_per
+      9998
+    end
+
+    def maximum_pagination_per
+      9998
+    end
+
     private
 
     def filter_by_day?(start_date, end_date)
@@ -61,10 +69,6 @@ module Leads
 
     def conversions(leads)
       leads.converted.count
-    end
-
-    def default_pagination_per
-      9998
     end
 
     #need to add validation
