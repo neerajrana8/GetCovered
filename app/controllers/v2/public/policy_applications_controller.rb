@@ -881,7 +881,7 @@ module V2
       end
 
       def residential_address_params
-        params.require(:policy_application).permit(fields: :address)
+        params.require(:policy_application).permit(fields: [:address, :unit])
       end
 
       def new_residential_params
