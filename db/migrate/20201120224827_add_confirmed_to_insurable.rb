@@ -19,7 +19,7 @@ class AddConfirmedToInsurable < ActiveRecord::Migration[5.2]
     if nprid.blank?
       ::Account.create(
         title: "Nonpreferred Residential",
-        slug: "nonpreferred-residential" 
+        slug: "nonpreferred-residential",
         enabled: true, 
         whitelabel: true, 
         tos_accepted: true, 
