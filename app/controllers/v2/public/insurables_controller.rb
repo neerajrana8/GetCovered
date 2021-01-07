@@ -113,6 +113,7 @@ module V2
         end
 
         # output stuff with essentially the same format as in the Address search
+        #  Note: we treat preferred_ho4 communities/buildings with enabled=false as nonpreferred here
         def insurable_prejson(ins, short_mode: false)
           case ins
             when ::Insurable
@@ -128,11 +129,11 @@ module V2
                 }.compact)
               elsif ::InsurableType::RESIDENTIAL_COMMUNITIES_IDS.include?(ins.insurable_type_id)
                 return {
-                  id: ins.id, title: ins.title, enabled: ins.enabled, preferred_ho4: ins.preferred_ho4,
+                  id: ins.id, title: ins.title, enabled: ins.enabled, preferred_ho4: ins.preferred_ho4 && ins.enabled,
                   account_id: ins.account_id, agency_id: ins.agency_id, insurable_type_id: ins.insurable_type_id
                 }.merge(short_mode ? {} : {
                   category: ins.category, primary_address: insurable_prejson(ins.primary_address),
-                  units: ins.preferred_ho4 ? ins.units.confirmed.select{|u| u.enabled }.map{|u| insurable_prejson(u, short_mode: true) } : nil
+                  units: ins.preferred_ho4 && ins.enabled ? ins.units.confirmed.select{|u| u.enabled }.map{|u| insurable_prejson(u, short_mode: true) } : nil
                 }).compact
               elsif ::InsurableType::RESIDENTIAL_BUILDINGS_IDS.include?(ins.insurable_type_id)
                 com = ins.parent_community
@@ -140,9 +141,9 @@ module V2
                   id: ins.id, title: ins.title,
                   account_id: ins.account_id, agency_id: ins.agency_id, insurable_type_id: ins.insurable_type_id,
                 }.merge(short_mode ? {} : {
-                  enabled: ins.enabled, preferred_ho4: ins.preferred_ho4 || false,
+                  enabled: ins.enabled, preferred_ho4: (ins.preferred_ho4 && ins.enabled) || false,
                   category: ins.category, primary_address: insurable_prejson(ins.primary_address),
-                  units: ins.preferred_ho4 ? ins.units.confirmed.select{|u| u.enabled }.map{|u| insurable_prejson(u, short_mode: true) } : nil, # WARNING: we don't bother recursing with short mode here
+                  units: ins.preferred_ho4 && ins.enabled ? ins.units.confirmed.select{|u| u.enabled }.map{|u| insurable_prejson(u, short_mode: true) } : nil, # WARNING: we don't bother recursing with short mode here
                   community: insurable_prejson(com, short_mode: true)
                 }.compact)
               else

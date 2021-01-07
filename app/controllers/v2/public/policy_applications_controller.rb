@@ -169,7 +169,7 @@ module V2
           :agency => @access_token.bearer,
           :policy_type => PolicyType.find(policy_type),
           :carrier => policy_type == 1 ? Carrier.find(5) : Carrier.find(4),
-          :account => policy_type == 1 ? Account.first : nil, # MOOSE WARNING: we should be grabbing the primary insurable's account id (or nil if it lacks one), but we don't have that yet
+          :account => nil,
           :effective_date => place_holder_date,
           :expiration_date => place_holder_date + 1.year
         }
@@ -331,6 +331,7 @@ module V2
       def create_security_deposit_replacement
         # set up the application
         @application = PolicyApplication.new(create_security_deposit_replacement_params)
+        @application.account_id = @application.primary_insurable&.account_id if @application.primary_insurable&.account_id
         if @application.agency.nil? && @application.account.nil?
           @application.agency = Agency.where(master_agency: true).take
         elsif @application.agency.nil?
@@ -405,6 +406,7 @@ module V2
       def create_residential
         @application = PolicyApplication.new(create_residential_params)
         @application.expiration_date = @application.effective_date&.send(:+, 1.year)
+        @application.account_id = @application.primary_insurable&.account_id
 
         unless @application.coverage_selections.blank?
           @application.coverage_selections.each do |cs|
@@ -419,8 +421,6 @@ module V2
           @application.coverage_selections.select!{|cs| cs['selection'] || cs[:selection] }
           @application.coverage_selections.push({ 'category' => 'coverage', 'options_type' => 'none', 'uid' => '1010', 'selection' => true }) unless @application.coverage_selections.any?{|co| co['uid'] == '1010' }
         end
-        
-        @application.account_id = @application.primary_insurable&.account_id
 
         if @application.agency.nil? && @application.account.nil?
           @application.agency = Agency.where(master_agency: true).take

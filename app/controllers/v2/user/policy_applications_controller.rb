@@ -153,6 +153,8 @@ module V2
       def create_residential
         @application = PolicyApplication.new(create_residential_params)
         @application.expiration_date = @application.effective_date&.send(:+, 1.year)
+        @application.account_id = @application.primary_insurable&.account_id
+        
         if @application.carrier_id == 5
           if !@application.effective_date.nil? && (@application.effective_date >= Time.current.to_date + 90.days || @application.effective_date < Time.current.to_date)
             render json: { "effective_date" => [I18n.t('user_policy_application_controller.must_be_within_the_next_90_days')] }.to_json,
@@ -259,6 +261,8 @@ module V2
         @policy_application = PolicyApplication.find(params[:id])
 
         if @policy_application.policy_type.title == 'Residential'
+        
+          @application.account_id = @application.primary_insurable&.account_id
 
           @policy_application.policy_rates.destroy_all
           if update_residential_params[:effective_date].present?
