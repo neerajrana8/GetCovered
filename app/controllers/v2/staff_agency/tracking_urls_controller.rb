@@ -2,7 +2,7 @@ module V2
   module StaffAgency
     class TrackingUrlsController < StaffAgencyController
 
-      before_action :set_tracking_url, only: [:show, :destroy]
+      before_action :set_tracking_url, only: [:show, :destroy, :get_leads]
       before_action :set_substrate, only: :index
 
       def create
@@ -52,6 +52,11 @@ module V2
         render 'v2/shared/tracking_urls/index'
       end
 
+      def get_leads
+        @leads = @tracking_url.leads
+        render 'v2/shared/leads/index'
+      end
+
       private
 
       def set_tracking_url
@@ -71,7 +76,9 @@ module V2
       def set_substrate
         super
         if @substrate.nil?
-          @substrate = access_model(::TrackingUrl).not_deleted
+          @substrate = access_model(::TrackingUrl)
+          params[:filter][:deleted] = params[:filter][:archived] if params[:filter].present? && params[:filter][:archived].present?
+          params[:filter].delete(:archived)
         end
       end
 
@@ -79,7 +86,8 @@ module V2
         @calling_supported_orders = called_from_orders
         {
             agency_id: %i[scalar array],
-            created_at: %i[scalar interval]
+            created_at: %i[scalar interval],
+            deleted: [:scalar]
         }
       end
 

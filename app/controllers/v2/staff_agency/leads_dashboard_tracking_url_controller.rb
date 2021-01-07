@@ -4,7 +4,6 @@ module V2
       before_action :set_substrate, only: :index
 
       def index
-        define_params
         super(:@tracking_urls, @substrate, :leads)
         @tracking_url_counts = {}
         calculate_counts
@@ -19,10 +18,6 @@ module V2
         end
       end
 
-      def define_params
-
-      end
-
       def supported_filters(called_from_orders = false)
         @calling_supported_orders = called_from_orders
         {
@@ -35,7 +30,8 @@ module V2
             campaign_content: [:scalar],
             leads: {
                 last_visit: [:interval, :scalar]
-            }
+            },
+            deleted: [:scalar]
         }
       end
 
@@ -47,12 +43,14 @@ module V2
         super
         #need to delete after fix on ui
         if @substrate.nil?
-          @substrate = access_model(::TrackingUrl).not_deleted
-          if params[:filter].present? && params[:filter][:archived]
-            @substrate = access_model(::TrackingUrl).deleted
-          elsif params[:filter].nil? || !!params[:filter][:archived]
-            @substrate = access_model(::TrackingUrl).not_deleted
-          end
+          @substrate = access_model(::TrackingUrl)
+          params[:filter][:deleted] = params[:filter][:archived] if params[:filter].present? && params[:filter][:archived].present?
+          params[:filter].delete(:archived)
+          #if params[:filter].present? && params[:filter][:archived]
+          #  @substrate = access_model(::TrackingUrl).deleted
+          #elsif params[:filter].nil? || !!params[:filter][:archived]
+          #  @substrate = access_model(::TrackingUrl).not_deleted
+          #end
         end
       end
 

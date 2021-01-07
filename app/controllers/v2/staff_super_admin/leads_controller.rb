@@ -36,22 +36,18 @@ module V2
       def update_params
         return({}) if params[:lead].blank?
 
-        permitted = params.require(:lead).permit( :status)
-        permitted[:archived] = permitted[:status] == 'archived' ? true : false
-        permitted.delete(:status)
-
-        permitted
+        params.require(:lead).permit(:archived)
       end
 
       def set_substrate
         if @substrate.nil?
           @substrate = access_model(::Lead).presented.not_converted.includes(:profile, :tracking_url)
           #need to delete after fix on ui
-          if params[:filter].present? && params[:filter][:archived]
-            @substrate = access_model(::Lead).presented.not_converted.archived.includes(:profile, :tracking_url)
-          elsif params[:filter].nil? || !!params[:filter][:archived]
-            @substrate = access_model(::Lead).presented.not_converted.not_archived.includes(:profile, :tracking_url)
-          end
+          #if params[:filter].present? && params[:filter][:archived]
+          #  @substrate = access_model(::Lead).presented.not_converted.archived.includes(:profile, :tracking_url)
+          #elsif params[:filter].nil? || !!params[:filter][:archived]
+          #  @substrate = access_model(::Lead).presented.not_converted.not_archived.includes(:profile, :tracking_url)
+          #end
         end
       end
 
@@ -61,9 +57,8 @@ module V2
             created_at: [:scalar, :array, :interval],
             email: [:scalar, :like],
             agency_id: [:scalar, :interval],
-            status: [:scalar]
-        #,
-            #    archived: [:scalar]
+            status: [:scalar],
+            archived: [:scalar]
         }
       end
 
