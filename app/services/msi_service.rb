@@ -557,6 +557,10 @@ class MsiService
     # put the request together
     self.action = :get_or_create_community
     self.errors = nil
+    unless year_built.nil? # MSI system requires YB>=1900; they told us older buildings should be submitted as built in 1900
+      year_built = year_built.to_i
+      year_built = 1900 if year_built < 1900
+    end
     self.compiled_rxml = compile_xml({
       InsuranceSvcRq: {
         RenterPolicyQuoteInqRq: {
@@ -618,6 +622,7 @@ class MsiService
       number_of_units ||= 50
       years_professionally_managed ||= 6
       year_built ||= 2002
+      year_built = 1900 if year_built && year_built.to_i < 1900
       gated = false unless gated == true
     end
     # go go go
@@ -701,6 +706,7 @@ class MsiService
       number_of_units ||= 50
       years_professionally_managed ||= 6
       year_built ||= 2002
+      year_built = 1900 if year_built && year_built.to_i < 1900
       gated = false unless gated == true
     end
     # handling mailing address
