@@ -1,6 +1,5 @@
 FactoryBot.define do
   factory :branding_profile do
-    title { "GetCovered" }
     subdomain { "" }
     sequence(:url) { |n| "getcovered+#{n}.com" }
     logo_url { "some_url.com" }
