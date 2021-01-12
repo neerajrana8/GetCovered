@@ -2,6 +2,8 @@ module Leads
   module LeadsDashboardCalculations
     extend ActiveSupport::Concern
 
+    MAX_COUNTS = 9998
+
     def get_filters
       render json: {campaign_source: TrackingUrl.not_deleted.pluck(:campaign_source).uniq.as_json,
                     campaign_name: TrackingUrl.not_deleted.pluck(:campaign_name).uniq.as_json,
@@ -26,11 +28,11 @@ module Leads
     end
 
     def default_pagination_per
-      9998
+      MAX_COUNTS
     end
 
     def maximum_pagination_per
-      9998
+      MAX_COUNTS
     end
 
     private
@@ -54,17 +56,16 @@ module Leads
     end
 
     def leads(leads)
-      leads.where(last_visited_page: [Lead::PAGES_RENT_GUARANTEE[0], Lead::PAGES_RESIDENTIAL[0]]).count
+      #leads.where(last_visited_page: [Lead::PAGES_RENT_GUARANTEE[0], Lead::PAGES_RESIDENTIAL[0]]).count
+      leads.not_converted.count
     end
 
     def applications(leads)
-      leads.where.not(last_visited_page: [Lead::PAGES_RENT_GUARANTEE[0], Lead::PAGES_RESIDENTIAL[0]]).count
+      leads.not_converted.where.not(last_visited_page: [Lead::PAGES_RENT_GUARANTEE[0], Lead::PAGES_RESIDENTIAL[0]]).count
     end
 
     def not_finished_applications(leads)
-      leads.where(last_visited_page: [Lead::PAGES_RENT_GUARANTEE.last, Lead::PAGES_RESIDENTIAL.last]).count
-      #applications(leads) - conversions(leads)
-      #@leads.with_user.prospected.count
+      leads.not_converted.where(last_visited_page: [Lead::PAGES_RENT_GUARANTEE.last, Lead::PAGES_RESIDENTIAL.last]).count
     end
 
     def conversions(leads)

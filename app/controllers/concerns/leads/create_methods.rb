@@ -69,6 +69,7 @@ module Leads
 
     def lead_params
       permitted = params.permit(:email, :identifier, :last_visited_page, :agency_id)
+      permitted[:email] = permitted[:email].downcase
       permitted[:last_visited_page] = params[:lead_event_attributes][:data][:last_visited_page] if params[:lead_event_attributes] &&
           params[:lead_event_attributes][:data] && permitted[:last_visited_page].blank?
       permitted
@@ -119,6 +120,7 @@ module Leads
 
     def external_api_call_params(application)
       user_attr = create_policy_users_params[:policy_users_attributes].first[:user_attributes]
+      user_attr[:email] = user_attr[:email].downcase
       request = {
           "email": user_attr[:email],
           "lead_event_attributes":{
