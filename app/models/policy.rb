@@ -104,7 +104,7 @@ class Policy < ApplicationRecord
 
   has_many :histories, as: :recordable
   has_many :change_requests, as: :changeable
-  
+
   has_many :signable_documents, as: :referent
 
   has_many_attached :documents
@@ -396,6 +396,7 @@ class Policy < ApplicationRecord
   end
 
   def run_postbind_hooks # do not remove this; concerns add functionality to it by overriding it and calling super
+    notify_the_idiots()
     super if defined?(super)
   end
 
@@ -404,8 +405,8 @@ class Policy < ApplicationRecord
     def notify_the_idiots
       # this method is a critical joke.  touch it at your own expense - dylan.
       the_idiots = ["brandon@getcoveredllc.com", "dylan@getcoveredllc.com", "ryan@getcoveredllc.com"]
-      their_message = "Bray out!  a policy hath been sold.  'i  this message thou shall find details that might be of interest.\n\nname: #{primary_user.profile.full_name}\nagency: #{agency.title}\npolicy type: #{policy_type.title}\npremium: $#{ sprintf "%.2f", @policy.policy_premiums.first.total.to_f / 100 }"
-      ActionMailer::Base.mail(from: 'purchase-notifier@getcoveredinsurance.com', to: the_idiots, subject: "A Policy has Sold!", body: their_message).deliver
+      their_message = "Bray out!  a policy hath been sold.  'i  this message thou shall find details that might be of interest.\n\nname: #{primary_user.profile.full_name}\nagency: #{agency.title}\npolicy type: #{policy_type.title}\nbilling strategy: #{policy_premiums.first.billing_strategy.title}\npremium: $#{ sprintf "%.2f", policy_premiums.first.total.to_f / 100 }\nfirst payment: $#{ sprintf "%.2f", invoices.order(due_date: :DESC).first.total.to_f / 100 }"
+      ActionMailer::Base.mail(from: "purchase-notifier-#{ENV["RAILS_ENV"]}@getcoveredinsurance.com", to: the_idiots, subject: "A Policy has Sold!", body: their_message).deliver
     end
 
     def date_order
