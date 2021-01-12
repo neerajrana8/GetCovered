@@ -189,6 +189,7 @@ class KlaviyoService
 
   def map_last_visited_url(event_details)
     return "" if event_details.blank?
+    #need to update after multiple brandings setup
     branding_url = @lead.agency.branding_profiles.take.url
     if @lead.last_event&.policy_type&.rent_guarantee?
       "https://#{branding_url}/rentguarantee"
