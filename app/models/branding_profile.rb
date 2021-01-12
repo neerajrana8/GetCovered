@@ -79,7 +79,11 @@ class BrandingProfile < ApplicationRecord
     base_uri = Rails.application.credentials.uri[ENV["RAILS_ENV"].to_sym][:client]
     uri = URI(base_uri)
     uri.host = "#{self.profileable.slug}.#{uri.host}"
-    uri.host = "#{self.profileable.slug}-#{Time.zone.now.to_i}.#{URI(base_uri).host}" if BrandingProfile.exists?(url: uri.to_s)
+
+    if BrandingProfile.exists?(url: uri.to_s.sub(/^https?\:\/\/(www.)?/,''))
+      uri.host = "#{self.profileable.slug}-#{Time.zone.now.to_i}.#{URI(base_uri).host}"
+    end
+
     uri.to_s
   end
 
