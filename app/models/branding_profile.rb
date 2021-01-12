@@ -52,6 +52,7 @@ class BrandingProfile < ApplicationRecord
     self.styles['client']['colors']['highlight'] ||= '#FFFFFF'
     self.styles['client']['colors']['warning']   ||= '#FF0000'
     self.styles['client']['content'] ||= {}
+    self.url ||= default_url
   end
 
   def sanitize_branding_url
@@ -72,6 +73,14 @@ class BrandingProfile < ApplicationRecord
 
   def check_global_default
     BrandingProfile.where(global_default: true).where.not(id: id).update(global_default: false) if global_default?
+  end
+
+  def default_url
+    base_uri = Rails.application.credentials.uri[ENV["RAILS_ENV"].to_sym][:client]
+    uri = URI(base_uri)
+    uri.host = "#{self.profileable.slug}.#{uri.host}"
+    uri.host = "#{self.profileable.slug}-#{Time.zone.now.to_i}.#{URI(base_uri).host}" if BrandingProfile.exists?(url: uri.to_s)
+    uri.to_s
   end
 
   def set_up_from_master
