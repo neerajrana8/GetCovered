@@ -3,7 +3,6 @@
 # Get Covered
 agency = Agency.find_by_title('Get Covered')
 params = {
-  "title"            => "GetCovered",
   "url"              => "getcoveredinsurance.com",
   "default"          => false,
   "global_default"   => true,
@@ -412,7 +411,7 @@ Faq.create(faq_attributes)
 # Cambridge
 agency = Agency.find_by_title('Cambridge')
 if agency.present?
-  params = {"title"=>"Cambridge Insurance",
+  params = {
             "url"=>"os.getcoveredinsurance.com",
             "default"=>false,
             "styles"=>

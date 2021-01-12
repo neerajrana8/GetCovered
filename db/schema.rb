@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_12_23_134111) do
+ActiveRecord::Schema.define(version: 2021_01_11_112823) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
@@ -149,6 +149,19 @@ ActiveRecord::Schema.define(version: 2020_12_23_134111) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "application_notifications", force: :cascade do |t|
+    t.string "action"
+    t.string "subject"
+    t.integer "status"
+    t.integer "code"
+    t.boolean "read", default: false
+    t.integer "notifiable_id"
+    t.string "notifiable_type"
+    t.string "message"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
   create_table "assignments", force: :cascade do |t|
     t.boolean "primary"
     t.bigint "staff_id"
@@ -189,7 +202,6 @@ ActiveRecord::Schema.define(version: 2020_12_23_134111) do
   end
 
   create_table "branding_profiles", force: :cascade do |t|
-    t.string "title"
     t.string "url"
     t.boolean "default", default: false, null: false
     t.jsonb "styles"
@@ -373,6 +385,9 @@ ActiveRecord::Schema.define(version: 2020_12_23_134111) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "type_of_loss", default: 0, null: false
+    t.string "name"
+    t.string "address"
+    t.string "nature_of_claim"
     t.text "staff_notes"
     t.index ["claimant_type", "claimant_id"], name: "index_claims_on_claimant_type_and_claimant_id"
     t.index ["insurable_id"], name: "index_claims_on_insurable_id"
@@ -996,7 +1011,6 @@ ActiveRecord::Schema.define(version: 2020_12_23_134111) do
     t.jsonb "resolver_info"
     t.jsonb "tagging_data"
     t.string "error_message"
-    t.bigint "tag_ids", default: [], null: false, array: true
     t.index ["account_id"], name: "index_policy_applications_on_account_id"
     t.index ["agency_id"], name: "index_policy_applications_on_agency_id"
     t.index ["billing_strategy_id"], name: "index_policy_applications_on_billing_strategy_id"
@@ -1004,7 +1018,6 @@ ActiveRecord::Schema.define(version: 2020_12_23_134111) do
     t.index ["policy_application_group_id"], name: "index_policy_applications_on_policy_application_group_id"
     t.index ["policy_id"], name: "index_policy_applications_on_policy_id"
     t.index ["policy_type_id"], name: "index_policy_applications_on_policy_type_id"
-    t.index ["tag_ids"], name: "policy_application_tag_ids_index", using: :gin
   end
 
   create_table "policy_coverages", force: :cascade do |t|
@@ -1345,14 +1358,6 @@ ActiveRecord::Schema.define(version: 2020_12_23_134111) do
     t.index ["reset_password_token"], name: "index_staffs_on_reset_password_token", unique: true
     t.index ["role"], name: "index_staffs_on_role"
     t.index ["uid", "provider"], name: "index_staffs_on_uid_and_provider", unique: true
-  end
-
-  create_table "tags", force: :cascade do |t|
-    t.string "title"
-    t.text "description"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["title"], name: "index_tags_on_title", unique: true
   end
 
   create_table "tracking_urls", force: :cascade do |t|
