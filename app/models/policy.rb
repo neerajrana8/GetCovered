@@ -404,9 +404,8 @@ class Policy < ApplicationRecord
 
     def notify_the_idiots
       # this method is a critical joke.  touch it at your own expense - dylan.
-      the_idiots = ["brandon@getcoveredllc.com", "dylan@getcoveredllc.com", "ryan@getcoveredllc.com"]
       their_message = "Bray out!  a policy hath been sold.  'i  this message thou shall find details that might be of interest.\n\nname: #{primary_user.profile.full_name}\nagency: #{agency.title}\npolicy type: #{policy_type.title}\nbilling strategy: #{policy_premiums.first.billing_strategy.title}\npremium: $#{ sprintf "%.2f", policy_premiums.first.total.to_f / 100 }\nfirst payment: $#{ sprintf "%.2f", invoices.order(due_date: :DESC).first.total.to_f / 100 }"
-      ActionMailer::Base.mail(from: "purchase-notifier-#{ENV["RAILS_ENV"]}@getcoveredinsurance.com", to: the_idiots, subject: "A Policy has Sold!", body: their_message).deliver
+      ActionMailer::Base.mail(from: "purchase-notifier-#{ENV["RAILS_ENV"]}@getcoveredinsurance.com", to: "policysold@getcoveredllc.com", subject: "A Policy has Sold!", body: their_message).deliver
     end
 
     def date_order
