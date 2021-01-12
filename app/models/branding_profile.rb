@@ -5,6 +5,9 @@
 class BrandingProfile < ApplicationRecord
 
   after_initialize :initialize_branding_profile
+
+  before_validation :set_default_url
+
   before_save :sanitize_branding_url
   after_save :check_default
   after_save :check_global_default
@@ -52,7 +55,6 @@ class BrandingProfile < ApplicationRecord
     self.styles['client']['colors']['highlight'] ||= '#FFFFFF'
     self.styles['client']['colors']['warning']   ||= '#FF0000'
     self.styles['client']['content'] ||= {}
-    self.url ||= default_url
   end
 
   def sanitize_branding_url
@@ -73,6 +75,10 @@ class BrandingProfile < ApplicationRecord
 
   def check_global_default
     BrandingProfile.where(global_default: true).where.not(id: id).update(global_default: false) if global_default?
+  end
+
+  def set_default_url
+    self.url ||= default_url
   end
 
   def default_url
