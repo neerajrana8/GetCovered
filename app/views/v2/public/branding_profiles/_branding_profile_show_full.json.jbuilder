@@ -12,3 +12,5 @@ json.pages do
     json.title page.title
   end
 end
+
+json.profileable_title branding_profile.profileable.title if branding_profile.profileable.respond_to?(:title)

@@ -11,7 +11,7 @@ describe 'BrandingProfile API spec', type: :request do
   context 'public api' do
     before :all do
       @new_agency = FactoryBot.create(:agency, title: 'New Whitelabel Agency')
-      @agency_profile = FactoryBot.create(:branding_profile, title: 'New agency', profileable: @new_agency, url: 'new_agency.getcovered.com')
+      @agency_profile = FactoryBot.create(:branding_profile, profileable: @new_agency, url: 'new_agency.getcovered.com')
     end
 
     it 'should find correct profile with origin header' do
@@ -61,7 +61,6 @@ describe 'BrandingProfile API spec', type: :request do
       post "/v2/staff_agency/branding-profiles/#{@profile.id}/update_from_file", params: params, headers: @headers
       result = JSON.parse response.body
       expect(response.status).to eq(200)
-      expect(result['title']).to eq('Updated title')
     end
 
     it 'should create BrandingProfile' do
@@ -72,7 +71,7 @@ describe 'BrandingProfile API spec', type: :request do
     end
 
     it 'should let create another BrandingProfile' do
-      FactoryBot.create(:branding_profile, title: 'New agency', profileable: @agency, url: 'new_agency_test.getcovered.com')
+      FactoryBot.create(:branding_profile, profileable: @agency, url: 'new_agency_test.getcovered.com')
       post '/v2/staff_agency/branding-profiles', params: { branding_profile: correct_params }, headers: @headers
       result = JSON.parse response.body
       expect(response.status).to eq(201)
@@ -84,19 +83,16 @@ describe 'BrandingProfile API spec', type: :request do
       result = JSON.parse response.body
       expect(response.status).to eq(200)
       expect(result['id']).to_not eq(nil)
-      expect(result['title']).to eq(correct_params[:title])
       expect(result['profile_attributes'].count).to eq(1)
       expect(result['profile_attributes'].first['name']).to eq(correct_params[:branding_profile_attributes_attributes][0][:name])
     end
 
     it 'should update BrandingProfile' do
       @profile = BrandingProfile.create(correct_params)
-      new_title = 'A new title'
       style = { 'colors' => { 'primary' => '#fff' } }
-      put "/v2/staff_agency/branding-profiles/#{@profile.id}", params: { branding_profile: { title: new_title, styles: style } }, headers: @headers
+      put "/v2/staff_agency/branding-profiles/#{@profile.id}", params: { branding_profile: { styles: style } }, headers: @headers
       result = JSON.parse response.body
       expect(response.status).to eq(200)
-      expect(result['title']).to eq(new_title)
       expect(result['styles']).to eq(style)
     end
 
@@ -127,25 +123,21 @@ describe 'BrandingProfile API spec', type: :request do
       result = JSON.parse response.body
       expect(response.status).to eq(200)
       expect(result['id']).to_not eq(nil)
-      expect(result['title']).to eq(correct_params[:title])
       expect(result['profile_attributes'].count).to eq(1)
       expect(result['profile_attributes'].first['name']).to eq(correct_params[:branding_profile_attributes_attributes][0][:name])
     end
 
     it 'should update BrandingProfile' do
       @profile = BrandingProfile.create(correct_params)
-      new_title = 'A new title'
       style = { 'colors' => { 'primary' => '#fff' } }
-      put "/v2/staff_super_admin/branding-profiles/#{@profile.id}", params: { branding_profile: { title: new_title, styles: style } }, headers: @headers
+      put "/v2/staff_super_admin/branding-profiles/#{@profile.id}", params: { branding_profile: { styles: style } }, headers: @headers
       result = JSON.parse response.body
       expect(response.status).to eq(200)
-      expect(result['title']).to eq(new_title)
       expect(result['styles']).to eq(style)
     end
 
     it 'should destroy BrandingProfile' do
       @profile = BrandingProfile.create(correct_params)
-      new_title = 'A new title'
       style = { 'colors' => { 'primary' => '#fff' } }
       delete "/v2/staff_super_admin/branding-profiles/#{@profile.id}", headers: @headers
       result = JSON.parse response.body
@@ -164,7 +156,6 @@ describe 'BrandingProfile API spec', type: :request do
   def correct_params
     {
       subdomain: '',
-      title: 'GetCovered',
       profileable_id: @agency.id,
       profileable_type: 'Agency',
       url: 'getcovered.com',

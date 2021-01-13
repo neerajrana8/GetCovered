@@ -10,7 +10,7 @@ class BrandingProfile < ApplicationRecord
   after_save :check_global_default
   after_create :set_up_from_master
 
-  validates_presence_of :title, :url
+  validates_presence_of :url
 
   belongs_to :profileable, polymorphic: true
 
