@@ -25,13 +25,10 @@ module V2
           sub_agencies = agency.agencies.select(required_fields)
           sub_agencies_attr = sub_agencies.map{|sa| sa.branding_profiles.map{|bp| sa.attributes.merge("branding_url" => bp.formatted_url) } }
                                           .flatten.sort_by{|hash| hash["branding_url"] }
-          result << if sub_agencies.any?
-                      agency.attributes.merge("agencies" => sub_agencies_attr, "branding_url" => branding_profiles.first.formatted_url )
-                    else
-                      agency_attr = agency.attributes.merge("branding_url"=> branding_profiles.first.formatted_url)
-                    end
+          result << agency.attributes.merge({ "branding_url"=> branding_profiles.first.formatted_url })
+                                     .merge(sub_agencies_attr.blank? ? {} : { "agencies" => sub_agencies_attr })
           branding_profiles.drop(1).each do |branding_profile|
-            result << agency.attributes.merge("branding_profile" => branding_profile.formatted_url)
+            result << agency.attributes.merge("branding_url" => branding_profile.formatted_url)
           end
         end
 
