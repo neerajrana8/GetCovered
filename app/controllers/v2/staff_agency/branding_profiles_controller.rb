@@ -142,7 +142,7 @@ module V2
         def branding_profile_params
           return({}) if params[:branding_profile].blank?
           params.require(:branding_profile).permit(
-            :default, :profileable_id, :profileable_type, :title,
+            :default, :profileable_id, :profileable_type,
             :url, :footer_logo_url, :logo_url, :subdomain, :subdomain_test, images: [],
             branding_profile_attributes_attributes: [ :id, :name, :value, :attribute_type],
             styles: {}

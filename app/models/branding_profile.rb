@@ -10,7 +10,7 @@ class BrandingProfile < ApplicationRecord
   after_save :check_global_default
   after_create :set_up_from_master
 
-  validates_presence_of :title, :url
+  validates_presence_of :url
 
   belongs_to :profileable, polymorphic: true
 
@@ -32,6 +32,10 @@ class BrandingProfile < ApplicationRecord
 
   def contact_email
     branding_profile_attributes.find_by_name('contact_email')&.value
+  end
+  
+  def formatted_url
+    self.url.blank? ? I18n.t('agency_model.no_branding') : self.url.include?('https') ? self.url : "https://#{self.url}"
   end
 
   private

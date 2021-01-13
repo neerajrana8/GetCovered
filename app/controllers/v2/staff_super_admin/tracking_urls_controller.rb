@@ -21,15 +21,15 @@ module V2
         @agencies = Agency.main_agencies #paginator(Agency.main_agencies)
 
         @agencies.select(required_fields).each do |agency|
+          branding_profiles = agency.branding_profiles.order("url asc").to_a
           sub_agencies = agency.agencies.select(required_fields)
-          result << if sub_agencies.any?
-                      sub_agencies_attr = sub_agencies.map{|el| el.attributes.merge("branding_url"=> el.branding_url)}
-                      agency_attr = agency.attributes.reverse_merge("agencies"=> sub_agencies_attr)
-                      agency_attr.merge("branding_url"=> agency.branding_url)
-                    else
-                      agency_attr = agency.attributes
-                      agency_attr.merge("branding_url"=> agency.branding_url)
-                    end
+          sub_agencies_attr = sub_agencies.map{|sa| sa.branding_profiles.map{|bp| sa.attributes.merge("branding_url" => bp.formatted_url) } }
+                                          .flatten.sort_by{|hash| hash["branding_url"] }
+          result << agency.attributes.merge({ "branding_url"=> branding_profiles.first.formatted_url })
+                                     .merge(sub_agencies_attr.blank? ? {} : { "agencies" => sub_agencies_attr })
+          branding_profiles.drop(1).each do |branding_profile|
+            result << agency.attributes.merge("branding_url" => branding_profile.formatted_url)
+          end
         end
 
         render json: result.to_json
