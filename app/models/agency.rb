@@ -203,10 +203,7 @@ class Agency < ApplicationRecord
   end
 
   def branding_url
-    branding_url = self.branding_profiles&.last&.url
-    return I18n.t('agency_model.no_branding') if branding_url.blank?
-    branding_url = "https://#{branding_url}" unless branding_url.include?('https')
-    branding_url
+    self.branding_profiles&.last&.formatted_url || I18n.t('agency_model.no_branding')
   end
 
   private
