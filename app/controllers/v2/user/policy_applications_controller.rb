@@ -339,7 +339,7 @@ module V2
 
         if @policy_application.policy_type.title == 'Residential'
         
-          @application.account_id = @application.primary_insurable&.account_id
+          @policy_application.account_id = @policy_application.primary_insurable&.account_id
 
           @policy_application.policy_rates.destroy_all
           if update_residential_params[:effective_date].present?
