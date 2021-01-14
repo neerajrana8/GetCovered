@@ -56,22 +56,11 @@ module V2
         end
 
         if @application.save
-          update_users_result =
-            PolicyApplications::UpdateUsers.run!(
-              policy_application: @application,
-              policy_users_params: create_policy_users_params[:policy_users_attributes],
-              current_user_email: current_user.email
-            )
-
-          if update_users_result.success?
-            if @application.update(status: 'in_progress')
-              render 'v2/public/policy_applications/show'
-            else
-              render json: @application.errors.to_json,
-                     status: 422
-            end
+          if @application.update(status: 'in_progress')
+            render 'v2/public/policy_applications/show'
           else
-            render json: update_users_result.failure, status: 422
+            render json: @application.errors.to_json,
+                   status: 422
           end
         else
           # Rental Guarantee Application Save Error
