@@ -10,7 +10,7 @@ class TrackingUrl < ApplicationRecord
   scope :deleted, -> { where(deleted: true) }
 
   def branding_url
-    "https://#{self.agency.branding_profiles.last.url}"
+    "https://#{self.agency.branding_profiles.first.url}"
   end
 
   def form_url
