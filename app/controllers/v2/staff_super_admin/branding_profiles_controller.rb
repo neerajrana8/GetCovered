@@ -138,7 +138,8 @@ module V2
         @calling_supported_orders = called_from_orders
         {
           profileable_type: [:scalar],
-          profileable_id: [:scalar]
+          profileable_id: [:scalar],
+          enabled: [:scalar]
         }
       end
 
