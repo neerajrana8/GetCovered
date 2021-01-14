@@ -239,7 +239,7 @@ module V2
               new_access_token = @application.create_access_token
               @redirect_url = "#{site}/#{program}/#{new_access_token.to_urlparam}"
               # sign_in
-              sign_in_primaty_user(@application.primary_user)
+              sign_in_primary_user(@application.primary_user)
               # done
               render 'v2/public/policy_applications/show_external'
             else
@@ -310,7 +310,7 @@ module V2
                   end
                 end
 
-                sign_in_primaty_user(@application.primary_user)
+                sign_in_primary_user(@application.primary_user)
 
                 render json: result.to_json, status: 200
 
@@ -392,7 +392,7 @@ module V2
           end
           # return nice stuff
 
-          sign_in_primaty_user(@application.primary_user)
+          sign_in_primary_user(@application.primary_user)
 
           render json:  {
                          id:       @application.id,
@@ -469,7 +469,7 @@ module V2
 
                   @application.primary_user.set_stripe_id
 
-                  sign_in_primaty_user(@application.primary_user)
+                  sign_in_primary_user(@application.primary_user)
 
                   render json:  {
                                  id:       @application.id,
@@ -600,7 +600,7 @@ module V2
                     render json: standard_error(:quote_failed, @policy_application.error_message || I18n.t('policy_application_contr.create_security_deposit_replacement.quote_failed')),
                            status: 500
                   elsif @quote.status == "quoted"
-                    sign_in_primaty_user(@policy_application.primary_user)
+                    sign_in_primary_user(@policy_application.primary_user)
 
                     render json:                    {
                                    id:       @policy_application.id,
@@ -671,7 +671,7 @@ module V2
                 }
               }
 
-              sign_in_primaty_user(@policy_application.primary_user)
+              sign_in_primary_user(@policy_application.primary_user)
 
               render json: result.to_json, status: 200
             else
@@ -852,7 +852,7 @@ module V2
 
       private
 
-      def sign_in_primaty_user(primary_user)
+      def sign_in_primary_user(primary_user)
         sign_in(primary_user)
         response.headers.merge!(primary_user.create_new_auth_token)
       end
