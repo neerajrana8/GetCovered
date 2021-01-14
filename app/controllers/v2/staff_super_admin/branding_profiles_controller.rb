@@ -134,6 +134,18 @@ module V2
 
       private
 
+      def supported_filters(called_from_orders = false)
+        @calling_supported_orders = called_from_orders
+        {
+          profileable_type: [:scalar],
+          profileable_id: [:scalar]
+        }
+      end
+
+      def supported_orders
+        supported_filters(true)
+      end
+
       def view_path
         super + '/branding_profiles'
       end

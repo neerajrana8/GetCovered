@@ -87,7 +87,7 @@
 
     resources :branding_profiles,
       path: "branding-profiles",
-      only: [ :show, :create, :update ] do
+      only: [ :index, :show, :create, :update ] do
         member do
           get :faqs
           get :export

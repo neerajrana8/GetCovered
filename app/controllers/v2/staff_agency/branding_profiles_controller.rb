@@ -10,6 +10,10 @@ module V2
                     only: %i[update show destroy faqs faq_create faq_update
                              faq_question_create faq_question_update attach_images export update_from_file]
 
+      def index
+        super(:@branding_profiles, BrandingProfile.where(profileable_type: 'Agency', profileable_id: @agency.id))
+      end
+
       def show; end
 
       def create
@@ -121,6 +125,18 @@ module V2
       end
 
       private
+
+      def supported_filters(called_from_orders = false)
+        @calling_supported_orders = called_from_orders
+        {
+          profileable_type: [:scalar],
+          profileable_id: [:scalar]
+        }
+      end
+
+      def supported_orders
+        supported_filters(true)
+      end
 
       def view_path
         super + '/branding_profiles'
