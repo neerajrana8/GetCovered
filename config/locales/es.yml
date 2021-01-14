@@ -260,38 +260,6 @@ es:
     invalid_address: "Por favor introduce una dirección válida"
     invalid_effective_date: "La fecha de vigencia no es válida"
   coverage_options:
-    1003_title: 'Contenido'
-    1003_desc: 'La cobertura de propiedad personal protege sus pertenencias y propiedades personales.'
-    1004_title: 'Pérdida de uso'
-    1004_desc: 'La cobertura le reembolsa el costo de mantener un nivel de vida comparable después de una pérdida cubierta que excede sus gastos normales antes de la pérdida, hasta los límites de la póliza.'
-    1005_title: 'Responsabilidad'
-    1005_desc: 'La cobertura de responsabilidad lo protege en caso de daños por negligencia en su apartamento, la comunidad u otros residentes.'
-    1006_title: 'Med'
-    1006_desc: 'Cobertura diseñada para pagar los gastos médicos de otras personas que resulten lesionadas accidentalmente en un lugar asegurado o por las actividades de un asegurado, un empleado residente o un animal propiedad de un asegurado o al cuidado de este, hasta los límites de la póliza.'
-    1007_title: 'Daño de mascota'
-    1007_desc: 'Esta opción cubre hasta $ 500 por daños accidentales causados por una mascota, como una alfombra manchada o zócalos masticados.'
-    1008_title: 'Respaldo de agua'
-    1008_desc: 'Esta opción cubre su propiedad personal en caso de que haya un respaldo de agua / alcantarillado en su vivienda cubierta que comience fuera de las instalaciones.'
-    1060_title: 'Recompra de responsabilidad animal'
-    1060_desc: 'Esta opción proporciona un aumento en la cantidad de protección de responsabilidad otorgada al asegurado en el caso de que un asegurado pueda ser considerado responsable de los daños causados por una mascota.'
-    1065_title: 'Fraude de identidad'
-    1065_desc: 'Esta opción brinda cobertura de hasta $ 5,000 para los gastos incurridos por un asegurado como resultado directo de un fraude de identidad.'
-    1075_title: 'Ácaro'
-    1075_desc: 'Esta opción brinda cobertura para tratar, remediar y eliminar una infestación de chinches en la residencia.'
-    1076_title: 'Robo por entrada forzada'
-    1076_desc: 'Esta opción proporciona un descuento al cambiar la cobertura de robo para requerir evidencia física de entrada forzada y puede requerir un informe policial.'
-    1077_title: 'Protección adicional para inquilinos'
-    1077_desc: 'Esta opción cubre su propiedad personal (hasta $ 5,000) en caso de un terremoto.'
-    1062_title: 'Compensación de trabajadores'
-    1062_desc: ""
-    1_title: 'Todos los demás peligros'
-    1_desc: 'La cantidad que la aseguradora deducirá de una pérdida que resulte de otro peligro que no se haya mencionado (como robo, huracán o viento) antes de pagar hasta los límites de su póliza.'
-    2_title: 'Robo'
-    2_desc: 'La cantidad que la aseguradora deducirá de una pérdida resultante de un robo antes de pagar hasta los límites de su póliza.'
-    5_title: 'Granizo de viento'
-    5_desc: 'El monto que la aseguradora deducirá de una pérdida resultante de viento o granizo antes de pagar hasta los límites de su póliza.'
-    6_title: 'Terremoto'
-    6_desc: 'La cantidad que la aseguradora deducirá de una pérdida resultante de un terremoto antes de pagar hasta los límites de su póliza.'
     estimated_premium_errors: 'Se requiere selección de contenido'
     cannot_be_blank_counties: "no puede dejarse en blanco si se especifican condados"
     bound: 'UNIDO'
@@ -299,3 +267,66 @@ es:
     renewing: 'RENOVANDO'
     renewed: 'REINSTADO'
     reinstated: 'REINSTATED'
+    1_title: "Todos los demás peligros"
+    1_desc: "La aseguradora deducirá de una pérdida debido a un riesgo diferente que no está listado (es decir, robo, tifón o viento) antes de pagar hasta sus límites de cobertura."
+    2_title: "Robo"
+    2_desc: "La cantidad que la aseguradora deducirá de una pérdida resultante de un robo antes de pagar hasta los límites de su póliza."
+    3_title: "Huracán"
+    3_desc: "El monto que la aseguradora deducirá de una pérdida resultante de un huracán antes de pagar hasta los límites de su póliza."
+    5_title: "Granizo de viento"
+    5_desc: "El monto que la aseguradora deducirá de una pérdida resultante de viento o granizo antes de pagar hasta los límites de su póliza."
+    6_title: "Terremoto"
+    6_desc: "La cantidad que la aseguradora deducirá de una pérdida resultante de un terremoto antes de pagar hasta los límites de su póliza."
+    1003_title: "Cobertura C Contenido"
+    1003_desc: "Cobertura de propiedad individual que asegura sus propias cosas y propiedad"
+    1004_title: "Cobertura D Pérdida de uso"
+    1004_desc: "La cobertura le reembolsa el gasto de mantener una forma de vida prácticamente idéntica después de una desgracia cubierta que supera sus costos habituales."
+    1005_title: "Cobertura E Responsabilidad"
+    1005_desc: "La cobertura de responsabilidad lo protege en caso de daños por negligencia en su apartamento, la comunidad u otros residentes."
+    1006_title: "Pago de cobertura F Med"
+    1006_desc: "Cobertura diseñada para pagar los costos médicos de otras personas que por casualidad resulten lesionadas en una propiedad asegurada hasta los límites de la póliza."
+    1007_title: "Daño de mascota"
+    1007_desc: "Esta opción cubre hasta $ 500 por daños accidentales causados ​​por una mascota, como una alfombra manchada o zócalos masticados."
+    1008_title: "Respaldo de agua"
+    1008_desc: "Esta opción cubre su propiedad personal en caso de que haya daños por agua / alcantarillado en su vivienda cubierta que comience fuera de las instalaciones."
+    1009_title: "Paquete Tenants Plus"
+    1010_title: "Costo de remplazo"
+    1010_desc: "Esta opción reemplaza la propiedad dañada con materiales de la misma clase y calidad,"
+    1011_title: "Propiedad personal programada"
+    1012_title: "Joyería Spp"
+    1013_title: "Pieles Spp"
+    1014_title: "Cubiertos Spp"
+    1015_title: "Spp Bellas Artes"
+    1016_title: "Cámaras Spp"
+    1017_title: "Equipo Musical Spp"
+    1018_title: "Equipo de golf Spp"
+    1019_title: "Colecciones de sellos Spp"
+    1020_title: "Joyería de los hombres de Spp"
+    1021_title: "Joyería de mujer Spp"
+    1043_title: "Aumento de los límites de propiedad Joyas, Relojes"
+    1060_title: "Recompra de responsabilidad animal"
+    1060_desc: "Esta opción proporciona una cantidad mayor de protección de responsabilidad cuando un asegurado asume la responsabilidad por daños causados ​​por una mascota."
+    1061_title: "Terremoto"
+    1061_desc: "Esta opción cubre su propiedad personal (hasta $ 5,000) en caso de un terremoto."
+    1062_title: "Compensación de trabajadores"
+    1063_title: "Guardería en el hogar"
+    1065_title: "Fraude de identidad"
+    1065_desc: "Esta opción brinda cobertura de hasta $ 5,000 para los gastos incurridos por un asegurado como resultado directo de un fraude de identidad."
+    1066_title: "Servicio de Bomberos"
+    1067_title: "Agujero del fregadero"
+    1068_title: "Exclusión de granizo de viento"
+    1070_title: "Ordenanza o ley"
+    1071_title: "Evaluación de pérdidas"
+    1072_title: "Propiedad Refrigerada"
+    1072_desc: "Esta opción brinda una cobertura de hasta $ 500 por pérdida de propiedad causada por la interrupción del servicio eléctrico o falla mecánica en un congelador o frigorífico."
+    1073_title: "Los ingresos por alquiler"
+    1075_title: "Ácaro"
+    1075_desc: "Esta opción brinda cobertura para tratar, remediar y eliminar una infestación de chinches en la residencia."
+    1076_title: "Robo por entrada forzada"
+    1076_desc: "Esta opción proporciona un descuento al cambiar la cobertura de robo para requerir evidencia física de entrada forzada y puede requerir un informe policial."
+    1077_title: "Protección adicional para inquilinos"
+    1081_title: "Autoalmacenamiento Recompra"
+    1081_desc: "Esta opción permite al asegurado volver a comprar límites adicionales para la propiedad personal que se almacena."
+    1082_title: "Alquiler limitado a otros"
+    1082_desc: "La póliza puede estar respaldada para asegurar contra pérdidas por robo cuando sea total o parcial la residencia."
+    1083_title: "Avería del sistema doméstico"
