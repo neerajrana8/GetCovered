@@ -33,7 +33,7 @@ class BrandingProfile < ApplicationRecord
   def contact_email
     branding_profile_attributes.find_by_name('contact_email')&.value
   end
-  
+
   def formatted_url
     self.url.blank? ? I18n.t('agency_model.no_branding') : self.url.include?('https') ? self.url : "https://#{self.url}"
   end
@@ -59,7 +59,7 @@ class BrandingProfile < ApplicationRecord
   end
 
   def sanitize_branding_url
-    self.url = self.url.sub(/^https?\:\/\/(www.)?/,'')
+    self.url = self.url.sub(/^https?\:\/{0,3}(www.)?/,'')
   end
 
   def check_default
