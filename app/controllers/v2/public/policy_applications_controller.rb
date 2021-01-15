@@ -558,6 +558,7 @@ module V2
               policy_application: @policy_application,
               policy_users_params: update_policy_users_params[:policy_users_attributes]
             )
+          LeadEvents::LinkPolicyApplicationUsers.run!(policy_application: @policy_application)
           if !(update_users_result == true || update_users_result.success?)
             render json: update_users_result.failure,
               status: 422
@@ -645,6 +646,7 @@ module V2
               policy_application: @policy_application,
               policy_users_params: create_policy_users_params[:policy_users_attributes]
             )
+          LeadEvents::LinkPolicyApplicationUsers.run!(policy_application: @policy_application)
           if update_users_result.success?
             quote_attempt = @policy_application.pensio_quote
 
