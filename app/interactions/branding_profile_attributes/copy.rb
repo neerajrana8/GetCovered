@@ -35,7 +35,7 @@ module BrandingProfileAttributes
       attribute = branding_profile.branding_profile_attributes.find_by_name(name)
 
       if attribute.present?
-        return Success() unless force?
+        return Success() unless force
 
         force_update(attribute, value)
       else
