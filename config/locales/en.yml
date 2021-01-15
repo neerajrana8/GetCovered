@@ -259,38 +259,6 @@ en:
     invalid_address: "Please enter a valid address"
     invalid_effective_date: "The effective date is invalid"
   coverage_options:
-    1003_title: 'Contents'
-    1003_desc: 'Personal property coverage protects your personal belongings and property.'
-    1004_title: 'Loss Of Use'
-    1004_desc: 'Coverage reimburses you for the cost of maintaining a comparable standard of living following a covered loss that exceeds your normal expenses prior to the loss, up to the policy limits.'
-    1005_title: 'Liability'
-    1005_desc: 'Liability coverage protects you in an event of negligent damage to your apartment, the community, or other residents.'
-    1006_title: 'Med Payment'
-    1006_desc: 'Coverage designed to pay for medical expenses to others who are accidentally injured on an insured location or by the activities of an insured, resident employee, or an animal owned by or in the care of an insured, up to the policy limits.'
-    1007_title: 'Pet Damage'
-    1007_desc: 'This option covers up to $500 for accidental damage caused by a pet such as stained carpet or chewed baseboards.'
-    1008_title: 'Water Backup'
-    1008_desc: 'This option covers your personal property in the event there is water/sewer back-up in your covered dwelling that begins off premises.'
-    1060_title: 'Animal Liability Buy Back'
-    1060_desc: 'This option provides an increase in the amount of liability protection afforded to the insured in the case where an insured can be held liability for damages by a pet.'
-    1065_title: 'Identity Fraud'
-    1065_desc: 'This option provides coverage up to $5,000 for expenses incurred by an insured as a direct result of identity fraud.'
-    1075_title: 'Bed Bug'
-    1075_desc: 'This option provides coverage to treat, remediate and eliminate a bed bug infestation in the residence.'
-    1076_title: 'Forced Entry Theft'
-    1076_desc: 'his option provides a discount by changing theft coverage to require physical evidence of forced entry and may require a police report.'
-    1077_title: 'Tenants Additional Protection'
-    1077_desc: 'This option covers your personal property (up to $5,000) in the event of an earthquake.'
-    1062_title: 'Workers Compensation'
-    1062_desc: ""
-    1_title: 'All Other Peril'
-    1_desc: 'The amount the insurer will deduct from a loss resulting from other peril not already listed (such as theft, hurricane or wind) before paying up to its policy limits.'
-    2_title: 'Theft'
-    2_desc: 'The amount the insurer will deduct from a loss resulting from theft before paying up to its policy limits.'
-    5_title: 'Wind Hail'
-    5_desc: 'The amount the insurer will deduct from a loss resulting from wind or hail before paying up to its policy limits.'
-    6_title: 'Earthquake'
-    6_desc: 'The amount the insurer will deduct from a loss resulting from an earthquake before paying up to its policy limits.'
     estimated_premium_errors: 'Contents selection is required'
     cannot_be_blank_counties: "cannot be blank if counties are specified"
     bound: 'BOUND'
@@ -298,6 +266,69 @@ en:
     renewing: 'RENEWING'
     renewed: 'RENEWED'
     reinstated: 'REINSTATED'
+    1_title: "All Other Peril"
+    1_desc: "The insurer will deduct from a loss because of different risk that is unlisted (I.e., theft, typhoon, or wind) before paying up to its coverage limits."
+    2_title: "Theft"
+    2_desc: "The amount the insurer will deduct from a loss resulting from theft before paying up to its policy limits."
+    3_title: "Hurricane"
+    3_desc: "The amount the insurer will deduct from a loss resulting from a hurricane before paying up to its policy limits."
+    5_title: "Wind Hail"
+    5_desc: "The amount the insurer will deduct from a loss resulting from wind or hail before paying up to its policy limits."
+    6_title: "Earthquake"
+    6_desc: "The amount the insurer will deduct from a loss resulting from an earthquake before paying up to its policy limits."
+    1003_title: "Contents"
+    1003_desc: "Individual property coverage that ensures your own things and property"
+    1004_title: "Loss Of Use"
+    1004_desc: "Coverage repays you for the expense of keeping a practically identical way of life following a covered misfortune that surpasses your typical costs."
+    1005_title: "Liability"
+    1005_desc: "Liability coverage protects you in an event of negligent damage to your apartment, the community, or other residents."
+    1006_title: "Med Payment"
+    1006_desc: "Coverage designed to pay for medical costs to others who are by chance injured on an insured property up to the policy's limits."
+    1007_title: "Pet Damage"
+    1007_desc: "This option covers up to $500 for accidental damage caused by a pet such as stained carpet or chewed baseboards."
+    1008_title: "Water Backup"
+    1008_desc: "This option covers your personal property in the event there's water/sewer damage in your covered dwelling that begins off premises."
+    1009_title: "Tenants Plus Package"
+    1010_title: "Replacement Cost"
+    1010_desc: "This option replace the damaged property with materials of like kind and quality, without any deduction for depreciation"
+    1011_title: "Scheduled Personal Property"
+    1012_title: "Spp Jewelry"
+    1013_title: "Spp Furs"
+    1014_title: "Spp Silverware"
+    1015_title: "Spp Fine Arts"
+    1016_title: "Spp Cameras"
+    1017_title: "Spp Musical Equipment"
+    1018_title: "Spp Golf Equipment"
+    1019_title: "Spp Stamp Collections"
+    1020_title: "Spp Men's Jewelry"
+    1021_title: "Spp Women's Jewelry"
+    1043_title: "Increased Property Limits   Jewelry, Watches"
+    1060_title: "Animal Liability Buy Back"
+    1060_desc: "This option provides an increaed amount of liability protection when an insured is held liable for damages by a pet."
+    1061_title: "Earthquake"
+    1061_desc: "This option covers your personal property (up to $5,000) in the event of an earthquake."
+    1062_title: "Workers Compensation"
+    1063_title: "Home Day Care"
+    1065_title: "Identity Fraud"
+    1065_desc: "This option provides coverage up to $5,000 for expenses incurred by an insured as a direct result of identity fraud."
+    1066_title: "Fire Department Service"
+    1067_title: "Sink Hole"
+    1068_title: "Wind Hail Exclusion"
+    1070_title: "Ordinance Or Law"
+    1071_title: "Loss Assessment"
+    1072_title: "Refrigerated Property"
+    1072_desc: "This option provides up to $500 coverage for loss of property caused by power service interruption or mechanical failure in a freezer or frige."
+    1073_title: "Rental Income"
+    1075_title: "Bed Bug"
+    1075_desc: "This option provides coverage to treat, remediate and eliminate a bed bug infestation in the residence."
+    1076_title: "Forced Entry Theft"
+    1076_desc: "This option provides a discount by changing theft coverage to require physical evidence of forced entry and may require a police report."
+    1077_title: "Tenants Additional Protection"
+    1081_title: "Self Storage Buy Back"
+    1081_desc: "This option allows the insured to buy back additional limits for personal property that is stored."
+    1082_title: "Limited Rental To Others"
+    1082_desc: "The policy may be endorsed to insure against loss by theft when all or part of the residence."
+    1083_title: "Home System Breakdown"
 
 # I18n.t('agency_model.no_branding')
 # I18n.t('policy_application_contr.new.unit_not_found')
