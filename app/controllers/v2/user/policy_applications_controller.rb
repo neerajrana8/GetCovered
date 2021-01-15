@@ -453,7 +453,7 @@ module V2
 
       def create_residential_params
         params.require(:policy_application)
-          .permit(:effective_date, :expiration_date, :auto_pay,
+          .permit(:branding_profile_id, :effective_date, :expiration_date, :auto_pay,
                   :auto_renew, :billing_strategy_id, :account_id, :policy_type_id,
                   :carrier_id, :agency_id, fields: [:title, :value, options: []],
                   questions: [:title, :value, options: []],
@@ -468,7 +468,7 @@ module V2
 
       def create_commercial_params
         params.require(:policy_application)
-          .permit(:effective_date, :expiration_date, :auto_pay,
+          .permit(:branding_profile_id, :effective_date, :expiration_date, :auto_pay,
                   :auto_renew, :billing_strategy_id, :account_id, :policy_type_id,
                   :carrier_id, :agency_id, fields: {},
                                            questions: [:text, :value, :questionId, options: [], questions: [:text, :value, :questionId, options: []]])
@@ -476,14 +476,14 @@ module V2
 
       def create_rental_guarantee_params
         params.require(:policy_application)
-          .permit(:effective_date, :expiration_date, :auto_pay,
+          .permit(:branding_profile_id, :effective_date, :expiration_date, :auto_pay,
                   :auto_renew, :billing_strategy_id, :account_id, :policy_type_id,
                   :carrier_id, :agency_id, fields: {})
       end
 
       def create_security_deposit_replacement_params
         params.require(:policy_application)
-          .permit(:effective_date, :expiration_date, :auto_pay,
+          .permit(:branding_profile_id, :effective_date, :expiration_date, :auto_pay,
                   :auto_renew, :billing_strategy_id, :account_id, :policy_type_id,
                   :carrier_id, :agency_id, fields: [:title, :value, options: []],
                   questions:                       [:title, :value, options: []],
@@ -510,8 +510,7 @@ module V2
 
       def update_residential_params
         params.require(:policy_application)
-          .permit(:effective_date,
-                  :billing_strategy_id, fields: {},
+          .permit(:branding_profile_id, :effective_date, :billing_strategy_id, fields: {},
                   policy_rates_attributes: [:insurable_rate_id],
                   policy_insurables_attributes: [:insurable_id])
       end
