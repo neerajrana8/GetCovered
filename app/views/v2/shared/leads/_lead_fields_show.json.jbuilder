@@ -14,6 +14,19 @@ if last_event.present? && last_event.policy_type.present?
   json.interested_product last_event.policy_type.title
 end
 
+json.users do
+  json.array! policy.policy_users do |policy_user|
+    json.primary policy_user.primary
+    json.spouse policy_user.spouse
+    json.partial! "v2/staff_super_admin/users/user_show_full.json.jbuilder", user: policy_user.user
+  end
+end
+
+json.primary_campaign_name lead&.tracking_url&.campaign_name
+json.premium_total lead&.user&.policy_applications&.last&.policy_quotes&.last&.policy_premium&.total
+json.premium_first lead&.user&.policy_applications&.last&.policy_quotes&.last&.invoices&.first&.total
+json.billing_strategy lead&.user&.policy_applications&.last&.policy_quotes&.last&.policy_premium&.billing_strategy&.title
+
 json.tracking_url do
   if lead.tracking_url.present?
     json.partial! 'v2/shared/tracking_urls/tracking_url_index_fields.json.jbuilder',
