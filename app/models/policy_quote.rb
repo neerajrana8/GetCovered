@@ -124,6 +124,7 @@ class PolicyQuote < ApplicationRecord
 
 
           policy = build_policy(
+            branding_profile_id: policy_application.branding_profile_id,
             number: policy_number,
             status: policy_status,
             billing_status: "CURRENT",
