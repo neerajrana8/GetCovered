@@ -8,7 +8,7 @@ class RentGuaranteeCancellationMailer < ApplicationMailer
 
     set_locale(@user.profile&.language)
     @agency = @policy.agency
-    @branding_profile = @agency.branding_profiles.first
+    @branding_profile = @policy.branding_profile || BrandingProfile.global_default
     @agency_email = 'support@' + @branding_profile.url
     subject = t('rent_guarantee_cancellation_mailer.send_cancellation_email.subject',
                 agency_title: @agency.title,

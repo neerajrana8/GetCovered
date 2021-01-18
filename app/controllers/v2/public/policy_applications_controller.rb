@@ -906,14 +906,14 @@ module V2
 
       def new_residential_params
         params.require(:policy_application)
-          .permit(:agency_id, :account_id, :policy_type_id,
+          .permit(:branding_profile_id, :agency_id, :account_id, :policy_type_id,
                   :address_string, :unit_title, # for non-preferred
                   policy_insurables_attributes: [:id]) # for preferred
       end
 
       def create_residential_params
         params.require(:policy_application)
-          .permit(:effective_date, :auto_pay,
+          .permit(:branding_profile_id, :effective_date, :auto_pay,
                   :auto_renew, :billing_strategy_id, :account_id, :policy_type_id,
                   :carrier_id, :agency_id, fields: [:title, :value, options: []],
                   questions:                       [:title, :value, options: []],
@@ -928,7 +928,7 @@ module V2
 
       def create_commercial_params
         params.require(:policy_application)
-          .permit(:effective_date, :auto_pay,
+          .permit(:branding_profile_id, :effective_date, :auto_pay,
                   :auto_renew, :billing_strategy_id, :account_id, :policy_type_id,
                   :carrier_id, :agency_id, fields: {},
                   questions:                       [:text, :value, :questionId, options: [], questions: [:text, :value, :questionId, options: []]])
@@ -936,7 +936,7 @@ module V2
 
       def create_rental_guarantee_params
         params.require(:policy_application)
-          .permit(:effective_date, :auto_pay,
+          .permit(:branding_profile_id, :effective_date, :auto_pay,
                   :auto_renew, :billing_strategy_id, :account_id, :policy_type_id,
                   :carrier_id, :agency_id, fields: {})
       end
@@ -944,7 +944,7 @@ module V2
 
       def create_security_deposit_replacement_params
         params.require(:policy_application)
-          .permit(:effective_date, :expiration_date, :auto_pay,
+          .permit(:branding_profile_id, :effective_date, :expiration_date, :auto_pay,
                   :auto_renew, :billing_strategy_id, :account_id, :policy_type_id,
                   :carrier_id, :agency_id, fields: [:title, :value, options: []],
                   questions:                       [:title, :value, options: []],
@@ -977,13 +977,13 @@ module V2
       def update_residential_params
         return create_residential_params
         params.require(:policy_application)
-          .permit(:effective_date, policy_rates_attributes:      [:insurable_rate_id],
+          .permit(:branding_profile_id, :effective_date, policy_rates_attributes: [:insurable_rate_id],
                   policy_insurables_attributes: [:insurable_id])
       end
 
       def update_rental_guarantee_params
         params.require(:policy_application)
-          .permit(:effective_date, :billing_strategy_id,  :fields, fields: {})
+          .permit(:branding_profile_id, :effective_date, :billing_strategy_id,  :fields, fields: {})
       end
 
       def get_coverage_options_params

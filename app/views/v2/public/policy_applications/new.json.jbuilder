@@ -1,7 +1,7 @@
 json.extract! @application, :reference, :external_reference,
   :effective_date, :expiration_date, :status, :status_updated_on, 
   :fields, :questions, :carrier_id, :policy_type_id, :agency_id,
-  :account_id, :billing_strategy_id, :coverage_selections
+  :account_id, :billing_strategy_id, :coverage_selections, :branding_profile_id
 
 json.preferred @preferred
 json.policy_rates_attributes []
