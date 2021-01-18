@@ -31,15 +31,15 @@ module V2
           if host.present? && Rails.env.to_sym != :production
             agency_prefix = host.split('.').first
             agency = Agency.find_by_slug(agency_prefix)
-            agency&.branding_profiles&.take
+            agency&.branding_profiles&.where(enabled: true)&.take
           end
 
         # if there is no agency with that slug or it is the production, finds by the host or uses the default profile
-        @branding_profile ||= (BrandingProfile.find_by_url(host) || BrandingProfile.global_default)
+        @branding_profile ||= (BrandingProfile.where(enabled: true).find_by_url(host) || BrandingProfile.global_default)
       end
       
       def set_branding_profile
-        @branding_profile = BrandingProfile.find(params[:id])
+        @branding_profile = BrandingProfile.where(enabled: true).find(params[:id])
       end
     end
   end

@@ -5,7 +5,7 @@ module V2
 
       before_action :set_branding_profile,
                     only: %i[update show destroy faqs faq_create faq_update faq_question_create
-                    faq_question_update faq_delete faq_question_delete attach_images export update_from_file]
+                             faq_question_update faq_delete faq_question_delete attach_images export update_from_file]
 
       before_action :set_agency, only: [:import]
 
@@ -122,7 +122,7 @@ module V2
           logo_status = get_image_url(:logo_url) if attach_images_params[:logo_url].present?
           logo_jpeg_status = get_image_url(:logo_jpeg_url) if attach_images_params[:logo_jpeg_url].present?
           footer_status = get_image_url(:footer_logo_url) if attach_images_params[:footer_logo_url].present?
-          if logo_status == "error" || logo_jpeg_status == "error" || footer_status == "error"
+          if logo_status == 'error' || logo_jpeg_status == 'error' || footer_status == 'error'
             render json: { success: false }, status: :unprocessable_entity
           else
             render json: { logo_url: logo_status, logo_jpeg_url: logo_jpeg_status, footer_logo_url: footer_status }, status: :ok
@@ -138,7 +138,8 @@ module V2
         @calling_supported_orders = called_from_orders
         {
           profileable_type: [:scalar],
-          profileable_id: [:scalar]
+          profileable_id: [:scalar],
+          enabled: [:scalar]
         }
       end
 
@@ -172,7 +173,7 @@ module V2
 
         params.require(:branding_profile).permit(
           :default, :id, :profileable_id, :profileable_type,
-          :url, :footer_logo_url, :logo_url, :subdomain, :subdomain_test, :global_default,
+          :url, :footer_logo_url, :logo_url, :subdomain, :subdomain_test, :global_default, :enabled,
           images: [], branding_profile_attributes_attributes: %i[id name value attribute_type],
           styles: {}
         )
@@ -180,6 +181,7 @@ module V2
 
       def faq_params
         return({}) if params.blank?
+
         params.permit(:title, :branding_profile_id, :faq_order, :language)
       end
 
@@ -187,25 +189,26 @@ module V2
         { faq_order: @branding_profile.faqs.count }
       end
 
-
       def question_order_params
-        { question_order: @faq.faq_questions.count}
+        { question_order: @faq.faq_questions.count }
       end
 
       def faq_question_params
         return({}) if params.blank?
+
         params.permit(:question, :answer, :faq_id, :question_order)
       end
 
       def attach_images_params
         return({}) if params.blank?
+
         params.require(:images).permit(:logo_url, :logo_jpeg_url, :footer_logo_url)
       end
 
       def get_image_url(field_name)
         images = @branding_profile.images.attach(attach_images_params[field_name])
         img_url = rails_blob_url(images.last)
-        img_url.present? && @branding_profile.update_column(field_name, img_url) ? img_url : "error"
+        img_url.present? && @branding_profile.update_column(field_name, img_url) ? img_url : 'error'
       end
     end
   end
