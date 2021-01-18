@@ -149,7 +149,6 @@ module V2
 
         if @application.save
           if @application.update(status: 'in_progress')
-            LeadEvents::LinkPolicyApplicationUsers.run!(policy_application: @application)
             @policy_application = @application
             render 'v2/public/policy_applications/show'
           else
