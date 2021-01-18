@@ -9,10 +9,9 @@ class PaymentMadeMailer < ApplicationMailer
     return unless @user.is_a? User
 
     set_locale(@user.profile&.language)
-
-    @branding_profile = @invoice.invoiceable.agency.branding_profiles.first
     @agency = @invoice.invoiceable.agency
     @policy = @invoice.invoiceable.is_a?(Policy) ? @invoice.invoiceable : @invoice.invoiceable.policy
+    @branding_profile = @policy.branding_profile || BrandingProfile.global_default
     @from = 'support@' + @branding_profile.url
     @policy_type_title = I18n.t("policy_type_model.#{@policy.policy_type.title.parameterize.underscore}")
     subject = I18n.t("payment_made_mailer.send_successful_payment_notification.subject",

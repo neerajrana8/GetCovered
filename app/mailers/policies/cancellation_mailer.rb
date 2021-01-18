@@ -34,11 +34,7 @@ module Policies
       @without_request = params[:without_request]
       @user = @policy.primary_user
       @agency = @policy.agency
-      @contact_email =
-        BrandingProfiles::FindByObject.run!(object: @agency)&.
-          branding_profile_attributes&.
-          find_by_name('contact_email')&.
-          value
+      @contact_email = @policy.branding_profile || BrandingProfile.global_default
 
       I18n.locale = @user&.profile&.language if @user&.profile&.language&.present?
 

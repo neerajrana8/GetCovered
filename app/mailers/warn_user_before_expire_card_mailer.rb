@@ -8,7 +8,7 @@ class WarnUserBeforeExpireCardMailer < ApplicationMailer
 
     set_locale(@user.profile&.language)
     @agency = Agency.get_covered
-    @branding_profile = @agency.branding_profiles.first
+    @branding_profile = BrandingProfile.global_default
     @contact_email = @branding_profile.contact_email
     subject = t('warn_user_before_expire_card_mailer.send_warn_expire_card.subject', agency_title: @agency.title)
 
