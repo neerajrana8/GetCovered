@@ -11,6 +11,7 @@ module V2
       end
 
       def show
+        @visits = @lead.lead_events.order("DATE(created_at)").group("DATE(created_at)").count.keys.size
         render 'v2/shared/leads/show'
       end
 

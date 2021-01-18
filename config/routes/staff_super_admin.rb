@@ -276,6 +276,9 @@
                   get "get_leads",
                     to: "tracking_urls#get_leads",
                     via: "get"
+                  get "get_policies",
+                      to: "tracking_urls#get_policies",
+                      via: "get"
                 end
     end
 

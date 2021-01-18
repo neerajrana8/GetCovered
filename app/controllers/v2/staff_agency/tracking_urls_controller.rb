@@ -2,7 +2,7 @@ module V2
   module StaffAgency
     class TrackingUrlsController < StaffAgencyController
 
-      before_action :set_tracking_url, only: [:show, :destroy, :get_leads]
+      before_action :set_tracking_url, only: [:show, :destroy, :get_leads, :get_policies]
       before_action :set_substrate, only: :index
 
       def create
@@ -55,6 +55,13 @@ module V2
       def get_leads
         @leads = @tracking_url.leads
         render 'v2/shared/leads/index'
+      end
+
+      def get_policies
+        user_ids = @tracking_url.leads.pluck(:user_id).compact
+        policies_ids = PolicyUser.where(user_id: user_ids).pluck(:policy_id).compact
+        @policies = Policy.where(id: policies_ids)
+        render 'v2/staff_super_admin/policies/index'
       end
 
       private

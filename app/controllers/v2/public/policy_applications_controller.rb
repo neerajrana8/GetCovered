@@ -558,6 +558,7 @@ module V2
               policy_application: @policy_application,
               policy_users_params: update_policy_users_params[:policy_users_attributes]
             )
+          LeadEvents::LinkPolicyApplicationUsers.run!(policy_application: @policy_application)
           if !(update_users_result == true || update_users_result.success?)
             render json: update_users_result.failure,
               status: 422
@@ -585,7 +586,7 @@ module V2
                 @quote = @policy_application.policy_quotes.order("updated_at DESC").limit(1).first
 
                 if @policy_application.status == "quote_failed"
-                  render json: standard_error(:policy_application_unavailable, @policy_application.error_message || I18n.t('policy_application_contr.create_security_deposit_replacement.policy_application_unavailable')),
+                  render json: standard_error(:policy_application_unavailable, I18n.t('policy_application_contr.create_security_deposit_replacement.policy_application_unavailable') + " #{@policy_application.error_message}"),
                          status: 400
                 elsif @policy_application.status == "quoted"
                   render json: standard_error(:policy_application_unavailable, I18n.t('policy_application_contr.create_security_deposit_replacement.policy_application_unavailable')),
@@ -645,6 +646,7 @@ module V2
               policy_application: @policy_application,
               policy_users_params: create_policy_users_params[:policy_users_attributes]
             )
+          LeadEvents::LinkPolicyApplicationUsers.run!(policy_application: @policy_application)
           if update_users_result.success?
             quote_attempt = @policy_application.pensio_quote
 
@@ -895,7 +897,7 @@ module V2
       def set_policy_application_from_token
         token = ::AccessToken.from_urlparam(params[:token])
         pa_id = token.nil? || token.access_type != 'application_access' || token.expired? ? nil : token.access_data&.[]('policy_application_id')
-        @application = @policy_application = access_model(::PolicyApplication, pa_id)
+        @application = @policy_application = access_model(::PolicyApplication, pa_id || 0)
       end
 
       def residential_address_params
