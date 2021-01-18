@@ -359,7 +359,19 @@ module V2
           elsif @policy_application.agency.nil?
             @policy_application.agency = @policy_application.account.agency
           end
-          # WARNING: in public we try to update users here...
+          # try to update users
+          update_users_result = update_policy_users_params.blank? ? true :
+            PolicyApplications::UpdateUsers.run!(
+              policy_application: @policy_application,
+              policy_users_params: update_policy_users_params[:policy_users_attributes],
+              current_user_email: current_user.email
+            )
+          LeadEvents::LinkPolicyApplicationUsers.run!(policy_application: @policy_application)
+          if !(update_users_result == true || update_users_result.success?)
+            render json: update_users_result.failure,
+              status: 422
+            return
+          end
           # fix policy insurables if necessary
           @policy_insurables_to_restore = nil
           unless @replacement_policy_insurables.blank?
@@ -559,6 +571,10 @@ module V2
                       ]
                     ]
                   ])
+      end
+      
+      def update_policy_users_params
+        return create_policy_users_params
       end
 
       def update_residential_params
