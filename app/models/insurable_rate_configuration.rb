@@ -602,7 +602,7 @@ class InsurableRateConfiguration < ApplicationRecord
                                 .map do |s|
                                   s['options'] = coverage_options.find{|co| co['category'] == s['category'] && co['uid'] == s['uid'] }
                                   s['title'] = s['options']['title'] unless s['options'].blank?
-                                  s['description'] = s['options']['description'] if s['description'].blank? && !s['options']['description'].blank?
+                                  s['description'] = s['options']['description'] if s['description'].blank? && !s['options'].blank? && !s['options']['description'].blank?
                                   s
                                 end.select{|s| !s['options'].nil? }
                                 .map do |sel|

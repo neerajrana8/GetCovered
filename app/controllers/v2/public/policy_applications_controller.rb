@@ -897,7 +897,7 @@ module V2
       def set_policy_application_from_token
         token = ::AccessToken.from_urlparam(params[:token])
         pa_id = token.nil? || token.access_type != 'application_access' || token.expired? ? nil : token.access_data&.[]('policy_application_id')
-        @application = @policy_application = access_model(::PolicyApplication, pa_id)
+        @application = @policy_application = access_model(::PolicyApplication, pa_id || 0)
       end
 
       def residential_address_params

@@ -509,6 +509,7 @@ module V2
       end
 
       def update_residential_params
+        return create_residential_params
         params.require(:policy_application)
           .permit(:effective_date,
                   :billing_strategy_id, fields: {},
