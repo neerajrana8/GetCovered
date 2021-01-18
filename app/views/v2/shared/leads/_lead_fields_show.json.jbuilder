@@ -18,6 +18,8 @@ json.primary_campaign_name lead&.tracking_url&.campaign_name
 json.premium_total lead&.user&.policy_applications&.last&.policy_quotes&.last&.policy_premium&.total
 json.premium_first lead&.user&.policy_applications&.last&.policy_quotes&.last&.invoices&.first&.total
 json.billing_strategy lead&.user&.policy_applications&.last&.policy_quotes&.last&.policy_premium&.billing_strategy&.title
+json.site_visits visits
+
 
 json.tracking_url do
   if lead.tracking_url.present?
