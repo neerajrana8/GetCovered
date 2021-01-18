@@ -87,7 +87,7 @@
 
     resources :branding_profiles,
       path: "branding-profiles",
-      only: [ :show, :create, :update ] do
+      only: [ :index, :show, :create, :update ] do
         member do
           get :faqs
           get :export
@@ -301,8 +301,18 @@
     end
 
     get :agency_filters, controller: 'tracking_urls', path: 'tracking_urls/agency_filters', to: "tracking_urls#agency_filters"
+
     resources :tracking_urls,
-      only: [ :create, :index, :show, :destroy]
+      only: [ :create, :index, :show, :destroy] do
+        member do
+          get "get_leads",
+            to: "tracking_urls#get_leads",
+            via: "get"
+          get "get_policies",
+              to: "tracking_urls#get_policies",
+              via: "get"
+        end
+      end
 
     resources :users,
       only: [ :create, :update, :index, :show ] do

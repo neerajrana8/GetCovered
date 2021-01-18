@@ -134,6 +134,18 @@ module V2
 
       private
 
+      def supported_filters(called_from_orders = false)
+        @calling_supported_orders = called_from_orders
+        {
+          profileable_type: [:scalar],
+          profileable_id: [:scalar]
+        }
+      end
+
+      def supported_orders
+        supported_filters(true)
+      end
+
       def view_path
         super + '/branding_profiles'
       end
@@ -159,7 +171,7 @@ module V2
         return({}) if params[:branding_profile].blank?
 
         params.require(:branding_profile).permit(
-          :default, :id, :profileable_id, :profileable_type, :title,
+          :default, :id, :profileable_id, :profileable_type,
           :url, :footer_logo_url, :logo_url, :subdomain, :subdomain_test, :global_default,
           images: [], branding_profile_attributes_attributes: %i[id name value attribute_type],
           styles: {}

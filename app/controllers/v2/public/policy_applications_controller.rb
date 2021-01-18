@@ -8,6 +8,7 @@ module V2
     class PolicyApplicationsController < PublicController
 
       include Leads::CreateMethods
+      include Devise::Controllers::SignInOut
 
       before_action :set_policy_application, only: %i[update rent_guarantee_complete]
       before_action :set_policy_application_from_token, only: %i[show]
@@ -237,6 +238,8 @@ module V2
               # get token and redirect url
               new_access_token = @application.create_access_token
               @redirect_url = "#{site}/#{program}/#{new_access_token.to_urlparam}"
+              # sign_in
+              sign_in_primary_user(@application.primary_user)
               # done
               render 'v2/public/policy_applications/show_external'
             else
@@ -286,7 +289,7 @@ module V2
                 @quote.generate_invoices_for_term
                 @premium = @quote.policy_premium
 
-                response = {
+                result = {
                   id:                 @application.id,
                   quote: {
                     id:      @quote.id,
@@ -303,11 +306,13 @@ module V2
 
                 if @premium.base >= 500_000
                   BillingStrategy.where(agency: @application.agency_id, policy_type: @application.policy_type).each do |bs|
-                    response[:billing_strategies] << { id: bs.id, title: bs.title }
+                    result[:billing_strategies] << { id: bs.id, title: bs.title }
                   end
                 end
 
-                render json: response.to_json, status: 200
+                sign_in_primary_user(@application.primary_user)
+
+                render json: result.to_json, status: 200
 
               else
                 render json:   standard_error(:quote_failed, quote_attempt[:message]),
@@ -352,6 +357,7 @@ module V2
           )
         if update_users_result.success?
           # update status to complete
+
           LeadEvents::LinkPolicyApplicationUsers.run!(policy_application: @application)
           unless @application.update(status: 'complete')
             render json: standard_error(:policy_application_save_error, nil, @application.errors),
@@ -385,6 +391,9 @@ module V2
             end
           end
           # return nice stuff
+
+          sign_in_primary_user(@application.primary_user)
+
           render json:  {
                          id:       @application.id,
                          quote: {
@@ -459,6 +468,8 @@ module V2
                 elsif @quote.status == "quoted"
 
                   @application.primary_user.set_stripe_id
+
+                  sign_in_primary_user(@application.primary_user)
 
                   render json:  {
                                  id:       @application.id,
@@ -547,6 +558,7 @@ module V2
               policy_application: @policy_application,
               policy_users_params: update_policy_users_params[:policy_users_attributes]
             )
+          LeadEvents::LinkPolicyApplicationUsers.run!(policy_application: @policy_application)
           if !(update_users_result == true || update_users_result.success?)
             render json: update_users_result.failure,
               status: 422
@@ -574,7 +586,7 @@ module V2
                 @quote = @policy_application.policy_quotes.order("updated_at DESC").limit(1).first
 
                 if @policy_application.status == "quote_failed"
-                  render json: standard_error(:policy_application_unavailable, @policy_application.error_message || I18n.t('policy_application_contr.create_security_deposit_replacement.policy_application_unavailable')),
+                  render json: standard_error(:policy_application_unavailable, I18n.t('policy_application_contr.create_security_deposit_replacement.policy_application_unavailable') + " #{@policy_application.error_message}"),
                          status: 400
                 elsif @policy_application.status == "quoted"
                   render json: standard_error(:policy_application_unavailable, I18n.t('policy_application_contr.create_security_deposit_replacement.policy_application_unavailable')),
@@ -589,6 +601,7 @@ module V2
                     render json: standard_error(:quote_failed, @policy_application.error_message || I18n.t('policy_application_contr.create_security_deposit_replacement.quote_failed')),
                            status: 500
                   elsif @quote.status == "quoted"
+                    sign_in_primary_user(@policy_application.primary_user)
 
                     render json:                    {
                                    id:       @policy_application.id,
@@ -633,6 +646,7 @@ module V2
               policy_application: @policy_application,
               policy_users_params: create_policy_users_params[:policy_users_attributes]
             )
+          LeadEvents::LinkPolicyApplicationUsers.run!(policy_application: @policy_application)
           if update_users_result.success?
             quote_attempt = @policy_application.pensio_quote
 
@@ -644,7 +658,7 @@ module V2
               invoice_errors = @quote.generate_invoices_for_term
               @premium       = @quote.policy_premium
 
-              response = {
+              result = {
                 id:             @policy_application.id,
                 quote: {
                   id:      @quote.id,
@@ -659,8 +673,9 @@ module V2
                 }
               }
 
-              render json: response.to_json, status: 200
+              sign_in_primary_user(@policy_application.primary_user)
 
+              render json: result.to_json, status: 200
             else
               render json: standard_error(:quote_attempt_failed, quote_attempt[:message]),
                      status: 422
@@ -839,6 +854,11 @@ module V2
 
       private
 
+      def sign_in_primary_user(primary_user)
+        sign_in(primary_user)
+        response.headers.merge!(primary_user.create_new_auth_token)
+      end
+
       def use_translations_for_msi_coverage_options!(response_tr)
         response_tr[:coverage_options].each do |coverage_opt|
           uid = coverage_opt["uid"]
@@ -877,11 +897,11 @@ module V2
       def set_policy_application_from_token
         token = ::AccessToken.from_urlparam(params[:token])
         pa_id = token.nil? || token.access_type != 'application_access' || token.expired? ? nil : token.access_data&.[]('policy_application_id')
-        @application = @policy_application = access_model(::PolicyApplication, pa_id)
+        @application = @policy_application = access_model(::PolicyApplication, pa_id || 0)
       end
 
       def residential_address_params
-        params.require(:policy_application).permit(fields: :address)
+        params.require(:policy_application).permit(fields: [:address, :unit])
       end
 
       def new_residential_params

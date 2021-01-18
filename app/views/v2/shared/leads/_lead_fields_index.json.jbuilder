@@ -18,3 +18,8 @@ tracking_url =  lead.tracking_url
 if tracking_url.present?
   json.extract! tracking_url, :campaign_source
 end
+
+json.primary_campaign_name lead&.tracking_url&.campaign_name
+json.premium_total lead&.user&.policy_applications&.last&.policy_quotes&.last&.policy_premium&.total
+json.premium_first lead&.user&.policy_applications&.last&.policy_quotes&.last&.invoices&.first&.total
+json.billing_strategy lead&.user&.policy_applications&.last&.policy_quotes&.last&.policy_premium&.billing_strategy&.title

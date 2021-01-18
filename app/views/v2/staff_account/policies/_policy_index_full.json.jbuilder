@@ -8,3 +8,5 @@ json.agency policy.agency
 json.account policy.account
 
 json.policy_type_title policy&.policy_type&.title
+
+json.primary_campaign_name policy.primary_user&.lead&.tracking_url&.campaign_name

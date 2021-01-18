@@ -111,6 +111,8 @@ class SignableDocument < ApplicationRecord
           })
           return false
         end
+        page_width = pages[signature_block[:page_number] - 1][:info][:media_box][2] - pages[signature_block[:page_number] - 1][:info][:media_box][0]
+        sig_width = [6 * (signature_block[:previous_y] - signature_block[:y]), page_width - signature_block[:x]].min  # the line extends to the end of the page, so we just pick something reasonable
         self.update({
           status: 'unsigned',
           document_data: {
@@ -122,19 +124,19 @@ class SignableDocument < ApplicationRecord
             'signature_block' => {
               'x' => signature_block[:x],
               'y' => signature_block[:y],
-              'width' => 4 * (signature_block[:previous_y] - signature_block[:y]),  # the line extends to the end of the page, so we just pick something reasonable
+              'width' => sig_width,
               'height' => signature_block[:previous_y] - signature_block[:y]
             },
             'geometry_for_client' => {
               'document_dimensions' => {
-                'width' => pages[signature_block[:page_number] - 1][:info][:media_box][2] - pages[signature_block[:page_number] - 1][:info][:media_box][0],
+                'width' => page_width,
                 'height' => pages[signature_block[:page_number] - 1][:info][:media_box][3] - pages[signature_block[:page_number] - 1][:info][:media_box][1]
               },
               'signature_block' => {
                 'page_number' => signature_block[:page_number],
                 'x' => signature_block[:x] - pages[signature_block[:page_number] - 1][:info][:media_box][0],
                 'y' => signature_block[:y] - pages[signature_block[:page_number] - 1][:info][:media_box][1],
-                'width' => 4 * (signature_block[:previous_y] - signature_block[:y]),
+                'width' => sig_width,
                 'height' => signature_block[:previous_y] - signature_block[:y]
               },
               'date_block' => {

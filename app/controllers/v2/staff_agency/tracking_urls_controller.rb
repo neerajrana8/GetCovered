@@ -2,7 +2,7 @@ module V2
   module StaffAgency
     class TrackingUrlsController < StaffAgencyController
 
-      before_action :set_tracking_url, only: [:show, :destroy]
+      before_action :set_tracking_url, only: [:show, :destroy, :get_leads, :get_policies]
       before_action :set_substrate, only: :index
 
       def create
@@ -30,7 +30,7 @@ module V2
                       agency_attr = agency.attributes
                       agency_attr.merge("branding_url"=> agency.branding_url)
                     end
-        
+
         render json: result.to_json
       end
 
@@ -52,6 +52,18 @@ module V2
         render 'v2/shared/tracking_urls/index'
       end
 
+      def get_leads
+        @leads = @tracking_url.leads
+        render 'v2/shared/leads/index'
+      end
+
+      def get_policies
+        user_ids = @tracking_url.leads.pluck(:user_id).compact
+        policies_ids = PolicyUser.where(user_id: user_ids).pluck(:policy_id).compact
+        @policies = Policy.where(id: policies_ids)
+        render 'v2/staff_super_admin/policies/index'
+      end
+
       private
 
       def set_tracking_url
@@ -71,8 +83,23 @@ module V2
       def set_substrate
         super
         if @substrate.nil?
-          @substrate = access_model(::TrackingUrl).not_deleted
+          @substrate = access_model(::TrackingUrl)
+          params[:filter][:deleted] = params[:filter][:archived] if params[:filter].present? && params[:filter][:archived].present?
+          params[:filter].delete(:archived)
         end
+      end
+
+      def supported_filters(called_from_orders = false)
+        @calling_supported_orders = called_from_orders
+        {
+            agency_id: %i[scalar array],
+            created_at: %i[scalar interval],
+            deleted: [:scalar]
+        }
+      end
+
+      def supported_orders
+        supported_filters(true)
       end
 
     end

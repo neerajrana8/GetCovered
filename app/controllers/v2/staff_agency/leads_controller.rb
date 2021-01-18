@@ -11,6 +11,7 @@ module V2
       end
 
       def show
+        @visits = @lead.lead_events.order("DATE(created_at)").group("DATE(created_at)").count.keys.size
         render 'v2/shared/leads/show'
       end
 
@@ -36,13 +37,18 @@ module V2
       def update_params
         return({}) if params[:lead].blank?
 
-        params.require(:lead).permit( :status)
+        params.require(:lead).permit(:archived)
       end
 
       def set_substrate
-        super
         if @substrate.nil?
           @substrate = access_model(::Lead).presented.not_converted.includes(:profile, :tracking_url)
+          #need to delete after fix on ui
+          #if params[:filter].present? && params[:filter][:archived]
+          #   @substrate = access_model(::Lead).presented.not_converted.archived.includes(:profile, :tracking_url)
+          # elsif params[:filter].nil? || !!params[:filter][:archived]
+          #  @substrate = access_model(::Lead).presented.not_converted.not_archived.includes(:profile, :tracking_url)
+          #end
         end
       end
 
@@ -52,12 +58,17 @@ module V2
             created_at: [:scalar, :array, :interval],
             email: [:scalar, :like],
             agency_id: [:scalar, :interval],
-            status: [:scalar]
+            status: [:scalar],
+            archived: [:scalar]
         }
       end
 
       def supported_orders
         supported_filters(true)
+      end
+
+      def update_allowed?
+        true
       end
     end
   end

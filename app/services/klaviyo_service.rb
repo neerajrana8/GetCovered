@@ -158,9 +158,10 @@ class KlaviyoService
     if lead_agency.present?
       if lead_agency.sub_agency?
         request.merge!({'agency': lead_agency.agency.try(:title),
-                        'sub_agency': lead_agency.try(:title)})
+                        'sub_agency': lead_agency.try(:title) })
       else
-        request.merge!({'agency': lead_agency.try(:title)})
+        request.merge!({'agency': lead_agency.try(:title),
+                        'sub_agency': 'No Sub Agency'})
       end
     end
   end
@@ -188,6 +189,7 @@ class KlaviyoService
 
   def map_last_visited_url(event_details)
     return "" if event_details.blank?
+    #need to update after multiple brandings setup
     branding_url = @lead.agency.branding_profiles.take.url
     if @lead.last_event&.policy_type&.rent_guarantee?
       "https://#{branding_url}/rentguarantee"
