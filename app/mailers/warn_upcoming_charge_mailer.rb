@@ -7,15 +7,10 @@ class WarnUpcomingChargeMailer < ApplicationMailer
     return unless permitted?(@user, 'upcoming_invoice')
 
     set_locale(@user.profile&.language)
-    @branding_profile =
-      if invoice.invoiceable.respond_to?(:branding_profile)
-        invoice.invoiceable.branding_profile || BrandingProfile.global_default
-      else
-        BrandingProfile.global_default
-      end
     @invoice = invoice
     @agency = @invoice.invoiceable.agency
     @policy = @invoice.invoiceable.is_a?(Policy) ? @invoice.invoiceable : @invoice.invoiceable.policy
+    @branding_profile = @policy.branding_profile || BrandingProfile.global_default
     @policy_type_title = t("policy_type_model.#{@policy.policy_type.title.parameterize.underscore}")
     @from = 'support@' + @branding_profile.url
     subject = t('warn_upcoming_charge_mailer.send_warn_upcoming_invoice.subject',
