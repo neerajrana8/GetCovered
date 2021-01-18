@@ -7,8 +7,8 @@ class CardInfoUpdateMailer < ApplicationMailer
     @user = user
     @policy = policy
     @agency = policy.agency
-    @branding_profile = @agency.branding_profiles&.sample
-    @from = 'support@' + (@branding_profile&.url || 'getcoveredinsurance.com')
+    @branding_profile = BrandingProfile.global_default
+    @from = 'support@' + 'getcoveredinsurance.com'
     subject = t('card_info_update_mailer.please_update_card_info.subject',
                 agency_title: @agency.title,
                 policy_number: @policy.number)

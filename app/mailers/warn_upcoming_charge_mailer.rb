@@ -7,7 +7,12 @@ class WarnUpcomingChargeMailer < ApplicationMailer
     return unless permitted?(@user, 'upcoming_invoice')
 
     set_locale(@user.profile&.language)
-    @branding_profile = invoice.invoiceable.agency.branding_profiles.first
+    @branding_profile =
+      if invoice.invoiceable.respond_to?(:branding_profile)
+        invoice.invoiceable.branding_profile || BrandingProfile.global_default
+      else
+        BrandingProfile.global_default
+      end
     @invoice = invoice
     @agency = @invoice.invoiceable.agency
     @policy = @invoice.invoiceable.is_a?(Policy) ? @invoice.invoiceable : @invoice.invoiceable.policy
