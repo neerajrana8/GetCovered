@@ -166,6 +166,12 @@
       end
     end
 
+    resources :global_agency_permissions, only: [:update] do
+      collection do
+        get :available_permissions
+      end
+    end
+
     resources :insurables, only: [:index, :show, :destroy], concerns: :reportable do
       member do
         get :coverage_report
