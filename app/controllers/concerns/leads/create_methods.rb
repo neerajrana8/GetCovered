@@ -22,9 +22,9 @@ module Leads
               end
 
       agency = Agency.find(params[:agency_id])
-      tracking_url = TrackingUrl.find_by(landing_page: tracking_url_params["landing_page"], campaign_source: tracking_url_params["campaign_source"],
-                                         campaign_medium: tracking_url_params["campaign_medium"], campaign_term: tracking_url_params["campaign_term"],
-                                         campaign_content: tracking_url_params["campaign_content"], campaign_name: tracking_url_params["campaign_name"],
+      tracking_url = TrackingUrl.find_by(landing_page: unescape_param(tracking_url_params["landing_page"]), campaign_source: unescape_param(tracking_url_params["campaign_source"]),
+                                         campaign_medium: unescape_param(tracking_url_params["campaign_medium"]), campaign_term: unescape_param(tracking_url_params["campaign_term"]),
+                                         campaign_content: unescape_param(tracking_url_params["campaign_content"]), campaign_name: unescape_param(tracking_url_params["campaign_name"]),
                                          agency_id: agency.id) if tracking_url_params.present?
 
       @klaviyo_helper.lead = @lead if @lead.present?
@@ -163,6 +163,14 @@ module Leads
           "policy_type_id": application.policy_type_id,
           "agency_id": application.agency_id
       }
+    end
+
+    def escape_param(value)
+      value.nil? ? value : CGI::escape(value)
+    end
+
+    def unescape_param(value)
+      value.nil? ? value : CGI::unescape(value)
     end
 
   end
