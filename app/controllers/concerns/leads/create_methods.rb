@@ -166,11 +166,11 @@ module Leads
     end
 
     def escape_param(value)
-      CGI::escape(value)
+      value.nil? ? value : CGI::escape(value)
     end
 
     def unescape_param(value)
-      CGI::unescape(value)
+      value.nil? ? value : CGI::unescape(value)
     end
 
   end
