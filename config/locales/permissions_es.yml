@@ -1,0 +1,5 @@
+es:
+  permissions:
+    dashboard:
+      leads: 'Dashboard - Leads'
+      properties: 'Dashboard - Properties'

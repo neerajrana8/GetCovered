@@ -86,6 +86,8 @@ class Agency < ApplicationRecord
 
   has_many :leads
 
+  has_one :global_agency_permission
+
   accepts_nested_attributes_for :addresses, allow_destroy: true
 
   scope :enabled, -> { where(enabled: true) }

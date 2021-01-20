@@ -41,7 +41,8 @@ class Staff < ApplicationRecord
   
   # has_one relationships
   has_one :profile, as: :profileable, autosave: true
-  
+  has_one :staff_permission
+
   has_many :reports, as: :reportable
 
   has_many :invoices, as: :invoiceable
