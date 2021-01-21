@@ -14,7 +14,7 @@ class CreateStaffPermissions < ActiveRecord::Migration[5.2]
         StaffPermission.create(
           staff: staff,
           global_agency_permission: agency.global_agency_permission,
-          permissions: { 'dashboard.leads': staff == agency.owner , 'dashboard.properties': false }
+          permissions: { 'dashboard.leads': true, 'dashboard.properties': true }
         )
       end
     end

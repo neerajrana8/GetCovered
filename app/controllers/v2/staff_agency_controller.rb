@@ -39,7 +39,7 @@ module V2
     end
 
     def validate_permission(permission)
-      render(json: standard_error(:permission_not_enabled), status: :unauthorized) unless current_staff.staff_permission[permission]
+      render(json: standard_error(:permission_not_enabled), status: :unauthorized) unless current_staff.staff_permission.permissions[permission]
     end
 
     def is_agent?

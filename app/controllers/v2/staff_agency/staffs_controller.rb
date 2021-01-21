@@ -48,7 +48,8 @@ module V2
           if @staff.update_as(current_staff, update_params)
             render :show, status: :ok
           else
-            render json: @staff.errors, status: :unprocessable_entity
+            render json: standard_error(:staff_update_error, nil, @staff.errors.full_messages),
+                   status: :unprocessable_entity
           end
         else
           render json: { success: false, errors: ['Unauthorized Access'] }, status: :unauthorized
@@ -100,7 +101,7 @@ module V2
       end
         
       def update_allowed?
-        true
+        current_staff == @agency.owner
       end
         
       def set_staff
