@@ -24,6 +24,24 @@ module V2
 
     private
 
+    def self.check_privileges(args)
+      if args.is_a?(String)
+        before_action do
+          validate_permission(args)
+        end
+      elsif args.is_a?(Hash)
+        args.each do |key, value|
+          before_action only: value do
+            validate_permission(key)
+          end
+        end
+      end
+    end
+
+    def validate_permission(permission)
+      render(json: standard_error(:permission_not_enabled), status: :unauthorized) unless current_staff.staff_permission[permission]
+    end
+
     def is_agent?
       render json: { error: 'Unauthorized access' }, status: :unauthorized unless current_staff.agent?
     end

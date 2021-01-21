@@ -3,6 +3,7 @@ class StaffPermission < ApplicationRecord
   belongs_to :staff
 
   after_initialize :initialize_staff_permission
+  validate :permissions_restrictions
   
   private
   
