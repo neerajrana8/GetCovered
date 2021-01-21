@@ -129,6 +129,8 @@ es:
     already_included_on_policy: "Ya incluido en la política o la aplicación de la política"
   insurable_type_model:
     cannot_be_blank: "no puede estar en blanco"
+  staff_permission_model:
+    cant_be_enabled: "%{translated_key} cant be enabled due to global permissions restrictions"
   address_model:
     is_not_a_valid_state: "no es un estado válido"
     must_be_valid_address: "no se pudo analizar; debe ser una dirección válida"
