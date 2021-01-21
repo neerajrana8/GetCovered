@@ -152,7 +152,7 @@ module CarrierMsiPolicyApplication
           premium = PolicyPremium.new(
             base: total_paid,
             taxes: 0,
-            external_fees: fee_installment * installment_count,
+            external_fees: fee_installment * installment_count + msi_policy_fee,
             only_fees_internal: true,
             billing_strategy: self.billing_strategy,
             policy_quote: quote
@@ -185,12 +185,18 @@ module CarrierMsiPolicyApplication
                 external: true,
                 status: "quoted",
                 payer: self.primary_user,
-                line_items_attributes: ind == 0 ? [
+                line_items_attributes: ind == 0 ? ([
                   {
                     title: "Premium Down Payment",
-                    price: down_payment,
+                    price: down_payment - msi_policy_fee,
                     refundability: 'prorated_refund',
                     category: 'base_premium'
+                  },
+                  {
+                    title: "Policy Fee",
+                    price: msi_policy_fee,
+                    refundability: 'no_refund',
+                    category: 'deposit_fees'
                   }
                 ] : [
                   {
@@ -205,7 +211,7 @@ module CarrierMsiPolicyApplication
                     refundability: 'no_refund',
                     category: 'amortized_fees'
                   }
-                ]
+                ]).select{|li| li[:price] > 0 }
               }))
             end
             return true
