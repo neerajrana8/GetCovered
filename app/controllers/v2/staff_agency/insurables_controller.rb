@@ -14,7 +14,7 @@ module V2
 
       before_action :set_master_policies, only: :show
 
-      check_privileges 'insurables.create': [:create]
+      check_privileges 'insurables.create' => [:create]
 
       def index
         if params[:short]

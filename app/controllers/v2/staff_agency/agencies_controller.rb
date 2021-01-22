@@ -7,7 +7,7 @@ module V2
     class AgenciesController < StaffAgencyController
 
       before_action :set_agency, only: [:update, :show, :branding_profile]
-      check_privileges 'agencies.details': %i[create show]
+      check_privileges 'agencies.details' => %i[create show]
 
       def index
         if params[:short]
