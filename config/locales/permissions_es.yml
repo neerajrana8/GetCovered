@@ -10,7 +10,6 @@ es:
       coverage_proof: 'Policies - Proof of Coverage'
     requests:
       refunds: 'Requests - Refunds'
-      cancellations: 'Requests - Cancellations'
     users: 'Users'
     agencies:
       details: 'Agencies - Details'
@@ -21,3 +20,7 @@ es:
       buildings: 'Insurables - Buildings'
       units: 'Insurables - Units'
       create: 'Insurables - Add Insurable'
+    property_management:
+      accounts: 'Property Management - Accounts'
+      managers: 'Property Management - Managers'
+      users: 'Property Management - Users'
