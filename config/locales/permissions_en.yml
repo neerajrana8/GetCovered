@@ -1,26 +1,26 @@
 en:
   permissions:
-    dashboard:
-      leads: 'Dashboard - Leads'
-      properties: 'Dashboard - Properties'
-    policies:
-      policies: 'Policies'
-      master: 'Policies - Master Policies'
-      rent_mass_import: 'Policies - Rent Guarantee Mass import'
-      claims: 'Policies - Claims'
-      coverage_proof: 'Policies - Proof of Coverage'
-    requests:
-      refunds: 'Requests - Refunds'
     agencies:
-      details: 'Agencies - Details'
-      carriers: 'Agencies - Carriers'
-      agents: 'Agencies - Agents'
+      agents: "Agencies - Agents"
+      carriers: "Agencies - Carriers"
+      details: "Agencies - Details"
+    dashboard:
+      leads: "Dashboard - Leads"
+      properties: "Dashboard - Properties"
     insurables:
-      communities: 'Insurables - Communities'
-      buildings: 'Insurables - Buildings'
-      units: 'Insurables - Units'
-      create: 'Insurables - Add Insurable'
+      buildings: "Insurables - Buildings"
+      communities: "Insurables - Communities"
+      create: "Insurables - Add Insurable"
+      units: "Insurables - Units"
+    policies:
+      claims: "Policies - Claims"
+      coverage_proof: "Policies - Proof of Coverage"
+      master: "Policies - Master Policies"
+      policies: "Policies"
+      rent_mass_import: "Policies - Rent Guarantee Mass import"
     property_management:
-      accounts: 'Property Management - Accounts'
-      managers: 'Property Management - Managers'
-      users:    'Property Management - Users'
+      accounts: "Property Management - Accounts"
+      managers: "Property Management - Managers"
+      users: "Property Management - Users"
+    requests:
+      refunds: "Requests - Refunds"
