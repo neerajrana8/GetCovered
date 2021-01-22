@@ -3,14 +3,14 @@ es:
     dashboard:
       leads: 'Dashboard - Leads'
       properties: 'Dashboard - Properties'
-    policies: 'Policies'
+    policies:
+      policies: 'Policies'
       master: 'Policies - Master Policies'
       rent_mass_import: 'Policies - Rent Guarantee Mass import'
       claims: 'Policies - Claims'
       coverage_proof: 'Policies - Proof of Coverage'
     requests:
       refunds: 'Requests - Refunds'
-    users: 'Users'
     agencies:
       details: 'Agencies - Details'
       carriers: 'Agencies - Carriers'

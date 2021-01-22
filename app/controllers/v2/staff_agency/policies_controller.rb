@@ -10,7 +10,7 @@ module V2
                     only: %i[update show update_coverage_proof delete_policy_document refund_policy cancel_policy]
 
       before_action :set_substrate, only: %i[create index add_coverage_proof]
-      check_privileges 'policies'
+      check_privileges 'policies.policies'
 
       def index
         if current_staff.getcovered_agent? && params[:agency_id].nil?
