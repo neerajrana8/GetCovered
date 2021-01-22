@@ -5,11 +5,12 @@
 module V2
   module StaffAgency
     class StaffsController < StaffAgencyController
-
       include StaffsMethods
-      
+
       before_action :set_staff, only: %i[update show re_invite toggle_enabled]
-            
+
+      check_privileges 'agencies.agents'
+
       def index
         if (params[:filter] && params[:filter][:organizable_type] == 'Account')
           super(:@staffs, @agency.account_staff, :profile)

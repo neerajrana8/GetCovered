@@ -3,3 +3,22 @@ en:
     dashboard:
       leads: 'Dashboard - Leads'
       properties: 'Dashboard - Properties'
+    policies: 'Policies'
+      master: 'Policies - Master Policies'
+      rent_mass_import: 'Policies - Rent Guarantee Mass import'
+      claims: 'Policies - Claims'
+      coverage_proof: 'Policies - Proof of Coverage'
+    requests:
+      refunds: 'Requests - Refunds'
+      cancellations: 'Requests - Cancellations'
+    users: 'Users'
+    agencies:
+      details: 'Agencies - Details'
+      carriers: 'Agencies - Carriers'
+      agents: 'Agencies - Agents'
+    insurables: 'Insurables'
+      communities: 'Insurables - Communities'
+      buildings: 'Insurables - Buildings'
+      units: 'Insurables - Units'
+      create: 'Insurables - Add Insurable'
+

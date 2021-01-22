@@ -5,9 +5,10 @@
 module V2
   module StaffAgency
     class CarriersController < StaffAgencyController
-
       before_action :set_carrier, only: [:show]
       before_action :set_substrate, only: [:index]
+
+      check_privileges 'agencies.carriers'
 
       def index
         super(:@carriers, @substrate)

@@ -7,6 +7,8 @@ module V2
     class PolicyCancellationRequestsController < StaffAgencyController
       include PolicyCancellationRequestsMethods
 
+      check_privileges 'requests.refunds'
+
       private
 
       def relation
