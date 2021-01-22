@@ -15,7 +15,6 @@ module GlobalAgencyPermissions
       { key: 'agencies.details', default_value: true },
       { key: 'agencies.carriers', default_value: true },
       { key: 'agencies.agents', default_value: true },
-      { key: 'insurables', default_value: true },
       { key: 'insurables.communities', default_value: true },
       { key: 'insurables.buildings', default_value: true },
       { key: 'insurables.units', default_value: true },

@@ -15,7 +15,7 @@ es:
       details: 'Agencies - Details'
       carriers: 'Agencies - Carriers'
       agents: 'Agencies - Agents'
-    insurables: 'Insurables'
+    insurables:
       communities: 'Insurables - Communities'
       buildings: 'Insurables - Buildings'
       units: 'Insurables - Units'
