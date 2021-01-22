@@ -1,4 +1,5 @@
 require 'rake'
+require 'ruby-progressbar'
 
 namespace :permissions do
   desc 'Populate existing permissions'
