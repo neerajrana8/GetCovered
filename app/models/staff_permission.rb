@@ -10,7 +10,6 @@ class StaffPermission < ApplicationRecord
   def initialize_staff_permission
     self.global_agency_permission ||= staff.organizable&.global_agency_permission
     self.permissions = staff.organizable&.global_agency_permission&.permissions if self.permissions.keys.blank?
-    ap self
   end
 
   def permissions_restrictions
