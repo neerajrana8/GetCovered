@@ -113,7 +113,7 @@ module V2
 
         to_return = params.require(:agency).permit(
           :staff_id, :title, :tos_accepted, :whitelabel,
-          contact_info: {}, addresses_attributes: %i[
+          contact_info: {}, global_agency_permission_attributes: { permissions: {} }, addresses_attributes: %i[
             city country county id latitude longitude
             plus_four state street_name street_number
             street_two timezone zip_code
@@ -127,7 +127,7 @@ module V2
 
         to_return = params.require(:agency).permit(
           :staff_id, :title, :tos_accepted, :whitelabel,
-          contact_info: {}, settings: {}, addresses_attributes: %i[
+          contact_info: {}, settings: {}, global_agency_permission_attributes: { permissions: {} }, addresses_attributes: %i[
             city country county id latitude longitude
             plus_four state street_name street_number
             street_two timezone zip_code
