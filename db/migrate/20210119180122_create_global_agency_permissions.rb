@@ -11,7 +11,7 @@ class CreateGlobalAgencyPermissions < ActiveRecord::Migration[5.2]
     Agency.all.each do |agency|
       GlobalAgencyPermission.create(
         agency: agency,
-        permissions: { 'dashboard.leads': true, 'dashboard.properties': true }
+        permissions: GlobalAgencyPermission::AVAILABLE_PERMISSIONS
       )
     end
   end

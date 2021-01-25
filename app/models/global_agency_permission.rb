@@ -4,7 +4,7 @@ class GlobalAgencyPermission < ApplicationRecord
   belongs_to :agency
   has_many :staff_permissions
 
-  after_save :update_staff_permissions
+  after_update :update_staff_permissions
 
   private
 

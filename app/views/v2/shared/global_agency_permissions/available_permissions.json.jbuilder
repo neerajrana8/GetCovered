@@ -1,5 +1,5 @@
-json.array! @available_permissions.each do |available_permission|
-  json.key available_permission[:key]
-  json.title I18n.t("permissions.#{available_permission[:key]}")
-  json.default_value available_permission[:default_value]
+json.array! @available_permissions.each do |key, default_value|
+  json.key key
+  json.title I18n.t("permissions.#{key}")
+  json.default_value default_value
 end

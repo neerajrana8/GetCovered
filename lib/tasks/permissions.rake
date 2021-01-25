@@ -15,7 +15,7 @@ namespace :permissions do
       new_permissions = {}
       current_permissions = global_agency_permission.permissions
 
-      GlobalAgencyPermission::AVAILABLE_PERMISSIONS.each do |key:, **|
+      GlobalAgencyPermission::AVAILABLE_PERMISSIONS.keys do |key|
         new_permissions[key] = current_permissions[key] || default_value
       end
 
@@ -35,7 +35,7 @@ namespace :permissions do
       new_permissions = {}
       current_permissions = staff_permission.permissions
 
-      GlobalAgencyPermission::AVAILABLE_PERMISSIONS.each do |key:, **|
+      GlobalAgencyPermission::AVAILABLE_PERMISSIONS.keys do |key|
         new_permissions[key] = current_permissions[key] || default_value
       end
 

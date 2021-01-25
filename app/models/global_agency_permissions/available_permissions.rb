@@ -1,24 +1,25 @@
 module GlobalAgencyPermissions
   module AvailablePermissions
-    AVAILABLE_PERMISSIONS = [
-      { key: 'dashboard.leads', default_value: true },
-      { key: 'dashboard.properties', default_value: true },
-      { key: 'policies.policies', default_value: true },
-      { key: 'policies.master', default_value: true },
-      { key: 'policies.rent_mass_import', default_value: true },
-      { key: 'policies.claims', default_value: true },
-      { key: 'policies.coverage_proof', default_value: true },
-      { key: 'requests.refunds', default_value: true },
-      { key: 'property_management.accounts', default_value: true },
-      { key: 'property_management.managers', default_value: true },
-      { key: 'property_management.users', default_value: true },
-      { key: 'agencies.details', default_value: true },
-      { key: 'agencies.carriers', default_value: true },
-      { key: 'agencies.agents', default_value: true },
-      { key: 'insurables.communities', default_value: true },
-      { key: 'insurables.buildings', default_value: true },
-      { key: 'insurables.units', default_value: true },
-      { key: 'insurables.create', default_value: true }
-    ].freeze
+    # key => default_value
+    AVAILABLE_PERMISSIONS = {
+      'dashboard.leads' => true,
+      'dashboard.properties' => true,
+      'policies.policies' => true,
+      'policies.master' => true,
+      'policies.rent_mass_import' => true,
+      'policies.claims' => true,
+      'policies.coverage_proof' => true,
+      'requests.refunds' => true,
+      'property_management.accounts' => true,
+      'property_management.managers' => true,
+      'property_management.users' => true,
+      'agencies.details' => true,
+      'agencies.carriers' => true,
+      'agencies.agents' => true,
+      'insurables.communities' => true,
+      'insurables.buildings' => true,
+      'insurables.units' => true,
+      'insurables.create' => true
+    }.freeze
   end
 end

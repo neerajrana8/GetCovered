@@ -13,5 +13,9 @@ FactoryBot.define do
         FactoryBot.create(:account)
       end
     end
+
+    after(:create) do |staff|
+      staff.staff_permission ||= FactoryBot.create(:staff_permission, staff: staff) if staff.organizable.is_a?(Agency)
+    end
   end
 end
