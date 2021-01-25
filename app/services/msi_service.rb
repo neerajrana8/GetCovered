@@ -116,12 +116,14 @@ class MsiService
     '1075' => 'This option provides coverage to treat, remediate and eliminate a bed bug infestation in the residence.',
     '2' => 'The amount the insurer will deduct from a loss resulting from theft before paying up to its policy limits.',
     '5' => 'The amount the insurer will deduct from a loss resulting from wind or hail before paying up to its policy limits.',
-    '1072' => 'This option provides up to $500 coverage for loss of covered property stored in freezers or refrigerators caused by power service interruption or mechanical failure.',
+    '1072' => 'This option provides up to $500 coverage for loss of covered property stored in freezers or refrigerators caused by power service interruption or mechanical failure in a freezer or fridge.',
     '1081' => 'This option allows the insured to buy back additional limits for personal property that is stored.',
     '1082' => 'The policy may be endorsed to insure against loss by theft when all or part of the residence.',
     '1061' => 'This option covers your personal property (up to $5,000) in the event of an earthquake.',
     '6' => 'The amount the insurer will deduct from a loss resulting from an earthquake before paying up to its policy limits.',
-    '3' => 'The amount the insurer will deduct from a loss resulting from a hurricane before paying up to its policy limits.'
+    '3' => 'The amount the insurer will deduct from a loss resulting from a hurricane before paying up to its policy limits.',
+    '1077' => 'Increases Loss of Use to 40% and increases Rental Income Coverage to $10,000, from $3,000.',
+    '1062' => 'Provides coverage for 1 full time outservant employee for a premium of $60.00.'
   }
   
   def self.renew_descriptions
