@@ -111,7 +111,7 @@ class MsiService
     '1076' => 'This option provides a discount by changing theft coverage to require physical evidence of forced entry and may require a police report.',
     '1' => 'The amount the insurer will deduct from a loss resulting from other peril not already listed (such as theft, hurricane or wind) before paying up to its policy limits.',
     '1007' => 'This option covers up to $500 for accidental damage caused by a pet such as stained carpet or chewed baseboards.',
-    '1060' => 'This option provides an increase in the amount of liability protection afforded to the insured in the case where an insured can be held liability for damages by a pet.',
+    '1060' => 'This option provides an increased amount of liability protection when an insured is held liable for damages by a pet.',
     '1065' => 'This option provides coverage up to $5,000 for expenses incurred by an insured as a direct result of identity fraud.',
     '1075' => 'This option provides coverage to treat, remediate and eliminate a bed bug infestation in the residence.',
     '2' => 'The amount the insurer will deduct from a loss resulting from theft before paying up to its policy limits.',
