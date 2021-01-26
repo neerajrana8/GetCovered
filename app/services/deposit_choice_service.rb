@@ -262,8 +262,8 @@ class DepositChoiceService
             body: message_content.to_json,
             headers: {
               'Content-Type' => 'application/json',
-              'Authorization' => "Bearer #{access_token}",
-              'Referer' => Rails.application.credentials.deposit_choice[:referer][ENV['RAILS_ENV'].to_sym]
+              'Authorization' => "Bearer #{access_token}"#,
+              #'Referer' => Rails.application.credentials.deposit_choice[:referer][ENV['RAILS_ENV'].to_sym]
             },
             ssl_version: :TLSv1_2 # MOOSE WARNING: here and in get below, we need to add the right headers etc.
           )
@@ -272,8 +272,8 @@ class DepositChoiceService
             query: message_content.transform_keys{|k| k.to_s },
             headers: {
               'Accept' => 'text/plain',
-              'Authorization' => "Bearer #{access_token}",
-              'Referer' => Rails.application.credentials.deposit_choice[:referer][ENV['RAILS_ENV'].to_sym]
+              'Authorization' => "Bearer #{access_token}"#,
+              #'Referer' => Rails.application.credentials.deposit_choice[:referer][ENV['RAILS_ENV'].to_sym]
             },
             ssl_version: :TLSv1_2
           )
