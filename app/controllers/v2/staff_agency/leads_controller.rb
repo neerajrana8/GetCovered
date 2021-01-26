@@ -7,7 +7,12 @@ module V2
 
       def index
         super(:@leads, @substrate)
-        render 'v2/shared/leads/index'
+        if need_to_download?
+          ::Leads::RecentLeadsReportJob.perform_later(@leads.pluck(:id), params.as_json, current_staff.email)
+          render json: { message: 'Report were sent' }, status: :ok
+        else
+          render 'v2/shared/leads/index'
+        end
       end
 
       def show
@@ -70,6 +75,27 @@ module V2
       def update_allowed?
         true
       end
+
+      #need to add validation
+      def date_params
+        if params[:filter].present?
+          {
+              start: params[:filter][:interval][:start],
+              end: params[:filter][:interval][:end]
+          }
+        else
+          params[:filter] = {}
+          {
+              start: Lead.date_of_first_lead.to_s || Time.now.beginning_of_year.to_s,
+              end: Time.now.to_s
+          }
+        end
+      end
+
+      def need_to_download?
+        params["input_file"].present? && params["input_file"]=="text/csv"
+      end
+
     end
   end
 end
