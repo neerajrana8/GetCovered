@@ -78,6 +78,7 @@ describe 'Whether authentication is ocurring properly', type: :request do
     it 'should update password with valid token' do
       @reset_password_token  = @staff.send_reset_password_instructions
       params = {
+        current_password: 'test1234',
         password: 'new password',
         password_confirmation: 'new password',
         reset_password_token: @reset_password_token
