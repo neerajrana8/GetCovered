@@ -16,7 +16,7 @@ en:
       claims: "Policies - Claims"
       coverage_proof: "Policies - Proof of Coverage"
       master: "Policies - Master Policies"
-      policies: "Policies"
+      policies: "Policies - All"
       rent_mass_import: "Policies - Rent Guarantee Mass import"
     property_management:
       accounts: "Property Management - Accounts"
@@ -24,3 +24,9 @@ en:
       users: "Property Management - Users"
     requests:
       refunds: "Requests - Refunds"
+  permission_categories:
+    agencies: "Agencies"
+    dashboard: "Dashboard"
+    policies: "Policies"
+    property_management: "Property Management"
+    requests: "Dashboard"
