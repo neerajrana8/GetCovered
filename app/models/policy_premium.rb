@@ -13,6 +13,7 @@ class PolicyPremium < ApplicationRecord
   has_many :policy_premium_fees
   has_many :fees, 
     through: :policy_premium_fees
+  has_many :policy_premium_items
   
   validate :correct_total
   
@@ -65,38 +66,42 @@ class PolicyPremium < ApplicationRecord
 		
 		found_fees = regional_availability.fees + billing_strategy.fees
 		found_fees.each { |fee| self.fees << fee }
+    
+    # add items for fees
+		payments_count = billing_strategy.new_business["payments"].count{|x| x > 0 }
+    found_fees.each do |fee|
+      payments_total = case fee.amount_type
+        when "FLAT";        fee.amount * (fee.per_payment ? payments_count : 1)
+        when "PERCENTAGE";  ((fee.amount.to_d / 100) * self.combined_premium).ceil * (fee.per_payment ? payments_count : 1)
+        # MOOSE WARNING: is .ceil acceptable in the line above?
+      end
+      self.policy_premium_items << PolicyPremiumItem.new(
+        recipient: ###MOOSE WARNING FILL OUT #####,
+        source: fee,
+        title: fee.title || "#{(fee.amortized || fee.per_payment) ? "Amortized " : ""} Fee",
+        category: "fee",
+        amortized: fee.amortized || fee.per_payment,
+        external: false, # MOOSE WARNING: when should this be true?
+        preprocessed: false, # MOOSE WARNING: when should this be true?
+        original_total_due: payments_total,
+        total_due: payments_total,
+        total_received: 0,
+        total_processed: 0
+      )
+      # MOOSE WARNING: do we need a validation in this method to avoid re-creating items if it's called twice?
+      # MOOSE WARNING: add to self.amortized_fees or self.deposit_fees appropriately
+    end
 		
 	end
 	
 	def calculate_fees(persist = false)
-		payments_count = billing_strategy.new_business["payments"]
-																		 .count { |x| x > 0 }
-		self.fees.each do |fee|
-			case fee.amount_type
-			when "FLAT"
-				if fee.per_payment
-					self.amortized_fees += fee.amount * payments_count	
-				elsif fee.amortize
-					self.amortized_fees += fee.amount
-				elsif !fee.per_payment && 
-							!fee.amortize
-					self.deposit_fees += fee.amount 
-				end
-			when "PERCENTAGE"
-				percentage_amount = (fee.amount.to_f / 100) * self.combined_premium()
-				if fee.per_payment
-					self.amortized_fees += percentage_amount * payments_count	
-				elsif fee.amortize
-					self.amortized_fees += percentage_amount
-				elsif !fee.per_payment &&
-					 		!fee.amortize
-					self.deposit_fees += percentage_amount
-				end
-			end	
-		end 
-	  
+    self.amortized_fees = self.policy_premium_items.where(category: "fee", amortized: true, external: false)
+                                                   .inject(0){|sum,item| sum + item.total_due }
+    self.deposit_fees = self.policy_premium_items.where(category: "fee", amortized: false, external: false)
+                                                   .inject(0){|sum,item| sum + item.total_due }
+    self.external_fees = self.policy_premium_items.where(category: "fee", external: true)
+                                                   .inject(0){|sum,item| sum + item.total_due }
 	  self.total_fees = self.amortized_fees + self.deposit_fees + self.external_fees
-    
     save() if persist
   end
   
