@@ -797,7 +797,7 @@ module V2
         end
         # grab community
         community = unit.parent_community
-        cip       = CarrierInsurableProfile.where(carrier_id: @msi_id, insurable_id: community&.id).take # possibly nil, for non-preferred
+        cip       = !unit.preferred_ho4 ? nil : CarrierInsurableProfile.where(carrier_id: @msi_id, insurable_id: community&.id).take # possibly nil, for non-preferred
         if community.nil?
           render json:   { error: I18n.t('policy_application_contr.msi_get_coverage_options.community_not_found') },
                  status: :unprocessable_entity
@@ -823,6 +823,7 @@ module V2
           inputs[:effective_date] ? Date.parse(inputs[:effective_date]) : nil,
           inputs[:additional_insured].to_i,
           billing_strategy_code,
+          agency: Agency.where(id: msi_get_coverage_options_params[:agency_id].to_i || 0).take,
           perform_estimate: inputs[:estimate_premium] ? true : false,
           eventable:        unit,
           **(cip ? {} : {
