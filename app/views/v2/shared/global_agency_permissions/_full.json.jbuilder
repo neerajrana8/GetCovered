@@ -9,3 +9,11 @@ json.permissions do
     json.value value
   end
 end
+
+json.parent_global_agency_permission do
+  if global_agency_permission.agency.agency.present?
+    json.partial! 'v2/shared/global_agency_permissions/full.json.jbuilder',
+                  global_agency_permission: global_agency_permission.agency.agency.global_agency_permission
+
+  end
+end
