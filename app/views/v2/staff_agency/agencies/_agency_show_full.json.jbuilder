@@ -27,3 +27,11 @@ json.branding_profiles do
     end
   end
 end
+
+json.global_agency_permission do
+  if agency.global_agency_permission
+    json.partial! 'v2/shared/global_agency_permissions/full.json.jbuilder',
+                  global_agency_permission: agency.global_agency_permission
+
+  end
+end

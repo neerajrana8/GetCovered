@@ -129,6 +129,8 @@ es:
     already_included_on_policy: "Ya incluido en la política o la aplicación de la política"
   insurable_type_model:
     cannot_be_blank: "no puede estar en blanco"
+  global_agency_permission_model:
+    cant_be_enabled: "%{translated_key} cant be enabled due to global permissions restrictions of the parent agency"
   staff_permission_model:
     cant_be_enabled: "%{translated_key} cant be enabled due to global permissions restrictions"
   address_model:

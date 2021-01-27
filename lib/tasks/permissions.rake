@@ -15,7 +15,7 @@ namespace :permissions do
       new_permissions = {}
       current_permissions = global_agency_permission.permissions
 
-      GlobalAgencyPermission::AVAILABLE_PERMISSIONS.keys do |key|
+      GlobalAgencyPermission::AVAILABLE_PERMISSIONS.keys.each do |key|
         new_permissions[key] = current_permissions[key] || default_value
       end
 
@@ -30,15 +30,14 @@ namespace :permissions do
                                       progress_mark: ' ',
                                       remainder_mark: "\u{FF65}",
                                       starting_at: 0,
-                                      total: GlobalAgencyPermission.count)
+                                      total: StaffPermission.count)
     StaffPermission.all.each do |staff_permission|
       new_permissions = {}
       current_permissions = staff_permission.permissions
 
-      GlobalAgencyPermission::AVAILABLE_PERMISSIONS.keys do |key|
+      GlobalAgencyPermission::AVAILABLE_PERMISSIONS.keys.each do |key|
         new_permissions[key] = current_permissions[key] || default_value
       end
-
       staff_permission.update(permissions: new_permissions) if new_permissions != current_permissions
 
       progress_bar.increment
