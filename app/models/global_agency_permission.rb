@@ -39,6 +39,10 @@ class GlobalAgencyPermission < ApplicationRecord
   def update_staff_permissions
     staff_permissions.each do |staff_permission|
       permissions.each do |key, value|
+        # Sync permissions for agency owners
+        staff_permission.permissions[key] = value if staff_permission.staff_id == agency.staff_id
+
+        # Only disable for other stuff
         staff_permission.permissions[key] = false if value == false
       end
       staff_permission.save
