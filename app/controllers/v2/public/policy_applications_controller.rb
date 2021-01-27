@@ -45,7 +45,7 @@ module V2
               render(json: standard_error(:unit_not_found, I18n.t('policy_application_contr.new.unit_not_found')), status: :unprocessable_entity) and return
             end
             # determine preferred status
-            @preferred = (insurable.parent_community || insurable).preferred_ho4
+            @preferred = insurable.preferred_ho4
             # get the carrier_id
             carrier_id = nil
             if @preferred
