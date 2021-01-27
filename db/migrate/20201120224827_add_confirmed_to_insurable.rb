@@ -10,6 +10,8 @@ class AddConfirmedToInsurable < ActiveRecord::Migration[5.2]
       end
       Account.where(id: nprid).delete_all
     end
+    # mark insurables confirmed if they have an account
+    Insurable.where.not(account_id: nil).update_all(confirmed: true)
   end
   
   def down
