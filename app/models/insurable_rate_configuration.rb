@@ -163,7 +163,7 @@ class InsurableRateConfiguration < ApplicationRecord
   #                 generally should be true for IRCs with the same configurer and false when only the configurables differ
   # returns:
   #   an IRC (not saved in the DB) representing the combined IRC attributes
-  def self.merge(irc_array, mutable:)
+  def self.merge(irc_array, mutable:, allow_new_coverages:)
     # setup
     to_return = InsurableRateConfiguration.new(
       configurable_type: irc_array.drop(1).inject(irc_array.first&.configurable_type){|res,irc| break nil unless irc.configurable_type == res; res },
@@ -199,7 +199,7 @@ class InsurableRateConfiguration < ApplicationRecord
     end
     # coverage_options
     irc_array.each do |irc|
-      to_return.merge_child_options!(irc.coverage_options, mutable: mutable, allow_new_coverages: irc.configurer_type.nil? ? mutable : COVERAGE_ADDING_CONFIGURERS.include?(irc.configurer_type))
+      to_return.merge_child_options!(irc.coverage_options, mutable: mutable, allow_new_coverages: allow_new_coverages.nil? ? (irc.configurer_type.nil? ? mutable : COVERAGE_ADDING_CONFIGURERS.include?(irc.configurer_type)) : allow_new_coverages)
     end
     # done
     return to_return
