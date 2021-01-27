@@ -24,6 +24,14 @@ json.users do
   end
 end
 
+json.primary_campaign_name policy.primary_user&.lead&.tracking_url&.campaign_name
+
+json.premium_total policy.policy_quotes&.last&.policy_premium&.total
+
+json.premium_first policy.policy_quotes&.last&.invoices&.first&.total
+
+json.billing_strategy policy.policy_quotes&.last&.policy_premium&.billing_strategy&.title
+
 json.policy_coverages policy.coverages
 
 json.primary_insurable do

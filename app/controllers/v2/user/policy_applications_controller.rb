@@ -56,22 +56,11 @@ module V2
         end
 
         if @application.save
-          update_users_result =
-            PolicyApplications::UpdateUsers.run!(
-              policy_application: @application,
-              policy_users_params: create_policy_users_params[:policy_users_attributes],
-              current_user_email: current_user.email
-            )
-
-          if update_users_result.success?
-            if @application.update(status: 'in_progress')
-              render 'v2/public/policy_applications/show'
-            else
-              render json: @application.errors.to_json,
-                     status: 422
-            end
+          if @application.update(status: 'in_progress')
+            render 'v2/public/policy_applications/show'
           else
-            render json: update_users_result.failure, status: 422
+            render json: @application.errors.to_json,
+                   status: 422
           end
         else
           # Rental Guarantee Application Save Error
@@ -338,59 +327,123 @@ module V2
         @policy_application = PolicyApplication.find(params[:id])
 
         if @policy_application.policy_type.title == 'Residential'
-        
           @policy_application.account_id = @policy_application.primary_insurable&.account_id
-
+          @policy_application.account_id = @policy_application.primary_insurable&.account_id
           @policy_application.policy_rates.destroy_all
-          if update_residential_params[:effective_date].present?
-            @policy_application.expiration_date = update_residential_params[:effective_date].to_date&.send(:+, 1.year)
+          # try to update
+          @policy_application.assign_attributes(update_residential_params)
+          @policy_application.expiration_date = @policy_application.effective_date&.send(:+, 1.year)
+          # remove duplicate pis
+          @replacement_policy_insurables = nil
+          saved_pis = @policy_application.policy_insurables.select{|pi| pi.id }
+          @policy_application.policy_insurables = @policy_application.policy_insurables.select{|pi| pi.id || (pi.insurable_id && saved_pis.find{|spi| spi.insurable_id == pi.insurable_id }.nil?) }
+          unsaved_pis = @policy_application.policy_insurables.select{|pi| pi.id.nil? }.uniq{|pi| pi.insurable_id }
+          unless unsaved_pis.blank?
+            unsaved_pis.first.primary = true if unsaved_pis.find{|pi| pi.primary }.nil?
+            @replacement_policy_insurables = unsaved_pis
           end
-          if @policy_application.update(update_residential_params) &&
-             @policy_application.update(status: 'complete')
-
-            @policy_application.estimate
-            @quote = @policy_application.policy_quotes.order("updated_at DESC").limit(1).first
-            if @policy_application.status != 'quote_failed' || @policy_application.status != 'quoted'
-              # if application quote success or failure
-              @policy_application.quote(@quote.id)
-              @policy_application.reload
-              @quote.reload
-
-              if @quote.status == 'quoted'
-
-                render json: {
-                  id: @policy_application.id,
-                  quote: {
-                    id: @quote.id,
-                    status: @quote.status,
-                    premium: @quote.policy_premium
-                  },
-                  invoices: @quote.invoices.order('due_date ASC'),
-                  user: {
-                    id: @policy_application.primary_user.id,
-                    stripe_id: @policy_application.primary_user.stripe_id
-                  }
-                }.merge(@policy_application.carrier_id != 5 ? {} : {
-                  'policy_fee' => @quote.carrier_payment_data['policy_fee'],
-                  'installment_fee' => @quote.carrier_payment_data['installment_fee'],
-                  'installment_total' => @quote.carrier_payment_data['installment_total']
-                }).to_json, status: 200
-
-              else
-                render json: { error: I18n.t('user_policy_application_controller.quote_failed'), message: I18n.t('policy_application_contr.create_security_deposit_replacement.quote_failed') },
-                       status: 500
+          # fix coverage options if needed
+          unless @policy_application.coverage_selections.blank?
+            @policy_application.coverage_selections.each do |cs|
+              if [ActionController::Parameters, ActiveSupport::HashWithIndifferentAccess, ::Hash].include?(cs['selection'].class)
+                cs['selection']['value'] = cs['selection']['value'].to_d / 100.to_d if cs['selection']['data_type'] == 'currency'
+                cs['selection'] = cs['selection']['value']
+              elsif [ActionController::Parameters, ::Hash].include?(cs[:selection].class)
+                cs[:selection][:value] = cs[:selection][:value].to_d / 100.to_d if cs[:selection][:data_type] == 'currency'
+                cs[:selection] = cs[:selection][:value]
               end
-            else
-              render json: { error: I18n.t('user_policy_application_controller.application_unavailable'), message: I18n.t('policy_application_contr.create_security_deposit_replacement.policy_application_unavailable') },
-                     status: 400
             end
-          else
-            render json: @policy_application.errors.to_json,
-                   status: 422
+            @policy_application.coverage_selections = @policy_application.coverage_selections.select{|cs| cs['selection'] || cs[:selection] }
+            @policy_application.coverage_selections.push({ 'category' => 'coverage', 'options_type' => 'none', 'uid' => '1010', 'selection' => true }) unless @policy_application.coverage_selections.any?{|co| co['uid'] == '1010' }
           end
-        else
-          render json: { error: I18n.t('user_policy_application_controller.application_unavailable'), message: I18n.t('user_policy_application_controller.please_login_to_update_policy') },
-                 status: 401
+          # fix agency if needed
+          if @policy_application.agency.nil? && @policy_application.account.nil?
+            @policy_application.agency = Agency.where(master_agency: true).take
+          elsif @policy_application.agency.nil?
+            @policy_application.agency = @policy_application.account.agency
+          end
+          # try to update users
+          update_users_result = update_policy_users_params.blank? ? true :
+            PolicyApplications::UpdateUsers.run!(
+              policy_application: @policy_application,
+              policy_users_params: update_policy_users_params[:policy_users_attributes],
+              current_user_email: current_user.email
+            )
+          LeadEvents::LinkPolicyApplicationUsers.run!(policy_application: @policy_application)
+          if !(update_users_result == true || update_users_result.success?)
+            render json: update_users_result.failure,
+              status: 422
+            return
+          end
+          # fix policy insurables if necessary
+          @policy_insurables_to_restore = nil
+          unless @replacement_policy_insurables.blank?
+            @policy_insurables_to_restore = @policy_application.policy_insurables.select{|pi| pi.id }
+            @policy_application.policy_insurables.clear
+            @policy_application.policy_insurables = @replacement_policy_insurables
+          end
+          # try updating policy application
+          if !@policy_application.save
+            # restore the original policy insurables if we changed anything
+            unless @policy_insurables_to_restore.blank?
+              @policy_application.policy_insurables.clear
+              @policy_insurables_to_restore.update_all(policy_application_id: @policy_application.id)
+            end
+            # scream at the user
+            render json: standard_error(:policy_application_save_error, nil, @policy_application.errors),
+                   status: 422
+            return
+      
+          elsif @policy_application.primary_insurable.nil?
+            render json: standard_error(:invalid_address, I18n.t('policy_application_contr.update_residential.invalid_address')),
+                   status: 400
+            return
+          elsif !@policy_application.update(status: 'complete')
+            render json: standard_error(:policy_application_update_error, nil, @policy_application.errors),
+                   status: 422
+            return
+          end
+          # perform estimate
+          @policy_application.estimate
+          @quote = @policy_application.policy_quotes.order("updated_at DESC").limit(1).first
+          if @policy_application.status == "quote_failed"
+            render json: { error: I18n.t('user_policy_application_controller.application_unavailable') + " #{@policy_application.error_message}", message: I18n.t('policy_application_contr.create_security_deposit_replacement.policy_application_unavailable') },
+                   status: 400
+            return
+          elsif @policy_application.status == "quoted"          
+            render json: { error: I18n.t('user_policy_application_controller.application_unavailable'), message: I18n.t('policy_application_contr.create_security_deposit_replacement.policy_application_unavailable') },
+                   status: 400
+            return
+          end
+          # create quote
+          @policy_application.quote(@quote.id)
+          @policy_application.reload
+          @quote.reload
+          if @policy_application.status == "quote_failed"
+            render json: standard_error(:quote_failed, I18n.t('user_policy_application_controller.quote_failed') + " #{@policy_application.error_message}"),
+                   status: 500
+          elsif @quote.status == "quoted"
+            render json: {
+              id: @policy_application.id,
+              quote: {
+                id: @quote.id,
+                status: @quote.status,
+                premium: @quote.policy_premium
+              },
+              invoices: @quote.invoices.order('due_date ASC'),
+              user: {
+                id: @policy_application.primary_user.id,
+                stripe_id: @policy_application.primary_user.stripe_id
+              }
+            }.merge(@policy_application.carrier_id != 5 ? {} : {
+              'policy_fee' => @quote.carrier_payment_data['policy_fee'],
+              'installment_fee' => @quote.carrier_payment_data['installment_fee'],
+              'installment_total' => @quote.carrier_payment_data['installment_total']
+            }).to_json, status: 200
+          else
+            render json: standard_error(:quote_failed, I18n.t('user_policy_application_controller.quote_failed')),
+                   status: 500
+          end
         end
       end
 
@@ -468,7 +521,7 @@ module V2
 
       def create_residential_params
         params.require(:policy_application)
-          .permit(:effective_date, :expiration_date, :auto_pay,
+          .permit(:branding_profile_id, :effective_date, :expiration_date, :auto_pay,
                   :auto_renew, :billing_strategy_id, :account_id, :policy_type_id,
                   :carrier_id, :agency_id, fields: [:title, :value, options: []],
                   questions: [:title, :value, options: []],
@@ -483,7 +536,7 @@ module V2
 
       def create_commercial_params
         params.require(:policy_application)
-          .permit(:effective_date, :expiration_date, :auto_pay,
+          .permit(:branding_profile_id, :effective_date, :expiration_date, :auto_pay,
                   :auto_renew, :billing_strategy_id, :account_id, :policy_type_id,
                   :carrier_id, :agency_id, fields: {},
                                            questions: [:text, :value, :questionId, options: [], questions: [:text, :value, :questionId, options: []]])
@@ -491,14 +544,14 @@ module V2
 
       def create_rental_guarantee_params
         params.require(:policy_application)
-          .permit(:effective_date, :expiration_date, :auto_pay,
+          .permit(:branding_profile_id, :effective_date, :expiration_date, :auto_pay,
                   :auto_renew, :billing_strategy_id, :account_id, :policy_type_id,
                   :carrier_id, :agency_id, fields: {})
       end
 
       def create_security_deposit_replacement_params
         params.require(:policy_application)
-          .permit(:effective_date, :expiration_date, :auto_pay,
+          .permit(:branding_profile_id, :effective_date, :expiration_date, :auto_pay,
                   :auto_renew, :billing_strategy_id, :account_id, :policy_type_id,
                   :carrier_id, :agency_id, fields: [:title, :value, options: []],
                   questions:                       [:title, :value, options: []],
@@ -522,11 +575,15 @@ module V2
                     ]
                   ])
       end
+      
+      def update_policy_users_params
+        return create_policy_users_params
+      end
 
       def update_residential_params
+        return create_residential_params
         params.require(:policy_application)
-          .permit(:effective_date,
-                  :billing_strategy_id, fields: {},
+          .permit(:branding_profile_id, :effective_date, :billing_strategy_id, fields: {},
                   policy_rates_attributes: [:insurable_rate_id],
                   policy_insurables_attributes: [:insurable_id])
       end

@@ -87,7 +87,6 @@ module Leads
         }
       end
     end
-
   end
 end
 

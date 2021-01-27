@@ -87,7 +87,7 @@
 
     resources :branding_profiles,
       path: "branding-profiles",
-      only: [ :show, :create, :update ] do
+      only: [ :index, :show, :create, :update ] do
         member do
           get :faqs
           get :export
@@ -308,6 +308,9 @@
           get "get_leads",
             to: "tracking_urls#get_leads",
             via: "get"
+          get "get_policies",
+              to: "tracking_urls#get_policies",
+              via: "get"
         end
       end
 

@@ -54,6 +54,7 @@ class Policy < ApplicationRecord
 
   belongs_to :agency, optional: true
   belongs_to :account, optional: true
+  belongs_to :branding_profile, optional: true
   belongs_to :carrier, optional: true
   belongs_to :policy_type, optional: true
   # belongs_to :billing_profie

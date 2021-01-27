@@ -94,9 +94,12 @@
         post :import, on: :collection
       end
 
-    resources :branding_profile_attributes,
-      path: "branding-profile-attributes",
-      only: [ :destroy ]
+    resources :branding_profile_attributes, path: "branding-profile-attributes", only: [ :destroy ] do
+      collection do
+        post :copy
+        post :force_copy
+      end
+    end
 
     resources :pages
 
@@ -276,6 +279,9 @@
                   get "get_leads",
                     to: "tracking_urls#get_leads",
                     via: "get"
+                  get "get_policies",
+                      to: "tracking_urls#get_policies",
+                      via: "get"
                 end
     end
 
