@@ -65,7 +65,7 @@ class PolicyPremium < ApplicationRecord
 	  ).take
 		
 		found_fees = regional_availability.fees + billing_strategy.fees
-		found_fees.each { |fee| self.fees << fee }
+		found_fees.each { |fee| self.fees << fee } # MOOSE WARNING: we can get rid of this after the transition to items & the removal of the has_many declaration
     
     # add items for fees
 		payments_count = billing_strategy.new_business["payments"].count{|x| x > 0 }
