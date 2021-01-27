@@ -272,7 +272,7 @@ en:
     2_desc: "The amount the insurer will deduct from a loss resulting from theft before paying up to its policy limits."
     3_title: "Hurricane"
     3_desc: "The amount the insurer will deduct from a loss resulting from a hurricane before paying up to its policy limits."
-    5_title: "Wind Hail"
+    5_title: "Wind / Hail"
     5_desc: "The amount the insurer will deduct from a loss resulting from wind or hail before paying up to its policy limits."
     6_title: "Earthquake"
     6_desc: "The amount the insurer will deduct from a loss resulting from an earthquake before paying up to its policy limits."
