@@ -573,7 +573,7 @@ class InsurableRateConfiguration < ApplicationRecord
     # for each IRC, apply rules and merge down
     coverage_options = []
     irc_hierarchy.each do |irc|
-      irc.merge_child_options!(coverage_options, mutable: false, allow_new_coverages: COVERAGE_ADDING_CONFIGURERS.include?(irc.configurer_type))
+      irc.merge_parent_options!(coverage_options, mutable: false, allow_new_coverages: COVERAGE_ADDING_CONFIGURERS.include?(irc.configurer_type))
       coverage_options = irc.annotate_options(selections)
     end
     coverage_options.select!{|co| co['enabled'] != false }
