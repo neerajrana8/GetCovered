@@ -328,7 +328,6 @@ module V2
 
         if @policy_application.policy_type.title == 'Residential'
           @policy_application.account_id = @policy_application.primary_insurable&.account_id
-          @policy_application.account_id = @policy_application.primary_insurable&.account_id
           @policy_application.policy_rates.destroy_all
           # try to update
           @policy_application.assign_attributes(update_residential_params)
