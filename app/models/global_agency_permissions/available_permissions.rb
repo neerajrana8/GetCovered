@@ -16,6 +16,7 @@ module GlobalAgencyPermissions
       'agencies.details' => true,
       'agencies.carriers' => true,
       'agencies.agents' => true,
+      'agencies.manage_agents' => true,
       'insurables.communities' => true,
       'insurables.buildings' => true,
       'insurables.units' => true,

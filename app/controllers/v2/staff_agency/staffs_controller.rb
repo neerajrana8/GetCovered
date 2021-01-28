@@ -10,6 +10,7 @@ module V2
       before_action :set_staff, only: %i[update show re_invite toggle_enabled]
 
       check_privileges 'agencies.agents'
+      check_privileges 'agencies.manage_agents' => %i[create update]
 
       def index
         if (params[:filter] && params[:filter][:organizable_type] == 'Account')

@@ -4,6 +4,7 @@ es:
       agents: "Agencies - Agents"
       carriers: "Agencies - Carriers"
       details: "Agencies - Details"
+      manage_agents: "Agencies - Manage Agents"
     dashboard:
       leads: "Dashboard - Leads"
       properties: "Dashboard - Properties"
