@@ -2,6 +2,8 @@ class StaffPermission < ApplicationRecord
   belongs_to :global_agency_permission
   belongs_to :staff
 
+  serialize :permissions, HashSerializer
+
   after_initialize :initialize_staff_permission
   validate :permissions_restrictions
   

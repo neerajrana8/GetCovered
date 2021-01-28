@@ -9,6 +9,8 @@ class GlobalAgencyPermission < ApplicationRecord
 
   validate :subagency_permissions_restrictions, if: -> { agency.agency.present? }
 
+  serialize :permissions, HashSerializer
+
   private
 
   def subagency_permissions_restrictions
