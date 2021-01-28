@@ -96,6 +96,10 @@ module V2
         params["input_file"].present? && params["input_file"]=="text/csv"
       end
 
+      def file_name
+        "recent-leads-#{Date.today}.csv"
+      end
+
     end
   end
 end
