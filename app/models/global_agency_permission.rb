@@ -27,14 +27,18 @@ class GlobalAgencyPermission < ApplicationRecord
   end
 
   def update_subagencies_permissions
-    agency.agencies.each do |agency|
-      agency_permissions = agency.global_agency_permission
+    agency.agencies.each do |child_agency|
+      agency_permissions = child_agency.global_agency_permission
 
-      permissions.each do |key, value|
-        agency_permissions.permissions[key] = false if value == false
+      if agency_permissions.nil?
+        GlobalAgencyPermission.create(agency: child_agency, permissions: permissions)
+      else
+        permissions.each do |key, value|
+          agency_permissions.permissions[key] = false if value == false
+        end
+
+        agency_permissions.save
       end
-
-      agency_permissions.save
     end
   end
 
