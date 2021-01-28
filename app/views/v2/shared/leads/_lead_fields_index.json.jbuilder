@@ -24,7 +24,8 @@ if @site_visits.present?
 end
 
 json.primary_campaign_name lead&.tracking_url&.campaign_name
-json.primary_campaign_name lead&.tracking_url&.campaign_source
+json.primary_campaign_source lead&.tracking_url&.campaign_source
+json.primary_campaign_medium lead&.tracking_url&.campaign_medium
 json.premium_total lead&.user&.policy_applications&.last&.policy_quotes&.last&.policy_premium&.total
 json.premium_first lead&.user&.policy_applications&.last&.policy_quotes&.last&.invoices&.first&.total
 json.billing_strategy lead&.user&.policy_applications&.last&.policy_quotes&.last&.policy_premium&.billing_strategy&.title
