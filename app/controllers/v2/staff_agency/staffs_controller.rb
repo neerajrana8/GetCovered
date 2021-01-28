@@ -46,15 +46,11 @@ module V2
       end
       
       def update
-        if update_allowed?
-          if @staff.update_as(current_staff, update_params)
-            render :show, status: :ok
-          else
-            render json: standard_error(:staff_update_error, nil, @staff.errors.full_messages),
-                   status: :unprocessable_entity
-          end
+        if @staff.update_as(current_staff, update_params)
+          render :show, status: :ok
         else
-          render json: { success: false, errors: ['Unauthorized Access'] }, status: :unauthorized
+          render json: standard_error(:staff_update_error, nil, @staff.errors.full_messages),
+                 status: :unprocessable_entity
         end
       end
       
@@ -100,10 +96,6 @@ module V2
         return false if create_params[:organizable_type] == 'Account' && !@agency&.accounts&.ids&.include?(create_params[:organizable_id])
         
         true
-      end
-        
-      def update_allowed?
-        current_staff == @agency.owner
       end
         
       def set_staff
