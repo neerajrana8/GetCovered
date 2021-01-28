@@ -98,7 +98,8 @@ class MsiService
   end.to_h){|k,a,b| a + b }
   
   TITLE_OVERRIDES = {
-    @@coverage_codes[:ForcedEntryTheft][:code].to_s => Proc.new{|region| region == 'NY' ? "Burglary Limitation Coverage" : nil }
+    @@coverage_codes[:ForcedEntryTheft][:code].to_s => Proc.new{|region| region == 'NY' ? "Burglary Limitation Coverage" : nil },
+    @@coverage_codes[:WindHail][:code].to_s => Proc.new{|region| "Wind / Hail" }
   }
   
   DESCRIPTIONS = {
@@ -136,6 +137,10 @@ class MsiService
         end
       end
     end
+  end
+  
+  def self.covopt_sort(a,b)
+    (a['uid'] == '1' ? 999999 : 0) <=> (b['uid'] == '1' ? 999999 : 0)
   end
   
   LOSS_OF_USE_VARIATIONS = {
@@ -946,7 +951,7 @@ class MsiService
             "options"       => ded["MSI_DeductibleOptionList"].blank? ? nil : arrayify(ded["MSI_DeductibleOptionList"]["Deductible"]).map{|d| d["Amt"] ? d["Amt"].to_d : d["FormatPct"].to_d * 100 }, # MOOSE WARNING: handle percents in special way?
             "options_format"=> ded["MSI_DeductibleOptionList"].blank? ? "none" : arrayify(ded["MSI_DeductibleOptionList"]["Deductible"]).first["Amt"] ? "currency" : "percent"
           }
-      end)
+      end).sort{|a,b| MsiService.covopt_sort(a,b) }
     end
     # apply descriptions
     irc.coverage_options.each{|co| co['description'] = DESCRIPTIONS[co['uid'].to_s] unless DESCRIPTIONS[co['uid'].to_s].blank? }
