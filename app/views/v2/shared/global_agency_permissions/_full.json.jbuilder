@@ -11,9 +11,9 @@ json.permissions do
 end
 
 json.parent_global_agency_permission do
-  if global_agency_permission.agency.agency.present?
+  if global_agency_permission.agency.parent_agency.present?
     json.partial! 'v2/shared/global_agency_permissions/full.json.jbuilder',
-                  global_agency_permission: global_agency_permission.agency.agency.global_agency_permission
+                  global_agency_permission: global_agency_permission.agency.parent_agency.global_agency_permission
 
   end
 end

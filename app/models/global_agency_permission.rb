@@ -7,17 +7,17 @@ class GlobalAgencyPermission < ApplicationRecord
   after_update :update_staff_permissions
   after_update :update_subagencies_permissions
 
-  validate :subagency_permissions_restrictions, if: -> { agency.agency.present? }
+  validate :subagency_permissions_restrictions, if: -> { agency.parent_agency.present? }
 
   serialize :permissions, HashSerializer
 
   private
 
   def subagency_permissions_restrictions
-    parent_agency_permissions = agency.agency.global_agency_permission
+    parent_agency_permission = agency.parent_agency.global_agency_permission
 
     permissions.each do |key, value|
-      next unless value && !parent_agency_permissions.permissions[key]
+      next unless value && !parent_agency_permission.permissions[key]
 
       errors.add(
         :permissions,

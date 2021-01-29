@@ -97,6 +97,7 @@ class Agency < ApplicationRecord
 
   # ActiveSupport +pluralize+ method doesn't work correctly for this word(returns staffs). So I added alias for it
   alias staffs staff
+  alias parent_agency agency
 
   # Validations
 
