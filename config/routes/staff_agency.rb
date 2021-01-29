@@ -240,6 +240,9 @@
           to: "histories#index_recordable",
           via: "get",
           defaults: { recordable_type: Policy }
+        get "get_leads",
+            to: "policies#get_leads",
+            via: "get"
         get 'resend_policy_documents'
         put :refund_policy
         put :cancel_policy

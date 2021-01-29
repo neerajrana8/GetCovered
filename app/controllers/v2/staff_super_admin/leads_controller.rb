@@ -1,13 +1,19 @@
 module V2
   module StaffSuperAdmin
     class LeadsController < StaffSuperAdminController
+      include ActionController::MimeResponds
 
       before_action :set_lead, only: [:update, :show]
       before_action :set_substrate, only: :index
 
       def index
         super(:@leads, @substrate)
-        render 'v2/shared/leads/index'
+        if need_to_download?
+          ::Leads::RecentLeadsReportJob.perform_later(@leads.pluck(:id), params.as_json, current_staff.email)
+          render json: { message: 'Report were sent' }, status: :ok
+        else
+          render 'v2/shared/leads/index'
+        end
       end
 
       def show
@@ -26,6 +32,12 @@ module V2
           render json: { success: false, errors: [I18n.t('user_users_controler.unauthorized_access')] },
                  status: :unauthorized
         end
+      end
+
+      def get_products
+        products_id = LeadEvent.includes(:policy_type).pluck(:policy_type_id, :title)&.uniq&.compact
+        products = products_id&.map{|el| ["id", "title"].zip(el).to_h}
+        render json: products, status: :ok
       end
 
       private
@@ -71,6 +83,19 @@ module V2
         true
       end
 
+      def date_params
+        if params[:filter].present?
+          {
+              start: params[:filter][:last_visit][:start],
+              end: params[:filter][:last_visit][:end]
+          }
+        end
+      end
+
+      def need_to_download?
+        params["input_file"].present? && params["input_file"]=="text/csv"
+      end
+      
     end
   end
 end
