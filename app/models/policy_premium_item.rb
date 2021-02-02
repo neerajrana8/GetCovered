@@ -3,7 +3,7 @@ class PolicyPremiumItem < ApplicationRecord
   belongs_to :policy_premium  # the policy_premium to which this item applies
   belongs_to :recipient,      # who receives this money (generally a Carrier, Agent, or CommissionStrategy)
     polymorphic: true
-  belongs_to :collector       # which Carrier/Agent actually collects the money from users
+  belongs_to :collector,       # which Carrier/Agent actually collects the money from users
     polymorphic: true
   belongs_to :fee,            # what Fee this item corresponds to, if any
     optional: true

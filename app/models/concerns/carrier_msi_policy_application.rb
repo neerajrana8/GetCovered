@@ -186,7 +186,7 @@ module CarrierMsiPolicyApplication
                 external: true,
                 status: "quoted",
                 payer: self.primary_user,
-                line_items_attributes: ind == 0 ? ([
+                line_items_attributes: (ind == 0 ? [
                   {
                     title: "Premium Down Payment",
                     price: down_payment - msi_policy_fee,
