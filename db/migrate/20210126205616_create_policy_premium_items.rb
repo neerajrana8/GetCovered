@@ -10,9 +10,11 @@ class CreatePolicyPremiumItems < ActiveRecord::Migration[5.2]
       t.integer :total_due          # the total due
       t.integer :total_received     # the amount we've been paid so far
       t.integer :total_processed    # the amount we've fully processed as received (i.e. logged as commissions or whatever other logic we want)
-      t.references :policy_premium, foreign_key: true
-      t.references :recipient, polymorphic: true
-      t.references :source, polymorphic: true, null: true
+      t.references :policy_premium                                      # the PolicyPremium we belong to
+      t.references :recipient, polymorphic: true                        # the CommissionStrategy/Agent/Carrier who receives the money
+      t.references :collector, polymorphic: true                        # the Agency or Carrier who collects the money
+      t.references :collection_plan, polymorphic: true, null: true      # record indicating what the collector will pay off on their end (see model for details)
+      t.references :fee, null: true                                     # the Fee this item corresponds to, if any
 
       t.timestamps
     end

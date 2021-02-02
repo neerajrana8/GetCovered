@@ -3,8 +3,9 @@ class PolicyPremiumItem < ApplicationRecord
   belongs_to :policy_premium  # the policy_premium to which this item applies
   belongs_to :recipient,      # who receives this money (generally a Carrier, Agent, or CommissionStrategy)
     polymorphic: true
-  belongs_to :source,         # what model caused this item to be charged (generally a Fee or nil)
-    polymorphic: true,
+  belongs_to :collector       # which Carrier/Agent actually collects the money from users
+    polymorphic: true
+  belongs_to :fee,            # what Fee this item corresponds to, if any
     optional: true
   # Validations
   validates_presence_of :title
@@ -27,7 +28,7 @@ class PolicyPremiumItem < ApplicationRecord
   def from_fee(fee)
     ::PolicyPremiumItem.new(
       recipient: ###MOOSE WARNING FILL OUT #####,
-      source: fee,
+      fee: fee,
       title: fee.title || "#{(fee.amortized || fee.per_payment) ? "Amortized " : ""} Fee",
       category: "fee",
       amortized: fee.amortized || fee.per_payment,
