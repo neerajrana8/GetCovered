@@ -10,17 +10,26 @@ class PolicyPremiumItem < ApplicationRecord
     
   has_one :billing_strategy,
     through: :policy_premium
-    
+
+  # Callbacks
+  before_validation :set_amortization_plan,
+    if: :will_save_change_to_amortization?
+
   # Validations
   validates_presence_of :title
   validates_presence_of :category
-  validates_inclusion_of :amortized, in: [true, false]
-  validates_inclusion_of :external, in: [true, false]
-  validates_inclusion_of :preprocessed, in: [true, false]
+  validates_presence_of :amortization
+  validates_presence_of :amortization_plan
+  validates_presence_of :rounding_error_distribution
   validates :original_total_due, numericality: { :greater_than_or_equal_to => 0 }
   validates :total_due, numericality: { :greater_than_or_equal_to => 0 }
   validates :total_received, numericality: { :greater_than_or_equal_to => 0 }
   validates :total_processed, numericality: { :greater_than_or_equal_to => 0 }
+  validates_presence_of :proration_calculation
+  validates_inclusion_of :preprocessed, in: [true, false]
+  
+  validate :validate_amortization_plan
+  
   
   # Enums
   enum category: {
@@ -37,9 +46,10 @@ class PolicyPremiumItem < ApplicationRecord
     custom_spread: 4
   }, _prefix: false, _suffix: false
   enum rounding_error_distribution: {
-    rounding_error_on_last_payment: 0,
-    rounding_error_equidistributed: 1
-  }
+    on_last_payment: 0,
+    on_first_payment: 1,
+    dynamic: 1
+  }, _prefix: true, _suffix: false
   enum proration_calculation: {
     prorate_per_invoice: 0,
     prorate_total: 1
@@ -61,19 +71,70 @@ class PolicyPremiumItem < ApplicationRecord
   
   # Public Instance Methods
   def schedule_line_items
-    to_return = (0...(self.billing_strategy.payments_per_term)).map{|x| [] }
-    case self.amortization
-      when 'all_up_front'
-        to_return[0].push(LineItem.new(
-        ))
-      when 'billing_strategy_spread'
-        #self.billing_strategy.
-      when 'equal_spread'
-      when 'equal_spread_except_first'
-      when 'custom_spread'
+    to_return = nil
+    if self.rounding_error_distribution == 'dynamic'
+      total_left = self.original_total_due
+      weight_left = self.amortization_plan.inject(0){|sum,val| sum + val }.to_d
+      to_return = self.amortization_plan.map do |weight|
+        li_total = ((weight / weight_left) * total_left).floor
+        total_left -= li_total
+        weight_left -= weight
+        next li_total == 0 ? nil : LineItem.new(
+          policy_premium_item: self,
+          title: self.title,
+          original_total_due: li_total,
+          total_due: li_total,
+          total_received: 0,
+          total_processed: 0 # MOOSE WARNING: no more price, no refundability, no category
+        )
+      end
+    elsif self.rounding_error_distribution == 'on_first_payment' || self.rounding_error_distribution == 'on_last_payment'
+      total_weight = self.amortization_plan.inject(0){|sum,val| sum + val }.to_d
+      to_return = self.amortization_plan.map do |weight|
+        li_total = ((weight / total_weight) * self.original_total_due).floor
+        next li_total == 0 ? nil : LineItem.new(
+          policy_premium_item: self,
+          title: self.title,
+          original_total_due: li_total,
+          total_due: li_total,
+          total_received: 0,
+          total_processed: 0 # MOOSE WARNING: no more price, no refundability, no category
+        )
+      end
+      rounding_error = self.original_total_due - to_return.inject(0){|sum,li| sum + li.original_total_due }
+      li = to_return[self.rounding_error_distribution == 'on_first_payment' ? 0 : -1]
+      li.original_total_due += rounding_error
+      li.total_due += rounding_error
     end
     return to_return
   end
+  
+  
+  private
+  
+    def set_amortization_plan
+      self.amortization_plan = case self.amortization
+        when 'all_up_front'
+          (0...(self.billing_strategy.payments_per_term)).map{|x| x == 0 ? 1 : 0 }
+        when 'billing_strategy_spread'
+          self.billing_strategy.new_business["payments"].select{|p| p > 0 }
+        when 'equal_spread'
+          (0...(self.billing_strategy.payments_per_term)).map{|x| 1 }
+        when 'equal_spread_except_first'
+          (0...(self.billing_strategy.payments_per_term)).map{|x| x == 0 ? 0 : 1 }
+        when 'custom_spread'
+          self.amortization_plan
+      end
+    end
+    
+    def validate_amortization_plan
+      unless self.amortization_plan.class == ::Array &&
+             self.amortization_plan.length == self.billing_strategy.payments_per_term &&
+             self.amortization_plan.all?{|x| x.is_a?(::Integer) && x >= 0 } &&
+             self.amortization_plan.any?{|x| x != 0 }
+        errors.add(:amortization_plan, I18n.t('policy_premium_item_model.amortization_plan_is_invalid'))
+      end
+    end
 end
 
 
