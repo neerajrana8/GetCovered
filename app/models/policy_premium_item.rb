@@ -7,6 +7,10 @@ class PolicyPremiumItem < ApplicationRecord
     polymorphic: true
   belongs_to :fee,            # what Fee this item corresponds to, if any
     optional: true
+    
+  has_one :billing_strategy,
+    through: :policy_premium
+    
   # Validations
   validates_presence_of :title
   validates_presence_of :category
@@ -17,6 +21,7 @@ class PolicyPremiumItem < ApplicationRecord
   validates :total_due, numericality: { :greater_than_or_equal_to => 0 }
   validates :total_received, numericality: { :greater_than_or_equal_to => 0 }
   validates :total_processed, numericality: { :greater_than_or_equal_to => 0 }
+  
   # Enums
   enum category: {
     fee: 0,
@@ -39,6 +44,7 @@ class PolicyPremiumItem < ApplicationRecord
     prorate_per_invoice: 0,
     prorate_total: 1
   }
+  
   # Public Class Methods
   def from_fee(fee)
     ::PolicyPremiumItem.new(
@@ -52,8 +58,22 @@ class PolicyPremiumItem < ApplicationRecord
       #### MOOSE WARNING: this is no good, fees can be percentages ########
     )
   end
-  # Public Instance Methods
   
+  # Public Instance Methods
+  def schedule_line_items
+    to_return = (0...(self.billing_strategy.payments_per_term)).map{|x| [] }
+    case self.amortization
+      when 'all_up_front'
+        to_return[0].push(LineItem.new(
+        ))
+      when 'billing_strategy_spread'
+        #self.billing_strategy.
+      when 'equal_spread'
+      when 'equal_spread_except_first'
+      when 'custom_spread'
+    end
+    return to_return
+  end
 end
 
 

@@ -9,10 +9,10 @@ class CreatePolicyPremiumItems < ActiveRecord::Migration[5.2]
       t.integer :rounding_error_distribution, default: 0                # how to distribute rounding error
       t.timestamps                                                      # timestamps
       # payment tracking
-      t.integer :original_total_due                                     # the total due originally, before any modifications
-      t.integer :total_due                                              # the total due
-      t.integer :total_received                                         # the amount we've been paid so far
-      t.integer :total_processed                                        # the amount we've fully processed as received (i.e. logged as commissions or whatever other logic we want)
+      t.integer :original_total_due, null: false                        # the total due originally, before any modifications
+      t.integer :total_due, null: false                                 # the total due
+      t.integer :total_received, null: false                            # the amount we've been paid so far
+      t.integer :total_processed, null: false                           # the amount we've fully processed as received (i.e. logged as commissions or whatever other logic we want)
       # refund and cancellation settings
       t.integer :proration_calculation, default: 0                      # how to divide payment into chunks when prorating
       # commissions settings
