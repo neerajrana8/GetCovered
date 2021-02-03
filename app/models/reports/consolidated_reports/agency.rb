@@ -49,7 +49,7 @@ module Reports
       end
 
       def conversion_rate
-        leads_for_period.converted.count / policy_applications.count
+        conversions.count / policy_applications.count
       end
 
       def policy_applications
@@ -58,8 +58,13 @@ module Reports
           where(created_at: range_start..range_end)
       end
 
-      def leads_for_period
-        @leads_for_period ||= Lead.presented.not_archived.where(last_visit: range_start..range_end)
+      def conversions
+        @conversions ||= Lead.
+          presented.
+          not_archived.
+          where(last_visit: range_start..range_end).
+          joins(user: :policies).
+          where(policies: { created_at: range_start..range_end })
       end
     end
   end
