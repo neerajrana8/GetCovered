@@ -16,6 +16,9 @@ production:
     cron: '0 0 * * *'   # Every day at 0:00 AM
     class: Insurables::UpdateCoveredStatusJob
   # Reports
+  weekly_agency_reports_job:
+    cron: '0 4 * * 1'   # Every Monday at 4:00 AM
+    class: Reports::WeeklyAgencyReportsJob
   coverage_reports_job:
     cron: '0 2 * * *'   # Every day at 2:00 AM
     class: Reports::CoverageReportsJob
