@@ -43,7 +43,8 @@ class PolicyPremiumItem < ApplicationRecord
     billing_strategy_spread: 1,
     equal_spread: 2,
     equal_spread_except_first: 3,
-    custom_spread: 4
+    custom_spread: 4,
+    custom_spread_dollar_amounts: 5
   }, _prefix: false, _suffix: false
   enum rounding_error_distribution: {
     on_last_payment: 0,
@@ -124,6 +125,8 @@ class PolicyPremiumItem < ApplicationRecord
           (0...(self.billing_strategy.payments_per_term)).map{|x| x == 0 ? 0 : 1 }
         when 'custom_spread'
           self.amortization_plan
+        when 'custom_spread_dollar_amounts'
+          self.amortization_plan
       end
     end
     
@@ -133,6 +136,8 @@ class PolicyPremiumItem < ApplicationRecord
              self.amortization_plan.all?{|x| x.is_a?(::Integer) && x >= 0 } &&
              self.amortization_plan.any?{|x| x != 0 }
         errors.add(:amortization_plan, I18n.t('policy_premium_item_model.amortization_plan_is_invalid'))
+      elsif self.amortization == 'custom_spread_dollar_amounts' && self.amortization_plan.inject(0){|sum,v| sum + v } != self.original_total
+        errors.add(:amortization_plan, I18n.t('policy_premium_item_model.amortization_plan_sum_invalid'))
       end
     end
 end
