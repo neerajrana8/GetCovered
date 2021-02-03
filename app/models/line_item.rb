@@ -2,13 +2,18 @@
 
 class LineItem < ApplicationRecord
   belongs_to :invoice
+  belongs_to :chargeable,
+    polymorphic: true
 
   validates_presence_of :title
-  validates :price, numericality: { :greater_than_or_equal_to => 0 }
-  validates_presence_of :refundability
-  validates_presence_of :category
-  validates_presence_of :collected
-  validates_presence_of :proration_reduction
+  validates_inclusion_of :priced_in, in: [true, false]
+  validates :original_total_due, numericality: { :greater_than_or_equal_to => 0 }
+  validates :total_due, numericality: { :greater_than_or_equal_to => 0 }
+  validates :total_received, numericality: { :greater_than_or_equal_to => 0 }
+  validates :total_processed, numericality: { :greater_than_or_equal_to => 0 }
+  validates_inclusion_of :all_received, in: [true, false]
+  validates_inclusion_of :all_processed, in: [true, false]
+  
   
   enum refundability: {
     no_refund: 0,                         # if we cancel, no refund

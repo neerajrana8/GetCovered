@@ -33,10 +33,21 @@ class ArchiveOldFinancialData < ActiveRecord::Migration[5.2]
       #t.references :collection_plan, polymorphic: true, null: true      # record indicating what the collector will pay off on their end (see model for details)
       t.references :fee, null: true                                     # the Fee this item corresponds to, if any
     end
+    
+    create_table :policy_premium_item_term do |t|
+      t.datetime :original_term_first_moment, null: false               # the first moment of the term, before prorations
+      t.datetime :original_term_last_moment, null: false                # the last moment of the term, before prorations
+      t.datetime :term_first_moment, null: false                        # the first moment of the term
+      t.datetime :term_last_moment, null: false                         # the last moment of the term
+      t.integer  :time_resolution, null: false, default: 0              # enum for how precise to be with times
+      t.boolean  :cancelled, null: false, default: false                # whether this term has been entirely cancelled (i.e. prorated into nothingness)
+      t.references :policy_premium_item
+    end
   
     create_table :line_items do |t|
       # basic details
-      t.string      :title
+      t.string      :title, null: false
+      t.boolean     :priced_in, null: false, default: false
       t.timestamps
       # payment tracking
       t.integer     :original_total_due,  null: false
@@ -45,11 +56,9 @@ class ArchiveOldFinancialData < ActiveRecord::Migration[5.2]
       t.integer     :total_processed, null: false, default: 0
       t.boolean     :all_received, null: false, default: false
       t.boolean     :all_processed: null: false, default: false
-      t.references  :invoice, index: true
+      t.references  :invoice
       # details about what this line item is for
-      t.datetime :term_first_date
-      t.datetime :term_last_date
-      t.references  :policy_premium_item, index: true
+      t.references :chargeable, polymorphic: true # will be a PolicyPremiumItemTerm for now
     end
     
     create_table :invoices do |t|
