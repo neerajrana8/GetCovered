@@ -3,7 +3,8 @@
 class LineItem < ApplicationRecord
   belongs_to :invoice
   belongs_to :chargeable,
-    polymorphic: true
+    polymorphic: true,
+    autosave: true
 
   validates_presence_of :title
   validates_inclusion_of :priced_in, in: [true, false]

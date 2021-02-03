@@ -10,6 +10,8 @@ class PolicyPremiumItem < ApplicationRecord
     
   has_one :billing_strategy,
     through: :policy_premium
+  has_one :policy_quote,
+    through: :policy_premium
   has_many :policy_premium_item_terms
 
   # Callbacks
@@ -79,35 +81,48 @@ class PolicyPremiumItem < ApplicationRecord
   
   # Public Instance Methods
   def schedule_line_items
-    to_return = nil
+    # set up PolicyPremiumItemTerms from our amortization plan
+    to_return = self.amortization_plan.map.with_index do |weight, index|
+      term_start = (self.policy_quote.effective_date + (index * 12 / self.amortization_plan.length).months).beginning_of_day
+      term_end = (index == self.amortization_plan.length - 1 ?
+        self.policy_quote.expiration_date
+        : term_start + (self.policy_quote.effective_date + (index * 12 / self.amortization_plan.length).months - 1.day)
+      ).end_of_day
+      {
+        total: 0,
+        weight: weight,
+        term: PolicyPremiumItemTerm.new(
+          original_term_first_moment: term_start,
+          original_term_last_moment: term_start,
+          term_first_moment: term_end,
+          term_last_moment: term_end,
+          time_resolution: 'day',
+          cancelled: false,
+          policy_premium_item: self
+        )
+      }
+    end
+    # calculate line item totals
     case self.rounding_error_distribution
       when 'dynamic_forward', 'dynamic_reverse'
         total_left = self.original_total_due
-        weight_left = self.amortization_plan.inject(0){|sum,val| sum + val }.to_d
+        weight_left = to_return.inject(0){|sum,val| sum + val[:weight] }.to_d
         reversal = (self.rounding_error_distribution == 'dynamic_reverse' ? :reverse : :itself)
-        to_return = self.amortization_plan.send(reversal).map do |weight|
-          li_total = ((weight / weight_left) * total_left).floor
-          total_left -= li_total
-          weight_left -= weight
-          next li_total == 0 ? nil : LineItem.new(
-            policy_premium_item: self, # MOOSE WARNING: make it a term!
-            title: self.title,
-            original_total_due: li_total,
-            total_due: li_total,
-            total_received: 0,
-            total_processed: 0 # MOOSE WARNING: no more price, no refundability, no category
-          )
+        to_return = to_return.send(reversal).map do |val|
+          val[:total] = ((val[:weight] / weight_left) * total_left).floor
+          total_left -= val[:total]
+          weight_left -= val[:weight]
+          val
         end.send(reversal)
       when 'first_payment_simple', 'last_payment_simple'
-        total_weight = self.amortization_plan.inject(0){|sum,val| sum + val }.to_d
+        total_weight = to_return.inject(0){|sum,val| sum + val[:weight] }.to_d
         multiple_passes = self.rounding_error_distribution.end_with?("multipass")
-        to_return = self.amortization_plan.map{|weight| { weight: weight, total: 0 } }
         to_distribute = self.original_total_due
         loop do
           distributed = 0
-          to_return.each do |tr|
-            li_total = ((weight / total_weight) * to_distribute).floor
-            tr[:total] += li_total
+          to_return.each do |val|
+            li_total = ((val[:weight] / total_weight) * to_distribute).floor
+            val[:total] += li_total
             distributed += li_total
           end
           to_distribute -= distributed
@@ -115,19 +130,18 @@ class PolicyPremiumItem < ApplicationRecord
         end
         reversal = (self.rounding_error_distribution.start_with?('first_payment') ? :each : :reverse_each)
         to_return.send(reversal).find{|preli| preli[:total] > 0 }[:total] += to_distribute
-        to_return.map! do |preli|
-          preli[:total] == 0 ? nil : LineItem.new(
-            policy_premium_item: self, # MOOSE WARNING: make it a term!
-            title: self.title,
-            original_total_due: preli[:total],
-            total_due: preli[:total],
-            total_received: 0,
-            total_processed: 0 # MOOSE WARNING: no more price, no refundability, no category
-            
-          )
-        end
     end
-    return to_return
+    # return line items
+    return to_return.map do |val|
+      val[:total] == 0 ? nil : LineItem.new(
+        chargeable: val[:term],
+        title: self.title,
+        original_total_due: val[:total],
+        total_due: val[:total],
+        total_received: 0,
+        total_processed: 0
+      )
+    end
   end
   
   
