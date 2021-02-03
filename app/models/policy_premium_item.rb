@@ -3,7 +3,7 @@ class PolicyPremiumItem < ApplicationRecord
   belongs_to :policy_premium  # the policy_premium to which this item applies
   belongs_to :recipient,      # who receives this money (generally a Carrier, Agent, or CommissionStrategy)
     polymorphic: true
-  belongs_to :collector,       # which Carrier/Agent actually collects the money from users
+  belongs_to :collector,      # which Carrier/Agent actually collects the money from users
     polymorphic: true
   belongs_to :fee,            # what Fee this item corresponds to, if any
     optional: true
@@ -24,6 +24,21 @@ class PolicyPremiumItem < ApplicationRecord
     special_premium: 2,
     tax: 3
   }
+  enum amortization: {
+    all_up_front: 0,
+    billing_strategy_spread: 1,
+    equal_spread: 2,
+    equal_spread_except_first: 3,
+    custom_spread: 4
+  }, _prefix: false, _suffix: false
+  enum rounding_error_distribution: {
+    rounding_error_on_last_payment: 0,
+    rounding_error_equidistributed: 1
+  }
+  enum proration_calculation: {
+    prorate_per_invoice: 0,
+    prorate_total: 1
+  }
   # Public Class Methods
   def from_fee(fee)
     ::PolicyPremiumItem.new(
@@ -31,12 +46,20 @@ class PolicyPremiumItem < ApplicationRecord
       fee: fee,
       title: fee.title || "#{(fee.amortized || fee.per_payment) ? "Amortized " : ""} Fee",
       category: "fee",
-      amortized: fee.amortized || fee.per_payment,
-      external: false, # MOOSE WARNING: when should this be true?
+      amortization: fee.amortized ? 'billing_strategy_spread' : fee.per_payment ? 'equal_spread' : 'all_up_front',
       preprocessed: false, # MOOSE WARNING: when should this be true?
       original_total_due: fee.amount * (fee.per_payment ? PAYMENT_COUNT : 1), # MOOSE WARNING: PAYMENT_COUNT from where???
       #### MOOSE WARNING: this is no good, fees can be percentages ########
     )
   end
   # Public Instance Methods
+  
 end
+
+
+
+
+
+
+
+
