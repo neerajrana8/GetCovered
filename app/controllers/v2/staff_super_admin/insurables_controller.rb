@@ -123,7 +123,7 @@ module V2
 
       def set_agency
         @agency = Agency.find_by_id(insurable_params[:agency_id])
-        render json: standard_error(:agency_was_not_found), status: :not_found
+        render json: standard_error(:agency_was_not_found), status: :not_found  if @agency.nil?
       end
 
       def set_master_policies
