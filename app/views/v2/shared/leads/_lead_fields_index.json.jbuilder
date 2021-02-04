@@ -7,7 +7,7 @@ if profile.present?
   json.extract!  profile, :first_name, :last_name
 end
 
-last_event =  lead.last_event
+last_event = lead.last_event
 
 if last_event.present? && last_event.policy_type.present?
   json.interested_product last_event.policy_type.title
@@ -26,6 +26,6 @@ end
 json.primary_campaign_name lead&.tracking_url&.campaign_name
 json.primary_campaign_source lead&.tracking_url&.campaign_source
 json.primary_campaign_medium lead&.tracking_url&.campaign_medium
-json.premium_total lead&.user&.policy_applications&.last&.policy_quotes&.last&.policy_premium&.total
-json.premium_first lead&.user&.policy_applications&.last&.policy_quotes&.last&.invoices&.first&.total
+json.premium_total lead&.user&.policy_applications&.last&.policy_quotes&.last&.policy_premium&.total || last_event&.data['premium_total']
+json.premium_first lead&.user&.policy_applications&.last&.policy_quotes&.last&.invoices&.first&.total || last_event&.data['premium_total']
 json.billing_strategy lead&.user&.policy_applications&.last&.policy_quotes&.last&.policy_premium&.billing_strategy&.title
