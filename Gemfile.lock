@@ -72,7 +72,6 @@ GEM
     addressable (2.6.0)
       public_suffix (>= 2.0.2, < 4.0)
     afm (0.2.2)
-    analytics-ruby (2.0.13)
     arel (9.0.0)
     ast (2.4.0)
     attr_encrypted (3.0.3)
@@ -1322,7 +1321,6 @@ DEPENDENCIES
   active_interaction (~> 3.7)
   active_record_union
   addressable
-  analytics-ruby (~> 2.0.0)
   attr_encrypted (~> 3.0.0)
   authtrail
   awesome_print
