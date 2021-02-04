@@ -50,7 +50,7 @@ class PolicyPremiumItem < ApplicationRecord
     equal_spread: 2,
     equal_spread_except_first: 3,
     custom_spread: 4,
-    custom_spread_dollar_amounts: 5
+    custom_precalculated_totals: 5
   }, _prefix: false, _suffix: false
   enum rounding_error_distribution: {
     last_payment_simple: 0,       # distributes total by weight rounded down to the nearest cent; dumps remainder on last payment
@@ -61,8 +61,12 @@ class PolicyPremiumItem < ApplicationRecord
     dynamic_reverse: 5            # same but last-payment to first-payment
   }, _prefix: true, _suffix: false
   enum proration_calculation: {
-    prorate_per_invoice: 0,
-    prorate_total: 1
+    cancel_terms_exclusive: 0,          # terms not yet due and entirely after the proration date get cancelled, but nothing gets refunded 
+    cancel_or_refund_terms_exclusive: 1,# terms get cancelled or refunded if they lie entirely afer the proration date
+    cancel_or_refund_terms_inclusive: 2,# terms get cancelled or refunded if any portion of them 
+    prorate_per_term: 3,                # proration is handled proportionally per-payment based on its term (so if a given payment is $0.02 greater than another with the same term length, prorating in the middle would refund $0.01 more) 
+    prorate_from_total: 4,              # proration refund is calculated as (proportion of total term cancelled / total amount) and then distributed among payments from last to first; i.e. the total amount refunded is the same whether the payment plan charged it all on the 1st payment, charged it all on the last payment, or distributed it evenly
+    cancel_or_refund_nothing: 5         # if policy is cancelled, too bad; both past and future payments remain due
   }
   
   # Public Class Methods
@@ -88,7 +92,7 @@ class PolicyPremiumItem < ApplicationRecord
         self.policy_quote.expiration_date
         : term_start + (self.policy_quote.effective_date + (index * 12 / self.amortization_plan.length).months - 1.day)
       ).end_of_day
-      {
+      next {
         total: 0,
         weight: weight,
         term: PolicyPremiumItemTerm.new(
@@ -103,33 +107,37 @@ class PolicyPremiumItem < ApplicationRecord
       }
     end
     # calculate line item totals
-    case self.rounding_error_distribution
-      when 'dynamic_forward', 'dynamic_reverse'
-        total_left = self.original_total_due
-        weight_left = to_return.inject(0){|sum,val| sum + val[:weight] }.to_d
-        reversal = (self.rounding_error_distribution == 'dynamic_reverse' ? :reverse : :itself)
-        to_return = to_return.send(reversal).map do |val|
-          val[:total] = ((val[:weight] / weight_left) * total_left).floor
-          total_left -= val[:total]
-          weight_left -= val[:weight]
-          val
-        end.send(reversal)
-      when 'first_payment_simple', 'last_payment_simple'
-        total_weight = to_return.inject(0){|sum,val| sum + val[:weight] }.to_d
-        multiple_passes = self.rounding_error_distribution.end_with?("multipass")
-        to_distribute = self.original_total_due
-        loop do
-          distributed = 0
-          to_return.each do |val|
-            li_total = ((val[:weight] / total_weight) * to_distribute).floor
-            val[:total] += li_total
-            distributed += li_total
+    if self.amortization == 'custom_precalculated_totals'
+      to_return.each{|val| val[:total] = val[:weight] }
+    else
+      case self.rounding_error_distribution
+        when 'dynamic_forward', 'dynamic_reverse'
+          total_left = self.original_total_due
+          weight_left = to_return.inject(0){|sum,val| sum + val[:weight] }.to_d
+          reversal = (self.rounding_error_distribution == 'dynamic_reverse' ? :reverse : :itself)
+          to_return = to_return.send(reversal).map do |val|
+            val[:total] = ((val[:weight] / weight_left) * total_left).floor
+            total_left -= val[:total]
+            weight_left -= val[:weight]
+            next val
+          end.send(reversal)
+        when 'first_payment_simple', 'last_payment_simple'
+          total_weight = to_return.inject(0){|sum,val| sum + val[:weight] }.to_d
+          multiple_passes = self.rounding_error_distribution.end_with?("multipass")
+          to_distribute = self.original_total_due
+          loop do
+            distributed = 0
+            to_return.each do |val|
+              li_total = ((val[:weight] / total_weight) * to_distribute).floor
+              val[:total] += li_total
+              distributed += li_total
+            end
+            to_distribute -= distributed
+            break if distributed == 0 || !multiple_passes
           end
-          to_distribute -= distributed
-          break if distributed == 0 || !multiple_passes
-        end
-        reversal = (self.rounding_error_distribution.start_with?('first_payment') ? :each : :reverse_each)
-        to_return.send(reversal).find{|preli| preli[:total] > 0 }[:total] += to_distribute
+          reversal = (self.rounding_error_distribution.start_with?('first_payment') ? :each : :reverse_each)
+          to_return.send(reversal).find{|preli| preli[:total] > 0 }[:total] += to_distribute
+      end
     end
     # return line items
     return to_return.map do |val|
@@ -165,7 +173,7 @@ class PolicyPremiumItem < ApplicationRecord
           (0...(self.billing_strategy.payments_per_term)).map{|x| x == 0 ? 0 : 1 }
         when 'custom_spread'
           self.amortization_plan
-        when 'custom_spread_dollar_amounts'
+        when 'custom_precalculated_totals'
           self.amortization_plan
       end
     end
@@ -176,7 +184,7 @@ class PolicyPremiumItem < ApplicationRecord
              self.amortization_plan.all?{|x| x.is_a?(::Integer) && x >= 0 } &&
              self.amortization_plan.any?{|x| x != 0 }
         errors.add(:amortization_plan, I18n.t('policy_premium_item_model.amortization_plan_is_invalid'))
-      elsif self.amortization == 'custom_spread_dollar_amounts' && self.amortization_plan.inject(0){|sum,v| sum + v } != self.original_total
+      elsif self.amortization == 'custom_precalculated_totals' && self.amortization_plan.inject(0){|sum,v| sum + v } != self.original_total
         errors.add(:amortization_plan, I18n.t('policy_premium_item_model.amortization_plan_sum_invalid'))
       end
     end

@@ -7,6 +7,17 @@ class ArchiveOldFinancialData < ActiveRecord::Migration[5.2]
     rename_table :policy_premia, :archived_policy_premia
 
     # create replacement tables
+    
+    create_table :policy_term do |t|
+      t.datetime :original_term_first_moment, null: false               # the first moment of the term, before prorations
+      t.datetime :original_term_last_moment, null: false                # the last moment of the term, before prorations
+      t.datetime :term_first_moment, null: false                        # the first moment of the term
+      t.datetime :term_last_moment, null: false                         # the last moment of the term
+      t.integer  :time_resolution, null: false, default: 0              # enum for how precise to be with times
+      t.boolean  :cancelled, null: false, default: false                # whether this term has been entirely cancelled (i.e. prorated into nothingness)
+      t.references :policy_quote
+    end
+    
     create_table :policy_premium_items do |t|
       # what this is and how to charge for it
       t.string :title                                                   # a descriptive title to be attached to line items on invoices
