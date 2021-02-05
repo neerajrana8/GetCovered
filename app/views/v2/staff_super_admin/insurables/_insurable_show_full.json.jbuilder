@@ -77,7 +77,7 @@ json.active_master_policy_coverage do
 end
 
 json.account_agency do
-  if insurable.account.agency.present?
+  if insurable.account&.agency&.present?
     json.id insurable.account.agency.id
     json.title insurable.account.agency.title
   end
