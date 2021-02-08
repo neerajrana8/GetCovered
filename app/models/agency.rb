@@ -16,6 +16,7 @@ class Agency < ApplicationRecord
 
   # Active Record Callbacks
   after_initialize :initialize_agency
+  before_validation :set_producer_code, on: :create
 
   # belongs_to relationships
   belongs_to :agency,
@@ -206,10 +207,24 @@ class Agency < ApplicationRecord
     self.branding_profiles&.last&.formatted_url || I18n.t('agency_model.no_branding')
   end
 
+  def set_producer_code
+    loop do
+      self.producer_code = rand(36**12).to_s(36).upcase
+      break unless Agency.exists?(producer_code: producer_code)
+    end
+  end
+
   private
 
   def initialize_agency
    # Blank for now...
+  end
+
+  def set_producer_code
+    loop do
+      self.producer_code = rand(36**12).to_s(36).upcase
+      break unless Agency.exists?(producer_code: producer_code)
+    end
   end
 
   def parent_agency_exist
