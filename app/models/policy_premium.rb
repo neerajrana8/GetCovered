@@ -3,6 +3,162 @@
 # file: +app/models/policy_premium.rb+
 
 class PolicyPremium < ApplicationRecord
+
+
+  has_many :policy_premium_items
+
+
+  
+  def create_payment_terms
+    returned_errors = nil
+    last_end = self.policy_quote.effective_date - 1.day
+    extra_months = 0
+    ActiveRecord::Base.transaction do
+      begin
+        self.billing_strategy.new_business["payments"].each.with_index do |weight,index|
+          unless weight > 0
+            extra_months += 1
+            next
+          end
+          ::PolicyPremiumPaymentTerm.create!(
+            policy_premium: self,
+            first_moment: (last_end + 1.day).beginning_of_day,
+            last_moment: (last_end = (last_end + 1.day + (1 + extra_months).months - 1.day)).end_of_day,
+            time_resolution: 'day',
+            default_weight: weight
+          )
+        end
+      rescue ActiveRecord::RecordInvalid => rie
+        # MOOSE WARNING: error! should we really just throw the hash back at the caller?
+        returned_errors = rie.record.errors.to_h
+        raise ActiveRecord::Rollback
+      end
+    end
+    return returned_errors
+  end
+
+  def create_premium_item(amount, proratable: nil, refundable: nil)
+    # get payment terms
+    total_weight = nil
+    payment_terms = self.payment_terms.sort.select{|p| p.default_weight != 0 }
+    if payment_terms.blank?
+      return "This PolicyPremium has no PolicyPremiumPaymentTerms"
+    elsif payment_terms.any?{|p| p.default_weight.nil? }
+      return "This PolicyPremium has PolicyPremiumPaymentTerms with default_weight equal to nil"
+    end
+    # clean up proratable & refundable
+    cpt = nil
+    if proratable.nil?
+      proratable = (cpt ||= CarrierPolicyType.where(policy_type_id: self.policy_quote.policy_application.policy_type_id, carrier_id: self.policy_quote.policy_application.carrier_id).take)&.premium_proration_calculation
+    elsif proratable == true
+      proratable = 'per_payment_term' # MOOSE WARNING: default here?
+    elsif proratable == false
+      proratable = 'no_proration'
+    elsif !::PolicyPremiumItem.proration_calculations.has_key?(proratable)
+      return "Proration calculation method '#{proratable}' does not exist; you must pass 'proratable' as a valid value from PolicyPremiumItem::proration_calculation, pass true or false for the default options, or the appropriate CarrierPolicyType must exist and have a valid premium_proration_calculation value"
+    end
+    if refundable.nil?
+      refundable = (cpt ||= CarrierPolicyType.where(policy_type_id: self.policy_quote.policy_application.policy_type_id, carrier_id: self.policy_quote.policy_application.carrier_id).take)&.premium_proration_refunds_allowed
+    end
+    if refundable != true && refundable != false
+      return "Proration 'refundable' property was not set to a boolean value; you must pass one, or the appropriate CarrierPolicyType must exist and have a valid premium_proration_refunds_allowed value"
+    end
+    # make the item(s)
+    down_payment = nil
+    amortized_premium = nil
+    down_payment_revised_weight = nil
+    if first_payment_down_payment
+      total_weight = payment_terms.inject(0){|sum,pt| sum + pt.default_weight }.to_d
+      down_payment_amount = (payment_terms.first.default_weight * amount / total_weight).floor
+      if self.first_payment_down_payment_amount_override && self.first_payment_down_payment_amount_override < down_payment_amount
+        down_payment_revised_weight = ((down_payment_amount - self.first_payment_down_payment_amount_override.to_d) / down_payment_amount * payment_terms.first.default_weight).floor
+        down_payment_amount = self.first_payment_down_payment_amount_override
+      else
+        down_payment_revised_weight = 0
+      end
+      amount -= down_payment_amount
+      unless down_payment_amount == 0 
+        down_payment = ::PolicyPremiumItem.new(
+          title: "Premium Down Payment",
+          category: "premium",
+          rounding_error_distribution: "first_payment_simple",
+          total_due: down_payment_amount,
+          proration_calculation: 'no_proration',
+          proration_refunds_allowed: false,
+          # MOOSE WARNING: preprocessed
+          recipient: self.commission_strategy,
+          collector: , # MOOSE WARNING: needed
+          policy_premium_item_payment_terms: [payment_terms.first].map do |pt|
+            ::PolicyPremiumItemPaymentTerm.new(
+              policy_premium_payment_term: pt,
+              weight: 1
+            )
+          end
+        )
+      end
+    end
+    unless amount == 0
+      amortized_premium = ::PolicyPremiumItem.new(
+        title: "Premium",
+        category: "premium",
+        rounding_error_distribution: "last_payment_multipass", #MOOSE WARNING: change default???
+        total_due: amount,
+        proration_calculation: proratable,
+        proration_refunds_allowed: refundable,
+        # MOOSE WARNING: preprocessed
+        recipient: self.commission_strategy,
+        collector: , # MOOSE WARNING: needed
+        policy_premium_item_payment_terms: payment_terms.map.with_index do |pt, index|
+          next nil if index == 0 && down_payment_revised_weight == 0
+          ::PolicyPremiumItemPaymentTerm.new(
+            policy_premium_payment_term: pt,
+            weight: !down_payment_revised_weight.nil? ? down_payment_revised_weight : pt.default_weight
+          )
+        end.compact
+      )
+    end
+    # save the item(s)
+    save_error = nil
+    ActiveRecord::Base.transaction do
+      step = 'down payment'
+      begin
+        down_payment.save! unless down_payment.nil?
+        step = 'amortized premium'
+        amortized_premium.save! unless amortized_premium.nil?
+      rescue ActiveRecord::RecordInvalid => rie
+        # MOOSE WARNING: error! should we really just throw the hash back at the caller?
+        save_error = "Failed to create PolicyPremiumItem for #{step}; errors: #{rie.record.errors.to_h.to_s}"
+        raise ActiveRecord::Rollback
+      end
+    end
+    # all done
+    return save_error
+  end
+
+
+
+
+
+
+
+
+
+###### begin old ########## MOOSE WARNING ############
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   belongs_to :policy, optional: true
   belongs_to :policy_quote, optional: true
 	belongs_to :billing_strategy, optional: true

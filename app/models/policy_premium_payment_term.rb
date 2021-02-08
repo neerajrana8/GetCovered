@@ -1,9 +1,15 @@
-class PolicyPremiumItemTerm < ApplicationRecord
+class PolicyPremiumPaymentTerm < ApplicationRecord
 
   # Associations
-  belongs_to :policy_premium_item
-  has_one :line_item,
-    as: :chargeable
+  belongs_to :policy_premium
+  
+  has_one :policy_quote,
+    through: :policy_premium
+  has_one :policy,
+    through: :policy_quote
+  has_many :policy_premium_item_payment_terms
+  has_many :line_items,
+    through: :policy_premium_item_payment_terms
 
   # Callbacks
   before_validation :set_missing_term_data,
@@ -17,6 +23,9 @@ class PolicyPremiumItemTerm < ApplicationRecord
   validates_presence_of :term_last_moment
   validates_presence_of :time_resolution
   validates_presence_of :status
+  validates :default_weight,
+    numericality: { :greater_than_or_equal_to => 0 },
+    allow_blank: true
   validate :validate_term
   
   # Enums
@@ -31,6 +40,12 @@ class PolicyPremiumItemTerm < ApplicationRecord
   # Public Class Methods
   
   # Public Instance Methods
+  
+  
+  def <=>(other)
+    tr = self.original_first_moment <=> other.original_first_moment
+    return tr == 0 ? self.original_last_moment <=> other.original_last_moment : tr
+  end
   
   
   private

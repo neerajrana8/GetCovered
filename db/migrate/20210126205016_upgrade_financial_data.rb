@@ -1,5 +1,12 @@
 class ArchiveOldFinancialData < ActiveRecord::Migration[5.2]
   def up
+    # update premium_refundable
+    CarrierPolicyType
+    add_column :carrier_policy_types, :premium_proration_calculation, :string, null: false, default: 'no_proration'
+    add_column :carrier_policy_types, :premium_proration_refunds_allowed, :boolean, null: false, default: true
+    CarrierPolicyType.where(premium_refundable: true).update_all(premium_proration_calculation: 'per_payment_term') # MOOSE WARNING: is this the best default?
+    remove_column :carrier_policy_types, :premium_refundable
+  
     # archive old tables
     rename_table :policy_premium_fees, :archived_policy_premium_fees
     rename_table :line_items, :archived_line_items
@@ -8,50 +15,48 @@ class ArchiveOldFinancialData < ActiveRecord::Migration[5.2]
 
     # create replacement tables
     
-    create_table :policy_term do |t|
-      t.datetime :original_term_first_moment, null: false               # the first moment of the term, before prorations
-      t.datetime :original_term_last_moment, null: false                # the last moment of the term, before prorations
-      t.datetime :term_first_moment, null: false                        # the first moment of the term
-      t.datetime :term_last_moment, null: false                         # the last moment of the term
-      t.integer  :time_resolution, null: false, default: 0              # enum for how precise to be with times
-      t.boolean  :cancelled, null: false, default: false                # whether this term has been entirely cancelled (i.e. prorated into nothingness)
-      t.references :policy_quote
-    end
-    
     create_table :policy_premium_items do |t|
       # what this is and how to charge for it
       t.string :title                                                   # a descriptive title to be attached to line items on invoices
       t.integer :category                                               # whether this is a fee or a premium or what
-      t.integer :amortization                                           # how this payment should be spread among invoices
-      t.integer :amortization_plan, array: true                         # amortization weighted breakdown
       t.integer :rounding_error_distribution, default: 0                # how to distribute rounding error
       t.timestamps                                                      # timestamps
       # payment tracking
       t.integer :original_total_due, null: false                        # the total due originally, before any modifications
       t.integer :total_due, null: false                                 # the total due
-      t.integer :total_received, null: false                            # the amount we've been paid so far
-      t.integer :total_processed, null: false                           # the amount we've fully processed as received (i.e. logged as commissions or whatever other logic we want)
+      t.integer :total_received, null: false, default: 0                # the amount we've been paid so far
+      t.integer :total_processed, null: false, default: 0               # the amount we've fully processed as received (i.e. logged as commissions or whatever other logic we want)
       t.boolean :all_received, null: false, default: false              # whether we've received the full total (for efficient queries)
       t.boolean :all_processed: null: false, default: false             # whether we've processed the full amount received (for efficient queries)
       # refund and cancellation settings
-      t.integer :proration_calculation, default: 0                      # how to divide payment into chunks when prorating
+      t.integer :proration_calculation, null: false                     # how to divide payment into chunks when prorating
+      t.boolean :proration_refunds_allowed,  null: false                # whether to refund chunk that would have been cancelled if not already paid when prorating
       # commissions settings
       t.boolean :preprocessed                                           # whether this is paid out up-front rather than as received
       # associations
       t.references :policy_premium                                      # the PolicyPremium we belong to
       t.references :recipient, polymorphic: true                        # the CommissionStrategy/Agent/Carrier who receives the money
       t.references :collector, polymorphic: true                        # the Agency or Carrier who collects the money
-      #t.references :collection_plan, polymorphic: true, null: true      # record indicating what the collector will pay off on their end (see model for details)
+      #t.references :collection_plan, polymorphic: true, null: true     # record indicating what the collector will pay off on their end (see model for details)
       t.references :fee, null: true                                     # the Fee this item corresponds to, if any
     end
     
-    create_table :policy_premium_item_term do |t|
-      t.datetime :original_term_first_moment, null: false               # the first moment of the term, before prorations
-      t.datetime :original_term_last_moment, null: false                # the last moment of the term, before prorations
-      t.datetime :term_first_moment, null: false                        # the first moment of the term
-      t.datetime :term_last_moment, null: false                         # the last moment of the term
+    
+    create_table :policy_premium_payment_term do |t|
+      t.datetime :original_first_moment, null: false                    # the first moment of the term, before prorations
+      t.datetime :original_last_moment, null: false                     # the last moment of the term, before prorations
+      t.datetime :first_moment, null: false                             # the first moment of the term
+      t.datetime :last_moment, null: false                              # the last moment of the term
       t.integer  :time_resolution, null: false, default: 0              # enum for how precise to be with times
       t.boolean  :cancelled, null: false, default: false                # whether this term has been entirely cancelled (i.e. prorated into nothingness)
+      t.integer  :default_weight                                        # the default weight for policy_premium_item_payment_terms based on this payment term (i.e. the billing_strategy.new_business["payments"] value)
+      t.references :policy_premium
+    end
+    
+    create_table :policy_premium_item_payment_term do |t|
+      t.integer :weight, null: false                                    # the weight assigned to this payment term for calculating total due
+      t.integer :original_total_due                                     # the amount due before any prorations MOOSE WARNING: no validations
+      t.references :policy_premium_payment_term
       t.references :policy_premium_item
     end
   
@@ -70,6 +75,13 @@ class ArchiveOldFinancialData < ActiveRecord::Migration[5.2]
       t.references  :invoice
       # details about what this line item is for
       t.references :chargeable, polymorphic: true # will be a PolicyPremiumItemTerm for now
+    end
+    
+    create_table :policy_premia do |t|
+      t.boolean :first_payment_down_payment, null: false, default: false
+      t.integer :first_payment_down_payment_amount_override
+      t.string  :error_info
+      ###
     end
     
     create_table :invoices do |t|

@@ -7,7 +7,7 @@ module V2
     class PolicyQuotesController < PublicController
       before_action :set_policy_quote
 
-      def update
+      def update # only for commercial
         @application = @policy_quote.policy_application
 
         if @policy_quote.quoted? &&
