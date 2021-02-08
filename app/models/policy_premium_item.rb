@@ -69,18 +69,6 @@ class PolicyPremiumItem < ApplicationRecord
   }
   
   # Public Class Methods
-  def from_fee(fee)
-    ::PolicyPremiumItem.new(
-      recipient: ###MOOSE WARNING FILL OUT #####,
-      fee: fee,
-      title: fee.title || "#{(fee.amortized || fee.per_payment) ? "Amortized " : ""} Fee",
-      category: "fee",
-      amortization: fee.amortized ? 'billing_strategy_spread' : fee.per_payment ? 'equal_spread' : 'all_up_front',
-      preprocessed: false, # MOOSE WARNING: when should this be true?
-      original_total_due: fee.amount * (fee.per_payment ? PAYMENT_COUNT : 1), # MOOSE WARNING: PAYMENT_COUNT from where???
-      #### MOOSE WARNING: this is no good, fees can be percentages ########
-    )
-  end
   
   # Public Instance Methods
   

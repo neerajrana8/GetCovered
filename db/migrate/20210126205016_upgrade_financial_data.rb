@@ -91,10 +91,14 @@ class ArchiveOldFinancialData < ActiveRecord::Migration[5.2]
       t.boolean :first_payment_down_payment, null: false, default: false
       t.integer :first_payment_down_payment_amount_override
       # miscellaneous
+      t.timestamps
       t.string  :error_info
-      ###
+      # references
+      t.references :policy_quote, foreign_key: false
+      t.references :billing_strategy, foreign_key: false
+      t.references :commission_strategy, foreign_key: false
       
-      
+  ##### MOOSE WARNING below is old schema for reference ############
       
       
     t.integer "base", default: 0

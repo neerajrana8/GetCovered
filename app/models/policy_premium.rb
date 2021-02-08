@@ -6,20 +6,7 @@ class PolicyPremium < ApplicationRecord
 
   #### old stuff
   belongs_to :policy, optional: true
-  belongs_to :policy_quote, optional: true
-	belongs_to :billing_strategy, optional: true
-	belongs_to :commission_strategy, optional: true
-	
-	has_one :commission
-	
-  has_many :policy_premium_fees
-  has_many :fees, 
-    through: :policy_premium_fees
-  has_many :policy_premium_items
-  
-  validate :correct_total
-  
-  after_create :update_unearned_premium
+
   #### end old stuff
   
   
@@ -27,9 +14,12 @@ class PolicyPremium < ApplicationRecord
   belongs_to :billing_strategy
   belongs_to :commission_strategy
 
-  has_many :policy_premium_items
+
   has_one :policy_application,
     through: :policy_quote
+  has_many :policy_premium_items
+  has_many :fees,
+    through: :policy_premium_items
   
   # Public Class Methods
   def self.default_collector
@@ -48,6 +38,20 @@ class PolicyPremium < ApplicationRecord
     end
     self.total = new_total
     self.save if persist
+  end
+  
+  def initialize_all(premium_amount, term_group: nil)
+    result = nil
+    ActiveRecord::Base.transaction do
+      result = self.create_payment_terms(term_group: term_group)
+      raise ActiveRecord::Rollback unless result.nil? || result.end_with?("already exist")
+      result = self.itemize_premium(premium_amount, and_update_totals: false, term_group: term_group)
+      raise ActiveRecord::Rollback unless result.nil?
+      result = self.itemize_fees(premium_amount, and_update_totals: false, term_group: term_group)
+      raise ActiveRecord::Rollback unless result.nil?
+      self.update_totals
+    end
+    return result
   end
   
   def create_payment_terms(term_group: nil)
@@ -90,7 +94,7 @@ class PolicyPremium < ApplicationRecord
     return regional_availability.fees + billing_strategy.fees
   end
   
-  def create_fee_items(and_update_totals: true, term_group: nil, payment_terms: nil, collector: nil)
+  def itemize_fees(percentage_basis, and_update_totals: true, term_group: nil, payment_terms: nil, collector: nil)
     # get payment terms
     payment_terms = self.payment_terms.where(term_group: term_group).sort.select{|p| p.default_weight != 0 } if payment_terms.nil?
     if payment_terms.blank?
@@ -103,11 +107,11 @@ class PolicyPremium < ApplicationRecord
     already_itemized_fees = self.policy_premium_items.select(:fee).where(fee: found_fees).map{|ppi| ppi.fee }
     found_fees = found_fees - already_itemized_fees
     # create fee items
-    found_fees.each{|ff| self.create_fee_item(ff, and_update_totals: false, payment_terms: payment_terms, collector: collector) }
+    found_fees.each{|ff| self.itemize_fee(ff, percentage_basis, and_update_totals: false, payment_terms: payment_terms, collector: collector) }
     self.update_totals(persist: true) if and_update_totals
   end
   
-  def create_fee_item(fee, and_update_totals: true, term_group: nil, payment_terms: nil, collector: nil)
+  def itemize_fee(fee, percentage_basis, and_update_totals: true, term_group: nil, payment_terms: nil, collector: nil)
     # get payment terms
     payment_terms = self.payment_terms.where(term_group: term_group).sort.select{|p| p.default_weight != 0 } if payment_terms.nil?
     if payment_terms.blank?
@@ -119,7 +123,7 @@ class PolicyPremium < ApplicationRecord
     payments_count = payment_terms.count
     payments_total = case fee.amount_type
       when "FLAT";        fee.amount * (fee.per_payment ? payments_count : 1)
-      when "PERCENTAGE";  ((fee.amount.to_d / 100) * self.total_premium).ceil * (fee.per_payment ? payments_count : 1) # MOOSE WARNING: is .ceil acceptable?
+      when "PERCENTAGE";  ((fee.amount.to_d / 100) * percentage_basis).ceil * (fee.per_payment ? payments_count : 1) # MOOSE WARNING: is .ceil acceptable?
     end
     self.policy_premium_items << ::PolicyPremiumItem.new(
       title: fee.title || "#{(fee.amortized || fee.per_payment) ? "Amortized " : ""} Fee",
@@ -147,7 +151,7 @@ class PolicyPremium < ApplicationRecord
     self.update_totals(persist: true) if and_update_totals
   end
 
-  def create_premium_item(amount, and_update_totals: true, proratable: nil, refundable: nil, term_group: nil, collector: nil)
+  def itemize_premium(amount, and_update_totals: true, proratable: nil, refundable: nil, term_group: nil, collector: nil)
     # get payment terms
     payment_terms = self.payment_terms.where(term_group: term_group).sort.select{|p| p.default_weight != 0 }
     if payment_terms.blank?
