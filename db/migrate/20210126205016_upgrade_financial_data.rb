@@ -1,11 +1,13 @@
 class ArchiveOldFinancialData < ActiveRecord::Migration[5.2]
   def up
-    # update premium_refundable
-    CarrierPolicyType
+    # update CarrierPolicyType data
     add_column :carrier_policy_types, :premium_proration_calculation, :string, null: false, default: 'no_proration'
     add_column :carrier_policy_types, :premium_proration_refunds_allowed, :boolean, null: false, default: true
     CarrierPolicyType.where(premium_refundable: true).update_all(premium_proration_calculation: 'per_payment_term') # MOOSE WARNING: is this the best default?
     remove_column :carrier_policy_types, :premium_refundable
+    
+    # update BillingStrategy
+    add_reference :billing_strategies, :collector, foreign_key: false, polymorphic: true
   
     # archive old tables
     rename_table :policy_premium_fees, :archived_policy_premium_fees
@@ -34,9 +36,9 @@ class ArchiveOldFinancialData < ActiveRecord::Migration[5.2]
       # commissions settings
       t.boolean :preprocessed                                           # whether this is paid out up-front rather than as received
       # associations
-      t.references :policy_premium                                      # the PolicyPremium we belong to
-      t.references :recipient, polymorphic: true                        # the CommissionStrategy/Agent/Carrier who receives the money
-      t.references :collector, polymorphic: true                        # the Agency or Carrier who collects the money
+      t.references :policy_premium, foreign_key: false                  # the PolicyPremium we belong to
+      t.references :recipient, foreign_key: false, polymorphic: true    # the CommissionStrategy/Agent/Carrier who receives the money
+      t.references :collector, foreign_key: false, polymorphic: true   # the Agency or Carrier who collects the money
       #t.references :collection_plan, polymorphic: true, null: true     # record indicating what the collector will pay off on their end (see model for details)
       t.references :fee, null: true                                     # the Fee this item corresponds to, if any
     end
@@ -50,14 +52,15 @@ class ArchiveOldFinancialData < ActiveRecord::Migration[5.2]
       t.integer  :time_resolution, null: false, default: 0              # enum for how precise to be with times
       t.boolean  :cancelled, null: false, default: false                # whether this term has been entirely cancelled (i.e. prorated into nothingness)
       t.integer  :default_weight                                        # the default weight for policy_premium_item_payment_terms based on this payment term (i.e. the billing_strategy.new_business["payments"] value)
-      t.references :policy_premium
+      t.string   :term_group                                            # used in case there are overlapping terms with different functionalities
+      t.references :policy_premium, foreign_key: false
     end
     
     create_table :policy_premium_item_payment_term do |t|
       t.integer :weight, null: false                                    # the weight assigned to this payment term for calculating total due
       t.integer :original_total_due                                     # the amount due before any prorations MOOSE WARNING: no validations
-      t.references :policy_premium_payment_term
-      t.references :policy_premium_item
+      t.references :policy_premium_payment_term, foreign_key: false
+      t.references :policy_premium_item, foreign_key: false
     end
   
     create_table :line_items do |t|
@@ -72,16 +75,51 @@ class ArchiveOldFinancialData < ActiveRecord::Migration[5.2]
       t.integer     :total_processed, null: false, default: 0
       t.boolean     :all_received, null: false, default: false
       t.boolean     :all_processed: null: false, default: false
-      t.references  :invoice
+      t.references  :invoice, foreign_key: false
       # details about what this line item is for
-      t.references :chargeable, polymorphic: true # will be a PolicyPremiumItemTerm for now
+      t.references :chargeable, foreign_key: false, polymorphic: true    # will be a PolicyPremiumItemTerm for now
     end
     
     create_table :policy_premia do |t|
+      # totals
+      t.integer :total_premium, null: false, default: 0
+      t.integer :total_special_premium, null: false, default: 0
+      t.integer :total_fee, null: false, default: 0
+      t.integer :total_tax, null: false, default: 0
+      t.integer :total, null: false, default: 0
+      # down payment settings
       t.boolean :first_payment_down_payment, null: false, default: false
       t.integer :first_payment_down_payment_amount_override
+      # miscellaneous
       t.string  :error_info
       ###
+      
+      
+      
+      
+    t.integer "base", default: 0
+    t.integer "taxes", default: 0
+    t.integer "total_fees", default: 0
+    t.integer "total", default: 0
+    t.boolean "enabled", default: false, null: false
+    t.datetime "enabled_changed"
+    t.bigint "policy_quote_id"
+    t.bigint "policy_id"
+    t.bigint "billing_strategy_id"
+    t.bigint "commission_strategy_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.integer "estimate"
+    t.integer "calculation_base", default: 0
+    t.integer "deposit_fees", default: 0
+    t.integer "amortized_fees", default: 0
+    t.integer "carrier_base", default: 0
+    t.integer "special_premium", default: 0
+    t.boolean "include_special_premium", default: false
+    t.integer "unearned_premium", default: 0
+    t.boolean "only_fees_internal", default: false
+    t.integer "external_fees", default: 0
+      
     end
     
     create_table :invoices do |t|
@@ -106,8 +144,8 @@ class ArchiveOldFinancialData < ActiveRecord::Migration[5.2]
       t.integer :total_refunded, null: false, default: 0
       t.integer :total_lost_to_disputes, null: false, default: 0
       # associations
-      t.references :invoiceable, polymorphic: true
-      t.references :payer, polymorphic: true
+      t.references :invoiceable, foreign_key: false, polymorphic: true
+      t.references :payer, foreign_key: false, polymorphic: true
     end
   
     #add_reference :line_items, :policy_premium_item, index: true, null: false
