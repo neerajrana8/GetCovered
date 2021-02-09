@@ -4,16 +4,15 @@
 
 class PolicyPremium < ApplicationRecord
 
-  #### old stuff
+  #### MOOSE WARNING: old stuff
   belongs_to :policy, optional: true
 
   #### end old stuff
   
-  
+  # Associations
   belongs_to :policy_quote
   belongs_to :billing_strategy
   belongs_to :commission_strategy
-
 
   has_one :policy_application,
     through: :policy_quote
@@ -30,7 +29,7 @@ class PolicyPremium < ApplicationRecord
   def update_totals(persist: true)
     new_total = 0
     self.policy_premium_items.group_by{|ppi| ppi.category }
-                             .select{|k,v| ['premium', 'special_premium', 'fee', 'tax'].include?(k) }
+                             .select{|k,v| ['premium', 'fee', 'tax'].include?(k) }
                              .transform_values{|v| v.inject(0){|sum,ppi| sum + ppi.original_total_due } }
                              .each do |category, quantity|
       self.send("total_#{category}=", quantity)
@@ -49,7 +48,7 @@ class PolicyPremium < ApplicationRecord
       raise ActiveRecord::Rollback unless result.nil?
       result = self.itemize_fees(premium_amount, and_update_totals: false, term_group: term_group)
       raise ActiveRecord::Rollback unless result.nil?
-      self.update_totals
+      self.update_totals(persist: true)
     end
     return result
   end

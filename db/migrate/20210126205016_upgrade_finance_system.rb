@@ -1,4 +1,4 @@
-class ArchiveOldFinancialData < ActiveRecord::Migration[5.2]
+class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
   def up
     # update CarrierPolicyType data
     add_column :carrier_policy_types, :premium_proration_calculation, :string, null: false, default: 'no_proration'
@@ -7,7 +7,7 @@ class ArchiveOldFinancialData < ActiveRecord::Migration[5.2]
     remove_column :carrier_policy_types, :premium_refundable
     
     # update BillingStrategy
-    add_reference :billing_strategies, :collector, foreign_key: false, polymorphic: true
+    add_reference :billing_strategies, :collector, foreign_key: false, polymorphic: true, null: true
   
     # archive old tables
     rename_table :policy_premium_fees, :archived_policy_premium_fees
@@ -25,6 +25,7 @@ class ArchiveOldFinancialData < ActiveRecord::Migration[5.2]
       t.timestamps                                                      # timestamps
       # payment tracking
       t.integer :original_total_due, null: false                        # the total due originally, before any modifications
+      t.integer :preproration_total_due, null: false                    # the total due before any prorations are applied
       t.integer :total_due, null: false                                 # the total due
       t.integer :total_received, null: false, default: 0                # the amount we've been paid so far
       t.integer :total_processed, null: false, default: 0               # the amount we've fully processed as received (i.e. logged as commissions or whatever other logic we want)
@@ -58,7 +59,7 @@ class ArchiveOldFinancialData < ActiveRecord::Migration[5.2]
     
     create_table :policy_premium_item_payment_term do |t|
       t.integer :weight, null: false                                    # the weight assigned to this payment term for calculating total due
-      t.integer :original_total_due                                     # the amount due before any prorations MOOSE WARNING: no validations
+      t.integer :preproration_total_due                                 # the amount due before any prorations MOOSE WARNING: no validations
       t.references :policy_premium_payment_term, foreign_key: false
       t.references :policy_premium_item, foreign_key: false
     end
@@ -83,7 +84,6 @@ class ArchiveOldFinancialData < ActiveRecord::Migration[5.2]
     create_table :policy_premia do |t|
       # totals
       t.integer :total_premium, null: false, default: 0
-      t.integer :total_special_premium, null: false, default: 0
       t.integer :total_fee, null: false, default: 0
       t.integer :total_tax, null: false, default: 0
       t.integer :total, null: false, default: 0
@@ -140,6 +140,7 @@ class ArchiveOldFinancialData < ActiveRecord::Migration[5.2]
       # payment tracking
       t.integer :original_total_due, null: false
       t.integer :total_due, null: false
+      t.integer :total_pending, null: false, default: 0
       t.integer :total_received, null: false, default: 0
       t.boolean :all_processed, null: false, default: false
       # disputes and refunds
