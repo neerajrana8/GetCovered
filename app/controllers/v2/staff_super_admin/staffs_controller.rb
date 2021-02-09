@@ -89,7 +89,7 @@ module V2
 
       def update_params
         params.permit(
-          :email, notification_options: {}, settings: {},
+          :email, notification_options: {}, settings: {}, staff_permission_attributes: [permissions: {}],
                   profile_attributes: %i[
                     id birth_date contact_email contact_phone first_name
                     job_title last_name middle_name suffix title

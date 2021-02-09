@@ -87,7 +87,10 @@ class Agency < ApplicationRecord
 
   has_many :leads
 
+  has_one :global_agency_permission
+
   accepts_nested_attributes_for :addresses, allow_destroy: true
+  accepts_nested_attributes_for :global_agency_permission, update_only: true
 
   scope :enabled, -> { where(enabled: true) }
   scope :sub_agencies, -> { where.not(agency_id: nil) }
@@ -95,6 +98,7 @@ class Agency < ApplicationRecord
 
   # ActiveSupport +pluralize+ method doesn't work correctly for this word(returns staffs). So I added alias for it
   alias staffs staff
+  alias parent_agency agency
 
   # Validations
 

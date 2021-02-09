@@ -10,6 +10,8 @@ module V2
                              cover_unit available_top_insurables available_units historically_coverage_units
                              cancel cancel_coverage master_policy_coverages cancel_insurable]
 
+      check_privileges 'policies.master'
+
       def index
         master_policies_relation = Policy.where(policy_type_id: PolicyType::MASTER_ID, agency_id: @agency.id).order(created_at: :desc)
         master_policies_relation = master_policies_relation.where(account_id: params[:account_id]) if params[:account_id].present?

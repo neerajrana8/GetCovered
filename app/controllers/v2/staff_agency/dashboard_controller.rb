@@ -5,6 +5,8 @@
 module V2
   module StaffAgency
     class DashboardController < StaffAgencyController
+      check_privileges 'dashboard.properties'
+
       def total_dashboard
         unit_ids = InsurableType::UNITS_IDS
         community_ids = InsurableType::COMMUNITIES_IDS
