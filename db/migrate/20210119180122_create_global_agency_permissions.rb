@@ -9,8 +9,9 @@ class CreateGlobalAgencyPermissions < ActiveRecord::Migration[5.2]
     end
 
     # ensure we do agencies in parent-first order
+    valid_agency_ids = ::Agency.all.order(:id).group(:id).pluck(:id)
     done_agency_ids = []
-    todo_agencies = ::Agency.where(agency_id: nil)
+    todo_agencies = ::Agency.where(agency_id: nil).or(::Agency.where.not(agency_id: valid_agency_ids))
     while !todo_agencies.blank?
       todo_agencies.each do |agency|
         GlobalAgencyPermission.create(
