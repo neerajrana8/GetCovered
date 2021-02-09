@@ -216,6 +216,7 @@ ActiveRecord::Schema.define(version: 2021_02_08_184003) do
     t.string "subdomain"
     t.boolean "global_default", default: false, null: false
     t.string "logo_jpeg_url"
+    t.boolean "enabled", default: true
     t.index ["profileable_type", "profileable_id"], name: "index_branding_profiles_on_profileable_type_and_profileable_id"
     t.index ["url"], name: "index_branding_profiles_on_url", unique: true
   end
@@ -619,6 +620,7 @@ ActiveRecord::Schema.define(version: 2021_02_08_184003) do
     t.bigint "agency_id"
     t.bigint "policy_type_ids", default: [], null: false, array: true
     t.boolean "preferred_ho4", default: false, null: false
+    t.boolean "confirmed", default: true, null: false
     t.index ["account_id"], name: "index_insurables_on_account_id"
     t.index ["agency_id"], name: "index_insurables_on_agency_id"
     t.index ["insurable_id"], name: "index_insurables_on_insurable_id"
@@ -929,9 +931,9 @@ ActiveRecord::Schema.define(version: 2021_02_08_184003) do
     t.date "last_payment_date"
     t.date "next_payment_date"
     t.bigint "policy_group_id"
-    t.boolean "declined"
     t.string "address"
     t.string "out_of_system_carrier_title"
+    t.boolean "declined"
     t.bigint "policy_id"
     t.integer "cancellation_reason"
     t.integer "branding_profile_id"
@@ -1022,6 +1024,7 @@ ActiveRecord::Schema.define(version: 2021_02_08_184003) do
     t.jsonb "resolver_info"
     t.jsonb "tagging_data"
     t.string "error_message"
+    t.bigint "tag_ids", default: [], null: false, array: true
     t.integer "branding_profile_id"
     t.index ["account_id"], name: "index_policy_applications_on_account_id"
     t.index ["agency_id"], name: "index_policy_applications_on_agency_id"
@@ -1030,6 +1033,7 @@ ActiveRecord::Schema.define(version: 2021_02_08_184003) do
     t.index ["policy_application_group_id"], name: "index_policy_applications_on_policy_application_group_id"
     t.index ["policy_id"], name: "index_policy_applications_on_policy_id"
     t.index ["policy_type_id"], name: "index_policy_applications_on_policy_type_id"
+    t.index ["tag_ids"], name: "policy_application_tag_ids_index", using: :gin
   end
 
   create_table "policy_coverages", force: :cascade do |t|
@@ -1380,6 +1384,14 @@ ActiveRecord::Schema.define(version: 2021_02_08_184003) do
     t.index ["reset_password_token"], name: "index_staffs_on_reset_password_token", unique: true
     t.index ["role"], name: "index_staffs_on_role"
     t.index ["uid", "provider"], name: "index_staffs_on_uid_and_provider", unique: true
+  end
+
+  create_table "tags", force: :cascade do |t|
+    t.string "title"
+    t.text "description"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["title"], name: "index_tags_on_title", unique: true
   end
 
   create_table "tracking_urls", force: :cascade do |t|
