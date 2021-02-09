@@ -13,6 +13,9 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
     rename_table :policy_premium_fees, :archived_policy_premium_fees
     rename_table :line_items, :archived_line_items
     rename_table :invoices, :archived_invoices
+    rename_table :charges, :archived_charges
+    rename_table :refunds, :archived_refunds
+    rename_table :disputes, :archived_disputes
     rename_table :policy_premia, :archived_policy_premia
 
     # create replacement tables
@@ -43,7 +46,6 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
       #t.references :collection_plan, polymorphic: true, null: true     # record indicating what the collector will pay off on their end (see model for details)
       t.references :fee, null: true                                     # the Fee this item corresponds to, if any
     end
-    
     
     create_table :policy_premium_payment_term do |t|
       t.datetime :original_first_moment, null: false                    # the first moment of the term, before prorations
@@ -76,9 +78,9 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
       t.integer     :total_processed, null: false, default: 0
       t.boolean     :all_received, null: false, default: false
       t.boolean     :all_processed: null: false, default: false
+      # references
+      t.references  :chargeable, foreign_key: false, polymorphic: true    # will be a PolicyPremiumItemTerm for now
       t.references  :invoice, foreign_key: false
-      # details about what this line item is for
-      t.references :chargeable, foreign_key: false, polymorphic: true    # will be a PolicyPremiumItemTerm for now
     end
     
     create_table :policy_premia do |t|
@@ -140,6 +142,7 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
       # payment tracking
       t.integer :original_total_due, null: false
       t.integer :total_due, null: false
+      t.integer :total_payable, null: false
       t.integer :total_pending, null: false, default: 0
       t.integer :total_received, null: false, default: 0
       t.boolean :all_processed, null: false, default: false
@@ -151,6 +154,21 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
       # associations
       t.references :invoiceable, foreign_key: false, polymorphic: true
       t.references :payer, foreign_key: false, polymorphic: true
+      t.references :collector, foreign_key: false, polymorphic: true
+    end
+    
+    create_table :stripe_charges do |t|
+      t.string    :external_id                                          # the stripe id of the charge (external_id is a slightly more general name that might save us conditional statements when we implement payeezy etc.)
+      t.integer   :status                                               # the status of the stripe charge
+      t.integer   :amount                                               # the amount charged
+      t.string    :source                                               # the payment source string provided
+      t.string    :error_info                                           # detailed English error info for dev access
+      t.jsonb     :client_error                                         # I18n.t parameters, format { linear: [a,b,c,...], keyword: { a: :b, c: :d, ... } }
+      t.timestamps
+      t.references :invoice, foreign_key: false, null: true
+    end
+    
+    create_table :stripe_refunds do |t|
     end
   
     #add_reference :line_items, :policy_premium_item, index: true, null: false

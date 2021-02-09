@@ -4,6 +4,118 @@
 # file: app/models/invoice.rb
 
 class Invoice < ApplicationRecord
+
+  belongs_to :invoiceable, polymorphic: true
+  belongs_to :payer, polymorphic: true
+  belongs_to :collector, polymorphic: true
+
+  has_many :line_items
+  has_many :charges
+
+
+  enum status: {
+    quoted:             0,    # belongs to a not-yet accepted quote
+    upcoming:           1,    # not yet payable or due
+    available:          2,    # payable
+    processing:         3,    # processing a new payment
+    pending:            4,    # ACH payment submitted but not yet received
+    complete:           5,    # payment complete
+    missed:             6,    # payment missed
+    cancelled:          7,    # cancelled, no longer applies
+    managed_externally: 8     # managed by a partner who does not keep us abreast of invoice status
+  }
+
+  def pay(
+    amount: nil,                        # pass a specific integer amount to make a partial payment
+    stripe_source: nil,                 # stripe source id string or token, or :default to use customer's default payment method
+    allow_upcoming: false,              # pass true if forcing an otherwise-disallowed payment on an upcoming invoice
+    allow_missed: false                 # pass true if forcing an otherwise-disallowed payment on a missed invoice
+  )
+    # flee if external
+    return {
+      success: false,
+      charge_id: nil,
+      charge_status: nil,
+      error: "invoice is only a record of an external system's invoice"
+    } if self.external
+    # begin lock
+    with_lock do
+      # set invoice status to processing
+      unless (self.status == 'available' || (allow_upcoming && self.status == 'upcoming') || (allow_missed && self.status == 'missed')) && update(status: 'processing')
+        return {
+          success: false,
+          charge_id: nil,
+          charge_status: nil,
+          error: (self.status == 'processing' || self.status == 'pending') ?
+            'A payment is already being processed for this invoice'
+            : "This invoice is not eligible for payment, because its billing status is #{self.status}"
+        }
+      end
+      return return_error unless return_error.nil?
+      # grab the default payment method, if needed
+      stripe_source = self.payer.payment_profiles.where(default: true).take&.source_id if stripe_source == :default
+      # calculate payment amount
+      to_pay = self.total_payable
+      if to_pay < 0 || (amount && amount < 0)
+        return {
+          success: false,
+          charge_id: nil,
+          charge_status: nil,
+          error: "Cannot charge for a negative amount"
+        }
+      end
+      unless amount.nil?
+        if amount > to_pay
+          return {
+            success: false,
+            charge_id: nil,
+            charge_status: nil,
+            error: "Cannot pay more than due"
+          }
+        end
+        to_pay = amount
+      end
+      # get customer stripe id
+      customer_stripe_id = if self.payer.nil? || !self.payer.respond_to?(:stripe_id)
+        nil
+      else
+        invoice.payer.set_stripe_id if invoice.payer.stripe_id.nil? && invoice.payer.respond_to?(:set_stripe_id)
+        invoice.payer.stripe_id
+      end
+      # attempt to make payment
+      created_charge = ::StripeCharge.create_charge(to_pay, stripe_source, customer_stripe_id)
+      
+      
+      
+      created_charge = nil
+      created_charge = if !stripe_source.nil?    # use specified source or token
+                         charges.create(amount: to_pay, stripe_id: stripe_source)
+                       else                      # use charge's default behavior (which right now is to succeed if the amount is 0, else to fail with an error message)
+                         charges.create(amount: to_pay)
+                       end
+    # return (callbacks from charge creation will have set our status so that it is no longer 'processing')
+    if created_charge.nil?
+      return({ success: false, error: 'Failed to create charge', charge_id: nil, charge_status: nil })
+    elsif created_charge.status == 'processing'
+      return({ success: false, error: 'Failed to sync charge to payment processor', charge_id: created_charge.id, charge_status: 'processing' })
+    elsif created_charge.status == 'pending'
+      return({ success: true, charge_id: created_charge.id, charge_status: 'pending' })
+    elsif created_charge.status == 'succeeded'
+      return({ success: true, charge_id: created_charge.id, charge_status: 'succeeded' })
+    elsif created_charge.status == 'failed'
+      return({ success: false, error: created_charge.status_information, charge_id: created_charge.id, charge_status: 'failed' })
+    end
+
+    # this should never be run, but just in case
+    { success: false, error: 'Unknown error', charge_id: created_charge.nil? ? nil : created_charge.id, charge_status: created_charge.nil? ? nil : created_charge.status }
+  end
+
+
+
+  ######################### OLD #########################################
+
+
+
   # ActiveRecord Callbacks
 
   include ElasticsearchSearchable

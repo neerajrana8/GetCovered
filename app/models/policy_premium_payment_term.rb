@@ -59,10 +59,10 @@ class PolicyPremiumPaymentTerm < ApplicationRecord
     end
   
     def validate_term
-      errors.add(:original_term_last_moment, I18n.t("policy_premium_item_term.original_term_last_moment_invalid")) unless self.original_term_last_moment >= self.original_term_first_moment
-      errors.add(:term_last_moment, I18n.t("policy_premium_item_term.term_last_moment_invalid")) unless self.term_last_moment >= self.term_first_moment
-      errors.add(:term_first_moment, I18n.t("policy_premium_item_term.term_first_moment_too_early")) unless self.term_first_moment >= self.original_term_first_moment
-      errors.add(:term_last_moment, I18n.t("policy_premium_item_term.term_last_moment_too_late")) unless self.term_last_moment <= self.original_term_last_moment
+      errors.add(:original_term_last_moment, I18n.t("policy_premium_payment_term.original_term_last_moment_invalid")) unless self.original_term_last_moment >= self.original_term_first_moment
+      errors.add(:term_last_moment, I18n.t("policy_premium_payment_term.term_last_moment_invalid")) unless self.term_last_moment >= self.term_first_moment
+      errors.add(:term_first_moment, I18n.t("policy_premium_payment_term.term_first_moment_too_early")) unless self.term_first_moment >= self.original_term_first_moment
+      errors.add(:term_last_moment, I18n.t("policy_premium_payment_term.term_last_moment_too_late")) unless self.term_last_moment <= self.original_term_last_moment
     end
 end
 
