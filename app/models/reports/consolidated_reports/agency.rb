@@ -5,7 +5,9 @@ module Reports
 
       def generate
         completed_applications
-
+        site_visits
+        leads_fields
+        premium
         self
       end
 
@@ -16,7 +18,7 @@ module Reports
           'policy_type' => 'Policy type',
           'policy' => 'Policy number',
           'contents' => 'Contents',
-          'liability' => 'Liability',
+          'liability' => 'Liability'
         }
       end
 
@@ -32,11 +34,53 @@ module Reports
             'completed_applications' => {
               'average_time_minutes' => nil,
               'conversion_rate' => nil
+            },
+            'site_visits' => nil,
+            'leads' => {
+              'count' => nil,
+              'average_leads_visits' => nil
+            },
+            'premium' => {
+              'total' => nil,
+              'average_premium' => nil
             }
           }
       end
 
       # report generation methods (can be moved outside)
+
+      def leads
+        @leads ||= Lead.presented.not_archived.where(last_visit: range_start..range_end)
+      end
+
+      def leads_fields
+        self.data['leads']['count'] = leads.count
+        self.data['leads']['average_leads_visits'] = average_leads_visits
+        self.data['leads']['average_duration'] = average_duration
+      end
+
+      def premium
+        total = 0
+
+        Policies.where(id: conversions.pluck('policies.id').uniq).each do |policy|
+          total += (policy&.policy_quotes&.last&.policy_premium&.total || 0)
+        end
+
+        self.data['premium']['total'] = total
+        self.data['premium']['average_premium'] = (total / @leads.count).round
+      end
+
+      def site_visits
+        self.data['site_visits'] = @leads.
+          lead_events.
+          where(created_at: range_start..range_end).
+          order('DATE(created_at)').group('DATE(created_at)').
+          count.keys.size
+      end
+
+      def average_leads_visits
+        (self.data['site_visits'] / leads.count).round(2)
+      end
 
       def completed_applications
         time_diffs =
@@ -59,12 +103,7 @@ module Reports
       end
 
       def conversions
-        @conversions ||= Lead.
-          presented.
-          not_archived.
-          where(last_visit: range_start..range_end).
-          joins(user: :policies).
-          where(policies: { created_at: range_start..range_end })
+        @conversions ||= leads.joins(user: :policies).where(policies: { created_at: range_start..range_end })
       end
     end
   end
