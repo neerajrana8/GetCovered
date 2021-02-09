@@ -130,7 +130,8 @@ module V2
         @calling_supported_orders = called_from_orders
         {
           profileable_type: [:scalar],
-          profileable_id: [:scalar]
+          profileable_id: [:scalar],
+          enabled: [:scalar]
         }
       end
 
@@ -154,15 +155,16 @@ module V2
         @branding_profile = access_model(::BrandingProfile, params[:id])
       end
 
-        def branding_profile_params
-          return({}) if params[:branding_profile].blank?
-          params.require(:branding_profile).permit(
-            :default, :profileable_id, :profileable_type,
-            :url, :footer_logo_url, :logo_url, :subdomain, :subdomain_test, images: [],
-            branding_profile_attributes_attributes: [ :id, :name, :value, :attribute_type],
-            styles: {}
-          )
-        end
+      def branding_profile_params
+        return({}) if params[:branding_profile].blank?
+
+        params.require(:branding_profile).permit(
+          :default, :profileable_id, :profileable_type,
+          :url, :footer_logo_url, :logo_url, :subdomain, :subdomain_test, :enabled, images: [],
+                                                                                    branding_profile_attributes_attributes: %i[id name value attribute_type],
+                                                                                    styles: {}
+        )
+      end
 
       def faq_params
         return({}) if params.blank?

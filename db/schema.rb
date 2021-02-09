@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_01_19_180942) do
+ActiveRecord::Schema.define(version: 2021_02_08_184003) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
@@ -133,9 +133,11 @@ ActiveRecord::Schema.define(version: 2021_01_19_180942) do
     t.datetime "updated_at", null: false
     t.bigint "staff_id"
     t.string "integration_designation"
+    t.string "producer_code"
     t.index ["agency_id"], name: "index_agencies_on_agency_id"
     t.index ["call_sign"], name: "index_agencies_on_call_sign", unique: true
     t.index ["integration_designation"], name: "index_agencies_on_integration_designation", unique: true
+    t.index ["producer_code"], name: "index_agencies_on_producer_code", unique: true
     t.index ["staff_id"], name: "index_agencies_on_staff_id"
     t.index ["stripe_id"], name: "index_agencies_on_stripe_id", unique: true
   end

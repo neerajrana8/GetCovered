@@ -172,13 +172,28 @@
       end
     end
 
-    resources :insurables, only: [:index, :show, :destroy], concerns: :reportable do
+    resources :fees, only: [:index, :show, :create, :update]
+
+    resources :insurables, only: [:create, :update, :index, :show, :destroy], concerns: :reportable do
       member do
         get :coverage_report
         get :policies
         get 'related-insurables', to: 'insurables#related_insurables'
       end
+
+      resources :insurable_rates,
+                path: "insurable-rates",
+                defaults: {
+                    access_pathway: [::Insurable],
+                    access_ids:     [:insurable_id]
+                },
+                only: [ :update, :index ] do
+        get 'refresh-rates', to: 'insurable_rates#refresh_rates', on: :collection
+      end
     end
+    get :agency_filters, controller: 'insurables', to: 'insurables#agency_filters', path: 'insurables/filters/agency_filters'
+
+    resources :insurable_types, path: "insurable-types", only: [ :index ]
 
     resources :leads, only: [:index, :show, :update]
     resources :leads_dashboard, only: [:index]
@@ -225,6 +240,9 @@
             to: "histories#index_recordable",
             via: "get",
             defaults: { recordable_type: Policy }
+          get "get_leads",
+              to: "policies#get_leads",
+              via: "get"
           put :update_coverage_proof
           delete :delete_policy_document
           put :refund_policy

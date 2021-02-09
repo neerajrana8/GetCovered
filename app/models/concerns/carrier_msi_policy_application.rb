@@ -67,6 +67,7 @@ module CarrierMsiPolicyApplication
           self.effective_date,
           self.users.count - 1,
           self.billing_strategy.carrier_code,
+          agency: self.agency,
           nonpreferred_final_premium_params: {
             address_line_two: unit.title.nil? ? nil : "Unit #{unit.title}",
             number_of_units: self.extra_settings&.[]('number_of_units'),

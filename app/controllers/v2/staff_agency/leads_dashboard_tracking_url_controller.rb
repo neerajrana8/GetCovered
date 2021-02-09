@@ -47,12 +47,25 @@ module V2
           @substrate = access_model(::TrackingUrl)
           params[:filter][:deleted] = params[:filter][:archived] if params[:filter].present? && params[:filter][:archived].present?
           params[:filter].delete(:archived)
+          params[:campaign_source] = unescape_param(params[:campaign_source])
+          params[:campaign_medium] = unescape_param(params[:campaign_medium])
+          params[:campaign_name] = unescape_param(params[:campaign_name])
+          params[:campaign_term] = unescape_param(params[:campaign_term])
+          params[:campaign_content] = unescape_param(params[:campaign_content])
           #if params[:filter].present? && params[:filter][:archived]
           #  @substrate = access_model(::TrackingUrl).deleted
           #elsif params[:filter].nil? || !!params[:filter][:archived]
           #  @substrate = access_model(::TrackingUrl).not_deleted
           #end
         end
+      end
+
+      def escape_param(value)
+        value.nil? ? value : CGI::escape(value)
+      end
+
+      def unescape_param(value)
+        value.nil? ? value : CGI::unescape(value)
       end
 
     end

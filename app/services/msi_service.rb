@@ -98,7 +98,8 @@ class MsiService
   end.to_h){|k,a,b| a + b }
   
   TITLE_OVERRIDES = {
-    @@coverage_codes[:ForcedEntryTheft][:code].to_s => Proc.new{|region| region == 'NY' ? "Burglary Limitation Coverage" : nil }
+    @@coverage_codes[:ForcedEntryTheft][:code].to_s => Proc.new{|region| region == 'NY' ? "Burglary Limitation Coverage" : nil },
+    @@coverage_codes[:WindHail][:code].to_s => Proc.new{|region| "Wind / Hail" }
   }
   
   DESCRIPTIONS = {
@@ -111,17 +112,19 @@ class MsiService
     '1076' => 'This option provides a discount by changing theft coverage to require physical evidence of forced entry and may require a police report.',
     '1' => 'The amount the insurer will deduct from a loss resulting from other peril not already listed (such as theft, hurricane or wind) before paying up to its policy limits.',
     '1007' => 'This option covers up to $500 for accidental damage caused by a pet such as stained carpet or chewed baseboards.',
-    '1060' => 'This option provides an increase in the amount of liability protection afforded to the insured in the case where an insured can be held liability for damages by a pet.',
+    '1060' => 'This option provides an increased amount of liability protection when an insured is held liable for damages by a pet.',
     '1065' => 'This option provides coverage up to $5,000 for expenses incurred by an insured as a direct result of identity fraud.',
     '1075' => 'This option provides coverage to treat, remediate and eliminate a bed bug infestation in the residence.',
     '2' => 'The amount the insurer will deduct from a loss resulting from theft before paying up to its policy limits.',
     '5' => 'The amount the insurer will deduct from a loss resulting from wind or hail before paying up to its policy limits.',
-    '1072' => 'This option provides up to $500 coverage for loss of covered property stored in freezers or refrigerators caused by power service interruption or mechanical failure.',
+    '1072' => 'This option provides up to $500 coverage for loss of covered property stored in freezers or refrigerators caused by power service interruption or mechanical failure in a freezer or fridge.',
     '1081' => 'This option allows the insured to buy back additional limits for personal property that is stored.',
     '1082' => 'The policy may be endorsed to insure against loss by theft when all or part of the residence.',
     '1061' => 'This option covers your personal property (up to $5,000) in the event of an earthquake.',
     '6' => 'The amount the insurer will deduct from a loss resulting from an earthquake before paying up to its policy limits.',
-    '3' => 'The amount the insurer will deduct from a loss resulting from a hurricane before paying up to its policy limits.'
+    '3' => 'The amount the insurer will deduct from a loss resulting from a hurricane before paying up to its policy limits.',
+    '1077' => 'Increases Loss of Use to 40% and increases Rental Income Coverage to $10,000, from $3,000.',
+    '1062' => 'Provides coverage for 1 full time outservant employee for a premium of $60.00.'
   }
   
   def self.renew_descriptions
@@ -134,6 +137,10 @@ class MsiService
         end
       end
     end
+  end
+  
+  def self.covopt_sort(a,b)
+    (a['uid'] == '1' ? 999999 : 0) <=> (b['uid'] == '1' ? 999999 : 0)
   end
   
   LOSS_OF_USE_VARIATIONS = {
@@ -944,7 +951,7 @@ class MsiService
             "options"       => ded["MSI_DeductibleOptionList"].blank? ? nil : arrayify(ded["MSI_DeductibleOptionList"]["Deductible"]).map{|d| d["Amt"] ? d["Amt"].to_d : d["FormatPct"].to_d * 100 }, # MOOSE WARNING: handle percents in special way?
             "options_format"=> ded["MSI_DeductibleOptionList"].blank? ? "none" : arrayify(ded["MSI_DeductibleOptionList"]["Deductible"]).first["Amt"] ? "currency" : "percent"
           }
-      end)
+      end).sort{|a,b| MsiService.covopt_sort(a,b) }
     end
     # apply descriptions
     irc.coverage_options.each{|co| co['description'] = DESCRIPTIONS[co['uid'].to_s] unless DESCRIPTIONS[co['uid'].to_s].blank? }

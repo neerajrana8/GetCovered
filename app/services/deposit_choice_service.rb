@@ -262,8 +262,8 @@ class DepositChoiceService
             body: message_content.to_json,
             headers: {
               'Content-Type' => 'application/json',
-              'Authorization' => "Bearer #{access_token}",
-              'Referer' => Rails.application.credentials.deposit_choice[:referer][ENV['RAILS_ENV'].to_sym]
+              'Authorization' => "Bearer #{access_token}"#,
+              #'Referer' => Rails.application.credentials.deposit_choice[:referer][ENV['RAILS_ENV'].to_sym]
             },
             ssl_version: :TLSv1_2 # MOOSE WARNING: here and in get below, we need to add the right headers etc.
           )
@@ -272,8 +272,8 @@ class DepositChoiceService
             query: message_content.transform_keys{|k| k.to_s },
             headers: {
               'Accept' => 'text/plain',
-              'Authorization' => "Bearer #{access_token}",
-              'Referer' => Rails.application.credentials.deposit_choice[:referer][ENV['RAILS_ENV'].to_sym]
+              'Authorization' => "Bearer #{access_token}"#,
+              #'Referer' => Rails.application.credentials.deposit_choice[:referer][ENV['RAILS_ENV'].to_sym]
             },
             ssl_version: :TLSv1_2
           )
@@ -316,11 +316,10 @@ class DepositChoiceService
 
   def acquire_authorization
     result = HTTParty.post(Rails.application.credentials.deposit_choice[:identity_uri][ENV['RAILS_ENV'].to_sym],
-      body: "grant_type=client_credentials&scope=depositchoice",
+      body: "grant_type=client_credentials&scope=depositchoice&client_id=#{Rails.application.credentials.deposit_choice[:identity][ENV['RAILS_ENV'].to_sym]}&client_secret=#{Rails.application.credentials.deposit_choice[:client_secret][ENV['RAILS_ENV'].to_sym]}",
       headers: {
-        'Content-Type' => 'application/x-www-form-urlencoded',
-        'Authorization' => "Basic #{Base64.strict_encode64("#{Rails.application.credentials.deposit_choice[:identity][ENV['RAILS_ENV'].to_sym]}:#{Rails.application.credentials.deposit_choice[:client_secret][ENV['RAILS_ENV'].to_sym]}")}",
-        'Referer' => Rails.application.credentials.deposit_choice[:referer][ENV['RAILS_ENV'].to_sym]
+        # No longer used, they had us move it into the body instead: 'Authorization' => "Basic #{Base64.strict_encode64("#{Rails.application.credentials.deposit_choice[:identity][ENV['RAILS_ENV'].to_sym]}:#{Rails.application.credentials.deposit_choice[:client_secret][ENV['RAILS_ENV'].to_sym]}")}",
+        'Content-Type' => 'application/x-www-form-urlencoded'
       },
       ssl_version: :TLSv1_2
     )
