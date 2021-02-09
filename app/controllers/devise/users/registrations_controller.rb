@@ -12,11 +12,6 @@ class Devise::Users::RegistrationsController < DeviseTokenAuth::RegistrationsCon
     super
     return unless @resource.persisted?
 
-    ::Analytics.track(
-      user_id: @resource.id,
-      event: 'Signed Up',
-      properties: { category: 'Account' }
-    )
   end
 
   # GET /resource/edit

@@ -115,7 +115,6 @@ gem 'memory_profiler', require: false
 gem 'ruby-prof', require: false
 
 gem 'addressable'
-gem 'analytics-ruby', '~> 2.0.0', :require => 'segment/analytics'
 
 gem 'klaviyo', :github => 'getcoveredllc/ruby-klaviyo'
 gem 'minuteman'
