@@ -83,16 +83,12 @@ class Invoice < ApplicationRecord
         invoice.payer.stripe_id
       end
       # attempt to make payment
-      created_charge = ::StripeCharge.create_charge(to_pay, stripe_source, customer_stripe_id)
+      created_charge = ::StripeCharge.create_charge(to_pay, stripe_source, customer_stripe_id) # MOOSE WARNING: description and metadata!!!
       
-      
-      
-      created_charge = nil
-      created_charge = if !stripe_source.nil?    # use specified source or token
-                         charges.create(amount: to_pay, stripe_id: stripe_source)
-                       else                      # use charge's default behavior (which right now is to succeed if the amount is 0, else to fail with an error message)
-                         charges.create(amount: to_pay)
-                       end
+
+      ### MOOSE WARNING: old stuff here ###
+
+
     # return (callbacks from charge creation will have set our status so that it is no longer 'processing')
     if created_charge.nil?
       return({ success: false, error: 'Failed to create charge', charge_id: nil, charge_status: nil })
