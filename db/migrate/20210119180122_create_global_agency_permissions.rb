@@ -8,11 +8,18 @@ class CreateGlobalAgencyPermissions < ActiveRecord::Migration[5.2]
       t.timestamps
     end
 
-    Agency.all.each do |agency|
-      GlobalAgencyPermission.create(
-        agency: agency,
-        permissions: GlobalAgencyPermission::AVAILABLE_PERMISSIONS
-      )
+    # ensure we do agencies in parent-first order
+    done_agency_ids = []
+    todo_agencies = ::Agency.where(agency_id: nil)
+    while !todo_agencies.blank?
+      todo_agencies.each do |agency|
+        GlobalAgencyPermission.create(
+          agency: agency,
+          permissions: GlobalAgencyPermission::AVAILABLE_PERMISSIONS
+        )
+      end
+      done_agency_ids += todo_agencies.map{|agency| agency.id }
+      todo_agencies = ::Agency.where(agency_id: done_agency_ids).where.not(id: done_agency_ids)
     end
   end
 
