@@ -12,6 +12,7 @@ module Reports
           id: pa.id,
           status: pa.status,
           mediacode: pa.tagging_data['confie_mediacode'],
+          user: pa.primary_user,
           line_breaks: true
         )
           event = pa.events.new(cs.event_params)
@@ -26,7 +27,7 @@ module Reports
     end
 
     private
-    
+
       def set_policy_applications
         current_time = Time.current.beginning_of_hour
         confie_id = ConfieService.agency_id

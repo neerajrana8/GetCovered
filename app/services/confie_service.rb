@@ -1,7 +1,7 @@
 # Confie Service Model
 # file: app/services/confie_service.rb
 #
- 
+
 require 'base64'
 require 'fileutils'
 
@@ -11,11 +11,11 @@ class ConfieService
     @agency ||= ::Agency.where(integration_designation: "confie").take
     @agency_id ||= @agency&.id
   end
-  
+
   def self.agency
     @agency ||= ::Agency.where(integration_designation: "confie").take
   end
-  
+
   STATUS_MAP = {
     'started' => 'in_progress',
     'in_progress' => 'in_progress',
@@ -28,24 +28,24 @@ class ConfieService
     'accepted' => 'accepted',
     'rejected' => 'quoted'
   }
-  
+
   include HTTParty
   include ActiveModel::Validations
   include ActiveModel::Conversion
   extend ActiveModel::Naming
-  
+
   attr_accessor :compiled_rxml, :message_content,
     :errors,
     :request,
     :action,
     :rxml,
     :coverage_codes
-  
+
   def initialize
     self.action = nil
     self.errors = nil
   end
-  
+
   def event_params
     {
       verb: 'post',
@@ -56,7 +56,7 @@ class ConfieService
       request: self.action == :online_policy_sale ? self.compiled_rxml : self.message_content
     }
   end
-  
+
   def build_request(action_name, **args)
     self.action = action_name
     self.errors = nil
@@ -67,7 +67,7 @@ class ConfieService
     end
     return self.errors.blank?
   end
-  
+
   def endpoint_for(which_call) # MOOSE WARNING: apparently the endpoint is constant
     if which_call == :online_policy_sale
       Rails.application.credentials.confie[:uri][ENV['RAILS_ENV'].to_sym]
@@ -75,7 +75,7 @@ class ConfieService
       Rails.application.credentials.confie[:lead_uri][ENV['RAILS_ENV'].to_sym]
     end
   end
-  
+
   def call
     # try to call
     call_data = {
@@ -171,14 +171,16 @@ class ConfieService
     # all done
     return call_data
   end
-  
+
   def build_lead_info(
     id:,
     mediacode:,
     status:,
+    user:,
     **compilation_args
   )
     # put the request together
+    address = user.address
     self.action = :lead_info
     self.errors = nil
     self.message_content = {
@@ -186,13 +188,33 @@ class ConfieService
       mediacode: mediacode.to_s,
       data: {
         lead: {
-          gc_status: ConfieService::STATUS_MAP[status]
+          gc_status: ConfieService::STATUS_MAP[status],
+          jornaya_lead_id: "8197cd0c-ff37-650b-0e7c-test",
+          jornaya_lead_provider_code: "8197cd0c-ff37-650b-0e7c-test",
+          id_lead: user.id.to_s,
+          date_partner: "#{ Time.now.strftime('%Y-%m-%d') }"
+        },
+        client: {
+          first_name: user.profile.first_name,
+          last_name: user.profile.last_name,
+          phone: user.profile.contact_phone,
+          email: user.email,
+          gender: user.profile.gender,
+          zipcode: address.nil? ? nil : user.address.zip_code,
+          middle_name: user.profile.middle_name,
+          address: address.nil? ? nil : address.combined_street_address,
+          apt_suite: address.nil? ? nil : address.street_two,
+          birth_date: user.profile.birth_date.strftime('%Y-%m-%d'),
+          birth_month: user.profile.birth_date.strftime('%m')
         }
       }
     }.merge(get_auth_json).to_json
+
+    puts self.message_content.to_json
+    
     return errors.blank?
   end
-  
+
 
   def build_online_policy_sale(
     policy:,
@@ -260,17 +282,12 @@ class ConfieService
           : nil
         )
       }.transform_values{|v| v.blank? ? nil : v }.compact)
-      
+
     }, **compilation_args)
     return errors.blank?
   end
-  
-  
-  
-  
-  
-  
-private
+
+  private
 
     def payment_info(charge)
       if charge.class.name == 'Invoice'
@@ -321,7 +338,7 @@ private
       end
       return nil
     end
-    
+
     def address_from_stripe_source(source)
       if source.address_city && source.address_line1 && source.address_state && source.address_zip
         {
@@ -359,12 +376,12 @@ private
 
     def get_a1_policy_codes_for_policy_type(policy_type_id)
       case policy_type_id
-        when ::PolicyType::RENT_GUARANTEE_ID        
+        when ::PolicyType::RENT_GUARANTEE_ID
           return {
             "com.a1_CarrierCd": "RE",
             "com.a1_ProgramCd": "NGU"
           }
-        when ::PolicyType::RESIDENTIAL_ID        
+        when ::PolicyType::RESIDENTIAL_ID
           return {
             "com.a1_CarrierCd": "GC",
             "com.a1_ProgramCd": "REN"
@@ -398,7 +415,7 @@ private
         api_key: Rails.application.credentials.confie[:lead_key][ENV['RAILS_ENV'].to_sym]
       }
     end
-    
+
     def json_to_xml(obj, abbreviate_nils: true, closeless: false,  indent: nil, line_breaks: false, internal: false)
       # dynamic default parameters
       line_breaks = true unless indent.nil?
@@ -447,7 +464,7 @@ private
         child_string: child_string
       } : child_string
     end
-  
+
     def compile_xml(obj, line_breaks: false, **other_args)
       xml_data = json_to_xml({
         ACORD: obj
@@ -457,7 +474,7 @@ private
       )
       apply_soap_wrapper(xml_data, line_breaks: line_breaks)
     end
-    
+
     def apply_soap_wrapper(some_xml, line_breaks: true)
       json_to_xml({
         "s:Envelope": {
@@ -482,20 +499,5 @@ private
         }
       }, line_breaks: line_breaks)
     end
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+
 end
-
-
