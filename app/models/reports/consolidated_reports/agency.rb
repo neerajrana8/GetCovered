@@ -8,6 +8,7 @@ module Reports
         site_visits
         leads_fields
         premium
+        quotes
         self
       end
 
@@ -42,7 +43,13 @@ module Reports
             },
             'premium' => {
               'total' => nil,
-              'average_premium' => nil
+              'average_lead_premium' => nil,
+              'average_policy_premium' => nil
+            },
+            'quotes' => {
+              'quoting_rate' => nil,
+              'average_quote_price' => nil,
+              'average_time_from_quote_to_conversion' => nil
             }
           }
       end
@@ -67,7 +74,8 @@ module Reports
         end
 
         self.data['premium']['total'] = total
-        self.data['premium']['average_premium'] = (total / @leads.count).round
+        self.data['premium']['average_lead_premium'] = (total / conversions.pluck('leads.id').uniq.count).round
+        self.data['premium']['average_policy_premium'] = (total / conversions.count).round
       end
 
       def site_visits
@@ -100,6 +108,20 @@ module Reports
         reportable.
           policy_applications.
           where(created_at: range_start..range_end)
+      end
+
+      def quotes
+        quotes_values = leads.map do |lead|
+          lead.user&.policy_applications&.last&.policy_quotes&.last&.policy_premium&.total || last_event&.data['premium_total']
+        end.compact
+
+        conversion_time_diff = Policies.where(id: conversions.pluck('policies.id').uniq).map do |policy|
+          policy.created_at - policy.policy_quotes&.last&.created_at
+        end
+
+        self.data['quotes']['average_quote_price'] = (quotes_values.sum / quotes_values.count).count
+        self.data['quotes']['average_time_from_quote_to_conversion'] =
+          (conversion_time_diff.sum / 60 / conversion_time_diff.count).round
       end
 
       def conversions
