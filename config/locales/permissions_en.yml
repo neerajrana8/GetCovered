@@ -1,0 +1,35 @@
+en:
+  permissions:
+    agencies:
+      agents: "Agencies - Agents"
+      carriers: "Agencies - Carriers"
+      details: "Agencies - Details"
+      manage_agents: "Agencies - Manage Agents"
+    dashboard:
+      leads: "Dashboard - Leads"
+      properties: "Dashboard - Properties"
+    insurables:
+      buildings: "Insurables - Buildings"
+      communities: "Insurables - Communities"
+      create: "Insurables - Add Insurable"
+      units: "Insurables - Units"
+    policies:
+      claims: "Compliance - Claims"
+      coverage_proof: "Compliance - Proof of Coverage"
+      master: "Compliance - Master Compliance"
+      policies: "Compliance - Policies"
+      rent_mass_import: "Compliance - Rent Guarantee Mass import"
+    property_management:
+      accounts: "Property Management - Accounts"
+      managers: "Property Management - Managers"
+      users: "Property Management - Users"
+    requests:
+      refunds: "Requests - Refunds"
+      cancellations: "Requests - Cancellations"
+  permission_categories:
+    agencies: "Agencies"
+    dashboard: "Dashboard"
+    policies: "Compliance"
+    property_management: "Property Management"
+    requests: "Requests"
+    insurables: "Insurables"

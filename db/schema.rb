@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_01_15_174119) do
+ActiveRecord::Schema.define(version: 2021_02_08_184003) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
@@ -133,9 +133,11 @@ ActiveRecord::Schema.define(version: 2021_01_15_174119) do
     t.datetime "updated_at", null: false
     t.bigint "staff_id"
     t.string "integration_designation"
+    t.string "producer_code"
     t.index ["agency_id"], name: "index_agencies_on_agency_id"
     t.index ["call_sign"], name: "index_agencies_on_call_sign", unique: true
     t.index ["integration_designation"], name: "index_agencies_on_integration_designation", unique: true
+    t.index ["producer_code"], name: "index_agencies_on_producer_code", unique: true
     t.index ["staff_id"], name: "index_agencies_on_staff_id"
     t.index ["stripe_id"], name: "index_agencies_on_stripe_id", unique: true
   end
@@ -145,6 +147,19 @@ ActiveRecord::Schema.define(version: 2021_01_15_174119) do
     t.string "slug"
     t.jsonb "nodes", default: {}
     t.boolean "enabled"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
+  create_table "application_notifications", force: :cascade do |t|
+    t.string "action"
+    t.string "subject"
+    t.integer "status"
+    t.integer "code"
+    t.boolean "read", default: false
+    t.integer "notifiable_id"
+    t.string "notifiable_type"
+    t.string "message"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
   end
@@ -373,6 +388,9 @@ ActiveRecord::Schema.define(version: 2021_01_15_174119) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "type_of_loss", default: 0, null: false
+    t.string "name"
+    t.string "address"
+    t.string "nature_of_claim"
     t.text "staff_notes"
     t.index ["claimant_type", "claimant_id"], name: "index_claims_on_claimant_type_and_claimant_id"
     t.index ["insurable_id"], name: "index_claims_on_insurable_id"
@@ -504,6 +522,14 @@ ActiveRecord::Schema.define(version: 2021_01_15_174119) do
     t.datetime "updated_at", null: false
     t.index ["assignable_type", "assignable_id"], name: "index_fees_on_assignable_type_and_assignable_id"
     t.index ["ownerable_type", "ownerable_id"], name: "index_fees_on_ownerable_type_and_ownerable_id"
+  end
+
+  create_table "global_agency_permissions", force: :cascade do |t|
+    t.jsonb "permissions", default: {}
+    t.bigint "agency_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["agency_id"], name: "index_global_agency_permissions_on_agency_id"
   end
 
   create_table "histories", force: :cascade do |t|
@@ -905,9 +931,9 @@ ActiveRecord::Schema.define(version: 2021_01_15_174119) do
     t.date "last_payment_date"
     t.date "next_payment_date"
     t.bigint "policy_group_id"
-    t.boolean "declined"
     t.string "address"
     t.string "out_of_system_carrier_title"
+    t.boolean "declined"
     t.bigint "policy_id"
     t.integer "cancellation_reason"
     t.integer "branding_profile_id"
@@ -1300,6 +1326,16 @@ ActiveRecord::Schema.define(version: 2021_01_15_174119) do
     t.index ["referent_type", "referent_id"], name: "index_signable_documents_on_referent_type_and_referent_id"
     t.index ["signer_type", "signer_id"], name: "index_signable_documents_on_signer_type_and_signer_id"
     t.index ["status", "referent_type", "referent_id"], name: "signable_documents_signed_index"
+  end
+
+  create_table "staff_permissions", force: :cascade do |t|
+    t.jsonb "permissions", default: {}
+    t.bigint "global_agency_permission_id"
+    t.bigint "staff_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["global_agency_permission_id"], name: "index_staff_permissions_on_global_agency_permission_id"
+    t.index ["staff_id"], name: "index_staff_permissions_on_staff_id"
   end
 
   create_table "staffs", force: :cascade do |t|

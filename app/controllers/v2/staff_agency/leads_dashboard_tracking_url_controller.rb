@@ -2,6 +2,7 @@ module V2
   module StaffAgency
     class LeadsDashboardTrackingUrlController < StaffAgencyController
       before_action :set_substrate, only: :index
+      check_privileges 'dashboard.leads'
 
       def index
         super(:@tracking_urls, @substrate, :leads)

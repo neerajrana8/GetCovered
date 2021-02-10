@@ -114,8 +114,6 @@ class Invoice < ApplicationRecord
 
   # ActiveRecord Callbacks
 
-  include ElasticsearchSearchable
-
   before_validation :calculate_subtotal, on: :create
     
   before_validation :calculate_total
@@ -179,11 +177,6 @@ class Invoice < ApplicationRecord
     where(status: %w[available missed]).where('due_date < ?', DateTime.now)
   }
 
-  settings index: { number_of_shards: 1 } do
-    mappings dynamic: 'false' do
-      indexes :number, type: :text
-    end
-  end
   # Methods
 
 

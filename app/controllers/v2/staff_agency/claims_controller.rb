@@ -9,8 +9,9 @@ module V2
       include ClaimsMethods
       
       before_action :set_claim, only: %i[update show attach_documents delete_documents process_claim]
-      
       before_action :set_substrate, only: %i[index]
+
+      check_privileges 'policies.claims'
       
       def index
         if params[:short]

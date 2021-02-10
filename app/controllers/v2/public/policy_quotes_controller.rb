@@ -185,11 +185,6 @@ module V2
                 insurable = @policy_quote.policy_application.policy&.primary_insurable
                 Insurables::UpdateCoveredStatus.run!(insurable: insurable) if insurable.present? # MOOSE WARNING: shouldn't we only be running this on ho4? or, really, shouldn't this entire system be overhauled since it's from the QBE-only days?
 
-                ::Analytics.track(
-                  user_id: @user.id,
-                  event: 'Order Completed',
-                  properties: { category: 'Orders' }
-                )
                 invite_primary_user(@policy_quote.policy_application)
                 
                 if @policy_quote.policy_application.carrier_id == DepositChoiceService.carrier_id

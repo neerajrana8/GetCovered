@@ -23,7 +23,6 @@ describe 'Agency invitation spec', type: :request do
 
     expect { create_agency(agency_params) }.to change { Agency.count }.by(1)
     expect(Agency.last.agency).to eq(@agency)
-
     expect { create_staff(staff_params(Agency.last)) }.to change { ::Staff.count }.by(1)
 
     expect(::Staff.last.owner).to eq(true)
@@ -33,7 +32,10 @@ describe 'Agency invitation spec', type: :request do
     {
       title: "New test agency",
       tos_accepted: true,
-      whitelabel: false
+      whitelabel: false,
+      global_agency_permission_attributes: {
+        permissions: GlobalAgencyPermission::AVAILABLE_PERMISSIONS
+      }
     }
   end
 
@@ -142,7 +144,10 @@ describe 'Agency api spec', type: :request do
     {
         title: "New test agency",
         tos_accepted: true,
-        whitelabel: false
+        whitelabel: false,
+        global_agency_permission_attributes: {
+          permissions: GlobalAgencyPermission::AVAILABLE_PERMISSIONS
+        }
     }
   end
 
@@ -151,7 +156,10 @@ describe 'Agency api spec', type: :request do
         title: "New test subagency",
         tos_accepted: true,
         whitelabel: false,
-        agency_id: agency_id
+        agency_id: agency_id,
+        global_agency_permission_attributes: {
+          permissions: GlobalAgencyPermission::AVAILABLE_PERMISSIONS
+        }
     }
   end
 
@@ -166,6 +174,9 @@ describe 'Agency api spec', type: :request do
      agency_id: @agency.id,
      enabled: "true",
      whitelabel: "true",
+     global_agency_permission_attributes: {
+       permissions: GlobalAgencyPermission::AVAILABLE_PERMISSIONS
+     },
      contact_info: {"contact_email":"","contact_phone":"","contact_fax":""}}
   end
 

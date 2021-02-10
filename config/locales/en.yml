@@ -128,6 +128,10 @@ en:
     already_included_on_policy: "Already included on policy or policy application"
   insurable_type_model:
     cannot_be_blank: "cannot be blank"
+  global_agency_permission_model:
+    cant_be_enabled: "%{translated_key} cant be enabled due to global permissions restrictions of the parent agency"
+  staff_permission_model:
+    cant_be_enabled: "%{translated_key} cant be enabled due to global permissions restrictions"
   address_model:
     is_not_a_valid_state: "is not a valid state"
     must_be_valid_address: "could not be parsed; must be a valid address"
