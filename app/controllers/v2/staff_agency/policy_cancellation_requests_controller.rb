@@ -7,7 +7,8 @@ module V2
     class PolicyCancellationRequestsController < StaffAgencyController
       include PolicyCancellationRequestsMethods
 
-      check_privileges 'requests.refunds'
+      check_privileges 'requests.refunds' => [:approve, :decline]
+      check_privileges 'requests.cancellations' => [:cancel]
 
       private
 
