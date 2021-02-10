@@ -14,3 +14,9 @@ json.organizable do
                   staff.organizable_type.downcase.to_sym => staff.organizable
   end
 end
+
+json.staff_permission do
+  if @staff.staff_permission.present?
+    json.partial! 'v2/shared/staff_permissions/full.json.jbuilder', staff_permission: staff.staff_permission
+  end
+end

@@ -5,6 +5,7 @@ module V2
       include Leads::LeadsDashboardCalculations
 
       before_action :set_substrate, only: :index
+      check_privileges 'dashboard.leads'
 
       def index
         start_date = Date.parse(date_params[:start])

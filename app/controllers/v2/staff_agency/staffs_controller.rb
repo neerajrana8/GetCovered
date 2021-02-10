@@ -5,11 +5,13 @@
 module V2
   module StaffAgency
     class StaffsController < StaffAgencyController
-
       include StaffsMethods
-      
+
       before_action :set_staff, only: %i[update show re_invite toggle_enabled]
-            
+
+      check_privileges 'agencies.agents'
+      check_privileges 'agencies.manage_agents' => %i[create update]
+
       def index
         if (params[:filter] && params[:filter][:organizable_type] == 'Account')
           super(:@staffs, @agency.account_staff, :profile)
@@ -44,14 +46,11 @@ module V2
       end
       
       def update
-        if update_allowed?
-          if @staff.update_as(current_staff, update_params)
-            render :show, status: :ok
-          else
-            render json: @staff.errors, status: :unprocessable_entity
-          end
+        if @staff.update_as(current_staff, update_params)
+          render :show, status: :ok
         else
-          render json: { success: false, errors: ['Unauthorized Access'] }, status: :unauthorized
+          render json: standard_error(:staff_update_error, nil, @staff.errors.full_messages),
+                 status: :unprocessable_entity
         end
       end
       
@@ -99,10 +98,6 @@ module V2
         true
       end
         
-      def update_allowed?
-        true
-      end
-        
       def set_staff
         @staff = ::Staff.find(params[:id])
       end
@@ -129,7 +124,7 @@ module V2
                     profile_attributes: %i[ id
                       birth_date contact_email contact_phone first_name
                       job_title last_name middle_name suffix title
-                    ]
+                    ], staff_permission_attributes: [permissions: {}]
         )
       end
         

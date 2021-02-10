@@ -166,6 +166,12 @@
       end
     end
 
+    resources :global_agency_permissions, only: [:update] do
+      collection do
+        get :available_permissions
+      end
+    end
+
     resources :fees, only: [:index, :show, :create, :update]
 
     resources :insurables, only: [:create, :update, :index, :show, :destroy], concerns: :reportable do
