@@ -19,7 +19,7 @@ namespace :permissions do
         new_permissions[key] = current_permissions[key] || default_value
       end
 
-      global_agency_permission.update(permissions: new_permissions) if new_permissions != current_permissions
+      global_agency_permission.update_column(:permissions, new_permissions) if new_permissions != current_permissions
 
       progress_bar.increment
     end
