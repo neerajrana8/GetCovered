@@ -31,20 +31,7 @@ class Invoice < ApplicationRecord
       # lock, by order of id, Invoices->Line Items->[PolicyPremiumItemPaymentTerms]->PolicyPremiumItems
       self.lock!
       lia = self.line_items.order(id: :asc).lock.to_a
-      ppipta = ::PolicyPremiumItemPaymentTerm.where(id: lia.select{|li| li.chargeable_type == 'PolicyPremiumItemPaymentTerm' }.map{|li| li.chargeable_id })
-      ppids = nil
-      if lock_terms
-        ppipta = ppipta.lock.to_a
-        ppids = ppipta.map{|ppipt| ppipt.policy_premium_item_id }.uniq
-      else
-        ppids = ppipta.order(:policy_premium_item_id)
-                     .group(:policy_premium_item_id)
-                     .pluck(:policy_premium_item_id)
-      end
-      ppia = ::PolicyPremiumItem.where(id: ppids).order(id: :asc).lock.to_a
-      yield({ line_items: lia, policy_premium_items: ppia }.merge(!lock_terms ? {} :
-            { policy_premium_item_payment_terms: ppipta }
-      ))
+      yield(lia)
     end
   end
   
