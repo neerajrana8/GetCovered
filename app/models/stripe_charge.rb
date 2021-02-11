@@ -3,6 +3,8 @@
 
 class StripeCharge < ApplicationRecord
 
+  include ChargeType
+
   belongs_to :invoice,
     optional: true
   

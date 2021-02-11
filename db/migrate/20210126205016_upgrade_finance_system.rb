@@ -76,7 +76,6 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
       t.integer     :total_due, null: false
       t.integer     :total_received, null: false, default: 0
       t.integer     :total_processed, null: false, default: 0
-      t.boolean     :all_received, null: false, default: false
       t.boolean     :all_processed: null: false, default: false
       # references
       t.references  :chargeable, foreign_key: false, polymorphic: true    # will be a PolicyPremiumItemTerm for now
@@ -137,15 +136,17 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
       # state
       t.boolean :external, null: false, default: false
       t.integer :status
+      t.jsonb   :error_info
+      
       t.datetime :status_changed
       t.boolean :was_missed, null: false, default: false
-      # payment tracking
+      # payment tracking MOOSE WARNING: add index on (total_received - total_processed) and job to auto-run perform_line_item_distribution
       t.integer :original_total_due, null: false
       t.integer :total_due, null: false
       t.integer :total_payable, null: false
       t.integer :total_pending, null: false, default: 0
       t.integer :total_received, null: false, default: 0
-      t.boolean :all_processed, null: false, default: false
+      t.integer :total_processed, null: false, default: 0
       # disputes and refunds
       t.integer :pending_dispute_total, null: false, default: 0
       t.integer :pending_refund_total, null: false, default: 0
@@ -169,6 +170,7 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
     end
     
     create_table :stripe_refunds do |t|
+      t.integer   :amount # MOOSE WARNING: make sure you define .signed_amount
     end
   
     #add_reference :line_items, :policy_premium_item, index: true, null: false

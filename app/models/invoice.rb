@@ -10,35 +10,33 @@ class Invoice < ApplicationRecord
   belongs_to :collector, polymorphic: true
 
   has_many :line_items
-  has_many :charges
+  has_many :stripe_charges
 
 
   enum status: {
     quoted:             0,    # belongs to a not-yet accepted quote
     upcoming:           1,    # not yet payable or due
     available:          2,    # payable
-    processing:         3,    # processing a new payment
-    pending:            4,    # ACH payment submitted but not yet received
-    complete:           5,    # payment complete
-    missed:             6,    # payment missed
-    cancelled:          7,    # cancelled, no longer applies
+    pending:            3,    # ACH payment submitted but not yet received
+    complete:           4,    # payment complete
+    missed:             5,    # payment missed
+    cancelled:          6,    # cancelled, no longer applies
+    under_review:       7,    # something horrible happened & this invoice is frozen for manual review
     managed_externally: 8     # managed by a partner who does not keep us abreast of invoice status
   }
 
 
   def with_payment_lock(lock_terms: false)
     ActiveRecord::Base.transaction do
-      # lock, by order of id, Invoices->Line Items->[PolicyPremiumItemPaymentTerms]->PolicyPremiumItems
       self.lock!
-      lia = self.line_items.order(id: :asc).lock.to_a
-      yield(lia)
+      yield(self.line_items.order(id: :asc).lock.to_a)
     end
   end
   
 
 
   def pay(
-    amount: nil,                        # pass a specific integer amount to make a partial payment
+    amount: nil,                        # pass a specific integer amount to make a partial payment, default is total_payable
     stripe_source: nil,                 # stripe source id string or token, or :default to use customer's default payment method
     allow_upcoming: false,              # pass true if forcing an otherwise-disallowed payment on an upcoming invoice
     allow_missed: false                 # pass true if forcing an otherwise-disallowed payment on a missed invoice
@@ -51,14 +49,16 @@ class Invoice < ApplicationRecord
       error: "invoice is only a record of an external system's invoice"
     } if self.external
     # begin lock
-    with_lock do
+    notification_status = nil
+    charge_to_distribute = nil
+    self.with_payment_lock do
       # set invoice status to processing
-      unless (self.status == 'available' || (allow_upcoming && self.status == 'upcoming') || (allow_missed && self.status == 'missed')) && update(status: 'processing')
+      unless self.status == 'available' || (allow_upcoming && self.status == 'upcoming') || (allow_missed && self.status == 'missed')
         return {
           success: false,
           charge_id: nil,
           charge_status: nil,
-          error: (self.status == 'processing' || self.status == 'pending') ?
+          error: (self.status == 'pending') ?
             'A payment is already being processed for this invoice'
             : "This invoice is not eligible for payment, because its billing status is #{self.status}"
         }
@@ -101,31 +101,86 @@ class Invoice < ApplicationRecord
         description: descriptor[:description],
         metadata: descriptor[:metadata]
       )
-      
-
-      ### MOOSE WARNING: old stuff here ###
-
-
-    # return (callbacks from charge creation will have set our status so that it is no longer 'processing')
-    if created_charge.nil?
-      return({ success: false, error: 'Failed to create charge', charge_id: nil, charge_status: nil })
-    elsif created_charge.status == 'processing'
-      return({ success: false, error: 'Failed to sync charge to payment processor', charge_id: created_charge.id, charge_status: 'processing' })
-    elsif created_charge.status == 'pending'
-      return({ success: true, charge_id: created_charge.id, charge_status: 'pending' })
-    elsif created_charge.status == 'succeeded'
-      return({ success: true, charge_id: created_charge.id, charge_status: 'succeeded' })
-    elsif created_charge.status == 'failed'
-      return({ success: false, error: created_charge.status_information, charge_id: created_charge.id, charge_status: 'failed' })
-    end
-
-    # this should never be run, but just in case
-    { success: false, error: 'Unknown error', charge_id: created_charge.nil? ? nil : created_charge.id, charge_status: created_charge.nil? ? nil : created_charge.status }
+      # handle result
+      extended_status = created_charge.id.nil? ? 'unsaved' : created_charge.valid? ? 'invalid' : created_charge.status
+      case extended_status
+        when nil, 'invalid', 'processing', 'mysterious'
+          notification_status = 'error'
+          self.update(status: 'under_review', error_info: {
+            description: {
+              'unsaved'     => "Charge attempt failed to save charge.",
+              'invalid'     => "Charge attempt resulted in invalid charge.",
+              'processing'  => "Charge attempt resulted in 'processing' charge. There should be no code path with this result, but it happened.",
+              'mysterious'  => "Charge attempt resulted in 'mysterous' charge. This means the charge attempt threw no errors and had no failure status, but the returned Stripe object was invalid."
+            }[extended_status],
+            charge_type: 'StripeCharge',
+            charge_id: created_charge.id,
+            time: Time.current.to_s,
+            amount: to_pay,
+            stripe_charge_json: created_charge.as_json,
+            stripe_charge_errors: created_charge.errors.to_h
+          })
+        when 'failed'
+          notification_status = 'failed'
+          # there are no updates to make
+        when 'pending'
+          notification_status = 'pending'
+          self.update(
+            status: to_pay == self.total_payable ? 'pending' : self.status,
+            total_pending: self.total_pending + to_pay,
+            total_payable: self.total_payable - to_pay
+          )
+        when 'succeeded'
+          notification_status = 'succeeded'
+          charge_to_distribute = created_charge
+          self.update(
+            status: to_pay == self.total_payable ?
+                      (self.total_pending == 0 ? 'complete' : 'pending')
+                      : self.status,
+            total_payable: self.total_payable - to_pay,
+            total_received: self.total_received + to_pay
+          )
+      end
+    end # end with_payment_lock section
+    self.perform_line_item_distribution(charge_to_distribute) unless charge_to_distribute.nil?
+    self.send_charge_notifications(notification_status, charge_to_distribute)
   end
 
 
+  def perform_line_item_distribution(charge_or_refund)
+    self.with_payment_lock do |line_item_array|
+      line_item_array.sort!
+      signed_amount = charge_or_refund.nil? ? (self.total_received - self.total_processed) : charge_or_refund.signed_amount
+      amount_left = signed_amount
+      if amount_left > 0
+        line_item_array.select{|li| li.total_due > li.total_received }.each do |li|
+          clamped_amount = [li.total_due - li.total_received, amount_left].min
+          next if clamped_amount == 0
+          li.update(total_received: li.total_received + clamped_amount)
+          amount_left -= clamped_amount
+        end
+        self.update(total_processed: self.total_processed + signed_amount - amount_left)
+      elsif amount_left < 0
+        line_item_array.select{|li| li.total_due < li.total_received }.each do |li|
+          clamped_amount = [li.total_due - li.total_received, amount_left].max
+          next if clamped_amount == 0
+          li.update(total_received: li.total_received + clamped_amount)
+          amount_left -= clamped_amount
+        end
+        self.update(total_processed: self.total_processed + signed_amount - amount_left)
+      end
+    end
+  end
 
-
+  def send_charge_notifications(charge_status, charge)
+    # MOOSE WARNING: fill this out, notification people
+    case charge_status
+      when 'error'
+      when 'failed'
+      when 'pending'
+      when 'succeeded'
+    end
+  end
 
 
   private
