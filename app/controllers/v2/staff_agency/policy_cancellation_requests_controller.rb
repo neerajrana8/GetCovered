@@ -8,7 +8,7 @@ module V2
       include PolicyCancellationRequestsMethods
 
       check_privileges 'requests.refunds' => [:approve, :decline]
-      check_privileges 'requests.cancellations' => [:cancel]
+      check_privileges 'requests.cancellations' => [:cancel, :decline]
 
       private
 
