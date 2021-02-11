@@ -1,12 +1,12 @@
 json.extract! global_agency_permission, :agency_id
 json.permissions do
-  json.array! global_agency_permission.permissions.each do |key, value|
+  json.array! GlobalAgencyPermission::AVAILABLE_PERMISSIONS.keys.each do |key|
     json.key key
     json.title I18n.t("permissions.#{key}")
     category = key.split('.').first
     json.category category
     json.category_title I18n.t("permission_categories.#{category}")
-    json.value value
+    json.value global_agency_permission.permissions[key]
   end
 end
 
