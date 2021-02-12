@@ -105,6 +105,9 @@ module V2
           permissions: %i[scalar array],
           organizable_id: %i[scalar array],
           organizable_type: %i[scalar array],
+          organizable: {
+            title: %i[scalar like]
+          },
           profile: {
             first_name: %i[scalar like],
             last_name: %i[scalar like],
