@@ -4,23 +4,13 @@ module Reports
       NAME = 'Consolidated Agency Report'.freeze
 
       def generate
-        completed_applications
-        site_visits
-        leads_fields
-        premium
-        quotes
-        self
-      end
 
-      def column_names
-        {
-          'address' => 'Address',
-          'primary_user' => 'User',
-          'policy_type' => 'Policy type',
-          'policy' => 'Policy number',
-          'contents' => 'Contents',
-          'liability' => 'Liability'
-        }
+        by_products
+
+
+
+        aggregate
+        self
       end
 
       def headers
@@ -30,8 +20,8 @@ module Reports
       private
 
       def set_defaults
-        self.data ||=
-          {
+        self.data ||= {
+          'aggregate' => {
             'completed_applications' => {
               'average_time_minutes' => nil,
               'conversion_rate' => nil
@@ -47,17 +37,75 @@ module Reports
               'average_policy_premium' => nil
             },
             'quotes' => {
-              'quoting_rate' => nil,
               'average_quote_price' => nil,
               'average_time_from_quote_to_conversion' => nil
             }
-          }
+          },
+          'by_products' => {}
+        }
+
       end
 
       # report generation methods (can be moved outside)
 
+      def aggregate
+        completed_applications
+        site_visits
+        leads_fields
+        premium
+        quotes
+      end
+
+      def by_products
+        result =
+          PolicyType.map do |policy_type|
+            next if leads_for_product(policy_type.id).count.zero?
+
+            {
+              'policy_type_id' => policy_type.id,
+              'report' => for_product(policy_type.id)
+            }
+          end.compact
+        self.data['by_products'] = result
+      end
+
+      def for_product(policy_type_id)
+        leads = leads_for_product(policy_type_id)
+        conversions = conversions(leads)
+        policy_applications = policy_applications(policy_type_id)
+
+        {
+          'completed_applications' => {
+            'average_time_minutes' => nil,
+            'conversion_rate' => conversions.count / policy_applications.count
+          },
+          'site_visits' => nil,
+          'leads' => {
+            'count' => leads.count,
+            'average_leads_visits' => nil
+          },
+          'premium' => {
+            'total' => nil,
+            'average_lead_premium' => nil,
+            'average_policy_premium' => nil
+          },
+          'quotes' => {
+            'average_quote_price' => nil,
+            'average_time_from_quote_to_conversion' => nil
+          }
+        }
+      end
+
       def leads
-        @leads ||= Lead.presented.not_archived.where(last_visit: range_start..range_end)
+        Lead.presented.not_archived.where(last_visit: range_start..range_end)
+      end
+
+      def leads_for_product(policy_type_id)
+        Lead.presented.not_archived.
+          where(last_visit: range).
+          joins(:lead_events).
+          where(lead_events: { created_at: range, policy_type_id: policy_type_id }).
+          distinct
       end
 
       def leads_fields
@@ -104,6 +152,12 @@ module Reports
         conversions.count / policy_applications.count
       end
 
+      def policy_applications(policy_type_id)
+        reportable.
+          policy_applications.
+          where(created_at: range_start..range_end, policy_type_id: policy_type_id)
+      end
+
       def policy_applications
         reportable.
           policy_applications.
@@ -124,8 +178,8 @@ module Reports
           (conversion_time_diff.sum / 60 / conversion_time_diff.count).round
       end
 
-      def conversions
-        @conversions ||= leads.joins(user: :policies).where(policies: { created_at: range_start..range_end })
+      def conversions(leads)
+        leads.joins(user: :policies).where(policies: { created_at: range_start..range_end })
       end
     end
   end
