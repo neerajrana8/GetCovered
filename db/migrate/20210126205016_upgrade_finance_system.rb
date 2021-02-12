@@ -159,8 +159,9 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
     end
     
     create_table :stripe_charges do |t|
+#      t.boolean   :awaiting_processing
       t.string    :external_id                                          # the stripe id of the charge (external_id is a slightly more general name that might save us conditional statements when we implement payeezy etc.)
-      t.integer   :status                                               # the status of the stripe charge
+      t.integer   :status, null: false, default: 0                      # the status of the stripe charge
       t.integer   :amount                                               # the amount charged
       t.string    :source                                               # the payment source string provided
       t.string    :error_info                                           # detailed English error info for dev access
