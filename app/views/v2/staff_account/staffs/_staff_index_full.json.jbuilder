@@ -9,6 +9,4 @@ json.profile_attributes do
   end
 end
 
-json.organizable_title do
-  staff.organizable.title if staff.organizable.present?
-end
+json.organizable_title staff.organizable&.title
