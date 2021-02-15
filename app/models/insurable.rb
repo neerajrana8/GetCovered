@@ -17,6 +17,7 @@ class Insurable < ApplicationRecord
     on: :create
 
   belongs_to :account
+  belongs_to :agency, optional: true
   belongs_to :insurable, optional: true
   belongs_to :insurable_type
 
