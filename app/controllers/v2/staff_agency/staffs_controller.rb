@@ -14,9 +14,9 @@ module V2
 
       def index
         if (params[:filter] && params[:filter][:organizable_type] == 'Account')
-          super(:@staffs, @agency.account_staff, :profile, :organizable)
+          super(:@staffs, @agency.account_staff, :profile)
         else
-          super(:@staffs, @agency.staff, :profile, :organizable)
+          super(:@staffs, @agency.staff, :profile)
         end
       end
       
@@ -140,9 +140,6 @@ module V2
           updated_at: %i[scalar array],
           enabled: %i[scalar array],
           owner: %i[scalar array],
-          organizable: {
-            title: %i[scalar like]
-          },
           profile: {
             first_name: %i[scalar like],
             last_name: %i[scalar like],

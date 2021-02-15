@@ -10,7 +10,7 @@ module V2
       before_action :set_staff, only: %i[update show toggle_enabled re_invite]
             
       def index
-        super(:@staffs, current_staff.organizable.staff, :profile, :organizable)
+        super(:@staffs, current_staff.organizable.staff, :profile)
       end
       
       def show; end
@@ -117,9 +117,6 @@ module V2
           updated_at: %i[scalar array],
           enabled: %i[scalar array],
           owner: %i[scalar array],
-          organizable: {
-            title: %i[scalar like]
-          },
           profile: {
             first_name: %i[scalar like],
             last_name: %i[scalar like],

@@ -10,7 +10,7 @@ module V2
       before_action :set_staff, only: %i[show update re_invite toggle_enabled]
 
       def index
-        super(:@staffs, ::Staff, :profile, :organizable)
+        super(:@staffs, ::Staff, :profile)
         @staffs = filter_by_agency_id if params["agency_id"].present?
       end
 
@@ -109,9 +109,6 @@ module V2
           updated_at: %i[scalar array],
           enabled: %i[scalar array],
           owner: %i[scalar array],
-          organizable: {
-            title: %i[scalar like]
-          },
           profile: {
             first_name: %i[scalar like],
             last_name: %i[scalar like],
