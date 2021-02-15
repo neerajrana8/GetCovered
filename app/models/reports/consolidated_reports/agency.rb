@@ -6,9 +6,6 @@ module Reports
       def generate
 
         by_products
-
-
-
         aggregate
         self
       end
@@ -152,16 +149,15 @@ module Reports
         conversions.count / policy_applications.count
       end
 
-      def policy_applications(policy_type_id)
-        reportable.
-          policy_applications.
-          where(created_at: range_start..range_end, policy_type_id: policy_type_id)
-      end
+      def policy_applications(policy_type_id = nil)
+        query =
+          reportable.
+            policy_applications.
+            where(created_at: range_start..range_end)
 
-      def policy_applications
-        reportable.
-          policy_applications.
-          where(created_at: range_start..range_end)
+        query = query.where(policy_type_id: policy_type_id) if policy_type_id.present?
+
+        query
       end
 
       def quotes
