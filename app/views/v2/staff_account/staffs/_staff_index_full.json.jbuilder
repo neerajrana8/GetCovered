@@ -8,3 +8,7 @@ json.profile_attributes do
       profile: staff.profile
   end
 end
+
+json.organizable_title do
+  staff.organizable.title if staff.organizable.present?
+end
