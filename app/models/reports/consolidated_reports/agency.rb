@@ -71,24 +71,50 @@ module Reports
         conversions = conversions(leads)
         policy_applications = policy_applications(policy_type_id)
 
+        visits = leads.
+          lead_events.
+          where(created_at: range_start..range_end).
+          order('DATE(created_at)').group('DATE(created_at)').
+          count.keys.size
+
+        time_diffs =
+          policy_applications.joins(:policy).
+            pluck('policy_applications.created_at', 'policies.created_at').
+            map { |d1, d2| (d2 - d1) }
+
+        premium_total = 0
+
+        Policies.where(id: conversions.pluck('policies.id').uniq).each do |policy|
+          premium_total += (policy&.policy_quotes&.last&.policy_premium&.total || 0)
+        end
+
+        quotes_values = leads.map do |lead|
+          lead.user&.policy_applications&.last&.policy_quotes&.last&.policy_premium&.total || last_event&.data['premium_total']
+        end.compact
+
+        conversion_time_diff = Policies.where(id: conversions.pluck('policies.id').uniq).map do |policy|
+          policy.created_at - policy.policy_quotes&.last&.created_at
+        end
+
+
         {
           'completed_applications' => {
-            'average_time_minutes' => nil,
+            'average_time_minutes' => (time_diffs.sum / 60 / time_diffs.count).round,
             'conversion_rate' => conversions.count / policy_applications.count
           },
-          'site_visits' => nil,
+          'site_visits' => visits,
           'leads' => {
             'count' => leads.count,
-            'average_leads_visits' => nil
+            'average_leads_visits' => (visits / leads.count).round
           },
           'premium' => {
-            'total' => nil,
-            'average_lead_premium' => nil,
-            'average_policy_premium' => nil
+            'total' => premium_total,
+            'average_lead_premium' => (premium_total / conversions.pluck('leads.id').uniq.count).round,
+            'average_policy_premium' => (premium_total / conversions.count).round
           },
           'quotes' => {
-            'average_quote_price' => nil,
-            'average_time_from_quote_to_conversion' => nil
+            'average_quote_price' => (quotes_values.sum / quotes_values.count).count,
+            'average_time_from_quote_to_conversion' => (conversion_time_diff.sum / 60 / conversion_time_diff.count).round
           }
         }
       end
@@ -101,13 +127,13 @@ module Reports
         Lead.presented.not_archived.
           where(last_visit: range).
           joins(:lead_events).
-          where(lead_events: { created_at: range, policy_type_id: policy_type_id }).
+          where(lead_events: { policy_type_id: policy_type_id }).
           distinct
       end
 
       def leads_fields
         self.data['leads']['count'] = leads.count
-        self.data['leads']['average_leads_visits'] = average_leads_visits
+        self.data['leads']['average_leads_visits'] = average_leads_visits(leads)
         self.data['leads']['average_duration'] = average_duration
       end
 
@@ -131,8 +157,8 @@ module Reports
           count.keys.size
       end
 
-      def average_leads_visits
-        (self.data['site_visits'] / leads.count).round(2)
+      def average_leads_visits(leads)
+        (self.data['site_visits'] / leads.count).round
       end
 
       def completed_applications
