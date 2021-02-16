@@ -46,11 +46,7 @@ module Reports
       # report generation methods (can be moved outside)
 
       def aggregate
-        completed_applications
-        site_visits
-        leads_fields
-        premium
-        quotes
+        self.data['aggregate'] = report(leads, policy_applications)
       end
 
       def by_products
@@ -60,16 +56,14 @@ module Reports
 
             {
               'policy_type_id' => policy_type.id,
-              'report' => for_product(policy_type.id)
+              'report' => report(leads_for_product(policy_type.id), policy_applications(policy_type.id))
             }
           end.compact
         self.data['by_products'] = result
       end
 
-      def for_product(policy_type_id)
-        leads = leads_for_product(policy_type_id)
+      def report(leads, policy_applications)
         conversions = conversions(leads)
-        policy_applications = policy_applications(policy_type_id)
 
         visits = leads.
           lead_events.
@@ -96,13 +90,12 @@ module Reports
           policy.created_at - policy.policy_quotes&.last&.created_at
         end
 
-
         {
+          'site_visits' => visits,
           'completed_applications' => {
             'average_time_minutes' => (time_diffs.sum / 60 / time_diffs.count).round,
             'conversion_rate' => conversions.count / policy_applications.count
           },
-          'site_visits' => visits,
           'leads' => {
             'count' => leads.count,
             'average_leads_visits' => (visits / leads.count).round
