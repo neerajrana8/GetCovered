@@ -166,6 +166,7 @@ module CarrierDcInsurable
       result = dcs.call
       event.completed = Time.now
       event.response = result[:response].response.body
+      event.request = result[:response].request.raw_body
       event.status = result[:error] ? 'error' : 'success'
       event.save
       # make sure we succeeded
@@ -213,6 +214,7 @@ module CarrierDcInsurable
       result = dcs.call
       event.completed = Time.now
       event.response = result[:response].response.body
+      event.request = result[:response].request.raw_body
       event.status = result[:error] ? 'error' : 'success'
       event.save
       result[:event] = event
