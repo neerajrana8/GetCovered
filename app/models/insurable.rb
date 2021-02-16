@@ -17,6 +17,7 @@ class Insurable < ApplicationRecord
     on: :create
 
   belongs_to :account
+  belongs_to :agency, optional: true
   belongs_to :insurable, optional: true
   belongs_to :insurable_type
 
@@ -548,10 +549,15 @@ class Insurable < ApplicationRecord
                         .gsub(/\s+/m, ' ').gsub(/^\s+|\s+$/m, '')
                         .split(" ").select do |strang|
                           ![
+                            # english
                             'apartment', 'apt', 'ap', 'unit',
                             'fl', 'flt', 'flat', 'rm', 'room',
-                            'no', 'number', 'ste', 'suite',
-                            'ofc', 'office'
+                            'no', 'num', 'number', 'ste', 'suite',
+                            'ofc', 'office',
+                            # spanish (also no and num from above)
+                            'apartamento', 'apto', 'unidad',
+                            'piso', 'lanta', 'numero', 'oficina',
+                            'pta'
                           ].include?(strang.downcase)
                         end
       return(splat.size == 1 ? splat[0] : nil)
