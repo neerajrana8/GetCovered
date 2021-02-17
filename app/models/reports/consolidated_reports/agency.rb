@@ -4,9 +4,9 @@ module Reports
       NAME = 'Consolidated Agency Report'.freeze
 
       def generate
-
         by_products
-        aggregate
+        aggregate if leads.count.positive?
+
         self
       end
 
@@ -20,27 +20,26 @@ module Reports
         self.data ||= {
           'aggregate' => {
             'completed_applications' => {
-              'average_time_minutes' => nil,
-              'conversion_rate' => nil
+              'average_time_minutes' => 0,
+              'conversion_rate' => 0
             },
-            'site_visits' => nil,
+            'site_visits' => 0,
             'leads' => {
-              'count' => nil,
-              'average_leads_visits' => nil
+              'count' => 0,
+              'average_leads_visits' => 0
             },
             'premium' => {
-              'total' => nil,
-              'average_lead_premium' => nil,
-              'average_policy_premium' => nil
+              'total' => 0,
+              'average_lead_premium' => 0,
+              'average_policy_premium' => 0
             },
             'quotes' => {
-              'average_quote_price' => nil,
-              'average_time_from_quote_to_conversion' => nil
+              'average_quote_price' => 0,
+              'average_time_from_quote_to_conversion' => 0
             }
           },
           'by_products' => {}
         }
-
       end
 
       # report generation methods (can be moved outside)
@@ -51,7 +50,7 @@ module Reports
 
       def by_products
         result =
-          PolicyType.map do |policy_type|
+          PolicyType.all.map do |policy_type|
             next if leads_for_product(policy_type.id).count.zero?
 
             {
@@ -66,9 +65,9 @@ module Reports
         conversions = conversions(leads)
 
         visits = leads.
-          lead_events.
-          where(created_at: range_start..range_end).
-          order('DATE(created_at)').group('DATE(created_at)').
+          joins(:lead_events).
+          where(leads: { created_at: range_start..range_end }).
+          order('DATE(leads.created_at)').group('DATE(leads.created_at)').
           count.keys.size
 
         time_diffs =
@@ -78,7 +77,7 @@ module Reports
 
         premium_total = 0
 
-        Policies.where(id: conversions.pluck('policies.id').uniq).each do |policy|
+        Policy.where(id: conversions.pluck('policies.id').uniq).each do |policy|
           premium_total += (policy&.policy_quotes&.last&.policy_premium&.total || 0)
         end
 
@@ -86,15 +85,15 @@ module Reports
           lead.user&.policy_applications&.last&.policy_quotes&.last&.policy_premium&.total || last_event&.data['premium_total']
         end.compact
 
-        conversion_time_diff = Policies.where(id: conversions.pluck('policies.id').uniq).map do |policy|
+        conversion_time_diff = Policy.where(id: conversions.pluck('policies.id').uniq).map do |policy|
           policy.created_at - policy.policy_quotes&.last&.created_at
         end
 
         {
           'site_visits' => visits,
           'completed_applications' => {
-            'average_time_minutes' => (time_diffs.sum / 60 / time_diffs.count).round,
-            'conversion_rate' => conversions.count / policy_applications.count
+            'average_time_minutes' => time_diffs.count.positive? ? (time_diffs.sum / 60 / time_diffs.count).round : 0,
+            'conversion_rate' => policy_applications.count.positive? ? conversions.count / policy_applications.count : 0
           },
           'leads' => {
             'count' => leads.count,
@@ -118,7 +117,7 @@ module Reports
 
       def leads_for_product(policy_type_id)
         Lead.presented.not_archived.
-          where(last_visit: range).
+          where(last_visit: range_start..range_end).
           joins(:lead_events).
           where(lead_events: { policy_type_id: policy_type_id }).
           distinct
