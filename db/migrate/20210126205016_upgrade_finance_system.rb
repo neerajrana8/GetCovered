@@ -7,7 +7,7 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
     remove_column :carrier_policy_types, :premium_refundable
     
     # update BillingStrategy
-    add_reference :billing_strategies, :collector, foreign_key: false, polymorphic: true, null: true
+    add_reference :billing_strategies, :collector, polymorphic: true, null: true
   
     # archive old tables
     rename_table :policy_premium_fees, :archived_policy_premium_fees
@@ -40,9 +40,9 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
       # commissions settings
       t.boolean :preprocessed                                           # whether this is paid out up-front rather than as received
       # associations
-      t.references :policy_premium, foreign_key: false                  # the PolicyPremium we belong to
-      t.references :recipient, foreign_key: false, polymorphic: true    # the CommissionStrategy/Agent/Carrier who receives the money
-      t.references :collector, foreign_key: false, polymorphic: true   # the Agency or Carrier who collects the money
+      t.references :policy_premium                  # the PolicyPremium we belong to
+      t.references :recipient, polymorphic: true    # the CommissionStrategy/Agent/Carrier who receives the money
+      t.references :collector, polymorphic: true   # the Agency or Carrier who collects the money
       #t.references :collection_plan, polymorphic: true, null: true     # record indicating what the collector will pay off on their end (see model for details)
       t.references :fee, null: true                                     # the Fee this item corresponds to, if any
     end
@@ -56,14 +56,14 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
       t.boolean  :cancelled, null: false, default: false                # whether this term has been entirely cancelled (i.e. prorated into nothingness)
       t.integer  :default_weight                                        # the default weight for policy_premium_item_payment_terms based on this payment term (i.e. the billing_strategy.new_business["payments"] value)
       t.string   :term_group                                            # used in case there are overlapping terms with different functionalities
-      t.references :policy_premium, foreign_key: false
+      t.references :policy_premium
     end
     
     create_table :policy_premium_item_payment_term do |t|
       t.integer :weight, null: false                                    # the weight assigned to this payment term for calculating total due
       t.integer :preproration_total_due                                 # the amount due before any prorations MOOSE WARNING: no validations
-      t.references :policy_premium_payment_term, foreign_key: false
-      t.references :policy_premium_item, foreign_key: false
+      t.references :policy_premium_payment_term
+      t.references :policy_premium_item
     end
   
     create_table :line_items do |t|
@@ -78,8 +78,16 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
       t.integer     :total_processed, null: false, default: 0
       t.boolean     :all_processed: null: false, default: false
       # references
-      t.references  :chargeable, foreign_key: false, polymorphic: true    # will be a PolicyPremiumItemTerm for now
-      t.references  :invoice, foreign_key: false
+      t.references  :chargeable, polymorphic: true    # will be a PolicyPremiumItemTerm for now
+      t.references  :invoice
+    end
+    
+    create_table :line_item_receipt do |t|
+      t.integer     :amount
+      t.references  :line_item
+      t.references  :reason, polymorphic: true
+      t.references  :commission_item, null: true
+      t.timestamps
     end
     
     create_table :policy_premia do |t|
@@ -95,9 +103,9 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
       t.timestamps
       t.string  :error_info
       # references
-      t.references :policy_quote, foreign_key: false
-      t.references :billing_strategy, foreign_key: false
-      t.references :commission_strategy, foreign_key: false
+      t.references :policy_quote
+      t.references :billing_strategy
+      t.references :commission_strategy
       
   ##### MOOSE WARNING below is old schema for reference ############
       
@@ -131,37 +139,40 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
       # basic info
       t.string :number
       t.text :description
+      t.date :available_date
       t.date :due_date
       t.timestamps
       # state
-      t.boolean :external, null: false, default: false
-      t.integer :status
-      t.integer :pending_charge_count, null: false, default: 0
-      t.jsonb   :error_info
-      
-      t.datetime :status_changed
-      t.boolean :was_missed, null: false, default: false
-      # payment tracking MOOSE WARNING: add index on (total_received - total_processed) and job to auto-run perform_line_item_distribution
-      t.integer :original_total_due, null: false
-      t.integer :total_due, null: false
-      t.integer :total_payable, null: false
-      t.integer :total_pending, null: false, default: 0
-      t.integer :total_received, null: false, default: 0
-      t.integer :total_processed, null: false, default: 0
+      t.boolean     :external, null: false, default: false
+      t.integer     :status
+      t.integer     :pending_charge_count, null: false, default: 0
+      t.jsonb       :error_info
+      t.boolean     :was_missed, null: false, default: false
+      t.datetime    :was_missed_at
+      t.boolean     :autosend_status_change_notifications, null: false, default: true
+      # payment tracking
+      t.integer     :original_total_due, null: false
+      t.integer     :total_due, null: false
+      t.integer     :total_payable, null: false
+      t.integer     :total_pending, null: false, default: 0
+      t.integer     :total_received, null: false, default: 0
+      t.integer     :total_undistributable, null: false, default: 0
       # disputes and refunds
-      t.integer :pending_dispute_total, null: false, default: 0
-      t.integer :pending_refund_total, null: false, default: 0
-      t.integer :total_refunded, null: false, default: 0
-      t.integer :total_lost_to_disputes, null: false, default: 0
+      t.integer     :pending_dispute_total, null: false, default: 0
+      t.integer     :pending_refund_total, null: false, default: 0
+      t.integer     :total_refunded, null: false, default: 0
+      t.integer     :total_lost_to_disputes, null: false, default: 0
       # associations
-      t.references :invoiceable, foreign_key: false, polymorphic: true
-      t.references :payer, foreign_key: false, polymorphic: true
-      t.references :collector, foreign_key: false, polymorphic: true
+      t.references :invoiceable, polymorphic: true
+      t.references :payer, polymorphic: true
+      t.references :collector, polymorphic: true
     end
     
     create_table :stripe_charges do |t|
       t.boolean   :processed, null: false, default: false               # whether the charge has been handled by its invoice after success/failure
+      t.boolean   :invoice_aware, null: false, default: false           # whether the invoice is aware of the charge's state
       t.integer   :status, null: false, default: 0                      # the status of the stripe charge
+      t.datetime  :status_changed_at                                    # when the status was last changed
       t.integer   :amount, null: false                                  # the amount charged
       t.string    :source                                               # the payment source string provided
       t.string    :customer_stripe_id                                   # the customer stripe id, if any
@@ -171,7 +182,7 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
       t.string    :error_info                                           # detailed English error info for dev access
       t.jsonb     :client_error                                         # I18n.t parameters, format { linear: [a,b,c,...], keyword: { a: :b, c: :d, ... } }
       t.timestamps
-      t.references :invoice, foreign_key: false, null: true
+      t.references :invoice, null: true
     end
     
     create_table :stripe_refunds do |t|

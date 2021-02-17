@@ -5,6 +5,8 @@ class LineItem < ApplicationRecord
   belongs_to :chargeable,
     polymorphic: true,
     autosave: true
+    
+  has_many :line_item_receipts
 
   validates_presence_of :title
   validates_inclusion_of :priced_in, in: [true, false]
@@ -16,10 +18,7 @@ class LineItem < ApplicationRecord
   validates_inclusion_of :all_processed, in: [true, false]
   
   def <=>(other)
-    0 # MOOSE WARNING: implement proper line item sorting by proration refundability
-    
-    
-    
+    (self.id || 0) <=> (other.id || 0) # MOOSE WARNING: implement proper line item sorting by proration refundability
   end
   
   

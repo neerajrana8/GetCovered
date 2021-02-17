@@ -12,6 +12,12 @@ class Invoice < ApplicationRecord
   has_many :line_items
   has_many :stripe_charges
 
+  before_update :set_status,
+    unless: Proc.new{|i| i.will_save_change_to_attribute?('status') }
+  before_update :set_missed_record,
+    if: Proc.new{|i| i.will_save_change_to_attribute?('status') && i.status == 'missed' }
+  after_commit :send_status_change_notifications,
+    if: Proc.new{|i| i.autosend_status_change_notifications && i.saved_change_to_attribute?('status') }
 
   enum status: {
     quoted:             0,    # belongs to a not-yet accepted quote
@@ -26,13 +32,12 @@ class Invoice < ApplicationRecord
   }
 
 
-  def with_payment_lock(lock_terms: false)
-    ActiveRecord::Base.transaction do
+  def with_payment_lock
+    ActiveRecord::Base.transaction(requires_new: true) do
       self.lock!
       yield(self.line_items.order(id: :asc).lock.to_a)
     end
   end
-  
 
 
   def pay(
@@ -46,139 +51,214 @@ class Invoice < ApplicationRecord
       success: false,
       charge_id: nil,
       charge_status: nil,
-      error: "invoice is only a record of an external system's invoice"
+      error: "This invoice is external (i.e. only a record of an invoice handled by an external partner system)."
     } if self.external
     # begin lock
     notification_status = nil
     charge_to_distribute = nil
-    self.with_payment_lock do
-      # set invoice status to processing
-      unless self.status == 'available' || (allow_upcoming && self.status == 'upcoming') || (allow_missed && self.status == 'missed')
-        return {
-          success: false,
-          charge_id: nil,
-          charge_status: nil,
-          error: "This invoice is not eligible for payment, because its billing status is '#{self.status}'"
-        }
-      end
-      # grab the default payment method, if needed
-      stripe_source = self.payer.payment_profiles.where(default: true).take&.source_id if stripe_source == :default
-      # calculate payment amount
-      to_pay = self.total_payable
-      if to_pay < 0 || (amount && amount < 0)
-        return {
-          success: false,
-          charge_id: nil,
-          charge_status: nil,
-          error: "Cannot charge for a negative amount"
-        }
-      end
-      unless amount.nil?
-        if amount > to_pay
+    postransaction_return = nil
+    self.with_lock do
+      ActiveRecord::Base.transaction(requires_new: true) do # ensure that rollbacks really roll back
+        # set invoice status to processing
+        unless self.status == 'available' || (allow_upcoming && self.status == 'upcoming') || (allow_missed && self.status == 'missed')
           return {
             success: false,
             charge_id: nil,
             charge_status: nil,
-            error: "Cannot pay more than due"
+            error: "This invoice is not eligible for payment, because its billing status is '#{self.status}'."
           }
         end
-        to_pay = amount
-      end
-      # get customer stripe id
-      customer_stripe_id = if self.payer.nil? || !self.payer.respond_to?(:stripe_id)
-        nil
-      else
-        invoice.payer.set_stripe_id if invoice.payer.stripe_id.nil? && invoice.payer.respond_to?(:set_stripe_id)
-        invoice.payer.stripe_id
-      end
-      # create the charge
-      self.update(
-        pending_charge_count: self.pending_charge_count + 1,
-        total_pending: self.total_pending + to_pay,
-        total_payable: self.total_payable - to_pay,
-        status: self.total_payable == to_pay ? 'pending' : self.status
-      )
-      descriptor = self.get_descriptor
-      created_charge = ::StripeCharge.create(
-        amount: to_pay,
-        source: stripe_source,
-        customer_stripe_id: customer_stripe_id,
-        description: descriptor[:description],
-        metadata: descriptor[:metadata]
-      )
-      
-      
-      
-      
-      ###########################
-      
-      
-      # attempt to make payment
-      descriptor = self.get_descriptor
-      created_charge = ::StripeCharge.create_charge(
-        self, to_pay, stripe_source, customer_stripe_id,
-        description: descriptor[:description],
-        metadata: descriptor[:metadata]
-      )
-      # handle result
-      extended_status = created_charge.id.nil? ? 'unsaved' : created_charge.valid? ? 'invalid' : created_charge.status
-      case extended_status
-        when nil, 'invalid', 'processing', 'mysterious'
-          notification_status = 'error'
-          self.update(status: 'under_review', error_info: {
-            description: {
-              'unsaved'     => "Charge attempt failed to save charge.",
-              'invalid'     => "Charge attempt resulted in invalid charge.",
-              'processing'  => "Charge attempt resulted in 'processing' charge. There should be no code path with this result, but it happened.",
-              'mysterious'  => "Charge attempt resulted in 'mysterous' charge. This means the charge attempt threw no errors and had no failure status, but the returned Stripe object was invalid."
-            }[extended_status],
-            charge_type: 'StripeCharge',
-            charge_id: created_charge.id,
-            time: Time.current.to_s,
-            amount: to_pay,
-            stripe_charge_json: created_charge.as_json,
-            stripe_charge_errors: created_charge.errors.to_h
-          })
-        when 'failed'
-          notification_status = 'failed'
-          # there are no updates to make
-        when 'pending'
-          notification_status = 'pending'
-          self.update(
-            status: to_pay == self.total_payable ? 'pending' : self.status,
-            total_pending: self.total_pending + to_pay,
-            total_payable: self.total_payable - to_pay
-          )
-        when 'succeeded'
-          notification_status = 'succeeded'
-          charge_to_distribute = created_charge
-          self.update(
-            status: to_pay == self.total_payable ?
-                      (self.total_pending == 0 ? 'complete' : 'pending')
-                      : self.status,
-            total_payable: self.total_payable - to_pay,
-            total_received: self.total_received + to_pay
-          )
-      end
-    end # end with_payment_lock section
-    self.perform_line_item_distribution(charge_to_distribute) unless charge_to_distribute.nil?
-    self.send_charge_notifications(notification_status, charge_to_distribute)
+        # grab the default payment method, if needed
+        stripe_source = self.payer.payment_profiles.where(default: true).take&.source_id if stripe_source == :default
+        # calculate payment amount
+        to_pay = self.total_payable
+        if to_pay < 0 || (amount && amount < 0)
+          return {
+            success: false,
+            charge_id: nil,
+            charge_status: nil,
+            error: "Cannot charge for a negative amount."
+          }
+        end
+        unless amount.nil?
+          if amount > to_pay
+            return {
+              success: false,
+              charge_id: nil,
+              charge_status: nil,
+              error: "Cannot pay more than due."
+            }
+          end
+          to_pay = amount
+        end
+        # get customer stripe id
+        customer_stripe_id = if self.payer.nil? || !self.payer.respond_to?(:stripe_id)
+          nil
+        else
+          invoice.payer.set_stripe_id if invoice.payer.stripe_id.nil? && invoice.payer.respond_to?(:set_stripe_id)
+          invoice.payer.stripe_id
+        end
+        # update our financial totals for charge creation
+        unless self.update(
+          pending_charge_count: self.pending_charge_count + 1,
+          total_pending: self.total_pending + to_pay,
+          total_payable: self.total_payable - to_pay
+        )
+          return {
+            success: false,
+            charge_id: nil,
+            charge_status: nil,
+            error: "Failed to update invoice totals; errors #{self.errors.to_h}."
+          }
+        end
+        # create the charge
+        descriptor = self.get_descriptor
+        created_charge = ::StripeCharge.create(
+          amount: to_pay,
+          source: stripe_source,
+          customer_stripe_id: customer_stripe_id,
+          description: descriptor[:description],
+          metadata: descriptor[:metadata]
+        )
+        unless created_charge.id
+          postransaction_return = {
+            success: false,
+            charge_id: nil,
+            charge_status: nil,
+            error: "Failed to create charge; errors #{created_charge.errors.to_h}"
+          }
+          raise ActiveRecord::Rollback
+        end
+        postransaction_return = {
+          success: true,
+          charge: created_charge
+        }
+      end # end inner transaction
+    end # end lock
+    if posttransaction_return.nil?
+      posttransaction_return = {
+        success: false,
+        charge_id: nil,
+        charge_status: nil,
+        error: "Unknown error; charge transaction exited without returning a value"
+      }
+    elsif posttransaction_return[:success]
+      charge = posttransaction_return[:charge].reload
+      posttransaction_return = {
+        success: true,
+        charge_id: charge.id,
+        charge_status: charge.status,
+        error: nil
+      }
+    end
+    return posttransaction_return
   end
   
   def process_stripe_charge(charge)
-    case self.status
-      when 'processing'
+    rolled_back = false
+    # perform charge processing
+    if charge.status == 'processing'
+      rolled_back = charge.update(invoice_aware: true) ? true : false
+    elsif charge.status == 'succeeded'
+      self.with_payment_lock do |line_item_array|
+        rolled_back = true
+        raise ActiveRecord::Rollback unless charge.update(invoice_aware: true, processed: true)
+        amount_distributed = self.perform_line_item_distribution(charge)
+        raise ActiveRecord::Rollback unless self.update(
+          pending_charge_count: self.pending_charge_count - 1,
+          total_pending: self.total_pending - charge.amount,
+          total_received: self.total_received + charge.amount,
+          total_undistributable: charge.amount - amount_distributed
+        )
+        rolled_back = false
+      end
+    else
+      rolled_back = true
+      self.with_lock do
+        ActiveRecord::Base.transaction(requires_new: true) do # ensure that rollbacks really roll back
+          case charge.status
+            when 'processing'
+              raise ActiveRecord::Rollback unless charge.update(
+                status: 'mysterious',
+                invoice_aware: true,
+                error_info: "Stripe charge somehow became stuck with status 'processing'.",
+                client_error: ::StripeCharge.errorify('stripe_charge_model.payment_processor_mystery')
+              )
+              raise ActiveRecord::Rollback unless self.update(
+                status: 'under_review',
+                error_info: {
+                  description: "Charge attempt resulted in 'processing' charge. This should not occur; somehow the charge never received a valid status and was picked up by the HandleUnresponsiveCharges job.",
+                  charge_type: 'StripeCharge',
+                  charge_id: charge.id,
+                  time: Time.current.to_s,
+                  amount: charge.amount
+                }
+              )
+            when 'mysterious'
+              raise ActiveRecord::Rollback unless charge.update(invoice_aware: true)
+              raise ActiveRecord::Rollback unless self.update(
+                status: 'under_review',
+                error_info: {
+                  description: "Charge attempt resulted in 'mysterous' charge. This means the charge attempt threw no errors and had no failure status, but the returned Stripe object was invalid.",
+                  charge_type: 'StripeCharge',
+                  charge_id: charge.id,
+                  time: Time.current.to_s,
+                  amount: charge.amount
+                }
+              )
+            when 'failed'
+              raise ActiveRecord::Rollback unless charge.update(invoice_aware: true, processed: true)
+              raise ActiveRecord::Rollback unless return self.update(
+                pending_charge_count: self.pending_charge_count - 1,
+                total_pending: self.total_pending - charge.amount,
+                total_payable: self.total_payable + charge.amount
+              )
+          end # end case
+          rolled_back = false
+        end # end transaction
+      end # end lock
+    end # end if
+    # handle notifications
+    self.send_charge_notifications(charge) unless rolled_back
+  end
+
+  def send_charge_notifications(charge)
+    # MOOSE WARNING: fill this out, notification people
+    case charge_status # value will never be 'processing'
       when 'mysterious'
-      when 'failed'
       when 'pending'
+      when 'failed'
       when 'succeeded'
-        
     end
+  end
+  
+  def send_status_change_notifications
+    # this gets called after_commit whenever our status has changed
+    # MOOSE WARNING: fill this out, notification people
+  end
+  
+  def get_proper_status
+    if self.total_received >= self.total_due
+      return 'complete'
+    elsif self.total_received + self.total_pending >= self.total_due
+      return 'pending'
+    else
+      today = Time.current.to_date
+      if nowtime > self.due_date
+        return self.total_pending > 0 ? 'pending' : 'missed'
+      elsif nowtime < self.available_date
+        return 'upcoming'
+      end
+    end
+    return 'available'
   end
 
 
-  def perform_line_item_distribution(charge_or_refund)
-    self.with_payment_lock do |line_item_array|
+  private
+    
+    # distributes a charge or refund's total over line items, returns the amount distributed (positive for charges, negative for refunds)
+    def perform_line_item_distribution(charge_or_refund)
+      # WARNING: DO NOT INVOKE ME EXCEPT INSIDE .with_payment_lock!!!
       line_item_array.sort!
       signed_amount = charge_or_refund.nil? ? (self.total_received - self.total_processed) : charge_or_refund.signed_amount
       amount_left = signed_amount
@@ -186,37 +266,36 @@ class Invoice < ApplicationRecord
         line_item_array.select{|li| li.total_due > li.total_received }.each do |li|
           clamped_amount = [li.total_due - li.total_received, amount_left].min
           next if clamped_amount == 0
-          li.update(total_received: li.total_received + clamped_amount)
+          created = li.line_item_receipts.create(amount: clamped_amount, reason: charge_or_refund)
+          raise ActiveRecord::Rollback unless !created.id.nil? && li.update(total_received: li.total_received + clamped_amount)
           amount_left -= clamped_amount
         end
-        self.update(total_processed: self.total_processed + signed_amount - amount_left)
+        return signed_amount - amount_left
       elsif amount_left < 0
         line_item_array.select{|li| li.total_due < li.total_received }.each do |li|
           clamped_amount = [li.total_due - li.total_received, amount_left].max
           next if clamped_amount == 0
-          li.update(total_received: li.total_received + clamped_amount)
+          created = li.line_item_receipts.create(amount: clamped_amount, reason: charge_or_refund)
+          raise ActiveRecord::Rollback unless !created.id.nil? && li.update(total_received: li.total_received + clamped_amount)
           amount_left -= clamped_amount
         end
-        self.update(total_processed: self.total_processed + signed_amount - amount_left)
+        return signed_amount - amount_left
+      end
+      return 0
+    end
+  
+    # sets our current status based on various values
+    def set_status
+      unless self.external || self.status == 'quoted' || self.status == 'cancelled' || self.status == 'under_review' || self.status == 'managed_externally'
+        self.status = self.get_proper_status
       end
     end
-  end
-
-  def send_charge_notifications(charge_status, charge)
-    # MOOSE WARNING: fill this out, notification people
-    case charge_status
-      when 'error'
-      when 'failed'
-      when 'pending'
-      when 'succeeded'
+    
+    # set missed record data when status is about to update to missed
+    def set_missed_record
+      self.was_missed = true
+      self.was_missed_at = Time.current
     end
-  end
-
-
-  private
-  
-  
-
 
     # returns a descriptor for charges to send to stripe, format { description: string, metadata: hash_of_metadata_entries }
     def get_descriptor(to_describe = self.invoiceable)

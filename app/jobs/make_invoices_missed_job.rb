@@ -3,12 +3,12 @@ class MakeInvoicesMissedJob < ApplicationJob
   before_perform :set_invoices
 
   def perform(*args)
-    @invoices.each{|invoice| invoice.payment_missed(unless_processing: true) }
+    @invoices.each{|invoice| invoice.update(status: 'missed') }
   end
 
   private
 
     def set_invoices
-      @invoices = ::Invoice.where(status: 'available', external: false).where("due_date < '#{Time.current.to_date.to_s(:db)}'")
+      @invoices = ::Invoice.where(status: 'available', external: false).where("due_date < ?", Time.current.to_date)
     end
 end

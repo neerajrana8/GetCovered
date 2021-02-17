@@ -12,9 +12,11 @@ class StripeCharge < ApplicationRecord
   has_many :stripe_disputes
   
   after_create :attempt_payment
+  before_save :set_status_changed_at,
+    if: Proc.new{|sc| sc.will_save_change_to_attribute?('status') }
   after_commit :process,
     on: :update,
-    if: Proc.new{|sc| !sc.processed && sc.status != 'processing' && sc.saved_change_to_attribute?('status') }
+    if: Proc.new{|sc| !sc.invoice_aware && sc.status != 'processing' && sc.saved_change_to_attribute?('status') }
   
   enum status: {
     processing: 0, # must stay 0, it's the DB default
@@ -33,11 +35,16 @@ class StripeCharge < ApplicationRecord
   
   
   def process
-    self.with_lock { self.invoice.process_stripe_charge(self) } unless self.processed
+    self.with_lock do
+      if !self.invoice_aware
+        self.invoice.process_stripe_charge(self)
+      end
+    end
   end
   
   
   def attempt_payment
+    return false if self.status != 'processing'
     # determine the source type
     source_type = if self.amount == 0
       :null_payment
@@ -158,6 +165,13 @@ class StripeCharge < ApplicationRecord
       client_error: ::StripeCharge.errorify('stripe_charge_model.payment_processor_mystery')
     )
   end
+  
+  private
+  
+  
+    def set_status_changed_at
+      self.status_changed_at = Time.current
+    end
   
   
 end
