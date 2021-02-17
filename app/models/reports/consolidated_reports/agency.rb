@@ -66,8 +66,8 @@ module Reports
 
         visits = leads.
           joins(:lead_events).
-          where(leads: { created_at: range_start..range_end }).
-          order('DATE(leads.created_at)').group('DATE(leads.created_at)').
+          where(lead_events: { created_at: range_start..range_end }).
+          order('DATE(lead_events.created_at)').group('DATE(lead_events.created_at)').
           count.keys.size
 
         time_diffs =
@@ -82,12 +82,19 @@ module Reports
         end
 
         quotes_values = leads.map do |lead|
-          lead.user&.policy_applications&.last&.policy_quotes&.last&.policy_premium&.total || last_event&.data['premium_total']
+          lead.user&.policy_applications&.last&.policy_quotes&.last&.policy_premium&.total || lead.last_event&.data['premium_total']
         end.compact
 
         conversion_time_diff = Policy.where(id: conversions.pluck('policies.id').uniq).map do |policy|
           policy.created_at - policy.policy_quotes&.last&.created_at
         end
+
+        average_lead_premium = conversions.count > 0 ? (premium_total / conversions.pluck('leads.id').uniq.count).round : 0
+        average_policy_premium = conversions.count > 0 ? (premium_total / conversions.count).round : 0
+
+        average_quote_price = quotes_values.count > 0 ? (quotes_values.sum / quotes_values.count) : 0
+        average_time_from_quote_to_conversion =
+          conversion_time_diff.count > 0 ? (conversion_time_diff.sum / 60 / conversion_time_diff.count).round : 0
 
         {
           'site_visits' => visits,
@@ -97,16 +104,16 @@ module Reports
           },
           'leads' => {
             'count' => leads.count,
-            'average_leads_visits' => (visits / leads.count).round
+            'average_leads_visits' => (visits.to_f / leads.count).round(2)
           },
           'premium' => {
             'total' => premium_total,
-            'average_lead_premium' => (premium_total / conversions.pluck('leads.id').uniq.count).round,
-            'average_policy_premium' => (premium_total / conversions.count).round
+            'average_lead_premium' => average_lead_premium,
+            'average_policy_premium' => average_policy_premium
           },
           'quotes' => {
-            'average_quote_price' => (quotes_values.sum / quotes_values.count).count,
-            'average_time_from_quote_to_conversion' => (conversion_time_diff.sum / 60 / conversion_time_diff.count).round
+            'average_quote_price' => average_quote_price,
+            'average_time_from_quote_to_conversion' => average_time_from_quote_to_conversion
           }
         }
       end
