@@ -136,6 +136,7 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
       # state
       t.boolean :external, null: false, default: false
       t.integer :status
+      t.integer :pending_charge_count, null: false, default: 0
       t.jsonb   :error_info
       
       t.datetime :status_changed
@@ -159,11 +160,14 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
     end
     
     create_table :stripe_charges do |t|
-#      t.boolean   :awaiting_processing
-      t.string    :external_id                                          # the stripe id of the charge (external_id is a slightly more general name that might save us conditional statements when we implement payeezy etc.)
+      t.boolean   :processed, null: false, default: false               # whether the charge has been handled by its invoice after success/failure
       t.integer   :status, null: false, default: 0                      # the status of the stripe charge
-      t.integer   :amount                                               # the amount charged
+      t.integer   :amount, null: false                                  # the amount charged
       t.string    :source                                               # the payment source string provided
+      t.string    :customer_stripe_id                                   # the customer stripe id, if any
+      t.string    :description                                          # the description passed to stripe
+      t.jsonb     :metadata                                             # the metadata passed to stripe
+      t.string    :stripe_id                                            # the stripe id of the charge
       t.string    :error_info                                           # detailed English error info for dev access
       t.jsonb     :client_error                                         # I18n.t parameters, format { linear: [a,b,c,...], keyword: { a: :b, c: :d, ... } }
       t.timestamps

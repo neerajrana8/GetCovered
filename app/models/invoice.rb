@@ -58,12 +58,9 @@ class Invoice < ApplicationRecord
           success: false,
           charge_id: nil,
           charge_status: nil,
-          error: (self.status == 'pending') ?
-            'A payment is already being processed for this invoice'
-            : "This invoice is not eligible for payment, because its billing status is #{self.status}"
+          error: "This invoice is not eligible for payment, because its billing status is '#{self.status}'"
         }
       end
-      return return_error unless return_error.nil?
       # grab the default payment method, if needed
       stripe_source = self.payer.payment_profiles.where(default: true).take&.source_id if stripe_source == :default
       # calculate payment amount
@@ -94,10 +91,32 @@ class Invoice < ApplicationRecord
         invoice.payer.set_stripe_id if invoice.payer.stripe_id.nil? && invoice.payer.respond_to?(:set_stripe_id)
         invoice.payer.stripe_id
       end
+      # create the charge
+      self.update(
+        pending_charge_count: self.pending_charge_count + 1,
+        total_pending: self.total_pending + to_pay,
+        total_payable: self.total_payable - to_pay,
+        status: self.total_payable == to_pay ? 'pending' : self.status
+      )
+      descriptor = self.get_descriptor
+      created_charge = ::StripeCharge.create(
+        amount: to_pay,
+        source: stripe_source,
+        customer_stripe_id: customer_stripe_id,
+        description: descriptor[:description],
+        metadata: descriptor[:metadata]
+      )
+      
+      
+      
+      
+      ###########################
+      
+      
       # attempt to make payment
       descriptor = self.get_descriptor
       created_charge = ::StripeCharge.create_charge(
-        to_pay, stripe_source, customer_stripe_id,
+        self, to_pay, stripe_source, customer_stripe_id,
         description: descriptor[:description],
         metadata: descriptor[:metadata]
       )
@@ -145,6 +164,17 @@ class Invoice < ApplicationRecord
     self.perform_line_item_distribution(charge_to_distribute) unless charge_to_distribute.nil?
     self.send_charge_notifications(notification_status, charge_to_distribute)
   end
+  
+  def process_stripe_charge(charge)
+    case self.status
+      when 'processing'
+      when 'mysterious'
+      when 'failed'
+      when 'pending'
+      when 'succeeded'
+        
+    end
+  end
 
 
   def perform_line_item_distribution(charge_or_refund)
@@ -191,7 +221,7 @@ class Invoice < ApplicationRecord
     # returns a descriptor for charges to send to stripe, format { description: string, metadata: hash_of_metadata_entries }
     def get_descriptor(to_describe = self.invoiceable)
       description = "GetCovered Product"
-      metadata = { product_type: to_describe.class.name, product_id: to_describe.respond_to?(:id) ? to_describe.id : 'N/A' }
+      metadata = { product_type: to_describe.class.name, product_id: to_describe.respond_to?(:id) ? to_describe.id : 'N/A', metadata_version: 1 }
       case to_describe
         when ::Policy
           description = "#{to_describe.policy_type.title}#{to_describe.policy_type.title.end_with?("Policy") || to_describe.policy_type.title.end_with?("Coverage") ? "" : " Policy"} ##{to_describe.number}"
