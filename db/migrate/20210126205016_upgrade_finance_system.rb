@@ -144,9 +144,10 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
       t.timestamps
       # state
       t.boolean     :external, null: false, default: false
-      t.integer     :status
+      t.integer     :status, null: false
+      t.boolean     :under_review, null: false, default: false
       t.integer     :pending_charge_count, null: false, default: 0
-      t.jsonb       :error_info
+      t.jsonb       :error_info, null: false, default: []
       t.boolean     :was_missed, null: false, default: false
       t.datetime    :was_missed_at
       t.boolean     :autosend_status_change_notifications, null: false, default: true

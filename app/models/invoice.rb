@@ -27,8 +27,7 @@ class Invoice < ApplicationRecord
     complete:           4,    # payment complete
     missed:             5,    # payment missed
     cancelled:          6,    # cancelled, no longer applies
-    under_review:       7,    # something horrible happened & this invoice is frozen for manual review
-    managed_externally: 8     # managed by a partner who does not keep us abreast of invoice status
+    managed_externally: 7     # managed by a partner who does not keep us abreast of invoice status
   }
 
 
@@ -185,26 +184,26 @@ class Invoice < ApplicationRecord
                 client_error: ::StripeCharge.errorify('stripe_charge_model.payment_processor_mystery')
               )
               raise ActiveRecord::Rollback unless self.update(
-                status: 'under_review',
-                error_info: {
+                under_review: true,
+                error_info: (self.error_info || []) + [{
                   description: "Charge attempt resulted in 'processing' charge. This should not occur; somehow the charge never received a valid status and was picked up by the HandleUnresponsiveCharges job.",
                   charge_type: 'StripeCharge',
                   charge_id: charge.id,
                   time: Time.current.to_s,
                   amount: charge.amount
-                }
+                }]
               )
             when 'mysterious'
               raise ActiveRecord::Rollback unless charge.update(invoice_aware: true)
               raise ActiveRecord::Rollback unless self.update(
-                status: 'under_review',
-                error_info: {
+                under_review: true,
+                error_info: (self.error_info || []) + [{
                   description: "Charge attempt resulted in 'mysterous' charge. This means the charge attempt threw no errors and had no failure status, but the returned Stripe object was invalid.",
                   charge_type: 'StripeCharge',
                   charge_id: charge.id,
                   time: Time.current.to_s,
                   amount: charge.amount
-                }
+                }]
               )
             when 'failed'
               raise ActiveRecord::Rollback unless charge.update(invoice_aware: true, processed: true)
@@ -286,7 +285,7 @@ class Invoice < ApplicationRecord
   
     # sets our current status based on various values
     def set_status
-      unless self.external || self.status == 'quoted' || self.status == 'cancelled' || self.status == 'under_review' || self.status == 'managed_externally'
+      unless self.external || self.status == 'quoted' || self.status == 'cancelled' || self.status == 'managed_externally'
         self.status = self.get_proper_status
       end
     end
