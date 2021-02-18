@@ -34,6 +34,9 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
       t.integer :total_processed, null: false, default: 0               # the amount we've fully processed as received (i.e. logged as commissions or whatever other logic we want)
       t.boolean :all_received, null: false, default: false              # whether we've received the full total (for efficient queries)
       t.boolean :all_processed: null: false, default: false             # whether we've processed the full amount received (for efficient queries)
+      # pending proration tracking
+      t.integer :preproration_modifiers, null: false, default: 0        # how many LineItemReductions are active that might modify preproration_total_due # MOOSE WARNING validate
+      t.boolean :proration_pending, null: false, default: false         # whether there is a proration waiting to go into effect when preproration_modifiers drops to 0 # MOOSE WARNING validate
       # refund and cancellation settings
       t.integer :proration_calculation, null: false                     # how to divide payment into chunks when prorating
       t.boolean :proration_refunds_allowed,  null: false                # whether to refund chunk that would have been cancelled if not already paid when prorating
@@ -52,6 +55,7 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
       t.datetime :original_last_moment, null: false                     # the last moment of the term, before prorations
       t.datetime :first_moment, null: false                             # the first moment of the term
       t.datetime :last_moment, null: false                              # the last moment of the term
+      t.decimal  :unprorated_proportion, null: false, default: 1        # the proportion of this term that remains unprorated
       t.integer  :time_resolution, null: false, default: 0              # enum for how precise to be with times
       t.boolean  :cancelled, null: false, default: false                # whether this term has been entirely cancelled (i.e. prorated into nothingness)
       t.integer  :default_weight                                        # the default weight for policy_premium_item_payment_terms based on this payment term (i.e. the billing_strategy.new_business["payments"] value)
@@ -66,29 +70,6 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
       t.references :policy_premium_item
     end
   
-    create_table :line_items do |t|
-      # basic details
-      t.string      :title, null: false
-      t.boolean     :priced_in, null: false, default: false
-      t.timestamps
-      # payment tracking
-      t.integer     :original_total_due,  null: false
-      t.integer     :total_due, null: false
-      t.integer     :total_received, null: false, default: 0
-      t.integer     :total_processed, null: false, default: 0
-      t.boolean     :all_processed: null: false, default: false
-      # references
-      t.references  :chargeable, polymorphic: true    # will be a PolicyPremiumItemTerm for now
-      t.references  :invoice
-    end
-    
-    create_table :line_item_receipt do |t|
-      t.integer     :amount
-      t.references  :line_item
-      t.references  :reason, polymorphic: true
-      t.references  :commission_item, null: true
-      t.timestamps
-    end
     
     create_table :policy_premia do |t|
       # totals
@@ -99,6 +80,10 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
       # down payment settings
       t.boolean :first_payment_down_payment, null: false, default: false
       t.integer :first_payment_down_payment_amount_override
+      # proration information
+      t.boolean :prorated, null: false, default: false
+      t.datetime :prorated_term_last_moment
+      t.datetime :prorated_term_first_moment
       # miscellaneous
       t.timestamps
       t.string  :error_info
@@ -106,6 +91,7 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
       t.references :policy_quote
       t.references :billing_strategy
       t.references :commission_strategy
+      t.references :policy, null: true
       
   ##### MOOSE WARNING below is old schema for reference ############
       
@@ -135,29 +121,57 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
       
     end
     
+    create_table :line_items do |t|
+      # basic details
+      t.string      :title, null: false                                 # the title to display on the invoice
+      t.boolean     :priced_in, null: false, default: false             # true if this line item has been taken into account in the invoice total (i.e. starts as false and gets set to true once invoice processes the addition)
+      t.timestamps
+      # payment tracking
+      t.integer     :original_total_due,  null: false                   # the total due when this line item was created
+      t.integer     :total_due, null: false                             # the total due now (i.e. original_total_due minus refunds plus increases)
+      t.integer     :total_received, null: false, default: 0            # the amount received towards payment of total_due
+      t.integer     :extra_accepted, null: false, default: 0            # the amount beyond total_due that will be converted into total_due if a pending charge completes and provides it; if the pending charges all fail, it will be set to 0 (this is for "cancel part of the due amount but don't refund it if already paid" in the edge case of "a charge is pending and might still fail")
+      t.integer     :total_processed, null: false, default: 0           # the amount of total_received that has been taken into account already by the commissions system
+      t.boolean     :all_processed: null: false, default: false         # true if the commissions system has handled this line item completely & need not pay attention to it for now (more precisely, true if total_processed == total_received)
+      # references
+      t.references  :chargeable, polymorphic: true                      # will be a PolicyPremiumItemTerm right now, but could be anything
+      t.references  :invoice                                            # the invoice to which this LineItem belongs
+    end
+    
+    create_table :line_item_change do |t|
+      t.integer     :field_changed, null: false                         # enum for the LineItem field that was changed (either total_due or total_received)
+      t.integer     :amount, null: false                                # the change to line_item.total_received (positive or negative)
+      t.references  :line_item                                          # the LineItem
+      t.references  :reason, polymorphic: true                          # the reason for this change (a StripeCharge object, for example)
+      t.references  :handler, polymorphic: true, null: true             # the CommissionItem that reflects this change, or other model that handled it
+      t.timestamps
+    end
+    
     create_table :invoices do |t|
       # basic info
-      t.string :number
-      t.text :description
-      t.date :available_date
-      t.date :due_date
+      t.string      :number, null: false
+      t.text        :description
+      t.date        :available_date, null: false
+      t.date        :due_date, null: false
       t.timestamps
       # state
-      t.boolean     :external, null: false, default: false
-      t.integer     :status, null: false
-      t.boolean     :under_review, null: false, default: false
-      t.integer     :pending_charge_count, null: false, default: 0
-      t.jsonb       :error_info, null: false, default: []
-      t.boolean     :was_missed, null: false, default: false
-      t.datetime    :was_missed_at
-      t.boolean     :autosend_status_change_notifications, null: false, default: true
+      t.boolean     :external, null: false, default: false              # true if this is just a record of an invoice handled on a partner's server (i.e. we don't collect the payments)
+      t.integer     :status, null: false                                # invoice status
+      t.boolean     :under_review, null: false, default: false          # true if this invoice is under review due to a charge error. refunds are frozen during review (but charges aren't, since the charge that errored will still be counted as pending and absent from total_payable)
+      t.integer     :pending_charge_count, null: false, default: 0      # how many charges are pending (i.e. not yet processed, doesn't necessarily mean in 'pending' status)
+      t.jsonb       :error_info, null: false, default: []               # an array of error hashes representing charge problems that have put this invoice into under_review status
+      t.boolean     :was_missed, null: false, default: false            # true if this invoice was ever missed
+      t.datetime    :was_missed_at                                      # set to the first time this invoice was missed
+      t.boolean     :autosend_status_change_notifications, null: false, # true to automatically send status notifications when status changes; change to false if manually switching statuses around a bunch temporarily
+        default: true
       # payment tracking
-      t.integer     :original_total_due, null: false
-      t.integer     :total_due, null: false
-      t.integer     :total_payable, null: false
-      t.integer     :total_pending, null: false, default: 0
-      t.integer     :total_received, null: false, default: 0
-      t.integer     :total_undistributable, null: false, default: 0
+      t.integer     :original_total_due, null: false                    # the total due when this invoice was created
+      t.integer     :total_due, null: false                             # the total due now (taking refunds & newly added line items into account)
+      t.integer     :total_payable, null: false                         # the total that can be paid now (i.e. total_due - total_pending - total_received)
+      t.integer     :total_pending, null: false, default: 0             # the total amount pending (i.e. the sum of charge.amount over all charges with processed: false)
+      t.integer     :total_received, null: false, default: 0            # the total that has actually been received
+      t.integer     :extra_accepted, null: false, default: 0            # the amount beyond total_due that will be converted into total_due if a pending charge completes and provides it; if the pending charges all fail, it will be set to 0 (this is for "cancel part of the due amount but don't refund it if already paid" in the edge case of "a charge is pending and might still fail")
+      t.integer     :total_undistributable, null: false, default: 0     # if we receive a payment and the line items totals have somehow changed so that what we charged for has become less than the total, the extra is recorded here
       # disputes and refunds
       t.integer     :pending_dispute_total, null: false, default: 0
       t.integer     :pending_refund_total, null: false, default: 0
@@ -186,9 +200,27 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
       t.references :invoice, null: true
     end
     
+    create_table :line_item_reduction do |t|
+      t.boolean         :refunds_allowed, null: false                   # Whether to allow refunds (if false, will only reduce total_due insofar as it hasn't yet been paid)
+      t.integer         :max_reduction, null: false                     # The amount by which the line item total_due should be reduced
+      t.integer         :amount_reduced, null: false, default: 0        # The amount that actually ended up being reduced (if refunds_allowed, will be total_due_max_reduction; if not, it might be less)
+      t.timestamps
+      t.references      :policy_premium_item
+      t.references      :line_item
+    end
+    
+    
+    
     create_table :stripe_refunds do |t|
       t.integer   :amount # MOOSE WARNING: make sure you define .signed_amount
     end
+    
+    
+    
+    
+    
+    
+    
   
     #add_reference :line_items, :policy_premium_item, index: true, null: false
     #add_column :line_items, :original_total_due # set to price

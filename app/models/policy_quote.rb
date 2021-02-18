@@ -316,6 +316,14 @@ class PolicyQuote < ApplicationRecord
   def invoice_collected_changed(invoice, amount_collected, old_amount_collected)
     self.policy_premium.update_unearned_premium
   end
+  
+  def effective_moment
+    self.effective_date.beginning_of_day
+  end
+  
+  def expiration_moment
+    self.expiration_date.end_of_day
+  end
 
   private
     def set_status_updated_on

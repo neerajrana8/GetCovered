@@ -1,4 +1,10 @@
-class PolicyPremiumItem < ApplicationRecord
+class LineItemReduction < ApplicationRecord
+
+
+
+  ##############################################################################################
+
+
   # Associations
   belongs_to :policy_premium  # the policy_premium to which this item applies
   belongs_to :recipient,      # who receives this money (generally a Carrier, Agent, or CommissionStrategy)
@@ -120,15 +126,6 @@ class PolicyPremiumItem < ApplicationRecord
     end
   end
   
-  def apply_proration
-    return unless self.proration_pending && self.preproration_modifiers == 0 && self.policy_premium.prorated
-    # MOOSE WARNING: apply the proration here
-    
-  end
-  
-  def with_payment_lock
-    # MOOSE WARNING: do this
-  end
   
   private
   

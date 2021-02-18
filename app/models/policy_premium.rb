@@ -3,16 +3,12 @@
 # file: +app/models/policy_premium.rb+
 
 class PolicyPremium < ApplicationRecord
-
-  #### MOOSE WARNING: old stuff
-  belongs_to :policy, optional: true
-
-  #### end old stuff
   
   # Associations
   belongs_to :policy_quote
   belongs_to :billing_strategy
   belongs_to :commission_strategy
+  belongs_to :policy, optional: true
 
   has_one :policy_application,
     through: :policy_quote
@@ -248,7 +244,42 @@ class PolicyPremium < ApplicationRecord
     return save_error
   end
 
-
+  def prorate(new_first_moment: nil, new_last_moment: nil)
+    return nil if new_first_moment.nil? && new_last_moment.nil?
+    if new_first_moment && new_first_moment < (self.prorated_first_moment || self.policy_quote.effective_moment)
+      return "The requested new_first_moment #{new_first_moment.to_s} is invalid; it cannot precede the original or current prorated beginning of term (#{(self.prorated_first_moment || self.policy_quote.effective_moment).to_s})"
+    end
+    if new_last_moment && new_last_moment > (self.prorated_last_moment || self.policy_quote.expiration_moment)
+      return "The requested new_last_moment #{new_last_moment.to_s} is invalid; it cannot be after the original or current prorated end of term (#{(self.prorated_last_moment || self.policy_quote.expiration_moment).to_s})"
+    end
+    o_return = nil
+    ActiveRecord::Base.transaction(requires_new: true) do
+      # record the proration
+      unless self.update(
+        prorated_first_moment: new_first_moment || self.prorated_first_moment,
+        prorated_last_moment: new_last_moment || self.prorated_last_moment,
+        prorated: true
+      )
+        to_return = "The update to apply the proration failed, errors: #{self.errors.to_h}"
+        raise ActiveRecord::Rollback
+      end
+      # prorate our terms
+      self.policy_premium_payment_terms.each do |pppt|
+        unless pppt.update_proration(self.prorated_first_moment, self.prorated_last_moment)
+          to_return = "Applying proration to PolicyPremiumPaymentTerm ##{pppt.id} failed, errors: #{pppt.respond_to?(:errors) ? pppt.errors.to_h : '(return value did not respond to errors call)'}"
+          raise ActiveRecord::Rollback
+        end
+      end
+      # tell our items to apply the proration to their line items
+      ppi_array = self.policy_premium_items.order(id: :asc).lock.to_a
+      self.policy_premium_items.update_all(proration_pending: true)
+    end
+    return to_return unless to_return.nil?
+    self.policy_premium_items.each do |ppi|
+      ppi.apply_proration
+    end
+    return nil
+  end
 
 
 

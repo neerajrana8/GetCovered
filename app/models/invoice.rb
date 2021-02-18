@@ -34,7 +34,7 @@ class Invoice < ApplicationRecord
   def with_payment_lock
     ActiveRecord::Base.transaction(requires_new: true) do
       self.lock!
-      yield(self.line_items.order(id: :asc).lock.to_a)
+      yield(self.line_items.priced_in.order(id: :asc).lock.to_a)
     end
   end
 
@@ -293,7 +293,7 @@ class Invoice < ApplicationRecord
     # set missed record data when status is about to update to missed
     def set_missed_record
       self.was_missed = true
-      self.was_missed_at = Time.current
+      self.was_missed_at ||= Time.current
     end
 
     # returns a descriptor for charges to send to stripe, format { description: string, metadata: hash_of_metadata_entries }
