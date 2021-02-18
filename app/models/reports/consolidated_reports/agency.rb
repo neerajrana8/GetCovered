@@ -64,11 +64,12 @@ module Reports
       def report(leads, policy_applications)
         conversions = conversions(leads)
 
-        visits = leads.
-          joins(:lead_events).
-          where(lead_events: { created_at: range_start..range_end }).
-          order('DATE(lead_events.created_at)').group('DATE(lead_events.created_at)').
-          count.keys.size
+        visits = leads.map do |lead|
+          lead.lead_events.
+            where(created_at: range_start..range_end).
+            order('DATE(created_at)').group('DATE(created_at)').
+            count.keys.size
+        end.compact.sum
 
         time_diffs =
           policy_applications.joins(:policy).
