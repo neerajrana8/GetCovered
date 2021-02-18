@@ -1,16 +1,18 @@
 module Reports
   module ConsolidatedReports
-    class Aggregate < ::Report
-      NAME = 'Weekly Agency Report - Aggregate'.freeze
+    class Aggregate < ::Reports::ConsolidatedReports::Base
+      NAME = 'Consolidated Aggregated Report'.freeze
 
-      def generate(reports)
-        self
+      def leads
+        Lead.presented.not_archived.where(last_visit: range_start..range_end)
       end
 
-      private
-
-      def set_defaults
-        self.data ||= { rows: [] }
+      def leads_for_product(policy_type_id)
+        Lead.presented.not_archived.
+          where(last_visit: range_start..range_end).
+          joins(:lead_events).
+          where(lead_events: { policy_type_id: policy_type_id }).
+          distinct
       end
     end
   end
