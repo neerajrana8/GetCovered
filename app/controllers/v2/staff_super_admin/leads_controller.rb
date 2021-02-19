@@ -67,11 +67,20 @@ module V2
       def supported_filters(called_from_orders = false)
         @calling_supported_orders = called_from_orders
         {
-            created_at: [:scalar, :array, :interval],
-            email: [:scalar, :like],
-            agency_id: [:scalar, :interval],
-            status: [:scalar],
-            archived: [:scalar]
+          created_at: [:scalar, :array, :interval],
+          email: [:scalar, :like],
+          agency_id: [:scalar],
+          status: [:scalar],
+          archived: [:scalar],
+          last_visit: [:interval, :scalar, :interval],
+          tracking_url: {
+            campaign_source: [:scalar],
+            campaign_medium: [:scalar],
+            campaign_name: [:scalar]
+          },
+          lead_events: {
+            policy_type: [:scalar]
+          }
         }
       end
 
