@@ -11,6 +11,10 @@ class Invoice < ApplicationRecord
 
   has_many :line_items
   has_many :stripe_charges
+  has_many :refunds
+  
+  has_many :line_item_reductions,
+    through: :line_items
 
   before_update :set_status,
     unless: Proc.new{|i| i.will_save_change_to_attribute?('status') }
@@ -220,6 +224,57 @@ class Invoice < ApplicationRecord
     # handle notifications
     self.send_charge_notifications(charge) unless rolled_back
   end
+  
+  def process_reductions
+    self.with_payment_lock do |line_item_array|
+      return if self.pending_charge_count > 0 || self.pending_dispute_count > 0
+      lirs = self.line_item_reductions.pending.order(dispute_resolution: :desc, created_at: :asc).group_by{|lir| lir.line_item }
+      refundable_lirs = []
+      # handle reductions
+      total_due_change = 0
+      total_received_change = 0
+      total_to_refund = 0
+      line_item_array.each do |li|
+        lilirs = lirs[li]
+        next if lilirs.blank?
+        lilirs.each do |lir|
+          lir.pending = false
+          case lir.refundability
+            when 'dispute_resolution', 'cancel_or_refund'
+              to_reduce = [lir.amount - lir.amount_successful, li.total_due].min
+              lir.amount_successful += to_reduce
+              li.total_due -= to_reduce
+              total_due_change -= to_reduce
+              to_unpay = [to_reduce, li.total_received - li.total_due].min
+              unless to_unpay <= 0
+                li.total_received -= to_unpay
+                total_received_change -= to_unpay
+                refundable_lirs.push(lir)
+                total_to_refund -= to_unpay
+                lir.amount_refunded += to_unpay
+                created = li.line_item_changes.create(amount: -to_unpay, reason: lir)
+                raise ActiveRecord::Rollback if created.id.nil?
+              end
+            when 'cancel_only'
+              to_reduce = [lir.amount - lir.amount_successful, li.total_due - li.total_received].min
+              to_reduce = 0 if to_reduce < 0
+              lir.amount_successful += to_reduce
+              li.total_due -= to_reduce
+              total_due_change -= to_reduce
+          end
+          lir.save! rescue raise ActiveRecord::Rollback
+        end
+        li.save! rescue raise ActiveRecord::Rollback
+      end
+      self.save! rescue raise ActiveRecord::Rollback
+      # create refund
+      if total_to_refund > 0
+        refund = self.refunds.create
+        refundable_lirs.each{|lir| raise ActiveRecord::Rollback unless lir.update(refund: refund) }
+        refund.execute
+      end
+    end # end payment_lock
+  end
 
   def send_charge_notifications(charge)
     # MOOSE WARNING: fill this out, notification people
@@ -262,13 +317,18 @@ class Invoice < ApplicationRecord
       signed_amount = charge_or_refund.nil? ? (self.total_received - self.total_processed) : charge_or_refund.signed_amount
       amount_left = signed_amount
       if amount_left > 0
+        # distribute over line items with unpaid total_due
         line_item_array.select{|li| li.total_due > li.total_received }.each do |li|
           clamped_amount = [li.total_due - li.total_received, amount_left].min
-          next if clamped_amount == 0
-          created = li.line_item_receipts.create(amount: clamped_amount, reason: charge_or_refund)
+          if clamped_amount == 0
+            break if amount_left == 0
+            next
+          end
+          created = li.line_item_changes.create(amount: clamped_amount, reason: charge_or_refund)
           raise ActiveRecord::Rollback unless !created.id.nil? && li.update(total_received: li.total_received + clamped_amount)
           amount_left -= clamped_amount
         end
+        # return the amount we distributed
         return signed_amount - amount_left
       elsif amount_left < 0
         line_item_array.select{|li| li.total_due < li.total_received }.each do |li|

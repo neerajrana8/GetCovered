@@ -74,10 +74,16 @@ class PolicyPremiumPaymentTerm < ApplicationRecord
         else
           # we've prorated for real
           ofm = self.original_first_moment.to_date
-          olmm = self.original_last_moment.to_date
+          olm = self.original_last_moment.to_date
           fm = nfm if nfm > fm
           lm = nlm if nlm < lm
-          return self.update(first_moment: fm.beginning_of_day, last_moment: lm.end_of_day, unprorated_proportion: ((lm - fm).to_i + 1).to_d / ((olm - ofm).to_i + 1).to_d)
+          return self.update(
+            first_moment: fm.beginning_of_day,
+            last_moment: lm.end_of_day,
+            unprorated_proportion: ((lm - fm).to_i + 1).to_d / ((olm - ofm).to_i + 1).to_d,
+            start_prorated: (fm != ofm),
+            end_prorated: (lm != oolm)
+          )
         end
     end
     self.errors.add(:proration_attempt, "failed, since time_resolution value was not recognized")
@@ -97,6 +103,8 @@ class PolicyPremiumPaymentTerm < ApplicationRecord
     
     def set_proportion_to_zero
       self.unprorated_proportion = 0
+      self.start_prorated = true
+      self.end_prorated = true
     end
   
     def validate_term

@@ -1,6 +1,20 @@
 class LineItemReduction < ApplicationRecord
 
 
+  scope :pending, -> { where(pending: true) }
+  
+  enum refundability: { # these are ordered descending during processing by Invoice#process_reductions, so their numerical values matter! we want to do disputes and refunds first, then pure cancellations.
+    cancel_only: 0,
+    cancel_or_refund: 1,
+    dispute_resolution: 2
+  }
+  
+  enum stripe_reason: {
+    requested_by_customer: 0,
+    duplicate: 1,
+    fraudulent: 2
+  }
+
 
   ##############################################################################################
 
