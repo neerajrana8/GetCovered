@@ -96,16 +96,15 @@ module V2
 
       # need to add validation
       def date_params
-        if params[:filter].present?
+        if params[:filter].present? && params[:filter][:last_visit].present?
           {
-            start: params[:filter][:interval][:start],
-            end: params[:filter][:interval][:end]
+            start: params[:filter][:last_visit][:start],
+            end: params[:filter][:last_visit][:end]
           }
         else
-          params[:filter] = {}
           {
-            start: Lead.date_of_first_lead.to_s || Time.now.beginning_of_year.to_s,
-            end: Time.now.to_s
+            start: Lead.date_of_first_lead || Time.now.beginning_of_year,
+            end: Time.now
           }
         end
       end
