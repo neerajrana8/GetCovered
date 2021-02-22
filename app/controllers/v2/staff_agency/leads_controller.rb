@@ -8,12 +8,14 @@ module V2
         start_date = Date.parse(date_params[:start])
         end_date   = Date.parse(date_params[:end])
 
-        params[:filter][:last_visit] =
-          if date_params[:start] == date_params[:end]
-            start_date.all_day
-          else
-            (start_date.all_day.first...end_date.all_day.last)
-          end
+        if params[:filter].present?
+          params[:filter][:last_visit] =
+            if date_params[:start] == date_params[:end]
+              start_date.all_day
+            else
+              (start_date.all_day.first...end_date.all_day.last)
+            end
+        end
         
         super(:@leads, @substrate)
         if need_to_download?
