@@ -12,7 +12,7 @@ class PolicyPremiumItem < ApplicationRecord
     through: :policy_premium
   has_one :policy_quote,
     through: :policy_premium
-  has_many :policy_premium_item_terms,
+  has_many :policy_premium_item_payment_terms,
     autosave: true # MOOSE WARNING: does this suffice?
   has_many :line_items,
     through: :policy_premium_item_terms
@@ -123,11 +123,29 @@ class PolicyPremiumItem < ApplicationRecord
   def apply_proration
     return unless self.proration_pending && self.preproration_modifiers == 0 && self.policy_premium.prorated
     # MOOSE WARNING: apply the proration here
-    
-  end
-  
-  def with_payment_lock
-    # MOOSE WARNING: do this
+    ActiveRecord::Base.transaction(requires_new: true) do
+      # lock our bois
+      invoice_array = ::Invoice.where(id: self.line_items.map{|li| li.invoice_id }).order(id: :asc).lock.to_a
+      line_item_array = self.line_items.order(id: :asc).lock.to_a
+      self.lock!
+      # flee if there's an issue (yes, this is repeated; we checked at first in the hopes of avoiding locking overhead, now we are checking for real, within the lock
+      return unless self.proration_pending && self.proration_modifiers == 0
+      # apply the proration
+      case self.proration_calculation
+        when 'no_proration'
+          # woohoo, we're done!
+        when 'per_payment_term'
+        when 'per_total'
+        when 'payment_term_exclusive'
+        when 'payment_term_inclusive'
+          terms = self.policy_premium_item_payment_terms.references(:policy_premium_payment_terms).includes(:policy_premium_payment_term)
+                                                        .where(policy_premium_payment_terms: { prorated: true })
+                                                        .select{|ppit| ppit.policy_premium_payment_term.intersects?(self.policy_premium.prorated_first_moment, self.policy_premium.prorated_last_moment) }
+          term_ids = terms.map{|t| t.id }
+          lis = line_item_array.select{|lia| lia.chargeable_type == 'PolicyPremiumItemPaymentTerm' && term_ids.include?(lia.chargeable_id) }
+          
+      end
+    end
   end
   
   private

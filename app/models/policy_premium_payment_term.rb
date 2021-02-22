@@ -56,6 +56,28 @@ class PolicyPremiumPaymentTerm < ApplicationRecord
     end
   end
   
+  def intersects?(interval_start, interval_end)
+    case self.time_resolution
+      when 'day'
+        is = interval_start.to_date
+        ie = interval_end.to_date
+        fm = self.first_moment.to_date
+        lm = self.last_moment.to_date
+        return is <= lm && ie >= fm
+    end
+  end
+  
+  def is_contained_in?(interval_start, interval_end)
+    case self.time_resolution
+      when 'day'
+        is = interval_start.to_date
+        ie = interval_end.to_date
+        fm = self.first_moment.to_date
+        lm = self.last_moment.to_date
+        return is <= fm && ie >= lm
+    end
+  end
+  
   def update_proration(new_first_moment, new_last_moment)
     if new_first_moment > new_last_moment
       self.errors.add(:proration_attempt, "failed, since provided last moment preceded provided first moment")
@@ -68,7 +90,7 @@ class PolicyPremiumPaymentTerm < ApplicationRecord
         fm = self.first_moment.to_date
         lm = self.last_moment.to_date
         if fm > nlm || lm < nfm
-          return self.update(last_moment: self.first_moment, cancelled: true) # this term has been prorated into nothingness
+          return self.update(last_moment: self.first_moment, prorated: true, cancelled: true) # this term has been prorated into nothingness
         elsif nfm <= fm && nlm >= lm
           return self # no changes
         else
@@ -81,8 +103,7 @@ class PolicyPremiumPaymentTerm < ApplicationRecord
             first_moment: fm.beginning_of_day,
             last_moment: lm.end_of_day,
             unprorated_proportion: ((lm - fm).to_i + 1).to_d / ((olm - ofm).to_i + 1).to_d,
-            start_prorated: (fm != ofm),
-            end_prorated: (lm != oolm)
+            prorated: true
           )
         end
     end

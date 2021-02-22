@@ -9,13 +9,20 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
     # update BillingStrategy
     add_reference :billing_strategies, :collector, polymorphic: true, null: true
   
+    # get rid of really old tables we don't even use anymore
+    drop_table :payments
+    drop_table :modifiers
+    drop_table :commission_deductions
+    drop_table :commissions
+    drop_table :commission_strategies
+  
     # archive old tables
     rename_table :policy_premium_fees, :archived_policy_premium_fees
     rename_table :line_items, :archived_line_items
     rename_table :invoices, :archived_invoices
     rename_table :charges, :archived_charges
     rename_table :refunds, :archived_refunds
-    rename_table :disputes, :archived_disputes
+    rename_table :disputes, :archived_disputes # MOOSE WARNING redo dispute
     rename_table :policy_premia, :archived_policy_premia
 
     # create replacement tables
@@ -43,9 +50,9 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
       # commissions settings
       t.boolean :preprocessed                                           # whether this is paid out up-front rather than as received
       # associations
-      t.references :policy_premium                  # the PolicyPremium we belong to
-      t.references :recipient, polymorphic: true    # the CommissionStrategy/Agent/Carrier who receives the money
-      t.references :collector, polymorphic: true   # the Agency or Carrier who collects the money
+      t.references :policy_premium                                      # the PolicyPremium we belong to
+      t.references :recipient, polymorphic: true                        # the CommissionStrategy/Agent/Carrier who receives the money
+      t.references :collector, polymorphic: true                        # the Agency or Carrier who collects the money
       #t.references :collection_plan, polymorphic: true, null: true     # record indicating what the collector will pay off on their end (see model for details)
       t.references :fee, null: true                                     # the Fee this item corresponds to, if any
     end
@@ -56,8 +63,7 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
       t.datetime :first_moment, null: false                             # the first moment of the term
       t.datetime :last_moment, null: false                              # the last moment of the term
       t.decimal  :unprorated_proportion, null: false, default: 1        # the proportion of this term that remains unprorated
-      t.boolean  :start_prorated, null: false, default: false           # whether the term's first moment has been moved
-      t.boolean  :end_prorated, null: false, default: false             # whether the term's last moment has been moved
+      t.boolean  :prorated, null: false, default: false                 # whether this term has been prorated at all
       t.integer  :time_resolution, null: false, default: 0              # enum for how precise to be with times
       t.boolean  :cancelled, null: false, default: false                # whether this term has been entirely cancelled (i.e. prorated into nothingness)
       t.integer  :default_weight                                        # the default weight for policy_premium_item_payment_terms based on this payment term (i.e. the billing_strategy.new_business["payments"] value)
@@ -133,20 +139,13 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
       # payment tracking
       t.integer     :original_total_due,  null: false                   # the total due when this line item was created
       t.integer     :total_due, null: false                             # the total due now (i.e. original_total_due minus refunds plus increases)
+      t.integer     :total_reducing, null: falsee, default: 0           # the amount subtracted from total_due by pending LineItemReductions
       t.integer     :total_received, null: false, default: 0            # the amount received towards payment of total_due
       t.integer     :total_processed, null: false, default: 0           # the amount of total_received that has been taken into account already by the commissions system
       t.boolean     :all_processed: null: false, default: false         # true if the commissions system has handled this line item completely & need not pay attention to it for now (more precisely, true if total_processed == total_received)
       # references
       t.references  :chargeable, polymorphic: true                      # will be a PolicyPremiumItemTerm right now, but could be anything
       t.references  :invoice                                            # the invoice to which this LineItem belongs
-    end
-    
-    create_table :line_item_change do |t|
-      t.integer     :amount, null: false                                # the change to line_item.total_received (positive or negative)
-      t.references  :line_item                                          # the LineItem
-      t.references  :reason, polymorphic: true                          # the reason for this change (a StripeCharge object, for example)
-      t.references  :handler, polymorphic: true, null: true             # the CommissionItem that reflects this change, or other model that handled it
-      t.timestamps
     end
     
     create_table :invoices do |t|
@@ -170,6 +169,7 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
       # payment tracking
       t.integer     :original_total_due, null: false                    # the total due when this invoice was created
       t.integer     :total_due, null: false                             # the total due now (taking refunds & newly added line items into account)
+      t.integer     :total_reducing, null: falsee, default: 0           # the amount subtracted from total_due by pending LineItemReductions
       t.integer     :total_payable, null: false                         # the total that can be paid now (i.e. total_due - total_pending - total_received)
       t.integer     :total_pending, null: false, default: 0             # the total amount pending (i.e. the sum of charge.amount over all charges with processed: false)
       t.integer     :total_received, null: false, default: 0            # the total that has actually been received
@@ -203,40 +203,91 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
       t.references :invoice, null: true
     end
     
+    create_table :line_item_change do |t|
+      t.integer     :field_changed, null: false                         # which field was changed (total_due or total_received)
+      t.integer     :amount, null: false                                # the change to line_item.total_received (positive or negative)
+      t.boolean     :handled, null: false, default: false               # whether a handler has handled this LIC (we could just use !lic.handler.nil?, but this is cleaner)
+      t.references  :line_item                                          # the LineItem
+      t.references  :reason, polymorphic: true                          # the reason for this change (a StripeCharge object, for example)
+      t.references  :handler, polymorphic: true, null: true             # the CommissionItem that reflects this change, or other model that handled it
+      t.timestamps
+    end
+    
     create_table :line_item_reduction do |t|
       t.string          :reason, null: false                            # String describing the reason for this reduction
       t.integer         :refundability, null: false
       t.integer         :amount, null: false                            # The amount by which the line item total_due should be reduced
       t.integer         :amount_successful, null: false, default: 0     # The amount that actually ended up being reduced (if refunds_allowed, will be total_due_max_reduction; if not, it might be less)
       t.integer         :amount_refunded, null: false, default: 0
-      t.boolean         :processed, null: false, default: false         # True iff this LIR has completed all its work
       t.boolean         :pending, null: false, default: true            # True iff this LIR hasn't yet been applied
+      t.boolean         :processed, null: false, default: false         # True iff this LIR has completed all its work... MOOSE WARNING: is this needed???
       t.integer         :stripe_refund_reason                           # Optional field to specify a Stripe reason enum to provide for associated refunds; if nil, will use 'requested_by_customer' if any Stripe refunds are created
       t.timestamps
-      t.references      :policy_premium_item
+    #  t.references      :policy_premium_item
       t.references      :line_item
       t.references      :dispute, null: true                            # When refundability is 'dispute_resolution', we link to the relevant dispute here
       t.references      :refund, null: true                             # When this LIR results in a refund, we link to it here
     end
     
-    create_table :refund do |t|
-      t.string          :refund_reasons, null: false, array: true, default: [] # Array of strings describing the reasons for the refund
-      t.integer         :amount, null: false , default: 0               # How much to refund/return by dispute
-      t.integer         :amount_refunded, null: false, default: 0
-      t.integer         :amount_returned_by_dispute, null: false, default: 0
-      t.boolean         :complete, null: false, default: false          # Whether the refund process is complete
-      
+    create_table :refunds do |t|
+      t.string    :refund_reasons, null: false, array: true, default: []# Array of strings describing the reasons for the refund
+      t.integer   :amount, null: false , default: 0                     # How much to refund/return by dispute
+      t.integer   :amount_refunded, null: false, default: 0             # How much actually was refunded
+      t.integer   :amount_returned_by_dispute, null: false, default: 0  # How much actually was returned by dispute
+      t.boolean   :complete, null: false, default: false                # Whether the refund process is complete
+      t.references :invoice                                             # The invoice this refund applies to
     end
     
     create_table :stripe_refunds do |t|
-      t.integer   :amount # MOOSE WARNING: make sure you define .signed_amount
-      
+      t.integer   :status, null: false, default: 0
+      t.string    :full_reasons, null: false, array: true, default: []
+      t.integer   :amount, null: false
+      t.string    :stripe_id
+      t.integer   :stripe_reason
+      t.integer   :stripe_status
+      t.string    :failure_reason
+      t.string    :receipt_number
+      t.string    :error_message
+      t.timestamps
+      t.references :refund
+      t.references :stripe_charge
     end
     
     
+    create_table :commissions do |t|
+      # General data
+      t.integer       :status, null: false                              # The status of the commission. Only one commission per recipient can be 'collating', and barring weird errors that commission will never become non-collating.
+      t.integer       :total, null: false, default: 0                   # The total to be paid
+      t.boolean       :true_negative_payout, null: false, default: false# True if the total is negative and we want to ACTUALLY refund it instead of just creating a 'paid' commission for it and rolling the debt over to the next commission
+      t.integer       :payout_method, null: false, default: 0           # The method of actually paying the money ('manual' or 'stripe' for now)
+      t.string        :error_info                                       # If status is 'payout_error', this will contain a description of what went wrong
+      t.timestamps
+      t.references    :recipient, polymorphic: true                     # Who gets this payout?
+      # Payout data
+      t.string        :stripe_transfer_id                               # For stripe payouts, will contian the id of the Stripe::Transfer object created
+      t.jsonb         :payout_data                                      # Optional data stored about the payout process
+      t.text          :payout_notes                                     # Optional text notes about the payout process
+      t.datetime      :approved_at, null: true                          # When it was approved
+      t.datetime      :marked_paid_at, null: true                       # When it was marked paid
+      t.references    :approved_by, null: true                          # The superadmin who approved it
+      t.references    :marked_paid_by, null: true                       # The superadmin who marked it paid
+    end
     
+    create_table :commission_items do |t|
+      t.integer       :amount, null: false                              # The amount of money to pay out for this item. May be negative.
+      t.timestamps
+      t.references    :commission                                       # The commission on which this item is listed.
+      t.references    :commissionable, polymorphic: true                # The thing this item is being paid for. Generally will be a PolicyPremiumItem.
+      t.references    :policy, null: true                               # Optional direct reference to the Policy this item applies to, if it applies to one
+    end
     
-    
+    create_table :commission_strategies do |t|
+      t.string        :title, null: false                               # An easily-identifiable title
+      t.decimal       :percentage, null: false, precision: 5, scale: 2  # The percentage of the total that goes to this fellow
+      t.timestamps
+      t.references    :recipient, polymorphic: true                     # He who receives the money
+      t.references    :commission_strategy, optional: true              # The parent commission strategy
+    end
     
     
   

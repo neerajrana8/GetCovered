@@ -74,7 +74,6 @@ class StripeRefund < ApplicationRecord
     new_status = status_from_stripe_status(refund_hash['status'])
     update(
       amount: refund_hash['amount'],
-      currency: refund_hash['currency'],
       failure_reason: refund_hash['failure_reason'],
       stripe_reason: refund_hash['reason'],
       receipt_number: refund_hash['receipt_number'],
