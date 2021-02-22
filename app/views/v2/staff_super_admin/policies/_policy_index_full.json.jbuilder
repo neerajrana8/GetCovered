@@ -16,3 +16,11 @@ json.premium_total policy.policy_quotes&.last&.policy_premium&.total
 json.premium_first policy.policy_quotes&.last&.invoices&.first&.total
 
 json.billing_strategy policy.policy_quotes&.last&.policy_premium&.billing_strategy&.title
+
+json.primary_insurable do
+  unless policy.primary_insurable.nil?
+    json.partial! "v2/staff_agency/insurables/insurable_short_fields.json.jbuilder",
+                  insurable: policy.primary_insurable
+
+  end
+end
