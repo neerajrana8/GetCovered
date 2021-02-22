@@ -7,6 +7,16 @@ module V2
       before_action :set_substrate, only: :index
 
       def index
+        start_date = Date.parse(date_params[:start])
+        end_date   = Date.parse(date_params[:end])
+
+        params[:filter][:last_visit] =
+          if date_params[:start] == date_params[:end]
+            start_date.all_day
+          else
+            (start_date.all_day.first...end_date.all_day.last)
+          end
+
         super(:@leads, @substrate)
         if need_to_download?
           ::Leads::RecentLeadsReportJob.perform_later(@leads.pluck(:id), params.as_json, current_staff.email)
