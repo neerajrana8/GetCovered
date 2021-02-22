@@ -103,8 +103,8 @@ module V2
           }
         else
           {
-            start: Lead.date_of_first_lead || Time.now.beginning_of_year,
-            end: Time.now
+            start: Lead.date_of_first_lead.to_s || Time.now.beginning_of_year.to_s,
+            end: Time.now.to_s
           }
         end
       end
