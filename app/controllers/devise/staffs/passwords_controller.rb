@@ -1,5 +1,5 @@
 class Devise::Staffs::PasswordsController < DeviseTokenAuth::PasswordsController
-  skip_after_action :update_auth_header, only: [:create, :edit, :update]
+  skip_after_action :update_auth_header, only: %i[create edit update]
 
   def update
     # make sure user is authorized
@@ -15,9 +15,7 @@ class Devise::Staffs::PasswordsController < DeviseTokenAuth::PasswordsController
     return render_update_error_unauthorized unless @resource
 
     # make sure account doesn't use oauth2 provider
-    unless @resource.provider == 'email'
-      return render_update_error_password_not_required
-    end
+    return render_update_error_password_not_required unless @resource.provider == 'email'
 
     # ensure that password params were sent
     unless password_resource_params[:password] && password_resource_params[:password_confirmation]
@@ -39,7 +37,7 @@ class Devise::Staffs::PasswordsController < DeviseTokenAuth::PasswordsController
     else
       return render_update_error
     end
-  end
+ end
 
   private
 
