@@ -74,6 +74,7 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
     create_table :policy_premium_item_payment_term do |t|
       t.integer :weight, null: false                                    # the weight assigned to this payment term for calculating total due
       t.integer :preproration_total_due                                 # the amount due before any prorations MOOSE WARNING: no validations
+      t.integer :duplicatable_reductions                                # the total of all reductions with proration_interaction 'duplicated'
       t.integer :term_start_reduction                                   # the amount reduced from the beginning of the term (we prorate this last when prorating based on a last start date change)
       t.integer :term_end_reduction                                     # the amount reduced from the end of the term (we prorate this last when prorating based on a fist start date change)
       t.references :policy_premium_payment_term
@@ -215,7 +216,8 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
     
     create_table :line_item_reduction do |t|
       t.string          :reason, null: false                            # String describing the reason for this reduction
-      t.integer         :refundability, null: false
+      t.integer         :refundability, null: false                     # Enum for whether we can be refunded or only cancelled before payment
+      t.integer         :proration_interaction, null: false, default: 0 # How we interact with any future prorations
       t.integer         :amount, null: false                            # The amount by which the line item total_due should be reduced
       t.integer         :amount_successful, null: false, default: 0     # The amount that actually ended up being reduced (if refunds_allowed, will be total_due_max_reduction; if not, it might be less)
       t.integer         :amount_refunded, null: false, default: 0
