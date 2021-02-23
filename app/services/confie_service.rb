@@ -72,7 +72,7 @@ class ConfieService
     if which_call == :online_policy_sale
       Rails.application.credentials.confie[:uri][ENV['RAILS_ENV'].to_sym]
     else # :lead_info
-      Rails.application.credentials.confie[:lead_uri][ENV['RAILS_ENV'].to_sym]
+      Rails.application.credentials.confie[:lead_uri][:update][ENV['RAILS_ENV'].to_sym]
     end
   end
 
@@ -211,7 +211,7 @@ class ConfieService
     }.merge(get_auth_json).to_json
 
     puts self.message_content.to_json
-    
+
     return errors.blank?
   end
 
