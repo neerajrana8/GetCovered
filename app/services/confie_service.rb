@@ -20,7 +20,7 @@ class ConfieService
     return "Policy application is for a non-Confie carrier" unless application.carrier_id == ::ConfieService.carrier_id
     cs = ::ConfieService.new
     return "Failed to build create_lead request" unless cs.build_request(:create_lead,
-      user: application.primary_user#,
+      user: application.primary_user,
       #address: application.primary_address # leaving disabled for now; will default to user.address instead
       line_breaks: true
     )
