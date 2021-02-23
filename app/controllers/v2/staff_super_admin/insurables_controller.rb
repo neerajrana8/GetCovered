@@ -7,7 +7,7 @@ module V2
     class InsurablesController < StaffSuperAdminController
       alias super_index index
 
-      before_action :set_insurable, only: [:show, :coverage_report, :policies, :related_insurables, :destroy, :update]
+      before_action :set_insurable, only: %i[show coverage_report policies related_insurables destroy update]
       before_action :set_master_policies, only: :show
       before_action :set_agency, only: [:create]
 
@@ -20,7 +20,7 @@ module V2
       def create
         if create_allowed?
           @insurable = @agency.insurables.new(insurable_params)
-          if !@insurable.errors.any? && @insurable.save_as(current_staff)
+          if @insurable.errors.none? && @insurable.save_as(current_staff)
             render :show,
                    status: :created
           else
@@ -81,22 +81,22 @@ module V2
         end
       end
 
-      #the same as in tracking urls - need to refactor and combine filters in one place
+      # the same as in tracking urls - need to refactor and combine filters in one place
       def agency_filters
         result          = []
         required_fields = %i[id title agency_id]
 
-        @agencies = Agency.main_agencies #paginator(Agency.main_agencies)
+        @agencies = Agency.main_agencies # paginator(Agency.main_agencies)
 
         @agencies.select(required_fields).each do |agency|
-          branding_profiles = agency.branding_profiles.order("url asc").to_a
+          branding_profiles = agency.branding_profiles.order('url asc').to_a
           sub_agencies = agency.agencies.select(required_fields)
-          sub_agencies_attr = sub_agencies.map{|sa| sa.branding_profiles.map{|bp| sa.attributes.merge("branding_url" => bp.formatted_url) } }
-                                  .flatten.sort_by{|hash| hash["branding_url"] }
-          result << agency.attributes.merge({ "branding_url"=> branding_profiles.first.formatted_url })
-                        .merge(sub_agencies_attr.blank? ? {} : { "agencies" => sub_agencies_attr })
+          sub_agencies_attr = sub_agencies.map { |sa| sa.branding_profiles.map { |bp| sa.attributes.merge('branding_url' => bp.formatted_url) } }
+            .flatten.sort_by { |hash| hash['branding_url'] }
+          result << agency.attributes.merge('branding_url' => branding_profiles.first.formatted_url)
+            .merge(sub_agencies_attr.blank? ? {} : { 'agencies' => sub_agencies_attr })
           branding_profiles.drop(1).each do |branding_profile|
-            result << agency.attributes.merge("branding_url" => branding_profile.formatted_url)
+            result << agency.attributes.merge('branding_url' => branding_profile.formatted_url)
           end
         end
 
@@ -106,7 +106,7 @@ module V2
       private
 
       def view_path
-        super + "/insurables"
+        super + '/insurables'
       end
 
       def update_allowed?
@@ -122,7 +122,8 @@ module V2
       end
 
       def set_agency
-        @agency = Agency.find(params[:id])
+        @agency = Agency.find_by_id(insurable_params[:agency_id])
+        render json: standard_error(:agency_was_not_found), status: :not_found  if @agency.nil?
       end
 
       def set_master_policies
@@ -142,19 +143,19 @@ module V2
 
         to_return = params.require(:insurable).permit(
             :category, :covered, :enabled, :insurable_id,
-            :insurable_type_id, :title, :agency_id,addresses_attributes: %i[
-            city country county id latitude longitude
-            plus_four state street_name street_number
-            street_two timezone zip_code
-          ]
-        )
+            :insurable_type_id, :title, :agency_id, :account_id, addresses_attributes: %i[
+              city country county id latitude longitude
+              plus_four state street_name street_number
+              street_two timezone zip_code
+            ]
+          )
 
         existed_ids = to_return[:addresses_attributes]&.map { |addr| addr[:id] }
 
         unless @insurable.blank? || existed_ids.nil? || existed_ids.compact.blank?
           (@insurable.addresses.pluck(:id) - existed_ids).each do |id|
             to_return[:addresses_attributes] <<
-                ActionController::Parameters.new(id: id, _destroy: true).permit(:id, :_destroy)
+              ActionController::Parameters.new(id: id, _destroy: true).permit(:id, :_destroy)
           end
         end
         to_return
@@ -165,19 +166,19 @@ module V2
 
         to_return = params.require(:insurable).permit(
             :covered, :enabled, :insurable_id,
-            :title, :agency_id,addresses_attributes: %i[
-            city country county id latitude longitude
-            plus_four state street_name street_number
-            street_two timezone zip_code
-          ]
-        )
+            :title, :agency_id, :account_id, addresses_attributes: %i[
+              city country county id latitude longitude
+              plus_four state street_name street_number
+              street_two timezone zip_code
+            ]
+          )
 
         existed_ids = to_return[:addresses_attributes]&.map { |addr| addr[:id] }
 
         unless @insurable.blank? || existed_ids.nil? || existed_ids.compact.blank?
           (@insurable.addresses.pluck(:id) - existed_ids).each do |id|
             to_return[:addresses_attributes] <<
-                ActionController::Parameters.new(id: id, _destroy: true).permit(:id, :_destroy)
+              ActionController::Parameters.new(id: id, _destroy: true).permit(:id, :_destroy)
           end
         end
         to_return
@@ -186,12 +187,12 @@ module V2
       def supported_filters(called_from_orders = false)
         @calling_supported_orders = called_from_orders
         {
-          id: [ :scalar, :array ],
-          title: [ :scalar, :like ],
-          permissions: [ :scalar, :array ],
-          insurable_type_id: [ :scalar, :array ],
-          insurable_id: [ :scalar, :array ],
-          account_id: [ :scalar, :array ]
+          id: %i[scalar array],
+          title: %i[scalar like],
+          permissions: %i[scalar array],
+          insurable_type_id: %i[scalar array],
+          insurable_id: %i[scalar array],
+          account_id: %i[scalar array]
         }
       end
 

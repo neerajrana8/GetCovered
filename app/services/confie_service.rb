@@ -15,6 +15,30 @@ class ConfieService
   def self.agency
     @agency ||= ::Agency.where(integration_designation: "confie").take
   end
+  
+  def self.create_confie_lead(application)
+    return "Policy application is for a non-Confie carrier" unless application.carrier_id == ::ConfieService.carrier_id
+    cs = ::ConfieService.new
+    return "Failed to build create_lead request" unless cs.build_request(:create_lead,
+      user: application.primary_user#,
+      #address: application.primary_address # leaving disabled for now; will default to user.address instead
+      line_breaks: true
+    )
+    event = application.events.new(cs.event_params)
+    event.started = Time.now
+    result = cs.call
+    event.completed = Time.now
+    event.request = result[:response].request.raw_body
+    event.response = result[:response].response.body
+    event.status = result[:error] ? 'error' : 'success'
+    event.save
+    return "Request resulted in error" if result[:error]
+    media_code = result[:response].parsed_response.dig("data", "media_code")
+    unless media_code.blank?
+      application.update(tagging_data: (application.tagging_data || {}).merge('confie_mediacode' => media_code.to_s))
+    end
+    return nil
+  end
 
   REQUESTS = {
     online_policy_sale: {
@@ -194,25 +218,24 @@ class ConfieService
   end
 
   def build_create_lead(
-    id:,
-    mediacode:,
-    status:,
     user:,
+    address: user.address,
+    lead_id: user.id,
     **compilation_args
   )
+    if address.nil?
+      self.errors = { address: "cannot be blank" }
+      return false
+    end
     # put the request together
-    address = user.address
     self.action = :create_lead
     self.errors = nil
     self.message_content = {
-      id: id.to_s,
-      mediacode: mediacode.to_s,
       data: {
         lead: {
-          gc_status: ConfieService::STATUS_MAP[status],
           jornaya_lead_id: ENV['RAILS_ENV'] == 'production' ? nil : "8197cd0c-ff37-650b-0e7c-test",
           jornaya_lead_provider_code: ENV['RAILS_ENV'] == 'production' ? nil : "8197cd0c-ff37-650b-0e7c-test",
-          id_lead: user.id.to_s,
+          id_lead: lead_id.to_s,
           date_partner: "#{ Time.now.strftime('%Y-%m-%d') }"
         }.compact,
         client: {

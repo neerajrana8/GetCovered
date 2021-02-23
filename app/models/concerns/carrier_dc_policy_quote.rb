@@ -68,6 +68,7 @@ module CarrierDcPolicyQuote
       event.started = Time.now
       result = dcs.call
       event.completed = Time.now
+      event.request = result[:response].request.raw_body
       event.response = result[:response].response.body
       event.status = result[:error] ? 'error' : 'success'
       event.save
@@ -107,6 +108,7 @@ module CarrierDcPolicyQuote
       event.started = Time.now
       result = dcs.call
       event.completed = Time.now
+      event.request = result[:response].request.raw_body
       event.response = result[:response].response.body
       event.status = result[:error] ? 'error' : 'success'
       event.save

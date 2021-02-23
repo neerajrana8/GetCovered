@@ -72,3 +72,17 @@ json.active_master_policy_coverage do
     json.partial! 'v2/shared/policies/fields.json.jbuilder', policy: @master_policy_coverage
   end
 end
+
+json.account_agency do
+  if insurable.account.agency.present?
+    json.id insurable.account.agency.id
+    json.title insurable.account.agency.title
+  end
+end
+
+json.agency do
+  if insurable.agency.present?
+    json.id insurable.agency.id
+    json.title insurable.agency.title
+  end
+end

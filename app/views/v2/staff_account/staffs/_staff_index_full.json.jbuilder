@@ -8,3 +8,5 @@ json.profile_attributes do
       profile: staff.profile
   end
 end
+
+json.organizable_title staff.organizable&.title

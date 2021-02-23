@@ -264,9 +264,8 @@ module V2
                 @quote.reload
 
                 if @quote.status == 'quoted'
-
+                  ::ConfieService.create_confie_lead(@application) if @application.carrier_id == ::ConfieService.carrier_id
                   @application.primary_user.set_stripe_id
-
                   render json: {
                     id: @application.id,
                     quote: {

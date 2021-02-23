@@ -16,7 +16,7 @@ en:
     policies:
       claims: "Compliance - Claims"
       coverage_proof: "Compliance - Proof of Coverage"
-      master: "Compliance - Master Compliance"
+      master: "Compliance - Master Policies"
       policies: "Compliance - Policies"
       rent_mass_import: "Compliance - Rent Guarantee Mass import"
     property_management:

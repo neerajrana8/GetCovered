@@ -445,6 +445,7 @@ module V2
             render json: update_users_result.failure, status: 422
           else
             if @application.update status: 'complete'
+              # create lead
               LeadEvents::LinkPolicyApplicationUsers.run!(policy_application: @application)
               # if application.status updated to complete
               @application.estimate()
@@ -465,11 +466,12 @@ module V2
                   render json: standard_error(:quote_failed, @application.error_message || I18n.t('policy_application_contr.create_security_deposit_replacement.quote_failed')),
                          status: 500
                 elsif @quote.status == "quoted"
-
+                  # create Confie lead if necessary
+                  ::ConfieService.create_confie_lead(@application) if @application.carrier_id == ::ConfieService.carrier_id
+                  # perform final setup
                   @application.primary_user.set_stripe_id
-
                   sign_in_primary_user(@application.primary_user)
-
+                  # return response to user
                   render json:  {
                                  id:       @application.id,
                                  quote: {

@@ -105,6 +105,10 @@ module V2
           permissions: %i[scalar array],
           organizable_id: %i[scalar array],
           organizable_type: %i[scalar array],
+          created_at: %i[scalar array],
+          updated_at: %i[scalar array],
+          enabled: %i[scalar array],
+          owner: %i[scalar array],
           profile: {
             first_name: %i[scalar like],
             last_name: %i[scalar like],
