@@ -189,9 +189,9 @@ module V2
 
         @application = PolicyApplication.new(init_hash)
         @application.build_from_carrier_policy_type
-        @application.billing_strategy = BillingStrategy.where(agency:      @application.agency,
-                                                              policy_type: @application.policy_type,
-                                                              carrier: @application.carrier).take
+        @application.billing_strategy = BillingStrategy.where(agency:       @application.agency,
+                                                              policy_type:  @application.policy_type,
+                                                              carrier:      @application.carrier).take
 
         address_string = residential_address_params[:fields][:address]
         unit_string = residential_address_params[:fields][:unit]

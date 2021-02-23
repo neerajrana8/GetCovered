@@ -16,6 +16,21 @@ class ConfieService
     @agency ||= ::Agency.where(integration_designation: "confie").take
   end
 
+  REQUESTS = {
+    online_policy_sale: {
+      format: 'xml',
+      endpoint: Rails.application.credentials.confie[:uri][ENV['RAILS_ENV'].to_sym]
+    },
+    create_lead: {
+      format: 'json',
+      endpoint: Rails.application.credentials.confie[:lead_uri][:create][ENV['RAILS_ENV'].to_sym]
+    },
+    update_lead: {
+      format: 'json',
+      endpoint: Rails.application.credentials.confie[:lead_uri][:update][ENV['RAILS_ENV'].to_sym]
+    }
+  }
+
   STATUS_MAP = {
     'started' => 'in_progress',
     'in_progress' => 'in_progress',
@@ -69,11 +84,7 @@ class ConfieService
   end
 
   def endpoint_for(which_call) # MOOSE WARNING: apparently the endpoint is constant
-    if which_call == :online_policy_sale
-      Rails.application.credentials.confie[:uri][ENV['RAILS_ENV'].to_sym]
-    else # :lead_info
-      Rails.application.credentials.confie[:lead_uri][:update][ENV['RAILS_ENV'].to_sym]
-    end
+    return REQUESTS[which_call][:endpoint]
   end
 
   def call
@@ -85,84 +96,94 @@ class ConfieService
       response: nil,
       data: nil
     }
-    if self.action == :online_policy_sale
-      begin
-        call_data[:response] = HTTParty.post(endpoint_for(self.action),
-          body: compiled_rxml,
-          headers: {
-            'Content-Type' => 'text/xml',
-            'SOAPAction' => "http://appone.onesystemsinc.com/services/IInsuranceSubmissionService/SubmitPolicy"
-          },
-          ssl_version: :TLSv1_2
-        )
-      rescue StandardError => e
-        call_data = {
-          error: true,
-          code: 500,
-          message: 'Request Timeout',
-          response: e
-        }
-        puts "\nERROR\n"
-      end
-      # handle response
-      if call_data[:error]
-        puts 'ERROR ERROR ERROR'.red
-        pp call_data
-      else
-        call_data[:data] = call_data[:response].parsed_response
-        # Bad result:   {"Envelope"=>{"Body"=>{"SubmitPolicyResponse"=>{"SubmitPolicyResult"=>{"ExternalId"=>nil, "SubmissionState"=>"UnexpectedError", "SubmissionStateDescription"=>"An error has occurred during parsing policy data", "PolicyId"=>nil}}}}}
-        # Good result:  {"Envelope"=>{"Body"=>{"SubmitPolicyResponse"=>{"SubmitPolicyResult"=>{"ExternalId"=>"GC-1606249897-219099128", "SubmissionState"=>"Scheduled", "SubmissionStateDescription"=>"Policy has been scheduled for Import.", "PolicyId"=>nil}}}}}
-        case call_data[:data].dig("Envelope", "Body", "SubmitPolicyResponse", "SubmitPolicyResult", "SubmissionState")
-          when 'Scheduled'
-            # it worked! yay and hooray! let the jubilation begin!!!
-          when 'UnexpectedError'
-            call_data[:error] = true
-            call_data[:message] = "Request failed externally"
-            call_data[:external_message] = call_data[:data].dig("Envelope", "Body", "SubmitPolicyResponse", "SubmitPolicyResult", "SubmissionStateDescription")
-            call_data[:code] = 400 # the actual Response object gives code 200, what the heck?
-          else
-            call_data[:error] = true
-            call_data[:message] = "Request failed externally"
-            call_data[:external_message] = "No state description submitted"
-            call_data[:code] = 400
+    case self.action
+      when :online_policy_sale
+        begin
+          call_data[:response] = HTTParty.post(endpoint_for(self.action),
+            body: compiled_rxml,
+            headers: {
+              'Content-Type' => 'text/xml',
+              'SOAPAction' => "http://appone.onesystemsinc.com/services/IInsuranceSubmissionService/SubmitPolicy"
+            },
+            ssl_version: :TLSv1_2
+          )
+        rescue StandardError => e
+          call_data = {
+            error: true,
+            code: 500,
+            message: 'Request Timeout',
+            response: e
+          }
+          puts "\nERROR\n"
         end
-      end
-    elsif self.action == :lead_info
-      begin
-        call_data[:response] = HTTParty.post(endpoint_for(self.action),
-          body: message_content,
-          headers: {
-            'Content-Type' => 'application/json'
-          },
-          ssl_version: :TLSv1_2
-        )
-      rescue StandardError => e
-        call_data = {
-          error: true,
-          code: 500,
-          message: 'Request Timeout',
-          response: e
-        }
-        puts "\nERROR\n"
-      end
-      # handle response
-      if call_data[:error]
-        puts 'ERROR ERROR ERROR'.red
-        pp call_data
-      else
-        call_data[:code] = call_data[:response].code
-        if call_data[:code] != 200
-          call_data[:error] = true
-          call_data[:message] = "Request failed externally"
-          call_data[:external_message] = case call_data[:response].code
-            when 404;   "Lead not found"
-            when 422;   "Mediacode is invalid"
-            when 1001;  "Lead update contains invalid data"
-            when 1003;  "Lead outside updateable time range"
-            else;       "Unknown Error"
+        # handle response
+        if call_data[:error]
+          puts 'ERROR ERROR ERROR'.red
+          pp call_data
+        else
+          call_data[:data] = call_data[:response].parsed_response
+          # Bad result:   {"Envelope"=>{"Body"=>{"SubmitPolicyResponse"=>{"SubmitPolicyResult"=>{"ExternalId"=>nil, "SubmissionState"=>"UnexpectedError", "SubmissionStateDescription"=>"An error has occurred during parsing policy data", "PolicyId"=>nil}}}}}
+          # Good result:  {"Envelope"=>{"Body"=>{"SubmitPolicyResponse"=>{"SubmitPolicyResult"=>{"ExternalId"=>"GC-1606249897-219099128", "SubmissionState"=>"Scheduled", "SubmissionStateDescription"=>"Policy has been scheduled for Import.", "PolicyId"=>nil}}}}}
+          case call_data[:data].dig("Envelope", "Body", "SubmitPolicyResponse", "SubmitPolicyResult", "SubmissionState")
+            when 'Scheduled'
+              # it worked! yay and hooray! let the jubilation begin!!!
+            when 'UnexpectedError'
+              call_data[:error] = true
+              call_data[:message] = "Request failed externally"
+              call_data[:external_message] = call_data[:data].dig("Envelope", "Body", "SubmitPolicyResponse", "SubmitPolicyResult", "SubmissionStateDescription")
+              call_data[:code] = 400 # the actual Response object gives code 200, what the heck?
+            else
+              call_data[:error] = true
+              call_data[:message] = "Request failed externally"
+              call_data[:external_message] = "No state description submitted"
+              call_data[:code] = 400
           end
         end
-      end
+      when :create_lead, :update_lead
+        begin
+          call_data[:response] = HTTParty.post(endpoint_for(self.action),
+            body: message_content,
+            headers: {
+              'Content-Type' => 'application/json'
+            },
+            ssl_version: :TLSv1_2
+          )
+        rescue StandardError => e
+          call_data = {
+            error: true,
+            code: 500,
+            message: 'Request Timeout',
+            response: e
+          }
+          puts "\nERROR\n"
+        end
+        # handle response
+        if call_data[:error]
+          puts 'ERROR ERROR ERROR'.red
+          pp call_data
+        else
+          call_data[:code] = call_data[:response].code
+          case self.action
+            when :create_lead
+              if call_data[:code] != 200
+                call_data[:error] = true
+                call_data[:message] = "Request failed externally"
+                call_data[:external_message] = call_data[:response].parsed_response&.dig("error", "user_msg")
+              end
+            when :update_lead
+              if call_data[:code] != 200
+                call_data[:error] = true
+                call_data[:message] = "Request failed externally"
+                call_data[:external_message] = case call_data[:response].code
+                  when 404;   "Lead not found"
+                  when 422;   "Mediacode is invalid"
+                  when 1001;  "Lead update contains invalid data"
+                  when 1003;  "Lead outside updateable time range"
+                  else;       "Unknown Error"
+                end
+              end
+          end
+        end
     end
     # scream to the console for the benefit of any watchers
     display_status = call_data[:error] ? 'ERROR' : 'SUCCESS'
@@ -172,7 +193,7 @@ class ConfieService
     return call_data
   end
 
-  def build_lead_info(
+  def build_create_lead(
     id:,
     mediacode:,
     status:,
@@ -181,7 +202,7 @@ class ConfieService
   )
     # put the request together
     address = user.address
-    self.action = :lead_info
+    self.action = :create_lead
     self.errors = nil
     self.message_content = {
       id: id.to_s,
@@ -189,11 +210,11 @@ class ConfieService
       data: {
         lead: {
           gc_status: ConfieService::STATUS_MAP[status],
-          jornaya_lead_id: "8197cd0c-ff37-650b-0e7c-test",
-          jornaya_lead_provider_code: "8197cd0c-ff37-650b-0e7c-test",
+          jornaya_lead_id: ENV['RAILS_ENV'] == 'production' ? nil : "8197cd0c-ff37-650b-0e7c-test",
+          jornaya_lead_provider_code: ENV['RAILS_ENV'] == 'production' ? nil : "8197cd0c-ff37-650b-0e7c-test",
           id_lead: user.id.to_s,
           date_partner: "#{ Time.now.strftime('%Y-%m-%d') }"
-        },
+        }.compact,
         client: {
           first_name: user.profile.first_name,
           last_name: user.profile.last_name,
@@ -209,12 +230,29 @@ class ConfieService
         }
       }
     }.merge(get_auth_json).to_json
-
-    puts self.message_content.to_json
-
     return errors.blank?
   end
 
+  def build_update_lead(
+    id:,
+    mediacode:,
+    status:,
+    **compilation_args
+  )
+    # put the request together
+    self.action = :update_lead
+    self.errors = nil
+    self.message_content = {
+      id: id.to_s,
+      mediacode: mediacode&.to_s,
+      data: {
+        lead: {
+          gc_status: ConfieService::STATUS_MAP[status]
+        }
+      }
+    }.compact.merge(get_auth_json).to_json
+    return errors.blank?
+  end
 
   def build_online_policy_sale(
     policy:,
