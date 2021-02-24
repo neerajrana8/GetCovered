@@ -192,7 +192,7 @@ class ConfieService
               if call_data[:code] != 200
                 call_data[:error] = true
                 call_data[:message] = "Request failed externally"
-                call_data[:external_message] = call_data[:response].parsed_response&.dig("error", "user_msg")
+                #call_data[:external_message] = call_data[:response].parsed_response&.dig("error", "user_msg")
               end
             when :update_lead
               if call_data[:code] != 200
