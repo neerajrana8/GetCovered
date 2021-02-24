@@ -23,12 +23,12 @@ module V2
         sub_agencies = agency.agencies.select(required_fields)
 
         result << if sub_agencies.any?
-                    sub_agencies_attr = sub_agencies.map{|el| el.attributes.merge("branding_profiles"=> el.branding_profiles.map{|bp| {id: bp.id, url: bp.formatted_url}})}
+                    sub_agencies_attr = sub_agencies.map{|el| el.attributes.merge("branding_profiles"=> el.branding_profiles.map{|bp| {id: bp.id, url: bp.formatted_url, agency_id: el.id}})}
                     agency_attr = agency.attributes.reverse_merge("agencies"=> sub_agencies_attr)
-                    agency_attr.merge("branding_profiles"=> agency.branding_profiles.map{|bp| {id: bp.id, url: bp.formatted_url}})
+                    agency_attr.merge("branding_profiles"=> agency.branding_profiles.map{|bp| {id: bp.id, url: bp.formatted_url, agency_id: agency.id}})
                   else
                     agency_attr = agency.attributes
-                    agency_attr.merge("branding_profiles"=> agency.branding_profiles.map{|bp| {id: bp.id, url: bp.formatted_url}})
+                    agency_attr.merge("branding_profiles"=> agency.branding_profiles.map{|bp| {id: bp.id, url: bp.formatted_url, agency_id: agency.id}})
                   end
 
         render json: result.to_json
