@@ -158,11 +158,13 @@ module V2
 
       def validate_password_changing
         if update_params[:password].present? && !@staff.valid_password?(params[:staff][:current_password])
-          render json: standard_error(
-                         :wrong_current_password,
-                         I18n.t('devise_token_auth.passwords.missing_current_password')
-                       ),
-                 status: :unprocessable_entity
+          error_object =
+            if @staff.invitation_accepted?
+              standard_error(:wrong_current_password, I18n.t('devise_token_auth.passwords.missing_current_password'))
+            else
+              standard_error(:invitation_was_not_accepted, 'Invitation was not accepted')
+            end
+          render json: error_object, status: :unprocessable_entity
         end
       end
     end
