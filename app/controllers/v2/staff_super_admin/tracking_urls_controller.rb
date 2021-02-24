@@ -76,7 +76,7 @@ module V2
 
         to_return = params.require(:tracking_url).permit(
             :landing_page, :campaign_source, :campaign_medium,
-            :campaign_name, :campaign_term, :campaign_content, :agency_id
+            :campaign_name, :campaign_term, :campaign_content, :agency_id, :branding_profile_id
         )
         to_return
       end
