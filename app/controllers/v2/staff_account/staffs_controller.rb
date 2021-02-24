@@ -8,6 +8,7 @@ module V2
       include StaffsMethods
       
       before_action :set_staff, only: %i[update show toggle_enabled re_invite]
+      before_action :validate_password_changing, only: %i[update]
             
       def index
         super(:@staffs, current_staff.organizable.staff, :profile)
@@ -98,10 +99,14 @@ module V2
         return({}) if params[:staff].blank?
 
         params.require(:staff).permit(
-          notification_options: {}, settings: {},
-          profile_attributes: %i[id
-                                 birth_date contact_email contact_phone first_name
-                                 job_title last_name middle_name suffix title]
+          :email, :password, :password_confirmation,
+          notification_options: {},
+          settings: {},
+          staff_permission_attributes: [permissions: {}],
+          profile_attributes: %i[
+            id birth_date contact_email contact_phone first_name
+            job_title last_name middle_name suffix title
+          ]
         )
       end
         
@@ -127,6 +132,16 @@ module V2
 
       def supported_orders
         supported_filters(true)
+      end
+
+      def validate_password_changing
+        if update_params[:password].present? && !@staff.valid_password?(params[:staff][:current_password])
+          render json: standard_error(
+                         :wrong_current_password,
+                         I18n.t('devise_token_auth.passwords.missing_current_password')
+                       ),
+                 status: :unprocessable_entity
+        end
       end
     end
   end # module StaffAccount
