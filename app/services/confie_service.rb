@@ -33,7 +33,7 @@ class ConfieService
     event.status = result[:error] ? 'error' : 'success'
     event.save
     return "Request resulted in error" if result[:error]
-    media_code = result[:response].parsed_response.dig("data", "media_code")
+    media_code = (result[:response].parsed_response.dig("data", "media_code") rescue nil)
     unless media_code.blank?
       application.update(tagging_data: (application.tagging_data || {}).merge('confie_mediacode' => media_code.to_s))
     end
@@ -192,7 +192,7 @@ class ConfieService
               if call_data[:code] != 200
                 call_data[:error] = true
                 call_data[:message] = "Request failed externally"
-                #call_data[:external_message] = call_data[:response].parsed_response&.dig("error", "user_msg")
+                call_data[:external_message] = (call_data[:response].parsed_response&.dig("error", "user_msg") rescue nil)
               end
             when :update_lead
               if call_data[:code] != 200
