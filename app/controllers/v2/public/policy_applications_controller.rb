@@ -467,7 +467,7 @@ module V2
                          status: 500
                 elsif @quote.status == "quoted"
                   # create Confie lead if necessary
-                  ::ConfieService.create_confie_lead(@application) if @application.carrier_id == ::ConfieService.carrier_id
+                  ::ConfieService.create_confie_lead(@application) if @application.agency_id == ::ConfieService.agency_id
                   # perform final setup
                   @application.primary_user.set_stripe_id
                   sign_in_primary_user(@application.primary_user)
