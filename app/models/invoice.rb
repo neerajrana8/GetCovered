@@ -242,6 +242,7 @@ class Invoice < ApplicationRecord
   end
   
   def process_reductions
+    return if self.pending_charge_count > 0 || self.pending_dispute_count > 0
     self.with_payment_lock do |line_item_array|
       return if self.pending_charge_count > 0 || self.pending_dispute_count > 0
       lirs = self.line_item_reductions.pending.order(dispute_resolution: :desc, created_at: :asc).group_by{|lir| lir.line_item }
@@ -264,7 +265,7 @@ class Invoice < ApplicationRecord
               to_reduce = 0 if to_reduce < 0
               li.total_due -= to_reduce
               lir.amount_successful += to_reduce
-              raise ActiveRecord::Rollback unless to_reduce == 0 || !li.line_item_changes.create(field_changed: 'total_due', amount: to_reduce, reason: lir).id.nil?
+              raise ActiveRecord::Rollback unless to_reduce == 0 || !li.line_item_changes.create(field_changed: 'total_due', amount: to_reduce, reason: lir, proration_interaction: lir.proration_interaction).id.nil?
               total_due_change -= to_reduce
               # total_received changes
               to_unpay = [to_reduce, li.total_received - li.total_due].min
@@ -286,7 +287,7 @@ class Invoice < ApplicationRecord
               to_reduce = [lir.amount - lir.amount_successful, li.total_due - li.total_received].min
               to_reduce = 0 if to_reduce < 0
               li.total_due -= to_reduce
-              raise ActiveRecord::Rollback unless to_reduce == 0 || !li.line_item_changes.create(field_changed: 'total_due', amount: to_reduce, reason: lir).id.nil?
+              raise ActiveRecord::Rollback unless to_reduce == 0 || !li.line_item_changes.create(field_changed: 'total_due', amount: to_reduce, reason: lir, proration_interaction: lir.proration_interaction).id.nil?
               lir.amount_successful += to_reduce
               total_due_change -= to_reduce
           end

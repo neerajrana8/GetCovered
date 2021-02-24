@@ -207,6 +207,7 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
     create_table :line_item_change do |t|
       t.integer     :field_changed, null: false                         # which field was changed (total_due or total_received)
       t.integer     :amount, null: false                                # the change to line_item.total_received (positive or negative)
+#      t.integer     :proration_interaction                              # How we interact with any future prorations (only used when field_changed is total_due)
       t.boolean     :handled, null: false, default: false               # whether a handler has handled this LIC (we could just use !lic.handler.nil?, but this is cleaner)
       t.references  :line_item                                          # the LineItem
       t.references  :reason, polymorphic: true                          # the reason for this change (a StripeCharge object, for example)

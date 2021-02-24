@@ -9,7 +9,8 @@ class LineItemReduction < ApplicationRecord
   has_one :invoice,
     through: :line_item
   
-  before_create :shift_due_to_reducing,
+  before_create :update_associated_models
+  after_commit :attempt_immediate_processing
 
   scope :pending, -> { where(pending: true) }
   
@@ -29,9 +30,10 @@ class LineItemReduction < ApplicationRecord
     fraudulent: 2
   }
   
-  def shift_due_to_reducing
+  def update_associated_models
     error_message = nil
     ActiveRecord::Base.transaction do
+      # move the invoice and line item totals into the reducing column (so that admins know the total that currently applies, and so that in multiple payment situations the user doesn't overpay & force us to issue a refund unnecessarily)
       self.invoice.lock!
       self.line_item.lock!
       to_shift = [self.amount, self.invoice.total_due, self.line_item.total_due].min
@@ -40,11 +42,22 @@ class LineItemReduction < ApplicationRecord
         error_message = "failed to be added to invoice/line item total_reducing values"
         raise ActiveRecord::Rollback
       end
+      # if a PolicyPremiumItem is involved & we reduce the proratable total, tell it that the proratable total is in a state of flux
+      if self.proration_interaction == 'reduced' && self.line_item.chargeable_type == 'PolicyPremiumItemPaymentTerm'
+        ppi = self.line_item.chargeable.policy_premium_item
+        ppi.lock!
+        ppi.update(preproration_modifiers: ppi.preproration_modifiers + 1)
+      end
     end
     unless error_message.nil?
       self.errors.add(:amount, error_message)
       throw(:abort)
     end
+  end
+  
+  def attempt_immediate_processing
+    # if there are pending charges/disputes, this will return without doing anything; if there aren't, it will go ahead and fully process this reduction
+    self.invoice.process_reductions
   end
 
 end
