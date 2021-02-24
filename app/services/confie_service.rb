@@ -47,7 +47,10 @@ class ConfieService
     },
     create_lead: {
       format: 'json',
-      endpoint: Rails.application.credentials.confie[:lead_uri][:create][ENV['RAILS_ENV'].to_sym]
+      endpoint: [
+        Rails.application.credentials.confie[:lead_uri][:create][ENV['RAILS_ENV'].to_sym],
+        Rails.application.credentials.confie[:partner_password_key][ENV['RAILS_ENV'].to_sym]
+      ].map{|v| v.chomp('/') }.join('/')
     },
     update_lead: {
       format: 'json',
