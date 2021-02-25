@@ -60,6 +60,14 @@ module Leads
       leads.not_converted.count
     end
 
+    def customers(leads)
+      leads.converted.count
+    end
+
+    def visitors(leads)
+      leads.count
+    end
+
     def applications(leads)
       leads.not_converted.where.not(last_visited_page: [Lead::PAGES_RENT_GUARANTEE[0], Lead::PAGES_RESIDENTIAL[0]]).count
     end
@@ -69,7 +77,10 @@ module Leads
     end
 
     def conversions(leads)
-      leads.converted.count
+      leads.converted.
+        joins(user: :policies).
+        where(policies: { created_at: params[:filter][:last_visit] }).
+        count
     end
 
     #need to add validation
