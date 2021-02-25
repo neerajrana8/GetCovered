@@ -247,16 +247,16 @@ class ConfieService
           last_name: user.profile.last_name,
           phone: user.profile.contact_phone,
           email: user.email,
-          gender: user.profile.gender,
+          gender: {'male'=>'male','female'=>'female','other'=>'non-binary'}[user.profile.gender],
           zipcode: address.nil? ? nil : user.address.zip_code,
           middle_name: user.profile.middle_name,
           address: address.nil? ? nil : address.combined_street_address,
           apt_suite: address.nil? ? nil : address.street_two,
           birth_date: user.profile.birth_date.strftime('%Y-%m-%d'),
           birth_month: user.profile.birth_date.strftime('%m')
-        }
+        }.compact
       }
-    }.merge(get_auth_json).to_json
+    }.to_json # no auth here apparently... merge(get_auth_json).to_json
     return errors.blank?
   end
 
