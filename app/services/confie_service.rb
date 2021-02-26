@@ -21,6 +21,7 @@ class ConfieService
     cs = ::ConfieService.new
     return "Failed to build create_lead request" unless cs.build_request(:create_lead,
       user: application.primary_user,
+      lead_id: application.id,
       #address: application.primary_address # leaving disabled for now; will default to user.address instead
       line_breaks: true
     )
@@ -223,8 +224,8 @@ class ConfieService
 
   def build_create_lead(
     user:,
+    lead_id:,
     address: user.address,
-    lead_id: user.id,
     **compilation_args
   )
     if address.nil?
@@ -235,27 +236,25 @@ class ConfieService
     self.action = :create_lead
     self.errors = nil
     self.message_content = {
-      #data: {
-        lead: {
-          jornaya_lead_id: ENV['RAILS_ENV'] == 'production' ? nil : "8197cd0c-ff37-650b-0e7c-test",
-          jornaya_lead_provider_code: ENV['RAILS_ENV'] == 'production' ? nil : "8197cd0c-ff37-650b-0e7c-test",
-          id_lead: lead_id.to_s,
-          date_partner: "#{ Time.now.strftime('%Y-%m-%d') }"
-        }.compact,
-        client: {
-          first_name: user.profile.first_name,
-          last_name: user.profile.last_name,
-          phone: user.profile.contact_phone,
-          email: user.email,
-          gender: {'male'=>'male','female'=>'female','other'=>'non-binary'}[user.profile.gender],
-          zipcode: address.nil? ? nil : user.address.zip_code,
-          middle_name: user.profile.middle_name,
-          address: address.nil? ? nil : address.combined_street_address,
-          apt_suite: address.nil? ? nil : address.street_two,
-          birth_date: user.profile.birth_date.strftime('%Y-%m-%d'),
-          birth_month: user.profile.birth_date.strftime('%m')
-        }.compact
-      #}
+      lead: {
+        jornaya_lead_id: ENV['RAILS_ENV'] == 'production' ? nil : "8197cd0c-ff37-650b-0e7c-test",
+        jornaya_lead_provider_code: ENV['RAILS_ENV'] == 'production' ? nil : "8197cd0c-ff37-650b-0e7c-test",
+        id_lead: lead_id.to_s,
+        date_partner: "#{ Time.now.strftime('%Y-%m-%d') }"
+      }.compact,
+      client: {
+        first_name: user.profile.first_name,
+        last_name: user.profile.last_name,
+        phone: user.profile.contact_phone,
+        email: user.email,
+        gender: {'male'=>'male','female'=>'female','other'=>'non-binary'}[user.profile.gender],
+        zipcode: address.nil? ? nil : user.address.zip_code,
+        middle_name: user.profile.middle_name,
+        address: address.nil? ? nil : address.combined_street_address,
+        apt_suite: address.nil? ? nil : address.street_two,
+        birth_date: user.profile.birth_date.strftime('%Y-%m-%d'),
+        birth_month: user.profile.birth_date.strftime('%m')
+      }.compact
     }.to_json # no auth here apparently... merge(get_auth_json).to_json
     return errors.blank?
   end
