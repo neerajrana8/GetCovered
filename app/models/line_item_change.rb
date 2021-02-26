@@ -73,7 +73,7 @@ class LineItemChange < ApplicationRecord
               # create the commission item
               created = ::CommissionItem.create(
                 amount: self.amount,
-                commission: ::Commission.collating_commission_for(ppi.recipient), # MOOSE WARNING WHAT IS THIS
+                commission: ::Commission.collating_commission_for(ppi.recipient),
                 commissionable: ppi,
                 policy: ppi.policy_quote.policy
               )
