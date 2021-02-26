@@ -170,8 +170,8 @@ class ConfieService
       when :create_lead, :update_lead
         begin
           call_data[:response] = HTTParty.post(endpoint_for(self.action),
-            body: message_content,
-            headers: {
+            body: self.action == :create_lead ? "data=#{message_content}" : message_content,
+            headers: self.action == :create_lead ? {} : {
               'Content-Type' => 'application/json'
             },
             ssl_version: :TLSv1_2
@@ -235,7 +235,7 @@ class ConfieService
     self.action = :create_lead
     self.errors = nil
     self.message_content = {
-      data: {
+      #data: {
         lead: {
           jornaya_lead_id: ENV['RAILS_ENV'] == 'production' ? nil : "8197cd0c-ff37-650b-0e7c-test",
           jornaya_lead_provider_code: ENV['RAILS_ENV'] == 'production' ? nil : "8197cd0c-ff37-650b-0e7c-test",
@@ -255,7 +255,7 @@ class ConfieService
           birth_date: user.profile.birth_date.strftime('%Y-%m-%d'),
           birth_month: user.profile.birth_date.strftime('%m')
         }.compact
-      }
+      #}
     }.to_json # no auth here apparently... merge(get_auth_json).to_json
     return errors.blank?
   end
