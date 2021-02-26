@@ -74,7 +74,7 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
     create_table :policy_premium_item_payment_term do |t|
       t.integer :weight, null: false                                    # the weight assigned to this payment term for calculating total due
       t.integer :preproration_total_due                                 # the amount due before any prorations MOOSE WARNING: no validations
-      t.integer :duplicatable_reductions                                # the total of all reductions with proration_interaction 'duplicated'
+      t.integer :duplicatable_reduction_total                           # the total of all reductions with proration_interaction 'duplicated'
       t.integer :term_start_reduction                                   # the amount reduced from the beginning of the term (we prorate this last when prorating based on a last start date change)
       t.integer :term_end_reduction                                     # the amount reduced from the end of the term (we prorate this last when prorating based on a fist start date change)
       t.references :policy_premium_payment_term
@@ -142,8 +142,6 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
       t.integer     :total_due, null: false                             # the total due now (i.e. original_total_due minus refunds plus increases)
       t.integer     :total_reducing, null: falsee, default: 0           # the amount subtracted from total_due by pending LineItemReductions
       t.integer     :total_received, null: false, default: 0            # the amount received towards payment of total_due
-      t.integer     :total_processed, null: false, default: 0           # the amount of total_received that has been taken into account already by the commissions system
-      t.boolean     :all_processed: null: false, default: false         # true if the commissions system has handled this line item completely & need not pay attention to it for now (more precisely, true if total_processed == total_received)
       # references
       t.references  :chargeable, polymorphic: true                      # will be a PolicyPremiumItemTerm right now, but could be anything
       t.references  :invoice                                            # the invoice to which this LineItem belongs

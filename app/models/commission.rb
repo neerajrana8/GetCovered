@@ -25,6 +25,11 @@ class Commission < ApplicationRecord
     manual: 1
   }
   
+  # Public Class Methods
+  def self.collating_commission_for(recipient)
+    ::Commission.find_or_create_by(recipient: recipient, status: 'collating')
+  end
+  
   # Public Instance Methods
   def separate_for_approval(which_items = self.commission_items, negative_payout: false)
     return { success: false, error: "Cannot separate an empty list of commission items" } if which_items.blank?

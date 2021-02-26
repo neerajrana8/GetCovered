@@ -265,7 +265,7 @@ class Invoice < ApplicationRecord
               to_reduce = 0 if to_reduce < 0
               li.total_due -= to_reduce
               lir.amount_successful += to_reduce
-              raise ActiveRecord::Rollback unless to_reduce == 0 || !li.line_item_changes.create(field_changed: 'total_due', amount: to_reduce, reason: lir, proration_interaction: lir.proration_interaction).id.nil?
+              raise ActiveRecord::Rollback unless to_reduce == 0 || !li.line_item_changes.create(field_changed: 'total_due', amount: -to_reduce, reason: lir, proration_interaction: lir.proration_interaction).id.nil?
               total_due_change -= to_reduce
               # total_received changes
               to_unpay = [to_reduce, li.total_received - li.total_due].min
@@ -274,7 +274,7 @@ class Invoice < ApplicationRecord
                 li.total_received -= to_unpay
                 total_received_change -= to_unpay
                 # lic
-                raise ActiveRecord::Rollback unless to_unpay == 0 || !li.line_item_changes.create(field_changed: 'total_received', amount: to_unpay, reason: lir).id.nil?
+                raise ActiveRecord::Rollback unless to_unpay == 0 || !li.line_item_changes.create(field_changed: 'total_received', amount: -to_unpay, reason: lir).id.nil?
                 # lir
                 refund_object ||= refund.create
                 raise ActiveRecord::Rollback if refund_object.id.nil?
@@ -287,7 +287,7 @@ class Invoice < ApplicationRecord
               to_reduce = [lir.amount - lir.amount_successful, li.total_due - li.total_received].min
               to_reduce = 0 if to_reduce < 0
               li.total_due -= to_reduce
-              raise ActiveRecord::Rollback unless to_reduce == 0 || !li.line_item_changes.create(field_changed: 'total_due', amount: to_reduce, reason: lir, proration_interaction: lir.proration_interaction).id.nil?
+              raise ActiveRecord::Rollback unless to_reduce == 0 || !li.line_item_changes.create(field_changed: 'total_due', amount: -to_reduce, reason: lir, proration_interaction: lir.proration_interaction).id.nil?
               lir.amount_successful += to_reduce
               total_due_change -= to_reduce
           end
