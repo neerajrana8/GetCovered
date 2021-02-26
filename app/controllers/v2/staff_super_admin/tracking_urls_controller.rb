@@ -23,12 +23,12 @@ module V2
         @agencies.select(required_fields).each do |agency|
           branding_profiles = agency.branding_profiles.order("url asc").to_a
           sub_agencies = agency.agencies.select(required_fields)
-          sub_agencies_attr = sub_agencies.map{|sa| sa.branding_profiles.map{|bp| sa.attributes.merge("branding_url" => bp.formatted_url) } }
+          sub_agencies_attr = sub_agencies.map{|sa| sa.branding_profiles.map{|bp| sa.attributes.merge(branding_profile_id: bp.id, branding_url: bp.formatted_url) } }
                                           .flatten.sort_by{|hash| hash["branding_url"] }
-          result << agency.attributes.merge({ "branding_url"=> branding_profiles.first.formatted_url })
+          result << agency.attributes.merge(branding_profile_id: branding_profiles.first.id, branding_url: branding_profiles.first.formatted_url)
                                      .merge(sub_agencies_attr.blank? ? {} : { "agencies" => sub_agencies_attr })
           branding_profiles.drop(1).each do |branding_profile|
-            result << agency.attributes.merge("branding_url" => branding_profile.formatted_url)
+            result << agency.attributes.merge(branding_profile_id: branding_profile.id, branding_url: branding_profile.formatted_url)
           end
         end
 
@@ -76,7 +76,7 @@ module V2
 
         to_return = params.require(:tracking_url).permit(
             :landing_page, :campaign_source, :campaign_medium,
-            :campaign_name, :campaign_term, :campaign_content, :agency_id
+            :campaign_name, :campaign_term, :campaign_content, :agency_id, :branding_profile_id
         )
         to_return
       end

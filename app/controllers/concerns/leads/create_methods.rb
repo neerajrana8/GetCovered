@@ -25,7 +25,7 @@ module Leads
       tracking_url = TrackingUrl.find_by(landing_page: unescape_param(tracking_url_params["landing_page"]), campaign_source: unescape_param(tracking_url_params["campaign_source"]),
                                          campaign_medium: unescape_param(tracking_url_params["campaign_medium"]), campaign_term: unescape_param(tracking_url_params["campaign_term"]),
                                          campaign_content: unescape_param(tracking_url_params["campaign_content"]), campaign_name: unescape_param(tracking_url_params["campaign_name"]),
-                                         agency_id: agency.id) if tracking_url_params.present?
+                                         branding_profile_id: tracking_url_params["branding_profile_id"]) if tracking_url_params.present?
 
       @klaviyo_helper.lead = @lead if @lead.present?
 
@@ -114,7 +114,7 @@ module Leads
       if params[:tracking_url].present?
         params.
             require(:tracking_url).
-            permit(%i[landing_page campaign_source campaign_medium campaign_term campaign_content campaign_name])
+            permit(%i[landing_page campaign_source campaign_medium campaign_term campaign_content campaign_name branding_profile_id])
       end
     end
 

@@ -20,24 +20,46 @@ module V2
         #check duplicates in totals?
         super(:@leads, @substrate, :profile, :tracking_url)
 
-        @stats = {site_visits: site_visits(@leads), leads: leads(@leads), applications: applications(@leads),
-                  not_finished_applications: not_finished_applications(@leads), conversions: conversions(@leads)}
+        @stats = {
+          site_visits: site_visits(@leads),
+          leads: leads(@leads),
+          applications: applications(@leads),
+          not_finished_applications: not_finished_applications(@leads),
+          conversions: conversions(@leads),
+          visitors: visitors(@leads),
+          customers: customers(@leads)
+        }
+
         @stats_by = {}
 
         if filter_by_day?(start_date, end_date)
           start_date.upto(end_date) do |date|
             params[:filter][:last_visit] = Date.parse("#{date}").all_day
             super(:@leads_by_day, @substrate, :profile, :tracking_url)
-            @stats_by["#{date}"] = {site_visits: site_visits(@leads_by_day), leads: leads(@leads_by_day), applications: applications(@leads_by_day),
-                                    not_finished_applications: not_finished_applications(@leads_by_day), conversions: conversions(@leads_by_day)}
+            @stats_by["#{date}"] = {
+              site_visits: site_visits(@leads_by_day),
+              leads: leads(@leads_by_day),
+              applications: applications(@leads_by_day),
+              not_finished_applications: not_finished_applications(@leads_by_day),
+              conversions: conversions(@leads_by_day),
+              visitors: visitors(@leads_by_day),
+              customers: customers(@leads_by_day)
+            }
           end
 
         else
           while start_date < end_date
             params[:filter][:last_visit] = start_date.all_month
             super(:@leads_by_month, @substrate, :profile, :tracking_url)
-            @stats_by["#{start_date.end_of_month}"] = {site_visits: site_visits(@leads_by_month), leads: leads(@leads_by_month), applications: applications(@leads_by_month),
-                                                       not_finished_applications: not_finished_applications(@leads_by_month), conversions: conversions(@leads_by_month)}
+            @stats_by["#{start_date.end_of_month}"] = {
+              site_visits: site_visits(@leads_by_month),
+              leads: leads(@leads_by_month),
+              applications: applications(@leads_by_month),
+              not_finished_applications: not_finished_applications(@leads_by_month),
+              conversions: conversions(@leads_by_month),
+              visitors: visitors(@leads_by_month),
+              customers: customers(@leads_by_month)
+            }
             start_date += 1.month
           end
         end
