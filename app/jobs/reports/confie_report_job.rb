@@ -8,7 +8,7 @@ module Reports
       @policy_applications.each do |pa|
         next if pa.tagging_data.nil? || pa.tagging_data['confie_mediacode'].nil?
         if cs.build_request(:update_lead,
-          id: pa.id,
+          id: pa.id.to_s,
           status: pa.status,
           mediacode: pa.tagging_data['confie_mediacode'],
           line_breaks: true
