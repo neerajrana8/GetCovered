@@ -261,7 +261,9 @@ class Invoice < ApplicationRecord
           case lir.refundability
             when 'dispute_resolution', 'cancel_or_refund'
               # total_due changes
-              to_reduce = [lir.amount - lir.amount_successful, li.total_due].min
+              to_reduce = lir.amount_interpretation == 'max_amount_to_reduce' ?
+                [lir.amount - lir.amount_successful, li.total_due].min
+                : li.total_due - lir.amount
               to_reduce = 0 if to_reduce < 0
               li.total_due -= to_reduce
               lir.amount_successful += to_reduce
@@ -284,7 +286,9 @@ class Invoice < ApplicationRecord
               end
             when 'cancel_only'
               # total_due changes
-              to_reduce = [lir.amount - lir.amount_successful, li.total_due - li.total_received].min
+              to_reduce = lir.amount_interpretation == 'max_amount_to_reduce' ?
+                [lir.amount - lir.amount_successful, li.total_due - li.total_received].min
+                : [li.total_due - lir.amount, li.total_due - li.total_received].min
               to_reduce = 0 if to_reduce < 0
               li.total_due -= to_reduce
               raise ActiveRecord::Rollback unless to_reduce == 0 || !li.line_item_changes.create(field_changed: 'total_due', amount: -to_reduce, reason: lir, proration_interaction: lir.proration_interaction).id.nil?

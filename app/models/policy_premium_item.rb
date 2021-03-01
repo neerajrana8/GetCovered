@@ -35,17 +35,6 @@ class PolicyPremiumItem < ApplicationRecord
   validates_inclusion_of :proration_refunds_allowed, in: [true, false]
   validates_inclusion_of :preprocessed, in: [true, false]
   
-  
-  # Useful constants
-  ProrationCalculationChargeOrder = [   # the order in which to apply charges to line items, based on proration_calculation (refunds occur in reverse)
-    'cancel_or_refund_nothing',
-    'cancel_terms_exclusive',
-    'cancel_or_refund_terms_exclusive',
-    'prorate_per_term',
-    'prorate_from_total',
-    'cancel_or_refund_terms_inclusive'
-  ]
-  
   # Enums etc.
   enum category: {
     fee: 0,
@@ -63,9 +52,9 @@ class PolicyPremiumItem < ApplicationRecord
   enum proration_calculation: {   # prorations cancel future payments; if proration_refunds_allowed is true, they can also refund past payments
     no_proration: 0,              # cancel/refund no payments on policy cancellation
     per_payment_term: 1,          # cancel/refund individual payment terms in proportion to the amount of the term cancelled
-    per_total: 2,                 # cancel/refund everything in proportion to the amount of the total active policy duration cancelled (i.e. total cancelled amount will be unaffected by how payments were distributed over payment terms)
-    payment_term_exclusive: 3,    # cancel/refund every payment term falling completely after the new policy last date
-    payment_term_inclusive: 4     # cancel/refund every payment term any portion of which falls after the new policy last date
+    payment_term_exclusive: 2,    # cancel/refund every payment term falling completely after the new policy last date
+    payment_term_inclusive: 3,    # cancel/refund every payment term any portion of which falls after the new policy last date
+    #per_total: 4                 # NOT IMPLEMENTED FOR NOW SINCE NOT USED. cancel/refund everything in proportion to the amount of the total active policy duration cancelled (i.e. total cancelled amount will be unaffected by how payments were distributed over payment terms)
   }
   
   # Public Class Methods
@@ -114,38 +103,83 @@ class PolicyPremiumItem < ApplicationRecord
         title: self.title,
         original_total_due: pt.original_total_due,
         total_due: pt_original_total_due,
-        total_received: 0,
-        total_processed: 0
+        total_received: 0
       )
     end
   end
   
   def apply_proration
-    return unless self.proration_pending && self.preproration_modifiers == 0 && self.policy_premium.prorated
-    # MOOSE WARNING: apply the proration here
+    return nil unless self.proration_pending && self.preproration_modifiers == 0 && self.policy_premium.prorated
+    error_message = nil
     ActiveRecord::Base.transaction(requires_new: true) do
       # lock our bois
       invoice_array = ::Invoice.where(id: self.line_items.map{|li| li.invoice_id }).order(id: :asc).lock.to_a
       line_item_array = self.line_items.order(id: :asc).lock.to_a
       self.lock!
-      # flee if there's an issue (yes, this is repeated; we checked at first in the hopes of avoiding locking overhead, now we are checking for real, within the lock
-      return unless self.proration_pending && self.proration_modifiers == 0
+      # flee if there's an issue (yes, this is redundant; we checked at first in the hopes of avoiding locking overhead, now we are checking for real, within the lock
+      return nil unless self.proration_pending && self.proration_modifiers == 0
       # apply the proration
       case self.proration_calculation
         when 'no_proration'
           # woohoo, we're done!
+        # NOT IMPLEMENTED FOR NOW SINCE NOT USED. when 'per_total'
         when 'per_payment_term'
-        when 'per_total'
+          terms = self.policy_premium_item_payment_terms.references(:policy_premium_payment_terms).includes(:policy_premium_payment_term)
+                                                        .references(:line_items).includes(:line_item)
+                                                        .where(policy_premium_payment_terms: { prorated: true })
+          terms.each do |ppipt|
+            created = ppipt.line_item.line_item_reductions.create(
+              reason: "Proration Adjustment",
+              amount_interpretation: 'max_total_after_reduction',
+              amount: [(ppipt.policy_premium_payment_term.unprorated_proportion * ppipt.preproration_total_due).ceil - ppipt.duplicatable_reduction_total, 0].max,
+              # MOOSE WARNING: the above handling of amount presents a potential problem... because we don't increment preproration_modifiers for duplicatable reductions... it could change after we are issued but before we are executed...
+              refundability: self.proration_refunds_allowed ? 'cancel_or_refund' : 'cancel_only',
+              proration_interaction: 'shared'
+            )
+            unless created.id
+              error_message = "Failed to create LineItemReduction for LineItem ##{ppipt.line_item_id}; errors: #{created.errors.to_h}"
+              raise ActiveRecord::rollback
+            end
+          end
         when 'payment_term_exclusive'
+          terms = self.policy_premium_item_payment_terms.references(:policy_premium_payment_terms).includes(:policy_premium_payment_term)
+                                                        .references(:line_items).includes(:line_item)
+                                                        .where(policy_premium_payment_terms: { prorated: true })
+                                                        .select{|ppit| !ppit.policy_premium_payment_term.intersects?(self.policy_premium.prorated_first_moment, self.policy_premium.prorated_last_moment) }
+          terms.each do |ppipt|
+            created = ppipt.line_item.line_item_reductions.create(
+              reason: "Proration Adjustment",
+              amount_interpretation: 'max_total_after_reduction',
+              amount: 0,
+              refundability: self.proration_refunds_allowed ? 'cancel_or_refund' : 'cancel_only',
+              proration_interaction: 'shared'
+            )
+            unless created.id
+              error_message = "Failed to create LineItemReduction for LineItem ##{ppipt.line_item_id}; errors: #{created.errors.to_h}"
+              raise ActiveRecord::rollback
+            end
+          end
         when 'payment_term_inclusive'
           terms = self.policy_premium_item_payment_terms.references(:policy_premium_payment_terms).includes(:policy_premium_payment_term)
+                                                        .references(:line_items).includes(:line_item)
                                                         .where(policy_premium_payment_terms: { prorated: true })
-                                                        .select{|ppit| ppit.policy_premium_payment_term.intersects?(self.policy_premium.prorated_first_moment, self.policy_premium.prorated_last_moment) }
-          term_ids = terms.map{|t| t.id }
-          lis = line_item_array.select{|lia| lia.chargeable_type == 'PolicyPremiumItemPaymentTerm' && term_ids.include?(lia.chargeable_id) }
-          
+                                                        .select{|ppit| !ppit.policy_premium_payment_term.is_contained_in?(self.policy_premium.prorated_first_moment, self.policy_premium.prorated_last_moment) }
+          terms.each do |ppipt|
+            created = ppipt.line_item.line_item_reductions.create(
+              reason: "Proration Adjustment",
+              amount_interpretation: 'max_total_after_reduction',
+              amount: 0,
+              refundability: self.proration_refunds_allowed ? 'cancel_or_refund' : 'cancel_only',
+              proration_interaction: 'shared'
+            )
+            unless created.id
+              error_message = "Failed to create LineItemReduction for LineItem ##{ppipt.line_item_id}; errors: #{created.errors.to_h}"
+              raise ActiveRecord::rollback
+            end
+          end
       end
     end
+    return error_message
   end
   
   private

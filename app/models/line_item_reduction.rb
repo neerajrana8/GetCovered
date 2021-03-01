@@ -14,6 +14,10 @@ class LineItemReduction < ApplicationRecord
 
   scope :pending, -> { where(pending: true) }
   
+  enum amount_interpretation: {
+    max_amount_to_reduce: 0,
+    max_total_after_reduction: 1
+  }
   enum refundability: { # these are ordered descending during processing by Invoice#process_reductions, so their numerical values matter! we want to do disputes and refunds first, then pure cancellations.
     cancel_only: 0,
     cancel_or_refund: 1,
@@ -36,9 +40,13 @@ class LineItemReduction < ApplicationRecord
       # move the invoice and line item totals into the reducing column (so that admins know the total that currently applies, and so that in multiple payment situations the user doesn't overpay & force us to issue a refund unnecessarily)
       self.invoice.lock!
       self.line_item.lock!
-      to_shift = [self.amount, self.invoice.total_due, self.line_item.total_due].min
-      unless self.invoice.update(total_due: self.invoice.total_due - to_shift, total_reducing: self.invoice.total_reducing + to_shift) &&
-             self.line_item.update(total_due: self.line_item.total_due - to_shift, total_reducing: self.line_item.total_reducing + to_shift)
+      to_shift = self.amount_interpretation == 'max_amount_to_reduce' ?
+        [self.amount, self.invoice.total_due, self.line_item.total_due].min
+        : [[self.invoice.total_due - self.amount, self.line_item.total_due - self.amount].min, 0].max
+      unless to_shift == 0 || (
+              self.invoice.update(total_due: self.invoice.total_due - to_shift, total_reducing: self.invoice.total_reducing + to_shift) &&
+              self.line_item.update(total_due: self.line_item.total_due - to_shift, total_reducing: self.line_item.total_reducing + to_shift)
+             )
         error_message = "failed to be added to invoice/line item total_reducing values"
         raise ActiveRecord::Rollback
       end
