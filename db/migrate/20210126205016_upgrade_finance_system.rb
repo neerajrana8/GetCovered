@@ -103,33 +103,6 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
       t.references :billing_strategy
       t.references :commission_strategy
       t.references :policy, null: true
-      
-  ##### MOOSE WARNING below is old schema for reference ############
-      
-      
-    t.integer "base", default: 0
-    t.integer "taxes", default: 0
-    t.integer "total_fees", default: 0
-    t.integer "total", default: 0
-    t.boolean "enabled", default: false, null: false
-    t.datetime "enabled_changed"
-    t.bigint "policy_quote_id"
-    t.bigint "policy_id"
-    t.bigint "billing_strategy_id"
-    t.bigint "commission_strategy_id"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.integer "estimate"
-    t.integer "calculation_base", default: 0
-    t.integer "deposit_fees", default: 0
-    t.integer "amortized_fees", default: 0
-    t.integer "carrier_base", default: 0
-    t.integer "special_premium", default: 0
-    t.boolean "include_special_premium", default: false
-    t.integer "unearned_premium", default: 0
-    t.boolean "only_fees_internal", default: false
-    t.integer "external_fees", default: 0
-      
     end
     
     create_table :line_items do |t|
@@ -205,7 +178,7 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
     create_table :line_item_change do |t|
       t.integer     :field_changed, null: false                         # which field was changed (total_due or total_received)
       t.integer     :amount, null: false                                # the change to line_item.total_received (positive or negative)
-#      t.integer     :proration_interaction                              # How we interact with any future prorations (only used when field_changed is total_due)
+      t.integer     :proration_interaction                              # How we interact with any future prorations (only used when field_changed is total_due)
       t.boolean     :handled, null: false, default: false               # whether a handler has handled this LIC (we could just use !lic.handler.nil?, but this is cleaner)
       t.references  :line_item                                          # the LineItem
       t.references  :reason, polymorphic: true                          # the reason for this change (a StripeCharge object, for example)
@@ -225,7 +198,6 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
       t.boolean         :processed, null: false, default: false         # True iff this LIR has completed all its work... MOOSE WARNING: is this needed???
       t.integer         :stripe_refund_reason                           # Optional enum field to specify a Stripe reason enum to provide for associated refunds; if nil, will use 'requested_by_customer' if any Stripe refunds are created
       t.timestamps
-    #  t.references      :policy_premium_item
       t.references      :line_item
       t.references      :dispute, null: true                            # When refundability is 'dispute_resolution', we link to the relevant dispute here
       t.references      :refund, null: true                             # When this LIR results in a refund, we link to it here
@@ -290,14 +262,6 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
       t.references    :recipient, polymorphic: true                     # He who receives the money
       t.references    :commission_strategy, optional: true              # The parent commission strategy
     end
-    
-    
-  
-    #add_reference :line_items, :policy_premium_item, index: true, null: false
-    #add_column :line_items, :original_total_due # set to price
-    #add_column :line_items, :total_due           # set to price - proration_reduction
-    #add_column :line_items, :total_received # set to collected
-    #add_column :line_items, :total_processed # set to 0
   
   end
   
