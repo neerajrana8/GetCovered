@@ -252,6 +252,13 @@
         get "search", to: 'policies#search', on: :collection
     end
 
+    resources :policies_dashboard, only: [] do
+      collection do
+        get 'total'
+        get 'graphs'
+      end
+    end
+
     resources :policy_cancellation_requests, only: [ :index, :show ] do
       member do
         put :approve

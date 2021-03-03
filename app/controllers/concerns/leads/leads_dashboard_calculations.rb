@@ -38,7 +38,7 @@ module Leads
     private
 
     def filter_by_day?(start_date, end_date)
-      (((end_date - 1.month) == start_date ) || ((end_date - 1.week) == start_date )) || (end_date.mjd - start_date.mjd < 31)
+      (((end_date - 1.month) == start_date) || ((end_date - 1.week) == start_date)) || (end_date.mjd - start_date.mjd < 31)
     end
 
     #data for last_month or last_year of from the begining of the year
@@ -50,7 +50,7 @@ module Leads
     def site_visits(leads)
       visits = 0
       leads.each do |lead|
-        visits+=lead.lead_events.order("DATE(created_at)").group("DATE(created_at)").count.keys.size
+        visits += lead.lead_events.order("DATE(created_at)").group("DATE(created_at)").count.keys.size
       end
       visits
     end
