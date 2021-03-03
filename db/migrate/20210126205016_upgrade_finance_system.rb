@@ -35,7 +35,6 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
       t.timestamps                                                      # timestamps
       # payment tracking
       t.integer :original_total_due, null: false                        # the total due originally, before any modifications
-      t.integer :preproration_total_due, null: false                    # the total due before any prorations are applied
       t.integer :total_due, null: false                                 # the total due
       t.integer :total_received, null: false, default: 0                # the amount we've been paid so far
       t.integer :total_processed, null: false, default: 0               # the amount we've fully processed as received (i.e. logged as commissions or whatever other logic we want)
@@ -73,10 +72,6 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
     
     create_table :policy_premium_item_payment_term do |t|
       t.integer :weight, null: false                                    # the weight assigned to this payment term for calculating total due
-      t.integer :preproration_total_due                                 # the amount due before any prorations MOOSE WARNING: no validations
-      t.integer :duplicatable_reduction_total                           # the total of all reductions with proration_interaction 'duplicated'
-      t.integer :term_start_reduction                                   # the amount reduced from the beginning of the term (we prorate this last when prorating based on a last start date change)
-      t.integer :term_end_reduction                                     # the amount reduced from the end of the term (we prorate this last when prorating based on a fist start date change)
       t.references :policy_premium_payment_term
       t.references :policy_premium_item
     end
@@ -115,6 +110,10 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
       t.integer     :total_due, null: false                             # the total due now (i.e. original_total_due minus refunds plus increases)
       t.integer     :total_reducing, null: falsee, default: 0           # the amount subtracted from total_due by pending LineItemReductions
       t.integer     :total_received, null: false, default: 0            # the amount received towards payment of total_due
+      
+      t.integer     :preproration_total_due, null: false                # the amount due before any prorations MOOSE WARNING: no validations
+      t.integer     :duplicatable_reduction_total, null: false, default: 0  # the total of all reductions with proration_interaction 'duplicated' MOOSE WARNING: no validations
+      
       # references
       t.references  :chargeable, polymorphic: true                      # will be a PolicyPremiumItemTerm right now, but could be anything
       t.references  :invoice                                            # the invoice to which this LineItem belongs
@@ -174,14 +173,23 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
       t.timestamps
       t.references :invoice, null: true
     end
+
+    create_table :disputes do |t|
+      t.string    :stripe_id, null: false
+      t.integer   :amount, null: false
+      t.integer   :stripe_reason, null: false
+      t.integer   :status, null: false
+      t.boolean   :active, null: false, default: true
+      t.timestamps
+      t.references :stripe_charge
+    end
     
     create_table :line_item_change do |t|
       t.integer     :field_changed, null: false                         # which field was changed (total_due or total_received)
       t.integer     :amount, null: false                                # the change to line_item.total_received (positive or negative)
-      t.integer     :proration_interaction                              # How we interact with any future prorations (only used when field_changed is total_due)
       t.boolean     :handled, null: false, default: false               # whether a handler has handled this LIC (we could just use !lic.handler.nil?, but this is cleaner)
       t.references  :line_item                                          # the LineItem
-      t.references  :reason, polymorphic: true                          # the reason for this change (a StripeCharge object, for example)
+      t.references  :reason, polymorphic: true                          # the reason for this change (a StripeCharge object, for example, or a LineItemReduction)
       t.references  :handler, polymorphic: true, null: true             # the CommissionItem that reflects this change, or other model that handled it
       t.timestamps
     end

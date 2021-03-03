@@ -26,7 +26,8 @@ class LineItemReduction < ApplicationRecord
   enum proration_interaction: {
     shared: 0,        # If we reduce by $10, and later a proration removes $5, the total reduction will be $10 (i.e. the prorated 5 will be part of the already-cancelled/refunded 10)
     duplicated: 1,    # If we reduce by $10, and later a proration removes $5, the total reduction will be $15, unless the line item TOTAL is less than $15, in which case it will be completely reduced (i.e. the proration attempts to apply as a separate, non-overlapping reduction when possible)
-    reduced: 2        # If the proratable total is $20 and we reduce by $10, then a 50% proration will reduce 50% of the remaining $10 instead of the original $20, i.e. will reduce by 5 additional dollars (i.e. we reduce this and modify the totals so that it is as if this had never been part of the total at all)
+    reduced: 2,       # If the proratable total is $20 and we reduce by $10, then a 50% proration will reduce 50% of the remaining $10 instead of the original $20, i.e. will reduce by 5 additional dollars (i.e. we reduce this and modify the totals so that it is as if this had never been part of the total at all)
+    is_proration: 3   # This IS a proration.
   }
   enum stripe_refund_reason: {
     requested_by_customer: 0,
@@ -34,27 +35,36 @@ class LineItemReduction < ApplicationRecord
     fraudulent: 2
   }
   
+  def get_amount_to_reduce(li = self.line_item)
+    to_reduce_ceiling = self.refundability == 'cancel_only' ? li.total_due - li.total_received : li.total_due
+    to_reduce = case self.proration_interaction
+      when 'is_proration'
+        self.amount_interpretation == 'max_amount_to_reduce' ?
+        li.total_due - (li.preproration_total_due - self.amount - li.duplicatable_reduction_total) # same as below, except that the desired max total_due is li.preproration_total_due - self.amount
+        : li.total_due - (self.amount - li.duplicatable_reduction_total) # self.amount is our desired max total_due; but DRT reductions should remain non-overlapping with proration reductions, i.e. we need to subtract them to get the REAL desired max total_due
+      else
+       self.amount_interpretation == 'max_amount_to_reduce' ?
+        self.amount - self.amount_successful
+        : li.total_due - self.amount
+    end
+    to_reduce = to_reduce_ceiling if to_reduce > to_reduce_ceiling
+    to_reduce = 0 if to_reduce < 0
+    return to_reduce
+  end
+  
   def update_associated_models
     error_message = nil
     ActiveRecord::Base.transaction do
       # move the invoice and line item totals into the reducing column (so that admins know the total that currently applies, and so that in multiple payment situations the user doesn't overpay & force us to issue a refund unnecessarily)
       self.invoice.lock!
       self.line_item.lock!
-      to_shift = self.amount_interpretation == 'max_amount_to_reduce' ?
-        [self.amount, self.invoice.total_due, self.line_item.total_due].min
-        : [[self.invoice.total_due - self.amount, self.line_item.total_due - self.amount].min, 0].max
+      to_shift = self.get_amount_to_reduce
       unless to_shift == 0 || (
               self.invoice.update(total_due: self.invoice.total_due - to_shift, total_reducing: self.invoice.total_reducing + to_shift) &&
               self.line_item.update(total_due: self.line_item.total_due - to_shift, total_reducing: self.line_item.total_reducing + to_shift)
              )
         error_message = "failed to be added to invoice/line item total_reducing values"
         raise ActiveRecord::Rollback
-      end
-      # if a PolicyPremiumItem is involved & we reduce the proratable total, tell it that the proratable total is in a state of flux
-      if self.proration_interaction == 'reduced' && self.line_item.chargeable_type == 'PolicyPremiumItemPaymentTerm'
-        ppi = self.line_item.chargeable.policy_premium_item
-        ppi.lock!
-        ppi.update(preproration_modifiers: ppi.preproration_modifiers + 1)
       end
     end
     unless error_message.nil?

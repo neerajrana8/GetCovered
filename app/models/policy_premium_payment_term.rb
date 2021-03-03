@@ -78,6 +78,10 @@ class PolicyPremiumPaymentTerm < ApplicationRecord
     end
   end
   
+  def cancel
+    return self.update(last_moment: self.first_moment, prorated: true, cancelled: true)
+  end
+  
   def update_proration(new_first_moment, new_last_moment)
     if new_first_moment > new_last_moment
       self.errors.add(:proration_attempt, "failed, since provided last moment preceded provided first moment")
@@ -90,7 +94,7 @@ class PolicyPremiumPaymentTerm < ApplicationRecord
         fm = self.first_moment.to_date
         lm = self.last_moment.to_date
         if fm > nlm || lm < nfm
-          return self.update(last_moment: self.first_moment, prorated: true, cancelled: true) # this term has been prorated into nothingness
+          return self.cancel # this term has been prorated into nothingness
         elsif nfm <= fm && nlm >= lm
           return self # no changes
         else
@@ -124,8 +128,6 @@ class PolicyPremiumPaymentTerm < ApplicationRecord
     
     def set_proportion_to_zero
       self.unprorated_proportion = 0
-      self.start_prorated = true
-      self.end_prorated = true
     end
   
     def validate_term

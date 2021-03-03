@@ -16,6 +16,8 @@ class PolicyPremiumItem < ApplicationRecord
     autosave: true # MOOSE WARNING: does this suffice?
   has_many :line_items,
     through: :policy_premium_item_terms
+  has_many :line_item_reductions,
+    through: :line_items
 
   # Callbacks
   before_validation :set_missing_total_data,
@@ -27,7 +29,6 @@ class PolicyPremiumItem < ApplicationRecord
   validates_presence_of :category
   validates_presence_of :rounding_error_distribution
   validates :original_total_due, numericality: { :greater_than_or_equal_to => 0 }
-  validates :preproration_total_due, numericality: { :greater_than_or_equal_to => 0 }
   validates :total_due, numericality: { :greater_than_or_equal_to => 0 }
   validates :total_received, numericality: { :greater_than_or_equal_to => 0 }
   validates :total_processed, numericality: { :greater_than_or_equal_to => 0 }
@@ -64,60 +65,52 @@ class PolicyPremiumItem < ApplicationRecord
   def generate_line_items
     # verify we haven't already done this & clean our PolicyPremiumItemPaymentTerms
     return "Line items already scheduled" unless self.line_items.blank?
-    ::PolicyPremiumItemPaymentTerm.prepare_clean_slate(self.policy_premium_item_payment_terms)
-    to_return = self.policy_premium_item_payment_terms.order(original_first_moment: :asc, original_last_moment: :desc)
+    to_return = self.policy_premium_item_payment_terms.references(:policy_premium_payment_terms).includes(:policy_premium_payment_term)
+                    .order("policy_premium_payment_terms.original_first_moment ASC, policy_premium_payment_terms.original_last_moment DESC")
+                    .map{|pt| ::LineItem.new(chargeable: pt, title: self.title, original_total_due: 0) }
     # calculate line item totals
     case self.rounding_error_distribution
       when 'dynamic_forward', 'dynamic_reverse'
-        total_left = self.preproration_total_due
-        weight_left = to_return.inject(0){|sum,pt| sum + pt.weight }.to_d
+        total_left = self.original_total_due
+        weight_left = to_return.inject(0){|sum,li| sum + li.chargeable.weight }.to_d
         reversal = (self.rounding_error_distribution == 'dynamic_reverse' ? :reverse : :itself)
-        to_return = to_return.send(reversal).each do |pt|
-          pt.preproration_total_due = ((pt.weight / weight_left) * total_left).floor
-          total_left -= pt.preproration_total_due
-          weight_left -= pt.weight
+        to_return = to_return.send(reversal).each do |li|
+          li.original_total_due = ((li.chargeable.weight / weight_left) * total_left).floor
+          total_left -= li.original_total_due
+          weight_left -= li.chargeable.weight
         end
       when 'first_payment_simple', 'last_payment_simple', 'first_payment_multipass', 'last_payment_multipass'
-        total_weight = to_return.inject(0){|sum,pt| sum + pt.weight }.to_d
+        total_weight = to_return.inject(0){|sum,li| sum + li.chargeable.weight }.to_d
         multiple_passes = self.rounding_error_distribution.end_with?("multipass")
-        to_distribute = self.preproration_total_due
+        to_distribute = self.original_total_due
         loop do
           distributed = 0
-          to_return.each do |pt|
-            li_total = ((pt.weight / total_weight) * to_distribute).floor
-            pt.preproration_total_due += li_total
+          to_return.each do |li|
+            li_total = ((li.chargeable.weight / total_weight) * to_distribute).floor
+            li.original_total_due += li_total
             distributed += li_total
           end
           to_distribute -= distributed
           break if distributed == 0 || !multiple_passes
         end
         reversal = (self.rounding_error_distribution.start_with?('first_payment') ? :each : :reverse_each)
-        to_return.send(reversal).find{|tp| tp.preproration_total_due > 0 }.preproration_total_due += to_distribute
+        to_return.send(reversal).find{|li| li.original_total_due > 0 }.original_total_due += to_distribute
     end
-    # save changes
-    to_return.each{|tr| tr.save }
-    # return line items MOOSE WARNING: save these instead, no?
-    return to_return.map do |pt|
-      pt.preproration_total_due == 0 ? nil : LineItem.new(
-        chargeable: pt,
-        title: self.title,
-        original_total_due: pt.original_total_due,
-        total_due: pt_original_total_due,
-        total_received: 0
-      )
-    end
+    # return unsaved line items
+    to_return.each{|li| li.preproration_total_due = li.original_total_due; li.total_due = li.original_total_due }
+    return to_return
   end
   
   def apply_proration
-    return nil unless self.proration_pending && self.preproration_modifiers == 0 && self.policy_premium.prorated
+    return nil unless self.proration_pending && self.policy_premium.prorated
     error_message = nil
     ActiveRecord::Base.transaction(requires_new: true) do
       # lock our bois
       invoice_array = ::Invoice.where(id: self.line_items.map{|li| li.invoice_id }).order(id: :asc).lock.to_a
       line_item_array = self.line_items.order(id: :asc).lock.to_a
       self.lock!
-      # flee if there's an issue (yes, this is redundant; we checked at first in the hopes of avoiding locking overhead, now we are checking for real, within the lock
-      return nil unless self.proration_pending && self.proration_modifiers == 0
+      # flee if there's an issue (yes, we check proration_pending again, since we're in the lock now)
+      return nil unless self.proration_pending && self.line_item_reductions.where(pending: true, proration_interaction: 'reduced').count > 0
       # apply the proration
       case self.proration_calculation
         when 'no_proration'
@@ -131,14 +124,13 @@ class PolicyPremiumItem < ApplicationRecord
             created = ppipt.line_item.line_item_reductions.create(
               reason: "Proration Adjustment",
               amount_interpretation: 'max_total_after_reduction',
-              amount: [(ppipt.policy_premium_payment_term.unprorated_proportion * ppipt.preproration_total_due).ceil - ppipt.duplicatable_reduction_total, 0].max,
-              # MOOSE WARNING: the above handling of amount presents a potential problem... because we don't increment preproration_modifiers for duplicatable reductions... it could change after we are issued but before we are executed...
+              amount: (ppipt.policy_premium_payment_term.unprorated_proportion * ppipt.preproration_total_due).ceil,
               refundability: self.proration_refunds_allowed ? 'cancel_or_refund' : 'cancel_only',
-              proration_interaction: 'shared'
+              proration_interaction: 'is_proration'
             )
             unless created.id
               error_message = "Failed to create LineItemReduction for LineItem ##{ppipt.line_item_id}; errors: #{created.errors.to_h}"
-              raise ActiveRecord::rollback
+              raise ActiveRecord::Rollback
             end
           end
         when 'payment_term_exclusive'
@@ -152,11 +144,11 @@ class PolicyPremiumItem < ApplicationRecord
               amount_interpretation: 'max_total_after_reduction',
               amount: 0,
               refundability: self.proration_refunds_allowed ? 'cancel_or_refund' : 'cancel_only',
-              proration_interaction: 'shared'
+              proration_interaction: 'is_proration'
             )
             unless created.id
               error_message = "Failed to create LineItemReduction for LineItem ##{ppipt.line_item_id}; errors: #{created.errors.to_h}"
-              raise ActiveRecord::rollback
+              raise ActiveRecord::Rollback
             end
           end
         when 'payment_term_inclusive'
@@ -170,13 +162,18 @@ class PolicyPremiumItem < ApplicationRecord
               amount_interpretation: 'max_total_after_reduction',
               amount: 0,
               refundability: self.proration_refunds_allowed ? 'cancel_or_refund' : 'cancel_only',
-              proration_interaction: 'shared'
+              proration_interaction: 'is_proration'
             )
             unless created.id
               error_message = "Failed to create LineItemReduction for LineItem ##{ppipt.line_item_id}; errors: #{created.errors.to_h}"
-              raise ActiveRecord::rollback
+              raise ActiveRecord::Rollback
             end
           end
+      end
+      # mark the proration as applied
+      unless self.update(proration_pending: false)
+        error_message = "Failed to mark PolicyPremiumItem ##{self.id} as proration_pending: false; errors: #{self.errors.to_h}"
+        raise ActiveRecord::Rollback
       end
     end
     return error_message
@@ -188,7 +185,6 @@ class PolicyPremiumItem < ApplicationRecord
       # for convenience, so you don't have to set all of them on create
       val = [self.original_total_due, self.preproration_total_due, self.total_due].compact.first
       self.original_total_due = val if self.original_total_due.nil?
-      self.preproration_total_due = val if self.preproration_total_due.nil?
       self.total_due = val if self.total_due.nil?
     end
 end

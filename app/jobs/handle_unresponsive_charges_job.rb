@@ -48,9 +48,9 @@ class HandleUnresponsiveChargesJob < ApplicationJob
 
   private
 
-  def set_charges
-    @processing_charges = ::StripeCharge.processing.where("created_at < ?", Time.current - 4.hours)
-    @unprocessed_charges = ::StripeCharge.where.not(status: 'processing').where(invoice_aware: false).where("status_changed_at < ?", Time.current - 4.hours)
-    @pending_charges = ::StripeCharge.pending.where("created_at < ?", Time.current - 14.days)
-  end
+    def set_charges
+      @processing_charges = ::StripeCharge.processing.where("created_at < ?", Time.current - 4.hours)
+      @unprocessed_charges = ::StripeCharge.where.not(status: 'processing').where(invoice_aware: false).where("status_changed_at < ?", Time.current - 4.hours)
+      @pending_charges = ::StripeCharge.pending.where("created_at < ?", Time.current - 14.days)
+    end
 end
