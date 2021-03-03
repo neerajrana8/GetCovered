@@ -47,8 +47,7 @@ describe 'Reset password API', type: :request do
     let(:params) do
       {
         password: 'tomato',
-        password_confirmation: 'tomato',
-        current_password: 'test1234'
+        password_confirmation: 'tomato'
       }
     end
 

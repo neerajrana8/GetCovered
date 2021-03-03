@@ -204,7 +204,8 @@ module V2
               render json: {
                 error: ("#{@policy_type_identifier} #{I18n.t('policy_quote_controller.could_not_be_accepted')}" unless @quote_attempt[:success]),
                 message: ("#{@policy_type_identifier} #{I18n.t('policy_quote_controller.accepted')} " if @quote_attempt[:success]).to_s + @quote_attempt[:message],
-                password_filled: @user.encrypted_password.present?
+                password_filled: @user.encrypted_password.present?,
+                policy_number:  @policy_quote&.policy&.number
               }.compact.merge(@signature_access_token.nil? ? {} : {
                 document_token: @signature_access_token.to_urlparam
               }), status: @quote_attempt[:success] ? 200 : 500
