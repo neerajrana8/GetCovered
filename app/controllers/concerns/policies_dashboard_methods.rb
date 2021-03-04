@@ -3,7 +3,9 @@ module PoliciesDashboardMethods
 
   MAX_COUNTS = 9998
 
-  before_action :set_policies
+  included do
+    before_action :set_policies
+  end
 
   def total
     @total = {
@@ -24,7 +26,7 @@ module PoliciesDashboardMethods
 
     if filter_by_day?(start_date, end_date)
       start_date.upto(end_date) do |date|
-        params[:filter][:last_visit] = Date.parse(date.to_s).all_day
+        params[:filter][:created_at] = Date.parse(date.to_s).all_day
         index(:@policies_by_day, @policies)
         @graphs[date.to_s] = {
           total_new_policies: total_new_policies(@policies_by_day)
@@ -32,7 +34,7 @@ module PoliciesDashboardMethods
       end
     else
       while start_date < end_date
-        params[:filter][:last_visit] = start_date.all_month
+        params[:filter][:created_at] = start_date.all_month
         index(:@policies_by_month, @policies)
         @graphs[start_date.end_of_month.to_s] = {
           total_new_policies: total_new_policies(@policies_by_month)
