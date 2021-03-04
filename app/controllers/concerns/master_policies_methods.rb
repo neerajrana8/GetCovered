@@ -7,14 +7,7 @@ module MasterPoliciesMethods
                              cover_unit available_top_insurables available_units historically_coverage_units
                              cancel cancel_coverage master_policy_coverages cancel_insurable]
 
-    def index
-      master_policies_relation = Policy.where(policy_type_id: PolicyType::MASTER_ID, agency_id: @agency.id).order(created_at: :desc)
-      master_policies_relation = master_policies_relation.where(account_id: params[:account_id]) if params[:account_id].present?
-      master_policies_relation = master_policies_relation.where(status: params[:status]) if params[:status].present?
 
-      @master_policies = paginator(master_policies_relation)
-      render template: 'v2/shared/master_policies/index', status: :ok
-    end
 
     def show
       render template: 'v2/shared/master_policies/show', status: :ok
@@ -217,11 +210,6 @@ module MasterPoliciesMethods
     end
 
     private
-
-    def set_policy
-      @master_policy = Policy.find_by(policy_type_id: PolicyType::MASTER_ID, id: params[:id], agency: @agency)
-      render(json: { master_policy: 'not found' }, status: :not_found) if @master_policy.blank?
-    end
 
     def create_params
       return({}) if params[:policy].blank?
