@@ -8,10 +8,12 @@ module PoliciesDashboardMethods
   end
 
   def total
+    apply_filters(:@filtered_policies, @policies)
+
     @total = {
       total_policies_sold: {
-        bound: bound_policy_count,
-        cancelled: cancelled_policy_count
+        bound: bound_policy_count(@filtered_policies),
+        cancelled: cancelled_policy_count(@filtered_policies)
       }
     }
 
@@ -27,7 +29,7 @@ module PoliciesDashboardMethods
     if filter_by_day?(start_date, end_date)
       start_date.upto(end_date) do |date|
         params[:filter][:created_at] = Date.parse(date.to_s).all_day
-        index(:@policies_by_day, @policies)
+        apply_filters(:@policies_by_day, @policies)
         @graphs[date.to_s] = {
           total_new_policies: total_new_policies(@policies_by_day)
         }
@@ -35,7 +37,7 @@ module PoliciesDashboardMethods
     else
       while start_date < end_date
         params[:filter][:created_at] = start_date.all_month
-        index(:@policies_by_month, @policies)
+        apply_filters(:@policies_by_month, @policies)
         @graphs[start_date.end_of_month.to_s] = {
           total_new_policies: total_new_policies(@policies_by_month)
         }
@@ -52,12 +54,12 @@ module PoliciesDashboardMethods
     @policies = Policy.not_master
   end
 
-  def bound_policy_count
-    @policies.current.count
+  def bound_policy_count(policies)
+    policies.current.count
   end
 
-  def cancelled_policy_count
-    @policies.where(status: 'CANCELLED').count
+  def cancelled_policy_count(policies)
+    policies.where(status: 'CANCELLED').count
   end
 
   def total_new_policies(policies_relation)
