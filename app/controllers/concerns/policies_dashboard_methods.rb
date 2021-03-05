@@ -24,23 +24,28 @@ module PoliciesDashboardMethods
     start_date = Date.parse(date_params[:start])
     end_date   = Date.parse(date_params[:end])
 
-    @graphs = {}
+    @graphs = {
+      total_new_policies: 0,
+      graphs: {}
+    }
 
     if filter_by_day?(start_date, end_date)
       start_date.upto(end_date) do |date|
         params[:filter][:created_at] = Date.parse(date.to_s).all_day
         apply_filters(:@policies_by_day, @policies)
-        @graphs[date.to_s] = {
+        @graphs[:graphs][date.to_s] = {
           total_new_policies: total_new_policies(@policies_by_day)
         }
+        @graphs[:total_new_policies] += @graphs[:graphs][date.to_s][:total_new_policies]
       end
     else
       while start_date < end_date
         params[:filter][:created_at] = start_date.all_month
         apply_filters(:@policies_by_month, @policies)
-        @graphs[start_date.end_of_month.to_s] = {
+        @graphs[:graphs][start_date.end_of_month.to_s] = {
           total_new_policies: total_new_policies(@policies_by_month)
         }
+        @graphs[:total_new_policies] += @graphs[:graphs][start_date.end_of_month.to_s][:total_new_policies]
         start_date += 1.month
       end
     end
