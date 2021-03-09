@@ -26,6 +26,7 @@ module PoliciesDashboardMethods
 
     @graphs = {
       total_new_policies: 0,
+      by_policy_type: Hash.new(0),
       graphs: {}
     }
 
@@ -33,19 +34,13 @@ module PoliciesDashboardMethods
       start_date.upto(end_date) do |date|
         params[:filter][:created_at] = Date.parse(date.to_s).all_day
         apply_filters(:@policies_by_day, @policies)
-        @graphs[:graphs][date.to_s] = {
-          total_new_policies: total_new_policies(@policies_by_day)
-        }
-        @graphs[:total_new_policies] += @graphs[:graphs][date.to_s][:total_new_policies]
+        set_day_data(@policies_by_day, date)
       end
     else
       while start_date < end_date
         params[:filter][:created_at] = start_date.all_month
         apply_filters(:@policies_by_month, @policies)
-        @graphs[:graphs][start_date.end_of_month.to_s] = {
-          total_new_policies: total_new_policies(@policies_by_month)
-        }
-        @graphs[:total_new_policies] += @graphs[:graphs][start_date.end_of_month.to_s][:total_new_policies]
+        set_day_data(@policies_by_month, start_date.end_of_month)
         start_date += 1.month
       end
     end
@@ -59,6 +54,18 @@ module PoliciesDashboardMethods
     @policies = Policy.not_master
   end
 
+  def set_day_data(policies, date)
+    @graphs[:graphs][date.to_s] = {
+      total_new_policies: total_new_policies(policies),
+      by_policy_type: by_policy_type(policies)
+    }
+
+    @graphs[:total_new_policies] += @graphs[:graphs][date.to_s][:total_new_policies]
+    @graphs[:graphs][date.to_s][:by_policy_type].each do |id, count|
+      @graphs[:by_policy_type][id] += count
+    end
+  end
+
   def bound_policy_count(policies)
     policies.current.count
   end
@@ -69,6 +76,12 @@ module PoliciesDashboardMethods
 
   def total_new_policies(policies_relation)
     policies_relation.count
+  end
+
+  def by_policy_type(policies)
+    PolicyType.where.not(id: PolicyType::MASTER_TYPES_IDS).pluck(:id).each_with_object({}) do |id, result|
+      result[id] = policies.current.where(policy_type_id: id).count
+    end
   end
 
   def supported_filters(called_from_orders = false)
