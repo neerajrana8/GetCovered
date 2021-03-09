@@ -79,8 +79,8 @@ module PoliciesDashboardMethods
   end
 
   def by_policy_type(policies)
-    PolicyType.where.not(id: PolicyType::MASTER_TYPES_IDS).pluck(:id).each_with_object({}) do |id, result|
-      result[id] = policies.current.where(policy_type_id: id).count
+    PolicyType.where.not(id: PolicyType::MASTER_TYPES_IDS).each_with_object({}) do |policy_type, result|
+      result[policy_type.slug.tr('-', '_')] = policies.current.where(policy_type_id: policy_type.id).count
     end
   end
 
