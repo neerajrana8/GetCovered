@@ -7,10 +7,10 @@ module V2
     class StaffsController < StaffAgencyController
       include StaffsMethods
 
-      before_action :set_staff, only: %i[update show re_invite toggle_enabled]
-      before_action :validate_password_changing, only: %i[update]
+      before_action :set_staff, only: %i[update update_self show re_invite toggle_enabled]
+      before_action :validate_password_changing, only: %i[update_self]
 
-      check_privileges 'agencies.agents'
+      check_privileges 'agencies.agents' => %i[index create update show re_invite toggle_enabled]
       check_privileges 'agencies.manage_agents' => %i[create update]
 
       def index
@@ -48,6 +48,15 @@ module V2
       
       def update
         if @staff.update_as(current_staff, update_params)
+          render :show, status: :ok
+        else
+          render json: standard_error(:staff_update_error, nil, @staff.errors.full_messages),
+                 status: :unprocessable_entity
+        end
+      end
+
+      def update_self
+        if @staff.update_as(current_staff, update_params) && @staff == current_staff
           render :show, status: :ok
         else
           render json: standard_error(:staff_update_error, nil, @staff.errors.full_messages),

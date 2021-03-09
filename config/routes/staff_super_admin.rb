@@ -4,7 +4,7 @@
   scope module: :staff_super_admin, path: "staff_super_admin" do
 
     resources :accounts,
-      only: [ :index, :show ],
+      only: [ :index, :show, :create, :update ],
       concerns: :reportable do
         member do
           get "histories",

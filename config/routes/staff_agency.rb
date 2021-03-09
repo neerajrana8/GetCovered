@@ -295,6 +295,7 @@
       only: [ :create, :update, :index, :show ] do
         member do
           put :re_invite
+          put :update_self
           get "histories",
             to: "histories#index_recordable",
             via: "get",
