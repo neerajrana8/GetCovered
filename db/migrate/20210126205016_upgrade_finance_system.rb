@@ -185,7 +185,7 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
       t.references :stripe_charge
     end
     
-    create_table :line_item_change do |t|
+    create_table :line_item_changes do |t|
       t.integer     :field_changed, null: false                         # which field was changed (total_due or total_received)
       t.integer     :amount, null: false                                # the change to line_item.total_received (positive or negative)
       t.boolean     :handled, null: false, default: false               # whether a handler has handled this LIC (we could just use !lic.handler.nil?, but this is cleaner)
@@ -195,7 +195,7 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
       t.references  :handler, polymorphic: true, null: true             # the CommissionItem that reflects this change, or other model that handled it
     end
     
-    create_table :line_item_reduction do |t|
+    create_table :line_item_reductions do |t|
       t.string          :reason, null: false                            # String describing the reason for this reduction
       t.integer         :refundability, null: false                     # Enum for whether we can be refunded or only cancelled before payment
       t.integer         :proration_interaction, null: false, default: 0 # How we interact with any future prorations
