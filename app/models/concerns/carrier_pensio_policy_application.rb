@@ -54,17 +54,19 @@ module CarrierPensioPolicyApplication
 					unchecked_premium = ((( rent_amount * 100 ) * 12 ) * multiplier ).to_i
 					checked_premium = unchecked_premium < minimum_premium ? minimum_premium : unchecked_premium
 
-				  premium = PolicyPremium.new base: checked_premium, policy_quote: quote,
-				                              billing_strategy: quote.policy_application.billing_strategy
-
-# 					premium.set_fees
-					premium.calculate_fees(true)
-					premium.calculate_total(true)
-				  quote_method = premium.save ? "mark_successful" : "mark_failure"
-
-				  quote.send(quote_method)
-
-				  quote_success[:success] = true
+          quote_method = "mark_failure"
+          premium = PolicyPremium.create policy_quote: quote, billing_strategy: quote.policy_application.billing_strategy
+          unless premium.id
+            puts "  Failed to create premium! #{premium.errors.to_h}"
+          else
+            result = premium.initialize_all(checked_premium)
+            unless result.nil?
+              puts "  Failed to initialize premium! #{result}"
+            else
+              quote_method = "mark_successful"
+              quote_success[:success] = true
+            end
+          end
 
 				else
 					self.update status: "quote_failed"

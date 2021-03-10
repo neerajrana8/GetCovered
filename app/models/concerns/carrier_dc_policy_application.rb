@@ -45,17 +45,22 @@ module CarrierDcPolicyApplication
           return false
         end
         # build policy premium
-        premium = PolicyPremium.new(
-          base: chosen["ratedPremium"],
-          taxes: 0,
-          external_fees: chosen["processingFee"],
-          only_fees_internal: true,
-          billing_strategy: self.billing_strategy,
-          policy_quote: quote
-        )
-        premium.set_fees
-        premium.calculate_fees(true)
-        premium.calculate_total(true)
+        premium = PolicyPremium.create policy_quote: quote, billing_strategy: quote.policy_application.billing_strategy
+        unless premium.id
+          puts "  Failed to create premium! #{premium.errors.to_h}"
+        else
+          created_fee = premium.fees.create(title: "Processing Fee", type: :ORIGINATION, amount: chosen["processingFee"], enabled: true, ownerable: ::DepositChoiceService.carrier)
+          unless created_fee.id
+            puts "  Failed to create fee! #{created_fee.errors.to_h}"
+          else
+            premium.initialize_all(base_premium.to_i, collector: ::DepositChoiceService.carrier, filter_fees: Proc.new{|f| f.id == created_fee.id })
+            unless result.nil?
+              puts "  Failed to initialize premium! #{result}"
+            else
+              quote_method = "mark_successful"
+            end
+          end
+        end
         # finalize quote
         quote_method = premium.save ? "mark_successful" : "mark_failure"
         quote.send(quote_method)

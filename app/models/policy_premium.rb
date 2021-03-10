@@ -14,7 +14,7 @@ class PolicyPremium < ApplicationRecord
     through: :policy_quote
   has_many :policy_premium_items
   has_many :fees,
-    through: :policy_premium_items
+    as: :assignable
   
   # Public Class Methods
   def self.default_collector
@@ -35,14 +35,21 @@ class PolicyPremium < ApplicationRecord
     self.save if persist
   end
   
-  def initialize_all(premium_amount, term_group: nil)
+  def initialize_all(premium_amount, tax: nil, taxes: nil, term_group: nil, collector: nil, filter_fees: nil)
+    tax = taxes if tax.nil? && !taxes.nil?
+    return "Tax must be >= 0" if tax && tax < 0
     result = nil
     ActiveRecord::Base.transaction do
       result = self.create_payment_terms(term_group: term_group)
       raise ActiveRecord::Rollback unless result.nil? || result.end_with?("already exist")
-      result = self.itemize_premium(premium_amount, and_update_totals: false, term_group: term_group)
+      # premium
+      result = self.itemize_premium(premium_amount, and_update_totals: false, term_group: term_group, collector: collector)
       raise ActiveRecord::Rollback unless result.nil?
-      result = self.itemize_fees(premium_amount, and_update_totals: false, term_group: term_group)
+      # taxes
+      result = self.itemize_taxes(tax, and_update_totals: false, term_group: term_group, collector: collector) unless tax.nil? || tax == 0
+      raise ActiveRecord::Rollback unless result.nil?
+      # fees
+      result = self.itemize_fees(premium_amount, and_update_totals: false, term_group: term_group, collector: collector, filter: filter_fees)
       raise ActiveRecord::Rollback unless result.nil?
       self.update_totals(persist: true)
     end
@@ -86,10 +93,10 @@ class PolicyPremium < ApplicationRecord
       self.policy_application.fields["premise"][0]["address"]["state"]
       : self.policy_application.primary_insurable.primary_address.state
     regional_availability = ::CarrierPolicyTypeAvailability.where(state: state, carrier_policy_type: carrier_policy_type).take
-    return regional_availability.fees + billing_strategy.fees
+    return regional_availability.fees + billing_strategy.fees + self.fees
   end
   
-  def itemize_fees(percentage_basis, and_update_totals: true, term_group: nil, payment_terms: nil, collector: nil)
+  def itemize_fees(percentage_basis, and_update_totals: true, term_group: nil, payment_terms: nil, collector: nil, filter: nil)
     # get payment terms
     payment_terms = self.payment_terms.where(term_group: term_group).sort.select{|p| p.default_weight != 0 } if payment_terms.nil?
     if payment_terms.blank?
@@ -101,6 +108,7 @@ class PolicyPremium < ApplicationRecord
     found_fees = self.get_fees
     already_itemized_fees = self.policy_premium_items.select(:fee).where(fee: found_fees).map{|ppi| ppi.fee }
     found_fees = found_fees - already_itemized_fees
+    found_fees = found_fees.select{|ff| filter.call(ff) } unless filter.nil?
     # create fee items
     found_fees.each{|ff| self.itemize_fee(ff, percentage_basis, and_update_totals: false, payment_terms: payment_terms, collector: collector) }
     self.update_totals(persist: true) if and_update_totals
@@ -145,8 +153,12 @@ class PolicyPremium < ApplicationRecord
     )
     self.update_totals(persist: true) if and_update_totals
   end
+  
+  def itemize_taxes(amount, and_update_totals: true, proratable: nil, refundable: nil, term_group: nil, collector: nil)
+    self.itemize_premium(amount, and_update_totals: and_update_totals, proratable: proratable, refundable: refundable, term_group: term_group, collector: collector, is_tax: true)
+  end
 
-  def itemize_premium(amount, and_update_totals: true, proratable: nil, refundable: nil, term_group: nil, collector: nil)
+  def itemize_premium(amount, and_update_totals: true, proratable: nil, refundable: nil, term_group: nil, collector: nil, is_tax: false)
     # get payment terms
     payment_terms = self.payment_terms.where(term_group: term_group).sort.select{|p| p.default_weight != 0 }
     if payment_terms.blank?
@@ -187,8 +199,8 @@ class PolicyPremium < ApplicationRecord
       amount -= down_payment_amount
       unless down_payment_amount == 0 
         down_payment = ::PolicyPremiumItem.new(
-          title: "Premium Down Payment",
-          category: "premium",
+          title: is_tax ? "Tax" : "Premium Down Payment",
+          category: is_tax ? "tax" : "premium",
           rounding_error_distribution: "first_payment_simple",
           total_due: down_payment_amount,
           proration_calculation: 'no_proration',
@@ -207,8 +219,8 @@ class PolicyPremium < ApplicationRecord
     end
     unless amount == 0
       amortized_premium = ::PolicyPremiumItem.new(
-        title: "Premium",
-        category: "premium",
+        title: is_tax ? "Tax" : "Premium",
+        category: is_tax ? "tax" : "premium",
         rounding_error_distribution: "last_payment_multipass", #MOOSE WARNING: change default???
         total_due: amount,
         proration_calculation: proratable,
