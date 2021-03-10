@@ -149,31 +149,107 @@ module CarrierMsiPolicyApplication
             end
           end
           quote.update(carrier_payment_data: { 'product_id' => product_uid, 'payment_methods' => payment_methods, 'policy_fee' => msi_policy_fee, 'installment_fee' => fee_installment, 'installment_total' => total_installment })
-          ###############
-          # build policy premium
+          # get payment schedule
+          installment_day = self.extra_settings&.[]('installment_day') || 1
+          installment_day = 1 if installment_day < 1
+          installment_day = 28 if installment_day > 28
+          if installment_day != self.extra_settings&.[]('installment_day')
+            self.extra_settings = (self.extra_settings || {}).merge({ 'installment_day' => installment_day })
+            self.update_columns(extra_settings: self.extra_settings)
+          end
+          gotten_schedule = msi_get_payment_schedule(payment_plan, installment_day: installment_day)
+          last_premium_installment = total_paid - (down_payment + premium_installment * (installment_count - 1))
+          last_premium_installment = premium_installment if last_premium_installment < 0 || gotten_schedule.length <= 2 # should NEVER EVER happen, but letting a negative in would be much worse than overcharging by a few cents and refunding later
+          # build policy premium & policy premium items
           premium = PolicyPremium.create policy_quote: quote, billing_strategy: quote.policy_application.billing_strategy
-          
-          
-          
-          
-          
-          
-          
-          ##############
-          
-          
-          # build policy premium
-          premium = PolicyPremium.new(
-            base: total_paid - msi_policy_fee,
-            taxes: 0,
-            external_fees: fee_installment * installment_count + msi_policy_fee,
-            only_fees_internal: true,
-            billing_strategy: self.billing_strategy,
-            policy_quote: quote
+          ppi_policy_fee = nil
+          ppi_installment_fee = nil
+          ppi_down_payment = nil
+          ppi_installment = nil
+          ppi_policy_fee = ::PolicyPremiumItem.create!(
+            policy_premium: premium,
+            title: "Policy Fee",
+            category: "fee",
+            rounding_error_distribution: "first_payment_simple",
+            total_due: msi_policy_fee,
+            proration_calculation: "no_proration",
+            proration_refunds_allowed: false,
+            # MOOSE WARNING: preprocessed
+            recipient: ::MsiService.carrier,
+            collector: ::MsiService.carrier
           )
-          premium.set_fees
-          premium.calculate_fees(true)
-          premium.calculate_total(true)
+          ppi_installment_fee = ::PolicyPremiumItem.create!(
+            policy_premium: premium,
+            title: "Installment Fee",
+            category: "fee",
+            rounding_error_distribution: "first_payment_simple",
+            total_due: fee_installment * installment_count,
+            proration_calculation: "no_proration",
+            proration_refunds_allowed: false,
+            # MOOSE WARNING: preprocessed
+            recipient: ::MsiService.carrier,
+            collector: ::MsiService.carrier
+          )
+          ppi_down_payment = ::PolicyPremiumItem.create!(
+            policy_premium: premium,
+            title: "Premium Down Payment",
+            category: "premium",
+            rounding_error_distribution: "first_payment_simple",
+            total_due: msi_policy_fee,
+            proration_calculation: "no_proration",
+            proration_refunds_allowed: false,
+            # MOOSE WARNING: preprocessed
+            recipient: ::MsiService.carrier,
+            collector: ::MsiService.carrier
+          )
+          ppi_installment = ::PolicyPremiumItem.create!(
+            policy_premium: premium,
+            title: "Premium Installment",
+            category: "premium",
+            rounding_error_distribution: "first_payment_simple",
+            total_due: premium_installment * [installment_count - 1, 0].max + last_premium_installment,
+            proration_calculation: "no_proration",
+            proration_refunds_allowed: false,
+            # MOOSE WARNING: preprocessed
+            recipient: ::MsiService.carrier,
+            collector: ::MsiService.carrier
+          )
+          premium.update_totals(persist: true)
+          # generate terms
+          gotten_schedule.each.with_index do |dates, ind|
+            pp_pt = ::PolicyPremiumPaymentTerm.create!(
+              policy_premium: premium,
+              first_moment: dates[:term_first_date].beginning_of_day,
+              last_moment: dates[:term_last_date].beginning_of_day,
+              time_resolution: 'day',
+              invoice_available_date_override: dates[:available_date],
+              invoice_due_date_override: dates[:due_date],
+              default_weight: 0
+            )
+            if ind == 0
+              ::PolicyPremiumItemPaymentTerm.create!(
+                policy_premium_item: ppi_down_payment,
+                policy_premium_payment_term: pp_pt,
+                weight: down_payment - msi_policy_fee
+              ) unless ppi_down_payment.nil? || (down_payemnt - msi_policy_fee) == 0
+              ::PolicyPremiumItemPaymentTerm.create!(
+                policy_premium_item: ppi_policy_fee,
+                policy_premium_payment_term: pp_pt,
+                weight: msi_policy_fee
+              ) unless ppi_policy_fee.nil? || msi_policy_fee == 0
+            else
+              ::PolicyPremiumItemPaymentTerm.create!(
+                policy_premium_item: ppi_installment,
+                policy_premium_payment_term: pp_pt,
+                weight: ind + 1 == gotten_schedule.length ? last_premium_installment : premium_installment
+              ) unless ppi_installment.nil? || (ind + 1 == gotten_schedule.length ? last_premium_installment : premium_installment) == 0
+              ::PolicyPremiumItemPaymentTerm.create!(
+                policy_premium_item: ppi_installment_fee,
+                policy_premium_payment_term: pp_pt,
+                weight: fee_installment
+              ) unless ppi_installment_fee.nil? || fee_installment == 0
+            end
+          end
           # woot
           if premium.save
             quote.mark_successful
@@ -181,53 +257,14 @@ module CarrierMsiPolicyApplication
             quote.mark_failure("Internal Error (47)");
           end
           if quote.status == 'quoted'
-            # generate internal invoices
-            #quote.generate_invoices_for_term MOOSE WARNING: uncomment if there are ever internal ones...
-            # generate external invoices
-            installment_day = self.extra_settings&.[]('installment_day') || 1
-            installment_day = 1 if installment_day < 1
-            installment_day = 28 if installment_day > 28
-            if installment_day != self.extra_settings&.[]('installment_day')
-              self.extra_settings = (self.extra_settings || {}).merge({ 'installment_day' => installment_day })
-              self.update_columns(extra_settings: self.extra_settings)
+            # generate invoices
+            result = quote.generate_invoices_for_term
+            unless result.nil?
+              puts result[:internal] # MOOSE WARNING: [:external] contains an I81n key for a user-displayable message, if desired
+              quote.mark_failure(result[:internal])
+              return false
             end
-            gotten_schedule = msi_get_payment_schedule(payment_plan, installment_day: installment_day)
-            last_premium_installment = total_paid - (down_payment + premium_installment * (installment_count - 1))
-            last_premium_installment = premium_installment if last_premium_installment < 0 || gotten_schedule.length <= 2 # should NEVER EVER happen, but letting a negative in would be much worse than overcharging by a few cents and refunding later
-            gotten_schedule.each.with_index do |dates, ind|
-              quote.invoices.create!(dates.merge({
-                external: true,
-                status: "quoted",
-                payer: self.primary_user,
-                line_items_attributes: (ind == 0 ? [
-                  {
-                    title: "Premium Down Payment",
-                    price: down_payment - msi_policy_fee,
-                    refundability: 'prorated_refund',
-                    category: 'base_premium'
-                  },
-                  {
-                    title: "Policy Fee",
-                    price: msi_policy_fee,
-                    refundability: 'no_refund',
-                    category: 'deposit_fees'
-                  }
-                ] : [
-                  {
-                    title: "Premium Installment",
-                    price: ind + 1 == gotten_schedule.length ? last_premium_installment : premium_installment,
-                    refundability: 'prorated_refund',
-                    category: 'base_premium'
-                  },
-                  {
-                    title: "Installment Fee",
-                    price: fee_installment,
-                    refundability: 'no_refund',
-                    category: 'amortized_fees'
-                  }
-                ]).select{|li| li[:price] > 0 }
-              }))
-            end
+            # done
             return true
           else
             puts "\nQuote Save Error\n"
@@ -254,7 +291,7 @@ module CarrierMsiPolicyApplication
             # go wild
             [
               {
-                due_date: Time.current.to_date,
+                due_date: Time.current.to_date + 1.day,
                 available_date: Time.current.to_date,
                 term_first_date: self.effective_date,
                 term_last_date: self.expiration_date

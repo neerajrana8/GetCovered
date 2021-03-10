@@ -67,6 +67,8 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
       t.boolean  :cancelled, null: false, default: false                # whether this term has been entirely cancelled (i.e. prorated into nothingness)
       t.integer  :default_weight                                        # the default weight for policy_premium_item_payment_terms based on this payment term (i.e. the billing_strategy.new_business["payments"] value)
       t.string   :term_group                                            # used in case there are overlapping terms with different functionalities
+      t.date     :invoice_available_date_override                       # used in case we need to provide an override to the default invoice available date calculation
+      t.date     :invoice_due_date_override                             # used in case we need to provide an override to the defailt invoice due date calculation
       t.references :policy_premium
     end
     

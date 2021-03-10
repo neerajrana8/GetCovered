@@ -359,9 +359,11 @@ class PolicyQuote < ApplicationRecord
           collector,
           by_pppt.map do |pppt, line_items|
             index += 1
+            available_date = pppt.invoice_available_date_override || (index == 0 ? Time.current.to_date : pppt.term_first_moment.beginning_of_day - 1.day - self.available_period) # MOOSE WARNING: model must support .available_period
+            due_date = pppt.invoice_due_date_override || (index == 0 ? Time.current.to_date + 1.day : pppt.term_first_moment.beginning_of_day - 1.day)
             created = ::Invoice.create(
-              available_date: index == 0 ? Time.current.to_date : pppt.term_first_moment.beginning_of_day - 1.day - self.available_period, # MOOSE WARNING: model must support .available_period
-              due_date: index == 0 ? Time.current.to_date + 1.day : pppt.term_first_moment.beginning_of_day - 1.day,
+              available_date: available_date,
+              due_date: due_date,
               external: !(collector.nil? || (collector.respond_to?(:master_agency) && collector.master_agency)),
               status: "quoted",
               invoiceable: self,
@@ -376,6 +378,7 @@ class PolicyQuote < ApplicationRecord
               }
               raise ActiveRecord::Rollback
             end
+            next created
           end
         ]
       end.to_h
