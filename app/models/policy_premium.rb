@@ -69,7 +69,7 @@ class PolicyPremium < ApplicationRecord
             next
           end
           ::PolicyPremiumPaymentTerm.create!(
-            policy_premium: self,
+            due_date: index == 0 ? Time.current.to_date + 1.day : ,
             first_moment: (last_end + 1.day).beginning_of_day,
             last_moment: (last_end = (last_end + 1.day + (1 + extra_months).months - 1.day)).end_of_day,
             time_resolution: 'day',

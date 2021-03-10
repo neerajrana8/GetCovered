@@ -11,7 +11,6 @@ class PolicyQuote < ApplicationRecord
   include CarrierMsiPolicyQuote
   include CarrierDcPolicyQuote
   include ElasticsearchSearchable
-  include InvoiceableQuote
 
   before_save :set_status_updated_on,
     if: Proc.new { |quote| quote.status_changed? }
@@ -323,6 +322,67 @@ class PolicyQuote < ApplicationRecord
   
   def expiration_moment
     self.expiration_date.end_of_day
+  end
+  
+  def generate_invoices_for_term(renewal = false, refresh = false)
+    # flee if renewal is true (unsupported right now)
+    if renewal
+      app "============================================================"
+      return {
+        internal: "Invoice generation for policy renewals is not yet supported!",
+        external: "policy_quote.cannot_gen_invoices_for_renewal"
+      }
+    end
+    # prepare
+    invoices.destroy_all if refresh
+    # get line items (format: { collector: { policy_premium_payment_term: [line_item,...] } }), with PPPTs in order
+    line_items = self.policy_premium.policy_premium_items.map{|ppi| { ppi: ppi, line_items: ppi.generate_line_items } }
+    failed_fellow = line_items.find{|li| li[:line_items].class == ::String }
+    if failed_fellow
+      return {
+        internal: "Failed to generate line items for PolicyPremiumItem #{failed_fellow[:ppi].id}; received error: #{failed_fellow[:line_items]}",
+        external: "policy_quote.line_item_gen_failed"
+      }
+    end
+    line_items = line_items.group_by{|li| li[:ppi].collector }
+                           .transform_values do |li_arr|
+                            li_arr.map{|li| li[:line_items] }.flatten
+                                  .group_by{|li| li.chargeable.policy_premium_payment_term }
+                                  .sort_by{|k,v| k }.to_h
+                           end
+    # create invoices
+    dat_problemo = nil
+    ActiveRecord::Base.transaction(requires_new: true) do
+      invoices = line_items.map do |collector, by_pppt|
+        index = -1
+        [
+          collector,
+          by_pppt.map do |pppt, line_items|
+            index += 1
+            created = ::Invoice.create(
+              available_date: index == 0 ? Time.current.to_date : pppt.term_first_moment.beginning_of_day - 1.day - self.available_period, # MOOSE WARNING: model must support .available_period
+              due_date: index == 0 ? Time.current.to_date + 1.day : pppt.term_first_moment.beginning_of_day - 1.day,
+              external: !(collector.nil? || (collector.respond_to?(:master_agency) && collector.master_agency)),
+              status: "quoted",
+              invoiceable: self,
+              payer: self.primary_user,
+              collector: collector,
+              line_items: line_items
+            )
+            unless created.id
+              dat_problemo = {
+                internal: "Failed to generate invoice for collector #{collector.class.name} ##{collector.id} and PolicyPremiumPaymentTerm #{pppt.id}; errors were #{created.errors.to_h}",
+                external: "policy_quote.invoice_gen_failed"
+              }
+              raise ActiveRecord::Rollback
+            end
+          end
+        ]
+      end.to_h
+      return dat_problemo unless dat_problemo.nil?
+    end
+    # all done
+    return nil
   end
 
   private

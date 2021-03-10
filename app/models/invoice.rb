@@ -16,6 +16,7 @@ class Invoice < ApplicationRecord
   has_many :line_item_reductions,
     through: :line_items
 
+  before_create :mark_line_items_priced_in
   before_update :set_status,
     unless: Proc.new{|i| i.will_save_change_to_attribute?('status') }
   before_update :set_missed_record,
@@ -335,6 +336,22 @@ class Invoice < ApplicationRecord
 
 
   private
+  
+    # bring in line items
+    def mark_line_items_priced_in
+      dat_total_tho = 0
+      self.line_items.group_by{|li| li.id.nil? }.each do |unsaved, lis|
+        if unsaved
+          lis.each{|li| li.priced_in = true; dat_total_tho += li.total_due }
+        else
+          ::LineItem.where(id: lis.map{|li| li.id }).update_all(priced_in: true)
+          lis.each{|li| dat_total_tho += li.total_due }
+        end
+      end
+      self.original_total_due = dat_total_tho
+      self.total_due = dat_total_tho
+      self.total_payable = dat_total_tho
+    end
   
     # sets our current status based on various values
     def set_status

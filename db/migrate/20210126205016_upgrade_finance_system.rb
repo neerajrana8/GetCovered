@@ -138,10 +138,10 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
       t.boolean     :autosend_status_change_notifications, null: false, # true to automatically send status notifications when status changes; change to false if manually switching statuses around a bunch temporarily
         default: true
       # payment tracking
-      t.integer     :original_total_due, null: false                    # the total due when this invoice was created
-      t.integer     :total_due, null: false                             # the total due now (taking refunds & newly added line items into account)
-      t.integer     :total_reducing, null: falsee, default: 0           # the amount subtracted from total_due by pending LineItemReductions
-      t.integer     :total_payable, null: false                         # the total that can be paid now (i.e. total_due - total_pending - total_received)
+      t.integer     :original_total_due, null: false, default: 0        # the total due when this invoice was created                                       (Automatically given a value in before_create based on LineItems.)
+      t.integer     :total_due, null: false, default: 0                 # the total due now (taking refunds & newly added line items into account)          (Automatically given a value in before_create based on LineItems.)
+      t.integer     :total_payable, null: false, default: 0             # the total that can be paid now (i.e. total_due - total_pending - total_received)  (Automatically given a value in before_create based on LineItems.)
+      t.integer     :total_reducing, null: false, default: 0            # the amount subtracted from total_due by pending LineItemReductions
       t.integer     :total_pending, null: false, default: 0             # the total amount pending (i.e. the sum of charge.amount over all charges with processed: false)
       t.integer     :total_received, null: false, default: 0            # the total that has actually been received
       t.integer     :total_undistributable, null: false, default: 0     # if we receive a payment and the line items totals have somehow changed so that what we charged for has become less than the total, the extra is recorded here
@@ -153,7 +153,7 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
       # associations
       t.references :invoiceable, polymorphic: true
       t.references :payer, polymorphic: true
-      t.references :collector, polymorphic: true
+      t.references :collector, polymorphic: true # MOOSE WARNING: auto-set .external based on this???
     end
     
     create_table :stripe_charges do |t|
