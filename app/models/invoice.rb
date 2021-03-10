@@ -15,7 +15,9 @@ class Invoice < ApplicationRecord
   
   has_many :line_item_reductions,
     through: :line_items
-
+    
+  before_validation :set_number,
+    on: :create
   before_create :mark_line_items_priced_in
   before_update :set_status,
     unless: Proc.new{|i| i.will_save_change_to_attribute?('status') }
@@ -336,6 +338,14 @@ class Invoice < ApplicationRecord
 
 
   private
+  
+    # set invoice number
+    def set_number
+      loop do
+        self.number = rand(36**12).to_s(36).upcase
+        break unless ::Invoice.exists?(number: number)
+      end
+    end
   
     # bring in line items
     def mark_line_items_priced_in

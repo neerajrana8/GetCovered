@@ -69,32 +69,12 @@ module CarrierDcPolicyApplication
           pp quote.errors
           return false
         else
-          # generate internal invoices
-          #quote.generate_invoices_for_term MOOSE WARNING: uncomment if there are ever internal ones...
-          # generate external invoices
-          quote.invoices.create!({
-            external: true,
-            status: "quoted",
-            payer: self.primary_user,
-            due_date: Time.current.to_date,
-            available_date: Time.current.to_date,
-            term_first_date: self.effective_date,
-            term_last_date: self.expiration_date,
-            line_items_attributes: [
-              {
-                title: "Premium",
-                price: premium.base,
-                refundability: 'no_refund', # MOOSE WARNING: really?
-                category: 'base_premium'
-              },
-              {
-                title: "Processing Fee",
-                price: premium.external_fees,
-                refundability: 'no_refund',
-                category: 'deposit_fees'
-              }
-            ]
-          })
+          result = quote.generate_invoices_for_term
+          unless result.nil?
+            puts result[:internal] # MOOSE WARNING: [:external] contains an I81n key for a user-displayable message, if desired
+            quote.mark_failure(result[:internal])
+            return false
+          end
           return true
         end
       end

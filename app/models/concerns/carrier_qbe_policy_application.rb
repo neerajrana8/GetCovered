@@ -140,7 +140,12 @@ module CarrierQbePolicyApplication
 	 					    quote.send(quote_method)
                 
   	 						if quote.status == 'quoted'
-	  	 						quote.generate_invoices_for_term
+                  result = quote.generate_invoices_for_term
+                  unless result.nil?
+                    puts result[:internal] # MOOSE WARNING: [:external] contains an I81n key for a user-displayable message, if desired
+                    quote.mark_failure(result[:internal])
+                    return false
+                  end
 		 							return true
 		 						else
 		 							puts "\nQuote Save Error\n"
