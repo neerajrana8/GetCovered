@@ -152,7 +152,7 @@ module V2
       end
 
       def set_branding_profile
-        @branding_profile = access_model(::BrandingProfile, params[:id])
+        @branding_profile = @agency.branding_profiles.find(params[:id])
       end
 
       def branding_profile_params
