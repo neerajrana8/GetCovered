@@ -29,8 +29,8 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
     
     create_table :policy_premium_items do |t|
       # what this is and how to charge for it
-      t.string :title                                                   # a descriptive title to be attached to line items on invoices
-      t.integer :category                                               # whether this is a fee or a premium or what
+      t.string :title, null: false                                      # a descriptive title to be attached to line items on invoices
+      t.integer :category, null: false                                  # whether this is a fee or a premium or what
       t.integer :rounding_error_distribution, default: 0                # how to distribute rounding error
       t.timestamps                                                      # timestamps
       # payment tracking
@@ -99,6 +99,7 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
       t.references :commission_strategy
       t.references :policy, null: true
     end
+    
     
     create_table :line_items do |t|
       # basic details
@@ -188,10 +189,10 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
       t.integer     :field_changed, null: false                         # which field was changed (total_due or total_received)
       t.integer     :amount, null: false                                # the change to line_item.total_received (positive or negative)
       t.boolean     :handled, null: false, default: false               # whether a handler has handled this LIC (we could just use !lic.handler.nil?, but this is cleaner)
+      t.timestamps
       t.references  :line_item                                          # the LineItem
       t.references  :reason, polymorphic: true                          # the reason for this change (a StripeCharge object, for example, or a LineItemReduction)
       t.references  :handler, polymorphic: true, null: true             # the CommissionItem that reflects this change, or other model that handled it
-      t.timestamps
     end
     
     create_table :line_item_reduction do |t|

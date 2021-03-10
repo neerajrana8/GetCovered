@@ -149,6 +149,19 @@ module CarrierMsiPolicyApplication
             end
           end
           quote.update(carrier_payment_data: { 'product_id' => product_uid, 'payment_methods' => payment_methods, 'policy_fee' => msi_policy_fee, 'installment_fee' => fee_installment, 'installment_total' => total_installment })
+          ###############
+          # build policy premium
+          premium = PolicyPremium.create policy_quote: quote, billing_strategy: quote.policy_application.billing_strategy
+          
+          
+          
+          
+          
+          
+          
+          ##############
+          
+          
           # build policy premium
           premium = PolicyPremium.new(
             base: total_paid - msi_policy_fee,
@@ -171,9 +184,9 @@ module CarrierMsiPolicyApplication
             # generate internal invoices
             #quote.generate_invoices_for_term MOOSE WARNING: uncomment if there are ever internal ones...
             # generate external invoices
-            installment_day = (self.extra_settings&.[]('installment_day') || self.fields.find{|f| f['title'] == "Installment Day" }&.[]('value') || 1).to_i
-            installment_day = 28 if installment_day > 28
+            installment_day = self.extra_settings&.[]('installment_day') || 1
             installment_day = 1 if installment_day < 1
+            installment_day = 28 if installment_day > 28
             if installment_day != self.extra_settings&.[]('installment_day')
               self.extra_settings = (self.extra_settings || {}).merge({ 'installment_day' => installment_day })
               self.update_columns(extra_settings: self.extra_settings)
@@ -228,6 +241,7 @@ module CarrierMsiPolicyApplication
     
     
     private
+    
     
       def msi_get_payment_schedule(billing_code, installment_day: nil)
         # set installment day

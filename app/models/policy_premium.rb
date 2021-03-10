@@ -35,7 +35,7 @@ class PolicyPremium < ApplicationRecord
     self.save if persist
   end
   
-  def initialize_all(premium_amount, tax: nil, taxes: nil, term_group: nil, collector: nil, filter_fees: nil)
+  def initialize_all(premium_amount, tax: nil, taxes: nil, term_group: nil, collector: nil, filter_fees: nil, tax_recipient: nil)
     tax = taxes if tax.nil? && !taxes.nil?
     return "Tax must be >= 0" if tax && tax < 0
     result = nil
@@ -46,7 +46,7 @@ class PolicyPremium < ApplicationRecord
       result = self.itemize_premium(premium_amount, and_update_totals: false, term_group: term_group, collector: collector)
       raise ActiveRecord::Rollback unless result.nil?
       # taxes
-      result = self.itemize_taxes(tax, and_update_totals: false, term_group: term_group, collector: collector) unless tax.nil? || tax == 0
+      result = self.itemize_taxes(tax, and_update_totals: false, term_group: term_group, collector: collector, recipient: tax_recipient) unless tax.nil? || tax == 0
       raise ActiveRecord::Rollback unless result.nil?
       # fees
       result = self.itemize_fees(premium_amount, and_update_totals: false, term_group: term_group, collector: collector, filter: filter_fees)
@@ -69,7 +69,7 @@ class PolicyPremium < ApplicationRecord
             next
           end
           ::PolicyPremiumPaymentTerm.create!(
-            due_date: index == 0 ? Time.current.to_date + 1.day : ,
+            policy_premium: self,
             first_moment: (last_end + 1.day).beginning_of_day,
             last_moment: (last_end = (last_end + 1.day + (1 + extra_months).months - 1.day)).end_of_day,
             time_resolution: 'day',
@@ -114,7 +114,7 @@ class PolicyPremium < ApplicationRecord
     self.update_totals(persist: true) if and_update_totals
   end
   
-  def itemize_fee(fee, percentage_basis, and_update_totals: true, term_group: nil, payment_terms: nil, collector: nil)
+  def itemize_fee(fee, percentage_basis, and_update_totals: true, term_group: nil, payment_terms: nil, collector: nil, recipient: nil)
     # get payment terms
     payment_terms = self.payment_terms.where(term_group: term_group).sort.select{|p| p.default_weight != 0 } if payment_terms.nil?
     if payment_terms.blank?
@@ -136,7 +136,7 @@ class PolicyPremium < ApplicationRecord
       proration_calculation: 'payment_term_exclusive',
       proration_refunds_allowed: false,
       # MOOSE WARNING: preprocessed
-      recipient: fee.ownerable,
+      recipient: recipient || fee.ownerable,
       collector: collector || self.billing_strategy.collector || ::PolicyPremium.default_collector,
       policy_premium_item_payment_terms: (
         (fee.amortized || fee.per_payment) ? payment_terms.map.with_index do |pt, index|
@@ -158,7 +158,7 @@ class PolicyPremium < ApplicationRecord
     self.itemize_premium(amount, and_update_totals: and_update_totals, proratable: proratable, refundable: refundable, term_group: term_group, collector: collector, is_tax: true)
   end
 
-  def itemize_premium(amount, and_update_totals: true, proratable: nil, refundable: nil, term_group: nil, collector: nil, is_tax: false)
+  def itemize_premium(amount, and_update_totals: true, proratable: nil, refundable: nil, term_group: nil, collector: nil, is_tax: false, recipient: nil)
     # get payment terms
     payment_terms = self.payment_terms.where(term_group: term_group).sort.select{|p| p.default_weight != 0 }
     if payment_terms.blank?
@@ -206,7 +206,7 @@ class PolicyPremium < ApplicationRecord
           proration_calculation: 'no_proration',
           proration_refunds_allowed: false,
           # MOOSE WARNING: preprocessed
-          recipient: self.commission_strategy,
+          recipient: recipient || self.commission_strategy,
           collector: collector || self.billing_strategy.collector || ::PolicyPremium.default_collector,
           policy_premium_item_payment_terms: [payment_terms.first].map do |pt|
             ::PolicyPremiumItemPaymentTerm.new(

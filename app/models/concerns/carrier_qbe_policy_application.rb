@@ -129,7 +129,7 @@ module CarrierQbePolicyApplication
                 unless premium.id
                   puts "  Failed to create premium! #{premium.errors.to_h}"
                 else
-                  premium.initialize_all(base_premium.to_i, tax: tax.to_i)
+                  premium.initialize_all(base_premium.to_i, tax: tax.to_i, tax_recipient: quote.policy_application.carrier)
                   unless result.nil?
                     puts "  Failed to initialize premium! #{result}"
                   else
