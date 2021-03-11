@@ -167,7 +167,7 @@ module V2
           agency_id: %i[scalar array],
           id: %i[scalar array],
           created_at: %i[scalar array interval],
-          title: %i[scalar array interval],
+          title: %i[scalar array interval like],
           enabled: %i[scalar array]
         }
       end

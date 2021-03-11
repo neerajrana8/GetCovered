@@ -152,7 +152,7 @@ module V2
           id: %i[scalar array],
           created_at: %i[scalar array interval],
           updated_at: %i[scalar array interval],
-          title: %i[scalar array interval],
+          title: %i[scalar array interval like],
           enabled: %i[scalar array]
         }
       end
