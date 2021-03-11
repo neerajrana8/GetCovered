@@ -92,13 +92,13 @@ module V2
       end
 
       def billing_strategies_list
-        if params[:carrier_agency_id].present?
-          billing_strategies = paginator(BillingStrategy.where(carrier_id: params[:id], agency_id: params[:carrier_agency_id]).order(created_at: :desc))
-          render json: billing_strategies, status: :ok
-        else
-          billing_strategies = paginator(BillingStrategy.where(carrier_id: params[:id]).order(created_at: :desc))
-          render json: billing_strategies, status: :ok
-        end
+        @billing_strategies =
+          if params[:carrier_agency_id].present?
+            paginator(BillingStrategy.includes(:agency).where(carrier_id: params[:id], agency_id: params[:carrier_agency_id]).order(created_at: :desc))
+          else
+            paginator(BillingStrategy.includes(:agency).where(carrier_id: params[:id]).order(created_at: :desc))
+          end
+        render 'v2/shared/billing_strategies/index'
       end
 
       def toggle_billing_strategy
