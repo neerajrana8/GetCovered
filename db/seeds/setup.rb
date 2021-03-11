@@ -128,6 +128,12 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
   if carrier.save!
     puts "Initializing carrier ##{carrier.id}..."
     
+    ::CommissionStrategy.create!(
+      title: "#{carrier.name} Parent Commission",
+      percentage: 100,
+      recipient: carrier
+    )
+    
     carrier_policy_type = carrier.carrier_policy_types.new(application_required: carrier.id == 2 ? false : true)
     carrier.access_tokens.create!
 

@@ -15,6 +15,11 @@ class PolicyPremium < ApplicationRecord
   has_many :policy_premium_items
   has_many :fees,
     as: :assignable
+
+  # Callbacks
+  before_validation :set_default_commission_strategy,
+    on: :create,
+    if: Proc.new{|pp| pp.commission_strategy.nil? && !pp.policy_quote.nil? }
   
   # Public Class Methods
   def self.default_collector
@@ -294,6 +299,12 @@ class PolicyPremium < ApplicationRecord
   end
   
   
+  
+  private
+  
+    def set_default_commission_strategy
+      self.commission_strategy = self.policy_application.carrier_agency_authorization.commission_strategy
+    end
   
   
   

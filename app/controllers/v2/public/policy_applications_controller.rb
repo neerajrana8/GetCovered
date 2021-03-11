@@ -285,8 +285,17 @@ module V2
                 @application.primary_user.set_stripe_id
 
                 @quote = @application.policy_quotes.last
-                @quote.generate_invoices_for_term
                 @premium = @quote.policy_premium
+                
+                # generate invoices
+                result = @quote.generate_invoices_for_term
+                unless result.nil?
+                  puts result[:internal] # MOOSE WARNING: [:external] contains an I81n key for a user-displayable message, if desired
+                  quote.mark_failure(result[:internal])
+                  render json: standard_error(:quote_failed, I18n.t(result[:external])),
+                         status: 400
+                  return
+                end
 
                 result = {
                   id:                 @application.id,
@@ -654,8 +663,17 @@ module V2
               @policy_application.primary_user.set_stripe_id
 
               @quote         = @policy_application.policy_quotes.last
-              invoice_errors = @quote.generate_invoices_for_term
               @premium       = @quote.policy_premium
+              
+              # generate invoices
+              result = @quote.generate_invoices_for_term
+              unless result.nil?
+                puts result[:internal]
+                quote.mark_failure(result[:internal])
+                render json: standard_error(:quote_failed, I18n.t(result[:external])),
+                       status: 400
+                return
+              end
 
               result = {
                 id:             @policy_application.id,
@@ -664,7 +682,6 @@ module V2
                   status: @quote.status,
                   premium: @premium
                 },
-                invoice_errors: invoice_errors,
                 invoices:       @quote.invoices,
                 user:           {
                   id:        @policy_application.primary_user.id,

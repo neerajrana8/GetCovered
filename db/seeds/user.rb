@@ -7,9 +7,9 @@ require './db/seeds/functions'
 @residential_units = Insurable.residential_units
 @residential_units.each do |unit|
   
-  # Create a 66% Occupancy Rate
+  # Create a 33% Occupancy Rate
   occupied_chance = rand(0..100)
-  if occupied_chance > 33
+  if occupied_chance > 66
     
     tenant_count = rand(1..5)
 		start_date = (Time.now + rand(2..16).days)

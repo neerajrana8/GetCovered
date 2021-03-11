@@ -63,16 +63,23 @@ module CarrierCrumPolicyApplication
                     limit: policy_details["liablityCoverages"][key].to_i * 100
                   )
                 end
-
-	 					    premium = PolicyPremium.new base: policy_details["termPremium"].include?(".") ?  policy_details["termPremium"].delete(".").to_i : policy_details["termPremium"].to_i * 100,
-	 					                                special_premium: policy_details["triaPremium"].to_i * 100,
-	 					                                taxes: 0,
-	 					                                billing_strategy: quote.policy_application.billing_strategy,
-	 					                                policy_quote: quote
-
-    						premium.set_fees
-    						premium.calculate_fees(true)
-    						premium.calculate_total(true)
+                
+                #########
+                quote_method = "mark_failure"
+                premium = PolicyPremium.create policy_quote: quote, billing_strategy: quote.policy_application.billing_strategy
+                unless premium.id
+                  puts "  Failed to create premium! #{premium.errors.to_h}"
+                else
+                  premium.initialize_all(
+                    (policy_details["termPremium"].include?(".") ?  policy_details["termPremium"].delete(".").to_i : policy_details["termPremium"].to_i * 100) + policy_details["triaPremium"].to_i * 100
+                    # the triaPremium bit is the old special_premium
+                  )
+                  unless result.nil?
+                    puts "  Failed to initialize premium! #{result}"
+                  else
+                    quote_method = "mark_successful"
+                  end
+                end
 	 					    quote_method = premium.save ? "mark_successful" : "mark_failure"
 	 					    quote.send(quote_method)
 

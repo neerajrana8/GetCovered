@@ -78,6 +78,20 @@ class PolicyApplication < ApplicationRecord
                  quote_in_progress: 4, quote_failed: 5, quoted: 6,
                  more_required: 7, accepted: 8, rejected: 9 }
 
+  # get carrier_agency_authorization
+  def carrier_agency_authorization
+    state = self.primary_insurable&.primary_address&.state
+    ::CarrierAgencyAuthorization.references(:carrier_agencies).includes(:carrier_agency).where({
+      state: state,
+      policy_type_id: self.policy_type_id,
+      carrier_agencies: {
+        carrier_id: self.carrier_id,
+        agency_id: self.agency_id
+      }
+    }.compact).take
+  end
+
+
   # get tags
   def tags
     ::Tag.where(id: self.tag_ids)

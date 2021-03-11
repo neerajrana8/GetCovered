@@ -14,6 +14,7 @@ require 'socket'
 @pensio = Carrier.find(4)
 @msi = Carrier.find(5) unless ENV['skip_msi']          # Residential Carrier
 
+
 ##
 # Set Up Get Covered
 #
@@ -69,7 +70,31 @@ if @get_covered.save
   CarrierAgency.where(agency_id: @get_covered.id, carrier_id: @qbe.id).take
                .update(external_carrier_id: "GETCVR")
 
+  gc_commission_strategies = {
+    @qbe => 30,
+    @crum => 15,
+    @msi => 30
+  }.map do |carrier, percent|
+    [
+      carrier,
+      ::CommissionStrategy.create!(
+        title: "Get Covered / #{carrier.title} Commission",
+        percentage: percent,
+        recipient: @get_covered,
+        commission_strategy: ::CommissionStrategy.where(recipient: carrier, commission_strategy_id: nil).take
+      )
+    ]
+  end.to_h
+
   @get_covered.carriers.each do |carrier|
+  
+    commission_strategy = (gc_commission_strategies[carrier] ||= ::CommissionStrategy.create!(
+      title: "Get Covered / #{carrier.title} Commission",
+      percentage: 20, # use 20 as a default if there's no entry
+      recipient: @get_covered,
+      commission_strategy: ::CommissionStrategy.where(recipient: carrier, commission_strategy_id: nil).take
+    ))
+  
   	51.times do |state|
   		
   		@policy_type = nil
@@ -92,7 +117,8 @@ if @get_covered.save
   	  authorization = CarrierAgencyAuthorization.create(state: state, 
   	  																									available: available, 
   	  																									carrier_agency: CarrierAgency.where(carrier: carrier, agency: @get_covered).take, 
-  	  																									policy_type: @policy_type)
+  	  																									policy_type: @policy_type
+                                                        commission_strategy: commission_strategy)
   	  Fee.create(title: "Service Fee", 
   	  					 type: :MISC, 
   	  					 per_payment: false,
@@ -140,19 +166,7 @@ if @get_covered.save
   		                                                      payments_per_term: 12, remainder_added_to_deposit: true },
   		                                      carrier: @qbe, policy_type: PolicyType.find(1), 
                                     				fees_attributes: [service_fee])
-  
-  @get_covered.commission_strategies.create!(title: 'Get Covered / QBE Residential Commission', 
-  																						carrier: Carrier.find(1), 
-  																						policy_type: PolicyType.find(1), 
-  																						amount: 30, 
-  																						type: 0, 
-  																						house_override: 0)
-  @get_covered.commission_strategies.create!(title: 'Get Covered / QBE Producer Commission', 
-  																						carrier: Carrier.find(1), 
-  																						policy_type: PolicyType.find(1), 
-  																						amount: 5, 
-  																						type: 0, 
-  																						house_override: 0)
+
   ##
   # Crum / Get Covered Billing & Comission Strategies
                                     
@@ -175,21 +189,6 @@ if @get_covered.save
 		                                                      payments_per_term: 1, remainder_added_to_deposit: true },
 		                                      carrier: @crum, policy_type: PolicyType.find(4), 
                                   				fees_attributes: [service_fee])
-  																						
-  @get_covered.commission_strategies.create!(title: 'Get Covered / Crum Commercial Commission',
-																						 carrier: Carrier.find(3), 
-																						 policy_type: PolicyType.find(4), 
-																						 amount: 15, 
-																						 type: 0, 
-																						 house_override: 0)
-  @get_covered.commission_strategies.create!(title: 'Get Covered / Crum Producer Commission',
-																						 carrier: Carrier.find(3), 
-																						 policy_type: PolicyType.find(4), 
-																						 amount: 3, 
-																						 type: 0, 
-																						 house_override: 0)
-
-
                                     
   @get_covered.billing_strategies.create!(title: 'Monthly', enabled: true, carrier_code: nil,
   		                                      new_business: { payments: [8.37, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33], 
@@ -224,20 +223,6 @@ if @get_covered.save
                                                               payments_per_term: 12, remainder_added_to_deposit: true },
                                               carrier: @msi, policy_type: PolicyType.find(1), 
                                               fees_attributes: [service_fee])
-    
-    # MOOSE WARNING: these are just copies of the QBE commission strategies and likely need to be changed
-    @get_covered.commission_strategies.create!(title: 'Get Covered / MSI Residential Commission', 
-                                                carrier: @msi, 
-                                                policy_type: PolicyType.find(1), 
-                                                amount: 30, 
-                                                type: 0, 
-                                                house_override: 0)
-    @get_covered.commission_strategies.create!(title: 'Get Covered / MSI Producer Commission', 
-                                                carrier: @msi,
-                                                policy_type: PolicyType.find(1), 
-                                                amount: 5, 
-                                                type: 0, 
-                                                house_override: 0)
   end
 else
   pp @get_covered.errors
@@ -323,6 +308,14 @@ end
                  .update(external_carrier_id: qbe_agency_id)
   
     cambridge_agency.carriers.each do |carrier|
+
+      commission_strategy = ::CommissionStrategy.create!(
+        title: "#{cambridge_agency.title} / #{carrier.title} Commission",
+        percentage: 25,
+        recipient: cambridge_agency,
+        commission_strategy: ::CommissionStrategy.where(recipient: carrier, commission_strategy_id: nil).take
+      )
+    
     	51.times do |state|
     		
     		@policy_type = nil
@@ -339,7 +332,8 @@ end
     	  authorization = CarrierAgencyAuthorization.create(state: state, 
     	  																									available: available, 
     	  																									carrier_agency: CarrierAgency.where(carrier: carrier, agency: cambridge_agency).take, 
-    	  																									policy_type: @policy_type)
+    	  																									policy_type: @policy_type,
+                                                          commission_strategy: commission_strategy)
     	  Fee.create(title: "Service Fee", 
     	  					 type: :MISC, 
     	  					 per_payment: false,
@@ -373,13 +367,6 @@ end
       		                                      renewal: { payments: [8.37, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33], 
       		                                                      payments_per_term: 12, remainder_added_to_deposit: true },
       		                                      carrier: @qbe, policy_type: PolicyType.find(1))    
-
-    cambridge_agency.commission_strategies.create!(title: "#{ cambridge_agency.title } / QBE Residential Commission", 
-      																						 carrier: @qbe, 
-      																						 policy_type: PolicyType.find(1), 
-      																						 amount: 25, 
-      																						 type: 0, 
-      																						 commission_strategy_id: 2)	
        
   else
     pp cambridge_agency.errors
@@ -402,6 +389,7 @@ end
   	verified: false, 
   	stripe_id: nil, 
   	master_agency: false,
+    agency: @get_covered,
   	addresses_attributes: [
   		{
   			street_number: "265",
@@ -425,6 +413,7 @@ end
   	verified: false, 
   	stripe_id: nil, 
   	master_agency: false,
+    agency: @get_covered,
   	addresses_attributes: [
   		{
   			street_number: "265",
@@ -467,6 +456,15 @@ end
                  .update(external_carrier_id: qbe_agency_id)
   
     gc_qbesub_agency.carriers.each do |carrier|
+
+      parent_commission_strategy = ::CommissionStrategy.includes(:commission_strategies).references(:commission_strategy).where(recipient: @get_covered, commission_strategies_commission_strategies: { recipient: commission }).take
+      commission_strategy = ::CommissionStrategy.create!(
+        title: "#{gc_qbesub_agency.title} / #{carrier.title} Commission",
+        percentage: parent_commission_strategy.percentage - 5,
+        recipient: gc_qbesub_agency,
+        commission_strategy: parent_commission_strategy
+      )
+    
     	51.times do |state|
     		
     		@policy_type = nil
@@ -483,7 +481,8 @@ end
     	  authorization = CarrierAgencyAuthorization.create(state: state, 
     	  																									available: available, 
     	  																									carrier_agency: CarrierAgency.where(carrier: carrier, agency: gc_qbesub_agency).take, 
-    	  																									policy_type: @policy_type)
+    	  																									policy_type: @policy_type,
+                                                          commission_strategy: commission_strategy)
     	  Fee.create(title: "Service Fee", 
     	  					 type: :MISC, 
     	  					 per_payment: false,
@@ -516,14 +515,7 @@ end
       		                                                      payments_per_term: 12, remainder_added_to_deposit: true },
       		                                      renewal: { payments: [8.37, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33], 
       		                                                      payments_per_term: 12, remainder_added_to_deposit: true },
-      		                                      carrier: @qbe, policy_type: PolicyType.find(1))    
-
-    gc_qbesub_agency.commission_strategies.create!(title: "#{ gc_qbesub_agency.title } / QBE Residential Commission", 
-      																						 carrier: @qbe, 
-      																						 policy_type: PolicyType.find(1), 
-      																						 amount: 25, 
-      																						 type: 0, 
-      																						 commission_strategy_id: 2)	
+      		                                      carrier: @qbe, policy_type: PolicyType.find(1))
        
   else
     pp gc_qbesub_agency.errors

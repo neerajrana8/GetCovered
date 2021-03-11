@@ -5,6 +5,9 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
     add_column :carrier_policy_types, :premium_proration_refunds_allowed, :boolean, null: false, default: true
     CarrierPolicyType.where(premium_refundable: true).update_all(premium_proration_calculation: 'per_payment_term') # MOOSE WARNING: is this the best default?
     remove_column :carrier_policy_types, :premium_refundable
+
+    # update CarrierAgencyAuthorization
+    add_column :carrier_agency_authorizations, :commission_strategy, :references, null: true # WARNING: set null: false in a second migration after data entry
     
     # update BillingStrategy
     add_reference :billing_strategies, :collector, polymorphic: true, null: true
@@ -273,6 +276,8 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
       t.references    :recipient, polymorphic: true                     # He who receives the money
       t.references    :commission_strategy, optional: true              # The parent commission strategy
     end
+    
+    
   
   end
   
