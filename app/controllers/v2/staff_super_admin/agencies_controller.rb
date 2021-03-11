@@ -127,7 +127,7 @@ module V2
         return({}) if params[:agency].blank?
 
         to_return = params.require(:agency).permit(
-          :agency_id, :enabled, :staff_id, :title, :tos_accepted,
+          :agency_id, :enabled, :staff_id, :title, :tos_accepted, :producer_code,
           :whitelabel, contact_info: {}, addresses_attributes: %i[
             city country county id latitude longitude
             plus_four state street_name street_number
@@ -141,7 +141,7 @@ module V2
         return({}) if params[:agency].blank?
 
         to_return = params.require(:agency).permit(
-          :agency_id, :enabled, :staff_id, :title, :tos_accepted, :whitelabel,
+          :agency_id, :enabled, :staff_id, :title, :tos_accepted, :whitelabel, :producer_code,
           contact_info: {}, settings: {}, addresses_attributes: %i[
             city country county id latitude longitude
             plus_four state street_name street_number
@@ -167,7 +167,8 @@ module V2
           agency_id: %i[scalar array],
           id: %i[scalar array],
           created_at: %i[scalar array interval],
-          title: %i[scalar array interval]
+          title: %i[scalar array interval],
+          enabled: %i[scalar array]
         }
       end
 
