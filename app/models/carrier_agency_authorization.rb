@@ -9,6 +9,7 @@ class CarrierAgencyAuthorization < ApplicationRecord
   
   belongs_to :carrier_agency
   belongs_to :policy_type
+  belongs_to :commission_strategy, optional: true
 
   has_one :agency, through: :carrier_agency
   has_one :carrier, through: :carrier_agency

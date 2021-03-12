@@ -7,7 +7,7 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
     remove_column :carrier_policy_types, :premium_refundable
 
     # update CarrierAgencyAuthorization
-    add_column :carrier_agency_authorizations, :commission_strategy, :references, null: true # WARNING: set null: false in a second migration after data entry
+    add_reference :carrier_agency_authorizations, :commission_strategy, null: true # WARNING: set null: false in a second migration after data entry
     
     # update BillingStrategy
     add_reference :billing_strategies, :collector, polymorphic: true, null: true
@@ -42,7 +42,7 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
       t.integer :total_received, null: false, default: 0                # the amount we've been paid so far
       t.integer :total_processed, null: false, default: 0               # the amount we've fully processed as received (i.e. logged as commissions or whatever other logic we want)
       t.boolean :all_received, null: false, default: false              # whether we've received the full total (for efficient queries)
-      t.boolean :all_processed: null: false, default: false             # whether we've processed the full amount received (for efficient queries)
+      t.boolean :all_processed, null: false, default: false             # whether we've processed the full amount received (for efficient queries)
       # pending proration tracking
       t.integer :preproration_modifiers, null: false, default: 0        # how many LineItemReductions are active that might modify preproration_total_due # MOOSE WARNING validate
       t.boolean :proration_pending, null: false, default: false         # whether there is a proration waiting to go into effect when preproration_modifiers drops to 0 # MOOSE WARNING validate
@@ -77,8 +77,10 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
     
     create_table :policy_premium_item_payment_term do |t|
       t.integer :weight, null: false                                    # the weight assigned to this payment term for calculating total due
-      t.references :policy_premium_payment_term
-      t.references :policy_premium_item
+      t.references :policy_premium_payment_term,
+        index: { name: 'index_ppipt_on_pppt_id' }
+      t.references :policy_premium_item,
+        index: { name: 'index_ppipt_on_ppi' }
     end
   
     
@@ -114,7 +116,7 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
       # payment tracking
       t.integer     :original_total_due,  null: false                   # the total due when this line item was created
       t.integer     :total_due, null: false                             # the total due now (i.e. original_total_due minus refunds plus increases)
-      t.integer     :total_reducing, null: falsee, default: 0           # the amount subtracted from total_due by pending LineItemReductions
+      t.integer     :total_reducing, null: false, default: 0            # the amount subtracted from total_due by pending LineItemReductions
       t.integer     :total_received, null: false, default: 0            # the amount received towards payment of total_due
       
       t.integer     :preproration_total_due, null: false                # the amount due before any prorations MOOSE WARNING: no validations
@@ -265,7 +267,8 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
       t.integer       :amount, null: false                              # The amount of money to pay out for this item. May be negative.
       t.timestamps
       t.references    :commission                                       # The commission on which this item is listed.
-      t.references    :commissionable, polymorphic: true                # The thing this item is being paid for. Generally will be a PolicyPremiumItem.
+      t.references    :commissionable, polymorphic: true,               # The thing this item is being paid for. Generally will be a PolicyPremiumItem.
+        index: { name: 'index_commision_items_on_commissionable' }
       t.references    :policy, null: true                               # Optional direct reference to the Policy this item applies to, if it applies to one
     end
     

@@ -117,7 +117,7 @@ if @get_covered.save
   	  authorization = CarrierAgencyAuthorization.create(state: state, 
   	  																									available: available, 
   	  																									carrier_agency: CarrierAgency.where(carrier: carrier, agency: @get_covered).take, 
-  	  																									policy_type: @policy_type
+  	  																									policy_type: @policy_type,
                                                         commission_strategy: commission_strategy)
   	  Fee.create(title: "Service Fee", 
   	  					 type: :MISC, 
@@ -457,7 +457,7 @@ end
   
     gc_qbesub_agency.carriers.each do |carrier|
 
-      parent_commission_strategy = ::CommissionStrategy.includes(:commission_strategies).references(:commission_strategy).where(recipient: @get_covered, commission_strategies_commission_strategies: { recipient: commission }).take
+      parent_commission_strategy = ::CommissionStrategy.includes(:commission_strategies).references(:commission_strategy).where(recipient: @get_covered, commission_strategies_commission_strategies: { recipient: carrier, commission_strategy_id: nil }).take
       commission_strategy = ::CommissionStrategy.create!(
         title: "#{gc_qbesub_agency.title} / #{carrier.title} Commission",
         percentage: parent_commission_strategy.percentage - 5,

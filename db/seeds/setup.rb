@@ -126,10 +126,10 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
 @carriers.each do |c|
   carrier = Carrier.new(c)
   if carrier.save!
-    puts "Initializing carrier ##{carrier.id}..."
+    puts "Initializing carrier ##{carrier.id} (#{carrier.title})..."
     
     ::CommissionStrategy.create!(
-      title: "#{carrier.name} Parent Commission",
+      title: "#{carrier.title} Parent Commission",
       percentage: 100,
       recipient: carrier
     )
@@ -190,7 +190,7 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
 	      carrier: carrier,
 	      policy_type: policy_type,
 				application_required: true,
-        premium_refundable: true,
+        premium_proration_refunds_allowed: true,
         max_days_for_full_refund: 30,
 				application_fields: [
 			    {
@@ -251,7 +251,7 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
 	      carrier: carrier,
 	      policy_type: policy_type,
 				application_required: true,
-        premium_refundable: true,
+        premium_proration_refunds_allowed: true,
         max_days_for_full_refund: 30,
 				application_fields: {
           "business": {
@@ -412,7 +412,7 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
 	      carrier: carrier,
 	      policy_type: policy_type,
 				application_required: true,
-        premium_refundable: false,
+        premium_proration_refunds_allowed: false,
         max_days_for_full_refund: 30,
 				application_fields: {
   				"monthly_rent": 0,
@@ -492,7 +492,7 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
 	      carrier: carrier,
 	      policy_type: policy_type,
 				application_required: true,
-        premium_refundable: true,
+        premium_proration_refunds_allowed: true,
         max_days_for_full_refund: 30,
 				application_fields: [
 			    {
