@@ -1,4 +1,4 @@
-@leases = Lease.all
+@leases = Lease.all.select{|l| !l.primary_user.nil? }
 @qbe_id = 1
 @msi_id = 5
 @max_msi_coverage_selection_iterations = 5

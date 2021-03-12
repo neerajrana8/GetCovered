@@ -554,7 +554,7 @@ class MsiService
   
   
   def build_get_or_create_community(
-      effective_date:,
+      effective_date: Time.current.to_date + 2.days,
       community_name:, number_of_units:, property_manager_name:, years_professionally_managed:, year_built:, gated:,
       address: nil, address_line_one: nil, city: nil, state: nil, zip: nil,
       **compilation_args

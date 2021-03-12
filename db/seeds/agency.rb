@@ -457,7 +457,7 @@ end
   
     gc_qbesub_agency.carriers.each do |carrier|
 
-      parent_commission_strategy = ::CommissionStrategy.includes(:commission_strategies).references(:commission_strategy).where(recipient: @get_covered, commission_strategies_commission_strategies: { recipient: carrier, commission_strategy_id: nil }).take
+      parent_commission_strategy = ::CommissionStrategy.references(:commission_strategies).includes(:commission_strategy).where(recipient: @get_covered, commission_strategies_commission_strategies: { recipient_type: "Carrier", recipient_id: carrier.id, commission_strategy_id: nil }).take
       commission_strategy = ::CommissionStrategy.create!(
         title: "#{gc_qbesub_agency.title} / #{carrier.title} Commission",
         percentage: parent_commission_strategy.percentage - 5,

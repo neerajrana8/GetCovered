@@ -14,17 +14,16 @@ class PolicyPremiumPaymentTerm < ApplicationRecord
   # Callbacks
   before_validation :set_missing_term_data,
     on: :create,
-    if: Proc.new{|ppit| ppit.original_term_first_moment.nil? || ppit.original_term_last_moment.nil? || ppit.term_last_moment.nil? || ppit.term_first_moment.nil? }
+    if: Proc.new{|ppit| ppit.original_first_moment.nil? || ppit.original_last_moment.nil? || ppit.last_moment.nil? || ppit.first_moment.nil? }
   before_save :set_proportion_to_zero,
     if: Proc.new{|ppit| ppit.cancelled }
 
   # Validations
-  validates_presence_of :original_term_first_moment
-  validates_presence_of :original_term_last_moment
-  validates_presence_of :term_first_moment
-  validates_presence_of :term_last_moment
+  validates_presence_of :original_first_moment
+  validates_presence_of :original_last_moment
+  validates_presence_of :first_moment
+  validates_presence_of :last_moment
   validates_presence_of :time_resolution
-  validates_presence_of :status
   validates :default_weight,
     numericality: { :greater_than_or_equal_to => 0 },
     allow_blank: true
@@ -33,10 +32,6 @@ class PolicyPremiumPaymentTerm < ApplicationRecord
   # Enums
   enum time_resolution: {
     day: 0
-  }
-  enum status: {
-    active: 0,
-    cancelled: 1
   }
   
   # Public Class Methods
@@ -120,10 +115,10 @@ class PolicyPremiumPaymentTerm < ApplicationRecord
   
     def set_missing_term_data
       # for convenience so you don't have to set both sets on creation
-      self.term_first_moment = self.original_term_first_moment if self.term_first_moment.nil?
-      self.term_last_moment = self.original_term_last_moment if self.term_last_moment.nil?
-      self.original_term_first_moment = self.term_first_moment if self.original_term_first_moment.nil?
-      self.original_term_last_moment = self.term_last_moment if self.original_term_last_moment.nil?
+      self.first_moment = self.original_first_moment if self.first_moment.nil?
+      self.last_moment = self.original_last_moment if self.last_moment.nil?
+      self.original_first_moment = self.first_moment if self.original_first_moment.nil?
+      self.original_last_moment = self.last_moment if self.original_last_moment.nil?
     end
     
     def set_proportion_to_zero
@@ -131,10 +126,10 @@ class PolicyPremiumPaymentTerm < ApplicationRecord
     end
   
     def validate_term
-      errors.add(:original_term_last_moment, I18n.t("policy_premium_payment_term.original_term_last_moment_invalid")) unless self.original_term_last_moment >= self.original_term_first_moment
-      errors.add(:term_last_moment, I18n.t("policy_premium_payment_term.term_last_moment_invalid")) unless self.term_last_moment >= self.term_first_moment
-      errors.add(:term_first_moment, I18n.t("policy_premium_payment_term.term_first_moment_too_early")) unless self.term_first_moment >= self.original_term_first_moment
-      errors.add(:term_last_moment, I18n.t("policy_premium_payment_term.term_last_moment_too_late")) unless self.term_last_moment <= self.original_term_last_moment
+      errors.add(:original_last_moment, I18n.t("policy_premium_payment_term.original_last_moment_invalid")) unless self.original_last_moment >= self.original_first_moment
+      errors.add(:last_moment, I18n.t("policy_premium_payment_term.last_moment_invalid")) unless self.last_moment >= self.first_moment
+      errors.add(:first_moment, I18n.t("policy_premium_payment_term.first_moment_too_early")) unless self.first_moment >= self.original_first_moment
+      errors.add(:last_moment, I18n.t("policy_premium_payment_term.last_moment_too_late")) unless self.last_moment <= self.original_last_moment
     end
 end
 

@@ -59,7 +59,7 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
       t.references :fee, null: true                                     # the Fee this item corresponds to, if any
     end
     
-    create_table :policy_premium_payment_term do |t|
+    create_table :policy_premium_payment_terms do |t|
       t.datetime :original_first_moment, null: false                    # the first moment of the term, before prorations
       t.datetime :original_last_moment, null: false                     # the last moment of the term, before prorations
       t.datetime :first_moment, null: false                             # the first moment of the term
@@ -75,7 +75,7 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
       t.references :policy_premium
     end
     
-    create_table :policy_premium_item_payment_term do |t|
+    create_table :policy_premium_item_payment_terms do |t|
       t.integer :weight, null: false                                    # the weight assigned to this payment term for calculating total due
       t.references :policy_premium_payment_term,
         index: { name: 'index_ppipt_on_pppt_id' }

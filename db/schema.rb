@@ -1293,7 +1293,7 @@ ActiveRecord::Schema.define(version: 2021_02_25_000019) do
     t.index ["policy_quote_id"], name: "index_policy_premia_on_policy_quote_id"
   end
 
-  create_table "policy_premium_item_payment_term", force: :cascade do |t|
+  create_table "policy_premium_item_payment_terms", force: :cascade do |t|
     t.integer "weight", null: false
     t.bigint "policy_premium_payment_term_id"
     t.bigint "policy_premium_item_id"
@@ -1330,7 +1330,7 @@ ActiveRecord::Schema.define(version: 2021_02_25_000019) do
     t.index ["recipient_type", "recipient_id"], name: "index_policy_premium_items_on_recipient_type_and_recipient_id"
   end
 
-  create_table "policy_premium_payment_term", force: :cascade do |t|
+  create_table "policy_premium_payment_terms", force: :cascade do |t|
     t.datetime "original_first_moment", null: false
     t.datetime "original_last_moment", null: false
     t.datetime "first_moment", null: false
@@ -1344,7 +1344,7 @@ ActiveRecord::Schema.define(version: 2021_02_25_000019) do
     t.date "invoice_available_date_override"
     t.date "invoice_due_date_override"
     t.bigint "policy_premium_id"
-    t.index ["policy_premium_id"], name: "index_policy_premium_payment_term_on_policy_premium_id"
+    t.index ["policy_premium_id"], name: "index_policy_premium_payment_terms_on_policy_premium_id"
   end
 
   create_table "policy_quotes", force: :cascade do |t|

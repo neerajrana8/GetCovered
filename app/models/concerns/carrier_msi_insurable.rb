@@ -23,8 +23,6 @@ module CarrierMsiInsurable
       # try to build the request
       msi_service = MsiService.new
       succeeded = msi_service.build_request(:get_or_create_community,
-        effective_date:                 Time.current.to_date + 1.day,
-        
         community_name:                 self.title,
         number_of_units:                units.where(preferred_ho4: true, account_id: self.account_id).count,
         property_manager_name:          account.title,
