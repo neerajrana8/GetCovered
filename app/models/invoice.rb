@@ -229,7 +229,7 @@ class Invoice < ApplicationRecord
               )
             when 'failed'
               raise ActiveRecord::Rollback unless charge.update(invoice_aware: true, processed: true)
-              raise ActiveRecord::Rollback unless return self.update(
+              raise ActiveRecord::Rollback unless self.update(
                 pending_charge_count: self.pending_charge_count - 1,
                 total_pending: self.total_pending - charge.amount,
                 total_payable: self.total_payable + charge.amount
