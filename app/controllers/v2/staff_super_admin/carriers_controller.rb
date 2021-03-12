@@ -51,7 +51,7 @@ module V2
           carrier_agency << agency
           policy_types.each do |policy_type|
             BillingStrategy.create(carrier: carrier, agency: agency,
-                                   title: 'Monthly', enabled: true, policy_type: policy_type,
+                                   title: 'Monthly', enabled: true, policy_type: policy_type, carrier_code: 'Monthly',
                                    new_business: {
                                      'payments' => [
                                        8.37, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33
@@ -60,7 +60,7 @@ module V2
                                      'remainder_added_to_deposit' => true
                                    })
             BillingStrategy.create(carrier: carrier, agency: agency,
-                                   title: 'Quarterly', enabled: true, policy_type: policy_type,
+                                   title: 'Quarterly', enabled: true, policy_type: policy_type, carrier_code: 'Quarterly',
                                    new_business: {
                                      'payments' => [
                                        25, 0, 0, 25, 0, 0, 25, 0, 0, 25, 0, 0
@@ -69,7 +69,7 @@ module V2
                                      'remainder_added_to_deposit' => true
                                    })
             BillingStrategy.create(carrier: carrier, agency: agency,
-                                   title: 'Annually', enabled: true, policy_type: policy_type,
+                                   title: 'Annually', enabled: true, policy_type: policy_type, carrier_code: 'Annually',
                                    new_business: {
                                      'payments' => [
                                        100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
@@ -78,7 +78,7 @@ module V2
                                      'remainder_added_to_deposit' => true
                                    })
             BillingStrategy.create(carrier: carrier, agency: agency,
-                                   title: 'Bi-Annually', enabled: true, policy_type: policy_type,
+                                   title: 'Bi-Annually', enabled: true, policy_type: policy_type, carrier_code: 'SemiAnnually',
                                    new_business: {
                                      'payments' => [
                                        50, 0, 0, 0, 0, 0, 50, 0, 0, 0, 0, 0
