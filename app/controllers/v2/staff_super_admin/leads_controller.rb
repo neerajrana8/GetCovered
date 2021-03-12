@@ -30,6 +30,8 @@ module V2
 
       def show
         @visits = @lead.lead_events.order("DATE(created_at)").group("DATE(created_at)").count.keys.size
+        @last_premium_estimation =
+          @lead.lead_events.where("(data -> 'total_amount') is not null").order(created_at: :desc).first
         render 'v2/shared/leads/show'
       end
 
