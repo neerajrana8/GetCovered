@@ -47,6 +47,10 @@ class PolicyQuote < ApplicationRecord
       indexes :external_reference, type: :text, analyzer: 'english'
     end
   end
+  
+  def primary_user
+    self.policy_application.primary_user
+  end
 
   def mark_successful
     policy_application.update status: 'quoted' if update status: 'quoted'
@@ -359,8 +363,8 @@ class PolicyQuote < ApplicationRecord
           collector,
           by_pppt.map do |pppt, line_items|
             index += 1
-            available_date = pppt.invoice_available_date_override || (index == 0 ? Time.current.to_date : pppt.term_first_moment.beginning_of_day - 1.day - self.available_period) # MOOSE WARNING: model must support .available_period
-            due_date = pppt.invoice_due_date_override || (index == 0 ? Time.current.to_date + 1.day : pppt.term_first_moment.beginning_of_day - 1.day)
+            available_date = pppt.invoice_available_date_override || (index == 0 ? Time.current.to_date : pppt.first_moment.beginning_of_day - 1.day - self.available_period) # MOOSE WARNING: model must support .available_period
+            due_date = pppt.invoice_due_date_override || (index == 0 ? Time.current.to_date + 1.day : pppt.first_moment.beginning_of_day - 1.day)
             created = ::Invoice.create(
               available_date: available_date,
               due_date: due_date,

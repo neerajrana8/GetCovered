@@ -359,6 +359,7 @@ class Policy < ApplicationRecord
   end
 
   def recalculate_policy_premium
+    throw "Policy#recalculate_policy_premium is currently broken!" # MOOSE WARNING
     policy_premiums&.last&.update(base: 0, taxes: 0, total_fees: 0, total: 0, calculation_base: 0, deposit_fees: 0, amortized_fees: 0, carrier_base: 0, special_premium: 0)
     policy_group&.policy_group_premium&.calculate_total
   end
@@ -405,7 +406,7 @@ class Policy < ApplicationRecord
 
     def notify_the_idiots
       # this method is a critical joke.  touch it at your own expense - dylan.
-      their_message = "Bray out!  a policy hath been sold.  'i  this message thou shall find details that might be of interest.\n\nname: #{primary_user.profile.full_name}\nagency: #{agency.title}\npolicy type: #{policy_type.title}\nbilling strategy: #{policy_premiums.first.billing_strategy.title}\npremium: $#{ sprintf "%.2f", policy_premiums.first.total.to_f / 100 }\nfirst payment: $#{ sprintf "%.2f", invoices.order(due_date: :DESC).first.total.to_f / 100 }"
+      their_message = "Bray out!  a policy hath been sold.  'i  this message thou shall find details that might be of interest.\n\nname: #{primary_user.profile.full_name}\nagency: #{agency.title}\npolicy type: #{policy_type.title}\nbilling strategy: #{policy_premiums.first.billing_strategy.title}\npremium: $#{ sprintf "%.2f", policy_premiums.first.total.to_f / 100 }\nfirst payment: $#{ sprintf "%.2f", invoices.order(due_date: :DESC).first.total_due.to_f / 100 }"
       ActionMailer::Base.mail(from: "purchase-notifier-#{ENV["RAILS_ENV"]}@getcoveredinsurance.com", to: "policysold@getcoveredllc.com", subject: "A Policy has Sold!", body: their_message).deliver
     end
 

@@ -70,7 +70,7 @@ module CarrierCrumPolicyApplication
                 unless premium.id
                   puts "  Failed to create premium! #{premium.errors.to_h}"
                 else
-                  premium.initialize_all(
+                  result = premium.initialize_all(
                     (policy_details["termPremium"].include?(".") ?  policy_details["termPremium"].delete(".").to_i : policy_details["termPremium"].to_i * 100) + policy_details["triaPremium"].to_i * 100
                     # the triaPremium bit is the old special_premium
                   )

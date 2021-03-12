@@ -15,7 +15,7 @@ class PolicyPremiumItem < ApplicationRecord
   has_many :policy_premium_item_payment_terms,
     autosave: true # MOOSE WARNING: does this suffice?
   has_many :line_items,
-    through: :policy_premium_item_terms
+    through: :policy_premium_item_payment_terms
   has_many :line_item_reductions,
     through: :line_items
 
@@ -34,7 +34,7 @@ class PolicyPremiumItem < ApplicationRecord
   validates :total_processed, numericality: { :greater_than_or_equal_to => 0 }
   validates_presence_of :proration_calculation
   validates_inclusion_of :proration_refunds_allowed, in: [true, false]
-  validates_inclusion_of :preprocessed, in: [true, false]
+#  validates_inclusion_of :preprocessed, in: [true, false] MOOSE WARNING: uncomment later
   
   # Enums etc.
   enum category: {
@@ -183,7 +183,7 @@ class PolicyPremiumItem < ApplicationRecord
   
     def set_missing_total_data
       # for convenience, so you don't have to set all of them on create
-      val = [self.original_total_due, self.preproration_total_due, self.total_due].compact.first
+      val = [self.original_total_due, self.total_due].compact.first
       self.original_total_due = val if self.original_total_due.nil?
       self.total_due = val if self.total_due.nil?
     end

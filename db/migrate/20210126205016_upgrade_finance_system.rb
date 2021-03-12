@@ -50,7 +50,7 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
       t.integer :proration_calculation, null: false                     # how to divide payment into chunks when prorating
       t.boolean :proration_refunds_allowed,  null: false                # whether to refund chunk that would have been cancelled if not already paid when prorating
       # commissions settings
-      t.boolean :preprocessed                                           # whether this is paid out up-front rather than as received
+      t.boolean :preprocessed, null: false, default: false              # whether this is paid out up-front rather than as received
       # associations
       t.references :policy_premium                                      # the PolicyPremium we belong to
       t.references :recipient, polymorphic: true                        # the CommissionStrategy/Agent/Carrier who receives the money

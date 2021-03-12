@@ -11,6 +11,10 @@ class MsiService
     5
   end
   
+  def self.carrier
+    @carrier ||= ::Carrier.find(5)
+  end
+  
   def self.displayable_error_for(msg, extended_msg = nil)
     return nil if msg.nil?
     if msg.start_with?("ADDR16") # address was invalid

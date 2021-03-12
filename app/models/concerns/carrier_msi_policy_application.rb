@@ -231,7 +231,7 @@ module CarrierMsiPolicyApplication
                 policy_premium_item: ppi_down_payment,
                 policy_premium_payment_term: pp_pt,
                 weight: down_payment - msi_policy_fee
-              ) unless ppi_down_payment.nil? || (down_payemnt - msi_policy_fee) == 0
+              ) unless ppi_down_payment.nil? || (down_payment - msi_policy_fee) == 0
               ::PolicyPremiumItemPaymentTerm.create!(
                 policy_premium_item: ppi_policy_fee,
                 policy_premium_payment_term: pp_pt,
@@ -250,6 +250,7 @@ module CarrierMsiPolicyApplication
               ) unless ppi_installment_fee.nil? || fee_installment == 0
             end
           end
+          # MOOSE WARNING: the foregoing should be wrapped in a transaction and errors should be caught...
           # woot
           if premium.save
             quote.mark_successful

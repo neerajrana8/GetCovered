@@ -25,6 +25,9 @@ class Invoice < ApplicationRecord
     if: Proc.new{|i| i.will_save_change_to_attribute?('status') && i.status == 'missed' }
   after_commit :send_status_change_notifications,
     if: Proc.new{|i| i.autosend_status_change_notifications && i.saved_change_to_attribute?('status') }
+    
+  scope :internal, -> { where(external: false) }
+  scope :external, -> { where(external: true) }
 
   enum status: {
     quoted:             0,    # belongs to a not-yet accepted quote
@@ -62,7 +65,7 @@ class Invoice < ApplicationRecord
     # begin lock
     notification_status = nil
     charge_to_distribute = nil
-    postransaction_return = nil
+    posttransaction_return = nil
     self.with_lock do
       ActiveRecord::Base.transaction(requires_new: true) do # ensure that rollbacks really roll back
         # set invoice status to processing
@@ -101,8 +104,8 @@ class Invoice < ApplicationRecord
         customer_stripe_id = if self.payer.nil? || !self.payer.respond_to?(:stripe_id)
           nil
         else
-          invoice.payer.set_stripe_id if invoice.payer.stripe_id.nil? && invoice.payer.respond_to?(:set_stripe_id)
-          invoice.payer.stripe_id
+          self.payer.set_stripe_id if self.payer.stripe_id.nil? && self.payer.respond_to?(:set_stripe_id)
+          self.payer.stripe_id
         end
         # update our financial totals for charge creation
         unless self.update(
@@ -118,7 +121,7 @@ class Invoice < ApplicationRecord
           }
         end
         # create the charge
-        descriptor = self.get_descriptor
+        descriptor = get_descriptor # silly ruby can't call private methods with self. :(
         created_charge = ::StripeCharge.create(
           amount: to_pay,
           source: stripe_source,
@@ -127,7 +130,7 @@ class Invoice < ApplicationRecord
           metadata: descriptor[:metadata]
         )
         unless created_charge.id
-          postransaction_return = {
+          posttransaction_return = {
             success: false,
             charge_id: nil,
             charge_status: nil,
@@ -135,7 +138,7 @@ class Invoice < ApplicationRecord
           }
           raise ActiveRecord::Rollback
         end
-        postransaction_return = {
+        posttransaction_return = {
           success: true,
           charge: created_charge
         }

@@ -28,6 +28,10 @@ class PolicyPremium < ApplicationRecord
   end
 
   # Public Instance Methods
+  def total_fees
+    self.total_fee
+  end
+  
   def update_totals(persist: true)
     new_total = 0
     self.policy_premium_items.group_by{|ppi| ppi.category }
@@ -112,7 +116,7 @@ class PolicyPremium < ApplicationRecord
     end
     # get fees
     found_fees = self.get_fees
-    already_itemized_fees = self.policy_premium_items.select(:fee).where(fee: found_fees).map{|ppi| ppi.fee }
+    already_itemized_fees = self.policy_premium_items.select(:fee_id).where(fee_id: found_fees.map{|ff| ff.id }).map{|ppi| ppi.fee }
     found_fees = found_fees - already_itemized_fees
     found_fees = found_fees.select{|ff| filter.call(ff) } unless filter.nil?
     # create fee items
@@ -135,7 +139,8 @@ class PolicyPremium < ApplicationRecord
       when "PERCENTAGE";  ((fee.amount.to_d / 100) * percentage_basis).ceil * (fee.per_payment ? payments_count : 1) # MOOSE WARNING: is .ceil acceptable?
     end
     self.policy_premium_items << ::PolicyPremiumItem.new(
-      title: fee.title || "#{(fee.amortized || fee.per_payment) ? "Amortized " : ""} Fee",
+      policy_premium: self,
+      title: fee.title || "#{(fee.amortize || fee.per_payment) ? "Amortized " : ""} Fee",
       category: "fee",
       rounding_error_distribution: "first_payment_simple",
       total_due: payments_total,
@@ -145,7 +150,7 @@ class PolicyPremium < ApplicationRecord
       recipient: recipient || fee.ownerable,
       collector: collector || self.billing_strategy.collector || ::PolicyPremium.default_collector,
       policy_premium_item_payment_terms: (
-        (fee.amortized || fee.per_payment) ? payment_terms.map.with_index do |pt, index|
+        (fee.amortize || fee.per_payment) ? payment_terms.map.with_index do |pt, index|
           ::PolicyPremiumItemPaymentTerm.new(
             policy_premium_payment_term: pt,
             weight: fee.per_payment ? 1 : pt.default_weight
@@ -205,6 +210,7 @@ class PolicyPremium < ApplicationRecord
       amount -= down_payment_amount
       unless down_payment_amount == 0 
         down_payment = ::PolicyPremiumItem.new(
+          policy_premium: self,
           title: is_tax ? "Tax" : "Premium Down Payment",
           category: is_tax ? "tax" : "premium",
           rounding_error_distribution: "first_payment_simple",
@@ -225,6 +231,7 @@ class PolicyPremium < ApplicationRecord
     end
     unless amount == 0
       amortized_premium = ::PolicyPremiumItem.new(
+        policy_premium: self,
         title: is_tax ? "Tax" : "Premium",
         category: is_tax ? "tax" : "premium",
         rounding_error_distribution: "last_payment_multipass", #MOOSE WARNING: change default???
