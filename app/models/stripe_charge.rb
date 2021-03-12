@@ -3,8 +3,7 @@
 
 class StripeCharge < ApplicationRecord
 
-  belongs_to :invoice,
-    optional: true
+  belongs_to :invoice
   
   has_many :stripe_refunds
   has_many :stripe_disputes

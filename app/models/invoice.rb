@@ -123,6 +123,7 @@ class Invoice < ApplicationRecord
         # create the charge
         descriptor = get_descriptor # silly ruby can't call private methods with self. :(
         created_charge = ::StripeCharge.create(
+          invoice: self,
           amount: to_pay,
           source: stripe_source,
           customer_stripe_id: customer_stripe_id,

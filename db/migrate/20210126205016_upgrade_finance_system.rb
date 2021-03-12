@@ -179,7 +179,7 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
       t.string    :error_info                                           # detailed English error info for dev access
       t.jsonb     :client_error                                         # I18n.t parameters, format { linear: [a,b,c,...], keyword: { a: :b, c: :d, ... } }
       t.timestamps
-      t.references :invoice, null: true
+      t.references :invoice, null: false
     end
 
     create_table :disputes do |t|
