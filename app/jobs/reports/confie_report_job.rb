@@ -6,7 +6,8 @@ module Reports
     def perform(*_args)
       cs = ConfieService.new
       @policy_applications.each do |pa|
-        next if pa.tagging_data.nil? || pa.tagging_data['confie_mediacode'].nil?
+        next if pa.tagging_data.nil? || pa.tagging_data['confie_mediacode'].nil? ||
+                !pa.tagging_data['confie_external'] || pa.tagging_data['confie_reported']
         if cs.build_request(:update_lead,
           id: pa.id.to_s,
           status: pa.status,
@@ -21,6 +22,7 @@ module Reports
           event.response = result[:response].response.body
           event.status = result[:error] ? 'error' : 'success'
           event.save
+          pa.update_columns(tagging_data: pa.tagging_data.merge({'confie_reported' => true}))
         end
       end
     end

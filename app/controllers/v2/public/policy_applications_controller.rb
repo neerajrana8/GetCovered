@@ -178,6 +178,7 @@ module V2
             unless params[:mediacode].blank?
               init_hash[:tagging_data] ||= {}
               init_hash[:tagging_data]['confie_mediacode'] = params.require(:mediacode).to_s
+              init_hash[:tagging_data]['confie_external'] = true
             end
           end
         end
