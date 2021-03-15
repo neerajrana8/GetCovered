@@ -19,7 +19,7 @@ module V2
 
       def sub_agencies_index
         result = []
-        required_fields = %i[id title agency_id]
+        required_fields = %i[id title agency_id enabled]
 
         @agencies = paginator(Agency.where(agency_id: nil))
 
