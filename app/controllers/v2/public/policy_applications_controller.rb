@@ -178,6 +178,7 @@ module V2
             unless params[:mediacode].blank?
               init_hash[:tagging_data] ||= {}
               init_hash[:tagging_data]['confie_mediacode'] = params.require(:mediacode).to_s
+              init_hash[:tagging_data]['confie_external'] = true
             end
           end
         end
@@ -189,9 +190,9 @@ module V2
 
         @application = PolicyApplication.new(init_hash)
         @application.build_from_carrier_policy_type
-        @application.billing_strategy = BillingStrategy.where(agency:      @application.agency,
-                                                              policy_type: @application.policy_type,
-                                                              carrier: @application.carrier).take
+        @application.billing_strategy = BillingStrategy.where(agency:       @application.agency,
+                                                              policy_type:  @application.policy_type,
+                                                              carrier:      @application.carrier).take
 
         address_string = residential_address_params[:fields][:address]
         unit_string = residential_address_params[:fields][:unit]
@@ -445,6 +446,7 @@ module V2
             render json: update_users_result.failure, status: 422
           else
             if @application.update status: 'complete'
+              # create lead
               LeadEvents::LinkPolicyApplicationUsers.run!(policy_application: @application)
               # if application.status updated to complete
               @application.estimate()
@@ -465,11 +467,12 @@ module V2
                   render json: standard_error(:quote_failed, @application.error_message || I18n.t('policy_application_contr.create_security_deposit_replacement.quote_failed')),
                          status: 500
                 elsif @quote.status == "quoted"
-
+                  # create Confie lead if necessary
+                  ::ConfieService.create_confie_lead(@application) if @application.agency_id == ::ConfieService.agency_id
+                  # perform final setup
                   @application.primary_user.set_stripe_id
-
                   sign_in_primary_user(@application.primary_user)
-
+                  # return response to user
                   render json:  {
                                  id:       @application.id,
                                  quote: {
