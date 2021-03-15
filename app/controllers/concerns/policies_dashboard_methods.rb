@@ -13,7 +13,10 @@ module PoliciesDashboardMethods
     @total = {
       total_policies_sold: {
         bound: bound_policy_count(@filtered_policies),
-        cancelled: cancelled_policy_count(@filtered_policies)
+        cancelled: cancelled_policy_count(@filtered_policies),
+        total_premium_paid: total_premium_paid(@filtered_policies),
+        average_premium_paid: average_premium_paid(@filtered_policies),
+        total_commission: total_commission(@filtered_policies)
       }
     }
 
@@ -57,7 +60,9 @@ module PoliciesDashboardMethods
   def set_day_data(policies, date)
     @graphs[:graphs][date.to_s] = {
       total_new_policies: total_new_policies(policies),
-      by_policy_type: by_policy_type(policies)
+      by_policy_type: by_policy_type(policies),
+      premium_collected: premium_collected(policies),
+      commissions_collected: commissions_collected(policies)
     }
 
     @graphs[:total_new_policies] += @graphs[:graphs][date.to_s][:total_new_policies]
