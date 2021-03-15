@@ -923,7 +923,12 @@ module V2
                   coverage_selections: [:category, :uid, :selection, selection: [ :data_type, :value ]],
                   extra_settings: [
                     # for MSI
-                    :installment_day, :number_of_units, :years_professionally_managed, :year_built, :gated
+                    :installment_day, :number_of_units, :years_professionally_managed, :year_built, :gated,
+                    additional_interest: [
+                      :entity_type, :email_address, :phone_number,
+                      :company_name, :address,
+                      :first_name, :last_name, :middle_name
+                    ]
                   ],
                   policy_rates_attributes:         [:insurable_rate_id],
                   policy_insurables_attributes:    [:insurable_id])
@@ -981,7 +986,16 @@ module V2
         return create_residential_params
         params.require(:policy_application)
           .permit(:branding_profile_id, :effective_date, policy_rates_attributes: [:insurable_rate_id],
-                  policy_insurables_attributes: [:insurable_id])
+                  policy_insurables_attributes: [:insurable_id],
+                  extra_settings: [
+                    # for MSI
+                    :installment_day, :number_of_units, :years_professionally_managed, :year_built, :gated,
+                    additional_interest: [
+                      :entity_type, :email_address, :phone_number,
+                      :company_name, :address,
+                      :first_name, :last_name, :middle_name
+                    ]
+                  ])
       end
 
       def update_rental_guarantee_params
