@@ -46,15 +46,12 @@ module V2
         
         unless agency.nil? || carrier.nil?
           if carrier.agencies.include?(agency)
-            render json: { message: 'This agency has been already assigned to this carrier' }, 
-                   status: :unprocessable_entity
+            render json: { message: 'This agency has been already assigned to this carrier' }, status: :unprocessable_entity
           else
             if carrier << agency
-              render json: { message: 'Carrier was added to the agency' }, 
-                     status: :ok
+              render json: { message: 'Carrier was added to the agency' }, status: :ok
             else
-              render json: standard_error(:something_went_wrong, "#{agency.title} could not be assigned to #{carrier.title}", nil),
-                           status: :unprocessable_entity
+              render json: standard_error(:something_went_wrong, "#{agency.title} could not be assigned to #{carrier.title}", {}), status: :unprocessable_entity
             end
           end
         end
