@@ -28,7 +28,7 @@ class CarrierAgency < ApplicationRecord
     BillingStrategy.where(agency: agency, carrier: carrier)
   end
 
-  def dsiable
+  def disable
     disable_authorizations()
     disable_billing_strategies()
   end
