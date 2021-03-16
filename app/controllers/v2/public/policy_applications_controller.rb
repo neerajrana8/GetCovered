@@ -411,9 +411,22 @@ module V2
         end
       end
 
+      def validate_msi_additional_interest(hash)
+        if 
+      end
+
       def create_residential
         @application = PolicyApplication.new(create_residential_params)
         @application.expiration_date = @application.effective_date&.send(:+, 1.year)
+
+        if @application.extra_settings && !@application.extra_settings['additional_interest'].blank?
+          error_message = validate_msi_additional_interest(@application.extra_settings['additional_interest'])
+          unless error_message.nil?
+            render json: standard_error(:policy_application_save_error, I18n.t(error_message)),
+                   status: 400
+            return
+          end
+        end
 
         unless @application.coverage_selections.blank?
           @application.coverage_selections.each do |cs|
@@ -521,11 +534,20 @@ module V2
       def update_residential
         @policy_application = PolicyApplication.find(params[:id])
         if @policy_application.policy_type.title == 'Residential'
-          @policy_application.policy_rates.destroy_all
           # try to update
           @policy_application.assign_attributes(update_residential_params)
           @policy_application.expiration_date = @policy_application.effective_date&.send(:+, 1.year)
+          # flee if nonsense is passed for additional interest
+          if @policy_application.extra_settings && !@policy_application.extra_settings['additional_interest'].blank?
+            error_message = validate_msi_additional_interest(@policy_application.extra_settings['additional_interest'])
+            unless error_message.nil?
+              render json: standard_error(:policy_application_save_error, I18n.t(error_message)),
+                     status: 400
+              return
+            end
+          end
           # remove duplicate pis
+          @policy_application.policy_rates.destroy_all
           @replacement_policy_insurables = nil
           saved_pis = @policy_application.policy_insurables.select{|pi| pi.id }
           @policy_application.policy_insurables = @policy_application.policy_insurables.select{|pi| pi.id || (pi.insurable_id && saved_pis.find{|spi| spi.insurable_id == pi.insurable_id }.nil?) }

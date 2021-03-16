@@ -975,8 +975,27 @@ class MsiService
   
   
   
-  
-  
+  def validate_additional_interest(hash)
+    case hash['entity_type']
+      when 'company'
+        return 'msi_service.additional_interest.company_name_required' if hash['company_name'].blank?
+        return 'msi_service.additional_interest.company_name_too_long' if hash['company_name'].length > 100
+        return 'msi_service.additional_interest.invalid_email' if hash['email_address'].blank? || hash['email_address'].index('@').nil? || hash['email_address'].index('.').nil? || hash['email_address'].length > 50
+        return 'msi_service.additional_interest.invalid_phone_number' if !hash['phone_number'].blank? && hash['phone_number'].delete("^0-9").length != 10
+      when 'person'
+        return 'msi_service.additional_interest.first_name_required' if hash['first_name'].blank?
+        return 'msi_service.additional_interest.first_name_too_long' if hash['first_name'].length > 50
+        return 'msi_service.additional_interest.last_name_required' if hash['last_name'].blank?
+        return 'msi_service.additional_interest.last_name_too_long' if hash['last_name'].length > 50
+        return 'msi_service.additional_interest.middle_name_too_long' if hash['middle_name'] && hash['middle_name'].length > 50
+        return 'msi_service.additional_interest.invalid_email' if hash['email_address'].blank? || hash['email_address'].index('@').nil? || hash['email_address'].index('.').nil? || hash['email_address'].length > 50
+        return 'msi_service.additional_interest.invalid_phone_number' if hash['phone_number'].blank? || hash['phone_number'].delete("^0-9").length != 10
+        
+      else
+        return 'msi_service.additional_interest.invalid_entity_type'
+    end
+    return nil
+  end
   
   
 private
