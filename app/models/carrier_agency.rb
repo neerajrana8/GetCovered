@@ -23,6 +23,10 @@ class CarrierAgency < ApplicationRecord
   def agency_title
     agency.try(:title)
   end
+  
+  def billing_strategies
+    BillingStrategy.where(agency: agency, carrier: carrier)
+  end
 
   def dsiable
     disable_authorizations()
@@ -33,7 +37,7 @@ class CarrierAgency < ApplicationRecord
 
   def blocked_policy_types
     # Prevent Master Policy & Master Policy Coverages from being included
-    return blocked_policy_types = [2,3]
+    return [2,3]
   end
   
   def create_authorizations
