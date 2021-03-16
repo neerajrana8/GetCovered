@@ -43,51 +43,20 @@ module V2
       def assign_agency_to_carrier
         agency = Agency.find_by(id: params[:carrier_agency_id])
         carrier = Carrier.find_by(id: params[:id])
-        policy_types = carrier.policy_types
-        carrier_agency = carrier.agencies
-        if carrier_agency.exists?(agency.id)
-          render json: { message: 'This agency has been already assigned to this carrier' }, status: :unprocessable_entity
-        else
-          carrier_agency << agency
-          policy_types.each do |policy_type|
-            BillingStrategy.create(carrier: carrier, agency: agency,
-                                   title: 'Monthly', enabled: true, policy_type: policy_type, carrier_code: 'Monthly',
-                                   new_business: {
-                                     'payments' => [
-                                       8.37, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33
-                                     ],
-                                     'payments_per_term' => 12,
-                                     'remainder_added_to_deposit' => true
-                                   })
-            BillingStrategy.create(carrier: carrier, agency: agency,
-                                   title: 'Quarterly', enabled: true, policy_type: policy_type, carrier_code: 'Quarterly',
-                                   new_business: {
-                                     'payments' => [
-                                       25, 0, 0, 25, 0, 0, 25, 0, 0, 25, 0, 0
-                                     ],
-                                     'payments_per_term' => 4,
-                                     'remainder_added_to_deposit' => true
-                                   })
-            BillingStrategy.create(carrier: carrier, agency: agency,
-                                   title: 'Annually', enabled: true, policy_type: policy_type, carrier_code: 'Annually',
-                                   new_business: {
-                                     'payments' => [
-                                       100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-                                     ],
-                                     'payments_per_term' => 1,
-                                     'remainder_added_to_deposit' => true
-                                   })
-            BillingStrategy.create(carrier: carrier, agency: agency,
-                                   title: 'Bi-Annually', enabled: true, policy_type: policy_type, carrier_code: 'SemiAnnually',
-                                   new_business: {
-                                     'payments' => [
-                                       50, 0, 0, 0, 0, 0, 50, 0, 0, 0, 0, 0
-                                     ],
-                                     'payments_per_term' => 2,
-                                     'remainder_added_to_deposit' => true
-                                   })
+        
+        unless agency.nil? || carrier.nil?
+          if carrier.agencies.include?(agency)
+            render json: { message: 'This agency has been already assigned to this carrier' }, 
+                   status: :unprocessable_entity
+          else
+            if carrier << agency
+              render json: { message: 'Carrier was added to the agency' }, 
+                     status: :ok
+            else
+              render json: standard_error(:something_went_wrong, "#{agency.title} could not be assigned to #{carrier.title}", nil),
+                           status: :unprocessable_entity
+            end
           end
-          render json: { message: 'Carrier was added to the agency' }, status: :ok
         end
       end
 
