@@ -166,23 +166,21 @@ module CarrierMsiPolicyQuote
             gotten_phone = nil if gotten_phone.length < 10
           end
           return [{
-            {
-              NameInfo: {
-                PersonName: {
-                  GivenName: pseudoname.first,
-                  Surname:   pseudoname.last
-                }.merge(addr.nil? ? {} : { OtherGivenName: addr })
-              },
-              Communications: { # feel free to add phone number here just like we do for user#get_msi_general_party_info
-                EmailInfo: {
-                  EmailAddr: gotten_email
-                }
-              }.merge(gotten_phone.nil? ? {} : {
-                PhoneInfo: {
-                  PhoneNumber: gotten_phone
-                }
-              })
-            }
+            NameInfo: {
+              PersonName: {
+                GivenName: pseudoname.first,
+                Surname:   pseudoname.last
+              }.merge(addr.nil? ? {} : { OtherGivenName: addr })
+            },
+            Communications: { # feel free to add phone number here just like we do for user#get_msi_general_party_info
+              EmailInfo: {
+                EmailAddr: gotten_email
+              }
+            }.merge(gotten_phone.nil? ? {} : {
+              PhoneInfo: {
+                PhoneNumber: gotten_phone
+              }
+            })
           }]
         when 'person'
           gotten_email = hash['email_address']
