@@ -82,6 +82,17 @@ module V2
         render template: 'v2/shared/insurables/index', status: :ok
       end
 
+      def communities_uninsured_units
+        @communities = []
+
+        render template: 'v2/shared/dashboard/communities_uninsured_units', status: :ok
+      end
+
+      def communities_expired_policies
+        @communities = []
+        render template: 'v2/shared/dashboard/communities_expired_policies', status: :ok
+      end
+
       private
 
       def view_path

@@ -105,6 +105,7 @@ module V2
       end
 
       def communities_expired_policies
+        @communities = []
         render template: 'v2/shared/dashboard/communities_expired_policies', status: :ok
       end
 
