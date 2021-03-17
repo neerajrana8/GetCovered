@@ -975,7 +975,7 @@ class MsiService
   
   
   
-  def validate_additional_interest(hash)
+  def validate_msi_additional_interest(hash)
     case hash['entity_type']
       when 'company'
         return 'msi_service.additional_interest.company_name_required' if hash['company_name'].blank?

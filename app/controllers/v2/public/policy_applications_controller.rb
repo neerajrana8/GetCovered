@@ -411,10 +411,6 @@ module V2
         end
       end
 
-      def validate_msi_additional_interest(hash)
-        if 
-      end
-
       def create_residential
         @application = PolicyApplication.new(create_residential_params)
         @application.expiration_date = @application.effective_date&.send(:+, 1.year)
