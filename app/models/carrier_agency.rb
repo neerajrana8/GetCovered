@@ -29,6 +29,7 @@ class CarrierAgency < ApplicationRecord
   end
 
   def disable
+    # Moose warning to force a new deployment
     disable_authorizations()
     disable_billing_strategies()
   end
@@ -79,9 +80,8 @@ class CarrierAgency < ApplicationRecord
   end
 
   def disable_billing_strategies
-    strats = BillingStrategy.where(agency: agency, carrier: carrier)
-    unless strats.nil?
-      strats.each { |bs| bs.update enabled: false }
+    unless billing_strategies().nil?
+      billing_strategies().each { |bs| bs.update enabled: false }
     end
   end
 
