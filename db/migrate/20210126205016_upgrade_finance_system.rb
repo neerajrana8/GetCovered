@@ -124,7 +124,7 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
       t.references  :chargeable, polymorphic: true                      # will be a PolicyPremiumItemTerm right now, but could be anything
       t.references  :invoice                                            # the invoice to which this LineItem belongs
       # redundant fields for convenient analytics
-      t.enum        :analytics_category, null: false, default: 0
+      t.integer     :analytics_category, null: false, default: 0
       t.references  :policy_quote, null: true
     end
     

@@ -903,8 +903,11 @@ ActiveRecord::Schema.define(version: 2021_02_25_000019) do
     t.string "chargeable_type"
     t.bigint "chargeable_id"
     t.bigint "invoice_id"
+    t.integer "analytics_category", default: 0, null: false
+    t.bigint "policy_quote_id"
     t.index ["chargeable_type", "chargeable_id"], name: "index_line_items_on_chargeable_type_and_chargeable_id"
     t.index ["invoice_id"], name: "index_line_items_on_invoice_id"
+    t.index ["policy_quote_id"], name: "index_line_items_on_policy_quote_id"
   end
 
   create_table "login_activities", force: :cascade do |t|
@@ -1317,7 +1320,7 @@ ActiveRecord::Schema.define(version: 2021_02_25_000019) do
     t.boolean "proration_pending", default: false, null: false
     t.integer "proration_calculation", null: false
     t.boolean "proration_refunds_allowed", null: false
-    t.boolean "preprocessed"
+    t.boolean "preprocessed", default: false, null: false
     t.bigint "policy_premium_id"
     t.string "recipient_type"
     t.bigint "recipient_id"
@@ -1547,7 +1550,7 @@ ActiveRecord::Schema.define(version: 2021_02_25_000019) do
     t.jsonb "client_error"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.bigint "invoice_id"
+    t.bigint "invoice_id", null: false
     t.index ["invoice_id"], name: "index_stripe_charges_on_invoice_id"
   end
 
