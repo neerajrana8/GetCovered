@@ -24,9 +24,9 @@ class CarrierAgency < ApplicationRecord
     agency.try(:title)
   end
   
-  def billing_strategies
-    BillingStrategy.where(agency: agency, carrier: carrier)
-  end
+  def billing_strategies
+    BillingStrategy.where(agency: agency, carrier: carrier)
+  end
 
   def disable
     disable_authorizations()
