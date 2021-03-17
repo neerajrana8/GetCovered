@@ -44,7 +44,7 @@ module V2
 
         @application.agency = Agency.where(master_agency: true).take if @application.agency.nil?
 
-        @application.billing_strategy = BillingStrategy.where(agency: @application.agency, policy_type: @application.policy_type).take if @application.billing_strategy.nil?
+        @application.billing_strategy = BillingStrategy.where(agency: @application.agency, carrier: @application.carrier, policy_type: @application.policy_type).take if @application.billing_strategy.nil?
 
         validate_applicant_result =
           PolicyApplications::ValidateApplicantsParameters.run!(
