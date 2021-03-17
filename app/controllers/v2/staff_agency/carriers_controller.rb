@@ -35,8 +35,8 @@ module V2
 
       def billing_strategies_list
         if params[:carrier_agency_id].present?
-          billing_strategies = paginator(BillingStrategy.where(carrier_id: params[:id], agency_id: params[:carrier_agency_id]).order(created_at: :desc))
-          render json: billing_strategies, status: :ok
+          @billing_strategies = paginator(BillingStrategy.includes(:agency).where(carrier_id: params[:id], agency_id: params[:carrier_agency_id]).order(created_at: :desc))
+          render 'v2/shared/billing_strategies/index'
         end
       end
 
