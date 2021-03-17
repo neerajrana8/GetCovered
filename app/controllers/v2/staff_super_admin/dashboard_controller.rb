@@ -5,6 +5,8 @@
 module V2
   module StaffSuperAdmin
     class DashboardController < StaffSuperAdminController
+      include DashboardMethods
+
       def total_dashboard
         unit_ids = InsurableType::UNITS_IDS
         @covered = Insurable.where(covered: true).count || 0
@@ -78,37 +80,6 @@ module V2
         render template: 'v2/shared/insurables/index', status: :ok
       end
 
-      def communities_uninsured_units
-        communities_relation = Insurable.where(insurable_type_id: InsurableType::COMMUNITIES_IDS)
-        communities_relation = communities_relation.where(account_id: params[:account_id]) if params.key?(:account_id)
-        communities_relation = paginator(communities_relation)
-
-        @communities = communities_relation.map do |community|
-          {
-            title: community.title,
-            account_title: community.account&.title,
-            total_units: community.units.count,
-            uninsured_units: 
-              Insurable.
-                where(id: community.units.pluck(:id)).joins('LEFT JOIN policy_insurables ON policy_insurables.id = insurables.id').
-                where(policy_insurables: { id: nil }).select('insurables.id').
-                distinct.count +
-                Insurable.
-                where(id: community.units.pluck(:id)).joins(:policies).
-                where(policies: { status: Policy.active_statuses }).
-                select('insurables.id').
-                distinct.count
-          }
-        end
-
-        render template: 'v2/shared/dashboard/communities_uninsured_units', status: :ok
-      end
-
-      def communities_expired_policies
-        @communities = []
-        render template: 'v2/shared/dashboard/communities_expired_policies', status: :ok
-      end
-
       def reports
         min = params[:start]
         max = params[:end]
@@ -144,6 +115,10 @@ module V2
 
       def supported_orders
         supported_filters(true)
+      end
+
+      def communities
+        Insurable.where(insurable_type_id: InsurableType::COMMUNITIES_IDS)
       end
     end
   end # module StaffSuperAdmin

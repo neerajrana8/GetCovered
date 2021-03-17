@@ -45,8 +45,7 @@
 
     resources :dashboard, only: [] do
       collection do
-        get 'communities_uninsured_units'
-        get 'communities_expired_policies'
+        get 'communities_data'
       end
     end
 

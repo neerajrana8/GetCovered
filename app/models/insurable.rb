@@ -141,6 +141,17 @@ class Insurable < ApplicationRecord
 		return to_return
   end
 
+  def units_relation
+    own_units = insurables.where(insurable_type_id: InsurableType::UNITS_IDS)
+    buildings_units =
+      Insurables.where(
+        insurable_type_id: InsurableType::UNITS_IDS,
+        insurable_id: insurables.where(insurable_type_id: InsurableType::BUILDINGS_IDS).pluck(:id)
+      )
+
+    own_units.or buildings_units
+  end
+
   def buildings
     insurables.where(insurable_type_id: InsurableType::BUILDINGS_IDS)
   end

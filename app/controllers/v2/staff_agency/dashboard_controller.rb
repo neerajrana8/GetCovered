@@ -5,6 +5,8 @@
 module V2
   module StaffAgency
     class DashboardController < StaffAgencyController
+      include DashboardMethods
+
       check_privileges 'dashboard.properties'
 
       def total_dashboard
@@ -82,21 +84,18 @@ module V2
         render template: 'v2/shared/insurables/index', status: :ok
       end
 
-      def communities_uninsured_units
-        @communities = []
-
-        render template: 'v2/shared/dashboard/communities_uninsured_units', status: :ok
-      end
-
-      def communities_expired_policies
-        @communities = []
-        render template: 'v2/shared/dashboard/communities_expired_policies', status: :ok
-      end
-
       private
 
       def view_path
         super + '/dashboard'
+      end
+
+      def communities
+        accounts_communities =
+          Insurable.where(insurable_type_id: InsurableType::COMMUNITIES_IDS, account: @agency.accounts)
+        agency_communities =
+          Insurable.where(insurable_type_id: InsurableType::COMMUNITIES_IDS, agency: @agency)
+        accounts_communities.or agency_communities
       end
 
       def supported_filters(called_from_orders = false)
