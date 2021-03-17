@@ -156,8 +156,8 @@ module CarrierMsiPolicyQuote
         when 'company'
           pseudoname = [hash['company_name'][0...50], hash['company_name'][50...(hash['company_name'].length)]]
           if !(pseudoname.first.blank? && pseudoname.first.blank?) && pseudoname.first.blank? != pseudoname.second.blank?
-            psn = pseudoname.first + pseudoname.second
-            splitter = [(psn.length.to_f/2).ceil, 50].min
+            psn = (pseudoname.first || '') + (pseudoname.second || '').strip
+            splitter = [psn.index(' ') || 50, (psn.length.to_f/2).ceil, 50].min
             pseudoname = [psn[0...splitter], psn[splitter...psn.length]]
             pseudoname[1] = "EndOfCompanyName" if pseudoname[1].blank?
           end
