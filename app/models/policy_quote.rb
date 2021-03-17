@@ -165,7 +165,7 @@ class PolicyQuote < ApplicationRecord
             policy_application.policy_rates.update_all policy_id: policy.id
 
             build_coverages() if policy_application.policy_type.title == "Residential"
-            if update!(policy: policy) &&
+            if update(policy: policy) &&
                policy_application.update(policy: policy, status: "accepted") &&
                policy_premium.update(policy: policy)
 
