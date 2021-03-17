@@ -24,7 +24,7 @@ class CarrierAgency < ApplicationRecord
     agency.try(:title)
   end
   
-  def billing_strategies
+  def billing_strategies
     BillingStrategy.where(agency: agency, carrier: carrier)
   end
 
