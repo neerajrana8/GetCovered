@@ -118,13 +118,14 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
       t.integer     :total_due, null: false                             # the total due now (i.e. original_total_due minus refunds plus increases)
       t.integer     :total_reducing, null: false, default: 0            # the amount subtracted from total_due by pending LineItemReductions
       t.integer     :total_received, null: false, default: 0            # the amount received towards payment of total_due
-      
       t.integer     :preproration_total_due, null: false                # the amount due before any prorations MOOSE WARNING: no validations
       t.integer     :duplicatable_reduction_total, null: false, default: 0  # the total of all reductions with proration_interaction 'duplicated' MOOSE WARNING: no validations
-      
       # references
       t.references  :chargeable, polymorphic: true                      # will be a PolicyPremiumItemTerm right now, but could be anything
       t.references  :invoice                                            # the invoice to which this LineItem belongs
+      # redundant fields for convenient analytics
+      t.enum        :analytics_category, null: false, default: 0
+      t.references  :policy_quote, null: true
     end
     
     create_table :invoices do |t|

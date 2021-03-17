@@ -67,7 +67,7 @@ class PolicyPremiumItem < ApplicationRecord
     return "Line items already scheduled" unless self.line_items.blank?
     to_return = self.policy_premium_item_payment_terms.references(:policy_premium_payment_terms).includes(:policy_premium_payment_term)
                     .order("policy_premium_payment_terms.original_first_moment ASC, policy_premium_payment_terms.original_last_moment DESC")
-                    .map{|pt| ::LineItem.new(chargeable: pt, title: self.title, original_total_due: 0) }
+                    .map{|pt| ::LineItem.new(chargeable: pt, title: self.title, original_total_due: 0, analytics_category: "policy_#{self.category}", policy_quote: self.policy_quote) }
     # calculate line item totals
     case self.rounding_error_distribution
       when 'dynamic_forward', 'dynamic_reverse'
