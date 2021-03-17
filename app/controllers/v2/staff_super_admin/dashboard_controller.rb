@@ -78,12 +78,42 @@ module V2
         render template: 'v2/shared/insurables/index', status: :ok
       end
 
+      def communities_uninsured_units
+        communities_relation = Insurable.where(insurable_type_id: InsurableType::COMMUNITIES_IDS)
+        communities_relation = communities_relation.where(account_id: params[:account_id]) if params.key?(:account_id)
+        communities_relation = paginator(communities_relation)
+
+        @communities = communities_relation.map do |community|
+          {
+            title: community.title,
+            account_title: community.account&.title,
+            total_units: community.units.count,
+            uninsured_units: 
+              Insurable.
+                where(id: community.units.pluck(:id)).joins('LEFT JOIN policy_insurables ON policy_insurables.id = insurables.id').
+                where(policy_insurables: { id: nil }).select('insurables.id').
+                distinct.count +
+                Insurable.
+                where(id: community.units.pluck(:id)).joins(:policies).
+                where(policies: { status: Policy.active_statuses }).
+                select('insurables.id').
+                distinct.count
+          }
+        end
+
+        render template: 'v2/shared/dashboard/communities_uninsured_units', status: :ok
+      end
+
+      def communities_expired_policies
+        render template: 'v2/shared/dashboard/communities_expired_policies', status: :ok
+      end
+
       def reports
         min = params[:start]
         max = params[:end]
         type = params[:type]
-        report = Report.joins("LEFT JOIN reports r2 ON (date(reports.created_at) = date(r2.created_at) AND reports.id < r2.id)")
-                       .where("r2.id IS NULL").where(reportable_type: 'Agency')
+        report = Report.joins('LEFT JOIN reports r2 ON (date(reports.created_at) = date(r2.created_at) AND reports.id < r2.id)')
+          .where('r2.id IS NULL').where(reportable_type: 'Agency')
 
         # reports = Agency.where(created_at: min..max).map { |report| report.coverage_report }
         # report = Report.where(created_at: min..max, reportable_type: 'Agency', type: type).group('created_at', 'id')
