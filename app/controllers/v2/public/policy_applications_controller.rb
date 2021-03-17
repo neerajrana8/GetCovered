@@ -416,7 +416,7 @@ module V2
         @application.expiration_date = @application.effective_date&.send(:+, 1.year)
 
         if @application.extra_settings && !@application.extra_settings['additional_interest'].blank?
-          error_message = validate_msi_additional_interest(@application.extra_settings['additional_interest'])
+          error_message = ::MsiService.validate_msi_additional_interest(@application.extra_settings['additional_interest'])
           unless error_message.nil?
             render json: standard_error(:policy_application_save_error, I18n.t(error_message)),
                    status: 400
@@ -535,7 +535,7 @@ module V2
           @policy_application.expiration_date = @policy_application.effective_date&.send(:+, 1.year)
           # flee if nonsense is passed for additional interest
           if @policy_application.extra_settings && !@policy_application.extra_settings['additional_interest'].blank?
-            error_message = validate_msi_additional_interest(@policy_application.extra_settings['additional_interest'])
+            error_message = ::MsiService.validate_msi_additional_interest(@policy_application.extra_settings['additional_interest'])
             unless error_message.nil?
               render json: standard_error(:policy_application_save_error, I18n.t(error_message)),
                      status: 400
