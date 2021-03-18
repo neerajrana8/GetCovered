@@ -9,9 +9,10 @@ module DashboardMethods
 
       @communities_data = communities_relation.map do |community|
         {
+          id: community.id,
           title: community.title,
           account_title: community.account&.title,
-          total_units: community.units.count,
+          total_units: community.units_relation.count,
           uninsured_units: uninsured_units_count(community),
           expiring_policies: expiring_policies_count(community)
         }

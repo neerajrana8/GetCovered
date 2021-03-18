@@ -144,7 +144,7 @@ class Insurable < ApplicationRecord
   def units_relation
     own_units = insurables.where(insurable_type_id: InsurableType::UNITS_IDS)
     buildings_units =
-      Insurables.where(
+      Insurable.where(
         insurable_type_id: InsurableType::UNITS_IDS,
         insurable_id: insurables.where(insurable_type_id: InsurableType::BUILDINGS_IDS).pluck(:id)
       )
