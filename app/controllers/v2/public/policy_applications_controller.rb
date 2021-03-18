@@ -137,6 +137,7 @@ module V2
         @application.expiration_date = @application.effective_date&.send(:+, 1.year)
         @application.agency = Agency.where(master_agency: true).take if @application.agency.nil?
         @application.billing_strategy = BillingStrategy.where(agency:      @application.agency,
+                                                              carrier:     @application.carrier,
                                                               policy_type: @application.policy_type).take if @application.billing_strategy.nil?
 
         validate_applicant_result =
@@ -660,24 +661,26 @@ module V2
               invoice_errors = @quote.generate_invoices_for_term
               @premium       = @quote.policy_premium
 
-              result = {
-                id:             @policy_application.id,
-                quote: {
-                  id:      @quote.id,
-                  status: @quote.status,
-                  premium: @premium
-                },
-                invoice_errors: invoice_errors,
-                invoices:       @quote.invoices,
-                user:           {
-                  id:        @policy_application.primary_user.id,
-                  stripe_id: @policy_application.primary_user.stripe_id
+              if invoice_errors.blank?
+                result = {
+                  id:             @policy_application.id,
+                  quote: {
+                    id:      @quote.id,
+                    status: @quote.status,
+                    premium: @premium
+                  },
+                  invoices:       @quote.invoices,
+                  user:           {
+                    id:        @policy_application.primary_user.id,
+                    stripe_id: @policy_application.primary_user.stripe_id
+                  }
                 }
-              }
-
-              sign_in_primary_user(@policy_application.primary_user)
-
-              render json: result.to_json, status: 200
+                sign_in_primary_user(@policy_application.primary_user)
+                render json: result.to_json, status: 200
+              else
+                render json:   standard_error(:policy_application_update_error, invoice_errors),
+                       status: 422
+              end
             else
               render json: standard_error(:quote_attempt_failed, quote_attempt[:message]),
                      status: 422
