@@ -3,7 +3,7 @@ module DashboardMethods
 
   included do
     def communities_data
-      apply_filters(:@communities_relation, communities, :account)
+      index(:@communities_relation, communities, :account)
 
       @communities_data = @communities_relation.map do |community|
         {
