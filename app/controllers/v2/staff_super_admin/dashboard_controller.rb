@@ -101,22 +101,6 @@ module V2
         super + '/dashboard'
       end
 
-      def supported_filters(called_from_orders = false)
-        @calling_supported_orders = called_from_orders
-        {
-          id: %i[scalar array],
-          title: %i[scalar like],
-          permissions: %i[scalar array],
-          insurable_type_id: %i[scalar array],
-          insurable_id: %i[scalar array],
-          agency_id: %i[scalar array]
-        }
-      end
-
-      def supported_orders
-        supported_filters(true)
-      end
-
       def communities
         Insurable.where(insurable_type_id: InsurableType::COMMUNITIES_IDS)
       end

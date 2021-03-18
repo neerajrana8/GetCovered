@@ -3,11 +3,9 @@ module DashboardMethods
 
   included do
     def communities_data
-      communities_relation = communities
-      communities_relation = communities_relation.where(account_id: params[:account_id]) if params.key?(:account_id)
-      communities_relation = paginator(communities_relation)
+      apply_filters(:@communities_relation, communities, :account)
 
-      @communities_data = communities_relation.map do |community|
+      @communities_data = @communities_relation.map do |community|
         {
           id: community.id,
           title: community.title,
@@ -48,6 +46,26 @@ module DashboardMethods
         where('policies.expiration_date < ?', Time.zone.now + 1.month).
         select('insurables.id').
         distinct.count
+    end
+
+    def supported_filters(called_from_orders = false)
+      @calling_supported_orders = called_from_orders
+      {
+        id: %i[scalar array],
+        title: %i[scalar like],
+        permissions: %i[scalar array],
+        insurable_type_id: %i[scalar array],
+        insurable_id: %i[scalar array],
+        agency_id: %i[scalar array],
+        account_id: %i[scalar array],
+        account: {
+          title: %i[scalar like]
+        }
+      }
+    end
+
+    def supported_orders
+      supported_filters(true)
     end
   end
 end
