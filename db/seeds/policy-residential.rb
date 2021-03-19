@@ -50,7 +50,7 @@
 @leases.each do |lease|
 # 	if rand(0..100) > 33 # Create a 66% Coverage Rate
 
-  if !lease.insurable.carrier_profile(@qbe_id).nil?
+  if !lease.insurable.carrier_profile(@qbe_id).nil? && !ENV['SKIPQBE']
     carrier_id = @qbe_id
 		#.insurable.carrier_profile(3)
 		policy_type = PolicyType.find(1)
@@ -172,7 +172,7 @@
 			pp application.errors	
 		end
   # end qbe
-  elsif !lease.insurable.carrier_profile(@msi_id).nil?
+  elsif !lease.insurable.carrier_profile(@msi_id).nil? && !ENV['SKIPMSI']
     # grab useful variables & set up application
     carrier_id = @msi_id
 		policy_type = PolicyType.find(1)

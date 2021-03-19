@@ -154,12 +154,22 @@ class Invoice < ApplicationRecord
       }
     elsif posttransaction_return[:success]
       charge = posttransaction_return[:charge].reload
-      posttransaction_return = {
-        success: true,
-        charge_id: charge.id,
-        charge_status: charge.status,
-        error: nil
-      }
+      case charge.status
+        when 'succeeded', 'pending'
+          posttransaction_return = {
+            success: true,
+            charge_id: charge.id,
+            charge_status: charge.status,
+            error: nil
+          }
+        else
+          posttransaction_return = {
+            success: false,
+            charge_id: charge.id,
+            charge_status: charge.status,
+            error: charge.error_info
+          }
+      end
     end
     return posttransaction_return
   end
@@ -311,7 +321,7 @@ class Invoice < ApplicationRecord
 
   def send_charge_notifications(charge)
     # MOOSE WARNING: fill this out, notification people
-    case charge_status # value will never be 'processing'
+    case charge.status # value will never be 'processing'
       when 'mysterious'
       when 'pending'
       when 'failed'

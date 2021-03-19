@@ -12,7 +12,6 @@ class StripeCharge < ApplicationRecord
   before_save :set_status_changed_at,
     if: Proc.new{|sc| sc.will_save_change_to_attribute?('status') }
   after_commit :process,
-    on: :update,
     if: Proc.new{|sc| !sc.invoice_aware && sc.status != 'processing' && sc.saved_change_to_attribute?('status') }
   
   enum status: {

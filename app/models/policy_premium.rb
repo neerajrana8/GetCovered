@@ -165,8 +165,8 @@ class PolicyPremium < ApplicationRecord
     self.update_totals(persist: true) if and_update_totals
   end
   
-  def itemize_taxes(amount, and_update_totals: true, proratable: nil, refundable: nil, term_group: nil, collector: nil)
-    self.itemize_premium(amount, and_update_totals: and_update_totals, proratable: proratable, refundable: refundable, term_group: term_group, collector: collector, is_tax: true)
+  def itemize_taxes(amount, and_update_totals: true, proratable: nil, refundable: nil, term_group: nil, collector: nil, recipient:)
+    self.itemize_premium(amount, and_update_totals: and_update_totals, proratable: proratable, refundable: refundable, term_group: term_group, collector: collector, is_tax: true, recipient: recipient)
   end
 
   def itemize_premium(amount, and_update_totals: true, proratable: nil, refundable: nil, term_group: nil, collector: nil, is_tax: false, recipient: nil)

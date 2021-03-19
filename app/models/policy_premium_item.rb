@@ -94,11 +94,11 @@ class PolicyPremiumItem < ApplicationRecord
           break if distributed == 0 || !multiple_passes
         end
         reversal = (self.rounding_error_distribution.start_with?('first_payment') ? :each : :reverse_each)
-        to_return.send(reversal).find{|li| li.original_total_due > 0 }.original_total_due += to_distribute
+        (to_return.send(reversal).find{|li| li.original_total_due > 0 } || to_return.send(reversal).first).original_total_due += to_distribute unless to_distribute == 0
     end
     # return unsaved line items
     to_return.each{|li| li.preproration_total_due = li.original_total_due; li.total_due = li.original_total_due }
-    return to_return
+    return to_return.select{|tr| tr.total_due > 0 }
   end
   
   def apply_proration

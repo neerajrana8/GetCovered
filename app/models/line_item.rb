@@ -9,6 +9,7 @@ class LineItem < ApplicationRecord
     optional: true
     
   has_many :line_item_changes
+  has_many :line_item_reductions
 
   validates_presence_of :title
   validates_inclusion_of :priced_in, in: [true, false]
@@ -27,8 +28,10 @@ class LineItem < ApplicationRecord
     policy_tax: 3
   }
   
+  # sort line items from first-to-charge-for to last-to-charge-for
   def <=>(other)
-    (self.id || 0) <=> (other.id || 0) # MOOSE WARNING: implement proper line item sorting by proration refundability if you care
+    return (self.id || 0) <=> (other.id || 0) if self.analytics_category == other.analytics_category
+    return -(self.analytics_category <=> other.analytics_category) # negative so tax gets paid first
   end
     
     

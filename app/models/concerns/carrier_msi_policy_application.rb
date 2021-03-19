@@ -177,7 +177,7 @@ module CarrierMsiPolicyApplication
             # MOOSE WARNING: preprocessed
             recipient: ::MsiService.carrier,
             collector: ::MsiService.carrier
-          )
+          ) unless msi_policy_fee == 0
           ppi_installment_fee = ::PolicyPremiumItem.create!(
             policy_premium: premium,
             title: "Installment Fee",
@@ -189,31 +189,32 @@ module CarrierMsiPolicyApplication
             # MOOSE WARNING: preprocessed
             recipient: ::MsiService.carrier,
             collector: ::MsiService.carrier
-          )
+          ) unless (fee_installment * installment_count) == 0
           ppi_down_payment = ::PolicyPremiumItem.create!(
             policy_premium: premium,
             title: "Premium Down Payment",
             category: "premium",
             rounding_error_distribution: "first_payment_simple",
-            total_due: msi_policy_fee,
+            total_due: down_payment,
             proration_calculation: "no_proration",
             proration_refunds_allowed: false,
             # MOOSE WARNING: preprocessed
             recipient: ::MsiService.carrier,
             collector: ::MsiService.carrier
-          )
+          ) unless down_payment == 0
+          installment_per = premium_installment * [installment_count - 1, 0].max + last_premium_installment
           ppi_installment = ::PolicyPremiumItem.create!(
             policy_premium: premium,
             title: "Premium Installment",
             category: "premium",
             rounding_error_distribution: "first_payment_simple",
-            total_due: premium_installment * [installment_count - 1, 0].max + last_premium_installment,
+            total_due: installment_per,
             proration_calculation: "no_proration",
             proration_refunds_allowed: false,
             # MOOSE WARNING: preprocessed
             recipient: ::MsiService.carrier,
             collector: ::MsiService.carrier
-          )
+          ) unless installment_per == 0
           premium.update_totals(persist: true)
           # generate terms
           gotten_schedule.each.with_index do |dates, ind|
