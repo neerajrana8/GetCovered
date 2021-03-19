@@ -8,7 +8,7 @@ module Policies
 
     def get_covered
       opening = [
-          "Bray out!  a policy hath been sold.  'i  this message thou shall find details that might be of interest.<br><br>",
+          "Bray out!  a policy hath been sold.  'i  this message thou shalt find details that might be of interest.<br><br>",
           "Been sold a policy has. Details that might of interest in this message you will find. Hrmmm.<br><br>",
           "A policy has been sold!  In this message you will find diddily ding dong details that might of interest.<br><br>",
           "Feiern! Eine Police wurde verkauft. In dieser Nachricht finden Sie Details, die von Interesse sein könnten.<br><br>",
@@ -19,7 +19,7 @@ module Policies
 
       @content = opening[rand(0..4)] + details
       @greeting = "Hello Losers,"
-      
+
       mail(subject: "A new #{ @policy.policy_type.title } Policy has Sold!", template_name: 'purchase')
     end
 
