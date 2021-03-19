@@ -18,7 +18,8 @@ module Policies
       details = "Name: #{ @user.profile.full_name }<br>Agency: #{ @agency.title }<br>Policy Type: #{ @policy.policy_type.title }<br>Billing Strategy: #{ @billing_strat.title }<br>Premium: $#{ sprintf "%.2f", @premium.total.to_f / 100 }<br>First Payment: $#{ sprintf "%.2f", @deposit.total.to_f / 100 }"
 
       @content = opening[rand(0..4)] + details
-
+      @greeting = "Hello Losers,"
+      
       mail(subject: "A new #{ @policy.policy_type.title } Policy has Sold!", template_name: 'purchase')
     end
 
@@ -42,6 +43,7 @@ module Policies
       @premium = @policy.policy_premiums.first
       @billing_strat = @premium.billing_strategy
       @deposit = @policy.invoices.order(due_date: :ASC).first
+      @greeting = nil
     end
   end
 end
