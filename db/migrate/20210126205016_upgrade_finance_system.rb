@@ -11,6 +11,9 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
     
     # update BillingStrategy
     add_reference :billing_strategies, :collector, polymorphic: true, null: true
+    
+    # give PA an internal error message
+    add_column :policy_applications, :internal_error_message, :string
   
     # get rid of really old tables we don't even use anymore
     drop_table :payments

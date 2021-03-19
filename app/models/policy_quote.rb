@@ -56,8 +56,8 @@ class PolicyQuote < ApplicationRecord
     policy_application.update status: 'quoted' if update status: 'quoted'
   end
 
-  def mark_failure(error_message = nil)
-    policy_application.update(status: 'quote_failed', error_message: error_message) if update status: 'quote_failed'
+  def mark_failure(error_message = nil, internal_error_message = nil)
+    policy_application.update(status: 'quote_failed', error_message: error_message, internal_error_message: internal_error_message) if update status: 'quote_failed'
   end
 
   def available_period
