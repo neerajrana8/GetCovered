@@ -397,18 +397,14 @@ class Policy < ApplicationRecord
   end
 
   def run_postbind_hooks # do not remove this; concerns add functionality to it by overriding it and calling super
-    notify_the_idiots()
     notify_relevant()
     super if defined?(super)
   end
 
   private
 
-    def notify_the_idiots
-      Policies::PurchaseMailer.with(policy: self).get_covered.deliver
-    end
-
     def notify_relevant
+      Policies::PurchaseMailer.with(policy: self).get_covered.deliver
       Policies::PurchaseMailer.with(policy: self).agency.deliver unless self.agency.nil?
       Policies::PurchaseMailer.with(policy: self).account.deliver unless self.account.nil?
     end
