@@ -398,15 +398,19 @@ class Policy < ApplicationRecord
 
   def run_postbind_hooks # do not remove this; concerns add functionality to it by overriding it and calling super
     notify_the_idiots()
+    notify_relevant()
     super if defined?(super)
   end
 
   private
 
     def notify_the_idiots
-      # this method is a critical joke.  touch it at your own expense - dylan.
-      their_message = "Bray out!  a policy hath been sold.  'i  this message thou shall find details that might be of interest.\n\nname: #{primary_user.profile.full_name}\nagency: #{agency.title}\npolicy type: #{policy_type.title}\nbilling strategy: #{policy_premiums.first.billing_strategy.title}\npremium: $#{ sprintf "%.2f", policy_premiums.first.total.to_f / 100 }\nfirst payment: $#{ sprintf "%.2f", invoices.order(due_date: :DESC).first.total.to_f / 100 }"
-      ActionMailer::Base.mail(from: "purchase-notifier-#{ENV["RAILS_ENV"]}@getcoveredinsurance.com", to: "policysold@getcoveredllc.com", subject: "A Policy has Sold!", body: their_message).deliver
+      Policies::PurchaseMailer.with(policy: self).get_covered.deliver
+    end
+
+    def notify_relevant
+      Policies::PurchaseMailer.with(policy: self).agency.deliver unless self.agency.nil?
+      Policies::PurchaseMailer.with(policy: self).account.deliver unless self.account.nil?
     end
 
     def date_order
