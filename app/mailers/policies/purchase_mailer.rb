@@ -19,19 +19,19 @@ module Policies
 
       @content = opening[rand(0..4)] + details
 
-      mail(subject: "A Policy has Sold!")
+      mail(subject: "A new #{ @policy.policy_type.title } Policy has Sold!", template_name: 'purchase')
     end
 
     def agency
       @content = "A new policy has been sold.  See details below.<br><br>Name: #{ @user.profile.full_name }<br>Agency: #{ @agency.title }<br>Policy Type: #{ @policy.policy_type.title }<br>Billing Strategy: #{ @billing_strat.title }<br>Premium: $#{ sprintf "%.2f", @premium.total.to_f / 100 }<br>First Payment: $#{ sprintf "%.2f", @deposit.total.to_f / 100 }"
 
-      mail(subject: "A Policy has Sold!")
+      mail(subject: "A new #{ @policy.policy_type.title } Policy has Sold!", template_name: 'purchase')
     end
 
     def account
       @content = "A new policy has been sold.  See details below.<br><br>Name: #{ @user.profile.full_name }<br>Agency: #{ @agency.title }<br>Policy Type: #{ @policy.policy_type.title }<br>Billing Strategy: #{ @billing_strat.title }"
 
-      mail(subject: "A Policy has Sold!")
+      mail(subject: "A new #{ @policy.policy_type.title } Policy has Sold!", template_name: 'purchase')
     end
 
     private
