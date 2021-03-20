@@ -103,6 +103,7 @@ class PolicyPremiumItem < ApplicationRecord
   
   def apply_proration
     return nil unless self.proration_pending && self.policy_premium.prorated
+    refunds_allowed = self.policy_premium.force_no_refunds ? false : self.proration_refunds_allowed
     error_message = nil
     ActiveRecord::Base.transaction(requires_new: true) do
       # lock our bois
@@ -110,7 +111,7 @@ class PolicyPremiumItem < ApplicationRecord
       line_item_array = self.line_items.order(id: :asc).lock.to_a
       self.lock!
       # flee if there's an issue (yes, we check proration_pending again, since we're in the lock now)
-      return nil unless self.proration_pending && self.line_item_reductions.where(pending: true, proration_interaction: 'reduced').count > 0
+      return nil unless self.proration_pending && self.line_item_reductions.where(pending: true, proration_interaction: 'reduced').count == 0
       # apply the proration
       case self.proration_calculation
         when 'no_proration'
@@ -125,7 +126,7 @@ class PolicyPremiumItem < ApplicationRecord
               reason: "Proration Adjustment",
               amount_interpretation: 'max_total_after_reduction',
               amount: (ppipt.policy_premium_payment_term.unprorated_proportion * ppipt.preproration_total_due).ceil,
-              refundability: self.proration_refunds_allowed ? 'cancel_or_refund' : 'cancel_only',
+              refundability: refunds_allowed ? 'cancel_or_refund' : 'cancel_only',
               proration_interaction: 'is_proration'
             )
             unless created.id
@@ -143,7 +144,7 @@ class PolicyPremiumItem < ApplicationRecord
               reason: "Proration Adjustment",
               amount_interpretation: 'max_total_after_reduction',
               amount: 0,
-              refundability: self.proration_refunds_allowed ? 'cancel_or_refund' : 'cancel_only',
+              refundability: refunds_allowed ? 'cancel_or_refund' : 'cancel_only',
               proration_interaction: 'is_proration'
             )
             unless created.id
@@ -161,7 +162,7 @@ class PolicyPremiumItem < ApplicationRecord
               reason: "Proration Adjustment",
               amount_interpretation: 'max_total_after_reduction',
               amount: 0,
-              refundability: self.proration_refunds_allowed ? 'cancel_or_refund' : 'cancel_only',
+              refundability: refunds_allowed ? 'cancel_or_refund' : 'cancel_only',
               proration_interaction: 'is_proration'
             )
             unless created.id

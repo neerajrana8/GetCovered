@@ -174,6 +174,10 @@ class Policy < ApplicationRecord
     manual_cancellation_with_refunds:     7,     # no qbe code
     manual_cancellation_without_refunds:  8    # no qbe code
   }
+  
+  def current_quote
+    self.policy_quotes.accepted.order('created_at desc').first
+  end
 
   def self.active_statuses
     ['BOUND', 'BOUND_WITH_WARNING', 'RENEWING', 'RENEWED', 'REINSTATED']
@@ -295,43 +299,50 @@ class Policy < ApplicationRecord
 
 
   # Cancels a policy; returns nil if no errors, otherwise a string explaining the error
-  def cancel(reason, cancel_date = Time.current.to_date)
+  def cancel(reason, last_active_moment = Time.current.to_date.end_of_day)
     # Flee on invalid data
     return I18n.t('policy_model.cancellation_reason_invalid') unless self.class.cancellation_reasons.has_key?(reason)
     return I18n.t('policy_model.policy_is_already_cancelled') if self.status == 'CANCELLED'
-    # Slaughter the invoices NOTE: we refund before changing status to CANCELLED because apply_proration can be called multiple times with the same arguments if something fails
+    return I18n.t('policy_model.cancellation_already_pending') if self.marked_for_cancellation
+    # get the current policy quote and prorate
+    pq = self.current_quote
     special_logic = SPECIAL_CANCELLATION_REFUND_LOGIC[reason]
+    result = nil
     case special_logic
       when :prorated_refund
-        # prorate regularly
-        self.invoices.each{|invoice| invoice.apply_proration(cancel_date, refund_date: cancel_date) }
+       result =  pq.policy_premium.prorate(new_last_moment: last_active_moment)
       when :early_cancellation
-        # prorate as if we'd cancelled immediately if cancellation is early, otherwise prorate regularly
         max_days_for_full_refund = (CarrierPolicyType.where(policy_type_id: self.policy_type_id, carrier_id: self.carrier_id).take&.max_days_for_full_refund || 0).days
-        if cancel_date < self.created_at.to_date + max_days_for_full_refund
-          self.invoices.each do |invoice|
-            invoice.apply_proration(cancel_date, refund_date: cancel_date, to_ensure_refunded: Proc.new{|li| ['amortized_fees', 'deposit_fees'].include?(li.category) ? 0 : li.price })
+        if last_active_moment < (self.created_at.to_date + max_days_for_full_refund.days).end_of_day
+          pq.policy_premium.policy_premium_items.where(category: ['premium', 'tax']).each do |ppi|
+            ppi.line_items.each do |li|
+              ::LineItemReduction.create!(
+                reason: "Early Cancellation Refund",
+                refundability: 'cancel_or_refund',
+                amount_interpretation: 'max_total_after_reduction',
+                amount: 0,
+                line_item: li
+              )
+            end
           end
-        else
-          self.invoices.each{|invoice| invoice.apply_proration(cancel_date, refund_date: cancel_date) }
         end
+        result = pq.policy_premium.prorate(new_last_moment: last_active_moment)
       else # :no_refund will end up here; by default we don't refund
-        # override the amount to refund to nothing and cancel everything unpaid or missed
-        self.invoices.each{|invoice| invoice.apply_proration(cancel_date, refund_date: cancel_date, to_refund_override: {}, cancel_if_unpaid_override: true, cancel_if_missed_override: true) }
+        result = pq.policy_premium.prorate(new_last_moment: last_active_moment, force_no_refunds: true)
+    end
+    # Handle proration error
+    unless result.nil?
+      update_columns(
+        marked_for_cancellation: true,
+        marked_for_cancellation_info: result,
+        marked_cancellation_time: last_active_moment,
+        marked_cancellation_reason: reason
+      )
+      return I18n.t('policy_model.proration_failed')
     end
     # Mark cancelled
-    update_columns(status: 'CANCELLED', cancellation_reason: reason, cancellation_date: cancel_date)
+    update_columns(status: 'CANCELLED', cancellation_reason: reason, cancellation_date: last_active_moment.to_date)
     RentGuaranteeCancellationEmailJob.perform_later(self) if self.policy_type.slug == 'rent-guarantee'
-    # Unearned balance is the remaining unearned amount on an insurance policy that
-    # needs to be deducted from future commissions to recuperate the loss
-    premium&.reload
-    commision_amount = premium&.commission&.amount || 0
-    unearned_premium = premium&.unearned_premium || 0
-    balance = (commision_amount * unearned_premium / premium&.base)
-    commission_deductions.create(
-      unearned_balance: balance,
-      deductee: premium&.commission_strategy&.commissionable
-    )
     # done
     return nil
   end

@@ -12,6 +12,12 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
     # update BillingStrategy
     add_reference :billing_strategies, :collector, polymorphic: true, null: true
     
+    # update Policy
+    add_column :policy, :marked_for_cancellation, :boolean, null: false, default: true
+    add_column :policy, :marked_for_cancellation_info, :string
+    add_column :policy, :marked_cancellation_time, :datetime
+    add_column :policy, :marked_cancellation_reason, :string
+    
     # give PA an internal error message
     add_column :policy_applications, :internal_error_message, :string
   
@@ -100,6 +106,7 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
       t.boolean :prorated, null: false, default: false
       t.datetime :prorated_term_last_moment
       t.datetime :prorated_term_first_moment
+      t.boolean :force_no_refunds, null: false, default: false
       # miscellaneous
       t.timestamps
       t.string  :error_info
@@ -273,6 +280,7 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
       t.references    :commission                                       # The commission on which this item is listed.
       t.references    :commissionable, polymorphic: true,               # The thing this item is being paid for. Generally will be a PolicyPremiumItem.
         index: { name: 'index_commision_items_on_commissionable' }
+      t.references    :reason, polymorphic: true, null: true            # The reason this CI was created (generally a LineItemChange object)
       t.references    :policy, null: true                               # Optional direct reference to the Policy this item applies to, if it applies to one
     end
     

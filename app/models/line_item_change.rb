@@ -50,6 +50,7 @@ class LineItemChange < ApplicationRecord
                 amount: self.amount,
                 commission: ::Commission.collating_commission_for(ppi.recipient),
                 commissionable: ppi,
+                reason: self,
                 policy: ppi.policy_quote.policy
               )
               unless created.id

@@ -269,13 +269,22 @@ class PolicyPremium < ApplicationRecord
     return save_error
   end
 
-  def prorate(new_first_moment: nil, new_last_moment: nil)
+  def prorate(new_first_moment: nil, new_last_moment: nil, force_no_refunds: false)
     return nil if new_first_moment.nil? && new_last_moment.nil?
+    # handle issues with the provided proration moments being less restrictive than exiting protations
     if new_first_moment && new_first_moment < (self.prorated_first_moment || self.policy_quote.effective_moment)
-      return "The requested new_first_moment #{new_first_moment.to_s} is invalid; it cannot precede the original or current prorated beginning of term (#{(self.prorated_first_moment || self.policy_quote.effective_moment).to_s})"
+      if new_last_moment && new_last_moment <= (self.prorated_last_moment || self.policy_quote.expiration_moment)
+        new_first_moment = nil # since NFM is less restrictive than a previously applied proration, just apply the NLM part
+      else
+        return "The requested new_first_moment #{new_first_moment.to_s} is invalid; it cannot precede the original or current prorated beginning of term (#{(self.prorated_first_moment || self.policy_quote.effective_moment).to_s})"
+      end
     end
     if new_last_moment && new_last_moment > (self.prorated_last_moment || self.policy_quote.expiration_moment)
-      return "The requested new_last_moment #{new_last_moment.to_s} is invalid; it cannot be after the original or current prorated end of term (#{(self.prorated_last_moment || self.policy_quote.expiration_moment).to_s})"
+      if new_first_moment && new_first_moment >= (self.prorated_first_moment || self.policy_quote.effective_moment)
+        new_last_moment = nil
+      else
+        return "The requested new_last_moment #{new_last_moment.to_s} is invalid; it cannot be after the original or current prorated end of term (#{(self.prorated_last_moment || self.policy_quote.expiration_moment).to_s})"
+      end
     end
     o_return = nil
     ActiveRecord::Base.transaction(requires_new: true) do
@@ -283,7 +292,8 @@ class PolicyPremium < ApplicationRecord
       unless self.update(
         prorated_first_moment: new_first_moment || self.prorated_first_moment,
         prorated_last_moment: new_last_moment || self.prorated_last_moment,
-        prorated: true
+        prorated: true,
+        force_no_refunds: force_no_refunds
       )
         to_return = "The update to apply the proration failed, errors: #{self.errors.to_h}"
         raise ActiveRecord::Rollback
