@@ -21,6 +21,8 @@ class Insurable < ApplicationRecord
   belongs_to :insurable, optional: true
   belongs_to :insurable_type
 
+  has_one :insurable_data
+
   has_many :insurables
   has_many :carrier_insurable_profiles
   has_many :insurable_rates
@@ -537,6 +539,9 @@ class Insurable < ApplicationRecord
     return { error_type: :internal_error, message: I18n.t('insurable_model.internal_error_occured') }
   end
 
+  def refresh_insurable_data
+    InsurableData::Refresh.run!(insurable: self)
+  end
 
   private
 
