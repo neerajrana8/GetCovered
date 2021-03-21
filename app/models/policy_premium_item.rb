@@ -5,6 +5,9 @@ class PolicyPremiumItem < ApplicationRecord
     polymorphic: true
   belongs_to :collector,      # which Carrier/Agent actually collects the money from users
     polymorphic: true
+  belongs_to :collection_plan,# what an external collector will pay off on their own (either null (collector pays off nothing), a parent CommissionStrategy of recipient (collector pays off that CS and its parents), or an Agency/Carrier/whatever (collector pays off all commissions to that entity))
+    polymorphic: true,
+    optional: true
   belongs_to :fee,            # what Fee this item corresponds to, if any
     optional: true
     
@@ -14,15 +17,18 @@ class PolicyPremiumItem < ApplicationRecord
     through: :policy_premium
   has_many :policy_premium_item_payment_terms,
     autosave: true # MOOSE WARNING: does this suffice?
+  has_many :policy_premium_item_commissions
   has_many :line_items,
     through: :policy_premium_item_payment_terms
   has_many :line_item_reductions,
     through: :line_items
+    
 
   # Callbacks
   before_validation :set_missing_total_data,
     on: :create,
     if: Proc.new{|ppi| ppi.original_total_due.nil? || ppi.total_due.nil? }
+  after_create :setup_commissions
 
   # Validations
   validates_presence_of :title
@@ -187,6 +193,43 @@ class PolicyPremiumItem < ApplicationRecord
       val = [self.original_total_due, self.total_due].compact.first
       self.original_total_due = val if self.original_total_due.nil?
       self.total_due = val if self.total_due.nil?
+    end
+    
+    def setup_commissions
+      begin
+        case self.recipient
+          when ::CommissionStrategy
+            external_mode = false
+            last_percentage = 0.to_d
+            total_assigned = 0
+            self.recipient.get_chain.each do |cs|
+              total_expected = (self.total_due * (self.recipient.percentage / 100.to_d).floor) - total_assigned
+              total_assigned += total_expected
+              external_mode = true if cs == self.collection_plan
+              ::PolicyPremiumItemCommission.create!(
+                policy_premium_item: self,
+                recipient: self.recipient.recipient,
+                payability: external_mode || self.recipient.recipient == self.collection_plan ? 'external' : 'internal',
+                total_expected: total_expected,
+                total_received: 0,
+                percentage: self.recipient.percentage - last_percentage
+              )
+              last_percentage = self.recipient.percentage
+            end
+          else
+            ::PolicyPremiumItemCommission.create!(
+              policy_premium_item: self,
+              recipient: self.recipient,
+              payability: self.recipient == self.collection_plan ? 'external' : 'internal',
+              total_expected: self.total_due,
+              total_received: 0,
+              percentage: 100
+            )
+        end
+      rescue ActiveRecord::RecordInvalid => e
+        errors.add(:policy_premium_item_commission, "could not be created (#{e.record.errors.to_h})")
+        raise ActiveRecord::RecordInvalid, self
+      end
     end
 end
 

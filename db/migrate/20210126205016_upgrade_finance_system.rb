@@ -64,7 +64,7 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
       t.references :policy_premium                                      # the PolicyPremium we belong to
       t.references :recipient, polymorphic: true                        # the CommissionStrategy/Agent/Carrier who receives the money
       t.references :collector, polymorphic: true                        # the Agency or Carrier who collects the money
-      #t.references :collection_plan, polymorphic: true, null: true     # record indicating what the collector will pay off on their end (see model for details)
+      t.references :collection_plan, polymorphic: true, null: true      # record indicating what the collector will pay off on their end (see model for details)
       t.references :fee, null: true                                     # the Fee this item corresponds to, if any
     end
     
@@ -254,6 +254,14 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
       t.references :stripe_charge
     end
     
+    create_table :policy_premium_item_commission do |t|
+      t.integer       :payability, null: false
+      t.integer       :total_expected, null: false
+      t.integer       :total_received,  null: false
+      t.decimal       :percentage, null: false, precision: 5, scale: 2
+      t.references    :policy_premium_item
+      t.references    :recipient, polymorphic: true
+    end
     
     create_table :commissions do |t|
       # General data
