@@ -8,13 +8,13 @@ class Policies::PurchaseNotifierJob < ApplicationJob
 
     @policy.agency.staffs.each do |staff|
       setting = staff.notification_settings.where(action: "purchase").take
-      Policies::PurchaseMailer.with(policy: self, staff: staff).agency.deliver if setting.enabled?
+      Policies::PurchaseMailer.with(policy: @policy, staff: staff).agency.deliver if setting.enabled?
     end
 
     unless @policy.account.nil?
       @policy.account.staffs.each do |staff|
         setting = staff.notification_settings.where(action: "purchase").take
-        Policies::PurchaseMailer.with(policy: self, staff: staff).account.deliver if setting.enabled?
+        Policies::PurchaseMailer.with(policy: @policy, staff: staff).account.deliver if setting.enabled?
       end
     end
 
