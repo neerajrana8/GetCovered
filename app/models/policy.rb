@@ -88,6 +88,9 @@ class Policy < ApplicationRecord
   through: :primary_policy_user,
   source: :user
 
+  has_one :primary_policy_insurable, -> { where(primary: true) }, class_name: 'PolicyInsurable'
+  has_one :primary_insurable, class_name: 'Insurable', through: :primary_policy_insurable, source: :insurable
+
   has_many :policy_coverages, autosave: true
   has_many :coverages, -> { where(enabled: true) },
   class_name: 'PolicyCoverage'
@@ -209,10 +212,10 @@ class Policy < ApplicationRecord
 
   # PolicyApplication.primary_insurable
 
-  def primary_insurable
-    policy_insurable = policy_insurables.where(primary: true).take
-    policy_insurable&.insurable
-  end
+  # def primary_insurable
+  #   policy_insurable = policy_insurables.where(primary: true).take
+  #   policy_insurable&.insurable
+  # end
 
   def is_allowed_to_update?
     errors.add(:policy_in_system, I18n.t('policy_model.cannot_update')) if policy_in_system == true && !rent_garantee? && !residential?

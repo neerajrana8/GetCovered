@@ -13,11 +13,14 @@ module V2
       check_privileges 'policies.policies'
 
       def index
-        if current_staff.getcovered_agent? && params[:agency_id].nil?
-          super(:@policies, Policy.all)
-        else
-          super(:@policies, Policy.where(agency: @agency))
-        end
+        relation =
+          if current_staff.getcovered_agent? && params[:agency_id].nil?
+            Policy.all
+          else
+            Policy.where(agency: @agency)
+          end
+
+        super(:@policies, relation, :agency, :account, :primary_user, :primary_insurable, :carrier, :policy_type)
       end
 
       def search
