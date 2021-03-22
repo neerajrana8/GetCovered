@@ -403,26 +403,24 @@ class Policy < ApplicationRecord
 
   private
 
-    def notify_relevant
-      Policies::PurchaseMailer.with(policy: self).get_covered.deliver
-      Policies::PurchaseMailer.with(policy: self).agency.deliver unless self.agency.nil?
-      Policies::PurchaseMailer.with(policy: self).account.deliver unless self.account.nil?
-    end
+  def notify_relevant
+    Policies::PurchaseNotifierJob.perform_later(policy: self)
+  end
 
-    def date_order
-      errors.add(:expiration_date, I18n.t('policy_app_model.expiration_date_cannot_be_before_effective')) if expiration_date < effective_date
-    end
+  def date_order
+    errors.add(:expiration_date, I18n.t('policy_app_model.expiration_date_cannot_be_before_effective')) if expiration_date < effective_date
+  end
 
-    def correct_document_mime_type
-      documents.each do |document|
-        if !document.blob.content_type.starts_with?('image/png', 'image/jpeg', 'image/jpg', 'image/svg',
-          'image/gif', 'application/pdf', 'text/plain', 'application/msword',
-          'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-          'text/comma-separated-values', 'application/vnd.ms-excel'
-          )
-          errors.add(:documents, I18n.t('policy_model.document_wrong_format'))
-        end
+  def correct_document_mime_type
+    documents.each do |document|
+      if !document.blob.content_type.starts_with?('image/png', 'image/jpeg', 'image/jpg', 'image/svg',
+        'image/gif', 'application/pdf', 'text/plain', 'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'text/comma-separated-values', 'application/vnd.ms-excel'
+        )
+        errors.add(:documents, I18n.t('policy_model.document_wrong_format'))
       end
     end
+  end
 end
