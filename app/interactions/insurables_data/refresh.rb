@@ -1,4 +1,4 @@
-class InsurableData
+module InsurablesData
   class Refresh < ActiveInteraction::Base
     object :insurable
 

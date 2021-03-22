@@ -540,7 +540,7 @@ class Insurable < ApplicationRecord
   end
 
   def refresh_insurable_data
-    InsurableData::Refresh.run!(insurable: self)
+    InsurablesData::Refresh.run!(insurable: self)
   end
 
   private

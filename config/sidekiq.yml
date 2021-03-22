@@ -16,7 +16,7 @@ production:
     cron: '0 0 * * *'   # Every day at 0:00 AM
     class: Insurables::UpdateCoveredStatusJob
   insurables_refresh_insurable_data:
-    cron: '0 0 * * *'   # Every day at 0:00 AM
+    cron: '0 */2 * * *'   # Every day at 0:00 AM
     class: Insurables::RefreshInsurableDataJob
   # Reports
   coverage_reports_job:
