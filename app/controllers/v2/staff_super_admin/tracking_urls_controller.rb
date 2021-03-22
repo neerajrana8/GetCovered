@@ -3,6 +3,7 @@ module V2
     class TrackingUrlsController < StaffSuperAdminController
       before_action :set_tracking_url, only: %i[show destroy get_leads get_policies]
       before_action :set_substrate, only: :index
+      before_action :set_agencies, only: :agency_filters
 
       include TrackingUrlsMethods
 

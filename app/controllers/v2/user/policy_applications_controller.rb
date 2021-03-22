@@ -44,7 +44,7 @@ module V2
 
         @application.agency = Agency.where(master_agency: true).take if @application.agency.nil?
 
-        @application.billing_strategy = BillingStrategy.where(agency: @application.agency, policy_type: @application.policy_type).take if @application.billing_strategy.nil?
+        @application.billing_strategy = BillingStrategy.where(agency: @application.agency, carrier: @application.carrier, policy_type: @application.policy_type).take if @application.billing_strategy.nil?
 
         validate_applicant_result =
           PolicyApplications::ValidateApplicantsParameters.run!(
@@ -482,22 +482,25 @@ module V2
               invoice_errors = @quote.generate_invoices_for_term
               @premium       = @quote.policy_premium
 
-              response = {
-                id: @policy_application.id,
-                quote: {
-                  id: @quote.id,
-                  status: @quote.status,
-                  premium: @premium
-                },
-                invoice_errors: invoice_errors,
-                invoices: @quote.invoices,
-                user: {
-                  id: @policy_application.primary_user.id,
-                  stripe_id: @policy_application.primary_user.stripe_id
+              if invoice_errors.blank?
+                response = {
+                  id: @policy_application.id,
+                  quote: {
+                    id: @quote.id,
+                    status: @quote.status,
+                    premium: @premium
+                  },
+                  invoices: @quote.invoices,
+                  user: {
+                    id: @policy_application.primary_user.id,
+                    stripe_id: @policy_application.primary_user.stripe_id
+                  }
                 }
-              }
-
-              render json: response.to_json, status: 200
+                render json: response.to_json, status: 200
+              else
+                render json:   standard_error(:policy_application_update_error, invoice_errors),
+                       status: 422
+              end
             else
               render json: standard_error(:quote_attempt_failed, quote_attempt[:message]), status: 422
             end

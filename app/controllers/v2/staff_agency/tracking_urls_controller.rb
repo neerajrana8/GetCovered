@@ -43,7 +43,6 @@ module V2
       def set_agencies
         @agencies = Agency.where(id: @agency.id).or(Agency.where(agency_id: @agency.id))
       end
-
     end
   end
 end
