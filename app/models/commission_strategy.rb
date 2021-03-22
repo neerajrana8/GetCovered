@@ -10,9 +10,12 @@ class CommissionStrategy < ApplicationRecord
   belongs_to :commission_strategy,
     optional: true
     
+  has_many :commission_strategies
+  
   # Validations
-  validates :percentage, numericality: { greater_than: 0 }
-  validate :percentage_is_sensible
+  validates :percentage, numericality: { greater_than: 0, less_than_or_equal_to: 100 }
+  validate :percentage_is_sensible,
+    if: Proc.new{|cs| cs.will_save_change_to_attribute?('percentage') || cs.will_save_change_to_attribute?('commission_strategy_id') }
   validate :recipient_is_not_commission_strategy
   
   def get_chain(reverse: false)
@@ -28,6 +31,7 @@ class CommissionStrategy < ApplicationRecord
     def percentage_is_sensible
       self.errors.add(:percentage, "must be 100 if this CommissionStrategy has no parent") if self.commission_strategy.nil? && self.percentage != 100
       self.errors.add(:percentage, "cannot exceed parent's percentage") if !self.commission_strategy.nil? && self.percentage > self.commission_strategy.percentage
+      self.errors.add(:percentage, "cannot be less than child's percentage") if !self.commission_strategy.nil? && self.commission_strategies.any?{|child| child.percentage > self.percentage }
     end
     
     def recipient_is_not_commission_strategy
