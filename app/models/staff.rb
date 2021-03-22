@@ -6,22 +6,22 @@ class Staff < ApplicationRecord
   devise :invitable, :database_authenticatable, :registerable,
          :recoverable, :rememberable, :trackable, :validatable
   serialize :tokens
-  
+
   include SetAsOwner
   include RecordChange
   include DeviseTokenAuth::Concerns::User
   include ElasticsearchSearchable
   include SessionRecordable
-  
+
   enum role: { staff: 0, agent: 1, owner: 2, super_admin: 3 }
-  
+
   enum current_payment_method: %w[none ach_unverified ach_verified card other],
        _prefix: true
 
-  
+
   validate :proper_role
   validates :organizable, presence: true, unless: -> { super_admin? }
-  
+
   # Active Record Callbacks
   after_initialize :initialize_staff
   after_create :set_first_as_primary_on_organizable
@@ -29,14 +29,14 @@ class Staff < ApplicationRecord
 
   # belongs_to relationships
   # belongs_to :account, required: true
-  
+
   belongs_to :organizable, polymorphic: true, required: false
-  
+
   # has_many relationships
   has_many :histories, as: :recordable, class_name: 'History', foreign_key: :recordable_id
-  
+
   has_many :assignments
-  
+
   # has_one relationships
   has_one :profile, as: :profileable, autosave: true
   has_one :staff_permission
@@ -46,12 +46,13 @@ class Staff < ApplicationRecord
   has_many :invoices, as: :invoiceable
   has_many :payment_profiles, as: :payer
 
-  
+  has_many :notification_settings
+
   scope :enabled, -> { where(enabled: true) }
-  
+
   accepts_nested_attributes_for :profile, update_only: true
   accepts_nested_attributes_for :staff_permission, update_only: true
-  
+
   settings index: { number_of_shards: 1 } do
     mappings dynamic: 'false' do
       indexes :email, type: :text
@@ -68,7 +69,7 @@ class Staff < ApplicationRecord
       end
     end
   end
-  
+
   def as_indexed_json(options = {})
     as_json(
       options.merge(
@@ -77,12 +78,12 @@ class Staff < ApplicationRecord
       )
     )
   end
-  
+
   def self.update_profile(profile, options = {})
     options[:index] ||= index_name
     options[:type]  ||= document_type
     options[:wait_for_completion] ||= false
-    
+
     options[:body] = {
       conflicts: :proceed,
       query: {
@@ -96,10 +97,10 @@ class Staff < ApplicationRecord
         params: { profile: { contact_phone: profile.contact_phone, last_name: profile.last_name, first_name: profile.first_name, full_name: profile.full_name, title: profile.title, contact_email: profile.contact_email } }
       }
     }
-    
+
     __elasticsearch__.client.update_by_query(options)
-  end  
-  
+  end
+
   # Override as_json to always include profile information
   def as_json(options = {})
     json = super(options.reverse_merge(include: :profile))
@@ -114,13 +115,13 @@ class Staff < ApplicationRecord
   def getcovered_agent?
     organizable_type == 'Agency' && organizable_id == ::Agency::GET_COVERED_ID
   end
-  
+
   private
 
   def history_blacklist
     %i[tokens sign_in_count current_sign_in_at last_sign_in_at]
   end
-  
+
   def initialize_staff; end
 
   def proper_role
