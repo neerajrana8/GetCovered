@@ -66,7 +66,7 @@ module Policies
 
     def agency_content
       details = "Name: #{ @user.profile.full_name }<br>"
-      details += "Effective: #{ @policy.effective_date.strftime("%m/%d/%Y') } to #{ @policy.expiration_date.strftime('%m/%d/%Y') }<br>"
+      details += "Effective: #{ @policy.effective_date.strftime('%m/%d/%Y') } to #{ @policy.expiration_date.strftime('%m/%d/%Y') }<br>"
       details += "Address: #{ @address.nil? ? 'N/A' : @address }<br>"
       details += "Agency: #{ @agency.title }<br>"
       details += "Property Manager: #{ @account.nil? ? 'N/A' : @account.title }<br>"
