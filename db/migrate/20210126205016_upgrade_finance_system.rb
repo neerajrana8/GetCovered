@@ -10,10 +10,10 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
     add_reference :billing_strategies, :collector, polymorphic: true, null: true
     
     # update Policy
-    add_column :policy, :marked_for_cancellation, :boolean, null: false, default: true
-    add_column :policy, :marked_for_cancellation_info, :string
-    add_column :policy, :marked_cancellation_time, :datetime
-    add_column :policy, :marked_cancellation_reason, :string
+    add_column :policies, :marked_for_cancellation, :boolean, null: false, default: true
+    add_column :policies, :marked_for_cancellation_info, :string
+    add_column :policies, :marked_cancellation_time, :datetime
+    add_column :policies, :marked_cancellation_reason, :string
     
     # give PA an internal error message
     add_column :policy_applications, :internal_error_message, :string
@@ -60,7 +60,8 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
       t.references :policy_premium                                      # the PolicyPremium we belong to
       t.references :recipient, polymorphic: true                        # the CommissionStrategy/Agent/Carrier who receives the money
       t.references :collector, polymorphic: true                        # the Agency or Carrier who collects the money
-      t.references :collection_plan, polymorphic: true, null: true      # record indicating what the collector will pay off on their end (see model for details)
+      t.references :collection_plan, polymorphic: true, null: true,     # record indicating what the collector will pay off on their end (see model for details)
+        index: { name: 'index_policy_premium_items_on_cp' }
       t.references :fee, null: true                                     # the Fee this item corresponds to, if any
     end
     
@@ -256,7 +257,8 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
       t.integer       :total_received,  null: false
       t.decimal       :percentage, null: false, precision: 5, scale: 2
       t.references    :policy_premium_item
-      t.references    :recipient, polymorphic: true
+      t.references    :recipient, polymorphic: true,
+        index: { name: 'index_policy_premium_item_commission_on_recipient' }
     end
     
     create_table :commissions do |t|

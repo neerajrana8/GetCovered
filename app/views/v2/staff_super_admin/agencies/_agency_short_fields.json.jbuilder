@@ -1,1 +1,1 @@
-json.extract! agency, :id, :title, :first_agent, :stripe_id
+json.extract! agency, :id, :title, :first_agent, :stripe_id, :enabled

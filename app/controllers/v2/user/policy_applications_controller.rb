@@ -44,7 +44,7 @@ module V2
 
         @application.agency = Agency.where(master_agency: true).take if @application.agency.nil?
 
-        @application.billing_strategy = BillingStrategy.where(agency: @application.agency, policy_type: @application.policy_type).take if @application.billing_strategy.nil?
+        @application.billing_strategy = BillingStrategy.where(agency: @application.agency, carrier: @application.carrier, policy_type: @application.policy_type).take if @application.billing_strategy.nil?
 
         validate_applicant_result =
           PolicyApplications::ValidateApplicantsParameters.run!(
@@ -272,9 +272,8 @@ module V2
                 @quote.reload
 
                 if @quote.status == 'quoted'
-
+                  ::ConfieService.create_confie_lead(@application) if @application.agency_id == ::ConfieService.agency_id
                   @application.primary_user.set_stripe_id
-
                   render json: {
                     id: @application.id,
                     quote: {
@@ -481,7 +480,6 @@ module V2
                        status: 400
                 return
               end
-
               response = {
                 id: @policy_application.id,
                 quote: {
@@ -495,7 +493,6 @@ module V2
                   stripe_id: @policy_application.primary_user.stripe_id
                 }
               }
-
               render json: response.to_json, status: 200
             else
               render json: standard_error(:quote_attempt_failed, quote_attempt[:message]), status: 422
