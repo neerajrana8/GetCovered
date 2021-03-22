@@ -46,7 +46,7 @@ class Staff < ApplicationRecord
   has_many :invoices, as: :invoiceable
   has_many :payment_profiles, as: :payer
 
-  has_many :notification_settings
+  has_many :notification_settings, as: :notifyable
 
   scope :enabled, -> { where(enabled: true) }
 
