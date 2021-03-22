@@ -118,6 +118,9 @@ module V2
         @calling_supported_orders = called_from_orders
         {
           id: %i[scalar array],
+          title: %i[scalar like],
+          created_at: %i[scalar array interval],
+          updated_at: %i[scalar array interval],
           agency: {
             title: %i[scalar like]
           },
