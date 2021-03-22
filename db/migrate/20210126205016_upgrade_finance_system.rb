@@ -6,9 +6,6 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
     CarrierPolicyType.where(premium_refundable: true).update_all(premium_proration_calculation: 'per_payment_term') # MOOSE WARNING: is this the best default?
     remove_column :carrier_policy_types, :premium_refundable
 
-    # update CarrierAgencyAuthorization
-    add_reference :carrier_agency_authorizations, :commission_strategy, null: true # WARNING: set null: false in a second migration after data entry
-    
     # update BillingStrategy
     add_reference :billing_strategies, :collector, polymorphic: true, null: true
     
@@ -26,7 +23,6 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
     drop_table :modifiers
     drop_table :commission_deductions
     drop_table :commissions
-    drop_table :commission_strategies
   
     # archive old tables
     rename_table :policy_premium_fees, :archived_policy_premium_fees
@@ -291,16 +287,6 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
       t.references    :reason, polymorphic: true, null: true            # The reason this CI was created (generally a LineItemChange object)
       t.references    :policy, null: true                               # Optional direct reference to the Policy this item applies to, if it applies to one
     end
-    
-    create_table :commission_strategies do |t|
-      t.string        :title, null: false                               # An easily-identifiable title
-      t.decimal       :percentage, null: false, precision: 5, scale: 2  # The percentage of the total that goes to this fellow
-      t.timestamps
-      t.references    :recipient, polymorphic: true                     # He who receives the money
-      t.references    :commission_strategy, optional: true              # The parent commission strategy
-    end
-    
-    
   
   end
   
