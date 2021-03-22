@@ -1,5 +1,5 @@
 class CreateInsurableData < ActiveRecord::Migration[5.2]
-  def change
+  def up
     create_table :insurable_data do |t|
       t.references :insurable, index: true
       t.integer :uninsured_units
@@ -8,5 +8,11 @@ class CreateInsurableData < ActiveRecord::Migration[5.2]
 
       t.timestamps
     end
+
+    Insurable.all.each(&:refresh_insurable_data)
+  end
+
+  def down
+    drop_table :insurable_data
   end
 end

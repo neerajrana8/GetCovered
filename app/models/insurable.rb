@@ -21,7 +21,7 @@ class Insurable < ApplicationRecord
   belongs_to :insurable, optional: true
   belongs_to :insurable_type
 
-  has_one :insurable_data
+  has_one :insurable_data, dependent: :destroy
 
   has_many :insurables
   has_many :carrier_insurable_profiles
