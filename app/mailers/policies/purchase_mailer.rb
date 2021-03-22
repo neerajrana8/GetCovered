@@ -1,5 +1,6 @@
 
 module Policies
+  #noinspection ALL
   class PurchaseMailer < ApplicationMailer
     before_action :set_variables
     before_action :set_address
@@ -29,7 +30,7 @@ module Policies
       @content = opening[rand_selector] + agency_content()
       @greeting = greetings[rand_selector]
 
-      mail(subject: 'A new #{ @policy.policy_type.title } Policy has Sold!", template_name: 'purchase')
+      mail(subject: "A new #{ @policy.policy_type.title } Policy has Sold!", template_name: 'purchase')
     end
 
     def agency
@@ -65,7 +66,7 @@ module Policies
 
     def agency_content
       details = "Name: #{ @user.profile.full_name }<br>"
-      details += "Effective: #{ @policy.effective_date.strftime('%m/%d/%Y') } to #{ @policy.expiration_date.strftime('%m/%d/%Y') }<br>"
+      details += "Effective: #{ @policy.effective_date.strftime("%m/%d/%Y') } to #{ @policy.expiration_date.strftime('%m/%d/%Y') }<br>"
       details += "Address: #{ @address.nil? ? 'N/A' : @address }<br>"
       details += "Agency: #{ @agency.title }<br>"
       details += "Property Manager: #{ @account.nil? ? 'N/A' : @account.title }<br>"
