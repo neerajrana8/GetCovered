@@ -4,7 +4,7 @@ class Policies::PurchaseNotifierJob < ApplicationJob
   def perform(policy)
     @policy = policy
 
-    Policies::PurchaseMailer.with(policy: self).get_covered.deliver
+    Policies::PurchaseMailer.with(policy: @policy).get_covered.deliver
 
     @policy.agency.staffs.each do |staff|
       setting = staff.notification_settings.where(action: "purchase").take
