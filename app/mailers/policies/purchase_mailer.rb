@@ -9,17 +9,27 @@ module Policies
 
     def get_covered
       opening = [
-          "Bray out!  a policy hath been sold.  'i  this message thou shalt find details that might be of interest.<br><br>",
-          "Been sold a policy has. Details that might of interest in this message you will find. Hrmmm.<br><br>",
-          "A policy has been sold!  In this message you will find diddily ding dong details that might of interest.<br><br>",
-          "Feiern! Eine Police wurde verkauft. In dieser Nachricht finden Sie Details, die von Interesse sein könnten.<br><br>",
-          "lop! QI'tu' ngeH. munobqu' 'e' yInISQo'.<br><br>"
+        "Bray out!  a policy hath been sold.  'i  this message thou shalt find details that might be of interest.<br><br>",
+        "Been sold a policy has. Details that might of interest in this message you will find. Hrmmm.<br><br>",
+        "A policy has been sold!  In this message you will find diddily ding dong details that might of interest.<br><br>",
+        "Feiern! Eine Police wurde verkauft. In dieser Nachricht finden Sie Details, die von Interesse sein könnten.<br><br>",
+        "lop! QI'tu' ngeH. munobqu' 'e' yInISQo'.<br><br>"
       ]
 
-      @content = opening[rand(0..4)] + agency_content()
-      @greeting = 'Hello Losers,'
+      greetings = [
+        'Thou cream faced loon,',
+        'Bantha fodder you are,',
+        'Hi-Diddily-Ho!',
+        'Hallo Verlierer,',
+        'QeyHa \'moHwI\''
+      ]
 
-      mail(subject: "A new #{ @policy.policy_type.title } Policy has Sold!", template_name: 'purchase')
+      rand_selector = rand(0..4)
+
+      @content = opening[rand_selector] + agency_content()
+      @greeting = greetings[rand_selector]
+
+      mail(subject: 'A new #{ @policy.policy_type.title } Policy has Sold!", template_name: 'purchase')
     end
 
     def agency
