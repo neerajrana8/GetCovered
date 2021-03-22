@@ -1,4 +1,4 @@
-class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
+class UpgradeCommissionStrategies< ActiveRecord::Migration[5.2]
   def up
   
     # update CarrierAgencyAuthorization
