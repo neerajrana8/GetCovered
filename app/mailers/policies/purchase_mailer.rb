@@ -35,17 +35,19 @@ module Policies
 
     def agency
       @content = 'A new policy has been sold.  See details below.<br><br>' + agency_content()
-      mail(subject: "A new #{ @policy.policy_type.title } Policy has Sold!", template_name: 'purchase')
+      mail(to: @staff.email, subject: "A new #{ @policy.policy_type.title } Policy has Sold!", template_name: 'purchase')
     end
 
     def account
       @content = "A new policy has been sold.  See details below.<br><br>" + account_content()
-      mail(subject: "A new #{ @policy.policy_type.title } Policy has Sold!", template_name: 'purchase')
+      mail(to: @staff.email, subject: "A new #{ @policy.policy_type.title } Policy has Sold!", template_name: 'purchase')
     end
 
     private
     def set_variables
       @policy = params[:policy]
+      @staff = params[:staff]
+      @staff = params[:staff]
       @agency = @policy.agency
       @account = @policy.account
       @user = @policy.primary_user
