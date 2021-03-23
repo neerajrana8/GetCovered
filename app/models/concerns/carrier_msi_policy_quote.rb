@@ -66,12 +66,11 @@ module CarrierMsiPolicyQuote
       payment_merchant_id = payment_data['merchant_id']
       payment_processor = payment_data['processor_id']
       payment_method = payment_data['method_id']
-      # determine preferred status
-      preferred = !(community.carrier_profile(5)&.external_carrier_id.nil?)
       # grab useful variables
       carrier_agency = CarrierAgency.where(agency: agency, carrier_id: 5).take
       unit = policy_application.primary_insurable
       community = unit.parent_community
+      preferred = !(community.carrier_profile(5)&.external_carrier_id.nil?)
       address = unit.primary_address
       primary_insured = policy_application.primary_user
       additional_insured = policy_application.users.select{|u| u.id != primary_insured.id }
