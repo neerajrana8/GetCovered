@@ -218,8 +218,9 @@ class PolicyPremiumItem < ApplicationRecord
           commission: ::Commission.collating_commission_for(ppic.recipient),
           commissionable: ppic,
           reason: reason
-        )) unless ppic.total_received == new_total_received
+        )) unless ppic.total_received == new_total_received || !ppic.payable?
         ppic.total_received = new_total_received
+        ppic.total_commission = new_total_received unless !ppic.payable?
       end
       ppics.each{|ppic| return { success: false, error: ppic.errors.to_h.to_s, record: ppic } unless ppic.save }
       commission_items.each{|ci| return { success: false, error: ci.errors.to_h.to_s, record: ci } unless ci.save }

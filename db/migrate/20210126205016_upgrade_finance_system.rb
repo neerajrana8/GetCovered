@@ -21,18 +21,36 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
     # get rid of really old tables we don't even use anymore
     drop_table :payments
     drop_table :modifiers
-    drop_table :commission_deductions
-    drop_table :commissions
   
     # archive old tables
-    rename_table :policy_premium_fees, :archived_policy_premium_fees
-    rename_table :line_items, :archived_line_items
-    rename_table :invoices, :archived_invoices
+    to_archive = ['Charge', 'Commission', 'CommissionDeduction', 'CommissionStrategy',
+                  'Dispute', 'Invoice', 'LineItem', 'PolicyPremium',
+                  'PolicyPremiumFee', 'Refund'
+                 ]
     rename_table :charges, :archived_charges
-    rename_table :refunds, :archived_refunds
-    rename_table :disputes, :archived_disputes # MOOSE WARNING redo dispute
+    rename_table :commissions, :archived_commissions
+    rename_table :commission_deductions, :archived_commission_deductions
+    rename_table :disputes, :archived_disputes
+    rename_table :invoices, :archived_invoices
+    rename_table :line_items, :archived_line_items
     rename_table :policy_premia, :archived_policy_premia
-
+    rename_table :policy_premium_fees, :archived_policy_premium_fees
+    rename_table :refunds, :archived_refunds
+    ::History.where(recordable_type: to_archive).each{|h| h.update_columns(recordable_type: "Archived#{to_archive}") }
+    {
+      'Commission' => ['commissionable'],
+      'CommissionDeduction' => ['deductee'],
+      'CommissionStrategy' => ['commissionable'],
+      'Invoice' => ['invoiceable', 'payer']
+    }.each do |model, polymorphics|
+      polymorphics.each do |poly|
+        to_archive.each do |tarch|
+          "Archived#{model}".constantize.where("#{poly}_type".to_sym => tarch).update_all("#{poly}_type".to_sym => "Archived#{tarch}")
+        end
+      end
+    end
+    
+    
     # create replacement tables
     
     create_table :policy_premium_items do |t|
@@ -255,7 +273,8 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
       t.integer       :status, null: false                              # 'quoted', 'active'
       t.integer       :payability, null: false                          # 'internal', 'external'
       t.integer       :total_expected, null: false                      # the total amount we expect to pay out in commissions for this PPI to this recipient
-      t.integer       :total_received,  null: false                     # the total amount we have actually received from the payer and written CommissionItems for
+      t.integer       :total_received,  null: false, defualt: 0         # the total amount we have actually received from the payer
+      t.integer       :total_commission, null: false, default: 0        # the total amount we have written CommissionItems for
       t.decimal       :percentage, null: false, precision: 5, scale: 2  # the % of total paid that goes to commissions for recipient (ppi.policy_premium_item_commisions.inject(0){|sum,ppic| sum+ppic} will be equal to 100
       t.timestamps
       t.references    :policy_premium_item                              # the PPI which owns us
@@ -285,6 +304,7 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
     
     create_table :commission_items do |t|
       t.integer       :amount, null: false                              # The amount of money to pay out for this item. May be negative.
+      t.text          :notes                                            # Any explanatory notes about this CI
       t.timestamps
       t.references    :commission                                       # The commission on which this item is listed.
       t.references    :commissionable, polymorphic: true,               # The thing this item is being paid for. Generally will be a PolicyPremiumItemCommission.

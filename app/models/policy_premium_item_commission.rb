@@ -28,6 +28,10 @@ class PolicyPremiumItemCommission < ApplicationRecord
   
   # Public Instance Methods
   
+  def payable?
+    return(self.payability == 'internal' && self.status == 'active')
+  end
+  
   # sort ourselves in the order in which funds should be distributed (smallest % to greatest)
   def <=>(other)
     tr = (self.percentage <=> other.percentage)
