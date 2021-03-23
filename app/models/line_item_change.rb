@@ -27,11 +27,18 @@ class LineItemChange < ApplicationRecord
           self.lock!
           ppipt.lock! unless ppipt.nil?
           ppi.lock!
+          ppic_array = ppi.policy_premium_item_commissions.order(id: :asc).lock.to_a
           case self.field_changed
             when 'total_due'
               # update the PPI
               unless ppi.update(total_due: ppi.total_due + self.amount)
                 error_message = "Failed to update PolicyPremiumItem! Errors: #{ppipt.errors.to_h}"
+                raise ActiveRecord::Rollback
+              end
+              # update the PPICs
+              result = ppi.attempt_commission_update(self, ppic_array)
+              unless result[:success]
+                error_message = "Failed to update commissions! Errors: #{result[:error]}. Record: #{result[:record]}"
                 raise ActiveRecord::Rollback
               end
               # update ourselves
@@ -45,20 +52,14 @@ class LineItemChange < ApplicationRecord
                 error_message = "Failed to update PolicyPremiumItem! Errors: #{ppipt.errors.to_h}"
                 raise ActiveRecord::Rollback
               end
-              # create the commission item
-              created = ::CommissionItem.create(
-                amount: self.amount,
-                commission: ::Commission.collating_commission_for(ppi.recipient),
-                commissionable: ppi,
-                reason: self,
-                policy: ppi.policy_quote.policy
-              )
-              unless created.id
-                error_message = "Failed to create CommissionItem! Errors: #{created.errors.to_h}"
+              # update the PPICs
+              result = ppi.attempt_commission_update(self, ppic_array)
+              unless result[:success]
+                error_message = "Failed to update commissions! Errors: #{result[:error]}. Record: #{result[:record]}"
                 raise ActiveRecord::Rollback
               end
               # update ourselves
-              unless self.update(handled: true, handler: created)
+              unless self.update(handled: true, handler: ppi)
                 error_message = "Failed to update LineItemChange to reflect handling! Errors: #{self.errors.to_h}"
                 raise ActiveRecord::Rollback
               end

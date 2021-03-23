@@ -27,7 +27,7 @@ class Commission < ApplicationRecord
   
   # Public Class Methods
   def self.collating_commission_for(recipient)
-    ::Commission.find_or_create_by(recipient: recipient, status: 'collating')
+    (@collating_commissions ||= {})[recipient] ||= ::Commission.find_or_create_by(recipient: recipient, status: 'collating')
   end
   
   # Public Instance Methods

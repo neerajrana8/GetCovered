@@ -235,6 +235,8 @@ class PolicyQuote < ApplicationRecord
     if policy.nil? &&
        policy_premium.total > 0 &&
        status == "accepted"
+       
+      policy_premium.policy_premium_item_commissions.update_all(status: 'active')
 
       invoices.external.update_all(status: 'managed_externally')
       invoices.internal.order("due_date").each_with_index do |invoice, index|
@@ -242,31 +244,21 @@ class PolicyQuote < ApplicationRecord
       end
 
       to_charge = invoices.internal.order("due_date").first
-      return true if to_charge.nil?
-      charge_invoice = to_charge.pay(stripe_source: :default)
-      logger.error "Charge invoice: #{charge_invoice.to_json}" unless charge_invoice[:success]
-      if charge_invoice[:success] == true
+      if to_charge.nil?
+        policy.update(billing_status: "CURRENT")
         return true
       end
+      charge_invoice = to_charge.pay(stripe_source: :default)
+      logger.error "Charge invoice error: #{charge_invoice.to_json}" unless charge_invoice[:success]
+      if charge_invoice[:success] == true
+        policy.update(billing_status: "CURRENT")
+        return true
+      else
+        policy.update(billing_status: "ERROR")
+        policy_premium.policy_premium_item_commissions.update_all(status: 'quoted')
+        invoices.internal.update_all(status: 'quoted')
+      end
     end
-
-#     if !policy.nil? && policy_premium.calculation_base > 0 && status == "accepted"
-#
-# 	    invoices.order("due_date").each_with_index do |invoice, index|
-# 		  	invoice.update status: index == 0 ? "available" : "upcoming",
-# 		  								 policy: policy
-# 		  end
-#
-# 		  charge_invoice = invoices.order("due_date").first.pay(stripe_source: policy_application.primary_user().payment_profiles.first.source_id)
-#
-#       if charge_invoice[:success] == true
-#         policy.update billing_status: "CURRENT"
-#         return true
-#       else
-#         policy.update billing_status: "ERROR"
-#       end
-#
-#     end
 
     billing_started
 

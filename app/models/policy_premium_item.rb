@@ -185,6 +185,48 @@ class PolicyPremiumItem < ApplicationRecord
     end
     return error_message
   end
+
+  # this is expected to be called from within a transaction, with self.policy_premium_item_commissions already locked (and passed as an array)
+  def attempt_commission_update(reason, locked_ppic_array)
+    ppics = locked_ppic_array
+    ppics.sort!
+    approx_100 = ppics.inject(0.to_d){|sum,ppic| sum + ppic.percentage } # just in case the decimal %s somehow add up to 99.99 or something (which should be impossible, but better safe than sorry with decimals)
+    ppic_total_due = ppics.inject(0){|sum,ppic| sum + ppic.total_expected }
+    ppic_total_received = ppics.inject(0){|sum,ppic| sum + ppic.total_received }
+    commission_items = []
+    # distribute total changes
+    if ppic_total_due != self.total_due
+      total_assigned = 0
+      last_percentage = 0.to_d
+      ppics.each do |ppic|
+        last_percentage += ppic.percentage
+        ppic.total_expected = (self.total_due * (last_percentage / approx_100)).floor - total_assigned
+        total_assigned += ppic.total_expected
+      end
+      ppics.each{|ppic| return { success: false, error: ppic.errors.to_h.to_s, record: ppic } unless ppic.save }
+    end
+    # distribute received changes & make commission items
+    if ppic_total_received != self.total_received
+      total_assigned = 0
+      last_percentage = 0.to_d
+      ppics.each do |ppic|
+        last_percentage += ppic.percentage
+        new_total_received = (self.total_received * (last_percentage / approx_100)).floor - total_assigned
+        total_assigned += new_total_received
+        commission_items.push(::CommissionItem.new(
+          amount: new_total_received - ppic.total_received,
+          commission: ::Commission.collating_commission_for(ppic.recipient),
+          commissionable: ppic,
+          reason: reason
+        )) unless ppic.total_received == new_total_received
+        ppic.total_received = new_total_received
+      end
+      ppics.each{|ppic| return { success: false, error: ppic.errors.to_h.to_s, record: ppic } unless ppic.save }
+      commission_items.each{|ci| return { success: false, error: ci.errors.to_h.to_s, record: ci } unless ci.save }
+    end
+    # done
+    return { success: true, commission_items: commission_items }
+  end
   
   private
   
@@ -203,24 +245,27 @@ class PolicyPremiumItem < ApplicationRecord
             last_percentage = 0.to_d
             total_assigned = 0
             self.recipient.get_chain.each do |cs|
-              total_expected = (self.total_due * (self.recipient.percentage / 100.to_d).floor) - total_assigned
+              total_expected = (self.total_due * (self.recipient.percentage / 100.to_d)).floor - total_assigned
               total_assigned += total_expected
               external_mode = true if cs == self.collection_plan
               ::PolicyPremiumItemCommission.create!(
                 policy_premium_item: self,
-                recipient: self.recipient.recipient,
-                payability: external_mode || self.recipient.recipient == self.collection_plan ? 'external' : 'internal',
+                recipient: cs.recipient,
+                commission_strategy: cs,
+                payability: external_mode || cs.recipient == self.collection_plan ? 'external' : 'internal',
+                status: 'quoted',
                 total_expected: total_expected,
                 total_received: 0,
-                percentage: self.recipient.percentage - last_percentage
+                percentage: cs.recipient.percentage - last_percentage
               )
-              last_percentage = self.recipient.percentage
+              last_percentage = cs.recipient.percentage
             end
           else
             ::PolicyPremiumItemCommission.create!(
               policy_premium_item: self,
               recipient: self.recipient,
               payability: self.recipient == self.collection_plan ? 'external' : 'internal',
+              status: 'quoted',
               total_expected: self.total_due,
               total_received: 0,
               percentage: 100

@@ -37,7 +37,7 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
     
     create_table :policy_premium_items do |t|
       # what this is and how to charge for it
-      t.string :title, null: false                                      # a descriptive title to be attached to line items on invoices
+      t.string  :title, null: false                                     # a descriptive title to be attached to line items on invoices
       t.integer :category, null: false                                  # whether this is a fee or a premium or what
       t.integer :rounding_error_distribution, default: 0                # how to distribute rounding error
       t.timestamps                                                      # timestamps
@@ -203,11 +203,11 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
     create_table :line_item_changes do |t|
       t.integer     :field_changed, null: false                         # which field was changed (total_due or total_received)
       t.integer     :amount, null: false                                # the change to line_item.total_received (positive or negative)
-      t.boolean     :handled, null: false, default: false               # whether a handler has handled this LIC (we could just use !lic.handler.nil?, but this is cleaner)
+      t.boolean     :handled, null: false, default: false               # whether a handler has handled this LIC (we could just use !lic.handler.nil?, but this is cleaner, and it allows us to retroactively look at folk whose invoice.chargeable_type didn't have any associated logic in the LIC model and who thus just got marked as handled=true)
       t.timestamps
       t.references  :line_item                                          # the LineItem
       t.references  :reason, polymorphic: true                          # the reason for this change (a StripeCharge object, for example, or a LineItemReduction)
-      t.references  :handler, polymorphic: true, null: true             # the CommissionItem that reflects this change, or other model that handled it
+      t.references  :handler, polymorphic: true, null: true             # the model that handled us (i.e. transcribed us into commissions... will generally be a PPI)
     end
     
     create_table :line_item_reductions do |t|
@@ -252,13 +252,16 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
     end
     
     create_table :policy_premium_item_commission do |t|
-      t.integer       :payability, null: false
-      t.integer       :total_expected, null: false
-      t.integer       :total_received,  null: false
-      t.decimal       :percentage, null: false, precision: 5, scale: 2
-      t.references    :policy_premium_item
-      t.references    :recipient, polymorphic: true,
+      t.integer       :status, null: false                              # 'quoted', 'active'
+      t.integer       :payability, null: false                          # 'internal', 'external'
+      t.integer       :total_expected, null: false                      # the total amount we expect to pay out in commissions for this PPI to this recipient
+      t.integer       :total_received,  null: false                     # the total amount we have actually received from the payer and written CommissionItems for
+      t.decimal       :percentage, null: false, precision: 5, scale: 2  # the % of total paid that goes to commissions for recipient (ppi.policy_premium_item_commisions.inject(0){|sum,ppic| sum+ppic} will be equal to 100
+      t.timestamps
+      t.references    :policy_premium_item                              # the PPI which owns us
+      t.references    :recipient, polymorphic: true,                    # the actual recipient of commissions (so not a CommissionStrategy)
         index: { name: 'index_policy_premium_item_commission_on_recipient' }
+      t.references    :commission_strategy, null: true                  # if our PPI has recipient_type==CS, we put self.recipient=ppi.recipient.recipient and self.commission_strategy=ppi.recipient; otherwise this will be nil
     end
     
     create_table :commissions do |t|
@@ -284,10 +287,12 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
       t.integer       :amount, null: false                              # The amount of money to pay out for this item. May be negative.
       t.timestamps
       t.references    :commission                                       # The commission on which this item is listed.
-      t.references    :commissionable, polymorphic: true,               # The thing this item is being paid for. Generally will be a PolicyPremiumItem.
+      t.references    :commissionable, polymorphic: true,               # The thing this item is being paid for. Generally will be a PolicyPremiumItemCommission.
         index: { name: 'index_commision_items_on_commissionable' }
       t.references    :reason, polymorphic: true, null: true            # The reason this CI was created (generally a LineItemChange object)
-      t.references    :policy, null: true                               # Optional direct reference to the Policy this item applies to, if it applies to one
+      # redundant fields for analytics
+      t.references    :policy_quote, null: true
+      t.references    :policy, null: true
     end
   
   end
