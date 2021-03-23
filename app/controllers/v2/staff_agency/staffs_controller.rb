@@ -5,11 +5,14 @@
 module V2
   module StaffAgency
     class StaffsController < StaffAgencyController
-
       include StaffsMethods
-      
-      before_action :set_staff, only: %i[update show re_invite toggle_enabled]
-            
+
+      before_action :set_staff, only: %i[update update_self show re_invite toggle_enabled]
+      before_action :validate_password_changing, only: %i[update_self]
+
+      check_privileges 'agencies.agents' => %i[index create update show re_invite toggle_enabled]
+      check_privileges 'agencies.manage_agents' => %i[create update]
+
       def index
         if (params[:filter] && params[:filter][:organizable_type] == 'Account')
           super(:@staffs, @agency.account_staff, :profile)
@@ -29,7 +32,7 @@ module V2
       
       def create
         if create_allowed?
-          @staff = Staff.new(create_params)
+          @staff = ::Staff.new(create_params)
           # remove password issues from errors since this is a Devise model
           @staff.valid? if @staff.errors.blank?
           @staff.errors.messages.except!(:password)
@@ -44,19 +47,25 @@ module V2
       end
       
       def update
-        if update_allowed?
-          if @staff.update_as(current_staff, update_params)
-            render :show, status: :ok
-          else
-            render json: @staff.errors, status: :unprocessable_entity
-          end
+        if @staff.update_as(current_staff, update_params)
+          render :show, status: :ok
         else
-          render json: { success: false, errors: ['Unauthorized Access'] }, status: :unauthorized
+          render json: standard_error(:staff_update_error, nil, @staff.errors.full_messages),
+                 status: :unprocessable_entity
+        end
+      end
+
+      def update_self
+        if @staff.update_as(current_staff, update_params) && @staff == current_staff
+          render :show, status: :ok
+        else
+          render json: standard_error(:staff_update_error, nil, @staff.errors.full_messages),
+                 status: :unprocessable_entity
         end
       end
       
       def search
-        @staff = Staff.search(params[:query]).records.where(organizable_id: @agency.id)
+        @staff = ::Staff.search(params[:query]).records.where(organizable_id: @agency.id)
         render json: @staff.to_json, status: 200
       end
 
@@ -99,12 +108,8 @@ module V2
         true
       end
         
-      def update_allowed?
-        true
-      end
-        
       def set_staff
-        @staff = Staff.find(params[:id])
+        @staff = ::Staff.find(params[:id])
       end
                 
       def create_params
@@ -125,11 +130,14 @@ module V2
         return({}) if params[:staff].blank?
 
         params.require(:staff).permit(
-          :email, notification_options: {}, settings: {},
-                    profile_attributes: %i[ id
-                      birth_date contact_email contact_phone first_name
-                      job_title last_name middle_name suffix title
-                    ]
+          :email, :password, :password_confirmation,
+          notification_options: {},
+          settings: {},
+          staff_permission_attributes: [permissions: {}],
+          profile_attributes: %i[
+            id birth_date contact_email contact_phone first_name
+            job_title last_name middle_name suffix title
+          ]
         )
       end
         
@@ -141,6 +149,10 @@ module V2
           permissions: %i[scalar array],
           organizable_id: %i[scalar array],
           organizable_type: %i[scalar array],
+          created_at: %i[scalar array],
+          updated_at: %i[scalar array],
+          enabled: %i[scalar array],
+          owner: %i[scalar array],
           profile: {
             first_name: %i[scalar like],
             last_name: %i[scalar like],
@@ -151,6 +163,18 @@ module V2
 
       def supported_orders
         supported_filters(true)
+      end
+
+      def validate_password_changing
+        if update_params[:password].present? && !@staff.valid_password?(params[:staff][:current_password])
+          error_object =
+            if @staff.invitation_accepted?
+              standard_error(:wrong_current_password, I18n.t('devise_token_auth.passwords.missing_current_password'))
+            else
+              standard_error(:invitation_was_not_accepted, 'Invitation was not accepted')
+            end
+          render json: error_object, status: :unprocessable_entity
+        end
       end
     end
   end

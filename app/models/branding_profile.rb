@@ -5,10 +5,15 @@
 class BrandingProfile < ApplicationRecord
 
   after_initialize :initialize_branding_profile
+
+  before_validation :set_default_url
+
+  before_save :sanitize_branding_url
   after_save :check_default
   after_save :check_global_default
+  after_create :set_up_from_master
 
-  validates_presence_of :title, :url
+  validates_presence_of :url
 
   belongs_to :profileable, polymorphic: true
 
@@ -28,8 +33,16 @@ class BrandingProfile < ApplicationRecord
     BrandingProfile.find_by(global_default: true)
   end
 
+  def contact_email
+    branding_profile_attributes.find_by_name('contact_email')&.value
+  end
+
+  def formatted_url
+    self.url.blank? ? I18n.t('agency_model.no_branding') : self.url.include?('https') ? self.url : "https://#{self.url}"
+  end
+
   private
-  
+
   def initialize_branding_profile
     self.styles ||= {}
     # Admin Styles Options
@@ -48,6 +61,10 @@ class BrandingProfile < ApplicationRecord
     self.styles['client']['content'] ||= {}
   end
 
+  def sanitize_branding_url
+    self.url = self.url.sub(/^https?\:\/{0,3}(www.)?/,'')
+  end
+
   def check_default
     if profileable.branding_profiles.count > 1 &&
        default?
@@ -62,5 +79,36 @@ class BrandingProfile < ApplicationRecord
 
   def check_global_default
     BrandingProfile.where(global_default: true).where.not(id: id).update(global_default: false) if global_default?
+  end
+
+  def set_default_url
+    self.url ||= default_url
+  end
+
+  def default_url
+    base_uri = Rails.application.credentials.uri[ENV["RAILS_ENV"].to_sym][:client]
+    uri = URI(base_uri)
+    uri.host = "#{self.profileable.slug}.#{uri.host}"
+
+    if BrandingProfile.exists?(url: uri.to_s.sub(/^https?\:\/\/(www.)?/,''))
+      uri.host = "#{self.profileable.slug}-#{Time.zone.now.to_i}.#{URI(base_uri).host}"
+    end
+
+    uri.to_s
+  end
+
+  def set_up_from_master
+    #@gc = Agency.where(master_agency: true).order("id asc").limit(1).take
+    #@gc_branding = @gc.branding_profiles.first
+    #@gc_branding.pages.each do |pg|
+    #  new_pg = pg.dup
+    #  new_pg.branding_profile = self
+    #  new_pg.save
+    #end
+    #@gc_branding.branding_profile_attributes.each do |bpa|
+    #  new_bpa = bpa.dup
+    #  new_bpa.branding_profile = self
+    #  new_bpa.save
+    #end
   end
 end

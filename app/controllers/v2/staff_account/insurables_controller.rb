@@ -251,7 +251,12 @@ module V2
           permissions: %i[scalar array],
           insurable_type_id: %i[scalar array],
           insurable_id: %i[scalar array],
-          account_id: %i[scalar array]
+          account_id: %i[scalar array],
+          created_at: %i[scalar array interval],
+          updated_at: %i[scalar array interval],
+          category: %i[scalar array],
+          covered: %i[scalar array],
+          enabled: %i[scalar array]
         }
       end
 

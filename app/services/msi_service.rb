@@ -1,11 +1,27 @@
 # Msi Service Model
-# file: app/models/msi_service.rb
+# file: app/services/msi_service.rb
 #
 
 require 'base64'
 require 'fileutils'
 
 class MsiService
+
+  def self.carrier_id
+    5
+  end
+  
+  def self.displayable_error_for(msg, extended_msg = nil)
+    return nil if msg.nil?
+    if msg.start_with?("ADDR16") # address was invalid
+      return I18n.t('msi_service.invalid_address')
+    elsif msg.start_with?("ACS24 - ") # effective date was invalid (returns something like 'Effective Date 11/29/2020 is invalid.  Date must be between 12/2/2020 - 3/1/2021.')
+      #tr = msg.split("ACS24 - ")&.[](1)
+      #return tr.blank? ? nil : tr
+      return I18n.t('msi_service.invalid_effective_date')
+    end
+    return nil
+  end
 
   @@coverage_codes = {
     AllOtherPeril:                                { code: 1, limit: true },
@@ -82,8 +98,50 @@ class MsiService
   end.to_h){|k,a,b| a + b }
   
   TITLE_OVERRIDES = {
-    @@coverage_codes[:ForcedEntryTheft][:code].to_s => Proc.new{|region| region == 'NY' ? "Burglary Limitation Coverage" : nil }
+    @@coverage_codes[:ForcedEntryTheft][:code].to_s => Proc.new{|region| region == 'NY' ? "Burglary Limitation Coverage" : nil },
+    @@coverage_codes[:WindHail][:code].to_s => Proc.new{|region| "Wind / Hail" }
   }
+  
+  DESCRIPTIONS = {
+    '1003' => 'Personal property coverage protects your personal belongings and property.',
+    '1004' => 'Coverage reimburses you for the cost of maintaining a comparable standard of living following a covered loss that exceeds your normal expenses prior to the loss, up to the policy limits.',
+    '1005' => 'Liability coverage protects you in an event of negligent damage to your apartment, the community, or other residents.',
+    '1006' => 'Coverage designed to pay for medical expenses to others who are accidentally injured on an insured location or by the activities of an insured, resident employee, or an animal owned by or in the care of an insured, up to the policy limits.',
+    '1008' => 'This option covers your personal property in the event there is water/sewer back-up in your covered dwelling that begins off premises.',
+    '1010' => 'This option provides coverage on a replacement cost basis instead of actual cash value.',
+    '1076' => 'This option provides a discount by changing theft coverage to require physical evidence of forced entry and may require a police report.',
+    '1' => 'The amount the insurer will deduct from a loss resulting from other peril not already listed (such as theft, hurricane or wind) before paying up to its policy limits.',
+    '1007' => 'This option covers up to $500 for accidental damage caused by a pet such as stained carpet or chewed baseboards.',
+    '1060' => 'This option provides an increased amount of liability protection when an insured is held liable for damages by a pet.',
+    '1065' => 'This option provides coverage up to $5,000 for expenses incurred by an insured as a direct result of identity fraud.',
+    '1075' => 'This option provides coverage to treat, remediate and eliminate a bed bug infestation in the residence.',
+    '2' => 'The amount the insurer will deduct from a loss resulting from theft before paying up to its policy limits.',
+    '5' => 'The amount the insurer will deduct from a loss resulting from wind or hail before paying up to its policy limits.',
+    '1072' => 'This option provides up to $500 coverage for loss of covered property stored in freezers or refrigerators caused by power service interruption or mechanical failure in a freezer or fridge.',
+    '1081' => 'This option allows the insured to buy back additional limits for personal property that is stored.',
+    '1082' => 'The policy may be endorsed to insure against loss by theft when all or part of the residence.',
+    '1061' => 'This option covers your personal property (up to $5,000) in the event of an earthquake.',
+    '6' => 'The amount the insurer will deduct from a loss resulting from an earthquake before paying up to its policy limits.',
+    '3' => 'The amount the insurer will deduct from a loss resulting from a hurricane before paying up to its policy limits.',
+    '1077' => 'Increases Loss of Use to 40% and increases Rental Income Coverage to $10,000, from $3,000.',
+    '1062' => 'Provides coverage for 1 full time outservant employee for a premium of $60.00.'
+  }
+  
+  def self.renew_descriptions
+    ::InsurableRateConfiguration.where(configurer_type: "Carrier", configurer_id: self.carrier_id).each do |irc|
+      next if irc.coverage_options.blank?
+      irc.coverage_options.each do |co|
+        unless !co['description'].blank? || co['uid'].blank? || MsiService::DESCRIPTIONS[co['uid']].blank?
+          irc.coverage_options.each{|co| co['description'] = MsiService::DESCRIPTIONS[co['uid']] }
+          irc.save
+        end
+      end
+    end
+  end
+  
+  def self.covopt_sort(a,b)
+    (a['uid'] == '1' ? 999999 : 0) <=> (b['uid'] == '1' ? 999999 : 0)
+  end
   
   LOSS_OF_USE_VARIATIONS = {
     standard: {
@@ -329,10 +387,16 @@ class MsiService
     self.errors = nil
   end
   
-  # Valid action names:
-  #   get_or_create_community
-  #   final_premium
-  #   
+  def event_params
+    {
+      verb: 'post',
+      format: 'xml',
+      interface: 'REST',
+      endpoint: self.endpoint_for(self.action),
+      process: "msi_#{self.action}"
+    }
+  end
+  
   def build_request(action_name, **args)
     self.action = action_name
     self.errors = nil
@@ -348,7 +412,7 @@ class MsiService
     Rails.application.credentials.msi[:uri][ENV['RAILS_ENV'].to_sym] + "/#{which_call.to_s.camelize}"
   end
   
-  ##
+
   def call
     # try to call
     call_data = {
@@ -367,7 +431,6 @@ class MsiService
         },
         ssl_version: :TLSv1_2
       )
-      #MOOSE WARNING: doc example in crazy .net lingo also has: 'Content-Length' => compiled_rxml.length, timeout 15000, cache policy new RequestCachePolicy(RequestCacheLevel.BypassCache)
           
     rescue StandardError => e
       call_data = {
@@ -493,7 +556,7 @@ class MsiService
   def build_get_or_create_community(
       effective_date:,
       community_name:, number_of_units:, property_manager_name:, years_professionally_managed:, year_built:, gated:,
-      address: nil, address_line_one: nil, city: nil, state: nil, zip: nil, # provide EITHER address OR these other params
+      address: nil, address_line_one: nil, city: nil, state: nil, zip: nil,
       **compilation_args
   )
     # do some fancy dynamic stuff with parameters
@@ -501,6 +564,10 @@ class MsiService
     # put the request together
     self.action = :get_or_create_community
     self.errors = nil
+    unless year_built.nil? # MSI system requires YB>=1900; they told us older buildings should be submitted as built in 1900
+      year_built = year_built.to_i
+      year_built = 1900 if year_built < 1900
+    end
     self.compiled_rxml = compile_xml({
       InsuranceSvcRq: {
         RenterPolicyQuoteInqRq: {
@@ -532,11 +599,17 @@ class MsiService
   end
 
   def build_final_premium(
-     effective_date:, additional_insured_count:, additional_interest_count:,
-     community_id:, #address_line_one:, city:, state:, zip:,
-     coverages_formatted:,
+    effective_date:, additional_insured_count:, additional_interest_count:,
+    coverages_formatted:,
+    # for preferred
+    community_id: nil, #address_line_one:, city:, state:, zip:,
+    # for non-preferred
+    number_of_units: nil, years_professionally_managed: nil, year_built: nil, gated: nil,
+    address: nil, address_line_one: nil, address_line_two: nil, city: nil, state: nil, zip: nil,
+    # comp args
     **compilation_args
   )
+    # setup
     self.action = :final_premium
     self.errors = nil
     # arguing with arguments
@@ -545,15 +618,29 @@ class MsiService
     elsif additional_interest_count > 2
       return ['Additional interest count cannot exceed 2']
     end
+    # handling distinctive preferred/nonpreferred arguments
+    preferred = !community_id.nil?
+    self.action = :final_premium_spot unless preferred
+    if preferred
+      return ['Community id cannot be blank'] if community_id.nil? # this can't happen, but for completeness in case we later determine prefered by different means...
+    else
+      address = untangle_address_params(**{ address: address, address_line_one: address_line_one, address_line_two: address_line_two, city: city, state: state, zip: zip }.compact)
+      # applying defaults (we don't do this in the args themselves because nil might be passed)
+      number_of_units ||= 50
+      years_professionally_managed ||= 6
+      year_built ||= 2002
+      year_built = 1900 if year_built && year_built.to_i < 1900
+      gated = false unless gated == true
+    end
     # go go go
     self.compiled_rxml = compile_xml({
       InsuranceSvcRq: {
         RenterPolicyQuoteInqRq: {
           Location: {
             '': { id: '0' },
-            Addr: {
-              MSI_CommunityID:                  community_id
-            }
+            Addr: preferred ? {
+              MSI_CommunityID:                community_id
+            } :                               address
           },
           PersPolicy: {
             ContractTerm: {
@@ -564,7 +651,9 @@ class MsiService
             Dwell: {
               :'' => { LocationRef: 0, id: "Dwell1" },
               PolicyTypeCd: 'H04'
-            },
+            }.merge(preferred ? {} : {
+              Construction: { YearBuilt:      year_built }
+            }),
             Coverage:                         coverages_formatted
           },
           InsuredOrPrincipal: [
@@ -573,23 +662,35 @@ class MsiService
             }
           ] + (0...additional_insured_count).map{|n| { InsuredOrPrincipalInfo: { InsuredOrPrincipalRoleCd: "OTHERNAMEDINSURED" } } } +
               (0...additional_interest_count).map{|n| { InsuredOrPrincipalInfo: { InsuredOrPrincipalRoleCd: "ADDITIONALINTEREST" } } }
-        }
+        }.merge(preferred ? {} : {
+          MSI_CommunityInfo: {
+            MSI_CommunityYearBuilt:           year_built,
+            MSI_CommunityIsGated:             gated ? "True" : "False",
+            MSI_CommunityYearsProfManaged:    years_professionally_managed,
+            MSI_NumberOfUnits:                number_of_units
+          }
+        })
       }
     }, **compilation_args)
     return errors.blank?
   end
   
   def build_bind_policy(
-     effective_date:,
-     payment_plan:, installment_day:,
-     community_id:,
-     unit: nil,
-     unit_prefix: unit.nil? ? nil : "Apartment",
-     address: nil, address_line_one: nil, city: nil, state: nil, zip: nil, # provide EITHER address OR these other params
-     maddress: nil, maddress_line_one: nil, maddress_line_two: nil, mcity: nil, mstate: nil, mzip: nil, # provide EITHER address OR these other params
-     payment_merchant_id:, payment_processor:, payment_method:, payment_info:, payment_other_id:,
-     primary_insured:, additional_insured:, additional_interest:,
-     coverage_raw:, # WARNING: raw msi formatted coverage hash; modify later to accept a nicer format
+    effective_date:,
+    payment_plan:, installment_day:,
+    unit: nil,
+    unit_prefix: unit.nil? ? nil : "Apartment",
+    address: nil, address_line_one: nil, city: nil, state: nil, zip: nil,
+    maddress: nil, maddress_line_one: nil, maddress_line_two: nil, mcity: nil, mstate: nil, mzip: nil,
+    payment_merchant_id:, payment_processor:, payment_method:, payment_info:, payment_other_id:,
+    primary_insured:, additional_insured:, additional_interest:,
+    coverage_raw:, # WARNING: raw msi formatted coverage hash; modify later to accept a nicer format
+    # for preferred
+    community_id: nil,
+    # for non-preferred
+    address_line_two: nil,
+    number_of_units: nil, years_professionally_managed: nil, year_built: nil, gated: nil,
+    # comp args 
     **compilation_args
   )
     # set up
@@ -601,9 +702,23 @@ class MsiService
     elsif additional_interest.count > 2
       return ['Additional interest count cannot exceed 2']
     end
-    address = untangle_address_params(**{ address: address, address_line_one: address_line_one, address_line_two: unit.nil? ? false : "#{unit_prefix ? unit_prefix.strip + " " : ""}#{unit}", city: city, state: state, zip: zip }.compact)
+    address = untangle_address_params(**{ address: address, address_line_one: address_line_one, address_line_two: unit.nil? ? (address_line_two || false) : "#{unit_prefix ? unit_prefix.strip + " " : ""}#{unit}", city: city, state: state, zip: zip }.compact)
+    # handling distinctive preferred/nonpreferred arguments
+    preferred = !community_id.nil?
+    self.action = :bind_policy_spot unless preferred
+    if preferred
+      return ['Community id cannot be blank'] if community_id.nil? # this can't happen, but for completeness in case we later determine prefered by different means...
+    else
+      # applying defaults (we don't do this in the args themselves because nil might be passed)
+      number_of_units ||= 50
+      years_professionally_managed ||= 6
+      year_built ||= 2002
+      year_built = 1900 if year_built && year_built.to_i < 1900
+      gated = false unless gated == true
+    end
+    # handling mailing address
     if !maddress.nil? || !maddress_line_one.nil? || !maddress_line_two.nil? || !mcity.nil? || !mstate.nil? || !mzip.nil?
-      maddress = untangle_address_params(**{ address: maddress, address_line_one: maddress_line_one, address_line_two: maddress_line_two || false, city: mcity, state: mstate, zip: mzip }.compact)
+      maddress = untangle_address_params(**{ address: maddress, address_line_one: maddress_line_one, address_line_two: maddress_line_two || nil, city: mcity, state: mstate, zip: mzip }.compact)
     else
       maddress = address
     end
@@ -614,10 +729,10 @@ class MsiService
           Location: [
             {
               '': { id: '0' },
-              Addr:                           address.merge({
+              Addr:                           address.merge(preferred ? {
                 MSI_CommunityID:                community_id,
                 MSI_Unit:                       unit
-             })
+             }.compact : {})
             }.compact
           ] + (maddress == address ? [] : [
             {
@@ -643,7 +758,9 @@ class MsiService
             Dwell: {
               :'' => { LocationRef: 0, id: "Dwell1" },
               PolicyTypeCd: 'H04'
-            },
+            }.merge(preferred ? {} : {
+              Construction: { YearBuilt:      year_built }
+            }),
             Coverage: coverage_raw
           },
           InsuredOrPrincipal: [
@@ -674,7 +791,14 @@ class MsiService
               GeneralPartyInfo:               [::User, ::Account].include?(ai.class) ? ai.get_msi_general_party_info : ai
             }
           end
-        }
+        }.merge(preferred ? {} : {
+          MSI_CommunityInfo: {
+            MSI_CommunityYearBuilt:           year_built,
+            MSI_CommunityIsGated:             gated ? "True" : "False",
+            MSI_CommunityYearsProfManaged:    years_professionally_managed,
+            MSI_NumberOfUnits:                number_of_units
+          }
+        })
       }
     }, **compilation_args)
     return errors.blank?
@@ -827,8 +951,10 @@ class MsiService
             "options"       => ded["MSI_DeductibleOptionList"].blank? ? nil : arrayify(ded["MSI_DeductibleOptionList"]["Deductible"]).map{|d| d["Amt"] ? d["Amt"].to_d : d["FormatPct"].to_d * 100 }, # MOOSE WARNING: handle percents in special way?
             "options_format"=> ded["MSI_DeductibleOptionList"].blank? ? "none" : arrayify(ded["MSI_DeductibleOptionList"]["Deductible"]).first["Amt"] ? "currency" : "percent"
           }
-      end)
+      end).sort{|a,b| MsiService.covopt_sort(a,b) }
     end
+    # apply descriptions
+    irc.coverage_options.each{|co| co['description'] = DESCRIPTIONS[co['uid'].to_s] unless DESCRIPTIONS[co['uid'].to_s].blank? }
     # apply universal disablings
     irc.coverage_options.select{|co| UNIVERSALLY_DISABLED_COVERAGE_OPTIONS.any?{|udco| udco['category'] == co['category'] && udco['uid'] == co['uid'] } }
                         .each{|co| co['enabled'] = false }
@@ -849,8 +975,27 @@ class MsiService
   
   
   
-  
-  
+  def self.validate_msi_additional_interest(hash)
+    case hash['entity_type']
+      when 'company'
+        return 'msi_service.additional_interest.company_name_required' if hash['company_name'].blank?
+        return 'msi_service.additional_interest.company_name_too_long' if hash['company_name'].length > 100
+        return 'msi_service.additional_interest.invalid_email' if hash['email_address'].blank? || hash['email_address'].index('@').nil? || hash['email_address'].index('.').nil? || hash['email_address'].length > 50
+        return 'msi_service.additional_interest.invalid_phone_number' if !hash['phone_number'].blank? && hash['phone_number'].delete("^0-9").length != 10
+      when 'person'
+        return 'msi_service.additional_interest.first_name_required' if hash['first_name'].blank?
+        return 'msi_service.additional_interest.first_name_too_long' if hash['first_name'].length > 50
+        return 'msi_service.additional_interest.last_name_required' if hash['last_name'].blank?
+        return 'msi_service.additional_interest.last_name_too_long' if hash['last_name'].length > 50
+        return 'msi_service.additional_interest.middle_name_too_long' if hash['middle_name'] && hash['middle_name'].length > 50
+        return 'msi_service.additional_interest.invalid_email' if hash['email_address'].blank? || hash['email_address'].index('@').nil? || hash['email_address'].index('.').nil? || hash['email_address'].length > 50
+        return 'msi_service.additional_interest.invalid_phone_number' if hash['phone_number'].blank? || hash['phone_number'].delete("^0-9").length != 10
+        
+      else
+        return 'msi_service.additional_interest.invalid_entity_type'
+    end
+    return nil
+  end
   
   
 private
@@ -886,7 +1031,7 @@ private
           # handle properties to pass back up to our caller
           if obj.has_key?(:'')
             prop_string = obj[:''].blank? ? "" : obj[:''].class == ::String ? obj[:''] :
-              obj[:''].map{|k,v| "#{k}=\"#{v.to_s.gsub('"', '&quot;').gsub('&', '&amp;').gsub('<', '&lt;')}\"" }.join(" ")
+              obj[:''].map{|k,v| "#{k}=\"#{v.to_s.gsub('&', '&amp;').gsub('"', '&quot;').gsub('<', '&lt;')}\"" }.join(" ")
             prop_string = " #{prop_string}" unless prop_string.blank?
             obj = obj.select{|k,v| k != :'' }
           end
@@ -915,7 +1060,7 @@ private
         when ::NilClass
           child_string = nil
         else
-          child_string = obj.to_s.gsub("<", "&lt;").gsub("<", "&gt;").gsub("&", "&amp;").split("\n").join("#{indent}\n")
+          child_string = obj.to_s.gsub("&", "&amp;").gsub("<", "&lt;").gsub(">", "&gt;").split("\n").join("#{indent}\n")
       end
       internal ? {
         prop_string: prop_string,

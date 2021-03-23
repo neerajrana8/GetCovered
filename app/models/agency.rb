@@ -16,6 +16,7 @@ class Agency < ApplicationRecord
 
   # Active Record Callbacks
   after_initialize :initialize_agency
+  before_validation :set_producer_code, on: :create
 
   # belongs_to relationships
   belongs_to :agency,
@@ -86,7 +87,10 @@ class Agency < ApplicationRecord
 
   has_many :leads
 
+  has_one :global_agency_permission
+
   accepts_nested_attributes_for :addresses, allow_destroy: true
+  accepts_nested_attributes_for :global_agency_permission, update_only: true
 
   scope :enabled, -> { where(enabled: true) }
   scope :sub_agencies, -> { where.not(agency_id: nil) }
@@ -94,14 +98,24 @@ class Agency < ApplicationRecord
 
   # ActiveSupport +pluralize+ method doesn't work correctly for this word(returns staffs). So I added alias for it
   alias staffs staff
+  alias parent_agency agency
 
   # Validations
 
   validates_presence_of :title, :slug, :call_sign
   validate :parent_agency_exist, on: [:create, :update]
   validate :agency_to_sub_disabled, on: :update
+  validates :integration_designation, uniqueness: { allow_nil: true }
 
   GET_COVERED_ID = 1
+
+  def self.get_covered
+    Agency.find(GET_COVERED_ID)
+  end
+
+  def default_branding_profile
+    branding_profiles.default.take
+  end
 
   def owner
     staff.where(id: staff_id).take
@@ -193,20 +207,38 @@ class Agency < ApplicationRecord
     @ids ||= Agency.main_agencies.pluck(:id)
   end
 
+  def branding_url
+    self.branding_profiles&.last&.formatted_url || I18n.t('agency_model.no_branding')
+  end
+
+  def set_producer_code
+    loop do
+      self.producer_code = rand(36**12).to_s(36).upcase
+      break unless Agency.exists?(producer_code: producer_code)
+    end
+  end
+
   private
 
   def initialize_agency
    # Blank for now...
   end
 
+  def set_producer_code
+    loop do
+      self.producer_code = rand(36**12).to_s(36).upcase
+      break unless Agency.exists?(producer_code: producer_code)
+    end
+  end
+
   def parent_agency_exist
     unless self.agency_id.nil? || parent_agencies_ids.include?(self.agency_id)
-      errors.add(:agency, "Parent id incorrect")
+      errors.add(:agency, I18n.t('agency_model.parent_id_incorrect'))
     end
   end
 
   def agency_to_sub_disabled
-    errors.add(:agency, "Agency can't be updated to sub-agency") if parent_agencies_ids.include?(self.agency_id) &&
+    errors.add(:agency, I18n.t('agency_model.agency_cannot_be_updated')) if parent_agencies_ids.include?(self.agency_id) &&
                                                                     parent_agencies_ids.include?(self.id)
   end
 

@@ -4,7 +4,7 @@
   scope module: :staff_super_admin, path: "staff_super_admin" do
 
     resources :accounts,
-      only: [ :index, :show ],
+      only: [ :index, :show, :create, :update ],
       concerns: :reportable do
         member do
           get "histories",
@@ -94,9 +94,12 @@
         post :import, on: :collection
       end
 
-    resources :branding_profile_attributes,
-      path: "branding-profile-attributes",
-      only: [ :destroy ]
+    resources :branding_profile_attributes, path: "branding-profile-attributes", only: [ :destroy ] do
+      collection do
+        post :copy
+        post :force_copy
+      end
+    end
 
     resources :pages
 
@@ -163,18 +166,38 @@
       end
     end
 
+    resources :global_agency_permissions, only: [:update] do
+      collection do
+        get :available_permissions
+      end
+    end
+
     resources :fees, only: [:index, :show, :create, :update]
 
-    resources :insurables, only: [:index, :show ], concerns: :reportable do
+    resources :insurables, only: [:create, :update, :index, :show, :destroy], concerns: :reportable do
       member do
         get :coverage_report
         get :policies
         get 'related-insurables', to: 'insurables#related_insurables'
       end
-    end
 
-    resources :leads, only: [:index, :show]
+      resources :insurable_rates,
+                path: "insurable-rates",
+                defaults: {
+                    access_pathway: [::Insurable],
+                    access_ids:     [:insurable_id]
+                },
+                only: [ :update, :index ] do
+        get 'refresh-rates', to: 'insurable_rates#refresh_rates', on: :collection
+      end
+    end
+    get :agency_filters, controller: 'insurables', to: 'insurables#agency_filters', path: 'insurables/filters/agency_filters'
+
+    resources :insurable_types, path: "insurable-types", only: [ :index ]
+
+    resources :leads, only: [:index, :show, :update]
     resources :leads_dashboard, only: [:index]
+    resources :leads_dashboard_tracking_url, only: [:index]
 
     get :get_filters, controller: 'leads_dashboard', path: 'leads_dashboard/get_filters'
 
@@ -194,9 +217,15 @@
       member do
         get :communities
         get :covered_units
+        get :available_top_insurables
         get :available_units
         get :historically_coverage_units
         get :master_policy_coverages
+        post :cover_unit
+        post :add_insurable
+        put :cancel
+        put :cancel_coverage
+        put :cancel_insurable
       end
     end
 
@@ -217,6 +246,9 @@
             to: "histories#index_recordable",
             via: "get",
             defaults: { recordable_type: Policy }
+          get "get_leads",
+              to: "policies#get_leads",
+              via: "get"
           put :update_coverage_proof
           delete :delete_policy_document
           put :refund_policy
@@ -269,7 +301,19 @@
         end
       end
 
-    resources :tracking_urls, only: [:index, :show]
+    get :agency_filters, controller: 'tracking_urls', path: 'tracking_urls/agency_filters', to: "tracking_urls#agency_filters"
+
+    resources :tracking_urls,
+              only: [ :create, :index, :show, :destroy ] do
+                member do
+                  get "get_leads",
+                    to: "tracking_urls#get_leads",
+                    via: "get"
+                  get "get_policies",
+                      to: "tracking_urls#get_policies",
+                      via: "get"
+                end
+    end
 
     resources :users,
       only: [ :index, :show ] do

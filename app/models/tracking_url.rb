@@ -1,17 +1,21 @@
 # frozen_string_literal: true
 
 class TrackingUrl < ApplicationRecord
-  RENT_GUARANTEE = 'rent_guarantee'
-  RENTERS_INSURANCE = 'renters_insurance'
-  BUSINESS_OWNERS = 'business_owners'
-
   has_many :leads
 
   belongs_to :agency
-  validates_presence_of :landing_page, :campaign_source,
-                        :campaign_medium, :campaign_name, :agency
+  belongs_to :branding_profile, optional: true
+
+  validates_presence_of :landing_page, :agency, :campaign_name
 
   scope :not_deleted, -> { where(deleted: false) }
+  scope :deleted, -> { where(deleted: true) }
 
+  def branding_url
+    "https://#{branding_profile&.url || agency.branding_profiles.first.url}"
+  end
+
+  def form_url
+    "#{branding_url}/#{self.landing_page}"
+  end
 end
-

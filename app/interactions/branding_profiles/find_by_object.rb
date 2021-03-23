@@ -9,11 +9,11 @@ module BrandingProfiles
     private
 
     def agency
-      object.branding_profiles.last
+      object.branding_profiles.first
     end
 
     def account
-      account_branding_profile = object.branding_profiles.last
+      account_branding_profile = object.branding_profiles.first
       return account_branding_profile if account_branding_profile.present?
 
       self.class.run!(object: object.agency)

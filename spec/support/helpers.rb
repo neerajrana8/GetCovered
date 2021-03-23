@@ -9,7 +9,7 @@ module Helpers
     FactoryBot.create(:agency)
   end
 
-  def account_for agency
+  def account_for(agency)
     FactoryBot.create(:account, agency: agency)
   end
 
@@ -25,6 +25,8 @@ module Helpers
     account = account_for agency
     FactoryBot.create(:staff, organizable: account, role: 'staff')
   end
+
+
 
   def login_staff(staff, password: 'test1234')
     post staff_session_path, params: { email: staff.email, password: password }.to_json, headers: base_headers
@@ -45,6 +47,15 @@ module Helpers
       'token_type' => token_type
     }
     auth_headers
+  end
+
+  def get_external_access_token_headers(agency)
+    access_token = FactoryBot.create(:access_token, bearer: agency)
+    access_headers = {
+        'token-key' => access_token.key,
+        'token-secret' => access_token.secret
+    }
+    access_headers
   end
 
   def profile_params

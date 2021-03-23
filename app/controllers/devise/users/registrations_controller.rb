@@ -12,11 +12,6 @@ class Devise::Users::RegistrationsController < DeviseTokenAuth::RegistrationsCon
     super
     return unless @resource.persisted?
 
-    ::Analytics.track(
-      user_id: @resource.id,
-      event: 'Signed Up',
-      properties: { category: 'Account' }
-    )
   end
 
   # GET /resource/edit
@@ -45,6 +40,22 @@ class Devise::Users::RegistrationsController < DeviseTokenAuth::RegistrationsCon
 
   protected
 
+  def build_resource
+    @resource            = resource_class.new(sign_up_params)
+    @resource.provider   = provider
+
+    # honor devise configuration for case_insensitive_keys
+    @resource.email =
+      if resource_class.case_insensitive_keys.include?(:email)
+        sign_up_params[:email].try(:downcase)
+      else
+        sign_up_params[:email]
+      end
+
+    @resource.invitation_accepted_at = Time.zone.now
+    @resource.profile.language = I18n.locale if @resource&.profile&.present?
+  end
+
   def render_create_error
     render json: standard_error(:user_creation_error, nil, @resource.errors.full_messages), status: 422
   end
@@ -52,7 +63,7 @@ class Devise::Users::RegistrationsController < DeviseTokenAuth::RegistrationsCon
   # If you have extra params to permit, append them to the sanitizer.
   def configure_sign_up_params
     devise_parameter_sanitizer.permit(:sign_up, keys: [:email, :password, :password_confirmation, profile_attributes: %i[
-                                        first_name middle_name last_name contact_email contact_phone birth_date
+                                        first_name middle_name last_name contact_email contact_phone birth_date language
                                       ]])
   end
 

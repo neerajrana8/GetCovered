@@ -85,7 +85,7 @@
 
     resources :branding_profiles,
       path: "branding-profiles",
-      only: [ :show, :create, :update ] do
+      only: [ :index, :show, :create, :update ] do
         member do
           get :faqs
           get :export
@@ -198,8 +198,9 @@
 
     resources :insurable_types, path: "insurable-types", only: [ :index ]
 
-    resources :leads, only: [:index, :show]
+    resources :leads, only: [:index, :show, :update]
     resources :leads_dashboard, only: [:index]
+    resources :leads_dashboard_tracking_url, only: [:index]
 
     get :get_filters, controller: 'leads_dashboard', path: 'leads_dashboard/get_filters'
 
@@ -239,6 +240,9 @@
           to: "histories#index_recordable",
           via: "get",
           defaults: { recordable_type: Policy }
+        get "get_leads",
+            to: "policies#get_leads",
+            via: "get"
         get 'resend_policy_documents'
         put :refund_policy
         put :cancel_policy
@@ -284,6 +288,7 @@
       only: [ :create, :update, :index, :show ] do
         member do
           put :re_invite
+          put :update_self
           get "histories",
             to: "histories#index_recordable",
             via: "get",
@@ -299,8 +304,19 @@
         end
     end
 
+    get :agency_filters, controller: 'tracking_urls', path: 'tracking_urls/agency_filters', to: "tracking_urls#agency_filters"
+
     resources :tracking_urls,
-      only: [ :create, :index, :show, :destroy]
+      only: [ :create, :index, :show, :destroy] do
+        member do
+          get "get_leads",
+            to: "tracking_urls#get_leads",
+            via: "get"
+          get "get_policies",
+              to: "tracking_urls#get_policies",
+              via: "get"
+        end
+      end
 
     resources :users,
       only: [ :create, :update, :index, :show ] do

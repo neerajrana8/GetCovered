@@ -1,18 +1,31 @@
 json.extract! lead, :id, :email, :created_at, :last_visited_page, :last_visit ,:agency_id
 
+json.agency_name lead&.agency&.title
+
 profile = lead.profile
 if profile.present?
   json.extract!  profile, :first_name, :last_name
 end
 
-first_event =  lead.lead_events.first
+last_event = lead.last_event
 
-if first_event.present? && first_event.policy_type.present?
-  json.interested_product first_event.policy_type.title
+if last_event.present? && last_event.policy_type.present?
+  json.interested_product last_event.policy_type.title
 end
 
-tracking_url =  lead.tracking_url
+tracking_url = lead.tracking_url
 
 if tracking_url.present?
   json.extract! tracking_url, :campaign_source
 end
+
+if @site_visits.present?
+  json.site_visits @site_visits
+end
+
+json.primary_campaign_name lead&.tracking_url&.campaign_name
+json.primary_campaign_source lead&.tracking_url&.campaign_source
+json.primary_campaign_medium lead&.tracking_url&.campaign_medium
+json.premium_total lead&.user&.policy_applications&.last&.policy_quotes&.last&.policy_premium&.total || (last_event&.data.present? ? last_event&.data['premium_total'] : nil)
+json.premium_first lead&.user&.policy_applications&.last&.policy_quotes&.last&.invoices&.first&.total || (last_event&.data.present? ? last_event&.data['premium_first'] : nil)
+json.billing_strategy lead&.user&.policy_applications&.last&.policy_quotes&.last&.policy_premium&.billing_strategy&.title

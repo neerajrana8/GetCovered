@@ -7,6 +7,8 @@ module V2
     class AccountsController < StaffAgencyController
       
       before_action :set_account, only: %i[update show]
+
+      check_privileges 'property_management.accounts'
             
       def index
         if params[:short]

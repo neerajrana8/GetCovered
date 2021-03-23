@@ -5,7 +5,7 @@ module V2
 
       before_action :set_branding_profile,
                     only: %i[update show destroy faqs faq_create faq_update faq_question_create
-                    faq_question_update faq_delete faq_question_delete attach_images export update_from_file]
+                             faq_question_update faq_delete faq_question_delete attach_images export update_from_file]
 
       before_action :set_agency, only: [:import]
 
@@ -25,7 +25,7 @@ module V2
       end
 
       def faqs
-        @branding_profile = BrandingProfile.includes(:faqs).find(params[:id]) || []
+        @faqs = params['language'].present? ? BrandingProfile.find(params[:id]).faqs.where(language: params['language']) : BrandingProfile.find(params[:id]).faqs
         render :faqs, status: :ok
       end
 
@@ -120,11 +120,12 @@ module V2
       def attach_images
         if update_allowed?
           logo_status = get_image_url(:logo_url) if attach_images_params[:logo_url].present?
+          logo_jpeg_status = get_image_url(:logo_jpeg_url) if attach_images_params[:logo_jpeg_url].present?
           footer_status = get_image_url(:footer_logo_url) if attach_images_params[:footer_logo_url].present?
-          if logo_status == "error" || footer_status == "error"
+          if logo_status == 'error' || logo_jpeg_status == 'error' || footer_status == 'error'
             render json: { success: false }, status: :unprocessable_entity
           else
-            render json: { logo_url: logo_status, footer_logo_url: footer_status }, status: :ok
+            render json: { logo_url: logo_status, logo_jpeg_url: logo_jpeg_status, footer_logo_url: footer_status }, status: :ok
           end
         else
           render json: { success: false, errors: ['Unauthorized Access'] }, status: :unauthorized
@@ -132,6 +133,19 @@ module V2
       end
 
       private
+
+      def supported_filters(called_from_orders = false)
+        @calling_supported_orders = called_from_orders
+        {
+          profileable_type: [:scalar],
+          profileable_id: [:scalar],
+          enabled: [:scalar]
+        }
+      end
+
+      def supported_orders
+        supported_filters(true)
+      end
 
       def view_path
         super + '/branding_profiles'
@@ -158,8 +172,8 @@ module V2
         return({}) if params[:branding_profile].blank?
 
         params.require(:branding_profile).permit(
-          :default, :id, :profileable_id, :profileable_type, :title,
-          :url, :footer_logo_url, :logo_url, :subdomain, :subdomain_test, :global_default,
+          :default, :id, :profileable_id, :profileable_type,
+          :url, :footer_logo_url, :logo_url, :subdomain, :subdomain_test, :global_default, :enabled,
           images: [], branding_profile_attributes_attributes: %i[id name value attribute_type],
           styles: {}
         )
@@ -167,34 +181,35 @@ module V2
 
       def faq_params
         return({}) if params.blank?
-        params.permit(:title, :branding_profile_id, :faq_order)
+
+        params.permit(:title, :branding_profile_id, :faq_order, :language)
       end
 
       def faq_order_params
         { faq_order: @branding_profile.faqs.count }
       end
 
-
       def question_order_params
-        { question_order: @faq.faq_questions.count}
+        { question_order: @faq.faq_questions.count }
       end
 
       def faq_question_params
         return({}) if params.blank?
+
         params.permit(:question, :answer, :faq_id, :question_order)
       end
 
       def attach_images_params
         return({}) if params.blank?
-        params.require(:images).permit(:logo_url, :footer_logo_url)
+
+        params.require(:images).permit(:logo_url, :logo_jpeg_url, :footer_logo_url)
       end
 
       def get_image_url(field_name)
         images = @branding_profile.images.attach(attach_images_params[field_name])
         img_url = rails_blob_url(images.last)
-        img_url.present? && @branding_profile.update_column(field_name, img_url) ? img_url : "error"
+        img_url.present? && @branding_profile.update_column(field_name, img_url) ? img_url : 'error'
       end
-
     end
   end
 end

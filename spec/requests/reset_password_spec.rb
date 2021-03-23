@@ -12,8 +12,7 @@ describe 'Reset password API', type: :request do
       expect(base_url).to eq("#{Rails.application.credentials.uri[ENV['RAILS_ENV'].to_sym][client]}/auth/reset-password")
 
       # Reset the password
-      params = { password: 'tomato', password_confirmation: 'tomato', reset_password_token: token }.to_json
-      put("/v2/#{entity_type}/auth/password", params: params, headers: base_headers)
+      put("/v2/#{entity_type}/auth/password", params: params.merge({reset_password_token: token}).to_json, headers: base_headers)
       expect(response.status).to be(200)
 
       # Login with an old password
@@ -36,6 +35,7 @@ describe 'Reset password API', type: :request do
     let!(:entity) { FactoryBot.create(:user, :accepted) }
     let(:entity_type) { 'user' }
     let(:client) { :client }
+    let(:params) { { password: 'tomato', password_confirmation: 'tomato'} }
 
     include_examples 'scenarios'
   end
@@ -44,6 +44,12 @@ describe 'Reset password API', type: :request do
     let!(:entity) { FactoryBot.create(:staff, role: 'staff') }
     let(:entity_type) { 'staff' }
     let(:client) { :admin }
+    let(:params) do
+      {
+        password: 'tomato',
+        password_confirmation: 'tomato'
+      }
+    end
 
     include_examples 'scenarios'
   end

@@ -39,7 +39,11 @@ exit
     else
       count = query.count
       per = (params.has_key?(:pagination) && params[:pagination].has_key?(:per)) ? params[:pagination][:per].to_i : default_pagination_per
-      per = default_pagination_per if per <= 0 || per > maximum_pagination_per
+      if per <= 0
+        per = default_pagination_per
+      elsif per > maximum_pagination_per
+        per = maximum_pagination_per
+      end
       page_count = count == 0 ? 1 : (count.to_f / per).ceil
       page = (params.has_key?(:pagination) && params[:pagination].has_key?(:page)) ? params[:pagination][:page].to_i : 0
       response.headers['current-page'] = page.to_s
@@ -486,7 +490,7 @@ exit
             to_return[:hash][key] = (value == '_NULL_' ? nil : value) if forms.include?(:scalar) # MOOSE WARNING: check string, integer, etc independently?
           elsif value.has_key?("like") && value.length == 1
             # like
-            to_return[:string]['$'].push(["$.#{key} LIKE ?", "%#{value["like"]}%"]) if forms.include?(:like)
+            to_return[:string]['$'].push(["$.#{key} ILIKE ?", "%#{value["like"]}%"]) if forms.include?(:like)
           elsif value.keys.length == (value.keys & ["start", "end", "before", "after"]).length && (value.keys & ["start", "after"]).length < 2 && (value.keys & ["end", "before"]).length < 2 # WARNING: no support for inverted intervals
             # interval
             if forms.include?(:interval)

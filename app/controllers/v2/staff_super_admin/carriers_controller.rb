@@ -51,7 +51,7 @@ module V2
           carrier_agency << agency
           policy_types.each do |policy_type|
             BillingStrategy.create(carrier: carrier, agency: agency,
-                                   title: 'Monthly', enabled: true, policy_type: policy_type,
+                                   title: 'Monthly', enabled: true, policy_type: policy_type, carrier_code: 'Monthly',
                                    new_business: {
                                      'payments' => [
                                        8.37, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33
@@ -60,7 +60,7 @@ module V2
                                      'remainder_added_to_deposit' => true
                                    })
             BillingStrategy.create(carrier: carrier, agency: agency,
-                                   title: 'Quarterly', enabled: true, policy_type: policy_type,
+                                   title: 'Quarterly', enabled: true, policy_type: policy_type, carrier_code: 'Quarterly',
                                    new_business: {
                                      'payments' => [
                                        25, 0, 0, 25, 0, 0, 25, 0, 0, 25, 0, 0
@@ -69,7 +69,7 @@ module V2
                                      'remainder_added_to_deposit' => true
                                    })
             BillingStrategy.create(carrier: carrier, agency: agency,
-                                   title: 'Annually', enabled: true, policy_type: policy_type,
+                                   title: 'Annually', enabled: true, policy_type: policy_type, carrier_code: 'Annually',
                                    new_business: {
                                      'payments' => [
                                        100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
@@ -78,7 +78,7 @@ module V2
                                      'remainder_added_to_deposit' => true
                                    })
             BillingStrategy.create(carrier: carrier, agency: agency,
-                                   title: 'Bi-Annually', enabled: true, policy_type: policy_type,
+                                   title: 'Bi-Annually', enabled: true, policy_type: policy_type, carrier_code: 'SemiAnnually',
                                    new_business: {
                                      'payments' => [
                                        50, 0, 0, 0, 0, 0, 50, 0, 0, 0, 0, 0
@@ -92,13 +92,13 @@ module V2
       end
 
       def billing_strategies_list
-        if params[:carrier_agency_id].present?
-          billing_strategies = paginator(BillingStrategy.where(carrier_id: params[:id], agency_id: params[:carrier_agency_id]).order(created_at: :desc))
-          render json: billing_strategies, status: :ok
-        else
-          billing_strategies = paginator(BillingStrategy.where(carrier_id: params[:id]).order(created_at: :desc))
-          render json: billing_strategies, status: :ok
-        end
+        @billing_strategies =
+          if params[:carrier_agency_id].present?
+            paginator(BillingStrategy.includes(:agency).where(carrier_id: params[:id], agency_id: params[:carrier_agency_id]).order(created_at: :desc))
+          else
+            paginator(BillingStrategy.includes(:agency).where(carrier_id: params[:id]).order(created_at: :desc))
+          end
+        render 'v2/shared/billing_strategies/index'
       end
 
       def toggle_billing_strategy

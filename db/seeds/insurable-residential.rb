@@ -100,7 +100,7 @@ require 'faker'
     city: "Louisville",
     county: "JEFFERSON",
     state: "KY",
-    zip_code: "40219",
+    zip_code: "40228",
     plus_four: "3078",
     primary: true
   },
@@ -276,7 +276,7 @@ while @addresses.length > 0
               units_per_floor.times do |unit_num|
                 mailing_id = floor_id + (unit_num + 1)
                 @unit = @community.insurables.new(title: mailing_id, insurable_type: @residential_unit_insurable_type,
-                                                     enabled: true, category: 'property', account: account)
+                                                     enabled: true, category: 'property', account: account, preferred_ho4: true)
                 if @unit.save
                   @unit.create_carrier_profile(5)
                 else

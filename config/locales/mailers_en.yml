@@ -1,0 +1,122 @@
+en:
+  cancellation_mailer:
+    refund_request:
+      subject: "%{agency_policy_type} Refund Request"
+      title: "Refund Request"
+      text: "We have received a refund request for your %{policy_type} policy %{policy_number} on %{request_date}.
+              Our team will review the request as soon as we can.
+              You will receive an update once we have processed your request.
+              If approved, your funds will be transferred back within 1-3 business days.
+              If you have made this request in error,
+              please reach out to us a %{contact_email} as soon as possible."
+    cancel_request:
+      subject: "%{agency_policy_type} Cancellation Request"
+      title: "Cancel request"
+      text: "We have received a cancellation request for your %{policy_type} policy %{policy_number} on %{request_date}.
+              Our team will review the request as soon as we can.
+              You will receive an update once we have processed your request.
+              If you have made this request in error,
+              please reach out to us at %{contact_email}. as soon as possible."
+    cancel_confirmation:
+      subject: "%{agency_policy_type} Policy Cancellation"
+      title: "Cancellation confirmation"
+      text: "This email is to confirm that your policy has been cancelled. Please keep this email for your records.
+        We are sorry to see you go! We appreciate and value any feedback
+        you may have on our %{policy_type} Policy product and service. If there’s something that
+        we could have done to make your experience with %{agency_title}  better, please reach out
+        to us at %{contact_email}. It has been a pleasure to do business with you."
+      cancellation_is_effective: "This cancellation is effective: %{cancellation_date}"
+      contact_us: "Please contact us at %{contact_email} if you have any questions."
+      canceled_by_user: "This policy has been canceled as requested by the policyholder."
+
+  user_coverage_mailer:
+    all_documents:
+      rent_guarantee_title: 'Rent Guarantee'
+      rent_guarantee_documents: 'Your Rent Guarantee documents have been attached to this email.<br>'
+      rent_guarantee_text: "Hello %{user_name},<br><br>Thank you for choosing Pensio Tenants.<br>﻿Your Rent Guarantee registration
+                                              has been accepted on %{accepted_on}.<br>%{documents}
+                                              Please log in to <a href=\"%{site}\">our site</a> for more information.<br><br>Kind Regards,<br>
+                                              Pensio Tenants Corp & the Get Covered Team<br><br>Keeping You At Home!"
+      other_title: 'Insurance Policy'
+      other_documents: "Your policy documents have been attached to this email."
+      other_text: "Hello, %{user_name}<br><br>Your policy
+                                     has been accepted on %{accepted_on}. %{documents}
+                                     Please log in to <a href=\"%{site}\">our site</a>
+                                     for more information."
+
+    rent_guarantee:
+      proof_of_coverage:
+        subject: 'Congratulations on Your New Rent Guarantee Policy'
+        thank_you: 'Thank you for registering for a Rent Guarantee policy. Below are the details of your policy along with the attached agreement and summary for your records.'
+        please_log_in: 'Please log in to our site <a class="o_text-light o_underline" href="%{login_url}" style="text-decoration: underline;outline: none;color: #126de5;">this page</a> for more information.'
+        contact_us: 'Please contact us at %{contact_email} if you have any questions'
+
+  payment_made_mailer:
+    send_successful_payment_notification:
+      subject: "%{agency_title} - %{policy_type} Premium Payment Made"
+      thank_you: "Thank you for selecting a %{policy_number} policy from %{agency_title}."
+      account_was_charged: "Your account was successfully charged $%{total} on %{charge_date}."
+      click_link_html: "Click on the following link <a href=\"https://%{link}\">%{link}</a> to review all of your invoices.
+                        If you have any questions, please contact %{from}."
+
+  rent_guarantee_cancellation_mailer:
+    send_cancellation_email:
+      subject: "%{agency_title} - %{policy_number} Policy Cancellation"
+      sorry: "We are sorry to see you go! We appreciate and value any feedback you may
+              have on our %{policy_type} product and service. If there’s something that we could
+              have done to make your experience with %{agency_title} better,
+              please reach out to us at %{agency_email}. It has been a pleasure to do business with you."
+      title: "Cancellation Confirmation"
+      date_of_notice: "Date of Notice"
+      policyholder: "Policyholder"
+      product: "Product"
+      company: "Company"
+      policy_was_cancelled: "This policy has been canceled as requested by the policyholder."
+      cancellation_is_effective: "This cancellation is effective: %{cancellation_date}"
+      contact_us: "Please contact us at %{agency_email} if you have any questions."
+
+  card_info_update_mailer:
+    please_update_card_info:
+      subject: "%{agency_title} - %{policy_number} Update Payment Information"
+      text: "Thank you for using %{agency_title} for your %{policy_type} Policy.
+             The credit card listed in your account is soon to expire.
+             Please login to %{agency_title} at the link below to update your credit
+             card information to avoid interruption of coverage."
+      contact_us: "Feel free to contact us at %{contact_email} If you have any questions."
+
+  warn_upcoming_charge_mailer:
+    send_warn_upcoming_invoice:
+      subject: "%{agency_title} - %{policy_number} Upcoming Premium Payment"
+      text_html: "Thank you for selecting a %{policy_type} policy from %{agency_title}.
+                 For your upcoming premium payment, your account will be charged $%{charged} on %{due_date}.
+                 Click on the following  <a href=\"%{link}\">link</a> to review all of your invoices."
+      contact_us: "Feel free to contact us at %{contact_email} if you have any questions."
+
+  warn_user_before_expire_card_mailer:
+    send_warn_expire_card:
+      subject: "%{agency_title} - Credit Card Expiring"
+      text: "Thank you for using the Get Covered Pay. According to our records,
+                 a credit card that you have listed with the GCpay service will soon expire.
+                 Please login to GCpay  at the link below to update your credit card information
+                 to avoid interruption of coverage "
+      contact_us: "Feel free to contact us at %{contact_email} if you have any questions."
+      thank_you: "Thank you again for using GCpay."
+  rent_guarantee_notifications_mailer:
+    first_nonpayment_warning:
+      subject: "%{agency_title} - Rent Guarantee - Warning Default"
+      thank_you: "Thank you for using %{agency_title} for your Rent Guarantee Policy. Our records show that
+        you have missed your last payment on %{due_date} for $%{amount_due}. Please note that your
+        policy will be cancelled if you miss two consecutive payments."
+      please_login: "Please login to %{agency_title} at the link below to update your credit card information to
+        avoid interruption of coverage."
+      contact_us: "Feel free to contact us at %{contact_email} if you have any questions."
+    second_nonpayment_warning:
+      subject: "%{agency_title} - Rent Guarantee - Default FINAL NOTICE"
+      thank_you:
+        "Thank you for using %{agency_title}  for your Rent Guarantee Policy. Our records show that
+        you have missed your second payment on %{due_date}  for $%{amount_due} Please note that your
+        policy will be cancelled if you do not pay by %{calculated_cancellation_date}."
+      please_login:
+        "Please login to %{agency_title} at the link below to update your credit card information
+        to avoid interruption of coverage."
+      contact_us: "Feel free to contact us at %{contact_email} if you have any questions."

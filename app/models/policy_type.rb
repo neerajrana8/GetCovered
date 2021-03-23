@@ -10,17 +10,18 @@ class PolicyType < ApplicationRecord
   MASTER_COVERAGE_ID = 3
   COMMERCIAL_ID = 4
   RENT_GUARANTEE_ID = 5
+  SECURITY_DEPOSIT_REPLACEMENT_ID = 6
 
   after_initialize :initialize_policy_type
-  
+
   # Relationships
   has_many :carrier_policy_types
-  has_many :carriers, 
+  has_many :carriers,
     through: :carrier_policy_types
-  
+
   has_many :commission_strategies
   has_many :billing_strategies
-  
+
   # Validations
   validates :title, presence: true, uniqueness: true
   validates_presence_of :slug
@@ -30,9 +31,24 @@ class PolicyType < ApplicationRecord
   scope :master_policies, -> { where("title LIKE 'Master%'") }
 
   def master_policy?
-    designation == 'MASTER'
+    self.designation == 'MASTER'
   end
 
+  def residential?
+    self.designation == 'HO4'
+  end
+
+  def rent_guarantee?
+    self.designation == 'RENT-GUARANTEE'
+  end
+
+  def master_coverage?
+    self.designation == 'MASTER-COVERAGE'
+  end
+
+  def commercial?
+    self.designation == 'BOP'
+  end
 
   class << self
     def residential
@@ -45,7 +61,7 @@ class PolicyType < ApplicationRecord
   end
 
   private
-  
+
   def initialize_policy_type
     self.enabled = false if enabled.nil?
   end

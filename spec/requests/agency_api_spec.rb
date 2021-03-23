@@ -16,24 +16,25 @@ describe 'Agency invitation spec', type: :request do
   end
 
   def create_agency(params)
-    post '/v2/staff_agency/agencies', params: {agency: params}, headers: @auth_headers
+    post '/v2/staff_agency/agencies', params: { agency: params }, headers: @auth_headers
   end
 
   it 'should create new agency with first staff as owner', perform_enqueued: true do
-
     expect { create_agency(agency_params) }.to change { Agency.count }.by(1)
     expect(Agency.last.agency).to eq(@agency)
+    expect { create_staff(staff_params(Agency.last)) }.to change { ::Staff.count }.by(1)
 
-    expect { create_staff(staff_params(Agency.last)) }.to change { Staff.count }.by(1)
-
-    expect(Staff.last.owner).to eq(true)
+    expect(::Staff.last.owner).to eq(true)
   end
 
   def agency_params
     {
-      title: "New test agency",
+      title: 'New test agency',
       tos_accepted: true,
-      whitelabel: false
+      whitelabel: false,
+      global_agency_permission_attributes: {
+        permissions: GlobalAgencyPermission::AVAILABLE_PERMISSIONS
+      }
     }
   end
 
@@ -42,14 +43,11 @@ describe 'Agency invitation spec', type: :request do
       staff: {
         email: 'new_test@getcovered.com',
         organizable_id: agency.id,
-        organizable_type: "Agency",
-        role: "agent"
+        organizable_type: 'Agency',
+        role: 'agent'
       }
     }
   end
-
-
-
 end
 
 describe 'Agency api spec', type: :request do
@@ -61,7 +59,7 @@ describe 'Agency api spec', type: :request do
   end
 
   def create_agency(params)
-    post '/v2/staff_super_admin/agencies', params: {agency: params}, headers: @auth_headers
+    post '/v2/staff_super_admin/agencies', params: { agency: params }, headers: @auth_headers
   end
 
   def get_agencies
@@ -73,7 +71,7 @@ describe 'Agency api spec', type: :request do
   end
 
   def create_sub_agency(params)
-    post "/v2/staff_super_admin/agencies", params: {agency: params}, headers: @auth_headers
+    post '/v2/staff_super_admin/agencies', params: { agency: params }, headers: @auth_headers
   end
 
   def get_sub_agencies_short
@@ -81,11 +79,11 @@ describe 'Agency api spec', type: :request do
   end
 
   def get_agencies_short
-    get "/v2/staff_super_admin/agencies/sub_agencies_index", headers: @auth_headers
+    get '/v2/staff_super_admin/agencies/sub_agencies_index', headers: @auth_headers
   end
 
   def update_agency(params)
-    put "/v2/staff_super_admin/agencies/#{@agency.id}", params: {agency: params}, headers: @auth_headers
+    put "/v2/staff_super_admin/agencies/#{@agency.id}", params: { agency: params }, headers: @auth_headers
   end
 
   it 'should create new subagency', perform_enqueued: true do
@@ -98,75 +96,83 @@ describe 'Agency api spec', type: :request do
     get_agencies
     agencies = JSON.parse(response.body)
 
-    expect(agencies.map{|el| el["agency_id"]}.uniq).to eq([nil])
+    expect(agencies.map { |el| el['agency_id'] }.uniq).to eq([nil])
   end
 
   it 'should get only sub-agencies', perform_enqueued: true do
     create_sub_agency(sub_agency_params)
     get_sub_agencies(get_sub_agency_params)
     sub_agencies = JSON.parse(response.body)
-    expect(sub_agencies.map{|el| el["agency_id"]}.uniq).to eq([@agency.id])
+    expect(sub_agencies.map { |el| el['agency_id'] }.uniq).to eq([@agency.id])
   end
 
   it 'should throw error when parent agency not exist', perform_enqueued: true do
     create_sub_agency(sub_agency_params(rand(1000..1111)))
     expect(response.status).to eq(422)
-    expect(JSON.parse(response.body)["payload"]).to eq(["Agency Parent id incorrect"])
+    expect(JSON.parse(response.body)['payload']).to eq(['Agency Parent id incorrect'])
   end
 
   it 'should throw error when agency tried to update to sub-agency', perform_enqueued: true do
     params = @agency.as_json
-    params["agency_id"] = @agency.id
+    params['agency_id'] = @agency.id
     update_agency(update_agency_params)
     expect(response.status).to eq(422)
-    expect(JSON.parse(response.body)["agency"]).to eq(["Agency can't be updated to sub-agency"])
+    expect(JSON.parse(response.body)['agency']).to eq(["Agency can't be updated to sub-agency"])
   end
 
   it 'should get only sub-agencies in short response', perform_enqueued: true do
     create_sub_agency(sub_agency_params)
     get_sub_agencies_short
     sub_agencies = JSON.parse(response.body)
-    expect(sub_agencies.map{|el| el["agency_id"]}.uniq).to eq([@agency.id])
-    expect(sub_agencies.first.keys).to eq(["id", "title", "agency_id"])
+    expect(sub_agencies.map { |el| el['agency_id'] }.uniq).to eq([@agency.id])
+    expect(sub_agencies.first.keys).to eq(%w[id title enabled agency_id])
   end
 
   it 'should get only agencies in short response', perform_enqueued: true do
     create_sub_agency(sub_agency_params)
     get_agencies_short
     agencies = JSON.parse(response.body)
-    expect(agencies.map{|el| el["agency_id"]}.uniq).to eq([nil])
-    #expect(agencies.first.keys).to eq(["id", "title", "agency_id"])
+    expect(agencies.map { |el| el['agency_id'] }.uniq).to eq([nil])
+    # expect(agencies.first.keys).to eq(["id", "title", "agency_id"])
   end
 
   def agency_params
     {
-        title: "New test agency",
-        tos_accepted: true,
-        whitelabel: false
+      title: 'New test agency',
+      tos_accepted: true,
+      whitelabel: false,
+      global_agency_permission_attributes: {
+        permissions: GlobalAgencyPermission::AVAILABLE_PERMISSIONS
+      }
     }
   end
 
   def sub_agency_params(agency_id = @agency.id)
     {
-        title: "New test subagency",
-        tos_accepted: true,
-        whitelabel: false,
-        agency_id: agency_id
+      title: 'New test subagency',
+      tos_accepted: true,
+      whitelabel: false,
+      agency_id: agency_id,
+      global_agency_permission_attributes: {
+        permissions: GlobalAgencyPermission::AVAILABLE_PERMISSIONS
+      }
     }
   end
 
   def get_sub_agency_params
     {
-        agency_id: @agency.id
+      agency_id: @agency.id
     }
   end
 
   def update_agency_params
-    {title: "New Test Agency",
-     agency_id: @agency.id,
-     enabled: "true",
-     whitelabel: "true",
-     contact_info: {"contact_email":"","contact_phone":"","contact_fax":""}}
+    { title: 'New Test Agency',
+      agency_id: @agency.id,
+      enabled: 'true',
+      whitelabel: 'true',
+      global_agency_permission_attributes: {
+        permissions: GlobalAgencyPermission::AVAILABLE_PERMISSIONS
+      },
+      contact_info: { "contact_email": '', "contact_phone": '', "contact_fax": '' } }
   end
-
 end

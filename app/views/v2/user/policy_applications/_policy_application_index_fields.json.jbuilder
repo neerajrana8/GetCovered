@@ -1,5 +1,5 @@
 json.extract! policy_application, :account_id, :agency_id,
   :billing_strategy_id, :carrier_id, :created_at, :effective_date,
   :expiration_date, :external_reference, :id, :policy_id,
-  :policy_type_id, :reference, :status, :coverage_selections
+  :policy_type_id, :reference, :status, :coverage_selections, :branding_profile_id
 

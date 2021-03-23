@@ -7,6 +7,8 @@ module V2
     class UsersController < StaffAgencyController
       before_action :set_user, only: %i[update show]
 
+      check_privileges 'property_management.users'
+
       def index
         super(:@users, @agency.active_users, :profile, :accounts, :agencies)
       end

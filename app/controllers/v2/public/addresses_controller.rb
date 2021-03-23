@@ -5,14 +5,14 @@
 module V2
   module Public
     class AddressesController < PublicController
-
       def index
         if params[:search].presence
           @addresses = Address.search_insurables(params[:search])
           @ids = @addresses.select{|a| a['_source']['addressable_type'] == 'Insurable' }.map{|a| a['_source']['addressable_id'] }
 
           @insurables = Insurable.where(id: @ids, enabled: true)
-
+                                 .send(*(params[:policy_type_id].blank? ? [:itself] : [:where, "policy_type_ids @> ARRAY[?]::bigint[]", params[:policy_type_id].to_i]))
+                                 .send(*(params[:policy_type_id].to_i == PolicyType::RESIDENTIAL_ID ? [:where, { preferred_ho4: true }] : [:itself]))
           @response = []
 
           @insurables&.each do |i|
@@ -21,6 +21,7 @@ module V2
                 id: i.id,
                 title: i.title,
                 enabled: i.enabled,
+                preferred_ho4: i.preferred_ho4,
                 account_id: i.account_id,
                 agency_id: i.account.agency_id,
                 insurable_type_id: i.insurable_type_id,

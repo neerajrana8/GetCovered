@@ -28,7 +28,8 @@ module PoliciesMethods
   def add_coverage_proof
     @policy = Policy.new(coverage_proof_params)
     @policy.policy_in_system = false
-    if @policy.save
+    add_error_master_types(@policy.policy_type_id)
+    if @policy.errors.blank? && @policy.save
       user_params[:users]&.each do |user_params|
         user = ::User.find_by(email: user_params[:email])
         if user.nil?
@@ -43,14 +44,16 @@ module PoliciesMethods
 
       render json: { message: 'Policy created' }, status: :created
     else
-      render json: { message: 'Policy failed' }, status: :unprocessable_entity
+      render json: @policy.errors, status: :unprocessable_entity
     end
   end
 
   def update_coverage_proof
     update_coverage_params = create_params
     documents_params = update_coverage_params.delete(:documents)
-    if @policy.update_as(current_staff, update_coverage_params)
+    type_id = update_coverage_params[:policy_type_id]
+    add_error_master_types(type_id) if type_id.present?
+    if @policy.errors.blank? && @policy.update_as(current_staff, update_coverage_params)
       user_params[:users]&.each do |user_params|
         user = ::User.find_by(email: user_params[:email])
         if user.nil?
@@ -72,7 +75,7 @@ module PoliciesMethods
 
       render json: { message: 'Policy updated' }, status: :ok
     else
-      render json: { message: 'Policy failed' }, status: :unprocessable_entity
+      render json: @policy.errors, status: :unprocessable_entity
     end
   end
 
@@ -160,6 +163,10 @@ module PoliciesMethods
     )
   end
 
+  def add_error_master_types(type_id)
+    @policy.errors.add(:policy_type_id, 'You cannot add or update coverage via master policy type') if [2,3].include?(type_id)
+  end
+
   def policy_application_merged_attributes
     @update_params = update_params
     if @update_params[:policy_application_attributes]
@@ -195,7 +202,8 @@ module PoliciesMethods
             profile: {
                 full_name: %i[scalar like],
             }
-        }
+        },
+        agency_id: %i[scalar]
     }
   end
 

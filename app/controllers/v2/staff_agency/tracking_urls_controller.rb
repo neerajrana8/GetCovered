@@ -1,40 +1,18 @@
 module V2
   module StaffAgency
     class TrackingUrlsController < StaffAgencyController
-      before_action :is_owner?, only: :create
 
-      before_action :set_tracking_url, only: [:show, :destroy]
-
+      before_action :set_tracking_url, only: %i[show destroy get_leads get_policies]
       before_action :set_substrate, only: :index
+      before_action :set_agencies, only: :agency_filters
 
+      include TrackingUrlsMethods
 
-      def create
-        @tracking_url = TrackingUrl.new(create_params)
-        @tracking_url.agency = current_staff.organizable
-        if @tracking_url.save
-          render 'v2/shared/tracking_urls/show', status: :created
-        else
-          render json: @tracking_url.errors,
-                 status: :unprocessable_entity
-        end
-      end
-
-      def destroy
-        @tracking_url.deleted = true
-        if @tracking_url.save
-          render json: { success: true}, status: :no_content
-        else
-          render json: @tracking_url.errors, status: :unprocessable_entity
-        end
-      end
-
-      def show
-        render 'v2/shared/tracking_urls/show'
-      end
-
-      def index
-        super(:@tracking_urls, @substrate)
-        render 'v2/shared/tracking_urls/index'
+      def get_policies
+        user_ids = @tracking_url.leads.pluck(:user_id).compact
+        policies_ids = PolicyUser.where(user_id: user_ids).pluck(:policy_id).compact
+        @policies = Policy.where(id: policies_ids)
+        render 'v2/staff_super_admin/policies/index'
       end
 
       private
@@ -48,7 +26,7 @@ module V2
 
         to_return = params.require(:tracking_url).permit(
             :landing_page, :campaign_source, :campaign_medium,
-            :campaign_name, :campaign_term, :campaign_content
+            :campaign_name, :campaign_term, :campaign_content, :agency_id, :branding_profile_id
         )
         to_return
       end
@@ -56,13 +34,14 @@ module V2
       def set_substrate
         super
         if @substrate.nil?
-          @substrate = access_model(::TrackingUrl).not_deleted
+          @substrate = access_model(::TrackingUrl)
+          params[:filter][:deleted] = params[:filter][:archived] if params[:filter].present? && params[:filter][:archived].present?
+          params[:filter].delete(:archived)
         end
       end
 
-      def is_owner?
-        render(json: { success: false, errors: ['Unauthorized Access'] },
-               status: :unauthorized) and return unless current_staff.owner
+      def set_agencies
+        @agencies = Agency.where(id: @agency.id).or(Agency.where(agency_id: @agency.id))
       end
     end
   end

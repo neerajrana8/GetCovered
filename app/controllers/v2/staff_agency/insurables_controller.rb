@@ -14,6 +14,8 @@ module V2
 
       before_action :set_master_policies, only: :show
 
+      check_privileges 'insurables.create' => [:create]
+
       def index
         if params[:short]
           super_index(:@insurables, @agency.insurables)
@@ -241,7 +243,12 @@ module V2
           permissions: %i[scalar array],
           insurable_type_id: %i[scalar array],
           insurable_id: %i[scalar array],
-          account_id: %i[scalar array]
+          account_id: %i[scalar array],
+          created_at: %i[scalar array interval],
+          updated_at: %i[scalar array interval],
+          category: %i[scalar array],
+          covered: %i[scalar array],
+          enabled: %i[scalar array]
         }
       end
 

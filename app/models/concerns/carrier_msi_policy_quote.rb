@@ -1,5 +1,5 @@
 # =MSI Policy Quote Functions Concern
-# file: +app/models/concerns/carrier_qbe_policy.rb+
+# file: +app/models/concerns/carrier_msi_policy_quote.rb+
 
 module CarrierMsiPolicyQuote
   extend ActiveSupport::Concern
@@ -8,13 +8,13 @@ module CarrierMsiPolicyQuote
 
     # MOOSE WARNING: PolicyQuote#bind_policy should call this boi if necessary
     def set_msi_external_reference
-      
-      return_status = true # MOOSE WARNING: change it? 
-      
+
+      return_status = true # MOOSE WARNING: change it?
+
     end
-    
+
     # MSI build coverages
-    
+
     def msi_build_coverages
       self.policy_application.coverage_selections.select{|covsel| covsel['selection'] }.each do |covsel|
         self.policy.policy_coverages.create(
@@ -27,9 +27,9 @@ module CarrierMsiPolicyQuote
         )
       end
     end
-    
+
     # MSI Bind
-  
+
     # payment_params should be a hash of form:
     #   {
     #     'payment_method' => 'card' or 'ach',
@@ -37,20 +37,19 @@ module CarrierMsiPolicyQuote
     #     'payment_token'  => the token
     #   }
     def msi_bind(payment_params)
-      # MOOSE WARNING: modify qbe bind methods here
       @bind_response = {
         :error => true,
         :message => nil,
-        :data => {}  
+        :data => {}
       }
       # handle common failure scenarios
       unless policy_application.carrier_id == 5
-        @bind_response[:message] = "Carrier must be QBE to bind residential quote"
+        @bind_response[:message] = I18n.t('qbe_policy_quote.carrier_must_be_qbe')
         #PolicyBindWarningNotificationJob.perform_later(message: @bind_response[:message])
         return @bind_response
       end
 		 	unless accepted? && policy.nil?
-		 		@bind_response[:message] = "Status must be quoted or error to bind quote"
+		 		@bind_response[:message] = I18n.t('qbe_policy_quote.status_must_be_quoted_or_error')
         #PolicyBindWarningNotificationJob.perform_later(message: @bind_response[:message])
         return @bind_response
 		 	end
@@ -60,35 +59,32 @@ module CarrierMsiPolicyQuote
           !payment_data.has_key?('method_id') || !payment_data.has_key?('merchant_id') || !payment_data.has_key?('processor_id') ||
           !payment_params.has_key?('payment_info') || !payment_params.has_key?('payment_token')
         # invalid payment data
-        @bind_response[:message] = "Invalid payment data for binding policy"
+        @bind_response[:message] = I18n.t('msi_policy_quote.invalid_payment_data')
         #PolicyBindWarningNotificationJob.perform_later(message: @bind_response[:message])
         return @bind_response
       end
       payment_merchant_id = payment_data['merchant_id']
       payment_processor = payment_data['processor_id']
       payment_method = payment_data['method_id']
+      # determine preferred status
+      preferred = !(community.carrier_profile(5)&.external_carrier_id.nil?)
       # grab useful variables
-      carrier_agency = CarrierAgency.where(agency: account.agency, carrier_id: 5).take
+      carrier_agency = CarrierAgency.where(agency: agency, carrier_id: 5).take
       unit = policy_application.primary_insurable
       community = unit.parent_community
       address = unit.primary_address
       primary_insured = policy_application.primary_user
       additional_insured = policy_application.users.select{|u| u.id != primary_insured.id }
-      additional_interest = [unit.account || community.account].compact
+      additional_interest = preferred ?
+        [unit.account || community.account].compact.select{|ai| ai&.title != "Nonpreferred Residential" }
+        : msi_additional_interest_array_from_extra_settings(self.policy_application.extra_settings&.[]('additional_interest'))
       # prepare for bind call
       msis = MsiService.new
-      event = events.new(
-        verb: 'post',
-        format: 'xml',
-        interface: 'REST',
-        endpoint: msis.endpoint_for(:bind_policy),
-        process: 'msi_bind_policy'
-      )
       result = msis.build_request(:bind_policy,
         effective_date:   policy_application.effective_date,
         payment_plan:     policy_application.billing_strategy.carrier_code,
-        installment_day:  policy_application.extra_settings&.[]('installment_day') || policy_application.fields.find{|f| f['title'] == "Installment Day" }&.[]('value') || 1,
-        community_id:     community.carrier_profile(5).external_carrier_id,
+        installment_day:  (policy_application.extra_settings&.[]('installment_day') || policy_application.fields.find{|f| f['title'] == "Installment Day" }&.[]('value') || 1).to_i,
+        community_id:     preferred ? community.carrier_profile(5).external_carrier_id : nil,
         unit:             unit.title,
         address:          unit.primary_address,
         maddress:         primary_insured.address || nil,
@@ -117,23 +113,31 @@ module CarrierMsiPolicyQuote
         payment_method:       payment_method,
         payment_info:         payment_params['payment_info'],
         payment_other_id:     payment_params['payment_token'],
-        
+        # for non-preferred
+        **(preferred ? {} : {
+          number_of_units: policy_application.extra_settings&.[]('number_of_units'),
+          years_professionally_managed: policy_application.extra_settings&.[]('years_professionally_managed'),
+          year_built: policy_application.extra_settings&.[]('year_built'),
+          gated: policy_application.extra_settings&.[]('gated')
+        }.compact),
+        # format params
         line_breaks: true
       )
       if !result
-        @bind_response[:message] = "Failed to build bind request (#{msis.errors.to_s})"
+        @bind_response[:message] = "#{I18n.t('msi_policy_quote.failed_to_build_bind_request')} (#{msis.errors.to_s})"
         #PolicyBindWarningNotificationJob.perform_later(message: @bind_response[:message])
         return @bind_response
       end
+      event = events.new(msis.event_params)
       event.request = msis.compiled_rxml
       event.started = Time.now
       result = msis.call
       event.completed = Time.now
-      event.response = result[:data]
+      event.response = result[:response].response.body
       event.status = result[:error] ? 'error' : 'success'
       event.save
       if result[:error]
-        @bind_response[:message] = "MSI bind failure (Event ID: #{event.id || event.errors.to_h})\nMSI Error: #{result[:external_message]}\n#{result[:extended_external_message]}"
+        @bind_response[:message] = "#{I18n.t('msi_policy_quote.msi_bind_failure')} #{event.id || event.errors.to_h})\n#{I18n.t('msi_policy_quote.msi_error')} #{result[:external_message]}\n#{result[:extended_external_message]}"
         #PolicyBindWarningNotificationJob.perform_later(message: @bind_response[:message])
         return @bind_response
       end
@@ -145,6 +149,74 @@ module CarrierMsiPolicyQuote
       @bind_response[:data][:policy_prefix] = policy_data["MSI_PolicyPrefix"]
       return @bind_response
     end
-    
+
+    def msi_additional_interest_array_from_extra_settings(hash)
+      return [] if hash.blank?
+      case hash['entity_type']
+        when 'company'
+          pseudoname = [hash['company_name'][0...50], hash['company_name'][50...(hash['company_name'].length)]]
+          if !(pseudoname.first.blank? && pseudoname.first.blank?) && pseudoname.first.blank? != pseudoname.second.blank?
+            psn = (pseudoname.first || '') + (pseudoname.second || '').strip
+            splitter = [psn.index(' ') || 50, (psn.length.to_f/2).ceil, 50].min
+            pseudoname = [psn[0...splitter], psn[splitter...psn.length]]
+            pseudoname[1] = "EndOfCompanyName" if pseudoname[1].blank?
+          end
+          addr = hash['address']
+          gotten_email = hash['email_address']
+          gotten_phone = hash['phone_number']
+          if gotten_phone.blank?
+            gotten_phone = nil
+          else
+            gotten_phone = gotten_phone.delete("^0-9")
+            gotten_phone = gotten_phone[-10..-1] if gotten_phone.length > 10
+            gotten_phone = nil if gotten_phone.length < 10
+          end
+          return [{
+            NameInfo: {
+              PersonName: {
+                GivenName: pseudoname.first,
+                Surname:   pseudoname.last
+              }.merge(addr.nil? ? {} : { OtherGivenName: addr })
+            },
+            Communications: { # feel free to add phone number here just like we do for user#get_msi_general_party_info
+              EmailInfo: {
+                EmailAddr: gotten_email
+              }
+            }.merge(gotten_phone.nil? ? {} : {
+              PhoneInfo: {
+                PhoneNumber: gotten_phone
+              }
+            })
+          }]
+        when 'person'
+          gotten_email = hash['email_address']
+          gotten_phone = hash['phone_number']
+          if gotten_phone.blank?
+            gotten_phone = nil
+          else
+            gotten_phone = gotten_phone.delete("^0-9")
+            gotten_phone = gotten_phone[-10..-1] if gotten_phone.length > 10
+            gotten_phone = nil if gotten_phone.length < 10
+          end
+          return [{
+            NameInfo: {
+              PersonName: {
+                GivenName: hash['first_name'],
+                Surname:   hash['last_name']
+              }.merge(hash['middle_name'].blank? ? {} : { OtherGivenName: hash['middle_name'] })
+            },
+            Communications: {
+              PhoneInfo: {
+                PhoneNumber: gotten_phone
+              },
+              EmailInfo: {
+                EmailAddr: gotten_email
+              }
+            }
+          }]
+      end
+      return []
+    end
+
   end
 end

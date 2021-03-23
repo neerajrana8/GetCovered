@@ -22,6 +22,7 @@ module GetCovered
   class Application < Rails::Application
     # Initialize configuration defaults for originally generated Rails version.
     config.load_defaults 5.2
+    config.middleware.use Rack::Attack
 
     # Settings in config/environments/* take precedence over those specified here.
     # Application configuration can go into files in config/initializers
@@ -32,9 +33,11 @@ module GetCovered
     # Middleware like session, flash, cookies can be added back manually.
     # Skip views, helpers and assets when generating a new resource.
     config.api_only = true
-    
+
     # Set Default Timezone
     config.time_zone = 'Pacific Time (US & Canada)'
+    config.i18n.default_locale = :en
+    config.i18n.available_locales = [:en, :es]
 
     # Add folders with ActiveInteraction
     config.autoload_paths += Dir.glob("#{config.root}/app/interactions/*")

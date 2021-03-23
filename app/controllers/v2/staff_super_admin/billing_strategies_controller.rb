@@ -74,7 +74,7 @@ module V2
         return({}) if params[:billing_strategy].blank?
 
         to_return = params.require(:billing_strategy).permit(
-          :carrier_id, :enabled, :policy_type_id, :title,
+          :carrier_id, :enabled, :policy_type_id, :title, :carrier_code,
           new_business: {}, renewal: {}
         )
         to_return
@@ -84,7 +84,7 @@ module V2
         return({}) if params[:billing_strategy].blank?
 
         params.require(:billing_strategy).permit(
-          :carrier_id, :enabled, :policy_type_id, :title,
+          :carrier_id, :enabled, :policy_type_id, :title, :carrier_code,
           new_business: {}, renewal: {}
         )
       end

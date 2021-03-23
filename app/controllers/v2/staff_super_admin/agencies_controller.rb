@@ -36,7 +36,7 @@ module V2
 
       def sub_agencies_index
         result          = []
-        required_fields = %i[id title agency_id]
+        required_fields = %i[id title agency_id enabled]
 
         @agencies = paginator(Agency.where(agency_id: sub_agency_filter_params))
 
@@ -127,12 +127,12 @@ module V2
         return({}) if params[:agency].blank?
 
         to_return = params.require(:agency).permit(
-          :agency_id, :enabled, :staff_id, :title, :tos_accepted,
+          :agency_id, :enabled, :staff_id, :title, :tos_accepted, :producer_code,
           :whitelabel, contact_info: {}, addresses_attributes: %i[
             city country county id latitude longitude
             plus_four state street_name street_number
             street_two timezone zip_code
-          ]
+          ], global_agency_permission_attributes: { permissions: {} }
         )
         to_return
       end
@@ -141,12 +141,12 @@ module V2
         return({}) if params[:agency].blank?
 
         to_return = params.require(:agency).permit(
-          :agency_id, :enabled, :staff_id, :title, :tos_accepted, :whitelabel,
+          :agency_id, :enabled, :staff_id, :title, :tos_accepted, :whitelabel, :producer_code,
           contact_info: {}, settings: {}, addresses_attributes: %i[
             city country county id latitude longitude
             plus_four state street_name street_number
             street_two timezone zip_code
-          ]
+          ], global_agency_permission_attributes: { permissions: {} }
         )
 
         existed_ids = to_return[:addresses_attributes]&.map { |addr| addr[:id] }
@@ -162,9 +162,13 @@ module V2
 
       def supported_filters(called_from_orders = false)
         @calling_supported_orders = called_from_orders
+
         {
           agency_id: %i[scalar array],
-          id: %i[scalar array]
+          id: %i[scalar array],
+          created_at: %i[scalar array interval],
+          title: %i[scalar array interval like],
+          enabled: %i[scalar array]
         }
       end
 

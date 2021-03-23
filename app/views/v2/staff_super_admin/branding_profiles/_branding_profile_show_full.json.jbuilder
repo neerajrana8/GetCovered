@@ -9,3 +9,5 @@ end
 json.pages do
   json.array! branding_profile&.pages
 end
+
+json.profileable_title branding_profile.profileable.title if branding_profile.profileable.respond_to?(:title)

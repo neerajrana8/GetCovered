@@ -23,12 +23,12 @@ describe 'Staff invitation spec', type: :request do
   end
   
   it 'should enable when invitation is accepted', perform_enqueued: true do
-    expect { create_staff(@staff_params) }.to change { Staff.count }.by(1)
+    expect { create_staff(@staff_params) }.to change { ::Staff.count }.by(1)
     last_mail = Nokogiri::HTML(ActionMailer::Base.deliveries.last.html_part.body.decoded)
     url = last_mail.css('a').first["href"]
     token = url.partition("localhost:4100/auth/accept-invitation/").last
     
-    new_staff = Staff.last
+    new_staff = ::Staff.last
     put staff_invitation_path, params: { invitation_token: token, password: 'foobar', password_confirmation: 'foobar' }
     
     result = JSON.parse response.body

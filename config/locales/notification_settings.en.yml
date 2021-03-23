@@ -1,0 +1,10 @@
+en:
+  notification_settings:
+    title:
+      upcoming_invoice: 'Upcoming Invoice'
+      update_credit_card: 'Update Credit Card'
+      rent_guarantee_warnings: 'Warning Emails'
+    description:
+      upcoming_invoice: 'These emails will provide a notification in advance of an upcoming invoice.'
+      update_credit_card: 'These emails will provide a notification when a credit card is about to expire, requiring a new payment method to be saved on the account.'
+      rent_guarantee_warnings: 'These emails will provide a notification when a user is in danger of defaulting on their rent guarantee policy as they are behind payment.'

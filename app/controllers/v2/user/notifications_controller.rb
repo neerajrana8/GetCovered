@@ -5,13 +5,13 @@
 module V2
   module User
     class NotificationsController < UserController
-      
+
       before_action :set_notification,
         only: [:update, :show]
-      
+
       before_action :set_substrate,
         only: [:index]
-      
+
       def index
         if params[:short]
           super(:@notifications, @substrate)
@@ -19,10 +19,10 @@ module V2
           super(:@notifications, @substrate)
         end
       end
-      
+
       def show
       end
-      
+
       def update
         if update_allowed?
           if @notification.update(update_params)
@@ -33,26 +33,26 @@ module V2
               status: :unprocessable_entity
           end
         else
-          render json: { success: false, errors: ['Unauthorized Access'] },
+          render json: { success: false, errors: [I18n.t('user_users_controler.unauthorized_access')] },
             status: :unauthorized
         end
       end
-      
-      
+
+
       private
-      
+
         def view_path
           super + "/notifications"
         end
-        
+
         def update_allowed?
           true
         end
-        
+
         def set_notification
           @notification = access_model(::Notification, params[:id])
         end
-        
+
         def set_substrate
           super
           if @substrate.nil?
@@ -61,14 +61,14 @@ module V2
             @substrate = @substrate.notifications
           end
         end
-        
+
         def update_params
           return({}) if params[:notification].blank?
           params.require(:notification).permit(
             :status
           )
         end
-        
+
         def supported_filters(called_from_orders = false)
           @calling_supported_orders = called_from_orders
           {
@@ -78,7 +78,7 @@ module V2
         def supported_orders
           supported_filters(true)
         end
-        
+
     end
   end # module User
 end
