@@ -5,8 +5,8 @@ module BrandingProfiles
 
     def execute
       ActiveRecord::Base.transaction do
+        clean_params
         destroy_dependencies
-        update_url if BrandingProfile.exists?(url: branding_profile_params['url'])
         branding_profile.update(branding_profile_params)
         errors.merge!(branding_profile.errors) if branding_profile.errors.any?
         branding_profile
@@ -15,9 +15,8 @@ module BrandingProfiles
 
     private
 
-    # For the sake
-    def update_url
-      branding_profile_params['url'] = branding_profile_params['url'] + Time.zone.now.to_i.to_s
+    def clean_params
+      branding_profile_params.delete('url')
     end
 
     def destroy_dependencies
