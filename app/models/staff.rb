@@ -26,6 +26,7 @@ class Staff < ApplicationRecord
   after_initialize :initialize_staff
   after_create :set_first_as_primary_on_organizable
   after_create :set_permissions_for_agent
+  after_create :build_notification_settings
 
   # belongs_to relationships
   # belongs_to :account, required: true
@@ -139,6 +140,12 @@ class Staff < ApplicationRecord
   def set_permissions_for_agent
     if role == 'agent'
       StaffPermission.create(staff: self)
+    end
+  end
+
+  def build_notification_settings
+    NotificationSetting::STAFFS_NOTIFICATIONS.each do |opt|
+      self.notification_settings.create(action: opt, enabled: false)
     end
   end
 end
