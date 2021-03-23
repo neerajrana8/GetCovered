@@ -29,13 +29,6 @@ module V2
         else
           render json: standard_error(:something_went_wrong, "Data Missing", {}), status: :unprocessable_entity
         end
-        # @carrier_agency = CarrierAgency.create(create_params)
-        # if @carrier_agency.errors.blank?
-        #   render template: 'v2/shared/carrier_agencies/show', status: :created
-        # else
-        #   render json: standard_error(:carrier_agency_create_error, nil, @carrier_agency.errors.full_messages),
-        #          status: :unprocessable_entity
-        # end
       end
 
       def update
