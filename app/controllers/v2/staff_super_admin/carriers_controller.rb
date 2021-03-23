@@ -10,7 +10,7 @@ module V2
 
       before_action :set_carrier, only: %i[update show]
       before_action :set_substrate, only: %i[create index]
-      
+
       def index
         super(:@carriers, @substrate)
         render template: 'v2/shared/carriers/index', status: :ok
@@ -20,11 +20,11 @@ module V2
         carrier_agencies = paginator(Carrier.find(params[:id]).agencies)
         render json: carrier_agencies, status: :ok
       end
-      
+
       def show
         render template: 'v2/shared/carriers/show', status: :ok
       end
-      
+
       def create
         if create_allowed?
           @carrier = Carrier.create(create_params)
@@ -43,12 +43,12 @@ module V2
       def assign_agency_to_carrier
         agency = Agency.find_by(id: params[:carrier_agency_id])
         carrier = Carrier.find_by(id: params[:id])
-        
+
         unless agency.nil? || carrier.nil?
           if carrier.agencies.include?(agency)
             render json: { message: 'This agency has been already assigned to this carrier' }, status: :unprocessable_entity
           else
-            if carrier << agency
+            if carrier.agencies << agency
               render json: { message: 'Carrier was added to the agency' }, status: :ok
             else
               render json: standard_error(:something_went_wrong, "#{agency.title} could not be assigned to #{carrier.title}", {}), status: :unprocessable_entity
@@ -83,7 +83,7 @@ module V2
         CarrierAgency.find_by(agency_id: agency.id, carrier_id: carrier).destroy
         render json: { message: 'Agency was successfully unassign' }
       end
-      
+
       def update
         if update_allowed?
           if @carrier.update(update_params)
@@ -97,21 +97,21 @@ module V2
                  status: :unauthorized
         end
       end
-      
+
       private
-        
+
       def create_allowed?
         true
       end
-        
+
       def update_allowed?
         true
       end
-        
+
       def set_carrier
         @carrier = access_model(::Carrier, params[:id])
       end
-        
+
       def set_substrate
         super
         if @substrate.nil?
@@ -120,28 +120,28 @@ module V2
           @substrate = @substrate.carriers
         end
       end
-        
+
       def create_params
         return({}) if params[:carrier].blank?
 
         to_return = params.require(:carrier).permit(
           :bindable, :call_sign, :enabled, :id,
           :integration_designation, :quotable, :rateable, :syncable,
-          :title, :verifiable, settings: {}, 
+          :title, :verifiable, settings: {},
                                carrier_policy_types_attributes: [
                                  :policy_type_id, carrier_policy_type_availabilities_attributes: %i[state available zip_code_blacklist]
                                ]
         )
         to_return
       end
-        
+
       def update_params
         return({}) if params[:carrier].blank?
 
         to_return = params.require(:carrier).permit(
           :bindable, :call_sign, :enabled, :id,
           :integration_designation, :quotable, :rateable, :syncable,
-          :title, :verifiable, 
+          :title, :verifiable,
           settings: {}, carrier_policy_types_attributes: [
             :id, :policy_type_id,
             carrier_policy_type_availabilities_attributes: %i[id state available zip_code_blacklist]
@@ -158,7 +158,7 @@ module V2
         end
         to_return
       end
-        
+
       def supported_filters(called_from_orders = false)
         @calling_supported_orders = called_from_orders
         {
