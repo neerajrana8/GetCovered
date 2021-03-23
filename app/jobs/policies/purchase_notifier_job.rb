@@ -1,10 +1,8 @@
 class Policies::PurchaseNotifierJob < ApplicationJob
   queue_as :default
 
-  def perform(policy)
-    pp policy
-    @policy = Policy.find(policy[:id])
-    pp @policy
+  def perform(policy_id)
+    @policy = Policy.find(policy_id)
 
     Policies::PurchaseMailer.with(policy: @policy).get_covered.deliver
 

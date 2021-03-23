@@ -404,7 +404,7 @@ class Policy < ApplicationRecord
   private
 
   def notify_relevant
-    Policies::PurchaseNotifierJob.perform_later(policy: self)
+    Policies::PurchaseNotifierJob.perform_later(self.id)
   end
 
   def date_order
