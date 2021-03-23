@@ -75,8 +75,8 @@ module V2
         {
           created_at: %i[scalar array interval],
           email: %i[scalar like],
-          agency_id: [:scalar],
-          status: [:scalar],
+          agency_id: [:scalar, :array],
+          status: [:scalar, :array],
           archived: [:scalar],
           last_visit: %i[interval scalar interval],
           tracking_url: {
