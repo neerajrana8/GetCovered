@@ -45,7 +45,7 @@ class PolicyPremium < ApplicationRecord
     self.save if persist
   end
   
-  def initialize_all(premium_amount, tax: nil, taxes: nil, term_group: nil, collector: nil, filter_fees: nil, tax_recipient: nil)
+  def initialize_all(premium_amount, tax: nil, taxes: nil, term_group: nil, collector: nil, filter_fees: nil, tax_recipient: nil, first_payment_down_payment: false, first_payment_down_payment_override: nil, first_tax_payment_down_payment_override: nil)
     tax = taxes if tax.nil? && !taxes.nil?
     return "Tax must be >= 0" if tax && tax < 0
     result = nil
@@ -53,10 +53,10 @@ class PolicyPremium < ApplicationRecord
       result = self.create_payment_terms(term_group: term_group)
       raise ActiveRecord::Rollback unless result.nil? || result.end_with?("already exist")
       # premium
-      result = self.itemize_premium(premium_amount, and_update_totals: false, term_group: term_group, collector: collector)
+      result = self.itemize_premium(premium_amount, and_update_totals: false, term_group: term_group, collector: collector, first_payment_down_payment: first_payment_down_payment, first_payment_down_payment_override: first_payment_down_payment_override)
       raise ActiveRecord::Rollback unless result.nil?
       # taxes
-      result = self.itemize_taxes(tax, and_update_totals: false, term_group: term_group, collector: collector, recipient: tax_recipient) unless tax.nil? || tax == 0
+      result = self.itemize_taxes(tax, and_update_totals: false, term_group: term_group, collector: collector, recipient: tax_recipient, first_payment_down_payment: first_payment_down_payment, first_payment_down_payment_override: first_tax_payment_down_payment_override) unless tax.nil? || tax == 0
       raise ActiveRecord::Rollback unless result.nil?
       # fees
       result = self.itemize_fees(premium_amount, and_update_totals: false, term_group: term_group, collector: collector, filter: filter_fees)
@@ -165,11 +165,11 @@ class PolicyPremium < ApplicationRecord
     self.update_totals(persist: true) if and_update_totals
   end
   
-  def itemize_taxes(amount, and_update_totals: true, proratable: nil, refundable: nil, term_group: nil, collector: nil, recipient:)
-    self.itemize_premium(amount, and_update_totals: and_update_totals, proratable: proratable, refundable: refundable, term_group: term_group, collector: collector, is_tax: true, recipient: recipient)
+  def itemize_taxes(amount, recipient:, and_update_totals: true, proratable: nil, refundable: nil, term_group: nil, collector: nil, first_payment_down_payment: false, first_payment_down_payment_override: nil)
+    self.itemize_premium(amount, and_update_totals: and_update_totals, proratable: proratable, refundable: refundable, term_group: term_group, collector: collector, is_tax: true, recipient: recipient, first_payment_down_payment: first_payment_down_payment, first_payment_down_payment_override: first_payment_down_payment_override)
   end
 
-  def itemize_premium(amount, and_update_totals: true, proratable: nil, refundable: nil, term_group: nil, collector: nil, is_tax: false, recipient: nil)
+  def itemize_premium(amount, and_update_totals: true, proratable: nil, refundable: nil, term_group: nil, collector: nil, is_tax: false, recipient: nil, first_payment_down_payment: false, first_payment_down_payment_override: nil)
     # get payment terms
     payment_terms = self.policy_premium_payment_terms.where(term_group: term_group).sort.select{|p| p.default_weight != 0 }
     if payment_terms.blank?
@@ -201,9 +201,9 @@ class PolicyPremium < ApplicationRecord
     if first_payment_down_payment
       total_weight = payment_terms.inject(0){|sum,pt| sum + pt.default_weight }.to_d
       down_payment_amount = (payment_terms.first.default_weight * amount / total_weight).floor
-      if self.first_payment_down_payment_amount_override && self.first_payment_down_payment_amount_override < down_payment_amount
-        down_payment_revised_weight = ((down_payment_amount - self.first_payment_down_payment_amount_override.to_d) / down_payment_amount * payment_terms.first.default_weight).floor
-        down_payment_amount = self.first_payment_down_payment_amount_override
+      if first_payment_down_payment_amount_override && first_payment_down_payment_amount_override < down_payment_amount
+        down_payment_revised_weight = ((down_payment_amount - first_payment_down_payment_amount_override.to_d) / down_payment_amount * payment_terms.first.default_weight).floor
+        down_payment_amount = first_payment_down_payment_amount_override
       else
         down_payment_revised_weight = 0
       end

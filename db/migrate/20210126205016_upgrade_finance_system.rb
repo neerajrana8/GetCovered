@@ -114,9 +114,6 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
       t.integer :total_fee, null: false, default: 0
       t.integer :total_tax, null: false, default: 0
       t.integer :total, null: false, default: 0
-      # down payment settings
-      t.boolean :first_payment_down_payment, null: false, default: false
-      t.integer :first_payment_down_payment_amount_override
       # proration information
       t.boolean :prorated, null: false, default: false
       t.datetime :prorated_term_last_moment
