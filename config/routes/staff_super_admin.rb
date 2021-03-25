@@ -328,5 +328,8 @@
             defaults: { authorable_type: User }
         end
       end
+
+    resources :notification_settings,
+              only: [ :index, :show, :update ]
   end
 # end
