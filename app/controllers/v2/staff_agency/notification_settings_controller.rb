@@ -6,7 +6,12 @@ module V2
   module StaffAgency
     class NotificationSettingsController < StaffAgencyController
       include StaffNotificationSettingsMethods
+      before_action :set_notification_setting, except: :index
 
+      private
+      def set_notification_setting
+        @notification_setting = current_staff.notification_settings.find(:id)
+      end
     end
   end
 end
