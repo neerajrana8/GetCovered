@@ -4,10 +4,9 @@ module MasterPoliciesMethods
   included do
     before_action :set_policy,
                   only: %i[update show communities add_insurable covered_units
-                             cover_unit available_top_insurables available_units historically_coverage_units
-                             cancel cancel_coverage master_policy_coverages cancel_insurable]
-
-
+                           cover_unit available_top_insurables available_units historically_coverage_units
+                           cancel cancel_coverage master_policy_coverages cancel_insurable auto_assign_all
+                           auto_assign_insurable]
 
     def show
       render template: 'v2/shared/master_policies/show', status: :ok
@@ -64,6 +63,26 @@ module MasterPoliciesMethods
       insurables_relation = @master_policy.insurables.distinct
       @insurables = paginator(insurables_relation)
       render template: 'v2/shared/master_policies/insurables', status: :ok
+    end
+
+    def auto_assign_all
+      @master_policy.policy_insurables.update(auto_assign: params[:auto_assign_value])
+      @insurables = paginator(@master_policy.insurables.distinct)
+      render template: 'v2/shared/master_policies/insurables', status: :ok
+    end
+
+    def auto_assign_insurable
+      policy_insurable = @master_policy.policy_insurables.where(insurable_id: params[:insurable_id]).take
+      
+      if policy_insurable.present?
+        policy_insurable.update(auto_assign: !policy_insurable.auto_assign)
+        @insurables = paginator(@master_policy.insurables.distinct)
+        render template: 'v2/shared/master_policies/insurables', status: :ok
+      else
+        render json: { error: :insurable_was_not_found, message: 'Insurable is not assigned to the master policy' },
+               status: :not_found
+      end
+
     end
 
     def add_insurable
@@ -198,10 +217,10 @@ module MasterPoliciesMethods
 
       if @master_policy_coverage.errors.any?
         render json: {
-                       error: :server_error,
-                       message: 'Master policy coverage was not cancelled',
-                       payload: @master_policy_coverage.errors.full_messages
-                     }.to_json,
+          error: :server_error,
+          message: 'Master policy coverage was not cancelled',
+          payload: @master_policy_coverage.errors.full_messages
+        }.to_json,
                status: :bad_request
       else
         @master_policy_coverage.insurables.take.update(covered: false)
@@ -217,7 +236,7 @@ module MasterPoliciesMethods
       permitted_params = params.require(:policy).permit(
         :account_id, :agency_id, :auto_renew, :carrier_id, :effective_date,
         :expiration_date, :number, system_data: [:landlord_sumplimental],
-        policy_coverages_attributes: %i[policy_application_id limit deductible enabled designation]
+                                   policy_coverages_attributes: %i[policy_application_id limit deductible enabled designation]
       )
 
       permitted_params
@@ -229,8 +248,8 @@ module MasterPoliciesMethods
       permitted_params = params.require(:policy).permit(
         :account_id, :agency_id, :auto_renew, :carrier_id, :effective_date,
         :expiration_date, :number, system_data: [:landlord_sumplimental],
-        policy_coverages_attributes: %i[id policy_application_id policy_id
-                                          limit deductible enabled designation]
+                                   policy_coverages_attributes: %i[id policy_application_id policy_id
+                                                                   limit deductible enabled designation]
       )
 
       existed_ids = permitted_params[:policy_coverages_attributes]&.map { |policy_coverage| policy_coverage[:id] }

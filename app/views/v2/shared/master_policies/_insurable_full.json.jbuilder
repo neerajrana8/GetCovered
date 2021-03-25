@@ -20,3 +20,5 @@ json.active_master_policy do
                   policy: insurable.policies.current.where(policy_type_id: [PolicyType::MASTER_ID, PolicyType::MASTER_COVERAGE_ID]).take
   end
 end
+
+json.auto_assign_policies insurable.policy_insurables.where(policy: @master_policy).take&.auto_assign
