@@ -176,11 +176,6 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
       t.integer     :total_pending, null: false, default: 0             # the total amount pending (i.e. the sum of charge.amount over all charges with processed: false)
       t.integer     :total_received, null: false, default: 0            # the total that has actually been received
       t.integer     :total_undistributable, null: false, default: 0     # if we receive a payment and the line items totals have somehow changed so that what we charged for has become less than the total, the extra is recorded here
-      # disputes and refunds
-      t.integer     :pending_dispute_total, null: false, default: 0
-      t.integer     :pending_refund_total, null: false, default: 0
-      t.integer     :total_refunded, null: false, default: 0
-      t.integer     :total_lost_to_disputes, null: false, default: 0
       # associations
       t.references :invoiceable, polymorphic: true
       t.references :payer, polymorphic: true
@@ -315,5 +310,6 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
   end
   
   def down
+    raise ActiveRecord::IrreversibleMigration
   end
 end

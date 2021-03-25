@@ -120,8 +120,9 @@ class PolicyPremium < ApplicationRecord
     found_fees = found_fees - already_itemized_fees
     found_fees = found_fees.select{|ff| filter.call(ff) } unless filter.nil?
     # create fee items
-    found_fees.each{|ff| self.itemize_fee(ff, percentage_basis, and_update_totals: false, payment_terms: payment_terms, collector: collector) }
+    found_fees.each{|ff| result = self.itemize_fee(ff, percentage_basis, and_update_totals: false, payment_terms: payment_terms, collector: collector); return result unless result.nil? }
     self.update_totals(persist: true) if and_update_totals
+    return nil
   end
   
   def itemize_fee(fee, percentage_basis, and_update_totals: true, term_group: nil, payment_terms: nil, collector: nil, recipient: nil)
@@ -138,7 +139,7 @@ class PolicyPremium < ApplicationRecord
       when "FLAT";        fee.amount * (fee.per_payment ? payments_count : 1)
       when "PERCENTAGE";  ((fee.amount.to_d / 100) * percentage_basis).ceil * (fee.per_payment ? payments_count : 1) # MOOSE WARNING: is .ceil acceptable?
     end
-    self.policy_premium_items << ::PolicyPremiumItem.new(
+    created = ::PolicyPremiumItem.create(
       policy_premium: self,
       title: fee.title || "#{(fee.amortize || fee.per_payment) ? "Amortized " : ""} Fee",
       category: "fee",
@@ -162,7 +163,9 @@ class PolicyPremium < ApplicationRecord
         )]
       )
     )
+    return "Failed to create PolicyPremiumItem for fee ##{fee.id} (#{fee.title})! Errors: #{created.errors.to_h}" unless created.id
     self.update_totals(persist: true) if and_update_totals
+    return nil
   end
   
   def itemize_taxes(amount, recipient:, and_update_totals: true, proratable: nil, refundable: nil, term_group: nil, collector: nil, first_payment_down_payment: false, first_payment_down_payment_override: nil)

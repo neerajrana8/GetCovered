@@ -4,6 +4,7 @@
 # file: app/models/invoice.rb
 
 class Invoice < ApplicationRecord
+  attr_accessor :callbacks_disabled
 
   belongs_to :invoiceable, polymorphic: true
   belongs_to :payer, polymorphic: true
@@ -18,13 +19,14 @@ class Invoice < ApplicationRecord
     
   before_validation :set_number,
     on: :create
-  before_create :mark_line_items_priced_in
+  before_create :mark_line_items_priced_in,
+    unless: Proc.new{|i| i.callbacks_disabled }
   before_update :set_status,
-    unless: Proc.new{|i| i.will_save_change_to_attribute?('status') }
+    unless: Proc.new{|i| i.will_save_change_to_attribute?('status') || i.callbacks_disabled }
   before_update :set_missed_record,
-    if: Proc.new{|i| i.will_save_change_to_attribute?('status') && i.status == 'missed' }
+    if: Proc.new{|i| i.will_save_change_to_attribute?('status') && i.status == 'missed' && !i.callbacks_disabled }
   after_commit :send_status_change_notifications,
-    if: Proc.new{|i| i.autosend_status_change_notifications && i.saved_change_to_attribute?('status') }
+    if: Proc.new{|i| i.autosend_status_change_notifications && i.saved_change_to_attribute?('status') && !i.callbacks_disabled }
     
   scope :internal, -> { where(external: false) }
   scope :external, -> { where(external: true) }
@@ -39,7 +41,6 @@ class Invoice < ApplicationRecord
     cancelled:          6,    # cancelled, no longer applies
     managed_externally: 7     # managed by a partner who does not keep us abreast of invoice status
   }
-
 
   def with_payment_lock
     ActiveRecord::Base.transaction(requires_new: true) do
