@@ -5,7 +5,7 @@
 class CommissionStrategy < ApplicationRecord
 
   # Associations
-  belongs_to :recipient,
+  belongs_to :recipient, 
     polymorphic: true
   belongs_to :commission_strategy,
     optional: true
