@@ -535,19 +535,20 @@ class Insurable < ApplicationRecord
     return if InsurableType::UNITS_IDS.exclude?(insurable_type_id) || insurable.blank?
 
     master_policy = insurable.policies.current.where(policy_type_id: PolicyType::MASTER_ID).take
-    if master_policy.present? && insurable.policy_insurables.where(policy: master_policy).take&.auto_assign
+    if master_policy.present? && insurable.policy_insurables.where(policy: master_policy).take.auto_assign
+      last_policy_number = master_policy.policies.maximum('number')
       self.policies.create(
-        agency: policy.agency,
-        carrier: policy.carrier,
-        account: policy.account,
+        agency: master_policy.agency,
+        carrier: master_policy.carrier,
+        account: master_policy.account,
         status: 'BOUND',
-        policy_coverages: policy.policy_coverages,
-        number: last_policy_number.nil? ? "#{policy.number}_1" : last_policy_number.next,
+        policy_coverages: master_policy.policy_coverages,
+        number: last_policy_number.nil? ? "#{master_policy.number}_1" : last_policy_number.next,
         policy_type_id: PolicyType::MASTER_COVERAGE_ID,
-        policy: policy,
+        policy: master_policy,
         effective_date: Time.zone.now,
-        expiration_date: policy.expiration_date,
-        system_data: policy.system_data
+        expiration_date: master_policy.expiration_date,
+        system_data: master_policy.system_data
       )
       self.update(covered: true)
     end
