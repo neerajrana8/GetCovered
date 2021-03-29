@@ -16,7 +16,9 @@ module V2
         agency = Agency.find_by(id: create_params[:agency_id])
         carrier = Carrier.find_by(id: create_params[:carrier_id])
 
-        unless agency.nil? || carrier.nil?
+        if agency.nil? || carrier.nil?
+          render json: standard_error(:something_went_wrong, 'Data Missing', {}), status: :unprocessable_entity
+        else
           if carrier.agencies.include?(agency)
             render json: { message: 'This agency has been already assigned to this carrier' }, status: :unprocessable_entity
           else
@@ -26,8 +28,6 @@ module V2
               render json: standard_error(:something_went_wrong, "#{agency.title} could not be assigned to #{carrier.title}", {}), status: :unprocessable_entity
             end
           end
-        else
-          render json: standard_error(:something_went_wrong, "Data Missing", {}), status: :unprocessable_entity
         end
       end
 
@@ -77,7 +77,8 @@ module V2
         @calling_supported_orders = called_from_orders
         {
           carrier_id: %i[scalar array],
-          agency_id: %i[scalar array]
+          agency_id: %i[scalar array],
+          created_at: %i[scalar array]
         }
       end
 
