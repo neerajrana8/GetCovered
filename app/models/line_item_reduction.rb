@@ -1,4 +1,5 @@
 class LineItemReduction < ApplicationRecord
+  attr_accessor :callbacks_disabled
 
   belongs_to :line_item
   belongs_to :dispute,
@@ -9,8 +10,10 @@ class LineItemReduction < ApplicationRecord
   has_one :invoice,
     through: :line_item
   
-  before_create :update_associated_models
-  after_commit :attempt_immediate_processing
+  before_create :update_associated_models,
+    unless: Proc.new{|lir| lir.callbacks_disabled }
+  after_commit :attempt_immediate_processing,
+    unless: Proc.new{|lir| lir.callbacks_disabled }
 
   scope :pending, -> { where(pending: true) }
   

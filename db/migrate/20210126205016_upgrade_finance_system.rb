@@ -233,7 +233,7 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
       t.integer         :amount_successful, null: false, default: 0     # The amount that actually ended up being reduced (if refunds_allowed, will be total_due_max_reduction; if not, it might be less)
       t.integer         :amount_refunded, null: false, default: 0
       t.boolean         :pending, null: false, default: true            # True iff this LIR hasn't yet been applied
-      t.boolean         :processed, null: false, default: false         # True iff this LIR has completed all its work... MOOSE WARNING: is this needed???
+      #t.boolean         :processed, null: false, default: false         # True iff this LIR has completed all its work... MOOSE WARNING: is this needed???
       t.integer         :stripe_refund_reason                           # Optional enum field to specify a Stripe reason enum to provide for associated refunds; if nil, will use 'requested_by_customer' if any Stripe refunds are created
       t.timestamps
       t.references      :line_item

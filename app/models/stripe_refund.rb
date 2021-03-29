@@ -11,7 +11,8 @@ class StripeRefund < ApplicationRecord
     errored: 1,
     failed: 2,
     pending: 3,
-    succeeded: 4
+    succeeded: 4,
+    succeeded_manually: 5
   }
   enum stripe_reason: {
     requested_by_customer: 0,

@@ -125,6 +125,7 @@ class UpgradeOldFinanceData < ActiveRecord::Migration[5.2]
             received = lis.inject(0){|sum,li| sum + li.total_received }
             proration_reduction = lis.inject(0){|sum,li| sum + li.proration_reduction }
             next if price == 0
+            # premium
             ppipt = ::PolicyPremiumItemPaymentTerm.create!(
               policy_premium_item: ppi_premium,
               policy_premium_payment_term: pppts[ind],
@@ -141,7 +142,7 @@ class UpgradeOldFinanceData < ActiveRecord::Migration[5.2]
               duplicatable_reduction_total: 0
               created_at: inv.created_at,
               updated_at: lis.map{|l| l.updated_at }.max
-            ) # MOOSE WARNING: create LIC (and maybe a LIR) when ready >____>
+            )
             inv.charges.each do |charge|
               # basic setup
               sc = ::StripeCharge.new(
@@ -150,7 +151,7 @@ class UpgradeOldFinanceData < ActiveRecord::Migration[5.2]
                 status: charge.status,
                 status_changed_at: charge.updated_at,
                 amount: charge.amount,
-                amount_refunded: charge.amount_refunded, # MOOSE WARNING: ??? + amount_in_queued_refunds ???
+                amount_refunded: charge.amount_refunded, # amount_in_queued_refunds is already included in this number
                 source: inv.payer.payment_profiles.where(default: true).take&.source_id,
                 customer_stripe_id: inv.payer&.stripe_id,
                 description: nil,
@@ -178,10 +179,85 @@ class UpgradeOldFinanceData < ActiveRecord::Migration[5.2]
                   raise Exception
                 when 'failed'
                   sc.save!
-                when 'succeeded'
-                  sc.save!
                 when 'pending'
                   sc.save!
+                when 'succeeded'
+                  sc.save!
+                  ::LineItemChange.create!(
+                    field_changed: 'total_received',
+                    amount: li.total_received,
+                    handled: false,
+                    line_item: li,
+                    reason: sc,
+                    handler: nil,
+                    created_at: charge.updated_at,
+                    updated_at: charge.updated_at
+                  )
+                  charge.refunds.each do |refund|
+                    refund.full_reason ||= "Refund" # just in case it was nil, since that won't fly no more
+                    new_refund = ::Refund.create!(
+                      refund_reasons: [refund.full_reason],
+                      amount: refund.amount,
+                      amount_refunded: refund.amount,
+                      amount_returned_by_dispute: 0,
+                      complete: true,
+                      invoice: inv,
+                      created_at: refund.created_at,
+                      updated_at: refund.updated_at
+                    )
+                    stripe_refund = ::StripeRefund.create!(
+                      status: case refund.status
+                        when 'processing';                    'awaiting_execution'
+                        when 'queued';                        'awaiting_execution'
+                        when 'pending';                       'pending'
+                        when 'succeeded';                     'succeeded'
+                        when 'succeeded_via_dispute_payout':  'succeeded'
+                        when 'failed';                        'failed'
+                        when 'errored';                       'errored'
+                        when 'failed_and_handled';            refund.stripe_status == 'succeeded' ? 'succeeded' : 'succeeded_manually'
+                      end,
+                      full_reasons: [refund.full_reason],
+                      amount: refund.amount,
+                      stripe_id: refund.stripe_id,
+                      stripe_reason: refund.stripe_reason,
+                      stripe_status: refund.stripe_status,
+                      failure_reason: refund.failure_reason,
+                      receipt_number: refund.receipt_number,
+                      error_message: refund.error_message,
+                      refund: new_refund,
+                      stripe_charge: sc,
+                      created_at: refund.created_at,
+                      updated_at: refund.updated_at
+                    )
+                    lir = ::LineItemReduction.new(
+                      reason: refund.full_reason,
+                      refundability: 'cancel_or_refund',
+                      proration_interaction: 'shared',
+                      amount_interpretation: 'max_amount_to_reduce',
+                      amount: refund.amount,
+                      amount_successful: refund.amount,
+                      amount_refunded: refund.amount,
+                      pending: false,
+                      line_item: li,
+                      dispute: nil,
+                      refund: new_refund,
+                      created_at: refund.created_at,
+                      updated_at: refund.updated_at
+                    )
+                    lir.callbacks_disabled = true
+                    lir.save!
+                    ::LineItemChange.create!(
+                      field_changed: 'total_received',
+                      amount: -refund.amount,
+                      handled: false,
+                      line_item: li,
+                      reason: lir,
+                      handler: nil,
+                      created_at: refund.created_at,
+                      updated_at: refund.updated_at
+                    )
+                  end
+
               end
             end
             
