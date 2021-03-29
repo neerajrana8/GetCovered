@@ -1,9 +1,13 @@
 class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
   def up
+    # remove ability to have CAAs without a CS (since data should have been entered while only the upgrade_commission_strategies branch was merged in)
+    change_column :carrier_agency_authorizations, :commission_strategy, null: false
+    
     # update CarrierPolicyType data
-    add_column :carrier_policy_types, :premium_proration_calculation, :string, null: false, default: 'no_proration'
+    add_column :carrier_policy_types, :premium_proration_calculation, :string, null: false, default: 'per_payment_term'
     add_column :carrier_policy_types, :premium_proration_refunds_allowed, :boolean, null: false, default: true
-    CarrierPolicyType.where(premium_refundable: true).update_all(premium_proration_calculation: 'per_payment_term') # MOOSE WARNING: is this the best default?
+    CarrierPolicyType.where(premium_refundable: true).update_all(premium_proration_calculation: 'per_payment_term', premium_proration_refunds_allowed: true)
+    CarrierPolicyType.where(premium_refundable: false).update_all(premium_proration_calculation: 'per_payment_term', premium_proration_refunds_allowed: false)
     remove_column :carrier_policy_types, :premium_refundable
 
     # update BillingStrategy

@@ -7,8 +7,25 @@ class UpgradeOldFinanceData < ActiveRecord::Migration[5.2]
     dictionary = {}
     # Policy Premia
     ArchivedPolicyPremium.all.each do |old|
+      # grab useful boiz
       pq = old.policy_quote
-      pa = pq.policy_application
+      pa = pq&.policy_application
+      caa = pa&.carrier_agency_authorization
+      cpt = ::CarrierPolicyType.where(carrier_id: pa&.carrier_id, policy_type_id: pa&.policy_type_id).take
+      cs = caa.commission_strategy # can't be nil if previous migrations succeeded, so don't bother checking
+      if pq.nil?
+        puts "Policy premium ##{old.id} is insane; it has no PolicyQuote!"
+        raise Exception
+      elsif pa.nil?
+        puts "Policy premium ##{old.id} has insane policy quote with no PolicyApplication!"
+        raise Exception
+      elsif caa.nil?
+        puts "Policy premium ##{old.id} has insane policy application with no CarrierAgencyAuthorization!"
+        raise Exception
+      elsif cpt.nil?
+        puts "Policy premium ##{old.id} has insane policy application with no CarrierPolicyType!"
+        raise Exception
+      end
       # create PolicyPremium
       total_premium = old.base + (old.include_special_premium ? old.special_premium : 0)
       total_tax = old.taxes
@@ -19,8 +36,6 @@ class UpgradeOldFinanceData < ActiveRecord::Migration[5.2]
         billing_strategy_id: old.billing_strategy_id,
         policy_id: old.policy_id,
         commission_strategy_id: pa.carrier_agency_authorization.commission_strategy_id,
-        created_at: old.created_at,
-        updated_at: old.updated_at,
         total_premium: total_premium,
         total_tax: total_tax,
         total_fee: total_fee,
@@ -29,7 +44,9 @@ class UpgradeOldFinanceData < ActiveRecord::Migration[5.2]
         prorated_term_first_moment: !prorated ? nil : pq.policy.effective_date.beginning_of_day,
         prorated_term_last_moment: !prorated ? nil : pq.policy.cancellation_date.end_of_day,
         force_no_refunds: false,
-        error_info: nil
+        error_info: nil,
+        created_at: old.created_at,
+        updated_at: old.updated_at
       }
       premium = PolicyPremium.create!(premium)
       # create PolicyPremiumPaymentTerms (and grab invoice and line item arrays while we're at it)
@@ -46,7 +63,9 @@ class UpgradeOldFinanceData < ActiveRecord::Migration[5.2]
           last_moment: inv.term_last_date.end_of_day,
           time_resolution: 'day',
           default_weight: 1,
-          term_group: nil
+          term_group: nil,
+          created_at: old.created_at,
+          updated_at: old.created_at
         )
       end
       # create new invoices (but no line items yet)
@@ -76,14 +95,101 @@ class UpgradeOldFinanceData < ActiveRecord::Migration[5.2]
           # assocs
           invoiceable: pq,
           payer: pa.primary_user,
-          collector: ::PolicyPremium.default_collector
+          collector: ::PolicyPremium.default_collector,
+          created_at: inv.created_at,
+          updated_at: inv.updated_at
         )
         to_create.callbacks_disabled = true
         to_create.save!
       end
       # create PolicyPremiumItems and PolicyPremiumItemPaymentTerms
+      premium_proration_calculation: 'per_payment_term', premium_proration_refunds_allowed: true
       case pa.carrier_id
         when 1,2,3,4
+          ppi_premium = ::PolicyPremiumItem.create!(
+            policy_premium: premium,
+            title: "Premium Installment",
+            category: "premium",
+            rounding_error_distribution: "first_payment_simple",
+            total_due: old.combined_premium,
+            proration_calculation: cpt.premium_proration_calculation,
+            proration_refunds_allowed: cpt.premium_proration_refunds_allowed,
+            recipient: cs,
+            collector: ::PolicyPremium.default_collector,
+            created_at: old.created_at,
+            updated_at: old.created_at
+          ) unless old.combined_premium == 0
+          invoices.map.with_index do |inv, ind|
+            lis = line_items.select{|li| li.invoice_id == inv.id && (li.category == 'base_premium' || li.category == 'special_premium') }
+            price = lis.inject(0){|sum,li| sum + li.price }
+            received = lis.inject(0){|sum,li| sum + li.total_received }
+            proration_reduction = lis.inject(0){|sum,li| sum + li.proration_reduction }
+            next if price == 0
+            ppipt = ::PolicyPremiumItemPaymentTerm.create!(
+              policy_premium_item: ppi_premium,
+              policy_premium_payment_term: pppts[ind],
+              weight: price,
+              created_at: inv.created_at,
+              updated_at: inv.created_at
+            )
+            li = ::LineItem.create!(chargeable: ppipt, title: "Premium", priced_in: true, analytics_category: "policy_premium", policy_quote: pq,
+              original_total_due: price,
+              total_due: inv.status == 'canceled' ? received : price - proration_reduction,
+              total_reducing: 0,
+              total_received: received,
+              preproration_total_due: price,
+              duplicatable_reduction_total: 0
+              created_at: inv.created_at,
+              updated_at: lis.map{|l| l.updated_at }.max
+            ) # MOOSE WARNING: create LIC (and maybe a LIR) when ready >____>
+            inv.charges.each do |charge|
+              # basic setup
+              sc = ::StripeCharge.new(
+                processed: true,
+                invoice_aware: true,
+                status: charge.status,
+                status_changed_at: charge.updated_at,
+                amount: charge.amount,
+                amount_refunded: charge.amount_refunded, # MOOSE WARNING: ??? + amount_in_queued_refunds ???
+                source: inv.payer.payment_profiles.where(default: true).take&.source_id,
+                customer_stripe_id: inv.payer&.stripe_id,
+                description: nil,
+                metadata: nil,
+                stripe_id: charge.stripe_id,
+                error_info: charge.status == 'failed' ? charge.status_information : nil,
+                client_error: charge.status == 'failed' ? { linear: ['stripe_charge_model.generic_error'] } : nil,
+                created_at: charge.created_at,
+                updated_at: charge.updated_at,
+                invoice_id: new_invoices[ind]
+              )
+              sc.callbacks_disabled = true
+              unless sc.stripe_id.nil?
+                from_stripe = (::Stripe:Charge::retrieve(sc.stripe_id) rescue nil)
+                unless from_stripe.nil?
+                  sc.source = from_stripe['source']&.[]('id')
+                  sc.description = from_stripe['description']
+                  sc.metadata = from_stripe['metadata'].to_h
+                end
+              end
+              # status-based handling
+              case charge.status
+                when 'processing'
+                  puts "Charge ##{charge.id} is still 'processing'; we dare not upgrade until it completes!"
+                  raise Exception
+                when 'failed'
+                  sc.save!
+                when 'succeeded'
+                  sc.save!
+                when 'pending'
+                  sc.save!
+              end
+            end
+            
+            
+          end
+        
+=begin
+# fee calculations disabled since none exist in production
           # fee calculations
           deposit_fees = old.fees.where(amortize: false, per_payment: false, enabled: true).to_a
           amortized_fees = old.fees.where(amortize: true).or(old.fees.where(per_payment: true)).where(enabled: true).to_a
@@ -139,7 +245,7 @@ class UpgradeOldFinanceData < ActiveRecord::Migration[5.2]
               duplicatable_reduction_total: 0
             ) # MOOSE WARNING: create LIC (and maybe a LIR) when ready >____>
           end
-            
+=end
             
             
           

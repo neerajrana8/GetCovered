@@ -2,17 +2,19 @@
 # file: app/models/stripe_charge.rb
 
 class StripeCharge < ApplicationRecord
+  attr_accessor :callbacks_disabled
 
   belongs_to :invoice
   
   has_many :stripe_refunds
   has_many :stripe_disputes
   
-  after_create :attempt_payment
+  after_create :attempt_payment,
+    unless: Proc.new{|sc| sc.callbacks_disabled }
   before_save :set_status_changed_at,
-    if: Proc.new{|sc| sc.will_save_change_to_attribute?('status') }
+    if: Proc.new{|sc| sc.will_save_change_to_attribute?('status') && !sc.callbacks_disabled }
   after_commit :process,
-    if: Proc.new{|sc| !sc.invoice_aware && sc.status != 'processing' && sc.saved_change_to_attribute?('status') }
+    if: Proc.new{|sc| !sc.invoice_aware && sc.status != 'processing' && sc.saved_change_to_attribute?('status') && !sc.callbacks_disabled }
   
   enum status: {
     processing: 0, # must stay 0, it's the DB default
