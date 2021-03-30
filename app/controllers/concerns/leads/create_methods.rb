@@ -38,7 +38,12 @@ module Leads
           begin
             @lead = Lead.create(create_params)
           rescue ActiveRecord::RecordNotUnique
-            @lead = Lead.find_by_identifier(lead_params[:identifier])
+            @lead = Lead.find_by_identifier(lead_params[:email])
+            # @lead = if lead_params[:identifier].present?
+            #   Lead.find_by_identifier(lead_params[:identifier])
+            # elsif lead_params[:email].present?
+            #   Lead.find_by_email(lead_params[:email])
+            # end
           end
 
           Address.create(lead_address_attributes.merge(addressable: @lead)) if lead_address_attributes

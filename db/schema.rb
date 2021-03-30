@@ -546,16 +546,6 @@ ActiveRecord::Schema.define(version: 2021_03_30_140422) do
     t.index ["recordable_type", "recordable_id"], name: "index_histories_on_recordable_type_and_recordable_id"
   end
 
-  create_table "insurable_data", force: :cascade do |t|
-    t.bigint "insurable_id"
-    t.integer "uninsured_units"
-    t.integer "total_units"
-    t.integer "expiring_policies"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["insurable_id"], name: "index_insurable_data_on_insurable_id"
-  end
-
   create_table "insurable_geographical_categories", force: :cascade do |t|
     t.integer "state"
     t.string "counties", array: true
@@ -942,9 +932,9 @@ ActiveRecord::Schema.define(version: 2021_03_30_140422) do
     t.date "last_payment_date"
     t.date "next_payment_date"
     t.bigint "policy_group_id"
+    t.boolean "declined"
     t.string "address"
     t.string "out_of_system_carrier_title"
-    t.boolean "declined"
     t.bigint "policy_id"
     t.integer "cancellation_reason"
     t.integer "branding_profile_id"
@@ -1035,8 +1025,8 @@ ActiveRecord::Schema.define(version: 2021_03_30_140422) do
     t.jsonb "resolver_info"
     t.jsonb "tagging_data"
     t.string "error_message"
-    t.bigint "tag_ids", default: [], null: false, array: true
     t.integer "branding_profile_id"
+    t.bigint "tag_ids", default: [], null: false, array: true
     t.index ["account_id"], name: "index_policy_applications_on_account_id"
     t.index ["agency_id"], name: "index_policy_applications_on_agency_id"
     t.index ["billing_strategy_id"], name: "index_policy_applications_on_billing_strategy_id"
@@ -1160,7 +1150,6 @@ ActiveRecord::Schema.define(version: 2021_03_30_140422) do
     t.bigint "insurable_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.boolean "auto_assign", default: false
     t.index ["insurable_id"], name: "index_policy_insurables_on_insurable_id"
     t.index ["policy_application_id"], name: "index_policy_insurables_on_policy_application_id"
     t.index ["policy_id"], name: "index_policy_insurables_on_policy_id"
