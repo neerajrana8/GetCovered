@@ -6,18 +6,17 @@ module V2
   module StaffSuperAdmin
     class DashboardController < StaffSuperAdminController
       def total_dashboard
-        unit_ids = InsurableType::UNITS_IDS
         @covered = Insurable.where(covered: true).count || 0
         @uncovered = Insurable.where(covered: false).count || 0
         @units = @covered + @uncovered
         community_ids = InsurableType::COMMUNITIES_IDS
         @communities = Insurable.where(insurable_type_id: community_ids).count
-        @total_policy = ::Policy.pluck(:id).count
-        @total_residential_policies = ::Policy.where(policy_type_id: 1).count
-        @total_master_policies = ::Policy.where(policy_type_id: 2).count
-        @total_master_policy_coverages = ::Policy.where(policy_type_id: 3).count
-        @total_commercial_policies = ::Policy.where(policy_type_id: 4).count
-        @total_rent_guarantee_policies = ::Policy.where(policy_type_id: 5).count
+        @total_policy = ::Policy.current.pluck(:id).count
+        @total_residential_policies = ::Policy.current.where(policy_type_id: 1).count
+        @total_master_policies = ::Policy.current.where(policy_type_id: 2).count
+        @total_master_policy_coverages = ::Policy.current.where(policy_type_id: 3).count
+        @total_commercial_policies = ::Policy.current.where(policy_type_id: 4).count
+        @total_rent_guarantee_policies = ::Policy.current.where(policy_type_id: 5).count
         policy_ids = ::Policy.pluck(:id)
         @total_commission = PolicyPremium.where(id: policy_ids).pluck(:total).inject(:+) || 0
         @total_premium = PolicyPremium.where(id: policy_ids).pluck(:total_fees).inject(:+) || 0
