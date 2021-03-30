@@ -35,7 +35,12 @@ module Leads
           create_params.merge({tracking_url_id: tracking_url.id}) if tracking_url.present?
           create_params.merge({agency_id: agency.id}) if agency.present?
 
-          @lead = Lead.create(create_params)
+          begin
+            @lead = Lead.create(create_params)
+          rescue ActiveRecord::RecordNotUnique
+            @lead = Lead.find_by_identifier(lead_params[:identifier])
+          end
+
           Address.create(lead_address_attributes.merge(addressable: @lead)) if lead_address_attributes
           Profile.create(lead_profile_attributes.merge(profileable: @lead)) if lead_profile_attributes
           @klaviyo_helper.lead = @lead
