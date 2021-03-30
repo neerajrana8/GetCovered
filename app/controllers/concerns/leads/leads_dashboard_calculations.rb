@@ -5,9 +5,11 @@ module Leads
     MAX_COUNTS = 9998
 
     def get_filters
-      render json: { campaign_source: TrackingUrl.not_deleted.pluck(:campaign_source).uniq.as_json,
-                     campaign_name: TrackingUrl.not_deleted.pluck(:campaign_name).uniq.as_json,
-                     campaign_medium: TrackingUrl.not_deleted.pluck(:campaign_medium).uniq.as_json }
+      render json: {
+        campaign_source: TrackingUrl.not_deleted.pluck(:campaign_source).uniq.compact.reject { |el| el == '' }.as_json,
+        campaign_name: TrackingUrl.not_deleted.pluck(:campaign_name).uniq.compact.reject { |el| el == '' }.as_json,
+        campaign_medium: TrackingUrl.not_deleted.pluck(:campaign_medium).uniq.compact.reject { |el| el == '' }.as_json
+      }
     end
 
     def supported_filters(called_from_orders = false)
