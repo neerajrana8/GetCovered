@@ -18,9 +18,7 @@ module V2
         else
           render json: { success: false, errors: @user.errors }, status: :unprocessable_entity
         end
-
       end
-
 
       def update
         if @user.update_as(current_user, update_params)
@@ -60,7 +58,8 @@ module V2
           profile_attributes: %i[
             birth_date contact_email contact_phone first_name language
             job_title last_name middle_name suffix title gender salutation
-          ]
+          ],
+          address_attributes: %i[city country state street_name street_two zip_code]
         )
       end
     end
