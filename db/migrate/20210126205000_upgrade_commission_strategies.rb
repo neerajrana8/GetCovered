@@ -1,9 +1,5 @@
 class UpgradeCommissionStrategies< ActiveRecord::Migration[5.2]
   def up
-  
-    # update CarrierAgencyAuthorization
-    add_reference :carrier_agency_authorizations, :commission_strategy, null: true # WARNING: set null: false in a second migration after data entry
-    
     # upgrade CommissionStrategy
     rename_table :commission_strategies, :archived_commission_strategies
     
@@ -14,12 +10,20 @@ class UpgradeCommissionStrategies< ActiveRecord::Migration[5.2]
       t.references    :recipient, polymorphic: true                     # He who receives the money
       t.references    :commission_strategy, optional: true              # The parent commission strategy
     end
+    
+    # add a CarrierAgencyPolicyType model to store the CS
+    create_table :carrier_agency_policy_types do |t|
+      t.references    :carrier
+      t.references    :agency
+      t.references    :policy_type
+      t.references    :commission_strategy, null: true                  # Temporarily null: true for data entry
+    end
   
   end
   
   def down
+    drop_table :carrier_agency_policy_types
     drop_table :commission_strategies
     rename_table :archived_commission_strategies, :commission_strategies
-    remove_reference :carrier_agency_authorizations, :commission_strategy
   end
 end
