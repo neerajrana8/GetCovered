@@ -17,6 +17,7 @@ end
 
 if staff.organizable_type == 'Account'
   json.account staff&.organizable&.title
+  json.agency  staff&.organizable&.agency&.title
 end
 
 if staff.organizable_type == 'Agency'
