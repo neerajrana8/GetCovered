@@ -75,17 +75,17 @@ module V2
         {
           created_at: %i[scalar array interval],
           email: %i[scalar like],
-          agency_id: [:scalar],
-          status: [:scalar],
+          agency_id: %i[scalar array],
+          status: %i[scalar array],
           archived: [:scalar],
           last_visit: %i[interval scalar interval],
           tracking_url: {
-            campaign_source: [:scalar],
-            campaign_medium: [:scalar],
-            campaign_name: [:scalar]
+            campaign_source: %i[scalar array],
+            campaign_medium: %i[scalar array],
+            campaign_name: %i[scalar array]
           },
           lead_events: {
-            policy_type: [:scalar]
+            policy_type: %i[scalar array]
           }
         }
       end

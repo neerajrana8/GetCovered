@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_02_25_000019) do
+ActiveRecord::Schema.define(version: 2021_03_30_140422) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
@@ -748,6 +748,7 @@ ActiveRecord::Schema.define(version: 2021_02_25_000019) do
     t.bigint "agency_id"
     t.bigint "policy_type_ids", default: [], null: false, array: true
     t.boolean "preferred_ho4", default: false, null: false
+    t.boolean "confirmed", default: true, null: false
     t.index ["account_id"], name: "index_insurables_on_account_id"
     t.index ["agency_id"], name: "index_insurables_on_agency_id"
     t.index ["insurable_id"], name: "index_insurables_on_insurable_id"
@@ -823,6 +824,7 @@ ActiveRecord::Schema.define(version: 2021_02_25_000019) do
     t.integer "agency_id"
     t.boolean "archived", default: false
     t.index ["email"], name: "index_leads_on_email"
+    t.index ["identifier"], name: "index_leads_on_identifier", unique: true
     t.index ["user_id"], name: "index_leads_on_user_id"
   end
 
@@ -1178,7 +1180,11 @@ ActiveRecord::Schema.define(version: 2021_02_25_000019) do
     t.jsonb "tagging_data"
     t.string "error_message"
     t.integer "branding_profile_id"
+<<<<<<< HEAD
     t.string "internal_error_message"
+=======
+    t.bigint "tag_ids", default: [], null: false, array: true
+>>>>>>> master
     t.index ["account_id"], name: "index_policy_applications_on_account_id"
     t.index ["agency_id"], name: "index_policy_applications_on_agency_id"
     t.index ["billing_strategy_id"], name: "index_policy_applications_on_billing_strategy_id"
@@ -1186,6 +1192,7 @@ ActiveRecord::Schema.define(version: 2021_02_25_000019) do
     t.index ["policy_application_group_id"], name: "index_policy_applications_on_policy_application_group_id"
     t.index ["policy_id"], name: "index_policy_applications_on_policy_id"
     t.index ["policy_type_id"], name: "index_policy_applications_on_policy_type_id"
+    t.index ["tag_ids"], name: "policy_application_tag_ids_index", using: :gin
   end
 
   create_table "policy_coverages", force: :cascade do |t|
@@ -1583,6 +1590,7 @@ ActiveRecord::Schema.define(version: 2021_02_25_000019) do
     t.index ["uid", "provider"], name: "index_staffs_on_uid_and_provider", unique: true
   end
 
+<<<<<<< HEAD
   create_table "stripe_charges", force: :cascade do |t|
     t.boolean "processed", default: false, null: false
     t.boolean "invoice_aware", default: false, null: false
@@ -1619,6 +1627,14 @@ ActiveRecord::Schema.define(version: 2021_02_25_000019) do
     t.bigint "stripe_charge_id"
     t.index ["refund_id"], name: "index_stripe_refunds_on_refund_id"
     t.index ["stripe_charge_id"], name: "index_stripe_refunds_on_stripe_charge_id"
+=======
+  create_table "tags", force: :cascade do |t|
+    t.string "title"
+    t.text "description"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["title"], name: "index_tags_on_title", unique: true
+>>>>>>> master
   end
 
   create_table "tracking_urls", force: :cascade do |t|

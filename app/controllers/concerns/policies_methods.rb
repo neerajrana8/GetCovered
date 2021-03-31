@@ -190,7 +190,7 @@ module PoliciesMethods
         },
         number: %i[scalar like],
         policy_type_id: %i[scalar array],
-        status: %i[scalar like],
+        status: %i[scalar like array],
         created_at: %i[scalar like],
         updated_at: %i[scalar like],
         policy_in_system: %i[scalar like],
@@ -203,7 +203,7 @@ module PoliciesMethods
                 full_name: %i[scalar like],
             }
         },
-        agency_id: %i[scalar]
+        agency_id: %i[scalar array]
     }
   end
 

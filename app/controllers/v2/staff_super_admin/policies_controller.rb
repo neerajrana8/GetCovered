@@ -13,7 +13,7 @@ module V2
       before_action :set_substrate, only: [:index]
 
       def index
-        super(:@policies, @substrate)
+        super(:@policies, @substrate, :agency, :account, :primary_user, :primary_insurable, :carrier, :policy_type)
       end
 
       def show; end
@@ -25,7 +25,7 @@ module V2
 
       def get_leads
         @leads = [@policy.primary_user.lead]
-        @site_visits=@leads.last.lead_events.order("DATE(created_at)").group("DATE(created_at)").count.keys.size
+        @site_visits = @leads.last.lead_events.order("DATE(created_at)").group("DATE(created_at)").count.keys.size
         render 'v2/shared/leads/index'
       end
 

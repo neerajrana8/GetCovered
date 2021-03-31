@@ -20,14 +20,14 @@ require 'socket'
 #
 
 @get_covered = Agency.new(
-	title: "Get Covered", 
-	enabled: true, 
-	whitelabel: true, 
-	tos_accepted: true, 
-	tos_accepted_at: Time.current, 
-	tos_acceptance_ip: nil, 
-	verified: false, 
-	stripe_id: nil, 
+	title: "Get Covered",
+	enabled: true,
+	whitelabel: true,
+	tos_accepted: true,
+	tos_accepted_at: Time.current,
+	tos_acceptance_ip: nil,
+	verified: false,
+	stripe_id: nil,
 	master_agency: true,
 	addresses_attributes: [
 		{
@@ -40,36 +40,37 @@ require 'socket'
 			zip_code: "10013",
 			primary: true
 		}
-	]	  
+	]
 )
 
 if @get_covered.save
   site_staff = [
-    { email: "dylan@getcoveredllc.com", password: 'TestingPassword1234', password_confirmation: 'TestingPassword1234', role: 'agent', enabled: true, organizable: @get_covered, 
+    { email: "dylan@getcoveredllc.com", password: 'TestingPassword1234', password_confirmation: 'TestingPassword1234', role: 'agent', enabled: true, organizable: @get_covered,
       profile_attributes: { first_name: 'Dylan', last_name: 'Gaines', job_title: 'Chief Technical Officer', birth_date: '04-01-1989'.to_date }},
-    { email: "brandon@getcoveredllc.com", password: 'TestingPassword1234', password_confirmation: 'TestingPassword1234', role: 'agent', enabled: true, organizable: @get_covered, 
+    { email: "brandon@getcoveredllc.com", password: 'TestingPassword1234', password_confirmation: 'TestingPassword1234', role: 'agent', enabled: true, organizable: @get_covered,
       profile_attributes: { first_name: 'Brandon', last_name: 'Tobman', job_title: 'Chief Executive Officer', birth_date: '18-11-1983'.to_date }},
-    { email: "baha@getcoveredllc.com", password: 'TestingPassword1234', password_confirmation: 'TestingPassword1234', role: 'agent', enabled: true, organizable: @get_covered, 
+    { email: "baha@getcoveredllc.com", password: 'TestingPassword1234', password_confirmation: 'TestingPassword1234', role: 'agent', enabled: true, organizable: @get_covered,
       profile_attributes: { first_name: 'Baha', last_name: 'Sagadiev'}},
     { email: 'super_admin@getcovered.com', password: 'Test1234', password_confirmation: 'Test1234', role: 'super_admin', enabled: true,
 			profile_attributes: { first_name: 'Super', last_name: 'Admin', job_title: 'Super Admin', birth_date: '01-01-0001'.to_date }},
 		{ email: 'agent@getcovered.com', password: 'Test1234', password_confirmation: 'Test1234', role: 'agent', enabled: true, organizable: @get_covered,
 			profile_attributes: { first_name: 'Agent', last_name: 'Agent', job_title: 'Agent' }}
 	]
-  
+
   site_staff.each do |staff|
     SeedFunctions.adduser(Staff, staff)
   end
 
-  @get_covered.carriers << @qbe 
+  @get_covered.carriers << @qbe
   @get_covered.carriers << @qbe_specialty
-  @get_covered.carriers << @crum  
+  @get_covered.carriers << @crum
   @get_covered.carriers << @pensio
   @get_covered.carriers << @msi unless ENV['skip_msi']
-  
+
   CarrierAgency.where(agency_id: @get_covered.id, carrier_id: @qbe.id).take
                .update(external_carrier_id: "GETCVR")
 
+<<<<<<< HEAD
   gc_commission_strategies = {
     @qbe => 30,
     @crum => 15,
@@ -133,96 +134,187 @@ if @get_covered.save
   
   service_fee = { 
 		title: "Service Fee", 
+=======
+  # @get_covered.carriers.each do |carrier|
+  # 	51.times do |state|
+  #
+  # 		@policy_type = nil
+  # 		@fee_amount = nil
+  #
+  # 		if carrier.id == 1
+  # 			@policy_type = PolicyType.find(1)
+  # 			@fee_amount = 2500
+  # 		elsif carrier.id == 2
+  # 			@policy_type = PolicyType.find(2)
+  # 		elsif carrier.id == 3
+  # 			@policy_type = PolicyType.find(4)
+  # 			@fee_amount = 2500
+  # 		elsif carrier.id == 5 # MOOSE WARNING: testing fee
+  # 			@policy_type = PolicyType.find(1)
+  # 			@fee_amount = 2500
+  # 		end
+  #
+  # 	  available = state == 0 || state == 11 ? false : true # we dont do business in Alaska (0) and Hawaii (11)
+  # 	  authorization = CarrierAgencyAuthorization.create(state: state,
+  # 	  																									available: available,
+  # 	  																									carrier_agency: CarrierAgency.where(carrier: carrier, agency: @get_covered).take,
+  # 	  																									policy_type: @policy_type)
+  # 	  Fee.create(title: "Service Fee",
+  # 	  					 type: :MISC,
+  # 	  					 per_payment: false,
+  # 	  					 amortize: false,
+  # 	  					 amount: @fee_amount,
+  # 	  					 amount_type: :FLAT,
+  # 	  					 enabled: true,
+  # 	  					 assignable: authorization,
+  # 	  					 ownerable: @get_covered) unless @fee_amount.nil?
+  # 	end
+  # end
+
+  service_fee = {
+		title: "Service Fee",
+>>>>>>> master
 		type: :MISC,
-		amount_type: "PERCENTAGE", 
+		amount_type: "PERCENTAGE",
 		amortize: true,
-		amount: 5, 
-		enabled: true, 
-		ownerable: @get_covered 
+		amount: 5,
+		enabled: true,
+		ownerable: @get_covered
 	}
 
-  @get_covered.billing_strategies.create!(title: 'Annually', enabled: true, carrier: @qbe, 
+  @get_covered.billing_strategies.create!(title: 'Annually', enabled: true, carrier: @qbe,
                                     				policy_type: PolicyType.find(1), carrier_code: "FL",
-                                            new_business: { payments: [100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
-                                                            payments_per_term: 1, remainder_added_to_deposit: true }, 
-                                    				fees_attributes: [service_fee])
-                                    
-  @get_covered.billing_strategies.create!(title: 'Bi-Annually', enabled: true,  carrier_code: "SA",
-  		                                      new_business: { payments: [50, 0, 0, 0, 0, 0, 50, 0, 0, 0, 0, 0], 
-  		                                                      payments_per_term: 2, remainder_added_to_deposit: true },
-  		                                      carrier: @qbe, policy_type: PolicyType.find(1), 
-                                    				fees_attributes: [service_fee])
-                                    
-  @get_covered.billing_strategies.create!(title: 'Quarterly', enabled: true,  carrier_code: "QT",
-  		                                      new_business: { payments: [25, 0, 0, 25, 0, 0, 25, 0, 0, 25, 0, 0], 
-  		                                                      payments_per_term: 4, remainder_added_to_deposit: true },
-  		                                      carrier: @qbe, policy_type: PolicyType.find(1), 
-                                    				fees_attributes: [service_fee])
-                                    
-  @get_covered.billing_strategies.create!(title: 'Monthly', enabled: true, carrier_code: "QBE_MoRe",
-  		                                      new_business: { payments: [22.01, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09], 
-  		                                                      payments_per_term: 12, remainder_added_to_deposit: true },
-  		                                      renewal: { payments: [8.37, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33], 
-  		                                                      payments_per_term: 12, remainder_added_to_deposit: true },
-  		                                      carrier: @qbe, policy_type: PolicyType.find(1), 
+                                            new_business: { payments: [100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                                                            payments_per_term: 1, remainder_added_to_deposit: true },
                                     				fees_attributes: [service_fee])
 
+  @get_covered.billing_strategies.create!(title: 'Bi-Annually', enabled: true,  carrier_code: "SA",
+  		                                      new_business: { payments: [50, 0, 0, 0, 0, 0, 50, 0, 0, 0, 0, 0],
+  		                                                      payments_per_term: 2, remainder_added_to_deposit: true },
+  		                                      carrier: @qbe, policy_type: PolicyType.find(1),
+                                    				fees_attributes: [service_fee])
+
+  @get_covered.billing_strategies.create!(title: 'Quarterly', enabled: true,  carrier_code: "QT",
+  		                                      new_business: { payments: [25, 0, 0, 25, 0, 0, 25, 0, 0, 25, 0, 0],
+  		                                                      payments_per_term: 4, remainder_added_to_deposit: true },
+  		                                      carrier: @qbe, policy_type: PolicyType.find(1),
+                                    				fees_attributes: [service_fee])
+
+  @get_covered.billing_strategies.create!(title: 'Monthly', enabled: true, carrier_code: "QBE_MoRe",
+  		                                      new_business: { payments: [22.01, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09],
+  		                                                      payments_per_term: 12, remainder_added_to_deposit: true },
+  		                                      renewal: { payments: [8.37, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33],
+  		                                                      payments_per_term: 12, remainder_added_to_deposit: true },
+  		                                      carrier: @qbe, policy_type: PolicyType.find(1),
+                                    				fees_attributes: [service_fee])
+
+<<<<<<< HEAD
+=======
+  # @get_covered.commission_strategies.create!(title: 'Get Covered / QBE Residential Commission',
+  # 																						carrier: Carrier.find(1),
+  # 																						policy_type: PolicyType.find(1),
+  # 																						amount: 30,
+  # 																						type: 0,
+  # 																						house_override: 0)
+  # @get_covered.commission_strategies.create!(title: 'Get Covered / QBE Producer Commission',
+  # 																						carrier: Carrier.find(1),
+  # 																						policy_type: PolicyType.find(1),
+  # 																						amount: 5,
+  # 																						type: 0,
+  # 																						house_override: 0)
+>>>>>>> master
   ##
   # Crum / Get Covered Billing & Comission Strategies
-                                    
+
   @get_covered.billing_strategies.create!(title: 'Monthly', enabled: true,  carrier_code: "M09",
-		                                      new_business: { payments: [25.03, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 0, 0], 
+		                                      new_business: { payments: [25.03, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 0, 0],
 		                                                      payments_per_term: 12, remainder_added_to_deposit: true },
-		                                      renewal: { payments: [8.37, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33], 
+		                                      renewal: { payments: [8.37, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33],
 		                                                      payments_per_term: 12, remainder_added_to_deposit: true },
-		                                      carrier: @crum, policy_type: PolicyType.find(4), 
+		                                      carrier: @crum, policy_type: PolicyType.find(4),
                                   				fees_attributes: [service_fee])
-                                    
+
   @get_covered.billing_strategies.create!(title: 'Quarterly', enabled: true,  carrier_code: "F",
-		                                      new_business: { payments: [40, 0, 0, 20, 0, 0, 20, 0, 0, 20, 0, 0], 
+		                                      new_business: { payments: [40, 0, 0, 20, 0, 0, 20, 0, 0, 20, 0, 0],
 		                                                      payments_per_term: 4, remainder_added_to_deposit: true },
-		                                      carrier: @crum, policy_type: PolicyType.find(4), 
+		                                      carrier: @crum, policy_type: PolicyType.find(4),
                                   				fees_attributes: [service_fee])
-                                    
+
   @get_covered.billing_strategies.create!(title: 'Annually', enabled: true,  carrier_code: "A",
-		                                      new_business: { payments: [100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
+		                                      new_business: { payments: [100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
 		                                                      payments_per_term: 1, remainder_added_to_deposit: true },
-		                                      carrier: @crum, policy_type: PolicyType.find(4), 
+		                                      carrier: @crum, policy_type: PolicyType.find(4),
                                   				fees_attributes: [service_fee])
+<<<<<<< HEAD
                                     
+=======
+
+  # @get_covered.commission_strategies.create!(title: 'Get Covered / Crum Commercial Commission',
+	# 																					 carrier: Carrier.find(3),
+	# 																					 policy_type: PolicyType.find(4),
+	# 																					 amount: 15,
+	# 																					 type: 0,
+	# 																					 house_override: 0)
+  # @get_covered.commission_strategies.create!(title: 'Get Covered / Crum Producer Commission',
+	# 																					 carrier: Carrier.find(3),
+	# 																					 policy_type: PolicyType.find(4),
+	# 																					 amount: 3,
+	# 																					 type: 0,
+	# 																					 house_override: 0)
+
+
+
+>>>>>>> master
   @get_covered.billing_strategies.create!(title: 'Monthly', enabled: true, carrier_code: nil,
-  		                                      new_business: { payments: [8.37, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33], 
+  		                                      new_business: { payments: [8.37, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33],
   		                                                      payments_per_term: 12, remainder_added_to_deposit: true },
-  		                                      carrier: @pensio, policy_type: PolicyType.find(5), 
-                                    				fees_attributes: [service_fee]) 
-                                            
+  		                                      carrier: @pensio, policy_type: PolicyType.find(5),
+                                    				fees_attributes: [service_fee])
+
   # MSI / Get Covered Billing & Commission Strategies
   unless ENV['skip_msi']
-    @get_covered.billing_strategies.create!(title: 'Annually', enabled: true, carrier: @msi, 
+    @get_covered.billing_strategies.create!(title: 'Annually', enabled: true, carrier: @msi,
                                               policy_type: PolicyType.find(1), carrier_code: "Annual",
-                                              new_business: { payments: [100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
-                                                              payments_per_term: 1, remainder_added_to_deposit: true }, 
+                                              new_business: { payments: [100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                                                              payments_per_term: 1, remainder_added_to_deposit: true },
                                               fees_attributes: [service_fee])
-                                      
+
     @get_covered.billing_strategies.create!(title: 'Bi-Annually', enabled: true,  carrier_code: "SemiAnnual",
-                                              new_business: { payments: [100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], #[50, 0, 0, 0, 0, 0, 50, 0, 0, 0, 0, 0], 
+                                              new_business: { payments: [100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], #[50, 0, 0, 0, 0, 0, 50, 0, 0, 0, 0, 0],
                                                               payments_per_term: 2, remainder_added_to_deposit: true },
-                                              carrier: @msi, policy_type: PolicyType.find(1), 
+                                              carrier: @msi, policy_type: PolicyType.find(1),
                                               fees_attributes: [service_fee])
-                                      
+
     @get_covered.billing_strategies.create!(title: 'Quarterly', enabled: true,  carrier_code: "Quarterly",
-                                              new_business: { payments: [100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], #[25, 0, 0, 25, 0, 0, 25, 0, 0, 25, 0, 0], 
+                                              new_business: { payments: [100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], #[25, 0, 0, 25, 0, 0, 25, 0, 0, 25, 0, 0],
                                                               payments_per_term: 4, remainder_added_to_deposit: true },
-                                              carrier: @msi, policy_type: PolicyType.find(1), 
+                                              carrier: @msi, policy_type: PolicyType.find(1),
                                               fees_attributes: [service_fee])
     # MOOSE WARNING: docs say 20% down payment and 10 monthly payments... wut sense dis make?
     @get_covered.billing_strategies.create!(title: 'Monthly', enabled: true, carrier_code: "Monthly",
-                                              new_business: { payments: [100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], #[22.01, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09], 
+                                              new_business: { payments: [100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], #[22.01, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09],
                                                               payments_per_term: 12, remainder_added_to_deposit: true },
-                                              renewal: { payments: [100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], #[8.37, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33], 
+                                              renewal: { payments: [100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], #[8.37, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33],
                                                               payments_per_term: 12, remainder_added_to_deposit: true },
-                                              carrier: @msi, policy_type: PolicyType.find(1), 
+                                              carrier: @msi, policy_type: PolicyType.find(1),
                                               fees_attributes: [service_fee])
+<<<<<<< HEAD
+=======
+
+    # MOOSE WARNING: these are just copies of the QBE commission strategies and likely need to be changed
+    # @get_covered.commission_strategies.create!(title: 'Get Covered / MSI Residential Commission',
+    #                                             carrier: @msi,
+    #                                             policy_type: PolicyType.find(1),
+    #                                             amount: 30,
+    #                                             type: 0,
+    #                                             house_override: 0)
+    # @get_covered.commission_strategies.create!(title: 'Get Covered / MSI Producer Commission',
+    #                                             carrier: @msi,
+    #                                             policy_type: PolicyType.find(1),
+    #                                             amount: 5,
+    #                                             type: 0,
+    #                                             house_override: 0)
+>>>>>>> master
   end
 else
   pp @get_covered.errors
@@ -234,14 +326,14 @@ end
 
 @cambridge_agencies = [
   {
-  	title: "Cambridge QBE", 
-  	enabled: true, 
-  	whitelabel: true, 
-  	tos_accepted: true, 
-  	tos_accepted_at: Time.current, 
-  	tos_acceptance_ip: nil, 
-  	verified: false, 
-  	stripe_id: nil, 
+  	title: "Cambridge QBE",
+  	enabled: true,
+  	whitelabel: true,
+  	tos_accepted: true,
+  	tos_accepted_at: Time.current,
+  	tos_acceptance_ip: nil,
+  	verified: false,
+  	stripe_id: nil,
   	master_agency: false,
   	addresses_attributes: [
   		{
@@ -257,14 +349,14 @@ end
   	]
 	},
 	{
-  	title: "Cambridge GC", 
-  	enabled: true, 
-  	whitelabel: true, 
-  	tos_accepted: true, 
-  	tos_accepted_at: Time.current, 
-  	tos_acceptance_ip: nil, 
-  	verified: false, 
-  	stripe_id: nil, 
+  	title: "Cambridge GC",
+  	enabled: true,
+  	whitelabel: true,
+  	tos_accepted: true,
+  	tos_accepted_at: Time.current,
+  	tos_acceptance_ip: nil,
+  	verified: false,
+  	stripe_id: nil,
   	master_agency: false,
   	addresses_attributes: [
   		{
@@ -278,36 +370,37 @@ end
   			primary: true
   		}
   	]
-  	
-	}  
+
+	}
 ]
 
 @cambridge_agencies.each do |ca|
   cambridge_agency = Agency.new(ca)
   if cambridge_agency.save
-    
+
     site_staff = [
-      { email: "dylan@#{ cambridge_agency.slug }.com", password: 'TestingPassword1234', password_confirmation: 'TestingPassword1234', role: 'agent', enabled: true, organizable: cambridge_agency, 
+      { email: "dylan@#{ cambridge_agency.slug }.com", password: 'TestingPassword1234', password_confirmation: 'TestingPassword1234', role: 'agent', enabled: true, organizable: cambridge_agency,
         profile_attributes: { first_name: 'Dylan', last_name: 'Gaines', job_title: 'Chief Technical Officer', birth_date: '04-01-1989'.to_date }},
-      { email: "brandon@#{ cambridge_agency.slug }.com", password: 'TestingPassword1234', password_confirmation: 'TestingPassword1234', role: 'agent', enabled: true, organizable: cambridge_agency, 
+      { email: "brandon@#{ cambridge_agency.slug }.com", password: 'TestingPassword1234', password_confirmation: 'TestingPassword1234', role: 'agent', enabled: true, organizable: cambridge_agency,
         profile_attributes: { first_name: 'Brandon', last_name: 'Tobman', job_title: 'Chief Executive Officer', birth_date: '18-11-1983'.to_date }},
-      { email: "baha@#{ cambridge_agency.slug }.com", password: 'TestingPassword1234', password_confirmation: 'TestingPassword1234', role: 'agent', enabled: true, organizable: cambridge_agency, 
+      { email: "baha@#{ cambridge_agency.slug }.com", password: 'TestingPassword1234', password_confirmation: 'TestingPassword1234', role: 'agent', enabled: true, organizable: cambridge_agency,
         profile_attributes: { first_name: 'Baha', last_name: 'Sagadiev'}}
     ]
-    
+
     site_staff.each do |staff|
       SeedFunctions.adduser(Staff, staff)
     end
-  
-    cambridge_agency.carriers << @qbe 
+
+    cambridge_agency.carriers << @qbe
     cambridge_agency.carriers << @qbe_specialty
-    
+
     qbe_agency_id = cambridge_agency.title == "Cambridge QBE" ? "CAMBQBE" : "CAMBGC"
-    
+
     CarrierAgency.where(agency_id: cambridge_agency.id, carrier_id: @qbe.id).take
                  .update(external_carrier_id: qbe_agency_id)
-  
+
     cambridge_agency.carriers.each do |carrier|
+<<<<<<< HEAD
 
       commission_strategy = ::CommissionStrategy.create!(
         title: "#{cambridge_agency.title} / #{carrier.title} Commission",
@@ -368,6 +461,66 @@ end
       		                                                      payments_per_term: 12, remainder_added_to_deposit: true },
       		                                      carrier: @qbe, policy_type: PolicyType.find(1))    
        
+=======
+    	# 51.times do |state|
+    	#
+    	# 	@policy_type = nil
+    	# 	@fee_amount = nil
+    	#
+    	# 	if carrier.id == 1
+    	# 		@policy_type = PolicyType.find(1)
+    	# 		@fee_amount = 4500
+    	# 	elsif carrier.id == 2
+    	# 		@policy_type = PolicyType.find(2)
+    	# 	end
+    	#
+    	#   available = state == 0 || state == 11 ? false : true # we dont do business in Alaska (0) and Hawaii (11)
+    	#   authorization = CarrierAgencyAuthorization.create(state: state,
+    	#   																									available: available,
+    	#   																									carrier_agency: CarrierAgency.where(carrier: carrier, agency: cambridge_agency).take,
+    	#   																									policy_type: @policy_type)
+    	#   Fee.create(title: "Service Fee",
+    	#   					 type: :MISC,
+    	#   					 per_payment: false,
+    	#   					 amortize: false,
+    	#   					 amount: @fee_amount,
+    	#   					 amount_type: :FLAT,
+    	#   					 enabled: true,
+    	#   					 assignable: authorization,
+    	#   					 ownerable: cambridge_agency) unless @fee_amount.nil?
+    	# end
+    end
+
+    # cambridge_agency.billing_strategies.create!(title: 'Annually', enabled: true, carrier: @qbe, carrier_code: "FL",
+    #   		                                      new_business: { payments: [100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    #   		                                                      payments_per_term: 1, remainder_added_to_deposit: true },
+    #                                   				  policy_type: PolicyType.find(1))
+		#
+    # cambridge_agency.billing_strategies.create!(title: 'Bi-Annually', enabled: true, carrier_code: "SA",
+    #   		                                      new_business: { payments: [50, 0, 0, 0, 0, 0, 50, 0, 0, 0, 0, 0],
+    #   		                                                      payments_per_term: 2, remainder_added_to_deposit: true },
+    #   		                                      carrier: @qbe, policy_type: PolicyType.find(1))
+		#
+    # cambridge_agency.billing_strategies.create!(title: 'Quarterly', enabled: true, carrier_code: "QT",
+    #   		                                      new_business: { payments: [25, 0, 0, 25, 0, 0, 25, 0, 0, 25, 0, 0],
+    #   		                                                      payments_per_term: 4, remainder_added_to_deposit: true },
+    #   		                                      carrier: @qbe, policy_type: PolicyType.find(1))
+		#
+    # cambridge_agency.billing_strategies.create!(title: 'Monthly', enabled: true, carrier_code: "QBE_MoRe",
+    #   		                                      new_business: { payments: [22.01, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09],
+    #   		                                                      payments_per_term: 12, remainder_added_to_deposit: true },
+    #   		                                      renewal: { payments: [8.37, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33],
+    #   		                                                      payments_per_term: 12, remainder_added_to_deposit: true },
+    #   		                                      carrier: @qbe, policy_type: PolicyType.find(1))
+
+    # cambridge_agency.commission_strategies.create!(title: "#{ cambridge_agency.title } / QBE Residential Commission",
+    #   																						 carrier: @qbe,
+    #   																						 policy_type: PolicyType.find(1),
+    #   																						 amount: 25,
+    #   																						 type: 0,
+    #   																						 commission_strategy_id: 2)
+
+>>>>>>> master
   else
     pp cambridge_agency.errors
   end
@@ -380,14 +533,14 @@ end
 
 @get_covered_agencies = [
   {
-  	title: "Get Covered 002", 
-  	enabled: true, 
-  	whitelabel: true, 
-  	tos_accepted: true, 
-  	tos_accepted_at: Time.current, 
-  	tos_acceptance_ip: nil, 
-  	verified: false, 
-  	stripe_id: nil, 
+  	title: "Get Covered 002",
+  	enabled: true,
+  	whitelabel: true,
+  	tos_accepted: true,
+  	tos_accepted_at: Time.current,
+  	tos_acceptance_ip: nil,
+  	verified: false,
+  	stripe_id: nil,
   	master_agency: false,
     agency: @get_covered,
   	addresses_attributes: [
@@ -404,14 +557,14 @@ end
   	]
 	},
 	{
-  	title: "Get Covered 011", 
-  	enabled: true, 
-  	whitelabel: true, 
-  	tos_accepted: true, 
-  	tos_accepted_at: Time.current, 
-  	tos_acceptance_ip: nil, 
-  	verified: false, 
-  	stripe_id: nil, 
+  	title: "Get Covered 011",
+  	enabled: true,
+  	whitelabel: true,
+  	tos_accepted: true,
+  	tos_accepted_at: Time.current,
+  	tos_acceptance_ip: nil,
+  	verified: false,
+  	stripe_id: nil,
   	master_agency: false,
     agency: @get_covered,
   	addresses_attributes: [
@@ -426,34 +579,35 @@ end
   			primary: true
   		}
   	]
-  	
-	}  
+
+	}
 ]
 
 @get_covered_agencies.each do |gca|
   gc_qbesub_agency = Agency.new(gca)
   if gc_qbesub_agency.save
-    
+
     site_staff = [
-      { email: "dylan@#{ gc_qbesub_agency.slug }.com", password: 'TestingPassword1234', password_confirmation: 'TestingPassword1234', role: 'agent', enabled: true, organizable: gc_qbesub_agency, 
+      { email: "dylan@#{ gc_qbesub_agency.slug }.com", password: 'TestingPassword1234', password_confirmation: 'TestingPassword1234', role: 'agent', enabled: true, organizable: gc_qbesub_agency,
         profile_attributes: { first_name: 'Dylan', last_name: 'Gaines', job_title: 'Chief Technical Officer', birth_date: '04-01-1989'.to_date }},
-      { email: "brandon@#{ gc_qbesub_agency.slug }.com", password: 'TestingPassword1234', password_confirmation: 'TestingPassword1234', role: 'agent', enabled: true, organizable: gc_qbesub_agency, 
+      { email: "brandon@#{ gc_qbesub_agency.slug }.com", password: 'TestingPassword1234', password_confirmation: 'TestingPassword1234', role: 'agent', enabled: true, organizable: gc_qbesub_agency,
         profile_attributes: { first_name: 'Brandon', last_name: 'Tobman', job_title: 'Chief Executive Officer', birth_date: '18-11-1983'.to_date }},
-      { email: "baha@#{ gc_qbesub_agency.slug }.com", password: 'TestingPassword1234', password_confirmation: 'TestingPassword1234', role: 'agent', enabled: true, organizable: gc_qbesub_agency, 
+      { email: "baha@#{ gc_qbesub_agency.slug }.com", password: 'TestingPassword1234', password_confirmation: 'TestingPassword1234', role: 'agent', enabled: true, organizable: gc_qbesub_agency,
         profile_attributes: { first_name: 'Baha', last_name: 'Sagadiev'}}
     ]
-    
+
     site_staff.each do |staff|
       SeedFunctions.adduser(Staff, staff)
     end
-  
-    gc_qbesub_agency.carriers << @qbe 
+
+    gc_qbesub_agency.carriers << @qbe
     gc_qbesub_agency.carriers << @qbe_specialty
-    
+
     qbe_agency_id = gc_qbesub_agency.title == "Get Covered 002" ? "Get002" : "Get011"
-    
+
     CarrierAgency.where(agency_id: gc_qbesub_agency.id, carrier_id: @qbe.id).take
                  .update(external_carrier_id: qbe_agency_id)
+<<<<<<< HEAD
   
     gc_qbesub_agency.carriers.each do |carrier|
 
@@ -517,6 +671,68 @@ end
       		                                                      payments_per_term: 12, remainder_added_to_deposit: true },
       		                                      carrier: @qbe, policy_type: PolicyType.find(1))
        
+=======
+
+    # gc_qbesub_agency.carriers.each do |carrier|
+    # 	51.times do |state|
+    #
+    # 		@policy_type = nil
+    # 		@fee_amount = nil
+    #
+    # 		if carrier.id == 1
+    # 			@policy_type = PolicyType.find(1)
+    # 			@fee_amount = 4500
+    # 		elsif carrier.id == 2
+    # 			@policy_type = PolicyType.find(2)
+    # 		end
+    #
+    # 	  available = state == 0 || state == 11 ? false : true # we dont do business in Alaska (0) and Hawaii (11)
+    # 	  authorization = CarrierAgencyAuthorization.create(state: state,
+    # 	  																									available: available,
+    # 	  																									carrier_agency: CarrierAgency.where(carrier: carrier, agency: gc_qbesub_agency).take,
+    # 	  																									policy_type: @policy_type)
+    # 	  Fee.create(title: "Service Fee",
+    # 	  					 type: :MISC,
+    # 	  					 per_payment: false,
+    # 	  					 amortize: false,
+    # 	  					 amount: @fee_amount,
+    # 	  					 amount_type: :FLAT,
+    # 	  					 enabled: true,
+    # 	  					 assignable: authorization,
+    # 	  					 ownerable: gc_qbesub_agency) unless @fee_amount.nil?
+    # 	end
+    # end
+
+    # gc_qbesub_agency.billing_strategies.create!(title: 'Annually', enabled: true, carrier: @qbe,
+    #   		                                      new_business: { payments: [100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    #   		                                                      payments_per_term: 1, remainder_added_to_deposit: true },
+    #                                   				   carrier_code: "FL", policy_type: PolicyType.find(1))
+		#
+    # gc_qbesub_agency.billing_strategies.create!(title: 'Bi-Annually', enabled: true, carrier_code: "SA",
+    #   		                                      new_business: { payments: [50, 0, 0, 0, 0, 0, 50, 0, 0, 0, 0, 0],
+    #   		                                                      payments_per_term: 2, remainder_added_to_deposit: true },
+    #   		                                      carrier: @qbe, policy_type: PolicyType.find(1))
+		#
+    # gc_qbesub_agency.billing_strategies.create!(title: 'Quarterly', enabled: true, carrier_code: "QT",
+    #   		                                      new_business: { payments: [25, 0, 0, 25, 0, 0, 25, 0, 0, 25, 0, 0],
+    #   		                                                      payments_per_term: 4, remainder_added_to_deposit: true },
+    #   		                                      carrier: @qbe, policy_type: PolicyType.find(1))
+		#
+    # gc_qbesub_agency.billing_strategies.create!(title: 'Monthly', enabled: true, carrier_code: "QBE_MoRe",
+    #   		                                      new_business: { payments: [22.01, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09, 7.09],
+    #   		                                                      payments_per_term: 12, remainder_added_to_deposit: true },
+    #   		                                      renewal: { payments: [8.37, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33],
+    #   		                                                      payments_per_term: 12, remainder_added_to_deposit: true },
+    #   		                                      carrier: @qbe, policy_type: PolicyType.find(1))
+		#
+    # gc_qbesub_agency.commission_strategies.create!(title: "#{ gc_qbesub_agency.title } / QBE Residential Commission",
+    #   																						 carrier: @qbe,
+    #   																						 policy_type: PolicyType.find(1),
+    #   																						 amount: 25,
+    #   																						 type: 0,
+    #   																						 commission_strategy_id: 2)
+
+>>>>>>> master
   else
     pp gc_qbesub_agency.errors
   end
