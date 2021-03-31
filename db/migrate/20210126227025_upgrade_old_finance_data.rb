@@ -78,7 +78,7 @@ class UpgradeOldFinanceData < ActiveRecord::Migration[5.2]
           external: false,
           status: ############# MOOSE WARNING map invoice status,
           under_review: false,
-          pending_charge_count: ####### ugh figure out how to get this,
+          pending_charge_count: 0, # we will scream and die if we encounter a pending charge
           pending_dispute_count: 0,
           error_info: [],
           was_missed: inv.was_missed,
@@ -86,12 +86,12 @@ class UpgradeOldFinanceData < ActiveRecord::Migration[5.2]
           autosend_status_change_notifications: true,
           # due stuff
           original_total_due: inv.subtotal,
-          total_due: inv.total,
-          total_payable: inv.total,
-          total_reducing: 0, # MOOOSESE
-          total_pending: 0, # MOOESSSSEE
-          total_received:  #############
-          total_undistributable:## 
+          total_due: inv.total - inv.amount_refunded,
+          total_payable: inv.total - inv.amount_refunded,
+          total_reducing: 0, # there are no pending reductions
+          total_pending: 0, # there are no pending charges
+          total_received: 0, # we'll fix this in just a bit
+          total_undistributable: 0,
           # assocs
           invoiceable: pq,
           payer: pa.primary_user,
@@ -122,7 +122,7 @@ class UpgradeOldFinanceData < ActiveRecord::Migration[5.2]
           invoices.map.with_index do |inv, ind|
             lis = line_items.select{|li| li.invoice_id == inv.id && (li.category == 'base_premium' || li.category == 'special_premium') }
             price = lis.inject(0){|sum,li| sum + li.price }
-            received = lis.inject(0){|sum,li| sum + li.total_received }
+            received = lis.inject(0){|sum,li| sum + li.collected }
             proration_reduction = lis.inject(0){|sum,li| sum + li.proration_reduction }
             next if price == 0
             # premium
@@ -174,18 +174,16 @@ class UpgradeOldFinanceData < ActiveRecord::Migration[5.2]
               end
               # status-based handling
               case charge.status
-                when 'processing'
-                  puts "Charge ##{charge.id} is still 'processing'; we dare not upgrade until it completes!"
+                when 'processing', 'pending'
+                  puts "Charge ##{charge.id} is still '#{charge.status}'; we dare not upgrade until it completes!"
                   raise Exception
                 when 'failed'
-                  sc.save!
-                when 'pending'
                   sc.save!
                 when 'succeeded'
                   sc.save!
                   ::LineItemChange.create!(
                     field_changed: 'total_received',
-                    amount: li.total_received,
+                    amount: charge.amount,
                     handled: false,
                     line_item: li,
                     reason: sc,
@@ -246,6 +244,16 @@ class UpgradeOldFinanceData < ActiveRecord::Migration[5.2]
                     )
                     lir.callbacks_disabled = true
                     lir.save!
+                    ::LineItemChange.create!(
+                      field_changed: 'total_due',
+                      amount: -refund.amount,
+                      handled: false,
+                      line_item: li,
+                      reason: lir,
+                      handler: nil,
+                      created_at: refund.created_at,
+                      updated_at: refund.updated_at
+                    )
                     ::LineItemChange.create!(
                       field_changed: 'total_received',
                       amount: -refund.amount,
