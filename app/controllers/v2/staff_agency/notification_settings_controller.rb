@@ -10,7 +10,7 @@ module V2
 
       private
       def set_notification_setting
-        @notification_setting = current_staff.notification_settings.find(:id)
+        @notification_setting = current_staff.notification_settings.find(params[:id])
       end
     end
   end
