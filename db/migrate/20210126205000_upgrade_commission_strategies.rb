@@ -16,12 +16,19 @@ class UpgradeCommissionStrategies< ActiveRecord::Migration[5.2]
       t.references    :carrier
       t.references    :agency
       t.references    :policy_type
-      t.references    :commission_strategy, null: true                  # Temporarily null: true for data entry
+      t.references    :commission_strategy, null: true                  # Temporarily nullable for data entry
     end
-  
+    
+    # add CS field to CarrierPolicyType
+    add_reference :carrier_policy_types, :commission_strategy, null: true  # Default commission strategy as parent to everybody
+    
+    # add CS field to Carrier & set up default global parent 100% carrier commission strategies
+    add_reference :carrier, :commission_strategy, null: true
   end
   
   def down
+    remove_reference :carriers, :commission_strategy
+    remove_reference :carrier_policy_types, :commission_strategy
     drop_table :carrier_agency_policy_types
     drop_table :commission_strategies
     rename_table :archived_commission_strategies, :commission_strategies

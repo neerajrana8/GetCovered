@@ -9,8 +9,12 @@ class Carrier < ApplicationRecord
   include RecordChange
   
   after_initialize :initialize_carrier
+  after_save :create_universal_parent_commission
   
   # Relationships
+  belongs_to :commission_strategy, # the universal parent commission strategy
+    optional: true
+  
   has_many :carrier_policy_types
   has_many :policy_types, 
            through: :carrier_policy_types
@@ -56,6 +60,15 @@ class Carrier < ApplicationRecord
   
   def uses_stripe?
     return(![5,6].include?(self.id))
+  end
+
+  def get_or_create_universal_parent_commission_strategy
+    return self.commission_strategy || ::CommissionStrategy.create!( 
+      title: "#{self.title} Commission",
+      percentage: 100,
+      recipient: self,
+      commission_strategy: nil
+    )
   end
 
   private
