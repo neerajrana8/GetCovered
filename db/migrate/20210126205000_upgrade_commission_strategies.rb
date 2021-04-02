@@ -19,11 +19,11 @@ class UpgradeCommissionStrategies< ActiveRecord::Migration[5.2]
       t.references    :commission_strategy, null: true                  # Temporarily nullable for data entry
     end
     
+    # add CS field to Carrier
+    add_reference :carrier, :commission_strategy, null: true
+    
     # add CS field to CarrierPolicyType
     add_reference :carrier_policy_types, :commission_strategy, null: true  # Default commission strategy as parent to everybody
-    
-    # add CS field to Carrier & set up default global parent 100% carrier commission strategies
-    add_reference :carrier, :commission_strategy, null: true
     
     # create CAPTs
     params = ["carrier_agencies.carrier_id", "carrier_agencies.agency_id", "policy_type_id"]

@@ -8,9 +8,6 @@ class Carrier < ApplicationRecord
   include SetSlug
   include RecordChange
   
-  after_initialize :initialize_carrier
-  after_save :create_universal_parent_commission
-  
   # Relationships
   belongs_to :commission_strategy, # the universal parent commission strategy
     optional: true
@@ -39,7 +36,10 @@ class Carrier < ApplicationRecord
   has_many :policy_application_fields
 
   has_many :access_tokens,
-           as: :bearer  
+           as: :bearer
+           
+  # Callbacks
+  after_initialize :initialize_carrier
 
   # Validations
   validates :title, presence: true,
