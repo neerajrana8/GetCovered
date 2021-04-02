@@ -22,6 +22,9 @@ class CarrierAgency < ApplicationRecord
   accepts_nested_attributes_for :carrier_agency_authorizations,
     allow_destroy: true
 
+
+  before_validation :manipulate_dem_nested_boiz_like_a_boss,
+    on: :create, # this cannot be a before_create, or the CAPTs will already have been saved
   before_destroy :remove_authorizations,
                  :disable_billing_strategies
 
@@ -54,5 +57,14 @@ class CarrierAgency < ApplicationRecord
       end
     end
     
+    def manipulate_dem_nested_boiz_like_a_boss
+      (self.carrier_agency_policy_types || []).select{|capt| capt.id.nil? }.each do |capt|
+        capt.carrier_id = self.carrier_id
+        capt.agency_id = self.agency_id
+        # WARNING: this will run before nested attribute validations according to tests. but if everything suddenly breaks hideously on a rails upgrade or something,
+        # try putting the before_validation line before the association lines, or make sure to manually re-invoke the CAPT manipulate_dem_nested_boiz_like_a_boss methods here after setting carrier & agency
+        # (because the CAPTs use this same structure to set up their CommissionStrategies from partial attributes, and if they don't have an agency yet shizzle will go bizzle real fizzle)
+      end
+    end
     
 end
