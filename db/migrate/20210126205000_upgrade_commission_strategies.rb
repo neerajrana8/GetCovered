@@ -24,6 +24,19 @@ class UpgradeCommissionStrategies< ActiveRecord::Migration[5.2]
     
     # add CS field to Carrier & set up default global parent 100% carrier commission strategies
     add_reference :carrier, :commission_strategy, null: true
+    
+    # create CAPTs
+    params = ["carrier_agencies.carrier_id", "carrier_agencies.agency_id", "policy_type_id"]
+    CarrierAgencyAuthorization.includes(:carrier_agency).references(:carrier_agencies).order(*params).group(*params).pluck(*params)
+                              .each do |trid| # tri-id... hahaha... ha... ha......
+      capt = ::CarrierAgencyPolicyType.new(
+        carrier_id: trid[0],
+        agency_id: trid[1],
+        policy_type_id: trid[2]
+      )
+      capt.callbacks_disabled = true
+      capt.save!
+    end
   end
   
   def down

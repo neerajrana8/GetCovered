@@ -3,6 +3,8 @@
 # file: +app/models/carrier_agency_policy_type.rb+
 
 class CarrierAgencyPolicyType < ApplicationRecord
+  attr_accessor :callbacks_disabled
+
   belongs_to :carrier
   belongs_to :agency
   belongs_to :policy_type
@@ -18,9 +20,12 @@ class CarrierAgencyPolicyType < ApplicationRecord
   
   
   before_validation :manipulate_dem_nested_boiz_like_a_boss,
-    on: :create # this cannot be a before_create, or the CS will already have been saved
-  after_create :create_authorizations
-  after_create :set_billing_strategies
+    on: :create, # this cannot be a before_create, or the CS will already have been saved
+    unless: Proc.new{|capt| capt.callbacks_disabled }
+  after_create :create_authorizations,
+    unless: Proc.new{|capt| capt.callbacks_disabled }
+  after_create :set_billing_strategies,
+    unless: Proc.new{|capt| capt.callbacks_disabled }
   before_destroy :remove_authorizations,
                  :disable_billing_strategies
   
