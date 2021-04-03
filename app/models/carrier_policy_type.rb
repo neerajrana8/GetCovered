@@ -12,8 +12,7 @@ class CarrierPolicyType < ApplicationRecord
   accepts_nested_attributes_for :commission_strategy
   accepts_nested_attributes_for :carrier_policy_type_availabilities, allow_destroy: true
   
-  before_validation :manipulate_dem_nested_boiz_like_a_boss,
-    on: :create # this cannot be a before_create, or the CS will already have been saved
+  before_validation :manipulate_dem_nested_boiz_like_a_boss # we don't restrict this to on: :create. that way it can be applied to commission_strategy updates too
 
   
   private

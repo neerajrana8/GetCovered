@@ -23,7 +23,7 @@ carrier = Carrier.create({
 
 puts "Initializing carrier #5..."
 
-carrier_policy_type = carrier.carrier_policy_types.new(application_required: true)
+@get_covered = Agency.where(master_agency: true).take
 carrier.access_tokens.create!
 
 
@@ -54,6 +54,7 @@ carrier_policy_type = CarrierPolicyType.create!(
   carrier: carrier,
   policy_type: policy_type,
   application_required: true,
+  commission_strategy_attributes: { recipient: @get_covered, percentage: 30 },
   application_fields: [
     {
       title: "Number of Insured",
@@ -141,7 +142,6 @@ if carrier_policy_type.save()
   51.times do |state|
     available = state == 0 || state == 11 ? false : true
     carrier_policy_availability = CarrierPolicyTypeAvailability.create(state: state, available: available, carrier_policy_type: carrier_policy_type)
-    carrier_policy_availability.fees.create(title: "Origination Fee", type: :ORIGINATION, amount: 2500, enabled: true, ownerable: carrier) unless carrier.id == 4 || carrier.id == 5 # disabled msi fee
   end      
 else
   pp carrier_policy_type.errors
@@ -151,30 +151,17 @@ end
 # AGENCY stuff (agency.rb equivalent)
 
 @msi = Carrier.find(5);          # Residential Carrier
-@get_covered = Agency.where(title: "Get Covered").take
+@get_covered = Agency.where(master_agency: true).take
 @get_covered.carriers << @msi
 
 carrier = @msi
-51.times do |state|
-  # MOOSE WARNING: testing fee
-  @policy_type = PolicyType.find(1)
-  @fee_amount = nil # WARNING: testing fee disabled 2500
 
-  available = state == 0 || state == 11 ? false : true # we don't do business in Alaska (0) and Hawaii (11)
-  authorization = CarrierAgencyAuthorization.create(state: state, 
-                                                    available: available, 
-                                                    carrier_agency: CarrierAgency.where(carrier: carrier, agency: @get_covered).take, 
-                                                    policy_type: @policy_type)
-  Fee.create(title: "Service Fee", 
-             type: :MISC, 
-             per_payment: false,
-             amortize: false, 
-             amount: @fee_amount, 
-             amount_type: :FLAT, 
-             enabled: true, 
-             assignable: authorization, 
-             ownerable: @get_covered) unless @fee_amount.nil?
-end
+
+::CarrierAgency.create!(agency: @get_covered, carrier: carrier, carrier_agency_policy_types_attributes: carrier.carrier_policy_types.map do |cpt|
+  {
+    policy_type_id: cpt.policy_type_id # no need to specify commission percentage since for GC the CarrierPolicyType has the GC commission already & will be inherited
+  }
+end)
 
 
 # MSI / Get Covered Billing & Commission Strategies
@@ -202,21 +189,6 @@ end
                                                           payments_per_term: 12, remainder_added_to_deposit: true },
                                           carrier: @msi, policy_type: PolicyType.find(1), 
                                           fees_attributes: [])
-
-# MOOSE WARNING: these are just copies of the QBE commission strategies and likely need to be changed
-@get_covered.commission_strategies.create!(title: 'Get Covered / MSI Residential Commission', 
-                                            carrier: @msi, 
-                                            policy_type: PolicyType.find(1), 
-                                            amount: 30, 
-                                            type: 0, 
-                                            house_override: 0)
-@get_covered.commission_strategies.create!(title: 'Get Covered / MSI Producer Commission', 
-                                            carrier: @msi,
-                                            policy_type: PolicyType.find(1), 
-                                            amount: 5, 
-                                            type: 0, 
-                                            house_override: 0)
-
 
 
 # INSURABLES (insurable-residential.rb equivalent)

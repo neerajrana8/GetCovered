@@ -15,6 +15,33 @@ require './db/seeds/functions'
 end
 
 ##
+# Setting up GetCovered (we need a master agency for various things to work right)
+
+@get_covered = Agency.create!(
+	title: "Get Covered",
+	enabled: true,
+	whitelabel: true,
+	tos_accepted: true,
+	tos_accepted_at: Time.current,
+	tos_acceptance_ip: nil,
+	verified: false,
+	stripe_id: nil,
+	master_agency: true,
+	addresses_attributes: [
+		{
+			street_number: "265",
+			street_name: "Canal St",
+			street_two: "#205",
+			city: "New York",
+			state: "NY",
+			county: "NEW YORK",
+			zip_code: "10013",
+			primary: true
+		}
+	]
+)
+
+##
 # Setting up base Policy Types
 
 @policy_types = [
@@ -128,7 +155,6 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
   if carrier.save!
     puts "Initializing carrier ##{carrier.id}..."
     
-    carrier_policy_type = carrier.carrier_policy_types.new(application_required: carrier.id == 2 ? false : true)
     carrier.access_tokens.create!
 
     # Add Residential to Queensland Business Insurance
@@ -186,6 +212,7 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
 				application_required: true,
         premium_refundable: true,
         max_days_for_full_refund: 30,
+        commission_strategy_attributes: { recipient: @get_covered, percentage: 30 },
 				application_fields: [
 			    {
 				  	title: "Number of Insured",
@@ -226,7 +253,7 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
 				    options: [true, false],
 				    questionId: "5"
 			    }	      																											
-				]	      
+				]
       )             
                                           
     # Add Master to Queensland Business Specialty Insurance 
@@ -247,6 +274,7 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
 				application_required: true,
         premium_refundable: true,
         max_days_for_full_refund: 30,
+        commission_strategy_attributes: { recipient: @get_covered, percentage: 30 },
 				application_fields: {
           "business": {
           	"number_of_insured": 1,
@@ -408,6 +436,7 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
 				application_required: true,
         premium_refundable: false,
         max_days_for_full_refund: 30,
+        commission_strategy_attributes: { recipient: @get_covered, percentage: 30 },
 				application_fields: {
   				"monthly_rent": 0,
       		"guarantee_option": 3,
@@ -488,6 +517,7 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
 				application_required: true,
         premium_refundable: true,
         max_days_for_full_refund: 30,
+        commission_strategy_attributes: { recipient: @get_covered, percentage: 30 },
 				application_fields: [
 			    {
 				  	title: "Number of Insured",

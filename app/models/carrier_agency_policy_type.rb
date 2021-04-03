@@ -48,8 +48,8 @@ class CarrierAgencyPolicyType < ApplicationRecord
 
     def set_billing_strategies
       # Create billing strategies as dups of GC's billing strategies, unless we already have some
-      return if self.agency_id == 1
-      strats = ::BillingStrategy.where(agency_id: [1, self.agency_id], carrier_id: self.carrier_id, policy_type: self.policy_type_id)
+      return if self.agency.master_agency
+      strats = ::BillingStrategy.where(agency_id: [self.agency_id, ::Agency.where(master_agency: true).take.id], carrier_id: self.carrier_id, policy_type: self.policy_type_id)
       unless strats.any?{|bs| bs.agency_id == self.agency_id }
         strats.each do |bs|
           new_bs = bs.dup
