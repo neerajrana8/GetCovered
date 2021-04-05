@@ -24,7 +24,7 @@ class CarrierAgency < ApplicationRecord
 
 
   before_validation :manipulate_dem_nested_boiz_like_a_boss,
-    on: :create, # This cannot be a before_create, or the CAPTs will already have been saved. If there are any issues after a rails upgrade or something, see note in method body.
+    on: :create # This cannot be a before_create, or the CAPTs will already have been saved. If there are any issues after a rails upgrade or something, see note in method body.
   before_destroy :remove_authorizations,
                  :disable_billing_strategies
 

@@ -252,10 +252,19 @@ ActiveRecord::Schema.define(version: 2021_03_30_140422) do
     t.bigint "policy_type_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.bigint "commission_strategy_id"
     t.index ["carrier_agency_id"], name: "index_carrier_agency_authorizations_on_carrier_agency_id"
-    t.index ["commission_strategy_id"], name: "index_carrier_agency_authorizations_on_commission_strategy_id"
     t.index ["policy_type_id"], name: "index_carrier_agency_authorizations_on_policy_type_id"
+  end
+
+  create_table "carrier_agency_policy_types", force: :cascade do |t|
+    t.bigint "carrier_id"
+    t.bigint "agency_id"
+    t.bigint "policy_type_id"
+    t.bigint "commission_strategy_id"
+    t.index ["agency_id"], name: "index_carrier_agency_policy_types_on_agency_id"
+    t.index ["carrier_id"], name: "index_carrier_agency_policy_types_on_carrier_id"
+    t.index ["commission_strategy_id"], name: "index_carrier_agency_policy_types_on_commission_strategy_id"
+    t.index ["policy_type_id"], name: "index_carrier_agency_policy_types_on_policy_type_id"
   end
 
   create_table "carrier_class_codes", force: :cascade do |t|
@@ -328,7 +337,9 @@ ActiveRecord::Schema.define(version: 2021_03_30_140422) do
     t.boolean "premium_refundable", default: true, null: false
     t.integer "max_days_for_full_refund", default: 31, null: false
     t.integer "days_late_before_cancellation", default: 30, null: false
+    t.bigint "commission_strategy_id"
     t.index ["carrier_id"], name: "index_carrier_policy_types_on_carrier_id"
+    t.index ["commission_strategy_id"], name: "index_carrier_policy_types_on_commission_strategy_id"
     t.index ["policy_type_id"], name: "index_carrier_policy_types_on_policy_type_id"
   end
 
@@ -346,6 +357,8 @@ ActiveRecord::Schema.define(version: 2021_03_30_140422) do
     t.jsonb "settings", default: {}, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "commission_strategy_id"
+    t.index ["commission_strategy_id"], name: "index_carriers_on_commission_strategy_id"
   end
 
   create_table "change_requests", force: :cascade do |t|
@@ -618,7 +631,6 @@ ActiveRecord::Schema.define(version: 2021_03_30_140422) do
     t.bigint "agency_id"
     t.bigint "policy_type_ids", default: [], null: false, array: true
     t.boolean "preferred_ho4", default: false, null: false
-    t.boolean "confirmed", default: true, null: false
     t.index ["account_id"], name: "index_insurables_on_account_id"
     t.index ["agency_id"], name: "index_insurables_on_agency_id"
     t.index ["insurable_id"], name: "index_insurables_on_insurable_id"
@@ -1024,7 +1036,6 @@ ActiveRecord::Schema.define(version: 2021_03_30_140422) do
     t.jsonb "tagging_data"
     t.string "error_message"
     t.integer "branding_profile_id"
-    t.bigint "tag_ids", default: [], null: false, array: true
     t.index ["account_id"], name: "index_policy_applications_on_account_id"
     t.index ["agency_id"], name: "index_policy_applications_on_agency_id"
     t.index ["billing_strategy_id"], name: "index_policy_applications_on_billing_strategy_id"
@@ -1032,7 +1043,6 @@ ActiveRecord::Schema.define(version: 2021_03_30_140422) do
     t.index ["policy_application_group_id"], name: "index_policy_applications_on_policy_application_group_id"
     t.index ["policy_id"], name: "index_policy_applications_on_policy_id"
     t.index ["policy_type_id"], name: "index_policy_applications_on_policy_type_id"
-    t.index ["tag_ids"], name: "policy_application_tag_ids_index", using: :gin
   end
 
   create_table "policy_coverages", force: :cascade do |t|
@@ -1383,14 +1393,6 @@ ActiveRecord::Schema.define(version: 2021_03_30_140422) do
     t.index ["reset_password_token"], name: "index_staffs_on_reset_password_token", unique: true
     t.index ["role"], name: "index_staffs_on_role"
     t.index ["uid", "provider"], name: "index_staffs_on_uid_and_provider", unique: true
-  end
-
-  create_table "tags", force: :cascade do |t|
-    t.string "title"
-    t.text "description"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["title"], name: "index_tags_on_title", unique: true
   end
 
   create_table "tracking_urls", force: :cascade do |t|
