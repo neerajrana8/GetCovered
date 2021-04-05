@@ -606,17 +606,11 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
 		  
     end
     
-    # Set policy type from if else block above
-    carrier_policy_type.policy_type = policy_type
-    
-    if carrier_policy_type.save()
-      51.times do |state|
-        available = state == 0 || state == 11 ? false : true
-        carrier_policy_availability = CarrierPolicyTypeAvailability.create(state: state, available: available, carrier_policy_type: carrier_policy_type)
-        carrier_policy_availability.fees.create(title: "Origination Fee", type: :ORIGINATION, amount: 2500, enabled: true, ownerable: carrier) unless carrier.id == 4
-      end      
-    else
-      pp carrier_policy_type.errors
+    # Set policy type from if else block above    
+    51.times do |state|
+      available = state == 0 || state == 11 ? false : true
+      carrier_policy_availability = CarrierPolicyTypeAvailability.create(state: state, available: available, carrier_policy_type: carrier_policy_type)
+      carrier_policy_availability.fees.create(title: "Origination Fee", type: :ORIGINATION, amount: 2500, enabled: true, ownerable: carrier) unless carrier.id == 4
     end
   
   else
