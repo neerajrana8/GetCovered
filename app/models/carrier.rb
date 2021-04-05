@@ -8,9 +8,10 @@ class Carrier < ApplicationRecord
   include SetSlug
   include RecordChange
   
-  after_initialize :initialize_carrier
-  
   # Relationships
+  belongs_to :commission_strategy, # the universal parent commission strategy
+    optional: true
+  
   has_many :carrier_policy_types
   has_many :policy_types, 
            through: :carrier_policy_types
@@ -37,7 +38,10 @@ class Carrier < ApplicationRecord
   has_many :policy_application_fields
 
   has_many :access_tokens,
-           as: :bearer  
+           as: :bearer
+           
+  # Callbacks
+  after_initialize :initialize_carrier
 
   # Validations
   validates :title, presence: true,
@@ -58,6 +62,15 @@ class Carrier < ApplicationRecord
   
   def uses_stripe?
     return(![5,6].include?(self.id))
+  end
+
+  def get_or_create_universal_parent_commission_strategy
+    return self.commission_strategy || ::CommissionStrategy.create!( 
+      title: "#{self.title} Commission",
+      percentage: 100,
+      recipient: self,
+      commission_strategy: nil
+    )
   end
 
   private

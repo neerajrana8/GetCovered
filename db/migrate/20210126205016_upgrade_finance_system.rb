@@ -1,7 +1,8 @@
 class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
   def up
-    # remove ability to have CAAs without a CS (since data should have been entered while only the upgrade_commission_strategies branch was merged in)
-    change_column :carrier_agency_authorizations, :commission_strategy, null: false
+    # remove nullability of certain commission strategy entries (they were temporarily null in the commission strategy branch for data entry purposes only)
+    change_column_null :carrier_agency_policy_types, :commission_strategy_id, false
+    change_column_null :carrier_policy_types, :commission_strategy_id, false
     
     # update CarrierPolicyType data
     add_column :carrier_policy_types, :premium_proration_calculation, :string, null: false, default: 'per_payment_term'
@@ -32,7 +33,9 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
                   'PolicyPremiumFee', 'Refund'
                  ]
     rename_table :charges, :archived_charges
+    rename_index :commissions, "index_commissions_on_commissionable_type_and_commissionable_id", "index_archived_commissions_on_commissionable"
     rename_table :commissions, :archived_commissions
+    rename_index :commission_deductions, "index_commission_deductions_on_deductee_type_and_deductee_id", "index_craptastic_garbage_why_is_there_a_length_limit_ugh"
     rename_table :commission_deductions, :archived_commission_deductions
     rename_table :disputes, :archived_disputes
     rename_table :invoices, :archived_invoices

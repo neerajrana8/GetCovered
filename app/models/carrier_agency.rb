@@ -4,28 +4,32 @@
 
 class CarrierAgency < ApplicationRecord
   include RecordChange
-
-  after_create :create_authorizations
-  after_create :set_billing_strategies, unless: proc { agency_id == 1 }
-  before_destroy :remove_authorizations,
-                 :disable_billing_strategies
+  
+  BLOCKED_POLICY_TYPES = [2, 3] # Prevent Master Policy & Master Policy Coverages from being included
 
   belongs_to :carrier
   belongs_to :agency
 
+  has_many :carrier_agency_policy_types, dependent: :destroy
+  has_many :commission_strategies,
+    through: :carrier_agency_policy_types
   has_many :carrier_agency_authorizations, dependent: :destroy
   has_many :histories, as: :recordable
+  def billing_strategies; ::BillingStrategy.where(carrier_id: self.carrier_id, agency_id: self.agency_id); end
+  
+  accepts_nested_attributes_for :carrier_agency_policy_types,
+    reject_if: Proc.new{|attrs| ::CarrierAgency::BLOCKED_POLICY_TYPES.include?(attrs['policy_type_id'] || attrs[:policy_type_id]) }
+  accepts_nested_attributes_for :carrier_agency_authorizations,
+    allow_destroy: true
+
+  before_destroy :remove_authorizations,
+                 :disable_billing_strategies
 
   validate :carrier_agency_assignment_unique
 
-  accepts_nested_attributes_for :carrier_agency_authorizations, allow_destroy: true
 
   def agency_title
     agency.try(:title)
-  end
-
-  def billing_strategies
-    BillingStrategy.where(agency: agency, carrier: carrier)
   end
 
   def disable
@@ -33,59 +37,21 @@ class CarrierAgency < ApplicationRecord
     disable_authorizations
     disable_billing_strategies
   end
-
+  
   private
 
-  def blocked_policy_types
-    # Prevent Master Policy & Master Policy Coverages from being included
-    [2, 3]
-  end
+    def disable_authorizations
+      carrier_agency_authorizations.each{|caa| caa.update available: false }
+    end
 
-  def create_authorizations
-    # Prevent Alaska & Hawaii as being set as available
-    blocked_states = [0, 11]
+    def disable_billing_strategies
+      billing_strategies.update_all(enabled: false)
+    end
 
-    carrier.carrier_policy_types.each do |cpt|
-      next if blocked_policy_types.include?(cpt.policy_type_id)
-
-      51.times do |state|
-        carrier_agency_authorizations.create(
-          state: state,
-          available: blocked_states.include?(state) ? false : true,
-          policy_type: cpt.policy_type
-        )
+    def carrier_agency_assignment_unique
+      if CarrierAgency.where(carrier: carrier, agency: agency).count > 1
+        errors.add(:agency, "assignment to #{carrier.title} already exists")
       end
     end
-  end
-
-  def set_billing_strategies
-    carrier.carrier_policy_types.each do |cpt|
-      strats = BillingStrategy.where(agency_id: 1, carrier: carrier, policy_type: cpt.policy_type)
-      next if blocked_policy_types.include?(cpt.policy_type_id) || strats.nil?
-
-      strats.each do |bs|
-        new_bs = bs.dup
-        new_bs.agency = agency
-        new_bs.save
-      end
-    end
-  end
-
-  def remove_authorizations
-    carrier_agency_authorizations.destroy_all
-  end
-
-  def disable_authorizations
-    carrier_agency_authorizations.each { |caa| caa.update available: false }
-  end
-
-  def disable_billing_strategies
-    billing_strategies&.each { |bs| bs.update enabled: false }
-  end
-
-  def carrier_agency_assignment_unique
-    if CarrierAgency.where(carrier: carrier, agency: agency).count > 1
-      errors.add(:agency, "assignment to #{carrier.title} already exists")
-    end
-  end
+    
 end

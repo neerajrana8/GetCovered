@@ -54,6 +54,7 @@ carrier_policy_type = CarrierPolicyType.create!(
   carrier: carrier,
   policy_type: policy_type,
   application_required: true,
+  # MOOSE WARNING commission_strategy_attributes: { percentage: ??? }
   application_fields: [
     {
       title: "Number of Insured",
