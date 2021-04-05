@@ -13,11 +13,10 @@ class CarrierAgencyPolicyType < ApplicationRecord
   
   accepts_nested_attributes_for :commission_strategy
   
-  has_one :carrier_agency, ->(capt) { where(agency_id: capt.agency_id, carrier_id: capt.carrier_id) }
-  has_one :carrier_policy_type, ->(capt) { where(policy_type_id: capt.policy_type_id, carrier_id: capt.carrier_id) }
-  has_many :carrier_agency_authorizations, ->(capt) { where(policy_type_id: capt.policy_type_id, carrier_agency_id: capt.carrier_agency.id) }
-  has_many :billing_strategies, ->(capt) { where(policy_type_id: capt.policy_type_id, carrier_id: capt.carrier_id, agency_id: capt.agency_id) }
-  
+  def carrier_agency; ::CarrierAgency.where(agency_id: self.agency_id, carrier_id: self.carrier_id); end
+  def carrier_policy_type; ::CarrierPolicyType.where(policy_type_id: self.policy_type_id, carrier_id: self.carrier_id); end
+  def carrier_agency_authorizations; ::CarrierAgencyAuthorization.where(policy_type_id: self.policy_type_id, carrier_agency_id: self.carrier_agency.id); end
+  def billing_strategies; ::BillingStrategy.where(policy_type_id: self.policy_type_id, carrier_id: self.carrier_id, agency_id: self.agency_id); end
   
   before_validation :manipulate_dem_nested_boiz_like_a_boss,
     on: :create, # this cannot be a before_create, or the CS will already have been saved

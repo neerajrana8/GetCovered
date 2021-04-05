@@ -15,7 +15,7 @@ class CarrierAgency < ApplicationRecord
     through: :carrier_agency_policy_types
   has_many :carrier_agency_authorizations, dependent: :destroy
   has_many :histories, as: :recordable
-  has_many :billing_strategies, ->(ca) { where(carrier_id: ca.carrier_id, agency_id: ca.agency_id) }
+  def billing_strategies; ::BillingStrategy.where(carrier_id: self.carrier_id, agency_id: self.agency_id); end
   
   accepts_nested_attributes_for :carrier_agency_policy_types,
     reject_if: Proc.new{|attrs| ::CarrierAgency::BLOCKED_POLICY_TYPES.include?(attrs['policy_type_id'] || attrs[:policy_type_id]) }
