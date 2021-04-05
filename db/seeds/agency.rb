@@ -199,35 +199,35 @@ end
 ]
 
 @cambridge_agencies.each do |ca|
-cambridge_agency = Agency.new(ca)
-if cambridge_agency.save
+  cambridge_agency = Agency.new(ca)
+  if cambridge_agency.save
 
-  site_staff = [
-    { email: "dylan@#{ cambridge_agency.slug }.com", password: 'TestingPassword1234', password_confirmation: 'TestingPassword1234', role: 'agent', enabled: true, organizable: cambridge_agency,
-      profile_attributes: { first_name: 'Dylan', last_name: 'Gaines', job_title: 'Chief Technical Officer', birth_date: '04-01-1989'.to_date }},
-    { email: "brandon@#{ cambridge_agency.slug }.com", password: 'TestingPassword1234', password_confirmation: 'TestingPassword1234', role: 'agent', enabled: true, organizable: cambridge_agency,
-      profile_attributes: { first_name: 'Brandon', last_name: 'Tobman', job_title: 'Chief Executive Officer', birth_date: '18-11-1983'.to_date }},
-    { email: "josh@#{ cambridge_agency.slug }.com", password: 'TestingPassword1234', password_confirmation: 'TestingPassword1234', role: 'agent', enabled: true, organizable: cambridge_agency,
-      profile_attributes: { first_name: 'Josh', last_name: 'Brinsfield'}}
-  ]
+    site_staff = [
+      { email: "dylan@#{ cambridge_agency.slug }.com", password: 'TestingPassword1234', password_confirmation: 'TestingPassword1234', role: 'agent', enabled: true, organizable: cambridge_agency,
+        profile_attributes: { first_name: 'Dylan', last_name: 'Gaines', job_title: 'Chief Technical Officer', birth_date: '04-01-1989'.to_date }},
+      { email: "brandon@#{ cambridge_agency.slug }.com", password: 'TestingPassword1234', password_confirmation: 'TestingPassword1234', role: 'agent', enabled: true, organizable: cambridge_agency,
+        profile_attributes: { first_name: 'Brandon', last_name: 'Tobman', job_title: 'Chief Executive Officer', birth_date: '18-11-1983'.to_date }},
+      { email: "josh@#{ cambridge_agency.slug }.com", password: 'TestingPassword1234', password_confirmation: 'TestingPassword1234', role: 'agent', enabled: true, organizable: cambridge_agency,
+        profile_attributes: { first_name: 'Josh', last_name: 'Brinsfield'}}
+    ]
 
-  site_staff.each do |staff|
-    SeedFunctions.adduser(Staff, staff)
+    site_staff.each do |staff|
+      SeedFunctions.adduser(Staff, staff)
+    end
+
+    qbe_agency_id = cambridge_agency.title == "Cambridge QBE" ? "CAMBQBE" : "CAMBGC"
+    [@qbe, @qbe_specialty].each do |carrier|
+      ::CarrierAgency.create!(carrier: carrier, agency: cambridge_agency, external_carrier_id: carrier == @qbe ? qbe_agency_id : nil, carrier_agency_policy_types_attributes: carrier.carrier_policy_types.map do |cpt|
+        {
+          policy_type_id: cpt.policy_type_id,
+          commission_strategy_attributes: { percentage: 25 }
+        }
+      end)
+    end
+  else
+    pp cambridge_agency.errors
   end
-
-  qbe_agency_id = cambridge_agency.title == "Cambridge QBE" ? "CAMBQBE" : "CAMBGC"
-  [@qbe, @qbe_specialty].each do |carrier|
-    ::CarrierAgency.create!(carrier: carrier, agency: cambridge_agency, external_carrier_id: carrier == @qbe ? qbe_agency_id : nil, carrier_agency_policy_types_attributes: carrier.carrier_policy_types.map do |cpt|
-      {
-        policy_type_id: cpt.policy_type_id,
-        commission_strategy_attributes: { percentage: 25 }
-      }
-    end)
-  end
-else
-  pp cambridge_agency.errors
 end
-
 
 ##
 # Set Up GC Agencies
