@@ -593,7 +593,7 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
         irc.save!
         # build county IRCs if needed
         if state.to_s == 'GA'
-          igc = ::InsurableGeographicalCategory.get_for(state: state, counties: ['Bryan', 'Camden', 'Chatham', 'Glynn', 'Liberty', 'McIntosh'])
+          igc = ::InsurableGeographicalCategory.get_for(state: state, counties: ['Bryan', 'Camden', 'Chatham', 'Glynn', 'Liberty', 'McIntosh']) 
           irc = msis.extract_insurable_rate_configuration(nil,
             configurer: carrier,
             configurable: igc,
