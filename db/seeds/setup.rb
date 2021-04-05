@@ -156,6 +156,7 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
     puts "Initializing carrier ##{carrier.id}..."
     
     carrier.access_tokens.create!
+    carrier_policy_type = nil
 
     # Add Residential to Queensland Business Insurance
     if carrier.id == 1
@@ -252,15 +253,21 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
 				    value: 'false',
 				    options: [true, false],
 				    questionId: "5"
-			    }	      																											
+			    }
 				]
-      )             
-                                          
-    # Add Master to Queensland Business Specialty Insurance 
+      )
+    # Add Master to Queensland Business Specialty Insurance
     elsif carrier.id == 2
-      policy_type = PolicyType.find(2)
-      policy_sub_type = PolicyType.find(3)
-      
+      [::PolicyType.find(2), ::PolicyType.find(3)].each do |policy_type|
+        carrier_policy_type = CarrierPolicyType.create!(
+          carrier: carrier,
+          policy_type: policy_type,
+          application_required: false,
+          commission_strategy_attributes: { recipient: @get_covered, percentage: 30 },
+          application_fields: [],
+          application_questions: []
+        )
+      end
     # Add Commercial to Crum & Forester
     elsif carrier.id == 3
 			crum_service = CrumService.new()
