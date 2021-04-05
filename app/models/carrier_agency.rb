@@ -59,8 +59,8 @@ class CarrierAgency < ApplicationRecord
     
     def manipulate_dem_nested_boiz_like_a_boss
       (self.carrier_agency_policy_types || []).select{|capt| capt.id.nil? }.each do |capt|
-        capt.carrier_id = self.carrier_id
-        capt.agency_id = self.agency_id
+        #capt.carrier_agency = self # this isn't needed anymore eh
+        
         # WARNING: this will run before nested attribute validations according to tests. but if everything suddenly breaks hideously on a rails upgrade or something,
         # try putting the before_validation line before the association lines, or make sure to manually re-invoke the CAPT manipulate_dem_nested_boiz_like_a_boss methods here after setting carrier & agency
         # (because the CAPTs use this same structure to set up their CommissionStrategies from partial attributes, and if they don't have an agency yet shizzle will go bizzle real fizzle)

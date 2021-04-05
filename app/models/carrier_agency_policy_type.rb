@@ -17,11 +17,11 @@ class CarrierAgencyPolicyType < ApplicationRecord
   
   accepts_nested_attributes_for :commission_strategy
   
-  def carrier_policy_type; ::CarrierPolicyType.where(policy_type_id: self.policy_type_id, carrier_id: self.carrier_agency.carrier_id); end
+  def carrier_policy_type; ::CarrierPolicyType.where(policy_type_id: self.policy_type_id, carrier_id: self.carrier_agency.carrier_id).take; end
   def carrier_agency_authorizations; ::CarrierAgencyAuthorization.where(policy_type_id: self.policy_type_id, carrier_agency_id: self.carrier_agency_id); end
   def billing_strategies; ::BillingStrategy.where(policy_type_id: self.policy_type_id, carrier_id: self.carrier_agency.carrier_id, agency_id: self.carrier_agency.agency_id); end
   def agency_id; self.carrier_agency.agency_id; end
-  def carrier_id; sef.carrier_agency.carrier_id; end
+  def carrier_id; self.carrier_agency.carrier_id; end
   
   before_validation :manipulate_dem_nested_boiz_like_a_boss,
     on: :create, # this cannot be a before_create, or the CS will already have been saved
@@ -81,25 +81,25 @@ class CarrierAgencyPolicyType < ApplicationRecord
     # can only happen when self.agency == GetCovered, since the parent CS will belong to a CarrierPolicyType and they always have recipient GetCovered)
     def manipulate_dem_nested_boiz_like_a_boss
       if self.commission_strategy.nil?
-        meesa_own_daddy = self.agency.agency_id.nil? ?
+        meesa_own_daddy = self.carrier_agency.agency.agency_id.nil? ?
           self.carrier_policy_type.commission_strategy
-          : ::CarrierAgencyPolicyType.where(carrier_id: self.carrier_id, agency_id: self.agency.agency_id, policy_type_id: self.policy_type_id).take.commission_strategy
-        if meesa_own_daddy.recipient == self.agency
+          : ::CarrierAgencyPolicyType.where(carrier_id: self.carrier_id, agency_id: self.carrier_agency.agency.agency_id, policy_type_id: self.policy_type_id).take.commission_strategy
+        if meesa_own_daddy.recipient == self.carrier_agency.agency
           self.commission_strategy = ::CommissionStrategy.new(
-            title: "#{self.agency.title} / #{self.carrier.title} #{self.policy_type.title} Commission",
+            title: "#{self.carrier_agency.agency.title} / #{self.carrier_agency.carrier.title} #{self.policy_type.title} Commission",
             percentage: meesa_own_daddy.percentage,
-            recipient: self.agency,
+            recipient: self.carrier_agency.agency,
             commission_strategy: meesa_own_daddy
           )
         end
       elsif self.commission_strategy.id.nil?
         cs = self.commission_strategy
-        cs.title = "#{self.agency.title} / #{self.carrier.title} #{self.policy_type.title} Commission" if cs.title.blank?
-        cs.recipient = self.agency if cs.recipient_id.nil? && cs.recipient_type.nil?
+        cs.title = "#{self.carrier_agency.agency.title} / #{self.carrier_agency.carrier.title} #{self.policy_type.title} Commission" if cs.title.blank?
+        cs.recipient = self.carrier_agency.agency if cs.recipient_id.nil? && cs.recipient_type.nil?
         if cs.commission_strategy_id.nil?
-          meesa_own_daddy = self.agency.agency_id.nil? ?
+          meesa_own_daddy = self.carrier_agency.agency.agency_id.nil? ?
             self.carrier_policy_type.commission_strategy
-            : ::CarrierAgencyPolicyType.where(carrier_id: self.carrier_id, agency_id: self.agency.agency_id, policy_type_id: self.policy_type_id).take.commission_strategy
+            : ::CarrierAgencyPolicyType.where(carrier_id: self.carrier_id, agency_id: self.carrier_agency.agency.agency_id, policy_type_id: self.policy_type_id).take.commission_strategy
           cs.commission_strategy = meesa_own_daddy 
         end
       end
