@@ -19,7 +19,7 @@ class UpgradeCommissionStrategies< ActiveRecord::Migration[5.2]
     end
     
     # add CS field to Carrier
-    add_reference :carriers, :commission_strategy, null: true
+    add_reference :carriers, :commission_strategy, null: true           # This one can stay nullable. It is created on demand and is completely deterministic (100% commission for the carrier), so no need for manual entry or for creation before need.
     
     # add CS field to CarrierPolicyType
     add_reference :carrier_policy_types, :commission_strategy, null: true  # Default commission strategy as parent to everybody
