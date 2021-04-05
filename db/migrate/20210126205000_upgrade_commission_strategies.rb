@@ -13,8 +13,7 @@ class UpgradeCommissionStrategies< ActiveRecord::Migration[5.2]
     
     # add a CarrierAgencyPolicyType model to store the CS
     create_table :carrier_agency_policy_types do |t|
-      t.references    :carrier
-      t.references    :agency
+      t.references    :carrier_agency
       t.references    :policy_type
       t.references    :commission_strategy, null: true                  # Temporarily nullable for data entry
     end
@@ -26,13 +25,12 @@ class UpgradeCommissionStrategies< ActiveRecord::Migration[5.2]
     add_reference :carrier_policy_types, :commission_strategy, null: true  # Default commission strategy as parent to everybody
     
     # create CAPTs
-    params = ["carrier_agencies.carrier_id", "carrier_agencies.agency_id", "policy_type_id"]
-    CarrierAgencyAuthorization.includes(:carrier_agency).references(:carrier_agencies).order(*params).group(*params).pluck(*params)
-                              .each do |trid| # tri-id... hahaha... ha... ha......
+    params = ["carrier_agency_id", "policy_type_id"]
+    CarrierAgencyAuthorization.order(*params).group(*params).pluck(*params)
+                              .each do |bid| #bi-id... bid... haha... ha...
       capt = ::CarrierAgencyPolicyType.new(
-        carrier_id: trid[0],
-        agency_id: trid[1],
-        policy_type_id: trid[2]
+        carrier_agency_id: bid[0],
+        policy_type_id: bid[1]
       )
       capt.callbacks_disabled = true
       capt.save!

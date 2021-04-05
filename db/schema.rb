@@ -257,12 +257,10 @@ ActiveRecord::Schema.define(version: 2021_03_30_140422) do
   end
 
   create_table "carrier_agency_policy_types", force: :cascade do |t|
-    t.bigint "carrier_id"
-    t.bigint "agency_id"
+    t.bigint "carrier_agency_id"
     t.bigint "policy_type_id"
     t.bigint "commission_strategy_id"
-    t.index ["agency_id"], name: "index_carrier_agency_policy_types_on_agency_id"
-    t.index ["carrier_id"], name: "index_carrier_agency_policy_types_on_carrier_id"
+    t.index ["carrier_agency_id"], name: "index_carrier_agency_policy_types_on_carrier_agency_id"
     t.index ["commission_strategy_id"], name: "index_carrier_agency_policy_types_on_commission_strategy_id"
     t.index ["policy_type_id"], name: "index_carrier_agency_policy_types_on_policy_type_id"
   end

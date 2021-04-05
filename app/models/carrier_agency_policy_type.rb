@@ -5,18 +5,23 @@
 class CarrierAgencyPolicyType < ApplicationRecord
   attr_accessor :callbacks_disabled
 
-  belongs_to :carrier
-  belongs_to :agency
+  belongs_to :carrier_agency
   belongs_to :policy_type
   belongs_to :commission_strategy,
     optional: true # for now
+    
+  has_one :carrier,
+    through: :carrier_agency
+  has_one :agency,
+    through: :carrier_agency
   
   accepts_nested_attributes_for :commission_strategy
   
-  def carrier_agency; ::CarrierAgency.where(agency_id: self.agency_id, carrier_id: self.carrier_id); end
-  def carrier_policy_type; ::CarrierPolicyType.where(policy_type_id: self.policy_type_id, carrier_id: self.carrier_id); end
-  def carrier_agency_authorizations; ::CarrierAgencyAuthorization.where(policy_type_id: self.policy_type_id, carrier_agency_id: self.carrier_agency.id); end
-  def billing_strategies; ::BillingStrategy.where(policy_type_id: self.policy_type_id, carrier_id: self.carrier_id, agency_id: self.agency_id); end
+  def carrier_policy_type; ::CarrierPolicyType.where(policy_type_id: self.policy_type_id, carrier_id: self.carrier_agency.carrier_id); end
+  def carrier_agency_authorizations; ::CarrierAgencyAuthorization.where(policy_type_id: self.policy_type_id, carrier_agency_id: self.carrier_agency_id); end
+  def billing_strategies; ::BillingStrategy.where(policy_type_id: self.policy_type_id, carrier_id: self.carrier_agency.carrier_id, agency_id: self.carrier_agency.agency_id); end
+  def agency_id; self.carrier_agency.agency_id; end
+  def carrier_id; sef.carrier_agency.carrier_id; end
   
   before_validation :manipulate_dem_nested_boiz_like_a_boss,
     on: :create, # this cannot be a before_create, or the CS will already have been saved
@@ -33,11 +38,11 @@ class CarrierAgencyPolicyType < ApplicationRecord
     def create_authorizations
       # Prevent Alaska & Hawaii as being set as available; prevent already-created CAAs from being recreated
       blocked_states = [0, 11]
-      skipped_states = ::CarrierAgencyAuthorization.where(carrier_agency: self.carrier_agency, policy_type_id: self.policy_type_id).map{|caa| caa.read_attribute_before_type_cast(:state) }
+      skipped_states = ::CarrierAgencyAuthorization.where(carrier_agency_id: self.carrier_agency_id, policy_type_id: self.policy_type_id).map{|caa| caa.read_attribute_before_type_cast(:state) }
       51.times do |state|
         next if skipped_states.include?(state)
         ::CarrierAgencyAuthorization.create!(
-          carrier_agency: self.carrier_agency,
+          carrier_agency_id: self.carrier_agency_id,
           policy_type_id: self.policy_type_id,
           state: state,
           available: blocked_states.include?(state) ? false : true
