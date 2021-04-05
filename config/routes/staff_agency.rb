@@ -246,6 +246,7 @@
         get 'resend_policy_documents'
         put :refund_policy
         put :cancel_policy
+        get :optional_coverages
         put :update_coverage_proof
         delete :delete_policy_document
       end
