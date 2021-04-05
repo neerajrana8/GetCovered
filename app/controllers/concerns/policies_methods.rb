@@ -140,11 +140,7 @@ module PoliciesMethods
         {
           designation: coverage['uid'],
           title: coverage['title'],
-          enabled: if policy_coverage.present?
-                         policy_coverage['enabled']
-                       else
-                         coverage['options'].nil? ? false : nil
-                       end,
+          enabled: policy_coverage.present? ? policy_coverage['enabled'] : false,
           limit: policy_coverage.present? ? policy_coverage['limit'] : nil
         }
       end
