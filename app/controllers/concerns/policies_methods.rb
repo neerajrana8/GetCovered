@@ -107,6 +107,52 @@ module PoliciesMethods
     end
   end
 
+  def optional_coverages
+    if @policy.carrier_id != MsiService.carrier_id || @policy.primary_insurable.nil? || @policy.primary_insurable.primary_address.nil?
+      render json: standard_error(
+                     :bad_policy,
+                     'It is not MSI policy or does not have insurable with valid address'
+                   ),
+             status: :unprocessable_entity
+    else
+      results = ::InsurableRateConfiguration.get_coverage_options(
+        @policy.carrier_id,
+        @policy.primary_insurable&.primary_address,
+        [{ 'category' => 'coverage', 'options_type' => 'none', 'uid' => '1010', 'selection' => true }],
+        nil,
+        0,
+        @policy.policy_premiums.last&.billing_strategy&.carrier_code,
+        agency: @policy.agency,
+        perform_estimate: false,
+        eventable: @policy.primary_insurable,
+        nonpreferred_final_premium_params: {
+                  number_of_units: 1,
+                  years_professionally_managed: nil,
+                  year_built: nil,
+                  gated: false
+                }.compact
+      )
+
+      @optional_coverages = results[:coverage_options].select { |coverage| coverage['requirement'] == 'optional' }.map do |coverage|
+        policy_coverage =
+          @policy.coverages.detect { |policy_coverage| policy_coverage['designation'] == coverage['uid'] }
+
+        {
+          designation: coverage['uid'],
+          title: coverage['title'],
+          enabled: if policy_coverage.present?
+                         policy_coverage['enabled']
+                       else
+                         coverage['options'].nil? ? false : nil
+                       end,
+          limit: policy_coverage.present? ? policy_coverage['limit'] : nil
+        }
+      end
+
+      render json: @optional_coverages.to_json
+    end
+  end
+
   private
 
   def update_params
@@ -170,51 +216,7 @@ module PoliciesMethods
     @update_params
   end
 
-  def optional_coverages
-    if @policy.carrier_id != MsiService.carrier_id || @policy.primary_insurable.nil? || @policy.primary_insurable.primary_address.nil?
-      render json: standard_error(
-                     :bad_policy,
-                     'It is not MSI policy or does not have insurable with valid address'
-                   ),
-             status: :unprocessable_entity
-    else
-      results = ::InsurableRateConfiguration.get_coverage_options(
-        @policy.carrier_id,
-        @policy.primary_insurable&.primary_address,
-        [{ 'category' => 'coverage', 'options_type' => 'none', 'uid' => '1010', 'selection' => true }],
-        nil,
-        0,
-        @policy.policy_premiums.last&.billing_strategy&.carrier_code,
-        agency: @policy.agency,
-        perform_estimate: false,
-        eventable: @policy.primary_insurable,
-        nonpreferred_final_premium_params: {
-          number_of_units: 1,
-          years_professionally_managed: nil,
-          year_built: nil,
-          gated: false
-        }.compact
-      )
 
-      @optional_coverages = results[:coverage_options].select { |coverage| coverage['requirement'] == 'optional' }.map do |coverage|
-        policy_coverage =
-          @policy.coverages.detect { |policy_coverage| policy_coverage['designation'] == coverage['uid'] }
-  
-        {
-          designation: coverage['uid'],
-          title: coverage['title'],
-          enabled: if policy_coverage.present?
-                     policy_coverage['enabled']
-                   else
-                     coverage['options'].nil? ? false : nil
-                   end,
-          limit: policy_coverage.present? ? policy_coverage['limit'] : nil
-        }
-      end
-    
-      render json: @optional_coverages.to_json
-    end
-  end
 
   def supported_filters(called_from_orders = false)
     @calling_supported_orders = called_from_orders
