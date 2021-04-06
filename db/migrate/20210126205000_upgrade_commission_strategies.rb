@@ -38,10 +38,13 @@ class UpgradeCommissionStrategies< ActiveRecord::Migration[5.2]
   end
   
   def down
-    remove_reference :carriers, :commission_strategy
-    remove_reference :carrier_policy_types, :commission_strategy
-    drop_table :carrier_agency_policy_types
+      drop_table :carrier_agency_policy_types
     drop_table :commission_strategies
     rename_table :archived_commission_strategies, :commission_strategies
+    #remove_reference :carriers, :commission_strategy
+    #remove_reference :carrier_policy_types, :commission_strategy
+    #drop_table :carrier_agency_policy_types
+    #drop_table :commission_strategies
+    #rename_table :archived_commission_strategies, :commission_strategies
   end
 end
