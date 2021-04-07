@@ -107,13 +107,9 @@ module PoliciesMethods
     end
   end
 
-  def optional_coverages
+  def set_optional_coverages
     if @policy.carrier_id != MsiService.carrier_id || @policy.primary_insurable.nil? || @policy.primary_insurable.primary_address.nil?
-      render json: standard_error(
-                     :bad_policy,
-                     'It is not MSI policy or does not have insurable with valid address'
-                   ),
-             status: :unprocessable_entity
+      @optional_coverages = nil
     else
       results = ::InsurableRateConfiguration.get_coverage_options(
         @policy.carrier_id,
@@ -144,8 +140,6 @@ module PoliciesMethods
           limit: policy_coverage.present? ? policy_coverage['limit'] : nil
         }
       end
-
-      render json: @optional_coverages.to_json
     end
   end
 

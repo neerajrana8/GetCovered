@@ -249,7 +249,6 @@
           get "get_leads",
               to: "policies#get_leads",
               via: "get"
-          get :optional_coverages
           put :update_coverage_proof
           delete :delete_policy_document
           put :refund_policy

@@ -13,3 +13,5 @@ json.deductibles do
     json.deductible policy_coverage.deductible
   end
 end
+
+json.optional_coverages @optional_coverages

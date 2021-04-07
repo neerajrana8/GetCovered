@@ -7,8 +7,8 @@ module V2
     class PoliciesController < StaffAgencyController
       include PoliciesMethods
       before_action :set_policy,
-                    only: %i[update show update_coverage_proof delete_policy_document refund_policy cancel_policy
-                             optional_coverages]
+                    only: %i[update show update_coverage_proof delete_policy_document refund_policy cancel_policy]
+      before_action :set_optional_coverages, only: [:show]
       before_action :set_substrate, only: %i[create index add_coverage_proof]
       check_privileges 'policies.policies'
 
