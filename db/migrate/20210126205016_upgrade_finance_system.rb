@@ -10,9 +10,7 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
     CarrierPolicyType.where(premium_refundable: true).update_all(premium_proration_calculation: 'per_payment_term', premium_proration_refunds_allowed: true)
     CarrierPolicyType.where(premium_refundable: false).update_all(premium_proration_calculation: 'per_payment_term', premium_proration_refunds_allowed: false)
     remove_column :carrier_policy_types, :premium_refundable
-
-    # update BillingStrategy
-    add_reference :billing_strategies, :collector, polymorphic: true, null: true
+    add_reference :carrier_agency_policy_types, :collector, polymorphic: true, null: true
     
     # update Policy
     add_column :policies, :marked_for_cancellation, :boolean, null: false, default: true
@@ -80,7 +78,7 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
       t.integer :proration_calculation, null: false                     # how to divide payment into chunks when prorating
       t.boolean :proration_refunds_allowed,  null: false                # whether to refund chunk that would have been cancelled if not already paid when prorating
       # commissions settings
-      t.boolean :preprocessed, null: false, default: false              # whether this is paid out up-front rather than as received
+      t.integer :commission_calculation, null: false, default: 0        # how to calculate commission payouts (default is to pay out proportionally for each payment/refund based on a fixed expected total due)
       # associations
       t.references :policy_premium                                      # the PolicyPremium we belong to
       t.references :recipient, polymorphic: true                        # the CommissionStrategy/Agent/Carrier who receives the money
@@ -130,10 +128,9 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
       t.timestamps
       t.string  :error_info
       # references
-      t.references :policy_quote
-      t.references :billing_strategy
-      t.references :commission_strategy
+      t.references :policy_quote, null: true
       t.references :policy, null: true
+      t.references :commission_strategy
     end
     
     

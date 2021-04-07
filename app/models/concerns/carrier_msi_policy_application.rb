@@ -169,7 +169,7 @@ module CarrierMsiPolicyApplication
           last_premium_installment = premium_installment if last_premium_installment < 0 || gotten_schedule.length <= 2 # should NEVER EVER happen, but letting a negative in would be much worse than overcharging by a few cents and refunding later
           # build policy premium & policy premium items
           succeeded = false
-          premium = PolicyPremium.create policy_quote: quote, billing_strategy: quote.policy_application.billing_strategy
+          premium = PolicyPremium.create policy_quote: quote
           ppi_policy_fee = nil
           ppi_installment_fee = nil
           ppi_down_payment = nil

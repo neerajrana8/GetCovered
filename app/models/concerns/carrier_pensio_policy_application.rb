@@ -55,7 +55,7 @@ module CarrierPensioPolicyApplication
 					checked_premium = unchecked_premium < minimum_premium ? minimum_premium : unchecked_premium
 
           quote_method = "mark_failure"
-          premium = PolicyPremium.create policy_quote: quote, billing_strategy: quote.policy_application.billing_strategy
+          premium = PolicyPremium.create policy_quote: quote
           unless premium.id
             puts "  Failed to create premium! #{premium.errors.to_h}"
           else

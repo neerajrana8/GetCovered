@@ -11,8 +11,6 @@ class PolicyPremiumItem < ApplicationRecord
   belongs_to :fee,            # what Fee this item corresponds to, if any
     optional: true
     
-  has_one :billing_strategy,
-    through: :policy_premium
   has_one :policy_quote,
     through: :policy_premium
   has_many :policy_premium_item_payment_terms,
@@ -47,7 +45,7 @@ class PolicyPremiumItem < ApplicationRecord
     fee: 0,
     premium: 1,
     tax: 2
-  }
+  }, _prefix: true, _suffix: false
   enum rounding_error_distribution: {
     last_payment_simple: 0,       # distributes total by weight rounded down to the nearest cent; dumps remainder on last payment
     first_payment_simple: 1,      # same but dumps on the first payment
@@ -62,13 +60,18 @@ class PolicyPremiumItem < ApplicationRecord
     payment_term_exclusive: 2,    # cancel/refund every payment term falling completely after the new policy last date
     payment_term_inclusive: 3,    # cancel/refund every payment term any portion of which falls after the new policy last date
     #per_total: 4                 # NOT IMPLEMENTED FOR NOW SINCE NOT USED. cancel/refund everything in proportion to the amount of the total active policy duration cancelled (i.e. total cancelled amount will be unaffected by how payments were distributed over payment terms)
-  }
+  }, _prefix: true, _suffix: false
+  enum commission_calculation: {
+    as_received: 0,               # whenever payments are received (or refunds given), generation a CommissionItem for the appropriate amount
+    no_payments: 1                # there will be no payments made on this PPI and hence no commissions; it is a dummy PPI that exists to track some bizarre nonsense (for instance the base premium PPI for master policies -___-)
+  }, _prefix: true, _suffix: false
   
   # Public Class Methods
   
   # Public Instance Methods
   
   def generate_line_items
+    return "Line items are not permitted since this PolicyPremiumItem's commission calculation is set to no_payments" if self.commission_calculation == 'no_payments'
     # verify we haven't already done this & clean our PolicyPremiumItemPaymentTerms
     return "Line items already scheduled" unless self.line_items.blank?
     to_return = self.policy_premium_item_payment_terms.references(:policy_premium_payment_terms).includes(:policy_premium_payment_term)
@@ -240,38 +243,43 @@ class PolicyPremiumItem < ApplicationRecord
     
     def setup_commissions
       begin
-        case self.recipient
-          when ::CommissionStrategy
-            external_mode = false
-            last_percentage = 0.to_d
-            total_assigned = 0
-            self.recipient.get_chain.each do |cs|
-              total_expected = (self.total_due * (self.recipient.percentage / 100.to_d)).floor - total_assigned
-              total_assigned += total_expected
-              external_mode = true if cs == self.collection_plan
-              ::PolicyPremiumItemCommission.create!(
-                policy_premium_item: self,
-                recipient: cs.recipient,
-                commission_strategy: cs,
-                payability: external_mode || cs.recipient == self.collection_plan ? 'external' : 'internal',
-                status: 'quoted',
-                total_expected: total_expected,
-                total_received: 0,
-                percentage: cs.recipient.percentage - last_percentage
-              )
-              last_percentage = cs.recipient.percentage
-            end
-          else
-            ::PolicyPremiumItemCommission.create!(
-              policy_premium_item: self,
-              recipient: self.recipient,
-              payability: self.recipient == self.collection_plan ? 'external' : 'internal',
-              status: 'quoted',
-              total_expected: self.total_due,
-              total_received: 0,
-              percentage: 100
-            )
-        end
+        case self.commission_calculation
+          when 'no_payments'
+            # don't do anything
+          when 'as_received'
+            case self.recipient
+              when ::CommissionStrategy
+                external_mode = false
+                last_percentage = 0.to_d
+                total_assigned = 0
+                self.recipient.get_chain.each do |cs|
+                  total_expected = (self.total_due * (self.recipient.percentage / 100.to_d)).floor - total_assigned
+                  total_assigned += total_expected
+                  external_mode = true if cs == self.collection_plan
+                  ::PolicyPremiumItemCommission.create!(
+                    policy_premium_item: self,
+                    recipient: cs.recipient,
+                    commission_strategy: cs,
+                    payability: external_mode || cs.recipient == self.collection_plan ? 'external' : 'internal',
+                    status: 'quoted',
+                    total_expected: total_expected,
+                    total_received: 0,
+                    percentage: cs.recipient.percentage - last_percentage
+                  )
+                  last_percentage = cs.recipient.percentage
+                end
+              else
+                ::PolicyPremiumItemCommission.create!(
+                  policy_premium_item: self,
+                  recipient: self.recipient,
+                  payability: self.recipient == self.collection_plan ? 'external' : 'internal',
+                  status: 'quoted',
+                  total_expected: self.total_due,
+                  total_received: 0,
+                  percentage: 100
+                )
+            end # end recipient case
+        end # end commission_calculation case
       rescue ActiveRecord::RecordInvalid => e
         errors.add(:policy_premium_item_commission, "could not be created (#{e.record.errors.to_h})")
         raise ActiveRecord::RecordInvalid, self

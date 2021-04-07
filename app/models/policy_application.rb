@@ -59,12 +59,14 @@ class PolicyApplication < ApplicationRecord
     through: :policy_application_answers
 
   has_many :policy_coverages, autosave: true
+  
+  def carrier_agency; @crag ||= ::CarrierAgency.where(carrier_id: self.carrier_id, agency_id: self.agency_id).take; end
 
   accepts_nested_attributes_for :policy_users, :policy_rates, :policy_insurables
 
   validate :billing_strategy_agency_and_carrier_correct
   validate :billing_strategy_must_be_enabled
-  validate :carrier_agency
+  validate :carrier_agency_valid
   validate :check_residential_question_responses,
     if: proc { |pol| pol.policy_type.title == "Residential" }
   validate :check_commercial_question_responses,
@@ -167,7 +169,7 @@ class PolicyApplication < ApplicationRecord
     errors.add(:billing_strategy, I18n.t('policy_app_model.billing_strategy_must_be_enabled')) unless billing_strategy.enabled == true
   end
 
-  def carrier_agency
+  def carrier_agency_valid
     errors.add(:carrier, I18n.t('policy_app_model.carrier_agency_must_exist')) unless agency.carriers.include?(carrier)
     # ensure auth
     addr = self.primary_insurable&.primary_address

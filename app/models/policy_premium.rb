@@ -5,22 +5,28 @@
 class PolicyPremium < ApplicationRecord
   
   # Associations
-  belongs_to :policy_quote
-  belongs_to :billing_strategy
-  belongs_to :commission_strategy
+  belongs_to :policy_quote, optional: true
   belongs_to :policy, optional: true
+  belongs_to :commission_strategy
 
   has_many :policy_premium_payment_terms
+  has_many :policy_premium_items
+  
   has_one :policy_application,
     through: :policy_quote
-  has_many :policy_premium_items
+  has_one :billing_strategy,
+    through: :policy_application
   has_many :fees,
     as: :assignable
+  def carrier_agency_policy_type; @capt ||= ::CarrierAgencyPolicyType.where(policy_type_id: self.policy_rep.policy_type_id, carrier_agency_id: self.policy_rep.carrier_agency.id).take; end
 
   # Callbacks
   before_validation :set_default_commission_strategy,
     on: :create,
-    if: Proc.new{|pp| pp.commission_strategy.nil? && !pp.policy_quote.nil? }
+    if: Proc.new{|pp| pp.commission_strategy.nil? && !pp.policy_rep.nil? }
+    
+  # validations
+  validates :has_policy_or_policy_quote
   
   # Public Class Methods
   def self.default_collector
@@ -66,14 +72,16 @@ class PolicyPremium < ApplicationRecord
     return result
   end
   
-  def create_payment_terms(term_group: nil)
+  def create_payment_terms(term_group: nil, billing_strategy_terms: nil)
+    billing_strategy_terms ||= self.policy_application&.billing_strategy&.new_business&.[]('payments')
+    return "No billing_strategy_terms were provided and policy application does not exist or has no associated billing strategy" if billing_strategy_terms.blank?
     return "Payment terms for term group '#{term_group || 'nil'}' already exist" unless self.policy_premium_payment_terms.where(term_group: term_group).blank?
     returned_errors = nil
-    last_end = self.policy_application.effective_date - 1.day
+    last_end = self.policy_rep.effective_date - 1.day
     extra_months = 0
     ActiveRecord::Base.transaction do
       begin
-        self.billing_strategy.new_business["payments"].each.with_index do |weight,index|
+        billing_strategy_terms.each.with_index do |weight,index|
           unless weight > 0
             extra_months += 1
             next
@@ -98,12 +106,13 @@ class PolicyPremium < ApplicationRecord
   
   def get_fees
 	  # Get CarrierPolicyTypeAvailability Fee for Region (we assume region is available if we've gotten this far)
-	  carrier_policy_type = self.policy_application.carrier.carrier_policy_types.where(:policy_type => self.policy_application.policy_type).take
-    state = self.policy_application.insurables.empty? ?
-      self.policy_application.fields["premise"][0]["address"]["state"]
-      : self.policy_application.primary_insurable.primary_address.state
+	  carrier_policy_type = self.policy_rep.carrier.carrier_policy_types.where(:policy_type => self.policy_rep.policy_type).take
+    state = !self.policy_rep.insurables.empty? ?
+      self.policy_rep.primary_insurable.primary_address.state
+      : self.policy_application ? self.policy_application.fields["premise"][0]["address"]["state"]
+      : nil # MOOSE WARNING what about pensio's hideous hack with no insurables :(?
     regional_availability = ::CarrierPolicyTypeAvailability.where(state: state, carrier_policy_type: carrier_policy_type).take
-    return regional_availability.fees + billing_strategy.fees + self.fees
+    return (regional_availability&.fees || []) + (self.policy_application&.billing_strategy&.fees || []) + self.fees
   end
   
   def itemize_fees(percentage_basis, and_update_totals: true, term_group: nil, payment_terms: nil, collector: nil, filter: nil)
@@ -149,7 +158,7 @@ class PolicyPremium < ApplicationRecord
       proration_refunds_allowed: false,
       # MOOSE WARNING: preprocessed
       recipient: recipient || fee.ownerable,
-      collector: collector || self.billing_strategy.collector || ::PolicyPremium.default_collector,
+      collector: collector || self.carrier_agency_policy_type&.collector || ::PolicyPremium.default_collector,
       policy_premium_item_payment_terms: (
         (fee.amortize || fee.per_payment) ? payment_terms.map.with_index do |pt, index|
           ::PolicyPremiumItemPaymentTerm.new(
@@ -183,7 +192,7 @@ class PolicyPremium < ApplicationRecord
     # clean up proratable & refundable
     cpt = nil
     if proratable.nil?
-      proratable = (cpt ||= CarrierPolicyType.where(policy_type_id: self.policy_application.policy_type_id, carrier_id: self.policy_application.carrier_id).take)&.premium_proration_calculation
+      proratable = (cpt ||= CarrierPolicyType.where(policy_type_id: self.policy_rep.policy_type_id, carrier_id: self.policy_rep.carrier_id).take)&.premium_proration_calculation
     elsif proratable == true
       proratable = 'per_payment_term' # MOOSE WARNING: default here?
     elsif proratable == false
@@ -192,7 +201,7 @@ class PolicyPremium < ApplicationRecord
       return "Proration calculation method '#{proratable}' does not exist; you must pass 'proratable' as a valid value from PolicyPremiumItem::proration_calculation, pass true or false for the default options, or the appropriate CarrierPolicyType must exist and have a valid premium_proration_calculation value"
     end
     if refundable.nil?
-      refundable = (cpt ||= CarrierPolicyType.where(policy_type_id: self.policy_application.policy_type_id, carrier_id: self.policy_application.carrier_id).take)&.premium_proration_refunds_allowed
+      refundable = (cpt ||= CarrierPolicyType.where(policy_type_id: self.policy_rep.policy_type_id, carrier_id: self.policy_rep.carrier_id).take)&.premium_proration_refunds_allowed
     end
     if refundable != true && refundable != false
       return "Proration 'refundable' property was not set to a boolean value; you must pass one, or the appropriate CarrierPolicyType must exist and have a valid premium_proration_refunds_allowed value"
@@ -222,7 +231,7 @@ class PolicyPremium < ApplicationRecord
           proration_refunds_allowed: false,
           # MOOSE WARNING: preprocessed
           recipient: recipient || self.commission_strategy,
-          collector: collector || self.billing_strategy.collector || ::PolicyPremium.default_collector,
+          collector: collector || self.carrier_agency_policy_type&.collector || ::PolicyPremium.default_collector,
           policy_premium_item_payment_terms: [payment_terms.first].map do |pt|
             ::PolicyPremiumItemPaymentTerm.new(
               policy_premium_payment_term: pt,
@@ -243,7 +252,7 @@ class PolicyPremium < ApplicationRecord
         proration_refunds_allowed: refundable,
         # MOOSE WARNING: preprocessed
         recipient: self.commission_strategy,
-        collector: collector || self.billing_strategy.collector || ::PolicyPremium.default_collector,
+        collector: collector || self.carrier_agency_policy_type&.collector || ::PolicyPremium.default_collector,
         policy_premium_item_payment_terms: payment_terms.map.with_index do |pt, index|
           next nil if index == 0 && down_payment_revised_weight == 0
           ::PolicyPremiumItemPaymentTerm.new(
@@ -275,18 +284,18 @@ class PolicyPremium < ApplicationRecord
   def prorate(new_first_moment: nil, new_last_moment: nil, force_no_refunds: false)
     return nil if new_first_moment.nil? && new_last_moment.nil?
     # handle issues with the provided proration moments being less restrictive than exiting protations
-    if new_first_moment && new_first_moment < (self.prorated_first_moment || self.policy_quote.effective_moment)
-      if new_last_moment && new_last_moment <= (self.prorated_last_moment || self.policy_quote.expiration_moment)
+    if new_first_moment && new_first_moment < (self.prorated_first_moment || self.policy_rep.effective_moment)
+      if new_last_moment && new_last_moment <= (self.prorated_last_moment || self.policy_rep.expiration_moment)
         new_first_moment = nil # since NFM is less restrictive than a previously applied proration, just apply the NLM part
       else
-        return "The requested new_first_moment #{new_first_moment.to_s} is invalid; it cannot precede the original or current prorated beginning of term (#{(self.prorated_first_moment || self.policy_quote.effective_moment).to_s})"
+        return "The requested new_first_moment #{new_first_moment.to_s} is invalid; it cannot precede the original or current prorated beginning of term (#{(self.prorated_first_moment || self.policy_rep.effective_moment).to_s})"
       end
     end
-    if new_last_moment && new_last_moment > (self.prorated_last_moment || self.policy_quote.expiration_moment)
-      if new_first_moment && new_first_moment >= (self.prorated_first_moment || self.policy_quote.effective_moment)
+    if new_last_moment && new_last_moment > (self.prorated_last_moment || self.policy_rep.expiration_moment)
+      if new_first_moment && new_first_moment >= (self.prorated_first_moment || self.policy_rep.effective_moment)
         new_last_moment = nil
       else
-        return "The requested new_last_moment #{new_last_moment.to_s} is invalid; it cannot be after the original or current prorated end of term (#{(self.prorated_last_moment || self.policy_quote.expiration_moment).to_s})"
+        return "The requested new_last_moment #{new_last_moment.to_s} is invalid; it cannot be after the original or current prorated end of term (#{(self.prorated_last_moment || self.policy_rep.expiration_moment).to_s})"
       end
     end
     o_return = nil
@@ -319,14 +328,26 @@ class PolicyPremium < ApplicationRecord
     return nil
   end
   
-  
+  def policy_rep
+    @policy_rep ||= (self.policy_application || self.policy) # we try PA first because policy's effective/expiration dates/moments might be more expansive
+  end
   
   private
   
     def set_default_commission_strategy
-      self.commission_strategy = self.policy_application.carrier_agency_authorization.commission_strategy
+      prep = self.policy_application || self.policy # since this happens before validation and someone might still add a policy/policy quote without reloading the record, let's avoid using self.policy_rep
+      self.commission_strategy = ::CarrierAgencyPolicyType.references(:carrier_agencies).includes(:carrier_agency)
+                                                          .where(
+                                                            policy_type_id: prep.policy_type_id,
+                                                            carrier_agencies: {
+                                                              carrier_id: prep.carrier_id,
+                                                              agency_id: prep.agency_id
+                                                            }
+                                                          ).take&.commission_strategy
     end
   
-  
+    def has_policy_or_policy_quote
+      errors.add(:base, "must be associated with a Policy or with a PolicyQuote with an associated PolicyApplication") if self.policy_id.nil? && self.policy_application.nil?
+    end
   
 end

@@ -113,6 +113,8 @@ class Policy < ApplicationRecord
 
   has_many_attached :documents
 
+  def carrier_agency; @crag ||= ::CarrierAgency.where(carrier_id: self.carrier_id, agency_id: self.agency_id).take; end
+
   # Scopes
   scope :current, -> { where(status: %i[BOUND BOUND_WITH_WARNING]) }
   scope :not_active, -> { where.not(status: %i[BOUND BOUND_WITH_WARNING]) }
@@ -137,7 +139,7 @@ class Policy < ApplicationRecord
   validate :is_allowed_to_update?, on: :update
   validate :residential_account_present
   validate :status_allowed
-  validate :carrier_agency
+  validate :carrier_agency_exists
   validate :master_policy, if: -> { policy_type&.designation == 'MASTER-COVERAGE' }
   validates :agency, presence: true, if: :in_system?
   validates :carrier, presence: true, if: :in_system?
@@ -229,7 +231,7 @@ class Policy < ApplicationRecord
     errors.add(:account, I18n.t('policy_model.account_must_be_specified')) if ![4,5].include?(policy_type_id) && account.nil?
   end
 
-  def carrier_agency
+  def carrier_agency_exists
     return unless in_system?
 
     errors.add(:carrier, I18n.t('policy_model.carrier_agency_must_exist')) unless agency&.carriers&.include?(carrier)
@@ -262,6 +264,14 @@ class Policy < ApplicationRecord
 
   def premium
     return policy_premiums.order("created_at").last
+  end
+  
+  def effective_moment
+    self.effective_date.beginning_of_day
+  end
+  
+  def expiration_moment
+    self.expiration_date.end_of_day
   end
 
   def update_leases

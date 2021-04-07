@@ -23,6 +23,22 @@ module MasterPoliciesMethods
                                                       policy_type_id: PolicyType::MASTER_ID,
                                                       status: 'BOUND'))
       @policy_premium = PolicyPremium.new(create_policy_premium)
+      
+      
+      #    @policy_premium = PolicyPremium.create policy: @master_policy, billing_strategy: quote.policy_application.billing_strategy
+      #    unless premium.id
+      #      puts "  Failed to create premium! #{premium.errors.to_h}"
+      #    else
+      #      result = premium.initialize_all(checked_premium)
+      #      unless result.nil?
+      #        puts "  Failed to initialize premium! #{result}"
+      #      else
+      #        quote_method = "mark_successful"
+      #        quote_success[:success] = true
+      #      end
+      #    end
+      
+      
       if @master_policy.errors.none? && @policy_premium.errors.none? && @master_policy.save && @policy_premium.save
         @master_policy.policy_premiums << @policy_premium
         render json: { message: 'Master Policy and Policy Premium created', payload: { policy: @master_policy.attributes } },
@@ -247,8 +263,8 @@ module MasterPoliciesMethods
 
     def create_policy_premium
       return({}) if params.blank?
-
-      params.permit(:base, :total, :calculation_base, :carrier_base)
+      params.permit(:premium)
+      # old params, for reference: params.permit(:base, :total, :calculation_base, :carrier_base)
     end
   end
 end

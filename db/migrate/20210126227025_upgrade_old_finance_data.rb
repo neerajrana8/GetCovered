@@ -4,7 +4,9 @@ class UpgradeOldFinanceData < ActiveRecord::Migration[5.2]
   end
 
   def up
-    dictionary = {}
+    # Collectors
+    ::CarrierAgencyPolicyType.where(carrier_id: [5]).update_all(collector: Carrier.find(5))
+    ::CarrierAgencyPolicyType.where(carrier_id: [6]).update_all(collector: Carrier.find(6))
     # Policy Premia
     ArchivedPolicyPremium.all.each do |old|
       # grab useful boiz
