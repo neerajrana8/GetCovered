@@ -183,7 +183,6 @@ module CarrierMsiPolicyApplication
               total_due: msi_policy_fee,
               proration_calculation: "no_proration",
               proration_refunds_allowed: false,
-              # MOOSE WARNING: preprocessed
               recipient: ::MsiService.carrier,
               collector: ::MsiService.carrier
             ) unless msi_policy_fee == 0
@@ -195,7 +194,6 @@ module CarrierMsiPolicyApplication
               total_due: fee_installment * installment_count,
               proration_calculation: "no_proration",
               proration_refunds_allowed: false,
-              # MOOSE WARNING: preprocessed
               recipient: ::MsiService.carrier,
               collector: ::MsiService.carrier
             ) unless (fee_installment * installment_count) == 0
@@ -207,8 +205,7 @@ module CarrierMsiPolicyApplication
               total_due: down_payment,
               proration_calculation: "no_proration",
               proration_refunds_allowed: false,
-              # MOOSE WARNING: preprocessed
-              recipient: ::MsiService.carrier,
+              recipient: premium.commission_strategy,
               collector: ::MsiService.carrier
             ) unless down_payment == 0
             installment_per = premium_installment * [installment_count - 1, 0].max + last_premium_installment
@@ -220,8 +217,7 @@ module CarrierMsiPolicyApplication
               total_due: installment_per,
               proration_calculation: "no_proration",
               proration_refunds_allowed: false,
-              # MOOSE WARNING: preprocessed
-              recipient: ::MsiService.carrier,
+              recipient: premium.commission_strategy,
               collector: ::MsiService.carrier
             ) unless installment_per == 0
             premium.update_totals(persist: true)

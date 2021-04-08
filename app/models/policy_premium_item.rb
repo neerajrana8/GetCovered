@@ -10,12 +10,15 @@ class PolicyPremiumItem < ApplicationRecord
     optional: true
   belongs_to :fee,            # what Fee this item corresponds to, if any
     optional: true
-    
-  has_one :policy_quote,
-    through: :policy_premium
+
+
   has_many :policy_premium_item_payment_terms,
     autosave: true # MOOSE WARNING: does this suffice?
   has_many :policy_premium_item_commissions
+  has_many :policy_premium_item_transactions
+
+  has_one :policy_quote,
+    through: :policy_premium
   has_many :line_items,
     through: :policy_premium_item_payment_terms
   has_many :line_item_reductions,
@@ -32,10 +35,12 @@ class PolicyPremiumItem < ApplicationRecord
   validates_presence_of :title
   validates_presence_of :category
   validates_presence_of :rounding_error_distribution
-  validates :original_total_due, numericality: { :greater_than_or_equal_to => 0 }
-  validates :total_due, numericality: { :greater_than_or_equal_to => 0 }
-  validates :total_received, numericality: { :greater_than_or_equal_to => 0 }
-  validates :total_processed, numericality: { :greater_than_or_equal_to => 0 }
+  validates :commission_creation_delay_hours, numericality: { greater_than: 0 },
+    if: Proc.new{|ppi| ppi.commission_calculation == 'group_by_transaction' }
+  validates :original_total_due, numericality: { greater_than_or_equal_to: 0 }
+  validates :total_due, numericality: { greater_than_or_equal_to: 0 }
+  validates :total_received, numericality: { greater_than_or_equal_to: 0 }
+  validates :total_processed, numericality: { greater_than_or_equal_to: 0 }
   validates_presence_of :proration_calculation
   validates_inclusion_of :proration_refunds_allowed, in: [true, false]
 #  validates_inclusion_of :preprocessed, in: [true, false] MOOSE WARNING: uncomment later
@@ -63,7 +68,8 @@ class PolicyPremiumItem < ApplicationRecord
   }, _prefix: true, _suffix: false
   enum commission_calculation: {
     as_received: 0,               # whenever payments are received (or refunds given), generation a CommissionItem for the appropriate amount
-    no_payments: 1                # there will be no payments made on this PPI and hence no commissions; it is a dummy PPI that exists to track some bizarre nonsense (for instance the base premium PPI for master policies -___-)
+    no_payments: 1,               # there will be no payments made on this PPI and hence no commissions; it is a dummy PPI that exists to track some bizarre nonsense (for instance the base premium PPI for master policies -___-)
+    group_by_transaction: 2       # we will generate a commission item only when attempt_commission_update is called with a reason.reason different from the one used last call, or after commission_creation_delay_hours hours
   }, _prefix: true, _suffix: false
   
   # Public Class Methods
@@ -191,12 +197,15 @@ class PolicyPremiumItem < ApplicationRecord
 
   # this is expected to be called from within a transaction, with self.policy_premium_item_commissions already locked (and passed as an array)
   def attempt_commission_update(reason, locked_ppic_array)
+    ppits = nil
+    if self.commission_calculation == 'group_by_transaction'
+      ppits = ::PolicyPremiumItemTransaction.where(pending: true, policy_premium_item: self).order(id: :asc).lock.to_a
+    end
     ppics = locked_ppic_array
     ppics.sort!
     approx_100 = ppics.inject(0.to_d){|sum,ppic| sum + ppic.percentage } # just in case the decimal %s somehow add up to 99.99 or something (which should be impossible, but better safe than sorry with decimals)
     ppic_total_due = ppics.inject(0){|sum,ppic| sum + ppic.total_expected }
     ppic_total_received = ppics.inject(0){|sum,ppic| sum + ppic.total_received }
-    commission_items = []
     # distribute total changes
     if ppic_total_due != self.total_due
       total_assigned = 0
@@ -209,6 +218,7 @@ class PolicyPremiumItem < ApplicationRecord
       ppics.each{|ppic| return { success: false, error: ppic.errors.to_h.to_s, record: ppic } unless ppic.save }
     end
     # distribute received changes & make commission items
+    commission_items = []
     if ppic_total_received != self.total_received
       total_assigned = 0
       last_percentage = 0.to_d
@@ -216,12 +226,39 @@ class PolicyPremiumItem < ApplicationRecord
         last_percentage += ppic.percentage
         new_total_received = (self.total_received * (last_percentage / approx_100)).floor - total_assigned
         total_assigned += new_total_received
-        commission_items.push(::CommissionItem.new(
-          amount: new_total_received - ppic.total_received,
-          commission: ::Commission.collating_commission_for(ppic.recipient),
-          commissionable: ppic,
-          reason: reason
-        )) unless ppic.total_received == new_total_received || !ppic.payable?
+        case self.commission_calculation
+          when 'as_received'
+            commission_items.push(::CommissionItem.new(
+              amount: new_total_received - ppic.total_received,
+              commission: ::Commission.collating_commission_for(ppic.recipient),
+              commissionable: ppic,
+              reason: reason
+            )) unless ppic.total_received == new_total_received || !ppic.payable?
+          when 'no_payments'
+            # do nothing
+          when 'group_by_transaction'
+            the_reason = reason.class == ::LineItemChange ? reason.reason : reason
+            transaction = ppits.find do |ppit|
+              ppit.recipient_type == ppic.recipient_type && ppit.recipient_id == ppic.recipient_id &&
+              ppit.commissionable_type == ppic.commissionable_type && ppit.commissionable_id == ppic.commissionable_id &&
+              ppit.reason_type == the_reason.class.name && ppit.reason_id == the_reason.id
+            end || ::PolicyPremiumItemTransaction.new(
+              amount: 0,
+              pending: true,
+              recipient: ppic.recipient,
+              commissionable: ppic,
+              reason: reason.class == ::LineItemChange ? reason.reason : reason,
+              policy_premium_item: self
+            )
+            transaction.amount += new_total_received - ppic.total_received
+            transaction.create_commission_items_at = Time.current + self.commission_creation_delay_hours.hours
+            return { success: false, error: transaction.errors.to_h.to_s, record: transaction } unless transaction.save!
+            transaction_membership = ::PolicyPremiumItemTransactionMembership.create(
+              policy_premium_item_transaction: transaction,
+              member: reason
+            )
+            return { success: false, error: transaction_membership.errors.to_h.to_s, record: transaction_membership } unless transaction_membership.save!
+        end
         ppic.total_received = new_total_received
         ppic.total_commission = new_total_received unless !ppic.payable?
       end
@@ -230,6 +267,12 @@ class PolicyPremiumItem < ApplicationRecord
     end
     # done
     return { success: true, commission_items: commission_items }
+  end
+  
+  def create_pending_commission_items
+    self.pending_commission_data
+  
+    return { success: true, commission_items: [] }
   end
   
   private
@@ -252,6 +295,7 @@ class PolicyPremiumItem < ApplicationRecord
                 external_mode = false
                 last_percentage = 0.to_d
                 total_assigned = 0
+                payment_order = 0
                 self.recipient.get_chain.each do |cs|
                   total_expected = (self.total_due * (self.recipient.percentage / 100.to_d)).floor - total_assigned
                   total_assigned += total_expected
@@ -264,8 +308,10 @@ class PolicyPremiumItem < ApplicationRecord
                     status: 'quoted',
                     total_expected: total_expected,
                     total_received: 0,
-                    percentage: cs.recipient.percentage - last_percentage
+                    percentage: cs.recipient.percentage - last_percentage,
+                    payment_order: payment_order
                   )
+                  payment_order += 1
                   last_percentage = cs.recipient.percentage
                 end
               else
@@ -276,7 +322,8 @@ class PolicyPremiumItem < ApplicationRecord
                   status: 'quoted',
                   total_expected: self.total_due,
                   total_received: 0,
-                  percentage: 100
+                  percentage: 100,
+                  payment_order: 0
                 )
             end # end recipient case
         end # end commission_calculation case

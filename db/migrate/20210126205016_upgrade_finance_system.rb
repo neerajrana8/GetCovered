@@ -79,6 +79,7 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
       t.boolean :proration_refunds_allowed,  null: false                # whether to refund chunk that would have been cancelled if not already paid when prorating
       # commissions settings
       t.integer :commission_calculation, null: false, default: 0        # how to calculate commission payouts (default is to pay out proportionally for each payment/refund based on a fixed expected total due)
+      t.integer :commission_creation_delay_hours                        # when commission_calculation is 'group_by_transaction', we wait this many hours before creating a commission item if no other transaction occurs first
       # associations
       t.references :policy_premium                                      # the PolicyPremium we belong to
       t.references :recipient, polymorphic: true                        # the CommissionStrategy/Agent/Carrier who receives the money
@@ -272,6 +273,7 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
       t.integer       :total_received,  null: false, defualt: 0         # the total amount we have actually received from the payer
       t.integer       :total_commission, null: false, default: 0        # the total amount we have written CommissionItems for
       t.decimal       :percentage, null: false, precision: 5, scale: 2  # the % of total paid that goes to commissions for recipient (ppi.policy_premium_item_commisions.inject(0){|sum,ppic| sum+ppic} will be equal to 100
+      t.integer       :payment_order, null: false                       # a nice integer to sort folk into the proper payment order
       t.timestamps
       t.references    :policy_premium_item                              # the PPI which owns us
       t.references    :recipient, polymorphic: true,                    # the actual recipient of commissions (so not a CommissionStrategy)
@@ -305,10 +307,28 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
       t.references    :commission                                       # The commission on which this item is listed.
       t.references    :commissionable, polymorphic: true,               # The thing this item is being paid for. Generally will be a PolicyPremiumItemCommission.
         index: { name: 'index_commision_items_on_commissionable' }
-      t.references    :reason, polymorphic: true, null: true            # The reason this CI was created (generally a LineItemChange object)
+      t.references    :reason, polymorphic: true, null: true            # The reason this CI was created (generally a LineItemChange or PolicyPremiumItemTransaction)
       # redundant fields for analytics
       t.references    :policy_quote, null: true
       t.references    :policy, null: true
+    end
+    
+    create_table :policy_premium_item_transaction
+      t.boolean       :pending, null: false, default: true              # Whether this PPIT is pending or has already created CommissionItems
+      t.datetime      :create_commission_items_at, null: false          # When to stop pending & create commission items
+      t.integer       :amount                                           # The amount of the commission items to create
+      t.jsonb         :error_info
+      t.timestamps
+      t.references    :recipient                                        # The recipient of the commission on which this thing's commision items will be listed.
+      t.references    :commissionable, polymorphic: true,               # The thing this item is being paid for. Generally will be a PolicyPremiumItemCommission.
+        index: { name: 'index_commision_items_on_ppit' }
+      t.references    :reason, polymorphic: true, null: true            # The reason this CI was created (generally a StripeCharge or LineItemReduction)
+      t.references    :policy_premium_item
+    end
+    
+    create_table :policy_premium_item_transaction_membership
+      t.references    :policy_premium_item_transaction
+      t.references    :member, polymorphic: true
     end
   
   end

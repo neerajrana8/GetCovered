@@ -34,9 +34,11 @@ class PolicyPremiumItemCommission < ApplicationRecord
   
   # sort ourselves in the order in which funds should be distributed (smallest % to greatest)
   def <=>(other)
+    tr = (self.payment_order <=> other.payemnt_order)
+    return tr unless tr == 0
     tr = (self.percentage <=> other.percentage)
     return tr unless tr == 0
-    return (self.id <=> other.id) # we create from child CommissionStrategy to parent CommissionStrategy, so use the creation order if we can't determine things by percentage
+    return (self.id <=> other.id) # we create from child CommissionStrategy to parent CommissionStrategy, so use the creation order if we can't determine things by payment_order or percentage
   end
 
 end
