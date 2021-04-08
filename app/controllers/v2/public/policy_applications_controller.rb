@@ -878,13 +878,6 @@ module V2
         params.require(:policy_application).permit(fields: [:address, :unit])
       end
 
-      def new_residential_params
-        params.require(:policy_application)
-          .permit(:branding_profile_id, :agency_id, :account_id, :policy_type_id,
-                  :address_string, :unit_title, # for non-preferred
-                  policy_insurables_attributes: [:id]) # for preferred
-      end
-
       def create_residential_params
         params.require(:policy_application)
           .permit(:branding_profile_id, :effective_date, :auto_pay,
@@ -988,10 +981,6 @@ module V2
                       :estimate_premium,
                       :number_of_units, :years_professionally_managed, :year_built, :gated, # nonpreferred stuff
                       coverage_selections: [:category, :uid, :selection, selection: [ :data_type, :value ]])
-      end
-
-      def valid_policy_types
-        return ["residential", "commercial", "rent-guarantee", "security-deposit-replacement"]
       end
 
     end
