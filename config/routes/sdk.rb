@@ -3,6 +3,9 @@
 
 scope module: :sdk, path: "sdk" do
 
+  resources :addresses,
+            only: [:index]
+
   resources :billing_strategies,
             path: "billing-strategies",
             only: [ :index ]
