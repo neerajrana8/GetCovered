@@ -24,4 +24,23 @@ scope module: :sdk, path: "sdk" do
     end
   end
 
+  resources :policy_applications,
+            path: "policy-applications",
+            only: [ :create, :update ] do
+    member do
+      post :rent_guarantee_complete
+    end
+    collection do
+      get '/:token', # define manually on collection to get :token instead of :id
+          to: 'policy_applications#show',
+          as: :sdk_show
+      post '/new',
+           to: 'policy_applications#new',
+           as: :sdk_new
+      post '/get-coverage-options',
+           to: 'policy_applications#get_coverage_options',
+           as: :sdk_get_coverage_options
+    end
+  end
+
 end
