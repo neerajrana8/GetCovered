@@ -13,7 +13,7 @@ module Leads
       end
 
       # check duplicates in totals?
-      super(:@leads, @substrate, :profile, :tracking_url)
+      super(:@leads, @substrate, :tracking_url)
 
       @stats = {
         site_visits: site_visits(@leads),
@@ -30,7 +30,7 @@ module Leads
       if filter_by_day?(start_date, end_date)
         start_date.upto(end_date) do |date|
           params[:filter][:last_visit] = Date.parse(date.to_s).all_day
-          super(:@leads_by_day, @substrate, :profile, :tracking_url)
+          super(:@leads_by_day, @substrate, :tracking_url)
           @stats_by[date.to_s] = {
             site_visits: site_visits(@leads_by_day),
             leads: leads(@leads_by_day),
@@ -44,7 +44,7 @@ module Leads
       else
         while start_date < end_date
           params[:filter][:last_visit] = start_date.all_month
-          super(:@leads_by_month, @substrate, :profile, :tracking_url)
+          super(:@leads_by_month, @substrate, :tracking_url)
           @stats_by[start_date.end_of_month.to_s] = {
             site_visits: site_visits(@leads_by_month),
             leads: leads(@leads_by_month),
