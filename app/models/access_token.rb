@@ -34,9 +34,7 @@ class AccessToken < ApplicationRecord
 
   def self.verify(token)
     to_return = false
-
-    token_string = token.gsub("Authorization: ", "")
-    token_array = token_string.split(":")
+    token_array = token.split(":")
 
     if token_array.length == 2
       token_key = token_array[0]
