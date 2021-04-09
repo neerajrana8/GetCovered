@@ -33,9 +33,10 @@ module V2
     end
 
     def set_event
+      process = request.fullpath().include?("?") ? request.fullpath().split("?")[0] : request.fullpath()
       @event = @auth.events.create(
           verb: request.method().downcase,
-          process: request.fullpath().sub('/','').gsub("/","-"),
+          process: process.sub('/','').tr("/","_").tr('-','_'),
           endpoint: request.original_url,
           request: request.body,
           started: Time.current
