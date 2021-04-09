@@ -4,16 +4,19 @@ module BrandingProfiles
     object :agency
 
     def execute
-      update_url if BrandingProfile.exists?(url: branding_profile_params['url'])
-      branding_profile = BrandingProfile.create(branding_profile_params.merge(profileable: agency))
+      branding_profile = BrandingProfile.create(branding_profile_params.merge(profileable: agency, uri: uri))
       errors.merge!(branding_profile.errors) if branding_profile.errors.present?
       branding_profile
     end
 
     private
 
-    def update_url
-      branding_profile_params['url'] = branding_profile_params['url'] + Time.zone.now.to_i.to_s
+    def url
+      base_uri = Rails.application.credentials.uri[ENV["RAILS_ENV"].to_sym][:client]
+      uri = URI(base_uri)
+      uri.host = "#{agency.slug}.#{uri.host}"
+      uri.host = "#{agency.slug}-#{Time.zone.now.to_i}.#{URI(base_uri).host}" if BrandingProfile.exists?(url: uri.to_s)
+      uri.to_s
     end
   end
 end

@@ -564,7 +564,7 @@ class InsurableRateConfiguration < ApplicationRecord
     return nil
   end
   
-  def self.get_coverage_options(carrier_id, carrier_insurable_profile_or_address, selections, effective_date, additional_insured_count, billing_strategy_carrier_code, perform_estimate: true, insurable_type_id: 4, agency: nil, account: carrier_insurable_profile_or_address.class == ::CarrierInsurableProfile ? carrier_insurable_profile_or_address&.insurable&.account : nil, eventable: nil, estimate_default_on_billing_strategy_code_failure: :min, nonpreferred_final_premium_params: {})
+  def self.get_coverage_options(carrier_id, carrier_insurable_profile_or_address, selections, effective_date, additional_insured_count, billing_strategy_carrier_code, additional_interest_count: nil, perform_estimate: true, insurable_type_id: 4, agency: nil, account: carrier_insurable_profile_or_address.class == ::CarrierInsurableProfile ? carrier_insurable_profile_or_address&.insurable&.account : nil, eventable: nil, estimate_default_on_billing_strategy_code_failure: :min, nonpreferred_final_premium_params: {})
     cip = (carrier_insurable_profile_or_address.class == ::CarrierInsurableProfile ? carrier_insurable_profile_or_address : nil)
     carrier_insurable_type = CarrierInsurableType.where(carrier_id: carrier_id, insurable_type_id: insurable_type_id).take
     # get IRCs MOOSE WARNING: we go to agency first if possible, which is a hack (since account.agency no longer necessarily equals agency)--since no accounts have custom settings it doesn't hurt anything for now
@@ -597,7 +597,7 @@ class InsurableRateConfiguration < ApplicationRecord
       result = msis.build_request(:final_premium,
         effective_date: effective_date, 
         additional_insured_count: additional_insured_count,
-        additional_interest_count: cip&.insurable&.account_id.nil? && cip&.insurable&.parent_community&.account_id.nil? ? 0 : 1,
+        additional_interest_count: additional_interest_count || (cip&.insurable&.account_id.nil? && cip&.insurable&.parent_community&.account_id.nil? ? 0 : 1),
         coverages_formatted:  selections.select{|s| s['selection'] }
                                 .map do |s|
                                   s['options'] = coverage_options.find{|co| co['category'] == s['category'] && co['uid'] == s['uid'] }

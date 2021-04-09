@@ -78,9 +78,6 @@
       end
     end
 
-    resources :fees,
-      only: [ :create, :update, :index, :show ]
-
     resources :assignments,
       only: [ :create, :update, :destroy, :index, :show ]
 
@@ -161,6 +158,8 @@
     resources :commission_strategies,
       path: "commission-strategies",
       only: [ :create, :update, :index, :show ]
+
+    resources :fees, only: [:index, :show, :create, :update]
 
     resources :histories,
       only: [ :index ]
@@ -341,5 +340,8 @@
           get "search", to: 'users#search'
         end
       end
+
+    resources :notification_settings,
+              only: [ :index, :show, :update ]
   end
 # end

@@ -416,6 +416,15 @@ module V2
         @application = PolicyApplication.new(create_residential_params)
         @application.expiration_date = @application.effective_date&.send(:+, 1.year)
 
+        if @application.extra_settings && !@application.extra_settings['additional_interest'].blank?
+          error_message = ::MsiService.validate_msi_additional_interest(@application.extra_settings['additional_interest'])
+          unless error_message.nil?
+            render json: standard_error(:policy_application_save_error, I18n.t(error_message)),
+                   status: 400
+            return
+          end
+        end
+
         unless @application.coverage_selections.blank?
           @application.coverage_selections.each do |cs|
             if [ActionController::Parameters, ActiveSupport::HashWithIndifferentAccess, ::Hash].include?(cs['selection'].class)
@@ -522,11 +531,20 @@ module V2
       def update_residential
         @policy_application = PolicyApplication.find(params[:id])
         if @policy_application.policy_type.title == 'Residential'
-          @policy_application.policy_rates.destroy_all
           # try to update
           @policy_application.assign_attributes(update_residential_params)
           @policy_application.expiration_date = @policy_application.effective_date&.send(:+, 1.year)
+          # flee if nonsense is passed for additional interest
+          if @policy_application.extra_settings && !@policy_application.extra_settings['additional_interest'].blank?
+            error_message = ::MsiService.validate_msi_additional_interest(@policy_application.extra_settings['additional_interest'])
+            unless error_message.nil?
+              render json: standard_error(:policy_application_save_error, I18n.t(error_message)),
+                     status: 400
+              return
+            end
+          end
           # remove duplicate pis
+          @policy_application.policy_rates.destroy_all
           @replacement_policy_insurables = nil
           saved_pis = @policy_application.policy_insurables.select{|pi| pi.id }
           @policy_application.policy_insurables = @policy_application.policy_insurables.select{|pi| pi.id || (pi.insurable_id && saved_pis.find{|spi| spi.insurable_id == pi.insurable_id }.nil?) }
@@ -926,7 +944,12 @@ module V2
                   coverage_selections: [:category, :uid, :selection, selection: [ :data_type, :value ]],
                   extra_settings: [
                     # for MSI
-                    :installment_day, :number_of_units, :years_professionally_managed, :year_built, :gated
+                    :installment_day, :number_of_units, :years_professionally_managed, :year_built, :gated,
+                    additional_interest: [
+                      :entity_type, :email_address, :phone_number,
+                      :company_name, :address,
+                      :first_name, :last_name, :middle_name
+                    ]
                   ],
                   policy_rates_attributes:         [:insurable_rate_id],
                   policy_insurables_attributes:    [:insurable_id])
@@ -984,7 +1007,16 @@ module V2
         return create_residential_params
         params.require(:policy_application)
           .permit(:branding_profile_id, :effective_date, policy_rates_attributes: [:insurable_rate_id],
-                  policy_insurables_attributes: [:insurable_id])
+                  policy_insurables_attributes: [:insurable_id],
+                  extra_settings: [
+                    # for MSI
+                    :installment_day, :number_of_units, :years_professionally_managed, :year_built, :gated,
+                    additional_interest: [
+                      :entity_type, :email_address, :phone_number,
+                      :company_name, :address,
+                      :first_name, :last_name, :middle_name
+                    ]
+                  ])
       end
 
       def update_rental_guarantee_params

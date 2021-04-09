@@ -1,10 +1,13 @@
+##
+# V2 StaffAgency Fees Controller
+# File: app/controllers/v2/staff_agency/fees_controller.rb
+
 module V2
-  module StaffAgency
-    class FeesController < StaffAgencyController
+  module StaffSuperAdmin
+    class FeesController < StaffSuperAdminController
       before_action :set_fee, only: %i[show update]
       before_action :validate_assignable, only: %i[create update]
       before_action :set_ownerable, only: %i[create update]
-      before_action :validate_ownerable, only: %i[create update]
 
       def index
         super(:@fees, Fee.all)
@@ -72,6 +75,8 @@ module V2
       def set_ownerable
         @ownerable =
           case params[:assignable_type]
+          when 'CarrierPolicyTypeAvailability'
+            CarrierPolicyTypeAvailability.find(params[:assignable_id]).carrier
           when 'CarrierAgencyAuthorization'
             CarrierAgencyAuthorization.find(params[:assignable_id]).agency
           when 'BillingStrategy'
@@ -79,16 +84,8 @@ module V2
           end
       end
 
-      def validate_ownerable
-        if @ownerable.agency != @agency
-          render json: standard_error(:bad_ownerable, 'Assignable should be in the same agency like an agent'),
-                 status: 422
-        end
-      end
-
       def validate_assignable
         unless params[:assignable_type].present? &&
-               %w[CarrierAgencyAuthorization BillingStrategy].include?(params[:assignable_type]) &&
                params[:assignable_id].present? &&
                params[:assignable_type].constantize.find(params[:assignable_id])
           render(json: standard_error(:bad_assignable, 'Bad assignable'), status: 422)
