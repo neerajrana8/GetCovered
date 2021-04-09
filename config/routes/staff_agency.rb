@@ -32,6 +32,7 @@
             via: "get"
         end
       end
+    post :accounts_index, action: :index, controller: :accounts
 
     resources :master_policies, path: 'master-policies',
       only: [ :create, :update, :index, :show ] do
@@ -62,9 +63,10 @@
         end
 
         collection do
-          get :sub_agencies_index
+          get :sub_agencies
         end
       end
+    post :agencies_index, action: :index, controller: :agencies
 
     get :total_dashboard, controller: 'dashboard', path: 'dashboard/:agency_id/total_dashboard'
     get :buildings_communities, controller: 'dashboard', path: 'dashboard/:agency_id/buildings_communities'
@@ -199,10 +201,15 @@
     resources :insurable_types, path: "insurable-types", only: [ :index ]
 
     resources :leads, only: [:index, :show, :update]
-    resources :leads_dashboard, only: [:index]
-    resources :leads_dashboard_tracking_url, only: [:index]
 
-    get :get_filters, controller: 'leads_dashboard', path: 'leads_dashboard/get_filters'
+    resources :leads_dashboard, only: [:index] do
+      collection do
+        get :get_filters
+      end
+    end
+    post :leads_dashboard_index, action: :index, controller: :leads_dashboard
+
+    resources :leads_dashboard_tracking_url, only: [:index]
 
     resources :leases,
       only: [ :create, :update, :destroy, :index, :show ] do

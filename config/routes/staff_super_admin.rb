@@ -28,7 +28,8 @@
             to: "accounts#account_buildings",
             via: "get"
         end
-      end
+    end
+    post :accounts_index, action: :index, controller: :accounts
 
     resources :refunds,
       only: [ :index, :create, :update] do
@@ -58,9 +59,10 @@
         end
 
         collection do
-          get :sub_agencies_index
+          get :sub_agencies
         end
-      end
+    end
+    post :agencies_index, action: :index, controller: :agencies
 
     resources :application_modules,
       path: "application-modules",
@@ -196,10 +198,15 @@
     resources :insurable_types, path: "insurable-types", only: [ :index ]
 
     resources :leads, only: [:index, :show, :update]
-    resources :leads_dashboard, only: [:index]
-    resources :leads_dashboard_tracking_url, only: [:index]
 
-    get :get_filters, controller: 'leads_dashboard', path: 'leads_dashboard/get_filters'
+    resources :leads_dashboard, only: [:index] do
+      collection do
+        get :get_filters
+      end
+    end
+    post :leads_dashboard_index, action: :index, controller: :leads_dashboard
+
+    resources :leads_dashboard_tracking_url, only: [:index]
 
     resources :lease_types,
       path: "lease-types",

@@ -75,11 +75,11 @@ describe 'Agency api spec', type: :request do
   end
 
   def get_sub_agencies_short
-    get "/v2/staff_super_admin/agencies/sub_agencies_index?agency_id=#{@agency.id}", headers: @auth_headers
+    get "/v2/staff_super_admin/agencies/sub_agencies?agency_id=#{@agency.id}", headers: @auth_headers
   end
 
   def get_agencies_short
-    get '/v2/staff_super_admin/agencies/sub_agencies_index', headers: @auth_headers
+    get '/v2/staff_super_admin/agencies/sub_agencies', headers: @auth_headers
   end
 
   def update_agency(params)
