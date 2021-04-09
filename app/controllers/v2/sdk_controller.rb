@@ -37,7 +37,7 @@ module V2
           verb: request.method().downcase,
           process: request.fullpath().sub('/','').gsub("/","-"),
           endpoint: request.original_url,
-          request: request.body.to_json,
+          request: request.body,
           started: Time.current
       )
     end
