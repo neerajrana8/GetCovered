@@ -8,7 +8,9 @@ module V2
       include PoliciesMethods
 
       before_action :set_policy,
-                    only: %i[update show refund_policy cancel_policy update_coverage_proof delete_policy_document get_leads]
+                    only: %i[update show refund_policy cancel_policy update_coverage_proof delete_policy_document
+                             get_leads]
+      before_action :set_optional_coverages, only: [:show]
 
       before_action :set_substrate, only: [:index]
 
