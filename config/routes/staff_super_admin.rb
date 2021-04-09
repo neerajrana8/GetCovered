@@ -194,6 +194,7 @@
       end
     end
     get :agency_filters, controller: 'insurables', to: 'insurables#agency_filters', path: 'insurables/filters/agency_filters'
+    post :insurables_index, action: :index, controller: :insurables
 
     resources :insurable_types, path: "insurable-types", only: [ :index ]
 
@@ -264,6 +265,7 @@
 
         get "search", to: 'policies#search', on: :collection
     end
+    post :policies_index, action: :index, controller: :policies
 
     resources :policy_cancellation_requests, only: [ :index, :show ] do
       member do
