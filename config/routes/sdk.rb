@@ -43,4 +43,6 @@ scope module: :sdk, path: "sdk" do
     end
   end
 
+  resources :policies,
+            only: [:index, :show]
 end
