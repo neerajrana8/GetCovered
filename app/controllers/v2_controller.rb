@@ -53,6 +53,12 @@ exit
     end
   end
 
+  def apply_filters(instance_symbol, data_source, *includes)
+    prequery = build_prequery(data_source, includes, (params[:filter].nil? ? {} : params[:filter].to_unsafe_h).deep_merge(fixed_filters), params[:sort].nil? ? nil : params[:sort].to_unsafe_h)
+    query = build_query(data_source, prequery)
+    instance_variable_set(instance_symbol, query)
+  end
+
   #private
 
   def paginator(data_source, *includes)
