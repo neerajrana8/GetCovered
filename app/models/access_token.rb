@@ -16,6 +16,8 @@ class AccessToken < ApplicationRecord
   belongs_to :bearer,
              polymorphic: true
 
+  has_many :events, as: :eventable
+
   enum access_type: {
     generic: 0,
     agency_integration: 1,

@@ -5,6 +5,7 @@
 module V2
   class SdkController < V2Controller
     before_action :verify_auth_token
+    after_action :capture_response
 
     private
 
@@ -17,6 +18,7 @@ module V2
           render_unathorized()
         else
           set_bearer()
+          set_event()
         end
       end
     end
@@ -28,6 +30,24 @@ module V2
 
     def set_bearer
       @bearer = @auth.bearer
+    end
+
+    def set_event
+      @event = @auth.events.create(
+          verb: request.method().downcase,
+          process: request.fullpath().sub('/','').gsub("/","-"),
+          endpoint: request.original_url,
+          request: request.body.to_json,
+          started: Time.current
+      )
+    end
+
+    def capture_response
+      @event.update(
+          response: response.body,
+          completed: Time.current,
+          status: response.message == 'OK' ? 'success' : 'error'
+      )
     end
 
   end
