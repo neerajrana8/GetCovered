@@ -16,7 +16,8 @@ class UpgradeOldFinanceData < ActiveRecord::Migration[5.2]
       pr = pa || p
       caa = pr&.carrier_agency_authorization
       cpt = ::CarrierPolicyType.where(carrier_id: pr&.carrier_id, policy_type_id: pr&.policy_type_id).take
-      cs = caa.commission_strategy # can't be nil if previous migrations succeeded, so don't bother checking
+      capt = ::CarrierAgencyPolicyType.references(:carrier_agencies).includes(:carrier_agency).where(policy_type_id: pr&.policy_type_id, carrier_agencies: { carrier_id: pr&.carrier_id, agency_id: pr&.agency_id }).take
+      cs = capt.commission_strategy # can't be nil if previous migrations succeeded, so don't bother checking
       if pr.nil?
         puts "Policy premium ##{old.id} is insane; it has no PolicyQuote or Policy!"
         raise Exception
@@ -29,6 +30,9 @@ class UpgradeOldFinanceData < ActiveRecord::Migration[5.2]
       elsif cpt.nil?
         puts "Policy premium ##{old.id} has insane policy application with no CarrierPolicyType!"
         raise Exception
+      elsif capt.nil?
+        puts "Policy premium ##{old.id} has no CarrierAgencyPolicyType! Oh dear, oh my, oh dear!"
+        raise Exception
       end
       # handle master policies
       if pr.policy_type_id == ::PolicyType::MASTER_COVERAGE_ID
@@ -38,7 +42,7 @@ class UpgradeOldFinanceData < ActiveRecord::Migration[5.2]
       if pr.policy_type_id == ::PolicyType::MASTER_ID
         premium = ::PolicyPremium.create!(
           policy: p,
-          commission_strategy_id: caa.commission_strategy_id,
+          commission_strategy: cs,
           total_premium: old.base,
           total_tax: 0,
           toatl_fee: 0,
@@ -221,9 +225,9 @@ class UpgradeOldFinanceData < ActiveRecord::Migration[5.2]
       total_fee = old.total_fees
       prorated = !pq.policy.nil? && pq.policy.status == 'CANCELLED'
       premium = ::PolicyPremium.create!({
-        policy_quote_id: pq_id,
+        policy_quote_id: pq.id,
         policy_id: old.policy_id,
-        commission_strategy_id: pa.carrier_agency_authorization.commission_strategy_id,
+        commission_strategy: cs,
         total_premium: total_premium,
         total_tax: total_tax,
         total_fee: total_fee,
@@ -235,7 +239,7 @@ class UpgradeOldFinanceData < ActiveRecord::Migration[5.2]
         error_info: nil,
         created_at: old.created_at,
         updated_at: old.updated_at,
-        archived_premium: old
+        archived_policy_premium: old
       })
       # create PolicyPremiumPaymentTerms (and grab invoice and line item arrays while we're at it)
       invoices = pq.invoices.order(term_first_date: :asc).to_a
@@ -585,12 +589,6 @@ class UpgradeOldFinanceData < ActiveRecord::Migration[5.2]
 end
 
 
-
-
-### MOOSE WARNING: before execution:
-# 1) Kill Deposit Choice policies
-# 2) Kill PolicyGroups
-# 3) Kill fees on non-MSI policies
 
 
 
