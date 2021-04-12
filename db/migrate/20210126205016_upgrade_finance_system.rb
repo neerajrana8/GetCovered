@@ -133,6 +133,8 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
       t.references :policy_quote, null: true
       t.references :policy, null: true
       t.references :commission_strategy
+      # garbage
+      t.references :archived_policy_premium
     end
     
     
@@ -154,6 +156,8 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
       # redundant fields for convenient analytics
       t.integer     :analytics_category, null: false, default: 0
       t.references  :policy_quote, null: true
+      # garbage
+      t.references :archived_line_item
     end
     
     create_table :invoices do |t|
@@ -186,6 +190,8 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
       t.references :invoiceable, polymorphic: true
       t.references :payer, polymorphic: true
       t.references :collector, polymorphic: true # MOOSE WARNING: auto-set .external based on this???
+      # garbage
+      t.references :archived_invoice
     end
     
     create_table :stripe_charges do |t|
@@ -204,6 +210,8 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
       t.jsonb     :client_error                                         # I18n.t parameters, format { linear: [a,b,c,...], keyword: { a: :b, c: :d, ... } }
       t.timestamps
       t.references :invoice, null: false
+      # garbage
+      t.references :archived_charge
     end
 
     create_table :disputes do |t|
@@ -219,6 +227,7 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
     create_table :line_item_changes do |t|
       t.integer     :field_changed, null: false                         # which field was changed (total_due or total_received)
       t.integer     :amount, null: false                                # the change to line_item.total_received (positive or negative)
+      t.integer     :new_value, null: false                             # the value of the field after the change
       t.boolean     :handled, null: false, default: false               # whether a handler has handled this LIC (we could just use !lic.handler.nil?, but this is cleaner, and it allows us to retroactively look at folk whose invoice.chargeable_type didn't have any associated logic in the LIC model and who thus just got marked as handled=true)
       t.timestamps
       t.references  :line_item                                          # the LineItem

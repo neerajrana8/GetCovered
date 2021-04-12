@@ -14,7 +14,8 @@ class LineItemChange < ApplicationRecord
   }
 
   validates_presence_of :field_changed
-  validates :amount, numericality: { :greater_than_or_equal_to => 0 }
+  validates_presence_of :amount
+  validates_presend_of :new_value
   
   
   def handle

@@ -18,7 +18,8 @@ class Invoice < ApplicationRecord
     through: :line_items
     
   before_validation :set_number,
-    on: :create
+    on: :create,
+    unless: Proc.new{|i| i.callbacks_disabled }
   before_create :mark_line_items_priced_in,
     unless: Proc.new{|i| i.callbacks_disabled }
   before_update :set_status,
@@ -194,7 +195,7 @@ class Invoice < ApplicationRecord
               break if amount_left == 0
               next
             end
-            created = li.line_item_changes.create(field_changed: 'total_received', amount: clamped_amount, reason: charge)
+            created = li.line_item_changes.create(field_changed: 'total_received', amount: clamped_amount, reason: charge, new_value: li.total_received + clamped_amount)
             raise ActiveRecord::Rollback unless !created.id.nil? && li.update(total_received: li.total_received + clamped_amount)
             amount_left -= clamped_amount
           end
@@ -284,7 +285,7 @@ class Invoice < ApplicationRecord
             when 'reduced';     li.preproration_total_due -= to_reduce
           end
           lir.amount_successful += to_reduce
-          raise ActiveRecord::Rollback unless to_reduce == 0 || !li.line_item_changes.create(field_changed: 'total_due', amount: -to_reduce, reason: lir).id.nil?
+          raise ActiveRecord::Rollback unless to_reduce == 0 || !li.line_item_changes.create(field_changed: 'total_due', amount: -to_reduce, reason: lir, new_value: li.total_due).id.nil?
           total_due_change -= to_reduce
           # calculate change to total_received
           to_unpay = lir.refundability == 'cancel_only' ? 0 : [to_reduce, li.total_received - li.total_due].min
@@ -293,7 +294,7 @@ class Invoice < ApplicationRecord
             li.total_received -= to_unpay
             total_received_change -= to_unpay
             # lic
-            raise ActiveRecord::Rollback unless to_unpay == 0 || !li.line_item_changes.create(field_changed: 'total_received', amount: -to_unpay, reason: lir).id.nil?
+            raise ActiveRecord::Rollback unless to_unpay == 0 || !li.line_item_changes.create(field_changed: 'total_received', amount: -to_unpay, reason: lir, new_value: li.total_received).id.nil?
             # lir
             refund_object ||= refund.create
             raise ActiveRecord::Rollback if refund_object.id.nil?

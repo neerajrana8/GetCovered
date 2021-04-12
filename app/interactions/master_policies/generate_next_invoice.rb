@@ -40,7 +40,7 @@ module MasterPolicies
         invoiceable: master_policy,
         payer: master_policy.account,
         collector: ppi.collector,
-        line_items: coverages.map |cov|
+        line_items: coverages.map do |cov|
           ::LineItem.new(
             chargeable: ppipt,
             title: cov.number,
