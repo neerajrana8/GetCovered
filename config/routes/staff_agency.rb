@@ -74,7 +74,7 @@
     resources :dashboard, only: [] do
       collection do
         get 'communities_data'
-        post 'communities_data_index', action: :index
+        post 'communities_data_index', action: :communities_data
       end
     end
 
