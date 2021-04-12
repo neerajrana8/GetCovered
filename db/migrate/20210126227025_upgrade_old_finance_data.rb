@@ -62,7 +62,9 @@ class UpgradeOldFinanceData < ActiveRecord::Migration[5.2]
           proration_refunds_allowed: false,
           commission_calculation: "no_payments",
           recipient: premium.commission_strategy,
-          collector: ::Agency.where(master_agency: true).take
+          collector: ::Agency.where(master_agency: true).take,
+          created_at: old.created_at,
+          updated_at: old.created_at
         )
         ::ArchivedInvoice.where(invoiceable: p).each do |inv|
           ppi = ::PolicyPremiumItem.create!(
@@ -76,7 +78,9 @@ class UpgradeOldFinanceData < ActiveRecord::Migration[5.2]
             commission_calculation: "group_by_transaction",
             commission_creation_delay_hours: 10,
             recipient: premium.commission_strategy,
-            collector: ::Agency.where(master_agency: true).take
+            collector: ::Agency.where(master_agency: true).take,
+            created_at: old.created_at,
+            updated_at: old.created_at
           )
           pppt = ::PolicyPremiumPaymentTerm.create!(
             policy_premium: premium,
@@ -85,12 +89,16 @@ class UpgradeOldFinanceData < ActiveRecord::Migration[5.2]
             time_resolution: 'day',
             invoice_available_date_override: inv.available_date,
             invoice_due_date_override: inv.due_date,
-            default_weight: 1
+            default_weight: 1,
+            created_at: old.created_at,
+            updated_at: old.created_at
           )
           ppipt = ::PolicyPremiumItemPaymentTerm.create!(
             policy_premium_item: ppi,
             policy_premium_payment_term: pppt,
-            weight: 1
+            weight: 1,
+            created_at: old.created_at,
+            updated_at: old.created_at
           )
           invoice = ::Invoice.new(
             number: inv.number,
@@ -111,7 +119,9 @@ class UpgradeOldFinanceData < ActiveRecord::Migration[5.2]
             invoiceable: p,
             payer: p.account,
             collector: ppi.collector,
-            archived_invoice: inv
+            archived_invoice: inv,
+            created_at: inv.created_at,
+            updated_at: inv.updated_at
           )
           invoice.callbacks_disabled = true
           invoice.save!
@@ -123,9 +133,12 @@ class UpgradeOldFinanceData < ActiveRecord::Migration[5.2]
               title: li.title,
               original_total_due: li.price,
               total_due: li.price,
+              preproration_total_due: li.price,
               analytics_category: "policy_premium",
               policy_quote: nil,
-              archived_line_item: li
+              archived_line_item: li,
+              created_at: li.created_at,
+              updated_at: li.upated_at
             )
           end
           inv.charges.each do |charge|
@@ -196,7 +209,7 @@ class UpgradeOldFinanceData < ActiveRecord::Migration[5.2]
           )
           unless inv.status == 'quoted'
             invoice.callbacks_disabled = true
-            invoice.update!(status: invoice.get_proper_status)
+            invoice.update!(status: inv.status == 'cancelled' ? 'cancelled' : invoice.get_proper_status)
           end
         end
         # since this is a master policy, we are now done handling it; move on to the next policy premium to upgrade
@@ -250,8 +263,8 @@ class UpgradeOldFinanceData < ActiveRecord::Migration[5.2]
           description: inv.description,
           available_date: inv.available_date,
           due_date: inv.due_date,
-          external: false,
-          status: 'quoted', # for now! we will update this after handling the line items!
+          external: pa.carrier_id == 5 || pa.carrier_id == 6 ? true : false,
+          status: inv.status == 'cancelled' ? 'cancelled' : pa.carrier_id == 5 || pa.carrier_id == 6 ? 'managed_externally' : 'quoted', # for now! we will update this after handling the line items!
           under_review: false,
           pending_charge_count: 0, # we will scream and die if we encounter a pending charge
           pending_dispute_count: 0,
@@ -316,7 +329,7 @@ class UpgradeOldFinanceData < ActiveRecord::Migration[5.2]
               total_reducing: 0,
               total_received: received,
               preproration_total_due: price,
-              duplicatable_reduction_total: 0
+              duplicatable_reduction_total: 0,
               created_at: inv.created_at,
               updated_at: lis.map{|l| l.updated_at }.max,
               archived_line_item: lis.first
@@ -461,11 +474,105 @@ class UpgradeOldFinanceData < ActiveRecord::Migration[5.2]
             )
             unless inv.archived_invoice.status == 'quoted'
               inv.callbacks_disabled = true
-              inv.update!(status: invoice.get_proper_status)
+              inv.update!(status: invoice.archived_invoice.status == 'cancelled' ? 'cancelled' : invoice.get_proper_status)
             end
           end
         when 5
-          
+          # build the PPIs
+          msi_policy_fee = pq.carrier_payment_data["policy_fee"]
+          installment_total = old.external_fees
+          down_payment = pq.invoices.order('created_at asc').first.line_items.find{|li| li.category == 'base_premium' }.price - pq.carrier_payment_data["policy_fee"]
+          installment_per = old.base - down_payment - msi_policy_fee
+          ppi_policy_fee = msi_policy_fee == 0 ? nil : ::PolicyPremiumItem.create!(
+            policy_premium: premium,
+            title: "Policy Fee",
+            category: "fee",
+            rounding_error_distribution: "first_payment_simple",
+            total_due: msi_policy_fee,
+            proration_calculation: "no_proration",
+            proration_refunds_allowed: false,
+            recipient: ::MsiService.carrier,
+            collector: ::MsiService.carrier
+          )
+          ppi_installment_fee = installment_total == 0 ? nil : ::PolicyPremiumItem.create!(
+            policy_premium: premium,
+            title: "Installment Fee",
+            category: "fee",
+            rounding_error_distribution: "first_payment_simple",
+            total_due: installment_total,
+            proration_calculation: "no_proration",
+            proration_refunds_allowed: false,
+            recipient: ::MsiService.carrier,
+            collector: ::MsiService.carrier
+          )
+          ppi_down_payment = down_payment == 0 ? nil : ::PolicyPremiumItem.create!(
+            policy_premium: premium,
+            title: "Premium Down Payment",
+            category: "premium",
+            rounding_error_distribution: "first_payment_simple",
+            total_due: down_payment,
+            proration_calculation: "no_proration",
+            proration_refunds_allowed: false,
+            recipient: premium.commission_strategy,
+            collector: ::MsiService.carrier
+          )
+          ppi_installment = installment_per == 0 ? nil : ::PolicyPremiumItem.create!(
+            policy_premium: premium,
+            title: "Premium Installment",
+            category: "premium",
+            rounding_error_distribution: "first_payment_simple",
+            total_due: installment_per,
+            proration_calculation: "no_proration",
+            proration_refunds_allowed: false,
+            recipient: premium.commission_strategy,
+            collector: ::MsiService.carrier
+          )
+          premium.update_totals(persist: true)
+          ppis = { policy_fee: ppi_policy_fee, installment_fee: ppi_installment_fee, down_payment: ppi_down_payment, installment: ppi_installment }.compact
+          # generate terms
+          ppi_pts = ppis.map do |ppi_name, ppi|
+            [
+              ppi_name,
+              pppts.map.with_index do |pppt, index|
+                next if (ppi_name == :policy_fee || ppi_name == :down_payment) && index > 0
+                next if (ppi_name == :installment_fee || ppi_name == :installment) && index == 0
+                ::PolicyPremiumItemPaymentTerm.create!(
+                  policy_premium_item: ppi,
+                  policy_premium_payment_term: pppt,
+                  weight: ppi_name == :policy_fee ? msi_policy_fee
+                    : new_invoices[index].line_items.select{|li| li.category == (ppi_name == :installment_fee ? 'amortized_fees' : 'base_premium') }.inject(0){|s,l| s + l.price },
+                  created_at: inv.created_at,
+                  updated_at: inv.created_at
+                )
+              end
+            ]
+          end.to_h
+          # generate line items
+          ppi_pts.each do |ppi_name, ppi_pts|
+            ppi_pts.each.with_index do |ppi_pt, index|
+              next if ppi_pt.nil?
+              ::LineItem.create!(chargeable: ppi_pt, invoice: new_invoices[index], title: ppis[ppi_name].title, priced_in: true,
+                analytics_category: ppi_name == :policy_fee || ppi_name == :installment_fee ? "policy_fee" : "policy_premium",
+                policy_quote: pq,
+                original_total_due: ppi_pt.weight,
+                total_due: ppi_pt.weight,
+                total_reducing: 0,
+                total_received: 0,
+                preproration_total_due: ppi_pt.weight,
+                duplicatable_reduction_total: 0,
+                created_at: new_invoices[index].created_at,
+                updated_at: new_invoices[index].updated_at,
+                archived_line_item: nil # since we are breaking out the policy fee (which was counted as part of the premium before)
+              )
+            end
+          end
+          # update invoices... (just status)
+          new_invoices.each do |inv|
+            if inv.archived_invoice.status == 'cancelled'
+              inv.callbacks_disabled = true
+              inv.update!(status: 'cancelled')
+            end
+          end
         when 6
           puts "Policy Premium ##{old.id} belongs to Deposit Choice policy! Oh noooooo!!!"
           raise Exception
