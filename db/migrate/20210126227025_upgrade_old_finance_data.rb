@@ -5,8 +5,8 @@ class UpgradeOldFinanceData < ActiveRecord::Migration[5.2]
 
   def up
     # Collectors
-    ::CarrierAgencyPolicyType.where(carrier_id: [5]).update_all(collector: Carrier.find(5))
-    ::CarrierAgencyPolicyType.where(carrier_id: [6]).update_all(collector: Carrier.find(6))
+    ::CarrierAgencyPolicyType.references(:carrier_agencies).includes(:carrier_agency).where(carrier_agencies: { carrier_id: [5] }).update_all(collector_type: 'Carrier', collector_id: 5)
+    ::CarrierAgencyPolicyType.references(:carrier_agencies).includes(:carrier_agency).where(carrier_agencies: { carrier_id: [6] }).update_all(collector_type: 'Carrier', collector_id: 6)
     # Policy Premia
     ArchivedPolicyPremium.all.each do |old|
       # grab useful boiz
@@ -164,7 +164,7 @@ class UpgradeOldFinanceData < ActiveRecord::Migration[5.2]
             )
             sc.callbacks_disabled = true
             unless sc.stripe_id.nil?
-              from_stripe = (::Stripe:Charge::retrieve(sc.stripe_id) rescue nil)
+              from_stripe = (::Stripe::Charge::retrieve(sc.stripe_id) rescue nil)
               unless from_stripe.nil?
                 sc.source = from_stripe['source']&.[]('id')
                 sc.description = from_stripe['description']
@@ -293,7 +293,6 @@ class UpgradeOldFinanceData < ActiveRecord::Migration[5.2]
         to_create.save!
       end
       # create PolicyPremiumItems and PolicyPremiumItemPaymentTerms
-      premium_proration_calculation: 'per_payment_term', premium_proration_refunds_allowed: true
       case pa.carrier_id
         when 1,2,3,4
           ppi_premium = ::PolicyPremiumItem.create!(
@@ -359,7 +358,7 @@ class UpgradeOldFinanceData < ActiveRecord::Migration[5.2]
               )
               sc.callbacks_disabled = true
               unless sc.stripe_id.nil?
-                from_stripe = (::Stripe:Charge::retrieve(sc.stripe_id) rescue nil)
+                from_stripe = (::Stripe::Charge::retrieve(sc.stripe_id) rescue nil)
                 unless from_stripe.nil?
                   sc.source = from_stripe['source']&.[]('id')
                   sc.description = from_stripe['description']
@@ -404,7 +403,7 @@ class UpgradeOldFinanceData < ActiveRecord::Migration[5.2]
                         when 'queued';                        'awaiting_execution'
                         when 'pending';                       'pending'
                         when 'succeeded';                     'succeeded'
-                        when 'succeeded_via_dispute_payout':  'succeeded'
+                        when 'succeeded_via_dispute_payout';  'succeeded'
                         when 'failed';                        'failed'
                         when 'errored';                       'errored'
                         when 'failed_and_handled';            refund.stripe_status == 'succeeded' ? 'succeeded' : 'succeeded_manually'
@@ -579,7 +578,7 @@ class UpgradeOldFinanceData < ActiveRecord::Migration[5.2]
         else
           # MOOSE WARNING: some nils exist, don't they??? is that from missing policy_applications >____>???
       end
-      
+      1
       
     end
     

@@ -174,6 +174,17 @@ ActiveRecord::Schema.define(version: 2021_03_30_140422) do
     t.index ["stripe_id"], name: "charge_stripe_id"
   end
 
+  create_table "archived_commission_deductions", force: :cascade do |t|
+    t.integer "unearned_balance"
+    t.string "deductee_type"
+    t.bigint "deductee_id"
+    t.bigint "policy_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["deductee_type", "deductee_id"], name: "index_craptastic_garbage_why_is_there_a_length_limit_ugh"
+    t.index ["policy_id"], name: "index_archived_commission_deductions_on_policy_id"
+  end
+
   create_table "archived_commission_strategies", force: :cascade do |t|
     t.string "title", null: false
     t.integer "amount", default: 10, null: false
@@ -197,6 +208,25 @@ ActiveRecord::Schema.define(version: 2021_03_30_140422) do
     t.index ["commission_strategy_id"], name: "index_archived_commission_strategies_on_commission_strategy_id"
     t.index ["commissionable_type", "commissionable_id"], name: "index_strategy_on_type_and_id"
     t.index ["policy_type_id"], name: "index_archived_commission_strategies_on_policy_type_id"
+  end
+
+  create_table "archived_commissions", force: :cascade do |t|
+    t.integer "amount"
+    t.integer "deductions"
+    t.integer "total"
+    t.boolean "approved"
+    t.date "distributes"
+    t.boolean "paid"
+    t.string "stripe_transaction_id"
+    t.bigint "policy_premium_id"
+    t.bigint "commission_strategy_id"
+    t.string "commissionable_type"
+    t.bigint "commissionable_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["commission_strategy_id"], name: "index_archived_commissions_on_commission_strategy_id"
+    t.index ["commissionable_type", "commissionable_id"], name: "index_archived_commissions_on_commissionable"
+    t.index ["policy_premium_id"], name: "index_archived_commissions_on_policy_premium_id"
   end
 
   create_table "archived_disputes", force: :cascade do |t|
@@ -343,11 +373,8 @@ ActiveRecord::Schema.define(version: 2021_03_30_140422) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "carrier_code"
-    t.string "collector_type"
-    t.bigint "collector_id"
     t.index ["agency_id"], name: "index_billing_strategies_on_agency_id"
     t.index ["carrier_id"], name: "index_billing_strategies_on_carrier_id"
-    t.index ["collector_type", "collector_id"], name: "index_billing_strategies_on_collector_type_and_collector_id"
     t.index ["policy_type_id"], name: "index_billing_strategies_on_policy_type_id"
   end
 
@@ -405,8 +432,11 @@ ActiveRecord::Schema.define(version: 2021_03_30_140422) do
   create_table "carrier_agency_policy_types", force: :cascade do |t|
     t.bigint "carrier_agency_id"
     t.bigint "policy_type_id"
-    t.bigint "commission_strategy_id"
+    t.bigint "commission_strategy_id", null: false
+    t.string "collector_type"
+    t.bigint "collector_id"
     t.index ["carrier_agency_id"], name: "index_carrier_agency_policy_types_on_carrier_agency_id"
+    t.index ["collector_type", "collector_id"], name: "index_capt_on_collector"
     t.index ["commission_strategy_id"], name: "index_carrier_agency_policy_types_on_commission_strategy_id"
     t.index ["policy_type_id"], name: "index_carrier_agency_policy_types_on_policy_type_id"
   end
@@ -480,12 +510,9 @@ ActiveRecord::Schema.define(version: 2021_03_30_140422) do
     t.datetime "updated_at", null: false
     t.integer "max_days_for_full_refund", default: 31, null: false
     t.integer "days_late_before_cancellation", default: 30, null: false
-<<<<<<< HEAD
-    t.string "premium_proration_calculation", default: "no_proration", null: false
+    t.bigint "commission_strategy_id", null: false
+    t.string "premium_proration_calculation", default: "per_payment_term", null: false
     t.boolean "premium_proration_refunds_allowed", default: true, null: false
-=======
-    t.bigint "commission_strategy_id"
->>>>>>> GCV2-3280-commission-strategies
     t.index ["carrier_id"], name: "index_carrier_policy_types_on_carrier_id"
     t.index ["commission_strategy_id"], name: "index_carrier_policy_types_on_commission_strategy_id"
     t.index ["policy_type_id"], name: "index_carrier_policy_types_on_policy_type_id"
@@ -548,6 +575,7 @@ ActiveRecord::Schema.define(version: 2021_03_30_140422) do
 
   create_table "commission_items", force: :cascade do |t|
     t.integer "amount", null: false
+    t.text "notes"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.bigint "commission_id"
@@ -555,10 +583,12 @@ ActiveRecord::Schema.define(version: 2021_03_30_140422) do
     t.bigint "commissionable_id"
     t.string "reason_type"
     t.bigint "reason_id"
+    t.bigint "policy_quote_id"
     t.bigint "policy_id"
     t.index ["commission_id"], name: "index_commission_items_on_commission_id"
     t.index ["commissionable_type", "commissionable_id"], name: "index_commision_items_on_commissionable"
     t.index ["policy_id"], name: "index_commission_items_on_policy_id"
+    t.index ["policy_quote_id"], name: "index_commission_items_on_policy_quote_id"
     t.index ["reason_type", "reason_id"], name: "index_commission_items_on_reason_type_and_reason_id"
   end
 
@@ -793,16 +823,14 @@ ActiveRecord::Schema.define(version: 2021_03_30_140422) do
     t.integer "total_pending", default: 0, null: false
     t.integer "total_received", default: 0, null: false
     t.integer "total_undistributable", default: 0, null: false
-    t.integer "pending_dispute_total", default: 0, null: false
-    t.integer "pending_refund_total", default: 0, null: false
-    t.integer "total_refunded", default: 0, null: false
-    t.integer "total_lost_to_disputes", default: 0, null: false
     t.string "invoiceable_type"
     t.bigint "invoiceable_id"
     t.string "payer_type"
     t.bigint "payer_id"
     t.string "collector_type"
     t.bigint "collector_id"
+    t.bigint "archived_invoice_id"
+    t.index ["archived_invoice_id"], name: "index_invoices_on_archived_invoice_id"
     t.index ["collector_type", "collector_id"], name: "index_invoices_on_collector_type_and_collector_id"
     t.index ["invoiceable_type", "invoiceable_id"], name: "index_invoices_on_invoiceable_type_and_invoiceable_id"
     t.index ["payer_type", "payer_id"], name: "index_invoices_on_payer_type_and_payer_id"
@@ -898,6 +926,7 @@ ActiveRecord::Schema.define(version: 2021_03_30_140422) do
   create_table "line_item_changes", force: :cascade do |t|
     t.integer "field_changed", null: false
     t.integer "amount", null: false
+    t.integer "new_value", null: false
     t.boolean "handled", default: false, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
@@ -920,7 +949,6 @@ ActiveRecord::Schema.define(version: 2021_03_30_140422) do
     t.integer "amount_successful", default: 0, null: false
     t.integer "amount_refunded", default: 0, null: false
     t.boolean "pending", default: true, null: false
-    t.boolean "processed", default: false, null: false
     t.integer "stripe_refund_reason"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
@@ -948,6 +976,8 @@ ActiveRecord::Schema.define(version: 2021_03_30_140422) do
     t.bigint "invoice_id"
     t.integer "analytics_category", default: 0, null: false
     t.bigint "policy_quote_id"
+    t.bigint "archived_line_item_id"
+    t.index ["archived_line_item_id"], name: "index_line_items_on_archived_line_item_id"
     t.index ["chargeable_type", "chargeable_id"], name: "index_line_items_on_chargeable_type_and_chargeable_id"
     t.index ["invoice_id"], name: "index_line_items_on_invoice_id"
     t.index ["policy_quote_id"], name: "index_line_items_on_policy_quote_id"
@@ -1193,14 +1223,7 @@ ActiveRecord::Schema.define(version: 2021_03_30_140422) do
     t.jsonb "tagging_data"
     t.string "error_message"
     t.integer "branding_profile_id"
-<<<<<<< HEAD
-<<<<<<< HEAD
     t.string "internal_error_message"
-=======
-    t.bigint "tag_ids", default: [], null: false, array: true
->>>>>>> master
-=======
->>>>>>> GCV2-3280-commission-strategies
     t.index ["account_id"], name: "index_policy_applications_on_account_id"
     t.index ["agency_id"], name: "index_policy_applications_on_agency_id"
     t.index ["billing_strategy_id"], name: "index_policy_applications_on_billing_strategy_id"
@@ -1333,8 +1356,6 @@ ActiveRecord::Schema.define(version: 2021_03_30_140422) do
     t.integer "total_fee", default: 0, null: false
     t.integer "total_tax", default: 0, null: false
     t.integer "total", default: 0, null: false
-    t.boolean "first_payment_down_payment", default: false, null: false
-    t.integer "first_payment_down_payment_amount_override"
     t.boolean "prorated", default: false, null: false
     t.datetime "prorated_term_last_moment"
     t.datetime "prorated_term_first_moment"
@@ -1343,23 +1364,30 @@ ActiveRecord::Schema.define(version: 2021_03_30_140422) do
     t.datetime "updated_at", null: false
     t.string "error_info"
     t.bigint "policy_quote_id"
-    t.bigint "billing_strategy_id"
-    t.bigint "commission_strategy_id"
     t.bigint "policy_id"
-    t.index ["billing_strategy_id"], name: "index_policy_premia_on_billing_strategy_id"
+    t.bigint "commission_strategy_id"
+    t.bigint "archived_policy_premium_id"
+    t.index ["archived_policy_premium_id"], name: "index_policy_premia_on_archived_policy_premium_id"
     t.index ["commission_strategy_id"], name: "index_policy_premia_on_commission_strategy_id"
     t.index ["policy_id"], name: "index_policy_premia_on_policy_id"
     t.index ["policy_quote_id"], name: "index_policy_premia_on_policy_quote_id"
   end
 
   create_table "policy_premium_item_commission", force: :cascade do |t|
+    t.integer "status", null: false
     t.integer "payability", null: false
     t.integer "total_expected", null: false
     t.integer "total_received", null: false
+    t.integer "total_commission", default: 0, null: false
     t.decimal "percentage", precision: 5, scale: 2, null: false
+    t.integer "payment_order", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
     t.bigint "policy_premium_item_id"
     t.string "recipient_type"
     t.bigint "recipient_id"
+    t.bigint "commission_strategy_id"
+    t.index ["commission_strategy_id"], name: "index_policy_premium_item_commission_on_commission_strategy_id"
     t.index ["policy_premium_item_id"], name: "index_policy_premium_item_commission_on_policy_premium_item_id"
     t.index ["recipient_type", "recipient_id"], name: "index_policy_premium_item_commission_on_recipient"
   end
@@ -1370,6 +1398,34 @@ ActiveRecord::Schema.define(version: 2021_03_30_140422) do
     t.bigint "policy_premium_item_id"
     t.index ["policy_premium_item_id"], name: "index_ppipt_on_ppi"
     t.index ["policy_premium_payment_term_id"], name: "index_ppipt_on_pppt_id"
+  end
+
+  create_table "policy_premium_item_transaction", force: :cascade do |t|
+    t.boolean "pending", default: true, null: false
+    t.datetime "create_commission_items_at", null: false
+    t.integer "amount"
+    t.jsonb "error_info"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "recipient_id"
+    t.string "commissionable_type"
+    t.bigint "commissionable_id"
+    t.string "reason_type"
+    t.bigint "reason_id"
+    t.bigint "policy_premium_item_id"
+    t.index ["commissionable_type", "commissionable_id"], name: "index_ppits_on_commissionable"
+    t.index ["pending", "create_commission_items_at"], name: "index_ppits_on_pending_and_ccia"
+    t.index ["policy_premium_item_id"], name: "index_ppits_on_ppi"
+    t.index ["reason_type", "reason_id"], name: "index_ppits_on_reason"
+    t.index ["recipient_id"], name: "index_ppits_on_recipient"
+  end
+
+  create_table "policy_premium_item_transaction_membership", force: :cascade do |t|
+    t.bigint "policy_premium_item_transaction_id"
+    t.string "member_type"
+    t.bigint "member_id"
+    t.index ["member_type", "member_id"], name: "index_ppitms_on_member"
+    t.index ["policy_premium_item_transaction_id"], name: "index_ppitms_on_ppit"
   end
 
   create_table "policy_premium_items", force: :cascade do |t|
@@ -1388,7 +1444,8 @@ ActiveRecord::Schema.define(version: 2021_03_30_140422) do
     t.boolean "proration_pending", default: false, null: false
     t.integer "proration_calculation", null: false
     t.boolean "proration_refunds_allowed", null: false
-    t.boolean "preprocessed", default: false, null: false
+    t.integer "commission_calculation", default: 0, null: false
+    t.integer "commission_creation_delay_hours"
     t.bigint "policy_premium_id"
     t.string "recipient_type"
     t.bigint "recipient_id"
@@ -1605,8 +1662,6 @@ ActiveRecord::Schema.define(version: 2021_03_30_140422) do
     t.index ["uid", "provider"], name: "index_staffs_on_uid_and_provider", unique: true
   end
 
-<<<<<<< HEAD
-<<<<<<< HEAD
   create_table "stripe_charges", force: :cascade do |t|
     t.boolean "processed", default: false, null: false
     t.boolean "invoice_aware", default: false, null: false
@@ -1624,6 +1679,8 @@ ActiveRecord::Schema.define(version: 2021_03_30_140422) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.bigint "invoice_id", null: false
+    t.bigint "archived_charge_id"
+    t.index ["archived_charge_id"], name: "index_stripe_charges_on_archived_charge_id"
     t.index ["invoice_id"], name: "index_stripe_charges_on_invoice_id"
   end
 
@@ -1643,18 +1700,8 @@ ActiveRecord::Schema.define(version: 2021_03_30_140422) do
     t.bigint "stripe_charge_id"
     t.index ["refund_id"], name: "index_stripe_refunds_on_refund_id"
     t.index ["stripe_charge_id"], name: "index_stripe_refunds_on_stripe_charge_id"
-=======
-  create_table "tags", force: :cascade do |t|
-    t.string "title"
-    t.text "description"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["title"], name: "index_tags_on_title", unique: true
->>>>>>> master
   end
 
-=======
->>>>>>> GCV2-3280-commission-strategies
   create_table "tracking_urls", force: :cascade do |t|
     t.string "landing_page"
     t.string "campaign_source"

@@ -26,7 +26,7 @@ class PolicyPremium < ApplicationRecord
     if: Proc.new{|pp| pp.commission_strategy.nil? && !pp.policy_rep.nil? }
     
   # validations
-  validates :has_policy_or_policy_quote
+  validate :has_policy_or_policy_quote
   
   # Public Class Methods
   def self.default_collector
