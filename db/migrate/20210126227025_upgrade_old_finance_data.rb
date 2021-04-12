@@ -214,7 +214,7 @@ class UpgradeOldFinanceData < ActiveRecord::Migration[5.2]
         end
         # since this is a master policy, we are now done handling it; move on to the next policy premium to upgrade
         next
-      end
+      end # end handle master policies
       # create PolicyPremium
       total_premium = old.base + (old.include_special_premium ? old.special_premium : 0)
       total_tax = old.taxes
@@ -295,7 +295,7 @@ class UpgradeOldFinanceData < ActiveRecord::Migration[5.2]
       # create PolicyPremiumItems and PolicyPremiumItemPaymentTerms
       case pa.carrier_id
         when 1,2,3,4
-          ppi_premium = ::PolicyPremiumItem.create!(
+          ppi_premium = old.combined_premium == 0 ? nil : ::PolicyPremiumItem.create!(
             policy_premium: premium,
             title: "Premium Installment",
             category: "premium",
@@ -307,7 +307,7 @@ class UpgradeOldFinanceData < ActiveRecord::Migration[5.2]
             collector: ::PolicyPremium.default_collector,
             created_at: old.created_at,
             updated_at: old.created_at
-          ) unless old.combined_premium == 0
+          )
           invoices.map.with_index do |inv, ind|
             lis = line_items.select{|li| li.invoice_id == inv.id && (li.category == 'base_premium' || li.category == 'special_premium') }
             price = lis.inject(0){|sum,li| sum + li.price }
@@ -578,7 +578,6 @@ class UpgradeOldFinanceData < ActiveRecord::Migration[5.2]
         else
           # MOOSE WARNING: some nils exist, don't they??? is that from missing policy_applications >____>???
       end
-      1
       
     end
     
@@ -592,6 +591,7 @@ end
 # 1) Kill Deposit Choice policies
 # 2) Kill PolicyGroups
 # 3) Kill fees on non-MSI policies
+
 
 
 =begin
@@ -619,6 +619,7 @@ def sanity_check(old)
   tr[:id] = old.id unless tr.nil?
   return tr
 end
+
 
 
 
