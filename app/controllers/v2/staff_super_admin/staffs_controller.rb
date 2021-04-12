@@ -91,7 +91,7 @@ module V2
         params.permit(
           :email, :password, :password_confirmation,
           notification_options: {}, 
-          settings: {}, 
+          settings: {},
           staff_permission_attributes: [permissions: {}],
           profile_attributes: %i[
             id birth_date contact_email contact_phone first_name
@@ -112,6 +112,7 @@ module V2
           updated_at: %i[scalar array],
           enabled: %i[scalar array],
           owner: %i[scalar array],
+          current_sign_in_at: %i[scalar array],
           profile: {
             first_name: %i[scalar like],
             last_name: %i[scalar like],
