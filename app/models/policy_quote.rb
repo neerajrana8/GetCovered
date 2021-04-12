@@ -353,7 +353,7 @@ class PolicyQuote < ApplicationRecord
         index = -1
         [
           collector,
-          by_pppt.map do |pppt, line_items|
+          by_pppt.map do |pppt, line_item_array|
             index += 1
             available_date = pppt.invoice_available_date_override || (index == 0 ? Time.current.to_date : pppt.first_moment.beginning_of_day - 1.day - self.available_period) # MOOSE WARNING: model must support .available_period
             due_date = pppt.invoice_due_date_override || (index == 0 ? Time.current.to_date + 1.day : pppt.first_moment.beginning_of_day - 1.day)
@@ -365,7 +365,7 @@ class PolicyQuote < ApplicationRecord
               invoiceable: self,
               payer: self.primary_user,
               collector: collector,
-              line_items: line_items
+              line_items: line_item_array
             )
             unless created.id
               dat_problemo = {

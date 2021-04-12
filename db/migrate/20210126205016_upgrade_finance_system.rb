@@ -10,7 +10,8 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
     CarrierPolicyType.where(premium_refundable: true).update_all(premium_proration_calculation: 'per_payment_term', premium_proration_refunds_allowed: true)
     CarrierPolicyType.where(premium_refundable: false).update_all(premium_proration_calculation: 'per_payment_term', premium_proration_refunds_allowed: false)
     remove_column :carrier_policy_types, :premium_refundable
-    add_reference :carrier_agency_policy_types, :collector, polymorphic: true, null: true
+    add_reference :carrier_agency_policy_types, :collector, polymorphic: true, null: true,
+      index: { name: 'index_capt_on_collector' }
     
     # update Policy
     add_column :policies, :marked_for_cancellation, :boolean, null: false, default: true
@@ -313,22 +314,28 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
       t.references    :policy, null: true
     end
     
-    create_table :policy_premium_item_transaction
+    create_table :policy_premium_item_transaction do |t|
       t.boolean       :pending, null: false, default: true              # Whether this PPIT is pending or has already created CommissionItems
       t.datetime      :create_commission_items_at, null: false          # When to stop pending & create commission items
       t.integer       :amount                                           # The amount of the commission items to create
-      t.jsonb         :error_info
+      t.jsonb         :error_info                                       # If we encounter an error in unleash_commission_item!, we log it here
       t.timestamps
-      t.references    :recipient                                        # The recipient of the commission on which this thing's commision items will be listed.
+      t.references    :recipient,                                       # The recipient of the commission on which this thing's commision items will be listed.
+        index: { name: 'index_ppits_on_recipient' }
       t.references    :commissionable, polymorphic: true,               # The thing this item is being paid for. Generally will be a PolicyPremiumItemCommission.
-        index: { name: 'index_commision_items_on_ppit' }
-      t.references    :reason, polymorphic: true, null: true            # The reason this CI was created (generally a StripeCharge or LineItemReduction)
-      t.references    :policy_premium_item
+        index: { name: 'index_ppits_on_commissionable' }
+      t.references    :reason, polymorphic: true, null: true,           # The reason this PPIT was created (generally a StripeCharge or LineItemReduction)
+        index: { name: 'index_ppits_on_reason' }
+      t.references    :policy_premium_item,                             # The PPI we belong to
+        index: { name: 'index_ppits_on_ppi' }
+      t.index ["pending", "create_commission_items_at"], name: "index_ppits_on_pending_and_ccia"
     end
     
-    create_table :policy_premium_item_transaction_membership
-      t.references    :policy_premium_item_transaction
-      t.references    :member, polymorphic: true
+    create_table :policy_premium_item_transaction_membership do |t|
+      t.references    :policy_premium_item_transaction,
+        index: { name: 'index_ppitms_on_ppit' }
+      t.references    :member, polymorphic: true,
+        index: { name: 'index_ppitms_on_member' }
     end
   
   end
