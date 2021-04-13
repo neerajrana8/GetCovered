@@ -41,7 +41,7 @@ class UpgradeOldFinanceData < ActiveRecord::Migration[5.2]
           commission_strategy: cs,
           total_premium: old.base,
           total_tax: 0,
-          toatl_fee: 0,
+          total_fee: 0,
           total: old.base,
           prorated: false,
           prorated_term_first_moment: nil,
@@ -50,7 +50,7 @@ class UpgradeOldFinanceData < ActiveRecord::Migration[5.2]
           error_info: nil,
           created_at: old.created_at,
           updated_at: old.updated_at,
-          archived_policy_premium: old
+          archived_policy_premium_id: old.id
         )
         ppi_per_coverage = ::PolicyPremiumItem.create!(
           policy_premium: premium,
@@ -136,9 +136,9 @@ class UpgradeOldFinanceData < ActiveRecord::Migration[5.2]
               preproration_total_due: li.price,
               analytics_category: "policy_premium",
               policy_quote: nil,
-              archived_line_item: li,
+              archived_line_item_id: li.id,
               created_at: li.created_at,
-              updated_at: li.upated_at
+              updated_at: li.updated_at
             )
           end
           inv.charges.each do |charge|
@@ -160,7 +160,7 @@ class UpgradeOldFinanceData < ActiveRecord::Migration[5.2]
               created_at: charge.created_at,
               updated_at: charge.updated_at,
               invoice_id: invoice.id,
-              archived_charge: charge
+              archived_charge_id: charge.id
             )
             sc.callbacks_disabled = true
             unless sc.stripe_id.nil?
@@ -195,7 +195,7 @@ class UpgradeOldFinanceData < ActiveRecord::Migration[5.2]
                       created_at: charge.updated_at,
                       updated_at: charge.updated_at
                     )
-                    li.update!(total_received: li.total_recieved + dat_amount)
+                    li.update!(total_received: li.total_received + dat_amount)
                   end
                   amount_left -= dat_amount
                 end
@@ -229,8 +229,8 @@ class UpgradeOldFinanceData < ActiveRecord::Migration[5.2]
         total_fee: total_fee,
         total: total_premium + total_tax + total_fee,
         prorated: prorated,
-        prorated_term_first_moment: !prorated ? nil : pq.policy.effective_date.beginning_of_day,
-        prorated_term_last_moment: !prorated ? nil : pq.policy.cancellation_date.end_of_day,
+        prorated_term_first_moment: !prorated ? nil : pq.policy.effective_date.to_date.beginning_of_day,
+        prorated_term_last_moment: !prorated ? nil : pq.policy.cancellation_date.to_date.end_of_day,
         force_no_refunds: false,
         error_info: nil,
         created_at: old.created_at,
@@ -394,7 +394,7 @@ class UpgradeOldFinanceData < ActiveRecord::Migration[5.2]
                       amount_refunded: refund.amount,
                       amount_returned_by_dispute: 0,
                       complete: true,
-                      invoice: inv,
+                      invoice: new_invoices[ind],
                       created_at: refund.created_at,
                       updated_at: refund.updated_at
                     )

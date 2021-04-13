@@ -260,6 +260,7 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
       t.integer   :amount_refunded, null: false, default: 0             # How much actually was refunded
       t.integer   :amount_returned_by_dispute, null: false, default: 0  # How much actually was returned by dispute
       t.boolean   :complete, null: false, default: false                # Whether the refund process is complete
+      t.timestamps
       t.references :invoice                                             # The invoice this refund applies to
     end
     
