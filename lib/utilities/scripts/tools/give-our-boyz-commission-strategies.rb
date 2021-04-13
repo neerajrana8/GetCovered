@@ -8,13 +8,6 @@ def give_em_cses
       ::CarrierAgency.where("carrier_id > 6").each{|ca| ca.destroy! }
       ::Carrier.where("id > 6").each{|c| c.carrier_policy_types.each{|cpt| cpt.destroy! }; c.fees.delete_all; c.carrier_insurable_types.delete_all; c.carrier_insurable_profiles.delete_all; c.carrier_class_codes.delete_all; c.histories.delete_all; c.access_tokens.delete_all; c.destroy! }
 
-      # give our CPTs commission strategies
-      get_covered = ::Agency.where(master_agency: true).take
-      ::CarrierPolicyType.all.each do |cpt|
-        if cpt.commission_strategy.nil? || cpt.commission_strategy.recipient != get_covered
-          cpt.update!(commission_strategy_attributes: { percentage: 30 })
-        end
-      end
 
       # create capts for weird garbage
       folk = [
@@ -22,12 +15,23 @@ def give_em_cses
         ::Policy.order('carrier_id asc, agency_id asc, policy_type_id asc').group('carrier_id, agency_id, policy_type_id').pluck('carrier_id, agency_id, policy_type_id')
       ].uniq
       folk.each do |f|
-        ca = ::CarrierAgency.where(carrier_id: f[0], agency_id: f[1])
+        ca = ::CarrierAgency.where(carrier_id: f[0], agency_id: f[1]).take
         if ca.nil?
           ca = ::CarrierAgency.create!(carrier_id: f[0], agency_id: f[1])
         end
-        if ::CarrierAgencyPolicyType.where(carrier_agency: ca, policy_type_id: f[2]).nil?
-          ::CarrierAgencyPolicyType.where(carrier_agency: ca, policy_type_id: f[2])
+        if ::CarrierAgencyPolicyType.where(carrier_agency: ca, policy_type_id: f[2]).take.nil?
+          ::CarrierAgencyPolicyType.create!(carrier_agency: ca, policy_type_id: f[2])
+        end
+        if ::CarrierPolicyType.where(carrier_id: f[0], policy_type_id: f[2]).take.nil?
+          ::CarrierPolicyType.create!(carrier_id: f[0], policy_type_id: f[2])
+        end
+      end
+      
+      # give our CPTs commission strategies
+      get_covered = ::Agency.where(master_agency: true).take
+      ::CarrierPolicyType.all.each do |cpt|
+        if cpt.commission_strategy.nil? || cpt.commission_strategy.recipient != get_covered
+          cpt.update!(commission_strategy_attributes: { percentage: 30 })
         end
       end
       
