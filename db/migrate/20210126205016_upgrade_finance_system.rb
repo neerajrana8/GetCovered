@@ -109,6 +109,7 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
     
     create_table :policy_premium_item_payment_terms do |t|
       t.integer :weight, null: false                                    # the weight assigned to this payment term for calculating total due
+      t.timestamps
       t.references :policy_premium_payment_term,
         index: { name: 'index_ppipt_on_pppt_id' }
       t.references :policy_premium_item,

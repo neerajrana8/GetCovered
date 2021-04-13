@@ -303,7 +303,7 @@ class PolicyPremiumItem < ApplicationRecord
                   ::PolicyPremiumItemCommission.create!(
                     policy_premium_item: self,
                     recipient: cs.recipient,
-                    commission_strategy: cs,
+                    commission_strategy_id: cs.id,
                     payability: external_mode || cs.recipient == self.collection_plan ? 'external' : 'internal',
                     status: 'quoted',
                     total_expected: total_expected,
@@ -312,7 +312,7 @@ class PolicyPremiumItem < ApplicationRecord
                     payment_order: payment_order
                   )
                   payment_order += 1
-                  last_percentage = cs.recipient.percentage
+                  last_percentage = cs.percentage
                 end
               else
                 ::PolicyPremiumItemCommission.create!(
