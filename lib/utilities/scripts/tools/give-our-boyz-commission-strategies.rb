@@ -16,6 +16,21 @@ def give_em_cses
         end
       end
 
+      # create capts for weird garbage
+      folk = [
+        ::PolicyApplication.order('carrier_id asc, agency_id asc, policy_type_id asc').group('carrier_id, agency_id, policy_type_id').pluck('carrier_id, agency_id, policy_type_id') +
+        ::Policy.order('carrier_id asc, agency_id asc, policy_type_id asc').group('carrier_id, agency_id, policy_type_id').pluck('carrier_id, agency_id, policy_type_id')
+      ].uniq
+      folk.each do |f|
+        ca = ::CarrierAgency.where(carrier_id: f[0], agency_id: f[1])
+        if ca.nil?
+          ca = ::CarrierAgency.create!(carrier_id: f[0], agency_id: f[1])
+        end
+        if ::CarrierAgencyPolicyType.where(carrier_agency: ca, policy_type_id: f[2]).nil?
+          ::CarrierAgencyPolicyType.where(carrier_agency: ca, policy_type_id: f[2])
+        end
+      end
+      
       # order our capts by agency ownership
       allcapts = ::CarrierAgencyPolicyType.all.to_a
       capts = [allcapts.select{|capt| capt.agency.agency.nil? }]
