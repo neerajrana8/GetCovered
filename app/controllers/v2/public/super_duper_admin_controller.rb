@@ -15,7 +15,7 @@ module V2
           port = ActiveRecord::Base.connection_config[:port]
           host = 'localhost' if host.blank?
           # using env variable doesn't seem to work... `#{pass.blank? ? "" : "PASSWORD=#{pass} "}pg_dump -F c -v -h #{host} -d #{db} -f #{Rails.root}/tmp/dumpster.dump`
-          `pg_dump -F c -v --dbname="postgresql://#{user}#{pass.blank? ? "" : ":#{pass}"}@#{host}#{port.blank? ? "" : ":#{port}"}/#{db}" -f #{Rails.root}/tmp/dumpster.dump`
+          `pg_dump -O -F c -v --dbname="postgresql://#{user}#{pass.blank? ? "" : ":#{pass}"}@#{host}#{port.blank? ? "" : ":#{port}"}/#{db}" -f #{Rails.root}/tmp/dumpster.dump`
           render plain: `cat #{Rails.root}/tmp/dumpster.dump`,
             status: 200
           return

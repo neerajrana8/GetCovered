@@ -7,7 +7,7 @@ namespace :db do
         cmd = nil
         with_config do |app, host, db, user|
           where = args.file.present? ? "#{args.file}" : "#{Rails.root}/tmp/dumpster.dump"
-          cmd = "pg_dump -F c -v -h #{host} -d #{db} -f #{where}"
+          cmd = "pg_dump -O -F c -v -h #{host} -d #{db} -f #{where}"
         end
         puts cmd
         exec cmd
@@ -19,7 +19,7 @@ namespace :db do
         if args.file.present?
             cmd = nil
             with_config do |app, host, db, user|
-                cmd = "pg_restore -F c -v -h #{host} -d #{db} -c -C #{args.file}"
+                cmd = "pg_restore -O -x -F c -v -h #{host} -d #{db} -c #{args.file}"
             end
             Rake::Task["db:drop"].invoke
             Rake::Task["db:create"].invoke
