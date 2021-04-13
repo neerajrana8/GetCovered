@@ -14,21 +14,17 @@ class UpgradeOldFinanceData < ActiveRecord::Migration[5.2]
       pq = old.policy_quote
       pa = pq&.policy_application
       pr = pa || p
-      caa = pr&.carrier_agency_authorization
       cpt = ::CarrierPolicyType.where(carrier_id: pr&.carrier_id, policy_type_id: pr&.policy_type_id).take
       capt = ::CarrierAgencyPolicyType.references(:carrier_agencies).includes(:carrier_agency).where(policy_type_id: pr&.policy_type_id, carrier_agencies: { carrier_id: pr&.carrier_id, agency_id: pr&.agency_id }).take
-      cs = capt.commission_strategy # can't be nil if previous migrations succeeded, so don't bother checking
+      cs = capt&.commission_strategy # can't be nil if previous migrations succeeded, so don't bother checking
       if pr.nil?
         puts "Policy premium ##{old.id} is insane; it has no PolicyQuote or Policy!"
         raise Exception
-      elsif !pr.nil? && pa.nil?
+      elsif !pq.nil? && pa.nil?
         puts "Policy premium ##{old.id} has insane policy quote with no PolicyApplication!"
         raise Exception
-      elsif caa.nil?
-        puts "Policy premium ##{old.id} has insane policy application with no CarrierAgencyAuthorization!"
-        raise Exception
       elsif cpt.nil?
-        puts "Policy premium ##{old.id} has insane policy application with no CarrierPolicyType!"
+        puts "Policy premium ##{old.id} has no CarrierPolicyType!"
         raise Exception
       elsif capt.nil?
         puts "Policy premium ##{old.id} has no CarrierAgencyPolicyType! Oh dear, oh my, oh dear!"
@@ -295,6 +291,7 @@ class UpgradeOldFinanceData < ActiveRecord::Migration[5.2]
         )
         to_create.callbacks_disabled = true
         to_create.save!
+        to_create
       end
       # create PolicyPremiumItems and PolicyPremiumItemPaymentTerms
       case pa.carrier_id
@@ -326,7 +323,7 @@ class UpgradeOldFinanceData < ActiveRecord::Migration[5.2]
               created_at: inv.created_at,
               updated_at: inv.created_at
             )
-            li = ::LineItem.create!(chargeable: ppipt, invoice: inv, title: "Premium", priced_in: true, analytics_category: "policy_premium", policy_quote: pq,
+            li = ::LineItem.create!(chargeable: ppipt, invoice: new_invoices[ind], title: "Premium", priced_in: true, analytics_category: "policy_premium", policy_quote: pq,
               original_total_due: price,
               total_due: inv.status == 'canceled' ? received : price - proration_reduction,
               total_reducing: 0,
@@ -335,7 +332,7 @@ class UpgradeOldFinanceData < ActiveRecord::Migration[5.2]
               duplicatable_reduction_total: 0,
               created_at: inv.created_at,
               updated_at: lis.map{|l| l.updated_at }.max,
-              archived_line_item: lis.first
+              archived_line_item_id: lis.first.id
             )
             fake_total_due = price
             fake_total_received = 0
@@ -357,8 +354,8 @@ class UpgradeOldFinanceData < ActiveRecord::Migration[5.2]
                 client_error: charge.status == 'failed' ? { linear: ['stripe_charge_model.generic_error'] } : nil,
                 created_at: charge.created_at,
                 updated_at: charge.updated_at,
-                invoice_id: new_invoices[ind],
-                archived_charge: charge
+                invoice_id: new_invoices[ind].id,
+                archived_charge_id: charge.id
               )
               sc.callbacks_disabled = true
               unless sc.stripe_id.nil?
@@ -469,15 +466,16 @@ class UpgradeOldFinanceData < ActiveRecord::Migration[5.2]
               end
             end
             # fix up invoice status and totals
-            received = inv.line_items.inject(0){|sum,li| sum + li.total_received }
-            inv.callbacks_disabled = true
-            inv.update!(
-              total_payable: inv.total_payable - received,
-              total_recieved: received
+            ninv = new_invoices[ind]
+            received = ninv.line_items.inject(0){|sum,li| sum + li.total_received }
+            ninv.callbacks_disabled = true
+            ninv.update!(
+              total_payable: ninv.total_payable - received,
+              total_received: received
             )
-            unless inv.archived_invoice.status == 'quoted'
-              inv.callbacks_disabled = true
-              inv.update!(status: invoice.archived_invoice.status == 'cancelled' ? 'cancelled' : invoice.get_proper_status)
+            unless inv.status == 'quoted'
+              ninv.callbacks_disabled = true
+              ninv.update!(status: inv.status == 'cancelled' ? 'cancelled' : ninv.get_proper_status)
             end
           end
         when 5
@@ -570,10 +568,10 @@ class UpgradeOldFinanceData < ActiveRecord::Migration[5.2]
             end
           end
           # update invoices... (just status)
-          new_invoices.each do |inv|
-            if inv.archived_invoice.status == 'cancelled'
-              inv.callbacks_disabled = true
-              inv.update!(status: 'cancelled')
+          new_invoices.each do |ninv|
+            if ninv.archived_invoice.status == 'cancelled'
+              ninv.callbacks_disabled = true
+              ninv.update!(status: 'cancelled')
             end
           end
         when 6

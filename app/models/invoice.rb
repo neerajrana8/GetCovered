@@ -342,7 +342,7 @@ class Invoice < ApplicationRecord
     elsif self.total_received + self.total_pending >= self.total_due
       return 'pending'
     else
-      today = Time.current.to_date
+      nowtime = Time.current.to_date
       if nowtime > self.due_date
         return self.total_pending > 0 ? 'pending' : 'missed'
       elsif nowtime < self.available_date

@@ -15,7 +15,7 @@ class LineItemChange < ApplicationRecord
 
   validates_presence_of :field_changed
   validates_presence_of :amount
-  validates_presend_of :new_value
+  validates_presence_of :new_value
   
   
   def handle
