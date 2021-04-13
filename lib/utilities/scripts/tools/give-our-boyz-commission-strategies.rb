@@ -10,20 +10,26 @@ def give_em_cses
 
 
       # create capts for weird garbage
-      folk = [
-        ::PolicyApplication.order('carrier_id asc, agency_id asc, policy_type_id asc').group('carrier_id, agency_id, policy_type_id').pluck('carrier_id, agency_id, policy_type_id') +
-        ::Policy.order('carrier_id asc, agency_id asc, policy_type_id asc').group('carrier_id, agency_id, policy_type_id').pluck('carrier_id, agency_id, policy_type_id')
-      ].uniq
+      folk = (
+        ::PolicyApplication.order('carrier_id asc, agency_id asc, policy_type_id asc').group('carrier_id, agency_id, policy_type_id').pluck('carrier_id, agency_id, policy_type_id').to_a +
+        ::Policy.order('carrier_id asc, agency_id asc, policy_type_id asc').group('carrier_id, agency_id, policy_type_id').pluck('carrier_id, agency_id, policy_type_id').to_a
+      ).uniq
       folk.each do |f|
+        next if f.compact.count < 3
+        cpt = ::CarrierPolicyType.where(carrier_id: f[0], policy_type_id: f[2]).take
+        if cpt.nil?
+          cpt = ::CarrierPolicyType.create!(carrier_id: f[0], policy_type_id: f[2])
+        end
+        51.times do |state|
+          available = state == 0 || state == 11 ? false : true
+          carrier_policy_availability = CarrierPolicyTypeAvailability.create(state: state, available: available, carrier_policy_type: cpt) unless ::CarrierPolicyTypeAvailability.where(state: state, carrier_policy_type: cpt).take
+        end
         ca = ::CarrierAgency.where(carrier_id: f[0], agency_id: f[1]).take
         if ca.nil?
           ca = ::CarrierAgency.create!(carrier_id: f[0], agency_id: f[1])
         end
         if ::CarrierAgencyPolicyType.where(carrier_agency: ca, policy_type_id: f[2]).take.nil?
           ::CarrierAgencyPolicyType.create!(carrier_agency: ca, policy_type_id: f[2])
-        end
-        if ::CarrierPolicyType.where(carrier_id: f[0], policy_type_id: f[2]).take.nil?
-          ::CarrierPolicyType.create!(carrier_id: f[0], policy_type_id: f[2])
         end
       end
       
@@ -47,7 +53,11 @@ def give_em_cses
           if newparent.carrier_agency.agency.agency_id == nil
             capts.first.push(newparent)
             if newparent.carrier_policy_type.nil?
-              ::CarrierPolicyType.create!(carrier_id: newparent.carrier_agency.carrier_id, policy_type_id: newparent.policy_type_id, commission_strategy_attributes: { percentage: 30 })
+              cpt = ::CarrierPolicyType.create!(carrier_id: newparent.carrier_agency.carrier_id, policy_type_id: newparent.policy_type_id, commission_strategy_attributes: { percentage: 30 })
+              51.times do |state|
+                available = state == 0 || state == 11 ? false : true
+                carrier_policy_availability = CarrierPolicyTypeAvailability.create(state: state, available: available, carrier_policy_type: cpt)
+              end
             end
           else
             allcapts.push(newparent)

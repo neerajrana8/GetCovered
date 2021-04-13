@@ -86,8 +86,8 @@ class CarrierAgencyPolicyType < ApplicationRecord
       if self.commission_strategy.nil?
         meesa_own_daddy = self.carrier_agency.agency.agency_id.nil? ?
           self.carrier_policy_type.commission_strategy
-          : ::CarrierAgencyPolicyType.where(carrier_id: self.carrier_id, agency_id: self.carrier_agency.agency.agency_id, policy_type_id: self.policy_type_id).take.commission_strategy
-        if meesa_own_daddy.recipient == self.carrier_agency.agency
+          : parent_carrier_agency_policy_type.commission_strategy
+        if meesa_own_daddy && meesa_own_daddy.recipient == self.carrier_agency.agency
           self.commission_strategy = ::CommissionStrategy.new(
             title: "#{self.carrier_agency.agency.title} / #{self.carrier_agency.carrier.title} #{self.policy_type.title} Commission",
             percentage: meesa_own_daddy.percentage,
