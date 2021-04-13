@@ -3,7 +3,7 @@
 def slaughter_policy_or_application(pr)
   condemned = []
   if pr.class == ::Policy
-    condemned.push(pq.policy_group)
+    condemned.push(pr.policy_group)
     pr.policy_quotes.each do |pq|
       (pq.invoices.to_a + pq.policy_group_quote&.invoices.to_a).each do |i|
         condemned += i.line_items.to_a
@@ -37,7 +37,7 @@ def slaughter_policy_or_application(pr)
         condemned += i.refunds.to_a
         condemned.push(i)
       end
-      condemned += pq.policy_users.to_a
+      condemned += pr.policy_users.to_a
       condemned.push(pq)
       if pq.policy
         condemned.push(pq.policy.policy_group)
@@ -59,6 +59,10 @@ end
 def kill_dem_problemz
   begin
     ActiveRecord::Base.transaction do
+      # kill policies without invoices
+      ::Policy.all.select{|p| p.invoices.blank? }.each do |p|
+        slaughter_policy_or_application(p)
+      end
       # kill PolicyGroups and Deposit Choice policies
       ::PolicyApplication.where.not(policy_application_group_id: nil).or(::PolicyApplication.where(carrier_id: 6)).each do |pa|
         slaughter_policy_or_application(pa)
