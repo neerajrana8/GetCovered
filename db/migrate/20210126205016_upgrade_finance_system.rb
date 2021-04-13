@@ -103,6 +103,7 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
       t.string   :term_group                                            # used in case there are overlapping terms with different functionalities
       t.date     :invoice_available_date_override                       # used in case we need to provide an override to the default invoice available date calculation
       t.date     :invoice_due_date_override                             # used in case we need to provide an override to the defailt invoice due date calculation
+      t.timestamps
       t.references :policy_premium
     end
     
