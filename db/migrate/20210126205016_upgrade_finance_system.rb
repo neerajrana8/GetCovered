@@ -277,7 +277,7 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
       t.references :stripe_charge
     end
     
-    create_table :policy_premium_item_commission do |t|
+    create_table :policy_premium_item_commissions do |t|
       t.integer       :status, null: false                              # 'quoted', 'active'
       t.integer       :payability, null: false                          # 'internal', 'external'
       t.integer       :total_expected, null: false                      # the total amount we expect to pay out in commissions for this PPI to this recipient

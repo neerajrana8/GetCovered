@@ -308,7 +308,7 @@ class PolicyPremiumItem < ApplicationRecord
                     status: 'quoted',
                     total_expected: total_expected,
                     total_received: 0,
-                    percentage: cs.recipient.percentage - last_percentage,
+                    percentage: cs.percentage - last_percentage,
                     payment_order: payment_order
                   )
                   payment_order += 1

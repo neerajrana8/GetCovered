@@ -123,7 +123,7 @@ class UpgradeOldFinanceData < ActiveRecord::Migration[5.2]
             invoiceable: p,
             payer: p.account,
             collector: ppi.collector,
-            archived_invoice: inv,
+            archived_invoice_id: inv.id,
             created_at: inv.created_at,
             updated_at: inv.updated_at
           )
@@ -289,7 +289,7 @@ class UpgradeOldFinanceData < ActiveRecord::Migration[5.2]
           payer: pa.primary_user,
           collector: ::PolicyPremium.default_collector,
           # garbage
-          archived_invoice: inv,
+          archived_invoice_id: inv.id,
           created_at: inv.created_at,
           updated_at: inv.updated_at
         )
