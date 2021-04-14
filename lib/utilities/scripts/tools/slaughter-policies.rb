@@ -1,6 +1,6 @@
 
 
-def slaughter_policy_or_application(pr, be_merciful: false)
+def slaughter_policy(pr, be_merciful: false)
   condemned = []
   if pr.class == ::Policy
     condemned.push(pr.policy_group)
@@ -51,6 +51,22 @@ def slaughter_policy_or_application(pr, be_merciful: false)
       end
     end
     condemned.push(pr)
+  elsif pr.class == ::PolicyQuote
+    npr = pr.policy_application || pr.policy
+    if npr
+      condemned = slaughter_policy(npr, be_merciful: true)
+    else
+      condemned.push(pr)
+      condemned.push(pr.policy_premium)
+      condemned.push(pr.policy_group_quote)
+      condemned.push(pr.policy_group_quote&.policy_group_premium)
+      (pr.invoices.to_a + pr.policy_group_quote&.invoices.to_a).each do |i|
+        condemned += i.line_items.to_a
+        condemned += i.charges.to_a
+        condemned += i.refunds.to_a
+        condemned.push(i)
+      end
+    end
   end
   condemned = condemned.compact
   condemned = condemned.uniq
@@ -63,16 +79,20 @@ end
 def kill_dem_problemz
   begin
     ActiveRecord::Base.transaction do
+      # kill policy quotes without policies or policy applications
+      ::PolicyQuote.all.select{|pq| pq.policy.nil? && pq.policy_application.nil? }.each do |pq|
+        slaughter_policy(pq)
+      end
       # kill policies & policy quotes without invoices, or with invoices without payers
       ::Policy.all.select{|p| p.invoices.blank? || p.invoices.any?{|i| i.payer.nil? } }.each do |p|
-        slaughter_policy_or_application(p)
+        slaughter_policy(p)
       end
       ::PolicyQuote.all.select{|pq| pq.invoices.blank? || pq.invoices.any?{|i| i.payer.nil? } }.each do |pq|
-        slaughter_policy_or_application(pq.policy_application || pq.policy)
+        slaughter_policy(pq.policy_application || pq.policy)
       end
       # kill PolicyGroups and Deposit Choice policies
       ::PolicyApplication.where.not(policy_application_group_id: nil).or(::PolicyApplication.where(carrier_id: 6)).each do |pa|
-        slaughter_policy_or_application(pa)
+        slaughter_policy(pa)
       end
       # kill fees & taxes (no policy with these things exists on production so woomba schnoomba)
       ::PolicyPremium.where("amortized_fees > 0").or(::PolicyPremium.where("deposit_fees > 0")).or(::PolicyPremium.where("taxes > 0")).where.not(policy_quote_id: nil).all.each do |premium|
