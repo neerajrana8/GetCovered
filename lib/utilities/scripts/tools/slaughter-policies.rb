@@ -28,6 +28,7 @@ def slaughter_policy_or_application(pr, be_merciful: false)
   elsif pr.class == ::PolicyApplication
     condemned.push(pr.policy_application_group)
     pr.policy_quotes.each do |pq|
+      condemned.push(pq.policy_premium)
       condemned.push(pq.policy_group_quote)
       condemned.push(pq.policy_group_quote&.policy_group_premium)
       condemned += pr.policy_users.to_a
@@ -62,9 +63,12 @@ end
 def kill_dem_problemz
   begin
     ActiveRecord::Base.transaction do
-      # kill policies without invoices, or with invoices without payers
+      # kill policies without invoices, or Ps or PQs with invoices without payers
       ::Policy.all.select{|p| p.invoices.blank? || p.invoices.any?{|i| i.payer.nil? } }.each do |p|
         slaughter_policy_or_application(p)
+      end
+      ::PolicyQuote.all.select{|pq| pq.invoices.any?{|i| i.payer.nil? } }.each do |pq|
+        slaughter_policy_or_application(pq.policy_application || pq.policy)
       end
       # kill PolicyGroups and Deposit Choice policies
       ::PolicyApplication.where.not(policy_application_group_id: nil).or(::PolicyApplication.where(carrier_id: 6)).each do |pa|
@@ -72,7 +76,7 @@ def kill_dem_problemz
       end
       # kill fees & taxes (no policy with these things exists on production so woomba schnoomba)
       ::PolicyPremium.where("amortized_fees > 0").or(::PolicyPremium.where("deposit_fees > 0")).or(::PolicyPremium.where("taxes > 0")).where.not(policy_quote_id: nil).all.each do |premium|
-        next if [5,6].include?(premium.policy_quote.policy_application.carrier_id)
+        next if [5,6].include?(premium.policy_quote&.policy_application&.carrier_id || premium.policy&.carrier_id)
         #premium.calculation_base = premium.internal_base + premium.internal_special_premium + premium.internal_taxes + premium.amortized_fees
         premium.base = premium.base + premium.amortized_fees + premium.deposit_fees + premium.taxes
         #premium.total_fees = premium.total_fees - premium.amortized_fees - premium.deposit_fees
@@ -81,7 +85,7 @@ def kill_dem_problemz
         premium.taxes = 0
         premium.calculate_total
         premium.save!
-        premium.policy_quote.invoices.each do |invoice|
+        (premium.policy_quote&.invoices || premium.policy&.invoices || []).each do |invoice|
           extra_price = 0
           extra_collected = 0
           extra_proration_reduction = 0
