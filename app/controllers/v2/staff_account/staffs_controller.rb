@@ -122,6 +122,7 @@ module V2
           updated_at: %i[scalar array],
           enabled: %i[scalar array],
           owner: %i[scalar array],
+          current_sign_in_at: %i[scalar array],
           profile: {
             first_name: %i[scalar like],
             last_name: %i[scalar like],

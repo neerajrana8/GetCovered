@@ -1,5 +1,5 @@
-json.partial! "v2/staff_agency/policies/policy_show_fields.json.jbuilder",
-  policy: policy
+json.partial! 'v2/staff_agency/policies/policy_show_fields.json.jbuilder',
+              policy: policy
 
 json.carrier policy.carrier
 
@@ -20,28 +20,28 @@ json.users do
   json.array! policy.policy_users do |policy_user|
     json.primary policy_user.primary
     json.spouse policy_user.spouse
-    json.partial! "v2/staff_agency/users/user_show_full.json.jbuilder", user: policy_user.user
+    json.partial! 'v2/staff_agency/users/user_show_full.json.jbuilder', user: policy_user.user
   end
 end
 
 json.primary_campaign_name policy.primary_user&.lead&.tracking_url&.campaign_name
 
-json.policy_coverages policy.coverages
+json.partial! 'v2/shared/policies/policy_coverages.json.jbuilder', policy: policy
 
 json.primary_insurable do
   unless policy.primary_insurable.nil?
-    json.partial! "v2/staff_agency/insurables/insurable_short_fields.json.jbuilder",
-      insurable: policy.primary_insurable
+    json.partial! 'v2/staff_agency/insurables/insurable_short_fields.json.jbuilder',
+                  insurable: policy.primary_insurable
     json.parent_community do
       if policy.primary_insurable.parent_community_for_all.present?
         json.partial! 'v2/staff_agency/insurables/insurable_short_fields.json.jbuilder',
-          insurable: policy.primary_insurable.parent_community_for_all
+                      insurable: policy.primary_insurable.parent_community_for_all
       end
     end
     json.parent_building do
       if policy.primary_insurable.parent_building.present?
         json.partial! 'v2/staff_agency/insurables/insurable_short_fields.json.jbuilder',
-        insurable: policy.primary_insurable.parent_building
+                      insurable: policy.primary_insurable.parent_building
       end
     end
   end
