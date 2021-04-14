@@ -25,14 +25,14 @@ module DashboardMethods
       @calling_supported_orders = called_from_orders
       {
         id: %i[scalar array],
-        title: %i[scalar like],
+        title: %i[scalar like array],
         permissions: %i[scalar array],
         insurable_type_id: %i[scalar array],
         insurable_id: %i[scalar array],
         agency_id: %i[scalar array],
         account_id: %i[scalar array],
         account: {
-          title: %i[scalar like]
+          title: %i[scalar like array]
         },
         insurable_data: {
           expiring_policies: %i[scalar array],
