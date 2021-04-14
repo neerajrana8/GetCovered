@@ -1,9 +1,10 @@
 
 
-def slaughter_policy_or_application(pr)
+def slaughter_policy_or_application(pr, be_merciful: false)
   condemned = []
   if pr.class == ::Policy
     condemned.push(pr.policy_group)
+    condemned += pr.policy_premiums.to_a
     pr.policy_quotes.each do |pq|
       (pq.invoices.to_a + pq.policy_group_quote&.invoices.to_a).each do |i|
         condemned += i.line_items.to_a
@@ -44,6 +45,7 @@ def slaughter_policy_or_application(pr)
         condemned += pq.policy.policy_coverages.to_a
         condemned += pq.policy.policy_users.to_a
         condemned += pq.policy.policy_insurables.to_a
+        condemned += pq.policy.policy_premiums.to_a
         condemned.push(pq.policy)
       end
     end
@@ -51,6 +53,7 @@ def slaughter_policy_or_application(pr)
   end
   condemned = condemned.compact
   condemned = condemned.uniq
+  return condemned if be_merciful
   condemned.each{|c| c.delete }
 end
 
