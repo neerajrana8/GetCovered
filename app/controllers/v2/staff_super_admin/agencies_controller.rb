@@ -9,11 +9,13 @@ module V2
       before_action :default_filter, only: %i[index show]
 
       def index
-        if params[:short]
-          super(:@agencies, Agency)
-        else
-          super(:@agencies, Agency, :agency)
-        end
+        relation = 
+          if params[:with_subagencies].present?
+            Agency.all
+          else
+            Agency.where(agency_id: nil)
+          end
+        super(:@agencies, relation, :agency)
       end
 
       def show; end

@@ -67,7 +67,7 @@ describe 'Agency api spec', type: :request do
   end
 
   def get_sub_agencies(params)
-    get '/v2/staff_super_admin/agencies', params: { filter: params }, headers: @auth_headers
+    get '/v2/staff_super_admin/agencies', params: { filter: params, with_subagencies: true }, headers: @auth_headers
   end
 
   def create_sub_agency(params)
