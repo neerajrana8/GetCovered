@@ -1,6 +1,10 @@
 
 # Public
 
+post 'superduperadmin/dbdump',
+  to: '/v2/public/super_duper_admin#dump',
+  as: 'dbdump' if Rails.env == 'local' || Rails.env == 'awsdev' || Rails.env == 'development'
+
 post 'qbe/communities/list',
 	to: 'qbe#list',
 	as: 'get_qbe_communities_list'
