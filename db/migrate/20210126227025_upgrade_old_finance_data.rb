@@ -18,7 +18,7 @@ class UpgradeOldFinanceData < ActiveRecord::Migration[5.2]
       capt = ::CarrierAgencyPolicyType.references(:carrier_agencies).includes(:carrier_agency).where(policy_type_id: pr&.policy_type_id, carrier_agencies: { carrier_id: pr&.carrier_id, agency_id: pr&.agency_id }).take
       cs = capt&.commission_strategy # can't be nil if previous migrations succeeded, so don't bother checking
       if pr.nil?
-        puts "Policy premium ##{old.id} is insane; it has no PolicyQuote or Policy!"
+        puts "Policy premium ##{old.id} is insane; it has no PolicyApplication or Policy!"
         raise Exception
       elsif !pq.nil? && pa.nil?
         puts "Policy premium ##{old.id} has insane policy quote with no PolicyApplication!"
