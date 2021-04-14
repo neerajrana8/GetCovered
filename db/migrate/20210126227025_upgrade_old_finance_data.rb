@@ -238,7 +238,7 @@ class UpgradeOldFinanceData < ActiveRecord::Migration[5.2]
         archived_policy_premium_id: old.id
       })
       # create PolicyPremiumPaymentTerms (and grab invoice and line item arrays while we're at it)
-      invoices = ::ArchivedInvoice.where(invoiceable_type: "PolicyQuote", invoiceable_id: pq.id).order(term_first_date: :asc).to_a
+      invoices = ::ArchivedInvoice.where(invoiceable: pq).order(term_first_date: :asc).to_a
       if invoices.blank?
         puts "Policy premium ##{old.id} failed the sanity check; it has no invoices!"
         raise Exception
