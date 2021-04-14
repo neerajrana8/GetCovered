@@ -62,8 +62,8 @@ end
 def kill_dem_problemz
   begin
     ActiveRecord::Base.transaction do
-      # kill policies without invoices
-      ::Policy.all.select{|p| p.invoices.blank? }.each do |p|
+      # kill policies without invoices, or with invoices without payers
+      ::Policy.all.select{|p| p.invoices.blank? || p.invoices.any?{|i| i.payer.nil? } }.each do |p|
         slaughter_policy_or_application(p)
       end
       # kill PolicyGroups and Deposit Choice policies
