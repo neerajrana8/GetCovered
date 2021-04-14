@@ -40,6 +40,10 @@ class CarrierAgency < ApplicationRecord
   
   private
 
+    def remove_authorizations
+      self.carrier_agency_authorizations.destroy_all
+    end
+    
     def disable_authorizations
       carrier_agency_authorizations.each{|caa| caa.update available: false }
     end

@@ -19,14 +19,17 @@ class CarrierAgencyPolicyType < ApplicationRecord
   
   accepts_nested_attributes_for :commission_strategy
   
+  def parent_carrier_agency_policy_type
+    ::CarrierAgencyPolicyType.references(:carrier_agencies).includes(:carrier_agency)
+                             .where(carrier_agencies: { carrier_id: self.carrier_id, agency_id: self.carrier_agency.agency.agency_id }, policy_type_id: self.policy_type_id).take
+  end
   def carrier_policy_type; ::CarrierPolicyType.where(policy_type_id: self.policy_type_id, carrier_id: self.carrier_agency.carrier_id).take; end
   def carrier_agency_authorizations; ::CarrierAgencyAuthorization.where(policy_type_id: self.policy_type_id, carrier_agency_id: self.carrier_agency_id); end
   def billing_strategies; ::BillingStrategy.where(policy_type_id: self.policy_type_id, carrier_id: self.carrier_agency.carrier_id, agency_id: self.carrier_agency.agency_id); end
   def agency_id; self.carrier_agency.agency_id; end
   def carrier_id; self.carrier_agency.carrier_id; end
   
-  before_validation :manipulate_dem_nested_boiz_like_a_boss,
-    on: :create, # this cannot be a before_create, or the CS will already have been saved
+  before_validation :manipulate_dem_nested_boiz_like_a_boss, # this cannot be a before_create, or the CS will already have been saved
     unless: Proc.new{|capt| capt.callbacks_disabled }
   after_create :create_authorizations,
     unless: Proc.new{|capt| capt.callbacks_disabled }
@@ -85,8 +88,8 @@ class CarrierAgencyPolicyType < ApplicationRecord
       if self.commission_strategy.nil?
         meesa_own_daddy = self.carrier_agency.agency.agency_id.nil? ?
           self.carrier_policy_type.commission_strategy
-          : ::CarrierAgencyPolicyType.where(carrier_id: self.carrier_id, agency_id: self.carrier_agency.agency.agency_id, policy_type_id: self.policy_type_id).take.commission_strategy
-        if meesa_own_daddy.recipient == self.carrier_agency.agency
+          : parent_carrier_agency_policy_type.commission_strategy
+        if meesa_own_daddy && meesa_own_daddy.recipient == self.carrier_agency.agency
           self.commission_strategy = ::CommissionStrategy.new(
             title: "#{self.carrier_agency.agency.title} / #{self.carrier_agency.carrier.title} #{self.policy_type.title} Commission",
             percentage: meesa_own_daddy.percentage,
@@ -101,8 +104,12 @@ class CarrierAgencyPolicyType < ApplicationRecord
         if cs.commission_strategy_id.nil?
           meesa_own_daddy = self.carrier_agency.agency.agency_id.nil? ?
             self.carrier_policy_type.commission_strategy
-            : ::CarrierAgencyPolicyType.where(carrier_id: self.carrier_id, agency_id: self.carrier_agency.agency.agency_id, policy_type_id: self.policy_type_id).take.commission_strategy
-          cs.commission_strategy = meesa_own_daddy 
+            : ::CarrierAgencyPolicyType.references(:carrier_agencies).includes(:carrier_agency)
+                                       .where(carrier_agencies: { carrier_id: self.carrier_id, agency_id: self.carrier_agency.agency.agency_id }, policy_type_id: self.policy_type_id).take.commission_strategy
+          cs.commission_strategy = meesa_own_daddy
+        end
+        if cs.recipient == cs.commission_strategy.recipient
+          cs.percentage = cs.commission_strategy.percentage
         end
       end
     end
