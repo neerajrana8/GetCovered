@@ -1,7 +1,8 @@
 
 
-def slaughter_policy(pr, be_merciful: false)
+def slaughter_policy(pr, be_merciful: false, no_repeat: [])
   condemned = []
+  return condemned if no_repeat && no_repeat.include?(pr)
   if pr.class == ::Policy
     condemned.push(pr.policy_group)
     condemned += pr.policy_premiums.to_a
@@ -16,7 +17,7 @@ def slaughter_policy(pr, be_merciful: false)
       condemned.push(pq.policy_group_quote&.policy_group_premium)
       condemned.push(pq.policy_premium)
       condemned.push(pq)
-      condemned.push(pq.policy_application)
+      condemned += slaughter_policy(pq.policy_application, be_merciful: true, no_repeat: no_repeat + [pr])
       condemned += pq.policy_application&.policy_users.to_a
       condemned += pq.policy_application&.policy_insurables.to_a
       condemned.push(pq.policy_application&.policy_application_group)
@@ -26,6 +27,7 @@ def slaughter_policy(pr, be_merciful: false)
     condemned += pr.policy_insurables.to_a
     condemned.push(pr)
   elsif pr.class == ::PolicyApplication
+    condemned += pr.policy_coverages.to_a
     condemned.push(pr.policy_application_group)
     pr.policy_quotes.each do |pq|
       condemned.push(pq.policy_premium)
@@ -42,12 +44,14 @@ def slaughter_policy(pr, be_merciful: false)
       condemned += pr.policy_users.to_a
       condemned.push(pq)
       if pq.policy
-        condemned.push(pq.policy.policy_group)
-        condemned += pq.policy.policy_coverages.to_a
-        condemned += pq.policy.policy_users.to_a
-        condemned += pq.policy.policy_insurables.to_a
-        condemned += pq.policy.policy_premiums.to_a
-        condemned.push(pq.policy)
+        condemned += slaughter_policy(pq.policy_application, be_merciful: true, no_repeat: no_repeat + [pr])
+      
+        #condemned.push(pq.policy.policy_group)
+        #condemned += pq.policy.policy_coverages.to_a
+        #condemned += pq.policy.policy_users.to_a
+        #condemned += pq.policy.policy_insurables.to_a
+        #condemned += pq.policy.policy_premiums.to_a
+        #condemned.push(pq.policy)
       end
     end
     condemned.push(pr)
@@ -88,7 +92,7 @@ def kill_dem_problemz
         slaughter_policy(p)
       end
       ::PolicyQuote.all.select{|pq| pq.invoices.blank? || pq.invoices.any?{|i| i.payer.nil? } }.each do |pq|
-        slaughter_policy(pq.policy_application || pq.policy)
+        slaughter_policy(pq)
       end
       # kill PolicyGroups and Deposit Choice policies
       ::PolicyApplication.where.not(policy_application_group_id: nil).or(::PolicyApplication.where(carrier_id: 6)).each do |pa|
