@@ -7,7 +7,7 @@ def give_em_cses
       CarrierAgencyPolicyType.all.select{|capt| capt.carrier_policy_type.nil? }.each{|capt| capt.delete }
       ::CarrierAgency.where("carrier_id > 6").each{|ca| ca.destroy! }
       ::Carrier.where("id > 6").each{|c| c.carrier_policy_types.each{|cpt| cpt.destroy! }; c.fees.delete_all; c.carrier_insurable_types.delete_all; c.carrier_insurable_profiles.delete_all; c.carrier_class_codes.delete_all; c.histories.delete_all; c.access_tokens.delete_all; c.destroy! }
-
+      ::PolicyPremium.where(policy_id: nil, policy_quote_id: nil).delete_all
 
       # create capts for weird garbage
       folk = (
