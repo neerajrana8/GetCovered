@@ -32,7 +32,7 @@ json.premium_first policy.policy_quotes&.last&.invoices&.first&.total
 
 json.billing_strategy policy.policy_quotes&.last&.policy_premium&.billing_strategy&.title
 
-json.policy_coverages policy.coverages
+json.partial! 'v2/shared/policies/policy_coverages.json.jbuilder', policy: policy
 
 json.primary_insurable do
   unless policy.primary_insurable.nil?

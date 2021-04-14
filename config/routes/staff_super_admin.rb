@@ -43,6 +43,13 @@
     get :communities_list, controller: 'dashboard', path: 'dashboard/:super_admin_id/communities_list'
     get :uninsured_units, controller: 'dashboard', path: 'dashboard/:super_admin_id/uninsured_units'
 
+    resources :dashboard, only: [] do
+      collection do
+        get 'communities_data'
+        post 'communities_data_index', action: :index
+      end
+    end
+
     resources :agencies,
       only: [ :create, :update, :index, :show ],
       concerns: :reportable do
