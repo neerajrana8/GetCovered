@@ -209,7 +209,7 @@ class UpgradeOldFinanceData < ActiveRecord::Migration[5.2]
           )
           unless inv.status == 'quoted'
             invoice.callbacks_disabled = true
-            invoice.update!(status: inv.status == 'cancelled' ? 'cancelled' : invoice.get_proper_status)
+            invoice.update!(status: inv.status == 'canceled' ? 'cancelled' : invoice.get_proper_status)
           end
         end
         # since this is a master policy, we are now done handling it; move on to the next policy premium to upgrade
@@ -264,7 +264,7 @@ class UpgradeOldFinanceData < ActiveRecord::Migration[5.2]
           available_date: inv.available_date,
           due_date: inv.due_date,
           external: pa.carrier_id == 5 || pa.carrier_id == 6 ? true : false,
-          status: inv.status == 'cancelled' ? 'cancelled' : pa.carrier_id == 5 || pa.carrier_id == 6 ? 'managed_externally' : 'quoted', # for now! we will update this after handling the line items!
+          status: inv.status == 'canceled' ? 'cancelled' : pa.carrier_id == 5 || pa.carrier_id == 6 ? 'managed_externally' : 'quoted', # for now! we will update this after handling the line items!
           under_review: false,
           pending_charge_count: 0, # we will scream and die if we encounter a pending charge
           pending_dispute_count: 0,
@@ -475,14 +475,14 @@ class UpgradeOldFinanceData < ActiveRecord::Migration[5.2]
             )
             unless inv.status == 'quoted'
               ninv.callbacks_disabled = true
-              ninv.update!(status: inv.status == 'cancelled' ? 'cancelled' : ninv.get_proper_status)
+              ninv.update!(status: inv.status == 'canceled' ? 'cancelled' : ninv.get_proper_status)
             end
           end
         when 5
           # build the PPIs
           msi_policy_fee = pq.carrier_payment_data["policy_fee"]
           installment_total = old.external_fees
-          down_payment = pq.invoices.order('created_at asc').first.line_items.find{|li| li.category == 'base_premium' }.price - pq.carrier_payment_data["policy_fee"]
+          down_payment = ::ArchivedInvoice.where(invoiceable: pq).order('created_at asc').first.line_items.find{|li| li.category == 'base_premium' }.price - pq.carrier_payment_data["policy_fee"]
           installment_per = old.base - down_payment - msi_policy_fee
           ppi_policy_fee = msi_policy_fee == 0 ? nil : ::PolicyPremiumItem.create!(
             policy_premium: premium,
@@ -542,8 +542,8 @@ class UpgradeOldFinanceData < ActiveRecord::Migration[5.2]
                   policy_premium_payment_term: pppt,
                   weight: ppi_name == :policy_fee ? msi_policy_fee
                     : new_invoices[index].line_items.select{|li| li.category == (ppi_name == :installment_fee ? 'amortized_fees' : 'base_premium') }.inject(0){|s,l| s + l.price },
-                  created_at: inv.created_at,
-                  updated_at: inv.created_at
+                  created_at: pppt.created_at,
+                  updated_at: pppt.created_at
                 )
               end
             ]
@@ -563,13 +563,13 @@ class UpgradeOldFinanceData < ActiveRecord::Migration[5.2]
                 duplicatable_reduction_total: 0,
                 created_at: new_invoices[index].created_at,
                 updated_at: new_invoices[index].updated_at,
-                archived_line_item: nil # since we are breaking out the policy fee (which was counted as part of the premium before)
+                archived_line_item_id: nil # since we are breaking out the policy fee (which was counted as part of the premium before)
               )
             end
           end
           # update invoices... (just status)
           new_invoices.each do |ninv|
-            if ninv.archived_invoice.status == 'cancelled'
+            if ::ArchivedInvoice.where(id: ninv.archived_invoice_id).take.status == 'canceled'
               ninv.callbacks_disabled = true
               ninv.update!(status: 'cancelled')
             end
