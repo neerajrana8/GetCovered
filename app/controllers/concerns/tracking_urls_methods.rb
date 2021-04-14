@@ -31,7 +31,7 @@ module TrackingUrlsMethods
     end
 
     def get_leads
-      @leads = @tracking_url.leads
+      @leads = params[:archived].present? ? @tracking_url.leads : @tracking_url.leads.not_archived
       render 'v2/shared/leads/index'
     end
 
