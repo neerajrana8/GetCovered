@@ -14,6 +14,7 @@ FactoryBot.define do
     agency_id { parent_id }
     after(:create) do |agency|
       agency.global_agency_permission ||= FactoryBot.build(:global_agency_permission, agency: agency)
+      FactoryBot.create(:branding_profile, profileable: agency)
     end
   end
 
@@ -22,6 +23,7 @@ FactoryBot.define do
     carriers { [Carrier.last] }
     after(:create) do |agency|
       agency.global_agency_permission ||= FactoryBot.build(:global_agency_permission, agency: agency)
+      FactoryBot.create(:branding_profile, profileable: agency)
     end
   end
 end
