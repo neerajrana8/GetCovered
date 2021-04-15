@@ -16,11 +16,25 @@ module V2
       def show; end
 
       def create
-        @branding_profile = BrandingProfile.new(branding_profile_params)
-        if @branding_profile.errors.none? && @branding_profile.save
-          render :show, status: :created
+        agency = Agency.find(branding_profile_params[:profileable_id])
+        
+        if agency.present?
+          branding_profile_outcome = BrandingProfiles::CreateFromDefault.run(agency: agency)
+          
+          if branding_profile_outcome.valid?
+            @branding_profile = branding_profile_outcome.result
+            render :show, status: :created
+          else
+            render json: standard_error(
+                           :branding_profile_was_not_created,
+                           'Branding profile was not created',
+                           branding_profile_outcome.errors
+                         ),
+                   status: :unprocessable_entity
+          end
         else
-          render json: @branding_profile.errors, status: :unprocessable_entity
+          render json: standard_error(:agency_was_not_found,'Agency was not found'),
+                 status: :unprocessable_entity
         end
       end
 
