@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_04_08_112614) do
+ActiveRecord::Schema.define(version: 2021_04_15_210055) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
@@ -1438,7 +1438,15 @@ ActiveRecord::Schema.define(version: 2021_04_08_112614) do
     t.index ["policy_premium_payment_term_id"], name: "index_ppipt_on_pppt_id"
   end
 
-  create_table "policy_premium_item_transaction", force: :cascade do |t|
+  create_table "policy_premium_item_transaction_memberships", force: :cascade do |t|
+    t.bigint "policy_premium_item_transaction_id"
+    t.string "member_type"
+    t.bigint "member_id"
+    t.index ["member_type", "member_id"], name: "index_ppitms_on_member"
+    t.index ["policy_premium_item_transaction_id"], name: "index_ppitms_on_ppit"
+  end
+
+  create_table "policy_premium_item_transactions", force: :cascade do |t|
     t.boolean "pending", default: true, null: false
     t.datetime "create_commission_items_at", null: false
     t.integer "amount"
@@ -1457,14 +1465,6 @@ ActiveRecord::Schema.define(version: 2021_04_08_112614) do
     t.index ["policy_premium_item_id"], name: "index_ppits_on_ppi"
     t.index ["reason_type", "reason_id"], name: "index_ppits_on_reason"
     t.index ["recipient_type", "recipient_id"], name: "index_ppits_on_recipient"
-  end
-
-  create_table "policy_premium_item_transaction_membership", force: :cascade do |t|
-    t.bigint "policy_premium_item_transaction_id"
-    t.string "member_type"
-    t.bigint "member_id"
-    t.index ["member_type", "member_id"], name: "index_ppitms_on_member"
-    t.index ["policy_premium_item_transaction_id"], name: "index_ppitms_on_ppit"
   end
 
   create_table "policy_premium_items", force: :cascade do |t|

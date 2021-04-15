@@ -245,16 +245,16 @@ class PolicyQuote < ApplicationRecord
 
       to_charge = invoices.internal.order("due_date").first
       if to_charge.nil?
-        policy.update(billing_status: "CURRENT")
+        #policy.update(billing_status: "CURRENT") # there is no policy yet...
         return true
       end
       charge_invoice = to_charge.pay(stripe_source: :default)
       logger.error "Charge invoice error: #{charge_invoice.to_json}" unless charge_invoice[:success]
       if charge_invoice[:success] == true
-        policy.update(billing_status: "CURRENT")
+        #policy.update(billing_status: "CURRENT")
         return true
       else
-        policy.update(billing_status: "ERROR")
+        #policy.update(billing_status: "ERROR")
         policy_premium.policy_premium_item_commissions.update_all(status: 'quoted')
         invoices.internal.update_all(status: 'quoted')
       end
