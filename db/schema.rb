@@ -1007,10 +1007,12 @@ ActiveRecord::Schema.define(version: 2021_04_08_112614) do
     t.bigint "invoice_id"
     t.integer "analytics_category", default: 0, null: false
     t.bigint "policy_quote_id"
+    t.bigint "policy_id"
     t.bigint "archived_line_item_id"
     t.index ["archived_line_item_id"], name: "index_line_items_on_archived_line_item_id"
     t.index ["chargeable_type", "chargeable_id"], name: "index_line_items_on_chargeable_type_and_chargeable_id"
     t.index ["invoice_id"], name: "index_line_items_on_invoice_id"
+    t.index ["policy_id"], name: "index_line_items_on_policy_id"
     t.index ["policy_quote_id"], name: "index_line_items_on_policy_quote_id"
   end
 
@@ -1443,6 +1445,7 @@ ActiveRecord::Schema.define(version: 2021_04_08_112614) do
     t.jsonb "error_info"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "recipient_type"
     t.bigint "recipient_id"
     t.string "commissionable_type"
     t.bigint "commissionable_id"
@@ -1453,7 +1456,7 @@ ActiveRecord::Schema.define(version: 2021_04_08_112614) do
     t.index ["pending", "create_commission_items_at"], name: "index_ppits_on_pending_and_ccia"
     t.index ["policy_premium_item_id"], name: "index_ppits_on_ppi"
     t.index ["reason_type", "reason_id"], name: "index_ppits_on_reason"
-    t.index ["recipient_id"], name: "index_ppits_on_recipient"
+    t.index ["recipient_type", "recipient_id"], name: "index_ppits_on_recipient"
   end
 
   create_table "policy_premium_item_transaction_membership", force: :cascade do |t|
