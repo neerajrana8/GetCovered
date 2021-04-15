@@ -2,7 +2,7 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
 
   def up
     upgrade_system
-    upgrade_data
+    #upgrade_data MOOSE WARNING: no longer here. Instead run lib/utilities/scripts/bigmig/finance-upgrade.rb
   end
 
   def down
