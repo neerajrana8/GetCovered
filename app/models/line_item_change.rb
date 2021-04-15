@@ -68,7 +68,10 @@ class LineItemChange < ApplicationRecord
         end # transaction
       else
         # mark ourselves handled so we stop coming up in the list; but handler has been left blank, so we can still identify these easily enough if needed
-        self.update(handled: true)
+        unless self.update(handled: true)
+          error_message = "Failed to mark handled true! Errors: #{self.errors.to_h}"
+          raise ActiveRecord::Rollback
+        end
     end
     return error_message
   end

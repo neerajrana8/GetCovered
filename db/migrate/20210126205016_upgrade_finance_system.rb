@@ -445,6 +445,7 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
             created_at: old.created_at,
             updated_at: old.created_at
           )
+          ppi.policy_premium_item_commissions.update_all(status: 'active')
           pppt = ::PolicyPremiumPaymentTerm.create!(
             policy_premium: premium,
             first_moment: inv.term_first_date.beginning_of_day,
@@ -673,6 +674,7 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
             created_at: old.created_at,
             updated_at: old.created_at
           )
+          ppi_premium.policy_premium_item_commissions.update_all(status: 'active') unless pq.policy.nil?
           invoices.map.with_index do |inv, ind|
             lis = line_items.select{|li| li.invoice_id == inv.id && (li.category == 'base_premium' || li.category == 'special_premium') }
             price = lis.inject(0){|sum,li| sum + li.price }
@@ -894,6 +896,7 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
           )
           premium.update_totals(persist: true)
           ppis = { policy_fee: ppi_policy_fee, installment_fee: ppi_installment_fee, down_payment: ppi_down_payment, installment: ppi_installment }.compact
+          ppis.values.each{|ppiboi| ppiboi.policy_premium_item_commissions.update_all(status: 'active') } unless pq.policy.nil?
           # generate terms
           ppi_pts = ppis.map do |ppi_name, ppi|
             [
@@ -946,6 +949,7 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
       end
       
     end
+    
   end
   
 end

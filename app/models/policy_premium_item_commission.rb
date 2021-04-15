@@ -34,7 +34,7 @@ class PolicyPremiumItemCommission < ApplicationRecord
   
   # sort ourselves in the order in which funds should be distributed (smallest % to greatest)
   def <=>(other)
-    tr = (self.payment_order <=> other.payemnt_order)
+    tr = (self.payment_order <=> other.payment_order)
     return tr unless tr == 0
     tr = (self.percentage <=> other.percentage)
     return tr unless tr == 0
