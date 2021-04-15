@@ -8,8 +8,7 @@ class PolicyPremiumItemTransaction < ApplicationRecord
   belongs_to :recipient,
     polymorphic: true
   belongs_to :reason,
-    polymorphic: true,
-    optional: true
+    polymorphic: true
 
   has_many :policy_premium_item_transaction_memberships
   has_many :commission_items,

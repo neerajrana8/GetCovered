@@ -7,6 +7,8 @@ class LineItem < ApplicationRecord
     autosave: true
   belongs_to :policy_quote,
     optional: true
+  belongs_to :policy,
+    optional: true
     
   has_many :line_item_changes
   has_many :line_item_reductions
@@ -25,7 +27,8 @@ class LineItem < ApplicationRecord
     unknown: 0,
     policy_premium: 1,
     policy_fee: 2,
-    policy_tax: 3
+    policy_tax: 3,
+    master_policy_premium: 4
   }
   
   # sort line items from first-to-charge-for to last-to-charge-for

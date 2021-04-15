@@ -169,6 +169,7 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
       # redundant fields for convenient analytics
       t.integer     :analytics_category, null: false, default: 0
       t.references  :policy_quote, null: true
+      t.references  :policy, null: true
       # garbage
       t.references :archived_line_item
     end
@@ -343,11 +344,11 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
       t.integer       :amount                                           # The amount of the commission items to create
       t.jsonb         :error_info                                       # If we encounter an error in unleash_commission_item!, we log it here
       t.timestamps
-      t.references    :recipient,                                       # The recipient of the commission on which this thing's commision items will be listed.
+      t.references    :recipient, polymorphic: true,                    # The recipient of the commission on which this thing's commision items will be listed.
         index: { name: 'index_ppits_on_recipient' }
       t.references    :commissionable, polymorphic: true,               # The thing this item is being paid for. Generally will be a PolicyPremiumItemCommission.
         index: { name: 'index_ppits_on_commissionable' }
-      t.references    :reason, polymorphic: true, null: true,           # The reason this PPIT was created (generally a StripeCharge or LineItemReduction)
+      t.references    :reason, polymorphic: true,                       # The reason this PPIT was created (generally a StripeCharge or LineItemReduction)
         index: { name: 'index_ppits_on_reason' }
       t.references    :policy_premium_item,                             # The PPI we belong to
         index: { name: 'index_ppits_on_ppi' }
@@ -496,8 +497,9 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
               original_total_due: li.price,
               total_due: li.price,
               preproration_total_due: li.price,
-              analytics_category: "policy_premium",
+              analytics_category: "master_policy_premium",
               policy_quote: nil,
+              policy: p,
               archived_line_item_id: li.id,
               created_at: li.created_at,
               updated_at: li.updated_at
