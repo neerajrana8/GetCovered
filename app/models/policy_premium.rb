@@ -11,6 +11,8 @@ class PolicyPremium < ApplicationRecord
 
   has_many :policy_premium_payment_terms
   has_many :policy_premium_items
+  has_many :policy_premium_item_commissions,
+    through: :policy_premium_items
   
   has_one :policy_application,
     through: :policy_quote
