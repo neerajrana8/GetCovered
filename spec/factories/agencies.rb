@@ -4,6 +4,7 @@ FactoryBot.define do
     carriers { [Carrier.first] }
     after(:create) do |agency|
       agency.global_agency_permission ||= FactoryBot.build(:global_agency_permission, agency: agency)
+      FactoryBot.create(:branding_profile, profileable: agency)
     end
   end
 
