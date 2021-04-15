@@ -40,6 +40,9 @@ scope module: :sdk, path: "sdk" do
       post '/get-coverage-options',
            to: 'policy_applications#get_coverage_options',
            as: :sdk_get_coverage_options
+      post '/redirect',
+           to: 'policy_applications#create_and_redirect',
+           as: :sdk_create_and_redirect
     end
   end
 
