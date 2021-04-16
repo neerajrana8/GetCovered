@@ -7,7 +7,7 @@ FactoryBot.define do
     association :profileable, factory: :agency
 
     trait :default_branding_profile do
-      profileable { Agency.find_by_id(Agency::GET_COVERED_ID) || FactoryBot.create(:agency)}
+      profileable { Agency.find_by_id(Agency::GET_COVERED_ID) || FactoryBot.create(:agency, id: Agency::GET_COVERED_ID )}
     end
   end
 end
