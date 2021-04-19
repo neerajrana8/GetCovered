@@ -1,3 +1,1 @@
-json.extract! dispute, :active, :amount, :charge_id, :created_at, :id,
-  :reason, :status, :updated_at
-
+json.extract! dispute, :id, :amount, :stripe_reason, :status, :active, :created_at, :updated_at, :stripe_charge_id

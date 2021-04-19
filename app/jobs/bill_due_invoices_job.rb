@@ -31,6 +31,28 @@ class BillDueInvoicesJob < ApplicationJob
     end
 
     def set_invoices
+      # ******************************************************* #
+      # WARNING WARNING WARNING WARNING WARNING WARNING WARNING #
+      # ******************************************************* #
+      #                                                         #
+      # Hey, you! Developer! Yes, you!                          #
+      # Read. This. Before. Changing. This. Code.               #
+      # YES, YOU!!!                                             #
+      #                                                         #
+      # The part of the join below that deals with Policy       #
+      # is IMPORTANT! If a PolicyQuote's first payment          #
+      # succeeds (and the invoices are thus set to 'upcoming')  #
+      # but bind fails, right now those invoices will           #
+      # just be sitting there waiting for payment, and will     #
+      # even get set to 'available'. THAT JOIN is the only      #
+      # thing standing between you and charging a bunch of      #
+      # customers wrongly. DON'T REMOVE IT.                     #
+      #                                                         #
+      # If the aforementioned problem has already been fixed,   #
+      # fine, then its only purpose is to ensure auto_pay       #
+      # and policy_in_system are true.                          #
+      #                                                         #
+      # ******************************************************* #
       @invoices = Invoice.where(invoiceable_type: 'PolicyQuote', invoiceable_id: PolicyQuote.select(:id).where(status: 'accepted', policy_id: Policy.select(:id).policy_in_system(true).current.where(auto_pay: true))).or(
                             Invoice.where(invoiceable_type: 'PolicyGroupQuote', invoiceable_id: PolicyGroupQuote.select(:id).where(status: 'accepted', policy_group_id: PolicyGroup.select(:id).policy_in_system(true).current.where(auto_pay: true)))
                          ).where("due_date <= '#{Time.current.to_date.to_s(:db)}'").where(status: ['available', 'missed'], external: false).order("(invoiceable_type, invoiceable_id, due_date) ASC")

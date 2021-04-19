@@ -115,8 +115,10 @@ production:
     cron: '0 0 * * *' # Every day at midnight
     class: RemoveExpiredAccessTokensJob
   # Commissions
+  handle_line_item_changes_job:
+    cron: '0 3 * * *' # Every day at 3:00 AM
+    class: HandleLineItemChangesJob
   create_commissions_for_policy_premium_item_transactions_job:
     cron: '0 5 * * *' # Every day at 5:00 AM
     class: CreateCommissionsForPolicyPremiumItemTransactionsJob
-
 

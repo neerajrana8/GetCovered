@@ -7,5 +7,7 @@ class TweakFinancialSchema < ActiveRecord::Migration[5.2]
       inv.update_columns(status_changed: archinv&.status_changed || inv.updated_at)
     end
     change_column_null :invoices, :status_changed, false
+    # give line item changes an error message column
+    add_column :line_item_changes, :error_info, :string, null: true
   end
 end

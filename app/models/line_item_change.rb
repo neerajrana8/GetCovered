@@ -74,6 +74,7 @@ class LineItemChange < ApplicationRecord
           raise ActiveRecord::Rollback
         end
     end
+    self.update(error_info: error_message)
     return error_message
   end
   
