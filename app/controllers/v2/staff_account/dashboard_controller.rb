@@ -19,8 +19,9 @@ module V2
         @total_commercial_policies = ::Policy.current.where(policy_type_id: 4, account: current_staff.organizable).count
         @total_rent_guarantee_policies = ::Policy.current.where(policy_type_id: 5, account: current_staff.organizable).count
         policy_ids = ::Policy.where(account: current_staff.organizable).pluck(:id)
-        @total_commission = PolicyPremium.where(id: policy_ids).pluck(:total).inject(:+) || 0
-        @total_premium = PolicyPremium.where(id: policy_ids).pluck(:total_fees).inject(:+) || 0
+        policy_quote_ids = ::PolicyQuote.includes(:policy_application).references(:policy_applications).where(status: 'accepted', policy_applications: { account_id: current_staff.organizable.id }).pluck(:id)
+        @total_commission = ::Commission.where(recipient: current_staff.organizable).pluck(:total).inject(:+) || 0
+        @total_premium = ::PolicyPremium.where(policy_quote_id: policy_quote_ids).or(::PolicyPremium.where(policy_id: policy_ids)).pluck(:total_premium).inject(:+) || 0
 
         render json: {
           total_units: @units,
