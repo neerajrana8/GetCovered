@@ -1,5 +1,5 @@
-json.extract! invoice, :id, :number, :status, :external, :status_changed, :description, :due_date, :available_date,
-              :term_first_date, :term_last_date, :renewal_cycle, :total, :subtotal, :tax, :tax_percent, :system_data,
-              :amount_refunded, :amount_to_refund_on_completion, :has_pending_refund, :pending_refund_data, :created_at,
-              :updated_at, :invoiceable_type, :invoiceable_id, :proration_reduction, :disputed_charge_count,
-              :was_missed, :payer_type, :payer_id
+json.extract! invoice, :number, :description, :available_date, :due_date, :created_at, :updated_at,
+  :external, :status, :status_changed, :under_review, :pending_charge_count, :pending_dispute_count, :was_missed, :was_missed_at,
+  :total_due, :total_payable, :total_reducing, :total_pending, :total_received, :total_undistributable,
+  :invoiceable_id, :invoiceable_type,
+  :payer_id, :payer_type
