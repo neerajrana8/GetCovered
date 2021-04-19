@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_04_15_210055) do
+ActiveRecord::Schema.define(version: 2021_04_19_180905) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
@@ -860,6 +860,7 @@ ActiveRecord::Schema.define(version: 2021_04_15_210055) do
     t.string "collector_type"
     t.bigint "collector_id"
     t.bigint "archived_invoice_id"
+    t.datetime "status_changed", null: false
     t.index ["archived_invoice_id"], name: "index_invoices_on_archived_invoice_id"
     t.index ["collector_type", "collector_id"], name: "index_invoices_on_collector_type_and_collector_id"
     t.index ["invoiceable_type", "invoiceable_id"], name: "index_invoices_on_invoiceable_type_and_invoiceable_id"
@@ -966,6 +967,7 @@ ActiveRecord::Schema.define(version: 2021_04_15_210055) do
     t.bigint "reason_id"
     t.string "handler_type"
     t.bigint "handler_id"
+    t.string "error_info"
     t.index ["handler_type", "handler_id"], name: "index_line_item_changes_on_handler_type_and_handler_id"
     t.index ["line_item_id"], name: "index_line_item_changes_on_line_item_id"
     t.index ["reason_type", "reason_id"], name: "index_line_item_changes_on_reason_type_and_reason_id"
