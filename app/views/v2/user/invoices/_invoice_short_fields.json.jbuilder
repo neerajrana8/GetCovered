@@ -1,5 +1,4 @@
-json.extract! invoice, :available_date, :created_at, :due_date, :id,
-  :invoiceable_id, :invoiceable_type,
-  :number, :status, :external, :status_changed, :subtotal,
-  :term_first_date, :term_last_date, :total
-
+json.extract! invoice, :number, :available_date, :due_date, :created_at, :updated_at,
+  :external, :status, :status_changed, :under_review,
+  :total_due, :total_payable, :total_pending, :total_received,
+  :invoiceable_id, :invoiceable_type
