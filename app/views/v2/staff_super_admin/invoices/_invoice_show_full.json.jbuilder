@@ -2,11 +2,11 @@ json.partial! "v2/staff_super_admin/invoices/invoice_show_fields.json.jbuilder",
   invoice: invoice
 
 
-json.charges do
-  unless invoice.charges.nil?
-    json.array! invoice.charges do |invoice_charges|
-      json.partial! "v2/staff_super_admin/charges/charge_show_full.json.jbuilder",
-        charge: invoice_charges
+json.stripe_charges do
+  unless invoice.stripe_charges.nil?
+    json.array! invoice.stripe_charges do |invoice_charges|
+      json.partial! "v2/staff_super_admin/stripe_charges/stripe_charge_show_full.json.jbuilder",
+        stripe_charge: invoice_charges
     end
   end
 end

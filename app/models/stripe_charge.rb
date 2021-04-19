@@ -31,6 +31,13 @@ class StripeCharge < ApplicationRecord
     }
   end
   
+  def displayable_status
+    self.status == 'mysterious' ? 'errored' : self.status
+  end
+  
+  def displayable_error
+    self.client_error.blank? ? nil : I18n.t(*(self.client_error['linear'] || []), **(self.client_error['keyword'] || {}))
+  end
   
   def process
     self.with_lock do
