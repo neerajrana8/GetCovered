@@ -29,6 +29,7 @@ class LineItemChange < ApplicationRecord
           ppipt.lock! unless ppipt.nil?
           ppi.lock!
           ppic_array = ppi.policy_premium_item_commissions.order(id: :asc).lock.to_a
+          commission_hash = ::Commission.collating_commissions_for(ppic_array.map{|ppic| ppic.recipient }, apply_lock: true)
           case self.field_changed
             when 'total_due'
               # update the PPI
@@ -37,7 +38,7 @@ class LineItemChange < ApplicationRecord
                 raise ActiveRecord::Rollback
               end
               # update the PPICs
-              result = ppi.attempt_commission_update(self, ppic_array)
+              result = ppi.attempt_commission_update(self, ppic_array, commission_hash)
               unless result[:success]
                 error_message = "Failed to update commissions! Errors: #{result[:error]}. Record: #{result[:record]}"
                 raise ActiveRecord::Rollback
@@ -54,7 +55,7 @@ class LineItemChange < ApplicationRecord
                 raise ActiveRecord::Rollback
               end
               # update the PPICs
-              result = ppi.attempt_commission_update(self, ppic_array)
+              result = ppi.attempt_commission_update(self, ppic_array, commission_hash)
               unless result[:success]
                 error_message = "Failed to update commissions! Errors: #{result[:error]}. Record: #{result[:record]}"
                 raise ActiveRecord::Rollback

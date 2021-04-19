@@ -470,6 +470,7 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
             due_date: inv.due_date,
             external: false,
             status: 'quoted',
+            status_changed: inv.status_changed,
             was_missed: inv.was_missed,
             was_missed_at: !inv.was_missed ? nil : inv.status == 'missed' ? inv.status_changed : (inv.due_date + 1.day).beginning_of_day,
             autosend_status_change_notifications: true,
@@ -630,6 +631,7 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
           due_date: inv.due_date,
           external: pa.carrier_id == 5 || pa.carrier_id == 6 ? true : false,
           status: inv.status == 'canceled' ? 'cancelled' : pa.carrier_id == 5 || pa.carrier_id == 6 ? 'managed_externally' : 'quoted', # for now! we will update this after handling the line items!
+          status_changed: inv.status_changed,
           under_review: false,
           pending_charge_count: 0, # we will scream and die if we encounter a pending charge
           pending_dispute_count: 0,

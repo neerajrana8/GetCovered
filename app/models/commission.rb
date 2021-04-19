@@ -30,6 +30,24 @@ class Commission < ApplicationRecord
     (@collating_commissions ||= {})[recipient] ||= ::Commission.find_or_create_by(recipient: recipient, status: 'collating')
   end
   
+  def self.collating_commisions_for(recipients, apply_lock: false)
+    found = (@collating_commissions ||= {}).select{|r,c| recipients.include?(r) }
+    unless recipients.length == found.length
+      found = ::Commission.where(recipient: recipients, status: 'collating')
+      unless recipients.length == found.length
+        (recipients - found.map{|f| f.recipient }).each do |rec|
+          found.push(::Commission.find_or_create_by(recipient: rec, status: 'collating'))
+        end
+      end
+      found = found.map{|c| [c.recipient, c] }.to_h
+      @collating_commissions.merge!(found)
+    end
+    if apply_lock
+      ::Commission.where(id: found.values.map{|v| v.id }).order(id: :asc).lock.to_a
+    end
+    return found
+  end
+  
   # Public Instance Methods
   def separate_for_approval(which_items = self.commission_items, negative_payout: false)
     return { success: false, error: "Cannot separate an empty list of commission items" } if which_items.blank?

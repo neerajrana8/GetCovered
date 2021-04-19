@@ -195,8 +195,8 @@ class PolicyPremiumItem < ApplicationRecord
     return error_message
   end
 
-  # this is expected to be called from within a transaction, with self.policy_premium_item_commissions already locked (and passed as an array)
-  def attempt_commission_update(reason, locked_ppic_array)
+  # this is expected to be called from within a transaction, with self.policy_premium_item_commissions & an array of collating commissions already locked (and passed as an array)
+  def attempt_commission_update(reason, locked_ppic_array, locked_commission_hash)
     ppits = nil
     if self.commission_calculation == 'group_by_transaction'
       ppits = ::PolicyPremiumItemTransaction.where(pending: true, policy_premium_item: self).order(id: :asc).lock.to_a
@@ -230,7 +230,7 @@ class PolicyPremiumItem < ApplicationRecord
           when 'as_received'
             commission_items.push(::CommissionItem.new(
               amount: new_total_received - ppic.total_received,
-              commission: ::Commission.collating_commission_for(ppic.recipient),
+              commission: locked_commission_hash[ppic.recipient],
               commissionable: ppic,
               reason: reason
             )) unless ppic.total_received == new_total_received || !ppic.payable?

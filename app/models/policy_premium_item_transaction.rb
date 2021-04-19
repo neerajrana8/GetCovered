@@ -29,6 +29,7 @@ class PolicyPremiumItemTransaction < ApplicationRecord
     begin
       ::ActiveRecord::Base.transaction(requires_new: true) do
         self.lock!
+        commission_item.commission.lock!
         self.update!(pending: false)
         commission_item.save!
       end

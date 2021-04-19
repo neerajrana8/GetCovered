@@ -24,6 +24,8 @@ class Invoice < ApplicationRecord
     unless: Proc.new{|i| i.callbacks_disabled }
   before_update :set_status,
     unless: Proc.new{|i| i.will_save_change_to_attribute?('status') || i.callbacks_disabled }
+  before_update :set_status_changed,
+    unless: Proc.new{|i| !i.will_save_change_to_attribute?('status') || i.callbacks_disabled }
   before_update :set_missed_record,
     if: Proc.new{|i| i.will_save_change_to_attribute?('status') && i.status == 'missed' && !i.callbacks_disabled }
   after_commit :send_status_change_notifications,
@@ -384,6 +386,11 @@ class Invoice < ApplicationRecord
       unless self.external || self.status == 'quoted' || self.status == 'cancelled' || self.status == 'managed_externally'
         self.status = self.get_proper_status
       end
+    end
+    
+    # set our status changed time
+    def set_status_changed
+      self.status_changed = Time.current
     end
     
     # set missed record data when status is about to update to missed
