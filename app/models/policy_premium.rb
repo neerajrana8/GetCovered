@@ -111,7 +111,7 @@ class PolicyPremium < ApplicationRecord
 	  carrier_policy_type = self.policy_rep.carrier.carrier_policy_types.where(:policy_type => self.policy_rep.policy_type).take
     state = !self.policy_rep.insurables.empty? ?
       self.policy_rep.primary_insurable.primary_address.state
-      : self.policy_application ? self.policy_application.fields["premise"][0]["address"]["state"]
+      : self.policy_application ? self.policy_application.fields&[].("premise")&.[](0)&.[]("address")&.[]("state")
       : nil # MOOSE WARNING what about pensio's hideous hack with no insurables :(?
     regional_availability = ::CarrierPolicyTypeAvailability.where(state: state, carrier_policy_type: carrier_policy_type).take
     return (regional_availability&.fees || []) + (self.policy_application&.billing_strategy&.fees || []) + self.fees
