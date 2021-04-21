@@ -6,7 +6,6 @@ module V2
   module StaffSuperAdmin
     class AgenciesController < StaffSuperAdminController
       before_action :set_agency, only: %i[update show branding_profile enable disable]
-      before_action :default_filter, only: %i[index show]
 
       def index
         relation = 
@@ -114,11 +113,6 @@ module V2
 
       def set_agency
         @agency = Agency.find_by(id: params[:id])
-      end
-
-      # return only agencies
-      def default_filter
-        params[:filter] = { 'agency_id' => '_NULL_' } if params[:filter].blank?
       end
 
       def sub_agency_filter_params
