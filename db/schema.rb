@@ -531,6 +531,16 @@ ActiveRecord::Schema.define(version: 2021_04_08_112614) do
     t.index ["recordable_type", "recordable_id"], name: "index_histories_on_recordable_type_and_recordable_id"
   end
 
+  create_table "insurable_data", force: :cascade do |t|
+    t.bigint "insurable_id"
+    t.integer "uninsured_units"
+    t.integer "total_units"
+    t.integer "expiring_policies"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["insurable_id"], name: "index_insurable_data_on_insurable_id"
+  end
+
   create_table "insurable_geographical_categories", force: :cascade do |t|
     t.integer "state"
     t.string "counties", array: true

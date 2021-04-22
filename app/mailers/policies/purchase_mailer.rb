@@ -33,6 +33,8 @@ module Policies
       @content = opening[rand_selector] + agency_content()
       @greeting = greetings[rand_selector]
 
+      @inverted = rand(0..9) > 8 ? true : false
+
       mail(subject: "A new #{ @policy.policy_type.title } Policy has Sold!", template_name: 'purchase')
     end
 
@@ -58,6 +60,7 @@ module Policies
       @billing_strat = @premium.billing_strategy
       @deposit = @policy.invoices.order(due_date: :ASC).first
       @greeting = nil
+      @inverted = false
       @address = nil
     end
 
