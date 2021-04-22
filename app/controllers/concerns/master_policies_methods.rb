@@ -56,7 +56,7 @@ module MasterPoliciesMethods
         render json: standard_error(
                        :master_policy_creation_error,
                        'Master policy was not created',
-                       err.record.errors
+                       error.record.errors
                      ),
                status: :unprocessable_entity
       end
