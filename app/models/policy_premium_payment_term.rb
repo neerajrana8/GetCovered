@@ -91,7 +91,7 @@ class PolicyPremiumPaymentTerm < ApplicationRecord
         if fm > nlm || lm < nfm
           return self.cancel # this term has been prorated into nothingness
         elsif nfm <= fm && nlm >= lm
-          return self # no changes
+          return true # no changes
         else
           # we've prorated for real
           ofm = self.original_first_moment.to_date

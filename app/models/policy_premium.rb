@@ -50,12 +50,14 @@ class PolicyPremium < ApplicationRecord
       new_total += quantity
     end
     self.total = new_total
-    self.save if persist
+    persist ? self.save : true
   end
   
   def initialize_all(premium_amount, tax: nil, taxes: nil, term_group: nil, collector: nil, filter_fees: nil, tax_recipient: nil, first_payment_down_payment: false, first_payment_down_payment_override: nil, first_tax_payment_down_payment_override: nil)
     tax = taxes if tax.nil? && !taxes.nil?
     return "Tax must be >= 0" if tax && tax < 0
+    return "Tax recipient must be specified" unless !tax || tax == 0
+    return "PolicyPremium must be persisted to the database before initializing" unless self.id
     result = nil
     ActiveRecord::Base.transaction do
       result = self.create_payment_terms(term_group: term_group)
@@ -78,6 +80,7 @@ class PolicyPremium < ApplicationRecord
     billing_strategy_terms ||= self.policy_application&.billing_strategy&.new_business&.[]('payments')
     return "No billing_strategy_terms were provided and policy application does not exist or has no associated billing strategy" if billing_strategy_terms.blank?
     return "Payment terms for term group '#{term_group || 'nil'}' already exist" unless self.policy_premium_payment_terms.where(term_group: term_group).blank?
+    return "The billing strategy terms are interpreted as applying to successive months, but there are more than 12 of them" if billing_strategy_terms.length > 12
     returned_errors = nil
     last_end = self.policy_rep.effective_date - 1.day
     extra_months = 0
@@ -119,7 +122,7 @@ class PolicyPremium < ApplicationRecord
   
   def itemize_fees(percentage_basis, and_update_totals: true, term_group: nil, payment_terms: nil, collector: nil, filter: nil)
     # get payment terms
-    payment_terms = self.policy_premium_payment_terms.where(term_group: term_group).sort.select{|p| p.default_weight != 0 } if payment_terms.nil?
+    payment_terms ||= self.policy_premium_payment_terms.where(term_group: term_group).sort.select{|p| p.default_weight != 0 }
     if payment_terms.blank?
       return "This PolicyPremium has no PolicyPremiumPaymentTerms with term_group = '#{term_group || 'nil'}'"
     elsif payment_terms.any?{|p| p.default_weight.nil? }
@@ -183,9 +186,9 @@ class PolicyPremium < ApplicationRecord
     self.itemize_premium(amount, and_update_totals: and_update_totals, proratable: proratable, refundable: refundable, term_group: term_group, collector: collector, is_tax: true, recipient: recipient, first_payment_down_payment: first_payment_down_payment, first_payment_down_payment_override: first_payment_down_payment_override)
   end
 
-  def itemize_premium(amount, and_update_totals: true, proratable: nil, refundable: nil, term_group: nil, collector: nil, is_tax: false, recipient: nil, first_payment_down_payment: false, first_payment_down_payment_override: nil)
+  def itemize_premium(amount, and_update_totals: true, proratable: nil, refundable: nil, term_group: nil, payment_terms: nil, collector: nil, is_tax: false, recipient: nil, first_payment_down_payment: false, first_payment_down_payment_override: nil)
     # get payment terms
-    payment_terms = self.policy_premium_payment_terms.where(term_group: term_group).sort.select{|p| p.default_weight != 0 }
+    payment_terms ||= self.policy_premium_payment_terms.where(term_group: term_group).sort.select{|p| p.default_weight != 0 }
     if payment_terms.blank?
       return "This PolicyPremium has no PolicyPremiumPaymentTerms"
     elsif payment_terms.any?{|p| p.default_weight.nil? }
