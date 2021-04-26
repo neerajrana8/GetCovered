@@ -25,7 +25,7 @@ class Invoice < ApplicationRecord
   before_update :set_status,
     unless: Proc.new{|i| i.will_save_change_to_attribute?('status') || i.callbacks_disabled }
   before_update :set_status_changed,
-    unless: Proc.new{|i| !i.will_save_change_to_attribute?('status') || i.callbacks_disabled }
+    unless: Proc.new{|i| (!i.status_changed.nil? && !i.will_save_change_to_attribute?('status')) || i.callbacks_disabled }
   before_update :set_missed_record,
     if: Proc.new{|i| i.will_save_change_to_attribute?('status') && i.status == 'missed' && !i.callbacks_disabled }
   after_commit :send_status_change_notifications,

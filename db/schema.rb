@@ -111,7 +111,6 @@ ActiveRecord::Schema.define(version: 2021_04_19_180905) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.boolean "searchable", default: false
-    t.boolean "verified", default: false
     t.index ["addressable_type", "addressable_id"], name: "index_addresses_on_addressable_type_and_addressable_id"
   end
 
@@ -148,19 +147,6 @@ ActiveRecord::Schema.define(version: 2021_04_19_180905) do
     t.string "slug"
     t.jsonb "nodes", default: {}
     t.boolean "enabled"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-  end
-
-  create_table "application_notifications", force: :cascade do |t|
-    t.string "action"
-    t.string "subject"
-    t.integer "status"
-    t.integer "code"
-    t.boolean "read", default: false
-    t.integer "notifiable_id"
-    t.string "notifiable_type"
-    t.string "message"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
   end
@@ -439,9 +425,7 @@ ActiveRecord::Schema.define(version: 2021_04_19_180905) do
     t.bigint "policy_type_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.bigint "commission_strategy_id"
     t.index ["carrier_agency_id"], name: "index_carrier_agency_authorizations_on_carrier_agency_id"
-    t.index ["commission_strategy_id"], name: "index_carrier_agency_authorizations_on_commission_strategy_id"
     t.index ["policy_type_id"], name: "index_carrier_agency_authorizations_on_policy_type_id"
   end
 
@@ -583,9 +567,6 @@ ActiveRecord::Schema.define(version: 2021_04_19_180905) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "type_of_loss", default: 0, null: false
-    t.string "name"
-    t.string "address"
-    t.string "nature_of_claim"
     t.text "staff_notes"
     t.index ["claimant_type", "claimant_id"], name: "index_claims_on_claimant_type_and_claimant_id"
     t.index ["insurable_id"], name: "index_claims_on_insurable_id"
@@ -821,7 +802,6 @@ ActiveRecord::Schema.define(version: 2021_04_19_180905) do
     t.bigint "agency_id"
     t.bigint "policy_type_ids", default: [], null: false, array: true
     t.boolean "preferred_ho4", default: false, null: false
-    t.boolean "confirmed", default: true, null: false
     t.index ["account_id"], name: "index_insurables_on_account_id"
     t.index ["agency_id"], name: "index_insurables_on_agency_id"
     t.index ["insurable_id"], name: "index_insurables_on_insurable_id"
@@ -1255,7 +1235,6 @@ ActiveRecord::Schema.define(version: 2021_04_19_180905) do
     t.jsonb "coverage_selections", default: [], null: false
     t.jsonb "extra_settings"
     t.jsonb "resolver_info"
-    t.bigint "tag_ids", default: [], null: false, array: true
     t.jsonb "tagging_data"
     t.string "error_message"
     t.integer "branding_profile_id"
@@ -1267,7 +1246,6 @@ ActiveRecord::Schema.define(version: 2021_04_19_180905) do
     t.index ["policy_application_group_id"], name: "index_policy_applications_on_policy_application_group_id"
     t.index ["policy_id"], name: "index_policy_applications_on_policy_id"
     t.index ["policy_type_id"], name: "index_policy_applications_on_policy_type_id"
-    t.index ["tag_ids"], name: "policy_application_tag_ids_index", using: :gin
   end
 
   create_table "policy_coverages", force: :cascade do |t|
@@ -1383,7 +1361,6 @@ ActiveRecord::Schema.define(version: 2021_04_19_180905) do
     t.bigint "insurable_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.boolean "auto_assign", default: false
     t.index ["insurable_id"], name: "index_policy_insurables_on_insurable_id"
     t.index ["policy_application_id"], name: "index_policy_insurables_on_policy_application_id"
     t.index ["policy_id"], name: "index_policy_insurables_on_policy_id"
@@ -1538,6 +1515,7 @@ ActiveRecord::Schema.define(version: 2021_04_19_180905) do
     t.jsonb "carrier_payment_data"
     t.index ["account_id"], name: "index_policy_quotes_on_account_id"
     t.index ["agency_id"], name: "index_policy_quotes_on_agency_id"
+    t.index ["external_id"], name: "index_policy_quotes_on_external_id", unique: true
     t.index ["policy_application_id"], name: "index_policy_quotes_on_policy_application_id"
     t.index ["policy_group_quote_id"], name: "index_policy_quotes_on_policy_group_quote_id"
     t.index ["policy_id"], name: "index_policy_quotes_on_policy_id"
@@ -1746,14 +1724,6 @@ ActiveRecord::Schema.define(version: 2021_04_19_180905) do
     t.index ["stripe_charge_id"], name: "index_stripe_refunds_on_stripe_charge_id"
   end
 
-  create_table "tags", force: :cascade do |t|
-    t.string "title"
-    t.text "description"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["title"], name: "index_tags_on_title", unique: true
-  end
-
   create_table "tracking_urls", force: :cascade do |t|
     t.string "landing_page"
     t.string "campaign_source"
@@ -1809,7 +1779,6 @@ ActiveRecord::Schema.define(version: 2021_04_19_180905) do
     t.string "mailchimp_id"
     t.integer "mailchimp_category", default: 0
     t.string "qbe_id"
-    t.integer "insured_address_id"
     t.index ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["invitation_token"], name: "index_users_on_invitation_token", unique: true

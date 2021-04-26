@@ -1,5 +1,5 @@
 class Dispute < ApplicationRecord
-    # ActiveRecord Callbacks
+  # ActiveRecord Callbacks
 
   after_create :handle_new_dispute,
     if: Proc.new { |dspt| dspt.active }
@@ -14,6 +14,8 @@ class Dispute < ApplicationRecord
   belongs_to :stripe_charge
   
   has_one :invoice, through: :stripe_charge
+  
+  has_many :line_item_reductions
 
   # Validations
 
