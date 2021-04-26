@@ -84,20 +84,21 @@ class StripeRefund < ApplicationRecord
     ) # most of these are not expected to be able to change, but are included for completeness
   end
   
+  private
 
-  def status_from_stripe_status(stripe_status_value = nil)
-    stripe_status_value = self.stripe_status if stripe_status_value.nil?
-    case stripe_status_value || self.stripe_status
-      when 'succeeded'
-        'succeeded'
-      when 'failed', 'canceled'
-        'failed'
-      when 'pending'
-        'pending'
-      else
-        'errored'
+    def status_from_stripe_status(stripe_status_value = nil)
+      stripe_status_value = self.stripe_status if stripe_status_value.nil?
+      case stripe_status_value || self.stripe_status
+        when 'succeeded'
+          'succeeded'
+        when 'failed', 'canceled'
+          'failed'
+        when 'pending'
+          'pending'
+        else
+          'errored'
+      end
     end
-  end
 
 
 end
