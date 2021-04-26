@@ -840,7 +840,7 @@ ActiveRecord::Schema.define(version: 2021_04_19_180905) do
     t.string "collector_type"
     t.bigint "collector_id"
     t.bigint "archived_invoice_id"
-    t.datetime "status_changed", null: false
+    t.datetime "status_changed"
     t.index ["archived_invoice_id"], name: "index_invoices_on_archived_invoice_id"
     t.index ["collector_type", "collector_id"], name: "index_invoices_on_collector_type_and_collector_id"
     t.index ["invoiceable_type", "invoiceable_id"], name: "index_invoices_on_invoiceable_type_and_invoiceable_id"

@@ -295,7 +295,7 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
       t.integer       :status, null: false                              # 'quoted', 'active'
       t.integer       :payability, null: false                          # 'internal', 'external'
       t.integer       :total_expected, null: false                      # the total amount we expect to pay out in commissions for this PPI to this recipient
-      t.integer       :total_received,  null: false, defualt: 0         # the total amount we have actually received from the payer
+      t.integer       :total_received,  null: false, default: 0         # the total amount we have actually received from the payer
       t.integer       :total_commission, null: false, default: 0        # the total amount we have written CommissionItems for
       t.decimal       :percentage, null: false, precision: 5, scale: 2  # the % of total paid that goes to commissions for recipient (ppi.policy_premium_item_commisions.inject(0){|sum,ppic| sum+ppic} will be equal to 100
       t.integer       :payment_order, null: false                       # a nice integer to sort folk into the proper payment order
