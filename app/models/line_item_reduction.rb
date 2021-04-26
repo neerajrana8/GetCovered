@@ -55,31 +55,33 @@ class LineItemReduction < ApplicationRecord
     return to_reduce
   end
   
-  def update_associated_models
-    error_message = nil
-    ActiveRecord::Base.transaction do
-      # move the invoice and line item totals into the reducing column (so that admins know the total that currently applies, and so that in multiple payment situations the user doesn't overpay & force us to issue a refund unnecessarily)
-      self.invoice.lock!
-      self.line_item.lock!
-      to_shift = self.get_amount_to_reduce
-      unless to_shift == 0 || (
-              self.invoice.update(total_due: self.invoice.total_due - to_shift, total_reducing: self.invoice.total_reducing + to_shift) &&
-              self.line_item.update(total_due: self.line_item.total_due - to_shift, total_reducing: self.line_item.total_reducing + to_shift)
-             )
-        error_message = "failed to be added to invoice/line item total_reducing values"
-        raise ActiveRecord::Rollback
-      end
-    end
-    unless error_message.nil?
-      self.errors.add(:amount, error_message)
-      throw(:abort)
-    end
-  end
-  
   def attempt_immediate_processing
     # if there are pending charges/disputes, this will return without doing anything; if there aren't, it will go ahead and fully process this reduction
     self.invoice.process_reductions
   end
+
+  private
+  
+    def update_associated_models
+      error_message = nil
+      ActiveRecord::Base.transaction do
+        # move the invoice and line item totals into the reducing column (so that admins know the total that currently applies, and so that in multiple payment situations the user doesn't overpay & force us to issue a refund unnecessarily)
+        self.invoice.lock!
+        self.line_item.lock!
+        to_shift = self.get_amount_to_reduce
+        unless to_shift == 0 || (
+                self.invoice.update(total_due: self.invoice.total_due - to_shift, total_reducing: self.invoice.total_reducing + to_shift) &&
+                self.line_item.update(total_due: self.line_item.total_due - to_shift, total_reducing: self.line_item.total_reducing + to_shift)
+               )
+          error_message = "failed to be added to invoice/line item total_reducing values"
+          raise ActiveRecord::Rollback
+        end
+      end
+      unless error_message.nil?
+        self.errors.add(:amount, error_message)
+        throw(:abort)
+      end
+    end
 
 end
 
