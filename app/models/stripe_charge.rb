@@ -21,7 +21,7 @@ class StripeCharge < ApplicationRecord
     pending: 1,
     succeeded: 2,
     failed: 3,
-    mysterious: 4
+    errored: 4
   }
   
   def self.errorify(*linear_params, **keyword_params)
@@ -29,10 +29,6 @@ class StripeCharge < ApplicationRecord
       'linear' => linear_params,
       'keyword' => keyword_params
     }
-  end
-  
-  def displayable_status
-    self.status == 'mysterious' ? 'errored' : self.status
   end
   
   def displayable_error
@@ -139,7 +135,7 @@ class StripeCharge < ApplicationRecord
       )
     elsif !stripe_charge.respond_to?('[]')
       return self.update(
-        status: 'mysterious',
+        status: 'errored',
         error_info: "Stripe charge creation succeeded, but resulting object did not support square bracket operator",
         client_error: ::StripeCharge.errorify('stripe_charge_model.payment_processor_mystery')
       )
@@ -164,7 +160,7 @@ class StripeCharge < ApplicationRecord
         )
     end
     return self.update(
-      status: 'mysterious',
+      status: 'errored',
       stripe_id: stripe_charge['id'],
       error_info: "Stripe charge creation succeeded, but resulting object did not have a known status (status was '#{stripe_charge['status']}')",
       client_error: ::StripeCharge.errorify('stripe_charge_model.payment_processor_mystery')

@@ -38,7 +38,7 @@ class HandleUnresponsiveChargesJob < ApplicationJob
           )
         else # either stripe_charge is nil or it is somehow invalid (stripe api guarantees succeeded/pending/failed statuses)
           charge.update(
-            status: 'mysterious',
+            status: 'errored',
             error_info: "Stripe charge was marked 'pending' for a long time; investigation revealed #{stripe_charge.nil? ? "charge's stripe_id does not correspond to a charge in Stripe's system" : "charge has unknown status on Stripe ('#{stripe_charge['status']}')"}",
             client_error: ::StripeCharge.errorify('stripe_charge_model.payment_processor_mystery')
           )

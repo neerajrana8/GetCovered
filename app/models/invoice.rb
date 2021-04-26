@@ -182,7 +182,7 @@ class Invoice < ApplicationRecord
     rolled_back = false
     # perform charge processing
     if charge.status == 'processing'
-      rolled_back = charge.update(invoice_aware: true) ? true : false
+      rolled_back = charge.update(invoice_aware: true) ? false : true
     elsif charge.status == 'succeeded'
       self.with_payment_lock do |line_item_array|
         rolled_back = true
@@ -218,7 +218,7 @@ class Invoice < ApplicationRecord
           case charge.status
             when 'processing'
               raise ActiveRecord::Rollback unless charge.update(
-                status: 'mysterious',
+                status: 'errored',
                 invoice_aware: true,
                 error_info: "Stripe charge somehow became stuck with status 'processing'.",
                 client_error: ::StripeCharge.errorify('stripe_charge_model.payment_processor_mystery')
@@ -233,12 +233,12 @@ class Invoice < ApplicationRecord
                   amount: charge.amount
                 }]
               )
-            when 'mysterious'
+            when 'errored'
               raise ActiveRecord::Rollback unless charge.update(invoice_aware: true)
               raise ActiveRecord::Rollback unless self.update(
                 under_review: true,
                 error_info: (self.error_info || []) + [{
-                  description: "Charge attempt resulted in 'mysterous' charge. This means the charge attempt threw no errors and had no failure status, but the returned Stripe object was invalid.",
+                  description: "Charge attempt resulted in 'errored' charge. This means the charge attempt threw no errors and had no failure status, but the returned Stripe object was invalid.",
                   charge_type: 'StripeCharge',
                   charge_id: charge.id,
                   time: Time.current.to_s,
@@ -258,8 +258,10 @@ class Invoice < ApplicationRecord
       end # end lock
     end # end if
     # handle notifications
-    self.send_charge_notifications(charge) unless rolled_back
-    self.process_reductions
+    unless rolled_back
+      self.send_charge_notifications(charge)
+      self.process_reductions
+    end
   end
   
   def process_reductions
@@ -298,7 +300,7 @@ class Invoice < ApplicationRecord
             # lic
             raise ActiveRecord::Rollback unless to_unpay == 0 || !li.line_item_changes.create(field_changed: 'total_received', amount: -to_unpay, reason: lir, new_value: li.total_received).id.nil?
             # lir
-            refund_object ||= refund.create
+            refund_object ||= ::Refund.create
             raise ActiveRecord::Rollback if refund_object.id.nil?
             lir.refund = refund_object
             lir.amount_refunded += to_unpay
@@ -326,7 +328,7 @@ class Invoice < ApplicationRecord
   def send_charge_notifications(charge)
     # MOOSE WARNING: fill this out, notification people
     case charge.status # value will never be 'processing'
-      when 'mysterious'
+      when 'errored'
       when 'pending'
       when 'failed'
       when 'succeeded'
