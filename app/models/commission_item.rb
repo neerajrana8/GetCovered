@@ -24,8 +24,8 @@ class CommissionItem < ApplicationRecord
   private
 
     def set_analytics_fields
-      self.policy_quote_id = self.commissionable.policy_premium_item.policy_quote.id if self.policy_quote_id.nil? && self.commissionable_type == 'PolicyPremiumItemCommission'
-      self.policy_id = self.commissionable.policy_premium_item.policy_quote.policy_id if self.policy_id.nil? && self.commissionable_type == 'PolicyPremiumItemCommission'
+      self.policy_quote_id = self.commissionable.policy_premium_item.policy_quote&.id if self.policy_quote_id.nil? && self.commissionable_type == 'PolicyPremiumItemCommission'
+      self.policy_id = self.commissionable.policy_premium_item.policy_quote&.policy_id if self.policy_id.nil? && self.commissionable_type == 'PolicyPremiumItemCommission'
     end
 
     def update_commission_total
