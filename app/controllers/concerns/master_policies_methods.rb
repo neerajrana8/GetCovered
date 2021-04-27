@@ -7,6 +7,7 @@ module MasterPoliciesMethods
                            cover_unit available_top_insurables available_units historically_coverage_units
                            cancel cancel_coverage master_policy_coverages cancel_insurable auto_assign_all
                            auto_assign_insurable]
+    before_action :update_effective_date, only: %i[add_insurable cover_unit]
 
     def show
       render template: 'v2/shared/master_policies/show', status: :ok
@@ -73,7 +74,7 @@ module MasterPoliciesMethods
 
     def auto_assign_insurable
       policy_insurable = @master_policy.policy_insurables.where(insurable_id: params[:insurable_id]).take
-      
+
       if policy_insurable.present?
         policy_insurable.update(auto_assign: !policy_insurable.auto_assign)
         @insurables = paginator(@master_policy.insurables.distinct)
@@ -161,7 +162,9 @@ module MasterPoliciesMethods
           agency: @master_policy.agency,
           carrier: @master_policy.carrier,
           account: @master_policy.account,
-          policy_coverages: @master_policy.policy_coverages,
+          policy_coverages_attributes: @master_policy.policy_coverages.map do |policy_coverage|
+            policy_coverage.attributes.slice('limit', 'deductible', 'enabled', 'designation', 'title')
+          end,
           number: last_policy_number.nil? ? "#{@master_policy.number}_1" : last_policy_number.next,
           policy_type_id: PolicyType::MASTER_COVERAGE_ID,
           policy: @master_policy,
@@ -230,13 +233,21 @@ module MasterPoliciesMethods
 
     private
 
+    def update_effective_date
+      return if @master_policy.policies.any?
+
+      if @master_policy.effective_date < Time.zone.now
+        @master_policy.update(effective_date: Time.zone.now, expiration_date: Time.zone.now + 1.year)
+      end
+    end
+
     def create_params
       return({}) if params[:policy].blank?
 
       permitted_params = params.require(:policy).permit(
         :account_id, :agency_id, :auto_renew, :carrier_id, :effective_date,
         :expiration_date, :number, system_data: [:landlord_sumplimental],
-                                   policy_coverages_attributes: %i[policy_application_id limit deductible enabled designation]
+                                   policy_coverages_attributes: %i[policy_application_id title limit deductible enabled designation]
       )
 
       permitted_params
@@ -248,7 +259,7 @@ module MasterPoliciesMethods
       permitted_params = params.require(:policy).permit(
         :account_id, :agency_id, :auto_renew, :carrier_id, :effective_date,
         :expiration_date, :number, system_data: [:landlord_sumplimental],
-                                   policy_coverages_attributes: %i[id policy_application_id policy_id
+                                   policy_coverages_attributes: %i[id policy_application_id policy_id title
                                                                    limit deductible enabled designation]
       )
 

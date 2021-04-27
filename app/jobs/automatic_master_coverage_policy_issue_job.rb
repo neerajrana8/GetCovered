@@ -14,7 +14,9 @@ class AutomaticMasterCoveragePolicyIssueJob < ApplicationJob
             carrier: master_policy.carrier,
             account: master_policy.account,
             status: 'BOUND',
-            policy_coverages: master_policy.policy_coverages,
+            policy_coverages_attributes: master_policy.policy_coverages.map do |policy_coverage|
+              policy_coverage.attributes.slice('limit', 'deductible', 'enabled', 'designation', 'title')
+            end,
             number: last_policy_number.nil? ? "#{master_policy.number}_1" : last_policy_number.next,
             policy_type_id: PolicyType::MASTER_COVERAGE_ID,
             policy: master_policy,

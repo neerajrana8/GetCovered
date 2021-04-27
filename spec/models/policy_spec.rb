@@ -74,20 +74,6 @@ RSpec.describe Policy, elasticsearch: true, type: :model do
       expect(policy_coverage.errors.messages[:expiration_date]).to be_empty
     end
     
-    it 'policy coverage must inherit all master policy coverages' do
-      
-      policy_coverage = FactoryBot.build(:policy, agency: @agency, carrier: @carrier, account: @account)
-      policy_coverage.primary_user = @user
-      policy_coverage.policy_type = @master_policy_coverage_type
-      policy_coverage.policy_in_system = true
-      policy_coverage.expiration_date = nil
-      policy_coverage.policy = @master_policy
-      expect(policy_coverage).to be_valid
-      policy_coverage.save
-      expect(policy_coverage.policy_coverages.count).to eq(1)
-      expect(policy_coverage.policy_coverages.first.designation).to eq('liability_coverage')
-    end
-    
     it 'should create automatic coverage policy issue' do
       clear_enqueued_jobs
       residential_community = FactoryBot.create(:insurable, account: @account, insurable_type: @insurable_type_1)
