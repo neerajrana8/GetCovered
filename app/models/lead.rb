@@ -39,9 +39,7 @@ class Lead < ApplicationRecord
   end
 
   def self.presented
-    columns_distinct = [:email]
-    distinct_ids = Lead.select("MAX(id) as id").group(columns_distinct).map(&:id)
-    Lead.where.not(email: [nil, '']).where(id: distinct_ids)
+    Lead.where.not(email: [nil, ''])
   end
 
   def check_identifier
@@ -60,13 +58,14 @@ class Lead < ApplicationRecord
 
   private
 
+  # DO NOT CHANGE! CAN BRAKE IDENTIFIERS UNIQUENESS
   def set_identifier
     new_uid = Digest::MD5.hexdigest(fields_for_identifier)
     old_uid = self.identifier
     self.identifier = new_uid if identifier.nil? && new_uid != old_uid
   end
 
-  #can be extended if needed, but need to be sure about old ones
+  # can be extended if needed, but need to be sure about old ones
   def fields_for_identifier
     "#{self.email}"
   end

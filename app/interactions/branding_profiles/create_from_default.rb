@@ -56,6 +56,15 @@ module BrandingProfiles
         errors[:branding_profile_attributes] << bad_attributes.map(&:errors)
         raise ActiveRecord::Rollback
       end
+      disable_is_register(branding_profile_attributes)
+    end
+
+    def disable_is_register(branding_profile_attributes)
+      is_register_attribute = branding_profile_attributes.detect do |branding_profile_attribute|
+        branding_profile_attribute.name == 'is_register_disabled'
+      end
+
+      is_register_attribute.update(value: 'true') if is_register_attribute.present? && is_register_attribute.value == 'false'
     end
 
     def create_pages

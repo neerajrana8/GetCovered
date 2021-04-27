@@ -5,19 +5,20 @@
 module V2
   module StaffSuperAdmin
     class DashboardController < StaffSuperAdminController
+      include DashboardMethods
+
       def total_dashboard
-        unit_ids = InsurableType::UNITS_IDS
         @covered = Insurable.where(covered: true).count || 0
         @uncovered = Insurable.where(covered: false).count || 0
         @units = @covered + @uncovered
         community_ids = InsurableType::COMMUNITIES_IDS
         @communities = Insurable.where(insurable_type_id: community_ids).count
-        @total_policy = ::Policy.pluck(:id).count
-        @total_residential_policies = ::Policy.where(policy_type_id: 1).count
-        @total_master_policies = ::Policy.where(policy_type_id: 2).count
-        @total_master_policy_coverages = ::Policy.where(policy_type_id: 3).count
-        @total_commercial_policies = ::Policy.where(policy_type_id: 4).count
-        @total_rent_guarantee_policies = ::Policy.where(policy_type_id: 5).count
+        @total_policy = ::Policy.current.pluck(:id).count
+        @total_residential_policies = ::Policy.current.where(policy_type_id: 1).count
+        @total_master_policies = ::Policy.current.where(policy_type_id: 2).count
+        @total_master_policy_coverages = ::Policy.current.where(policy_type_id: 3).count
+        @total_commercial_policies = ::Policy.current.where(policy_type_id: 4).count
+        @total_rent_guarantee_policies = ::Policy.current.where(policy_type_id: 5).count
         policy_ids = ::Policy.pluck(:id)
         @total_commission = PolicyPremium.where(id: policy_ids).pluck(:total).inject(:+) || 0
         @total_premium = PolicyPremium.where(id: policy_ids).pluck(:total_fees).inject(:+) || 0
@@ -82,8 +83,8 @@ module V2
         min = params[:start]
         max = params[:end]
         type = params[:type]
-        report = Report.joins("LEFT JOIN reports r2 ON (date(reports.created_at) = date(r2.created_at) AND reports.id < r2.id)")
-                       .where("r2.id IS NULL").where(reportable_type: 'Agency')
+        report = Report.joins('LEFT JOIN reports r2 ON (date(reports.created_at) = date(r2.created_at) AND reports.id < r2.id)')
+          .where('r2.id IS NULL').where(reportable_type: 'Agency')
 
         # reports = Agency.where(created_at: min..max).map { |report| report.coverage_report }
         # report = Report.where(created_at: min..max, reportable_type: 'Agency', type: type).group('created_at', 'id')
@@ -99,20 +100,8 @@ module V2
         super + '/dashboard'
       end
 
-      def supported_filters(called_from_orders = false)
-        @calling_supported_orders = called_from_orders
-        {
-          id: %i[scalar array],
-          title: %i[scalar like],
-          permissions: %i[scalar array],
-          insurable_type_id: %i[scalar array],
-          insurable_id: %i[scalar array],
-          agency_id: %i[scalar array]
-        }
-      end
-
-      def supported_orders
-        supported_filters(true)
+      def communities
+        Insurable.where(insurable_type_id: InsurableType::COMMUNITIES_IDS)
       end
     end
   end # module StaffSuperAdmin

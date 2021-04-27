@@ -35,9 +35,7 @@ module PoliciesMethods
         if user.nil?
           user = ::User.new(user_params)
           user.password = SecureRandom.base64(12)
-          if user.save
-            user.invite!
-          end
+          user.invite! if user.save
         end
         @policy.users << user
       end
@@ -59,19 +57,13 @@ module PoliciesMethods
         if user.nil?
           user = ::User.new(user_params)
           user.password = SecureRandom.base64(12)
-          if user.save
-            user.invite!
-          end
+          user.invite! if user.save
         else
           user.update_attributes(user_params)
         end
-        unless @policy.users.include?(user)
-          @policy.users << user
-        end
+        @policy.users << user unless @policy.users.include?(user)
       end
-      if documents_params.present?
-        @policy.documents.attach(documents_params)
-      end
+      @policy.documents.attach(documents_params) if documents_params.present?
 
       render json: { message: 'Policy updated' }, status: :ok
     else
@@ -115,30 +107,66 @@ module PoliciesMethods
     end
   end
 
+  def set_optional_coverages
+    if @policy.carrier_id != MsiService.carrier_id || @policy.primary_insurable.nil? || @policy.primary_insurable.primary_address.nil?
+      @optional_coverages = nil
+    else
+      results = ::InsurableRateConfiguration.get_coverage_options(
+        @policy.carrier_id,
+        @policy.primary_insurable&.primary_address,
+        [{ 'category' => 'coverage', 'options_type' => 'none', 'uid' => '1010', 'selection' => true }],
+        nil,
+        0,
+        @policy.policy_premiums.last&.billing_strategy&.carrier_code,
+        agency: @policy.agency,
+        perform_estimate: false,
+        eventable: @policy.primary_insurable,
+        nonpreferred_final_premium_params: {
+                  number_of_units: 1,
+                  years_professionally_managed: nil,
+                  year_built: nil,
+                  gated: false
+                }.compact
+      )
+
+      @optional_coverages = results[:coverage_options].select { |coverage| coverage['requirement'] == 'optional' }.map do |coverage|
+        policy_coverage =
+          @policy.coverages.detect { |policy_coverage| policy_coverage['designation'] == coverage['uid'] }
+
+        {
+          designation: coverage['uid'],
+          title: coverage['title'],
+          enabled: policy_coverage.present? ? policy_coverage['enabled'] : false,
+          limit: policy_coverage.present? ? policy_coverage['limit'] : nil
+        }
+      end
+    end
+  end
+
   private
 
   def update_params
     return({}) if params[:policy].blank?
+
     params.require(:policy).permit(
         :account_id, :agency_id, :auto_renew, :cancellation_code,
         :cancellation_date_date, :carrier_id, :effective_date,
         :expiration_date, :number, :policy_type_id, :status, :out_of_system_carrier_title,
         documents: [],
-        policy_insurables_attributes: [ :insurable_id ],
-        policy_users_attributes: [ :user_id ],
-        policy_coverages_attributes: [ :id, :policy_application_id, :policy_id,
-                                       :limit, :deductible, :enabled, :designation ],
-        policy_application_attributes: [fields: {}],
-    )
+        policy_insurables_attributes: [:insurable_id],
+        policy_users_attributes: [:user_id],
+        policy_coverages_attributes: %i[id policy_application_id policy_id
+                                        limit deductible enabled designation],
+        policy_application_attributes: [fields: {}]
+      )
   end
 
   def update_user_params
     params.require(:policy).permit(users: [:id, :email,
-      address_attributes: [ :city, :country, :state, :street_name,
-                            :street_two, :zip_code],
-      profile_attributes: [ :first_name, :last_name, :contact_phone,
-                            :birth_date, :gender, :salutation]]
-    )
+                                           address_attributes: %i[city country state street_name
+                                                                  street_two zip_code],
+                                           profile_attributes: %i[first_name last_name contact_phone
+                                                                  birth_date gender salutation]])
   end
 
   def delete_policy_document_params
@@ -147,11 +175,10 @@ module PoliciesMethods
 
   def user_params
     params.permit(users: [:primary,
-                          :email, :agency_id, profile_attributes: [:birth_date, :contact_phone,
-                                                                   :first_name, :gender, :job_title, :last_name, :salutation],
-                          address_attributes: [ :city, :country, :state, :street_name,
-                                                :street_two, :zip_code] ]
-    )
+                          :email, :agency_id, profile_attributes: %i[birth_date contact_phone
+                                                                     first_name gender job_title last_name salutation],
+                                              address_attributes: %i[city country state street_name
+                                                                     street_two zip_code]])
   end
 
   def coverage_proof_params
@@ -159,12 +186,11 @@ module PoliciesMethods
                                    :account_id, :agency_id, :policy_type_id,
                                    :carrier_id, :effective_date, :expiration_date,
                                    :out_of_system_carrier_title, :address, documents: [],
-                                   policy_users_attributes: [ :user_id ]
-    )
+                                                                           policy_users_attributes: [:user_id])
   end
 
   def add_error_master_types(type_id)
-    @policy.errors.add(:policy_type_id, 'You cannot add or update coverage via master policy type') if [2,3].include?(type_id)
+    @policy.errors.add(:policy_type_id, 'You cannot add or update coverage via master policy type') if [2, 3].include?(type_id)
   end
 
   def policy_application_merged_attributes
@@ -172,7 +198,7 @@ module PoliciesMethods
     if @update_params[:policy_application_attributes]
       if @update_params[:policy_application_attributes][:fields]
         @update_params[:policy_application_attributes] =
-            @policy.policy_application.attributes.deep_merge(@update_params[:policy_application_attributes])
+          @policy.policy_application.attributes.deep_merge(@update_params[:policy_application_attributes])
       else
         @update_params.delete(:policy_application_attributes)
       end
@@ -180,46 +206,49 @@ module PoliciesMethods
     @update_params
   end
 
+
+
   def supported_filters(called_from_orders = false)
     @calling_supported_orders = called_from_orders
     {
+      id: %i[scalar array],
+      carrier: {
         id: %i[scalar array],
-        carrier: {
-            id: %i[scalar array],
-            title: %i[scalar like]
-        },
-        number: %i[scalar like],
-        policy_type_id: %i[scalar array],
-        status: %i[scalar like],
-        created_at: %i[scalar like],
-        updated_at: %i[scalar like],
-        policy_in_system: %i[scalar like],
-        effective_date: %i[scalar like],
-        expiration_date: %i[scalar like],
-        users: {
-            id: %i[scalar array],
-            email: %i[scalar like],
-            profile: {
-                full_name: %i[scalar like],
-            }
-        },
-        agency_id: %i[scalar]
+        title: %i[scalar like]
+      },
+      number: %i[scalar like],
+      policy_type_id: %i[scalar array],
+      status: %i[scalar like array],
+      created_at: %i[scalar like],
+      updated_at: %i[scalar like],
+      policy_in_system: %i[scalar like],
+      effective_date: %i[scalar like],
+      expiration_date: %i[scalar like],
+      users: {
+        id: %i[scalar array],
+        email: %i[scalar like],
+        profile: {
+          full_name: %i[scalar like]
+        }
+      },
+      agency_id: %i[scalar array]
     }
   end
 
   def create_params
     return({}) if params[:policy].blank?
+
     to_return = params.require(:policy).permit(
         :account_id, :agency_id, :auto_renew, :cancellation_reason,
         :cancellation_date, :carrier_id, :effective_date, :out_of_system_carrier_title,
         :expiration_date, :number, :policy_type_id, :status,
         documents: [],
-        policy_insurables_attributes: [ :insurable_id ],
-        policy_users_attributes: [ :user_id ],
-        policy_coverages_attributes: [ :id, :policy_application_id, :policy_id,
-                                       :limit, :deductible, :enabled, :designation ]
-    )
-    return(to_return)
+        policy_insurables_attributes: [:insurable_id],
+        policy_users_attributes: [:user_id],
+        policy_coverages_attributes: %i[id policy_application_id policy_id
+                                        limit deductible enabled designation]
+      )
+    to_return
   end
 
   def supported_orders

@@ -2,7 +2,7 @@
 
   # StaffAccount
   scope module: :staff_account, path: "staff_account" do
-    
+
     get "stripe/button_link", to: "stripe#stripe_button_link", as: :account_stripe_link
     get "stripe/connect", to: "stripe#connect", as: :account_stripe_connect
     post "plaid/connect", to: "plaid#connect", as: :account_plaid_connect
@@ -57,15 +57,15 @@
 
     resources :assignments,
       only: [ :create, :update, :destroy, :index, :show ]
-  
+
     resources :branding_profiles,
       path: "branding-profiles",
       only: [ :update, :index, :show ]
-      
+
     resources :carrier_insurable_profiles,
       path: "carrier-insurable-profiles",
       only: [:update, :show, :create]
-  
+
     resources :claims,
       only: [ :create, :index, :show ] do
         member do
@@ -78,13 +78,13 @@
           put :process_claim
         end
       end
-  
+
     resources :commissions,
       only: [ :index, :show ]
-  
+
     resources :histories,
       only: [ :index ]
-  
+
     resources :insurables,
       only: [ :create, :update, :destroy, :index, :show], concerns: :reportable do
         member do
@@ -95,13 +95,13 @@
           get :coverage_report
           get :policies
           get 'related-insurables', to: 'insurables#related_insurables'
-          
+
           post :sync_residential_address,
           	path: "sync-residential-address"
-          	
+
           post :get_residential_property_info,
           	path: "get-residential-property-info"
-        
+
         end
 
         collection do
@@ -118,9 +118,10 @@
             get 'refresh-rates', to: 'insurable_rates#refresh_rates', on: :collection
           end
       end
-  
+    post :insurables_index, action: :index, controller: :insurables
+
     resources :insurable_types, path: "insurable-types", only: [ :index ]
-    
+
     resources :leases,
       only: [ :create, :update, :destroy, :index, :show ] do
         member do
@@ -134,14 +135,14 @@
           post :bulk_create
         end
       end
-  
+
     resources :lease_types,
       path: "lease-types",
       only: [ :index ]
-  
+
     resources :notes,
       only: [ :create, :update, :destroy, :index, :show ]
-  
+
     resources :notifications,
       only: [ :update, :index, :show ]
 
@@ -150,10 +151,10 @@
         put "set_default"
       end
     end
-  
+
     resources :payments,
       only: [ :index, :show ]
-  
+
     resources :policies,
       only: [ :create, :update, :index, :show ] do
         collection do
@@ -171,7 +172,8 @@
           delete :delete_policy_document
         end
         get "search", to: 'policies#search', on: :collection
-      end
+    end
+    post :policies_index, action: :index, controller: :policies
 
     resources :refunds,
       only: [ :index, :create, :update] do
@@ -182,7 +184,7 @@
       end
 
     resources :policy_coverages, only: [ :update ]
-  
+
     resources :policy_applications,
       path: "policy-applications",
       only: [ :index, :show ]
@@ -192,11 +194,11 @@
         put :accept
       end
     end
-  
+
     resources :policy_quotes,
       path: "policy-quotes",
       only: [ :index, :show ]
-  
+
     resources :staffs,
       only: [ :create, :update, :index, :show ] do
         member do
@@ -215,7 +217,7 @@
           get "search", to: 'staffs#search'
         end
       end
-  
+
     resources :users,
       only: [ :create, :update, :index, :show ] do
         member do
@@ -232,5 +234,8 @@
           get "search", to: 'users#search'
         end
       end
+
+    resources :notification_settings,
+              only: [ :index, :show, :update ]
   end
 # end
