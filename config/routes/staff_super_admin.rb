@@ -241,6 +241,8 @@
         put :cancel
         put :cancel_coverage
         put :cancel_insurable
+        put :auto_assign_all
+        put :auto_assign_insurable
       end
     end
 

@@ -5,7 +5,8 @@ module MasterPoliciesMethods
     before_action :set_policy,
                   only: %i[update show communities add_insurable covered_units
                            cover_unit available_top_insurables available_units historically_coverage_units
-                           cancel cancel_coverage master_policy_coverages cancel_insurable]
+                           cancel cancel_coverage master_policy_coverages cancel_insurable auto_assign_all
+                           auto_assign_insurable]
     before_action :update_effective_date, only: %i[add_insurable cover_unit]
 
     def show
@@ -63,6 +64,26 @@ module MasterPoliciesMethods
       insurables_relation = @master_policy.insurables.distinct
       @insurables = paginator(insurables_relation)
       render template: 'v2/shared/master_policies/insurables', status: :ok
+    end
+
+    def auto_assign_all
+      @master_policy.policy_insurables.update(auto_assign: params[:auto_assign_value])
+      @insurables = paginator(@master_policy.insurables.distinct)
+      render template: 'v2/shared/master_policies/insurables', status: :ok
+    end
+
+    def auto_assign_insurable
+      policy_insurable = @master_policy.policy_insurables.where(insurable_id: params[:insurable_id]).take
+
+      if policy_insurable.present?
+        policy_insurable.update(auto_assign: !policy_insurable.auto_assign)
+        @insurables = paginator(@master_policy.insurables.distinct)
+        render template: 'v2/shared/master_policies/insurables', status: :ok
+      else
+        render json: { error: :insurable_was_not_found, message: 'Insurable is not assigned to the master policy' },
+               status: :not_found
+      end
+
     end
 
     def add_insurable

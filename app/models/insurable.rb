@@ -16,6 +16,8 @@ class Insurable < ApplicationRecord
   after_commit :create_profile_by_carrier,
     on: :create
 
+  after_create :assign_master_policy
+
   belongs_to :account
   belongs_to :agency, optional: true
   belongs_to :insurable, optional: true
@@ -544,6 +546,29 @@ class Insurable < ApplicationRecord
   end
 
   private
+
+  def assign_master_policy
+    return if InsurableType::UNITS_IDS.exclude?(insurable_type_id) || insurable.blank?
+
+    master_policy = insurable.policies.current.where(policy_type_id: PolicyType::MASTER_ID).take
+    if master_policy.present? && insurable.policy_insurables.where(policy: master_policy).take.auto_assign
+      last_policy_number = master_policy.policies.maximum('number')
+      self.policies.create(
+        agency: master_policy.agency,
+        carrier: master_policy.carrier,
+        account: master_policy.account,
+        status: 'BOUND',
+        policy_coverages: master_policy.policy_coverages,
+        number: last_policy_number.nil? ? "#{master_policy.number}_1" : last_policy_number.next,
+        policy_type_id: PolicyType::MASTER_COVERAGE_ID,
+        policy: master_policy,
+        effective_date: Time.zone.now,
+        expiration_date: master_policy.expiration_date,
+        system_data: master_policy.system_data
+      )
+      self.update(covered: true)
+    end
+  end
 
     def title_uniqueness
       return if insurable.nil?
