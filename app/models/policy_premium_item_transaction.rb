@@ -20,6 +20,7 @@ class PolicyPremiumItemTransaction < ApplicationRecord
     if: Proc.new{|ppit| ppit.pending }
 
   def unleash_commission_item!
+    return nil if !self.pending
     commission_item = ::CommissionItem.new(
       amount: self.amount,
       commission: ::Commission.collating_commission_for(self.recipient),
@@ -29,6 +30,7 @@ class PolicyPremiumItemTransaction < ApplicationRecord
     begin
       ::ActiveRecord::Base.transaction(requires_new: true) do
         self.lock!
+        return nil if !self.pending
         commission_item.commission.lock!
         self.update!(pending: false)
         commission_item.save!
