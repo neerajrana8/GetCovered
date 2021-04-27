@@ -21,8 +21,8 @@ module CarrierMsiPolicyQuote
           policy_application: self.policy_application,
           title: covsel['title'],
           designation: covsel['uid'],
-          limit: covsel['category'] != 'coverage' ? 0 : [nil, true].include?(covsel['selection']) ? 0 : covsel['selection'].to_i,
-          deductible: covsel['category'] != 'deductible' ? 0 : [nil, true].include?(covsel['selection']) ? 0 : covsel['selection'].to_i,
+          limit: covsel['category'] != 'coverage' ? 0 : [nil, true].include?(covsel['selection']) ? 0 : (covsel['selection'].to_d * 100).to_i,
+          deductible: covsel['category'] != 'deductible' ? 0 : [nil, true].include?(covsel['selection']) ? 0 : (covsel['selection'].to_d * 100).to_i,
           enabled: true
         )
       end
