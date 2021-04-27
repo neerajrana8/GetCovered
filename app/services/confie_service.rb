@@ -15,7 +15,7 @@ class ConfieService
   def self.agency
     @agency ||= ::Agency.where(integration_designation: "confie").take
   end
-  
+
   def self.create_confie_lead(application)
     return "Policy application is for a non-Confie agency" unless application.agency_id == ::ConfieService.agency_id
     cs = ::ConfieService.new
@@ -172,7 +172,10 @@ class ConfieService
         begin
           call_data[:response] = HTTParty.post(endpoint_for(self.action),
             body: self.action == :create_lead ? "data=#{message_content}" : message_content,
-            headers: self.action == :create_lead ? {} : {
+            headers: self.action == :create_lead ? {
+                'Content-Type' => 'application/form-data',
+                'charset' => 'utf-8'
+            } : {
               'Content-Type' => 'application/json'
             },
             ssl_version: :TLSv1_2
