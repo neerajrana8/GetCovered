@@ -548,25 +548,14 @@ class Insurable < ApplicationRecord
   private
 
   def assign_master_policy
-    return if InsurableType::UNITS_IDS.exclude?(insurable_type_id) || insurable.blank?
+    return if InsurableType::COMMUNITIES_IDS.include?(insurable_type_id) || insurable.blank?
 
     master_policy = insurable.policies.current.where(policy_type_id: PolicyType::MASTER_ID).take
     if master_policy.present? && insurable.policy_insurables.where(policy: master_policy).take.auto_assign
-      last_policy_number = master_policy.policies.maximum('number')
-      self.policies.create(
-        agency: master_policy.agency,
-        carrier: master_policy.carrier,
-        account: master_policy.account,
-        status: 'BOUND',
-        policy_coverages: master_policy.policy_coverages,
-        number: last_policy_number.nil? ? "#{master_policy.number}_1" : last_policy_number.next,
-        policy_type_id: PolicyType::MASTER_COVERAGE_ID,
-        policy: master_policy,
-        effective_date: Time.zone.now,
-        expiration_date: master_policy.expiration_date,
-        system_data: master_policy.system_data
-      )
-      self.update(covered: true)
+      if InsurableType::BUILDINGS_IDS.include?(insurable_type_id) && master_policy.insurables.find_by(id: id).blank?
+        PolicyInsurable.create(policy: master_policy, insurable: self, auto_assign: true)
+      end
+      Insurables::MasterPolicyAutoAssignJob.perform_later # try to cover if its possible
     end
   end
 

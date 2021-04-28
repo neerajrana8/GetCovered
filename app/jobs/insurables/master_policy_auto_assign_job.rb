@@ -19,7 +19,9 @@ module Insurables
             carrier: policy.carrier,
             account: policy.account,
             status: 'BOUND',
-            policy_coverages: policy.policy_coverages,
+            policy_coverages_attributes: policy.policy_coverages.map do |policy_coverage|
+              policy_coverage.attributes.slice('limit', 'deductible', 'enabled', 'designation', 'title')
+            end,
             number: last_policy_number.nil? ? "#{policy.number}_1" : last_policy_number.next,
             policy_type_id: PolicyType::MASTER_COVERAGE_ID,
             policy: policy,

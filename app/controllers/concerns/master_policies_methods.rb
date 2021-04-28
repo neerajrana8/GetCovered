@@ -106,6 +106,9 @@ module MasterPoliciesMethods
           end
 
           @master_policy.start_automatic_master_coverage_policy_issue
+
+          @master_policy.policy_insurables.update(auto_assign: params[:auto_assign]) unless params[:auto_assign].nil?
+          
           response_json =
             if ::MasterPolicies::AvailableUnitsQuery.call(@master_policy, insurable.id).any?
               { message: 'Community added', allow_edit: false }
