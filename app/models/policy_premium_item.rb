@@ -89,7 +89,8 @@ class PolicyPremiumItem < ApplicationRecord
         total_left = self.original_total_due
         weight_left = to_return.inject(0){|sum,li| sum + li.chargeable.weight }.to_d
         reversal = (self.rounding_error_distribution == 'dynamic_reverse' ? :reverse : :itself)
-        to_return = to_return.send(reversal).each do |li|
+        to_return = to_return.send(reversal)
+        to_return.each do |li|
           li.original_total_due = ((li.chargeable.weight / weight_left) * total_left).floor
           total_left -= li.original_total_due
           weight_left -= li.chargeable.weight
@@ -269,11 +270,6 @@ class PolicyPremiumItem < ApplicationRecord
     return { success: true, commission_items: commission_items }
   end
   
-  def create_pending_commission_items
-    self.pending_commission_data
-  
-    return { success: true, commission_items: [] }
-  end
   
   private
   

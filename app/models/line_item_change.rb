@@ -29,7 +29,7 @@ class LineItemChange < ApplicationRecord
           ppipt.lock! unless ppipt.nil?
           ppi.lock!
           ppic_array = ppi.policy_premium_item_commissions.order(id: :asc).lock.to_a
-          commission_hash = ::Commission.collating_commissions_for(ppic_array.map{|ppic| ppic.recipient }, apply_lock: true)
+          commission_hash = ::Commission.collating_commissions_for(ppic_array.map{|ppic| ppic.recipient }.uniq, apply_lock: true)
           case self.field_changed
             when 'total_due'
               # update the PPI
