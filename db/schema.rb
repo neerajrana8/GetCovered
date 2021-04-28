@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_04_19_180905) do
+ActiveRecord::Schema.define(version: 2021_04_28_210130) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
@@ -1428,7 +1428,7 @@ ActiveRecord::Schema.define(version: 2021_04_19_180905) do
   create_table "policy_premium_item_transactions", force: :cascade do |t|
     t.boolean "pending", default: true, null: false
     t.datetime "create_commission_items_at", null: false
-    t.integer "amount"
+    t.integer "amount", null: false
     t.jsonb "error_info"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
@@ -1449,16 +1449,12 @@ ActiveRecord::Schema.define(version: 2021_04_19_180905) do
   create_table "policy_premium_items", force: :cascade do |t|
     t.string "title", null: false
     t.integer "category", null: false
-    t.integer "rounding_error_distribution", default: 0
+    t.integer "rounding_error_distribution", default: 0, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "original_total_due", null: false
     t.integer "total_due", null: false
     t.integer "total_received", default: 0, null: false
-    t.integer "total_processed", default: 0, null: false
-    t.boolean "all_received", default: false, null: false
-    t.boolean "all_processed", default: false, null: false
-    t.integer "preproration_modifiers", default: 0, null: false
     t.boolean "proration_pending", default: false, null: false
     t.integer "proration_calculation", null: false
     t.boolean "proration_refunds_allowed", null: false
