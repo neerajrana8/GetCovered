@@ -40,10 +40,8 @@ class PolicyPremiumItem < ApplicationRecord
   validates :original_total_due, numericality: { greater_than_or_equal_to: 0 }
   validates :total_due, numericality: { greater_than_or_equal_to: 0 }
   validates :total_received, numericality: { greater_than_or_equal_to: 0 }
-  validates :total_processed, numericality: { greater_than_or_equal_to: 0 }
   validates_presence_of :proration_calculation
   validates_inclusion_of :proration_refunds_allowed, in: [true, false]
-#  validates_inclusion_of :preprocessed, in: [true, false] MOOSE WARNING: uncomment later
   
   # Enums etc.
   enum category: {
