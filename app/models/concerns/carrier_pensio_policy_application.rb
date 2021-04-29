@@ -69,7 +69,6 @@ module CarrierPensioPolicyApplication
           end
 
 				else
-					self.update status: "quote_failed"
           quote_success[:error] = true
           quote_success[:message] = I18n.t('policy_app_model.pensio.policy_quote_failed_to_return')
 				end
@@ -78,6 +77,7 @@ module CarrierPensioPolicyApplication
 				quote_success[:message] = I18n.t('policy_app_model.pensio.application_unavailable')
 			end
 
+      quote.send(quote_method)
 			return quote_success
 
 		end
