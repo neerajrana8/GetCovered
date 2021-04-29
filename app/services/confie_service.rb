@@ -320,16 +320,16 @@ class ConfieService
           LanguageCd: "EN",
           PolicyNumber: policy.number,
           CurrentTermAmt: {
-            Amt: (first_invoice.total.to_d / 100.to_d).to_s
+            Amt: (first_invoice.total_due.to_d / 100.to_d).to_s
           },
           FullTermAmt: {
             Amt: (policy.policy_quotes.accepted.order("created_at desc").limit(1).take.policy_premium.total / 100.to_d).to_s
           },
           "com.a1_Payment": payment_info(
             policy.carrier.uses_stripe? ?
-              first_invoice&.charges&.succeeded&.take
+              first_invoice&.stripe_charges&.succeeded&.take
               : first_invoice
-          ) || { MethodPaymentCd: "CreditCard", Amount: { Amt: (first_invoice.total.to_d / 100.to_d).to_s } },
+          ) || { MethodPaymentCd: "CreditCard", Amount: { Amt: (first_invoice.total_due.to_d / 100.to_d).to_s } },
           "com.a1_OnlineSalesFee": {
             Amt: "0.00"
           }
@@ -357,7 +357,7 @@ class ConfieService
       if charge.class.name == 'Invoice'
         return {
           MethodPaymentCd: "CreditCard",
-          Amount: { Amt: (charge.total.to_d / 100.to_d).to_s },
+          Amount: { Amt: (charge.total_due.to_d / 100.to_d).to_s },
           "com.a1_CreditCardInfo": {
             Number: 'NoData',
             "com.a1_CardHolder": {
