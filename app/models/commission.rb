@@ -30,7 +30,7 @@ class Commission < ApplicationRecord
     (@collating_commissions ||= {})[recipient] ||= ::Commission.find_or_create_by(recipient: recipient, status: 'collating')
   end
   
-  def self.collating_commisions_for(recipients, apply_lock: false)
+  def self.collating_commissions_for(recipients, apply_lock: false)
     found = (@collating_commissions ||= {}).select{|r,c| recipients.include?(r) }
     unless recipients.length == found.length
       found = ::Commission.where(recipient: recipients, status: 'collating')
