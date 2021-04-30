@@ -316,7 +316,7 @@ class PolicyPremium < ApplicationRecord
         raise ActiveRecord::Rollback
       end
       # prorate our terms
-      self.policy_premium_payment_terms.each do |pppt|
+      self.policy_premium_payment_terms.order(id: :asc).lock.each do |pppt|
         unless pppt.update_proration(self.prorated_first_moment, self.prorated_last_moment)
           to_return = "Applying proration to PolicyPremiumPaymentTerm ##{pppt.id} failed, errors: #{pppt.respond_to?(:errors) ? pppt.errors.to_h : '(return value did not respond to errors call)'}"
           raise ActiveRecord::Rollback

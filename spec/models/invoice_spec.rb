@@ -10,6 +10,8 @@ RSpec.describe Invoice, elasticsearch: false, type: :model do
       number: 'test_invoice',
       due_date: Time.current.to_date,
       available_date: Time.current.to_date - 1.day,
+      
+      
       term_first_date: Time.current.to_date,
       term_last_date: Time.current.to_date + 3.days,
       line_items_attributes: [
