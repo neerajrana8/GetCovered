@@ -157,7 +157,7 @@ class Invoice < ApplicationRecord
         error: "Unknown error; charge transaction exited without returning a value"
       }
     elsif posttransaction_return[:success]
-      charge = posttransaction_return[:charge].reload
+      charge = posttransaction_return[:charge].reload # reload, since attempt_payment is triggered by an after_commit callback
       case charge.status
         when 'succeeded', 'pending'
           posttransaction_return = {
@@ -178,30 +178,67 @@ class Invoice < ApplicationRecord
     return posttransaction_return
   end
   
+  def process_external_charge(charge)
+    return if charge.processed
+    case charge.status
+      when 'pending'
+        return if charge.invoice_aware
+        self.with_lock do
+          ActiveRecord::Base.transaction(requires_new: true) do
+            raise ActiveRecord::Rollback unless self.update(
+              pending_charge_count: self.pending_charge_count + 1,
+              total_pending: self.total_pending + charge.amount,
+              total_payable: self.total_payable - charge.amount
+            )
+            raise ActiveRecord::Rollback unless charge.update(invoice_aware: true)
+          end
+        end
+      when 'failed'
+        self.with_lock do
+          ActiveRecord::Base.transaction(requires_new: true) do
+            raise ActiveRecord::Rollback unless !charge.invoice_aware || self.update(
+              pending_charge_count: self.pending_charge_count - 1,
+              total_pending: self.total_pending - charge.amount,
+              total_payable: self.total_payable + charge.amount
+            )
+            raise ActiveRecord::Rollback unless charge.update(invoice_aware: true, processed: true)
+          end
+        end
+      when 'succeeded'
+        self.with_payment_lock do |line_item_array|
+          # peform distribution of the total over our line items
+          amount_left = distribute_payment(charge.amount, charge, line_item_array)
+          # update ourselves
+          raise ActiveRecord::Rollback unless self.update(
+            {
+              total_received: self.total_received + charge.amount,
+              total_undistributable: amount_left
+            }.merge(charge.invoice_aware ? {
+              pending_charge_count: self.pending_charge_count - 1,
+              total_pending: self.total_pending - charge.amount
+            } : {
+              total_payable: self.total_payable - charge.amount
+            })
+          )
+          # update the charge
+          raise ActiveRecord::Rollback unless charge.update(invoice_aware: true, processed: true)
+        end
+    end
+  end
+  
   def process_stripe_charge(charge)
+    return if charge.processed
     rolled_back = false
     # perform charge processing
-    if charge.status == 'processing'
+    if charge.status == 'processing' && !charge.invoice_aware
+      # the first time, we just mark that we've seen it; the HandleUnresponsiveChargesJob will find it if it stays 'processing', try payment again, and send it back to us if it doesn't change
       rolled_back = charge.update(invoice_aware: true) ? false : true
     elsif charge.status == 'succeeded'
       self.with_payment_lock do |line_item_array|
         rolled_back = true
         raise ActiveRecord::Rollback unless charge.update(invoice_aware: true, processed: true)
         # peform distribution of the total over our line items
-        line_item_array.sort!
-        amount_left = charge.amount
-        if amount_left > 0
-          line_item_array.select{|li| li.total_due + li.total_reducing > li.total_received }.each do |li|
-            clamped_amount = [li.total_due + li.total_reducing - li.total_received, amount_left].min
-            if clamped_amount == 0
-              break if amount_left == 0
-              next
-            end
-            created = li.line_item_changes.create(field_changed: 'total_received', amount: clamped_amount, reason: charge, new_value: li.total_received + clamped_amount)
-            raise ActiveRecord::Rollback unless !created.id.nil? && li.update(total_received: li.total_received + clamped_amount)
-            amount_left -= clamped_amount
-          end
-        end
+        amount_left = distribute_payment(charge.amount, charge, line_item_array)
         # update ourselves
         raise ActiveRecord::Rollback unless self.update(
           pending_charge_count: self.pending_charge_count - 1,
@@ -220,7 +257,7 @@ class Invoice < ApplicationRecord
               raise ActiveRecord::Rollback unless charge.update(
                 status: 'errored',
                 invoice_aware: true,
-                error_info: "Stripe charge somehow became stuck with status 'processing'.",
+                error_info: "Charge somehow became stuck with status 'processing'.",
                 client_error: ::StripeCharge.errorify('stripe_charge_model.payment_processor_mystery')
               )
               raise ActiveRecord::Rollback unless self.update(
@@ -468,6 +505,28 @@ class Invoice < ApplicationRecord
           # do nothing
       end
       return to_return
+    end
+    
+    
+    # distributes a payment over line items
+    # WARNING: to be called from within a with_payment_lock transaction!
+    # Rolls back on failure!
+    def distribute_payment(amount, reason, line_item_array)
+      line_item_array.sort!
+      amount_left = amount
+      if amount_left > 0
+        line_item_array.select{|li| li.total_due + li.total_reducing > li.total_received }.each do |li|
+          clamped_amount = [li.total_due + li.total_reducing - li.total_received, amount_left].min
+          if clamped_amount == 0
+            break if amount_left == 0
+            next
+          end
+          created = li.line_item_changes.create(field_changed: 'total_received', amount: clamped_amount, reason: reason, new_value: li.total_received + clamped_amount)
+          raise ActiveRecord::Rollback unless !created.id.nil? && li.update(total_received: li.total_received + clamped_amount)
+          amount_left -= clamped_amount
+        end
+      end
+      return amount_left
     end
 
 

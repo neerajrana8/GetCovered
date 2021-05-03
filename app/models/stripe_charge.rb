@@ -14,7 +14,7 @@ class StripeCharge < ApplicationRecord
   before_save :set_status_changed_at,
     if: Proc.new{|sc| sc.will_save_change_to_attribute?('status') && !sc.callbacks_disabled }
   after_commit :process,
-    if: Proc.new{|sc| !sc.invoice_aware && sc.status != 'processing' && sc.saved_change_to_attribute?('status') && !sc.callbacks_disabled }
+    if: Proc.new{|sc| !sc.processed && sc.status != 'processing' && sc.saved_change_to_attribute?('status') && !sc.callbacks_disabled }
   
   enum status: {
     processing: 0, # must stay 0, it's the DB default
@@ -37,7 +37,7 @@ class StripeCharge < ApplicationRecord
   
   def process
     self.with_lock do
-      if !self.invoice_aware
+      if !self.processed
         self.invoice.process_stripe_charge(self)
       end
     end
