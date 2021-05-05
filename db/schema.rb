@@ -10,10 +10,12 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_04_08_112614) do
+ActiveRecord::Schema.define(version: 2021_05_04_201511) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
+  enable_extension "fuzzystrmatch"
+  enable_extension "pg_trgm"
   enable_extension "plpgsql"
 
   create_table "access_tokens", force: :cascade do |t|
@@ -614,6 +616,7 @@ ActiveRecord::Schema.define(version: 2021_04_08_112614) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.bigint "policy_type_ids", default: [], null: false, array: true
+    t.boolean "occupiable", default: false
   end
 
   create_table "insurables", force: :cascade do |t|
@@ -631,6 +634,7 @@ ActiveRecord::Schema.define(version: 2021_04_08_112614) do
     t.bigint "policy_type_ids", default: [], null: false, array: true
     t.boolean "preferred_ho4", default: false, null: false
     t.boolean "confirmed", default: true, null: false
+    t.boolean "occupied", default: false
     t.index ["account_id"], name: "index_insurables_on_account_id"
     t.index ["agency_id"], name: "index_insurables_on_agency_id"
     t.index ["insurable_id"], name: "index_insurables_on_insurable_id"
