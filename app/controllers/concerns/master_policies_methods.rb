@@ -83,7 +83,6 @@ module MasterPoliciesMethods
         render json: { error: :insurable_was_not_found, message: 'Insurable is not assigned to the master policy' },
                status: :not_found
       end
-
     end
 
     def add_insurable
@@ -107,7 +106,12 @@ module MasterPoliciesMethods
 
           @master_policy.start_automatic_master_coverage_policy_issue
 
-          @master_policy.policy_insurables.update(auto_assign: params[:auto_assign]) unless params[:auto_assign].nil?
+          unless params[:auto_assign].nil?
+            @master_policy.
+              policy_insurables.
+              where(insurable: [insurable, *insurable.buildings]).
+              update(auto_assign: params[:auto_assign])
+          end
           
           response_json =
             if ::MasterPolicies::AvailableUnitsQuery.call(@master_policy, insurable.id).any?
