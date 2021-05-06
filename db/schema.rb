@@ -14,8 +14,6 @@ ActiveRecord::Schema.define(version: 2021_05_04_201511) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
-  enable_extension "fuzzystrmatch"
-  enable_extension "pg_trgm"
   enable_extension "plpgsql"
 
   create_table "access_tokens", force: :cascade do |t|
@@ -947,9 +945,9 @@ ActiveRecord::Schema.define(version: 2021_05_04_201511) do
     t.date "last_payment_date"
     t.date "next_payment_date"
     t.bigint "policy_group_id"
+    t.boolean "declined"
     t.string "address"
     t.string "out_of_system_carrier_title"
-    t.boolean "declined"
     t.bigint "policy_id"
     t.integer "cancellation_reason"
     t.integer "branding_profile_id"
@@ -1040,8 +1038,8 @@ ActiveRecord::Schema.define(version: 2021_05_04_201511) do
     t.jsonb "resolver_info"
     t.jsonb "tagging_data"
     t.string "error_message"
-    t.bigint "tag_ids", default: [], null: false, array: true
     t.integer "branding_profile_id"
+    t.bigint "tag_ids", default: [], null: false, array: true
     t.index ["account_id"], name: "index_policy_applications_on_account_id"
     t.index ["agency_id"], name: "index_policy_applications_on_agency_id"
     t.index ["billing_strategy_id"], name: "index_policy_applications_on_billing_strategy_id"
