@@ -1,6 +1,7 @@
 
 
 class PolicyPremiumItemTransaction < ApplicationRecord
+  include FinanceAnalyticsCategory # provides analytics_category enum
 
   belongs_to :policy_premium_item
   belongs_to :commissionable,

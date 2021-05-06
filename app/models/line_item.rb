@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class LineItem < ApplicationRecord
+  include FinanceAnalyticsCategory # provides analytics_category enum
+
   belongs_to :invoice
   belongs_to :chargeable,
     polymorphic: true,
@@ -23,14 +25,6 @@ class LineItem < ApplicationRecord
   
   scope :priced_in, -> { where(priced_in: true) }
 
-  enum analytics_category: {
-    unknown: 0,
-    policy_premium: 1,
-    policy_fee: 2,
-    policy_tax: 3,
-    master_policy_premium: 4
-  }
-  
   # sort line items from first-to-charge-for to last-to-charge-for
   def <=>(other)
     return (self.id || 0) <=> (other.id || 0) if self.analytics_category == other.analytics_category

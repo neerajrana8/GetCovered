@@ -1,12 +1,19 @@
 
 
 class LineItemChange < ApplicationRecord
+  include FinanceAnalyticsCategory # provides analytics_category enum
+  
   belongs_to :line_item
   belongs_to :reason,
     polymorphic: true
   belongs_to :handler,
     polymorphic: true,
     optional: true
+  
+  has_many :commission_items,
+    as: :reason
+    
+  before_create :set_analytics_category
     
   enum field_changed: {
     total_received: 0,
@@ -78,4 +85,9 @@ class LineItemChange < ApplicationRecord
     return error_message
   end
   
+  private
+  
+    def set_analytics_category
+      self.analytics_category = self.line_item&.analytics_category || 'other'
+    end
 end

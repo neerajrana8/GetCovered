@@ -196,6 +196,7 @@ def perform_upgrade(idrange)
                       line_item: li,
                       reason: sc,
                       handler: nil,
+                      analytics_category: li.analytics_category,
                       created_at: charge.updated_at,
                       updated_at: charge.updated_at
                     )
@@ -389,6 +390,7 @@ def perform_upgrade(idrange)
                     line_item: li,
                     reason: sc,
                     handler: nil,
+                    analytics_category: li.analytics_category,
                     created_at: charge.updated_at,
                     updated_at: charge.updated_at
                   )
@@ -453,6 +455,7 @@ def perform_upgrade(idrange)
                       line_item: li,
                       reason: lir,
                       handler: nil,
+                      analytics_category: li.analytics_category,
                       created_at: refund.created_at,
                       updated_at: refund.updated_at
                     )
@@ -464,6 +467,7 @@ def perform_upgrade(idrange)
                       line_item: li,
                       reason: lir,
                       handler: nil,
+                      analytics_category: li.analytics_category,
                       created_at: refund.created_at,
                       updated_at: refund.updated_at
                     )
