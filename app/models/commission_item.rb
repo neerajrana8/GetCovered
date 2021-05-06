@@ -25,9 +25,9 @@ class CommissionItem < ApplicationRecord
   private
 
     def set_analytics_fields
-      self.policy_quote_id = self.commissionable.policy_premium_item.policy_quote&.id if self.policy_quote_id.nil? && self.commissionable_type == 'PolicyPremiumItemCommission'
-      self.policy_id = (self.commissionable.policy_premium_item.policy_quote&.policy_id || self.commissionable.policy_premium_item.policy_id) if self.policy_id.nil? && self.commissionable_type == 'PolicyPremiumItemCommission'
-      self.analytics_category = (self.reason.respond_to?(:analytics_category) ?
+      self.policy_quote_id ||= self.commissionable.policy_premium_item.policy_quote&.id if self.policy_quote_id.nil? && self.commissionable_type == 'PolicyPremiumItemCommission'
+      self.policy_id ||= (self.commissionable.policy_premium_item.policy_quote&.policy_id || self.commissionable.policy_premium_item.policy_id) if self.policy_id.nil? && self.commissionable_type == 'PolicyPremiumItemCommission'
+      self.analytics_category ||= (self.reason.respond_to?(:analytics_category) ?
         self.reason.analytics_category
         : self.reason.respond_to?(:reason) && self.reason.reason && self.reason.respond_to?(:analytics_category) ?
           self.reason.reason.analytics_category
@@ -35,6 +35,7 @@ class CommissionItem < ApplicationRecord
             self.reason.line_item
             : nil
       ) || 'other'
+      self.parent_payment_total ||= self.reason.respond_to?(:amount) ? self.reason.amount : nil
     end
 
     def update_commission_total

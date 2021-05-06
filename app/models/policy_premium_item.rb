@@ -237,17 +237,20 @@ class PolicyPremiumItem < ApplicationRecord
             # do nothing
           when 'group_by_transaction'
             the_reason = reason.class == ::LineItemChange ? reason.reason : reason
+            acat = (reason.respond_to?(:analytics_category) ? reason.analytics_category : reason.respond_to?(:line_item) ? reason.line_item&.analytics_category : nil) || 'other'
             transaction = ppits.find do |ppit|
               ppit.recipient_type == ppic.recipient_type && ppit.recipient_id == ppic.recipient_id &&
               ppit.commissionable_type == ppic.commissionable_type && ppit.commissionable_id == ppic.commissionable_id &&
-              ppit.reason_type == the_reason.class.name && ppit.reason_id == the_reason.id
+              ppit.reason_type == the_reason.class.name && ppit.reason_id == the_reason.id &&
+              ppit.analytics_category == acat
             end || ::PolicyPremiumItemTransaction.new(
               amount: 0,
               pending: true,
               recipient: ppic.recipient,
               commissionable: ppic,
               reason: reason.class == ::LineItemChange ? reason.reason : reason,
-              policy_premium_item: self
+              policy_premium_item: self,
+              analytics_category: acat
             )
             transaction.amount += new_total_received - ppic.total_received
             transaction.create_commission_items_at = Time.current + self.commission_creation_delay_hours.hours
