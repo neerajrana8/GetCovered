@@ -21,6 +21,6 @@ RSpec.describe Lease, elasticsearch: true, type: :model do
   it 'Unset occupied status for unit if lease was expired' do
     insurable = FactoryBot.create(:insurable, :residential_unit)
     lease = FactoryBot.create(:lease, insurable: insurable)
-    expect { lease.update(end_date: Time.zone.now - 1.day) }.to change { insurable.occupied }.from(true).to(false )
+    expect { lease.update(end_date: Time.zone.now - 1.day) }.to change { insurable.occupied }.from(true).to(false)
   end
 end
