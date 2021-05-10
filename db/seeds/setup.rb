@@ -2,6 +2,7 @@
 # file: db/seeds/setup.rb
 
 require './db/seeds/functions'
+require './db/seeds/faked-msi-responses'
 
 ##
 # Setting up base Staff
@@ -558,36 +559,41 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
         # make carrier IGC for this state
         igc = ::InsurableGeographicalCategory.get_for(state: state)
         # grab rates from MSI for this state
-        result = msis.build_request(:get_product_definition,
-          effective_date: Time.current.to_date + 2.days,
-          state: state
-        )
-        unless result
-          pp msis.errors
-          puts "!!!!!MSI GET RATES FAILURE (#{state})!!!!!"
-          exit
-        end
-        event = ::Event.new(
-          eventable: igc,
-          verb: 'post',
-          format: 'xml',
-          interface: 'REST',
-          endpoint: msis.endpoint_for(:get_product_definition),
-          process: 'msi_get_product_definition'
-        )
-        event.request = msis.compiled_rxml
-        event.save!
-        event.started = Time.now
-        result = msis.call
-        event.completed = Time.now     
-        event.response = result[:data]
-        event.status = result[:error] ? 'error' : 'success'
-        event.save!
-        if result[:error]
-          pp result[:response]&.parsed_response
-          puts ""
-          puts "!!!!!MSI GET RATES FAILURE (#{state})!!!!!"
-          exit
+        result = nil
+        unless ENV['real_msi_calls'] || Rails.env == 'production'
+          result = { data: FakedMsiResponses::RESPONSES[state] }
+        else
+          result = msis.build_request(:get_product_definition,
+            effective_date: Time.current.to_date + 2.days,
+            state: state
+          )
+          unless result
+            pp msis.errors
+            puts "!!!!!MSI GET RATES FAILURE (#{state})!!!!!"
+            exit
+          end
+          event = ::Event.new(
+            eventable: igc,
+            verb: 'post',
+            format: 'xml',
+            interface: 'REST',
+            endpoint: msis.endpoint_for(:get_product_definition),
+            process: 'msi_get_product_definition'
+          )
+          event.request = msis.compiled_rxml
+          event.save!
+          event.started = Time.now
+          result = msis.call
+          event.completed = Time.now     
+          event.response = result[:data]
+          event.status = result[:error] ? 'error' : 'success'
+          event.save!
+          if result[:error]
+            pp result[:response]&.parsed_response
+            puts ""
+            puts "!!!!!MSI GET RATES FAILURE (#{state})!!!!!"
+            exit
+          end
         end
         # build IRC for this state
         irc = msis.extract_insurable_rate_configuration(result[:data],

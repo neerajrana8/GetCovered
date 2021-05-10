@@ -2,6 +2,96 @@
 
 RSpec.describe Invoice, elasticsearch: false, type: :model do
 
+  before :each do
+    invoice = FactoryBot.create(:invoice)
+    invoice.payer.attach_payment_source("tok_visa", true)
+    
+    @invoice = invoice
+  end
+  
+  
+  it 'should handle post-payment cancellations correctly' do
+    # charge it
+    result = @invoice.pay(amount: @invoice.total_payable - 1000, stripe_source: :default)
+    @invoice.reload
+    expect(result[:success]).to eq(true), "payment attempt failed with output: #{result}"
+    expect(@invoice.total_payable).to eq(1000)
+
+    # reduce it
+    created = ::LineItemReduction.create!(
+      reason: "Testing reductions",
+      refundability: "cancel_only",
+      amount: 2000,
+      line_item: @invoice.line_items.first
+    )
+    @invoice.reload
+    created.reload
+    
+    # check it
+    expect(@invoice.total_due).to eq(@invoice.original_total_due - 1000)
+    expect(@invoice.total_payable).to eq(0)
+    expect(created.amount_successful).to eq(1000)
+    expect(created.amount_refunded).to eq(0)
+  end
+  
+
+  it 'should be chargeable' do
+    # charge our invoice
+    result = @invoice.pay(stripe_source: :default)
+    @invoice.reload
+    expect(result[:success]).to eq(true), "payment attempt failed with output: #{result}"
+    expect(@invoice.total_received).to eq(@invoice.total_due)
+    expect(@invoice.line_items.first.total_received).to eq(@invoice.line_items.first.total_due)
+    expect(@invoice.status).to eq("complete")
+  end
+  
+  it 'should be partially chargeable' do
+    # charge our invoice
+    to_charge = @invoice.total_payable / 2
+    result = @invoice.pay(amount: to_charge, stripe_source: :default)
+    @invoice.reload
+    expect(result[:success]).to eq(true), "payment attempt failed with output: #{result}"
+    expect(@invoice.total_received).to eq(to_charge)
+    expect(@invoice.line_items.first.total_received).to eq(to_charge)
+    expect(@invoice.status).to eq("available")
+  end
+  
+  it 'should handle pre-payment cancellations correctly' do
+    # reduce
+    created = ::LineItemReduction.create!(
+      reason: "Testing reductions",
+      refundability: "cancel_only",
+      amount: 1000,
+      line_item: @invoice.line_items.first
+    )
+    @invoice.reload
+    created.reload
+    expect(@invoice.total_due).to eq(@invoice.original_total_due - 1000)
+    expect(@invoice.total_payable).to eq(@invoice.original_total_due - 1000)
+    expect(created.amount_successful).to eq(1000)
+    expect(created.amount_refunded).to eq(0)
+  end
+  
+  it 'should handle pre-payment cancellations correctly when refunds are allowed' do
+    # reduce
+    created = ::LineItemReduction.create!(
+      reason: "Testing reductions",
+      refundability: "cancel_or_refund",
+      amount: 1000,
+      line_item: @invoice.line_items.first
+    )
+    @invoice.reload
+    created.reload
+    expect(@invoice.total_due).to eq(@invoice.original_total_due - 1000)
+    expect(@invoice.total_payable).to eq(@invoice.original_total_due - 1000)
+    expect(created.amount_successful).to eq(1000)
+    expect(created.amount_refunded).to eq(0)
+  end
+  
+
+  
+
+=begin
   before :all do
     invoice = FactoryBot.create(:invoice)
     invoice.payer.attach_payment_source("tok_visa", true)
@@ -177,7 +267,7 @@ RSpec.describe Invoice, elasticsearch: false, type: :model do
     expect(@invoice.has_pending_refund).to eq(false)
   end
   
-  
+=end
   
 end
 

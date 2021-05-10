@@ -1,7 +1,7 @@
 class BeefUpCommissionItemAnalyticsFields < ActiveRecord::Migration[5.2]
   def up
-    add_column :policy_premium_item_transaction, :analytics_category, :integer, null: false, default: 0
-    add_column :line_item_change, :analytics_category, :integer, null: false, default: 0
+    add_column :policy_premium_item_transactions, :analytics_category, :integer, null: false, default: 0
+    add_column :line_item_changes, :analytics_category, :integer, null: false, default: 0
     add_column :commission_items, :analytics_category, :integer, null: false, default: 0
     add_column :commission_items, :parent_payment_total, :integer, null: true
   
@@ -12,8 +12,8 @@ class BeefUpCommissionItemAnalyticsFields < ActiveRecord::Migration[5.2]
   end
   
   def down
-    remove_column :policy_premium_item_transaction, :analytics_category
-    remove_column :line_item_change, :analytics_category
+    remove_column :policy_premium_item_transactions, :analytics_category
+    remove_column :line_item_changes, :analytics_category
     remove_column :commission_items, :analytics_category
     remove_column :commission_items, :parent_payment_total
   end

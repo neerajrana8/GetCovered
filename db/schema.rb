@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_04_28_210130) do
+ActiveRecord::Schema.define(version: 2021_05_05_183545) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
@@ -585,6 +585,8 @@ ActiveRecord::Schema.define(version: 2021_04_28_210130) do
     t.bigint "reason_id"
     t.bigint "policy_quote_id"
     t.bigint "policy_id"
+    t.integer "analytics_category", default: 0, null: false
+    t.integer "parent_payment_total"
     t.index ["commission_id"], name: "index_commission_items_on_commission_id"
     t.index ["commissionable_type", "commissionable_id"], name: "index_commision_items_on_commissionable"
     t.index ["policy_id"], name: "index_commission_items_on_policy_id"
@@ -654,6 +656,20 @@ ActiveRecord::Schema.define(version: 2021_04_28_210130) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["eventable_type", "eventable_id"], name: "index_events_on_eventable_type_and_eventable_id"
+  end
+
+  create_table "external_charges", force: :cascade do |t|
+    t.boolean "processed", default: false, null: false
+    t.boolean "invoice_aware", default: false, null: false
+    t.integer "status", null: false
+    t.datetime "status_changed_at"
+    t.string "external_reference", null: false
+    t.integer "amount", null: false
+    t.datetime "collected_at", null: false
+    t.bigint "invoice_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["invoice_id"], name: "index_external_charges_on_invoice_id"
   end
 
   create_table "faq_questions", force: :cascade do |t|
@@ -948,6 +964,7 @@ ActiveRecord::Schema.define(version: 2021_04_28_210130) do
     t.string "handler_type"
     t.bigint "handler_id"
     t.string "error_info"
+    t.integer "analytics_category", default: 0, null: false
     t.index ["handler_type", "handler_id"], name: "index_line_item_changes_on_handler_type_and_handler_id"
     t.index ["line_item_id"], name: "index_line_item_changes_on_line_item_id"
     t.index ["reason_type", "reason_id"], name: "index_line_item_changes_on_reason_type_and_reason_id"
@@ -1392,7 +1409,7 @@ ActiveRecord::Schema.define(version: 2021_04_28_210130) do
     t.integer "status", null: false
     t.integer "payability", null: false
     t.integer "total_expected", null: false
-    t.integer "total_received", null: false
+    t.integer "total_received", default: 0, null: false
     t.integer "total_commission", default: 0, null: false
     t.decimal "percentage", precision: 5, scale: 2, null: false
     t.integer "payment_order", null: false
@@ -1439,6 +1456,7 @@ ActiveRecord::Schema.define(version: 2021_04_28_210130) do
     t.string "reason_type"
     t.bigint "reason_id"
     t.bigint "policy_premium_item_id"
+    t.integer "analytics_category", default: 0, null: false
     t.index ["commissionable_type", "commissionable_id"], name: "index_ppits_on_commissionable"
     t.index ["pending", "create_commission_items_at"], name: "index_ppits_on_pending_and_ccia"
     t.index ["policy_premium_item_id"], name: "index_ppits_on_ppi"

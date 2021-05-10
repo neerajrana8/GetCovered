@@ -8,7 +8,9 @@ FactoryBot.define do
     total_received { 0 }
     preproration_total_due { 10000 }
     duplicatable_reduction_total { 0 }
-    #chargeable 
+    
+    invoice
+    chargeable { invoice.policy }
   end
 end
 
