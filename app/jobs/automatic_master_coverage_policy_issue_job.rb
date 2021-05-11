@@ -6,7 +6,7 @@ class AutomaticMasterCoveragePolicyIssueJob < ApplicationJob
     return if master_policy.nil? || master_policy.policy_type_id != PolicyType::MASTER_ID
 
     master_policy.insurables.each do |insurable|      
-      insurable.units&.each do |unit|
+      insurable.units_relation&.each do |unit|
         if unit.policies.current.empty? && unit.leases.empty?
           last_policy_number = master_policy.policies.maximum('number')
           unit.policies.create(
