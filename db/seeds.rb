@@ -18,7 +18,13 @@ def display_options()
 	return @string
 end
 
-if @opts.include?(ENV["section"])
+if ENV["section"] == 'test'
+
+  puts "Running test seeds..."
+  require Rails.root.join("db/seeds/setup.rb")
+  require Rails.root.join("db/seeds/agency.rb")
+  
+elsif @opts.include?(ENV["section"])
 
   puts "Running: #{ENV["section"].titlecase}"
   require Rails.root.join("db/seeds/#{ ENV["section"] }.rb")

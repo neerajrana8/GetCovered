@@ -143,7 +143,7 @@ RSpec.configure do |config|
   config.before(:all) do
     if `echo "command -v pg_dump" | bash`.blank?
       # if we can't call pg_dump, reset the db before every test set
-      ENV['section'] = 'setup'
+      ENV['section'] = 'test'
       Rake::Task["db:reset"].invoke
     else
       # if we can call pg_dump, restore the seeded database
@@ -160,7 +160,7 @@ RSpec.configure do |config|
       end
       unless `echo "command -v pg_dump" | bash`.blank?
         # if we can call pg_dump, reset/seed the db and cache it
-        ENV['section'] = 'setup'
+        ENV['section'] = 'test'
         Rake::Task["db:reset"].invoke
         Rake::Task["db:dump"].invoke("#{Rails.root}/tmp/spec.dump", false, false)
       end
