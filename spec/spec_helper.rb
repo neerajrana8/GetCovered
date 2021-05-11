@@ -29,6 +29,7 @@ SimpleCov.start 'rails' do
 end
 
 RSpec.configure do |config|
+
   # rspec-expectations config goes here. You can use an alternate
   # assertion/expectation library such as wrong or the stdlib/minitest
   # assertions if you prefer.
@@ -122,5 +123,47 @@ RSpec.configure do |config|
       klass.__elasticsearch__.refresh_index!
     end
     example.run
+  end
+  
+  
+  # Nope. Tried getting before each blocks to work properly. They don't.
+  #
+  #config.before(:each) do
+  #  DatabaseCleaner.strategy = :transaction # or :truncation to remove from db after
+  #  DatabaseCleaner.start
+  #end
+  # 
+  #config.after(:each) do
+  #  DatabaseCleaner.clean
+  #end
+  
+  
+  
+  
+  config.before(:all) do
+    if `echo "command -v pg_dump" | bash`.blank?
+      # if we can't call pg_dump, reset the db before every test set
+      ENV['section'] = 'setup'
+      Rake::Task["db:reset"].invoke
+    else
+      # if we can call pg_dump, restore the seeded database
+      Rake::Task["db:restore"].invoke("#{Rails.root}/tmp/spec.dump", false, false)
+    end
+  end
+    
+  
+  
+  config.before(:suite) do
+    if Rails.env == 'test' || Rails.env == 'test_container'
+      if (require 'rake')
+        Rails.application.load_tasks
+      end
+      unless `echo "command -v pg_dump" | bash`.blank?
+        # if we can call pg_dump, reset/seed the db and cache it
+        ENV['section'] = 'setup'
+        Rake::Task["db:reset"].invoke
+        Rake::Task["db:dump"].invoke("#{Rails.root}/tmp/spec.dump", false, false)
+      end
+    end
   end
 end

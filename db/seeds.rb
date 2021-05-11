@@ -23,14 +23,13 @@ if @opts.include?(ENV["section"])
   puts "Running: #{ENV["section"].titlecase}"
   require Rails.root.join("db/seeds/#{ ENV["section"] }.rb")
 
+elsif ENV["section"].blank?
+
+  puts "\nNO SECTION SELECTION -- NO SEEDS RUN"
+  
 elsif !@opts.include?(ENV["section"])
 
-	puts "\nInvalid Section Selection"
+	puts "\nInvalid Section Selection '#{ENV["section"]}'"
 	puts "Option availability in order: #{ display_options() }\n"
-
-elsif ENV["section"].nil?
-
-  puts "\nNO SECTION SELECTION"
-  puts "Option availability in order: \n"
 
 end

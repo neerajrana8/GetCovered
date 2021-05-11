@@ -278,7 +278,7 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
     # Add Commercial to Crum & Forester
     elsif carrier.id == 3
 			crum_service = CrumService.new()
-			crum_service.refresh_all_class_codes()
+			# crum_service.refresh_all_class_codes()
 			
       policy_type = PolicyType.find(4)
 
@@ -618,11 +618,11 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
 		  
     end
     
-    # Set policy type from if else block above    
+    # Set policy type from if else block above
     51.times do |state|
       available = state == 0 || state == 11 ? false : true
-      carrier_policy_availability = CarrierPolicyTypeAvailability.create(state: state, available: available, carrier_policy_type: carrier_policy_type)
-      carrier_policy_availability.fees.create(title: "Origination Fee", type: :ORIGINATION, amount: 2500, enabled: true, ownerable: carrier) unless carrier.id == 4
+      carrier_policy_availability = CarrierPolicyTypeAvailability.create!(state: state, available: available, carrier_policy_type: carrier_policy_type)
+      carrier_policy_availability.fees.create!(title: "Origination Fee", type: :ORIGINATION, amount: 2500, enabled: true, ownerable: carrier) unless carrier.id == 4
     end
   
   else

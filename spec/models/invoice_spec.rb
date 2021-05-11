@@ -10,30 +10,6 @@ RSpec.describe Invoice, elasticsearch: false, type: :model do
   end
   
   
-  it 'should handle post-payment cancellations correctly' do
-    # charge it
-    result = @invoice.pay(amount: @invoice.total_payable - 1000, stripe_source: :default)
-    @invoice.reload
-    expect(result[:success]).to eq(true), "payment attempt failed with output: #{result}"
-    expect(@invoice.total_payable).to eq(1000)
-
-    # reduce it
-    created = ::LineItemReduction.create!(
-      reason: "Testing reductions",
-      refundability: "cancel_only",
-      amount: 2000,
-      line_item: @invoice.line_items.first
-    )
-    @invoice.reload
-    created.reload
-    
-    # check it
-    expect(@invoice.total_due).to eq(@invoice.original_total_due - 1000)
-    expect(@invoice.total_payable).to eq(0)
-    expect(created.amount_successful).to eq(1000)
-    expect(created.amount_refunded).to eq(0)
-  end
-  
 
   it 'should be chargeable' do
     # charge our invoice
@@ -89,6 +65,30 @@ RSpec.describe Invoice, elasticsearch: false, type: :model do
   end
   
 
+  
+  it 'should handle post-payment cancellations correctly' do
+    # charge it
+    result = @invoice.pay(amount: @invoice.total_payable - 1000, stripe_source: :default)
+    @invoice.reload
+    expect(result[:success]).to eq(true), "payment attempt failed with output: #{result}"
+    expect(@invoice.total_payable).to eq(1000)
+
+    # reduce it
+    created = ::LineItemReduction.create!(
+      reason: "Testing reductions",
+      refundability: "cancel_only",
+      amount: 2000,
+      line_item: @invoice.line_items.first
+    )
+    @invoice.reload
+    created.reload
+    
+    # check it
+    expect(@invoice.total_due).to eq(@invoice.original_total_due - 1000)
+    expect(@invoice.total_payable).to eq(0)
+    expect(created.amount_successful).to eq(1000)
+    expect(created.amount_refunded).to eq(0)
+  end
   
 
 =begin
