@@ -16,33 +16,29 @@ module MasterPoliciesMethods
     def create
       carrier = Carrier.find(params[:carrier_id])
       account = Account.where(agency_id: carrier.agencies.ids).find(params[:account_id])
-      @master_policy = Policy.new(create_params.merge(agency: account.agency,
-                                                        carrier: carrier,
-                                                        account: account,
-                                                        policy_type_id: PolicyType::MASTER_ID,
-                                                        status: 'BOUND'))
-      @policy_premium = PolicyPremium.new(policy: @master_policy)
-      @ppi = ::PolicyPremiumItem.new(
-        policy_premium: @policy_premium,
-        title: "Per-Coverage Premium",
-        category: "premium",
-        rounding_error_distribution: "first_payment_simple",
-        total_due: create_policy_premium[:base],
-        proration_calculation: "no_proration",
-        proration_refunds_allowed: false,
-        commission_calculation: "no_payments",
-        recipient: @policy_premium.commission_strategy,
-        collector: ::Agency.where(master_agency: true).take
-      )
       error = nil
       ::ActiveRecord::Base.transaction do
         begin
-          @master_policy.save!
-          @policy_premium.save!
-          @ppi.save!
+          @master_policy = Policy.create!(create_params.merge(agency: account.agency,
+                                                    carrier: carrier,
+                                                    account: account,
+                                                    policy_type_id: PolicyType::MASTER_ID,
+                                                    status: 'BOUND'))
+          @policy_premium = PolicyPremium.create!(policy: @master_policy)
+          @ppi = ::PolicyPremiumItem.create!(
+            policy_premium: @policy_premium,
+            title: "Per-Coverage Premium",
+            category: "premium",
+            rounding_error_distribution: "first_payment_simple",
+            total_due: create_policy_premium[:base],
+            proration_calculation: "no_proration",
+            proration_refunds_allowed: false,
+            commission_calculation: "no_payments",
+            recipient: @policy_premium.commission_strategy,
+            collector: ::Agency.where(master_agency: true).take
+          )
           @policy_premium.update_totals(persist: false)
           @policy_premium.save!
-          succeeded = true
         rescue ActiveRecord::RecordInvalid => err
           error = err
           raise ActiveRecord::Rollback

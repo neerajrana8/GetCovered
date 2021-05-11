@@ -352,7 +352,7 @@ class PolicyPremium < ApplicationRecord
     end
   
     def has_policy_or_policy_quote
-      errors.add(:base, "must be associated with a Policy or with a PolicyQuote with an associated PolicyApplication") if self.policy_id.nil? && self.policy_application.nil?
+      errors.add(:base, "must be associated with a Policy or with a PolicyQuote with an associated PolicyApplication") if self.policy.nil? && self.policy_application.nil?
     end
   
 end
