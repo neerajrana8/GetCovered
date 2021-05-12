@@ -239,7 +239,7 @@ module MasterPoliciesMethods
         }.to_json,
                status: :bad_request
       else
-        @master_policy_coverage.insurables.primary_insurable&.update(covered: false)
+        @master_policy_coverage.primary_insurable&.update(covered: false)
         render json: { message: "Master policy coverage #{@master_policy_coverage.number} was successfully cancelled" }
       end
     end

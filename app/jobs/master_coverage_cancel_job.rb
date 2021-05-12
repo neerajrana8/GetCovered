@@ -10,7 +10,7 @@ class MasterCoverageCancelJob < ApplicationJob
     
     master_policy.policies.master_policy_coverages.each do |policy|
       policy.update(status: 'CANCELLED', cancellation_date: Time.zone.now, expiration_date: new_expiration_date)
-      policy.insurables.primary_insurable&.update(covered: false)
+      policy.primary_insurable&.update(covered: false)
     end
 
     master_policy.update(status: 'CANCELLED', cancellation_date: Time.zone.now, expiration_date: new_expiration_date)
