@@ -3,6 +3,7 @@ FactoryBot.define do
     sequence :title, &:to_s
     association :account, factory: :account
     residential_unit
+    occupied { true }
 
     trait :residential_community do
       insurable_type_id { InsurableType::RESIDENTIAL_COMMUNITIES_IDS.first }
