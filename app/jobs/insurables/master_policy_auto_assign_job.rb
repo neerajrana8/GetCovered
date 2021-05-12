@@ -13,7 +13,7 @@ module Insurables
         policy_insurable.insurable&.units&.each do |unit|
           next unless unit.policies.current.empty? && unit.leases.empty?
 
-          policy_number = MasterPolicies::GenerateNextCoverageNumber.run!(master_policy_number: master_policy.number)
+          policy_number = MasterPolicies::GenerateNextCoverageNumber.run!(master_policy_number: policy.number)
           unit.policies.create(
             agency: policy.agency,
             carrier: policy.carrier,

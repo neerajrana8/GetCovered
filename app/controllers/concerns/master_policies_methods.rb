@@ -164,7 +164,7 @@ module MasterPoliciesMethods
     def cover_unit
       unit = Insurable.find(params[:insurable_id])
       if unit.policies.current.empty? && unit.leases&.count&.zero?
-        policy_number = MasterPolicies::GenerateNextCoverageNumber.run!(master_policy_number: master_policy.number)
+        policy_number = MasterPolicies::GenerateNextCoverageNumber.run!(master_policy_number: @master_policy.number)
         policy = unit.policies.create(
           agency: @master_policy.agency,
           carrier: @master_policy.carrier,
