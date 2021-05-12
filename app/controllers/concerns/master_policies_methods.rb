@@ -211,9 +211,9 @@ module MasterPoliciesMethods
       @insurable = @master_policy.insurables.find(params[:insurable_id])
       @master_policy.policies.master_policy_coverages.
         joins(:policy_insurables).
-        where(policy_insurables: { insurable_id: @insurable.units_relation&.pluck(:id) }) do |policy|
+        where(policy_insurables: { insurable_id: @insurable.units_relation&.pluck(:id) }).each do |policy|
         policy.update(status: 'CANCELLED', cancellation_date: Time.zone.now, expiration_date: Time.zone.now)
-        policy.insurables.primary_insurable&.update(covered: false)
+        policy.primary_insurable&.update(covered: false)
       end
       @master_policy.policy_insurables.where(insurable: @insurable).destroy_all
       @master_policy.policy_insurables.where(insurable: @insurable.buildings).destroy_all
