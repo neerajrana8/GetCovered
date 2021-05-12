@@ -6,9 +6,9 @@ class AutomaticMasterCoveragePolicyIssueJob < ApplicationJob
     return if master_policy.nil? || master_policy.policy_type_id != PolicyType::MASTER_ID
 
     master_policy.insurables.each do |insurable|      
-      insurable.units&.each do |unit|
+      insurable.units_relation&.each do |unit|
         if unit.policies.current.empty? && unit.occupied?
-          last_policy_number = master_policy.policies.maximum('number')
+          policy_number = MasterPolicies::GenerateNextCoverageNumber.run!(master_policy_number: master_policy.number)
           unit.policies.create(
             agency: master_policy.agency,
             carrier: master_policy.carrier,
@@ -17,7 +17,7 @@ class AutomaticMasterCoveragePolicyIssueJob < ApplicationJob
             policy_coverages_attributes: master_policy.policy_coverages.map do |policy_coverage|
               policy_coverage.attributes.slice('limit', 'deductible', 'enabled', 'designation', 'title')
             end,
-            number: last_policy_number.nil? ? "#{master_policy.number}_1" : last_policy_number.next,
+            number: policy_number,
             policy_type_id: PolicyType::MASTER_COVERAGE_ID,
             policy: master_policy,
             effective_date: Time.zone.now,

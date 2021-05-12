@@ -83,7 +83,6 @@ module MasterPoliciesMethods
         render json: { error: :insurable_was_not_found, message: 'Insurable is not assigned to the master policy' },
                status: :not_found
       end
-
     end
 
     def add_insurable
@@ -106,6 +105,14 @@ module MasterPoliciesMethods
           end
 
           @master_policy.start_automatic_master_coverage_policy_issue
+
+          unless params[:auto_assign].nil?
+            @master_policy.
+              policy_insurables.
+              where(insurable: [insurable, *insurable.buildings]).
+              update(auto_assign: params[:auto_assign])
+          end
+          
           response_json =
             if ::MasterPolicies::AvailableUnitsQuery.call(@master_policy, insurable.id).any?
               { message: 'Community added', allow_edit: false }
@@ -157,7 +164,7 @@ module MasterPoliciesMethods
     def cover_unit
       unit = Insurable.find(params[:insurable_id])
       if unit.policies.current.empty? && unit.leases&.count&.zero?
-        last_policy_number = @master_policy.policies.maximum('number')
+        policy_number = MasterPolicies::GenerateNextCoverageNumber.run!(master_policy_number: @master_policy.number)
         policy = unit.policies.create(
           agency: @master_policy.agency,
           carrier: @master_policy.carrier,
@@ -165,7 +172,7 @@ module MasterPoliciesMethods
           policy_coverages_attributes: @master_policy.policy_coverages.map do |policy_coverage|
             policy_coverage.attributes.slice('limit', 'deductible', 'enabled', 'designation', 'title')
           end,
-          number: last_policy_number.nil? ? "#{@master_policy.number}_1" : last_policy_number.next,
+          number: policy_number,
           policy_type_id: PolicyType::MASTER_COVERAGE_ID,
           policy: @master_policy,
           status: 'BOUND',
@@ -202,13 +209,16 @@ module MasterPoliciesMethods
 
     def cancel_insurable
       @insurable = @master_policy.insurables.find(params[:insurable_id])
+      new_expiration_date = 
+        @master_policy.effective_date > Time.zone.now ? @master_policy.effective_date : Time.zone.now
       @master_policy.policies.master_policy_coverages.
         joins(:policy_insurables).
-        where(policy_insurables: { insurable_id: @insurable.units&.pluck(:id) }) do |policy|
-        policy.update(status: 'CANCELLED', cancellation_date: Time.zone.now, expiration_date: Time.zone.now)
-        policy.insurables.take.update(covered: false)
-      end
+        where(policy_insurables: { insurable_id: @insurable.units_relation&.pluck(:id) }).each do |policy|
+          policy.update(status: 'CANCELLED', cancellation_date: Time.zone.now, expiration_date: new_expiration_date)
+          policy.primary_insurable&.update(covered: false)
+        end
       @master_policy.policy_insurables.where(insurable: @insurable).destroy_all
+      @master_policy.policy_insurables.where(insurable: @insurable.buildings).destroy_all
       render json: { message: "Master Policy Coverages for #{@insurable.title} cancelled" }, status: :ok
     end
 
@@ -216,7 +226,10 @@ module MasterPoliciesMethods
       @master_policy_coverage =
         @master_policy.policies.master_policy_coverages.find(params[:master_policy_coverage_id])
 
-      @master_policy_coverage.update(status: 'CANCELLED', cancellation_date: Time.zone.now, expiration_date: Time.zone.now)
+      new_expiration_date =
+        @master_policy_coverage.effective_date > Time.zone.now ? @master_policy_coverage.effective_date : Time.zone.now
+
+      @master_policy_coverage.update(status: 'CANCELLED', cancellation_date: Time.zone.now, expiration_date: new_expiration_date)
 
       if @master_policy_coverage.errors.any?
         render json: {
@@ -226,7 +239,7 @@ module MasterPoliciesMethods
         }.to_json,
                status: :bad_request
       else
-        @master_policy_coverage.insurables.take.update(covered: false)
+        @master_policy_coverage.primary_insurable&.update(covered: false)
         render json: { message: "Master policy coverage #{@master_policy_coverage.number} was successfully cancelled" }
       end
     end
@@ -279,6 +292,27 @@ module MasterPoliciesMethods
       return({}) if params.blank?
 
       params.permit(:base, :total, :calculation_base, :carrier_base)
+    end
+
+    def supported_filters(called_from_orders = false)
+      @calling_supported_orders = called_from_orders
+      {
+        id: %i[scalar array],
+        carrier: {
+          id: %i[scalar array],
+          title: %i[scalar like]
+        },
+        number: %i[scalar like],
+        policy_type_id: %i[scalar array],
+        status: %i[scalar like array],
+        created_at: %i[scalar like],
+        updated_at: %i[scalar like],
+        policy_in_system: %i[scalar like],
+        effective_date: %i[scalar like],
+        expiration_date: %i[scalar like],
+        agency_id: %i[scalar array],
+        account_id: %i[scalar array]
+      }
     end
   end
 end

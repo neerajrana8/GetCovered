@@ -15,7 +15,7 @@ module V2
         master_policies_relation = master_policies_relation.where(account_id: params[:account_id]) if params[:account_id].present?
         master_policies_relation = master_policies_relation.where(status: params[:status]) if params[:status].present?
 
-        @master_policies = paginator(master_policies_relation)
+        super(:@master_policies, master_policies_relation)
         render template: 'v2/shared/master_policies/index', status: :ok
       end
 

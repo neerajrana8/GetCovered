@@ -10,7 +10,7 @@ module V2
       def index
         master_policies_relation = Policy.where(policy_type_id: PolicyType::MASTER_ID).order(created_at: :desc)
         master_policies_relation = master_policies_relation.where(status: params[:status]) if params[:status].present?
-        @master_policies = paginator(master_policies_relation)
+        super(:@master_policies, master_policies_relation)
         render template: 'v2/shared/master_policies/index', status: :ok
       end
 
