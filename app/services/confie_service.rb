@@ -36,7 +36,10 @@ class ConfieService
     return "Request resulted in error" if result[:error]
     media_code = (result[:response].parsed_response.dig("data", "media_code") rescue nil)
     unless media_code.blank?
-      application.update(tagging_data: (application.tagging_data || {}).merge('confie_mediacode' => media_code.to_s))
+      application.update(tagging_data: (application.tagging_data || {}).merge({
+        'confie_mediacode' => media_code.to_s,
+        'confie_reported' => true
+      }))
     end
     return nil
   end
@@ -172,10 +175,7 @@ class ConfieService
         begin
           call_data[:response] = HTTParty.post(endpoint_for(self.action),
             body: self.action == :create_lead ? "data=#{message_content}" : message_content,
-            headers: self.action == :create_lead ? {
-                'Content-Type' => 'application/form-data',
-                'charset' => 'utf-8'
-            } : {
+            headers: self.action == :create_lead ? {} : {
               'Content-Type' => 'application/json'
             },
             ssl_version: :TLSv1_2
@@ -194,15 +194,19 @@ class ConfieService
           puts 'ERROR ERROR ERROR'.red
           pp call_data
         else
-          call_data[:code] = call_data[:response].code
           case self.action
             when :create_lead
+              call_data[:code] = call_data[:response].code
+              if call_data[:response].code == 200
+                call_data[:code] = call_data[:response].parsed_response&.[]('statuscode') || 500
+              end
               if call_data[:code] != 200
                 call_data[:error] = true
                 call_data[:message] = "Request failed externally"
                 call_data[:external_message] = (call_data[:response].parsed_response&.dig("error", "user_msg") rescue nil)
               end
             when :update_lead
+              call_data[:code] = call_data[:response].code
               if call_data[:code] != 200
                 call_data[:error] = true
                 call_data[:message] = "Request failed externally"
