@@ -7,7 +7,7 @@ class AutomaticMasterCoveragePolicyIssueJob < ApplicationJob
 
     master_policy.insurables.each do |insurable|      
       insurable.units&.each do |unit|
-        if unit.policies.current.empty? && unit.leases.empty?
+        if unit.policies.current.empty? && unit.occupied?
           last_policy_number = master_policy.policies.maximum('number')
           unit.policies.create(
             agency: master_policy.agency,
