@@ -13,7 +13,7 @@ module Insurables
         policy_insurable.insurable&.units&.each do |unit|
           next unless unit.policies.current.empty? && unit.leases.empty?
 
-          last_policy_number = policy.policies.maximum('number')
+          policy_number = MasterPolicies::GenerateNextCoverageNumber.run!(master_policy_number: master_policy.number)
           unit.policies.create(
             agency: policy.agency,
             carrier: policy.carrier,
@@ -22,7 +22,7 @@ module Insurables
             policy_coverages_attributes: policy.policy_coverages.map do |policy_coverage|
               policy_coverage.attributes.slice('limit', 'deductible', 'enabled', 'designation', 'title')
             end,
-            number: last_policy_number.nil? ? "#{policy.number}_1" : last_policy_number.next,
+            number: policy_number,
             policy_type_id: PolicyType::MASTER_COVERAGE_ID,
             policy: policy,
             effective_date: Time.zone.now,
