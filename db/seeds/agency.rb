@@ -20,7 +20,7 @@ require 'socket'
 @get_covered = ::Agency.where(master_agency: true).take
 
 
-site_staff = [
+site_staff = ENV['section'] == 'test' ? [] : [
   { email: "dylan@getcoveredllc.com", password: 'TestingPassword1234', password_confirmation: 'TestingPassword1234', role: 'agent', enabled: true, organizable: @get_covered,
     profile_attributes: { first_name: 'Dylan', last_name: 'Gaines', job_title: 'Chief Technical Officer', birth_date: '04-01-1989'.to_date }},
   { email: "brandon@getcoveredllc.com", password: 'TestingPassword1234', password_confirmation: 'TestingPassword1234', role: 'agent', enabled: true, organizable: @get_covered,
@@ -144,6 +144,8 @@ unless ENV['skip_msi']
                                             carrier: @msi, policy_type: PolicyType.find(1),
                                             fees_attributes: [service_fee])
 end
+
+unless ENV['section'] == 'test'
 
 ##
 # Set Up Cambridge
@@ -315,3 +317,5 @@ end
     pp gc_qbesub_agency.errors
   end
 end
+
+end # end "unless ENV['section'] == 'test'"

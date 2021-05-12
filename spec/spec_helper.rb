@@ -110,7 +110,7 @@ RSpec.configure do |config|
 
   Elasticsearch::Model.client = Elasticsearch::Client.new host: 'http://localhost:9200', log: false
 
-  ES_CLASSES = %w[Account Address Agency Carrier Insurable Invoice Lease Policy PolicyApplication PolicyQuote Profile Staff User].freeze
+  ES_CLASSES = %w[Account Address Agency Carrier Insurable Policy Profile Staff User].freeze # removed Invoice, Lease, PolicyApplication, PolicyQuote
 
   config.before :each, type: :controller do
     request.env['HTTP_ACCEPT_LANGUAGE'] = "en"

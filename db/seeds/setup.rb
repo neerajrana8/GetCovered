@@ -263,6 +263,27 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
 			    }
 				]
       )
+      51.times do |state|
+        available = state == 0 || state == 11 ? false : true
+        carrier_policy_availability = CarrierPolicyTypeAvailability.create!(state: state, available: available, carrier_policy_type: carrier_policy_type)
+        carrier_policy_availability.fees.create!(title: "Origination Fee", type: :ORIGINATION, amount: 2500, enabled: true, ownerable: carrier) unless carrier.id == 4
+      end
+      # create QBE master policy
+      [::PolicyType.find(2), ::PolicyType.find(3)].each do |master_policy_type|
+        carrier_policy_type = CarrierPolicyType.create!(
+          carrier: carrier,
+          policy_type: master_policy_type,
+          application_required: false,
+          commission_strategy_attributes: { recipient: @get_covered, percentage: 30 },
+          application_fields: [],
+          application_questions: []
+        )
+        51.times do |state|
+          available = state == 0 || state == 11 ? false : true
+          carrier_policy_availability = CarrierPolicyTypeAvailability.create!(state: state, available: available, carrier_policy_type: carrier_policy_type)
+          carrier_policy_availability.fees.create!(title: "Origination Fee", type: :ORIGINATION, amount: 2500, enabled: true, ownerable: carrier) unless carrier.id == 4
+        end
+      end
     # Add Master to Queensland Business Specialty Insurance
     elsif carrier.id == 2
       [::PolicyType.find(2), ::PolicyType.find(3)].each do |policy_type|
@@ -274,6 +295,11 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
           application_fields: [],
           application_questions: []
         )
+        51.times do |state|
+          available = state == 0 || state == 11 ? false : true
+          carrier_policy_availability = CarrierPolicyTypeAvailability.create!(state: state, available: available, carrier_policy_type: carrier_policy_type)
+          carrier_policy_availability.fees.create!(title: "Origination Fee", type: :ORIGINATION, amount: 2500, enabled: true, ownerable: carrier) unless carrier.id == 4
+        end
       end
     # Add Commercial to Crum & Forester
     elsif carrier.id == 3
@@ -438,7 +464,13 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
 						]
 					}																									
 				]	      
-      )  
+      )
+
+      51.times do |state|
+        available = state == 0 || state == 11 ? false : true
+        carrier_policy_availability = CarrierPolicyTypeAvailability.create!(state: state, available: available, carrier_policy_type: carrier_policy_type)
+        carrier_policy_availability.fees.create!(title: "Origination Fee", type: :ORIGINATION, amount: 2500, enabled: true, ownerable: carrier) unless carrier.id == 4
+      end
 		      
 		# Add Rental Guarantee to Pensio
 		elsif carrier.id == 4
@@ -498,7 +530,12 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
     				}
   				}   				
 				}
-		  )    
+		  )
+      51.times do |state|
+        available = state == 0 || state == 11 ? false : true
+        carrier_policy_availability = CarrierPolicyTypeAvailability.create!(state: state, available: available, carrier_policy_type: carrier_policy_type)
+        carrier_policy_availability.fees.create!(title: "Origination Fee", type: :ORIGINATION, amount: 2500, enabled: true, ownerable: carrier) unless carrier.id == 4
+      end
       
     elsif carrier.id == 5
     
@@ -542,6 +579,11 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
 			    }									
 				]     
       )
+      51.times do |state|
+        available = state == 0 || state == 11 ? false : true
+        carrier_policy_availability = CarrierPolicyTypeAvailability.create!(state: state, available: available, carrier_policy_type: carrier_policy_type)
+        carrier_policy_availability.fees.create!(title: "Origination Fee", type: :ORIGINATION, amount: 2500, enabled: true, ownerable: carrier) unless carrier.id == 4
+      end
       
       # Set up MSI InsurableRateConfigurations
       msis = MsiService.new
@@ -618,12 +660,6 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
 		  
     end
     
-    # Set policy type from if else block above
-    51.times do |state|
-      available = state == 0 || state == 11 ? false : true
-      carrier_policy_availability = CarrierPolicyTypeAvailability.create!(state: state, available: available, carrier_policy_type: carrier_policy_type)
-      carrier_policy_availability.fees.create!(title: "Origination Fee", type: :ORIGINATION, amount: 2500, enabled: true, ownerable: carrier) unless carrier.id == 4
-    end
   
   else
     pp carrier.errors

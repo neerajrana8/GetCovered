@@ -20,11 +20,16 @@ RSpec.describe Policy, elasticsearch: true, type: :model do
       
       @agency = FactoryBot.create(:agency)
       @account = FactoryBot.create(:account, agency: @agency)
-      @carrier = Carrier.first
-      @carrier.policy_types << [@residential_policy_type, @master_policy_type, @master_policy_coverage_type, @commercial_policy_type, @rent_guarantee_policy_type]
-      @carrier.agencies << [@agency]
+      @carrier = Carrier.find(1)
+      ::CarrierAgency.create!(agency: @agency, carrier: @carrier, carrier_agency_policy_types_attributes: @carrier.carrier_policy_types.map do |cpt|
+        {
+          policy_type_id: cpt.policy_type_id,
+          commission_strategy_attributes: { percentage: 9 }
+        }
+      end)
+      
       @user = FactoryBot.create(:user)
-      @master_policy = FactoryBot.build(:policy, agency: @agency, carrier: @carrier, account: @account)
+      @master_policy = FactoryBot.build(:policy, :master, agency: @agency, carrier: @carrier, account: @account)
       @master_policy.primary_user = @user
       @master_policy.policy_type = @master_policy_type
       @master_policy.status = 'BOUND'

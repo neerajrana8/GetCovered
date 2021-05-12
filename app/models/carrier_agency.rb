@@ -5,7 +5,7 @@
 class CarrierAgency < ApplicationRecord
   include RecordChange
   
-  BLOCKED_POLICY_TYPES = [2, 3] # Prevent Master Policy & Master Policy Coverages from being included
+  BLOCKED_POLICY_TYPES = [] # was 2,3 to prevent MP and MPC from being included... but I don't think we really want to do that...
 
   belongs_to :carrier
   belongs_to :agency

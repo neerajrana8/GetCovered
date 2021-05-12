@@ -46,6 +46,7 @@ module MasterPolicies
             title: cov.number,
             original_total_due: amount,
             total_due: amount,
+            preproration_total_due: amount,
             analytics_category: "master_policy_premium",
             policy_quote: nil,
             policy: master_policy
