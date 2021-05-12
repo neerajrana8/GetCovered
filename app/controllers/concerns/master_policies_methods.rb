@@ -209,12 +209,14 @@ module MasterPoliciesMethods
 
     def cancel_insurable
       @insurable = @master_policy.insurables.find(params[:insurable_id])
+      new_expiration_date = 
+        @master_policy.effective_date > Time.zone.now ? @master_policy.effective_date : Time.zone.now
       @master_policy.policies.master_policy_coverages.
         joins(:policy_insurables).
         where(policy_insurables: { insurable_id: @insurable.units_relation&.pluck(:id) }).each do |policy|
-        policy.update(status: 'CANCELLED', cancellation_date: Time.zone.now, expiration_date: Time.zone.now)
-        policy.primary_insurable&.update(covered: false)
-      end
+          policy.update(status: 'CANCELLED', cancellation_date: Time.zone.now, expiration_date: new_expiration_date)
+          policy.primary_insurable&.update(covered: false)
+        end
       @master_policy.policy_insurables.where(insurable: @insurable).destroy_all
       @master_policy.policy_insurables.where(insurable: @insurable.buildings).destroy_all
       render json: { message: "Master Policy Coverages for #{@insurable.title} cancelled" }, status: :ok
@@ -224,7 +226,10 @@ module MasterPoliciesMethods
       @master_policy_coverage =
         @master_policy.policies.master_policy_coverages.find(params[:master_policy_coverage_id])
 
-      @master_policy_coverage.update(status: 'CANCELLED', cancellation_date: Time.zone.now, expiration_date: Time.zone.now)
+      new_expiration_date =
+        @master_policy_coverage.effective_date > Time.zone.now ? @master_policy_coverage.effective_date : Time.zone.now
+
+      @master_policy_coverage.update(status: 'CANCELLED', cancellation_date: Time.zone.now, expiration_date: new_expiration_date)
 
       if @master_policy_coverage.errors.any?
         render json: {
