@@ -1163,7 +1163,6 @@ ActiveRecord::Schema.define(version: 2021_05_04_201511) do
     t.bigint "insurable_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.boolean "auto_assign", default: false
     t.index ["insurable_id"], name: "index_policy_insurables_on_insurable_id"
     t.index ["policy_application_id"], name: "index_policy_insurables_on_policy_application_id"
     t.index ["policy_id"], name: "index_policy_insurables_on_policy_id"

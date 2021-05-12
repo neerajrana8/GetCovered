@@ -17,15 +17,18 @@ module V2
       def show; end
 
       def create
-        if create_allowed?
-          @branding_profile = @agency.branding_profiles.new(branding_profile_params)
-          if @branding_profile.errors.none? && @branding_profile.save
-            render :show, status: :created
-          else
-            render json: @branding_profile.errors, status: :unprocessable_entity
-          end
+        branding_profile_outcome = BrandingProfiles::CreateFromDefault.run(agency: @agency)
+
+        if branding_profile_outcome.valid?
+          @branding_profile = branding_profile_outcome.result
+          render :show, status: :created
         else
-          render json: { success: false, errors: ['Unauthorized Access'] }, status: :unauthorized
+          render json: standard_error(
+                         :branding_profile_was_not_created,
+                         'Branding profile was not created',
+                         branding_profile_outcome.errors
+                       ),
+                 status: :unprocessable_entity
         end
       end
 
