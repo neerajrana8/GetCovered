@@ -3,18 +3,15 @@ include ActionController::RespondWith
 
 describe 'Admin Policy spec', type: :request do
   before :all do
-    Policy.__elasticsearch__.client.indices.delete index: Policy.index_name rescue nil
-    Policy.__elasticsearch__.create_index!
-    Policy.import force: true
+#    Policy.__elasticsearch__.client.indices.delete index: Policy.index_name rescue nil
+#    Policy.__elasticsearch__.create_index!
+#    Policy.import force: true
     @user = create_user
-    @agency = FactoryBot.create(:agency)
+    @agency = Agency.find(1)
     @account = FactoryBot.create(:account, agency: @agency)
-    @carrier = Carrier.first
-    @policy_type = @carrier.policy_types.take
-    @agency = FactoryBot.create(:agency)
-    @carrier.agencies << @agency
-    @account = FactoryBot.create(:account, agency: @agency)
-    BillingStrategy.create(title: "Monthly", slug: nil, enabled: true, new_business: {"payments"=>[8.37, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33], "payments_per_term"=>12, "remainder_added_to_deposit"=>true}, renewal: nil, locked: false, agency: @agency, carrier: @carrier, policy_type: @policy_type, carrier_code: nil)
+    @carrier = Carrier.find(1)
+    @policy_type = PolicyType.find(1)
+    #BillingStrategy.create(title: "Monthly", slug: nil, enabled: true, new_business: {"payments"=>[8.37, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33], "payments_per_term"=>12, "remainder_added_to_deposit"=>true}, renewal: nil, locked: false, agency: @agency, carrier: @carrier, policy_type: @policy_type, carrier_code: nil)
   end
 
   context 'for StaffAccount roles' do
@@ -72,7 +69,9 @@ describe 'Admin Policy spec', type: :request do
       expect(result.count).to eq(0)
 
       # Third Request should return 1 policy belonging to a new policy_type
-      new_policy_type = @carrier.policy_types.create(title: "New Policy Type")
+      new_policy_type = PolicyType.create(title: "New Policy Type")
+      CarrierPolicyType.create!(carrier: @carrier, policy_type: new_policy_type, commission_strategy_attributes: { percentage: 20 })
+      CarrierAgencyPolicyType.create(carrier_agency: CarrierAgency.where(carrier: @carrier, agency: @agency).take, policy_type: new_policy_type, commission_strategy_attributes: { percentage: 10 })
       FactoryBot.create(:policy, agency: @agency, carrier: @carrier, account: @account, policy_type: new_policy_type)
       login_staff(@staff)
       @headers = get_auth_headers_from_login_response_headers(response)
@@ -96,6 +95,7 @@ describe 'Admin Policy spec', type: :request do
   context 'for StaffAgency roles' do
     before :all do
       @staff = create_agent_for @agency
+      @staff.staff_permission.update!(permissions: @staff.staff_permission.permissions.merge({ 'policies.policies' => true }))
     end
     before :each do
       login_staff(@staff)

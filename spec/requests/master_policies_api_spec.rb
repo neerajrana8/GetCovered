@@ -2,7 +2,7 @@ require 'rails_helper'
 include ActionController::RespondWith
 
 describe 'Master Policies API spec', type: :request do
-  let!(:agency)  { FactoryBot.create(:agency) }
+  let!(:agency)  { Agency.find(1) }
   let!(:account) { FactoryBot.create(:account, agency: agency) }
   let!(:agent)   { FactoryBot.create(:staff, role: 'agent', organizable: agency) }
   let!(:staff)   { FactoryBot.create(:staff, role: 'staff', organizable: account) }
@@ -37,7 +37,7 @@ describe 'Master Policies API spec', type: :request do
              params: master_policy_params.to_json,
              headers: @headers.reverse_merge(base_headers)
       end
-
+      
       expect { request.call }.to change { Policy.where(policy_type_id: PolicyType::MASTER_ID).count }.by(1)
       expect(response.status).to eq(201)
     end
@@ -103,7 +103,7 @@ describe 'Master Policies API spec', type: :request do
 
   def master_policy_params
     {
-      carrier_id: agency.carriers.take.id,
+      carrier_id: 1,
       account_id: account.id,
       base: 100,
       total: 100,

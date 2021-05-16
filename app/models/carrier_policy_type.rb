@@ -12,7 +12,8 @@ class CarrierPolicyType < ApplicationRecord
   accepts_nested_attributes_for :commission_strategy
   accepts_nested_attributes_for :carrier_policy_type_availabilities, allow_destroy: true
   
-  before_validation :manipulate_dem_nested_boiz_like_a_boss # we don't restrict this to on: :create. that way it can be applied to commission_strategy updates too
+  before_validation :manipulate_dem_nested_boiz_like_a_boss, # we don't restrict this to on: :create. that way it can be applied to commission_strategy updates too
+    unless: Proc.new{|cpt| cpt.carrier.nil? || cpt.policy_type.nil? }
   
   validate :premium_proration_calculation_valid
 
