@@ -22,7 +22,7 @@ describe 'AutomaticMasterCoveragePolicyIssueJob' do
       insurables: [community1, community2]
     )
   end
-
+=begin
   let!(:master_policy_coverage_1) do
     FactoryBot.create(
       :policy,
@@ -45,7 +45,7 @@ describe 'AutomaticMasterCoveragePolicyIssueJob' do
     policy_premium.calculation_base = policy_premium.base + policy_premium.taxes + policy_premium.amortized_fees
     policy_premium.save
   end
-
+=end
   it 'covers units in the community2' do
     expect { AutomaticMasterCoveragePolicyIssueJob.perform_now(master_policy.id) }.to change { master_policy.policies.count }.by(2)
   end
