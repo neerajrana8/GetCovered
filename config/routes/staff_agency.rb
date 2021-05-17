@@ -34,6 +34,8 @@
       end
     post :accounts_index, action: :index, controller: :accounts
 
+    resources :addresses, only: [:index]
+
     resources :master_policies, path: 'master-policies',
       only: [ :create, :update, :index, :show ] do
         member do

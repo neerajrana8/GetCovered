@@ -31,6 +31,8 @@
     end
     post :accounts_index, action: :index, controller: :accounts
 
+    resources :addresses, only: [:index]
+
     resources :refunds,
       only: [ :index, :create, :update] do
         member do
