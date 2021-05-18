@@ -30,7 +30,9 @@ json.premium_total (policy.policy_quotes&.last&.policy_premium&.total_premium ||
 
 json.premium_first (policy.policy_quotes&.last&.invoices&.first&.line_items&.where(analytics_category: 'policy_premium')&.inject(0){|s,li| s + li.total_due } || 0)
 
-json.billing_strategy (policy.policy_quotes&.last&.policy_application&.billing_strategy || policy.billing_strategies&.last)&.title
+if policy.in_system?
+  json.billing_strategy (policy.policy_quotes&.last&.policy_application&.billing_strategy || policy.billing_strategies&.last)&.title
+end
 
 json.partial! 'v2/shared/policies/policy_coverages.json.jbuilder', policy: policy
 
