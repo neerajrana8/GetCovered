@@ -41,7 +41,7 @@ module PoliciesMethods
         @policy.users << user
       end
 
-      render json: { policy: @policy.to_json }, status: :created
+      render json: { policy: @policy }, status: :created
     else
       render json: @policy.errors, status: :unprocessable_entity
     end
@@ -66,7 +66,7 @@ module PoliciesMethods
       end
       @policy.documents.attach(documents_params) if documents_params.present?
 
-      render json: { policy: @policy.to_json  }, status: :ok
+      render json: { policy: @policy }, status: :ok
     else
       render json: @policy.errors, status: :unprocessable_entity
     end
