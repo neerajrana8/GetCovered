@@ -28,6 +28,7 @@ module PoliciesMethods
   def add_coverage_proof
     @policy = Policy.new(coverage_proof_params)
     @policy.policy_in_system = false
+    @policy.status = 'BOUND'
     add_error_master_types(@policy.policy_type_id)
     if @policy.errors.blank? && @policy.save
       user_params[:users]&.each do |user_params|
@@ -40,7 +41,7 @@ module PoliciesMethods
         @policy.users << user
       end
 
-      render json: { message: 'Policy created' }, status: :created
+      render json: { policy: @policy.to_json }, status: :created
     else
       render json: @policy.errors, status: :unprocessable_entity
     end
@@ -65,7 +66,7 @@ module PoliciesMethods
       end
       @policy.documents.attach(documents_params) if documents_params.present?
 
-      render json: { message: 'Policy updated' }, status: :ok
+      render json: { policy: @policy.to_json  }, status: :ok
     else
       render json: @policy.errors, status: :unprocessable_entity
     end
@@ -182,7 +183,7 @@ module PoliciesMethods
   end
 
   def coverage_proof_params
-    params.require(:policy).permit(:number,
+    params.require(:policy).permit(:number, :status,
                                    :account_id, :agency_id, :policy_type_id,
                                    :carrier_id, :effective_date, :expiration_date,
                                    :out_of_system_carrier_title, :address, documents: [],
