@@ -819,7 +819,6 @@ ActiveRecord::Schema.define(version: 2021_05_05_183545) do
     t.bigint "agency_id"
     t.bigint "policy_type_ids", default: [], null: false, array: true
     t.boolean "preferred_ho4", default: false, null: false
-    t.boolean "confirmed", default: true, null: false
     t.boolean "occupied", default: false
     t.index ["account_id"], name: "index_insurables_on_account_id"
     t.index ["agency_id"], name: "index_insurables_on_agency_id"
@@ -1259,7 +1258,6 @@ ActiveRecord::Schema.define(version: 2021_05_05_183545) do
     t.string "error_message"
     t.integer "branding_profile_id"
     t.string "internal_error_message"
-    t.bigint "tag_ids", default: [], null: false, array: true
     t.index ["account_id"], name: "index_policy_applications_on_account_id"
     t.index ["agency_id"], name: "index_policy_applications_on_agency_id"
     t.index ["billing_strategy_id"], name: "index_policy_applications_on_billing_strategy_id"
@@ -1382,6 +1380,7 @@ ActiveRecord::Schema.define(version: 2021_05_05_183545) do
     t.bigint "insurable_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "auto_assign", default: false
     t.index ["insurable_id"], name: "index_policy_insurables_on_insurable_id"
     t.index ["policy_application_id"], name: "index_policy_insurables_on_policy_application_id"
     t.index ["policy_id"], name: "index_policy_insurables_on_policy_id"
