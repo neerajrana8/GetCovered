@@ -5,9 +5,9 @@ describe 'AutomaticMasterCoveragePolicyIssueJob' do
   let(:account)       { FactoryBot.create(:account, agency: agency) }
   let(:community1)    { FactoryBot.create(:insurable, :residential_community, account: account) }
   let(:community2)    { FactoryBot.create(:insurable, :residential_community, account: account) }
-  let(:unit1)     { FactoryBot.create(:insurable, :residential_unit, account: account, insurable: community1) }
-  let!(:unit2)    { FactoryBot.create(:insurable, :residential_unit, account: account, insurable: community2) }
-  let!(:unit3)    { FactoryBot.create(:insurable, :residential_unit, account: account, insurable: community2) }
+  let(:unit1)     { FactoryBot.create(:insurable, :residential_unit, account: account, insurable: community1, occupied: true) }
+  let!(:unit2)    { FactoryBot.create(:insurable, :residential_unit, account: account, insurable: community2, occupied: true) }
+  let!(:unit3)    { FactoryBot.create(:insurable, :residential_unit, account: account, insurable: community2, occupied: true) }
 
   let(:master_policy) do
     FactoryBot.create(

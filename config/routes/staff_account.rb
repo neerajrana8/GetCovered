@@ -118,6 +118,7 @@
             get 'refresh-rates', to: 'insurable_rates#refresh_rates', on: :collection
           end
       end
+    post :insurables_index, action: :index, controller: :insurables
 
     resources :insurable_types, path: "insurable-types", only: [ :index ]
 
@@ -171,7 +172,8 @@
           delete :delete_policy_document
         end
         get "search", to: 'policies#search', on: :collection
-      end
+    end
+    post :policies_index, action: :index, controller: :policies
 
     resources :refunds,
       only: [ :index, :create, :update] do
