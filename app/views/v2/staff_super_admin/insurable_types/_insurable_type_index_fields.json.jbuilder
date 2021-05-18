@@ -1,2 +1,2 @@
-json.extract! insurable_type, :category, :enabled, :id, :title
+json.extract! insurable_type, :category, :enabled, :id, :title, :occupiable
 

@@ -9,13 +9,11 @@ class Lease < ApplicationRecord
   # Active Record Callbacks
   after_initialize :initialize_lease
 
-  before_validation :set_type,
-    unless: proc { |lease| lease.insurable.nil? }
+  before_validation :set_type, unless: proc { |lease| lease.insurable.nil? }
 
-  before_validation :set_reference,
-    if: proc { |lease| lease.reference.nil? }
+  before_validation :set_reference, if: proc { |lease| lease.reference.nil? }
 
-  # after_commit :update_unit_occupation
+  after_commit :update_unit_occupation
 
   belongs_to :account
 
@@ -49,6 +47,9 @@ class Lease < ApplicationRecord
   #  unless: Proc.new { |lease| lease.unit.nil? || account.nil? }
 
   # Allow use of .type without invoking STI
+
+  scope :active, -> { where('? BETWEEN "start_date" AND "end_date"', Time.zone.now).where(status: %i[approved current]) }
+
   self.inheritance_column = nil
 
   enum status: %i[pending approved current expired rejected]
@@ -117,20 +118,20 @@ class Lease < ApplicationRecord
   end
 
   def update_unit_occupation
-    unit.update_occupation
+    insurable.update(occupied: insurable.leases.active.present?)
   end
 
   def related_records_list
     %w[insurable account]
   end
-	
-	# Lease.primary_insurable
-	
-	def primary_user
-		lease_user = lease_users.where(primary: true).take
-		return lease_user&.user.nil? ? nil : lease_user.user	
-	end
-	
+  
+  # Lease.primary_insurable
+  
+  def primary_user
+    lease_user = lease_users.where(primary: true).take
+    lease_user.user.nil? ? nil : lease_user.user  
+  end
+  
   private
 
   ## Initialize Lease

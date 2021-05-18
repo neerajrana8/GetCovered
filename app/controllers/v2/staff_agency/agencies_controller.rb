@@ -17,7 +17,7 @@ module V2
         end
       end
 
-      def sub_agencies_index
+      def sub_agencies
         result = []
         required_fields = %i[id title agency_id enabled]
 

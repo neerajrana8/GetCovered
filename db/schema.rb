@@ -802,6 +802,7 @@ ActiveRecord::Schema.define(version: 2021_05_05_183545) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.bigint "policy_type_ids", default: [], null: false, array: true
+    t.boolean "occupiable", default: false
   end
 
   create_table "insurables", force: :cascade do |t|
@@ -818,6 +819,8 @@ ActiveRecord::Schema.define(version: 2021_05_05_183545) do
     t.bigint "agency_id"
     t.bigint "policy_type_ids", default: [], null: false, array: true
     t.boolean "preferred_ho4", default: false, null: false
+    t.boolean "confirmed", default: true, null: false
+    t.boolean "occupied", default: false
     t.index ["account_id"], name: "index_insurables_on_account_id"
     t.index ["agency_id"], name: "index_insurables_on_agency_id"
     t.index ["insurable_id"], name: "index_insurables_on_insurable_id"
@@ -1256,6 +1259,7 @@ ActiveRecord::Schema.define(version: 2021_05_05_183545) do
     t.string "error_message"
     t.integer "branding_profile_id"
     t.string "internal_error_message"
+    t.bigint "tag_ids", default: [], null: false, array: true
     t.index ["account_id"], name: "index_policy_applications_on_account_id"
     t.index ["agency_id"], name: "index_policy_applications_on_agency_id"
     t.index ["billing_strategy_id"], name: "index_policy_applications_on_billing_strategy_id"

@@ -13,15 +13,13 @@ class LeaseExpirationCheckJob < ApplicationJob
   #
   # Checks for leases expiring today and
   # activates them
-  def perform(*args)
-    @leases.each do |lease|
-      lease.deactivate
-    end
+  def perform(*_args)
+    @leases.each(&:deactivate)
   end
 
   private
     
-    def set_leases
-      @leases = Lease.current.where(end_date: Time.current.to_date - 1.day)
-    end
+  def set_leases
+    @leases = Lease.current.where(end_date: Time.current.to_date - 1.day)
+  end
 end
