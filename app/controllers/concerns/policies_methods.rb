@@ -38,9 +38,13 @@ module PoliciesMethods
           user.password = SecureRandom.base64(12)
           user.invite! if user.save
         end
-        @policy.users << user
+        PolicyUser.create(user: user, spouse: user_params[:spouse], policy: @policy)
+
       end
 
+      unit = Insurable.find_by(id: coverage_proof_params[:unit_id])
+      PolicyInsurable.create(insurable: unit, policy: @policy) if unit.present?
+      
       render json: { policy: @policy }, status: :created
     else
       render json: @policy.errors, status: :unprocessable_entity
@@ -175,19 +179,20 @@ module PoliciesMethods
   end
 
   def user_params
-    params.permit(users: [:primary,
-                          :email, :agency_id, profile_attributes: %i[birth_date contact_phone
+    params.permit(users: [:spouse, :email, :agency_id, profile_attributes: %i[birth_date contact_phone
                                                                      first_name gender job_title last_name salutation],
-                                              address_attributes: %i[city country state street_name
+                                              address_attributes: %i[city county street_number state street_name
                                                                      street_two zip_code]])
   end
 
   def coverage_proof_params
     params.require(:policy).permit(:number, :status,
                                    :account_id, :agency_id, :policy_type_id,
-                                   :carrier_id, :effective_date, :expiration_date,
-                                   :out_of_system_carrier_title, :address, documents: [],
-                                                                           policy_users_attributes: [:user_id])
+                                   :carrier_id, :effective_date, :expiration_date, :out_of_system_carrier_title,
+                                   :address, :unit_id,
+                                   policy_users_attributes: [:user_id],
+                                   policy_coverages_attributes: %i[limit deductible enabled designation],
+                                   documents: [])
   end
 
   def add_error_master_types(type_id)
