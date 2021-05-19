@@ -115,7 +115,7 @@ class Commission < ApplicationRecord
     return { success: true }
   end
   
-  def pay_with_stripe
+  def pay_with_stripe(marking_superadmin, with_payout_data: nil, with_payout_notes: nil)
     return { success: false, error: "This commission has status '#{self.status}' and payout_method '#{self.payout_method}'; only 'approved' and 'stripe' commissions can be paid with stripe!" } unless self.status == 'approved' && self.payout_method == 'stripe'
     ActiveRecord::Base.transaction do
       self.lock!
@@ -135,7 +135,7 @@ class Commission < ApplicationRecord
           self.update(status: 'payout_error', error_info: e.message)
           return { success: false, error: e.message }
         end
-        unless self.update(status: 'complete', marked_paid_by: nil, marked_paid_at: Time.current, stripe_transfer_id: transfer.id)
+        unless self.update(status: 'complete', marked_paid_by: marking_superadmin, marked_paid_at: Time.current, stripe_transfer_id: transfer.id)
           self.update(status: 'payout_error', error_info: "Transfer succeeded, but failed to update the commission to reflect this; the transfer id was #{transfer.respond_to?(:id) ? transfer.id : 'N/A'}")
           return { success: false, error: "Transfer succeeded, but failed to update the commission to reflect this; the transfer id was #{transfer.respond_to?(:id) ? transfer.id : 'N/A'}" }
         end
