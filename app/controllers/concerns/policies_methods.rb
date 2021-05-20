@@ -26,25 +26,22 @@ module PoliciesMethods
   end
 
   def add_coverage_proof
-    @policy = Policy.new(coverage_proof_params)
+    @policy                  = Policy.new(coverage_proof_params)
     @policy.policy_in_system = false
-    @policy.status = 'BOUND'
+    @policy.status           = 'BOUND'
     add_error_master_types(@policy.policy_type_id)
     if @policy.errors.blank? && @policy.save
-      user_params[:users]&.each do |user_params|
-        user = ::User.find_by(email: user_params[:email])
+      user_params[:policy_users_attributes]&.each do |user_params|
+        user = ::User.find_by(email: user_params[:user_attributes][:email])
+
         if user.nil?
-          user = ::User.new(user_params.except(:spouse))
+          user          = ::User.new(user_params[:user_attributes])
           user.password = SecureRandom.base64(12)
           user.invite! if user.save
         end
         PolicyUser.create(user: user, spouse: user_params[:spouse], policy: @policy)
-
       end
 
-      unit = Insurable.find_by(id: params[:policy][:unit_id])
-      PolicyInsurable.create(insurable: unit, policy: @policy) if unit.present?
-      
       render json: { policy: @policy }, status: :created
     else
       render json: @policy.errors, status: :unprocessable_entity
@@ -53,14 +50,14 @@ module PoliciesMethods
 
   def update_coverage_proof
     update_coverage_params = create_params
-    documents_params = update_coverage_params.delete(:documents)
-    type_id = update_coverage_params[:policy_type_id]
+    documents_params       = update_coverage_params.delete(:documents)
+    type_id                = update_coverage_params[:policy_type_id]
     add_error_master_types(type_id) if type_id.present?
     if @policy.errors.blank? && @policy.update_as(current_staff, update_coverage_params)
       user_params[:users]&.each do |user_params|
         user = ::User.find_by(email: user_params[:email])
         if user.nil?
-          user = ::User.new(user_params)
+          user          = ::User.new(user_params)
           user.password = SecureRandom.base64(12)
           user.invite! if user.save
         else
@@ -127,11 +124,11 @@ module PoliciesMethods
         perform_estimate: false,
         eventable: @policy.primary_insurable,
         nonpreferred_final_premium_params: {
-                  number_of_units: 1,
-                  years_professionally_managed: nil,
-                  year_built: nil,
-                  gated: false
-                }.compact
+          number_of_units: 1,
+          years_professionally_managed: nil,
+          year_built: nil,
+          gated: false
+        }.compact
       )
 
       @optional_coverages = results[:coverage_options].select { |coverage| coverage['requirement'] == 'optional' }.map do |coverage|
@@ -154,16 +151,16 @@ module PoliciesMethods
     return({}) if params[:policy].blank?
 
     params.require(:policy).permit(
-        :account_id, :agency_id, :auto_renew, :cancellation_code,
-        :cancellation_date_date, :carrier_id, :effective_date,
-        :expiration_date, :number, :policy_type_id, :status, :out_of_system_carrier_title,
-        documents: [],
-        policy_insurables_attributes: [:insurable_id],
-        policy_users_attributes: [:user_id],
-        policy_coverages_attributes: %i[id policy_application_id policy_id
-                                        limit deductible enabled designation],
-        policy_application_attributes: [fields: {}]
-      )
+      :account_id, :agency_id, :auto_renew, :cancellation_code,
+      :cancellation_date_date, :carrier_id, :effective_date,
+      :expiration_date, :number, :policy_type_id, :status, :out_of_system_carrier_title,
+      documents: [],
+      policy_insurables_attributes: [:insurable_id],
+      policy_users_attributes: [:user_id],
+      policy_coverages_attributes: %i[id policy_application_id policy_id
+                                      limit deductible enabled designation],
+      policy_application_attributes: [fields: {}]
+    )
   end
 
   def update_user_params
@@ -179,10 +176,16 @@ module PoliciesMethods
   end
 
   def user_params
-    params.permit(users: [:spouse, :email, :agency_id, profile_attributes: %i[birth_date contact_phone
-                                                                     first_name gender job_title last_name salutation],
-                                              address_attributes: %i[city county street_number state street_name
-                                                                     street_two zip_code]])
+    params.require(:policy).permit(
+      policy_users_attributes: [
+        :spouse, :primary,
+        user_attributes: [
+          :email,
+          profile_attributes: %i[birth_date contact_phone first_name gender job_title last_name salutation],
+          address_attributes: %i[city county street_number state street_name street_two zip_code]
+        ]
+      ]
+    )
   end
 
   def coverage_proof_params
@@ -190,7 +193,7 @@ module PoliciesMethods
                                    :account_id, :agency_id, :policy_type_id,
                                    :carrier_id, :effective_date, :expiration_date, :out_of_system_carrier_title,
                                    :address,
-                                   policy_users_attributes: [:user_id],
+                                   policy_insurables_attributes: %i[insurable_id primary],
                                    policy_coverages_attributes: %i[limit deductible enabled designation],
                                    documents: [])
   end
@@ -211,8 +214,6 @@ module PoliciesMethods
     end
     @update_params
   end
-
-
 
   def supported_filters(called_from_orders = false)
     @calling_supported_orders = called_from_orders
@@ -245,15 +246,15 @@ module PoliciesMethods
     return({}) if params[:policy].blank?
 
     to_return = params.require(:policy).permit(
-        :account_id, :agency_id, :auto_renew, :cancellation_reason,
-        :cancellation_date, :carrier_id, :effective_date, :out_of_system_carrier_title,
-        :expiration_date, :number, :policy_type_id, :status,
-        documents: [],
-        policy_insurables_attributes: [:insurable_id],
-        policy_users_attributes: [:user_id],
-        policy_coverages_attributes: %i[id policy_application_id policy_id
-                                        limit deductible enabled designation]
-      )
+      :account_id, :agency_id, :auto_renew, :cancellation_reason,
+      :cancellation_date, :carrier_id, :effective_date, :out_of_system_carrier_title,
+      :expiration_date, :number, :policy_type_id, :status,
+      documents: [],
+      policy_insurables_attributes: [:insurable_id],
+      policy_users_attributes: [:user_id],
+      policy_coverages_attributes: %i[id policy_application_id policy_id
+                                      limit deductible enabled designation]
+    )
     to_return
   end
 
