@@ -26,7 +26,7 @@ module PoliciesMethods
   end
 
   def add_coverage_proof
-    @policy = Policy.new(coverage_proof_params.except(:unit_id))
+    @policy = Policy.new(coverage_proof_params)
     @policy.policy_in_system = false
     @policy.status = 'BOUND'
     add_error_master_types(@policy.policy_type_id)
@@ -42,7 +42,7 @@ module PoliciesMethods
 
       end
 
-      unit = Insurable.find_by(id: coverage_proof_params[:unit_id])
+      unit = Insurable.find_by(id: params[:policy][:unit_id])
       PolicyInsurable.create(insurable: unit, policy: @policy) if unit.present?
       
       render json: { policy: @policy }, status: :created
@@ -189,7 +189,7 @@ module PoliciesMethods
     params.require(:policy).permit(:number, :status,
                                    :account_id, :agency_id, :policy_type_id,
                                    :carrier_id, :effective_date, :expiration_date, :out_of_system_carrier_title,
-                                   :address, :unit_id,
+                                   :address,
                                    policy_users_attributes: [:user_id],
                                    policy_coverages_attributes: %i[limit deductible enabled designation],
                                    documents: [])
