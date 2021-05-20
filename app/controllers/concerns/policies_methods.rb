@@ -34,7 +34,7 @@ module PoliciesMethods
       user_params[:users]&.each do |user_params|
         user = ::User.find_by(email: user_params[:email])
         if user.nil?
-          user = ::User.new(user_params)
+          user = ::User.new(user_params.except(:spouse))
           user.password = SecureRandom.base64(12)
           user.invite! if user.save
         end
