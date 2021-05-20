@@ -26,7 +26,7 @@ module PoliciesMethods
   end
 
   def add_coverage_proof
-    @policy = Policy.new(coverage_proof_params)
+    @policy = Policy.new(coverage_proof_params.except(:unit_id))
     @policy.policy_in_system = false
     @policy.status = 'BOUND'
     add_error_master_types(@policy.policy_type_id)
