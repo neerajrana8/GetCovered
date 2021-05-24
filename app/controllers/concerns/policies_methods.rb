@@ -18,7 +18,6 @@ module PoliciesMethods
   def create
     @policy = Policy.new(create_params)
     if @policy.save_as(current_staff)
-      Insurables::UpdateCoveredStatus.run!(insurable: @policy.primary_insurable) if @policy.primary_insurable.present?
       render :show, status: :created
     else
       render json: @policy.errors, status: :unprocessable_entity
@@ -165,10 +164,8 @@ module PoliciesMethods
 
   def update_user_params
     params.require(:policy).permit(users: [:id, :email,
-                                           address_attributes: %i[city country state street_name
-                                                                  street_two zip_code],
-                                           profile_attributes: %i[first_name last_name contact_phone
-                                                                  birth_date gender salutation]])
+                                           profile_attributes: %i[birth_date contact_phone first_name gender job_title last_name salutation],
+                                           address_attributes: %i[city county street_number state street_name street_two zip_code]])
   end
 
   def delete_policy_document_params
