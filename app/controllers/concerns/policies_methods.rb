@@ -48,25 +48,16 @@ module PoliciesMethods
   end
 
   def update_coverage_proof
-    update_coverage_params = create_params
-    documents_params       = update_coverage_params.delete(:documents)
-    type_id                = update_coverage_params[:policy_type_id]
+    type_id = update_coverage_params[:policy_type_id]
     add_error_master_types(type_id) if type_id.present?
     if @policy.errors.blank? && @policy.update_as(current_staff, update_coverage_params)
-      user_params[:users]&.each do |user_params|
-        user = ::User.find_by(email: user_params[:email])
-        if user.nil?
-          user          = ::User.new(user_params)
-          user.password = SecureRandom.base64(12)
-          user.invite! if user.save
-        else
-          user.update_attributes(user_params)
-        end
-        @policy.users << user unless @policy.users.include?(user)
-      end
-      @policy.documents.attach(documents_params) if documents_params.present?
+      result = Policies::UpdateUsers.run!(policy: @policy, policy_users_params: user_params[:policy_users_attributes])
 
-      render json: { policy: @policy }, status: :ok
+      if result.failure?
+        render json: result.failure, status: 422
+      else
+        render json: { policy: @policy }, status: :ok
+      end
     else
       render json: @policy.errors, status: :unprocessable_entity
     end
@@ -76,7 +67,7 @@ module PoliciesMethods
     document = @policy.documents.find(delete_policy_document_params[:document_id])
     if document.present?
       document.purge
-      render json: { message: 'Policy Document successfuly deleted' }, status: :ok
+      render json: { message: 'Policy Document successfully deleted' }, status: :ok
     else
       render json: { message: 'Policy Document not found' }, status: :unprocessable_entity
     end
@@ -160,6 +151,27 @@ module PoliciesMethods
                                       limit deductible enabled designation],
       policy_application_attributes: [fields: {}]
     )
+  end
+
+  def update_coverage_params
+    return({}) if params[:policy].blank?
+
+    permitted_params =
+      params.require(:policy).permit(
+        :effective_date, :expiration_date, :number, :status, :out_of_system_carrier_title,
+        policy_coverages_attributes: %i[id limit deductible enabled designation]
+      )
+
+    existed_ids = permitted_params[:policy_coverages_attributes]&.map { |coverage| coverage[:id] }
+
+    unless existed_ids.nil? || existed_ids.compact.blank?
+      (@policy.policy_insurables.pluck(:id) - existed_ids).each do |id|
+        permitted_params[:policy_coverages_attributes] <<
+          ActionController::Parameters.new(id: id, _destroy: true).permit(:id, :_destroy)
+      end
+    end
+
+    permitted_params
   end
 
   def update_user_params
