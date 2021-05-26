@@ -30,18 +30,13 @@ module PoliciesMethods
     @policy.status           = 'BOUND'
     add_error_master_types(@policy.policy_type_id)
     if @policy.errors.blank? && @policy.save
-      user_params[:policy_users_attributes]&.each do |user_params|
-        user = ::User.find_by(email: user_params[:user_attributes][:email])
+      result = Policies::UpdateUsers.run!(policy: @policy, policy_users_params: user_params[:policy_users_attributes])
 
-        if user.nil?
-          user          = ::User.new(user_params[:user_attributes])
-          user.password = SecureRandom.base64(12)
-          user.invite! if user.save
-        end
-        PolicyUser.create(user: user, spouse: user_params[:spouse], policy: @policy)
+      if result.failure?
+        render json: result.failure, status: 422
+      else
+        render :show, status: :created
       end
-
-      render json: { policy: @policy }, status: :created
     else
       render json: @policy.errors, status: :unprocessable_entity
     end
@@ -56,7 +51,7 @@ module PoliciesMethods
       if result.failure?
         render json: result.failure, status: 422
       else
-        render json: { policy: @policy }, status: :ok
+        render :show, status: :ok
       end
     else
       render json: @policy.errors, status: :unprocessable_entity
@@ -165,7 +160,7 @@ module PoliciesMethods
     existed_ids = permitted_params[:policy_coverages_attributes]&.map { |coverage| coverage[:id] }
 
     unless existed_ids.nil? || existed_ids.compact.blank?
-      (@policy.policy_insurables.pluck(:id) - existed_ids).each do |id|
+      (@policy.policy_coverages.pluck(:id) - existed_ids).each do |id|
         permitted_params[:policy_coverages_attributes] <<
           ActionController::Parameters.new(id: id, _destroy: true).permit(:id, :_destroy)
       end
