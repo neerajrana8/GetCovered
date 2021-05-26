@@ -154,7 +154,7 @@ module PoliciesMethods
     permitted_params =
       params.require(:policy).permit(
         :effective_date, :expiration_date, :number, :status, :out_of_system_carrier_title,
-        policy_coverages_attributes: %i[id limit deductible enabled designation]
+        policy_coverages_attributes: %i[id limit title deductible enabled designation]
       )
 
     existed_ids = permitted_params[:policy_coverages_attributes]&.map { |coverage| coverage[:id] }
@@ -198,7 +198,7 @@ module PoliciesMethods
                                    :carrier_id, :effective_date, :expiration_date, :out_of_system_carrier_title,
                                    :address,
                                    policy_insurables_attributes: %i[insurable_id primary],
-                                   policy_coverages_attributes: %i[limit deductible enabled designation],
+                                   policy_coverages_attributes: %i[title limit deductible enabled designation],
                                    documents: [])
   end
 
