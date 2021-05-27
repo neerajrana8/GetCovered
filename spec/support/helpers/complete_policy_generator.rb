@@ -15,6 +15,14 @@ module Helpers
           current_unit.create_carrier_profile(1) unless current_unit.carrier_profile(1)
         end
         community.reset_qbe_rates(true, true)
+        # debug screaming
+        failed_events = ::Event.where(eventable: community, status: "error").to_a
+        unless failed_events.blank?
+          puts "**********************************************"
+          puts "* QBE community setup event errors occurred (spec/support/helpers/complete_policy_generator.rb:4)! *"
+          failed_events.each{|evt| puts "-------------"; puts "\n"; puts evt.request; puts "\n"; puts evt.response; puts "\n"; puts "---------" }
+          puts "**********************************************"
+        end
       end
     end
     
@@ -29,13 +37,13 @@ module Helpers
       if unit.nil?
         community = FactoryBot.create(:insurable, :residential_community, account: account)
         ::Address.create!(
-          street_number: "3201",
-          street_name: "S Bentley Ave",
-          city: "Los Angeles",
-          county: "LOS ANGELES",
-          state: "CA",
-          zip_code: "90034",
-          plus_four: "5203",
+          street_number: "105",
+          street_name: "N Elm St",
+          city: "Mahomet",
+          county: "Champaign",
+          state: "IL",
+          zip_code: "61853",
+          plus_four: "9364",
           primary: true,
           addressable_type: "Insurable",
           addressable_id: community.id
