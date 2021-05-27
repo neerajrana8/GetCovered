@@ -171,7 +171,7 @@ module V2
         return({}) if params[:lease].blank?
         
         params.require(:lease).permit(
-          :covered, :end_date, :start_date, :status,
+          :covered, :end_date, :start_date, :status, :account_id, :insurable_id,
           lease_users_attributes: [:user_id],
           users_attributes: %i[id email password]
         )
