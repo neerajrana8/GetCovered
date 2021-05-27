@@ -20,7 +20,9 @@ module V2
         end
       end
       
-      def show; end
+      def show
+        render template: 'v2/shared/leases/show', status: :ok
+      end
       
       def create
         if create_allowed?

@@ -19,6 +19,7 @@ module V2
       end
 
       def show
+        render template: 'v2/shared/leases/show', status: :ok
       end
 
       def create
