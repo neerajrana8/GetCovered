@@ -170,6 +170,7 @@
           get 'resend_policy_documents'
           put :refund_policy
           put :cancel_policy
+          put :add_policy_documents
           put :update_coverage_proof
           delete :delete_policy_document
         end

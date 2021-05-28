@@ -265,6 +265,7 @@
         put :refund_policy
         put :cancel_policy
         put :update_coverage_proof
+        put :add_policy_documents
         delete :delete_policy_document
       end
       get "search", to: 'policies#search', on: :collection

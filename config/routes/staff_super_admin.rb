@@ -269,6 +269,7 @@
               to: "policies#get_leads",
               via: "get"
           put :update_coverage_proof
+          put :add_policy_documents
           delete :delete_policy_document
           put :refund_policy
           put :cancel_policy

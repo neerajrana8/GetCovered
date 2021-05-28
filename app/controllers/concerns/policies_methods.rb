@@ -58,6 +58,19 @@ module PoliciesMethods
     end
   end
 
+  def add_policy_documents
+    if @policy.in_system?
+      render json: standard_error(:not_permitted, 'Cant change documents for in system policies'),
+             status: :unprocessable_entity
+    else
+      params.permit(documents: [])[:documents].each do |file|
+        @policy.documents.attach(file)
+      end
+
+      render :show, status: :ok
+    end
+  end
+
   def delete_policy_document
     document = @policy.documents.find(delete_policy_document_params[:document_id])
     if document.present?
