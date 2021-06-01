@@ -99,7 +99,7 @@ module V2
       private
 
       def parse_input_file
-        if params[:input_file].present? && params[:input_file].content_type == 'text/csv'
+        if params[:input_file].present?
           file = params[:input_file].open
           result =
             ::Leases::BulkCreate::InputFileParser.run(
