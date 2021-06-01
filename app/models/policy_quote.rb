@@ -282,7 +282,7 @@ class PolicyQuote < ApplicationRecord
   end
 
   # to be invoked by Invoice, not directly; an invoice payment attempt was successful
-  def payment_succeeded(invoice)
+  def invoice_complete(invoice)
     unless self.policy.nil?
       if self.policy.BEHIND? || self.policy.REJECTED?
         self.policy.update_columns(billing_status: 'RESCINDED') unless self.policy.invoices.map{|inv| inv.status }.include?('missed')
@@ -293,23 +293,13 @@ class PolicyQuote < ApplicationRecord
     # Mailer?
   end
 
-  # to be invoked by Invoice, not directly; an invoice payment attempt failed (keep in mind it might not actually have been due yet, and that invoice.status will not yet have been changed to available/missed when this is called!)
-  def payment_failed(invoice)
-    # Mailer? (will run whenever a charge fails, including before due date or on auto-pay attempts after due date)
-  end
-
   # to be invoked by Invoice, not directly; an invoice payment attempt was missed
   #(either a job invoked this on/after the due date, or a payment attempt failed after the due date, in which case payment_failed and then payment_missed will be invoked by the invoice)
-  def payment_missed(invoice)
+  def invoice_missed(invoice)
     unless self.policy.nil?
       self.policy.update_columns(billing_status: 'BEHIND', billing_behind_since: Time.current.to_date) unless self.policy.billing_status == 'BEHIND'
     end
     # Mailer?
-  end
-
-  # to be invoked by Invoice, not directly; an invoice received payment or underwent a refund
-  def invoice_collected_changed(invoice, amount_collected, old_amount_collected)
-    self.policy_premium.update_unearned_premium
   end
   
   def effective_moment

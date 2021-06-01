@@ -29,7 +29,7 @@ class Invoice < ApplicationRecord
   before_update :set_missed_record,
     if: Proc.new{|i| i.will_save_change_to_attribute?('status') && i.status == 'missed' && !i.callbacks_disabled }
   after_commit :send_status_change_notifications,
-    if: Proc.new{|i| i.autosend_status_change_notifications && i.saved_change_to_attribute?('status') && !i.callbacks_disabled }
+    if: Proc.new{|i| i.saved_change_to_attribute?('status') && !i.callbacks_disabled }
     
   scope :internal, -> { where(external: false) }
   scope :external, -> { where(external: true) }
@@ -363,8 +363,8 @@ class Invoice < ApplicationRecord
     end # end payment_lock
   end
 
+  # WARNING: only called from stripe charges right now, not external charges!
   def send_charge_notifications(charge)
-    # MOOSE WARNING: fill this out, notification people
     case charge.status # value will never be 'processing'
       when 'errored'
       when 'pending'
@@ -374,8 +374,26 @@ class Invoice < ApplicationRecord
   end
   
   def send_status_change_notifications
-    # this gets called after_commit whenever our status has changed
-    # MOOSE WARNING: fill this out, notification people
+    # inform the invoiceable, if relevant
+    case self.status
+      when 'quoted', 'managed_externally'
+        return nil # do nothing
+      when 'upcoming', 'pending'
+        return nil # do nothing
+      when 'available'
+        self.invoiceable.invoice_available(self) if self.invoiceable.respond_to?(:invoice_available)
+      when 'complete'
+        self.invoiceable.invoice_complete(self) if self.invoiceable.respond_to?(:invoice_complete)
+      when 'missed'
+        self.invoiceable.invoice_missed(self) if self.invoiceable.respond_to?(:invoice_missed)
+      when 'cancelled'
+        self.invoiceable.invoice_cancelled(self) if self.invoiceable.respond_to?(:invoice_cancelled)
+    end
+    # send any other notifications
+    if self.autosend_status_change_notifications
+      # this gets called after_commit whenever our status has changed
+      # MOOSE WARNING: fill this out, notification people
+    end
   end
   
   def get_proper_status
