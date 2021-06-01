@@ -47,7 +47,7 @@ module V2
                 lease.users << user
               else
                 secure_tmp_password = SecureRandom.base64(12)
-                user = User.create(
+                user = ::User.create(
                   email: lease_user[:user_attributes][:email],
                   password: secure_tmp_password,
                   password_confirmation: secure_tmp_password,

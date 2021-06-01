@@ -370,8 +370,8 @@ end
 			  	email_providers = ['gmail', 'yahoo', 'msn', 'outlook']
 			  	email = "#{ name[:first].downcase }#{ name[:last].downcase }@#{email_providers[rand(0..3)]}.com"
 	        
-	        unless User.exists?(:email => email)
-				  	user = User.new(email: email, password: 'TestingPassword1234', password_confirmation: 'TestingPassword1234',
+	        unless ::User.exists?(:email => email)
+				  	user = ::User.new(email: email, password: 'TestingPassword1234', password_confirmation: 'TestingPassword1234',
 				  													     profile_attributes: { first_name: name[:first], 
 					  													     										 last_name: name[:last], 
 					  													     										 birth_date: SeedFunctions.time_rand(Time.local(1955, 1, 1), Time.local(1991, 1, 1)) })		
