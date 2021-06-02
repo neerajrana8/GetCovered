@@ -6,6 +6,7 @@ describe 'BrandingProfile API spec', type: :request do
     @agency = FactoryBot.create(:agency)
     @staff = create_agent_for @agency
     @super_admin = FactoryBot.create(:staff, role: 'super_admin')
+    FactoryBot.create(:branding_profile, :default_branding_profile)
   end
 
   context 'public api' do

@@ -36,7 +36,7 @@ module Leads
             leads: leads(@leads_by_day),
             applications: applications(@leads_by_day),
             not_finished_applications: not_finished_applications(@leads_by_day),
-            conversions: conversions(@leads_by_day),
+            conversions: conversions(@leads),
             visitors: visitors(@leads_by_day),
             customers: customers(@leads_by_day)
           }
@@ -50,7 +50,7 @@ module Leads
             leads: leads(@leads_by_month),
             applications: applications(@leads_by_month),
             not_finished_applications: not_finished_applications(@leads_by_month),
-            conversions: conversions(@leads_by_month),
+            conversions: conversions(@leads),
             visitors: visitors(@leads_by_month),
             customers: customers(@leads_by_month)
           }

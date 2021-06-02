@@ -28,7 +28,8 @@
             to: "accounts#account_buildings",
             via: "get"
         end
-      end
+    end
+    post :accounts_index, action: :index, controller: :accounts
 
     resources :refunds,
       only: [ :index, :create, :update] do
@@ -46,7 +47,7 @@
     resources :dashboard, only: [] do
       collection do
         get 'communities_data'
-        post 'communities_data_index', action: :index
+        post 'communities_data_index', action: :communities_data
       end
     end
 
@@ -65,9 +66,10 @@
         end
 
         collection do
-          get :sub_agencies_index
+          get :sub_agencies
         end
-      end
+    end
+    post :agencies_index, action: :index, controller: :agencies
 
     resources :application_modules,
       path: "application-modules",
@@ -199,14 +201,20 @@
       end
     end
     get :agency_filters, controller: 'insurables', to: 'insurables#agency_filters', path: 'insurables/filters/agency_filters'
+    post :insurables_index, action: :index, controller: :insurables
 
     resources :insurable_types, path: "insurable-types", only: [ :index ]
 
     resources :leads, only: [:index, :show, :update]
-    resources :leads_dashboard, only: [:index]
-    resources :leads_dashboard_tracking_url, only: [:index]
 
-    get :get_filters, controller: 'leads_dashboard', path: 'leads_dashboard/get_filters'
+    resources :leads_dashboard, only: [:index] do
+      collection do
+        get :get_filters
+      end
+    end
+    post :leads_dashboard_index, action: :index, controller: :leads_dashboard
+
+    resources :leads_dashboard_tracking_url, only: [:index]
 
     resources :lease_types,
       path: "lease-types",
@@ -220,7 +228,7 @@
       path: "lease-type-policy-types",
       only: [ :create, :update, :index, :show ]
 
-    resources :master_policies, path: 'master-policies', only: [ :index, :show ] do
+    resources :master_policies, path: 'master-policies', only: [:create, :update, :index, :show] do
       member do
         get :communities
         get :covered_units
@@ -233,6 +241,8 @@
         put :cancel
         put :cancel_coverage
         put :cancel_insurable
+        put :auto_assign_all
+        put :auto_assign_insurable
       end
     end
 
@@ -264,6 +274,7 @@
 
         get "search", to: 'policies#search', on: :collection
     end
+    post :policies_index, action: :index, controller: :policies
 
     resources :policy_cancellation_requests, only: [ :index, :show ] do
       member do

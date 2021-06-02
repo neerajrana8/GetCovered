@@ -47,7 +47,6 @@ class Policy < ApplicationRecord
   include AgencyConfiePolicy
   include RecordChange
 
-  after_create :inherit_policy_coverages, if: -> { policy_type&.designation == 'MASTER-COVERAGE' }
   after_create :schedule_coverage_reminders, if: -> { policy_type&.designation == 'MASTER-COVERAGE' }
 
   # after_save :start_automatic_master_coverage_policy_issue, if: -> { policy_type&.designation == 'MASTER' }
@@ -233,10 +232,6 @@ class Policy < ApplicationRecord
 
   def master_policy
     errors.add(:policy, I18n.t('policy_model.must_belong_to_coverage')) unless policy&.policy_type&.master_policy? && policy&.BOUND?
-  end
-
-  def inherit_policy_coverages
-    policy_coverages << policy&.policy_coverages
   end
 
   def schedule_coverage_reminders
