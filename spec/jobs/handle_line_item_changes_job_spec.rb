@@ -40,7 +40,7 @@ describe 'HandleLineItemChangesJob' do
   
   it "correctly generates commissions" do
     policy = Helpers::CompletePolicyGenerator.create_complete_qbe_policy(account: @account, agency: @agency)
-    expect(policy.id).to neq(nil)
+    expect(policy.id.nil?).to eq(false)
     
   end
 

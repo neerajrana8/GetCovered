@@ -2,7 +2,7 @@
 
 RSpec.describe Account, elasticsearch: true, type: :model do
   it 'Account Get Covered should be indexed' do
-    FactoryBot.create(:account)
+    # already created in setup seeds FactoryBot.create(:account)
     # refresh the index 
     Account.__elasticsearch__.refresh_index!
     # verify your model was indexed
@@ -10,7 +10,6 @@ RSpec.describe Account, elasticsearch: true, type: :model do
   end
 
   it 'Account Test should not be indexed' do
-    FactoryBot.create(:account)
     # refresh the index 
     Account.__elasticsearch__.refresh_index!
     # verify your model was indexed
