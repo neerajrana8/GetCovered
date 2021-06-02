@@ -25,3 +25,8 @@ json.primary_user do
     json.full_name policy.primary_user.profile&.full_name
   end
 end
+
+# @todo remove after the commissions release
+if policy.in_system?
+  json.billing_strategy (policy.policy_quotes&.last&.policy_application&.billing_strategy || policy.billing_strategies&.last)&.title
+end
