@@ -26,7 +26,4 @@ json.primary_user do
   end
 end
 
-# @todo remove after the commissions release
-if policy.in_system?
-  json.billing_strategy (policy.policy_quotes&.last&.policy_application&.billing_strategy || policy.billing_strategies&.last)&.title
-end
+json.billing_strategy policy.policy_quotes&.last&.policy_application&.billing_strategy&.title
