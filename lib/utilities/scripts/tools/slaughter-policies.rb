@@ -80,27 +80,73 @@ end
 
 
 
-def kill_dem_problemz
+def kill_dem_problemz(really_kill: false)
   begin
     ActiveRecord::Base.transaction do
       # kill policy quotes without policies or policy applications
       ::PolicyQuote.all.select{|pq| pq.policy.nil? && pq.policy_application.nil? }.each do |pq|
-        slaughter_policy(pq)
+        if really_kill
+          slaughter_policy(pq)
+        else
+          condemned = slaughter_policy(pq, be_merciful: true)
+          unless condemned.blank?
+            puts "!!!!!! first slaughter found records"
+            condemned.each{|c| puts "#{c.class.name} #{c.id}" }
+            puts "!!!!!! first slaughter found records"
+            exit
+          end
+        end
       end
       # kill policies & policy quotes without invoices, or with invoices without payers
       ::Policy.all.select{|p| p.invoices.blank? || p.invoices.any?{|i| i.payer.nil? } }.each do |p|
-        slaughter_policy(p)
+        if really_kill
+          slaughter_policy(p)
+        else
+          condemned = slaughter_policy(p, be_merciful: true)
+          unless condemned.blank?
+            puts "!!!!!! second slaughter found records"
+            condemned.each{|c| puts "#{c.class.name} #{c.id}" }
+            puts "!!!!!! second slaughter found records"
+            exit
+          end
+        end
       end
       ::PolicyQuote.all.select{|pq| pq.invoices.blank? || pq.invoices.any?{|i| i.payer.nil? } }.each do |pq|
-        slaughter_policy(pq)
+        if really_kill
+          slaughter_policy(pq)
+        else
+          condemned = slaughter_policy(pq, be_merciful: true)
+          unless condemned.blank?
+            puts "!!!!!! third slaughter found records"
+            condemned.each{|c| puts "#{c.class.name} #{c.id}" }
+            puts "!!!!!! third slaughter found records"
+            exit
+          end
+        end
       end
       # kill PolicyGroups and Deposit Choice policies
       ::PolicyApplication.where.not(policy_application_group_id: nil).or(::PolicyApplication.where(carrier_id: 6)).each do |pa|
-        slaughter_policy(pa)
+        if really_kill
+          slaughter_policy(pa)
+        else
+          condemned = slaughter_policy(pa, be_merciful: true)
+          unless condemned.blank?
+            puts "!!!!!! fourth slaughter found records"
+            condemned.each{|c| puts "#{c.class.name} #{c.id}" }
+            puts "!!!!!! fourth slaughter found records"
+            exit
+          end
+        end
       end
       # kill fees & taxes (no policy with these things exists on production so woomba schnoomba)
       ::PolicyPremium.where("amortized_fees > 0").or(::PolicyPremium.where("deposit_fees > 0")).or(::PolicyPremium.where("taxes > 0")).where.not(policy_quote_id: nil).all.each do |premium|
         next if [5,6].include?(premium.policy_quote&.policy_application&.carrier_id || premium.policy&.carrier_id)
+        if !really_kill
+          puts "!!!!! tax and fee cull found record"
+          puts "PolicyPremium #{premium.id}"
+          puts "!!!!! tax and fee cull found record"
+          exit
+        end
         #premium.calculation_base = premium.internal_base + premium.internal_special_premium + premium.internal_taxes + premium.amortized_fees
         premium.base = premium.base + premium.amortized_fees + premium.deposit_fees + premium.taxes
         #premium.total_fees = premium.total_fees - premium.amortized_fees - premium.deposit_fees
