@@ -39,8 +39,20 @@ describe 'HandleLineItemChangesJob' do
   
   
   it "correctly generates commissions" do
+    # create the policy
     policy = Helpers::CompletePolicyGenerator.create_complete_qbe_policy(account: @account, agency: @agency)
     expect(policy.id.nil?).to eq(false)
+    # pay the invoices
+    policy.invoices.order('due_date asc').each do |invoice|
+      unless invoice.status == 'complete'
+        result = @invoice.pay(stripe_source: :default)
+        @invoice.reload
+        expect(result[:success]).to eq(true), "payment attempt failed with output: #{result}"
+      end
+    end
+    # run the job
+    HandleLineItemChangesJob.perform_now
+    # check the commissions numbers
     
   end
 
