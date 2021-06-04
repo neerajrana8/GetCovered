@@ -12,7 +12,7 @@ class PolicyType < ApplicationRecord
   RENT_GUARANTEE_ID = 5
   SECURITY_DEPOSIT_REPLACEMENT_ID = 6
 
-  MASTER_IDS = [MASTER_IDS, SECURITY_DEPOSIT_REPLACEMENT_ID].freeze
+  MASTER_IDS = [MASTER_ID, SECURITY_DEPOSIT_REPLACEMENT_ID].freeze
   
   after_initialize :initialize_policy_type
 
