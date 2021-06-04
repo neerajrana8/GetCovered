@@ -41,17 +41,18 @@ module V2
       end
 
       def assign_agency_to_carrier
-        agency = Agency.find_by(id: params[:carrier_agency_id])
-        carrier = Carrier.find_by(id: params[:id])
+        agency = Agency.find_by(id: assign_to_carrier_params[:agency_id])
+        carrier = Carrier.find_by(id: assign_to_carrier_params[:carrier_id])
 
         unless agency.nil? || carrier.nil?
           if carrier.agencies.include?(agency)
             render json: { message: 'This agency has been already assigned to this carrier' }, status: :unprocessable_entity
           else
-            if carrier.agencies << agency
+            created = ::CarrierAgency.create(assign_to_carrier_params)
+            if created.id
               render json: { message: 'Carrier was added to the agency' }, status: :ok
             else
-              render json: standard_error(:something_went_wrong, "#{agency.title} could not be assigned to #{carrier.title}", {}), status: :unprocessable_entity
+              render json: standard_error(:something_went_wrong, "#{agency.title} could not be assigned to #{carrier.title}", created.errors.full_messages), status: :unprocessable_entity
             end
           end
         end
@@ -119,6 +120,19 @@ module V2
         elsif !params[:substrate_association_provided]
           @substrate = @substrate.carriers
         end
+      end
+      
+      def assign_to_carrier_params
+        params.require(:carrier_agency).permit(
+          :carrier_id,
+          :agency_id,
+          carrier_agency_policy_type_attributes: [
+            :policy_type_id,
+            commission_strategy_attributes: [
+              :percentage
+            ]
+          ]
+        )
       end
 
       def create_params
