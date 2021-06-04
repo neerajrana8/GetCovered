@@ -20,7 +20,6 @@ module MasterPoliciesMethods
       @master_policy = Policy.new(create_params.merge(agency: account.agency,
                                                       carrier: carrier,
                                                       account: account,
-                                                      policy_type_id: PolicyType::MASTER_ID,
                                                       status: 'BOUND'))
       @policy_premium = PolicyPremium.new(create_policy_premium)
       if @master_policy.errors.none? && @policy_premium.errors.none? && @master_policy.save && @policy_premium.save
@@ -258,7 +257,7 @@ module MasterPoliciesMethods
       return({}) if params[:policy].blank?
 
       permitted_params = params.require(:policy).permit(
-        :account_id, :agency_id, :auto_renew, :carrier_id, :effective_date,
+        :account_id, :agency_id, :auto_renew, :carrier_id, :effective_date, :policy_type_id,
         :expiration_date, :number, system_data: [:landlord_sumplimental],
                                    policy_coverages_attributes: %i[policy_application_id title limit deductible enabled designation]
       )

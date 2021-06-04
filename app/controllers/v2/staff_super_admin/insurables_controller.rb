@@ -133,7 +133,7 @@ module V2
           @master_policy = @master_policy_coverage&.policy
         else
           @master_policy =
-            @insurable.policies.current.where(policy_type_id: PolicyType::MASTER_ID).take
+            @insurable.policies.current.where(policy_type_id: PolicyType::MASTER_IDS).take
           @master_policy_coverage = nil
         end
       end
