@@ -112,6 +112,7 @@ describe 'Master Policies API spec', type: :request do
       policy: {
         effective_date: Time.zone.now + 1.day,
         expiration_date: Time.zone.now + 1.month,
+        policy_type_id: PolicyType::MASTER_ID,
         number: 'MPN',
         policy_coverages_attributes: [
           {
