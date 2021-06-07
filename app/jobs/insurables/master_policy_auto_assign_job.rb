@@ -5,7 +5,7 @@ module Insurables
     def perform
       policy_insurables = PolicyInsurable.
         joins(:policy).
-        where(policy_insurables: { auto_assign: true }, policies: { policy_type_id: PolicyType::MASTER_IDS }).
+        where(policy_insurables: { auto_assign: true }, policies: { policy_type_id: PolicyType.master.ids }).
         where('expiration_date > ?', Time.zone.now)
 
       policy_insurables.each do |policy_insurable|

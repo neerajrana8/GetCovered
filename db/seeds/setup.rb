@@ -45,12 +45,14 @@ end
 # Setting up base Policy Types
 
 @policy_types = [
-  { title: "Residential", designation: "HO4", enabled: true },
-  { title: "Master Policy", designation: "MASTER", enabled: true },
-  { title: "Master Policy Coverage", designation: "MASTER-COVERAGE", enabled: true },
-  { title: "Commercial", designation: "BOP", enabled: true },
-  { title: "Rent Guarantee", designation: "RENT-GUARANTEE", enabled: true },
-  { title: "Security Deposit Replacement", designation: "SECURITY-DEPOSIT", enabled: true }
+  { id: 1, title: "Residential", designation: "HO4", enabled: true },
+  { id: 2, title: "Master Policy", designation: "MASTER", enabled: true, master: true },
+  { id: 3, title: "Master Policy Coverage", designation: "MASTER-COVERAGE", enabled: true, master_coverage: true, master_policy_id: 2 },
+  { id: 4, title: "Commercial", designation: "BOP", enabled: true },
+  { id: 5, title: "Rent Guarantee", designation: "RENT-GUARANTEE", enabled: true },
+  { id: 6, title: "Security Deposit Replacement", designation: "SECURITY-DEPOSIT", enabled: true },
+  { id: 7, title: "Master Security Deposit Replacement", designation: "MASTER-SECURITY-DEPOSIT", enabled: true, master: true },
+  { id: 8, title: "Master Security Deposit Replacement Coverage", designation: "MASTER-SECURITY-DEPOSIT-COVERAGE", enabled: true, master_coverage: true, master_policy_id: 7 }
 ]
 
 @policy_types.each do |pt|

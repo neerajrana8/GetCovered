@@ -23,7 +23,7 @@ class PolicyInsurable < ApplicationRecord
         errors.add(:insurable, 'must be occupied')
       end
 
-      if insurable&.parent_community&.policies&.where(policy_type_id: PolicyType::MASTER_IDS).count&.positive?
+      if insurable&.parent_community&.policies&.where(policy_type_id: PolicyType::MASTER_ID).count&.positive?
         errors.add(:insurable, 'must have Master Policy')
       end
     end

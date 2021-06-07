@@ -11,18 +11,20 @@ class PolicyType < ApplicationRecord
   COMMERCIAL_ID = 4
   RENT_GUARANTEE_ID = 5
   SECURITY_DEPOSIT_REPLACEMENT_ID = 6
-
-  MASTER_IDS = [MASTER_ID, SECURITY_DEPOSIT_REPLACEMENT_ID].freeze
+  MASTER_SECURITY_DEPOSIT_REPLACEMENT_ID = 7
   
   after_initialize :initialize_policy_type
 
   # Relationships
+
+  belongs_to :master_policy, class_name: 'PolicyType', optional: true
   has_many :carrier_policy_types
   has_many :carriers,
     through: :carrier_policy_types
 
   has_many :commission_strategies
   has_many :billing_strategies
+  has_many :master_coverages, class_name: 'PolicyType', foreign_key: :master_policy_id
 
   # Validations
   validates :title, presence: true, uniqueness: true
@@ -30,10 +32,12 @@ class PolicyType < ApplicationRecord
   # validates :designation, presence: true,
   #                         uniqueness: true
   #
-  scope :master_policies, -> { where("title LIKE 'Master%'") }
+  scope :master, -> { where(master: true) }
+  scope :master_coverages, -> { where(master_coverage: true) }
+  scope :master_and_coverages, -> { where(master: true).or where(master_coverage: true) }
 
   def master_policy?
-    self.designation == 'MASTER'
+    master
   end
 
   def residential?

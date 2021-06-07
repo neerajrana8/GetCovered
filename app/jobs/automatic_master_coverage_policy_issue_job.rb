@@ -3,7 +3,7 @@ class AutomaticMasterCoveragePolicyIssueJob < ApplicationJob
   
   def perform(policy_id)
     master_policy = Policy.find_by(id: policy_id)
-    return if master_policy.nil? || PolicyType::MASTER_IDS.exclude?(master_policy.policy_type_id)
+    return if master_policy.nil? || PolicyType.master.ids.exclude?(master_policy.policy_type_id)
 
     master_policy.insurables.each do |insurable|      
       insurable.units_relation&.each do |unit|

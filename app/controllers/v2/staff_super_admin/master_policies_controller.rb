@@ -8,14 +8,14 @@ module V2
       include MasterPoliciesMethods
 
       def index
-        master_policies_relation = Policy.where(policy_type_id: PolicyType::MASTER_IDS).order(created_at: :desc)
+        master_policies_relation = Policy.where(policy_type_id: PolicyType.master.ids).order(created_at: :desc)
         master_policies_relation = master_policies_relation.where(status: params[:status]) if params[:status].present?
         super(:@master_policies, master_policies_relation)
         render template: 'v2/shared/master_policies/index', status: :ok
       end
 
       def set_policy
-        @master_policy = Policy.find_by(policy_type_id: PolicyType::MASTER_IDS, id: params[:id])
+        @master_policy = Policy.find_by(policy_type_id: PolicyType.master.ids, id: params[:id])
         render(json: { error: :not_found, message: 'Master policy not found' }, status: :not_found) if @master_policy.blank?
       end
     end
