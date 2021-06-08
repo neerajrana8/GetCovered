@@ -172,7 +172,7 @@ module MasterPoliciesMethods
             policy_coverage.attributes.slice('limit', 'deductible', 'enabled', 'designation', 'title')
           end,
           number: policy_number,
-          policy_type_id: PolicyType::MASTER_COVERAGE_ID,
+          policy_type_id: @master_policy.policy_type.coverage,
           policy: @master_policy,
           status: 'BOUND',
           system_data: @master_policy.system_data,

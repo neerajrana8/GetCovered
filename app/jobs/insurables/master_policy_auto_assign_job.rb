@@ -5,7 +5,7 @@ module Insurables
     def perform
       policy_insurables = PolicyInsurable.
         joins(:policy).
-        where(policy_insurables: { auto_assign: true }, policies: { policy_type_id: PolicyType.master.ids }).
+        where(policy_insurables: { auto_assign: true }, policies: { policy_type_id: PolicyType::MASTER_IDS }).
         where('expiration_date > ?', Time.zone.now)
 
       policy_insurables.each do |policy_insurable|
@@ -23,7 +23,7 @@ module Insurables
               policy_coverage.attributes.slice('limit', 'deductible', 'enabled', 'designation', 'title')
             end,
             number: policy_number,
-            policy_type_id: PolicyType::MASTER_COVERAGE_ID,
+            policy_type_id: policy.coverage,
             policy: policy,
             effective_date: Time.zone.now,
             expiration_date: policy.expiration_date,

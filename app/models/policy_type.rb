@@ -10,8 +10,12 @@ class PolicyType < ApplicationRecord
   MASTER_COVERAGE_ID = 3
   COMMERCIAL_ID = 4
   RENT_GUARANTEE_ID = 5
-  SECURITY_DEPOSIT_REPLACEMENT_ID = 6
-  MASTER_SECURITY_DEPOSIT_REPLACEMENT_ID = 7
+  SECURITY_DEPOSIT_ID = 6
+  MASTER_SECURITY_DEPOSIT_ID = 7
+  MASTER_SECURITY_COVERAGE_ID = 8
+  
+  MASTER_IDS = [MASTER_ID, MASTER_SECURITY_DEPOSIT_ID].freeze
+  MASTER_COVERAGES_IDS = [MASTER_COVERAGE_ID, MASTER_SECURITY_COVERAGE_ID].freeze
   
   after_initialize :initialize_policy_type
 
@@ -38,6 +42,10 @@ class PolicyType < ApplicationRecord
 
   def master_policy?
     master
+  end
+
+  def coverage
+    master_coverages.take
   end
 
   def residential?

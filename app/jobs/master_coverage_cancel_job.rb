@@ -3,7 +3,7 @@ class MasterCoverageCancelJob < ApplicationJob
   
   def perform(policy_id)
     master_policy = Policy.find_by(id: policy_id)
-    return if master_policy.nil? || PolicyType.master.ids.exclude?(master_policy.policy_type_id)
+    return if master_policy.nil? || PolicyType::MASTER_IDS.exclude?(master_policy.policy_type_id)
 
     new_expiration_date =
       master_policy.effective_date > Time.zone.now ? master_policy.effective_date : Time.zone.now

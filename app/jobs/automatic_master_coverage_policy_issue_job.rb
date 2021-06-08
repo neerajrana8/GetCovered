@@ -3,7 +3,7 @@ class AutomaticMasterCoveragePolicyIssueJob < ApplicationJob
   
   def perform(policy_id)
     master_policy = Policy.find_by(id: policy_id)
-    return if master_policy.nil? || PolicyType.master.ids.exclude?(master_policy.policy_type_id)
+    return if master_policy.nil? || PolicyType::MASTER_IDS.exclude?(master_policy.policy_type_id)
 
     master_policy.insurables.each do |insurable|      
       insurable.units_relation&.each do |unit|
@@ -18,7 +18,7 @@ class AutomaticMasterCoveragePolicyIssueJob < ApplicationJob
               policy_coverage.attributes.slice('limit', 'deductible', 'enabled', 'designation', 'title')
             end,
             number: policy_number,
-            policy_type_id: PolicyType::MASTER_COVERAGE_ID,
+            policy_type_id: master_policy.policy_type.coverage,
             policy: master_policy,
             effective_date: Time.zone.now,
             expiration_date: master_policy.expiration_date,

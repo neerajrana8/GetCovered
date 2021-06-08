@@ -20,6 +20,6 @@ class BillMasterPoliciesJob < ApplicationJob
   private
 
   def master_policies
-    Policy.where(policy_type_id: PolicyType.master.ids)
+    Policy.where(policy_type_id: PolicyType::MASTER_IDS)
   end
 end
