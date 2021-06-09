@@ -47,7 +47,7 @@ describe 'HandleLineItemChangesJob' do
       unless invoice.status == 'complete'
         invoice.update(available_date: Time.current.to_date - 1.day)
         result = invoice.pay(stripe_source: :default)
-        @invoice.reload
+        invoice.reload
         expect(result[:success]).to eq(true), "payment attempt failed with output: #{result}"
       end
     end
