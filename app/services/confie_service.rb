@@ -312,7 +312,7 @@ class ConfieService
           }.merge(get_insured_or_principal_for(
             policy.primary_user,
             nil,
-            for_insurable: policy.primary_insurable || (policy.policy_type_id == ::PolicyType::RENT_GUARANTEE_ID ? policy.primary_user&.address : nil)
+            for_insurable: policy.primary_insurable || (policy.policy_type_id == ::PolicyType::RENT_GUARANTEE_ID ? true : nil)
           ))
         ),
         "com.a1_Policy": {
