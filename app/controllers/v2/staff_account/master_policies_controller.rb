@@ -11,6 +11,14 @@ module V2
       def index
         master_policies_relation = Policy.where(policy_type_id: PolicyType::MASTER_IDS, account: @account).order(created_at: :desc)
         master_policies_relation = master_policies_relation.where(status: params[:status]) if params[:status].present?
+
+        if params[:insurable_id].present?
+          insurable = Insurable.find(params[:insurable_id])
+
+          current_types_ids = insurable.policies.current.pluck(:policy_type_id)
+          master_policies_relation = master_policies_relation.where.not(policy_type_id: current_types_ids)
+        end
+        
         @master_policies = paginator(master_policies_relation)
         render template: 'v2/shared/master_policies/index', status: :ok
       end
