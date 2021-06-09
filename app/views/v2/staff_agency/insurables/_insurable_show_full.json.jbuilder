@@ -21,7 +21,9 @@ end
 json.policies do
   unless insurable.policies.nil?
     json.array! insurable.policies do |policy|
-      json.partial! "v2/staff_agency/policies/policy_short_fields.json.jbuilder", policy: policy
+      json.extract! policy, :id, :number, :policy_type_id, :status
+
+      json.policy_type_title policy&.policy_type&.title
     end
   end
 end
