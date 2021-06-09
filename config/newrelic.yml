@@ -49,7 +49,7 @@ test_container:
   # It doesn't make sense to report to New Relic from automated test runs.
   monitor_mode: false
 
-staging:
+aws_staging:
   <<: *default_settings
   app_name: GCV2 STAGING
   attributes.include: [job.sidekiq.args.*, request.parameters.*]
