@@ -13,11 +13,9 @@ module V2
       before_action :parse_input_file, only: %i[bulk_create]
       
       def index
-        if params[:short]
-          super(:@leases, @substrate)
-        else
-          super(:@leases, @substrate, :account, :insurable, :lease_type)
-        end
+        super(:@leases, Lease, :account, :insurable, :lease_type)
+
+        render template: 'v2/shared/leases/index', status: :ok
       end
       
       def show
