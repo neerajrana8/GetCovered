@@ -7,6 +7,7 @@ module V2
     class LeasesController < StaffSuperAdminController
       
       before_action :set_lease, only: [:update, :destroy, :show]
+      before_action :parse_input_file, only: %i[bulk_create]
             
       def index
         if params[:short]
@@ -17,6 +18,7 @@ module V2
       end
       
       def show
+        render template: 'v2/shared/leases/show', status: :ok
       end
       
       def create
@@ -60,9 +62,69 @@ module V2
             status: :unauthorized
         end
       end
-      
+
+      def bulk_create
+        @parsed_input_file.each do |lease_params|
+          lease = Lease.create(lease_params[:lease].merge(account: params[:account_id]))
+
+          if lease.valid?
+            lease_params[:lease_users].each do |lease_user|
+              if ::User.where(email: lease_user[:user_attributes][:email]).exists?
+                user = ::User.find_by_email(lease_user[:user_attributes][:email])
+                lease.users << user
+              else
+                secure_tmp_password = SecureRandom.base64(12)
+                user = User.create(
+                  email: lease_user[:user_attributes][:email],
+                  password: secure_tmp_password,
+                  password_confirmation: secure_tmp_password,
+                  profile_attributes: lease_user[:user_attributes][:profile_attributes]
+                )
+                if !user.valid?
+                  ap user.errors.full_messages
+                  render json: { success: false, message: user.errors.full_messages } && return
+                else
+                  lease.users << user
+                end
+              end
+            end
+            Leases::InviteUsersJob.perform_later(lease)
+          else
+            render json: { success: false, message: lease.errors.full_messages } && return
+          end
+        end
+        head :no_content
+      end      
       
       private
+
+      def parse_input_file
+        if params[:input_file].present?
+          file = params[:input_file].open
+          result =
+            ::Leases::BulkCreate::InputFileParser.run(
+              input_file: file,
+              insurable_id: bulk_create_params[:account_id]
+            )
+
+          unless result.valid?
+            render(json: { error: 'Bad file', content: result.errors[:bad_rows] }, status: :unprocessable_entity) && return
+          end
+
+          render json: { error: 'No valid rows' }, status: :unprocessable_entity if result.result.empty?
+
+          @parsed_input_file = result.result
+        else
+          render json: { error: 'Need the correct csv spreadsheet' }, status: :unprocessable_entity
+        end
+      end
+
+      def bulk_create_params
+        params.require(:leases).permit(
+          :community_insurable_id,
+          :account_id
+        )
+      end
       
         def view_path
           super + "/leases"

@@ -20,7 +20,9 @@ module V2
         end
       end
       
-      def show; end
+      def show
+        render template: 'v2/shared/leases/show', status: :ok
+      end
       
       def create
         if create_allowed?
@@ -130,7 +132,7 @@ module V2
       end
 
       def parse_input_file
-        if params[:input_file].present? && params[:input_file].content_type == 'text/csv'
+        if params[:input_file].present?
           file = params[:input_file].open
           result =
             ::Leases::BulkCreate::InputFileParser.run(
