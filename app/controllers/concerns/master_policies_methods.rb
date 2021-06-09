@@ -133,13 +133,9 @@ module MasterPoliciesMethods
         else
           :communities_and_buildings
         end
-      insurables_relation =
-        @master_policy.
-          account.
-          insurables.
-          send(insurables_type).
-          where.not(id: @master_policy.insurables.communities_and_buildings.ids)
-      @insurables = paginator(insurables_relation)
+      
+      insurables_relation = ::MasterPolicies::AvailableTopInsurablesQuery.call(@master_policy, insurables_type)
+      @insurables = insurables_relation.all
       render template: 'v2/shared/master_policies/insurables', status: :ok
     end
 
