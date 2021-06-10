@@ -28,3 +28,13 @@ json.users do
     json.partial! 'v2/staff_super_admin/users/user_show_full.json.jbuilder', user: user
   end
 end
+
+json.policies do
+  if lease.insurable.policies.present?
+    json.array! lease.insurable.policies do |policy|
+      json.extract! policy, :id, :number, :policy_type_id, :status
+
+      json.policy_type_title policy&.policy_type&.title
+    end
+  end
+end
