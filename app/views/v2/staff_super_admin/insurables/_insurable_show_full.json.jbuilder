@@ -21,7 +21,7 @@ end
 json.policies do
   unless insurable.policies.nil?
     json.array! insurable.policies do |policy|
-      json.extract! policy, :id, :number, :policy_type_id, :status
+      json.extract! policy, :id, :number, :policy_type_id, :status, :created_at, :effective_date, :expiration_date
 
       json.policy_type_title policy&.policy_type&.title
     end
