@@ -9,7 +9,7 @@ class AutomaticMasterCoveragePolicyIssueJob < ApplicationJob
       insurable.units_relation&.each do |unit|
         if unit.
           policies.
-          where(policy_type_id: PolicyType::MASTER_MUTUALLY_EXCLUSIVE[@master_policy.policy_type_id]).
+          where(policy_type_id: PolicyType::MASTER_MUTUALLY_EXCLUSIVE[master_policy.policy_type_id]).
           current.
           empty? && unit.occupied?
           policy_number = MasterPolicies::GenerateNextCoverageNumber.run!(master_policy_number: master_policy.number)
