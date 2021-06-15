@@ -15,7 +15,7 @@ module V2
         @communities = Insurable.where(insurable_type_id: community_ids).count
         @total_policy = ::Policy.current.pluck(:id).count
         @total_residential_policies = ::Policy.current.where(policy_type_id: 1).count
-        @total_master_policies = ::Policy.current.where(policy_type_id: 2).count
+        @total_master_policies = ::Policy.current.where(policy_type_id: PolicyType::MASTER_IDS).count
         @total_master_policy_coverages = ::Policy.current.where(policy_type_id: 3).count
         @total_commercial_policies = ::Policy.current.where(policy_type_id: 4).count
         @total_rent_guarantee_policies = ::Policy.current.where(policy_type_id: 5).count

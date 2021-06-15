@@ -20,7 +20,6 @@ module MasterPoliciesMethods
       @master_policy = Policy.new(create_params.merge(agency: account.agency,
                                                       carrier: carrier,
                                                       account: account,
-                                                      policy_type_id: PolicyType::MASTER_ID,
                                                       status: 'BOUND'))
       @policy_premium = PolicyPremium.new(create_policy_premium)
       if @master_policy.errors.none? && @policy_premium.errors.none? && @master_policy.save && @policy_premium.save
@@ -112,7 +111,7 @@ module MasterPoliciesMethods
               where(insurable: [insurable, *insurable.buildings]).
               update(auto_assign: params[:auto_assign])
           end
-          
+
           response_json =
             if ::MasterPolicies::AvailableUnitsQuery.call(@master_policy, insurable.id).any?
               { message: 'Community added', allow_edit: false }
@@ -134,13 +133,9 @@ module MasterPoliciesMethods
         else
           :communities_and_buildings
         end
-      insurables_relation =
-        @master_policy.
-          account.
-          insurables.
-          send(insurables_type).
-          where.not(id: @master_policy.insurables.communities_and_buildings.ids)
-      @insurables = paginator(insurables_relation)
+
+      insurables_relation = ::MasterPolicies::AvailableTopInsurablesQuery.call(@master_policy, insurables_type)
+      @insurables = insurables_relation.all
       render template: 'v2/shared/master_policies/insurables', status: :ok
     end
 
@@ -173,7 +168,7 @@ module MasterPoliciesMethods
             policy_coverage.attributes.slice('limit', 'deductible', 'enabled', 'designation', 'title')
           end,
           number: policy_number,
-          policy_type_id: PolicyType::MASTER_COVERAGE_ID,
+          policy_type_id: @master_policy.policy_type.coverage,
           policy: @master_policy,
           status: 'BOUND',
           system_data: @master_policy.system_data,
@@ -209,14 +204,14 @@ module MasterPoliciesMethods
 
     def cancel_insurable
       @insurable = @master_policy.insurables.find(params[:insurable_id])
-      new_expiration_date = 
+      new_expiration_date =
         @master_policy.effective_date > Time.zone.now ? @master_policy.effective_date : Time.zone.now
       @master_policy.policies.master_policy_coverages.
         joins(:policy_insurables).
         where(policy_insurables: { insurable_id: @insurable.units_relation&.pluck(:id) }).each do |policy|
-          policy.update(status: 'CANCELLED', cancellation_date: Time.zone.now, expiration_date: new_expiration_date)
-          policy.primary_insurable&.update(covered: false)
-        end
+        policy.update(status: 'CANCELLED', cancellation_date: Time.zone.now, expiration_date: new_expiration_date)
+        policy.primary_insurable&.update(covered: false)
+      end
       @master_policy.policy_insurables.where(insurable: @insurable).destroy_all
       @master_policy.policy_insurables.where(insurable: @insurable.buildings).destroy_all
       render json: { message: "Master Policy Coverages for #{@insurable.title} cancelled" }, status: :ok
@@ -233,10 +228,10 @@ module MasterPoliciesMethods
 
       if @master_policy_coverage.errors.any?
         render json: {
-          error: :server_error,
-          message: 'Master policy coverage was not cancelled',
-          payload: @master_policy_coverage.errors.full_messages
-        }.to_json,
+                       error: :server_error,
+                       message: 'Master policy coverage was not cancelled',
+                       payload: @master_policy_coverage.errors.full_messages
+                     }.to_json,
                status: :bad_request
       else
         @master_policy_coverage.primary_insurable&.update(covered: false)
@@ -258,9 +253,9 @@ module MasterPoliciesMethods
       return({}) if params[:policy].blank?
 
       permitted_params = params.require(:policy).permit(
-        :account_id, :agency_id, :auto_renew, :carrier_id, :effective_date,
+        :account_id, :agency_id, :auto_renew, :carrier_id, :effective_date, :policy_type_id,
         :expiration_date, :number, system_data: [:landlord_sumplimental],
-                                   policy_coverages_attributes: %i[policy_application_id title limit deductible enabled designation]
+        policy_coverages_attributes: %i[policy_application_id title limit deductible enabled designation]
       )
 
       permitted_params
@@ -272,7 +267,7 @@ module MasterPoliciesMethods
       permitted_params = params.require(:policy).permit(
         :account_id, :agency_id, :auto_renew, :carrier_id, :effective_date,
         :expiration_date, :number, system_data: [:landlord_sumplimental],
-                                   policy_coverages_attributes: %i[id policy_application_id policy_id title
+        policy_coverages_attributes: %i[id policy_application_id policy_id title
                                                                    limit deductible enabled designation]
       )
 

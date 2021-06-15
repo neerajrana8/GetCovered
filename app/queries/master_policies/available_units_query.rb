@@ -79,7 +79,7 @@ module MasterPolicies
     end
 
     def related_policy_types
-      [PolicyType::MASTER_COVERAGE_ID, PolicyType::RESIDENTIAL_ID].join(', ')
+      PolicyType::MASTER_MUTUALLY_EXCLUSIVE[@master_policy.policy_type_id].join(', ')
     end
 
     def active_statuses

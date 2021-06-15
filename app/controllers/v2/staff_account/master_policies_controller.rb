@@ -9,8 +9,16 @@ module V2
                                           master_policy_coverages cover_unit cancel_coverage available_top_insurables]
 
       def index
-        master_policies_relation = Policy.where(policy_type_id: PolicyType::MASTER_ID, account: @account).order(created_at: :desc)
+        master_policies_relation = Policy.where(policy_type_id: PolicyType::MASTER_IDS, account: @account).order(created_at: :desc)
         master_policies_relation = master_policies_relation.where(status: params[:status]) if params[:status].present?
+
+        if params[:insurable_id].present?
+          insurable = Insurable.find(params[:insurable_id])
+
+          current_types_ids = insurable.policies.current.pluck(:policy_type_id)
+          master_policies_relation = master_policies_relation.where.not(policy_type_id: current_types_ids)
+        end
+        
         @master_policies = paginator(master_policies_relation)
         render template: 'v2/shared/master_policies/index', status: :ok
       end
@@ -79,7 +87,7 @@ module V2
             account: @master_policy.account,
             policy_coverages: @master_policy.policy_coverages,
             number: policy_number,
-            policy_type_id: PolicyType::MASTER_COVERAGE_ID,
+            policy_type_id: @master_policy.policy_type.coverage,
             status: 'BOUND',
             policy: @master_policy,
             effective_date: @master_policy.effective_date,
@@ -120,7 +128,7 @@ module V2
       private
 
       def set_policy
-        @master_policy = Policy.find_by(policy_type_id: PolicyType::MASTER_ID, id: params[:id], account: @account)
+        @master_policy = Policy.find_by(policy_type_id: PolicyType::MASTER_IDS, id: params[:id], account: @account)
         render(json: { error: :not_found, message: 'Master policy not found' }, status: :not_found) if @master_policy.blank?
       end
     end
