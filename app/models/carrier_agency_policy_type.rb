@@ -4,6 +4,7 @@
 
 class CarrierAgencyPolicyType < ApplicationRecord
   attr_accessor :callbacks_disabled
+  attr_accessor :disable_tree_repair
 
   belongs_to :carrier_agency
   belongs_to :policy_type
@@ -33,6 +34,8 @@ class CarrierAgencyPolicyType < ApplicationRecord
     unless: Proc.new{|capt| capt.callbacks_disabled }
   after_create :set_billing_strategies,
     unless: Proc.new{|capt| capt.callbacks_disabled }
+  after_update :repair_commission_strategy_tree,
+    if: Proc.new{|capt| !capt.disable_tree_repair && capt.saved_change_to_attribute?('commission_strategy_id') }
   before_destroy :remove_authorizations,
                  :disable_billing_strategies
   
@@ -111,4 +114,45 @@ class CarrierAgencyPolicyType < ApplicationRecord
         end
       end
     end
+    
+    def repair_commission_strategy_tree
+      our_agency = self.agency
+      old_id = self.attribute_before_last_save('commission_strategy_id')
+      if our_agency.master_agency
+      else
+        kiddos = ::CarrierAgencyPolicyType.references(:commission_strategies, carrier_agencies: :agencies).includes(:commission_strategy, carrier_agency: :agency)
+                   .where(
+                      policy_type_id: self.policy_type_id,
+                      commission_strategies: { commission_strategy_id: old_id },
+                      carrier_agencies: { carrier_id: self.carrier_id, agencies: { agency_id: our_agency.id } }
+                    )
+        kiddos.each do |kiddo|
+          unless kiddo.update(commission_strategy_attributes: ::CommissionStrategy
+                                                                   .column_names
+                                                                   .select{|cn| !['updated_at', 'created_at'].include?(cn) }
+                                                                   .map{|cn| [cn.to_sym, cn == 'commission_strategy_id' ? self.commission_strategy_id : kiddo.commission_strategy.send(cn)] }
+                                                                   .to_h)
+            ################errors.add(:commission_strategy, 'failed to update; ')
+            raise ActiveRecord::RecordInvalid, self
+          end
+        end
+      end
+    end
 end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

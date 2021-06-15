@@ -148,4 +148,23 @@ class Staff < ApplicationRecord
       self.notification_settings.create(action: opt, enabled: false)
     end
   end
+  
+  def switch_agency(new_agency_id) # can also pass an Agency instead of an id
+    new_agency = new_agency_id.class == ::Agency ? new_agency_id : ::Agency.where(id: new_agency_id).take
+    new_agency_id = new_agency.id if new_agency_id.class == ::Agency
+    if new_agency.nil?
+      self.errors.add(:agency, "must exist")
+      return false
+    elsif self.role != 'agent'
+      self.errors.add(:role, "must be agent")
+      return false
+    end
+    worked = false
+    ActiveRecord::Base.transaction do
+      raise ActiveRecord::Rollback unless self.update(agency_id: new_agency_id)
+      raise ActiveRecord::Rollback unless self.staff_permission.update(global_agency_permission_id: new_agency.global_agency_permission.id, permissions: new_agency.global_agency_permission.permissions)
+      worked = true
+    end
+    return worked ? self : false
+  end
 end

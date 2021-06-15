@@ -136,7 +136,21 @@
         end
         post :assign_agency_to_carrier, path: 'assign-agency-to-carrier'
       end
-    resources :carrier_agencies, path: "carrier-agencies", only: [ :index, :show, :create, :update, :destroy ]
+      
+    resources :carrier_agencies, path: "carrier-agencies", only: [ :index, :show, :create, :update, :destroy ] do
+      collection do
+        get "carrier/:carrier_id/agency/:agency_id",
+          to: "carrier_agencies#show",
+          via: "get"
+        put "carrier/:carrier_id/agency/:agency_id",
+          to: "carrier_agencies#update",
+          via: "put"
+        patch "carrier/:carrier_id/agency/:agency_id",
+          to: "carrier_agencies#update",
+          via: "patch"
+      end
+    end
+    
     resources :carrier_agency_authorizations, path: "carrier-agency-authorizations", only: [ :update, :index, :show ] do
       member do
         post :add_fee
