@@ -26,6 +26,16 @@ module V2
         if create_allowed?
           @lease = @substrate.new(create_params)
           if @lease.errors.none? && @lease.save_as(current_staff)
+            user_params[:users]&.each do |user_params|
+              user = ::User.find_by(email: user_params[:email])
+              if user.nil?
+                user = ::User.new(user_params)
+                user.password = SecureRandom.base64(12)
+                user.invite! if user.save
+              end
+              @lease.users << user
+            end
+
             render :show, status: :created
           else
             render json: @lease.errors, status: :unprocessable_entity
@@ -72,6 +82,18 @@ module V2
       def update
         if update_allowed?
           if @lease.update_as(current_staff, update_params)
+            user_params[:users]&.each do |user_params|
+              user = ::User.find_by(email: user_params[:email])
+              if user.nil?
+                user = ::User.new(user_params)
+                user.password = SecureRandom.base64(12)
+                user.invite! if user.save
+              else
+                user.update_attributes(user_params)
+              end
+              @lease.users << user unless @lease.users.include?(user)
+            end
+
             render :show, status: :ok
           else
             render json: @lease.errors, status: :unprocessable_entity
@@ -99,6 +121,11 @@ module V2
       
       
       private
+
+      def user_params
+        params.permit(users: [:email, :agency_id, profile_attributes: %i[birth_date contact_phone first_name gender job_title last_name salutation],
+                                                  address_attributes: %i[city country county state street_name street_two zip_code]])
+      end
       
       def view_path
         super + '/leases'
