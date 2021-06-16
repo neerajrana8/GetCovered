@@ -98,7 +98,7 @@ def kill_dem_problemz(really_kill: false)
         end
       end
       # kill policies & policy quotes without invoices, or with invoices without payers
-      ::Policy.all.select{|p| p.invoices.blank? || p.invoices.any?{|i| i.payer.nil? } }.each do |p|
+      ::Policy.where.not(policy_type_id: ::PolicyType::MASTER_COVERAGE_ID).select{|p| p.invoices.blank? || p.invoices.any?{|i| i.payer.nil? } }.each do |p|
         if really_kill
           slaughter_policy(p)
         else
