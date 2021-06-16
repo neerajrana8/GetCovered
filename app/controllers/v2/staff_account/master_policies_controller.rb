@@ -87,7 +87,7 @@ module V2
             account: @master_policy.account,
             policy_coverages: @master_policy.policy_coverages,
             number: policy_number,
-            policy_type_id: @master_policy.policy_type.coverage,
+            policy_type: @master_policy.policy_type.coverage,
             status: 'BOUND',
             policy: @master_policy,
             effective_date: @master_policy.effective_date,

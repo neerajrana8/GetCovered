@@ -22,7 +22,7 @@ class AutomaticMasterCoveragePolicyIssueJob < ApplicationJob
               policy_coverage.attributes.slice('limit', 'deductible', 'enabled', 'designation', 'title')
             end,
             number: policy_number,
-            policy_type_id: master_policy.policy_type.coverage,
+            policy_type: master_policy.policy_type.coverage,
             policy: master_policy,
             effective_date: Time.zone.now,
             expiration_date: master_policy.expiration_date,
