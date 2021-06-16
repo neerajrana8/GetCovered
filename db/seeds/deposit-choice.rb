@@ -75,7 +75,7 @@ puts "Initializing carrier ##{@dc_id}..."
   carrier: @carrier,
   policy_type: @policy_type,
   application_required: true,
-  commission_strategy_attributes: { recipient: @get_covered, percentage: 30 },
+  commission_strategy_attributes: { recipient: @get_covered, percentage: 10 },
   application_fields: [
   ]
 })
@@ -96,7 +96,6 @@ puts "  Initializing DC agencies..."
 
 carrier_agency = CarrierAgency.where(carrier: @carrier, agency: @get_covered).take
 if carrier_agency.nil?
-  @get_covered.carriers << @carrier
   carrier_agency = ::CarrierAgency.create!(
     carrier: @carrier,
     agency: @get_covered,
