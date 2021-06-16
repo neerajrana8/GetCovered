@@ -13,7 +13,7 @@ class CommissionStrategy < ApplicationRecord
   has_many :commission_strategies
   
   # Validations
-  validates :percentage, numericality: { greater_than: 0, less_than_or_equal_to: 100 }
+  validates :percentage, numericality: { greater_than_or_equal_to: 0, less_than_or_equal_to: 100 }
   validate :percentage_is_sensible,
     if: Proc.new{|cs| cs.will_save_change_to_attribute?('percentage') || cs.will_save_change_to_attribute?('commission_strategy_id') }
   validate :recipient_is_not_commission_strategy
