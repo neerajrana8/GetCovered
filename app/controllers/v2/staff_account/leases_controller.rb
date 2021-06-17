@@ -123,7 +123,7 @@ module V2
       private
 
       def user_params
-        params.permit(users: [:email, :agency_id, profile_attributes: %i[birth_date contact_phone first_name gender job_title last_name salutation],
+        params.permit(users: [:id, :email, :agency_id, profile_attributes: %i[birth_date contact_phone first_name gender job_title last_name salutation],
                                                   address_attributes: %i[city country county state street_name street_two zip_code]])
       end
       
