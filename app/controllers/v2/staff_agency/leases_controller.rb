@@ -26,7 +26,7 @@ module V2
           @lease = @substrate.new(create_params)
           if !@lease.errors.any? && @lease.save_as(current_staff)
             user_params[:users]&.each do |user_params|
-              user = ::User.find_by(email: user_params[:email])
+              user = ::User.find_by(id: user_params[:id]) || ::User.find_by(email: user_params[:email])
               if user.nil?
                 user = ::User.new(user_params)
                 user.password = SecureRandom.base64(12)
