@@ -27,6 +27,16 @@ json.policies do
   end
 end
 
+json.master_policies do
+  unless insurable.policies.nil?
+    json.array! insurable.policies.where(policy_type_id: PolicyType::MASTER_COVERAGES_IDS).each do |policy|
+      json.extract! policy.policy, :id, :number, :policy_type_id, :status, :created_at, :effective_date, :expiration_date
+
+      json.policy_type_title policy.policy&.policy_type&.title
+    end
+  end
+end
+
 json.carrier_insurable_profiles do
   unless insurable.carrier_insurable_profiles.nil?
     json.array! insurable.carrier_insurable_profiles do |insurable_carrier_insurable_profile|
