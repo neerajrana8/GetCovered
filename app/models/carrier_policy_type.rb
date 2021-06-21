@@ -3,6 +3,8 @@
 # file: +app/models/carrier_policy_type.rb+
 
 class CarrierPolicyType < ApplicationRecord
+  attr_accessor :disable_tree_repair
+  
   belongs_to :carrier
   belongs_to :policy_type
   belongs_to :commission_strategy, optional: true # temporarily optional only
@@ -14,6 +16,8 @@ class CarrierPolicyType < ApplicationRecord
   
   before_validation :manipulate_dem_nested_boiz_like_a_boss # we don't restrict this to on: :create. that way it can be applied to commission_strategy updates too
 
+  after_update :repair_commission_strategy_tree,
+    if: Proc.new{|cpt| !cpt.disable_tree_repair && cpt.saved_change_to_attribute?('commission_strategy_id') }
   
   private
   
@@ -34,6 +38,23 @@ class CarrierPolicyType < ApplicationRecord
         if cs.commission_strategy_id.nil?
           big_old_papa_strat ||= self.carrier.get_or_create_universal_parent_commission_strategy
           cs.commission_strategy = big_old_papa_strat
+        end
+      end
+    end
+    
+    def repair_commission_strategy_tree
+      # we update the master agency CAPT to have the same CS, relying on CAPT#repair_commission_strategy_tree to fix the rest
+      capt = ::CarrierAgencyPolicyType.references(carrier_agencies: :agencies).includes(carrier_agency: :agency)
+                    .where(
+                      policy_type_id: self.policy_type_id,
+                      carrier_agencies: { carrier_id: self.carrier_id, agencies: { master_agency: true } }
+                    ).take
+      unless capt.nil?
+        begin
+          capt.update!(commission_strategy_id: self.commission_strategy_id)
+        rescue ActiveRecord::RecordInvalid => err
+          self.errors.add(:carrier_agency_policy_type, "for master agency (id #{capt.id}) failed to update: #{err.record.errors.to_h}")
+          raise ActiveRecord::RecordInvalid, self
         end
       end
     end

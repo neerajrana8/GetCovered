@@ -118,24 +118,54 @@ class CarrierAgencyPolicyType < ApplicationRecord
     def repair_commission_strategy_tree
       our_agency = self.agency
       old_id = self.attribute_before_last_save('commission_strategy_id')
+      # fix siblings if we are master agency
       if our_agency.master_agency
-      else
-        kiddos = ::CarrierAgencyPolicyType.references(:commission_strategies, carrier_agencies: :agencies).includes(:commission_strategy, carrier_agency: :agency)
-                   .where(
+        cpt = self.carrier_policy_type
+        cpt.update_columns(commission_strategy_id: self.commission_strategy_id) unless cpt.commission_strategy_id == self.commission_strategy_id # NOTE: we are using update_columns here to intentionally skip callbacks! we don't want to set off a recursive loop
+        siblings = ::CarrierAgencyPolicyType.references(:commission_strategies, carrier_agencies: :agencies).includes(:commission_strategy, carrier_agency: :agency)
+                    .where(
                       policy_type_id: self.policy_type_id,
                       commission_strategies: { commission_strategy_id: old_id },
-                      carrier_agencies: { carrier_id: self.carrier_id, agencies: { agency_id: our_agency.id } }
+                      carrier_agencies: { carrier_id: self.carrier_id, agencies: { agency_id: nil } }
                     )
+        begin
+          siblings.each do |sibling|
+            next if sibling == self
+            unless sibling.update(commission_strategy_attributes: ::CommissionStrategy
+                                                                     .column_names
+                                                                     .select{|cn| !['updated_at', 'created_at'].include?(cn) }
+                                                                     .map{|cn| [cn.to_sym, cn == 'commission_strategy_id' ? self.commission_strategy_id : sibling.commission_strategy.send(cn)] }
+                                                                     .to_h)
+              errors.add(:commission_strategy, "failed to update sibling records during repair_commission_strategy_tree execution (CarrierAgencyPolicyType #{sibling.id} update encountered an error: #{sibling.errors.to_h})")
+              raise ActiveRecord::RecordInvalid, self
+            end
+          end
+        rescue ActiveRecord::RecordInvalid => err
+          errors.add(:commission_strategy, "failed to update sibling records during repair_commission_strategy_tree execution (CarrierAgencyPolicyType #{err.record.id} update encountered an error: #{err.record.errors.to_h})")
+          raise ActiveRecord::RecordInvalid, self
+        end
+      else
+      # fix children whether we're a master agency or not
+      kiddos = ::CarrierAgencyPolicyType.references(:commission_strategies, carrier_agencies: :agencies).includes(:commission_strategy, carrier_agency: :agency)
+                 .where(
+                    policy_type_id: self.policy_type_id,
+                    commission_strategies: { commission_strategy_id: old_id },
+                    carrier_agencies: { carrier_id: self.carrier_id, agencies: { agency_id: our_agency.id } }
+                  )
+      begin
         kiddos.each do |kiddo|
           unless kiddo.update(commission_strategy_attributes: ::CommissionStrategy
                                                                    .column_names
                                                                    .select{|cn| !['updated_at', 'created_at'].include?(cn) }
                                                                    .map{|cn| [cn.to_sym, cn == 'commission_strategy_id' ? self.commission_strategy_id : kiddo.commission_strategy.send(cn)] }
                                                                    .to_h)
-            ################errors.add(:commission_strategy, 'failed to update; ')
+            errors.add(:commission_strategy, "failed to update child records during repair_commission_strategy_tree execution (CarrierAgencyPolicyType #{kiddo.id} update encountered an error: #{kiddo.errors.to_h})")
             raise ActiveRecord::RecordInvalid, self
           end
         end
+      rescue ActiveRecord::RecordInvalid => err
+        errors.add(:commission_strategy, "failed to update child records during repair_commission_strategy_tree execution (CarrierAgencyPolicyType #{err.record.id} update encountered an error: #{err.record.errors.to_h})")
+        raise ActiveRecord::RecordInvalid, self
       end
     end
 end
