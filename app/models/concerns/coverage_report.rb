@@ -52,7 +52,7 @@ module CoverageReport
   def insurables_covered_by_master_policy
     insurables_units
       .joins(:policies)
-      .where(policies: { policy_type_id: PolicyType.master_policies.ids })
+      .where(policies: { policy_type_id: PolicyType.master_coverages.ids })
       .distinct
       .count
   end
@@ -61,7 +61,7 @@ module CoverageReport
     Policy.joins(:insurables).
       where(insurables: { id: insurables_units.ids }).
       distinct.
-      where.not(policy_type_id: PolicyType.master_policies.ids).
+      where.not(policy_type_id: PolicyType.master_coverages.ids).
       where(status: 'CANCELLED').
       count
   end
@@ -70,7 +70,7 @@ module CoverageReport
     Policy.joins(:insurables).
       where(insurables: { id: insurables_units.ids }).
       distinct.
-      where.not(policy_type_id: PolicyType.master_policies.ids).
+      where.not(policy_type_id: PolicyType.master_coverages.ids).
       where('expiration_date > ?', Time.zone.now).
       current
   end

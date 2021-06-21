@@ -37,7 +37,13 @@ def give_em_cses
       get_covered = ::Agency.where(master_agency: true).take
       ::CarrierPolicyType.all.each do |cpt|
         if cpt.commission_strategy.nil? || cpt.commission_strategy.recipient != get_covered
-          cpt.update!(commission_strategy_attributes: { percentage: 30 })
+          cpt.update!(commission_strategy_attributes: { percentage: {
+            PolicyType::RESIDENTIAL_ID => 30,
+            PolicyType::MASTER_ID => 25,
+            PolicyType::SECURITY_DEPOSIT_REPLACEMENT_ID => 10,
+            PolicyType::RENT_GUARANTEE_ID => 18.5,
+            PolicyType::COMMERCIAL_ID => 0
+          }[cpt.policy_type_id] || "unknown policy type ##{cpt.policy_type_id}" }) # will trigger error on unknown
         end
       end
       

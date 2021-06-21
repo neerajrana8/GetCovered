@@ -35,7 +35,7 @@ module V2
 
             render :show, status: :created
           else
-            render json: @lease.errors, status: :unprocessable_entity
+            render json: standard_error(:unprocessable_entity, @lease.errors.full_messages), status: :unprocessable_entity
           end
         else
           render json: { success: false, errors: ['Unauthorized Access'] },

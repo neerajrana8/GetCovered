@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_05_04_201511) do
+ActiveRecord::Schema.define(version: 2021_06_06_231522) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
@@ -1256,6 +1256,9 @@ ActiveRecord::Schema.define(version: 2021_05_04_201511) do
     t.boolean "enabled", default: false, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "master", default: false
+    t.boolean "master_coverage", default: false
+    t.integer "master_policy_id"
   end
 
   create_table "policy_users", force: :cascade do |t|
@@ -1478,4 +1481,5 @@ ActiveRecord::Schema.define(version: 2021_05_04_201511) do
   add_foreign_key "payments", "invoices"
   add_foreign_key "policy_coverages", "policies"
   add_foreign_key "policy_coverages", "policy_applications"
+  add_foreign_key "policy_types", "policy_types", column: "master_policy_id"
 end
