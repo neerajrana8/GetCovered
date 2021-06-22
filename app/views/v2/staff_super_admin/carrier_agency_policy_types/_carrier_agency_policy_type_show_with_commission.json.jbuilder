@@ -7,6 +7,10 @@ json.commission_strategy_percentage_max do
   100
 end
 
+json.commission_strategy_percentage_min do
+  child_carrier_agency_policy_types(true).map{|capt| capt.commission_strategy&.percentage }.max || 0
+end
+
 json.commission_strategy do
   if carrier_agency_policy_type.commission_strategy.present?
     json.partial! "v2/staff_super_admin/commission_strategies/commission_strategy_show_fields.json.jbuilder",

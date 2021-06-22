@@ -217,6 +217,16 @@ class Agency < ApplicationRecord
       break unless Agency.exists?(producer_code: producer_code)
     end
   end
+  
+  def get_ancestor_chain
+    to_return = [self]
+    selected = self.agency
+    while !selected.nil?
+      to_return.push(selected)
+      selected = selected.agency
+    end
+    return to_return
+  end
 
   private
 

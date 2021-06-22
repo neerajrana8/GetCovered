@@ -40,27 +40,101 @@ module V2
       end
       
       def parent_info
-        to_return = {
-          record_id: nil,
-          parent_id: nil,
-          parent_agency_id: nil,
-          parent_agency_title: nil,
-          parent_commission_rate: nil
-          
-        }
-        agency = Agency.find(params[:agency_id])
-        carrier = Agency.find(params[:carrier_id])
-        if agency.master_agency
-          
-        elsif agency.agency.nil?
-        else
+        # process parameters
+        agency = Agency.where(id: parent_info_params[:agency_id]).take
+        if agency.nil?
+          render json standard_error(:agency_error, nil, "Agency with id #{parent_info_params[:agency_id] || 'null'} does not exist"),
+            status: :unprocessable_entity
+          return
         end
+        ancestors = agency.get_ancestor_chain
+        master_agency = Agency.where(master_agency: true).take
+        ancestors.push(master_agency) unless ancestors.last == master_agency
+        carrier = Carrier.where(id: parent_info_params[:carrier_id]).take
+        if carrier.nil?
+          render json standard_error(:carrier_error, nil, "Carrier with id #{parent_info_params[:carrier_id] || 'null'} does not exist"),
+            status: :unprocessable_entity
+          return
+        end
+        policy_type_ids = parent_info_params[:policy_type_ids].map{|ptid| ptid.to_i }.uniq
+        policy_type_ids = ::CarrierPolicyType.where(carrier_id: carrier.id).pluck(:policy_type_id) if policy_type_ids.blank?
+        # grab records
+        all_capts = ::CarrierAgencyPolicyType.includes(:carrier_agency, :commission_strategy).references(:carrier_agencies, :commission_strategies)
+                                             .where(carrier_agency: { carrier_id: carrier.id, agency_id: ancestors.map{|an| an.id } }, policy_type_id: policy_type_ids)
+                                             .group_by{|capt| capt.policy_type_id }
+                                             .transform_values{|capts| capts.sort_by{|capt| ancestors.find_index{|ag| ag.id == capt.carrier_agency.agency_id } }[0..1] }
+        to_return = policy_type_ids.map do |ptid|
+          capts = all_capts[ptid]
+          if capts.blank?
+            # not even GC has been set up for this policy type/carrier combo yet
+            {
+              status: 'nothing_exists',
+              missing_agency_chain: ancestors.map{|ag| ag.id }
+            }
+          elsif capts[0].carrier_agency.agency_id == agency.id
+            # the CAPT already exists
+            {
+              status: 'record_exists',
+              carrier_agency_id: capts[0].carrier_agency_id,
+              carrier_agency_policy_type_id: capts[0].id,
+              missing_agency_chain: nil,
+              commission_current: capts[0].commission_strategy&.percentage,
+              commission_max: capts[1]&.commission_strategy&.percentage || 100,
+              commission_min: capts[0].child_carrier_agency_policy_types(true).map{|capt| capt.commission_strategy&.percentage }.compact.max || 0
+            }
+          elsif capts[0].carrier_agency.agency_id == (agency.agency_id || (agency.master_agency ? nil : master_agency))
+            # the parent agency has a corresponding CAPT
+            {
+              status: 'parent_exists',
+              parent_agency_id: capts[0].carrier_agency.agency_id,
+              parent_agency_title: ancestors[1].title,
+              parent_carrier_agency_id: capts[0].carrier_agency_id,
+              parent_carrier_agency_policy_type_id: capts[0].id,
+              missing_agency_chain: [agency.id],
+              commission_max: capts[0].commission_strategy&.percentage,
+              commission_min: 0
+            }
+          else
+            # some non-immediate ancestor has a corresponding CAPT
+            ancestor_index = ancestors.find_index{|ag| ag.id == capts[0].carrier_agency.agency_id }
+            {
+              status: 'ancestor_exists',
+              ancestor_agency_id: capts[0].carrier_agency.agency_id,
+              ancestor_agency_title: ancestors[ancestor_index].title,
+              ancestor_carrier_agency_id: capts[0].carrier_agency_id,
+              ancestor_carrier_agency_policy_type_id: capts[0].id,
+              missing_agency_chain: ancestors[0...ancestor_index].map{|ag| ag.id },
+              commission_max: capts[0].commission_strategy&.percentage,
+              commission_min: 0
+            }
+          end
+        end
+        # note CPT existence instead of 'nothing_exists' where appropriate
+        broke_boiz = to_return.select{|ptid,result| result[:status] == 'nothing_exists' }
+        if broke_boiz.count > 0
+          ::CarrierPolicyType.includes(:commission_strategy).references(:commission_strategies).where(carrier_id: carrier.id, policy_type_id: broke_boiz.keys).each do |cpt|
+            broke_boiz[cpt.policy_type_id][:status] = 'carrier_policy_type_exists'
+            broke_boiz[cpt.policy_type_id][:commission_max] = cpt.commission_strategy&.percentage
+            broke_boiz[cpt.policy_type_id][:commission_min] = 0
+          end
+        end
+        # all done
+        render json: to_return,
+          status: :ok
       end
 
       private
 
       def set_carrier_agency
         @carrier_agency = !params[:id].blank? ? CarrierAgency.find(params[:id]) : CarrierAgency.where(carrier_id: params[:carrier_id], agency_id: params[:agency_id]).take
+      end
+      
+      def parent_info_params
+        params.permit(
+          :carrier_id,
+          :agency_id,
+          policy_type_ids: []
+        )
       end
 
       def create_params

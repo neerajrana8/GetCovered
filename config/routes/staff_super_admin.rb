@@ -148,6 +148,9 @@
         patch "carrier/:carrier_id/agency/:agency_id",
           to: "carrier_agencies#update",
           via: "patch"
+        post "carrier/:carrier_id/agency/:agency_id",
+          to: "carrier_agencies#parent_info",
+          via: "post"
       end
     end
     

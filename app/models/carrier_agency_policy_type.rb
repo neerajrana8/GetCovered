@@ -18,9 +18,14 @@ class CarrierAgencyPolicyType < ApplicationRecord
   
   accepts_nested_attributes_for :commission_strategy
   
-  def parent_carrier_agency_policy_type
+  def parent_carrier_agency_policy_type(include_top_level = false) # iff true, for top-level agency, includes master agency record
     ::CarrierAgencyPolicyType.references(:carrier_agencies).includes(:carrier_agency)
-                             .where(carrier_agencies: { carrier_id: self.carrier_id, agency_id: self.carrier_agency.agency.agency_id }, policy_type_id: self.policy_type_id).take
+                             .where(carrier_agencies: { carrier_id: self.carrier_id, agency_id: (include_top_level && self.carrier_agency.agency.agency_id.nil? ? ::Agency.where(master_agency: true).take.id : self.carrier_agency.agency.agency_id) }, policy_type_id: self.policy_type_id).take
+  end
+  def child_carrier_agency_policy_types(include_top_level = false) # iff true, for master agency, includes CAPTs for top-level agencies
+    ::CarrierAgencyPolicyType.references(carrier_agencies: :agencies).includes(carrier_agency: :agency)
+                             .where(carrier_agencies: { carrier_id: self.carrier_id, agencies: { agency_id: [self.agency_id] + (include_top_level && self.agency.master_agency ? [nil] : []) }}, policy_type_id: self.policy_type_id)
+                             .where.not(id: self.id)
   end
   def carrier_policy_type; ::CarrierPolicyType.where(policy_type_id: self.policy_type_id, carrier_id: self.carrier_agency.carrier_id).take; end
   def carrier_agency_authorizations; ::CarrierAgencyAuthorization.where(policy_type_id: self.policy_type_id, carrier_agency_id: self.carrier_agency_id); end
@@ -144,7 +149,7 @@ class CarrierAgencyPolicyType < ApplicationRecord
           errors.add(:commission_strategy, "failed to update sibling records during repair_commission_strategy_tree execution (CarrierAgencyPolicyType #{err.record.id} update encountered an error: #{err.record.errors.to_h})")
           raise ActiveRecord::RecordInvalid, self
         end
-      else
+      end
       # fix children whether we're a master agency or not
       kiddos = ::CarrierAgencyPolicyType.references(:commission_strategies, carrier_agencies: :agencies).includes(:commission_strategy, carrier_agency: :agency)
                  .where(
