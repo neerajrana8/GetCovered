@@ -2,7 +2,7 @@ module LeasesMethods
   extend ActiveSupport::Concern
 
   def create
-    @lease = Lease.new(create_params)
+    @lease = ::Lease.new(create_params)
     if @lease.errors.none? && @lease.save_as(current_staff)
       user_params[:users]&.each do |user_params|
         user = ::User.find_by(id: user_params[:user][:id]) || ::User.find_by(email: user_params[:user][:email])
@@ -12,7 +12,7 @@ module LeasesMethods
           user.invite! if user.save
         end
 
-        LeaseUser.create(lease: @lease, user: user, primary: user_params[:primary])
+        ::LeaseUser.create(lease: @lease, user: user, primary: user_params[:primary])
       end
 
       render :show, status: :created
