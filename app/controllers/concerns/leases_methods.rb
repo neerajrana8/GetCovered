@@ -23,8 +23,8 @@ module LeasesMethods
 
   def update
     if @lease.update_as(current_staff, update_params)
-      users_ids = user_params[:users].map { |user_params| user_params[:user][:id] }.compact
-      @lease.lease_user.where.not(id: users_ids).destroy_all
+      users_ids = user_params[:users]&.map { |user_params| user_params[:user][:id] }&.compact
+      @lease.lease_users.where.not(id: users_ids).destroy_all
 
       user_params[:users]&.each do |user_params|
         lease_user = @lease.lease_users.find_by(user_id: user_params[:user][:id])
