@@ -24,16 +24,14 @@ json.policies do
       json.extract! policy, :id, :number, :policy_type_id, :status, :created_at, :effective_date, :expiration_date
 
       json.policy_type_title policy&.policy_type&.title
-    end
-  end
-end
 
-json.master_policies do
-  unless insurable.policies.nil?
-    json.array! insurable.policies.where(policy_type_id: PolicyType::MASTER_COVERAGES_IDS).each do |policy|
-      json.extract! policy.policy, :id, :number, :policy_type_id, :status, :created_at, :effective_date, :expiration_date
+      if PolicyType::MASTER_COVERAGES_IDS.include?(policy.policy_type_id) && policy.policy.present?
+        json.master_policy do
+          json.extract! policy.policy, :id, :number, :policy_type_id, :status, :created_at, :effective_date, :expiration_date
 
-      json.policy_type_title policy.policy&.policy_type&.title
+          json.policy_type_title policy.policy&.policy_type&.title
+        end
+      end
     end
   end
 end
