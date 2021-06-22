@@ -4,7 +4,7 @@ module LeasesMethods
   def create
     @lease = ::Lease.new(create_params)
     if @lease.errors.none? && @lease.save_as(current_staff)
-      user_params[:users]&.each do |user_params|
+      users_params[:users]&.each do |user_params|
         user = ::User.find_by(id: user_params[:user][:id]) || ::User.find_by(email: user_params[:user][:email])
         if user.nil?
           user = ::User.new(user_params[:user])
@@ -23,10 +23,10 @@ module LeasesMethods
 
   def update
     if @lease.update_as(current_staff, update_params)
-      users_ids = user_params[:users]&.map { |user_params| user_params[:user][:id] }&.compact
+      users_ids = users_params[:users]&.map { |user_params| user_params[:user][:id] }&.compact
       @lease.lease_users.where.not(id: users_ids).destroy_all
 
-      user_params[:users]&.each do |user_params|
+      users_params[:users]&.each do |user_params|
         lease_user = @lease.lease_users.find_by(user_id: user_params[:user][:id])
 
         if lease_user.present?
@@ -52,7 +52,7 @@ module LeasesMethods
 
   private
 
-  def user_params
+  def users_params
     params.permit(users: [:primary, user: [
                                             :id, :email, :agency_id,
                                             profile_attributes: %i[birth_date contact_phone first_name gender job_title last_name salutation],
