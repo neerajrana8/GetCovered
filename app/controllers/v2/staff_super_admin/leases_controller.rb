@@ -5,6 +5,7 @@
 module V2
   module StaffSuperAdmin
     class LeasesController < StaffSuperAdminController
+      include LeasesMethods
       
       before_action :set_lease, only: %i[update destroy show]
             
@@ -17,56 +18,6 @@ module V2
       end
       
       def show; end
-      
-      def create
-        if create_allowed?
-          @lease = Lease.new(create_params)
-          if @lease.errors.none? && @lease.save_as(current_staff)
-
-            user_params[:users]&.each do |user_params|
-              user = ::User.find_by(id: user_params[:id]) || ::User.find_by(email: user_params[:email])
-              if user.nil?
-                user = ::User.new(user_params)
-                user.password = SecureRandom.base64(12)
-                user.invite! if user.save
-              end
-              @lease.users << user
-            end
-
-            render :show, status: :created
-          else
-            render json: standard_error(:unprocessable_entity, @lease.errors.full_messages), status: :unprocessable_entity
-          end
-        else
-          render json: { success: false, errors: ['Unauthorized Access'] },
-                 status: :unauthorized
-        end
-      end
-      
-      def update
-        if update_allowed?
-          if @lease.update_as(current_staff, update_params)
-            user_params[:users]&.each do |user_params|
-              user = ::User.find_by(email: user_params[:email])
-              if user.nil?
-                user = ::User.new(user_params)
-                user.password = SecureRandom.base64(12)
-                user.invite! if user.save
-              else
-                user.update_attributes(user_params)
-              end
-              @lease.users << user unless @lease.users.include?(user)
-            end
-            
-            render :show, status: :ok
-          else
-            render json: @lease.errors, status: :unprocessable_entity
-          end
-        else
-          render json: { success: false, errors: ['Unauthorized Access'] },
-                 status: :unauthorized
-        end
-      end
       
       def destroy
         if destroy_allowed?
