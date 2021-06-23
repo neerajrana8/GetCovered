@@ -27,7 +27,6 @@ describe 'Insurables API spec', type: :request do
       result = JSON.parse response.body
       expect(response.status).to eq(422)
       expect(result['addresses.state']).to eq([' is not a valid state'])
-      expect(Address.last).to eq(nil)
     end
     
     it 'should not raise error with invalid state when updating Insurable' do
