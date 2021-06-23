@@ -6,7 +6,7 @@ module V2
   module StaffAccount
     class LeasesController < StaffAccountController
       include LeasesMethods
-      
+
       before_action :set_lease, only: %i[update destroy show]
       
       before_action :set_substrate, only: %i[create index]
@@ -14,14 +14,14 @@ module V2
       before_action :parse_input_file, only: %i[bulk_create]
       
       def index
-        if params[:short]
-          super(:@leases, @substrate)
-        else
-          super(:@leases, @substrate, :account, :insurable, :lease_type)
-        end
+        super(:@leases, Lease, :account, :insurable, :lease_type)
+
+        render template: 'v2/shared/leases/index', status: :ok
       end
-      
-      def show; end
+
+      def show
+        render template: 'v2/shared/leases/show', status: :ok
+      end
 
       def bulk_create
         @parsed_input_file.each do |lease_params|
@@ -55,7 +55,7 @@ module V2
         end
         head :no_content
       end
-      
+
       def destroy
         if destroy_allowed?
           if @lease.destroy
@@ -70,13 +70,13 @@ module V2
                  status: :unauthorized
         end
       end
-      
+
       private
       
       def view_path
         super + '/leases'
       end
-        
+
       def destroy_allowed?
         true
       end
@@ -95,7 +95,7 @@ module V2
       end
 
       def parse_input_file
-        if params[:input_file].present? && params[:input_file].content_type == 'text/csv'
+        if params[:input_file].present?
           file = params[:input_file].open
           result =
             ::Leases::BulkCreate::InputFileParser.run(

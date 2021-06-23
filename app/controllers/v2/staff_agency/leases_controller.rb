@@ -12,14 +12,14 @@ module V2
       before_action :parse_input_file, only: %i[bulk_create]
 
       def index
-        if params[:short]
-          super(:@leases, @substrate)
-        else
-          super(:@leases, @substrate, :account, :insurable, :lease_type)
-        end
+        super(:@leases, Lease, :account, :insurable, :lease_type)
+
+        render template: 'v2/shared/leases/index', status: :ok
       end
 
-      def show; end
+      def show
+        render template: 'v2/shared/leases/show', status: :ok
+      end
 
       def bulk_create
         account = @agency.accounts.find_by_id(bulk_create_params[:account_id])
@@ -77,7 +77,7 @@ module V2
       private
 
       def parse_input_file
-        if params[:input_file].present? && params[:input_file].content_type == 'text/csv'
+        if params[:input_file].present?
           file = params[:input_file].open
           result =
             ::Leases::BulkCreate::InputFileParser.run(
