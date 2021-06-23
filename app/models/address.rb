@@ -51,7 +51,7 @@ class Address < ApplicationRecord
   # scope :residential_communities, -> { joins(:insurable).where() }
   validates :state,
             inclusion: { in: US_STATE_CODES.keys.map(&:to_s), message: "%{value} #{I18n.t('address_model.is_not_a_valid_state')}" },
-            unless: -> { [Lead].include?(addressable.class) || country != 'USA' || (country == 'USA' && state.blank?) }
+            unless: -> { [Lead].include?(addressable.class) || country != 'USA' || (country == 'USA' && state.present?) }
 
   settings index: { number_of_shards: 1 } do
     mappings dynamic: 'false' do
