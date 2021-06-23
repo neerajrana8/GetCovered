@@ -29,11 +29,10 @@ module BrandingProfiles
     private
 
     def url
-      base_uri = Rails.application.credentials.uri[ENV["RAILS_ENV"].to_sym][:client]
-      uri = URI(base_uri)
-      uri.host = "#{agency.slug}.#{uri.host}"
-      uri.host = "#{agency.slug}-#{Time.zone.now.to_i}.#{URI(base_uri).host}" if BrandingProfile.exists?(url: uri.to_s)
-      uri.to_s
+      base_uri = Rails.application.credentials.uri[ENV["RAILS_ENV"].to_sym][:client]&.sub(/^https?\:\/{0,3}(www.)?/,'')
+      uri = "#{agency.slug}.#{base_uri}"
+      uri = "#{agency.slug}-#{Time.zone.now.to_i}.#{base_uri}" if BrandingProfile.exists?(url: uri)
+      uri
     end
 
     def default_branding_profile
