@@ -118,6 +118,7 @@ describe 'Insurables API spec', type: :request do
           city: 'Los Angeles',
           county: 'LOS ANGELES',
           state: 'ACD',
+          country: 'USA',
           street_number: '3301',
           street_name: 'New Drive'
         }
