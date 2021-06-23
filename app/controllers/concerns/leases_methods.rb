@@ -15,7 +15,7 @@ module LeasesMethods
         ::LeaseUser.create(lease: @lease, user: user, primary: user_params[:primary])
       end
 
-      render :show, status: :created
+      render template: 'v2/shared/leases/show', status: :created
     else
       render json: @lease.errors, status: :unprocessable_entity
     end
@@ -44,7 +44,7 @@ module LeasesMethods
         end
       end
 
-      render :show, status: :ok
+      render template: 'v2/shared/leases/show', status: :ok
     else
       render json: @lease.errors, status: :unprocessable_entity
     end
