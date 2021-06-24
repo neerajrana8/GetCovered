@@ -20,7 +20,8 @@ module V2
 
         if branding_profile_outcome.valid?
           @branding_profile = branding_profile_outcome.result
-          render template: 'v2/shared/branding_profiles/show', status: :created
+          render template: 'v2/shared/branding_profiles/show', status: :created          
+        else          
           render json: standard_error(
                          :branding_profile_was_not_created,
                          'Branding profile was not created',
