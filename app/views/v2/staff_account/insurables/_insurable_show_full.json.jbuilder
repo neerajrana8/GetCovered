@@ -20,7 +20,17 @@ end
 json.policies do
   unless insurable.policies.nil?
     json.array! insurable.policies do |policy|
-      json.partial! "v2/staff_account/policies/policy_short_fields.json.jbuilder", policy: policy
+      json.extract! policy, :id, :number, :policy_type_id, :status, :created_at, :effective_date, :expiration_date
+
+      json.policy_type_title policy&.policy_type&.title
+
+      if PolicyType::MASTER_COVERAGES_IDS.include?(policy.policy_type_id) && policy.policy.present?
+        json.master_policy do
+          json.extract! policy.policy, :id, :number, :policy_type_id, :status, :created_at, :effective_date, :expiration_date
+
+          json.policy_type_title policy.policy&.policy_type&.title
+        end
+      end
     end
   end
 end
@@ -60,7 +70,6 @@ end
 json.buildings_count insurable&.buildings&.count
 json.units_count insurable&.insurables&.where(insurable_type_id: InsurableType::UNITS_IDS)&.count
 
-json.can_be_covered insurable.policies.current.empty?
 json.active_master_policy do
   if @master_policy.present?
     json.partial! 'v2/shared/policies/fields.json.jbuilder', policy: @master_policy
