@@ -5,7 +5,8 @@
 module V2
   module StaffSuperAdmin
     class LeasesController < StaffSuperAdminController
-      
+      include LeasesMethods
+
       before_action :set_lease, only: [:update, :destroy, :show]
       before_action :parse_input_file, only: %i[bulk_create]
             
@@ -18,46 +19,19 @@ module V2
       def show
         render template: 'v2/shared/leases/show', status: :ok
       end
-      
-      def create
-        if create_allowed?
-          @lease = Lease.new(create_params)
-          if !@lease.errors.any? && @lease.save_as(current_staff)
-            render :show, status: :created
-          else
-            render json: @lease.errors, status: :unprocessable_entity
-          end
-        else
-          render json: { success: false, errors: ['Unauthorized Access'] },
-            status: :unauthorized
-        end
-      end
-      
-      def update
-        if update_allowed?
-          if @lease.update_as(current_staff, update_params)
-            render :show, status: :ok
-          else
-            render json: @lease.errors, status: :unprocessable_entity
-          end
-        else
-          render json: { success: false, errors: ['Unauthorized Access'] },
-            status: :unauthorized
-        end
-      end
-      
+
       def destroy
         if destroy_allowed?
           if @lease.destroy
             render json: { success: true },
-              status: :ok
+                   status: :ok
           else
             render json: { success: false },
-              status: :unprocessable_entity
+                   status: :unprocessable_entity
           end
         else
           render json: { success: false, errors: ['Unauthorized Access'] },
-            status: :unauthorized
+                 status: :unauthorized
         end
       end
 
@@ -92,7 +66,7 @@ module V2
           end
         end
         head :no_content
-      end      
+      end
       
       private
 
@@ -123,45 +97,38 @@ module V2
           :account_id
         )
       end
-      
-        def view_path
-          super + "/leases"
-        end
+
+      def view_path
+        super + '/leases'
+      end
         
-        def create_allowed?
-          true
-        end
+      def destroy_allowed?
+        true
+      end
         
-        def update_allowed?
-          true
-        end
+      def set_lease
+        @lease = Lease.find(params[:id])
+      end
         
-        def destroy_allowed?
-          true
+      def set_substrate
+        super
+        if @substrate.nil?
+          @substrate = access_model(::Lease)
+        elsif !params[:substrate_association_provided]
+          @substrate = @substrate.leases
         end
+      end
         
-        def set_lease
-          @lease = Lease.find(params[:id])
-        end
-        
-        def set_substrate
-          super
-          if @substrate.nil?
-            @substrate = access_model(::Lease)
-          elsif !params[:substrate_association_provided]
-            @substrate = @substrate.leases
-          end
-        end
-        
-        def create_params
-          return({}) if params[:lease].blank?
-          params.require(:lease).permit(
-            :account_id, :covered, :start_date, :end_date, :insurable_id,
-            :lease_type_id, :status,
-            lease_users_attributes: [ :user_id ],
-            users_attributes: [ :id, :email, :password ]
-          )
-        end
+      def create_params
+        return({}) if params[:lease].blank?
+
+        params.require(:lease).permit(
+          :account_id, :covered, :start_date, :end_date, :insurable_id,
+          :lease_type_id, :status,
+          lease_users_attributes: [:user_id],
+          users_attributes: %i[id email password]
+        )
+      end
         
         def update_params
           return({}) if params[:lease].blank?
@@ -172,23 +139,23 @@ module V2
           )
         end
         
-        def supported_filters(called_from_orders = false)
-          @calling_supported_orders = called_from_orders
-          {
-            id: [ :scalar, :array ],
-            start_date: [ :scalar, :array, :interval ],
-            end_date: [ :scalar, :array, :interval ],
-            lease_type_id: [ :scalar, :array ],
-            status: [ :scalar, :array ],
-            covered: [ :scalar ],
-            insurable_id: [ :scalar, :array ],
-            account_id: [ :scalar, :array ]
-          }
-        end
+      def supported_filters(called_from_orders = false)
+        @calling_supported_orders = called_from_orders
+        {
+          id: %i[scalar array],
+          start_date: %i[scalar array interval],
+          end_date: %i[scalar array interval],
+          lease_type_id: %i[scalar array],
+          status: %i[scalar array],
+          covered: [:scalar],
+          insurable_id: %i[scalar array],
+          account_id: %i[scalar array]
+        }
+      end
 
-        def supported_orders
-          supported_filters(true)
-        end
+      def supported_orders
+        supported_filters(true)
+      end
         
     end
   end # module StaffAgency

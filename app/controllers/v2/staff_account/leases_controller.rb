@@ -5,7 +5,8 @@
 module V2
   module StaffAccount
     class LeasesController < StaffAccountController
-      
+      include LeasesMethods
+
       before_action :set_lease, only: %i[update destroy show]
       
       before_action :set_substrate, only: %i[create index]
@@ -17,23 +18,9 @@ module V2
 
         render template: 'v2/shared/leases/index', status: :ok
       end
-      
+
       def show
         render template: 'v2/shared/leases/show', status: :ok
-      end
-      
-      def create
-        if create_allowed?
-          @lease = @substrate.new(create_params)
-          if @lease.errors.none? && @lease.save_as(current_staff)
-            render :show, status: :created
-          else
-            render json: @lease.errors, status: :unprocessable_entity
-          end
-        else
-          render json: { success: false, errors: ['Unauthorized Access'] },
-                 status: :unauthorized
-        end
       end
 
       def bulk_create
@@ -68,20 +55,7 @@ module V2
         end
         head :no_content
       end
-      
-      def update
-        if update_allowed?
-          if @lease.update_as(current_staff, update_params)
-            render :show, status: :ok
-          else
-            render json: @lease.errors, status: :unprocessable_entity
-          end
-        else
-          render json: { success: false, errors: ['Unauthorized Access'] },
-                 status: :unauthorized
-        end
-      end
-      
+
       def destroy
         if destroy_allowed?
           if @lease.destroy
@@ -96,22 +70,13 @@ module V2
                  status: :unauthorized
         end
       end
-      
-      
+
       private
       
       def view_path
         super + '/leases'
       end
-        
-      def create_allowed?
-        true
-      end
-        
-      def update_allowed?
-        true
-      end
-        
+
       def destroy_allowed?
         true
       end
