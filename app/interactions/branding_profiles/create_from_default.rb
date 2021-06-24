@@ -34,8 +34,9 @@ module BrandingProfiles
 
     def url
       base_uri = Rails.application.credentials.uri[ENV["RAILS_ENV"].to_sym][:client]&.sub(/^https?\:\/{0,3}(www.)?/,'')
-      uri = "#{agency.slug}.#{base_uri}"
-      uri = "#{agency.slug}-#{Time.zone.now.to_i}.#{base_uri}" if BrandingProfile.exists?(url: uri)
+      prefix = account&.slug || agency&.slug
+      uri = "#{prefix}.#{base_uri}"
+      uri = "#{prefix}-#{Time.zone.now.to_i}.#{base_uri}" if BrandingProfile.exists?(url: uri)
       uri
     end
 
