@@ -161,7 +161,7 @@ class Staff < ApplicationRecord
     end
     worked = false
     ActiveRecord::Base.transaction do
-      raise ActiveRecord::Rollback unless self.update(agency_id: new_agency_id)
+      raise ActiveRecord::Rollback unless self.update(organizable: new_agency)
       raise ActiveRecord::Rollback unless self.staff_permission.update(global_agency_permission_id: new_agency.global_agency_permission.id, permissions: new_agency.global_agency_permission.permissions)
       worked = true
     end
