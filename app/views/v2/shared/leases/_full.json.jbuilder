@@ -29,3 +29,13 @@ json.users do
     json.primary lease_user.primary
   end
 end
+
+json.policies do
+  if lease.insurable.policies.present?
+    json.array! lease.insurable.policies do |policy|
+      json.extract! policy, :id, :number, :policy_type_id, :status
+
+      json.policy_type_title policy&.policy_type&.title
+    end
+  end
+end

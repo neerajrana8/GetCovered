@@ -56,8 +56,8 @@ describe 'User API spec', type: :request do
     end
     
     it 'should autocomplete search users by email' do
-      user = User.create(email: 'newemail@test.com', password: 'foobar')
-      User.__elasticsearch__.refresh_index!
+      user = ::User.create(email: 'newemail@test.com', password: 'foobar')
+      ::User.__elasticsearch__.refresh_index!
       get search_v2_users_path, params: {"query" => 'newemail'}, headers: @headers
       result = JSON.parse response.body
       expect(result).not_to be_empty

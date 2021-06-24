@@ -130,15 +130,14 @@ module V2
         )
       end
         
-      def update_params
-        return({}) if params[:lease].blank?
-
-        params.require(:lease).permit(
-          :covered, :end_date, :start_date, :status,
-          lease_users_attributes: [:user_id],
-          users_attributes: %i[id email password]
-        )
-      end
+        def update_params
+          return({}) if params[:lease].blank?
+          params.require(:lease).permit(
+            :covered, :end_date, :start_date, :status, :account_id, :insurable_id,
+            lease_users_attributes: [ :user_id ],
+            users_attributes: [ :id, :email, :password ]
+          )
+        end
         
       def supported_filters(called_from_orders = false)
         @calling_supported_orders = called_from_orders

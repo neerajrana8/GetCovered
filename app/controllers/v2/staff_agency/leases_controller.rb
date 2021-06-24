@@ -40,7 +40,7 @@ module V2
                 lease.users << user
               else
                 secure_tmp_password = SecureRandom.base64(12)
-                user = User.create(
+                user = ::User.create(
                   email: lease_user[:user_attributes][:email],
                   password: secure_tmp_password,
                   password_confirmation: secure_tmp_password,
@@ -136,7 +136,7 @@ module V2
         return({}) if params[:lease].blank?
 
         params.require(:lease).permit(
-          :covered, :end_date, :start_date, :status,
+          :covered, :end_date, :start_date, :status, :account_id, :insurable_id,
           lease_users_attributes: [:user_id],
           users_attributes: %i[id email password]
         )
