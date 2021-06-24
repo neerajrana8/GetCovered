@@ -175,7 +175,7 @@ module V2
       end
 
       def set_branding_profile
-        @branding_profile = @agency.branding_profiles.find(params[:id])
+        @branding_profile = @agency.branding_profiles.find_by_id(params[:id]) || BrandingProfile.where(profileable_type: 'Account', profileable_id: @agency.accounts.ids).find_by_id(params[:id])
       end
 
       def branding_profile_params
