@@ -76,6 +76,10 @@
       post :import, on: :collection
     end
 
+    resources :branding_profile_attributes,
+              path: "branding-profile-attributes",
+              only: [ :destroy ]
+
     resources :carrier_insurable_profiles,
       path: "carrier-insurable-profiles",
       only: [:update, :show, :create]

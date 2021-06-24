@@ -17,9 +17,24 @@ module V2
       def show; end
 
       def create
-        branding_profile_outcome = BrandingProfiles::CreateFromDefault.run(agency: @agency)
+        profileable =
+          case branding_profile_params[:profileable_type]
+          when 'Account'
+            Account.find_by_id(branding_profile_params[:profileable_id])
+          when 'Agency'
+            Agency.find_by_id(branding_profile_params[:profileable_id])
+          end
 
-        if branding_profile_outcome.valid?
+
+        if profileable.present?
+          branding_profile_outcome =
+            case profileable
+            when Agency
+              BrandingProfiles::CreateFromDefault.run(agency: profileable)
+            when Account
+              BrandingProfiles::CreateFromDefault.run(account: profileable)
+            end
+
           @branding_profile = branding_profile_outcome.result
           render :show, status: :created
         else
