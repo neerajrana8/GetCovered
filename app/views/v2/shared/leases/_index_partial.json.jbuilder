@@ -22,20 +22,3 @@ json.lease_type do
                   lease_type: lease.lease_type
   end
 end
-
-json.users do
-  json.array! lease.lease_users do |lease_user|
-    json.partial! 'v2/staff_super_admin/users/user_show_full.json.jbuilder', user: lease_user.user if lease_user.present?
-    json.primary lease_user.primary
-  end
-end
-
-json.policies do
-  if lease.insurable.policies.present?
-    json.array! lease.insurable.policies do |policy|
-      json.extract! policy, :id, :number, :policy_type_id, :status
-
-      json.policy_type_title policy&.policy_type&.title
-    end
-  end
-end
