@@ -23,13 +23,13 @@ json.policies do
     json.array! insurable.policies do |policy|
       json.extract! policy, :id, :number, :policy_type_id, :status, :created_at, :effective_date, :expiration_date
 
-      json.policy_type_title policy&.policy_type&.title
+      json.policy_type_title I18n.t("policy_type_model.#{policy&.policy_type&.title&.parameterize&.underscore}")
 
       if PolicyType::MASTER_COVERAGES_IDS.include?(policy.policy_type_id) && policy.policy.present?
         json.master_policy do
           json.extract! policy.policy, :id, :number, :policy_type_id, :status, :created_at, :effective_date, :expiration_date
 
-          json.policy_type_title policy.policy&.policy_type&.title
+          json.policy_type_title I18n.t("policy_type_model.#{policy.policy&.policy_type&.title&.parameterize&.underscore}")
         end
       end
     end
