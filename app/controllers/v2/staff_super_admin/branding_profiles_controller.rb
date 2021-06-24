@@ -11,6 +11,7 @@ module V2
 
       def index
         super(:@branding_profiles, BrandingProfile)
+        render template: 'v2/shared/branding_profiles/index', status: :ok
       end
 
       def show; end
@@ -37,7 +38,7 @@ module V2
           
           if branding_profile_outcome.valid?
             @branding_profile = branding_profile_outcome.result
-            render :show, status: :created
+            render template: 'v2/shared/branding_profiles/show', status: :created
           else
             render json: standard_error(
                            :branding_profile_was_not_created,
@@ -123,7 +124,7 @@ module V2
       def update
         if update_allowed?
           if @branding_profile.update(branding_profile_params)
-            render :show, status: :ok
+            render template: 'v2/shared/branding_profiles/show', status: :ok
           else
             render json: @branding_profile.errors, status: :unprocessable_entity
           end
