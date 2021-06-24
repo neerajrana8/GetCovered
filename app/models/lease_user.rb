@@ -6,7 +6,7 @@ class LeaseUser < ApplicationRecord
   # Callbacks
   before_create :set_first_as_primary
   after_create :set_account_user
-  after_save :check_default
+  after_save :check_primary
   
   # Relationships
   belongs_to :lease
@@ -19,7 +19,7 @@ class LeaseUser < ApplicationRecord
   private
     
   def set_first_as_primary
-    self.primary = true if lease.lease_users.count == 0  
+    self.primary = true if lease.lease_users.count == 0 && primary.nil?
   end
    
   def set_account_user
@@ -31,13 +31,13 @@ class LeaseUser < ApplicationRecord
     end
   end
 
-  def check_default
-    if profileable.branding_profiles.count > 1 && default?
+  def check_primary
+    if lease.lease_users.count > 1 && primary?
 
-      profileable.branding_profiles
-                 .where(default: true)
-                 .where.not(id: id)
-                 .update default: false
+      lease.lease_users
+        .where(primary: true)
+        .where.not(id: id)
+        .update(primary: false)
     end
   end
 end
