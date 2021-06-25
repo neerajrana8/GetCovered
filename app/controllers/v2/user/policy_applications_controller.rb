@@ -595,8 +595,9 @@ module V2
       def update_residential_params
         return create_residential_params
         params.require(:policy_application)
-          .permit(:branding_profile_id, :effective_date, :billing_strategy_id, fields: {},
+          .permit(:branding_profile_id, :effective_date, :billing_strategy_id,
                   :agency_id, :account_id,
+                  fields: {},
                   policy_rates_attributes: [:insurable_rate_id],
                   policy_insurables_attributes: [:insurable_id],
                   extra_settings: [
