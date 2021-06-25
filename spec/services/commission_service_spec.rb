@@ -1,6 +1,7 @@
 require 'rails_helper'
 
 describe 'Commission calculation spec', type: :request do
+=begin
   before(:all) do
     @carrier = Carrier.first
     @policy_type = @carrier.policy_types.take
@@ -176,5 +177,5 @@ describe 'Commission calculation spec', type: :request do
     getcovered_commission = Commission.where(commissionable: @getcovered_agency).last
     expect(getcovered_commission.amount).to eq(10225)
   end
-  
+=end
 end

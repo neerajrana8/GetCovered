@@ -75,7 +75,7 @@ describe 'Admin Policy spec', type: :request do
       expect(result.count).to eq(0)
 
       # Third Request should return 1 policy belonging to a new policy_type
-      new_policy_type = @carrier.policy_types.create(title: 'New Policy Type')
+      new_policy_type = @carrier.policy_types.create(id: PolicyType.maximum(:id).next, title: "New Policy Type")
       FactoryBot.create(:policy, agency: @agency, carrier: @carrier, account: @account, policy_type: new_policy_type)
       login_staff(@staff)
       @headers = get_auth_headers_from_login_response_headers(response)
@@ -151,7 +151,7 @@ describe 'Admin Policy spec', type: :request do
       expect(result.count).to eq(0)
 
       # Third Request should return 1 policy belonging to a new policy_type
-      new_policy_type = @carrier.policy_types.create(title: 'New Policy Type')
+      new_policy_type = @carrier.policy_types.create(id: PolicyType.maximum(:id).next, title: "New Policy Type")
       FactoryBot.create(:policy, agency: @agency, carrier: @carrier, account: @account, policy_type: new_policy_type)
       login_staff(@staff)
       @headers = get_auth_headers_from_login_response_headers(response)

@@ -5,12 +5,7 @@
 module V2
   module Public
     class PolicyTypesController < PublicController
-	  
-      def index
-        @policy_types = PolicyType.where(enabled: true)
-        render :index, status: :ok                                           
-		  end
-	   
-	  end
-	end
+      include PolicyTypesMethods     
+    end
+  end
 end

@@ -19,12 +19,12 @@ class ConfieService
   def self.create_confie_lead(application)
     return "Policy application is for a non-Confie agency" unless application.agency_id == ::ConfieService.agency_id
     cs = ::ConfieService.new
-    return "Failed to build create_lead request" unless cs.build_request(:create_lead,
+    return "Failed to build create_lead request" unless (cs.build_request(:create_lead,
       user: application.primary_user,
       lead_id: application.id,
       #address: application.primary_address # leaving disabled for now; will default to user.address instead
       line_breaks: true
-    )
+    ) rescue false)
     event = application.events.new(cs.event_params)
     event.started = Time.now
     result = cs.call

@@ -218,6 +218,19 @@
 
     resources :leads_dashboard_tracking_url, only: [:index]
 
+    resources :leases, only: [ :create, :update, :destroy, :index, :show ] do
+      member do
+        get "histories",
+            to: "histories#index_recordable",
+            via: "get",
+            defaults: { recordable_type: Lease }
+      end
+
+      collection do
+        post :bulk_create
+      end
+    end
+    
     resources :lease_types,
       path: "lease-types",
       only: [ :create, :update, :index, :show ]

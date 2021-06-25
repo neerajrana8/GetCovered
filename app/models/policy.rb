@@ -125,7 +125,7 @@ class Policy < ApplicationRecord
   scope :accepted_quote, lambda {
     joins(:policy_quotes).where(policy_quotes: { status: 'accepted'})
   }
-  scope :master_policy_coverages, -> { where(policy_type_id: PolicyType::MASTER_COVERAGE_ID) }
+  scope :master_policy_coverages, -> { where(policy_type_id: PolicyType::MASTER_COVERAGES_IDS) }
 
   accepts_nested_attributes_for :policy_premiums,
   :insurables, :policy_users, :policy_insurables, :policy_application

@@ -4,28 +4,35 @@
 
 class CarrierAgency < ApplicationRecord
   include RecordChange
-
-  after_create :create_authorizations
-  after_create :set_billing_strategies, unless: proc { agency_id == 1 }
-  before_destroy :remove_authorizations,
-                 :disable_billing_strategies
+  
+  BLOCKED_POLICY_TYPES = [2, 3] # Prevent Master Policy & Master Policy Coverages from being included
 
   belongs_to :carrier
   belongs_to :agency
 
+  has_many :carrier_agency_policy_types, dependent: :destroy
+  has_many :commission_strategies,
+    through: :carrier_agency_policy_types
   has_many :carrier_agency_authorizations, dependent: :destroy
   has_many :histories, as: :recordable
+  def billing_strategies; ::BillingStrategy.where(carrier_id: self.carrier_id, agency_id: self.agency_id); end
+  
+  accepts_nested_attributes_for :carrier_agency_policy_types,
+    reject_if: Proc.new{|attrs| ::CarrierAgency::BLOCKED_POLICY_TYPES.include?(attrs['policy_type_id'] || attrs[:policy_type_id]) }
+  accepts_nested_attributes_for :carrier_agency_authorizations,
+    allow_destroy: true
+
+
+  before_validation :manipulate_dem_nested_boiz_like_a_boss,
+    on: :create # This cannot be a before_create, or the CAPTs will already have been saved. If there are any issues after a rails upgrade or something, see note in method body.
+  before_destroy :remove_authorizations,
+                 :disable_billing_strategies
 
   validate :carrier_agency_assignment_unique
 
-  accepts_nested_attributes_for :carrier_agency_authorizations, allow_destroy: true
 
   def agency_title
     agency.try(:title)
-  end
-
-  def billing_strategies
-    BillingStrategy.where(agency: agency, carrier: carrier)
   end
 
   def disable
@@ -33,59 +40,35 @@ class CarrierAgency < ApplicationRecord
     disable_authorizations
     disable_billing_strategies
   end
-
+  
   private
 
-  def blocked_policy_types
-    # Prevent Master Policy & Master Policy Coverages from being included
-    [2, 3]
-  end
+    def remove_authorizations
+      self.carrier_agency_authorizations.destroy_all
+    end
+    
+    def disable_authorizations
+      carrier_agency_authorizations.each{|caa| caa.update available: false }
+    end
 
-  def create_authorizations
-    # Prevent Alaska & Hawaii as being set as available
-    blocked_states = [0, 11]
+    def disable_billing_strategies
+      billing_strategies.update_all(enabled: false)
+    end
 
-    carrier.carrier_policy_types.each do |cpt|
-      next if blocked_policy_types.include?(cpt.policy_type_id)
-
-      51.times do |state|
-        carrier_agency_authorizations.create(
-          state: state,
-          available: blocked_states.include?(state) ? false : true,
-          policy_type: cpt.policy_type
-        )
+    def carrier_agency_assignment_unique
+      if CarrierAgency.where(carrier: carrier, agency: agency).count > 1
+        errors.add(:agency, "assignment to #{carrier.title} already exists")
       end
     end
-  end
-
-  def set_billing_strategies
-    carrier.carrier_policy_types.each do |cpt|
-      strats = BillingStrategy.where(agency_id: 1, carrier: carrier, policy_type: cpt.policy_type)
-      next if blocked_policy_types.include?(cpt.policy_type_id) || strats.nil?
-
-      strats.each do |bs|
-        new_bs = bs.dup
-        new_bs.agency = agency
-        new_bs.save
+    
+    def manipulate_dem_nested_boiz_like_a_boss
+      (self.carrier_agency_policy_types || []).select{|capt| capt.id.nil? }.each do |capt|
+        #capt.carrier_agency = self # this isn't needed anymore eh
+        
+        # WARNING: this will run before nested attribute validations according to tests. but if everything suddenly breaks hideously on a rails upgrade or something,
+        # try putting the before_validation line before the association lines, or make sure to manually re-invoke the CAPT manipulate_dem_nested_boiz_like_a_boss methods here after setting carrier & agency
+        # (because the CAPTs use this same structure to set up their CommissionStrategies from partial attributes, and if they don't have an agency yet shizzle will go bizzle real fizzle)
       end
     end
-  end
-
-  def remove_authorizations
-    carrier_agency_authorizations.destroy_all
-  end
-
-  def disable_authorizations
-    carrier_agency_authorizations.each { |caa| caa.update available: false }
-  end
-
-  def disable_billing_strategies
-    billing_strategies&.each { |bs| bs.update enabled: false }
-  end
-
-  def carrier_agency_assignment_unique
-    if CarrierAgency.where(carrier: carrier, agency: agency).count > 1
-      errors.add(:agency, "assignment to #{carrier.title} already exists")
-    end
-  end
+    
 end

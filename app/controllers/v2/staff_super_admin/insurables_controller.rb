@@ -129,11 +129,11 @@ module V2
       def set_master_policies
         if @insurable.unit?
           @master_policy_coverage =
-            @insurable.policies.current.where(policy_type_id: PolicyType::MASTER_COVERAGE_ID).take
+            @insurable.policies.current.where(policy_type_id: PolicyType::MASTER_COVERAGES_IDS).take
           @master_policy = @master_policy_coverage&.policy
         else
           @master_policy =
-            @insurable.policies.current.where(policy_type_id: PolicyType::MASTER_ID).take
+            @insurable.policies.current.where(policy_type_id: PolicyType::MASTER_IDS).take
           @master_policy_coverage = nil
         end
       end
