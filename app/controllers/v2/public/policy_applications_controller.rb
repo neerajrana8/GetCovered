@@ -45,6 +45,9 @@ module V2
             if insurable.nil?
               render(json: standard_error(:unit_not_found, I18n.t('policy_application_contr.new.unit_not_found')), status: :unprocessable_entity) and return
             end
+            # fix up account and agency if needed
+            account_id = insurable.account_id if account_id.nil?
+            agency_id = insurable.agency_id || insurable.account&.agency_id if agency_id.nil?
             # determine preferred status
             @preferred = (insurable.parent_community || insurable).preferred_ho4
             # get the carrier_id
@@ -135,7 +138,8 @@ module V2
       def create_rental_guarantee
         @application        = PolicyApplication.new(create_rental_guarantee_params)
         @application.expiration_date = @application.effective_date&.send(:+, 1.year)
-        @application.agency = Agency.where(master_agency: true).take if @application.agency.nil?
+        @application.agency = @application.account&.agency || Agency.where(master_agency: true).take if @application.agency.nil?
+        @application.account = @application.primary_insurable&.account if @application.account.nil?
         @application.billing_strategy = BillingStrategy.where(agency:      @application.agency,
                                                               carrier:     @application.carrier,
                                                               policy_type: @application.policy_type).take if @application.billing_strategy.nil?
@@ -265,7 +269,8 @@ module V2
       def create_commercial
         @application        = PolicyApplication.new(create_commercial_params)
         @application.expiration_date = @application.effective_date&.send(:+, 1.year)
-        @application.agency = Agency.where(master_agency: true).take if @application.agency.nil?
+        @application.agency = @application.account&.agency || Agency.where(master_agency: true).take if @application.agency.nil?
+        @application.account = @application.primary_insurable&.account if @application.account.nil?
 
         @application.billing_strategy = BillingStrategy.where(agency:      @application.agency,
                                                               policy_type: @application.policy_type,
@@ -337,12 +342,9 @@ module V2
       def create_security_deposit_replacement
         # set up the application
         @application = PolicyApplication.new(create_security_deposit_replacement_params)
-        if @application.agency.nil? && @application.account.nil?
-          @application.agency = Agency.where(master_agency: true).take
-        elsif @application.agency.nil?
-          @application.agency = @application.account.agency
-        end
-        @application.billing_strategy = BillingStrategy.where(carrier_id: DepositChoiceService.carrier_id).take if @application.billing_strategy.nil? # WARNING: there should only be one (annual) right now
+        @application.agency = @application.account&.agency || Agency.where(master_agency: true).take if @application.agency.nil?
+        @application.account = @application.primary_insurable&.account if @application.account.nil?
+        @application.billing_strategy = BillingStrategy.where(carrier_id: DepositChoiceService.carrier_id, agency_id: @application.agency_id).take if @application.billing_strategy.nil? # WARNING: there should only be one (annual) right now
         @application.expiration_date = @application.effective_date + 1.year unless @application.effective_date.nil?
         # try to save
         unless @application.save
@@ -415,6 +417,8 @@ module V2
       def create_residential
         @application = PolicyApplication.new(create_residential_params)
         @application.expiration_date = @application.effective_date&.send(:+, 1.year)
+        @application.agency = @application.account&.agency || Agency.where(master_agency: true).take if @application.agency.nil?
+        @application.account = @application.primary_insurable&.account if @application.account.nil?
 
         if @application.extra_settings && !@application.extra_settings['additional_interest'].blank?
           error_message = ::MsiService.validate_msi_additional_interest(@application.extra_settings['additional_interest'])
@@ -437,12 +441,6 @@ module V2
           end
           @application.coverage_selections.select!{|cs| cs['selection'] || cs[:selection] }
           @application.coverage_selections.push({ 'category' => 'coverage', 'options_type' => 'none', 'uid' => '1010', 'selection' => true }) unless @application.coverage_selections.any?{|co| co['uid'] == '1010' }
-        end
-
-        if @application.agency.nil? && @application.account.nil?
-          @application.agency = Agency.where(master_agency: true).take
-        elsif @application.agency.nil?
-          @application.agency = @application.account.agency
         end
 
         if @application.save
@@ -534,6 +532,9 @@ module V2
           # try to update
           @policy_application.assign_attributes(update_residential_params)
           @policy_application.expiration_date = @policy_application.effective_date&.send(:+, 1.year)
+          # fix agency/account if needed
+          @policy_application.agency = @policy_application.account&.agency || Agency.where(master_agency: true).take if @policy_application.agency.nil?
+          @policy_application.account = @policy_application.primary_insurable&.account if @policy_application.account.nil?
           # flee if nonsense is passed for additional interest
           if @policy_application.extra_settings && !@policy_application.extra_settings['additional_interest'].blank?
             error_message = ::MsiService.validate_msi_additional_interest(@policy_application.extra_settings['additional_interest'])
@@ -567,12 +568,6 @@ module V2
             @policy_application.coverage_selections = @policy_application.coverage_selections.select{|cs| cs['selection'] || cs[:selection] }
             @policy_application.coverage_selections.push({ 'category' => 'coverage', 'options_type' => 'none', 'uid' => '1010', 'selection' => true }) unless @policy_application.coverage_selections.any?{|co| co['uid'] == '1010' }
           end
-          # fix agency if needed
-          if @policy_application.agency.nil? && @policy_application.account.nil?
-            @policy_application.agency = Agency.where(master_agency: true).take
-          elsif @policy_application.agency.nil?
-            @policy_application.agency = @policy_application.account.agency
-          end
           # woot woot, try to update users and save
           update_users_result = update_policy_users_params.blank? ? true :
             PolicyApplications::UpdateUsers.run!(
@@ -589,6 +584,7 @@ module V2
               @policy_insurables_to_restore = @policy_application.policy_insurables.select{|pi| pi.id }
               @policy_application.policy_insurables.clear
               @policy_application.policy_insurables = @replacement_policy_insurables
+              @policy_application.account = @policy_application.primary_insurable&.account if update_residential_params[:account_id].nil?
             end
             if !@policy_application.save
               unless @policy_insurables_to_restore.blank?
@@ -658,10 +654,12 @@ module V2
 
       def update_rental_guarantee
         @policy_application = PolicyApplication.find(params[:id])
-        if update_residential_params[:effective_date].present?
-          @policy_application.expiration_date = update_residential_params[:effective_date].to_date&.send(:+, 1.year)
-        end
-        if @policy_application.update(update_rental_guarantee_params) && @policy_application.update(status: 'complete')
+        @policy_application.assign_attributes(update_residential_params)
+        @policy_application.expiration_date = @policy_application.effective_date&.send(:+, 1.year)
+        @policy_application.agency = @policy_application.account&.agency || Agency.where(master_agency: true).take if @policy_application.agency.nil?
+        @policy_application.account = @policy_application.primary_insurable&.account if @policy_application.account.nil?
+        
+        if @policy_application.save && @policy_application.update(status: 'complete')
           update_users_result =
             PolicyApplications::UpdateUsers.run!(
               policy_application: @policy_application,
@@ -838,7 +836,7 @@ module V2
           billing_strategy_code = billing_strategy&.carrier_code
         end
         # get coverage options
-        results                    = ::InsurableRateConfiguration.get_coverage_options(
+        results                    = ::InsurableRateConfiguration.get_coverage_options(**({
           @msi_id,
           cip || unit.primary_address,
           [{ 'category' => 'coverage', 'options_type' => 'none', 'uid' => '1010', 'selection' => true }] + (
@@ -858,7 +856,9 @@ module V2
               gated: inputs[:gated].nil? ? nil : inputs[:gated] ? true : false
             }.compact
           })
-        )
+        }.merge(
+          msi_get_coverage_options_params[:account_id].blank? ? {} : { account: Account.where(msi_get_coverage_options_params[:account_id]).take }
+        )))
         results[:coverage_options] = results[:coverage_options].select{|co| co['uid'] != '1010' && co['uid'] != 1010 }.map{|co| co['options'].blank? ? co : co.merge({'options' => co['options'].map{|v| { 'value' => v, 'data_type' => co['uid'].to_s == '3' && v.to_d == 500 ? 'currency' : co['options_format'] } }.map{|h| h['value'] = (h['value'].to_d * 100).to_i if h['data_type'] == 'currency'; h }}) }
         #results[:coverage_options] = results[:coverage_options].sort_by { |co| co["title"] }.group_by do |co|
         #  if co["category"] == "coverage"
@@ -1005,18 +1005,6 @@ module V2
 
       def update_residential_params
         return create_residential_params
-        params.require(:policy_application)
-          .permit(:branding_profile_id, :effective_date, policy_rates_attributes: [:insurable_rate_id],
-                  policy_insurables_attributes: [:insurable_id],
-                  extra_settings: [
-                    # for MSI
-                    :installment_day, :number_of_units, :years_professionally_managed, :year_built, :gated,
-                    additional_interest: [
-                      :entity_type, :email_address, :phone_number,
-                      :company_name, :address,
-                      :first_name, :last_name, :middle_name
-                    ]
-                  ])
       end
 
       def update_rental_guarantee_params
@@ -1033,7 +1021,7 @@ module V2
       end
 
       def msi_get_coverage_options_params
-        params.permit(:insurable_id, :agency_id, :billing_strategy_id,
+        params.permit(:insurable_id, :agency_id, :account_id, :billing_strategy_id,
                       :effective_date, :additional_insured,
                       :estimate_premium,
                       :number_of_units, :years_professionally_managed, :year_built, :gated, # nonpreferred stuff
