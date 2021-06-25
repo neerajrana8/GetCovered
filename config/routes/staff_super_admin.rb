@@ -31,6 +31,8 @@
     end
     post :accounts_index, action: :index, controller: :accounts
 
+    resources :addresses, only: [:index]
+
     resources :refunds,
       only: [ :index, :create, :update] do
         member do
@@ -280,6 +282,7 @@
               to: "policies#get_leads",
               via: "get"
           put :update_coverage_proof
+          put :add_policy_documents
           delete :delete_policy_document
           put :refund_policy
           put :cancel_policy
