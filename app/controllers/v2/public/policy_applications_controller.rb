@@ -836,7 +836,7 @@ module V2
           billing_strategy_code = billing_strategy&.carrier_code
         end
         # get coverage options
-        results                    = ::InsurableRateConfiguration.get_coverage_options(**({
+        results                    = ::InsurableRateConfiguration.get_coverage_options(
           @msi_id,
           cip || unit.primary_address,
           [{ 'category' => 'coverage', 'options_type' => 'none', 'uid' => '1010', 'selection' => true }] + (
@@ -845,20 +845,23 @@ module V2
           inputs[:effective_date] ? Date.parse(inputs[:effective_date]) : nil,
           inputs[:additional_insured].to_i,
           billing_strategy_code,
-          agency: Agency.where(id: msi_get_coverage_options_params[:agency_id].to_i || 0).take,
-          perform_estimate: inputs[:estimate_premium] ? true : false,
-          eventable:        unit,
-          **(cip ? {} : {
-            nonpreferred_final_premium_params: {
-              number_of_units: inputs[:number_of_units].to_i == 0 ? nil : inputs[:number_of_units].to_i,
-              years_professionally_managed: inputs[:years_professionally_managed].blank? ? nil : inputs[:years_professionally_managed].to_i,
-              year_built: inputs[:year_built].to_i == 0 ? nil : inputs[:year_built].to_i,
-              gated: inputs[:gated].nil? ? nil : inputs[:gated] ? true : false
-            }.compact
-          })
-        }.merge(
-          msi_get_coverage_options_params[:account_id].blank? ? {} : { account: Account.where(msi_get_coverage_options_params[:account_id]).take }
-        )))
+          **({
+            agency: Agency.where(id: msi_get_coverage_options_params[:agency_id].to_i || 0).take,
+            perform_estimate: inputs[:estimate_premium] ? true : false,
+            eventable:        unit,
+            **(cip ? {} : {
+              nonpreferred_final_premium_params: {
+                number_of_units: inputs[:number_of_units].to_i == 0 ? nil : inputs[:number_of_units].to_i,
+                years_professionally_managed: inputs[:years_professionally_managed].blank? ? nil : inputs[:years_professionally_managed].to_i,
+                year_built: inputs[:year_built].to_i == 0 ? nil : inputs[:year_built].to_i,
+                gated: inputs[:gated].nil? ? nil : inputs[:gated] ? true : false
+              }.compact
+            })
+            }.merge(
+              msi_get_coverage_options_params[:account_id].blank? ? {} : { account: Account.where(msi_get_coverage_options_params[:account_id]).take }
+            )
+          )
+        )
         results[:coverage_options] = results[:coverage_options].select{|co| co['uid'] != '1010' && co['uid'] != 1010 }.map{|co| co['options'].blank? ? co : co.merge({'options' => co['options'].map{|v| { 'value' => v, 'data_type' => co['uid'].to_s == '3' && v.to_d == 500 ? 'currency' : co['options_format'] } }.map{|h| h['value'] = (h['value'].to_d * 100).to_i if h['data_type'] == 'currency'; h }}) }
         #results[:coverage_options] = results[:coverage_options].sort_by { |co| co["title"] }.group_by do |co|
         #  if co["category"] == "coverage"
