@@ -596,6 +596,7 @@ module V2
         return create_residential_params
         params.require(:policy_application)
           .permit(:branding_profile_id, :effective_date, :billing_strategy_id, fields: {},
+                  :agency_id, :account_id,
                   policy_rates_attributes: [:insurable_rate_id],
                   policy_insurables_attributes: [:insurable_id],
                   extra_settings: [
@@ -611,7 +612,7 @@ module V2
 
       def update_rental_guarantee_params
         params.require(:policy_application)
-          .permit(:fields, :billing_strategy_id, :effective_date, fields: {})
+          .permit(:agency_id, :account_id, :fields, :billing_strategy_id, :effective_date, fields: {})
       end
 
       def supported_filters(called_from_orders = false)

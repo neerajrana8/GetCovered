@@ -967,7 +967,7 @@ module V2
         params.require(:policy_application)
           .permit(:branding_profile_id, :effective_date, :auto_pay,
                   :auto_renew, :billing_strategy_id, :account_id, :policy_type_id,
-                  :carrier_id, :agency_id, fields: {})
+                  :carrier_id, :agency_id, :account_id, fields: {})
       end
 
 
