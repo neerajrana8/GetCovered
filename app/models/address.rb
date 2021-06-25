@@ -36,6 +36,8 @@ class Address < ApplicationRecord
               :from_full
 
 	before_create :set_first_as_primary
+  
+  before_create :standardize
 
   after_validation :geocode
 
@@ -84,6 +86,7 @@ class Address < ApplicationRecord
       return address
     end
     address.from_full
+    address.set_full
     ['street_number', 'street_name', 'city', 'state', 'zip_code'].each do |prop|
       if address.send(prop).blank?
         address.errors.add(prop.to_sym, "is invalid")
@@ -237,6 +240,18 @@ class Address < ApplicationRecord
   def refresh_insurable_policy_type_ids
     # update policy type ids (in case a newly created or changed address alters which policy types an insurable supports)
     self.addressable&.refresh_policy_type_ids(and_save: true)
+  end
+
+  def standardize
+    fields = [:street_number, :street_name, :street_two, :city]
+    dupper = self.dup
+    dupper.street_two = nil
+    dupper.set_full
+    temp = ::Address.from_string(dupper.full)
+    temp.street_two = self.street_two
+    temp.set_full
+    fields.each{|f| self.send("#{f.to_s}=", temp.send(f)) }
+    self.set_full
   end
 
 end
