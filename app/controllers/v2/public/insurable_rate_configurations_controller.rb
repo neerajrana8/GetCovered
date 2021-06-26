@@ -15,7 +15,7 @@ module V2
         end
         # grab some useful stuff
         agency_list = [agency]
-        agency_list.push(agency.last.agency) while !agency.last.agency.nil?
+        agency_list.push(agency_list.last.agency) while !agency_list.last.agency.nil?
         carrier_insurable_type = CarrierInsurableType.where(carrier_id: 5, insurable_type_id: 1).take
         usa = InsurableGeographicalCategory.get_for(state: nil)
         # calculate parent options
