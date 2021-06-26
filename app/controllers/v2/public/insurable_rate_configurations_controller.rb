@@ -7,9 +7,9 @@ module V2
         return if Rails.env == 'production' # just in case since this is temporary
       
         # grab params
-        agency = Agency.where(id: params[:agency_id].to_i).take
+        agency = Agency.where(id: params[:id].to_i).take
         if agency.nil?
-          render json: standard_error(:agency_not_found, "No agency with the provided id (#{params[:agency_id] || 'null'}) was found", nil),
+          render json: standard_error(:agency_not_found, "No agency with the provided id (#{params[:id] || 'null'}) was found", nil),
             status: 422
           return
         end
@@ -63,9 +63,9 @@ module V2
       
       
         # grab params
-        agency = Agency.where(id: params[:agency_id].to_i).take
+        agency = Agency.where(id: params[:id].to_i).take
         if agency.nil?
-          render json: standard_error(:agency_not_found, "No agency with the provided id (#{params[:agency_id] || 'null'}) was found", nil),
+          render json: standard_error(:agency_not_found, "No agency with the provided id (#{params[:id] || 'null'}) was found", nil),
             status: 422
           return
         end
