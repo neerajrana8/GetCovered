@@ -16,7 +16,7 @@ module V2
         # grab some useful stuff
         agency_list = [agency]
         agency_list.push(agency_list.last.agency) while !agency_list.last.agency.nil?
-        carrier_insurable_type = CarrierInsurableType.where(carrier_id: 5, insurable_type_id: 1).take
+        carrier_insurable_type = CarrierInsurableType.where(carrier_id: 5, insurable_type_id: 4).take
         usa = InsurableGeographicalCategory.get_for(state: nil)
         # calculate parent options
         parent_ircs = (agency_list.drop(1) + [Carrier.find(5)]).reverse.map do |configurer|
@@ -27,18 +27,19 @@ module V2
             carrier_info: {},
             rules: {},
             coverage_options: combine_option_sets(
-              ::InsurableRateConfiguration.where(configurer: configurer, configurable_type: "InsurableGeographicalCategory", carrier_insurable_type: carrier_insurable_type)
+              *InsurableRateConfiguration.where(configurer: configurer, configurable_type: "InsurableGeographicalCategory", carrier_insurable_type: carrier_insurable_type)
                                           .map{|irc| irc.coverage_options }
-            )
+            ).values
           )
         end
         coverage_options = []
         parent_ircs.each do |irc|
           irc.merge_parent_options!(coverage_options, mutable: false, allow_new_coverages: InsurableRateConfiguration::COVERAGE_ADDING_CONFIGURERS.include?(irc.configurer_type))
+          coverage_options = irc.coverage_options
         end
         coverage_options.select!{|co| co['enabled'] != false }
         # calculate our own options
-        agency_irc = ::InsurableRateConfiguration.where(carrier_insurable_type: carrier_insurable_type, configurer: agency, configurable: usa).take
+        agency_irc = ::InsurableRateConfiguration.where(carrier_insurable_type: carrier_insurable_type, configurer: agency, configurable: usa).take || ::InsurableRateConfiguration.new(coverage_options: [])
         # annotate with our stuff
         coverage_options.select!{|co| co['options_type'] == 'multiple_choice' }
         coverage_options.each do |opt|
@@ -60,8 +61,7 @@ module V2
       
       def set_options
         return if Rails.env == 'production' # just in case since this is temporary
-      
-      
+   
         # grab params
         agency = Agency.where(id: params[:id].to_i).take
         if agency.nil?
@@ -69,15 +69,16 @@ module V2
             status: 422
           return
         end
-        covopts = set_options_parameters[:coverage_options]
+        covopts = set_options_params[:coverage_options]
         if covopts.blank?
           render json: { success: true }, status: :ok
           return
         end
         # grab models
-        carrier_insurable_type = CarrierInsurableType.where(carrier_id: 5, insurable_type_id: 1).take
+        carrier_insurable_type = CarrierInsurableType.where(carrier_id: 5, insurable_type_id: 4).take
         usa = InsurableGeographicalCategory.get_for(state: nil)
-        agency_irc = ::InsurableRateConfiguration.where(carrier_insurable_type: carrier_insurable_type, configurer: agency, configurable: usa).take
+        agency_irc = ::InsurableRateConfiguration.where(carrier_insurable_type: carrier_insurable_type, configurer: agency, configurable: usa).take ||
+                     ::InsurableRateConfiguration.new(carrier_insurable_type: carrier_insurable_type, configurer: agency, configurable: usa, coverage_options: [])
         # update options
         covopts.each do |opt|
           opt['options'] = opt['allowed_options'] # simple way to let the user pass 'allowed_options' instead but leave this code IRC generic
@@ -111,7 +112,7 @@ module V2
       private
       
         def set_options_params
-          params.require(:insurable_rate_configuration).permit(coverage_options: [:uid, :category, allowed_options: []])
+          params.require(:insurable_rate_configuration).permit(coverage_options: [:uid, :category, allowed_options: [] ])
         end
 
         def combine_option_sets(*option_sets)
