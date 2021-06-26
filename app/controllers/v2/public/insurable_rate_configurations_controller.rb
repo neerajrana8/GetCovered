@@ -9,7 +9,7 @@ module V2
         # grab params
         agency = Agency.where(id: params[:agency_id].to_i).take
         if agency.nil?
-          render standard_error(:agency_not_found, "No agency with the provided id (#{params[:agency_id] || 'null'}) was found", nil),
+          render json: standard_error(:agency_not_found, "No agency with the provided id (#{params[:agency_id] || 'null'}) was found", nil),
             status: 422
           return
         end
@@ -55,6 +55,7 @@ module V2
         end
         # return it all
         render json: coverage_options, status: :ok
+        return
       end
       
       def set_options
@@ -64,7 +65,7 @@ module V2
         # grab params
         agency = Agency.where(id: params[:agency_id].to_i).take
         if agency.nil?
-          render standard_error(:agency_not_found, "No agency with the provided id (#{params[:agency_id] || 'null'}) was found", nil),
+          render json: standard_error(:agency_not_found, "No agency with the provided id (#{params[:agency_id] || 'null'}) was found", nil),
             status: 422
           return
         end
@@ -100,11 +101,11 @@ module V2
         agency_irc.coverage_options.compact!
         if agency_irc.save
           render json: { success: true}, status: :ok
-          return
         else
           render json: standard_error(:insurable_rate_configuration_update_failed, "Failed to apply updates!", agency_irc.errors.to_h),
             status: 422
         end
+        return
       end
 
       private
@@ -113,7 +114,7 @@ module V2
           params.require(:insurable_rate_configuration).permit(coverage_options: [:uid, :category, allowed_options: []])
         end
 
-        def combine_option_sets(option_sets*)
+        def combine_option_sets(*option_sets)
           return [] if option_sets.blank?
           req_rankings = { 'forbidden' => 0, 'required' => 1, 'optional' => 2 }
           to_return = {}
