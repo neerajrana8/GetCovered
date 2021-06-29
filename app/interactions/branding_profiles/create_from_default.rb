@@ -1,8 +1,12 @@
 module BrandingProfiles
   class CreateFromDefault < ActiveInteraction::Base
-    object :agency
+    object :agency, default: nil
+    object :account, default: nil
 
     def execute
+      @profileable = account || agency
+      @agency = account.present? ? account.agency : agency
+
       return nil if default_branding_profile.nil? # If there is no default branding profile, add nothing
 
       ActiveRecord::Base.transaction(requires_new: true) do
@@ -10,7 +14,7 @@ module BrandingProfiles
           default_branding_profile.
             attributes.
             except('id', 'created_at', 'updated_at', 'global_default').
-            merge(profileable: agency, url: url)
+            merge(profileable: @profileable, url: url)
         @branding_profile = BrandingProfile.create(branding_profile_params)
 
         if @branding_profile.errors.any?
@@ -30,8 +34,9 @@ module BrandingProfiles
 
     def url
       base_uri = Rails.application.credentials.uri[ENV["RAILS_ENV"].to_sym][:client]&.sub(/^https?\:\/{0,3}(www.)?/,'')
-      uri = "#{agency.slug}.#{base_uri}"
-      uri = "#{agency.slug}-#{Time.zone.now.to_i}.#{base_uri}" if BrandingProfile.exists?(url: uri)
+      prefix = account&.slug || agency&.slug
+      uri = "#{prefix}.#{base_uri}"
+      uri = "#{prefix}-#{Time.zone.now.to_i}.#{base_uri}" if BrandingProfile.exists?(url: uri)
       uri
     end
 
@@ -71,7 +76,7 @@ module BrandingProfiles
         page.
           attributes.
           except('id', 'created_at', 'updated_at').
-          merge(branding_profile_id: @branding_profile.id, agency_id: agency.id)
+          merge(branding_profile_id: @branding_profile.id, agency_id: @agency.id)
       end
       pages = Page.create(pages_params)
 
