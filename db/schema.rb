@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_04_08_112614) do
+ActiveRecord::Schema.define(version: 2021_06_06_231522) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
@@ -111,7 +111,6 @@ ActiveRecord::Schema.define(version: 2021_04_08_112614) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.boolean "searchable", default: false
-    t.boolean "verified", default: false
     t.index ["addressable_type", "addressable_id"], name: "index_addresses_on_addressable_type_and_addressable_id"
   end
 
@@ -150,6 +149,31 @@ ActiveRecord::Schema.define(version: 2021_04_08_112614) do
     t.boolean "enabled"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+  end
+
+  create_table "archived_commission_strategies", force: :cascade do |t|
+    t.string "title", null: false
+    t.integer "amount", default: 10, null: false
+    t.integer "type", default: 0, null: false
+    t.integer "fulfillment_schedule", default: 0, null: false
+    t.boolean "amortize", default: false, null: false
+    t.boolean "per_payment", default: false, null: false
+    t.boolean "enabled", default: false, null: false
+    t.boolean "locked", default: false, null: false
+    t.integer "house_override", default: 10, null: false
+    t.integer "override_type", default: 0, null: false
+    t.bigint "carrier_id"
+    t.bigint "policy_type_id"
+    t.string "commissionable_type"
+    t.bigint "commissionable_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "commission_strategy_id"
+    t.decimal "percentage", precision: 5, scale: 2, default: "0.0"
+    t.index ["carrier_id"], name: "index_archived_commission_strategies_on_carrier_id"
+    t.index ["commission_strategy_id"], name: "index_archived_commission_strategies_on_commission_strategy_id"
+    t.index ["commissionable_type", "commissionable_id"], name: "index_strategy_on_type_and_id"
+    t.index ["policy_type_id"], name: "index_archived_commission_strategies_on_policy_type_id"
   end
 
   create_table "assignments", force: :cascade do |t|
@@ -232,6 +256,15 @@ ActiveRecord::Schema.define(version: 2021_04_08_112614) do
     t.index ["policy_type_id"], name: "index_carrier_agency_authorizations_on_policy_type_id"
   end
 
+  create_table "carrier_agency_policy_types", force: :cascade do |t|
+    t.bigint "carrier_agency_id"
+    t.bigint "policy_type_id"
+    t.bigint "commission_strategy_id"
+    t.index ["carrier_agency_id"], name: "index_carrier_agency_policy_types_on_carrier_agency_id"
+    t.index ["commission_strategy_id"], name: "index_carrier_agency_policy_types_on_commission_strategy_id"
+    t.index ["policy_type_id"], name: "index_carrier_agency_policy_types_on_policy_type_id"
+  end
+
   create_table "carrier_class_codes", force: :cascade do |t|
     t.integer "external_id"
     t.string "major_category"
@@ -302,7 +335,9 @@ ActiveRecord::Schema.define(version: 2021_04_08_112614) do
     t.boolean "premium_refundable", default: true, null: false
     t.integer "max_days_for_full_refund", default: 31, null: false
     t.integer "days_late_before_cancellation", default: 30, null: false
+    t.bigint "commission_strategy_id"
     t.index ["carrier_id"], name: "index_carrier_policy_types_on_carrier_id"
+    t.index ["commission_strategy_id"], name: "index_carrier_policy_types_on_commission_strategy_id"
     t.index ["policy_type_id"], name: "index_carrier_policy_types_on_policy_type_id"
   end
 
@@ -320,6 +355,8 @@ ActiveRecord::Schema.define(version: 2021_04_08_112614) do
     t.jsonb "settings", default: {}, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "commission_strategy_id"
+    t.index ["commission_strategy_id"], name: "index_carriers_on_commission_strategy_id"
   end
 
   create_table "change_requests", force: :cascade do |t|
@@ -395,27 +432,14 @@ ActiveRecord::Schema.define(version: 2021_04_08_112614) do
 
   create_table "commission_strategies", force: :cascade do |t|
     t.string "title", null: false
-    t.integer "amount", default: 10, null: false
-    t.integer "type", default: 0, null: false
-    t.integer "fulfillment_schedule", default: 0, null: false
-    t.boolean "amortize", default: false, null: false
-    t.boolean "per_payment", default: false, null: false
-    t.boolean "enabled", default: false, null: false
-    t.boolean "locked", default: false, null: false
-    t.integer "house_override", default: 10, null: false
-    t.integer "override_type", default: 0, null: false
-    t.bigint "carrier_id"
-    t.bigint "policy_type_id"
-    t.string "commissionable_type"
-    t.bigint "commissionable_id"
+    t.decimal "percentage", precision: 5, scale: 2, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "recipient_type"
+    t.bigint "recipient_id"
     t.bigint "commission_strategy_id"
-    t.decimal "percentage", precision: 5, scale: 2, default: "0.0"
-    t.index ["carrier_id"], name: "index_commission_strategies_on_carrier_id"
     t.index ["commission_strategy_id"], name: "index_commission_strategies_on_commission_strategy_id"
-    t.index ["commissionable_type", "commissionable_id"], name: "index_strategy_on_type_and_id"
-    t.index ["policy_type_id"], name: "index_commission_strategies_on_policy_type_id"
+    t.index ["recipient_type", "recipient_id"], name: "index_commission_strategies_on_recipient_type_and_recipient_id"
   end
 
   create_table "commissions", force: :cascade do |t|
@@ -599,6 +623,7 @@ ActiveRecord::Schema.define(version: 2021_04_08_112614) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.bigint "policy_type_ids", default: [], null: false, array: true
+    t.boolean "occupiable", default: false
   end
 
   create_table "insurables", force: :cascade do |t|
@@ -615,6 +640,7 @@ ActiveRecord::Schema.define(version: 2021_04_08_112614) do
     t.bigint "agency_id"
     t.bigint "policy_type_ids", default: [], null: false, array: true
     t.boolean "preferred_ho4", default: false, null: false
+    t.boolean "occupied", default: false
     t.index ["account_id"], name: "index_insurables_on_account_id"
     t.index ["agency_id"], name: "index_insurables_on_agency_id"
     t.index ["insurable_id"], name: "index_insurables_on_insurable_id"
@@ -1143,6 +1169,7 @@ ActiveRecord::Schema.define(version: 2021_04_08_112614) do
     t.bigint "insurable_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "auto_assign", default: false
     t.index ["insurable_id"], name: "index_policy_insurables_on_insurable_id"
     t.index ["policy_application_id"], name: "index_policy_insurables_on_policy_application_id"
     t.index ["policy_id"], name: "index_policy_insurables_on_policy_id"
@@ -1229,6 +1256,9 @@ ActiveRecord::Schema.define(version: 2021_04_08_112614) do
     t.boolean "enabled", default: false, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "master", default: false
+    t.boolean "master_coverage", default: false
+    t.integer "master_policy_id"
   end
 
   create_table "policy_users", force: :cascade do |t|
@@ -1451,4 +1481,5 @@ ActiveRecord::Schema.define(version: 2021_04_08_112614) do
   add_foreign_key "payments", "invoices"
   add_foreign_key "policy_coverages", "policies"
   add_foreign_key "policy_coverages", "policy_applications"
+  add_foreign_key "policy_types", "policy_types", column: "master_policy_id"
 end

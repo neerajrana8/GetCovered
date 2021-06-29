@@ -16,6 +16,9 @@ module PolicyApplicationMethods
         if insurable.nil?
           render(json: standard_error(:unit_not_found, I18n.t('policy_application_contr.new.unit_not_found')), status: :unprocessable_entity) and return
         end
+        # fix up account and agency if needed
+        account_id = insurable.account_id if account_id.nil?
+        agency_id = insurable.agency_id || insurable.account&.agency_id if agency_id.nil?
         # determine preferred status
         @preferred = (insurable.parent_community || insurable).preferred_ho4
         # get the carrier_id
@@ -153,25 +156,30 @@ module PolicyApplicationMethods
     end
     # get coverage options
     results                    = ::InsurableRateConfiguration.get_coverage_options(
-        @msi_id,
-        cip || unit.primary_address,
-        [{ 'category' => 'coverage', 'options_type' => 'none', 'uid' => '1010', 'selection' => true }] + (
+      @msi_id,
+      cip || unit.primary_address,
+      [{ 'category' => 'coverage', 'options_type' => 'none', 'uid' => '1010', 'selection' => true }] + (
         (inputs[:coverage_selections] || []).map{|cs| { 'category' => cs[:category], 'uid' => cs[:uid].to_s, 'selection' => [ActionController::Parameters, ActiveSupport::HashWithIndifferentAccess, ::Hash].include?(cs[:selection].class) ? (cs[:selection][:data_type] == 'currency' ? (cs[:selection][:value].to_d / 100.to_d) : cs[:selection][:value]) : cs[:selection] } }
-        ),
-        inputs[:effective_date] ? Date.parse(inputs[:effective_date]) : nil,
-        inputs[:additional_insured].to_i,
-        billing_strategy_code,
+      ),
+      inputs[:effective_date] ? Date.parse(inputs[:effective_date]) : nil,
+      inputs[:additional_insured].to_i,
+      billing_strategy_code,
+      **({
         agency: Agency.where(id: msi_get_coverage_options_params[:agency_id].to_i || 0).take,
         perform_estimate: inputs[:estimate_premium] ? true : false,
         eventable:        unit,
         **(cip ? {} : {
-            nonpreferred_final_premium_params: {
-                number_of_units: inputs[:number_of_units].to_i == 0 ? nil : inputs[:number_of_units].to_i,
-                years_professionally_managed: inputs[:years_professionally_managed].blank? ? nil : inputs[:years_professionally_managed].to_i,
-                year_built: inputs[:year_built].to_i == 0 ? nil : inputs[:year_built].to_i,
-                gated: inputs[:gated].nil? ? nil : inputs[:gated] ? true : false
-            }.compact
+          nonpreferred_final_premium_params: {
+            number_of_units: inputs[:number_of_units].to_i == 0 ? nil : inputs[:number_of_units].to_i,
+            years_professionally_managed: inputs[:years_professionally_managed].blank? ? nil : inputs[:years_professionally_managed].to_i,
+            year_built: inputs[:year_built].to_i == 0 ? nil : inputs[:year_built].to_i,
+            gated: inputs[:gated].nil? ? nil : inputs[:gated] ? true : false
+          }.compact
         })
+        }.merge(
+          msi_get_coverage_options_params[:account_id].blank? ? {} : { account: Account.where(msi_get_coverage_options_params[:account_id]).take }
+        )
+      )
     )
     results[:coverage_options] = results[:coverage_options].select{|co| co['uid'] != '1010' && co['uid'] != 1010 }.map{|co| co['options'].blank? ? co : co.merge({'options' => co['options'].map{|v| { 'value' => v, 'data_type' => co['uid'].to_s == '3' && v.to_d == 500 ? 'currency' : co['options_format'] } }.map{|h| h['value'] = (h['value'].to_d * 100).to_i if h['data_type'] == 'currency'; h }}) }
     #results[:coverage_options] = results[:coverage_options].sort_by { |co| co["title"] }.group_by do |co|
@@ -204,7 +212,7 @@ module PolicyApplicationMethods
   end
 
   def msi_get_coverage_options_params
-    params.permit(:insurable_id, :agency_id, :billing_strategy_id,
+    params.permit(:insurable_id, :agency_id, :account_id, :billing_strategy_id,
                   :effective_date, :additional_insured,
                   :estimate_premium,
                   :number_of_units, :years_professionally_managed, :year_built, :gated, # nonpreferred stuff

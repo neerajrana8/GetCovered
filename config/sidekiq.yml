@@ -15,6 +15,12 @@ production:
   insurables_update_covered_status:
     cron: '0 0 * * *'   # Every day at 0:00 AM
     class: Insurables::UpdateCoveredStatusJob
+  insurables_refresh_insurable_data:
+    cron: '0 */2 * * *'   # Every day at 0:00 AM
+    class: Insurables::RefreshInsurableDataJob
+  insurables_master_policy_auto_assign:
+    cron: '0 3 * * *'   # Every day at 3:00 AM
+    class: Insurables::MasterPolicyAutoAssignJob
   # Reports
   coverage_reports_job:
     cron: '0 2 * * *'   # Every day at 2:00 AM
@@ -100,6 +106,10 @@ production:
   leads_status_update_job:
     cron: '0 6 * * *' # Every day at 6:00 AM
     class: LeadsStatusUpdateJob
+  # Leases
+  lease_status_update_job:
+    cron: '0 6 * * *' # Every day at 6:00 AM
+    class: LeaseExpirationCheckJob
   # Emails
   warn_expire_cards_job:
     cron: '0 10 1 * *'  # Each first day of month at 10:00 AM

@@ -16,10 +16,14 @@ class Insurable < ApplicationRecord
   after_commit :create_profile_by_carrier,
     on: :create
 
+  after_create :assign_master_policy
+
   belongs_to :account
   belongs_to :agency, optional: true
   belongs_to :insurable, optional: true
   belongs_to :insurable_type
+
+  has_one :insurable_data, dependent: :destroy
 
   has_many :insurables
   has_many :carrier_insurable_profiles
@@ -139,6 +143,17 @@ class Insurable < ApplicationRecord
 		end
 
 		return to_return
+  end
+
+  def units_relation
+    own_units = insurables.where(insurable_type_id: InsurableType::UNITS_IDS)
+    buildings_units =
+      Insurable.where(
+        insurable_type_id: InsurableType::UNITS_IDS,
+        insurable_id: insurables.where(insurable_type_id: InsurableType::BUILDINGS_IDS).pluck(:id)
+      )
+
+    own_units.or buildings_units
   end
 
   def buildings
@@ -526,8 +541,23 @@ class Insurable < ApplicationRecord
     return { error_type: :internal_error, message: I18n.t('insurable_model.internal_error_occured') }
   end
 
+  def refresh_insurable_data
+    InsurablesData::Refresh.run!(insurable: self)
+  end
 
   private
+
+  def assign_master_policy
+    return if InsurableType::COMMUNITIES_IDS.include?(insurable_type_id) || insurable.blank?
+
+    master_policy = insurable.policies.current.where(policy_type_id: PolicyType::MASTER_IDS).take
+    if master_policy.present? && insurable.policy_insurables.where(policy: master_policy).take.auto_assign
+      if InsurableType::BUILDINGS_IDS.include?(insurable_type_id) && master_policy.insurables.find_by(id: id).blank?
+        PolicyInsurable.create(policy: master_policy, insurable: self, auto_assign: true)
+      end
+      Insurables::MasterPolicyAutoAssignJob.perform_later # try to cover if its possible
+    end
+  end
 
     def title_uniqueness
       return if insurable.nil?

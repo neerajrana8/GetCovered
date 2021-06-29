@@ -15,16 +15,16 @@ class ConfieService
   def self.agency
     @agency ||= ::Agency.where(integration_designation: "confie").take
   end
-  
+
   def self.create_confie_lead(application)
     return "Policy application is for a non-Confie agency" unless application.agency_id == ::ConfieService.agency_id
     cs = ::ConfieService.new
-    return "Failed to build create_lead request" unless cs.build_request(:create_lead,
+    return "Failed to build create_lead request" unless (cs.build_request(:create_lead,
       user: application.primary_user,
       lead_id: application.id,
       #address: application.primary_address # leaving disabled for now; will default to user.address instead
       line_breaks: true
-    )
+    ) rescue false)
     event = application.events.new(cs.event_params)
     event.started = Time.now
     result = cs.call
@@ -36,7 +36,10 @@ class ConfieService
     return "Request resulted in error" if result[:error]
     media_code = (result[:response].parsed_response.dig("data", "media_code") rescue nil)
     unless media_code.blank?
-      application.update(tagging_data: (application.tagging_data || {}).merge('confie_mediacode' => media_code.to_s))
+      application.update(tagging_data: (application.tagging_data || {}).merge({
+        'confie_mediacode' => media_code.to_s,
+        'confie_reported' => true
+      }))
     end
     return nil
   end
@@ -191,15 +194,19 @@ class ConfieService
           puts 'ERROR ERROR ERROR'.red
           pp call_data
         else
-          call_data[:code] = call_data[:response].code
           case self.action
             when :create_lead
+              call_data[:code] = call_data[:response].code
+              if call_data[:response].code == 200
+                call_data[:code] = call_data[:response].parsed_response&.[]('statuscode') || 500
+              end
               if call_data[:code] != 200
                 call_data[:error] = true
                 call_data[:message] = "Request failed externally"
                 call_data[:external_message] = (call_data[:response].parsed_response&.dig("error", "user_msg") rescue nil)
               end
             when :update_lead
+              call_data[:code] = call_data[:response].code
               if call_data[:code] != 200
                 call_data[:error] = true
                 call_data[:message] = "Request failed externally"

@@ -29,11 +29,10 @@ module BrandingProfiles
     private
 
     def url
-      base_uri = Rails.application.credentials.uri[ENV["RAILS_ENV"].to_sym][:client]
-      uri = URI(base_uri)
-      uri.host = "#{agency.slug}.#{uri.host}"
-      uri.host = "#{agency.slug}-#{Time.zone.now.to_i}.#{URI(base_uri).host}" if BrandingProfile.exists?(url: uri.to_s)
-      uri.to_s
+      base_uri = Rails.application.credentials.uri[ENV["RAILS_ENV"].to_sym][:client]&.sub(/^https?\:\/{0,3}(www.)?/,'')
+      uri = "#{agency.slug}.#{base_uri}"
+      uri = "#{agency.slug}-#{Time.zone.now.to_i}.#{base_uri}" if BrandingProfile.exists?(url: uri)
+      uri
     end
 
     def default_branding_profile
@@ -56,6 +55,15 @@ module BrandingProfiles
         errors[:branding_profile_attributes] << bad_attributes.map(&:errors)
         raise ActiveRecord::Rollback
       end
+      disable_is_register(branding_profile_attributes)
+    end
+
+    def disable_is_register(branding_profile_attributes)
+      is_register_attribute = branding_profile_attributes.detect do |branding_profile_attribute|
+        branding_profile_attribute.name == 'is_register_disabled'
+      end
+
+      is_register_attribute.update(value: 'true') if is_register_attribute.present? && is_register_attribute.value == 'false'
     end
 
     def create_pages

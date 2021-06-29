@@ -87,9 +87,9 @@ end
 
 	if demo_account.save
 	  site_staff = [
-	    { email: "dylan@#{ demo_account.slug }.com", password: 'TestingPassword1234', password_confirmation: 'TestingPassword1234', role: 'agent', enabled: true, organizable: demo_account, 
+	    { email: "dylan@#{ demo_account.slug }.com", password: 'TestingPassword1234', password_confirmation: 'TestingPassword1234', role: 'staff', enabled: true, organizable: demo_account, 
   	    profile_attributes: { first_name: 'Dylan', last_name: 'Gaines', job_title: 'Chief Technical Officer', birth_date: '04-01-1989'.to_date }},
-	    { email: "brandon@#{ demo_account.slug }.com", password: 'TestingPassword1234', password_confirmation: 'TestingPassword1234', role: 'agent', enabled: true, organizable: demo_account, 
+	    { email: "brandon@#{ demo_account.slug }.com", password: 'TestingPassword1234', password_confirmation: 'TestingPassword1234', role: 'staff', enabled: true, organizable: demo_account, 
   	    profile_attributes: { first_name: 'Brandon', last_name: 'Tobman', job_title: 'Chief Executive Officer', birth_date: '18-11-1983'.to_date }}
 	  ]
 	  

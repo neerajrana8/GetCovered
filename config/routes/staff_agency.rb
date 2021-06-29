@@ -32,6 +32,7 @@
             via: "get"
         end
       end
+    post :accounts_index, action: :index, controller: :accounts
 
     resources :master_policies, path: 'master-policies',
       only: [ :create, :update, :index, :show ] do
@@ -47,6 +48,8 @@
           put :cancel
           put :cancel_coverage
           put :cancel_insurable
+          put :auto_assign_all
+          put :auto_assign_insurable
         end
       end
 
@@ -62,15 +65,22 @@
         end
 
         collection do
-          get :sub_agencies_index
+          get :sub_agencies
         end
       end
+    post :agencies_index, action: :index, controller: :agencies
 
     get :total_dashboard, controller: 'dashboard', path: 'dashboard/:agency_id/total_dashboard'
     get :buildings_communities, controller: 'dashboard', path: 'dashboard/:agency_id/buildings_communities'
     get :communities_list, controller: 'dashboard', path: 'dashboard/:agency_id/communities_list'
     get :uninsured_units, controller: 'dashboard', path: 'dashboard/:agency_id/uninsured_units'
 
+    resources :dashboard, only: [] do
+      collection do
+        get 'communities_data'
+        post 'communities_data_index', action: :communities_data
+      end
+    end
 
     resources :assignments,
       only: [ :create, :update, :destroy, :index, :show ]
@@ -192,17 +202,23 @@
           only: [ :update, :index ] do
             get 'refresh-rates', to: 'insurable_rates#refresh_rates', on: :collection
           end
-      end
+    end
+    post :insurables_index, action: :index, controller: :insurables
 
     resources :invoices, only: [ :update, :index, :show ]
 
     resources :insurable_types, path: "insurable-types", only: [ :index ]
 
     resources :leads, only: [:index, :show, :update]
-    resources :leads_dashboard, only: [:index]
-    resources :leads_dashboard_tracking_url, only: [:index]
 
-    get :get_filters, controller: 'leads_dashboard', path: 'leads_dashboard/get_filters'
+    resources :leads_dashboard, only: [:index] do
+      collection do
+        get :get_filters
+      end
+    end
+    post :leads_dashboard_index, action: :index, controller: :leads_dashboard
+
+    resources :leads_dashboard_tracking_url, only: [:index]
 
     resources :leases,
       only: [ :create, :update, :destroy, :index, :show ] do
@@ -251,6 +267,7 @@
       end
       get "search", to: 'policies#search', on: :collection
     end
+    post :policies_index, action: :index, controller: :policies
 
     resources :policy_cancellation_requests, only: [ :index, :show ] do
       member do

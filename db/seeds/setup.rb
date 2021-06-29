@@ -15,15 +15,44 @@ require './db/seeds/functions'
 end
 
 ##
+# Setting up GetCovered (we need a master agency for various things to work right)
+
+@get_covered = Agency.create!(
+	title: "Get Covered",
+	enabled: true,
+	whitelabel: true,
+	tos_accepted: true,
+	tos_accepted_at: Time.current,
+	tos_acceptance_ip: nil,
+	verified: false,
+	stripe_id: nil,
+	master_agency: true,
+	addresses_attributes: [
+		{
+			street_number: "265",
+			street_name: "Canal St",
+			street_two: "#205",
+			city: "New York",
+			state: "NY",
+			county: "NEW YORK",
+			zip_code: "10013",
+			primary: true
+		}
+	]
+)
+
+##
 # Setting up base Policy Types
 
 @policy_types = [
-  { title: "Residential", designation: "HO4", enabled: true },
-  { title: "Master Policy", designation: "MASTER", enabled: true },
-  { title: "Master Policy Coverage", designation: "MASTER-COVERAGE", enabled: true },
-  { title: "Commercial", designation: "BOP", enabled: true },
-  { title: "Rent Guarantee", designation: "RENT-GUARANTEE", enabled: true },
-  { title: "Security Deposit Replacement", designation: "SECURITY-DEPOSIT", enabled: true }
+  { id: 1, title: "Residential", designation: "HO4", enabled: true },
+  { id: 2, title: "Master Policy", designation: "MASTER", enabled: true, master: true },
+  { id: 3, title: "Master Policy Coverage", designation: "MASTER-COVERAGE", enabled: true, master_coverage: true, master_policy_id: 2 },
+  { id: 4, title: "Commercial", designation: "BOP", enabled: true },
+  { id: 5, title: "Rent Guarantee", designation: "RENT-GUARANTEE", enabled: true },
+  { id: 6, title: "Security Deposit Replacement", designation: "SECURITY-DEPOSIT", enabled: true },
+  { id: 7, title: "Master Security Deposit Replacement", designation: "MASTER-SECURITY-DEPOSIT", enabled: true, master: true },
+  { id: 8, title: "Master Security Deposit Replacement Coverage", designation: "MASTER-SECURITY-DEPOSIT-COVERAGE", enabled: true, master_coverage: true, master_policy_id: 7 }
 ]
 
 @policy_types.each do |pt|
@@ -128,8 +157,8 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
   if carrier.save!
     puts "Initializing carrier ##{carrier.id}..."
     
-    carrier_policy_type = carrier.carrier_policy_types.new(application_required: carrier.id == 2 ? false : true)
     carrier.access_tokens.create!
+    carrier_policy_type = nil
 
     # Add Residential to Queensland Business Insurance
     if carrier.id == 1
@@ -186,6 +215,7 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
 				application_required: true,
         premium_refundable: true,
         max_days_for_full_refund: 30,
+        commission_strategy_attributes: { recipient: @get_covered, percentage: 30 },
 				application_fields: [
 			    {
 				  	title: "Number of Insured",
@@ -225,15 +255,21 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
 				    value: 'false',
 				    options: [true, false],
 				    questionId: "5"
-			    }	      																											
-				]	      
-      )             
-                                          
-    # Add Master to Queensland Business Specialty Insurance 
+			    }
+				]
+      )
+    # Add Master to Queensland Business Specialty Insurance
     elsif carrier.id == 2
-      policy_type = PolicyType.find(2)
-      policy_sub_type = PolicyType.find(3)
-      
+      [::PolicyType.find(2), ::PolicyType.find(3)].each do |policy_type|
+        carrier_policy_type = CarrierPolicyType.create!(
+          carrier: carrier,
+          policy_type: policy_type,
+          application_required: false,
+          commission_strategy_attributes: { recipient: @get_covered, percentage: 30 },
+          application_fields: [],
+          application_questions: []
+        )
+      end
     # Add Commercial to Crum & Forester
     elsif carrier.id == 3
 			crum_service = CrumService.new()
@@ -247,6 +283,7 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
 				application_required: true,
         premium_refundable: true,
         max_days_for_full_refund: 30,
+        commission_strategy_attributes: { recipient: @get_covered, percentage: 30 },
 				application_fields: {
           "business": {
           	"number_of_insured": 1,
@@ -408,6 +445,7 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
 				application_required: true,
         premium_refundable: false,
         max_days_for_full_refund: 30,
+        commission_strategy_attributes: { recipient: @get_covered, percentage: 30 },
 				application_fields: {
   				"monthly_rent": 0,
       		"guarantee_option": 3,
@@ -488,6 +526,7 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
 				application_required: true,
         premium_refundable: true,
         max_days_for_full_refund: 30,
+        commission_strategy_attributes: { recipient: @get_covered, percentage: 30 },
 				application_fields: [
 			    {
 				  	title: "Number of Insured",
@@ -556,7 +595,7 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
         irc.save!
         # build county IRCs if needed
         if state.to_s == 'GA'
-          igc = ::InsurableGeographicalCategory.get_for(state: state, counties: ['Bryan', 'Camden', 'Chatham', 'Glynn', 'Liberty', 'McIntosh'])
+          igc = ::InsurableGeographicalCategory.get_for(state: state, counties: ['Bryan', 'Camden', 'Chatham', 'Glynn', 'Liberty', 'McIntosh']) 
           irc = msis.extract_insurable_rate_configuration(nil,
             configurer: carrier,
             configurable: igc,
@@ -569,17 +608,11 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
 		  
     end
     
-    # Set policy type from if else block above
-    carrier_policy_type.policy_type = policy_type
-    
-    if carrier_policy_type.save()
-      51.times do |state|
-        available = state == 0 || state == 11 ? false : true
-        carrier_policy_availability = CarrierPolicyTypeAvailability.create(state: state, available: available, carrier_policy_type: carrier_policy_type)
-        carrier_policy_availability.fees.create(title: "Origination Fee", type: :ORIGINATION, amount: 2500, enabled: true, ownerable: carrier) unless carrier.id == 4
-      end      
-    else
-      pp carrier_policy_type.errors
+    # Set policy type from if else block above    
+    51.times do |state|
+      available = state == 0 || state == 11 ? false : true
+      carrier_policy_availability = CarrierPolicyTypeAvailability.create(state: state, available: available, carrier_policy_type: carrier_policy_type)
+      carrier_policy_availability.fees.create(title: "Origination Fee", type: :ORIGINATION, amount: 2500, enabled: true, ownerable: carrier) unless carrier.id == 4
     end
   
   else

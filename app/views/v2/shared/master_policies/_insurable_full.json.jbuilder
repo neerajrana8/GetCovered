@@ -15,8 +15,10 @@ json.building do
 end
 
 json.active_master_policy do
-  if insurable.policies.current.where(policy_type_id: [PolicyType::MASTER_ID, PolicyType::MASTER_COVERAGE_ID]).any?
+  if insurable.policies.current.where(policy_type_id: PolicyType::MASTER_IDS + PolicyType::MASTER_COVERAGES_IDS).any?
     json.partial! 'v2/shared/policies/fields.json.jbuilder',
-                  policy: insurable.policies.current.where(policy_type_id: [PolicyType::MASTER_ID, PolicyType::MASTER_COVERAGE_ID]).take
+                  policy: insurable.policies.current.where(policy_type_id: PolicyType::MASTER_IDS + PolicyType::MASTER_COVERAGES_IDS).take
   end
 end
+
+json.auto_assign_policies insurable.policy_insurables.where(policy: @master_policy).take&.auto_assign
