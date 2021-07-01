@@ -41,10 +41,19 @@ class CarrierAgencyPolicyType < ApplicationRecord
     unless: Proc.new{|capt| capt.callbacks_disabled }
   after_update :repair_commission_strategy_tree,
     if: Proc.new{|capt| !capt.disable_tree_repair && capt.saved_change_to_attribute?('commission_strategy_id') }
-  before_destroy :remove_authorizations,
-                 :disable_billing_strategies
+  before_destroy :refuse_to_perish_if_a_parent
+  before_destroy :remove_authorizations
+  before_destroy :disable_billing_strategies
   
   private
+  
+    def refuse_to_perish_if_a_parent
+      chillenz = self.child_carrier_agency_policy_types(true)
+      unless chillenz.blank?
+        errors.add(:base, "cannot be destroyed due to presence of child CAPTs (IDs #{chillenz.map{|c| c.id }.join(', ')})")
+        raise ActiveRecord::RecordNotDestroyed, self
+      end
+    end
   
     def create_authorizations
       # Prevent Alaska & Hawaii as being set as available; prevent already-created CAAs from being recreated

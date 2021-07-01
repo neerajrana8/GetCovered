@@ -31,7 +31,7 @@ module V2
       end
 
       def update
-        if @carrier_agency.update_as(current_staff, update_params)
+        if (@carrier_agency.update_as(current_staff, update_params) rescue false)
           render template: 'v2/shared/carrier_agencies/show', status: :ok
         else
           render json: standard_error(:carrier_agency_update_errors, nil, @carrier_agency.errors.full_messages),
