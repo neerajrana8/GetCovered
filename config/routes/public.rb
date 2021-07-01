@@ -20,11 +20,11 @@ scope module: :public do
       member do
         get 'coverage-options',
           to: 'insurable_rate_configurations#get_parent_options',
-          as: :get_parent_options
+          as: :pub_get_parent_options
           
         post 'coverage-options',
           to: 'insurable_rate_configurations#set_options',
-          as: :set_options
+          as: :pub_set_options
       end
     end
   end
