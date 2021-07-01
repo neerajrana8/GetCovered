@@ -58,6 +58,8 @@ module V2
         end
         policy_type_ids = parent_info_params[:policy_type_ids].map{|ptid| ptid.to_i }.uniq
         policy_type_ids = ::CarrierPolicyType.where(carrier_id: carrier.id).pluck(:policy_type_id) if policy_type_ids.blank?
+        # get CA if extant
+        carrier_agency = ::CarrerAgency.where(carrier_id: carrier.id, agency_id: agency.id)
         # grab records
         all_capts = ::CarrierAgencyPolicyType.includes(:carrier_agency, :commission_strategy).references(:carrier_agencies, :commission_strategies)
                                              .where(carrier_agency: { carrier_id: carrier.id, agency_id: ancestors.map{|an| an.id } }, policy_type_id: policy_type_ids)
@@ -73,6 +75,7 @@ module V2
             }
           elsif capts[0].carrier_agency.agency_id == agency.id
             # the CAPT already exists
+            current_children = capts[0].child_carrier_agency_policy_types(true)
             {
               status: 'record_exists',
               carrier_agency_id: capts[0].carrier_agency_id,
@@ -80,7 +83,9 @@ module V2
               missing_agency_chain: nil,
               commission_current: capts[0].commission_strategy&.percentage,
               commission_max: capts[1]&.commission_strategy&.percentage || 100,
-              commission_min: capts[0].child_carrier_agency_policy_types(true).map{|capt| capt.commission_strategy&.percentage }.compact.max || 0
+              commission_min: current_children.map{|capt| capt.commission_strategy&.percentage }.compact.max 0,
+              can_disable: current_children.blank?,
+              child_carrier_agency_policy_type_ids: current_children.map{|cc| cc.id }
             }
           elsif capts[0].carrier_agency.agency_id == (agency.agency_id || (agency.master_agency ? nil : master_agency))
             # the parent agency has a corresponding CAPT
@@ -119,7 +124,7 @@ module V2
           end
         end
         # all done
-        render json: to_return,
+        render json: { carrier_agency_id: carrier_agency&.id, policy_type_info: to_return },
           status: :ok
       end
 
