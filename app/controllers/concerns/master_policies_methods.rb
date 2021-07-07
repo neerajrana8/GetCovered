@@ -22,7 +22,6 @@ module MasterPoliciesMethods
           @master_policy = Policy.create!(create_params.merge(agency: account.agency,
                                                     carrier: carrier,
                                                     account: account,
-                                                    policy_type_id: PolicyType::MASTER_ID,
                                                     status: 'BOUND'))
           @policy_premium = PolicyPremium.create!(policy: @master_policy)
           @ppi = ::PolicyPremiumItem.create!(
