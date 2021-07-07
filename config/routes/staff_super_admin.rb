@@ -67,12 +67,10 @@
           put :disable
           
           get 'coverage-options',
-            to: 'insurable_rate_configurations#get_parent_options',
-            as: :sa_get_parent_options
+            to: 'insurable_rate_configurations#get_parent_options'
             
           post 'coverage-options',
-            to: 'insurable_rate_configurations#set_options',
-            as: :sa_set_options
+            to: 'insurable_rate_configurations#set_options'
         end
 
         collection do
