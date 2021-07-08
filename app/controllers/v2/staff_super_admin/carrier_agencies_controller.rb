@@ -83,7 +83,7 @@ module V2
               missing_agency_chain: nil,
               commission_current: capts[0].commission_strategy&.percentage,
               commission_max: capts[1]&.commission_strategy&.percentage || 100,
-              commission_min: current_children.map{|capt| capt.commission_strategy&.percentage }.compact.max 0,
+              commission_min: current_children.map{|capt| capt.commission_strategy&.percentage }.compact.max || 0,
               can_disable: current_children.blank?,
               child_carrier_agency_policy_type_ids: current_children.map{|cc| cc.id }
             }
