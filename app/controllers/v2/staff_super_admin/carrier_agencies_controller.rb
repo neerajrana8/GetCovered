@@ -69,14 +69,14 @@ module V2
           capts = all_capts[ptid]
           if capts.blank?
             # not even GC has been set up for this policy type/carrier combo yet
-            {
+            next {
               status: 'nothing_exists',
               missing_agency_chain: ancestors.map{|ag| ag.id }
             }
           elsif capts[0].carrier_agency.agency_id == agency.id
             # the CAPT already exists
             current_children = capts[0].child_carrier_agency_policy_types(true)
-            {
+            next {
               status: 'record_exists',
               carrier_agency_id: capts[0].carrier_agency_id,
               carrier_agency_policy_type_id: capts[0].id,
@@ -89,7 +89,7 @@ module V2
             }
           elsif capts[0].carrier_agency.agency_id == (agency.agency_id || (agency.master_agency ? nil : master_agency))
             # the parent agency has a corresponding CAPT
-            {
+            next {
               status: 'parent_exists',
               parent_agency_id: capts[0].carrier_agency.agency_id,
               parent_agency_title: ancestors[1].title,
@@ -102,7 +102,7 @@ module V2
           else
             # some non-immediate ancestor has a corresponding CAPT
             ancestor_index = ancestors.find_index{|ag| ag.id == capts[0].carrier_agency.agency_id }
-            {
+            next {
               status: 'ancestor_exists',
               ancestor_agency_id: capts[0].carrier_agency.agency_id,
               ancestor_agency_title: ancestors[ancestor_index].title,
