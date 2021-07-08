@@ -107,8 +107,17 @@ module V2
       def supported_filters(called_from_orders = false)
         @calling_supported_orders = called_from_orders
         {
-          created_at: [:scalar, :array, :interval],
-          updated_at: [:scalar, :array, :interval],
+          email: %i[scalar array like],
+          profile: {
+            full_name: %i[scalar array like]
+          },
+          policies: {
+            account: {
+              title: %i[scalar array like]
+            }
+          },
+          created_at: %i[scalar array interval],
+          updated_at: %i[scalar array interval],
           accounts: { agency_id: [:scalar] }
         }
       end

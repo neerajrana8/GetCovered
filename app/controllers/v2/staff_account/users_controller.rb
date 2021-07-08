@@ -108,7 +108,10 @@ module V2
       def supported_filters(called_from_orders = false)
         @calling_supported_orders = called_from_orders
         {
-          email: [ :scalar, :array, :like ],
+          email: %i[scalar array like],
+          profile: {
+            full_name: %i[scalar array like]
+          },
           created_at: %i[scalar array interval],
           updated_at: %i[scalar array interval],
         }
