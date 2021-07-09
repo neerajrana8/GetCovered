@@ -37,7 +37,7 @@ describe 'HandleLineItemChangesJob' do
   end
   
   
-  
+=begin
   it "correctly generates commissions" do
     # create the policy
     policy = Helpers::CompletePolicyGenerator.create_complete_qbe_policy(account: @account, agency: @agency)
@@ -56,6 +56,6 @@ describe 'HandleLineItemChangesJob' do
     # check the commissions numbers
     
   end
-
+=end
 
 end
