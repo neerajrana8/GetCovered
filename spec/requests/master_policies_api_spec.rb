@@ -9,7 +9,7 @@ describe 'Master Policies API spec', type: :request do
   let!(:community1) { FactoryBot.create(:insurable, :residential_community, account: account) }
   let!(:community2) { FactoryBot.create(:insurable, :residential_community, account: account) }
   let!(:community_new) { FactoryBot.create(:insurable, :residential_community, account: account) }
-  let!(:unit) { FactoryBot.create(:insurable, :residential_unit, account: account, insurable: community1) }
+  let!(:unit) { FactoryBot.create(:insurable, :residential_unit, occupied: true, account: account, insurable: community1) }
 
   let(:master_policy) do
     FactoryBot.create(
@@ -112,6 +112,7 @@ describe 'Master Policies API spec', type: :request do
       policy: {
         effective_date: Time.zone.now + 1.day,
         expiration_date: Time.zone.now + 1.month,
+        policy_type_id: PolicyType::MASTER_ID,
         number: 'MPN',
         policy_coverages_attributes: [
           {

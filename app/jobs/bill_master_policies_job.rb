@@ -21,6 +21,6 @@ puts "EXCEPTION #{exception.to_s}"
   private
 
   def master_policies
-    Policy.where(policy_type_id: PolicyType::MASTER_ID)
+    Policy.where(policy_type_id: PolicyType::MASTER_IDS)
   end
 end

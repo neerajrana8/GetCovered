@@ -127,12 +127,16 @@ class Policy < ApplicationRecord
   scope :accepted_quote, lambda {
     joins(:policy_quotes).where(policy_quotes: { status: 'accepted'})
   }
-  scope :master_policy_coverages, -> { where(policy_type_id: PolicyType::MASTER_COVERAGE_ID) }
+  scope :master_policy_coverages, -> { where(policy_type_id: PolicyType::MASTER_COVERAGES_IDS) }
 
   accepts_nested_attributes_for :policy_premiums,
   :insurables, :policy_users, :policy_insurables, :policy_application
   accepts_nested_attributes_for :policy_coverages, allow_destroy: true
   #  after_save :update_leases, if: :saved_changes_to_status?
+
+  after_commit :update_insurables_coverage,
+             if: Proc.new{ saved_change_to_status? || saved_change_to_effective_date? || saved_change_to_effective_date? }
+  after_destroy_commit :update_insurables_coverage
 
   validate :correct_document_mime_type
   validate :is_allowed_to_update?, on: :update
@@ -442,5 +446,9 @@ class Policy < ApplicationRecord
         errors.add(:documents, I18n.t('policy_model.document_wrong_format'))
       end
     end
+  end
+
+  def update_insurables_coverage
+    insurables.each { |insurable| Insurables::UpdateCoveredStatus.run!(insurable: insurable) }
   end
 end
