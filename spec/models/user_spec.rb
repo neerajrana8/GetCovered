@@ -2,7 +2,7 @@
 
 RSpec.describe User, elasticsearch: true, type: :model do
   it 'User with email test@test.com should be indexed' do
-    user = FactoryBot.create(:user, email: email)
+    user = FactoryBot.create(:user, email: 'test@test.com')
     User.__elasticsearch__.refresh_index!
     expect(User.search(user.email).records.length >= 1).to eq(true)
   end
