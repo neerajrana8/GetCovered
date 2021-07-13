@@ -21,7 +21,7 @@ module V2
         result = []
         required_fields = %i[id title agency_id enabled]
 
-        @agencies = paginator(Agency.where(agency_id: nil))
+        @agencies = paginator(filtered_sub_agencies)
 
         if current_staff.getcovered_agent?
           @agencies.select(required_fields).each do |agency|
@@ -95,6 +95,18 @@ module V2
 
       def update_allowed?
         true
+      end
+
+      def filtered_sub_agencies
+        relation = Agency.left_joins(carrier_agencies: :carrier_agency_policy_types)
+
+        relation = relation.where(agency_id: sub_agency_filter_params)
+        relation = relation.where(carrier_agencies: { carrier_id: params[:carrier_id] }) if params[:carrier_id].present?
+        if params[:policy_type_id].present?
+          relation = relation.where(carrier_agency_policy_types: { policy_type_id: params[:policy_type_id] })
+        end
+
+        relation.uniq
       end
 
       def set_agency
