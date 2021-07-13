@@ -122,6 +122,7 @@ module PolicyApplicationMethods
     @residential_community_insurable_type_id = 1
     @residential_unit_insurable_type_id      = 4
     @ho4_policy_type_id                      = 1
+    @agency_id                               = instance_variable_defined?(:@bearer) ? @bearer.id : inputs["agency_id"]
     # grab params and validate 'em
     inputs = msi_get_coverage_options_params
     if inputs[:insurable_id].nil?
@@ -144,7 +145,7 @@ module PolicyApplicationMethods
       end
     end
     if inputs[:estimate_premium]
-      if inputs[:agency_id].nil?
+      if @agency_id.nil?
         render json:   { error: I18n.t('policy_application_contr.msi_get_coverage_options.agency_cannot_be_blank') },
                status: :unprocessable_entity
         return
@@ -190,7 +191,7 @@ module PolicyApplicationMethods
     end
     # grab billing strategy and make sure it's valid
     billing_strategy_code = nil
-    billing_strategy      = BillingStrategy.where(carrier_id: @msi_id, agency_id: inputs[:agency_id].to_i, policy_type_id: @ho4_policy_type_id, id: inputs[:billing_strategy_id].to_i).take
+    billing_strategy      = BillingStrategy.where(carrier_id: @msi_id, agency_id: @agency_id.to_i, policy_type_id: @ho4_policy_type_id, id: inputs[:billing_strategy_id].to_i).take
     if billing_strategy.nil? && inputs[:estimate_premium]
       render json:   { error: I18n.t('policy_application_contr.msi_get_coverage_options.billing_strategy_must_belong_to_carrier') },
              status: :unprocessable_entity
