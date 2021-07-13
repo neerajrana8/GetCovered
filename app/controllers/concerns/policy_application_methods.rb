@@ -73,6 +73,50 @@ module PolicyApplicationMethods
     render json: standard_error(:invalid_policy_type, "The selected policy is type is not yet supported by the Get Covered SDK"), status: 422
   end
 
+  def get_coverage_options
+    case (get_coverage_options_params[:carrier_id] || MsiService.carrier_id).to_i # we set the default to MSI for now since the form doesn't require a carrier_id input yet for this request
+      when MsiService.carrier_id
+        msi_get_coverage_options
+      when DepositChoiceService.carrier_id
+        deposit_choice_get_coverage_options
+      else
+        render json:   { error: "#{I18n.t('policy_application_contr.get_coverage_options.invalid_combination')} #{get_coverage_options_params[:carrier_id] || 'NULL'}/#{get_coverage_options_params[:policy_type_id] || 'NULL'}" },
+               status: :unprocessable_entity
+    end
+  end
+
+  def deposit_choice_get_coverage_options
+    @residential_unit_insurable_type_id = 4
+    # validate params
+    inputs = deposit_choice_get_coverage_options_params
+    if inputs[:insurable_id].nil?
+      render json:   { error: I18n.t('policy_application_contr.deposit_choice_get_coverage_options.insurable_id_cannot_be_blank') },
+             status: :unprocessable_entity
+      return
+    end
+    if inputs[:effective_date].nil?
+      render json:   { error: I18n.t('policy_application_contr.deposit_choice_get_coverage_options.effective_date_cannot_be_blank') },
+             status: :unprocessable_entity
+      return
+    end
+    # pull unit from db
+    unit = Insurable.where(id: inputs[:insurable_id].to_i).take
+    if unit.nil? || unit.insurable_type_id != @residential_unit_insurable_type_id
+      render json:   { error: I18n.t('policy_application_contr.new.unit_not_found') },
+             status: :unprocessable_entity
+      return
+    end
+    # get coverage options
+    result = unit.dc_get_rates(Date.parse(inputs[:effective_date]))
+    unless result[:success]
+      render json:   { error: "#{ I18n.t('policy_application_contr.deposit_choice_get_coverage_options.no_security_deposit_replacement')} #{result[:event]&.id || 0})" },
+             status: :unprocessable_entity
+      return
+    end
+    render json: { coverage_options: result[:rates] },
+           status: 200
+  end
+
   def msi_get_coverage_options
     @msi_id                                  = MsiService.carrier_id
     @residential_community_insurable_type_id = 1
@@ -209,6 +253,24 @@ module PolicyApplicationMethods
 
   def valid_policy_types
     return ["residential", "commercial", "rent-guarantee", "security-deposit-replacement"]
+  end
+  
+  def use_translations_for_msi_coverage_options!(response_tr)
+    response_tr[:coverage_options].each do |coverage_opt|
+      uid = coverage_opt["uid"]
+      title = I18n.t("coverage_options.#{uid}_title")
+      description = I18n.t("coverage_options.#{uid}_desc")
+      coverage_opt["description"] = description unless description.include?('translation missing')
+      coverage_opt["title"] = title unless description.include?('translation missing')
+    end
+  end
+  
+  def get_coverage_options_params
+    params.permit(:carrier_id, :policy_type_id)
+  end
+
+  def deposit_choice_get_coverage_options_params
+    params.permit(:insurable_id, :effective_date)
   end
 
   def msi_get_coverage_options_params
