@@ -11,6 +11,7 @@ module V2
                     only: %i[
                       update show update_coverage_proof delete_policy_document refund_policy 
                       cancel_policy get_leads add_policy_documents]
+      before_action :set_optional_coverages, only: [:show]
       
 
       before_action :set_substrate, only: [:index]
