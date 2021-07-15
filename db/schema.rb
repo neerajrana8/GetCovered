@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_06_06_231522) do
+ActiveRecord::Schema.define(version: 2021_07_15_045543) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
@@ -1010,6 +1010,7 @@ ActiveRecord::Schema.define(version: 2021_06_06_231522) do
     t.bigint "policy_quote_id"
     t.bigint "policy_id"
     t.bigint "archived_line_item_id"
+    t.boolean "hidden", default: false, null: false
     t.index ["archived_line_item_id"], name: "index_line_items_on_archived_line_item_id"
     t.index ["chargeable_type", "chargeable_id"], name: "index_line_items_on_chargeable_type_and_chargeable_id"
     t.index ["invoice_id"], name: "index_line_items_on_invoice_id"
@@ -1402,6 +1403,8 @@ ActiveRecord::Schema.define(version: 2021_06_06_231522) do
     t.bigint "policy_id"
     t.bigint "commission_strategy_id"
     t.bigint "archived_policy_premium_id"
+    t.integer "total_hidden_fee", default: 0, null: false
+    t.integer "total_hidden_tax", default: 0, null: false
     t.index ["archived_policy_premium_id"], name: "index_policy_premia_on_archived_policy_premium_id"
     t.index ["commission_strategy_id"], name: "index_policy_premia_on_commission_strategy_id"
     t.index ["policy_id"], name: "index_policy_premia_on_policy_id"
@@ -1489,6 +1492,7 @@ ActiveRecord::Schema.define(version: 2021_06_06_231522) do
     t.string "collection_plan_type"
     t.bigint "collection_plan_id"
     t.bigint "fee_id"
+    t.boolean "hidden", default: false, null: false
     t.index ["collection_plan_type", "collection_plan_id"], name: "index_policy_premium_items_on_cp"
     t.index ["collector_type", "collector_id"], name: "index_policy_premium_items_on_collector_type_and_collector_id"
     t.index ["fee_id"], name: "index_policy_premium_items_on_fee_id"

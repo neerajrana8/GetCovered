@@ -80,7 +80,7 @@ class Invoice < ApplicationRecord
         end
         # update duplicate
         [:original_total_due, :total_due, :total_reducing, :total_received, :preproration_total_due, :duplicatable_reduction_total].each do |prop|
-          lis[subi].send(prop) += h.send(prop)
+          lis[subi].send("#{prop.to_s}=", lis[subi].send(prop) + h.send(prop))
         end
       end
     end
