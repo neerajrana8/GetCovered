@@ -42,13 +42,21 @@ class PolicyPremium < ApplicationRecord
   
   def update_totals(persist: true)
     new_total = 0
+    fee_hidden_total = 0
+    tax_hidden_total = 0
     self.policy_premium_items.group_by{|ppi| ppi.category }
-                             .select{|k,v| ['premium', 'fee', 'tax'].include?(k) }
+                             .select do |k,v|
+                                fee_hidden_total = v.select{|ppi| ppi.hidden }.inject(0){|sum,ppi| sum + ppi.original_total_due } if k == 'fee'
+                                tax_hidden_total = v.select{|ppi| ppi.hidden }.inject(0){|sum,ppi| sum + ppi.original_total_due } if k == 'tax'
+                                ['premium', 'fee', 'tax'].include?(k)
+                             end
                              .transform_values{|v| v.inject(0){|sum,ppi| sum + ppi.original_total_due } }
                              .each do |category, quantity|
       self.send("total_#{category}=", quantity)
       new_total += quantity
     end
+    self.total_hidden_fee = fee_hidden_total
+    self.total_hidden_tax = tax_hidden_total
     self.total = new_total
     persist ? self.save : true
   end

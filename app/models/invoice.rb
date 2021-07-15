@@ -51,6 +51,41 @@ class Invoice < ApplicationRecord
       yield(self.line_items.priced_in.order(id: :asc).lock.to_a)
     end
   end
+  
+  # for use in views for the user; hides hidden fee/tax line items as premium amounts
+  def sanitized_line_items
+    lis = self.line_items.to_a
+    hidden = lis.select{|li| li.hidden }
+    return lis if hidden.blank?
+    lis -= hidden
+    hidden = hidden.map do |h|
+      [
+        h,
+        lis.select{|li| li.policy_quote_id == h.policy_quote_id || li.policy_id == h.policy_id }
+           .map{|li| [li.hidden_substitute_suitability_rating, li] }.select{|x| !x[0].nil? }.sort_by{|x| x[0] }.first&.[](1)
+      ]
+    end.to_h.transform_values{|sub| sub.nil? ? nil : lis.find_index(sub) }
+    subbed = []
+    hidden.each do |h,subi|
+      if subi.nil?
+        # there isn't a suitable line item to add it to, so just obfuscate its nature
+        lis.push(h.dup)
+        lis.last.title = "Premium"
+        lis.last.analytics_category = "policy_premium"
+      else
+        # replace li with duplicate
+        unless subbed.include?(subi)
+          subbed.push(subi)
+          lis[subi] = lis[subi].dup
+        end
+        # update duplicate
+        [:original_total_due, :total_due, :total_reducing, :total_received, :preproration_total_due, :duplicatable_reduction_total].each do |prop|
+          lis[subi].send(prop) += h.send(prop)
+        end
+      end
+    end
+    return lis
+  end
 
 
   def pay(

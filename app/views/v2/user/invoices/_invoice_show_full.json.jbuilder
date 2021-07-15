@@ -4,7 +4,8 @@ json.partial! "v2/user/invoices/invoice_show_fields.json.jbuilder",
 
 json.line_items_attributes do
   unless invoice.line_items.nil?
-    json.array! invoice.line_items do |invoice_line_items|
+    
+    json.array! invoice.sanitized_line_items do |invoice_line_items|
       json.partial! "v2/user/line_items/line_item_show_fields.json.jbuilder",
         line_item: invoice_line_items
     end

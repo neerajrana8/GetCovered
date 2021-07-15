@@ -42,6 +42,7 @@ class PolicyPremiumItem < ApplicationRecord
   validates :total_received, numericality: { greater_than_or_equal_to: 0 }
   validates_presence_of :proration_calculation
   validates_inclusion_of :proration_refunds_allowed, in: [true, false]
+  validate :hidden_false_unless_fee_or_tax
   
   # Enums etc.
   enum category: {
@@ -80,7 +81,7 @@ class PolicyPremiumItem < ApplicationRecord
     return "Line items already scheduled" unless self.line_items.blank?
     to_return = self.policy_premium_item_payment_terms.references(:policy_premium_payment_terms).includes(:policy_premium_payment_term)
                     .order("policy_premium_payment_terms.original_first_moment ASC, policy_premium_payment_terms.original_last_moment DESC")
-                    .map{|pt| ::LineItem.new(chargeable: pt, title: self.title, original_total_due: 0, analytics_category: "policy_#{self.category}", policy_quote: self.policy_quote) }
+                    .map{|pt| ::LineItem.new(chargeable: pt, title: self.title, hidden: self.hidden, original_total_due: 0, analytics_category: "policy_#{self.category}", policy_quote: self.policy_quote) }
     # calculate line item totals
     case self.rounding_error_distribution
       when 'dynamic_forward', 'dynamic_reverse'
@@ -273,6 +274,10 @@ class PolicyPremiumItem < ApplicationRecord
   
   
   private
+  
+    def hidden_false_unless_fee_or_tax
+      self.errors.add(:hidden, "cannot be true unless category is 'fee' or 'tax'") unless !self.hidden || ['fee', 'tax'].include?(self.category)
+    end
   
     def set_missing_total_data
       # for convenience, so you don't have to set all of them on create
