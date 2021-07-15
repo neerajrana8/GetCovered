@@ -122,9 +122,10 @@ module PolicyApplicationMethods
     @residential_community_insurable_type_id = 1
     @residential_unit_insurable_type_id      = 4
     @ho4_policy_type_id                      = 1
-    @agency_id                               = instance_variable_defined?(:@bearer) ? @bearer.id : inputs["agency_id"]
     # grab params and validate 'em
     inputs = msi_get_coverage_options_params
+    # define agency after inputs to solve error
+    @agency_id                               = instance_variable_defined?(:@bearer) ? @bearer.id : inputs["agency_id"]
     if inputs[:insurable_id].nil?
       render json:   { error: I18n.t('policy_application_contr.deposit_choice_get_coverage_options.insurable_id_cannot_be_blank') },
              status: :unprocessable_entity
