@@ -13,6 +13,9 @@ class Lease < ApplicationRecord
 
   before_validation :set_reference, if: proc { |lease| lease.reference.nil? }
 
+  after_commit :update_status,
+               if: Proc.new{ saved_change_to_start_date? || saved_change_to_end_date? }
+
   after_commit :update_unit_occupation
 
   belongs_to :account
@@ -48,11 +51,9 @@ class Lease < ApplicationRecord
 
   # Allow use of .type without invoking STI
 
-  scope :active, -> { where('? BETWEEN "start_date" AND "end_date"', Time.zone.now).where(status: %i[approved current]) }
-
   self.inheritance_column = nil
 
-  enum status: %i[pending approved current expired rejected]
+  enum status: %i[pending current expired]
 
   settings index: { number_of_shards: 1 } do
     mappings dynamic: 'false' do
@@ -68,7 +69,7 @@ class Lease < ApplicationRecord
 
   # Lease.activate
   def activate
-    if status == 'approved'
+    if status != 'current' && (start_date..end_date === Time.zone.now)
       update status: 'current'
       # update covered: true if unit.covered
 
@@ -86,39 +87,49 @@ class Lease < ApplicationRecord
       related_records_list.each do |related|
         send(related)&.histories&.create(related_history)
       end
-
-      unless covered
-        # Create Coverage Required Notification Here...
-      end
-
     end
   end
 
   # Lease.deactivate
   def deactivate
-    if status == 'current'
-      update status: 'expired'
+    return unless status == 'current'
 
-      related_history = {
-        data: {
-          leases: {
-            model: 'Lease',
-            id: id,
-            message: "Lease ##{id} deactivated"
-          }
-        },
-        action: 'update_related'
-      }
+    update status: 'expired'
 
-      related_records_list.each do |related|
-        send(related)&.histories&.create(related_history)
-      end
+    related_history = {
+      data: {
+        leases: {
+          model: 'Lease',
+          id: id,
+          message: "Lease ##{id} deactivated"
+        }
+      },
+      action: 'update_related'
+    }
 
+    related_records_list.each do |related|
+      send(related)&.histories&.create(related_history)
     end
   end
 
+  def update_status
+
+    ap start_date..end_date
+
+    new_status =
+      if (start_date..end_date) === Time.zone.now.to_date
+        'current'
+      elsif Time.zone.now.to_date < start_date
+        'pending'
+      elsif Time.zone.now.to_date > end_date
+        'expired'
+      end
+
+    update(status: new_status) unless new_status.nil?
+  end
+
   def update_unit_occupation
-    insurable.update(occupied: insurable.leases.active.present?)
+    insurable.update(occupied: insurable.leases.current.present?)
   end
 
   def related_records_list
