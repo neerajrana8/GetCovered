@@ -179,6 +179,7 @@ module CarrierMsiPolicyApplication
               policy_premium: premium,
               title: "Policy Fee",
               category: "fee",
+              hidden: true,
               rounding_error_distribution: "first_payment_simple",
               total_due: msi_policy_fee,
               proration_calculation: "no_proration",
