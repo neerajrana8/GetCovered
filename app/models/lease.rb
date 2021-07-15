@@ -114,8 +114,6 @@ class Lease < ApplicationRecord
 
   def update_status
 
-    ap start_date..end_date
-
     new_status =
       if (start_date..end_date) === Time.zone.now.to_date
         'current'
