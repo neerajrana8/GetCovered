@@ -20,7 +20,10 @@ json.quote do
 end
     
 unless !instance_variable_defined?(:@extra_fields) || @extra_fields.blank?
-  @extra_fields.each do |k,v|
-    json.send(k, v)
-  end
+
+  json.extra_garbate @extra_fields
+
+  #@extra_fields.each do |k,v|
+  #  json.send(k, v)
+  #end
 end
