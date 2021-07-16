@@ -417,7 +417,7 @@ module V2
                    'installment_fee' => @quote.carrier_payment_data['installment_fee'],
                    'installment_total' => @quote.carrier_payment_data['installment_total']
                   } if @application.carrier_id == 5
-                  render 'v2/public/policy_applications/create.json.jbuilder', status: 200
+                  render template: 'v2/public/policy_applications/create.json', status: 200
 
                 else
                   render json: standard_error(:quote_failed, I18n.t('policy_application_contr.create_security_deposit_replacement.quote_failed')),
