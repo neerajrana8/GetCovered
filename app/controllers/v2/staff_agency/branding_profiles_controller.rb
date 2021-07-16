@@ -11,17 +11,37 @@ module V2
                              faq_question_create faq_question_update attach_images export update_from_file]
 
       def index
-        super(:@branding_profiles, BrandingProfile.where(profileable_type: 'Agency', profileable_id: @agency.id))
+        relation =
+          BrandingProfile.where(profileable_type: 'Agency', profileable_id: @agency.id)
+            .or BrandingProfile.where(profileable_type: 'Account', profileable_id: @agency.accounts&.ids)
+        super(:@branding_profiles, relation)
+        render template: 'v2/shared/branding_profiles/index', status: :ok
       end
 
-      def show; end
+      def show
+        render template: 'v2/shared/branding_profiles/show', status: :ok
+      end
 
       def create
-        branding_profile_outcome = BrandingProfiles::CreateFromDefault.run(agency: @agency)
+        profileable =
+          case branding_profile_params[:profileable_type]
+          when 'Account'
+            Account.find_by_id(branding_profile_params[:profileable_id])
+          when 'Agency'
+            Agency.find_by_id(branding_profile_params[:profileable_id])
+          end
 
-        if branding_profile_outcome.valid?
+        if profileable.present?
+          branding_profile_outcome =
+            case profileable
+            when Agency
+              BrandingProfiles::CreateFromDefault.run(agency: profileable)
+            when Account
+              BrandingProfiles::CreateFromDefault.run(account: profileable)
+            end
+
           @branding_profile = branding_profile_outcome.result
-          render :show, status: :created
+          render template: 'v2/shared/branding_profiles/show', status: :created
         else
           render json: standard_error(
                          :branding_profile_was_not_created,
@@ -103,7 +123,7 @@ module V2
       def update
         if update_allowed?
           if @branding_profile.update(branding_profile_params)
-            render :show, status: :ok
+            render template: 'v2/shared/branding_profiles/show', status: :ok
           else
             render json: @branding_profile.errors, status: :unprocessable_entity
           end
@@ -155,7 +175,7 @@ module V2
       end
 
       def set_branding_profile
-        @branding_profile = @agency.branding_profiles.find(params[:id])
+        @branding_profile = @agency.branding_profiles.find_by_id(params[:id]) || BrandingProfile.where(profileable_type: 'Account', profileable_id: @agency.accounts.ids).find_by_id(params[:id])
       end
 
       def branding_profile_params
@@ -164,8 +184,8 @@ module V2
         params.require(:branding_profile).permit(
           :default, :profileable_id, :profileable_type,
           :footer_logo_url, :logo_url, :subdomain, :subdomain_test, :enabled, images: [],
-                                                                                    branding_profile_attributes_attributes: %i[id name value attribute_type],
-                                                                                    styles: {}
+                                                                              branding_profile_attributes_attributes: %i[id name value attribute_type],
+                                                                              styles: {}
         )
       end
 

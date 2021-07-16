@@ -11,19 +11,34 @@ module V2
 
       def index
         super(:@branding_profiles, BrandingProfile)
+        render template: 'v2/shared/branding_profiles/index', status: :ok
       end
 
       def show; end
 
       def create
-        agency = Agency.find(branding_profile_params[:profileable_id])
+        profileable = 
+          case branding_profile_params[:profileable_type]
+          when 'Account'
+            Account.find_by_id(branding_profile_params[:profileable_id])
+          when 'Agency'
+            Agency.find_by_id(branding_profile_params[:profileable_id])
+          end
+          
         
-        if agency.present?
-          branding_profile_outcome = BrandingProfiles::CreateFromDefault.run(agency: agency)
+        if profileable.present?
+          branding_profile_outcome = 
+            case profileable
+            when Agency
+              BrandingProfiles::CreateFromDefault.run(agency: profileable)
+            when Account
+              BrandingProfiles::CreateFromDefault.run(account: profileable)
+            end
+            
           
           if branding_profile_outcome.valid?
             @branding_profile = branding_profile_outcome.result
-            render :show, status: :created
+            render template: 'v2/shared/branding_profiles/show', status: :created
           else
             render json: standard_error(
                            :branding_profile_was_not_created,
@@ -109,7 +124,7 @@ module V2
       def update
         if update_allowed?
           if @branding_profile.update(branding_profile_params)
-            render :show, status: :ok
+            render template: 'v2/shared/branding_profiles/show', status: :ok
           else
             render json: @branding_profile.errors, status: :unprocessable_entity
           end
