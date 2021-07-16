@@ -498,6 +498,7 @@ def perform_upgrade(idrange)
             policy_premium: premium,
             title: "Policy Fee",
             category: "fee",
+            hidden: true,
             rounding_error_distribution: "first_payment_simple",
             total_due: msi_policy_fee,
             proration_calculation: "no_proration",
@@ -564,6 +565,7 @@ def perform_upgrade(idrange)
             ppi_pts.each.with_index do |ppi_pt, index|
               next if ppi_pt.nil?
               ::LineItem.create!(chargeable: ppi_pt, invoice: new_invoices[index], title: ppis[ppi_name].title, priced_in: true,
+                hidden: (ppi_name == :policy_fee),
                 analytics_category: ppi_name == :policy_fee || ppi_name == :installment_fee ? "policy_fee" : "policy_premium",
                 policy_quote: pq,
                 original_total_due: ppi_pt.weight,
