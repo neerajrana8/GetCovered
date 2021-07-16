@@ -5,8 +5,8 @@ json.quote do
   json.status @quote.status
   json.premium do
     json.partial! "v2/public/policy_premia/policy_premium_show_fields.json.jbuilder",
-      policy_premium: @quote.policy_premium
-  end unless @quote.policy_premium.nil?
+      policy_premium: @premium || @quote.policy_premium
+  end unless @premium || @quote.policy_premium.nil?
   json.user do
     json.id @application.primary_user.id
     json.stripe_id @application.primary_user.stripe_id
@@ -21,7 +21,7 @@ end
     
 unless !instance_variable_defined?(:@extra_fields) || @extra_fields.blank?
 
-  json.extra_garbate @extra_fields
+  json.extra_garbage @extra_fields
 
   #@extra_fields.each do |k,v|
   #  json.send(k, v)
