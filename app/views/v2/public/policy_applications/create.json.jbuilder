@@ -20,10 +20,5 @@ json.invoices do
 end
     
 unless !instance_variable_defined?(:@extra_fields) || @extra_fields.blank?
-
-  json.extra_garbage @extra_fields
-
-  #@extra_fields.each do |k,v|
-  #  json.send(k, v)
-  #end
+  json.send(:extract!, @extra_fields, *@extra_fields.keys)
 end

@@ -114,7 +114,7 @@ module V2
                   end
                 end
 
-                render template: 'v2/public/policy_applications/create.json', status: 200
+                render template: 'v2/user/policy_applications/create.json', status: 200
 
               else
                 render json: { error: I18n.t('user_policy_application_controller.quote_failed'), message: quote_attempt[:message] },
@@ -191,7 +191,7 @@ module V2
             end
           end
           # return nice stuff
-          render template: 'v2/public/policy_applications/create.json', status: 200
+          render template: 'v2/user/policy_applications/create.json', status: 200
           return
         end
       end
@@ -256,7 +256,7 @@ module V2
                    'installment_fee' => @quote.carrier_payment_data['installment_fee'],
                    'installment_total' => @quote.carrier_payment_data['installment_total']
                   } if @application.carrier_id == 5
-                  render template: 'v2/public/policy_applications/create.json', status: 200
+                  render template: 'v2/user/policy_applications/create.json', status: 200
 
                 else
                   render json: { error: I18n.t('user_policy_application_controller.quote_failed'), message: I18n.t('policy_application_contr.create_security_deposit_replacement.quote_failed') },
@@ -405,7 +405,7 @@ module V2
              'installment_fee' => @quote.carrier_payment_data['installment_fee'],
              'installment_total' => @quote.carrier_payment_data['installment_total']
             } if @application.carrier_id == 5
-            render template: 'v2/public/policy_applications/create.json', status: 200
+            render template: 'v2/user/policy_applications/create.json', status: 200
           else
             render json: standard_error(:quote_failed, I18n.t('user_policy_application_controller.quote_failed')),
                    status: 500
@@ -443,7 +443,7 @@ module V2
                 return
               end
               @application = @policy_application
-              render template: 'v2/public/policy_applications/create.json', status: 200
+              render template: 'v2/user/policy_applications/create.json', status: 200
             else
               render json: standard_error(:quote_attempt_failed, quote_attempt[:message]), status: 422
             end
