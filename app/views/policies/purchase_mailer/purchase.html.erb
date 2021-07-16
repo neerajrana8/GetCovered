@@ -68,7 +68,7 @@
   </xml>
   <![endif]-->
 </head>
-<body class="o_body o_bg-light" style="width: 100%;margin: 0px;padding: 0px;-webkit-text-size-adjust: 100%;-ms-text-size-adjust: 100%;background-color: #dbe5ea;">
+<body class="o_body o_bg-light" style="width: 100%;margin: 0px;padding: 0px;-webkit-text-size-adjust: 100%;-ms-text-size-adjust: 100%;background-color: #dbe5ea;<% if @inverted == true %>-moz-transform: scale(-1, -1);-webkit-transform: scale(-1, -1);-o-transform: scale(-1, -1);-ms-transform: scale(-1, -1);transform: scale(-1, -1);<% end %>">
 <!-- preview-text -->
 <table width="100%" cellspacing="0" cellpadding="0" border="0" role="presentation">
   <tbody>
@@ -79,6 +79,7 @@
 </table>
 <!-- header-primary-button -->
 <table width="100%" cellspacing="0" cellpadding="0" border="0" role="presentation">
+
   <tbody>
   <tr>
     <td class="o_bg-light o_px-xs o_pt-lg o_xs-pt-xs" align="center" style="background-color: #dbe5ea;padding-left: 8px;padding-right: 8px;padding-top: 32px;">
