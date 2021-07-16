@@ -260,7 +260,7 @@ module V2
 
                 sign_in_primary_user(@application.primary_user)
 
-                render 'policy_applications/create.json', status: 200
+                render template: 'v2/public/policy_applications/create.json', status: 200
 
               else
                 render json:   standard_error(:quote_failed, quote_attempt[:message]),
@@ -339,7 +339,7 @@ module V2
 
           sign_in_primary_user(@application.primary_user)
 
-          render 'policy_applications/create.json', status: 200
+          render template: 'v2/public/policy_applications/create.json', status: 200
           
           return
         end
@@ -546,7 +546,7 @@ module V2
                      'installment_fee' => @quote.carrier_payment_data['installment_fee'],
                      'installment_total' => @quote.carrier_payment_data['installment_total']
                     } if @application.carrier_id == 5
-                    render 'policy_applications/create.json', status: 200
+                    render template: 'v2/public/policy_applications/create.json', status: 200
 
                   else
                     render json: standard_error(:quote_failed, I18n.t('policy_application_contr.create_security_deposit_replacement.quote_failed')),
@@ -597,7 +597,7 @@ module V2
               end
               sign_in_primary_user(@policy_application.primary_user)
               @application = @policy_application
-              render 'policy_applications/create.json', status: 200
+              render template: 'v2/public/policy_applications/create.json', status: 200
             else
               render json: standard_error(:quote_attempt_failed, quote_attempt[:message]),
                      status: 422

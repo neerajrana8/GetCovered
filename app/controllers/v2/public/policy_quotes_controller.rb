@@ -59,7 +59,7 @@ module V2
           end
           @application = @policy_quote.policy_application
           @quote = @policy_quote
-          render 'policy_applications/create.json', status: 200
+          render template: 'v2/public/policy_applications/create.json', status: 200
         else
           render json: { error: I18n.t('policy_quote_controller.quote_unavailable_update'), message:  I18n.t('policy_quote_controller.unable_to_update_quote') }, status: 422
         end

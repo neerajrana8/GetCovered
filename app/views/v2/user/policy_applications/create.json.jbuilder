@@ -8,7 +8,7 @@ json.quote do
       policy_premium: @quote.policy_premium
   end unless @quote.policy_premium.nil?
   json.user do
-    json.id @application.primary_user.id,
+    json.id @application.primary_user.id
     json.stripe_id @application.primary_user.stripe_id
   end
   json.invoices do
