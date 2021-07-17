@@ -20,5 +20,5 @@ json.quote do
 end
     
 unless !instance_variable_defined?(:@extra_fields) || @extra_fields.blank?
-  json.send(:extract!, @extra_fields, *@extra_fields.keys)
+  json.merge!(@extra_fields)
 end
