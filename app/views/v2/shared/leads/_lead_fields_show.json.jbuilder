@@ -1,4 +1,4 @@
-json.extract! lead, :id, :email, :created_at, :last_visited_page, :last_visit, :agency_id, :status, :archived
+json.extract! lead, :id, :email, :created_at, :last_visited_page, :last_visit, :agency_id, :account_id, :status, :archived
 
 json.agency_name lead&.agency&.title
 

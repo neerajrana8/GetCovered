@@ -65,7 +65,7 @@ module PolicyApplicationMethods
   end
 
   def create_residential
-    render json: { message: "Hey, Fuck You!"}.to_json,
+    render json: { message: "Whoops, something went wrong!"}.to_json,
            status: :ok
   end
 

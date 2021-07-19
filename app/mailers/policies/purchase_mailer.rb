@@ -6,7 +6,7 @@ module Policies
     before_action :set_address
 
     default to: -> { ENV["RAILS_ENV"] == "production" ? "policysold@getcovered.io" : "testing@getcovered.io" },
-            from: -> { "purchase-notifier-#{ENV["RAILS_ENV"]}@getcoveredinsurance.com" }
+            from: -> { "purchase-notifier-#{ENV["RAILS_ENV"]}@getcovered.io" }
 
     def get_covered
       greetings = [

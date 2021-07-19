@@ -893,6 +893,7 @@ ActiveRecord::Schema.define(version: 2021_07_15_045543) do
     t.integer "tracking_url_id"
     t.integer "agency_id"
     t.boolean "archived", default: false
+    t.integer "account_id"
     t.index ["email"], name: "index_leads_on_email"
     t.index ["identifier"], name: "index_leads_on_identifier", unique: true
     t.index ["tracking_url_id"], name: "index_leads_on_tracking_url_id"
