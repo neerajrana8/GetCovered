@@ -23,6 +23,9 @@ common: &default_settings
 
   # Logging level for log/newrelic_agent.log
   log_level: info
+  
+  # We want big honkin' stack traces
+  error_collector.max_backtrace_frames: 1024
 
 
 # Environment-specific settings are in this section.

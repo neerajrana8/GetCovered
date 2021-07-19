@@ -44,6 +44,10 @@ require 'faker'
     plus_four: "5751",
     primary: true
   },
+=begin
+
+  # disabled for now to make seeding faster
+
   {
     street_number: "70",
     street_name: "Bonita Dr.",
@@ -124,6 +128,7 @@ require 'faker'
     plus_four: "2452",
     primary: true
   },
+=end
   {
     street_number: "1304",
     street_name: "University City Blvd",

@@ -239,33 +239,28 @@ module V2
                 @application.primary_user.set_stripe_id
 
                 @quote = @application.policy_quotes.last
-                @quote.generate_invoices_for_term
                 @premium = @quote.policy_premium
-
-                result = {
-                  id:                 @application.id,
-                  quote: {
-                    id:      @quote.id,
-                    status: @quote.status,
-                    premium: @premium
-                  },
-                  invoices: @quote.invoices.order("due_date ASC"),
-                  user:     {
-                    id:        @application.primary_user.id,
-                    stripe_id: @application.primary_user.stripe_id
-                  },
-                  billing_strategies: []
-                }
+                
+                # generate invoices
+                result = @quote.generate_invoices_for_term
+                unless result.nil?
+                  puts result[:internal] # MOOSE WARNING: [:external] contains an I81n key for a user-displayable message, if desired
+                  quote.mark_failure(result[:internal])
+                  render json: standard_error(:quote_failed, I18n.t(result[:external])),
+                         status: 400
+                  return
+                end
 
                 if @premium.base >= 500_000
                   BillingStrategy.where(agency: @application.agency_id, policy_type: @application.policy_type).each do |bs|
-                    result[:billing_strategies] << { id: bs.id, title: bs.title }
+                    @extra_fields ||= { billing_strategies: [] }
+                    @extra_fields[:billing_strategies] << { billing_strategies: { id: bs.id, title: bs.title } }
                   end
                 end
 
                 sign_in_primary_user(@application.primary_user)
 
-                render json: result.to_json, status: 200
+                render template: 'v2/public/policy_applications/create.json', status: 200
 
               else
                 render json:   standard_error(:quote_failed, quote_attempt[:message]),
@@ -344,19 +339,8 @@ module V2
 
           sign_in_primary_user(@application.primary_user)
 
-          render json:  {
-                         id:       @application.id,
-                         quote: {
-                           id:      @quote.id,
-                           status: @quote.status,
-                           premium: @quote.policy_premium
-                         },
-                         invoices: @quote.invoices.order('due_date ASC'),
-                         user:     {
-                           id:        @application.primary_user.id,
-                           stripe_id: @application.primary_user.stripe_id
-                         }
-                       }.to_json, status: 200
+          render template: 'v2/public/policy_applications/create.json', status: 200
+          
           return
         end
       end
@@ -428,23 +412,12 @@ module V2
                   @application.primary_user.set_stripe_id
                   sign_in_primary_user(@application.primary_user)
                   # return response to user
-                  render json:  {
-                                 id:       @application.id,
-                                 quote: {
-                                   id:      @quote.id,
-                                   status: @quote.status,
-                                   premium: @quote.policy_premium
-                                 },
-                                 invoices: @quote.invoices.order('due_date ASC'),
-                                 user:     {
-                                   id:        @application.primary_user.id,
-                                   stripe_id: @application.primary_user.stripe_id
-                                 }
-                               }.merge(@application.carrier_id != 5 ? {} : {
-                                 'policy_fee' => @quote.carrier_payment_data['policy_fee'],
-                                 'installment_fee' => @quote.carrier_payment_data['installment_fee'],
-                                 'installment_total' => @quote.carrier_payment_data['installment_total']
-                               }).to_json, status: 200
+                  @extra_fields = {
+                   'policy_fee' => @quote.carrier_payment_data['policy_fee'],
+                   'installment_fee' => @quote.carrier_payment_data['installment_fee'],
+                   'installment_total' => @quote.carrier_payment_data['installment_total']
+                  } if @application.carrier_id == 5
+                  render template: 'v2/public/policy_applications/create.json', status: 200
 
                 else
                   render json: standard_error(:quote_failed, I18n.t('policy_application_contr.create_security_deposit_replacement.quote_failed')),
@@ -567,23 +540,13 @@ module V2
                   elsif @quote.status == "quoted"
                     sign_in_primary_user(@policy_application.primary_user)
 
-                    render json:                    {
-                                   id:       @policy_application.id,
-                                   quote: {
-                                     id:      @quote.id,
-                                     status: @quote.status,
-                                     premium: @quote.policy_premium
-                                   },
-                                   invoices: @quote.invoices.order('due_date ASC'),
-                                   user:     {
-                                     id:        @policy_application.primary_user().id,
-                                     stripe_id: @policy_application.primary_user().stripe_id
-                                   }
-                                 }.merge(@policy_application.carrier_id != 5 ? {} : {
-                                   'policy_fee' => @quote.carrier_payment_data['policy_fee'],
-                                   'installment_fee' => @quote.carrier_payment_data['installment_fee'],
-                                   'installment_total' => @quote.carrier_payment_data['installment_total']
-                                 }).to_json, status: 200
+                    @application = @policy_application
+                    @extra_fields = {
+                     'policy_fee' => @quote.carrier_payment_data['policy_fee'],
+                     'installment_fee' => @quote.carrier_payment_data['installment_fee'],
+                     'installment_total' => @quote.carrier_payment_data['installment_total']
+                    } if @application.carrier_id == 5
+                    render template: 'v2/public/policy_applications/create.json', status: 200
 
                   else
                     render json: standard_error(:quote_failed, I18n.t('policy_application_contr.create_security_deposit_replacement.quote_failed')),
@@ -621,29 +584,20 @@ module V2
               @policy_application.primary_user.set_stripe_id
 
               @quote         = @policy_application.policy_quotes.last
-              invoice_errors = @quote.generate_invoices_for_term
               @premium       = @quote.policy_premium
-
-              if invoice_errors.blank?
-                result = {
-                  id:             @policy_application.id,
-                  quote: {
-                    id:      @quote.id,
-                    status: @quote.status,
-                    premium: @premium
-                  },
-                  invoices:       @quote.invoices,
-                  user:           {
-                    id:        @policy_application.primary_user.id,
-                    stripe_id: @policy_application.primary_user.stripe_id
-                  }
-                }
-                sign_in_primary_user(@policy_application.primary_user)
-                render json: result.to_json, status: 200
-              else
-                render json:   standard_error(:policy_application_update_error, invoice_errors),
-                       status: 422
+              
+              # generate invoices
+              result = @quote.generate_invoices_for_term
+              unless result.nil?
+                puts result[:internal]
+                quote.mark_failure(result[:internal])
+                render json: standard_error(:quote_failed, I18n.t(result[:external])),
+                       status: 400
+                return
               end
+              sign_in_primary_user(@policy_application.primary_user)
+              @application = @policy_application
+              render template: 'v2/public/policy_applications/create.json', status: 200
             else
               render json: standard_error(:quote_attempt_failed, quote_attempt[:message]),
                      status: 422

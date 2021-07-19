@@ -16,21 +16,42 @@ module MasterPoliciesMethods
     def create
       carrier = Carrier.find(params[:carrier_id])
       account = Account.where(agency_id: carrier.agencies.ids).find(params[:account_id])
-
-      @master_policy = Policy.new(create_params.merge(agency: account.agency,
-                                                      carrier: carrier,
-                                                      account: account,
-                                                      status: 'BOUND'))
-      @policy_premium = PolicyPremium.new(create_policy_premium)
-      if @master_policy.errors.none? && @policy_premium.errors.none? && @master_policy.save && @policy_premium.save
-        @master_policy.policy_premiums << @policy_premium
+      error = nil
+      ::ActiveRecord::Base.transaction do
+        begin
+          @master_policy = Policy.create!(create_params.merge(agency: account.agency,
+                                                    carrier: carrier,
+                                                    account: account,
+                                                    status: 'BOUND'))
+          @policy_premium = PolicyPremium.create!(policy: @master_policy)
+          @ppi = ::PolicyPremiumItem.create!(
+            policy_premium: @policy_premium,
+            title: "Per-Coverage Premium",
+            category: "premium",
+            rounding_error_distribution: "first_payment_simple",
+            total_due: create_policy_premium[:base],
+            proration_calculation: "no_proration",
+            proration_refunds_allowed: false,
+            commission_calculation: "no_payments",
+            recipient: @policy_premium.commission_strategy,
+            collector: ::Agency.where(master_agency: true).take
+          )
+          @policy_premium.update_totals(persist: false)
+          @policy_premium.save!
+        rescue ActiveRecord::RecordInvalid => err
+          error = err
+          raise ActiveRecord::Rollback
+        end
+      end
+      
+      if error.nil?
         render json: { message: 'Master Policy and Policy Premium created', payload: { policy: @master_policy.attributes } },
                status: :created
       else
         render json: standard_error(
                        :master_policy_creation_error,
                        'Master policy was not created',
-                       @master_policy.errors.merge!(@policy_premium.errors)
+                       error.record.errors
                      ),
                status: :unprocessable_entity
       end
@@ -45,14 +66,30 @@ module MasterPoliciesMethods
                      ),
                status: :unprocessable_entity
       else
-        if @master_policy.update(update_params) && @master_policy.policy_premiums.take.update(create_policy_premium)
+        error = nil
+        ::ActiveRecord::Base.transaction do
+          begin
+            @master_policy.update!(update_params)
+            if create_policy_premium && create_policy_premium[:base] && create_policy_premium[:base] != @master_policy.policy_premiums.take.total_premium
+              premium = @master_policy.policy_premiums.take
+              ppi = premium.policy_premium_items.where(commission_calculation: 'no_payments').take
+              ppi.update!(original_total_due: create_policy_premium[:base], total_due: create_policy_premium[:base])
+              pp.update_totals(persist: false)
+              pp.save!
+            end
+          rescue ActiveRecord::RecordInvalid => err
+            error = err
+            raise ActiveRecord::Rollback
+          end
+        end
+        if error.nil?
           render json: { message: 'Master Policy updated', payload: { policy: @master_policy.attributes } },
                  status: :created
         else
           render json: standard_error(
                          :master_policy_update_error,
                          'Master policy was not updated',
-                         @master_policy.errors
+                         error.record.errors
                        ),
                  status: :unprocessable_entity
         end
@@ -285,8 +322,8 @@ module MasterPoliciesMethods
 
     def create_policy_premium
       return({}) if params.blank?
-
-      params.permit(:base, :total, :calculation_base, :carrier_base)
+      params.permit(:base)
+      # old params, for reference: params.permit(:base, :total, :calculation_base, :carrier_base)
     end
 
     def supported_filters(called_from_orders = false)

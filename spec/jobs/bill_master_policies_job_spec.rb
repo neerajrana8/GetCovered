@@ -14,11 +14,20 @@ describe 'BillMasterPoliciesJob' do
   let(:unit4)    { FactoryBot.create(:insurable, :residential_unit, account: account, insurable: community2) }
 
   let(:master_policy) do
+    carrier = Carrier.find(1)
+    # create CAPTs for the new agency, so authorizations & commission strategies exist for Master Policies
+    ca = ::CarrierAgency.create!(agency: agency, carrier: carrier, carrier_agency_policy_types_attributes: carrier.carrier_policy_types.map do |cpt|
+      {
+        policy_type_id: cpt.policy_type_id,
+        commission_strategy_attributes: { percentage: 9 }
+      }
+    end)
     FactoryBot.create(
       :policy,
       :master,
       agency: agency,
       account: account,
+      carrier: carrier,
       status: 'BOUND',
       effective_date: Time.zone.now - 2.months,
       expiration_date: Time.zone.now + 2.months,
@@ -28,11 +37,20 @@ describe 'BillMasterPoliciesJob' do
   end
 
   let!(:policy_premium) do
-    policy_premium = FactoryBot.build(:policy_premium, policy: master_policy)
-    policy_premium.base = 10_000
-    policy_premium.total = policy_premium.base + policy_premium.taxes + policy_premium.total_fees
-    policy_premium.calculation_base = policy_premium.base + policy_premium.taxes + policy_premium.amortized_fees
-    policy_premium.save
+    policy_premium = PolicyPremium.create!(policy: master_policy)
+    ppi = ::PolicyPremiumItem.create!(
+      policy_premium: policy_premium,
+      title: "Per-Coverage Premium",
+      category: "premium",
+      rounding_error_distribution: "first_payment_simple",
+      total_due: 10000,
+      proration_calculation: "no_proration",
+      proration_refunds_allowed: false,
+      commission_calculation: "no_payments",
+      recipient: policy_premium.commission_strategy,
+      collector: ::Agency.find(1)
+    )
+    policy_premium.update_totals(persist: true)
   end
 
   let!(:master_policy_coverage_1) do
@@ -97,7 +115,7 @@ describe 'BillMasterPoliciesJob' do
 
   it 'generates invoice' do
     expect { BillMasterPoliciesJob.perform_now }.to change { master_policy.master_policy_invoices.count }.by(1)
-    expect(master_policy.master_policy_invoices.take.total).to eq(30000)
+    expect(master_policy.master_policy_invoices.take.total_due).to eq(30000)
     expect(master_policy.master_policy_invoices.take.line_items.count).to eq(3)
   end
 

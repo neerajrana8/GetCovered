@@ -173,9 +173,12 @@
       end
     end
 
-    resources :commissions, only: [:index, :show, :update] do
+    resources :commissions, only: [:index, :show] do
       member do
-        put :approve
+        post :separate_for_approval
+        post :approve
+        post :mark_paid
+        post :pay_with_stripe
       end
     end
 

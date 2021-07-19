@@ -6,8 +6,15 @@ describe 'Policy buying' do
     before(:context) do
       carrier = Carrier.find(4)
       @agency = FactoryBot.create(:agency)
-      carrier.agencies << @agency
-      @billing_strategy = FactoryBot.create(:monthly_billing_strategy, agency: @agency, carrier: carrier, policy_type_id: 5)
+      ::CarrierAgency.create(carrier: carrier, agency: @agency, carrier_agency_policy_types_attributes: [
+        {
+          policy_type_id: 5,
+          commission_strategy_attributes: { percentage: 10 }
+        }
+      ])
+      @billing_strategy = ::BillingStrategy.where(carrier: carrier, agency: @agency, policy_type_id: 5).last
+      #carrier.agencies << @agency
+      #@billing_strategy = FactoryBot.create(:monthly_billing_strategy, agency: @agency, carrier: carrier, policy_type_id: 5)
       address = FactoryBot.create(:address,
                                   street_name: 'Test co-tenant street',
                                   street_two: '12',

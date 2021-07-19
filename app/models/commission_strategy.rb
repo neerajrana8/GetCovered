@@ -2,7 +2,7 @@
 # =Commission Strategy Model
 # file: +app/models/commission_strategy.rb+
 
-class CommissionStrategy < ApplicationRecord
+class CommissionStrategy < ApplicationRecord 
 
   # Associations
   belongs_to :recipient,

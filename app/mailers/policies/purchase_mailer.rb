@@ -81,7 +81,7 @@ module Policies
       details += "Policy Type: #{ @policy.policy_type.title }<br>"
       details += "Billing Strategy: #{ @billing_strat.title }<br>"
       details += "Premium: $#{ sprintf "%.2f", @premium.total.to_f / 100 }<br>"
-      details += "First Payment: $#{ sprintf "%.2f", @deposit.total.to_f / 100 }"
+      details += "First Payment: $#{ sprintf "%.2f", @deposit.total_due.to_f / 100 }"
 
       return details
     end

@@ -11,7 +11,6 @@ class PolicyQuote < ApplicationRecord
   include CarrierMsiPolicyQuote
   include CarrierDcPolicyQuote
   include ElasticsearchSearchable
-  include InvoiceableQuote
 
   before_save :set_status_updated_on,
     if: Proc.new { |quote| quote.status_changed? }
@@ -48,13 +47,17 @@ class PolicyQuote < ApplicationRecord
       indexes :external_reference, type: :text, analyzer: 'english'
     end
   end
+  
+  def primary_user
+    self.policy_application.primary_user
+  end
 
   def mark_successful
     policy_application.update status: 'quoted' if update status: 'quoted'
   end
 
-  def mark_failure(error_message = nil)
-    policy_application.update(status: 'quote_failed', error_message: error_message) if update status: 'quote_failed'
+  def mark_failure(error_message = nil, internal_error_message = nil)
+    policy_application.update(status: 'quote_failed', error_message: error_message, internal_error_message: internal_error_message) if update status: 'quote_failed'
   end
 
   def available_period
@@ -232,6 +235,8 @@ class PolicyQuote < ApplicationRecord
     if policy.nil? &&
        policy_premium.total > 0 &&
        status == "accepted"
+       
+      policy_premium.policy_premium_item_commissions.update_all(status: 'active')
 
       invoices.external.update_all(status: 'managed_externally')
       invoices.internal.order("due_date").each_with_index do |invoice, index|
@@ -239,31 +244,21 @@ class PolicyQuote < ApplicationRecord
       end
 
       to_charge = invoices.internal.order("due_date").first
-      return true if to_charge.nil?
-      charge_invoice = to_charge.pay(stripe_source: :default)
-      logger.error "Charge invoice: #{charge_invoice.to_json}" unless charge_invoice[:success]
-      if charge_invoice[:success] == true
+      if to_charge.nil?
+        #policy.update(billing_status: "CURRENT") # there is no policy yet...
         return true
       end
+      charge_invoice = to_charge.pay(stripe_source: :default)
+      logger.error "Charge invoice error: #{charge_invoice.to_json}" unless charge_invoice[:success]
+      if charge_invoice[:success] == true
+        #policy.update(billing_status: "CURRENT")
+        return true
+      else
+        #policy.update(billing_status: "ERROR")
+        policy_premium.policy_premium_item_commissions.update_all(status: 'quoted')
+        invoices.internal.update_all(status: 'quoted')
+      end
     end
-
-#     if !policy.nil? && policy_premium.calculation_base > 0 && status == "accepted"
-#
-# 	    invoices.order("due_date").each_with_index do |invoice, index|
-# 		  	invoice.update status: index == 0 ? "available" : "upcoming",
-# 		  								 policy: policy
-# 		  end
-#
-# 		  charge_invoice = invoices.order("due_date").first.pay(stripe_source: policy_application.primary_user().payment_profiles.first.source_id)
-#
-#       if charge_invoice[:success] == true
-#         policy.update billing_status: "CURRENT"
-#         return true
-#       else
-#         policy.update billing_status: "ERROR"
-#       end
-#
-#     end
 
     billing_started
 
@@ -287,7 +282,7 @@ class PolicyQuote < ApplicationRecord
   end
 
   # to be invoked by Invoice, not directly; an invoice payment attempt was successful
-  def payment_succeeded(invoice)
+  def invoice_complete(invoice)
     unless self.policy.nil?
       if self.policy.BEHIND? || self.policy.REJECTED?
         self.policy.update_columns(billing_status: 'RESCINDED') unless self.policy.invoices.map{|inv| inv.status }.include?('missed')
@@ -298,23 +293,85 @@ class PolicyQuote < ApplicationRecord
     # Mailer?
   end
 
-  # to be invoked by Invoice, not directly; an invoice payment attempt failed (keep in mind it might not actually have been due yet, and that invoice.status will not yet have been changed to available/missed when this is called!)
-  def payment_failed(invoice)
-    # Mailer? (will run whenever a charge fails, including before due date or on auto-pay attempts after due date)
-  end
-
   # to be invoked by Invoice, not directly; an invoice payment attempt was missed
   #(either a job invoked this on/after the due date, or a payment attempt failed after the due date, in which case payment_failed and then payment_missed will be invoked by the invoice)
-  def payment_missed(invoice)
+  def invoice_missed(invoice)
     unless self.policy.nil?
       self.policy.update_columns(billing_status: 'BEHIND', billing_behind_since: Time.current.to_date) unless self.policy.billing_status == 'BEHIND'
     end
     # Mailer?
   end
-
-  # to be invoked by Invoice, not directly; an invoice received payment or underwent a refund
-  def invoice_collected_changed(invoice, amount_collected, old_amount_collected)
-    self.policy_premium.update_unearned_premium
+  
+  def effective_moment
+    self.effective_date.beginning_of_day
+  end
+  
+  def expiration_moment
+    self.expiration_date.end_of_day
+  end
+  
+  def generate_invoices_for_term(renewal = false, refresh = false)
+    # flee if renewal is true (unsupported right now)
+    if renewal
+      app "============================================================"
+      return {
+        internal: "Invoice generation for policy renewals is not yet supported!",
+        external: "policy_quote.cannot_gen_invoices_for_renewal"
+      }
+    end
+    # prepare
+    invoices.destroy_all if refresh
+    # get line items (format: { collector: { policy_premium_payment_term: [line_item,...] } }), with PPPTs in order
+    line_items = self.policy_premium.policy_premium_items.map{|ppi| { ppi: ppi, line_items: ppi.generate_line_items } }
+    failed_fellow = line_items.find{|li| li[:line_items].class == ::String }
+    if failed_fellow
+      return {
+        internal: "Failed to generate line items for PolicyPremiumItem #{failed_fellow[:ppi].id}; received error: #{failed_fellow[:line_items]}",
+        external: "policy_quote.line_item_gen_failed"
+      }
+    end
+    line_items = line_items.group_by{|li| li[:ppi].collector }
+                           .transform_values do |li_arr|
+                            li_arr.map{|li| li[:line_items] }.flatten
+                                  .group_by{|li| li.chargeable.policy_premium_payment_term }
+                                  .sort_by{|k,v| k }.to_h
+                           end
+    # create invoices
+    dat_problemo = nil
+    ActiveRecord::Base.transaction(requires_new: true) do
+      invoices = line_items.map do |collector, by_pppt|
+        index = -1
+        [
+          collector,
+          by_pppt.map do |pppt, line_item_array|
+            index += 1
+            available_date = pppt.invoice_available_date_override || (index == 0 ? Time.current.to_date : pppt.first_moment.beginning_of_day - 1.day - self.available_period) # MOOSE WARNING: model must support .available_period
+            due_date = pppt.invoice_due_date_override || (index == 0 ? Time.current.to_date + 1.day : pppt.first_moment.beginning_of_day - 1.day)
+            created = ::Invoice.create(
+              available_date: available_date,
+              due_date: due_date,
+              external: !(collector.nil? || (collector.respond_to?(:master_agency) && collector.master_agency)),
+              status: "quoted",
+              invoiceable: self,
+              payer: self.primary_user,
+              collector: collector,
+              line_items: line_item_array
+            )
+            unless created.id
+              dat_problemo = {
+                internal: "Failed to generate invoice for collector #{collector.class.name} ##{collector.id} and PolicyPremiumPaymentTerm #{pppt.id}; errors were #{created.errors.to_h}",
+                external: "policy_quote.invoice_gen_failed"
+              }
+              raise ActiveRecord::Rollback
+            end
+            next created
+          end
+        ]
+      end.to_h
+      return dat_problemo unless dat_problemo.nil?
+    end
+    # all done
+    return nil
   end
 
   private

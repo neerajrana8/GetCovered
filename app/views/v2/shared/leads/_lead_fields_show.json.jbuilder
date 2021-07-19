@@ -15,8 +15,8 @@ if last_event.present? && last_event.policy_type.present?
 end
 
 json.primary_campaign_name lead&.tracking_url&.campaign_name
-json.premium_total lead&.user&.policy_applications&.last&.policy_quotes&.last&.policy_premium&.total
-json.premium_first lead&.user&.policy_applications&.last&.policy_quotes&.last&.invoices&.first&.total
+json.premium_total lead&.user&.policy_applications&.last&.policy_quotes&.last&.policy_premium&.total || (last_event&.data.present? ? last_event&.data['premium_total'] : nil)
+json.premium_first lead&.user&.policy_applications&.last&.policy_quotes&.last&.invoices&.first&.total_due || (last_event&.data.present? ? last_event&.data['premium_first'] : nil)
 json.billing_strategy lead&.user&.policy_applications&.last&.policy_quotes&.last&.policy_premium&.billing_strategy&.title
 json.site_visits visits
 
