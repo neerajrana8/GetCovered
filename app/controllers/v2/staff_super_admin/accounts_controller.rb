@@ -5,7 +5,7 @@
 module V2
   module StaffSuperAdmin
     class AccountsController < StaffSuperAdminController
-      before_action :set_account, only: %i[show update]
+      before_action :set_account, only: %i[show update enable disable]
 
       before_action :set_substrate, only: [:index]
 
@@ -60,6 +60,27 @@ module V2
           render :show, status: :ok
         else
           render json: @account.errors, status: :unprocessable_entity
+        end
+      end
+
+
+      def disable
+        result = Accounts::Disable.run(account: @account)
+        if result.valid?
+          render :show, status: :ok
+        else
+          render json: standard_error(:disabling_failed, 'Account was not disabled', result.errors),
+                 status: 422
+        end
+      end
+
+      def enable
+        result = Accounts::Enable.run(account: @account)
+        if result.valid?
+          render :show, status: :ok
+        else
+          render json: standard_error(:disabling_failed, 'Account was not disabled', result.errors),
+                 status: 422
         end
       end
 

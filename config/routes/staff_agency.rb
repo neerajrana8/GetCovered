@@ -31,6 +31,9 @@
             to: "accounts#account_buildings",
             via: "get"
         end
+
+        put :enable
+        put :disable
       end
     post :accounts_index, action: :index, controller: :accounts
 
