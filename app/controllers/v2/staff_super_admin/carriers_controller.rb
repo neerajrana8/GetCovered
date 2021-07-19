@@ -12,6 +12,7 @@ module V2
       before_action :set_substrate, only: %i[create index]
 
       def index
+
         super(:@carriers, @substrate)
         render template: 'v2/shared/carriers/index', status: :ok
       end
@@ -176,6 +177,9 @@ module V2
       def supported_filters(called_from_orders = false)
         @calling_supported_orders = called_from_orders
         {
+          carrier_policy_types: {
+            policy_type_id: %i[scalar array]
+          }
         }
       end
 

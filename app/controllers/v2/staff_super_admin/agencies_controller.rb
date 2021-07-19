@@ -39,7 +39,7 @@ module V2
         result          = []
         required_fields = %i[id title agency_id enabled]
 
-        @agencies = paginator(Agency.where(agency_id: sub_agency_filter_params))
+        @agencies = paginator(filtered_sub_agencies)
 
         @agencies.select(required_fields).each do |agency|
           sub_agencies = agency.agencies.select(required_fields)
@@ -117,6 +117,18 @@ module V2
 
       def sub_agency_filter_params
         params[:agency_id].blank? ? nil : params.require(:agency_id)
+      end
+
+      def filtered_sub_agencies
+        relation = Agency.left_joins(carrier_agencies: :carrier_agency_policy_types)
+
+        relation = relation.where(agency_id: sub_agency_filter_params)
+        relation = relation.where(carrier_agencies: { carrier_id: params[:carrier_id] }) if params[:carrier_id].present?
+        if params[:policy_type_id].present?
+          relation = relation.where(carrier_agency_policy_types: { policy_type_id: params[:policy_type_id] })
+        end
+
+        relation.distinct
       end
 
       def create_params
