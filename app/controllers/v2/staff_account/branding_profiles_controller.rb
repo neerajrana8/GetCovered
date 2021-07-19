@@ -163,7 +163,6 @@ module V2
         params.require(:branding_profile).permit(
           :default, :profileable_id, :profileable_type,
           :footer_logo_url, :logo_url, :subdomain, :subdomain_test, :enabled, images: [],
-          branding_profile_attributes_attributes: %i[id name value attribute_type],
           styles: {}
         )
       end
