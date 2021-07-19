@@ -3,9 +3,7 @@
   # StaffSuperAdmin
   scope module: :staff_super_admin, path: "staff_super_admin" do
 
-    resources :accounts,
-      only: [ :index, :show, :create, :update ],
-      concerns: :reportable do
+    resources :accounts, only: [ :index, :show, :create, :update ], concerns: :reportable do
         member do
           get "histories",
             to: "histories#index_recordable",
@@ -27,8 +25,12 @@
           get "account_buildings",
             to: "accounts#account_buildings",
             via: "get"
+
+          put :enable
+          put :disable
         end
     end
+
     post :accounts_index, action: :index, controller: :accounts
 
     resources :addresses, only: [:index]
