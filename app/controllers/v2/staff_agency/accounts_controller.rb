@@ -6,7 +6,7 @@ module V2
   module StaffAgency
     class AccountsController < StaffAgencyController
       
-      before_action :set_account, only: %i[update show]
+      before_action :set_account, only: %i[update show enable disable]
 
       check_privileges 'property_management.accounts'
             
@@ -70,6 +70,26 @@ module V2
         else
           render json: { success: false, errors: ['Unauthorized Access'] },
                  status: :unauthorized
+        end
+      end
+
+      def disable
+        result = Accounts::Disable.run(account: @account)
+        if result.valid?
+          render :show, status: :ok
+        else
+          render json: standard_error(:disabling_failed, 'Account was not disabled', result.errors),
+                 status: 422
+        end
+      end
+
+      def enable
+        result = Accounts::Enable.run(account: @account)
+        if result.valid?
+          render :show, status: :ok
+        else
+          render json: standard_error(:disabling_failed, 'Account was not disabled', result.errors),
+                 status: 422
         end
       end
       

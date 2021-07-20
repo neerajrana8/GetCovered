@@ -2,8 +2,7 @@ require 'rails_helper'
 
 RSpec.describe Page, :type => :model do
   subject {
-    agency = FactoryBot.create(:agency)
-    agency.update(id: 1, master_agency: true)
+    agency = Agency.find(1)
     branding_profile = FactoryBot.create(:branding_profile, profileable: agency)
     described_class.new(title: "Anything",
                         content: "Lorem ipsum",

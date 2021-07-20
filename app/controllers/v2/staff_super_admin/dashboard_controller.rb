@@ -20,8 +20,8 @@ module V2
         @total_commercial_policies = ::Policy.current.where(policy_type_id: 4).count
         @total_rent_guarantee_policies = ::Policy.current.where(policy_type_id: 5).count
         policy_ids = ::Policy.pluck(:id)
-        @total_commission = PolicyPremium.where(id: policy_ids).pluck(:total).inject(:+) || 0
-        @total_premium = PolicyPremium.where(id: policy_ids).pluck(:total_fees).inject(:+) || 0
+        @total_commission = ::Commission.where(recipient_type: 'Agency', recipient_id: 1).pluck(:total).inject(:+) || 0  # this is total GetCovered commissions
+        @total_premium = ::PolicyPremium.where(policy_quote_id: ::PolicyQuote.where(status: 'accepted').pluck(:id)).or(::PolicyPremium.where(policy_id: policy_ids)).pluck(:total_premium).inject(:+) || 0
 
         render json: {
           total_units: @units,

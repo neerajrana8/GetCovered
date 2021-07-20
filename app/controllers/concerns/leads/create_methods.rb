@@ -78,7 +78,7 @@ module Leads
     end
 
     def lead_params
-      permitted = params.permit(:email, :identifier, :last_visited_page, :agency_id)
+      permitted = params.permit(:email, :identifier, :last_visited_page, :agency_id, :account_id)
       permitted[:email] = permitted[:email].downcase
       permitted[:last_visited_page] = params[:lead_event_attributes][:data][:last_visited_page] if params[:lead_event_attributes] &&
           params[:lead_event_attributes][:data] && permitted[:last_visited_page].blank?

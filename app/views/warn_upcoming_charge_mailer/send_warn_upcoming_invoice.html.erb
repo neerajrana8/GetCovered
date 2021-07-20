@@ -6,7 +6,7 @@
           t('warn_upcoming_charge_mailer.send_warn_upcoming_invoice.text_html',
             policy_type: @policy_type_title,
             agency_title: @agency.title,
-            charged: Money.new(@invoice.total).to_s,
+            charged: Money.new(@invoice.total_payable).to_s,
             due_date: @invoice.due_date,
             link: "https://#{@branding_profile.url}/user/invoices/list"))
     %>

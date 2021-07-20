@@ -26,7 +26,7 @@ end
 
 json.primary_campaign_name policy.primary_user&.lead&.tracking_url&.campaign_name
 
-json.policy_coverages policy.coverages
+json.partial! 'v2/shared/policies/policy_coverages.json.jbuilder', policy: policy
 
 json.primary_insurable do
   unless policy.primary_insurable.nil?

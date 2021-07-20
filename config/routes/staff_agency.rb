@@ -30,8 +30,12 @@
           get "account_buildings",
             to: "accounts#account_buildings",
             via: "get"
+
+          put :enable
+          put :disable
         end
       end
+
     post :accounts_index, action: :index, controller: :accounts
 
     resources :addresses, only: [:index]

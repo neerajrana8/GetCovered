@@ -45,17 +45,22 @@ module CarrierDcPolicyApplication
           return false
         end
         # build policy premium
-        premium = PolicyPremium.new(
-          base: chosen["ratedPremium"],
-          taxes: 0,
-          external_fees: chosen["processingFee"],
-          only_fees_internal: true,
-          billing_strategy: self.billing_strategy,
-          policy_quote: quote
-        )
-        premium.set_fees
-        premium.calculate_fees(true)
-        premium.calculate_total(true)
+        premium = PolicyPremium.create policy_quote: quote
+        unless premium.id
+          puts "  Failed to create premium! #{premium.errors.to_h}"
+        else
+          created_fee = premium.fees.create(title: "Processing Fee", type: :ORIGINATION, amount: chosen["processingFee"], enabled: true, ownerable: ::DepositChoiceService.carrier)
+          unless created_fee.id
+            puts "  Failed to create fee! #{created_fee.errors.to_h}"
+          else
+            result = premium.initialize_all(base_premium.to_i, collector: ::DepositChoiceService.carrier, filter_fees: Proc.new{|f| f.id == created_fee.id })
+            unless result.nil?
+              puts "  Failed to initialize premium! #{result}"
+            else
+              quote_method = "mark_successful"
+            end
+          end
+        end
         # finalize quote
         quote_method = premium.save ? "mark_successful" : "mark_failure"
         quote.send(quote_method)
@@ -64,32 +69,12 @@ module CarrierDcPolicyApplication
           pp quote.errors
           return false
         else
-          # generate internal invoices
-          #quote.generate_invoices_for_term MOOSE WARNING: uncomment if there are ever internal ones...
-          # generate external invoices
-          quote.invoices.create!({
-            external: true,
-            status: "quoted",
-            payer: self.primary_user,
-            due_date: Time.current.to_date,
-            available_date: Time.current.to_date,
-            term_first_date: self.effective_date,
-            term_last_date: self.expiration_date,
-            line_items_attributes: [
-              {
-                title: "Premium",
-                price: premium.base,
-                refundability: 'no_refund', # MOOSE WARNING: really?
-                category: 'base_premium'
-              },
-              {
-                title: "Processing Fee",
-                price: premium.external_fees,
-                refundability: 'no_refund',
-                category: 'deposit_fees'
-              }
-            ]
-          })
+          result = quote.generate_invoices_for_term
+          unless result.nil?
+            puts result[:internal] # MOOSE WARNING: [:external] contains an I81n key for a user-displayable message, if desired
+            quote.mark_failure(result[:internal])
+            return false
+          end
           return true
         end
       end
