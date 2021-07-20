@@ -6,6 +6,14 @@ module V2
       def get_parent_options
         return if Rails.env == 'production' # just in case since this is temporary
       
+
+        
+        
+        
+        
+        
+        
+      
         # grab params
         agency = Agency.where(id: params[:id].to_i).take
         if agency.nil?
@@ -113,6 +121,41 @@ module V2
       
         def set_options_params
           params.require(:insurable_rate_configuration).permit(coverage_options: [:uid, :category, allowed_options: [] ])
+        end
+        
+        def unpack_params
+          # get account & agency
+          @account = nil
+          @agency = nil
+          case params[:type]
+            when 'Account'
+              @account = Account.where(id: params[:id].to_i).take
+              if @account.nil?
+                render json: standard_error(:account_not_found, "No account with the provided id (#{params[:id] || 'null'}) was found", nil),
+                  status: 422
+                return
+              end
+              @agency = @account.agency
+            when 'Agency'
+              @agency = Agency.where(id: params[:id].to_i).take
+            else
+              render json: standard_error(:unsupported_configurable, "It is not possible to customize rates for an object of type '#{params[:type] || 'null'}'", nil),
+                status: 422
+              return
+          end
+          if @agency.nil?
+            render json: standard_error(:agency_not_found, "No agency with the provided id (#{params[:id] || 'null'}) was found", nil),
+              status: 422
+            return
+          end
+          # get carrier, insurable type, & carrier_insurable_type
+          @carrier = nil
+          @insurable_type_id = nil
+          @carrier_insurable_type = nil
+          if params[:carrier_insurable_type_id]
+            
+          else
+          end
         end
 
         def combine_option_sets(*option_sets)
