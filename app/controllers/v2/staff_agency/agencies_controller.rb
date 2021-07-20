@@ -17,6 +17,7 @@ module V2
         end
       end
 
+      # if the carriers filters are passed, sorting won't work because of DISTINCT in the resulted query
       def sub_agencies
         result = []
         required_fields = %i[id title agency_id enabled]
@@ -98,7 +99,14 @@ module V2
       end
 
       def filtered_sub_agencies
-        relation = Agency.left_joins(carrier_agencies: :carrier_agency_policy_types)
+        passed_carriers_filters = params[:policy_type_id].present? || params[:carrier_id].present?
+
+        relation =
+          if passed_carriers_filters
+            Agency.left_joins(carrier_agencies: :carrier_agency_policy_types)
+          else
+            Agency
+          end
 
         relation = relation.where(agency_id: sub_agency_filter_params)
         relation = relation.where(carrier_agencies: { carrier_id: params[:carrier_id] }) if params[:carrier_id].present?
@@ -106,7 +114,7 @@ module V2
           relation = relation.where(carrier_agency_policy_types: { policy_type_id: params[:policy_type_id] })
         end
 
-        relation.uniq
+        passed_carriers_filters ? relation.distinct : relation
       end
 
       def set_agency
