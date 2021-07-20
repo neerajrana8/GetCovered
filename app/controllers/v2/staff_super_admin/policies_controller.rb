@@ -15,7 +15,7 @@ module V2
       before_action :set_substrate, only: [:index]
 
       def index
-        super(:@policies, @substrate, :agency, :account, :primary_user, :primary_insurable, :carrier, :policy_type)
+        super(:@policies, @substrate, :agency, :account, :primary_user, :primary_insurable, :carrier, :policy_type, invoices: :line_items)
       end
 
       def show; end
