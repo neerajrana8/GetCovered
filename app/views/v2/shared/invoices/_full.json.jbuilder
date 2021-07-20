@@ -1,4 +1,4 @@
-json.partial! "v2/shared/invoices/_fields.json.jbuilder",
+json.partial! "v2/shared/invoices/fields.json.jbuilder",
   invoice: invoice
 
 json.line_items_attributes do
