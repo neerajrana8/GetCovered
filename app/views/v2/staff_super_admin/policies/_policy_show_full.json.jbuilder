@@ -74,8 +74,8 @@ end
 
 json.invoices do
   if policy.invoices.any?
-    json.array! policy.invoices.order(:due_date),
-                partial: 'v2/shared/invoices/fields.json.jbuilder',
+    json.array! policy.invoices.order(due_date: :asc),
+                partial: 'v2/shared/invoices/full.json.jbuilder',
                 as: :invoice
   end
 end
