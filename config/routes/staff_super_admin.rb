@@ -28,6 +28,14 @@
 
           put :enable
           put :disable
+          
+          get 'coverage-options',
+            to: 'insurable_rate_configurations#get_parent_options',
+            defaults: { type: 'Account', carrier_id: 5 }
+            
+          post 'coverage-options',
+            to: 'insurable_rate_configurations#set_options',
+            defaults: { type: 'Account', carrier_id: 5 }
         end
     end
 
@@ -69,10 +77,12 @@
           put :disable
           
           get 'coverage-options',
-            to: 'insurable_rate_configurations#get_parent_options'
+            to: 'insurable_rate_configurations#get_parent_options',
+            defaults: { type: 'Agency', carrier_id: 5 }
             
           post 'coverage-options',
-            to: 'insurable_rate_configurations#set_options'
+            to: 'insurable_rate_configurations#set_options',
+            defaults: { type: 'Agency', carrier_id: 5 }
         end
 
         collection do
