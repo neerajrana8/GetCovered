@@ -117,6 +117,10 @@ module V2
         passed_carriers_filters ? relation.distinct : relation
       end
 
+      def sub_agency_filter_params
+        params[:agency_id].blank? ? nil : params.require(:agency_id)
+      end
+
       def set_agency
         @agency =
           if current_staff.organizable_type == 'Agency' && current_staff.organizable_id.to_s == params[:id]
