@@ -118,7 +118,7 @@ class QbeService
         prop_zipcode: '32301'
       }.merge!(args)
 
-      options[:heading][:program][:ClientName] = args[:agent_code]
+      options[:heading][:program][:ClientName] = args[:agent_code] || Rails.application.credentials.qbe[:agent_code]
 
       # / PropertyInfo
     elsif action == 'getRates'
@@ -148,7 +148,7 @@ class QbeService
         effective_date: Time.current.strftime('%m/%d/%Y')
       }.merge!(args)
 
-      options[:heading][:program][:ClientName] = args[:agent_code]
+      options[:heading][:program][:ClientName] = args[:agent_code] || Rails.application.credentials.qbe[:agent_code]
 
       # / getRates
     elsif action == 'getMinPrem'
@@ -178,7 +178,7 @@ class QbeService
         lia_amount: 10_000
       }.merge!(args)
 
-      options[:heading][:program][:ClientName] = args[:agent_code]
+      options[:heading][:program][:ClientName] = args[:agent_code] || Rails.application.credentials.qbe[:agent_code]
 
       # / getMinPrem
     elsif action == 'SendPolicyInfo'
@@ -211,7 +211,7 @@ class QbeService
           agency: application.agency
         }
 
-        options[:heading][:program][:ClientName] = args[:agent_code]
+        options[:heading][:program][:ClientName] = args[:agent_code] || Rails.application.credentials.qbe[:agent_code]
 
       end
 

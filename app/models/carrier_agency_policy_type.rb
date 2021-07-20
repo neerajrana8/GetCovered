@@ -8,8 +8,10 @@ class CarrierAgencyPolicyType < ApplicationRecord
 
   belongs_to :carrier_agency
   belongs_to :policy_type
-  belongs_to :commission_strategy,
-    optional: true # for now
+  belongs_to :commission_strategy # the commission strategy to use for these policies
+  belongs_to :collector,          # who will collect payments on these (null = get covered)
+    polymorphic: true,
+    optional: true
     
   has_one :carrier,
     through: :carrier_agency

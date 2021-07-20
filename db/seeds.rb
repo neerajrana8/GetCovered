@@ -18,19 +18,24 @@ def display_options()
 	return @string
 end
 
-if @opts.include?(ENV["section"])
+if ENV["section"] == 'test'
+
+  puts "Running test seeds..."
+  require Rails.root.join("db/seeds/setup.rb")
+  require Rails.root.join("db/seeds/agency.rb")
+  
+elsif @opts.include?(ENV["section"])
 
   puts "Running: #{ENV["section"].titlecase}"
   require Rails.root.join("db/seeds/#{ ENV["section"] }.rb")
 
+elsif ENV["section"].blank?
+
+  puts "\nNO SECTION SELECTION -- NO SEEDS RUN"
+  
 elsif !@opts.include?(ENV["section"])
 
-	puts "\nInvalid Section Selection"
+	puts "\nInvalid Section Selection '#{ENV["section"]}'"
 	puts "Option availability in order: #{ display_options() }\n"
-
-elsif ENV["section"].nil?
-
-  puts "\nNO SECTION SELECTION"
-  puts "Option availability in order: \n"
 
 end

@@ -270,12 +270,15 @@ class User < ApplicationRecord
       }),
       Addr: (
         for_insurable.blank? ? (self.address.blank? ? nil : self.address.get_confie_addr(true, address_type: "MailingAddress"))
+        : for_insurable == true ? [
+          self.address.nil? ? nil : self.address.get_confie_addr(true, address_type: "StreetAddress"),
+          self.address.nil? ? nil : self.address.get_confie_addr(true, address_type: "MailingAddress")
+        ].compact
         : [
           for_insurable.primary_address.get_confie_addr(::InsurableType::RESIDENTIAL_UNITS_IDS.include?(for_insurable.insurable_type_id) ? "Unit #{for_insurable.title}" : true, address_type: "StreetAddress"),
           self.address.blank? ?
             for_insurable.primary_address.get_confie_addr(::InsurableType::RESIDENTIAL_UNITS_IDS.include?(for_insurable.insurable_type_id) ? "Unit #{for_insurable.title}" : true, address_type: "MailingAddress")
             : self.address.get_confie_addr(true, address_type: "MailingAddress")
-
         ]
       )
     }.compact

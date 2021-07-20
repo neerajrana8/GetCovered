@@ -14,24 +14,30 @@ describe 'Bill due invoice spec', type: :request do
     policy.policy_in_system = true
     policy.policy_type = policy_type
     policy.billing_enabled = true
+    policy.auto_pay = true
     policy.carrier = carrier
     policy.agency = agency
     policy.account = account
+    policy.status = 'BOUND'
     policy.save!
     
-    @invoice = Invoice.new do |i|
-      i.payer = user
-      i.status = 'available'
-      i.number = Time.now.to_i
-      i.due_date = Time.current
-      i.available_date = 1.day.ago
-      i.invoiceable = policy
-    end
-    @invoice.save!
+    @policy = policy
+    
+    @invoice = FactoryBot.create(:invoice, invoiceable: policy, due_date: Time.current.to_date, available_date: Time.current.to_date - 1.day, status: 'available')
+    @invoice.payer.attach_payment_source("tok_visa", true)
+
   end
   
-  it 'should pay invoices' do
+  it 'should pay invoices' do 
+    policy_ids = Policy.select(:id).policy_in_system(true).current.where(auto_pay: true)
+    @invoices = Invoice.where(invoiceable_type: 'PolicyQuote', invoiceable_id: PolicyQuote.select(:id).where(status: 'accepted', policy_id: policy_ids)).or(
+                          Invoice.where(invoiceable_type: 'PolicyGroupQuote', invoiceable_id: PolicyGroupQuote.select(:id).where(status: 'accepted', policy_group_id: PolicyGroup.select(:id).policy_in_system(true).current.where(auto_pay: true)))
+                       ).or(
+                          Invoice.where(invoiceable_type: 'Policy', invoiceable_id: policy_ids)
+                       ).where("due_date <= '#{Time.current.to_date.to_s(:db)}'").where(status: ['available', 'missed'], external: false).order("(invoiceable_type, invoiceable_id, due_date) ASC")
+  
     BillDueInvoicesJob.perform_now
+    expect(@invoice.reload.status).to eq('complete')
   end
   
 end

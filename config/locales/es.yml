@@ -164,6 +164,8 @@ es:
     commercial: 'Política de propietarios de empresas'
     rent_guarantee: 'Garantía de alquiler'
     security_deposit_replacement: 'Este Insoranke'
+    master_security_deposit_replacement: 'Security Deposit Replacement'
+    master_security_deposit_replacement_coverage: 'Security Deposit Replacement Coverage'
   policy_quote_model:
     no_policy_for_qbe: "Ninguna política vinculante para QBE Specialty"
     error_with_policy_bund: "Se produjo un error con la vinculación de la política"

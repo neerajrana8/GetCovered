@@ -24,7 +24,9 @@ class Carrier < ApplicationRecord
   has_many :carrier_agency_authorizations,
            through: :carrier_agencies
   
-  has_many :commission_strategies
+  has_many :commission_strategies, as: :recipient
+  has_many :commissions, as: :recipient
+  has_many :commission_items, through: :commissions
     
   has_many :fees,
            as: :ownerable

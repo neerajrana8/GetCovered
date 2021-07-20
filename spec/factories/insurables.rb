@@ -2,6 +2,7 @@ FactoryBot.define do
   factory :insurable do
     sequence :title, &:to_s
     association :account, factory: :account
+    enabled { true }
     residential_unit
 
     trait :residential_community do

@@ -73,7 +73,7 @@ module Reports
       base_query =
         Policy.
           includes(:policy, :insurables, :users, :agency, :account, policy: :insurables).
-          where(policy_type_id: PolicyType::MASTER_COVERAGE_ID).
+          where(policy_type_id: PolicyType::MASTER_COVERAGES_IDS).
           where(coverages_condition, range_start: range_start, range_end: range_end)
       coverages =
         if reportable.blank?

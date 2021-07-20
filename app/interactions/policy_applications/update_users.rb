@@ -56,7 +56,7 @@ module PolicyApplications
           where(users: { email: policy_user_params[:user_attributes][:email] }).take
 
       # will be the same as the +policy_user.user+ if the +policy_user+ present
-      user = User.find_by_email(policy_user_params[:user_attributes][:email])
+      user = ::User.find_by_email(policy_user_params[:user_attributes][:email])
 
       if policy_user.present? # user exists and already added as a policy user
         yield update_policy_user(policy_user, policy_user_params.slice(:primary, :spouse))
@@ -105,7 +105,7 @@ module PolicyApplications
 
     def create_user(user_params)
       secure_tmp_password = SecureRandom.base64(12)
-      user = User.create(user_params.merge(password: secure_tmp_password, password_confirmation: secure_tmp_password))
+      user = ::User.create(user_params.merge(password: secure_tmp_password, password_confirmation: secure_tmp_password))
       if user.errors.empty?
         Success(user)
       else

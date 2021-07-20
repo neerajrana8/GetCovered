@@ -19,12 +19,12 @@ class ConfieService
   def self.create_confie_lead(application)
     return "Policy application is for a non-Confie agency" unless application.agency_id == ::ConfieService.agency_id
     cs = ::ConfieService.new
-    return "Failed to build create_lead request" unless cs.build_request(:create_lead,
+    return "Failed to build create_lead request" unless (cs.build_request(:create_lead,
       user: application.primary_user,
       lead_id: application.id,
       #address: application.primary_address # leaving disabled for now; will default to user.address instead
       line_breaks: true
-    )
+    ) rescue false)
     event = application.events.new(cs.event_params)
     event.started = Time.now
     result = cs.call
@@ -312,7 +312,7 @@ class ConfieService
           }.merge(get_insured_or_principal_for(
             policy.primary_user,
             nil,
-            for_insurable: policy.primary_insurable
+            for_insurable: policy.primary_insurable || (policy.policy_type_id == ::PolicyType::RENT_GUARANTEE_ID ? true : nil)
           ))
         ),
         "com.a1_Policy": {
@@ -327,16 +327,16 @@ class ConfieService
           LanguageCd: "EN",
           PolicyNumber: policy.number,
           CurrentTermAmt: {
-            Amt: (first_invoice.total.to_d / 100.to_d).to_s
+            Amt: (first_invoice.total_due.to_d / 100.to_d).to_s
           },
           FullTermAmt: {
             Amt: (policy.policy_quotes.accepted.order("created_at desc").limit(1).take.policy_premium.total / 100.to_d).to_s
           },
           "com.a1_Payment": payment_info(
             policy.carrier.uses_stripe? ?
-              first_invoice&.charges&.succeeded&.take
+              first_invoice&.stripe_charges&.succeeded&.take
               : first_invoice
-          ) || { MethodPaymentCd: "CreditCard", Amount: { Amt: (first_invoice.total.to_d / 100.to_d).to_s } },
+          ) || { MethodPaymentCd: "CreditCard", Amount: { Amt: (first_invoice.total_due.to_d / 100.to_d).to_s } },
           "com.a1_OnlineSalesFee": {
             Amt: "0.00"
           }
@@ -364,7 +364,7 @@ class ConfieService
       if charge.class.name == 'Invoice'
         return {
           MethodPaymentCd: "CreditCard",
-          Amount: { Amt: (charge.total.to_d / 100.to_d).to_s },
+          Amount: { Amt: (charge.total_due.to_d / 100.to_d).to_s },
           "com.a1_CreditCardInfo": {
             Number: 'NoData',
             "com.a1_CardHolder": {

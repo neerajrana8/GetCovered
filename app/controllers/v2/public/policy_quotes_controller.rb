@@ -7,7 +7,7 @@ module V2
     class PolicyQuotesController < PublicController
       before_action :set_policy_quote
 
-      def update
+      def update # only for commercial
         @application = @policy_quote.policy_application
 
         if @policy_quote.quoted? &&
@@ -53,11 +53,13 @@ module V2
 
           if @policy_quote.policy_premium.base >= 500_000
             BillingStrategy.where(agency: @policy_quote.policy_application.agency_id, policy_type: @policy_quote.policy_application.policy_type).each do |bs|
-              response[:billing_strategies] << { id: bs.id, title: bs.title }
+              @extra_fields ||= { billing_strategies: [] }
+              @extra_fields[:billing_strategies] << { id: bs.id, title: bs.title }
             end
           end
-
-          render json: response.to_json, status: 200
+          @application = @policy_quote.policy_application
+          @quote = @policy_quote
+          render template: 'v2/public/policy_applications/create.json', status: 200
         else
           render json: { error: I18n.t('policy_quote_controller.quote_unavailable_update'), message:  I18n.t('policy_quote_controller.unable_to_update_quote') }, status: 422
         end

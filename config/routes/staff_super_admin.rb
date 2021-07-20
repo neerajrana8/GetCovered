@@ -3,9 +3,7 @@
   # StaffSuperAdmin
   scope module: :staff_super_admin, path: "staff_super_admin" do
 
-    resources :accounts,
-      only: [ :index, :show, :create, :update ],
-      concerns: :reportable do
+    resources :accounts, only: [ :index, :show, :create, :update ], concerns: :reportable do
         member do
           get "histories",
             to: "histories#index_recordable",
@@ -27,9 +25,15 @@
           get "account_buildings",
             to: "accounts#account_buildings",
             via: "get"
+
+          put :enable
+          put :disable
         end
     end
+
     post :accounts_index, action: :index, controller: :accounts
+
+    resources :addresses, only: [:index]
 
     resources :refunds,
       only: [ :index, :create, :update] do
@@ -186,9 +190,12 @@
       end
     end
 
-    resources :commissions, only: [:index, :show, :update] do
+    resources :commissions, only: [:index, :show] do
       member do
-        put :approve
+        post :separate_for_approval
+        post :approve
+        post :mark_paid
+        post :pay_with_stripe
       end
     end
 
@@ -233,6 +240,19 @@
 
     resources :leads_dashboard_tracking_url, only: [:index]
 
+    resources :leases, only: [ :create, :update, :destroy, :index, :show ] do
+      member do
+        get "histories",
+            to: "histories#index_recordable",
+            via: "get",
+            defaults: { recordable_type: Lease }
+      end
+
+      collection do
+        post :bulk_create
+      end
+    end
+    
     resources :lease_types,
       path: "lease-types",
       only: [ :create, :update, :index, :show ]
@@ -284,6 +304,7 @@
               to: "policies#get_leads",
               via: "get"
           put :update_coverage_proof
+          put :add_policy_documents
           delete :delete_policy_document
           put :refund_policy
           put :cancel_policy

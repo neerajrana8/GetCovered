@@ -38,6 +38,8 @@
         end
       end
 
+    resources :addresses, only: [:index]
+    
     get :total_dashboard, controller: 'dashboard', path: 'dashboard/:account_id/total_dashboard'
     get :buildings_communities, controller: 'dashboard', path: 'dashboard/:account_id/buildings_communities'
     get :communities_list, controller: 'dashboard', path: 'dashboard/:account_id/communities_list'
@@ -59,8 +61,24 @@
       only: [ :create, :update, :destroy, :index, :show ]
 
     resources :branding_profiles,
-      path: "branding-profiles",
-      only: [ :update, :index, :show ]
+              path: "branding-profiles",
+              only: [ :index, :show, :create, :update ] do
+      member do
+        get :faqs
+        post :update_from_file
+        post :faq_create
+        put :faq_update, path: '/faq_update/faq_id'
+        post :faq_question_create, path: '/faqs/:faq_id/faq_question_create'
+        put :faq_question_update, path: '/faqs/:faq_id/faq_question_update/:faq_question_id'
+        delete :faq_delete, path: '/faqs/:faq_id/faq_delete'
+        delete :faq_question_delete, path: '/faqs/:faq_id/faq_question_delete/:faq_question_id'
+        post :attach_images, path: '/attach_images'
+      end
+    end
+
+    resources :branding_profile_attributes,
+              path: "branding-profile-attributes",
+              only: [ :destroy ]
 
     resources :carrier_insurable_profiles,
       path: "carrier-insurable-profiles",
@@ -168,6 +186,7 @@
           get 'resend_policy_documents'
           put :refund_policy
           put :cancel_policy
+          put :add_policy_documents
           put :update_coverage_proof
           delete :delete_policy_document
         end

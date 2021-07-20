@@ -1,4 +1,4 @@
-json.extract! lead, :id, :email, :created_at, :last_visited_page, :last_visit ,:agency_id
+json.extract! lead, :id, :email, :created_at, :last_visited_page, :last_visit ,:agency_id, :account_id
 
 json.agency_name lead&.agency&.title
 
@@ -27,5 +27,5 @@ json.primary_campaign_name lead&.tracking_url&.campaign_name
 json.primary_campaign_source lead&.tracking_url&.campaign_source
 json.primary_campaign_medium lead&.tracking_url&.campaign_medium
 json.premium_total lead&.user&.policy_applications&.last&.policy_quotes&.last&.policy_premium&.total || (last_event&.data.present? ? last_event&.data['premium_total'] : nil)
-json.premium_first lead&.user&.policy_applications&.last&.policy_quotes&.last&.invoices&.first&.total || (last_event&.data.present? ? last_event&.data['premium_first'] : nil)
+json.premium_first lead&.user&.policy_applications&.last&.policy_quotes&.last&.invoices&.first&.total_due || (last_event&.data.present? ? last_event&.data['premium_first'] : nil)
 json.billing_strategy lead&.user&.policy_applications&.last&.policy_quotes&.last&.policy_premium&.billing_strategy&.title

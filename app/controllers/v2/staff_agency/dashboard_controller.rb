@@ -18,13 +18,14 @@ module V2
         @communities = Insurable.where(insurable_type_id: community_ids, account: @agency.accounts).count
         @total_policy = ::Policy.current.where(agency: @agency).count
         @total_residential_policies = ::Policy.current.where(policy_type_id: 1, agency: @agency).count
-        @total_master_policies = ::Policy.current.where(policy_type_id: 2, agency: @agency).count
+        @total_master_policies = ::Policy.current.where(policy_type_id: PolicyType::MASTER_IDS, agency: @agency).count
         @total_master_policy_coverages = ::Policy.current.where(policy_type_id: 3, agency: @agency).count
         @total_commercial_policies = ::Policy.current.where(policy_type_id: 4, agency: @agency).count
         @total_rent_guarantee_policies = ::Policy.current.where(policy_type_id: 5, agency: @agency).count
         policy_ids = ::Policy.where(agency: @agency).pluck(:id)
-        @total_commission = PolicyPremium.where(id: policy_ids).pluck(:total).inject(:+) || 0
-        @total_premium = PolicyPremium.where(id: policy_ids).pluck(:total_fees).inject(:+) || 0
+        policy_quote_ids = ::PolicyQuote.includes(:policy_application).references(:policy_applications).where(status: 'accepted', policy_applications: { agency_id: @agency.id }).pluck(:id)
+        @total_commission = ::Commission.where(recipient: @agency).pluck(:total).inject(:+) || 0
+        @total_premium = ::PolicyPremium.where(policy_quote_id: policy_quote_ids).or(::PolicyPremium.where(policy_id: policy_ids)).pluck(:total_premium).inject(:+) || 0
 
         render json: {
           total_units: @units,

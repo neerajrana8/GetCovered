@@ -23,6 +23,9 @@ common: &default_settings
 
   # Logging level for log/newrelic_agent.log
   log_level: info
+  
+  # We want big honkin' stack traces
+  error_collector.max_backtrace_frames: 1024
 
 
 # Environment-specific settings are in this section.
@@ -46,7 +49,7 @@ test_container:
   # It doesn't make sense to report to New Relic from automated test runs.
   monitor_mode: false
 
-staging:
+aws_staging:
   <<: *default_settings
   app_name: GCV2 STAGING
   attributes.include: [job.sidekiq.args.*, request.parameters.*]

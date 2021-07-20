@@ -1,3 +1,1 @@
-json.extract! refund, :amount, :charge_id, :created_at, :currency, :id,
-  :receipt_number, :status
-
+json.extract! refund, :id, :amount, :complete, :refund_reasons, :invoice_id, :created_at

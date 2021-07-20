@@ -30,9 +30,15 @@
           get "account_buildings",
             to: "accounts#account_buildings",
             via: "get"
+
+          put :enable
+          put :disable
         end
       end
+
     post :accounts_index, action: :index, controller: :accounts
+
+    resources :addresses, only: [:index]
 
     resources :master_policies, path: 'master-policies',
       only: [ :create, :update, :index, :show ] do
@@ -263,6 +269,7 @@
         put :refund_policy
         put :cancel_policy
         put :update_coverage_proof
+        put :add_policy_documents
         delete :delete_policy_document
       end
       get "search", to: 'policies#search', on: :collection

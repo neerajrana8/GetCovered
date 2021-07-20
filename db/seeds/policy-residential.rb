@@ -1,4 +1,4 @@
-@leases = Lease.all
+@leases = Lease.all.select{|l| !l.primary_user.nil? }
 @qbe_id = 1
 @msi_id = 5
 @max_msi_coverage_selection_iterations = 5
@@ -50,7 +50,7 @@
 @leases.each do |lease|
 # 	if rand(0..100) > 33 # Create a 66% Coverage Rate
 
-  if !lease.insurable.carrier_profile(@qbe_id).nil?
+  if !lease.insurable.carrier_profile(@qbe_id).nil? && !ENV['SKIPQBE']
     carrier_id = @qbe_id
 		#.insurable.carrier_profile(3)
 		policy_type = PolicyType.find(1)
@@ -144,7 +144,7 @@
                 
                 message = "POLICY #{ policy.number } has been #{ policy.status.humanize }\n"
                 message += "Application ID: #{ application.id } | Application Status: #{ application.status } | Quote Status: #{ quote.status }\n" 
-                message += "Premium Base: $#{ '%.2f' % (premium.base.to_f / 100) } | Taxes: $#{ '%.2f' % (premium.taxes.to_f / 100) } | Fees: $#{ '%.2f' % (premium.total_fees.to_f / 100) } | Total: $#{ '%.2f' % (premium.total.to_f / 100) }"
+                message += "Premium Base: $#{ '%.2f' % (premium.total_premium.to_f / 100) } | Taxes: $#{ '%.2f' % (premium.total_tax.to_f / 100) } | Fees: $#{ '%.2f' % (premium.total_fee.to_f / 100) } | Total: $#{ '%.2f' % (premium.total.to_f / 100) }"
             
                 puts message
               
@@ -172,7 +172,7 @@
 			pp application.errors	
 		end
   # end qbe
-  elsif !lease.insurable.carrier_profile(@msi_id).nil?
+  elsif !lease.insurable.carrier_profile(@msi_id).nil? && !ENV['SKIPMSI']
     # grab useful variables & set up application
     carrier_id = @msi_id
 		policy_type = PolicyType.find(1)
@@ -266,7 +266,7 @@
             policy = quote.policy
             message = "POLICY #{ policy.number } has been #{ policy.status.humanize }\n"
             message += "Application ID: #{ application.id } | Application Status: #{ application.status } | Quote Status: #{ quote.status }\n" 
-            message += "Premium Base: $#{ '%.2f' % (premium.base.to_f / 100) } | Taxes: $#{ '%.2f' % (premium.taxes.to_f / 100) } | Fees: $#{ '%.2f' % (premium.total_fees.to_f / 100) } | Total: $#{ '%.2f' % (premium.total.to_f / 100) }"
+            message += "Premium Base: $#{ '%.2f' % (premium.total_premium.to_f / 100) } | Taxes: $#{ '%.2f' % (premium.total_tax.to_f / 100) } | Fees: $#{ '%.2f' % (premium.total_fee.to_f / 100) } | Total: $#{ '%.2f' % (premium.total.to_f / 100) }"
             puts message
           else
             puts "Application ID: #{ application.id } | Application Status: #{ application.status } | Quote Status: #{ quote.status }"

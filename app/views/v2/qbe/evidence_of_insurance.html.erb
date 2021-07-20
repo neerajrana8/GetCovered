@@ -341,7 +341,7 @@
           <table cellpadding="5" cellspacing="0" style="border: none;">
             <tr>
               <td><h4>Premium:</h4></td>
-              <td><h4><%= ActionController::Base.helpers.number_to_currency(@policy.premium.carrier_base.to_f / 100) %></h4></td>
+              <td><h4><%= ActionController::Base.helpers.number_to_currency((@policy.premium.total_premium + @policy.premium.total_tax).to_f / 100) %></h4></td>
             </tr>
             <tr>
               <td><h4>Admin Fees:</h4></td>

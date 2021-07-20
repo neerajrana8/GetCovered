@@ -7,19 +7,29 @@ class CarrierPolicyType < ApplicationRecord
   
   belongs_to :carrier
   belongs_to :policy_type
-  belongs_to :commission_strategy, optional: true # temporarily optional only
+  belongs_to :commission_strategy
 
   has_many :carrier_policy_type_availabilities, dependent: :destroy
 
   accepts_nested_attributes_for :commission_strategy
   accepts_nested_attributes_for :carrier_policy_type_availabilities, allow_destroy: true
   
-  before_validation :manipulate_dem_nested_boiz_like_a_boss # we don't restrict this to on: :create. that way it can be applied to commission_strategy updates too
+  before_validation :manipulate_dem_nested_boiz_like_a_boss, # we don't restrict this to on: :create. that way it can be applied to commission_strategy updates too
+    unless: Proc.new{|cpt| cpt.carrier.nil? || cpt.policy_type.nil? }
 
   after_update :repair_commission_strategy_tree,
     if: Proc.new{|cpt| !cpt.disable_tree_repair && cpt.saved_change_to_attribute?('commission_strategy_id') }
   
+  validate :premium_proration_calculation_valid
+
+
   private
+  
+    def premium_proration_calculation_valid
+      unless ::PolicyPremiumItem.proration_calculations.has_key?(self.premium_proration_calculation)
+        errors.add(:premium_proration_calculation, "must be a valid proration calculation method")
+      end
+    end
   
     # fills out appropriate defaults for passed CommissionStrategy nested attributes or unsaved associated model
     def manipulate_dem_nested_boiz_like_a_boss
