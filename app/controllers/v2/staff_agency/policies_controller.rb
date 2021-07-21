@@ -20,7 +20,7 @@ module V2
             Policy.where(agency: @agency)
           end
 
-        super(:@policies, relation, :agency, :account, :primary_user, :primary_insurable, :carrier, :policy_type)
+        super(:@policies, relation, :agency, :account, :primary_user, :primary_insurable, :carrier, :policy_type, invoices: :line_items)
       end
 
       def search
