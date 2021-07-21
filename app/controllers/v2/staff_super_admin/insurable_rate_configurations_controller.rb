@@ -5,8 +5,13 @@ module V2
 
       def get_parent_options
         return if Rails.env == 'production' # just in case since this is temporary
-      
-
+        # grab params
+        return unless unpack_params
+        # grab some useful stuff
+        configurer_list = [account, agency]
+        configurer_list.push(configurer_list.last.agency) while !configurer_list.last.agency.nil?
+        carrier_insurable_type = CarrierInsurableType.where(carrier_id: 5, insurable_type_id: 4).take
+        usa = InsurableGeographicalCategory.get_for(state: nil)
         
         
         
@@ -153,9 +158,29 @@ module V2
           @insurable_type_id = nil
           @carrier_insurable_type = nil
           if params[:carrier_insurable_type_id]
-            
+            @carrier_insurable_type = ::CarrierInsurableType.where(id: params[:carrier_insurable_type_id].to_i).take
+            @carrier = @carrier_insurable_type&.carrier
+            @insurable_type_id = @carrier_insurable_type&.insurable_type_id
           else
+            @carrier = ::Carrier.where(id: params[:carrier_id].to_i).take
+            @insurable_type_id = params[:insurable_type_id].nil? ? nil : params[:insurable_type_id].to_i
+            @carrier_insurable_type = ::CarrierInsurableType.where(carrier_id: @carrier&.id, insurable_type_id: @insurable_type_id).take
           end
+          if !params[:carrier_insurable_type_id] && @carrier.nil?
+            render json: standard_error(:carrier_not_found, "No carrier with id #{@carrier.id || 'null'} was found", nil),
+              status: 422
+            return
+          elsif !params[:carrier_insurable_type_id] && @insurable_type_id.nil?
+            render json: standard_error(:insurable_type_not_found, "No insurable type with id #{@insurable_type_id || 'null'} was found", nil),
+              status: 422
+            return
+          elsif @carrier_insurable_type.nil?
+            render json: standard_error(:carrier_insurable_type_not_found, "No carrier insurable type with #{params[:carrier_insurable_type_id] ? "id #{params[:carrier_insurable_type_id]}" : "carrier id #{@carrier&.id || 'null'} and insurable type id #{@insurable_type_id || 'null'}"} was found", nil),
+              status: 422
+            return
+          end
+          # return success
+          return true
         end
 
         def combine_option_sets(*option_sets)
