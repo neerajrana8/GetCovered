@@ -65,12 +65,13 @@ class Carrier < ApplicationRecord
   end
 
   def get_or_create_universal_parent_commission_strategy
-    return self.commission_strategy || ::CommissionStrategy.create!( 
+    self.update(commission_strategy: ::CommissionStrategy.create!( 
       title: "#{self.title} Commission",
       percentage: 100,
       recipient: self,
       commission_strategy: nil
-    )
+    )) if self.commission_strategy.nil?
+    return self.commission_strategy
   end
 
   private
