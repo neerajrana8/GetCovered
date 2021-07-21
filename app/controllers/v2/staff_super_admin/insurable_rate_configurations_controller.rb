@@ -33,8 +33,8 @@ module V2
                 carrier_info: {},
                 rules: {},
                 coverage_options: combine_option_sets(
-                  ircs.select{|irc| irc.configurer == configurer }
-                      .map{|irc| irc.coverage_options }
+                  irc_hierarchy.select{|irc| irc.configurer == configurer }
+                               .map{|irc| irc.coverage_options }
                 ).values
               )
             end,
