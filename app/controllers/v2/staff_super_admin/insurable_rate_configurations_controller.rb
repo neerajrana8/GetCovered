@@ -37,8 +37,8 @@ module V2
                 ).values
               )
             end,
-            mutable: false,
-            allow_new_coverages: false
+            mutable: true,
+            allow_new_coverages: true
           )
         end
         # get configurer options
