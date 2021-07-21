@@ -31,11 +31,11 @@
           
           get 'coverage-options',
             to: 'insurable_rate_configurations#get_parent_options',
-            defaults: { type: 'Account', carrier_id: 5 }
+            defaults: { type: 'Account', carrier_id: 5, insurable_type_id: ::InsurableType::RESIDENTIAL_UNITS_IDS.first }
             
           post 'coverage-options',
             to: 'insurable_rate_configurations#set_options',
-            defaults: { type: 'Account', carrier_id: 5 }
+            defaults: { type: 'Account', carrier_id: 5, insurable_type_id: ::InsurableType::RESIDENTIAL_UNITS_IDS.first }
         end
     end
 
@@ -78,11 +78,11 @@
           
           get 'coverage-options',
             to: 'insurable_rate_configurations#get_parent_options',
-            defaults: { type: 'Agency', carrier_id: 5 }
+            defaults: { type: 'Agency', carrier_id: 5, insurable_type_id: ::InsurableType::RESIDENTIAL_UNITS_IDS.first }
             
           post 'coverage-options',
             to: 'insurable_rate_configurations#set_options',
-            defaults: { type: 'Agency', carrier_id: 5 }
+            defaults: { type: 'Agency', carrier_id: 5, insurable_type_id: ::InsurableType::RESIDENTIAL_UNITS_IDS.first }
         end
 
         collection do

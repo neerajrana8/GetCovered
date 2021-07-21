@@ -7,52 +7,50 @@ module V2
         return if Rails.env == 'production' # just in case since this is temporary
         # grab params
         return unless unpack_params
-        # grab some useful stuff
-        configurer_list = [account, agency]
+        # grab the configurable IGC and the hierarchy of configurers
+        configurable = InsurableGeographicalCategory.get_for(state: nil)
+        configurer_list = [@agency].compact
         configurer_list.push(configurer_list.last.agency) while !configurer_list.last.agency.nil?
-        carrier_insurable_type = CarrierInsurableType.where(carrier_id: 5, insurable_type_id: 4).take
-        usa = InsurableGeographicalCategory.get_for(state: nil)
-        
-        
-        
-        
-        
-        
-      
-        # grab params
-        agency = Agency.where(id: params[:id].to_i).take
-        if agency.nil?
-          render json: standard_error(:agency_not_found, "No agency with the provided id (#{params[:id] || 'null'}) was found", nil),
-            status: 422
-          return
+        configurer_list = [[@carrier], configurer_list.reverse]
+        configurer_list.push([@account]) unless @account.nil?
+        # drop our actual entity from the configurer list
+        if @account
+          configurer_list.pop
+        else
+          configurer_list.last.shift
+          configurer_list.pop if configurer_list.last.blank?
         end
-        # grab some useful stuff
-        agency_list = [agency]
-        agency_list.push(agency_list.last.agency) while !agency_list.last.agency.nil?
-        carrier_insurable_type = CarrierInsurableType.where(carrier_id: 5, insurable_type_id: 4).take
-        usa = InsurableGeographicalCategory.get_for(state: nil)
-        # calculate parent options
-        parent_ircs = (agency_list.drop(1) + [Carrier.find(5)]).reverse.map do |configurer|
-          ::InsurableRateConfiguration.new(
-            carrier_insurable_type: carrier_insurable_type,
-            configurer: configurer,
-            configurable: usa,
-            carrier_info: {},
-            rules: {},
-            coverage_options: combine_option_sets(
-              *InsurableRateConfiguration.where(configurer: configurer, configurable_type: "InsurableGeographicalCategory", carrier_insurable_type: carrier_insurable_type)
-                                          .map{|irc| irc.coverage_options }
-            ).values
+        # get IRC hierarchy
+        irc_hierarchy = ::InsurableRateConfiguration.where(configurer: configurer_list.flatten, configurable_type: "InsurableGeographicalCategory", carrier_insurable_type: @carrier_insurable_type)
+                                                    .group_by{|irc| irc.configurer }
+        irc_hierarchy = configurer_list.map do |array|
+          ::InsurableRateConfiguration.merge(
+            array.map do |configurer|
+              ::InsurableRateConfiguration.new(
+                carrier_insurable_type: @carrier_insurable_type,
+                configurer: configurer,
+                configurable: configurable,
+                carrier_info: {},
+                rules: {},
+                coverage_options: combine_option_sets(
+                  ircs.select{|irc| irc.configurer == configurer }
+                      .map{|irc| irc.coverage_options }
+                ).values
+              )
+            end,
+            mutable: false,
+            allow_new_coverages: false
           )
         end
+        # get configurer options
         coverage_options = []
-        parent_ircs.each do |irc|
-          irc.merge_parent_options!(coverage_options, mutable: false, allow_new_coverages: InsurableRateConfiguration::COVERAGE_ADDING_CONFIGURERS.include?(irc.configurer_type))
+        irc_hierarchy.each do |irc|
+          irc.merge_parent_options!(coverage_options, mutable: false, allow_new_coverages: ::InsurableRateConfiguration::COVERAGE_ADDING_CONFIGURERS.include?(irc.configurer_type))
           coverage_options = irc.coverage_options
         end
         coverage_options.select!{|co| co['enabled'] != false }
-        # calculate our own options
-        agency_irc = ::InsurableRateConfiguration.where(carrier_insurable_type: carrier_insurable_type, configurer: agency, configurable: usa).take || ::InsurableRateConfiguration.new(coverage_options: [])
+        # get our target entity's options
+        entity_irc = ::InsurableRateConfiguration.where(carrier_insurable_type: @carrier_insurable_type, configurer: @account || @agency, configurable: configurable).take || ::InsurableRateConfiguration.new(coverage_options: [])
         # annotate with our stuff
         coverage_options.select!{|co| co['options_type'] == 'multiple_choice' }
         coverage_options.each do |opt|
@@ -74,49 +72,42 @@ module V2
       
       def set_options
         return if Rails.env == 'production' # just in case since this is temporary
-   
         # grab params
-        agency = Agency.where(id: params[:id].to_i).take
-        if agency.nil?
-          render json: standard_error(:agency_not_found, "No agency with the provided id (#{params[:id] || 'null'}) was found", nil),
-            status: 422
-          return
-        end
+        return unless unpack_params
         covopts = set_options_params[:coverage_options]
         if covopts.blank?
           render json: { success: true }, status: :ok
           return
         end
         # grab models
-        carrier_insurable_type = CarrierInsurableType.where(carrier_id: 5, insurable_type_id: 4).take
-        usa = InsurableGeographicalCategory.get_for(state: nil)
-        agency_irc = ::InsurableRateConfiguration.where(carrier_insurable_type: carrier_insurable_type, configurer: agency, configurable: usa).take ||
-                     ::InsurableRateConfiguration.new(carrier_insurable_type: carrier_insurable_type, configurer: agency, configurable: usa, coverage_options: [])
+        configurable = InsurableGeographicalCategory.get_for(state: nil)
+        entity_irc = ::InsurableRateConfiguration.where(carrier_insurable_type: @carrier_insurable_type, configurer: @account || @agency, configurable: configurable).take ||
+                     ::InsurableRateConfiguration.new(carrier_insurable_type: @carrier_insurable_type, configurer: @account || @agency, configurable: configurable, coverage_options: [])
         # update options
         covopts.each do |opt|
           opt['options'] = opt['allowed_options'] # simple way to let the user pass 'allowed_options' instead but leave this code IRC generic
-          found_index = agency_irc.coverage_options.find_index{|co| co&.[]('uid') == opt['uid'] }
+          found_index = entity_irc.coverage_options.find_index{|co| co&.[]('uid') == opt['uid'] }
           if opt['options'].nil?
-            agency_irc.coverage_options[found_index] = nil unless found_index.nil?
+            entity_irc.coverage_options[found_index] = nil unless found_index.nil?
           elsif opt['options'].blank?
             if found_index.nil?
-              agency_irc.coverage_options.push({ 'uid' => opt['uid'], 'category' => opt['category'], 'enabled' => false })
+              entity_irc.coverage_options.push({ 'uid' => opt['uid'], 'category' => opt['category'], 'enabled' => false })
             else
-              agency_irc.coverage_options[found_index]['enabled'] = false
+              entity_irc.coverage_options[found_index]['enabled'] = false
             end
           else
             if found_index.nil?
-              agency_irc.coverage_options.push({ 'uid' => opt['uid'], 'category' => opt['category'], 'options' => opt['options'] })
+              entity_irc.coverage_options.push({ 'uid' => opt['uid'], 'category' => opt['category'], 'options' => opt['options'] })
             else
-              agency_irc.coverage_options[found_index]['options'] = opt['options']
+              entity_irc.coverage_options[found_index]['options'] = opt['options']
             end
           end
         end
-        agency_irc.coverage_options.compact!
-        if agency_irc.save
+        entity_irc.coverage_options.compact!
+        if entity_irc.save
           render json: { success: true}, status: :ok
         else
-          render json: standard_error(:insurable_rate_configuration_update_failed, "Failed to apply updates!", agency_irc.errors.to_h),
+          render json: standard_error(:insurable_rate_configuration_update_failed, "Failed to apply updates!", entity_irc.errors.to_h),
             status: 422
         end
         return
