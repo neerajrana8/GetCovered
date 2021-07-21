@@ -22,7 +22,6 @@ module V2
         end
         # get IRC hierarchy
         irc_hierarchy = ::InsurableRateConfiguration.where(configurer: configurer_list.flatten, configurable_type: "InsurableGeographicalCategory", carrier_insurable_type: @carrier_insurable_type)
-                                                    .group_by{|irc| irc.configurer }
         irc_hierarchy = configurer_list.map do |array|
           ::InsurableRateConfiguration.merge(
             array.map do |configurer|
