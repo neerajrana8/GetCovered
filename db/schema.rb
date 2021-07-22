@@ -14,6 +14,8 @@ ActiveRecord::Schema.define(version: 2021_07_15_045543) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
+  enable_extension "fuzzystrmatch"
+  enable_extension "pg_trgm"
   enable_extension "plpgsql"
 
   create_table "access_tokens", force: :cascade do |t|
@@ -147,6 +149,19 @@ ActiveRecord::Schema.define(version: 2021_07_15_045543) do
     t.string "slug"
     t.jsonb "nodes", default: {}
     t.boolean "enabled"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
+  create_table "application_notifications", force: :cascade do |t|
+    t.string "action"
+    t.string "subject"
+    t.integer "status"
+    t.integer "code"
+    t.boolean "read", default: false
+    t.integer "notifiable_id"
+    t.string "notifiable_type"
+    t.string "message"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
   end
@@ -432,7 +447,7 @@ ActiveRecord::Schema.define(version: 2021_07_15_045543) do
   create_table "carrier_agency_policy_types", force: :cascade do |t|
     t.bigint "carrier_agency_id"
     t.bigint "policy_type_id"
-    t.bigint "commission_strategy_id", null: false
+    t.bigint "commission_strategy_id"
     t.string "collector_type"
     t.bigint "collector_id"
     t.index ["carrier_agency_id"], name: "index_carrier_agency_policy_types_on_carrier_agency_id"
@@ -510,7 +525,7 @@ ActiveRecord::Schema.define(version: 2021_07_15_045543) do
     t.datetime "updated_at", null: false
     t.integer "max_days_for_full_refund", default: 31, null: false
     t.integer "days_late_before_cancellation", default: 30, null: false
-    t.bigint "commission_strategy_id", null: false
+    t.bigint "commission_strategy_id"
     t.string "premium_proration_calculation", default: "per_payment_term", null: false
     t.boolean "premium_proration_refunds_allowed", default: true, null: false
     t.index ["carrier_id"], name: "index_carrier_policy_types_on_carrier_id"
@@ -567,6 +582,9 @@ ActiveRecord::Schema.define(version: 2021_07_15_045543) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "type_of_loss", default: 0, null: false
+    t.string "name"
+    t.string "address"
+    t.string "nature_of_claim"
     t.text "staff_notes"
     t.index ["claimant_type", "claimant_id"], name: "index_claims_on_claimant_type_and_claimant_id"
     t.index ["insurable_id"], name: "index_claims_on_insurable_id"
@@ -819,6 +837,7 @@ ActiveRecord::Schema.define(version: 2021_07_15_045543) do
     t.bigint "agency_id"
     t.bigint "policy_type_ids", default: [], null: false, array: true
     t.boolean "preferred_ho4", default: false, null: false
+    t.boolean "confirmed", default: true, null: false
     t.boolean "occupied", default: false
     t.index ["account_id"], name: "index_insurables_on_account_id"
     t.index ["agency_id"], name: "index_insurables_on_agency_id"
@@ -1161,9 +1180,9 @@ ActiveRecord::Schema.define(version: 2021_07_15_045543) do
     t.date "last_payment_date"
     t.date "next_payment_date"
     t.bigint "policy_group_id"
-    t.boolean "declined"
     t.string "address"
     t.string "out_of_system_carrier_title"
+    t.boolean "declined"
     t.bigint "policy_id"
     t.integer "cancellation_reason"
     t.integer "branding_profile_id"
@@ -1258,6 +1277,7 @@ ActiveRecord::Schema.define(version: 2021_07_15_045543) do
     t.jsonb "resolver_info"
     t.jsonb "tagging_data"
     t.string "error_message"
+    t.bigint "tag_ids", default: [], null: false, array: true
     t.integer "branding_profile_id"
     t.string "internal_error_message"
     t.index ["account_id"], name: "index_policy_applications_on_account_id"
@@ -1267,6 +1287,7 @@ ActiveRecord::Schema.define(version: 2021_07_15_045543) do
     t.index ["policy_application_group_id"], name: "index_policy_applications_on_policy_application_group_id"
     t.index ["policy_id"], name: "index_policy_applications_on_policy_id"
     t.index ["policy_type_id"], name: "index_policy_applications_on_policy_type_id"
+    t.index ["tag_ids"], name: "policy_application_tag_ids_index", using: :gin
   end
 
   create_table "policy_coverages", force: :cascade do |t|
@@ -1749,6 +1770,14 @@ ActiveRecord::Schema.define(version: 2021_07_15_045543) do
     t.index ["stripe_charge_id"], name: "index_stripe_refunds_on_stripe_charge_id"
   end
 
+  create_table "tags", force: :cascade do |t|
+    t.string "title"
+    t.text "description"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["title"], name: "index_tags_on_title", unique: true
+  end
+
   create_table "tracking_urls", force: :cascade do |t|
     t.string "landing_page"
     t.string "campaign_source"
@@ -1804,6 +1833,7 @@ ActiveRecord::Schema.define(version: 2021_07_15_045543) do
     t.string "mailchimp_id"
     t.integer "mailchimp_category", default: 0
     t.string "qbe_id"
+    t.integer "insured_address_id"
     t.index ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["invitation_token"], name: "index_users_on_invitation_token", unique: true

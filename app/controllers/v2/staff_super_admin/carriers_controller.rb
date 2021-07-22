@@ -127,7 +127,7 @@ module V2
         params.require(:carrier_agency).permit(
           :carrier_id,
           :agency_id,
-          carrier_agency_policy_type_attributes: [
+          carrier_agency_policy_types_attributes: [
             :policy_type_id,
             commission_strategy_attributes: [
               :percentage
