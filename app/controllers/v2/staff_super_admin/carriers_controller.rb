@@ -144,7 +144,9 @@ module V2
           :integration_designation, :quotable, :rateable, :syncable,
           :title, :verifiable, settings: {},
                                carrier_policy_types_attributes: [
-                                 :policy_type_id, carrier_policy_type_availabilities_attributes: %i[state available zip_code_blacklist]
+                                 :policy_type_id,
+                                 commission_strategy_attributes: [:percentage],
+                                 carrier_policy_type_availabilities_attributes: %i[state available zip_code_blacklist]
                                ]
         )
         to_return
@@ -159,6 +161,7 @@ module V2
           :title, :verifiable,
           settings: {}, carrier_policy_types_attributes: [
             :id, :policy_type_id,
+            commission_strategy_attributes: [:percentage],
             carrier_policy_type_availabilities_attributes: %i[id state available zip_code_blacklist]
           ]
         )

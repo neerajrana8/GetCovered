@@ -127,7 +127,6 @@
           get :toggle_billing_strategy
           get :billing_strategies_list
           get :commission_list
-          post :assign_agency_to_carrier
           post :unassign_agency_from_carrier
           post :add_billing_strategy
           post :add_commissions
@@ -138,7 +137,9 @@
           get :fees
           delete :destroy_fee
         end
-        post :assign_agency_to_carrier, path: 'assign-agency-to-carrier'
+        collection do
+          post :assign_agency_to_carrier
+        end
       end
     resources :carrier_agencies, path: "carrier-agencies", only: [ :index, :show, :create, :update, :destroy ]
     resources :carrier_agency_authorizations, path: "carrier-agency-authorizations", only: [ :update, :index, :show ] do
