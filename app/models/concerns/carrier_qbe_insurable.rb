@@ -483,7 +483,7 @@ module CarrierQbeInsurable
 							#check_carrier_process_error("qbe", false, { process: "get_qbe_rates_#{ number_insured }" })
 	          else
 	          
-	            rates.activated
+	            insurable_rates.activated
 	                 .where(number_insured: number_insured)
 	                 .update_all(:activated => false)
 	                 
