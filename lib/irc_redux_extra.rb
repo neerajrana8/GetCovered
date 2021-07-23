@@ -95,11 +95,6 @@ class InsurableRateConfiguration < ApplicationRecord
                   'required' => true,
                   'validity' = DATA_TYPES.keys,
                   'default_overridability' => 0
-                },
-                'enabled' => {
-                  'required' => false,
-                  'validity' => [true, false],
-                  'default_overridability' => Proc.new{|v| v == false ? 0 : nil }
                 }
               }
             }
