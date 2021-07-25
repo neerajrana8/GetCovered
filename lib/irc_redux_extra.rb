@@ -257,21 +257,21 @@ class InsurableRateConfiguration < ApplicationRecord
   def get_selection_errors(selections, options, use_titles: false)
     to_return = {}
     options.select{|uid,opt| opt['requirement'] == 'required' }.each do |opt|
-      (to_return[uid] ||= []).push("selection cannot be blank") if selections[uid].nil? || !selections[uid]['selection']
+      (to_return[uid] ||= []).push("is required") if !selections[uid]
     end 
-    selections.select{|uid,sel| sel['selection'] }.each do |sel|
+    selections.select{|uid,sel| sel }.each do |sel|
       #next if options[uid].nil? # WARNING: for now we just ignore selections that aren't in the options... NOPE, RESTORED ERROR. But left this here because I don't remember why it was here to begin with
       if options[uid].nil? || options[uid]['requirement'] == 'forbidden'
         (to_return[uid] ||= []).push("is not a valid coverage option")
-      elsif sel['selection'] == true
+      elsif sel == true
         (to_return[uid] ||= []).push("selection cannot be blank") if options[uid]['options_type'] != 'none'
       else
-        found = (options[uid]['options'] || {}).find{|opt| opt['data_type'] == sel['selection']['data_type'] && opt['value'] == sel['selection']['value'] }
-        (to_return[uid] ||= []).push("has invalid selection '#{sel['selection']['value']}'") if found.nil?
+        found = (options[uid]['options'] || {}).find{|opt| opt['data_type'] == sel['data_type'] && opt['value'] == sel['value'] }
+        (to_return[uid] ||= []).push("has invalid selection '#{sel['value']}'") if found.nil?
       end
     end
     if use_titles
-      to_return.transform_keys!{|uid| options[uid]&.[]('title') || selections[uid]&.[]('title') || 'Coverage Option #{uid}' }
+      to_return.transform_keys!{|uid| options[uid]&.[]('title') || 'Coverage Option #{uid}' }
     end
     return to_return
   end
@@ -280,22 +280,22 @@ class InsurableRateConfiguration < ApplicationRecord
     options.map do |uid, opt|
       sel = selections[uid]
       if opt['requirement'] == 'required'
-        next [uid, { 'category' => opt['category'], 'selection' =>
+        next [uid,
           opt['options_type'] == 'none' ?
             true
             : opt['options'].blank? ?
               false
-              : sel && sel['selection'] && opt['options'].any?{|o| o['data_type'] == sel['selection']['data_type'] && o['value'] == sel['selection']['value'] } ?
-                sel['selection']
+              : sel && sel != true && opt['options'].any?{|o| o['data_type'] == sel['data_type'] && o['value'] == sel['value'] } ?
+                sel
                 : rechoose_selection.call(opt, sel)
-        }]
+        ]
       elsif opt['requirement'] == 'optional'
-        if !sel || !sel['selection']
+        if !sel
           next nil
         elsif opt['options_type'] == 'none'
-          next [uid, { 'category' => opt['category'], 'selection' => true }]
+          next [uid, true ]
         elsif opt['options_type'] == 'multiple_choice'
-          if opt['options'].any?{|o| o['data_type'] == sel['selection']['data_type'] && o['value'] == sel['selection']['value'] }
+          if sel != true && opt['options'].any?{|o| o['data_type'] == sel['data_type'] && o['value'] == sel['value'] }
             next [uid, sel]
           else
             next [uid, rechoose_selection.call(opt, sel)]
@@ -306,7 +306,7 @@ class InsurableRateConfiguration < ApplicationRecord
       else
         next nil
       end
-    end.compact.to_h.compact#.map{|s| s['selection'] } was here in the original version (when it was an array, so need to incorporate uid if we want this)
+    end.compact.to_h.compact
   end
 
   
