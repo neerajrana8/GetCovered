@@ -31,7 +31,86 @@ class InsurableRateConfiguration < ApplicationRecord
   
   # Structurable structures used in this model
 
-  CONFIGURATION_STRUCTURE = {
+  QBE_STRUCTURE = {
+    'coverage_options' => {
+      'required' => false,
+      'validity' => Proc.new{|v| v.class == ::Hash },
+      'default_overridability' => 0,
+      'default_value' => {},
+    
+      'special' => 'hash',
+      'special_data' => {
+        'structure' => {
+          'schedule' => {
+            'required' => true,
+            'validity' => ['coverage_c', 'liability', 'optional', 'liability_only'],
+            'default_overridability' => 0
+          },
+          'sub_schedule' => {
+            'required' => true,
+            'validity' => Proc.new{|v| v.nil? || v.class == ::String },
+            'default_overridability' => 0
+          },
+          'category' => {
+            'required' => true,
+            'validity' => ['limit', 'deductible'],
+            'default_overridability' => 0 
+          },
+          'title' => {
+            'required' => true,
+            'validity' => Proc.new{|v| v.class == ::String },
+            'default_overridability' => 0
+          },
+          'visible' => {
+            'required' => true,
+            'validity' => [true, false],
+            'default_overridability' => 0
+          },
+          'requirement' => {
+            'required' => true,
+            'validity' => ['optional', 'required', 'forbidden'],
+            'default_overridability' => Proc.new{|v| v == 'optional' ? nil : 0 }
+          },
+          'options_type' => {
+            'required' => true,
+            'validity' => ['multiple_choice', 'none'],
+            'default_overridability' => 0
+          },
+          'options' => {
+            'required' => Proc.new{|v,datum| datum['options_type'] == 'multiple_choice' },
+            'validity' => Proc.new{|v| v.class == ::Array },
+            'default_overridability' => 0,
+            
+            'special' => 'array',
+            'special_data' => {
+              'identity_keys' => ['data_type', 'value'],
+              'remove_missing' => 'different_overridabilities', # could also be false or true
+              'structure' => {
+                'value' => {
+                  'required' => true,
+                  'validity' => Proc.new do |v,datum|
+                    case datum['data_type']
+                      when 'currency'; (Integer(v) rescue -1) >= 0 ? true : false
+                      when 'percentage';  (BigDecimal(v) rescue -1) >= 0 ? true : false
+                      else; false
+                    end
+                  end,
+                  'default_overridability' => 0
+                },
+                'data_type' => {
+                  'required' => true,
+                  'validity' = ['currency', 'percentage'],
+                  'default_overridability' => 0
+                }
+              }
+            }
+          }
+        }# end coverage_options/special_data/structure
+      }# end coverage_options/special_data
+    }# end coverage_options
+  }
+
+  MSI_STRUCTURE = {
     'coverage_options' => {
       'required' => false,
       'validity' => Proc.new{|v| v.class == ::Hash },
@@ -88,12 +167,18 @@ class InsurableRateConfiguration < ApplicationRecord
               'structure' => {
                 'value' => {
                   'required' => true,
-                  'validity' => Proc.new{|v,datum| DATA_TYPES(datum['data_type'])&.['validity'] || false },
+                  'validity' => Proc.new do |v,datum|
+                    case datum['data_type']
+                      when 'currency'; (Integer(v) rescue -1) >= 0 ? true : false
+                      when 'percentage';  (BigDecimal(v) rescue -1) >= 0 ? true : false
+                      else; false
+                    end
+                  end,
                   'default_overridability' => 0
                 },
                 'data_type' => {
                   'required' => true,
-                  'validity' = DATA_TYPES.keys,
+                  'validity' = ['currency', 'percentage'],
                   'default_overridability' => 0
                 }
               }
@@ -133,11 +218,11 @@ class InsurableRateConfiguration < ApplicationRecord
   
   # Merge an array of IRCs together.
   # params:
-  #   irc_array:              an array of IRCs
-  #   common_override_level:  true to treat IRCs as having the same override level, false to treat them as having override levels equal to their indices
+  #   irc_array:          an array of IRCs
+  #   override_level:     true to treat IRCs as having the same override level, false to treat them as having override levels equal to their indices, array of integers to provide explicit offsets
   # returns:
   #   an IRC representing the combination of all the IRCs in the array
-  def self.merge(irc_array, common_override_level)
+  def self.merge(irc_array, override_level)
     # setup
     to_return = InsurableRateConfiguration.new(
       configurable_type: irc_array.drop(1).inject(irc_array.first&.configurable_type){|res,irc| break nil unless irc.configurable_type == res; res },
@@ -153,11 +238,11 @@ class InsurableRateConfiguration < ApplicationRecord
     to_return.carrier_info = irc_array.inject({}) do |combined, single|
       combined.deep_merge(single.carrier_info) do |k, v1, v2|
         # WARNING: no special support for arrays, since they aren't used right now
-        v1 == v2 ? v1 : condemnation
+        v1 == v2 ? v1 : (v1.nil? ^ v2.nil?) ? (v1 || v2) : condemnation
       end
     end
     # configuration
-    offsets = common_override_level ? 0 : [0...-1].map{|irc| irc.max_overridability }.inject([0]){|arr,mo| arr.concat(arr.last + mo + 1) }
+    offsets = override_level.class == ::Array ? override_level : override_level ? 0 : [0...-1].map{|irc| irc.max_overridability }.inject([0]){|arr,mo| arr.concat(arr.last + mo + 1) }
     to_return.configuration = merge_data_structures(irc_array.map{|irc| irc.configuration }, CONFIGURATION_STRUCTURE, offsets)
     to_return.refresh_max_overridability
     # done
@@ -170,11 +255,12 @@ class InsurableRateConfiguration < ApplicationRecord
   #   carrier_insurable_type: the CIT for which to pull IRCs (normally Residential Unit for MSI residential policies)
   #   configurer:             an account/agency/carrier
   #   configurable:           an InsurableGeographicalCategory or an insurable's CarrierInsurableProfile
+  #   agency:                 (optional) if configurer is an account, you can provide an agency to use instead of configurer.agency if desired
   # returns:
   #   an array (ordered from least to most specific configurer) of arrays (ordered from least to most specific configurable) of IRCs
-  def self.get_hierarchy(carrier_insurable_type, configurer, configurable)
+  def self.get_hierarchy(carrier_insurable_type, configurer, configurable, agency: nil)
     # get configurer and configurable hierarchies
-    configurers = get_configurer_hierarchy(configurer, carrier_insurable_type.carrier)
+    configurers = get_configurer_hierarchy(configurer, carrier_insurable_type.carrier, agency: agency)
     configurables = get_configurable_hierarchy(configurable)
     # get the insurable rate configurations
     to_return = ::InsurableRateConfiguration.where(configurer: configurers, configurable: configurables, carrier_insurable_type: carrier_insurable_type)
@@ -220,23 +306,23 @@ class InsurableRateConfiguration < ApplicationRecord
       (to_return[uid] ||= []).push("selection cannot be blank") if selections[uid].nil? || !selections[uid]['selection']
     end 
     selections.select{|uid,sel| sel['selection'] }.each do |sel|
-      next if options[uid].nil? # WARNING: for now we just ignore selections that aren't in the options...
+      #next if options[uid].nil? # WARNING: for now we just ignore selections that aren't in the options... NOPE, RESTORED ERROR. But left this here because I don't remember why it was here to begin with
       if options[uid].nil? || options[uid]['requirement'] == 'forbidden'
         (to_return[uid] ||= []).push("is not a valid coverage option")
       elsif sel['selection'] == true
         (to_return[uid] ||= []).push("selection cannot be blank") if options[uid]['options_type'] != 'none'
       else
         found = (options[uid]['options'] || {}).find{|opt| opt['data_type'] == sel['selection']['data_type'] && opt['value'] == sel['selection']['value'] }
-        (to_return[uid] ||= []).push("has invalid selection '#{sel['selection']['value']}'") if found.nil? || found['enabled'] == false
+        (to_return[uid] ||= []).push("has invalid selection '#{sel['selection']['value']}'") if found.nil?
       end
     end
     if use_titles
-      to_return.transform_keys!{|uid| options[uid]&.[]('title') || selections[uid]&.[]('title') || 'Coverage Options #{uid}' }
+      to_return.transform_keys!{|uid| options[uid]&.[]('title') || selections[uid]&.[]('title') || 'Coverage Option #{uid}' }
     end
     return to_return
   end
   
-  def self.automatically_select_options(options, selections = [], iterations: 1, rechoose_selection: Proc.new{|option,selection| option['requirement'] == 'required' ? (option['options_type'] == 'multiple_choice' ? option['options'].min{|a,b| a['enabled'] == false ? 1 : b['enabled'] == false ? -1 : a['value'].to_d <=> b['value'].to_d } : true) : nil })
+  def self.automatically_select_options(options, selections = [], iterations: 1, rechoose_selection: Proc.new{|option,selection| option['requirement'] == 'required' ? (option['options_type'] == 'multiple_choice' ? option['options'].min{|a,b| a['value'].to_d <=> b['value'].to_d } : true) : nil })
     options.map do |uid, opt|
       sel = selections[uid]
       if opt['requirement'] == 'required'
@@ -275,7 +361,7 @@ class InsurableRateConfiguration < ApplicationRecord
   
     # Class Methods
   
-    def self.get_configurer_hierarchy(configurer, carrier)
+    def self.get_configurer_hierarchy(configurer, carrier, agency: nil) # if configurer is an account, agency lets you choose an agency to use (default is account.agency)
       to_return = [configurer]
       case configurer.class
         when ::Carrier
@@ -283,7 +369,7 @@ class InsurableRateConfiguration < ApplicationRecord
         when ::Agency
           to_return.concat(configurer.agency_hierarchy(include_self: false) + [carrier])
         when ::Account
-          to_return.concat(configurer.agency.agency_hierarchy(include_self: true) + [carrier])
+          to_return.concat((agency || configurer.agency).agency_hierarchy(include_self: true) + [carrier])
       end
       return(to_return)
     end
