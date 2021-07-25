@@ -141,7 +141,11 @@
           post :assign_agency_to_carrier
         end
       end
-    resources :carrier_agencies, path: "carrier-agencies", only: [ :index, :show, :create, :update, :destroy ]
+    resources :carrier_agencies, path: "carrier-agencies", only: [ :index, :show, :create, :update ] do
+      member do
+        put :unassign
+      end
+    end
     resources :carrier_agency_authorizations, path: "carrier-agency-authorizations", only: [ :update, :index, :show ] do
       member do
         post :add_fee

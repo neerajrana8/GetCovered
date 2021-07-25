@@ -1,7 +1,7 @@
 module V2
   module StaffSuperAdmin
     class CarrierAgenciesController < StaffSuperAdminController
-      before_action :set_carrier_agency, only: %i[show update]
+      before_action :set_carrier_agency, only: %i[show update unassign]
 
       def index
         super(:@carrier_agencies, CarrierAgency.all)
@@ -39,6 +39,16 @@ module V2
         else
           render json: standard_error(:carrier_agency_update_errors, nil, @carrier_agency.errors.full_messages),
                  status: :unprocessable_entity
+        end
+      end
+
+      def unassign
+        if @carrier_agency.destroy
+          render json: { message: "Agency ##{@carrier_agency.agency_id} successfully unassigned" },
+                 status: :ok
+        else
+          render json: standard_error(:unassignment_error, "Agency ##{@carrier_agency.agency_id} was not unassigned"),
+                 status: :bad_request
         end
       end
 
