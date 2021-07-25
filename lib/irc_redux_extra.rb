@@ -30,6 +30,58 @@ class InsurableRateConfiguration < ApplicationRecord
   validate :validate_configuration
   
   # Structurable structures used in this model
+  
+  CRITICAL_SUBSTRUCTURE = {
+    'title' => {
+      'required' => true,
+      'validity' => Proc.new{|v| v.class == ::String },
+      'default_overridability' => 0
+    },
+    'visible' => {
+      'required' => true,
+      'validity' => [true, false],
+      'default_overridability' => 0
+    },
+    'requirement' => {
+      'required' => true,
+      'validity' => ['optional', 'required', 'forbidden'],
+      'default_overridability' => Proc.new{|v| v == 'optional' ? nil : 0 }
+    },
+    'options_type' => {
+      'required' => true,
+      'validity' => ['multiple_choice', 'none'],
+      'default_overridability' => 0
+    },
+    'options' => {
+      'required' => Proc.new{|v,datum| datum['options_type'] == 'multiple_choice' },
+      'validity' => Proc.new{|v| v.class == ::Array },
+      'default_overridability' => 0,
+      
+      'special' => 'array',
+      'special_data' => {
+        'identity_keys' => ['data_type', 'value'],
+        'remove_missing' => 'different_overridabilities', # could also be false or true
+        'structure' => {
+          'value' => {
+            'required' => true,
+            'validity' => Proc.new do |v,datum|
+              case datum['data_type']
+                when 'currency'; (Integer(v) rescue -1) >= 0 ? true : false
+                when 'percentage';  (BigDecimal(v) rescue -1) >= 0 ? true : false
+                else; false
+              end
+            end,
+            'default_overridability' => 0
+          },
+          'data_type' => {
+            'required' => true,
+            'validity' = ['currency', 'percentage'],
+            'default_overridability' => 0
+          }
+        }
+      }
+    }
+  }
 
   QBE_STRUCTURE = {
     'coverage_options' => {
@@ -55,59 +107,10 @@ class InsurableRateConfiguration < ApplicationRecord
             'required' => true,
             'validity' => ['limit', 'deductible'],
             'default_overridability' => 0 
-          },
-          'title' => {
-            'required' => true,
-            'validity' => Proc.new{|v| v.class == ::String },
-            'default_overridability' => 0
-          },
-          'visible' => {
-            'required' => true,
-            'validity' => [true, false],
-            'default_overridability' => 0
-          },
-          'requirement' => {
-            'required' => true,
-            'validity' => ['optional', 'required', 'forbidden'],
-            'default_overridability' => Proc.new{|v| v == 'optional' ? nil : 0 }
-          },
-          'options_type' => {
-            'required' => true,
-            'validity' => ['multiple_choice', 'none'],
-            'default_overridability' => 0
-          },
-          'options' => {
-            'required' => Proc.new{|v,datum| datum['options_type'] == 'multiple_choice' },
-            'validity' => Proc.new{|v| v.class == ::Array },
-            'default_overridability' => 0,
-            
-            'special' => 'array',
-            'special_data' => {
-              'identity_keys' => ['data_type', 'value'],
-              'remove_missing' => 'different_overridabilities', # could also be false or true
-              'structure' => {
-                'value' => {
-                  'required' => true,
-                  'validity' => Proc.new do |v,datum|
-                    case datum['data_type']
-                      when 'currency'; (Integer(v) rescue -1) >= 0 ? true : false
-                      when 'percentage';  (BigDecimal(v) rescue -1) >= 0 ? true : false
-                      else; false
-                    end
-                  end,
-                  'default_overridability' => 0
-                },
-                'data_type' => {
-                  'required' => true,
-                  'validity' = ['currency', 'percentage'],
-                  'default_overridability' => 0
-                }
-              }
-            }
           }
-        }# end coverage_options/special_data/structure
-      }# end coverage_options/special_data
-    }# end coverage_options
+        }.merge(CRITICAL_SUBSTRUCTURE) # end coverage_options/special_data/structure
+      } # end coverage_options/special_data
+    } # end coverage_options
   }
 
   MSI_STRUCTURE = {
@@ -130,61 +133,12 @@ class InsurableRateConfiguration < ApplicationRecord
             'validity' => Proc.new{|v| v.class == ::String },
             'default_overridability' => 0
           },
-          'title' => {
-            'required' => true,
-            'validity' => Proc.new{|v| v.class == ::String },
-            'default_overridability' => 0
-          },
           'description' => {
             'required' => false,
             'validity' => Proc.new{|v| v.nil? || v.class == ::String },
             'default_overridability' => Proc.new{|v,uid,data,irc| v.nil? ? nil : 0 }
-          },
-          'visible' => {
-            'required' => true,
-            'validity' => [true, false],
-            'default_overridability' => 0
-          },
-          'requirement' => {
-            'required' => true,
-            'validity' => ['optional', 'required', 'forbidden'],
-            'default_overridability' => Proc.new{|v| v == 'optional' ? nil : 0 }
-          },
-          'options_type' => {
-            'required' => true,
-            'validity' => ['multiple_choice', 'none'],
-            'default_overridability' => 0
-          },
-          'options' => {
-            'required' => Proc.new{|v,datum| datum['options_type'] == 'multiple_choice' },
-            'validity' => Proc.new{|v| v.class == ::Array },
-            'default_overridability' => 0,
-            
-            'special' => 'array',
-            'special_data' => {
-              'identity_keys' => ['data_type', 'value'],
-              'remove_missing' => 'different_overridabilities', # could also be false or true
-              'structure' => {
-                'value' => {
-                  'required' => true,
-                  'validity' => Proc.new do |v,datum|
-                    case datum['data_type']
-                      when 'currency'; (Integer(v) rescue -1) >= 0 ? true : false
-                      when 'percentage';  (BigDecimal(v) rescue -1) >= 0 ? true : false
-                      else; false
-                    end
-                  end,
-                  'default_overridability' => 0
-                },
-                'data_type' => {
-                  'required' => true,
-                  'validity' = ['currency', 'percentage'],
-                  'default_overridability' => 0
-                }
-              }
-            }
           }
-        } # end coverage_options/special_data/structure
+        }.merge(CRITICAL_SUBSTRUCTURE) # end coverage_options/special_data/structure
       } # end coverage_options/special_data
     }, # end coverage_options
     'rules' => {
