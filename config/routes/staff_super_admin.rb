@@ -144,6 +144,7 @@
     resources :carrier_agencies, path: "carrier-agencies", only: [ :index, :show, :create, :update ] do
       member do
         put :unassign
+        put :update_policy_types
       end
     end
     resources :carrier_agency_authorizations, path: "carrier-agency-authorizations", only: [ :update, :index, :show ] do

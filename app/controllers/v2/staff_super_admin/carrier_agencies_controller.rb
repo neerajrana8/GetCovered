@@ -1,7 +1,7 @@
 module V2
   module StaffSuperAdmin
     class CarrierAgenciesController < StaffSuperAdminController
-      before_action :set_carrier_agency, only: %i[show update unassign]
+      before_action :set_carrier_agency, only: %i[show update update_policy_types unassign]
 
       def index
         super(:@carrier_agencies, CarrierAgency.all)
@@ -15,12 +15,12 @@ module V2
       def create
         # Use CarriersController#assign_agency_to_carrier instead!
         #
-        #agency = Agency.find_by(id: create_params[:agency_id])
-        #carrier = Carrier.find_by(id: create_params[:carrier_id])
+        # agency = Agency.find_by(id: create_params[:agency_id])
+        # carrier = Carrier.find_by(id: create_params[:carrier_id])
         #
-        #if agency.nil? || carrier.nil?
+        # if agency.nil? || carrier.nil?
         #  render json: standard_error(:something_went_wrong, 'Data Missing', {}), status: :unprocessable_entity
-        #else
+        # else
         #  if carrier.agencies.include?(agency)
         #    render json: { message: 'This agency has been already assigned to this carrier' }, status: :unprocessable_entity
         #  else
@@ -30,11 +30,20 @@ module V2
         #      render json: standard_error(:something_went_wrong, "#{agency.title} could not be assigned to #{carrier.title}", {}), status: :unprocessable_entity
         #    end
         #  end
-        #end
+        # end
       end
 
       def update
         if @carrier_agency.update_as(current_staff, update_params)
+          render template: 'v2/shared/carrier_agencies/show', status: :ok
+        else
+          render json: standard_error(:carrier_agency_update_errors, nil, @carrier_agency.errors.full_messages),
+                 status: :unprocessable_entity
+        end
+      end
+
+      def update_policy_types
+        if @carrier_agency.update_as(current_staff, update_types_params)
           render template: 'v2/shared/carrier_agencies/show', status: :ok
         else
           render json: standard_error(:carrier_agency_update_errors, nil, @carrier_agency.errors.full_messages),
@@ -65,6 +74,27 @@ module V2
           :carrier_id, :external_carrier_id, :agency_id,
           carrier_agency_authorizations_attributes: %i[state available policy_type_id zip_code_blacklist]
         )
+        to_return
+      end
+      
+      def update_types_params
+        return({}) if params[:carrier].blank?
+
+        to_return = params.require(:carrier_agency).permit(
+           carrier_agency_policy_types_attributes: [
+             :id, :policy_type_id,
+             commission_strategy_attributes: [:percentage]
+           ]
+         )
+
+        existed_ids = to_return[:carrier_agency_policy_types_attributes]&.map { |cpt| cpt[:id] }
+
+        unless @carrier_agency.blank? || existed_ids.nil?
+          (@carrier_agency.carrier_agency_policy_types.pluck(:id) - existed_ids).each do |id|
+            to_return[:carrier_agency_policy_types_attributes] <<
+              ActionController::Parameters.new(id: id, _destroy: true).permit(:id, :_destroy)
+          end
+        end
         to_return
       end
 
