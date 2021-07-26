@@ -10,6 +10,14 @@ require 'fileutils'
 
 class QbeService
 
+  def self.carrier_id
+    1
+  end
+  
+  def self.carrier
+    @carrier ||= ::Carrier.find(1)
+  end
+  
   include HTTParty
   include ActiveModel::Validations
   include ActiveModel::Conversion

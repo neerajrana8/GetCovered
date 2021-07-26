@@ -8,7 +8,7 @@ class InsurableRateConfiguration < ApplicationRecord
   
   belongs_to :configurable, polymorphic: true # Insurable or InsurableGeographicCategory (for now)
   belongs_to :configurer, polymorphic: true   # Account, Agency, or Carrier
-  belongs_to :carrier_insurable_type
+  belongs_to :carrier_policy_type
   
   # Convenience associations to particular types of configurable
   belongs_to :insurable_geographical_category,
@@ -165,8 +165,10 @@ class InsurableRateConfiguration < ApplicationRecord
   
   
   # Returns an (unsaved) IRC representing the combined IRC formed by merging the entire inheritance hierarchy for some configurable
-  def self.get_inherited_irc(carrier_insurable_type, configurer, configurable)
-    merge(get_hierarchy(carrier_insurable_type, configurer, configurable).map{|ircs| merge(ircs, true) }, false)
+  def self.get_inherited_irc(carrier_policy_type, configurer, configurable, agency: nil)
+    # Alternative: merge(get_hierarchy(carrier_policy_type, configurer, configurable, agency: agency).map{|ircs| merge(ircs, true) }, false)
+    hierarchy = get_hierarchy(carrier_policy_type, configurer, configurable, agency: agency)
+    merge(hierarchy.flatten, hierarchy.map.with_index{|ircs, index| ircs.map{|irc| index } }.flatten)
   end
   
   
@@ -206,18 +208,18 @@ class InsurableRateConfiguration < ApplicationRecord
   
   # Get the IRC inheritance hierarchy for a given configuration.
   # params:
-  #   carrier_insurable_type: the CIT for which to pull IRCs (normally Residential Unit for MSI residential policies)
+  #   carrier_policy_type:    the CPT for which to pull IRCs
   #   configurer:             an account/agency/carrier
   #   configurable:           an InsurableGeographicalCategory or an insurable's CarrierInsurableProfile
   #   agency:                 (optional) if configurer is an account, you can provide an agency to use instead of configurer.agency if desired
   # returns:
   #   an array (ordered from least to most specific configurer) of arrays (ordered from least to most specific configurable) of IRCs
-  def self.get_hierarchy(carrier_insurable_type, configurer, configurable, agency: nil)
+  def self.get_hierarchy(carrier_policy_type, configurer, configurable, agency: nil)
     # get configurer and configurable hierarchies
-    configurers = get_configurer_hierarchy(configurer, carrier_insurable_type.carrier, agency: agency)
+    configurers = get_configurer_hierarchy(configurer, carrier_policy_type.carrier, agency: agency)
     configurables = get_configurable_hierarchy(configurable)
     # get the insurable rate configurations
-    to_return = ::InsurableRateConfiguration.where(configurer: configurers, configurable: configurables, carrier_insurable_type: carrier_insurable_type)
+    to_return = ::InsurableRateConfiguration.where(configurer: configurers, configurable: configurables, carrier_policy_type: carrier_policy_type)
     # sort into hierarchy (i.e. array (ordered by configurer) of arrays (ordered by configurable))
     to_return = to_return.group_by{|irc| configurers.find_index{|c| irc.configurer_id == c.id && irc.configurer_type == c.class.name } }
       .sort_by{|configurable_index, ircs| configurable_index } # makes it into an array of [k,v] pairs
@@ -235,6 +237,10 @@ class InsurableRateConfiguration < ApplicationRecord
   # Instance Methods
   
   def annotate_options(coverage_selections, coverage_options = self.configuration['coverage_options'], rules = self.configuration['rules'], deserialize_selections: true)
+    return coverage_options
+=begin
+  # NEEDS TO BE MODIFIED FOR NEW RULES
+  
     # construct data hash
     data = {
       'overridability' => nil, # for the current rule's overridability level
@@ -252,12 +258,30 @@ class InsurableRateConfiguration < ApplicationRecord
     end
     # w00t w00t
     return data['coverage_options']
+=end
   end
   
-  def get_selection_errors(selections, options, use_titles: false)
+  # insert_invisible_requirements will insert visible == false, requirement == 'required' options into the selections hash;
+  # it is assumed that these will all have 'options_type' == 'none'; if some are 'multiple_choice', pass insert_invisible_requirements a hash mapping their UIDs to the desired selections. Otherwise, it will pick the first option automatically
+  def get_selection_errors(selections, options = annotate_options(selections), use_titles: false, insert_invisible_requirements: true)
     to_return = {}
     options.select{|uid,opt| opt['requirement'] == 'required' }.each do |opt|
-      (to_return[uid] ||= []).push("is required") if !selections[uid]
+      if !selections[uid]
+        if opt['visible'] == false && insert_invisible_requirements
+          selections[uid] = case opt['options_type']
+            when 'multiple_choice'
+              if insert_invisible_requirements.class == ::Hash  && insert_invisible_requirements.has_key?(uid)
+                insert_invisible_requirements[uid]
+              else
+                opt['options'].first
+              end
+            else
+              true
+          end
+        else
+          (to_return[uid] ||= []).push("is required")
+        end
+      end
     end 
     selections.select{|uid,sel| sel }.each do |sel|
       #next if options[uid].nil? # WARNING: for now we just ignore selections that aren't in the options... NOPE, RESTORED ERROR. But left this here because I don't remember why it was here to begin with
@@ -276,7 +300,7 @@ class InsurableRateConfiguration < ApplicationRecord
     return to_return
   end
   
-  def self.automatically_select_options(options, selections = [], iterations: 1, rechoose_selection: Proc.new{|option,selection| option['requirement'] == 'required' ? (option['options_type'] == 'multiple_choice' ? option['options'].min{|a,b| a['value'].to_d <=> b['value'].to_d } : true) : nil })
+  def self.automatically_select_options(options, selections = {}, iterations: 1, rechoose_selection: Proc.new{|option,selection| option['requirement'] == 'required' ? (option['options_type'] == 'multiple_choice' ? option['options'].min{|a,b| a['value'].to_d <=> b['value'].to_d } : true) : nil })
     options.map do |uid, opt|
       sel = selections[uid]
       if opt['requirement'] == 'required'
@@ -309,7 +333,148 @@ class InsurableRateConfiguration < ApplicationRecord
     end.compact.to_h.compact
   end
 
-  
+
+  def self.get_coverage_options(carrier_policy_type, insurable, selections, effective_date, additional_insured_count, billing_strategy_carrier_code,    # required data
+                                eventable: nil, perform_estimate: true, estimate_default_on_billing_strategy_code_failure: :min,                        # execution options
+                                additional_interest_count: nil, agency: nil, account: insurable.class == ::Insurable ? insurable.account : nil,         # optional/overridable data
+                                nonpreferred_final_premium_params: {})                                                                                  # special optional data
+    # clean up insurable info
+    unit = nil
+    if insurable.class == ::Insurable && !::InsurableType::COMMUNITIES_IDS.include?(insurable.insurable_type_id)
+      unit = insurable
+      insurable = insurable.parent_community
+    end
+    cip = (insurable.class != ::Insurable ? nil : insurable.carrier_profile(carrier_policy_type.carrier_id))
+    # get coverage options and selection errors
+    selections = selections.select{|uid, sel| sel }
+    irc = get_inherited_irc(carrier_policy_type, account || agency || carrier_policy_type.carrier, insurable, agency: agency)
+    coverage_options = irc.annotate_options(selections).select!{|co| co['enabled'] != false }
+    selection_errors = irc.get_selection_errors(selections, coverage_options, insert_invisible_requirements: true)
+    valid = selection_errors.blank?
+    estimated_premium_error = valid ? nil : { internal: selection_errors, external: selection_errors }
+    if perform_estimate
+      case carrier_policy_type.carrier_id
+        when ::MsiService.carrier_id
+          # fix up selections and get preferred status
+          selections = automatically_select_options(coverage_options, selections) unless valid
+          preferred = cip && !cip.external_carrier_id.blank? && (unit.nil? || unit.account_id == insurable.account_id)
+          # prepare the call
+          msis = MsiService.new
+          result = msis.build_request(:final_premium,
+            effective_date: effective_date, 
+            additional_insured_count: additional_insured_count,
+            additional_interest_count: additional_interest_count || (insurable.class == ::Insurable && (!insurable.account_id.nil? || !insurable.parent_community&.account_id.nil?) ? 1 : 0),
+            coverages_formatted:  selections.map do |uid, sel|
+                                    next nil unless sel
+                                    covopt = coverage_options[uid]
+                                    next nil unless covopt
+                                    next { CoverageCd: uid }.merge(sel == true ? {} : {
+                                      (covopt['category'] == 'deductible' ? :Deductible : :Limit) => { Amt: BigDecimal(sel['value']) / 100.to_d } # same whether sel['data_type'] is 'percentage' or 'currency', since currency stores number of cents
+                                    })
+                                  end.compact,
+            **(preferred ?
+                { community_id: cip.external_carrier_id }
+                : { address: insurable.primary_address }.merge(nonpreferred_final_premium_params.compact)
+            ).merge({ line_breaks: true })
+          )
+          event = ::Event.new(msis.event_params.merge(eventable: eventable))
+          if !result
+            # failed to get final premium
+            valid = false
+            estimated_premium_error = { internal: msis.errors.to_s, external: "Unknown error occurred" } if estimated_premium_error.blank? # error before making the call
+          else
+            # make the call
+            event.request = msis.compiled_rxml
+            event.save
+            event.started = Time.now
+            result = msis.call
+            event.completed = Time.now
+            event.response = result[:response].response.body
+            event.status = result[:error] ? 'error' : 'success'
+            event.save
+            # handle the result
+            if result[:error]
+              valid = false
+              if estimated_premium_error.blank?
+                msg = result[:external_message].to_s
+                estimated_premium_error = {
+                  internal: "#{result[:external_message].to_s}#{result[:extended_external_message].blank? ? "" : "\n\n #{result[:extended_external_message]}"}",
+                  external: MsiService.displayable_error_for(result[:external_message].to_s, result[:extended_external_message]) || "Error calculating premium"
+                }
+              end
+            else
+              # total premium
+              estimated_premium = [result[:data].dig("MSIACORD", "InsuranceSvcRs", "RenterPolicyQuoteInqRs", "PersPolicy", "PaymentPlan")].flatten
+                                              .map do |plan|
+                                                [
+                                                  plan["PaymentPlanCd"],
+                                                  plan["MSI_TotalPremiumAmt"]["Amt"]
+                                                ]
+                                              end.to_h
+              estimated_premium = estimated_premium[billing_strategy_carrier_code].to_d || estimated_premium.values.send(estimate_default_on_billing_strategy_code_failure).to_d
+              estimated_premium = (estimated_premium * 100).ceil # put it in cents
+              if(billing_strategy_carrier_code == 'Annual')
+                estimated_installment = estimated_premium
+                estimated_first_payment = 0
+              else
+                # installment
+                estimated_installment = [result[:data].dig("MSIACORD", "InsuranceSvcRs", "RenterPolicyQuoteInqRs", "PersPolicy", "PaymentPlan")].flatten
+                                                .map do |plan|
+                                                  [
+                                                    plan["PaymentPlanCd"],
+                                                    plan["MSI_InstallmentAmount"]["Amt"]
+                                                  ]
+                                                end.to_h
+                estimated_installment = estimated_installment[billing_strategy_carrier_code].to_d || estimated_installment.values.send(estimate_default_on_billing_strategy_code_failure).to_d
+                estimated_installment = (estimated_installment * 100).ceil # put it in cents
+                # first payment
+                estimated_first_payment = [result[:data].dig("MSIACORD", "InsuranceSvcRs", "RenterPolicyQuoteInqRs", "PersPolicy", "PaymentPlan")].flatten
+                                                .map do |plan|
+                                                  [
+                                                    plan["PaymentPlanCd"],
+                                                    plan["MSI_DownPaymentAmount"]["Amt"]
+                                                  ]
+                                                end.to_h
+                estimated_first_payment = estimated_first_payment[billing_strategy_carrier_code].to_d || estimated_first_payment.values.send(estimate_default_on_billing_strategy_code_failure).to_d
+                estimated_first_payment = (estimated_first_payment * 100).ceil # put it in cents
+              end
+            end # msi result handling (starts at if result[:error])
+          end # event handling (starts at if !result)
+        when ::QbeService.carrier_id
+        
+        
+          ####### MOOSE WARNING: PUT RATE CALCULATIONS HERE #########
+        
+        
+        
+        
+        else # invalid carrier policy type for estimate performance
+          estimated_premium_error = {
+            internal: "Invalid carrier for estimation; carrier policy type provided was ##{carrier_policy_type.id}",
+            external: "Unable to obtain estimate for this policy type"
+          }
+          valid = false
+      end # end carrier switch statement
+    end # end if perform_estimate
+    # done
+    return {
+      valid: valid,
+      coverage_options: coverage_options.select{|k,v| v['visible'] },
+      estimated_premium: estimated_premium,
+      estimated_installment: estimated_installment,
+      estimated_first_payment: estimated_first_payment,
+      installment_fee: installment_fee,
+      errors: estimated_premium_error,
+    }.merge(eventable.class != ::PolicyQuote ? {} : {
+      msi_data: result,
+      event: event,
+      annotated_selections: selections
+    })
+  end
+
+
+
+
   private
     
   
@@ -332,6 +497,12 @@ class InsurableRateConfiguration < ApplicationRecord
     def self.get_configurable_hierarchy(configurable)
       to_return = []
       case configurable.class
+        when ::Insurable
+          address = configurable.primary_address
+          to_return = [configurable] + ::InsurableGeographicalCategory.where(state: nil)
+            .or(::InsurableGeographicalCategory.where(state: address.state, counties: nil))
+            .or(::InsurableGeographicalCategory.where(state: address.state).where('counties @> ARRAY[?]::varchar[]', address.county)
+            .to_a.sort
         when ::CarrierInsurableProfile
           address = configurable.insurable.primary_address
           to_return = [configurable] + ::InsurableGeographicalCategory.where(state: nil)
@@ -349,6 +520,54 @@ class InsurableRateConfiguration < ApplicationRecord
           to_return = to_return.to_a.sort
       end
       return to_return
+    end
+    
+    # Data type tools
+    
+    def self.copy_with_deserialization(input)
+      case input
+        when ::Hash
+          transformed = input.transform_values{|val| copy_with_deserialization(val) }
+          transformed.has_key?('data_type') ? hash_deserialize(transformed) : transformed
+        when ::Array
+          input.map{|val| copy_with_deserialization(val) }
+        else
+          input
+      end
+    end
+    
+    def self.copy_with_serialization(input)
+      case input
+        when ::Hash
+          transformed = input.transform_values{|val| copy_with_serialization(val) }
+          transformed.has_key?('data_type') ? hash_serialize(transformed) : transformed
+        when ::Array
+          input.map{|val| copy_with_serialization(val) }
+        else
+          input
+      end
+    end
+    
+    def self.hash_serialize(var)
+      case var['data_type']
+        when 'currency'
+          var
+        when 'percentage'
+          var.to_s
+        else
+          var
+      end
+    end
+    
+    def self.hash_deserialize(var)
+      case var['data_type']
+        when 'currency'
+          Integer(var)
+        when 'percentage'
+          BigDecimal(var)
+        else
+          var
+      end
     end
     
     # Callbacks
