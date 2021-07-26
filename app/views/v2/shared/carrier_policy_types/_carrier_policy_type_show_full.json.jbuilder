@@ -12,8 +12,10 @@ json.carrier_policy_type_availabilities do
   end
 end
 
-if carrier_policy_type.commission_strategy.present?
-  json.partial! 'v2/shared/commission_strategies/fields',
-                commission_strategy: carrier_policy_type.commission_strategy
+json.commission_strategy do
+  if carrier_policy_type.commission_strategy.present?
+    json.partial! 'v2/shared/commission_strategies/fields',
+                  commission_strategy: carrier_policy_type.commission_strategy
+  end
 end
 
