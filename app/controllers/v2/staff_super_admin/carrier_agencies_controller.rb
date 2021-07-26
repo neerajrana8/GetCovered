@@ -78,7 +78,7 @@ module V2
       end
       
       def update_types_params
-        return({}) if params[:carrier].blank?
+        return({}) if params[:carrier_agency].blank?
 
         to_return = params.require(:carrier_agency).permit(
            carrier_agency_policy_types_attributes: [
