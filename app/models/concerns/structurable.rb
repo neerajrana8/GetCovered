@@ -82,13 +82,15 @@ module Structurable
     def get_validity(validity, value, datum, data_root, path)
       case validity
         when ::Array
-          return validity.include?(value)
+          return validity.include?(value) ? nil : "has an invalid value"
         when ::Proc
           return get_validity(validity.call(value, datum, data_root, path), value, datum, data_root, path)
         when ::TrueClass, ::FalseClass, ::NilClass
-          return validity != false
+          return validity == false ? "has an invalid value" : nil
+        when ::String
+          return validity
       end
-      return false
+      return "has an invalid value"
     end
     
     # get a data structure element's default overridability
@@ -292,9 +294,9 @@ module Structurable
             # nothing to do here
         end
         # validate our value
-        validity = get_validity(struc['validity'], *stdargs) rescue false
-        unless validity
-          (errors[prop] ||= []).push("has an invalid value")
+        validity = (get_validity(struc['validity'], *stdargs) rescue "has an invalid value")
+        unless validity.nil?
+          (errors[prop] ||= []).push(validity)
         end
       end # </validate the data structure>
       # append any nested errors to the appropriate error entry
