@@ -29,7 +29,7 @@ module V2
       def create
         if create_allowed?
           @carrier = Carrier.create(create_params)
-          if @carrier.errors.blank?
+          if @carrier.errors.blank? && @carrier.update(init_types_params)
             render template: 'v2/shared/carriers/show', status: :created
           else
             render json: standard_error(:carrier_creation_error, nil, @carrier.errors.full_messages),
@@ -142,12 +142,20 @@ module V2
         to_return = params.require(:carrier).permit(
           :bindable, :call_sign, :enabled, :id,
           :integration_designation, :quotable, :rateable, :syncable,
-          :title, :verifiable, settings: {},
-                               carrier_policy_types_attributes: [
-                                 :policy_type_id,
-                                 commission_strategy_attributes: [:percentage],
-                                 carrier_policy_type_availabilities_attributes: %i[state available zip_code_blacklist]
-                               ]
+          :title, :verifiable, settings: {}
+        )
+        to_return
+      end
+
+      def init_types_params
+        return({}) if params[:carrier].blank?
+
+        to_return = params.require(:carrier).permit(
+          carrier_policy_types_attributes: [
+           :policy_type_id,
+           commission_strategy_attributes: [:percentage],
+           carrier_policy_type_availabilities_attributes: %i[state available zip_code_blacklist]
+         ]
         )
         to_return
       end
