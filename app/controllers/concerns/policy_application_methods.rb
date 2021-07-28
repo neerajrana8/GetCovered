@@ -211,15 +211,6 @@ module PolicyApplicationMethods
     carrier_policy_type = CarrierPolicyType.where(carrier_id: @msi_id, policy_type_id: @ho4_policy_type_id).take
     coverage_selections = inputs[:coverage_selections].map{|cs| [cs['uid'], cs['selection']] }.to_h # WARNING: turn coverage selections into a hash
     # get coverage options
-    def self.get_coverage_options(carrier_policy_type, insurable, selections, effective_date, additional_insured_count, billing_strategy_carrier_code,    # required data
-                                eventable: nil, perform_estimate: true, estimate_default_on_billing_strategy_code_failure: :min,                        # execution options
-                                additional_interest_count: nil, agency: nil, account: insurable.class == ::Insurable ? insurable.account : nil,         # optional/overridable data
-                                nonpreferred_final_premium_params: {})                                                                                  # special optional data
-                                
-                                
-                                
-    
-    
     results = ::InsurableRateConfiguration.get_coverage_options(
       carrier_policy_type, unit, coverage_selections, inputs[:effective_date] ? Date.parse(inputs[:effective_date]) : nil, inputs[:additional_insured].to_i, billing_strategy_code,
       **({
@@ -228,6 +219,7 @@ module PolicyApplicationMethods
           perform_estimate: inputs[:estimate_premium] ? true : false,
           # overrides
           agency: Agency.where(id: msi_get_coverage_options_params[:agency_id].to_i || 0).take,
+          preferred: (cip ? true : false),
         }.merge(
           msi_get_coverage_options_params[:account_id].blank? ? {} : { account: Account.where(id: msi_get_coverage_options_params[:account_id]).take }
         ).merge(cip ? {} : {
