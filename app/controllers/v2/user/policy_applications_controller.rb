@@ -215,18 +215,10 @@ module V2
                    status: 422
             return
           end
-          unless @application.coverage_selections.blank?
-            @application.coverage_selections.each do |cs|
-              if [ActionController::Parameters, ActiveSupport::HashWithIndifferentAccess, ::Hash].include?(cs['selection'].class)
-                cs['selection']['value'] = cs['selection']['value'].to_d / 100.to_d if cs['selection']['data_type'] == 'currency'
-                cs['selection'] = cs['selection']['value']
-              elsif [ActionController::Parameters, ::Hash].include?(cs[:selection].class)
-                cs[:selection][:value] = cs[:selection][:value].to_d / 100.to_d if cs[:selection][:data_type] == 'currency'
-                cs[:selection] = cs[:selection][:value]
-              end
-            end
-            @application.coverage_selections.push({ 'category' => 'coverage', 'options_type' => 'none', 'uid' => '1010', 'selection' => true }) unless @application.coverage_selections.any?{|co| co['uid'] == '1010' }
-          end
+        end
+        
+        unless @application.coverage_selections.blank? || @application.coverage_selections.class != ::Array
+          @application.coverage_selections = @application.coverage_selections.map{|cs| [cs['uid'], cs['selection']] }.to_h
         end
 
         if @application.save
@@ -324,18 +316,8 @@ module V2
             @replacement_policy_insurables = unsaved_pis
           end
           # fix coverage options if needed
-          unless @policy_application.coverage_selections.blank?
-            @policy_application.coverage_selections.each do |cs|
-              if [ActionController::Parameters, ActiveSupport::HashWithIndifferentAccess, ::Hash].include?(cs['selection'].class)
-                cs['selection']['value'] = cs['selection']['value'].to_d / 100.to_d if cs['selection']['data_type'] == 'currency'
-                cs['selection'] = cs['selection']['value']
-              elsif [ActionController::Parameters, ::Hash].include?(cs[:selection].class)
-                cs[:selection][:value] = cs[:selection][:value].to_d / 100.to_d if cs[:selection][:data_type] == 'currency'
-                cs[:selection] = cs[:selection][:value]
-              end
-            end
-            @policy_application.coverage_selections = @policy_application.coverage_selections.select{|cs| cs['selection'] || cs[:selection] }
-            @policy_application.coverage_selections.push({ 'category' => 'coverage', 'options_type' => 'none', 'uid' => '1010', 'selection' => true }) unless @policy_application.coverage_selections.any?{|co| co['uid'] == '1010' }
+          unless @policy_application.coverage_selections.blank? || @policy_application.coverage_selections.class != ::Array
+            @policy_application.coverage_selections = @policy_application.coverage_selections.map{|cs| [cs['uid'], cs['selection']] }.to_h
           end
           # try to update users
           update_users_result = update_policy_users_params.blank? ? true :
@@ -484,7 +466,7 @@ module V2
                   :auto_renew, :billing_strategy_id, :account_id, :policy_type_id,
                   :carrier_id, :agency_id, fields: [:title, :value, options: []],
                   questions: [:title, :value, options: []],
-                  coverage_selections: [:category, :uid, :selection, selection: [ :data_type, :value ]],
+                  coverage_selections: [:uid, :selection, selection: [ :data_type, :value ]],
                   extra_settings: [
                     # for MSI
                     :installment_day, :number_of_units, :years_professionally_managed, :year_built, :gated,
@@ -552,6 +534,7 @@ module V2
                   fields: {},
                   policy_rates_attributes: [:insurable_rate_id],
                   policy_insurables_attributes: [:insurable_id],
+                  coverage_selections: [:uid, :selection, selection: [ :data_type, :value ]],
                   extra_settings: [
                     # for MSI
                     :installment_day, :number_of_units, :years_professionally_managed, :year_built, :gated,

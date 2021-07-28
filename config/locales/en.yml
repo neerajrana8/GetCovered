@@ -69,7 +69,7 @@ en:
       no_security_deposit_replacement: "There are no security deposit replacement plans available for this property (error code"
     msi_get_coverage_options:
       coverage_selections_must_be_array: "coverage_selections must be an array of coverage selections"
-      must_include_category_and_uid:  "all entries of coverage_selections must include a category and uid"
+      must_include_category_and_uid:  "all entries of coverage_selections must include a uid"
       agency_cannot_be_blank:  "agency_id cannot be blank"
       effective_date_must_be_valid_date:  "effective_date must be a valid date"
       additional_insured_cannot_be_blank:  "additional_insured cannot be blank"

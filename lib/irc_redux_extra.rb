@@ -227,7 +227,7 @@ class InsurableRateConfiguration < ApplicationRecord
           },
           'category' => {
             'required' => true,
-            'validity' => ['limit', 'deductible'],
+            'validity' => ['limit', 'deductible', 'option'],
             'default_overridability' => 0 
           }
         }.merge(CRITICAL_SUBSTRUCTURE) # end coverage_options/special_data/structure
