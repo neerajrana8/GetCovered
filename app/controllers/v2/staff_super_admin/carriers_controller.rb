@@ -28,12 +28,15 @@ module V2
 
       def create
         if create_allowed?
-          @carrier = Carrier.create(create_params)
-          if @carrier.errors.blank? && @carrier.update(init_types_params)
-            render template: 'v2/shared/carriers/show', status: :created
-          else
-            render json: standard_error(:carrier_creation_error, nil, @carrier.errors.full_messages),
-                   status: :unprocessable_entity
+          ActiveRecord::Base.transaction do
+            @carrier = Carrier.create(create_params)
+            @carrier.get_or_create_universal_parent_commission_strategy if create_params[:commission_strategy_attributes].nil?
+            if @carrier.errors.blank? && @carrier.update(init_types_params)
+              render template: 'v2/shared/carriers/show', status: :created
+            else
+              render json: standard_error(:carrier_creation_error, nil, @carrier.errors.full_messages),
+                     status: :unprocessable_entity
+            end
           end
         else
           render json: { success: false, errors: ['Unauthorized Access'] },
@@ -88,6 +91,9 @@ module V2
 
       def update
         if update_allowed?
+          if update_params[:commission_strategy_attributes].nil? && @carrier.commission_strategy.nil?
+            @carrier.get_or_create_universal_parent_commission_strategy
+          end
           if @carrier.update(update_params)
             render template: 'v2/shared/carriers/show', status: :ok
           else
