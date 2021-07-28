@@ -83,7 +83,7 @@ module V2
         to_return = params.require(:carrier_agency).permit(
            carrier_agency_policy_types_attributes: [
              :id, :policy_type_id,
-             commission_strategy_attributes: [:percentage]
+             commission_strategy_attributes: [:id, :percentage]
            ]
          )
 
