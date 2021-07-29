@@ -79,3 +79,5 @@ json.invoices do
                 as: :invoice
   end
 end
+
+json.branding_profile_title policy.branding_profile&.title
