@@ -184,7 +184,7 @@ describe 'Histories API spec', type: :request do
         expect(response.status).to eq(201)
         expect(result["id"]).to_not eq(nil)
         lease = Lease.find result["id"]
-        expect(lease.histories.count).to eq(1)
+        expect(lease.histories.count).to eq(2)
         expect(lease.histories.first.action).to eq('create')
         expect(lease.histories.first.recordable_type).to eq('Lease')
         expect(lease.histories.first.recordable_id).to eq(lease.id)

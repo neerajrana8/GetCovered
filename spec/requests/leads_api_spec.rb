@@ -85,8 +85,7 @@ describe 'Leads API spec', type: :request do
       @test_email1 = Faker::Internet.email
       @test_email2 = Faker::Internet.email
       @lead_id1 = create_lead_or_event(@test_email1, new_lead_short_params(@test_email1))['id']
-      @lead_id2 = create_lead_or_event(@test_email2,
-                           new_lead_full_params(@test_email2))['id']
+      @lead_id2 = create_lead_or_event(@test_email2, new_lead_full_params(@test_email2))['id']
     end
 
     it 'should view lead index json' do
@@ -169,10 +168,9 @@ describe 'Leads API spec', type: :request do
     }
   end
 
-  def new_lead_short_params(email = Faker::Internet.email, identifier = "")
+  def new_lead_short_params(email = Faker::Internet.email)
     {
         "email": email,
-        "identifier": identifier,
         "agency_id": @agency.id,
         "lead_event_attributes": {
             "tag": TEST_TAG,

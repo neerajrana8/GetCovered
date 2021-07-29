@@ -38,6 +38,21 @@ module V2
       def supported_filters(called_from_orders = false)
         @calling_supported_orders = called_from_orders
         {
+          id: [:scalar, :array],
+          created_at: [:scalar, :array, :interval],
+          updated_at: [:scalar, :array, :interval],
+          number: [:scalar, :array],
+          status: [:scalar, :array],
+          external: [:scalar],
+          available_date: [:scalar, :array, :interval],
+          due_date: [:scalar, :array, :interval],
+          
+          total_due: [:scalar, :array, :interval],
+          total_payable: [:scalar, :array, :interval],
+          total_received: [:scalar, :array, :interval],
+          
+          invoiceable_id: [:scalar, :array],
+          invoiceable_type: [:scalar, :array]
         }
       end
 

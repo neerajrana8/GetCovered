@@ -37,8 +37,8 @@ end
   { title: "Residential Community", category: "property", enabled: true }, # ID: 1
   { title: "Mixed Use Community", category: "property", enabled: true }, # ID: 2
   { title: "Commercial Community", category: "property", enabled: true }, # ID: 3
-  { title: "Residential Unit", category: "property", enabled: true }, # ID:4
-  { title: "Commercial Unit", category: "property", enabled: true }, # ID: 5
+  { title: "Residential Unit", category: "property", enabled: true, occupiable: true }, # ID:4
+  { title: "Commercial Unit", category: "property", enabled: true, occupiable: true }, # ID: 5
   { title: "Small Business", category: "entity", enabled: true } # ID: 6
 ]
 

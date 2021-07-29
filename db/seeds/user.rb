@@ -7,9 +7,9 @@ require './db/seeds/functions'
 @residential_units = Insurable.residential_units
 @residential_units.each do |unit|
   
-  # Create a 66% Occupancy Rate
+  # Create a 33% Occupancy Rate
   occupied_chance = rand(0..100)
-  if occupied_chance > 33
+  if occupied_chance > 66
     
     tenant_count = rand(1..5)
 		start_date = (Time.now + rand(2..16).days)
@@ -30,12 +30,13 @@ require './db/seeds/functions'
 			  	email_providers = ['gmail', 'yahoo', 'msn', 'outlook']
 			  	email = "#{ name[:first].downcase }#{ name[:last].downcase }@#{email_providers[rand(0..3)]}.com"
 	        
-	        unless User.exists?(:email => email)
-				  	user = User.new(email: email, password: 'TestingPassword1234', password_confirmation: 'TestingPassword1234',
+	        unless ::User.exists?(:email => email)
+				  	user = ::User.new(email: email, password: 'TestingPassword1234', password_confirmation: 'TestingPassword1234',
 				  													     profile_attributes: { first_name: name[:first], 
 					  													     										 last_name: name[:last], 
-					  													     										 birth_date: SeedFunctions.time_rand(Time.local(1955, 1, 1), Time.local(1991, 1, 1)) },
-                                                               contact_phone: "5555555555")		
+					  													     										 birth_date: SeedFunctions.time_rand(Time.local(1955, 1, 1), Time.local(1991, 1, 1)),
+                                                               contact_phone: "5555555555"
+                                                             })
 						if user.save
 							@lease.users << user
 	        	end

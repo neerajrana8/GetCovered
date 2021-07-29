@@ -28,6 +28,9 @@ module V2
         def supported_filters(called_from_orders = false)
           @calling_supported_orders = called_from_orders
           {
+            occupiable: %i[scalar array],
+            enabled: %i[scalar array],
+            category: %i[scalar array],
           }
         end
 

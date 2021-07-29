@@ -172,12 +172,14 @@ en:
     error_with_build_coverages: 'Error happened with build coverages'
   policy_type_model:
     residential: 'Residential'
-    master_policy: 'Master Policy'
-    master_policy_coverage: 'Master Policy Coverage'
+    master_policy: 'Residential'
+    master_policy_coverage: 'Residential Coverage'
     commercial: 'Commercial'
     rent_guarantee: 'Rent Guarantee'
     security_deposit_replacement: 'Security Deposit Replacement'
-  policy_bind_warning_notification_job:
+    master_security_deposit_replacement: 'Security Deposit Replacement'
+    master_security_deposit_replacement_coverage: 'Security Deposit Replacement Coverage'
+  policy_bind_warning_notification_job: 
     get_covered_bind_warning: "Get Covered Bind Warning"
   qbe_policy_quote:
     qbe_bind_failure: "QBE Bind Failure"
@@ -262,6 +264,17 @@ en:
   msi_service:
     invalid_address: "Please enter a valid address"
     invalid_effective_date: "The effective date is invalid"
+    additional_interest:
+      invalid_entity_type: "Please choose whether the property manager is an individual or a company"
+      company_name_required: "Property manager company name cannot be blank"
+      company_name_too_long: "Property manager company name cannot be more than 100 characters"
+      invalid_email: "Property manager email is invalid"
+      invalid_phone_number: "Property manager phone number is invalid"
+      first_name_required: "Property manager first name cannot be blank"
+      first_name_too_long: "Property manager first name cannot be more than 50 characters"
+      last_name_required: "Property manager last name cannot be blank"
+      last_name_too_long: "Property manager last name cannot be more than 50 characters"
+      middle_name_too_long: "Property manager middle name cannot be more than 50 characters"
   coverage_options:
     estimated_premium_errors: 'Contents selection is required'
     cannot_be_blank_counties: "cannot be blank if counties are specified"

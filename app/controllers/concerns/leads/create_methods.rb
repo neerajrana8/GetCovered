@@ -35,7 +35,17 @@ module Leads
           create_params.merge({tracking_url_id: tracking_url.id}) if tracking_url.present?
           create_params.merge({agency_id: agency.id}) if agency.present?
 
-          @lead = Lead.create(create_params)
+          begin
+            @lead = Lead.create(create_params)
+          rescue ActiveRecord::RecordNotUnique
+            @lead = Lead.find_by_identifier(lead_params[:email])
+            # @lead = if lead_params[:identifier].present?
+            #   Lead.find_by_identifier(lead_params[:identifier])
+            # elsif lead_params[:email].present?
+            #   Lead.find_by_email(lead_params[:email])
+            # end
+          end
+
           Address.create(lead_address_attributes.merge(addressable: @lead)) if lead_address_attributes
           Profile.create(lead_profile_attributes.merge(profileable: @lead)) if lead_profile_attributes
           @klaviyo_helper.lead = @lead
@@ -68,7 +78,7 @@ module Leads
     end
 
     def lead_params
-      permitted = params.permit(:email, :identifier, :last_visited_page, :agency_id)
+      permitted = params.permit(:email, :identifier, :last_visited_page, :agency_id, :account_id)
       permitted[:email] = permitted[:email].downcase
       permitted[:last_visited_page] = params[:lead_event_attributes][:data][:last_visited_page] if params[:lead_event_attributes] &&
           params[:lead_event_attributes][:data] && permitted[:last_visited_page].blank?

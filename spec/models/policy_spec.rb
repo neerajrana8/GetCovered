@@ -20,11 +20,16 @@ RSpec.describe Policy, elasticsearch: true, type: :model do
       
       @agency = FactoryBot.create(:agency)
       @account = FactoryBot.create(:account, agency: @agency)
-      @carrier = Carrier.first
-      @carrier.policy_types << [@residential_policy_type, @master_policy_type, @master_policy_coverage_type, @commercial_policy_type, @rent_guarantee_policy_type]
-      @carrier.agencies << [@agency]
+      @carrier = Carrier.find(1)
+      ::CarrierAgency.create!(agency: @agency, carrier: @carrier, carrier_agency_policy_types_attributes: @carrier.carrier_policy_types.map do |cpt|
+        {
+          policy_type_id: cpt.policy_type_id,
+          commission_strategy_attributes: { percentage: 9 }
+        }
+      end)
+      
       @user = FactoryBot.create(:user)
-      @master_policy = FactoryBot.build(:policy, agency: @agency, carrier: @carrier, account: @account)
+      @master_policy = FactoryBot.build(:policy, :master, agency: @agency, carrier: @carrier, account: @account)
       @master_policy.primary_user = @user
       @master_policy.policy_type = @master_policy_type
       @master_policy.status = 'BOUND'
@@ -72,20 +77,6 @@ RSpec.describe Policy, elasticsearch: true, type: :model do
       policy_coverage.policy_in_system = true
       policy_coverage.expiration_date = nil
       expect(policy_coverage.errors.messages[:expiration_date]).to be_empty
-    end
-    
-    it 'policy coverage must inherit all master policy coverages' do
-      
-      policy_coverage = FactoryBot.build(:policy, agency: @agency, carrier: @carrier, account: @account)
-      policy_coverage.primary_user = @user
-      policy_coverage.policy_type = @master_policy_coverage_type
-      policy_coverage.policy_in_system = true
-      policy_coverage.expiration_date = nil
-      policy_coverage.policy = @master_policy
-      expect(policy_coverage).to be_valid
-      policy_coverage.save
-      expect(policy_coverage.policy_coverages.count).to eq(1)
-      expect(policy_coverage.policy_coverages.first.designation).to eq('liability_coverage')
     end
     
     it 'should create automatic coverage policy issue' do

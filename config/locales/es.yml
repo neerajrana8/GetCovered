@@ -164,6 +164,8 @@ es:
     commercial: 'Política de propietarios de empresas'
     rent_guarantee: 'Garantía de alquiler'
     security_deposit_replacement: 'Este Insoranke'
+    master_security_deposit_replacement: 'Security Deposit Replacement'
+    master_security_deposit_replacement_coverage: 'Security Deposit Replacement Coverage'
   policy_quote_model:
     no_policy_for_qbe: "Ninguna política vinculante para QBE Specialty"
     error_with_policy_bund: "Se produjo un error con la vinculación de la política"
@@ -263,6 +265,17 @@ es:
   msi_service:
     invalid_address: "Por favor introduce una dirección válida"
     invalid_effective_date: "La fecha de vigencia no es válida"
+    additional_interest:
+      invalid_entity_type: "Por favor, elija si el administrador de la propiedad es un individuo o una empresa"
+      company_name_required: "El nombre de la empresa del administrador de la propiedad no puede estar en blanco"
+      company_name_too_long: "El nombre de la empresa del administrador de la propiedad no puede tener más de 100 caracteres"
+      invalid_email: "El correo electrónico del administrador de la propiedad no es válido"
+      invalid_phone_number: "El número de teléfono del administrador de la propiedad no es válido"
+      first_name_required: "El nombre del administrador de la propiedad no puede estar en blanco"
+      first_name_too_long: "El nombre del administrador de la propiedad no puede tener más de 50 caracteres"
+      last_name_required: "El apellido del administrador de la propiedad no puede estar en blanco"
+      last_name_too_long: "El apellido del administrador de la propiedad no puede tener más de 50 caracteres"
+      middle_name_too_long: "El segundo nombre del administrador de la propiedad no puede tener más de 50 caracteres"
   coverage_options:
     estimated_premium_errors: 'Se requiere selección de contenido'
     cannot_be_blank_counties: "no puede dejarse en blanco si se especifican condados"

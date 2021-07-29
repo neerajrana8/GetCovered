@@ -26,13 +26,15 @@ end
 
 json.primary_campaign_name policy.primary_user&.lead&.tracking_url&.campaign_name
 
-json.premium_total policy.policy_quotes&.last&.policy_premium&.total
+json.premium_total (policy.policy_quotes&.last&.policy_premium&.total_premium || 0)
 
-json.premium_first policy.policy_quotes&.last&.invoices&.first&.total
+json.premium_first (policy.policy_quotes&.last&.invoices&.first&.line_items&.where(analytics_category: 'policy_premium')&.inject(0){|s,li| s + li.total_due } || 0)
 
-json.billing_strategy policy.policy_quotes&.last&.policy_premium&.billing_strategy&.title
+if policy.in_system?
+  json.billing_strategy (policy.policy_quotes&.last&.policy_application&.billing_strategy || policy.billing_strategies&.last)&.title
+end
 
-json.policy_coverages policy.coverages
+json.partial! 'v2/shared/policies/policy_coverages.json.jbuilder', policy: policy
 
 json.primary_insurable do
   unless policy.primary_insurable.nil?
@@ -72,8 +74,8 @@ end
 
 json.invoices do
   if policy.invoices.any?
-    json.array! policy.invoices.order(:due_date),
-                partial: 'v2/shared/invoices/fields.json.jbuilder',
+    json.array! policy.invoices.order(due_date: :asc),
+                partial: 'v2/shared/invoices/full.json.jbuilder',
                 as: :invoice
   end
 end

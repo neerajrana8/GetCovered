@@ -16,7 +16,7 @@ class StaffPermission < ApplicationRecord
 
   def permissions_restrictions
     permissions.each do |key, value|
-      next unless value && !global_agency_permission.permissions[key]
+      next unless value && !global_agency_permission&.permissions&.[](key)
 
       errors.add(
         :permissions,

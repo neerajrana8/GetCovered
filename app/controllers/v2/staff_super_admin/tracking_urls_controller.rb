@@ -1,56 +1,11 @@
 module V2
   module StaffSuperAdmin
     class TrackingUrlsController < StaffSuperAdminController
-      before_action :set_tracking_url, only: [:show, :destroy, :get_leads, :get_policies]
+      before_action :set_tracking_url, only: %i[show destroy get_leads get_policies]
       before_action :set_substrate, only: :index
+      before_action :set_agencies, only: :agency_filters
 
-      def create
-        @tracking_url = TrackingUrl.new(create_params)
-        if @tracking_url.save
-          render 'v2/shared/tracking_urls/show', status: :created
-        else
-          render json: @tracking_url.errors,
-                 status: :unprocessable_entity
-        end
-      end
-
-      def agency_filters
-        result = []
-
-        Agency.all.select(%i[id title agency_id]).each do |agency|
-          agency.branding_profiles.each do |branding_profile|
-            result << agency.attributes.merge(
-              branding_profile_id: branding_profile.id,
-              branding_url: branding_profile.formatted_url
-            )
-          end
-        end
-
-        render json: result.to_json
-      end
-
-      def destroy
-        @tracking_url.deleted = true
-        if @tracking_url.save
-          render json: { success: true }, status: :no_content
-        else
-          render json: @tracking_url.errors, status: :unprocessable_entity
-        end
-      end
-
-      def show
-        render 'v2/shared/tracking_urls/show'
-      end
-
-      def index
-        super(:@tracking_urls, @substrate)
-        render 'v2/shared/tracking_urls/index'
-      end
-
-      def get_leads
-        @leads = @tracking_url.leads
-        render 'v2/shared/leads/index'
-      end
+      include TrackingUrlsMethods
 
       def get_policies
         user_ids = @tracking_url.leads.pluck(:user_id).compact
@@ -71,7 +26,7 @@ module V2
         to_return = params.require(:tracking_url).permit(
             :landing_page, :campaign_source, :campaign_medium,
             :campaign_name, :campaign_term, :campaign_content, :agency_id, :branding_profile_id
-        )
+          )
         to_return
       end
 
@@ -84,19 +39,9 @@ module V2
         end
       end
 
-      def supported_filters(called_from_orders = false)
-        @calling_supported_orders = called_from_orders
-        {
-            agency_id: %i[scalar array],
-            created_at: %i[scalar interval],
-            deleted: [:scalar]
-        }
+      def set_agencies
+        @agencies = Agency.all
       end
-
-      def supported_orders
-        supported_filters(true)
-      end
-
     end
   end
 end

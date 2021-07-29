@@ -1,21 +1,15 @@
 json.partial! "v2/staff_super_admin/policies/policy_index_fields.json.jbuilder",
   policy: policy
 
-json.carrier policy.carrier
+json.carrier do
+  json.title policy.carrier&.title
+end
 
-json.agency policy.agency
-
-json.account policy.account
+json.agency do
+  json.title policy.agency&.title
+end
 
 json.policy_type_title policy&.policy_type&.title
-
-json.primary_campaign_name policy.primary_user&.lead&.tracking_url&.campaign_name
-
-json.premium_total policy.policy_quotes&.last&.policy_premium&.total
-
-json.premium_first policy.policy_quotes&.last&.invoices&.first&.total
-
-json.billing_strategy policy.policy_quotes&.last&.policy_premium&.billing_strategy&.title
 
 json.primary_insurable do
   unless policy.primary_insurable.nil?
@@ -24,3 +18,12 @@ json.primary_insurable do
 
   end
 end
+
+json.primary_user do
+  if policy.primary_user.present?
+    json.email policy.primary_user.email
+    json.full_name policy.primary_user.profile&.full_name
+  end
+end
+
+json.billing_strategy policy.policy_quotes&.last&.policy_application&.billing_strategy&.title

@@ -5,7 +5,7 @@
 module V2
   module StaffSuperAdmin
     class AccountsController < StaffSuperAdminController
-      before_action :set_account, only: %i[show update]
+      before_action :set_account, only: %i[show update enable disable]
 
       before_action :set_substrate, only: [:index]
 
@@ -63,6 +63,27 @@ module V2
         end
       end
 
+
+      def disable
+        result = Accounts::Disable.run(account: @account)
+        if result.valid?
+          render :show, status: :ok
+        else
+          render json: standard_error(:disabling_failed, 'Account was not disabled', result.errors),
+                 status: 422
+        end
+      end
+
+      def enable
+        result = Accounts::Enable.run(account: @account)
+        if result.valid?
+          render :show, status: :ok
+        else
+          render json: standard_error(:disabling_failed, 'Account was not disabled', result.errors),
+                 status: 422
+        end
+      end
+
       private
 
       def account_params
@@ -108,6 +129,9 @@ module V2
         @calling_supported_orders = called_from_orders
         {
           id: %i[scalar array],
+          title: %i[scalar like],
+          created_at: %i[scalar array interval],
+          updated_at: %i[scalar array interval],
           agency: {
             title: %i[scalar like]
           },

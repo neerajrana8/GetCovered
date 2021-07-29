@@ -41,10 +41,10 @@ module V2
 
       def create_rental_guarantee
         @application = PolicyApplication.new(create_rental_guarantee_params)
-
-        @application.agency = Agency.where(master_agency: true).take if @application.agency.nil?
-
-        @application.billing_strategy = BillingStrategy.where(agency: @application.agency, policy_type: @application.policy_type).take if @application.billing_strategy.nil?
+        @application.expiration_date = @application.effective_date&.send(:+, 1.year)
+        @application.agency = @application.account&.agency || Agency.where(master_agency: true).take if @application.agency.nil?
+        @application.account = @application.primary_insurable&.account if @application.account.nil?
+        @application.billing_strategy = BillingStrategy.where(agency: @application.agency, carrier: @application.carrier, policy_type: @application.policy_type).take if @application.billing_strategy.nil?
 
         validate_applicant_result =
           PolicyApplications::ValidateApplicantsParameters.run!(
@@ -71,8 +71,9 @@ module V2
 
       def create_commercial
         @application = PolicyApplication.new(create_commercial_params)
-        @application.agency = Agency.where(master_agency: true).take
-
+        @application.expiration_date = @application.effective_date&.send(:+, 1.year)
+        @application.agency = @application.account&.agency || Agency.where(master_agency: true).take if @application.agency.nil?
+        @application.account = @application.primary_insurable&.account if @application.account.nil?
         @application.billing_strategy = BillingStrategy.where(agency: @application.agency,
                                                               policy_type: @application.policy_type,
                                                               title: 'Annually').take
@@ -95,31 +96,25 @@ module V2
                 @application.primary_user.set_stripe_id
 
                 @quote = @application.policy_quotes.last
-                @quote.generate_invoices_for_term
                 @premium = @quote.policy_premium
-
-                response = {
-                  id: @application.id,
-                  quote: {
-                    id: @quote.id,
-                    status: @quote.status,
-                    premium: @premium
-                  },
-                  invoices: @quote.invoices.order("due_date ASC"),
-                  user: {
-                    id: @application.primary_user.id,
-                    stripe_id: @application.primary_user.stripe_id
-                  },
-                  billing_strategies: []
-                }
+                # generate invoices
+                result = @quote.generate_invoices_for_term
+                unless result.nil?
+                  puts result[:internal]
+                  quote.mark_failure(result[:internal])
+                  render json: standard_error(:quote_failed, I18n.t(result[:external])),
+                         status: 400
+                  return
+                end
 
                 if @premium.base >= 500_000
                   BillingStrategy.where(agency: @application.agency_id, policy_type: @application.policy_type).each do |bs|
-                    response[:billing_strategies] << { id: bs.id, title: bs.title }
+                    @extra_fields ||= { billing_strategies: [] }
+                    @extra_fields[:billing_strategies] << { id: bs.id, title: bs.title }
                   end
                 end
 
-                render json: response.to_json, status: 200
+                render template: 'v2/user/policy_applications/create.json', status: 200
 
               else
                 render json: { error: I18n.t('user_policy_application_controller.quote_failed'), message: quote_attempt[:message] },
@@ -144,11 +139,8 @@ module V2
       def create_security_deposit_replacement
         # set up the application
         @application = PolicyApplication.new(create_security_deposit_replacement_params)
-        if @application.agency.nil? && @application.account.nil?
-          @application.agency = Agency.where(master_agency: true).take
-        elsif @application.agency.nil?
-          @application.agency = @application.account.agency
-        end
+        @application.agency = @application.account&.agency || Agency.where(master_agency: true).take if @application.agency.nil?
+        @application.account = @application.primary_insurable&.account if @application.account.nil?
         @application.billing_strategy = BillingStrategy.where(carrier_id: DepositChoiceService.carrier_id).take if @application.billing_strategy.nil? # WARNING: there should only be one (annual) right now
         @application.expiration_date = @application.effective_date + 1.year unless @application.effective_date.nil?
         # try to save
@@ -199,19 +191,7 @@ module V2
             end
           end
           # return nice stuff
-          render json:  {
-                         id:       @application.id,
-                         quote: {
-                           id:      @quote.id,
-                           status: @quote.status,
-                           premium: @quote.policy_premium
-                         },
-                         invoices: @quote.invoices.order('due_date ASC'),
-                         user:     {
-                           id:        @application.primary_user.id,
-                           stripe_id: @application.primary_user.stripe_id
-                         }
-                       }.to_json, status: 200
+          render template: 'v2/user/policy_applications/create.json', status: 200
           return
         end
       end
@@ -219,7 +199,17 @@ module V2
       def create_residential
         @application = PolicyApplication.new(create_residential_params)
         @application.expiration_date = @application.effective_date&.send(:+, 1.year)
+        @application.agency = @application.account&.agency || Agency.where(master_agency: true).take if @application.agency.nil?
+        @application.account = @application.primary_insurable&.account if @application.account.nil?
         if @application.carrier_id == 5
+          if @application.extra_settings && !@application.extra_settings['additional_interest'].blank?
+            error_message = ::MsiService.validate_msi_additional_interest(@application.extra_settings['additional_interest'])
+            unless error_message.nil?
+              render json: standard_error(:policy_application_save_error, I18n.t(error_message)),
+                     status: 400
+              return
+            end
+          end
           if !@application.effective_date.nil? && (@application.effective_date >= Time.current.to_date + 90.days || @application.effective_date < Time.current.to_date)
             render json: { "effective_date" => [I18n.t('user_policy_application_controller.must_be_within_the_next_90_days')] }.to_json,
                    status: 422
@@ -237,12 +227,6 @@ module V2
             end
             @application.coverage_selections.push({ 'category' => 'coverage', 'options_type' => 'none', 'uid' => '1010', 'selection' => true }) unless @application.coverage_selections.any?{|co| co['uid'] == '1010' }
           end
-        end
-
-        if @application.agency.nil? && @application.account.nil?
-          @application.agency = Agency.where(master_agency: true).take
-        elsif @application.agency.nil?
-          @application.agency = @application.account.agency
         end
 
         if @application.save
@@ -264,26 +248,15 @@ module V2
                 @quote.reload
 
                 if @quote.status == 'quoted'
-
+                  ::ConfieService.create_confie_lead(@application) if @application.agency_id == ::ConfieService.agency_id
                   @application.primary_user.set_stripe_id
-
-                  render json: {
-                    id: @application.id,
-                    quote: {
-                      id: @quote.id,
-                      status: @quote.status,
-                      premium: @quote.policy_premium
-                    },
-                    invoices: @quote.invoices.order('due_date ASC'),
-                    user: {
-                      id: @application.primary_user.id,
-                      stripe_id: @application.primary_user.stripe_id
-                    }
-                  }.merge(@application.carrier_id != 5 ? {} : {
-                    'policy_fee' => @quote.carrier_payment_data['policy_fee'],
-                    'installment_fee' => @quote.carrier_payment_data['installment_fee'],
-                    'installment_total' => @quote.carrier_payment_data['installment_total']
-                  }).to_json, status: 200
+  
+                  @extra_fields = {
+                   'policy_fee' => @quote.carrier_payment_data['policy_fee'],
+                   'installment_fee' => @quote.carrier_payment_data['installment_fee'],
+                   'installment_total' => @quote.carrier_payment_data['installment_total']
+                  } if @application.carrier_id == 5
+                  render template: 'v2/user/policy_applications/create.json', status: 200
 
                 else
                   render json: { error: I18n.t('user_policy_application_controller.quote_failed'), message: I18n.t('policy_application_contr.create_security_deposit_replacement.quote_failed') },
@@ -326,11 +299,22 @@ module V2
 
         if @policy_application.policy_type.title == 'Residential'
           @policy_application.account_id = @policy_application.primary_insurable&.account_id
-          @policy_application.policy_rates.destroy_all
           # try to update
           @policy_application.assign_attributes(update_residential_params)
           @policy_application.expiration_date = @policy_application.effective_date&.send(:+, 1.year)
+          @policy_application.agency = @policy_application.account&.agency || Agency.where(master_agency: true).take if @policy_application.agency.nil?
+          @policy_application.account = @policy_application.primary_insurable&.account if @policy_application.account.nil?
+          # flee if nonsense is passed for additional interest
+          if @policy_application.extra_settings && !@policy_application.extra_settings['additional_interest'].blank?
+            error_message = ::MsiService.validate_msi_additional_interest(@policy_application.extra_settings['additional_interest'])
+            unless error_message.nil?
+              render json: standard_error(:policy_application_save_error, I18n.t(error_message)),
+                     status: 400
+              return
+            end
+          end
           # remove duplicate pis
+          @policy_application.policy_rates.destroy_all
           @replacement_policy_insurables = nil
           saved_pis = @policy_application.policy_insurables.select{|pi| pi.id }
           @policy_application.policy_insurables = @policy_application.policy_insurables.select{|pi| pi.id || (pi.insurable_id && saved_pis.find{|spi| spi.insurable_id == pi.insurable_id }.nil?) }
@@ -353,12 +337,6 @@ module V2
             @policy_application.coverage_selections = @policy_application.coverage_selections.select{|cs| cs['selection'] || cs[:selection] }
             @policy_application.coverage_selections.push({ 'category' => 'coverage', 'options_type' => 'none', 'uid' => '1010', 'selection' => true }) unless @policy_application.coverage_selections.any?{|co| co['uid'] == '1010' }
           end
-          # fix agency if needed
-          if @policy_application.agency.nil? && @policy_application.account.nil?
-            @policy_application.agency = Agency.where(master_agency: true).take
-          elsif @policy_application.agency.nil?
-            @policy_application.agency = @policy_application.account.agency
-          end
           # try to update users
           update_users_result = update_policy_users_params.blank? ? true :
             PolicyApplications::UpdateUsers.run!(
@@ -378,6 +356,7 @@ module V2
             @policy_insurables_to_restore = @policy_application.policy_insurables.select{|pi| pi.id }
             @policy_application.policy_insurables.clear
             @policy_application.policy_insurables = @replacement_policy_insurables
+            @policy_application.account = @policy_application.primary_insurable&.account if update_residential_params[:account_id].nil?
           end
           # try updating policy application
           if !@policy_application.save
@@ -420,23 +399,13 @@ module V2
             render json: standard_error(:quote_failed, I18n.t('user_policy_application_controller.quote_failed') + " #{@policy_application.error_message}"),
                    status: 500
           elsif @quote.status == "quoted"
-            render json: {
-              id: @policy_application.id,
-              quote: {
-                id: @quote.id,
-                status: @quote.status,
-                premium: @quote.policy_premium
-              },
-              invoices: @quote.invoices.order('due_date ASC'),
-              user: {
-                id: @policy_application.primary_user.id,
-                stripe_id: @policy_application.primary_user.stripe_id
-              }
-            }.merge(@policy_application.carrier_id != 5 ? {} : {
-              'policy_fee' => @quote.carrier_payment_data['policy_fee'],
-              'installment_fee' => @quote.carrier_payment_data['installment_fee'],
-              'installment_total' => @quote.carrier_payment_data['installment_total']
-            }).to_json, status: 200
+            @application = @policy_application
+            @extra_fields = {
+             'policy_fee' => @quote.carrier_payment_data['policy_fee'],
+             'installment_fee' => @quote.carrier_payment_data['installment_fee'],
+             'installment_total' => @quote.carrier_payment_data['installment_total']
+            } if @application.carrier_id == 5
+            render template: 'v2/user/policy_applications/create.json', status: 200
           else
             render json: standard_error(:quote_failed, I18n.t('user_policy_application_controller.quote_failed')),
                    status: 500
@@ -463,25 +432,18 @@ module V2
               @policy_application.primary_user.set_stripe_id
 
               @quote         = @policy_application.policy_quotes.last
-              invoice_errors = @quote.generate_invoices_for_term
               @premium       = @quote.policy_premium
-
-              response = {
-                id: @policy_application.id,
-                quote: {
-                  id: @quote.id,
-                  status: @quote.status,
-                  premium: @premium
-                },
-                invoice_errors: invoice_errors,
-                invoices: @quote.invoices,
-                user: {
-                  id: @policy_application.primary_user.id,
-                  stripe_id: @policy_application.primary_user.stripe_id
-                }
-              }
-
-              render json: response.to_json, status: 200
+              # generate invoices
+              result = @quote.generate_invoices_for_term
+              unless result.nil?
+                puts result[:internal]
+                quote.mark_failure(result[:internal])
+                render json: standard_error(:quote_failed, I18n.t(result[:external])),
+                       status: 400
+                return
+              end
+              @application = @policy_application
+              render template: 'v2/user/policy_applications/create.json', status: 200
             else
               render json: standard_error(:quote_attempt_failed, quote_attempt[:message]), status: 422
             end
@@ -525,7 +487,12 @@ module V2
                   coverage_selections: [:category, :uid, :selection, selection: [ :data_type, :value ]],
                   extra_settings: [
                     # for MSI
-                    :installment_day, :number_of_units, :years_professionally_managed, :year_built, :gated
+                    :installment_day, :number_of_units, :years_professionally_managed, :year_built, :gated,
+                    additional_interest: [
+                      :entity_type, :email_address, :phone_number,
+                      :company_name, :address,
+                      :first_name, :last_name, :middle_name
+                    ]
                   ],
                   policy_rates_attributes: [:insurable_rate_id],
                   policy_insurables_attributes: [:insurable_id])
@@ -580,14 +547,25 @@ module V2
       def update_residential_params
         return create_residential_params
         params.require(:policy_application)
-          .permit(:branding_profile_id, :effective_date, :billing_strategy_id, fields: {},
+          .permit(:branding_profile_id, :effective_date, :billing_strategy_id,
+                  :agency_id, :account_id,
+                  fields: {},
                   policy_rates_attributes: [:insurable_rate_id],
-                  policy_insurables_attributes: [:insurable_id])
+                  policy_insurables_attributes: [:insurable_id],
+                  extra_settings: [
+                    # for MSI
+                    :installment_day, :number_of_units, :years_professionally_managed, :year_built, :gated,
+                    additional_interest: [
+                      :entity_type, :email_address, :phone_number,
+                      :company_name, :address,
+                      :first_name, :last_name, :middle_name
+                    ]
+                  ])
       end
 
       def update_rental_guarantee_params
         params.require(:policy_application)
-          .permit(:fields, :billing_strategy_id, :effective_date, fields: {})
+          .permit(:agency_id, :account_id, :fields, :billing_strategy_id, :effective_date, fields: {})
       end
 
       def supported_filters(called_from_orders = false)
