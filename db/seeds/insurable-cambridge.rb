@@ -24,7 +24,7 @@ else
 														  		}																	   
 															   ])
 
-	SeedFunctions.adduser(Staff, { 
+	owner = SeedFunctions.adduser(Staff, { 
 		email: "mel@getcoveredllc.com", 
 		password: 'TestingPassword1234', 
 		password_confirmation: 'TestingPassword1234', 
@@ -38,6 +38,7 @@ else
 	  	birth_date: '04-01-1989'.to_date 
 	  }	
 	})
+  # this should get taken care of by a callback... @occupant_shield.update(staff: owner)
 	
 end
 

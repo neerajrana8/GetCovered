@@ -11,6 +11,7 @@ class Lead < ApplicationRecord
   belongs_to :user, optional: true
   belongs_to :tracking_url, optional: true
   belongs_to :agency, optional: true
+  belongs_to :account, optional: true
 
   has_one :profile, as: :profileable
   has_one :address, as: :addressable
@@ -39,9 +40,7 @@ class Lead < ApplicationRecord
   end
 
   def self.presented
-    columns_distinct = [:email]
-    distinct_ids = Lead.select("MAX(id) as id").group(columns_distinct).map(&:id)
-    Lead.where.not(email: [nil, '']).where(id: distinct_ids)
+    Lead.where.not(email: [nil, ''])
   end
 
   def check_identifier
@@ -60,13 +59,14 @@ class Lead < ApplicationRecord
 
   private
 
+  # DO NOT CHANGE! CAN BRAKE IDENTIFIERS UNIQUENESS
   def set_identifier
     new_uid = Digest::MD5.hexdigest(fields_for_identifier)
     old_uid = self.identifier
     self.identifier = new_uid if identifier.nil? && new_uid != old_uid
   end
 
-  #can be extended if needed, but need to be sure about old ones
+  # can be extended if needed, but need to be sure about old ones
   def fields_for_identifier
     "#{self.email}"
   end
@@ -84,6 +84,60 @@ class Lead < ApplicationRecord
     # converted: converted to user
     #
     # lost: no return visit in 90 days
+  end
+
+  def self.to_csv(filters = nil)
+    attributes =
+        {"Agency" => "agency_id", "Email" => "email", "First Name" => "first_name","Last Name" => "last_name",
+     "Date Created" => "created_at", "Last Activity" => "last_visit", "Policy Type" => "policy_type",
+     "Last Visited Page" => "last_visited_page", "Premium Total" => "premium_total",
+     "Billing Strategy"=>"billing_strategy", "Campaign Name"=>"campaign_name"
+    }
+
+    CSV.generate(headers: true) do |csv|
+      if filters.present?
+        csv << ['Filters']
+        csv << ['Archived', filters[:filter][:archived]]
+        csv << ['Agency', Agency.find(filters[:filter][:agency_id])&.title] if filters[:filter][:agency_id]
+        csv << ['Policy Type', PolicyType.find(filters[:filter][:lead_events][:policy_type_id])&.title] if filters[:filter][:lead_events]
+        csv << ['Last Visit Period', filters[:filter][:last_visit][:start], filters[:filter][:last_visit][:end] ] if filters[:filter][:last_visit]
+        if filters[:filter][:tracking_url]
+          csv << ['Campaign Name', filters[:filter][:tracking_url][:campaign_name]]
+          csv << ['Campaign Medium', filters[:filter][:tracking_url][:campaign_medium]]
+          csv << ['Campaign Source', filters[:filter][:tracking_url][:campaign_source]]
+        end
+      end
+
+      csv << attributes.keys
+
+      all.each do |lead|
+        csv << attributes.values.map{ |attr| lead.send(attr) }
+      end
+    end
+  end
+
+  def first_name
+    self&.profile.first_name
+  end
+
+  def last_name
+    self&.profile.last_name
+  end
+
+  def policy_type
+    self.lead_events&.last&.policy_type&.title
+  end
+
+  def premium_total
+    self&.user&.policy_applications&.last&.policy_quotes&.last&.policy_premium&.total
+  end
+
+  def billing_strategy
+    self&.user&.policy_applications&.last&.policy_quotes&.last&.policy_premium&.billing_strategy&.title
+  end
+
+  def campaign_name
+    self&.tracking_url&.campaign_name
   end
 
 end

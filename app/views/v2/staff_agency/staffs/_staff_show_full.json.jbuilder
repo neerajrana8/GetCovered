@@ -16,9 +16,15 @@ end
 
 if staff.organizable_type == 'Account'
   json.account staff&.organizable&.title
+  json.agency  staff&.organizable&.agency&.title
 end
 
 if staff.organizable_type == 'Agency'
   json.agency staff&.organizable&.title
 end
 
+json.staff_permission do
+  if @staff.staff_permission.present?
+    json.partial! 'v2/shared/staff_permissions/full.json.jbuilder', staff_permission: staff.staff_permission
+  end
+end

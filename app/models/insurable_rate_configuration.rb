@@ -163,7 +163,7 @@ class InsurableRateConfiguration < ApplicationRecord
   #                 generally should be true for IRCs with the same configurer and false when only the configurables differ
   # returns:
   #   an IRC (not saved in the DB) representing the combined IRC attributes
-  def self.merge(irc_array, mutable:)
+  def self.merge(irc_array, mutable:, allow_new_coverages:)
     # setup
     to_return = InsurableRateConfiguration.new(
       configurable_type: irc_array.drop(1).inject(irc_array.first&.configurable_type){|res,irc| break nil unless irc.configurable_type == res; res },
@@ -199,7 +199,7 @@ class InsurableRateConfiguration < ApplicationRecord
     end
     # coverage_options
     irc_array.each do |irc|
-      to_return.merge_child_options!(irc.coverage_options, mutable: mutable, allow_new_coverages: irc.configurer_type.nil? ? mutable : COVERAGE_ADDING_CONFIGURERS.include?(irc.configurer_type))
+      to_return.merge_child_options!(irc.coverage_options, mutable: mutable, allow_new_coverages: allow_new_coverages.nil? ? (irc.configurer_type.nil? ? mutable : COVERAGE_ADDING_CONFIGURERS.include?(irc.configurer_type)) : allow_new_coverages)
     end
     # done
     return to_return
@@ -564,16 +564,16 @@ class InsurableRateConfiguration < ApplicationRecord
     return nil
   end
   
-  def self.get_coverage_options(carrier_id, carrier_insurable_profile_or_address, selections, effective_date, additional_insured_count, billing_strategy_carrier_code, perform_estimate: true, insurable_type_id: 4, agency: nil, account: carrier_insurable_profile_or_address.class == ::CarrierInsurableProfile ? carrier_insurable_profile_or_address&.insurable&.account : nil, eventable: nil, estimate_default_on_billing_strategy_code_failure: :min, nonpreferred_final_premium_params: {})
+  def self.get_coverage_options(carrier_id, carrier_insurable_profile_or_address, selections, effective_date, additional_insured_count, billing_strategy_carrier_code, additional_interest_count: nil, perform_estimate: true, insurable_type_id: 4, agency: nil, account: carrier_insurable_profile_or_address.class == ::CarrierInsurableProfile ? carrier_insurable_profile_or_address&.insurable&.account : nil, eventable: nil, estimate_default_on_billing_strategy_code_failure: :min, nonpreferred_final_premium_params: {})
     cip = (carrier_insurable_profile_or_address.class == ::CarrierInsurableProfile ? carrier_insurable_profile_or_address : nil)
     carrier_insurable_type = CarrierInsurableType.where(carrier_id: carrier_id, insurable_type_id: insurable_type_id).take
-    # get IRCs
-    irc_hierarchy = ::InsurableRateConfiguration.get_hierarchy(carrier_insurable_type, account || agency || Carrier.find(carrier_id), cip || ::InsurableGeographicalCategory.get_for(state: carrier_insurable_profile_or_address.state, counties: carrier_insurable_profile_or_address.county.blank? ? nil : [carrier_insurable_profile_or_address.county]))
-    irc_hierarchy.map!{|ircs| ::InsurableRateConfiguration.merge(ircs, mutable: true) }
+    # get IRCs MOOSE WARNING: we go to agency first if possible, which is a hack (since account.agency no longer necessarily equals agency)--since no accounts have custom settings it doesn't hurt anything for now
+    irc_hierarchy = ::InsurableRateConfiguration.get_hierarchy(carrier_insurable_type, agency || account || Carrier.find(carrier_id), cip || ::InsurableGeographicalCategory.get_for(state: carrier_insurable_profile_or_address.state, counties: carrier_insurable_profile_or_address.county.blank? ? nil : [carrier_insurable_profile_or_address.county]))
+    irc_hierarchy.map!{|ircs| ::InsurableRateConfiguration.merge(ircs, mutable: true, allow_new_coverages: true) }
     # for each IRC, apply rules and merge down
     coverage_options = []
     irc_hierarchy.each do |irc|
-      irc.merge_child_options!(coverage_options, mutable: false, allow_new_coverages: COVERAGE_ADDING_CONFIGURERS.include?(irc.configurer_type))
+      irc.merge_parent_options!(coverage_options, mutable: false, allow_new_coverages: COVERAGE_ADDING_CONFIGURERS.include?(irc.configurer_type))
       coverage_options = irc.annotate_options(selections)
     end
     coverage_options.select!{|co| co['enabled'] != false }
@@ -597,7 +597,7 @@ class InsurableRateConfiguration < ApplicationRecord
       result = msis.build_request(:final_premium,
         effective_date: effective_date, 
         additional_insured_count: additional_insured_count,
-        additional_interest_count: cip&.insurable&.account_id.nil? && cip&.insurable&.parent_community&.account_id.nil? ? 0 : 1,
+        additional_interest_count: additional_interest_count || (cip&.insurable&.account_id.nil? && cip&.insurable&.parent_community&.account_id.nil? ? 0 : 1),
         coverages_formatted:  selections.select{|s| s['selection'] }
                                 .map do |s|
                                   s['options'] = coverage_options.find{|co| co['category'] == s['category'] && co['uid'] == s['uid'] }

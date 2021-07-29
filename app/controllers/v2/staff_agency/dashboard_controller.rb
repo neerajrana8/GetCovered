@@ -5,6 +5,10 @@
 module V2
   module StaffAgency
     class DashboardController < StaffAgencyController
+      include DashboardMethods
+
+      check_privileges 'dashboard.properties'
+
       def total_dashboard
         unit_ids = InsurableType::UNITS_IDS
         community_ids = InsurableType::COMMUNITIES_IDS
@@ -12,15 +16,16 @@ module V2
         @uncovered = Insurable.where(insurable_type_id: unit_ids, covered: false, account: @agency.accounts).count
         @units = @covered + @uncovered
         @communities = Insurable.where(insurable_type_id: community_ids, account: @agency.accounts).count
-        @total_policy = ::Policy.where(agency: @agency).count
-        @total_residential_policies = ::Policy.where(policy_type_id: 1, agency: @agency).count
-        @total_master_policies = ::Policy.where(policy_type_id: 2, agency: @agency).count
-        @total_master_policy_coverages = ::Policy.where(policy_type_id: 3, agency: @agency).count
-        @total_commercial_policies = ::Policy.where(policy_type_id: 4, agency: @agency).count
-        @total_rent_guarantee_policies = ::Policy.where(policy_type_id: 5, agency: @agency).count
+        @total_policy = ::Policy.current.where(agency: @agency).count
+        @total_residential_policies = ::Policy.current.where(policy_type_id: 1, agency: @agency).count
+        @total_master_policies = ::Policy.current.where(policy_type_id: PolicyType::MASTER_IDS, agency: @agency).count
+        @total_master_policy_coverages = ::Policy.current.where(policy_type_id: 3, agency: @agency).count
+        @total_commercial_policies = ::Policy.current.where(policy_type_id: 4, agency: @agency).count
+        @total_rent_guarantee_policies = ::Policy.current.where(policy_type_id: 5, agency: @agency).count
         policy_ids = ::Policy.where(agency: @agency).pluck(:id)
-        @total_commission = PolicyPremium.where(id: policy_ids).pluck(:total).inject(:+) || 0
-        @total_premium = PolicyPremium.where(id: policy_ids).pluck(:total_fees).inject(:+) || 0
+        policy_quote_ids = ::PolicyQuote.includes(:policy_application).references(:policy_applications).where(status: 'accepted', policy_applications: { agency_id: @agency.id }).pluck(:id)
+        @total_commission = ::Commission.where(recipient: @agency).pluck(:total).inject(:+) || 0
+        @total_premium = ::PolicyPremium.where(policy_quote_id: policy_quote_ids).or(::PolicyPremium.where(policy_id: policy_ids)).pluck(:total_premium).inject(:+) || 0
 
         render json: {
           total_units: @units,
@@ -86,20 +91,12 @@ module V2
         super + '/dashboard'
       end
 
-      def supported_filters(called_from_orders = false)
-        @calling_supported_orders = called_from_orders
-        {
-          id: %i[scalar array],
-          title: %i[scalar like],
-          permissions: %i[scalar array],
-          insurable_type_id: %i[scalar array],
-          insurable_id: %i[scalar array],
-          agency_id: %i[scalar array]
-        }
-      end
-
-      def supported_orders
-        supported_filters(true)
+      def communities
+        accounts_communities =
+          Insurable.where(insurable_type_id: InsurableType::COMMUNITIES_IDS, account: @agency.accounts)
+        agency_communities =
+          Insurable.where(insurable_type_id: InsurableType::COMMUNITIES_IDS, agency: @agency)
+        accounts_communities.or agency_communities
       end
     end
   end # module StaffAgency

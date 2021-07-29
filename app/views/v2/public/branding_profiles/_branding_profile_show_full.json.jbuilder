@@ -14,3 +14,11 @@ json.pages do
 end
 
 json.profileable_title branding_profile.profileable.title if branding_profile.profileable.respond_to?(:title)
+
+case branding_profile.profileable
+when Account
+  json.agency_id branding_profile.profileable.agency_id
+  json.account_id branding_profile.profileable_id
+when Agency
+  json.agency_id branding_profile.profileable_id
+end

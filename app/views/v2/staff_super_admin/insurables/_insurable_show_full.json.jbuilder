@@ -21,7 +21,17 @@ end
 json.policies do
   unless insurable.policies.nil?
     json.array! insurable.policies do |policy|
-      json.partial! "v2/staff_super_admin/policies/policy_short_fields.json.jbuilder", policy: policy
+      json.extract! policy, :id, :number, :policy_type_id, :status, :created_at, :effective_date, :expiration_date
+
+      json.policy_type_title I18n.t("policy_type_model.#{policy&.policy_type&.title&.parameterize&.underscore}")
+
+      if PolicyType::MASTER_COVERAGES_IDS.include?(policy.policy_type_id) && policy.policy.present?
+        json.master_policy do
+          json.extract! policy.policy, :id, :number, :policy_type_id, :status, :created_at, :effective_date, :expiration_date
+
+          json.policy_type_title I18n.t("policy_type_model.#{policy.policy&.policy_type&.title&.parameterize&.underscore}")
+        end
+      end
     end
   end
 end
@@ -62,8 +72,6 @@ end
 json.buildings_count insurable&.buildings&.count
 json.units_count insurable&.insurables&.where(insurable_type_id: InsurableType::UNITS_IDS)&.count
 
-json.can_be_covered insurable.policies.current.empty?
-
 json.active_master_policy do
   if @master_policy.present?
     json.partial! 'v2/shared/policies/fields.json.jbuilder', policy: @master_policy
@@ -73,5 +81,19 @@ end
 json.active_master_policy_coverage do
   if @master_policy_coverage.present?
     json.partial! 'v2/shared/policies/fields.json.jbuilder', policy: @master_policy_coverage
+  end
+end
+
+json.account_agency do
+  if insurable.account&.agency&.present?
+    json.id insurable.account.agency.id
+    json.title insurable.account.agency.title
+  end
+end
+
+json.agency do
+  if insurable.agency.present?
+    json.id insurable.agency.id
+    json.title insurable.agency.title
   end
 end

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_01_15_174119) do
+ActiveRecord::Schema.define(version: 2021_07_15_045543) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
@@ -133,9 +133,11 @@ ActiveRecord::Schema.define(version: 2021_01_15_174119) do
     t.datetime "updated_at", null: false
     t.bigint "staff_id"
     t.string "integration_designation"
+    t.string "producer_code"
     t.index ["agency_id"], name: "index_agencies_on_agency_id"
     t.index ["call_sign"], name: "index_agencies_on_call_sign", unique: true
     t.index ["integration_designation"], name: "index_agencies_on_integration_designation", unique: true
+    t.index ["producer_code"], name: "index_agencies_on_producer_code", unique: true
     t.index ["staff_id"], name: "index_agencies_on_staff_id"
     t.index ["stripe_id"], name: "index_agencies_on_stripe_id", unique: true
   end
@@ -147,6 +149,204 @@ ActiveRecord::Schema.define(version: 2021_01_15_174119) do
     t.boolean "enabled"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+  end
+
+  create_table "archived_charges", force: :cascade do |t|
+    t.integer "status", default: 0
+    t.string "status_information"
+    t.integer "refund_status", default: 0
+    t.integer "payment_method", default: 0
+    t.integer "amount_returned_via_dispute", default: 0
+    t.integer "amount_refunded", default: 0
+    t.integer "amount_lost_to_disputes", default: 0
+    t.integer "amount_in_queued_refunds", default: 0
+    t.integer "dispute_count", default: 0
+    t.string "stripe_id"
+    t.bigint "invoice_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.integer "amount", default: 0
+    t.boolean "invoice_update_failed", default: false, null: false
+    t.string "invoice_update_error_call"
+    t.string "invoice_update_error_record"
+    t.jsonb "invoice_update_error_hash"
+    t.index ["invoice_id"], name: "index_archived_charges_on_invoice_id"
+    t.index ["stripe_id"], name: "charge_stripe_id"
+  end
+
+  create_table "archived_commission_deductions", force: :cascade do |t|
+    t.integer "unearned_balance"
+    t.string "deductee_type"
+    t.bigint "deductee_id"
+    t.bigint "policy_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["deductee_type", "deductee_id"], name: "index_craptastic_garbage_why_is_there_a_length_limit_ugh"
+    t.index ["policy_id"], name: "index_archived_commission_deductions_on_policy_id"
+  end
+
+  create_table "archived_commission_strategies", force: :cascade do |t|
+    t.string "title", null: false
+    t.integer "amount", default: 10, null: false
+    t.integer "type", default: 0, null: false
+    t.integer "fulfillment_schedule", default: 0, null: false
+    t.boolean "amortize", default: false, null: false
+    t.boolean "per_payment", default: false, null: false
+    t.boolean "enabled", default: false, null: false
+    t.boolean "locked", default: false, null: false
+    t.integer "house_override", default: 10, null: false
+    t.integer "override_type", default: 0, null: false
+    t.bigint "carrier_id"
+    t.bigint "policy_type_id"
+    t.string "commissionable_type"
+    t.bigint "commissionable_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "commission_strategy_id"
+    t.decimal "percentage", precision: 5, scale: 2, default: "0.0"
+    t.index ["carrier_id"], name: "index_archived_commission_strategies_on_carrier_id"
+    t.index ["commission_strategy_id"], name: "index_archived_commission_strategies_on_commission_strategy_id"
+    t.index ["commissionable_type", "commissionable_id"], name: "index_strategy_on_type_and_id"
+    t.index ["policy_type_id"], name: "index_archived_commission_strategies_on_policy_type_id"
+  end
+
+  create_table "archived_commissions", force: :cascade do |t|
+    t.integer "amount"
+    t.integer "deductions"
+    t.integer "total"
+    t.boolean "approved"
+    t.date "distributes"
+    t.boolean "paid"
+    t.string "stripe_transaction_id"
+    t.bigint "policy_premium_id"
+    t.bigint "commission_strategy_id"
+    t.string "commissionable_type"
+    t.bigint "commissionable_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["commission_strategy_id"], name: "index_archived_commissions_on_commission_strategy_id"
+    t.index ["commissionable_type", "commissionable_id"], name: "index_archived_commissions_on_commissionable"
+    t.index ["policy_premium_id"], name: "index_archived_commissions_on_policy_premium_id"
+  end
+
+  create_table "archived_disputes", force: :cascade do |t|
+    t.string "stripe_id"
+    t.integer "amount"
+    t.integer "reason"
+    t.integer "status"
+    t.boolean "active", default: true, null: false
+    t.bigint "charge_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["charge_id"], name: "index_archived_disputes_on_charge_id"
+    t.index ["status"], name: "dispute_status"
+    t.index ["stripe_id"], name: "dispute_stripe_id"
+  end
+
+  create_table "archived_invoices", force: :cascade do |t|
+    t.string "number"
+    t.integer "status", default: 0
+    t.datetime "status_changed"
+    t.text "description"
+    t.date "due_date"
+    t.date "available_date"
+    t.date "term_first_date"
+    t.date "term_last_date"
+    t.integer "renewal_cycle", default: 0
+    t.integer "total", default: 0
+    t.integer "subtotal", default: 0
+    t.integer "tax", default: 0
+    t.decimal "tax_percent", precision: 5, scale: 2, default: "0.0"
+    t.jsonb "system_data", default: {}
+    t.integer "amount_refunded", default: 0
+    t.integer "amount_to_refund_on_completion", default: 0
+    t.boolean "has_pending_refund", default: false
+    t.jsonb "pending_refund_data", default: {}
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.string "invoiceable_type"
+    t.bigint "invoiceable_id"
+    t.integer "proration_reduction", default: 0, null: false
+    t.integer "disputed_charge_count", default: 0, null: false
+    t.boolean "was_missed", default: false, null: false
+    t.string "payer_type"
+    t.bigint "payer_id"
+    t.boolean "external", default: false, null: false
+    t.index ["invoiceable_type", "invoiceable_id"], name: "index_invoices_on_invoiceable"
+    t.index ["payer_type", "payer_id"], name: "index_invoices_on_payee"
+  end
+
+  create_table "archived_line_items", force: :cascade do |t|
+    t.string "title"
+    t.integer "price", default: 0
+    t.bigint "invoice_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.integer "refundability", null: false
+    t.integer "category", default: 0, null: false
+    t.boolean "priced_in", default: false, null: false
+    t.integer "collected", default: 0, null: false
+    t.integer "proration_reduction", default: 0, null: false
+    t.date "full_refund_before_date"
+    t.index ["invoice_id"], name: "index_archived_line_items_on_invoice_id"
+  end
+
+  create_table "archived_policy_premia", force: :cascade do |t|
+    t.integer "base", default: 0
+    t.integer "taxes", default: 0
+    t.integer "total_fees", default: 0
+    t.integer "total", default: 0
+    t.boolean "enabled", default: false, null: false
+    t.datetime "enabled_changed"
+    t.bigint "policy_quote_id"
+    t.bigint "policy_id"
+    t.bigint "billing_strategy_id"
+    t.bigint "commission_strategy_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.integer "estimate"
+    t.integer "calculation_base", default: 0
+    t.integer "deposit_fees", default: 0
+    t.integer "amortized_fees", default: 0
+    t.integer "carrier_base", default: 0
+    t.integer "special_premium", default: 0
+    t.boolean "include_special_premium", default: false
+    t.integer "unearned_premium", default: 0
+    t.boolean "only_fees_internal", default: false
+    t.integer "external_fees", default: 0
+    t.index ["billing_strategy_id"], name: "index_archived_policy_premia_on_billing_strategy_id"
+    t.index ["commission_strategy_id"], name: "index_archived_policy_premia_on_commission_strategy_id"
+    t.index ["policy_id"], name: "index_archived_policy_premia_on_policy_id"
+    t.index ["policy_quote_id"], name: "index_archived_policy_premia_on_policy_quote_id"
+  end
+
+  create_table "archived_policy_premium_fees", force: :cascade do |t|
+    t.bigint "policy_premium_id"
+    t.bigint "fee_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["fee_id"], name: "index_archived_policy_premium_fees_on_fee_id"
+    t.index ["policy_premium_id"], name: "index_archived_policy_premium_fees_on_policy_premium_id"
+  end
+
+  create_table "archived_refunds", force: :cascade do |t|
+    t.string "stripe_id"
+    t.integer "amount"
+    t.string "currency"
+    t.string "failure_reason"
+    t.integer "stripe_reason"
+    t.string "receipt_number"
+    t.integer "stripe_status"
+    t.integer "status"
+    t.string "full_reason"
+    t.string "error_message"
+    t.integer "amount_returned_via_dispute", default: 0
+    t.bigint "charge_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["charge_id"], name: "index_archived_refunds_on_charge_id"
+    t.index ["status"], name: "refund_status"
+    t.index ["stripe_id"], name: "refund_stripe_id"
   end
 
   create_table "assignments", force: :cascade do |t|
@@ -229,6 +429,18 @@ ActiveRecord::Schema.define(version: 2021_01_15_174119) do
     t.index ["policy_type_id"], name: "index_carrier_agency_authorizations_on_policy_type_id"
   end
 
+  create_table "carrier_agency_policy_types", force: :cascade do |t|
+    t.bigint "carrier_agency_id"
+    t.bigint "policy_type_id"
+    t.bigint "commission_strategy_id", null: false
+    t.string "collector_type"
+    t.bigint "collector_id"
+    t.index ["carrier_agency_id"], name: "index_carrier_agency_policy_types_on_carrier_agency_id"
+    t.index ["collector_type", "collector_id"], name: "index_capt_on_collector"
+    t.index ["commission_strategy_id"], name: "index_carrier_agency_policy_types_on_commission_strategy_id"
+    t.index ["policy_type_id"], name: "index_carrier_agency_policy_types_on_policy_type_id"
+  end
+
   create_table "carrier_class_codes", force: :cascade do |t|
     t.integer "external_id"
     t.string "major_category"
@@ -296,10 +508,13 @@ ActiveRecord::Schema.define(version: 2021_01_15_174119) do
     t.bigint "policy_type_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.boolean "premium_refundable", default: true, null: false
     t.integer "max_days_for_full_refund", default: 31, null: false
     t.integer "days_late_before_cancellation", default: 30, null: false
+    t.bigint "commission_strategy_id", null: false
+    t.string "premium_proration_calculation", default: "per_payment_term", null: false
+    t.boolean "premium_proration_refunds_allowed", default: true, null: false
     t.index ["carrier_id"], name: "index_carrier_policy_types_on_carrier_id"
+    t.index ["commission_strategy_id"], name: "index_carrier_policy_types_on_commission_strategy_id"
     t.index ["policy_type_id"], name: "index_carrier_policy_types_on_policy_type_id"
   end
 
@@ -317,6 +532,8 @@ ActiveRecord::Schema.define(version: 2021_01_15_174119) do
     t.jsonb "settings", default: {}, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "commission_strategy_id"
+    t.index ["commission_strategy_id"], name: "index_carriers_on_commission_strategy_id"
   end
 
   create_table "change_requests", force: :cascade do |t|
@@ -338,29 +555,6 @@ ActiveRecord::Schema.define(version: 2021_01_15_174119) do
     t.index ["staff_id"], name: "index_change_requests_on_staff_id"
   end
 
-  create_table "charges", force: :cascade do |t|
-    t.integer "status", default: 0
-    t.string "status_information"
-    t.integer "refund_status", default: 0
-    t.integer "payment_method", default: 0
-    t.integer "amount_returned_via_dispute", default: 0
-    t.integer "amount_refunded", default: 0
-    t.integer "amount_lost_to_disputes", default: 0
-    t.integer "amount_in_queued_refunds", default: 0
-    t.integer "dispute_count", default: 0
-    t.string "stripe_id"
-    t.bigint "invoice_id"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.integer "amount", default: 0
-    t.boolean "invoice_update_failed", default: false, null: false
-    t.string "invoice_update_error_call"
-    t.string "invoice_update_error_record"
-    t.jsonb "invoice_update_error_hash"
-    t.index ["invoice_id"], name: "index_charges_on_invoice_id"
-    t.index ["stripe_id"], name: "charge_stripe_id"
-  end
-
   create_table "claims", force: :cascade do |t|
     t.string "subject"
     t.text "description"
@@ -379,73 +573,71 @@ ActiveRecord::Schema.define(version: 2021_01_15_174119) do
     t.index ["policy_id"], name: "index_claims_on_policy_id"
   end
 
-  create_table "commission_deductions", force: :cascade do |t|
-    t.integer "unearned_balance"
-    t.string "deductee_type"
-    t.bigint "deductee_id"
-    t.bigint "policy_id"
+  create_table "commission_items", force: :cascade do |t|
+    t.integer "amount", null: false
+    t.text "notes"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["deductee_type", "deductee_id"], name: "index_commission_deductions_on_deductee_type_and_deductee_id"
-    t.index ["policy_id"], name: "index_commission_deductions_on_policy_id"
+    t.bigint "commission_id"
+    t.string "commissionable_type"
+    t.bigint "commissionable_id"
+    t.string "reason_type"
+    t.bigint "reason_id"
+    t.bigint "policy_quote_id"
+    t.bigint "policy_id"
+    t.integer "analytics_category", default: 0, null: false
+    t.integer "parent_payment_total"
+    t.index ["commission_id"], name: "index_commission_items_on_commission_id"
+    t.index ["commissionable_type", "commissionable_id"], name: "index_commision_items_on_commissionable"
+    t.index ["policy_id"], name: "index_commission_items_on_policy_id"
+    t.index ["policy_quote_id"], name: "index_commission_items_on_policy_quote_id"
+    t.index ["reason_type", "reason_id"], name: "index_commission_items_on_reason_type_and_reason_id"
   end
 
   create_table "commission_strategies", force: :cascade do |t|
     t.string "title", null: false
-    t.integer "amount", default: 10, null: false
-    t.integer "type", default: 0, null: false
-    t.integer "fulfillment_schedule", default: 0, null: false
-    t.boolean "amortize", default: false, null: false
-    t.boolean "per_payment", default: false, null: false
-    t.boolean "enabled", default: false, null: false
-    t.boolean "locked", default: false, null: false
-    t.integer "house_override", default: 10, null: false
-    t.integer "override_type", default: 0, null: false
-    t.bigint "carrier_id"
-    t.bigint "policy_type_id"
-    t.string "commissionable_type"
-    t.bigint "commissionable_id"
+    t.decimal "percentage", precision: 5, scale: 2, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "recipient_type"
+    t.bigint "recipient_id"
     t.bigint "commission_strategy_id"
-    t.decimal "percentage", precision: 5, scale: 2, default: "0.0"
-    t.index ["carrier_id"], name: "index_commission_strategies_on_carrier_id"
     t.index ["commission_strategy_id"], name: "index_commission_strategies_on_commission_strategy_id"
-    t.index ["commissionable_type", "commissionable_id"], name: "index_strategy_on_type_and_id"
-    t.index ["policy_type_id"], name: "index_commission_strategies_on_policy_type_id"
+    t.index ["recipient_type", "recipient_id"], name: "index_commission_strategies_on_recipient_type_and_recipient_id"
   end
 
   create_table "commissions", force: :cascade do |t|
-    t.integer "amount"
-    t.integer "deductions"
-    t.integer "total"
-    t.boolean "approved"
-    t.date "distributes"
-    t.boolean "paid"
-    t.string "stripe_transaction_id"
-    t.bigint "policy_premium_id"
-    t.bigint "commission_strategy_id"
-    t.string "commissionable_type"
-    t.bigint "commissionable_id"
+    t.integer "status", null: false
+    t.integer "total", default: 0, null: false
+    t.boolean "true_negative_payout", default: false, null: false
+    t.integer "payout_method", default: 0, null: false
+    t.string "error_info"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["commission_strategy_id"], name: "index_commissions_on_commission_strategy_id"
-    t.index ["commissionable_type", "commissionable_id"], name: "index_commissions_on_commissionable_type_and_commissionable_id"
-    t.index ["policy_premium_id"], name: "index_commissions_on_policy_premium_id"
+    t.string "recipient_type"
+    t.bigint "recipient_id"
+    t.string "stripe_transfer_id"
+    t.jsonb "payout_data"
+    t.text "payout_notes"
+    t.datetime "approved_at"
+    t.datetime "marked_paid_at"
+    t.bigint "approved_by_id"
+    t.bigint "marked_paid_by_id"
+    t.index ["approved_by_id"], name: "index_commissions_on_approved_by_id"
+    t.index ["marked_paid_by_id"], name: "index_commissions_on_marked_paid_by_id"
+    t.index ["recipient_type", "recipient_id"], name: "index_commissions_on_recipient_type_and_recipient_id"
   end
 
   create_table "disputes", force: :cascade do |t|
-    t.string "stripe_id"
-    t.integer "amount"
-    t.integer "reason"
-    t.integer "status"
+    t.string "stripe_id", null: false
+    t.integer "amount", null: false
+    t.integer "stripe_reason", null: false
+    t.integer "status", null: false
     t.boolean "active", default: true, null: false
-    t.bigint "charge_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["charge_id"], name: "index_disputes_on_charge_id"
-    t.index ["status"], name: "dispute_status"
-    t.index ["stripe_id"], name: "dispute_stripe_id"
+    t.bigint "stripe_charge_id"
+    t.index ["stripe_charge_id"], name: "index_disputes_on_stripe_charge_id"
   end
 
   create_table "events", force: :cascade do |t|
@@ -464,6 +656,20 @@ ActiveRecord::Schema.define(version: 2021_01_15_174119) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["eventable_type", "eventable_id"], name: "index_events_on_eventable_type_and_eventable_id"
+  end
+
+  create_table "external_charges", force: :cascade do |t|
+    t.boolean "processed", default: false, null: false
+    t.boolean "invoice_aware", default: false, null: false
+    t.integer "status", null: false
+    t.datetime "status_changed_at"
+    t.string "external_reference", null: false
+    t.integer "amount", null: false
+    t.datetime "collected_at", null: false
+    t.bigint "invoice_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["invoice_id"], name: "index_external_charges_on_invoice_id"
   end
 
   create_table "faq_questions", force: :cascade do |t|
@@ -506,6 +712,14 @@ ActiveRecord::Schema.define(version: 2021_01_15_174119) do
     t.index ["ownerable_type", "ownerable_id"], name: "index_fees_on_ownerable_type_and_ownerable_id"
   end
 
+  create_table "global_agency_permissions", force: :cascade do |t|
+    t.jsonb "permissions", default: {}
+    t.bigint "agency_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["agency_id"], name: "index_global_agency_permissions_on_agency_id"
+  end
+
   create_table "histories", force: :cascade do |t|
     t.integer "action", default: 0
     t.json "data", default: {}
@@ -518,6 +732,16 @@ ActiveRecord::Schema.define(version: 2021_01_15_174119) do
     t.string "author"
     t.index ["authorable_type", "authorable_id"], name: "index_histories_on_authorable_type_and_authorable_id"
     t.index ["recordable_type", "recordable_id"], name: "index_histories_on_recordable_type_and_recordable_id"
+  end
+
+  create_table "insurable_data", force: :cascade do |t|
+    t.bigint "insurable_id"
+    t.integer "uninsured_units"
+    t.integer "total_units"
+    t.integer "expiring_policies"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["insurable_id"], name: "index_insurable_data_on_insurable_id"
   end
 
   create_table "insurable_geographical_categories", force: :cascade do |t|
@@ -578,6 +802,7 @@ ActiveRecord::Schema.define(version: 2021_01_15_174119) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.bigint "policy_type_ids", default: [], null: false, array: true
+    t.boolean "occupiable", default: false
   end
 
   create_table "insurables", force: :cascade do |t|
@@ -594,7 +819,7 @@ ActiveRecord::Schema.define(version: 2021_01_15_174119) do
     t.bigint "agency_id"
     t.bigint "policy_type_ids", default: [], null: false, array: true
     t.boolean "preferred_ho4", default: false, null: false
-    t.boolean "confirmed", default: true, null: false
+    t.boolean "occupied", default: false
     t.index ["account_id"], name: "index_insurables_on_account_id"
     t.index ["agency_id"], name: "index_insurables_on_agency_id"
     t.index ["insurable_id"], name: "index_insurables_on_insurable_id"
@@ -604,36 +829,40 @@ ActiveRecord::Schema.define(version: 2021_01_15_174119) do
   end
 
   create_table "invoices", force: :cascade do |t|
-    t.string "number"
-    t.integer "status", default: 0
-    t.datetime "status_changed"
+    t.string "number", null: false
     t.text "description"
-    t.date "due_date"
-    t.date "available_date"
-    t.date "term_first_date"
-    t.date "term_last_date"
-    t.integer "renewal_cycle", default: 0
-    t.integer "total", default: 0
-    t.integer "subtotal", default: 0
-    t.integer "tax", default: 0
-    t.decimal "tax_percent", precision: 5, scale: 2, default: "0.0"
-    t.jsonb "system_data", default: {}
-    t.integer "amount_refunded", default: 0
-    t.integer "amount_to_refund_on_completion", default: 0
-    t.boolean "has_pending_refund", default: false
-    t.jsonb "pending_refund_data", default: {}
+    t.date "available_date", null: false
+    t.date "due_date", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "external", default: false, null: false
+    t.integer "status", null: false
+    t.boolean "under_review", default: false, null: false
+    t.integer "pending_charge_count", default: 0, null: false
+    t.integer "pending_dispute_count", default: 0, null: false
+    t.jsonb "error_info", default: [], null: false
+    t.boolean "was_missed", default: false, null: false
+    t.datetime "was_missed_at"
+    t.boolean "autosend_status_change_notifications", default: true, null: false
+    t.integer "original_total_due", default: 0, null: false
+    t.integer "total_due", default: 0, null: false
+    t.integer "total_payable", default: 0, null: false
+    t.integer "total_reducing", default: 0, null: false
+    t.integer "total_pending", default: 0, null: false
+    t.integer "total_received", default: 0, null: false
+    t.integer "total_undistributable", default: 0, null: false
     t.string "invoiceable_type"
     t.bigint "invoiceable_id"
-    t.integer "proration_reduction", default: 0, null: false
-    t.integer "disputed_charge_count", default: 0, null: false
-    t.boolean "was_missed", default: false, null: false
     t.string "payer_type"
     t.bigint "payer_id"
-    t.boolean "external", default: false, null: false
-    t.index ["invoiceable_type", "invoiceable_id"], name: "index_invoices_on_invoiceable"
-    t.index ["payer_type", "payer_id"], name: "index_invoices_on_payee"
+    t.string "collector_type"
+    t.bigint "collector_id"
+    t.bigint "archived_invoice_id"
+    t.datetime "status_changed"
+    t.index ["archived_invoice_id"], name: "index_invoices_on_archived_invoice_id"
+    t.index ["collector_type", "collector_id"], name: "index_invoices_on_collector_type_and_collector_id"
+    t.index ["invoiceable_type", "invoiceable_id"], name: "index_invoices_on_invoiceable_type_and_invoiceable_id"
+    t.index ["payer_type", "payer_id"], name: "index_invoices_on_payer_type_and_payer_id"
   end
 
   create_table "lead_events", force: :cascade do |t|
@@ -664,7 +893,10 @@ ActiveRecord::Schema.define(version: 2021_01_15_174119) do
     t.integer "tracking_url_id"
     t.integer "agency_id"
     t.boolean "archived", default: false
+    t.integer "account_id"
     t.index ["email"], name: "index_leads_on_email"
+    t.index ["identifier"], name: "index_leads_on_identifier", unique: true
+    t.index ["tracking_url_id"], name: "index_leads_on_tracking_url_id"
     t.index ["user_id"], name: "index_leads_on_user_id"
   end
 
@@ -722,19 +954,69 @@ ActiveRecord::Schema.define(version: 2021_01_15_174119) do
     t.index ["reference"], name: "lease_reference", unique: true
   end
 
-  create_table "line_items", force: :cascade do |t|
-    t.string "title"
-    t.integer "price", default: 0
-    t.bigint "invoice_id"
+  create_table "line_item_changes", force: :cascade do |t|
+    t.integer "field_changed", null: false
+    t.integer "amount", null: false
+    t.integer "new_value", null: false
+    t.boolean "handled", default: false, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "line_item_id"
+    t.string "reason_type"
+    t.bigint "reason_id"
+    t.string "handler_type"
+    t.bigint "handler_id"
+    t.string "error_info"
+    t.integer "analytics_category", default: 0, null: false
+    t.index ["handler_type", "handler_id"], name: "index_line_item_changes_on_handler_type_and_handler_id"
+    t.index ["line_item_id"], name: "index_line_item_changes_on_line_item_id"
+    t.index ["reason_type", "reason_id"], name: "index_line_item_changes_on_reason_type_and_reason_id"
+  end
+
+  create_table "line_item_reductions", force: :cascade do |t|
+    t.string "reason", null: false
     t.integer "refundability", null: false
-    t.integer "category", default: 0, null: false
+    t.integer "proration_interaction", default: 0, null: false
+    t.integer "amount_interpretation", default: 0, null: false
+    t.integer "amount", null: false
+    t.integer "amount_successful", default: 0, null: false
+    t.integer "amount_refunded", default: 0, null: false
+    t.boolean "pending", default: true, null: false
+    t.integer "stripe_refund_reason"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "line_item_id"
+    t.bigint "dispute_id"
+    t.bigint "refund_id"
+    t.index ["dispute_id"], name: "index_line_item_reductions_on_dispute_id"
+    t.index ["line_item_id"], name: "index_line_item_reductions_on_line_item_id"
+    t.index ["refund_id"], name: "index_line_item_reductions_on_refund_id"
+  end
+
+  create_table "line_items", force: :cascade do |t|
+    t.string "title", null: false
     t.boolean "priced_in", default: false, null: false
-    t.integer "collected", default: 0, null: false
-    t.integer "proration_reduction", default: 0, null: false
-    t.date "full_refund_before_date"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.integer "original_total_due", null: false
+    t.integer "total_due", null: false
+    t.integer "total_reducing", default: 0, null: false
+    t.integer "total_received", default: 0, null: false
+    t.integer "preproration_total_due", null: false
+    t.integer "duplicatable_reduction_total", default: 0, null: false
+    t.string "chargeable_type"
+    t.bigint "chargeable_id"
+    t.bigint "invoice_id"
+    t.integer "analytics_category", default: 0, null: false
+    t.bigint "policy_quote_id"
+    t.bigint "policy_id"
+    t.bigint "archived_line_item_id"
+    t.boolean "hidden", default: false, null: false
+    t.index ["archived_line_item_id"], name: "index_line_items_on_archived_line_item_id"
+    t.index ["chargeable_type", "chargeable_id"], name: "index_line_items_on_chargeable_type_and_chargeable_id"
     t.index ["invoice_id"], name: "index_line_items_on_invoice_id"
+    t.index ["policy_id"], name: "index_line_items_on_policy_id"
+    t.index ["policy_quote_id"], name: "index_line_items_on_policy_quote_id"
   end
 
   create_table "login_activities", force: :cascade do |t|
@@ -771,17 +1053,6 @@ ActiveRecord::Schema.define(version: 2021_01_15_174119) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["model_type", "model_id"], name: "index_model_errors_on_model_type_and_model_id"
-  end
-
-  create_table "modifiers", force: :cascade do |t|
-    t.integer "strategy"
-    t.float "amount"
-    t.integer "tier", default: 0
-    t.integer "condition", default: 0
-    t.bigint "invoice_id"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["invoice_id"], name: "index_modifiers_on_invoice_id"
   end
 
   create_table "module_permissions", force: :cascade do |t|
@@ -860,21 +1131,6 @@ ActiveRecord::Schema.define(version: 2021_01_15_174119) do
     t.index ["payer_type", "payer_id"], name: "index_payment_profiles_on_payer_type_and_payer_id"
   end
 
-  create_table "payments", force: :cascade do |t|
-    t.boolean "active"
-    t.integer "status"
-    t.integer "amount"
-    t.integer "reason"
-    t.string "stripe_id"
-    t.bigint "charge_id"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.bigint "invoice_id"
-    t.index ["charge_id"], name: "index_payments_on_charge_id"
-    t.index ["invoice_id"], name: "index_payments_on_invoice_id"
-    t.index ["stripe_id"], name: "stripe_payment", unique: true
-  end
-
   create_table "policies", force: :cascade do |t|
     t.string "number"
     t.date "effective_date"
@@ -911,6 +1167,10 @@ ActiveRecord::Schema.define(version: 2021_01_15_174119) do
     t.bigint "policy_id"
     t.integer "cancellation_reason"
     t.integer "branding_profile_id"
+    t.boolean "marked_for_cancellation", default: true, null: false
+    t.string "marked_for_cancellation_info"
+    t.datetime "marked_cancellation_time"
+    t.string "marked_cancellation_reason"
     t.index ["account_id"], name: "index_policies_on_account_id"
     t.index ["agency_id"], name: "index_policies_on_agency_id"
     t.index ["carrier_id"], name: "index_policies_on_carrier_id"
@@ -999,8 +1259,8 @@ ActiveRecord::Schema.define(version: 2021_01_15_174119) do
     t.bigint "tag_ids", default: [], null: false, array: true
     t.jsonb "tagging_data"
     t.string "error_message"
-    t.bigint "tag_ids", default: [], null: false, array: true
     t.integer "branding_profile_id"
+    t.string "internal_error_message"
     t.index ["account_id"], name: "index_policy_applications_on_account_id"
     t.index ["agency_id"], name: "index_policy_applications_on_agency_id"
     t.index ["billing_strategy_id"], name: "index_policy_applications_on_billing_strategy_id"
@@ -1008,7 +1268,6 @@ ActiveRecord::Schema.define(version: 2021_01_15_174119) do
     t.index ["policy_application_group_id"], name: "index_policy_applications_on_policy_application_group_id"
     t.index ["policy_id"], name: "index_policy_applications_on_policy_id"
     t.index ["policy_type_id"], name: "index_policy_applications_on_policy_type_id"
-    t.index ["tag_ids"], name: "policy_application_tag_ids_index", using: :gin
   end
 
   create_table "policy_coverages", force: :cascade do |t|
@@ -1124,47 +1383,142 @@ ActiveRecord::Schema.define(version: 2021_01_15_174119) do
     t.bigint "insurable_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "auto_assign", default: false
     t.index ["insurable_id"], name: "index_policy_insurables_on_insurable_id"
     t.index ["policy_application_id"], name: "index_policy_insurables_on_policy_application_id"
     t.index ["policy_id"], name: "index_policy_insurables_on_policy_id"
   end
 
   create_table "policy_premia", force: :cascade do |t|
-    t.integer "base", default: 0
-    t.integer "taxes", default: 0
-    t.integer "total_fees", default: 0
-    t.integer "total", default: 0
-    t.boolean "enabled", default: false, null: false
-    t.datetime "enabled_changed"
-    t.bigint "policy_quote_id"
-    t.bigint "policy_id"
-    t.bigint "billing_strategy_id"
-    t.bigint "commission_strategy_id"
+    t.integer "total_premium", default: 0, null: false
+    t.integer "total_fee", default: 0, null: false
+    t.integer "total_tax", default: 0, null: false
+    t.integer "total", default: 0, null: false
+    t.boolean "prorated", default: false, null: false
+    t.datetime "prorated_term_last_moment"
+    t.datetime "prorated_term_first_moment"
+    t.boolean "force_no_refunds", default: false, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.integer "estimate"
-    t.integer "calculation_base", default: 0
-    t.integer "deposit_fees", default: 0
-    t.integer "amortized_fees", default: 0
-    t.integer "carrier_base", default: 0
-    t.integer "special_premium", default: 0
-    t.boolean "include_special_premium", default: false
-    t.integer "unearned_premium", default: 0
-    t.boolean "only_fees_internal", default: false
-    t.integer "external_fees", default: 0
-    t.index ["billing_strategy_id"], name: "index_policy_premia_on_billing_strategy_id"
+    t.string "error_info"
+    t.bigint "policy_quote_id"
+    t.bigint "policy_id"
+    t.bigint "commission_strategy_id"
+    t.bigint "archived_policy_premium_id"
+    t.integer "total_hidden_fee", default: 0, null: false
+    t.integer "total_hidden_tax", default: 0, null: false
+    t.index ["archived_policy_premium_id"], name: "index_policy_premia_on_archived_policy_premium_id"
     t.index ["commission_strategy_id"], name: "index_policy_premia_on_commission_strategy_id"
     t.index ["policy_id"], name: "index_policy_premia_on_policy_id"
     t.index ["policy_quote_id"], name: "index_policy_premia_on_policy_quote_id"
   end
 
-  create_table "policy_premium_fees", force: :cascade do |t|
-    t.bigint "policy_premium_id"
-    t.bigint "fee_id"
+  create_table "policy_premium_item_commissions", force: :cascade do |t|
+    t.integer "status", null: false
+    t.integer "payability", null: false
+    t.integer "total_expected", null: false
+    t.integer "total_received", default: 0, null: false
+    t.integer "total_commission", default: 0, null: false
+    t.decimal "percentage", precision: 5, scale: 2, null: false
+    t.integer "payment_order", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["fee_id"], name: "index_policy_premium_fees_on_fee_id"
-    t.index ["policy_premium_id"], name: "index_policy_premium_fees_on_policy_premium_id"
+    t.bigint "policy_premium_item_id"
+    t.string "recipient_type"
+    t.bigint "recipient_id"
+    t.bigint "commission_strategy_id"
+    t.index ["commission_strategy_id"], name: "index_policy_premium_item_commissions_on_commission_strategy_id"
+    t.index ["policy_premium_item_id"], name: "index_policy_premium_item_commissions_on_policy_premium_item_id"
+    t.index ["recipient_type", "recipient_id"], name: "index_policy_premium_item_commission_on_recipient"
+  end
+
+  create_table "policy_premium_item_payment_terms", force: :cascade do |t|
+    t.integer "weight", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "policy_premium_payment_term_id"
+    t.bigint "policy_premium_item_id"
+    t.index ["policy_premium_item_id"], name: "index_ppipt_on_ppi"
+    t.index ["policy_premium_payment_term_id"], name: "index_ppipt_on_pppt_id"
+  end
+
+  create_table "policy_premium_item_transaction_memberships", force: :cascade do |t|
+    t.bigint "policy_premium_item_transaction_id"
+    t.string "member_type"
+    t.bigint "member_id"
+    t.index ["member_type", "member_id"], name: "index_ppitms_on_member"
+    t.index ["policy_premium_item_transaction_id"], name: "index_ppitms_on_ppit"
+  end
+
+  create_table "policy_premium_item_transactions", force: :cascade do |t|
+    t.boolean "pending", default: true, null: false
+    t.datetime "create_commission_items_at", null: false
+    t.integer "amount", null: false
+    t.jsonb "error_info"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.string "recipient_type"
+    t.bigint "recipient_id"
+    t.string "commissionable_type"
+    t.bigint "commissionable_id"
+    t.string "reason_type"
+    t.bigint "reason_id"
+    t.bigint "policy_premium_item_id"
+    t.integer "analytics_category", default: 0, null: false
+    t.index ["commissionable_type", "commissionable_id"], name: "index_ppits_on_commissionable"
+    t.index ["pending", "create_commission_items_at"], name: "index_ppits_on_pending_and_ccia"
+    t.index ["policy_premium_item_id"], name: "index_ppits_on_ppi"
+    t.index ["reason_type", "reason_id"], name: "index_ppits_on_reason"
+    t.index ["recipient_type", "recipient_id"], name: "index_ppits_on_recipient"
+  end
+
+  create_table "policy_premium_items", force: :cascade do |t|
+    t.string "title", null: false
+    t.integer "category", null: false
+    t.integer "rounding_error_distribution", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.integer "original_total_due", null: false
+    t.integer "total_due", null: false
+    t.integer "total_received", default: 0, null: false
+    t.boolean "proration_pending", default: false, null: false
+    t.integer "proration_calculation", null: false
+    t.boolean "proration_refunds_allowed", null: false
+    t.integer "commission_calculation", default: 0, null: false
+    t.integer "commission_creation_delay_hours"
+    t.bigint "policy_premium_id"
+    t.string "recipient_type"
+    t.bigint "recipient_id"
+    t.string "collector_type"
+    t.bigint "collector_id"
+    t.string "collection_plan_type"
+    t.bigint "collection_plan_id"
+    t.bigint "fee_id"
+    t.boolean "hidden", default: false, null: false
+    t.index ["collection_plan_type", "collection_plan_id"], name: "index_policy_premium_items_on_cp"
+    t.index ["collector_type", "collector_id"], name: "index_policy_premium_items_on_collector_type_and_collector_id"
+    t.index ["fee_id"], name: "index_policy_premium_items_on_fee_id"
+    t.index ["policy_premium_id"], name: "index_policy_premium_items_on_policy_premium_id"
+    t.index ["recipient_type", "recipient_id"], name: "index_policy_premium_items_on_recipient_type_and_recipient_id"
+  end
+
+  create_table "policy_premium_payment_terms", force: :cascade do |t|
+    t.datetime "original_first_moment", null: false
+    t.datetime "original_last_moment", null: false
+    t.datetime "first_moment", null: false
+    t.datetime "last_moment", null: false
+    t.decimal "unprorated_proportion", default: "1.0", null: false
+    t.boolean "prorated", default: false, null: false
+    t.integer "time_resolution", default: 0, null: false
+    t.boolean "cancelled", default: false, null: false
+    t.integer "default_weight"
+    t.string "term_group"
+    t.date "invoice_available_date_override"
+    t.date "invoice_due_date_override"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "policy_premium_id"
+    t.index ["policy_premium_id"], name: "index_policy_premium_payment_terms_on_policy_premium_id"
   end
 
   create_table "policy_quotes", force: :cascade do |t|
@@ -1210,6 +1564,9 @@ ActiveRecord::Schema.define(version: 2021_01_15_174119) do
     t.boolean "enabled", default: false, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "master", default: false
+    t.boolean "master_coverage", default: false
+    t.integer "master_policy_id"
   end
 
   create_table "policy_users", force: :cascade do |t|
@@ -1251,23 +1608,15 @@ ActiveRecord::Schema.define(version: 2021_01_15_174119) do
   end
 
   create_table "refunds", force: :cascade do |t|
-    t.string "stripe_id"
-    t.integer "amount"
-    t.string "currency"
-    t.string "failure_reason"
-    t.integer "stripe_reason"
-    t.string "receipt_number"
-    t.integer "stripe_status"
-    t.integer "status"
-    t.string "full_reason"
-    t.string "error_message"
-    t.integer "amount_returned_via_dispute", default: 0
-    t.bigint "charge_id"
+    t.string "refund_reasons", default: [], null: false, array: true
+    t.integer "amount", default: 0, null: false
+    t.integer "amount_refunded", default: 0, null: false
+    t.integer "amount_returned_by_dispute", default: 0, null: false
+    t.boolean "complete", default: false, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["charge_id"], name: "index_refunds_on_charge_id"
-    t.index ["status"], name: "refund_status"
-    t.index ["stripe_id"], name: "refund_stripe_id"
+    t.bigint "invoice_id"
+    t.index ["invoice_id"], name: "index_refunds_on_invoice_id"
   end
 
   create_table "reports", force: :cascade do |t|
@@ -1301,6 +1650,16 @@ ActiveRecord::Schema.define(version: 2021_01_15_174119) do
     t.index ["referent_type", "referent_id"], name: "index_signable_documents_on_referent_type_and_referent_id"
     t.index ["signer_type", "signer_id"], name: "index_signable_documents_on_signer_type_and_signer_id"
     t.index ["status", "referent_type", "referent_id"], name: "signable_documents_signed_index"
+  end
+
+  create_table "staff_permissions", force: :cascade do |t|
+    t.jsonb "permissions", default: {}
+    t.bigint "global_agency_permission_id"
+    t.bigint "staff_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["global_agency_permission_id"], name: "index_staff_permissions_on_global_agency_permission_id"
+    t.index ["staff_id"], name: "index_staff_permissions_on_staff_id"
   end
 
   create_table "staffs", force: :cascade do |t|
@@ -1351,12 +1710,44 @@ ActiveRecord::Schema.define(version: 2021_01_15_174119) do
     t.index ["uid", "provider"], name: "index_staffs_on_uid_and_provider", unique: true
   end
 
-  create_table "tags", force: :cascade do |t|
-    t.string "title"
-    t.text "description"
+  create_table "stripe_charges", force: :cascade do |t|
+    t.boolean "processed", default: false, null: false
+    t.boolean "invoice_aware", default: false, null: false
+    t.integer "status", default: 0, null: false
+    t.datetime "status_changed_at"
+    t.integer "amount", null: false
+    t.integer "amount_refunded", default: 0, null: false
+    t.string "source"
+    t.string "customer_stripe_id"
+    t.string "description"
+    t.jsonb "metadata"
+    t.string "stripe_id"
+    t.string "error_info"
+    t.jsonb "client_error"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["title"], name: "index_tags_on_title", unique: true
+    t.bigint "invoice_id", null: false
+    t.bigint "archived_charge_id"
+    t.index ["archived_charge_id"], name: "index_stripe_charges_on_archived_charge_id"
+    t.index ["invoice_id"], name: "index_stripe_charges_on_invoice_id"
+  end
+
+  create_table "stripe_refunds", force: :cascade do |t|
+    t.integer "status", default: 0, null: false
+    t.string "full_reasons", default: [], null: false, array: true
+    t.integer "amount", null: false
+    t.string "stripe_id"
+    t.integer "stripe_reason"
+    t.integer "stripe_status"
+    t.string "failure_reason"
+    t.string "receipt_number"
+    t.string "error_message"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "refund_id"
+    t.bigint "stripe_charge_id"
+    t.index ["refund_id"], name: "index_stripe_refunds_on_refund_id"
+    t.index ["stripe_charge_id"], name: "index_stripe_refunds_on_stripe_charge_id"
   end
 
   create_table "tracking_urls", force: :cascade do |t|
@@ -1370,6 +1761,7 @@ ActiveRecord::Schema.define(version: 2021_01_15_174119) do
     t.bigint "agency_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "branding_profile_id"
     t.index ["agency_id"], name: "index_tracking_urls_on_agency_id"
   end
 
@@ -1426,7 +1818,7 @@ ActiveRecord::Schema.define(version: 2021_01_15_174119) do
   end
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
-  add_foreign_key "payments", "invoices"
   add_foreign_key "policy_coverages", "policies"
   add_foreign_key "policy_coverages", "policy_applications"
+  add_foreign_key "policy_types", "policy_types", column: "master_policy_id"
 end

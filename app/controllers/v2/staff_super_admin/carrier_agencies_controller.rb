@@ -13,13 +13,24 @@ module V2
       end
 
       def create
-        @carrier_agency = CarrierAgency.create(create_params)
-        if @carrier_agency.errors.blank?
-          render template: 'v2/shared/carrier_agencies/show', status: :created
-        else
-          render json: standard_error(:carrier_agency_create_error, nil, @carrier_agency.errors.full_messages),
-                 status: :unprocessable_entity
-        end
+        # Use CarriersController#assign_agency_to_carrier instead!
+        #
+        #agency = Agency.find_by(id: create_params[:agency_id])
+        #carrier = Carrier.find_by(id: create_params[:carrier_id])
+        #
+        #if agency.nil? || carrier.nil?
+        #  render json: standard_error(:something_went_wrong, 'Data Missing', {}), status: :unprocessable_entity
+        #else
+        #  if carrier.agencies.include?(agency)
+        #    render json: { message: 'This agency has been already assigned to this carrier' }, status: :unprocessable_entity
+        #  else
+        #    if carrier.agencies << agency
+        #      render json: { message: 'Carrier was added to the agency' }, status: :ok
+        #    else
+        #      render json: standard_error(:something_went_wrong, "#{agency.title} could not be assigned to #{carrier.title}", {}), status: :unprocessable_entity
+        #    end
+        #  end
+        #end
       end
 
       def update
@@ -68,7 +79,8 @@ module V2
         @calling_supported_orders = called_from_orders
         {
           carrier_id: %i[scalar array],
-          agency_id: %i[scalar array]
+          agency_id: %i[scalar array],
+          created_at: %i[scalar array]
         }
       end
 

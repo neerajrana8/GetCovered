@@ -896,7 +896,7 @@
           Lease Co-Guarantee Summary attached hereto as Exhibit A forming part of this Agreement.
         </p>
         <p>
-          You agree to pay a monthly Lease Co-Guarantee Fee of <%= ActionController::Base.helpers.number_to_currency((@policy.invoices&.order(:due_date)&.pluck(:total)&.last || 0) / 100) %> for a period of twelve months,
+          You agree to pay a monthly Lease Co-Guarantee Fee of <%= ActionController::Base.helpers.number_to_currency((@policy.invoices&.order(:due_date)&.pluck(:total_due)&.last || 0) / 100) %> for a period of twelve months,
           from the registration and subsequent renewals received from You in writing pursuant to Articles 3 and 4,
           and the Terms and Conditions of this Agreement.
         </p>
@@ -934,7 +934,7 @@
           <span>1.1</span>
           <p>Lease Co-Guarantee Fee</p>
           <ol class="inner-list-top">
-            <li><p>The Lease Co-Guarantee Fee of <%= ActionController::Base.helpers.number_to_currency((@policy.invoices&.order(:due_date)&.pluck(:total)&.last || 0) / 100) %> payable by You either (i) pre-paid for
+            <li><p>The Lease Co-Guarantee Fee of <%= ActionController::Base.helpers.number_to_currency((@policy.invoices&.order(:due_date)&.pluck(:total_due)&.last || 0) / 100) %> payable by You either (i) pre-paid for
               the first twelve (12) month period; or (ii) on Your bill cycle date of each month.</p></li>
             <li><p>In the event You miss or fail to make two (2) consecutive payments, or a total of three (3) payments
               within a six (6) month period, this Lease Co-Guarantee Agreement will be cancelled without notice to You or Your Landlord.</p></li>

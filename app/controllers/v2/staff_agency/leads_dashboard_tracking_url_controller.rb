@@ -2,6 +2,7 @@ module V2
   module StaffAgency
     class LeadsDashboardTrackingUrlController < StaffAgencyController
       before_action :set_substrate, only: :index
+      check_privileges 'dashboard.leads'
 
       def index
         super(:@tracking_urls, @substrate, :leads)
@@ -21,17 +22,17 @@ module V2
       def supported_filters(called_from_orders = false)
         @calling_supported_orders = called_from_orders
         {
-            agency_id: [:scalar],
-            campaign_source: [:scalar],
-            campaign_medium: [:scalar],
-            campaign_name: [:scalar],
-            landing_page: [:scalar],
-            campaign_term: [:scalar],
-            campaign_content: [:scalar],
-            leads: {
-                last_visit: [:interval, :scalar]
-            },
-            deleted: [:scalar]
+          agency_id: %i[scalar array],
+          campaign_source: %i[scalar array],
+          campaign_medium: %i[scalar array],
+          campaign_name: %i[scalar array],
+          landing_page: %i[scalar array],
+          campaign_term: %i[scalar array],
+          campaign_content: %i[scalar array],
+          leads: {
+            last_visit: %i[interval scalar]
+          },
+          deleted: [:scalar]
         }
       end
 
@@ -41,7 +42,7 @@ module V2
 
       def set_substrate
         super
-        #need to delete after fix on ui
+        # need to delete after fix on ui
         if @substrate.nil?
           @substrate = access_model(::TrackingUrl)
           params[:filter][:deleted] = params[:filter][:archived] if params[:filter].present? && params[:filter][:archived].present?
@@ -51,22 +52,21 @@ module V2
           params[:campaign_name] = unescape_param(params[:campaign_name])
           params[:campaign_term] = unescape_param(params[:campaign_term])
           params[:campaign_content] = unescape_param(params[:campaign_content])
-          #if params[:filter].present? && params[:filter][:archived]
+          # if params[:filter].present? && params[:filter][:archived]
           #  @substrate = access_model(::TrackingUrl).deleted
-          #elsif params[:filter].nil? || !!params[:filter][:archived]
+          # elsif params[:filter].nil? || !!params[:filter][:archived]
           #  @substrate = access_model(::TrackingUrl).not_deleted
-          #end
+          # end
         end
       end
 
       def escape_param(value)
-        value.nil? ? value : CGI::escape(value)
+        value.nil? ? value : CGI.escape(value)
       end
 
       def unescape_param(value)
-        value.nil? ? value : CGI::unescape(value)
+        value.nil? ? value : CGI.unescape(value)
       end
-
     end
   end
 end

@@ -8,12 +8,14 @@ module V2
       include PoliciesMethods
 
       before_action :set_policy,
-                    only: %i[update show refund_policy cancel_policy update_coverage_proof delete_policy_document]
+                    only: %i[update show refund_policy cancel_policy update_coverage_proof delete_policy_document
+                             get_leads add_policy_documents]
+      before_action :set_optional_coverages, only: [:show]
 
       before_action :set_substrate, only: [:index]
 
       def index
-        super(:@policies, @substrate)
+        super(:@policies, @substrate, :agency, :account, :primary_user, :primary_insurable, :carrier, :policy_type, invoices: :line_items)
       end
 
       def show; end
@@ -21,6 +23,19 @@ module V2
       def search
         @policies = Policy.search(params[:query]).records
         render json: @policies.to_json, status: 200
+      end
+
+      def get_leads
+        @leads = [@policy.primary_user.lead]
+        @site_visits = @leads.last.lead_events.order("DATE(created_at)").group("DATE(created_at)").count.keys.size
+        render 'v2/shared/leads/index'
+      end
+
+      def get_policies
+        user_ids = @tracking_url.leads.pluck(:user_id).compact
+        policies_ids = PolicyUser.where(user_id: user_ids).pluck(:policy_id).compact
+        @policies = Policy.where(id: policies_ids)
+        render 'v2/staff_super_admin/policies/index'
       end
 
       private

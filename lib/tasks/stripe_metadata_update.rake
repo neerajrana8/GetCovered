@@ -5,7 +5,7 @@ namespace :stripe_metadata do
   task update_stripe_meta: :environment do
     Charge.pluck(:stripe_id, :invoice_id).each do |un_id|
       Invoice.find_by(id: un_id[1].to_i) do |invoice|
-        user = User&.find(invoice&.payer_id)
+        user = ::User&.find(invoice&.payer_id)
         user_name = user&.profile&.first_name
         user_last_name = user&.profile&.last_name
         contact_phone = user&.profile&.contact_phone

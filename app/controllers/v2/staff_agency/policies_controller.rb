@@ -7,16 +7,20 @@ module V2
     class PoliciesController < StaffAgencyController
       include PoliciesMethods
       before_action :set_policy,
-                    only: %i[update show update_coverage_proof delete_policy_document refund_policy cancel_policy]
-
+                    only: %i[update show update_coverage_proof delete_policy_document refund_policy cancel_policy add_policy_documents]
+      before_action :set_optional_coverages, only: [:show]
       before_action :set_substrate, only: %i[create index add_coverage_proof]
-      
+      check_privileges 'policies.policies'
+
       def index
-        if current_staff.getcovered_agent? && params[:agency_id].nil?
-          super(:@policies, Policy.all)
-        else
-          super(:@policies, Policy.where(agency: @agency))
-        end
+        relation =
+          if current_staff.getcovered_agent? && params[:agency_id].nil?
+            Policy.all
+          else
+            Policy.where(agency: @agency)
+          end
+
+        super(:@policies, relation, :agency, :account, :primary_user, :primary_insurable, :carrier, :policy_type, invoices: :line_items)
       end
 
       def search

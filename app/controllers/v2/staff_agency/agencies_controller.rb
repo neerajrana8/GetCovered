@@ -7,6 +7,7 @@ module V2
     class AgenciesController < StaffAgencyController
 
       before_action :set_agency, only: [:update, :show, :branding_profile]
+      check_privileges 'agencies.details' => %i[create show]
 
       def index
         if params[:short]
@@ -16,11 +17,12 @@ module V2
         end
       end
 
-      def sub_agencies_index
+      # if the carriers filters are passed, sorting won't work because of DISTINCT in the resulted query
+      def sub_agencies
         result = []
-        required_fields = %i[id title agency_id]
+        required_fields = %i[id title agency_id enabled]
 
-        @agencies = paginator(Agency.where(agency_id: nil))
+        @agencies = paginator(filtered_sub_agencies)
 
         if current_staff.getcovered_agent?
           @agencies.select(required_fields).each do |agency|
@@ -96,6 +98,29 @@ module V2
         true
       end
 
+      def filtered_sub_agencies
+        passed_carriers_filters = params[:policy_type_id].present? || params[:carrier_id].present?
+
+        relation =
+          if passed_carriers_filters
+            Agency.left_joins(carrier_agencies: :carrier_agency_policy_types)
+          else
+            Agency
+          end
+
+        relation = relation.where(agency_id: sub_agency_filter_params)
+        relation = relation.where(carrier_agencies: { carrier_id: params[:carrier_id] }) if params[:carrier_id].present?
+        if params[:policy_type_id].present?
+          relation = relation.where(carrier_agency_policy_types: { policy_type_id: params[:policy_type_id] })
+        end
+
+        passed_carriers_filters ? relation.distinct : relation
+      end
+
+      def sub_agency_filter_params
+        params[:agency_id].blank? ? nil : params.require(:agency_id)
+      end
+
       def set_agency
         @agency =
           if current_staff.organizable_type == 'Agency' && current_staff.organizable_id.to_s == params[:id]
@@ -111,8 +136,8 @@ module V2
         return({}) if params[:agency].blank?
 
         to_return = params.require(:agency).permit(
-          :staff_id, :title, :tos_accepted, :whitelabel,
-          contact_info: {}, addresses_attributes: %i[
+          :staff_id, :title, :tos_accepted, :whitelabel, :producer_code,
+          contact_info: {}, global_agency_permission_attributes: { permissions: {} }, addresses_attributes: %i[
             city country county id latitude longitude
             plus_four state street_name street_number
             street_two timezone zip_code
@@ -125,8 +150,8 @@ module V2
         return({}) if params[:agency].blank?
 
         to_return = params.require(:agency).permit(
-          :staff_id, :title, :tos_accepted, :whitelabel,
-          contact_info: {}, settings: {}, addresses_attributes: %i[
+          :staff_id, :title, :tos_accepted, :whitelabel, :producer_code,
+          contact_info: {}, settings: {}, global_agency_permission_attributes: { permissions: {} }, addresses_attributes: %i[
             city country county id latitude longitude
             plus_four state street_name street_number
             street_two timezone zip_code
@@ -147,6 +172,12 @@ module V2
       def supported_filters(called_from_orders = false)
         @calling_supported_orders = called_from_orders
         {
+          agency_id: %i[scalar array],
+          id: %i[scalar array],
+          created_at: %i[scalar array interval],
+          updated_at: %i[scalar array interval],
+          title: %i[scalar array interval like],
+          enabled: %i[scalar array]
         }
       end
 

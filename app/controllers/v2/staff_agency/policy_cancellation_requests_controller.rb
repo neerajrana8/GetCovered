@@ -7,6 +7,8 @@ module V2
     class PolicyCancellationRequestsController < StaffAgencyController
       include PolicyCancellationRequestsMethods
 
+      check_privileges %w[requests.refunds requests.cancellations] => %i[approve decline]
+
       private
 
       def relation

@@ -3,12 +3,12 @@ class MakeInvoicesAvailableJob < ApplicationJob
   before_perform :set_invoices
 
   def perform(*args)
-    @invoices.each{|invoice| invoice.update(status: 'available') }
+    @invoices.each{|invoice| invoice.update(status: invoice.get_proper_status) }
   end
 
   private
 
     def set_invoices
-      @invoices = ::Invoice.where(status: 'upcoming', external: false).where("available_date <= '#{Time.current.to_date.to_s(:db)}'")
+      @invoices = ::Invoice.where(status: 'upcoming', external: false).where("available_date <= ?", Time.current.to_date)
     end
 end

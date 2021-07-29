@@ -11,6 +11,10 @@ class MsiService
     5
   end
   
+  def self.carrier
+    @carrier ||= ::Carrier.find(5)
+  end
+  
   def self.displayable_error_for(msg, extended_msg = nil)
     return nil if msg.nil?
     if msg.start_with?("ADDR16") # address was invalid
@@ -98,7 +102,8 @@ class MsiService
   end.to_h){|k,a,b| a + b }
   
   TITLE_OVERRIDES = {
-    @@coverage_codes[:ForcedEntryTheft][:code].to_s => Proc.new{|region| region == 'NY' ? "Burglary Limitation Coverage" : nil }
+    @@coverage_codes[:ForcedEntryTheft][:code].to_s => Proc.new{|region| region == 'NY' ? "Burglary Limitation Coverage" : nil },
+    @@coverage_codes[:WindHail][:code].to_s => Proc.new{|region| "Wind / Hail" }
   }
   
   DESCRIPTIONS = {
@@ -136,6 +141,10 @@ class MsiService
         end
       end
     end
+  end
+  
+  def self.covopt_sort(a,b)
+    (a['uid'] == '1' ? 999999 : 0) <=> (b['uid'] == '1' ? 999999 : 0)
   end
   
   LOSS_OF_USE_VARIATIONS = {
@@ -549,7 +558,7 @@ class MsiService
   
   
   def build_get_or_create_community(
-      effective_date:,
+      effective_date: Time.current.to_date + 2.days,
       community_name:, number_of_units:, property_manager_name:, years_professionally_managed:, year_built:, gated:,
       address: nil, address_line_one: nil, city: nil, state: nil, zip: nil,
       **compilation_args
@@ -946,7 +955,7 @@ class MsiService
             "options"       => ded["MSI_DeductibleOptionList"].blank? ? nil : arrayify(ded["MSI_DeductibleOptionList"]["Deductible"]).map{|d| d["Amt"] ? d["Amt"].to_d : d["FormatPct"].to_d * 100 }, # MOOSE WARNING: handle percents in special way?
             "options_format"=> ded["MSI_DeductibleOptionList"].blank? ? "none" : arrayify(ded["MSI_DeductibleOptionList"]["Deductible"]).first["Amt"] ? "currency" : "percent"
           }
-      end)
+      end).sort{|a,b| MsiService.covopt_sort(a,b) }
     end
     # apply descriptions
     irc.coverage_options.each{|co| co['description'] = DESCRIPTIONS[co['uid'].to_s] unless DESCRIPTIONS[co['uid'].to_s].blank? }
@@ -970,8 +979,27 @@ class MsiService
   
   
   
-  
-  
+  def self.validate_msi_additional_interest(hash)
+    case hash['entity_type']
+      when 'company'
+        return 'msi_service.additional_interest.company_name_required' if hash['company_name'].blank?
+        return 'msi_service.additional_interest.company_name_too_long' if hash['company_name'].length > 100
+        return 'msi_service.additional_interest.invalid_email' if hash['email_address'].blank? || hash['email_address'].index('@').nil? || hash['email_address'].index('.').nil? || hash['email_address'].length > 50
+        return 'msi_service.additional_interest.invalid_phone_number' if !hash['phone_number'].blank? && hash['phone_number'].delete("^0-9").length != 10
+      when 'person'
+        return 'msi_service.additional_interest.first_name_required' if hash['first_name'].blank?
+        return 'msi_service.additional_interest.first_name_too_long' if hash['first_name'].length > 50
+        return 'msi_service.additional_interest.last_name_required' if hash['last_name'].blank?
+        return 'msi_service.additional_interest.last_name_too_long' if hash['last_name'].length > 50
+        return 'msi_service.additional_interest.middle_name_too_long' if hash['middle_name'] && hash['middle_name'].length > 50
+        return 'msi_service.additional_interest.invalid_email' if hash['email_address'].blank? || hash['email_address'].index('@').nil? || hash['email_address'].index('.').nil? || hash['email_address'].length > 50
+        return 'msi_service.additional_interest.invalid_phone_number' if hash['phone_number'].blank? || hash['phone_number'].delete("^0-9").length != 10
+        
+      else
+        return 'msi_service.additional_interest.invalid_entity_type'
+    end
+    return nil
+  end
   
   
 private

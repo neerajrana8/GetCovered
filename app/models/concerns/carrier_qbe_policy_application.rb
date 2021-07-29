@@ -124,18 +124,28 @@ module CarrierQbePolicyApplication
 	 					    tax = xml_min_prem.attribute('tax').value.delete(".")
 	 					    base_premium = response_premium.to_i - tax.to_i
 
-	 					    premium = PolicyPremium.new base: base_premium.to_i,
-	 					                                taxes: tax.to_i,
-	 					                                billing_strategy: quote.policy_application.billing_strategy,
-	 					                                policy_quote: quote
-    						premium.set_fees
-    						premium.calculate_fees(true)
-    						premium.calculate_total(true)
+                quote_method = "mark_failure"
+                premium = PolicyPremium.create policy_quote: quote
+                unless premium.id
+                  puts "  Failed to create premium! #{premium.errors.to_h}"
+                else
+                  result = premium.initialize_all(base_premium.to_i, tax: tax.to_i, tax_recipient: quote.policy_application.carrier)
+                  unless result.nil?
+                    puts "  Failed to initialize premium! #{result}"
+                  else
+                    quote_method = "mark_successful"
+                  end
+                end
 	 					    quote_method = premium.save ? "mark_successful" : "mark_failure"
 	 					    quote.send(quote_method)
-
+                
   	 						if quote.status == 'quoted'
-	  	 						quote.generate_invoices_for_term
+                  result = quote.generate_invoices_for_term
+                  unless result.nil?
+                    puts result[:internal] # MOOSE WARNING: [:external] contains an I81n key for a user-displayable message, if desired
+                    quote.mark_failure(result[:internal])
+                    return false
+                  end
 		 							return true
 		 						else
 		 							puts "\nQuote Save Error\n"

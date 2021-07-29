@@ -26,6 +26,8 @@ module Helpers
     FactoryBot.create(:staff, organizable: account, role: 'staff')
   end
 
+
+
   def login_staff(staff, password: 'test1234')
     post staff_session_path, params: { email: staff.email, password: password }.to_json, headers: base_headers
   end

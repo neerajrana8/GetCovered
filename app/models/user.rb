@@ -17,8 +17,7 @@ class User < ApplicationRecord
   after_initialize :initialize_user
 
   after_create_commit :add_to_mailchimp,
-                      :set_qbe_id,
-                      :identify_segment
+                      :set_qbe_id
 
 	has_many :invoices, as: :payer
 
@@ -271,12 +270,15 @@ class User < ApplicationRecord
       }),
       Addr: (
         for_insurable.blank? ? (self.address.blank? ? nil : self.address.get_confie_addr(true, address_type: "MailingAddress"))
+        : for_insurable == true ? [
+          self.address.nil? ? nil : self.address.get_confie_addr(true, address_type: "StreetAddress"),
+          self.address.nil? ? nil : self.address.get_confie_addr(true, address_type: "MailingAddress")
+        ].compact
         : [
           for_insurable.primary_address.get_confie_addr(::InsurableType::RESIDENTIAL_UNITS_IDS.include?(for_insurable.insurable_type_id) ? "Unit #{for_insurable.title}" : true, address_type: "StreetAddress"),
           self.address.blank? ?
             for_insurable.primary_address.get_confie_addr(::InsurableType::RESIDENTIAL_UNITS_IDS.include?(for_insurable.insurable_type_id) ? "Unit #{for_insurable.title}" : true, address_type: "MailingAddress")
             : self.address.get_confie_addr(true, address_type: "MailingAddress")
-
         ]
       )
     }.compact
@@ -290,17 +292,6 @@ class User < ApplicationRecord
       principalPhone:     (self.profile.contact_phone || '').tr('^0-9', ''),
       isPrimaryOccupant:  primary
     }
-  end
-
-  def identify_segment
-    Analytics.identify(
-      user_id: id,
-      traits: {
-        name: "#{profile&.first_name} #{profile&.last_name}",
-        email: email,
-        created_at: created_at
-      }
-    )
   end
 
   private

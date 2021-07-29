@@ -3,18 +3,24 @@ include ActionController::RespondWith
 
 describe 'Admin Policy spec', type: :request do
   before :all do
+#<<<<<<< HEAD
     Policy.__elasticsearch__.client.indices.delete index: Policy.index_name rescue nil
     Policy.__elasticsearch__.create_index!
     Policy.import force: true
+#=======
+#    begin
+#      Policy.__elasticsearch__.client.indices.delete index: Policy.index_name
+#    rescue StandardError
+#      nil
+#    end
+#    Policy.__elasticsearch__.create_index!
+#    Policy.import force: true
+#>>>>>>> master
     @user = create_user
-    @agency = FactoryBot.create(:agency)
+    @agency = Agency.find(1)
     @account = FactoryBot.create(:account, agency: @agency)
-    @carrier = Carrier.first
-    @policy_type = @carrier.policy_types.take
-    @agency = FactoryBot.create(:agency)
-    @carrier.agencies << @agency
-    @account = FactoryBot.create(:account, agency: @agency)
-    BillingStrategy.create(title: "Monthly", slug: nil, enabled: true, new_business: {"payments"=>[8.37, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33], "payments_per_term"=>12, "remainder_added_to_deposit"=>true}, renewal: nil, locked: false, agency: @agency, carrier: @carrier, policy_type: @policy_type, carrier_code: nil)
+    @carrier = Carrier.find(1)
+    @policy_type = PolicyType.find(1)
   end
 
   context 'for StaffAccount roles' do
@@ -26,11 +32,10 @@ describe 'Admin Policy spec', type: :request do
       @headers = get_auth_headers_from_login_response_headers(response)
     end
 
-
     it 'should add coverage proof' do
-      post '/v2/staff_account/policies/add_coverage_proof', params: { policy: coverage_proof_params, users: [user_params] }, headers: @headers
+      post '/v2/staff_account/policies/add_coverage_proof', params: { policy: coverage_proof_params }, headers: @headers
       result = JSON.parse response.body
-      expect(result["message"]).to eq("Policy created")
+      expect(response.status).to eq(201)
       expect(Policy.last.users.last.email).to eq('yernar.mussin@nitka.com')
     end
 
@@ -72,7 +77,9 @@ describe 'Admin Policy spec', type: :request do
       expect(result.count).to eq(0)
 
       # Third Request should return 1 policy belonging to a new policy_type
-      new_policy_type = @carrier.policy_types.create(title: "New Policy Type")
+      new_policy_type = PolicyType.create(id: PolicyType.maximum(:id).next, title: "New Policy Type")
+      CarrierPolicyType.create!(carrier: @carrier, policy_type: new_policy_type, commission_strategy_attributes: { percentage: 20 })
+      CarrierAgencyPolicyType.create(carrier_agency: CarrierAgency.where(carrier: @carrier, agency: @agency).take, policy_type: new_policy_type, commission_strategy_attributes: { percentage: 10 })
       FactoryBot.create(:policy, agency: @agency, carrier: @carrier, account: @account, policy_type: new_policy_type)
       login_staff(@staff)
       @headers = get_auth_headers_from_login_response_headers(response)
@@ -83,7 +90,7 @@ describe 'Admin Policy spec', type: :request do
     end
 
     it 'should search policies by number' do
-      policy = FactoryBot.create(:policy, number: "n0101", agency: @agency, carrier: @carrier, account: @account, policy_type: @policy_type)
+      policy = FactoryBot.create(:policy, number: 'n0101', agency: @agency, carrier: @carrier, account: @account, policy_type: @policy_type)
       sleep 5
       get '/v2/staff_account/policies/search', params: { 'query' => policy.number }, headers: @headers
       result = JSON.parse response.body
@@ -96,18 +103,17 @@ describe 'Admin Policy spec', type: :request do
   context 'for StaffAgency roles' do
     before :all do
       @staff = create_agent_for @agency
+      @staff.staff_permission.update!(permissions: @staff.staff_permission.permissions.merge({ 'policies.policies' => true }))
     end
     before :each do
       login_staff(@staff)
       @headers = get_auth_headers_from_login_response_headers(response)
     end
 
-
     it 'should add coverage proof' do
-      post '/v2/staff_agency/policies/add_coverage_proof', params: { policy: coverage_proof_params, users: [user_params] }, headers: @headers
+      post '/v2/staff_agency/policies/add_coverage_proof', params: { policy: coverage_proof_params }, headers: @headers
       result = JSON.parse response.body
-      expect(result["message"]).to eq("Policy created")
-      expect(Policy.last.users.first).to eq(@user)
+      expect(response.status).to eq(201)
       expect(Policy.last.users.last.email).to eq('yernar.mussin@nitka.com')
     end
 
@@ -150,7 +156,9 @@ describe 'Admin Policy spec', type: :request do
       expect(result.count).to eq(0)
 
       # Third Request should return 1 policy belonging to a new policy_type
-      new_policy_type = @carrier.policy_types.create(title: "New Policy Type")
+      new_policy_type = PolicyType.create(id: PolicyType.maximum(:id).next, title: "New Policy Type")
+      CarrierPolicyType.create!(carrier: @carrier, policy_type: new_policy_type, commission_strategy_attributes: { percentage: 20 })
+      CarrierAgencyPolicyType.create(carrier_agency: CarrierAgency.where(carrier: @carrier, agency: @agency).take, policy_type: new_policy_type, commission_strategy_attributes: { percentage: 10 })
       FactoryBot.create(:policy, agency: @agency, carrier: @carrier, account: @account, policy_type: new_policy_type)
       login_staff(@staff)
       @headers = get_auth_headers_from_login_response_headers(response)
@@ -161,7 +169,7 @@ describe 'Admin Policy spec', type: :request do
     end
 
     it 'should search policies by number' do
-      policy = FactoryBot.create(:policy, number: "nagency0101", agency: @agency, carrier: @carrier, account: @account, policy_type: @policy_type)
+      policy = FactoryBot.create(:policy, number: 'nagency0101', agency: @agency, carrier: @carrier, account: @account, policy_type: @policy_type)
       sleep 5
       get '/v2/staff_agency/policies/search', params: { 'query' => policy.number }, headers: @headers
       result = JSON.parse response.body
@@ -171,10 +179,9 @@ describe 'Admin Policy spec', type: :request do
     end
   end
 
-
   def coverage_proof_params
     {
-      number: "New policy wiht number: #{SecureRandom.uuid}",
+      number: "New policy with number: #{SecureRandom.uuid}",
       account_id: @account.id,
       agency_id: @agency.id,
       policy_type_id: @policy_type.id,
@@ -182,35 +189,32 @@ describe 'Admin Policy spec', type: :request do
       effective_date: 6.months.ago,
       expiration_date: 6.months.from_now,
       out_of_system_carrier_title: 'Out of system carrier',
-      address: "Some address",
+      address: 'Some address',
       policy_users_attributes: [
         {
-          user_id: @user.id
+          spouse: false,
+          primary: true,
+          user_attributes: {
+            email: 'yernar.mussin@nitka.com',
+            address_attributes: {
+              city: 'Louisville',
+              country: 'United States',
+              state: 'KY',
+              street_name: '7111 Jefferson Run Dr',
+              street_two: '102',
+              zip_code: '40219'
+            },
+            profile_attributes: {
+              birth_date: '1993-04-27',
+              contact_phone: '7770556406',
+              first_name: 'Yernar',
+              gender: 'male',
+              last_name: 'Mussin',
+              salutation: 'mr'
+            }
+          }
         }
       ]
     }
   end
-
-  def user_params
-    {
-      email: "yernar.mussin@nitka.com",
-      address_attributes: {
-        city: "Louisville",
-        country: "United States",
-        state: "KY",
-        street_name: "7111 Jefferson Run Dr",
-        street_two: "102",
-        zip_code: "40219",
-      },
-      profile_attributes: {
-        birth_date: "1993-04-27",
-        contact_phone: "7770556406",
-        first_name: "Yernar",
-        gender: "male",
-        last_name: "Mussin",
-        salutation: "mr"
-      }
-    }
-  end
-
 end

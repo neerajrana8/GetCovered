@@ -59,7 +59,7 @@ while !line[0].blank?
     community.create_carrier_profile(5)
     profile = community.carrier_profile(5)
     profile.traits['professionally_manged'] = true
-    profile.traits['construction_year'] = line[8].to_i unless line[8].blank? # professionally_managed_year and gated are unknown...
+    profile.traits['construction_year'] = (line[8].blank? ? '1996' : line[8].to_i) # professionally_managed_year and gated are unknown...
     profile.save
   end
   @created_communities[community.primary_address.full] = community

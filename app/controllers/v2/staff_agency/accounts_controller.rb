@@ -6,7 +6,9 @@ module V2
   module StaffAgency
     class AccountsController < StaffAgencyController
       
-      before_action :set_account, only: %i[update show]
+      before_action :set_account, only: %i[update show enable disable]
+
+      check_privileges 'property_management.accounts'
             
       def index
         if params[:short]
@@ -70,6 +72,26 @@ module V2
                  status: :unauthorized
         end
       end
+
+      def disable
+        result = Accounts::Disable.run(account: @account)
+        if result.valid?
+          render :show, status: :ok
+        else
+          render json: standard_error(:disabling_failed, 'Account was not disabled', result.errors),
+                 status: 422
+        end
+      end
+
+      def enable
+        result = Accounts::Enable.run(account: @account)
+        if result.valid?
+          render :show, status: :ok
+        else
+          render json: standard_error(:disabling_failed, 'Account was not disabled', result.errors),
+                 status: 422
+        end
+      end
       
       
       private
@@ -116,6 +138,9 @@ module V2
         @calling_supported_orders = called_from_orders
         {
           id: %i[scalar array],
+          title: %i[scalar like],
+          created_at: %i[scalar array interval],
+          updated_at: %i[scalar array interval],
           agency: {
             title: %i[scalar like]
           },

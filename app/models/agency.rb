@@ -16,6 +16,7 @@ class Agency < ApplicationRecord
 
   # Active Record Callbacks
   after_initialize :initialize_agency
+  before_validation :set_producer_code, on: :create
 
   # belongs_to relationships
   belongs_to :agency,
@@ -53,10 +54,9 @@ class Agency < ApplicationRecord
   has_many :branding_profiles,
     as: :profileable
 
-  has_many :commission_strategies, as: :commissionable
-
-  has_many :commissions, as: :commissionable
-  has_many :commission_deductions, as: :deductee
+  has_many :commission_strategies, as: :recipient
+  has_many :commissions, as: :recipient
+  has_many :commission_items, through: :commissions
 
   has_many :billing_strategies
 
@@ -86,7 +86,13 @@ class Agency < ApplicationRecord
 
   has_many :leads
 
+  has_one :global_agency_permission
+
+  has_many :access_tokens,
+           as: :bearer
+
   accepts_nested_attributes_for :addresses, allow_destroy: true
+  accepts_nested_attributes_for :global_agency_permission, update_only: true
 
   scope :enabled, -> { where(enabled: true) }
   scope :sub_agencies, -> { where.not(agency_id: nil) }
@@ -94,6 +100,7 @@ class Agency < ApplicationRecord
 
   # ActiveSupport +pluralize+ method doesn't work correctly for this word(returns staffs). So I added alias for it
   alias staffs staff
+  alias parent_agency agency
 
   # Validations
 
@@ -206,10 +213,24 @@ class Agency < ApplicationRecord
     self.branding_profiles&.last&.formatted_url || I18n.t('agency_model.no_branding')
   end
 
+  def set_producer_code
+    loop do
+      self.producer_code = rand(36**12).to_s(36).upcase
+      break unless Agency.exists?(producer_code: producer_code)
+    end
+  end
+
   private
 
   def initialize_agency
    # Blank for now...
+  end
+
+  def set_producer_code
+    loop do
+      self.producer_code = rand(36**12).to_s(36).upcase
+      break unless Agency.exists?(producer_code: producer_code)
+    end
   end
 
   def parent_agency_exist

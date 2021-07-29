@@ -21,8 +21,8 @@ module CarrierMsiPolicyQuote
           policy_application: self.policy_application,
           title: covsel['title'],
           designation: covsel['uid'],
-          limit: covsel['category'] != 'coverage' ? 0 : [nil, true].include?(covsel['selection']) ? 0 : covsel['selection'].to_i,
-          deductible: covsel['category'] != 'deductible' ? 0 : [nil, true].include?(covsel['selection']) ? 0 : covsel['selection'].to_i,
+          limit: covsel['category'] != 'coverage' ? 0 : [nil, true].include?(covsel['selection']) ? 0 : (covsel['selection'].to_d * 100).to_i,
+          deductible: covsel['category'] != 'deductible' ? 0 : [nil, true].include?(covsel['selection']) ? 0 : (covsel['selection'].to_d * 100).to_i,
           enabled: true
         )
       end
@@ -73,9 +73,10 @@ module CarrierMsiPolicyQuote
       address = unit.primary_address
       primary_insured = policy_application.primary_user
       additional_insured = policy_application.users.select{|u| u.id != primary_insured.id }
-      additional_interest = [unit.account || community.account].compact.select{|ai| ai&.title != "Nonpreferred Residential" }
-      # determine preferred status
-      preferred = unit.preferred_ho4
+      preferred = !(unit.preferred_ho4 && community.carrier_profile(5)&.external_carrier_id.nil?)
+      additional_interest = preferred ?
+        [unit.account || community.account].compact.select{|ai| ai&.title != "Nonpreferred Residential" }
+        : msi_additional_interest_array_from_extra_settings(self.policy_application.extra_settings&.[]('additional_interest'))
       # prepare for bind call
       msis = MsiService.new
       result = msis.build_request(:bind_policy,
@@ -146,6 +147,74 @@ module CarrierMsiPolicyQuote
       @bind_response[:data][:policy_number] = policy_data["PolicyNumber"]
       @bind_response[:data][:policy_prefix] = policy_data["MSI_PolicyPrefix"]
       return @bind_response
+    end
+
+    def msi_additional_interest_array_from_extra_settings(hash)
+      return [] if hash.blank?
+      case hash['entity_type']
+        when 'company'
+          pseudoname = [hash['company_name'][0...50], hash['company_name'][50...(hash['company_name'].length)]]
+          if !(pseudoname.first.blank? && pseudoname.first.blank?) && pseudoname.first.blank? != pseudoname.second.blank?
+            psn = (pseudoname.first || '') + (pseudoname.second || '').strip
+            splitter = [psn.index(' ') || 50, (psn.length.to_f/2).ceil, 50].min
+            pseudoname = [psn[0...splitter], psn[splitter...psn.length]]
+            pseudoname[1] = "EndOfCompanyName" if pseudoname[1].blank?
+          end
+          addr = hash['address']
+          gotten_email = hash['email_address']
+          gotten_phone = hash['phone_number']
+          if gotten_phone.blank?
+            gotten_phone = nil
+          else
+            gotten_phone = gotten_phone.delete("^0-9")
+            gotten_phone = gotten_phone[-10..-1] if gotten_phone.length > 10
+            gotten_phone = nil if gotten_phone.length < 10
+          end
+          return [{
+            NameInfo: {
+              PersonName: {
+                GivenName: pseudoname.first,
+                Surname:   pseudoname.last
+              }.merge(addr.nil? ? {} : { OtherGivenName: addr })
+            },
+            Communications: { # feel free to add phone number here just like we do for user#get_msi_general_party_info
+              EmailInfo: {
+                EmailAddr: gotten_email
+              }
+            }.merge(gotten_phone.nil? ? {} : {
+              PhoneInfo: {
+                PhoneNumber: gotten_phone
+              }
+            })
+          }]
+        when 'person'
+          gotten_email = hash['email_address']
+          gotten_phone = hash['phone_number']
+          if gotten_phone.blank?
+            gotten_phone = nil
+          else
+            gotten_phone = gotten_phone.delete("^0-9")
+            gotten_phone = gotten_phone[-10..-1] if gotten_phone.length > 10
+            gotten_phone = nil if gotten_phone.length < 10
+          end
+          return [{
+            NameInfo: {
+              PersonName: {
+                GivenName: hash['first_name'],
+                Surname:   hash['last_name']
+              }.merge(hash['middle_name'].blank? ? {} : { OtherGivenName: hash['middle_name'] })
+            },
+            Communications: {
+              PhoneInfo: {
+                PhoneNumber: gotten_phone
+              },
+              EmailInfo: {
+                EmailAddr: gotten_email
+              }
+            }
+          }]
+      end
+      return []
     end
 
   end

@@ -1,8 +1,12 @@
 module BrandingProfiles
   class CreateFromDefault < ActiveInteraction::Base
-    object :agency
+    object :agency, default: nil
+    object :account, default: nil
 
     def execute
+      @profileable = account || agency
+      @agency = account.present? ? account.agency : agency
+
       return nil if default_branding_profile.nil? # If there is no default branding profile, add nothing
 
       ActiveRecord::Base.transaction(requires_new: true) do
@@ -10,7 +14,7 @@ module BrandingProfiles
           default_branding_profile.
             attributes.
             except('id', 'created_at', 'updated_at', 'global_default').
-            merge(profileable: agency, url: url)
+            merge(profileable: @profileable, url: url)
         @branding_profile = BrandingProfile.create(branding_profile_params)
 
         if @branding_profile.errors.any?
@@ -29,11 +33,11 @@ module BrandingProfiles
     private
 
     def url
-      base_uri = Rails.application.credentials.uri[ENV["RAILS_ENV"].to_sym][:client]
-      uri = URI(base_uri)
-      uri.host = "#{agency.slug}.#{uri.host}"
-      uri.host = "#{agency.slug}-#{Time.zone.now.to_i}.#{URI(base_uri).host}" if BrandingProfile.exists?(url: uri.to_s)
-      uri.to_s
+      base_uri = Rails.application.credentials.uri[ENV["RAILS_ENV"].to_sym][:client]&.sub(/^https?\:\/{0,3}(www.)?/,'')
+      prefix = account&.slug || agency&.slug
+      uri = "#{prefix}.#{base_uri}"
+      uri = "#{prefix}-#{Time.zone.now.to_i}.#{base_uri}" if BrandingProfile.exists?(url: uri)
+      uri
     end
 
     def default_branding_profile
@@ -56,6 +60,15 @@ module BrandingProfiles
         errors[:branding_profile_attributes] << bad_attributes.map(&:errors)
         raise ActiveRecord::Rollback
       end
+      disable_is_register(branding_profile_attributes)
+    end
+
+    def disable_is_register(branding_profile_attributes)
+      is_register_attribute = branding_profile_attributes.detect do |branding_profile_attribute|
+        branding_profile_attribute.name == 'is_register_disabled'
+      end
+
+      is_register_attribute.update(value: 'true') if is_register_attribute.present? && is_register_attribute.value == 'false'
     end
 
     def create_pages
@@ -63,7 +76,7 @@ module BrandingProfiles
         page.
           attributes.
           except('id', 'created_at', 'updated_at').
-          merge(branding_profile_id: @branding_profile.id, agency_id: agency.id)
+          merge(branding_profile_id: @branding_profile.id, agency_id: @agency.id)
       end
       pages = Page.create(pages_params)
 

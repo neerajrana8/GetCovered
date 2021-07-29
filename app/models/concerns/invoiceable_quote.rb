@@ -7,6 +7,7 @@ module InvoiceableQuote
 
 
 
+
   # WARNING:
   #  the model this concern is used on must provide status_updated_on and available_period,
   #  and must have an entry in this concern's private methods

@@ -13,13 +13,16 @@ module V2
       end
 
       def create
-        @carrier_agency = CarrierAgency.create(create_params)
-        if @carrier_agency.errors.blank?
-          render template: 'v2/shared/carrier_agencies/show', status: :created
-        else
-          render json: standard_error(:carrier_agency_creation_error, nil, @carrier_agency.errors.full_messages),
-                 status: :unprocessable_entity
-        end
+        # AGENCIES CAN'T DO THIS!
+        # I hereby comment it out for now! Have fun with your hideous nonexistent json responses, would-be exploiters!!!
+        #
+        #@carrier_agency = CarrierAgency.create(create_params)
+        #if @carrier_agency.errors.blank?
+        #  render template: 'v2/shared/carrier_agencies/show', status: :created
+        #else
+        #  render json: standard_error(:carrier_agency_creation_error, nil, @carrier_agency.errors.full_messages),
+        #         status: :unprocessable_entity
+        #end
       end
 
       private
@@ -29,13 +32,10 @@ module V2
       end
 
       def create_params
-        return({}) if params[:carrier_agency].blank?
-
-        to_return = params.require(:carrier_agency).permit(
+        params.require(:carrier_agency).permit(
           :carrier_id, :external_carrier_id,
           carrier_agency_authorizations_attributes: %i[state available policy_type_id zip_code_blacklist]
         ).merge(agency_id: @agency.id)
-        to_return
       end
 
       def supported_filters(called_from_orders = false)
