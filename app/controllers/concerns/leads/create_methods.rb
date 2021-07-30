@@ -78,7 +78,7 @@ module Leads
     end
 
     def lead_params
-      permitted = params.permit(:email, :identifier, :last_visited_page, :agency_id, :account_id)
+      permitted = params.permit(:email, :identifier, :last_visited_page, :agency_id, :account_id, :branding_profile_id)
       permitted[:email] = permitted[:email].downcase
       permitted[:last_visited_page] = params[:lead_event_attributes][:data][:last_visited_page] if params[:lead_event_attributes] &&
           params[:lead_event_attributes][:data] && permitted[:last_visited_page].blank?
@@ -115,7 +115,7 @@ module Leads
       end
       permitted ||= params.
           require(:lead_event_attributes).
-          permit(:tag, :latitude, :longitude, :agency_id, :policy_type_id).tap do |whitelisted|
+          permit(:tag, :latitude, :longitude, :agency_id, :account_id, :policy_type_id, :branding_profile_id).tap do |whitelisted|
         whitelisted[:data] = data.permit!
       end
     end
