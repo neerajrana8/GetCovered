@@ -64,4 +64,4 @@ json.documents policy.documents do |document|
   json.preview_url link_to_document_preview(document) if document.variable?
 end
 
-json.branding_profile_title policy.branding_profile&.title
+json.branding_profile_url policy.branding_profile&.url
