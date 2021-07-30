@@ -19,7 +19,7 @@ module V2
             end
         end
 
-        super(:@leads, @substrate, :branding_profile, :account, :agency)
+        super(:@leads, @substrate, :account, :agency)
         if need_to_download?
           ::Leads::RecentLeadsReportJob.perform_later(@leads.pluck(:id), params.as_json, current_staff.email)
           render json: { message: 'Report were sent' }, status: :ok
@@ -84,6 +84,7 @@ module V2
           created_at: %i[scalar array interval],
           email: %i[scalar like],
           agency_id: %i[scalar array],
+          account_id: %i[scalar array],
           status: %i[scalar array],
           archived: [:scalar],
           last_visit: %i[interval scalar interval],
