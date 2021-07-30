@@ -19,7 +19,7 @@ module V2
             end
         end
 
-        super(:@leads, @substrate)
+        super(:@leads, @substrate, :branding_profile, :account, :agency)
         if need_to_download?
           ::Leads::RecentLeadsReportJob.perform_later(@leads.pluck(:id), params.as_json, current_staff.email)
           render json: { message: 'Report were sent' }, status: :ok
