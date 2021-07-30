@@ -2,7 +2,6 @@ json.extract! lead, :id, :email, :created_at, :last_visited_page, :last_visit, :
 
 json.agency_name lead&.agency&.title
 json.account_title lead&.account&.title
-json.branding_profile_title lead&.branding_profile&.title
 
 # Coverage Option, Quote
 profile = lead.profile
