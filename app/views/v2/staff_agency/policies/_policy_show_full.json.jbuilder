@@ -72,4 +72,4 @@ json.invoices do
   end
 end
 
-json.branding_profile_title policy.branding_profile&.title
+json.branding_profile_url policy.branding_profile&.url
