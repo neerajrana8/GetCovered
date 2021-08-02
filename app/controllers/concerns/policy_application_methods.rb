@@ -209,7 +209,7 @@ module PolicyApplicationMethods
     end
     # get a bit of extra nonsense
     carrier_policy_type = CarrierPolicyType.where(carrier_id: @msi_id, policy_type_id: @ho4_policy_type_id).take
-    coverage_selections = inputs[:coverage_selections].map{|cs| [cs['uid'], cs['selection']] }.to_h # WARNING: turn coverage selections into a hash
+    coverage_selections = inputs[:coverage_selections].map{|cs| [cs['uid'], { 'selection' => cs['selection'] }] }.to_h # WARNING: turn coverage selections into a hash
     # get coverage options
     results = ::InsurableRateConfiguration.get_coverage_options(
       carrier_policy_type, unit, coverage_selections, inputs[:effective_date] ? Date.parse(inputs[:effective_date]) : nil, inputs[:additional_insured].to_i, billing_strategy_code,
@@ -233,7 +233,8 @@ module PolicyApplicationMethods
       )
     )
     results[:coverage_options] = results[:coverage_options].map{|uid,sel| { 'uid' => uid, 'selection' => sel } } # WARNING: to let client keep using arrays
-    response_tr = results.select{|k, v| k != :errors }.merge(results[:errors] ? { estimated_premium_errors: [results[:errors][:external]].flatten } : {})
+    keys_to_keep = [:valid, :coverage_options, :estimated_premium, :estimated_installment, :estimated_first_payment, :installment_fee]
+    response_tr = results.select{|k, v| keys_to_keep.include?(k) }.merge(results[:errors] ? { estimated_premium_errors: [results[:errors][:external]].flatten } : {})
     use_translations_for_msi_coverage_options!(response_tr)
 
     render json: response_tr,

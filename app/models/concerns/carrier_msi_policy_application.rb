@@ -66,6 +66,7 @@ module CarrierMsiPolicyApplication
           # execution options
           eventable: quote, # by passing a PolicyQuote we ensure results[:msi_data], results[:event], and results[:annotated_selections] get passed back out
           perform_estimate: true,
+          add_selection_fields: true,
           # overrides
           additional_interest_count: community_profile ? nil : self.extra_settings['additional_interest'].blank? ? 0 : 1,
           agency: self.agency,
@@ -96,6 +97,8 @@ module CarrierMsiPolicyApplication
           quote.mark_failure("Internal Error (786)", interr)
           return false
         else
+          # save the beefed up coverage_selections
+          self.update_columns(coverage_selections: results[:annotated_selections])
           # grab msi payment amounts
           payment_plan = self.billing_strategy.carrier_code
           installment_count = MsiService::INSTALLMENT_COUNT[payment_plan]

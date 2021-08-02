@@ -217,8 +217,8 @@ module V2
           end
         end
         
-        unless @application.coverage_selections.blank? || @application.coverage_selections.class != ::Array
-          @application.coverage_selections = @application.coverage_selections.map{|cs| [cs['uid'], cs['selection']] }.to_h
+        unless @application.coverage_selections.class != ::Array
+          @application.coverage_selections = @application.coverage_selections.map{|cs| [cs['uid'], { 'selection' => cs['selection'] }] }.to_h
         end
 
         if @application.save
@@ -317,7 +317,7 @@ module V2
           end
           # fix coverage options if needed
           unless @policy_application.coverage_selections.blank? || @policy_application.coverage_selections.class != ::Array
-            @policy_application.coverage_selections = @policy_application.coverage_selections.map{|cs| [cs['uid'], cs['selection']] }.to_h
+            @policy_application.coverage_selections = @policy_application.coverage_selections.map{|cs| [cs['uid'], { 'selection' => cs['selection'] }] }.to_h
           end
           # try to update users
           update_users_result = update_policy_users_params.blank? ? true :

@@ -15,7 +15,7 @@ module CarrierMsiPolicyQuote
 
     # MSI build coverages
     
-    def msi_inherited_irc
+    def msi_inherited_irc # not actually needed now... left here just in case we reinstate its use
       @msi_inherited_irc ||= ::InsurableRateConfiguration.get_inherited_irc(
         ::CarrierPolicyType.where(carrier_id: MsiService.carrier_id, policy_type_id: PolicyType::RESIDENTIAL_ID).take,
         self.account || self.agency,
@@ -25,15 +25,13 @@ module CarrierMsiPolicyQuote
     end
 
     def msi_build_coverages
-      irc = @msi_inherited_irc
-      self.policy_application.coverage_selections.select{|uid, covsel| covsel }.each do |uid, covsel|
-        opt = irc.configuration['coverage_options'][uid]
+      self.policy_application.coverage_selections.select{|uid, covsel| covsel['selection'] }.each do |uid, covsel|
         self.policy.policy_coverages.create(
           policy_application: self.policy_application,
-          title: opt['title'],
+          title: covsel['title'],
           designation: uid,
-          limit: opt['category'] != 'coverage' ? 0 : [nil, true].include?(covsel) ? 0 : covsel['value'], # MOOSE WARNING: what about percentages?
-          deductible: opt['category'] != 'deductible' ? 0 : [nil, true].include?(covsel) ? 0 : covsel['value'], # MOOSE WARNING: what about percentages?
+          limit: covsel['category'] != 'coverage' ? 0 : [nil, true].include?(covsel['selection']) ? 0 : covsel['selection']['value'], # MOOSE WARNING: what about percentages?
+          deductible: covsel['category'] != 'deductible' ? 0 : [nil, true].include?(covsel['selection']) ? 0 : covsel['selection']['value'], # MOOSE WARNING: what about percentages?
           enabled: true
         )
       end
@@ -88,7 +86,6 @@ module CarrierMsiPolicyQuote
       additional_interest = preferred ?
         [unit.account || community.account].compact.select{|ai| ai&.title != "Nonpreferred Residential" }
         : msi_additional_interest_array_from_extra_settings(self.policy_application.extra_settings&.[]('additional_interest'))
-      irc = @msi_inherited_irc
       # prepare for bind call
       msis = MsiService.new
       result = msis.build_request(:bind_policy,
@@ -102,19 +99,18 @@ module CarrierMsiPolicyQuote
         primary_insured:    primary_insured,
         additional_insured: additional_insured,
         additional_interest: additional_interest,
-        coverage_raw: policy_application.coverage_selections.select{|uid, sel| sel }.map do |uid, sel|
-          opt = irc.configuration['coverage_options'][uid]
-          if opt['category'] == 'coverage'
+        coverage_raw: policy_application.coverage_selections.select{|uid, sel| sel['selection'] }.map do |uid, sel|
+          if sel['category'] == 'coverage'
             {
               CoverageCd: uid
-            }.merge(sel == true ? {} : {
-              Limit: { Amt: sel['value'].to_d / 100.to_d } # same for percent or currency
+            }.merge(sel['selection'] == true ? {} : {
+              Limit: { Amt: sel['selection']['value'].to_d / 100.to_d } # same for percent or currency
             })
-          elsif opt['category'] == 'deductible'
+          elsif sel['category'] == 'deductible'
             {
               CoverageCd: uid
-            }.merge(sel == true ? {} : {
-              Deductible: { Amt: sel['value'].to_d / 100.to_d } # same for percent or currency
+            }.merge(sel['selection'] == true ? {} : {
+              Deductible: { Amt: sel['selection']['value'].to_d / 100.to_d } # same for percent or currency
             })
           else
             nil

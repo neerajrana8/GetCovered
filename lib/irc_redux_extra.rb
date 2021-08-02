@@ -429,9 +429,10 @@ equal to FIXED
   def get_selection_errors(selections, options = annotate_options(selections), use_titles: false, insert_invisible_requirements: true)
     to_return = {}
     options.select{|uid,opt| opt['requirement'] == 'required' }.each do |opt|
-      if !selections[uid]
+      if !selections[uid] || !selections['selection']
         if opt['visible'] == false && insert_invisible_requirements
-          selections[uid] = case opt['options_type']
+          selections[uid] ||= {}
+          selections[uid]['selection'] = case opt['options_type']
             when 'multiple_choice'
               if insert_invisible_requirements.class == ::Hash  && insert_invisible_requirements.has_key?(uid)
                 insert_invisible_requirements[uid]
@@ -450,11 +451,11 @@ equal to FIXED
       #next if options[uid].nil? # WARNING: for now we just ignore selections that aren't in the options... NOPE, RESTORED ERROR. But left this here because I don't remember why it was here to begin with
       if options[uid].nil? || options[uid]['requirement'] == 'forbidden'
         (to_return[uid] ||= []).push("is not a valid coverage option")
-      elsif sel == true
+      elsif sel['selection'] == true
         (to_return[uid] ||= []).push("selection cannot be blank") if options[uid]['options_type'] != 'none'
       else
-        found = (options[uid]['options'] || {}).find{|opt| opt['data_type'] == sel['data_type'] && opt['value'] == sel['value'] }
-        (to_return[uid] ||= []).push("has invalid selection '#{sel['value']}'") if found.nil?
+        found = (options[uid]['options'] || {}).find{|opt| opt['data_type'] == sel['selection']['data_type'] && opt['value'] == sel['selection']['value'] }
+        (to_return[uid] ||= []).push("has invalid selection '#{sel['selection']['value']}'") if found.nil?
       end
     end
     if use_titles
@@ -465,7 +466,7 @@ equal to FIXED
   
   def self.automatically_select_options(options, selections = {}, iterations: 1, rechoose_selection: Proc.new{|option,selection| option['requirement'] == 'required' ? (option['options_type'] == 'multiple_choice' ? option['options'].min{|a,b| a['value'].to_d <=> b['value'].to_d } : true) : nil })
     options.map do |uid, opt|
-      sel = selections[uid]
+      sel = selections[uid]&.[]('selection')
       if opt['requirement'] == 'required'
         next [uid,
           opt['options_type'] == 'none' ?
@@ -499,6 +500,7 @@ equal to FIXED
 
   def self.get_coverage_options(carrier_policy_type, insurable, selections, effective_date, additional_insured_count, billing_strategy_carrier_code,    # required data
                                 eventable: nil, perform_estimate: true, estimate_default_on_billing_strategy_code_failure: :min,                        # execution options
+                                add_selection_fields: false,
                                 additional_interest_count: nil, agency: nil, account: insurable.class == ::Insurable ? insurable.account : nil,         # optional/overridable data
                                 nonpreferred_final_premium_params: {})                                                                                  # special optional data
     # clean up insurable info
@@ -509,12 +511,13 @@ equal to FIXED
     end
     cip = (insurable.class != ::Insurable ? nil : insurable.carrier_profile(carrier_policy_type.carrier_id))
     # get coverage options and selection errors
-    selections = selections.select{|uid, sel| sel }
+    selections = selections.select{|uid, sel| sel && sel['selection'] }
     irc = get_inherited_irc(carrier_policy_type, account || agency || carrier_policy_type.carrier, insurable, agency: agency)
     coverage_options = irc.annotate_options(selections).select!{|co| co['enabled'] != false }
     selection_errors = irc.get_selection_errors(selections, coverage_options, insert_invisible_requirements: true)
     valid = selection_errors.blank?
     estimated_premium_error = valid ? nil : { internal: selection_errors, external: selection_errors }
+    # perform the estimate, if requested
     if perform_estimate
       case carrier_policy_type.carrier_id
         when ::MsiService.carrier_id
@@ -528,11 +531,11 @@ equal to FIXED
             additional_insured_count: additional_insured_count,
             additional_interest_count: additional_interest_count || (insurable.class == ::Insurable && (!insurable.account_id.nil? || !insurable.parent_community&.account_id.nil?) ? 1 : 0),
             coverages_formatted:  selections.map do |uid, sel|
-                                    next nil unless sel
+                                    next nil unless sel && sel['selection']
                                     covopt = coverage_options[uid]
                                     next nil unless covopt
                                     next { CoverageCd: uid }.merge(sel == true ? {} : {
-                                      (covopt['category'] == 'deductible' ? :Deductible : :Limit) => { Amt: BigDecimal(sel['value']) / 100.to_d } # same whether sel['data_type'] is 'percentage' or 'currency', since currency stores number of cents
+                                      (covopt['category'] == 'deductible' ? :Deductible : :Limit) => { Amt: BigDecimal(sel['selection']['value']) / 100.to_d } # same whether sel['selection']['data_type'] is 'percentage' or 'currency', since currency stores number of cents
                                     })
                                   end.compact,
             **(preferred ?
@@ -619,6 +622,25 @@ equal to FIXED
           valid = false
       end # end carrier switch statement
     end # end if perform_estimate
+    # add fields to selections, if requestsed
+    if add_selection_fields
+      selections = selections.map do |sel|
+        covopt = coverage_options[uid]
+        next sel unless covopt
+        {
+          'selection' => sel
+        }.merge(case carrier_policy_type.carrier_id
+          when ::MsiService.carrier_id
+            {
+              'title' => covopt['title'],
+              'category' => covopt['category'],
+              'options_type' => covopt['options_type']
+            }
+          else
+            {}
+        end)
+      end
+    end
     # done
     return {
       valid: valid,
@@ -628,10 +650,10 @@ equal to FIXED
       estimated_first_payment: estimated_first_payment,
       installment_fee: installment_fee,
       errors: estimated_premium_error,
+      annotated_selections: selections
     }.merge(eventable.class != ::PolicyQuote ? {} : {
       msi_data: result,
-      event: event,
-      annotated_selections: selections
+      event: event
     })
   end
 

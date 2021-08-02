@@ -100,7 +100,7 @@ module CarrierQbePolicyApplication
 	          premium: quote.est_premium.to_f / 100,
 	          premium_pif: quote.est_premium.to_f / 100,
 	          num_insured: users.count,
-	          lia_amount: insurable_rates.liability.first.coverage_limits["liability"].to_f / 100,
+	          lia_amount: (coverage_selections["liability"].to_d / 100).to_f,
 	          agent_code: carrier_agency.external_carrier_id
 	        }
 

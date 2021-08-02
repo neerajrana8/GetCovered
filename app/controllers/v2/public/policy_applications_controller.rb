@@ -22,7 +22,7 @@ module V2
           return
         end
         if [MsiService.carrier_id, QbeService.carrier_id].include?(@policy_application.carrier_id) && @policy_application.coverage_selections
-          @policy_application.coverage_selections.map{|uid, datum| datum.merge({ 'uid' => uid }) } # WARNING: hack so client can keep using arrays
+          @policy_application.coverage_selections.map{|uid, datum| datum.merge({ 'uid' => datum }) } # WARNING: hack so client can keep using arrays
         end
       end
 
@@ -356,7 +356,7 @@ module V2
         end
 
         unless @application.coverage_selections.blank? || @application.coverage_selections.class != ::Array
-          @application.coverage_selections = @application.coverage_selections.map{|cs| [cs['uid'], cs['selection']] }.to_h
+          @application.coverage_selections = @application.coverage_selections.map{|cs| [cs['uid'], { 'selection' => cs['selection'] }] }.to_h
         end
 
         if @application.save
@@ -460,8 +460,8 @@ module V2
             @replacement_policy_insurables = unsaved_pis
           end
           # fix coverage options if needed
-          unless @policy_application.coverage_selections.blank? || @policy_application.coverage_selections.class != ::Array
-            @policy_application.coverage_selections = @policy_application.coverage_selections.map{|cs| [cs['uid'], cs['selection']] }.to_h
+          unless @policy_application.coverage_selections.class != ::Array
+            @policy_application.coverage_selections = @policy_application.coverage_selections.map{|cs| [cs['uid'], { 'selection' => cs['selection'] }] }.to_h
           end
           # woot woot, try to update users and save
           update_users_result = update_policy_users_params.blank? ? true :
