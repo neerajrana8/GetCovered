@@ -52,6 +52,8 @@ class InsurableRateConfiguration < ApplicationRecord
               next "must be a hash" unless v.class == ::Hash
               next v.each do |rule, params|
                 case rule
+                  when 'has_requirement'
+                    break "has invalid requirement type '#{params}'" unless ['optional', 'required', 'forbidden'].include?(params)
                   when 'compares_fixed'
                     break "has invalid comparator '#{params['comparator']}'" unless ['=','<','>','<=','>='].include?(params['comparator'])
                     break "has invalid object '#{params['object']}' (expected a valid decimal number or a currency or percentage data type hash)" unless (BigDecimal(params['object'], 3) rescue false) || (params['object'].class == ::Hash && ['currency', 'percentage'].include?(params['object']['data_type']) && (BigDecimal(params['object']['value'], 3) rescue false))
@@ -60,6 +62,10 @@ class InsurableRateConfiguration < ApplicationRecord
                     break "has invalid object '#{params['object']}' (expected a string representing a coverage UID)" unless params['object'].class == ::String
                   when 'compares_percent'
                     break "has invalid comparator '#{params['comparator']}'" if !['=','<','>','<=','>='].include?(params['comparator'])
+                    break "has invalid percent '#{params['percent']}' (expected a valid decimal number)" unless (BigDecimal(params['percent'], 3)
+                    break "has invalid object '#{params['object']}' (expected a string representing a coverage UID)" unless params['object'].class == ::String
+                  when 'equal_to_fixed_or_percent'
+                    break "has invalid fixed '#{params['fixed']}' (expected a valid decimal number or a currency or percentage data type hash)" unless (BigDecimal(params['fixed'], 3) rescue false) || (params['fixed'].class == ::Hash && ['currency', 'percentage'].include?(params['fixed']['data_type']) && (BigDecimal(params['fixed']['value'], 3) rescue false))
                     break "has invalid percent '#{params['percent']}' (expected a valid decimal number)" unless (BigDecimal(params['percent'], 3)
                     break "has invalid object '#{params['object']}' (expected a string representing a coverage UID)" unless params['object'].class == ::String
                   when 'greatest_of_fixed_or_percent'
@@ -94,9 +100,9 @@ class InsurableRateConfiguration < ApplicationRecord
       to_return += "if " + rule['condition'].map do |cond_type, params|
         case cond_type
           when 'coverage_selected'
-            "#{coverage_options[params]&.[]('title') || "Coverage Option #{params}"} is selected"
+            "#{(params.class == ::Array ? params : [params]).map{|param| coverage_options[param]&.[]('title') || "Coverage Option #{params}" }.join(" and ")} #{params.class == ::Array && params.length > 1 ? 'are' : 'is'} selected"
           when 'coverage_not_selected'
-            "#{coverage_options[params]&.[]('title') || "Coverage Option #{params}"} is not selected"
+            "#{(params.class == ::Array ? params : [params]).map{|param| coverage_options[param]&.[]('title') || "Coverage Option #{params}" }.join(" and ")} #{params.class == ::Array && params.length > 1 ? 'are' : 'is'} not selected"
           else
             throw 'fail'
         end
@@ -106,6 +112,8 @@ class InsurableRateConfiguration < ApplicationRecord
       subject_title = subject&.[]('title') || "Coverage Option #{rule['subject']}"
       # add in rule body
       to_return += rule['rule'].map do |rule_type, params|
+        when 'has_requirement'
+          "#{subject_title} must be #{params}"
         when 'compares_fixed'
           object = if params['object'].class != ::Hash
             BigDecimal(params['object'], 3).to_s("F")
@@ -127,6 +135,22 @@ class InsurableRateConfiguration < ApplicationRecord
           object = coverage_options[params['object']]&.[]('title') || "Coverage option #{params['object']}"
           percent = "#{BigDecimal(params['percent'], 3).to_s("F")}%"
           "#{subject_title} must be #{params['comparator']} #{percent} of #{object}"
+        when 'equal_to_fixed_or_percent'
+          fixed = if params['fixed'].class != ::Hash
+            BigDecimal(params['fixed'], 3).to_s("F")
+          else
+            case params['fixed']['data_type']
+              when 'currency'
+                "$#{(BigDecimal(params['fixed']['value'], 2).to_s("F") + "00")[ /.*\..{2}/ ]}"
+              when 'percentage'
+                "#{BigDecimal(params['fixed']['value'], 3).to_s("F")}%"
+              else
+                throw 'fail'
+            end
+          end
+          object = coverage_options[params['object']]&.[]('title') || "Coverage option #{params['object']}"
+          percent = "#{BigDecimal(params['percent'], 3).to_s("F")}%"
+          "#{subject_title} must = #{fixed} or #{percent} of ##{object}"
         when 'greatest_of_fixed_or_percent'
           fixed = if params['fixed'].class != ::Hash
             BigDecimal(params['fixed'], 3).to_s("F")
@@ -250,11 +274,6 @@ class InsurableRateConfiguration < ApplicationRecord
             'validity' => ['coverage', 'deductible'],
             'default_overridability' => 0 
           },
-          'external_id' => {
-            'required' => true,
-            'validity' => Proc.new{|v| v.class == ::String },
-            'default_overridability' => 0
-          },
           'description' => {
             'required' => false,
             'validity' => Proc.new{|v| v.nil? || v.class == ::String },
@@ -359,69 +378,73 @@ class InsurableRateConfiguration < ApplicationRecord
   # Instance Methods
   
   def annotate_options(coverage_selections, coverage_options = self.configuration['coverage_options'], rules = self.configuration['rules'], deserialize_selections: true)
-    return coverage_options
-=begin
-  # NEEDS TO BE MODIFIED FOR NEW RULES
-  
-  
-equal to greater of FIXED or PERCENT of COV[, unless COV2 (then greater of FIXED or PERCENT)]
-  # do as two rules with mutex conditions
-equal to PERCENT of COV
-  {
-    'subject' => 1099, # some uid
-    'rule' => { 'eq_percent' => { 'coverage' => 1095, 'percent' => 20.5 } },
-    'condition' => { 'coverage_selected' => 1095 }
-  }
-leq FIXED
-  {
-    'subject' => 1099, # some uid
-    'rule' => { 'leq_fixed' => { 'data_type' => 'currency', 'value' => 1000 } },
-    'condition' => { 'selected_coverage' => 1095 }
-  }
-leq COV
-  {
-    'subject' => 1099, # some uid
-    'rule' => { 'leq_coverage' => 1095 },
-    'condition' => true
-  }
-greater than FIXED when COV selected
-  {
-    'subject' => 1099, # some uid
-    'rule' => { 'eq_fixed' => { 'data_type' => 'currency', 'value' => 1000 } },
-    'condition' => { 'coverage_selected' => 1095 }
-  }
-equal to FIXED
-  {
-    'subject' => 1099, # some uid
-    'rule' => { 'eq_fixed' => { 'data_type' => 'currency', 'value' => 1000 } },
-    'condition' => true
-  }
-
-  
-  
-  
-  
-  
-  
-  
-    # construct data hash
-    data = {
-      'overridability' => nil, # for the current rule's overridability level
-      'coverage_options' => self.class.copy_with_deserialization(coverage_options),
-      'coverage_selections' => deserialize_selections ? selections.replace(self.class.copy_with_deserialization(coverage_selections)) : self.class.copy_with_deserialization(coverage_selections)
-    }
+    # WARNING: should be no need to do this for now... we handle the cases in the body, which is irritating. # ensure values are deserialized
+    #coverage_options = self.class.copy_with_deserialization(coverage_options)
+    #coverage_selections = deserialize_selections ? selections.replace(self.class.copy_with_deserialization(coverage_selections)) : self.class.copy_with_deserialization(coverage_selections)
     # execute rules
-    rules.values.sort{|a,b| (a['overridabilities_']['code'] || Float::INFINITY) <=> (a['overridabilities_']['code'] || Float::INFINITY) }.each do |rule|
-      data['overridability'] = rule['overridabilities_']['code'] || Float::INFINITY
-      begin
-        execute(self.class.copy_with_deserialization(rule['code']), LANGUAGE, stack: [], data: data)
-      rescue PseudoscriptError => pse
-        puts "Pseudoscript Error Occurred: #{pse.message}" # otherwise ignore it, I suppose
+    rules.values.sort{|a,b| (rules['overridabilities_'][a[0]] || Float::INFINITY) <=> (rules['overridabilities_'][b[0]] || Float::INFINITY) }.each do |rule_pair|
+      subject = coverage_options[rule['subject']]
+      next unless subject
+      overridability = rules['overridabilities_'][rule_pair[0]] || Float::INFINITY
+      rule = rule_pair[1]
+      condition_satisfied =  rule['condition'] == true || (rule['condition'].class == ::Hash && rule['condition'].all? do |cond, params|
+        case cond
+          when 'coverage_selected'
+            (params.class == ::Array ? params : [params]).all?{|uid| coverage_selections[uid] && coverage_selections[uid]['selection'] }
+          when 'coverage_not_selected'
+            (params.class == ::Array ? params : [params]).all?{|uid| !coverage_selections[uid] || !coverage_selections[uid]['selection'] }
+          else
+            false
+        end
+      end)
+      if condition_satisfied
+        rule['rule'].each do |rule_type, params|
+          case rule_type # MOOSE WARNING: institute overridability checks, bub!
+            when 'has_requirement'
+              subject['requirement'] = params
+            when 'compares_fixed', 'compares_coverage', 'compares_percent'
+              # get the object
+              object = case rule_type
+                when 'compares_fixed';      (params.class == ::Hash ? { 'data_type' => params['data_type'], 'value' => BigDecimal(params['value'], 3) } : BigDecimal(params, 3) rescue false)
+                when 'compares_coverage';   coverage_selections[params['object']]['selection']
+                when 'compares_percent';    ({ 'data_type' => coverage_selections[params['object']]['selection']['data_type'], 'value' => (BigDecimal(coverage_selections[params['object']]['selection'], 3) * BigDecimal(params['percent'], 3) / 100.to_d).truncate(coverage_selections[params['object']]['selection']['data_type'] == 'currency' ? 0 : 3) } rescue false)
+              end
+              next if object == false
+              required_data_type = (object.class == ::Hash ? object['data_type'] : nil)
+              object = (object.class == ::Hash ? object['value'] : object)
+              # filter the options
+              subject['options'] = subject['options'].select do |opt|
+                next true if required_data_type && required_data_type != opt['data_type']
+                next (opt['data_type'] == 'currency' ? Integer(opt['value']) : BigDecimal(opt['value'], 3)).send(params['comparator'] == '=' ? '==' : params['comparator'], object)
+              end if subject['options']
+            when 'equal_to_fixed_or_percent', 'greatest_of_fixed_or_percent'
+              # get the fixed and the object
+              fixed = (params['fixed'].class == ::Hash ? { 'data_type' => params['fixed']['data_type'], 'value' => BigDecimal(params['fixed']['value'], 3) } : BigDecimal(params['fixed'], 3) rescue false)
+              fixed_required_data_type = (fixed.class == ::Hash ? fixed['data_type'] : nil)
+              fixed = (fixed.class == ::Hash ? fixed['value'] : fixed)
+              object = ({ 'data_type' => coverage_selections[params['object']]['selection']['data_type'], 'value' => (BigDecimal(coverage_selections[params['object']]['selection'], 3) * BigDecimal(params['percent'], 3) / 100.to_d).truncate(coverage_selections[params['object']]['selection']['data_type'] == 'currency' ? 0 : 3) } rescue false)
+              next if fixed == false || object == false
+              required_data_type = (object.class == ::Hash ? object['data_type'] : nil)
+              object = (object.class == ::Hash ? object['value'] : object)
+              # filter the options
+              subject['options'] = subject['options'].select do |opt|
+                opt_value = (opt['data_type'] == 'currency' ? Integer(opt['value']) : BigDecimal(opt['value'], 3))
+                case rule_type
+                  when 'equal_to_fixed_or_percent'
+                    next ((fixed_required_data_type.nil? || opt['data_type'] == fixed_required_data_type) && fixed == opt_value) ||
+                         ((required_data_type.nil? || opt['data_type'] == required_data_type) && object == opt_value)
+                  when 'greatest_of_fixed_or_percent'
+                    next [[fixed_required_data_type, fixed], [required_data_type, object]].select{|v| v[0].nil? || v[0] == opt['data_type'] }.max{|a,b| a[1] <=> b[1] }[1] == opt_value
+                  else
+                    next true
+                end
+              end if subject['options']
+          end
+        end
       end
     end
     # w00t w00t
-    return data['coverage_options']
-=end
+    return coverage_options
   end
   
   # insert_invisible_requirements will insert visible == false, requirement == 'required' options into the selections hash;
