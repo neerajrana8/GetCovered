@@ -12,6 +12,7 @@ class Lead < ApplicationRecord
   belongs_to :tracking_url, optional: true
   belongs_to :agency, optional: true
   belongs_to :account, optional: true
+  belongs_to :branding_profile, optional: true
 
   has_one :profile, as: :profileable
   has_one :address, as: :addressable
