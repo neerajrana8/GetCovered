@@ -819,6 +819,7 @@ ActiveRecord::Schema.define(version: 2021_07_15_045543) do
     t.bigint "agency_id"
     t.bigint "policy_type_ids", default: [], null: false, array: true
     t.boolean "preferred_ho4", default: false, null: false
+    t.boolean "confirmed", default: true, null: false
     t.boolean "occupied", default: false
     t.index ["account_id"], name: "index_insurables_on_account_id"
     t.index ["agency_id"], name: "index_insurables_on_agency_id"
@@ -1268,6 +1269,7 @@ ActiveRecord::Schema.define(version: 2021_07_15_045543) do
     t.index ["policy_application_group_id"], name: "index_policy_applications_on_policy_application_group_id"
     t.index ["policy_id"], name: "index_policy_applications_on_policy_id"
     t.index ["policy_type_id"], name: "index_policy_applications_on_policy_type_id"
+    t.index ["tag_ids"], name: "policy_application_tag_ids_index", using: :gin
   end
 
   create_table "policy_coverages", force: :cascade do |t|
@@ -1748,6 +1750,14 @@ ActiveRecord::Schema.define(version: 2021_07_15_045543) do
     t.bigint "stripe_charge_id"
     t.index ["refund_id"], name: "index_stripe_refunds_on_refund_id"
     t.index ["stripe_charge_id"], name: "index_stripe_refunds_on_stripe_charge_id"
+  end
+
+  create_table "tags", force: :cascade do |t|
+    t.string "title"
+    t.text "description"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["title"], name: "index_tags_on_title", unique: true
   end
 
   create_table "tracking_urls", force: :cascade do |t|
