@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_07_15_045543) do
+ActiveRecord::Schema.define(version: 2021_07_30_120553) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
@@ -111,6 +111,7 @@ ActiveRecord::Schema.define(version: 2021_07_15_045543) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.boolean "searchable", default: false
+    t.boolean "verified", default: false
     t.index ["addressable_type", "addressable_id"], name: "index_addresses_on_addressable_type_and_addressable_id"
   end
 
@@ -821,6 +822,7 @@ ActiveRecord::Schema.define(version: 2021_07_15_045543) do
     t.boolean "preferred_ho4", default: false, null: false
     t.boolean "confirmed", default: true, null: false
     t.boolean "occupied", default: false
+    t.boolean "confirmed", default: true, null: false
     t.index ["account_id"], name: "index_insurables_on_account_id"
     t.index ["agency_id"], name: "index_insurables_on_agency_id"
     t.index ["insurable_id"], name: "index_insurables_on_insurable_id"
@@ -876,6 +878,7 @@ ActiveRecord::Schema.define(version: 2021_07_15_045543) do
     t.datetime "updated_at", null: false
     t.bigint "policy_type_id"
     t.bigint "agency_id"
+    t.integer "branding_profile_id"
     t.index ["agency_id"], name: "index_lead_events_on_agency_id"
     t.index ["lead_id"], name: "index_lead_events_on_lead_id"
     t.index ["policy_type_id"], name: "index_lead_events_on_policy_type_id"
@@ -895,6 +898,7 @@ ActiveRecord::Schema.define(version: 2021_07_15_045543) do
     t.integer "agency_id"
     t.boolean "archived", default: false
     t.integer "account_id"
+    t.integer "branding_profile_id"
     t.index ["email"], name: "index_leads_on_email"
     t.index ["identifier"], name: "index_leads_on_identifier", unique: true
     t.index ["tracking_url_id"], name: "index_leads_on_tracking_url_id"
@@ -1262,6 +1266,7 @@ ActiveRecord::Schema.define(version: 2021_07_15_045543) do
     t.string "error_message"
     t.integer "branding_profile_id"
     t.string "internal_error_message"
+    t.bigint "tag_ids", default: [], null: false, array: true
     t.index ["account_id"], name: "index_policy_applications_on_account_id"
     t.index ["agency_id"], name: "index_policy_applications_on_agency_id"
     t.index ["billing_strategy_id"], name: "index_policy_applications_on_billing_strategy_id"
@@ -1540,7 +1545,6 @@ ActiveRecord::Schema.define(version: 2021_07_15_045543) do
     t.jsonb "carrier_payment_data"
     t.index ["account_id"], name: "index_policy_quotes_on_account_id"
     t.index ["agency_id"], name: "index_policy_quotes_on_agency_id"
-    t.index ["external_id"], name: "index_policy_quotes_on_external_id", unique: true
     t.index ["policy_application_id"], name: "index_policy_quotes_on_policy_application_id"
     t.index ["policy_group_quote_id"], name: "index_policy_quotes_on_policy_group_quote_id"
     t.index ["policy_id"], name: "index_policy_quotes_on_policy_id"
@@ -1815,6 +1819,7 @@ ActiveRecord::Schema.define(version: 2021_07_15_045543) do
     t.string "mailchimp_id"
     t.integer "mailchimp_category", default: 0
     t.string "qbe_id"
+    t.integer "insured_address_id"
     t.index ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["invitation_token"], name: "index_users_on_invitation_token", unique: true
