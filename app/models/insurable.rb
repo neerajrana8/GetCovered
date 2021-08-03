@@ -11,6 +11,7 @@ class Insurable < ApplicationRecord
   include RecordChange
   include SetSlug
 
+  before_validation :set_confirmed_automatically
   before_save :refresh_policy_type_ids
 
   after_commit :create_profile_by_carrier,
@@ -344,8 +345,7 @@ class Insurable < ApplicationRecord
             title: unit_title == :titleless ? nil : unit_title,
             insurable_type: ::InsurableType.where(title: "Residential Unit").take,
             enabled: true, category: 'property', preferred_ho4: false,
-            account_id: account_id || nil,
-            confirmed: false
+            account_id: account_id || nil
           )
           unless unit.save
             return { error_type: :invalid_unit, message: I18n.t('insurable_model.unable_create_unit'), details: unit.errors.full_messages }
@@ -453,8 +453,7 @@ class Insurable < ApplicationRecord
               insurable_type: ::InsurableType.where(title: "Residential Community").take,
               enabled: true, preferred_ho4: false, category: 'property',
               addresses: [ address ],
-              account_id: account_id || nil,
-              confirmed: false
+              account_id: account_id || nil
             )
             unless parent.save
              return { error_type: :invalid_community, message: I18n.t('insurable_model.unable_create_community_from_address'), details: parent.errors.full_messages }
@@ -469,8 +468,7 @@ class Insurable < ApplicationRecord
             title: unit_title == :titleless ? nil : unit_title,
             insurable_type: ::InsurableType.where(title: "Residential Unit").take,
             enabled: true, category: 'property', preferred_ho4: false,
-            account_id: account_id || nil,
-            confirmed: false
+            account_id: account_id || nil
           )
           unless unit.save
             return { error_type: :invalid_unit, message: I18n.t('insurable_model.unable_create_unit'), details: unit.errors.full_messages }
@@ -545,8 +543,7 @@ class Insurable < ApplicationRecord
               insurable_type: ::InsurableType.where(title: parent.nil? ? "Residential Community" : "Residential Building").take,
               enabled: true, preferred_ho4: false, category: 'property',
               addresses: [ address ],
-              account_id: account_id || nil,
-              confirmed: false
+              account_id: account_id || nil
             )
           unless created.save
             message = parent.nil? ? I18n.t('insurable_model.unable_to_create_from_address') : I18n.t('insurable_model.unable_to_create_building_from_address')
@@ -616,6 +613,10 @@ class Insurable < ApplicationRecord
                           ].include?(strang.downcase)
                         end
       return(splat.size == 1 ? splat[0] : nil)
+    end
+    
+    def set_confirmed_automatically
+      self.confirmed = !self.account_id.nil?
     end
 
 end
