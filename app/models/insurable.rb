@@ -11,6 +11,7 @@ class Insurable < ApplicationRecord
   include RecordChange
   include SetSlug
 
+  before_validation :set_confirmed_automatically
   before_save :refresh_policy_type_ids
 
   after_commit :create_profile_by_carrier,
@@ -18,8 +19,9 @@ class Insurable < ApplicationRecord
 
   after_create :assign_master_policy
 
-  belongs_to :account
+  belongs_to :account, optional: true
   belongs_to :agency, optional: true
+
   belongs_to :insurable, optional: true
   belongs_to :insurable_type
 
@@ -56,6 +58,7 @@ class Insurable < ApplicationRecord
   validate :title_uniqueness, on: :create
 
   scope :covered, -> { where(covered: true) }
+  scope :confirmed, -> { where(confirmed: true) }
   scope :units, -> { where(insurable_type_id: InsurableType::UNITS_IDS) }
   scope :communities, -> { where(insurable_type_id: InsurableType::COMMUNITIES_IDS) }
   scope :buildings, -> { where(insurable_type_id: InsurableType::BUILDINGS_IDS) }
@@ -106,11 +109,11 @@ class Insurable < ApplicationRecord
   # Insurable.create_carrier_profile(carrier_id)
   #
 
-  def create_carrier_profile(carrier_id)
+  def create_carrier_profile(carrier_id, data: nil, traits: nil)
     cit = CarrierInsurableType.where(carrier_id: carrier_id, insurable_type_id: insurable_type_id).take
     unless cit.nil?
-      carrier_insurable_profiles.create!(traits: cit.profile_traits,
-                                         data: cit.profile_data,
+      carrier_insurable_profiles.create!(traits: cit.profile_traits&.send(*(traits.blank? ? [:itself] : [:merge, traits])),
+                                         data: cit.profile_data&.send(*(data.blank? ? [:itself] : [:merge, data])),
                                          carrier_id: carrier_id)
     end
   end
@@ -124,25 +127,51 @@ class Insurable < ApplicationRecord
 
   def must_belong_to_same_account_if_parent_insurable
     return if insurable.nil?
-
-    errors.add(:account, I18n.t('insurable_model.must_belong_to_same_account')) if insurable.account != account
+    errors.add(:account, I18n.t('insurable_model.must_belong_to_same_account')) if insurable.account && account && insurable.account != account
   end
-
-  def units
-		to_return = []
-
-		unless insurable_type.title.include? "Unit"
-			if insurables.count > 0
-				if insurables.where(insurable_type_id: [4,5]).count > 0
-					to_return = insurables
-				elsif insurables.where(insurable_type_id: 7).count > 0
-					to_return = []
-					insurables.each { |i| to_return.push(*i.insurables) }
-				end
-			end
-		end
-
-		return to_return
+  
+  def residential_units
+    units(unit_type_ids: [4])
+  end
+  
+  def commercial_units
+    units(unit_type_ids: [5])
+  end
+  
+  def units(unit_type_ids: [4,5])
+    # special logic in case we haven't been saved yet
+    if self.id.nil?
+      nonunit_parents = []
+      found = [self]
+      while !found.blank?
+        nonunit_parents.concat(found)
+        found = found.map{|fi| fi.insurables.select{|i| !unit_type_ids.include?(i.insurable_type_id) } }.flatten
+      end
+      return nonunit_parents.map{|fi| fi.insurables.select{|i| unit_type_ids.include?(i.insurable_type_id) } }.flatten
+    end
+    # WARNING: at some point, we can use an activerecord callback to store all nonunit child insurable ids in a field and thus skip the loop
+    # get ids of self and child insurables that might hold units
+    nonunit_parent_ids = []
+    found = [self.id]
+    while !found.blank?
+      nonunit_parent_ids.concat(found)
+      found = ::Insurable.where(insurable_id: found).where.not(id: nonunit_parent_ids).where.not(insurable_type_id: unit_type_ids).order(:id).group(:id).pluck(:id)
+    end
+    # return the units
+    return ::Insurable.where(insurable_type_id: unit_type_ids, insurable_id: nonunit_parent_ids) # WARNING: some code (msi insurable concern) expects query rather than array output here (uses scopes on this call)
+  end
+  
+  def query_for_full_hierarchy
+    # WARNING: at some point, we can use an activerecord callback to store all nonunit child insurable ids in a field and thus skip the loop
+    # loopy schloopy
+    ids = []
+    found = [self.id]
+    while !found.blank?
+      ids.concat(found)
+      found = ::Insurable.where(insurable_id: found).where.not(id: ids).order(:id).group(:id).pluck(:id)
+    end
+    # return everything
+    return ::Insurable.where(id: ids)
   end
 
   def units_relation
@@ -213,9 +242,8 @@ class Insurable < ApplicationRecord
 
     return to_return
   end
-
-  def authorized_to_provide_for_address?(carrier_id, policy_type_id)
-    authorized = false
+  
+  def authorized_to_provide_for_address?(carrier_id, policy_type_id, agency: nil)
     addresses.each do |address|
       return true if authorized == true
 
@@ -226,7 +254,7 @@ class Insurable < ApplicationRecord
         zip_code: address.zip_code,
         plus_four: address.plus_four
       }
-      authorized = account.agency.offers_policy_type_in_region(args)
+      authorized = (agency || self.agency || account.agency)&.offers_policy_type_in_region(args)
     end
     authorized
   end
@@ -267,8 +295,7 @@ class Insurable < ApplicationRecord
     create_if_ambiguous: false,   # pass true to force insurable creation if there's any ambiguity (example: if you've already called this and got 'multiple' type results, none of which were what you wanted)
     disallow_creation: false,     # pass true to ONLY query, NOT create
     created_community_title: nil, # optionally pass the title for the community in case we have to create it (defaults to combined_street_address)
-    account_id: ::Account.where(slug: 'nonpreferred-residential').take&.id, # MOOSE WARNING: fix this if we aren't sticking with this weird dummy account
-                  # optionally, the account id to use if we create anything
+    account_id: nil,              # optionally, the account id to use if we create anything
     communities_only: false,      # if true, in unit mode does nothing; out of unit mode, searches only for communities with the address (no buildings)
     ignore_street_two: false,     # if true, will strip out street_two address data
     titleless: false,             # if true and unit is true, will seek a unit without a title
@@ -311,17 +338,14 @@ class Insurable < ApplicationRecord
           return nil if disallow_creation
           results = ::Insurable.where(id: insurable_id, insurable_type_id: ::InsurableType::RESIDENTIAL_COMMUNITIES_IDS | ::InsurableType::RESIDENTIAL_BUILDINGS_IDS).take
           if results.blank?
-            return { error_type: :invalid_community, message: I18n.t('insurable_model.building_doesnot_exist') }
+            return { error_type: :invalid_community, message: "The requested residential building/community does not exist" }
           end
           community = (results.parent_community || results)
-          if community.preferred_ho4
-            return { error_type: :invalid_unit, message: I18n.t('insurable_model.unit_doesnot_exist') }
-          end
           unit = results.insurables.new(
             title: unit_title == :titleless ? nil : unit_title,
             insurable_type: ::InsurableType.where(title: "Residential Unit").take,
             enabled: true, category: 'property', preferred_ho4: false,
-            account_id: account_id || result.account_id || community.account_id || nil # MOOSE WARNING: nil account id allowed?
+            account_id: account_id || nil
           )
           unless unit.save
             return { error_type: :invalid_unit, message: I18n.t('insurable_model.unable_create_unit'), details: unit.errors.full_messages }
@@ -409,7 +433,7 @@ class Insurable < ApplicationRecord
           # unit does not exist; find a parent we can create on
           return nil if disallow_creation
           parents = ::Insurable.where(id: parent_ids, insurable_type_id: ::InsurableType::RESIDENTIAL_COMMUNITIES_IDS | (communities_only ? [] : ::InsurableType::RESIDENTIAL_BUILDINGS_IDS))
-          parent = parents.select{|p| (p.parent_community || p).preferred_ho4 == false }.sort{|a,b| (::InsurableType::RESIDENTIAL_BUILDINGS_IDS.include?(a) ? -1 : 1) <=> (::InsurableType::RESIDENTIAL_BUILDINGS_IDS.include?(b) ? -1 : 1) }.first
+          parent = parents.sort{|a,b| (::InsurableType::RESIDENTIAL_BUILDINGS_IDS.include?(a) ? -1 : 1) <=> (::InsurableType::RESIDENTIAL_BUILDINGS_IDS.include?(b) ? -1 : 1) }.first
           diagnostics[:parent_count] = parents.count if diagnostics
           if parent.nil?
             # flee if prevented from creating community
@@ -417,7 +441,7 @@ class Insurable < ApplicationRecord
               return nil
             elsif !insurable_id.nil?
               return { error_type: :invalid_community, message: I18n.t('insurable_model.request_residential_build_not_exist') }
-            elsif parents.count > 0 # if parents.count > 0, we found the community/building but it was preferred
+            elsif parents.count > 0 # this no longer happens, but if we ever forbid creating on preferred communities/buildings again, the "parent =" line above should be changed so that this will execute
               return { error_type: :invalid_unit, message:  I18n.t('insurable_model.unit_doesnot_exist') }
             end
             # create community
@@ -429,7 +453,7 @@ class Insurable < ApplicationRecord
               insurable_type: ::InsurableType.where(title: "Residential Community").take,
               enabled: true, preferred_ho4: false, category: 'property',
               addresses: [ address ],
-              account_id: account_id # MOOSE WARNING: nil account_id???
+              account_id: account_id || nil
             )
             unless parent.save
              return { error_type: :invalid_community, message: I18n.t('insurable_model.unable_create_community_from_address'), details: parent.errors.full_messages }
@@ -444,7 +468,7 @@ class Insurable < ApplicationRecord
             title: unit_title == :titleless ? nil : unit_title,
             insurable_type: ::InsurableType.where(title: "Residential Unit").take,
             enabled: true, category: 'property', preferred_ho4: false,
-            account_id: account_id || parent.account_id || nil # MOOSE WARNING: nil account id allowed?
+            account_id: account_id || nil
           )
           unless unit.save
             return { error_type: :invalid_unit, message: I18n.t('insurable_model.unable_create_unit'), details: unit.errors.full_messages }
@@ -503,8 +527,6 @@ class Insurable < ApplicationRecord
             parent = ::Insurable.where(id: insurable_id, insurable_type_id: ::InsurableType::RESIDENTIAL_COMMUNITIES_IDS).take
             if parent.nil?
               return { error_type: :invalid_building, message: I18n.t('insurable_model.parent_community_not_exist') }
-            elsif parent.preferred_ho4
-              return { error_type: :invalid_building, message: I18n.t('insurable_model.parent_community_not_the_same') }
             else
               parent_address = parent&.primary_address
               if parent_address.state != address.state || parent_address.zip_code != address.zip_code || parent_address.city != address.city
@@ -521,7 +543,7 @@ class Insurable < ApplicationRecord
               insurable_type: ::InsurableType.where(title: parent.nil? ? "Residential Community" : "Residential Building").take,
               enabled: true, preferred_ho4: false, category: 'property',
               addresses: [ address ],
-              account_id: account_id || parent&.account_id || nil # MOOSE WARNING: nil account_id???
+              account_id: account_id || nil
             )
           unless created.save
             message = parent.nil? ? I18n.t('insurable_model.unable_to_create_from_address') : I18n.t('insurable_model.unable_to_create_building_from_address')
@@ -591,6 +613,10 @@ class Insurable < ApplicationRecord
                           ].include?(strang.downcase)
                         end
       return(splat.size == 1 ? splat[0] : nil)
+    end
+    
+    def set_confirmed_automatically
+      self.confirmed = !self.account_id.nil?
     end
 
 end

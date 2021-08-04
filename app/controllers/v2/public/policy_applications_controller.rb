@@ -121,7 +121,7 @@ module V2
           :agency => @access_token.bearer,
           :policy_type => PolicyType.find(policy_type),
           :carrier => policy_type == 1 ? Carrier.find(5) : Carrier.find(4),
-          :account => policy_type == 1 ? Account.first : nil,
+          :account => nil,
           :effective_date => place_holder_date,
           :expiration_date => place_holder_date + 1.year
         }

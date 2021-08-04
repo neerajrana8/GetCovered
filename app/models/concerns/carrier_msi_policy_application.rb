@@ -57,7 +57,7 @@ module CarrierMsiPolicyApplication
         address = unit.primary_address
         carrier_agency = CarrierAgency.where(agency_id: self.agency_id, carrier_id: self.carrier_id).take
         # call getfinalpremium
-        preferred = (community_profile&.data&.[]('registered_with_msi') == true) # MOOSE WARNING: we don't care about insurable.preferred_ho4 except in the address search... but we might want to use it here at some point
+        preferred = unit.preferred_ho4 && community_profile&.external_carrier_id
         self.update(status: 'quote_in_progress')
         # validate & make final premium call to msi
         results = ::InsurableRateConfiguration.get_coverage_options(

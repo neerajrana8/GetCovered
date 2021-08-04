@@ -820,6 +820,7 @@ ActiveRecord::Schema.define(version: 2021_07_30_120553) do
     t.bigint "agency_id"
     t.bigint "policy_type_ids", default: [], null: false, array: true
     t.boolean "preferred_ho4", default: false, null: false
+    t.boolean "confirmed", default: true, null: false
     t.boolean "occupied", default: false
     t.boolean "confirmed", default: true, null: false
     t.index ["account_id"], name: "index_insurables_on_account_id"
@@ -1260,6 +1261,7 @@ ActiveRecord::Schema.define(version: 2021_07_30_120553) do
     t.jsonb "coverage_selections", default: [], null: false
     t.jsonb "extra_settings"
     t.jsonb "resolver_info"
+    t.bigint "tag_ids", default: [], null: false, array: true
     t.jsonb "tagging_data"
     t.string "error_message"
     t.integer "branding_profile_id"
