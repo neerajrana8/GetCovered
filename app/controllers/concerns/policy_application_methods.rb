@@ -185,6 +185,7 @@ module PolicyApplicationMethods
     # grab community
     community = unit.parent_community
     cip       = !unit.preferred_ho4 ? nil : CarrierInsurableProfile.where(carrier_id: @msi_id, insurable_id: community&.id).take # possibly nil, for non-preferred
+    cip = nil unless cip.&.external_carrier_id
     if community.nil?
       render json:   { error: I18n.t('policy_application_contr.msi_get_coverage_options.community_not_found') },
              status: :unprocessable_entity
