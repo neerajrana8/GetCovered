@@ -125,7 +125,7 @@ module InsurablesMethods
         }.compact)
       elsif ::InsurableType::RESIDENTIAL_COMMUNITIES_IDS.include?(ins.insurable_type_id)
         return {
-          id: ins.id, title: ins.title, enabled: ins.enabled, preferred_ho4: ins.preferred_ho4 && ins.enabled,preferred
+          id: ins.id, title: ins.title, enabled: ins.enabled, preferred_ho4: ins.preferred_ho4 && ins.enabled,
           account_id: ins.account_id, agency_id: ins.agency_id, insurable_type_id: ins.insurable_type_id
         }.merge(short_mode ? {} : {
           category: ins.category, primary_address: insurable_prejson(ins.primary_address),
