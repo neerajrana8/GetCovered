@@ -9,7 +9,7 @@ module PoliciesDashboardMethods
 
   def total
     apply_filters(:@filtered_policies, @policies)
-    lics = line_item_changes(policies, params[:filter][:created_at])
+    lics = line_item_changes(@filtered_policies, date_params[:start]...date_params[:end])
     total_premium_paid = premium_collected(lics)
     bound_policies = bound_policy_count(@filtered_policies)
 
