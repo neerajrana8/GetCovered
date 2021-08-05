@@ -9,14 +9,17 @@ module PoliciesDashboardMethods
 
   def total
     apply_filters(:@filtered_policies, @policies)
+    lics = line_item_changes(policies, params[:filter][:created_at])
+    total_premium_paid = premium_collected(lics)
+    bound_policies = bound_policy_count(@filtered_policies)
 
     @total = {
       total_policies_sold: {
-        bound: bound_policy_count(@filtered_policies),
+        bound: bound_policies,
         cancelled: cancelled_policy_count(@filtered_policies),
-        total_premium_paid: total_premium_paid(@filtered_policies),
-        average_premium_paid: average_premium_paid(@filtered_policies),
-        total_commission: total_commission(@filtered_policies)
+        total_premium_paid: total_premium_paid,
+        average_premium_paid: (total_premium_paid.to_f / bound_policies).round(2),
+        total_commission: commissions_collected(lics)
       }
     }
 
@@ -58,11 +61,12 @@ module PoliciesDashboardMethods
   end
 
   def set_day_data(policies, date)
+    lics = line_item_changes(policies, params[:filter][:created_at])
     @graphs[:graphs][date.to_s] = {
       total_new_policies: total_new_policies(policies),
       by_policy_type: by_policy_type(policies),
-      premium_collected: premium_collected(policies),
-      commissions_collected: commissions_collected(policies)
+      premium_collected: premium_collected(lics),
+      commissions_collected: commissions_collected(lics)
     }
 
     @graphs[:total_new_policies] += @graphs[:graphs][date.to_s][:total_new_policies]
@@ -87,6 +91,33 @@ module PoliciesDashboardMethods
     PolicyType.where.not(id: PolicyType::MASTER_TYPES_IDS).each_with_object({}) do |policy_type, result|
       result[policy_type.slug.tr('-', '_')] = policies.current.where(policy_type_id: policy_type.id).count
     end
+  end
+
+  def premium_collected(line_item_changes)
+    line_item_changes.inject(0) { |sum, com| sum + com.amount }
+  end
+
+  def commissions_collected(line_item_changes)
+    CommissionItem.
+      references(:commissions).
+      includes(:commission).
+      where(
+        reason: line_item_changes,
+        analytics_category: ['policy_premium', 'master_policy_premium'],
+        commissions: { recipient: recipient }
+      ).
+      inject(0) { |sum, com| sum + com.amount }
+  end
+
+  def line_item_changes(policies, time_range)
+    LineItemChange.
+      joins(line_item: :invoice).
+      joins("inner join policy_quotes on (invoices.invoiceable_type = 'PolicyQuote' and invoices.invoiceable_id = policy_quotes.id)").
+      where(
+        created_at: time_range,
+        analytics_category: ['policy_premium', 'master_policy_premium'],
+        policy_quotes: { policy_id: policies.ids }
+      )
   end
 
   def supported_filters(called_from_orders = false)

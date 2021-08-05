@@ -128,7 +128,7 @@ class Policy < ApplicationRecord
     joins(:policy_quotes).where(policy_quotes: { status: 'accepted'})
   }
   scope :master_policy_coverages, -> { where(policy_type_id: PolicyType::MASTER_COVERAGES_IDS) }
-  scope :not_master, -> { where.not(policy_type_id: PolicyType::MASTER_TYPES_IDS) }
+  scope :not_master, -> { where.not(policy_type_id: PolicyType::MASTER_IDS) }
 
   accepts_nested_attributes_for :policy_premiums,
   :insurables, :policy_users, :policy_insurables, :policy_application
