@@ -139,7 +139,8 @@ module V2
         {
           profileable_type: [:scalar],
           profileable_id: [:scalar],
-          enabled: [:scalar]
+          enabled: [:scalar],
+          url: [:scalar, :like]
         }
       end
 
