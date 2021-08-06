@@ -15,7 +15,7 @@ module V2
       end
 
       def list
-        index(:@branding_profiles, BrandingProfile)
+        apply_filters(:@branding_profiles, BrandingProfile)
         render template: 'v2/shared/branding_profiles/list', status: :ok
       end
 
