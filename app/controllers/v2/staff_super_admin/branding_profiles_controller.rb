@@ -14,6 +14,11 @@ module V2
         render template: 'v2/shared/branding_profiles/index', status: :ok
       end
 
+      def list
+        index(:@branding_profiles, BrandingProfile)
+        render template: 'v2/shared/branding_profiles/list', status: :ok
+      end
+
       def show; end
 
       def create
