@@ -18,7 +18,8 @@ class CarrierAgency < ApplicationRecord
   def billing_strategies; ::BillingStrategy.where(carrier_id: self.carrier_id, agency_id: self.agency_id); end
   
   accepts_nested_attributes_for :carrier_agency_policy_types,
-    reject_if: Proc.new{|attrs| ::CarrierAgency::BLOCKED_POLICY_TYPES.include?(attrs['policy_type_id'] || attrs[:policy_type_id]) }
+    reject_if: :should_reject_capt?,
+    allow_destroy: true
   accepts_nested_attributes_for :carrier_agency_authorizations,
     allow_destroy: true
 
@@ -33,7 +34,6 @@ class CarrierAgency < ApplicationRecord
   end
 
   def disable
-    # Moose warning to force a new deployment
     disable_authorizations
     disable_billing_strategies
   end
@@ -56,6 +56,16 @@ class CarrierAgency < ApplicationRecord
       if CarrierAgency.where(carrier: carrier, agency: agency).count > 1
         errors.add(:agency, "assignment to #{carrier.title} already exists")
       end
+    end
+    
+    def should_reject_capt?(attrs)
+      return true if ::CarrierAgency::BLOCKED_POLICY_TYPES.include?(attrs['policy_type_id'])
+      return true if self.carrier_agency_policy_types.any? do |capt|
+        capt.id && capt.policy_type_id == attrs['policy_type_id'] && (attrs['commission_strategy_attributes'].blank? || attrs['commission_strategy_attributes'].all? do |csa|
+          capt.send(csa.first) == csa.second
+        end)
+      end
+      return false
     end
     
 end

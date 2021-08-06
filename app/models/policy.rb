@@ -232,7 +232,7 @@ class Policy < ApplicationRecord
   end
 
   def residential_account_present
-    errors.add(:account, I18n.t('policy_model.account_must_be_specified')) if ![4,5].include?(policy_type_id) && account.nil?
+    errors.add(:account, I18n.t('policy_model.account_must_be_specified')) if ![4,5].include?(policy_type_id) && account.nil? && !self.primary_insurable&.account.nil?
   end
 
   def carrier_agency_exists

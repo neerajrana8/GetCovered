@@ -148,7 +148,7 @@ en:
     invalid_address_value: "Address not yet in system, please try again later"
     unable_deduce_unit: "Unable to deduce unit title from address"
     not_standart_format: "is not a standard format (e.g. 'Apartment #2, Unit 3, #5, etc.)"
-    request_residential_build_not_exist: "The requested residential building/community id does not exist"
+    request_residential_build_not_exist: "The requested residential building/community does not exist"
     unable_create_community_from_address: "Unable to create community from address"
     parent_community_not_exist: "Requested parent community does not exist"
     parent_community_not_the_same: "Requested parent community is not in the same state/zip/city"

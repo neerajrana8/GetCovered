@@ -1,14 +1,16 @@
-json.extract! lead, :id, :email, :created_at, :last_visited_page, :last_visit, :agency_id, :account_id, :status, :archived
+json.extract! lead, :id, :email, :created_at, :last_visited_page, :last_visit, :agency_id, :account_id, :status, :archived, :branding_profile_id
 
 json.agency_name lead&.agency&.title
+json.account_title lead&.account&.title
+json.branding_profile_url lead&.branding_profile&.url
 
 # Coverage Option, Quote
 profile = lead.profile
 if profile.present?
-  json.extract!  profile, :first_name, :last_name
+  json.extract! profile, :first_name, :last_name
 end
 
-last_event =  lead.last_event
+last_event = lead.last_event
 
 if last_event.present? && last_event.policy_type.present?
   json.interested_product last_event.policy_type.title
