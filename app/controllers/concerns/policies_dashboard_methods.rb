@@ -18,7 +18,7 @@ module PoliciesDashboardMethods
         bound: bound_policies,
         cancelled: cancelled_policy_count(@filtered_policies),
         total_premium_paid: total_premium_paid,
-        average_premium_paid: (total_premium_paid.to_f / bound_policies).round(2),
+        average_premium_paid: (total_premium_paid.to_f / bound_policies).round,
         total_commission: commissions_collected(lics)
       }
     }
@@ -93,6 +93,17 @@ module PoliciesDashboardMethods
     end
   end
 
+  def line_item_changes(policies, time_range)
+    LineItemChange.
+      joins(line_item: :invoice).
+      joins("inner join policy_quotes on (invoices.invoiceable_type = 'PolicyQuote' and invoices.invoiceable_id = policy_quotes.id)").
+      where(
+        created_at: time_range,
+        analytics_category: %w[policy_premium master_policy_premium],
+        policy_quotes: { policy_id: policies.ids }
+      )
+  end
+
   def premium_collected(line_item_changes)
     line_item_changes.inject(0) { |sum, com| sum + com.amount }
   end
@@ -103,27 +114,17 @@ module PoliciesDashboardMethods
       includes(:commission).
       where(
         reason: line_item_changes,
-        analytics_category: ['policy_premium', 'master_policy_premium'],
+        analytics_category: %w[policy_premium master_policy_premium],
         commissions: { recipient: recipient }
       ).
       inject(0) { |sum, com| sum + com.amount }
-  end
-
-  def line_item_changes(policies, time_range)
-    LineItemChange.
-      joins(line_item: :invoice).
-      joins("inner join policy_quotes on (invoices.invoiceable_type = 'PolicyQuote' and invoices.invoiceable_id = policy_quotes.id)").
-      where(
-        created_at: time_range,
-        analytics_category: ['policy_premium', 'master_policy_premium'],
-        policy_quotes: { policy_id: policies.ids }
-      )
-  end
+  end  
 
   def supported_filters(called_from_orders = false)
     @calling_supported_orders = called_from_orders
     {
       agency_id: [:scalar],
+      policy_type_id: [:scalar],
       created_at: %i[interval scalar]
     }
   end
