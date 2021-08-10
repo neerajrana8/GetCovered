@@ -10,18 +10,7 @@ module V2
                     only: %i[update show destroy faqs faq_create faq_update
                              faq_question_create faq_question_update attach_images export update_from_file]
 
-      def index
-        relation =
-          BrandingProfile.where(profileable_type: 'Agency', profileable_id: @agency.id)
-            .or BrandingProfile.where(profileable_type: 'Account', profileable_id: @agency.accounts&.ids)
-        super(:@branding_profiles, relation)
-        render template: 'v2/shared/branding_profiles/index', status: :ok
-      end
-
-      def show
-        render template: 'v2/shared/branding_profiles/show', status: :ok
-      end
-
+      
       def create
         profileable =
           case branding_profile_params[:profileable_type]
@@ -139,8 +128,14 @@ module V2
         {
           profileable_type: [:scalar],
           profileable_id: [:scalar],
-          enabled: [:scalar]
+          enabled: [:scalar],
+          url: [:scalar, :like]
         }
+      end
+      
+      def relation
+        BrandingProfile.where(profileable_type: 'Agency', profileable_id: @agency.id).
+          or BrandingProfile.where(profileable_type: 'Account', profileable_id: @agency.accounts&.ids)
       end
 
       def supported_orders
