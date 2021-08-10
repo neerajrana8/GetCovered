@@ -28,12 +28,15 @@ module V2
 
       def create
         if create_allowed?
-          @carrier = Carrier.create(create_params)
-          if @carrier.errors.blank?
-            render template: 'v2/shared/carriers/show', status: :created
-          else
-            render json: standard_error(:carrier_creation_error, nil, @carrier.errors.full_messages),
-                   status: :unprocessable_entity
+          ActiveRecord::Base.transaction do
+            @carrier = Carrier.create(create_params)
+            @carrier.get_or_create_universal_parent_commission_strategy if create_params[:commission_strategy_attributes].nil?
+            if @carrier.errors.blank? && @carrier.update(init_types_params)
+              render template: 'v2/shared/carriers/show', status: :created
+            else
+              render json: standard_error(:carrier_creation_error, nil, @carrier.errors.full_messages),
+                     status: :unprocessable_entity
+            end
           end
         else
           render json: { success: false, errors: ['Unauthorized Access'] },
@@ -88,6 +91,9 @@ module V2
 
       def update
         if update_allowed?
+          if update_params[:commission_strategy_attributes].nil? && @carrier.commission_strategy.nil?
+            @carrier.get_or_create_universal_parent_commission_strategy
+          end
           if @carrier.update(update_params)
             render template: 'v2/shared/carriers/show', status: :ok
           else
@@ -143,10 +149,20 @@ module V2
         to_return = params.require(:carrier).permit(
           :bindable, :call_sign, :enabled, :id,
           :integration_designation, :quotable, :rateable, :syncable,
-          :title, :verifiable, settings: {},
-                               carrier_policy_types_attributes: [
-                                 :policy_type_id, carrier_policy_type_availabilities_attributes: %i[state available zip_code_blacklist]
-                               ]
+          :title, :verifiable, settings: {}
+        )
+        to_return
+      end
+
+      def init_types_params
+        return({}) if params[:carrier].blank?
+
+        to_return = params.require(:carrier).permit(
+          carrier_policy_types_attributes: [
+           :policy_type_id,
+           commission_strategy_attributes: [:percentage],
+           carrier_policy_type_availabilities_attributes: %i[state available zip_code_blacklist]
+         ]
         )
         to_return
       end
@@ -160,6 +176,7 @@ module V2
           :title, :verifiable,
           settings: {}, carrier_policy_types_attributes: [
             :id, :policy_type_id,
+            commission_strategy_attributes: [:percentage],
             carrier_policy_type_availabilities_attributes: %i[id state available zip_code_blacklist]
           ]
         )

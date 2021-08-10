@@ -1,7 +1,7 @@
 module V2
   module StaffSuperAdmin
     class CarrierAgenciesController < StaffSuperAdminController
-      before_action :set_carrier_agency, only: %i[show update]
+      before_action :set_carrier_agency, only: %i[show update update_policy_types unassign]
 
       def index
         super(:@carrier_agencies, CarrierAgency.all, :agency, :carrier)
@@ -38,7 +38,7 @@ module V2
                  status: :unprocessable_entity
         end
       end
-      
+
       def parent_info
         # process parameters
         agency = Agency.where(id: parent_info_params[:agency_id]).take
@@ -128,12 +128,31 @@ module V2
           status: :ok
       end
 
+      def update_policy_types
+        if @carrier_agency.update_as(current_staff, update_types_params)
+          render template: 'v2/shared/carrier_agencies/show', status: :ok
+        else
+          render json: standard_error(:carrier_agency_update_errors, nil, @carrier_agency.errors.full_messages),
+                 status: :unprocessable_entity
+        end
+      end
+
+      def unassign
+        if @carrier_agency.destroy
+          render json: { message: "Agency ##{@carrier_agency.agency_id} successfully unassigned" },
+                 status: :ok
+        else
+          render json: standard_error(:unassignment_error, "Agency ##{@carrier_agency.agency_id} was not unassigned"),
+                 status: :bad_request
+        end
+      end
+
       private
 
       def set_carrier_agency
         @carrier_agency = !params[:id].blank? ? CarrierAgency.find(params[:id]) : CarrierAgency.where(carrier_id: params[:carrier_id], agency_id: params[:agency_id]).take
       end
-      
+
       def parent_info_params
         params.permit(
           :carrier_id,
@@ -156,6 +175,27 @@ module V2
             ]
           ]
         )
+      end
+
+      def update_types_params
+        return({}) if params[:carrier_agency].blank?
+
+        to_return = params.require(:carrier_agency).permit(
+           carrier_agency_policy_types_attributes: [
+             :id, :policy_type_id,
+             commission_strategy_attributes: [:id, :percentage]
+           ]
+         )
+
+        existed_ids = to_return[:carrier_agency_policy_types_attributes]&.map { |cpt| cpt[:id] }
+
+        unless @carrier_agency.blank? || existed_ids.nil?
+          (@carrier_agency.carrier_agency_policy_types.pluck(:id) - existed_ids).each do |id|
+            to_return[:carrier_agency_policy_types_attributes] <<
+              ActionController::Parameters.new(id: id, _destroy: true).permit(:id, :_destroy)
+          end
+        end
+        to_return
       end
 
       def update_params
