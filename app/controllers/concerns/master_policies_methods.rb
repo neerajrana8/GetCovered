@@ -7,7 +7,6 @@ module MasterPoliciesMethods
                            cover_unit available_top_insurables available_units historically_coverage_units
                            cancel cancel_coverage master_policy_coverages cancel_insurable auto_assign_all
                            auto_assign_insurable]
-    before_action :update_effective_date, only: %i[add_insurable cover_unit]
 
     def show
       render template: 'v2/shared/master_policies/show', status: :ok
@@ -277,14 +276,6 @@ module MasterPoliciesMethods
     end
 
     private
-
-    def update_effective_date
-      return if @master_policy.policies.any?
-
-      if @master_policy.effective_date < Time.zone.now
-        @master_policy.update(effective_date: Time.zone.now, expiration_date: Time.zone.now + 1.year)
-      end
-    end
 
     def create_params
       return({}) if params[:policy].blank?

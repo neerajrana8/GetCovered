@@ -542,7 +542,7 @@ class InsurableRateConfiguration < ApplicationRecord
       else
         next nil
       end
-    end.compact.select{|s| s['selection'] }
+    end.compact.select{|s| s['selection'] }.uniq{|v| v['uid'] }
   end
   
   def self.get_selection_errors(selections, options)

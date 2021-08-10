@@ -47,7 +47,7 @@ class Policy < ApplicationRecord
   include AgencyConfiePolicy
   include RecordChange
 
-  after_create :schedule_coverage_reminders, if: -> { policy_type&.designation == 'MASTER-COVERAGE' }
+  after_create :schedule_coverage_reminders, if: -> { policy_type&.master_coverage }
 
   # after_save :start_automatic_master_coverage_policy_issue, if: -> { policy_type&.designation == 'MASTER' }
 
@@ -143,12 +143,12 @@ class Policy < ApplicationRecord
   validate :residential_account_present
   validate :status_allowed
   validate :carrier_agency_exists
-  validate :master_policy, if: -> { policy_type&.designation == 'MASTER-COVERAGE' }
+  validate :master_policy, if: -> { policy_type&.master_coverage }
   validates :agency, presence: true, if: :in_system?
   validates :carrier, presence: true, if: :in_system?
   validates :number, uniqueness: true
 
-  validates_presence_of :expiration_date, :effective_date, unless: -> { ['MASTER-COVERAGE', 'MASTER'].include?(policy_type&.designation) }
+  validates_presence_of :expiration_date, :effective_date, unless: -> { policy_type&.master || policy_type&.master_coverage }
 
   validate :date_order,
   unless: proc { |pol| pol.effective_date.nil? || pol.expiration_date.nil? }
@@ -231,7 +231,7 @@ class Policy < ApplicationRecord
   end
 
   def residential_account_present
-    errors.add(:account, I18n.t('policy_model.account_must_be_specified')) if ![4,5].include?(policy_type_id) && account.nil?
+    errors.add(:account, I18n.t('policy_model.account_must_be_specified')) if ![4,5].include?(policy_type_id) && account.nil? && !self.primary_insurable&.account.nil?
   end
 
   def carrier_agency_exists

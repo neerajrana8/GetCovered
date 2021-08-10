@@ -9,6 +9,7 @@ class InsurableType < ApplicationRecord
   RESIDENTIAL_COMMUNITIES_IDS = [1, 2].freeze
   RESIDENTIAL_BUILDINGS_IDS = [7].freeze
   RESIDENTIAL_UNITS_IDS = [4].freeze
+  RESIDENTIAL_IDS = [1, 2, 4, 7].freeze
 
   COMMERCIAL_COMMUNITIES_IDS = [2, 3].freeze
 

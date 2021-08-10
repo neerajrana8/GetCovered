@@ -4,6 +4,7 @@
 
 class CarrierAgencyPolicyType < ApplicationRecord
   attr_accessor :callbacks_disabled
+  attr_accessor :disable_tree_repair
 
   belongs_to :carrier_agency
   belongs_to :policy_type
@@ -19,29 +20,36 @@ class CarrierAgencyPolicyType < ApplicationRecord
   
   accepts_nested_attributes_for :commission_strategy
   
-  def parent_carrier_agency_policy_type
+  def parent_carrier_agency_policy_type(include_top_level = false) # iff true, for top-level agency, includes master agency record
     ::CarrierAgencyPolicyType.references(:carrier_agencies).includes(:carrier_agency)
+                             .where(carrier_agencies: { carrier_id: self.carrier_id, agency_id: (include_top_level && self.carrier_agency.agency.agency_id.nil? ? ::Agency.where(master_agency: true).take.id : self.carrier_agency.agency.agency_id) }, policy_type_id: self.policy_type_id).take
+  end
+
+  def child_carrier_agency_policy_types(include_top_level = false) # iff true, for master agency, includes CAPTs for top-level agencies
+    ::CarrierAgencyPolicyType.references(carrier_agencies: :agencies).includes(carrier_agency: :agency)
+                             .where(carrier_agencies: { carrier_id: self.carrier_id, agencies: { agency_id: [self.agency_id] + (include_top_level && self.agency.master_agency ? [nil] : []) }}, policy_type_id: self.policy_type_id)
+                             .where.not(id: self.id)
       .where(carrier_agencies: { carrier_id: carrier_id, agency_id: carrier_agency.agency.agency_id }, policy_type_id: policy_type_id).take
   end
 
-  def carrier_policy_type 
-    ::CarrierPolicyType.where(policy_type_id: policy_type_id, carrier_id: carrier_agency.carrier_id).take 
+  def carrier_policy_type
+    ::CarrierPolicyType.where(policy_type_id: policy_type_id, carrier_id: carrier_agency.carrier_id).take
   end
 
-  def carrier_agency_authorizations 
-    ::CarrierAgencyAuthorization.where(policy_type_id: policy_type_id, carrier_agency_id: carrier_agency_id) 
+  def carrier_agency_authorizations
+    ::CarrierAgencyAuthorization.where(policy_type_id: policy_type_id, carrier_agency_id: carrier_agency_id)
   end
 
-  def billing_strategies 
-    ::BillingStrategy.where(policy_type_id: policy_type_id, carrier_id: carrier_agency.carrier_id, agency_id: carrier_agency.agency_id) 
+  def billing_strategies
+    ::BillingStrategy.where(policy_type_id: policy_type_id, carrier_id: carrier_agency.carrier_id, agency_id: carrier_agency.agency_id)
   end
 
-  def agency_id 
-    carrier_agency.agency_id 
+  def agency_id
+    carrier_agency.agency_id
   end
 
-  def carrier_id 
-    carrier_agency.carrier_id 
+  def carrier_id
+    carrier_agency.carrier_id
   end
   
   before_validation :manipulate_dem_nested_boiz_like_a_boss, # this cannot be a before_create, or the CS will already have been saved
@@ -49,10 +57,13 @@ class CarrierAgencyPolicyType < ApplicationRecord
   after_create :create_authorizations,
                unless: proc { |capt| capt.callbacks_disabled }
   after_create :set_billing_strategies,
-               unless: proc { |capt| capt.callbacks_disabled }
+    unless: Proc.new{|capt| capt.callbacks_disabled }
+  after_update :repair_commission_strategy_tree,
+    if: Proc.new{|capt| !capt.disable_tree_repair && capt.saved_change_to_attribute?('commission_strategy_id') }
+  before_destroy :refuse_to_perish_if_a_parent
   before_destroy :remove_authorizations,
                  :disable_billing_strategies
-  
+
   private
   
   def create_authorizations
@@ -68,6 +79,14 @@ class CarrierAgencyPolicyType < ApplicationRecord
         state: state,
         available: blocked_states.include?(state) ? false : true
       )
+    end
+  end
+
+  def refuse_to_perish_if_a_parent
+    chillenz = self.child_carrier_agency_policy_types(true)
+    unless chillenz.blank?
+      errors.add(:base, "cannot be destroyed due to presence of child CAPTs (IDs #{chillenz.map{|c| c.id }.join(', ')})")
+      raise ActiveRecord::RecordNotDestroyed, self
     end
   end
 
@@ -97,35 +116,108 @@ class CarrierAgencyPolicyType < ApplicationRecord
     billing_strategies.update_all(enabled: false)
   end
     
-  # fills out appropriate defaults for passed CommissionStrategy nested attributes or unsaved associated model;
-  # if no commission strategy is passed and our parent CommissionStrategy (i.e. our parent agency's corresponding CAPT's commission strategy, or if no parent agency, our corresponding CarrierPolicyType's commission strategy)
-  # has recipient == self.agency, we go ahead and create a child CommissionStrategy with the same data but a more descriptive title (assuming no one creates CAPTs whose CS recipient is not the CAPT's agency, this
-  # can only happen when self.agency == GetCovered, since the parent CS will belong to a CarrierPolicyType and they always have recipient GetCovered)
-  def manipulate_dem_nested_boiz_like_a_boss
-    if commission_strategy.nil?
-      meesa_own_daddy = carrier_agency.agency.agency_id.nil? ?
-        carrier_policy_type.commission_strategy
-        : parent_carrier_agency_policy_type.commission_strategy
-      if meesa_own_daddy && meesa_own_daddy.recipient == carrier_agency.agency
-        self.commission_strategy = ::CommissionStrategy.new(
-          title: "#{carrier_agency.agency.title} / #{carrier_agency.carrier.title} #{policy_type.title} Commission",
-          percentage: meesa_own_daddy.percentage,
-          recipient: carrier_agency.agency,
-          commission_strategy: meesa_own_daddy
-        )
+    # fills out appropriate defaults for passed CommissionStrategy nested attributes or unsaved associated model;
+    # if no commission strategy is passed and our parent CommissionStrategy (i.e. our parent agency's corresponding CAPT's commission strategy, or if no parent agency, our corresponding CarrierPolicyType's commission strategy)
+    # has recipient == self.agency, we go ahead and create a child CommissionStrategy with the same data but a more descriptive title (assuming no one creates CAPTs whose CS recipient is not the CAPT's agency, this
+    # can only happen when self.agency == GetCovered, since the parent CS will belong to a CarrierPolicyType and they always have recipient GetCovered)
+    def manipulate_dem_nested_boiz_like_a_boss
+      if self.commission_strategy.nil?
+        meesa_own_daddy = self.carrier_agency.agency.agency_id.nil? ?
+          self.carrier_policy_type.commission_strategy
+          : parent_carrier_agency_policy_type.commission_strategy
+        if meesa_own_daddy && meesa_own_daddy.recipient == self.carrier_agency.agency
+          self.commission_strategy = ::CommissionStrategy.new(
+            title: "#{self.carrier_agency.agency.title} / #{self.carrier_agency.carrier.title} #{self.policy_type.title} Commission",
+            percentage: meesa_own_daddy.percentage,
+            recipient: self.carrier_agency.agency,
+            commission_strategy: meesa_own_daddy
+          )
+        end
+      elsif self.commission_strategy.id.nil?
+        cs = self.commission_strategy
+        cs.title = "#{self.carrier_agency.agency.title} / #{self.carrier_agency.carrier.title} #{self.policy_type.title} Commission" if cs.title.blank?
+        cs.recipient = self.carrier_agency.agency if cs.recipient_id.nil? && cs.recipient_type.nil?
+        if cs.commission_strategy_id.nil?
+          meesa_own_daddy = self.carrier_agency.agency.agency_id.nil? ?
+            self.carrier_policy_type.commission_strategy
+            : ::CarrierAgencyPolicyType.references(:carrier_agencies).includes(:carrier_agency)
+                                       .where(carrier_agencies: { carrier_id: self.carrier_id, agency_id: self.carrier_agency.agency.agency_id }, policy_type_id: self.policy_type_id).take.commission_strategy
+          cs.commission_strategy = meesa_own_daddy
+        end
+        if cs.recipient == cs.commission_strategy.recipient
+          cs.percentage = cs.commission_strategy.percentage
+        end
       end
-    elsif commission_strategy.id.nil?
-      cs = commission_strategy
-      cs.title = "#{carrier_agency.agency.title} / #{carrier_agency.carrier.title} #{policy_type.title} Commission" if cs.title.blank?
-      cs.recipient = carrier_agency.agency if cs.recipient_id.nil? && cs.recipient_type.nil?
-      if cs.commission_strategy_id.nil?
-        meesa_own_daddy = carrier_agency.agency.agency_id.nil? ?
-          carrier_policy_type.commission_strategy
-          : ::CarrierAgencyPolicyType.references(:carrier_agencies).includes(:carrier_agency)
-            .where(carrier_agencies: { carrier_id: carrier_id, agency_id: carrier_agency.agency.agency_id }, policy_type_id: policy_type_id).take.commission_strategy
-        cs.commission_strategy = meesa_own_daddy
-      end
-      cs.percentage = cs.commission_strategy.percentage if cs.recipient == cs.commission_strategy.recipient
     end
-  end
+
+    def repair_commission_strategy_tree
+      our_agency = self.agency
+      old_id = self.attribute_before_last_save('commission_strategy_id')
+      # fix siblings if we are master agency
+      if our_agency.master_agency
+        cpt = self.carrier_policy_type
+        cpt.update_columns(commission_strategy_id: self.commission_strategy_id) unless cpt.commission_strategy_id == self.commission_strategy_id # NOTE: we are using update_columns here to intentionally skip callbacks! we don't want to set off a recursive loop
+        siblings = ::CarrierAgencyPolicyType.references(:commission_strategies, carrier_agencies: :agencies).includes(:commission_strategy, carrier_agency: :agency)
+                    .where(
+                      policy_type_id: self.policy_type_id,
+                      commission_strategies: { commission_strategy_id: old_id },
+                      carrier_agencies: { carrier_id: self.carrier_id, agencies: { agency_id: nil } }
+                    )
+        begin
+          siblings.each do |sibling|
+            next if sibling == self
+            unless sibling.update(commission_strategy_attributes: ::CommissionStrategy
+                                                                     .column_names
+                                                                     .select{|cn| !['updated_at', 'created_at'].include?(cn) }
+                                                                     .map{|cn| [cn.to_sym, cn == 'commission_strategy_id' ? self.commission_strategy_id : sibling.commission_strategy.send(cn)] }
+                                                                     .to_h)
+              errors.add(:commission_strategy, "failed to update sibling records during repair_commission_strategy_tree execution (CarrierAgencyPolicyType #{sibling.id} update encountered an error: #{sibling.errors.to_h})")
+              raise ActiveRecord::RecordInvalid, self
+            end
+          end
+        rescue ActiveRecord::RecordInvalid => err
+          errors.add(:commission_strategy, "failed to update sibling records during repair_commission_strategy_tree execution (CarrierAgencyPolicyType #{err.record.id} update encountered an error: #{err.record.errors.to_h})")
+          raise ActiveRecord::RecordInvalid, self
+        end
+      end
+      # fix children whether we're a master agency or not
+      kiddos = ::CarrierAgencyPolicyType.references(:commission_strategies, carrier_agencies: :agencies).includes(:commission_strategy, carrier_agency: :agency)
+                 .where(
+                    policy_type_id: self.policy_type_id,
+                    commission_strategies: { commission_strategy_id: old_id },
+                    carrier_agencies: { carrier_id: self.carrier_id, agencies: { agency_id: our_agency.id } }
+                  )
+      begin
+        kiddos.each do |kiddo|
+          unless kiddo.update(commission_strategy_attributes: ::CommissionStrategy
+                                                                   .column_names
+                                                                   .select{|cn| !['updated_at', 'created_at'].include?(cn) }
+                                                                   .map{|cn| [cn.to_sym, cn == 'commission_strategy_id' ? self.commission_strategy_id : kiddo.commission_strategy.send(cn)] }
+                                                                   .to_h)
+            errors.add(:commission_strategy, "failed to update child records during repair_commission_strategy_tree execution (CarrierAgencyPolicyType #{kiddo.id} update encountered an error: #{kiddo.errors.to_h})")
+            raise ActiveRecord::RecordInvalid, self
+          end
+        end
+      rescue ActiveRecord::RecordInvalid => err
+        errors.add(:commission_strategy, "failed to update child records during repair_commission_strategy_tree execution (CarrierAgencyPolicyType #{err.record.id} update encountered an error: #{err.record.errors.to_h})")
+        raise ActiveRecord::RecordInvalid, self
+      end
+    end
 end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

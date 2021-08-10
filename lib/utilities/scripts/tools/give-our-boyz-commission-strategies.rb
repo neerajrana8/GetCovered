@@ -1,5 +1,6 @@
 
 def give_em_cses
+  sheet = Roo::Spreadsheet.open(Rails.root.join('lib/utilities/scripts/tools/gobcs/commissions.xlsx').to_s)
   begin
     ActiveRecord::Base.transaction do
       # clear out shittastic data
@@ -37,9 +38,10 @@ def give_em_cses
       get_covered = ::Agency.where(master_agency: true).take
       ::CarrierPolicyType.all.each do |cpt|
         if cpt.commission_strategy.nil? || cpt.commission_strategy.recipient != get_covered
-          cpt.update!(commission_strategy_attributes: { percentage: {
+          cpt.update!(commission_strategy_attributes: { recipient: get_covered, percentage: {
             PolicyType::RESIDENTIAL_ID => 30,
             PolicyType::MASTER_ID => 25,
+            PolicyType::MASTER_COVERAGE_ID => 25,
             PolicyType::SECURITY_DEPOSIT_ID => 10,
             PolicyType::RENT_GUARANTEE_ID => 18.5,
             PolicyType::COMMERCIAL_ID => 0

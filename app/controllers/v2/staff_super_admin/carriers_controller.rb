@@ -86,7 +86,7 @@ module V2
         carrier = Carrier.find(params[:id])
         agency = carrier.agencies.find_by(id: params[:carrier_agency_id])
         CarrierAgency.find_by(agency_id: agency.id, carrier_id: carrier).destroy
-        render json: { message: 'Agency was successfully unassign' }
+        render json: { message: 'Agency was successfully unassigned' }
       end
 
       def update
@@ -133,6 +133,7 @@ module V2
         params.require(:carrier_agency).permit(
           :carrier_id,
           :agency_id,
+          :external_carrier_id,
           carrier_agency_policy_types_attributes: [
             :policy_type_id,
             commission_strategy_attributes: [

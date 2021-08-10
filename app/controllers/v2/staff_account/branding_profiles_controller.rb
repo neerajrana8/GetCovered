@@ -6,15 +6,6 @@ module V2
                     only: %i[update show destroy faqs faq_create faq_update
                              faq_question_create faq_question_update attach_images export update_from_file]
 
-      def index
-        super(:@branding_profiles, BrandingProfile.where(profileable_type: 'Account', profileable_id: @account.id))
-        render template: 'v2/shared/branding_profiles/index', status: :ok
-      end
-
-      def show
-        render template: 'v2/shared/branding_profiles/show', status: :ok
-      end
-
       def create
         branding_profile_outcome = BrandingProfiles::CreateFromDefault.run(account: @account)
 
@@ -118,8 +109,13 @@ module V2
         {
           profileable_type: [:scalar],
           profileable_id: [:scalar],
+          url: [:scalar, :like],
           enabled: [:scalar]
         }
+      end
+
+      def relation
+        BrandingProfile.where(profileable_type: 'Account', profileable_id: @account.id)
       end
 
       def supported_orders

@@ -17,7 +17,7 @@ module V2
             end
         end
         
-        super(:@leads, @substrate)
+        super(:@leads, @substrate, :account, :agency, :branding_profile)
         if need_to_download?
           ::Leads::RecentLeadsReportJob.perform_later(@leads.pluck(:id), params.as_json, current_staff.email)
           render json: { message: 'Report were sent' }, status: :ok
@@ -60,7 +60,8 @@ module V2
 
       def set_substrate
         if @substrate.nil?
-          @substrate = access_model(::Lead).presented.not_converted.includes(:profile, :tracking_url)
+          agencies_ids = [@agency.id, @agency.agencies.ids].flatten.compact
+          @substrate = Lead.where(agency_id: agencies_ids).presented.not_converted.includes(:profile, :tracking_url)
           # need to delete after fix on ui
           # if params[:filter].present? && params[:filter][:archived]
           #   @substrate = access_model(::Lead).presented.not_converted.archived.includes(:profile, :tracking_url)
@@ -76,6 +77,7 @@ module V2
           created_at: %i[scalar array interval],
           email: %i[scalar like],
           agency_id: %i[scalar array],
+          account_id: %i[scalar array],
           status: %i[scalar array],
           archived: [:scalar],
           last_visit: %i[interval scalar interval],
@@ -86,6 +88,9 @@ module V2
           },
           lead_events: {
             policy_type: %i[scalar array]
+          },
+          branding_profile: {
+            url: %i[scalar like]
           }
         }
       end

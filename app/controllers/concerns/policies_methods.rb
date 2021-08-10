@@ -248,6 +248,9 @@ module PoliciesMethods
       policy_in_system: %i[scalar like],
       effective_date: %i[scalar like],
       expiration_date: %i[scalar like],
+      policy_insurables: {
+        insurable_id: %i[scalar array]
+      },
       users: {
         id: %i[scalar array],
         email: %i[scalar like],

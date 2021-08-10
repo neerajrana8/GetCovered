@@ -41,7 +41,7 @@ class InsurableRate < ApplicationRecord
   scope :policy_fee, -> { where(sub_schedule: "policy_fee") }
   scope :earthquake_coverage, -> { where(sub_schedule: "earthquake_coverage") }
   
-#   5.times do |i|
+#   5.times do |i| 
 #     
 #     number_insured = i + 1
 #     service = GetCoveredService.new()

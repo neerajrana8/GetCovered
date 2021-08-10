@@ -98,6 +98,7 @@ class PolicyApplication < ApplicationRecord
   def tags
     ::Tag.where(id: self.tag_ids)
   end
+
   # PolicyApplication.estimate()
 
   def estimate(args = [])

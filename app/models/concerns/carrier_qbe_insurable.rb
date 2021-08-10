@@ -393,7 +393,7 @@ module CarrierQbeInsurable
 	        prop_county: @address.county,
 	        prop_state: @address.state,
 	        prop_zipcode: @address.combined_zip_code,
-	        units_on_site: units.count,
+	        units_on_site: units.confirmed.count,
 	        age_of_facility: @carrier_profile.traits['construction_year'],
 	        gated_community: @carrier_profile.traits['gated_access'] == true ? 1 : 0,
 	        prof_managed: @carrier_profile.traits['professionally_managed'] == true ? 1 : 0,

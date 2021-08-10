@@ -104,6 +104,11 @@
           delete :faq_question_delete, path: '/faqs/:faq_id/faq_question_delete/:faq_question_id'
           post :attach_images, path: '/attach_images'
         end
+
+        collection do
+          post :list
+        end
+
         post :import, on: :collection
       end
 
@@ -141,12 +146,28 @@
           post :assign_agency_to_carrier
         end
       end
-    resources :carrier_agencies, path: "carrier-agencies", only: [ :index, :show, :create, :update ] do
+
+    resources :carrier_agencies, path: "carrier-agencies", only: [ :index, :show, :create, :update, :destroy ] do
+      collection do
+        get "carrier/:carrier_id/agency/:agency_id",
+          to: "carrier_agencies#show",
+          via: "get"
+        put "carrier/:carrier_id/agency/:agency_id",
+          to: "carrier_agencies#update",
+          via: "put"
+        patch "carrier/:carrier_id/agency/:agency_id",
+          to: "carrier_agencies#update",
+          via: "patch"
+        post "carrier/:carrier_id/agency/:agency_id/info",
+          to: "carrier_agencies#parent_info",
+          via: "post"
+      end
       member do
         put :unassign
         put :update_policy_types
       end
     end
+
     resources :carrier_agency_authorizations, path: "carrier-agency-authorizations", only: [ :update, :index, :show ] do
       member do
         post :add_fee
