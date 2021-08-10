@@ -1,8 +1,6 @@
 module PoliciesDashboardMethods
   extend ActiveSupport::Concern
 
-  MAX_COUNTS = 9998
-
   included do
     before_action :set_policies
   end
@@ -64,15 +62,27 @@ module PoliciesDashboardMethods
     lics = line_item_changes(policies, params[:filter][:created_at])
     @graphs[:graphs][date.to_s] = {
       total_new_policies: total_new_policies(policies),
-      by_policy_type: by_policy_type(policies),
+      added_policies_count: policies.current.count,
       premium_collected: premium_collected(lics),
-      commissions_collected: commissions_collected(lics)
+      agencies_commissions: commissions_collected(lics, recipient_type: 'Agency'),
+      get_covered_commissions: commissions_collected(lics, recipient_type: 'Agency', recipient_id: Agency::GET_COVERED_ID),
+      carriers_commissions: commissions_collected(lics, recipient_type: 'Carrier')
     }
 
-    @graphs[:total_new_policies] += @graphs[:graphs][date.to_s][:total_new_policies]
-    @graphs[:graphs][date.to_s][:by_policy_type].each do |id, count|
-      @graphs[:by_policy_type][id] += count
-    end
+    @graphs[:graphs][date.to_s][:premium_after_commissions] =
+      @graphs[:graphs][date.to_s][:premium_collected] -
+      @graphs[:graphs][date.to_s][:agencies_commissions] -
+      @graphs[:graphs][date.to_s][:carriers_commissions]
+
+    @graphs[:total] = {
+      total_new_policies: @graphs[:total][:total_new_policies] += @graphs[:graphs][date.to_s][:total_new_policies],
+      added_policies_count: @graphs[:total][:added_policies_count] += @graphs[:graphs][date.to_s][:added_policies_count],
+      premium_collected: @graphs[:total][:premium_collected] += @graphs[:graphs][date.to_s][:premium_collected],
+      agencies_commissions: @graphs[:total][:agencies_commissions] += @graphs[:graphs][date.to_s][:agencies_commissions],
+      get_covered_commissions: @graphs[:total][:get_covered_commissions] += @graphs[:graphs][date.to_s][:get_covered_commissions],
+      carriers_commissions: @graphs[:total][:carriers_commissions] += @graphs[:graphs][date.to_s][:carriers_commissions],
+      premium_after_commissions: @graphs[:total][:premium_after_commissions] += @graphs[:graphs][date.to_s][:premium_after_commissions]
+    }
   end
 
   def bound_policy_count(policies)
@@ -85,12 +95,6 @@ module PoliciesDashboardMethods
 
   def total_new_policies(policies_relation)
     policies_relation.count
-  end
-
-  def by_policy_type(policies)
-    PolicyType.where.not(id: PolicyType::MASTER_TYPES_IDS).each_with_object({}) do |policy_type, result|
-      result[policy_type.slug.tr('-', '_')] = policies.current.where(policy_type_id: policy_type.id).count
-    end
   end
 
   def line_item_changes(policies, time_range)
@@ -108,17 +112,17 @@ module PoliciesDashboardMethods
     line_item_changes.inject(0) { |sum, com| sum + com.amount }
   end
 
-  def commissions_collected(line_item_changes)
+  def commissions_collected(line_item_changes, recipient)
     CommissionItem.
       references(:commissions).
       includes(:commission).
       where(
         reason: line_item_changes,
         analytics_category: %w[policy_premium master_policy_premium],
-        commissions: { recipient: recipient }
+        commissions: recipient
       ).
       inject(0) { |sum, com| sum + com.amount }
-  end  
+  end
 
   def supported_filters(called_from_orders = false)
     @calling_supported_orders = called_from_orders
@@ -131,14 +135,6 @@ module PoliciesDashboardMethods
 
   def supported_orders
     supported_filters(true)
-  end
-
-  def default_pagination_per
-    MAX_COUNTS
-  end
-
-  def maximum_pagination_per
-    MAX_COUNTS
   end
 
   def filter_by_day?(start_date, end_date)
@@ -155,7 +151,7 @@ module PoliciesDashboardMethods
       params[:filter] = {}
       {
         start: @policies.order(:created_at).first&.created_at&.to_s || Time.now.beginning_of_year.to_s,
-        end: Time.now.to_s
+        end: Time.zone.now.to_s
       }
     end
   end
