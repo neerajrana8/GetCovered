@@ -17,7 +17,9 @@ module PoliciesDashboardMethods
         cancelled: cancelled_policy_count(@filtered_policies),
         total_premium_paid: total_premium_paid,
         average_premium_paid: (total_premium_paid.to_f / bound_policies).round,
-        total_commission: commissions_collected(lics)
+        agencies_commissions: commissions_collected(lics, recipient_type: 'Agency'),
+        get_covered_commissions: commissions_collected(lics, recipient_type: 'Agency', recipient_id: Agency::GET_COVERED_ID),
+        carriers_commissions: commissions_collected(lics, recipient_type: 'Carrier')
       }
     }
 
@@ -29,8 +31,15 @@ module PoliciesDashboardMethods
     end_date   = Date.parse(date_params[:end])
 
     @graphs = {
-      total_new_policies: 0,
-      by_policy_type: Hash.new(0),
+      total: {
+        total_new_policies: 0,
+        added_policies_count: 0,
+        premium_collected: 0,
+        agencies_commissions: 0,
+        get_covered_commissions: 0,
+        carriers_commissions: 0,
+        premium_after_commissions: 0
+      },
       graphs: {}
     }
 
