@@ -12,10 +12,11 @@ module PoliciesDashboardMethods
     bound_policies = bound_policy_count(@filtered_policies)
 
     @total = {
+      all_policies_count: @filtered_policies.count,
       bound: bound_policies,
       cancelled: cancelled_policy_count(@filtered_policies),
       total_premium_paid: total_premium_paid,
-      average_premium_paid: (total_premium_paid.to_f / bound_policies).round,
+      average_premium_paid: (total_premium_paid.to_f / @filtered_policies.count).round,
       agencies_commissions: commissions_collected(lics, recipient_type: 'Agency'),
       get_covered_commissions: commissions_collected(lics, recipient_type: 'Agency', recipient_id: Agency::GET_COVERED_ID),
       carriers_commissions: commissions_collected(lics, recipient_type: 'Carrier')
@@ -32,7 +33,7 @@ module PoliciesDashboardMethods
     @graphs = {
       total: {
         total_new_policies: 0,
-        added_policies_count: 0,
+        current_added_policies: 0,
         premium_collected: 0,
         agencies_commissions: 0,
         get_covered_commissions: 0,
@@ -70,7 +71,7 @@ module PoliciesDashboardMethods
     lics = line_item_changes(policies, params[:filter][:created_at])
     @graphs[:graphs][date.to_s] = {
       total_new_policies: total_new_policies(policies),
-      added_policies_count: policies.current.count,
+      current_added_policies: policies.current.count,
       premium_collected: premium_collected(lics),
       agencies_commissions: commissions_collected(lics, recipient_type: 'Agency'),
       get_covered_commissions: commissions_collected(lics, recipient_type: 'Agency', recipient_id: Agency::GET_COVERED_ID),
@@ -84,7 +85,7 @@ module PoliciesDashboardMethods
 
     @graphs[:total] = {
       total_new_policies: @graphs[:total][:total_new_policies] += @graphs[:graphs][date.to_s][:total_new_policies],
-      added_policies_count: @graphs[:total][:added_policies_count] += @graphs[:graphs][date.to_s][:added_policies_count],
+      current_added_policies: @graphs[:total][:current_added_policies] += @graphs[:graphs][date.to_s][:current_added_policies],
       premium_collected: @graphs[:total][:premium_collected] += @graphs[:graphs][date.to_s][:premium_collected],
       agencies_commissions: @graphs[:total][:agencies_commissions] += @graphs[:graphs][date.to_s][:agencies_commissions],
       get_covered_commissions: @graphs[:total][:get_covered_commissions] += @graphs[:graphs][date.to_s][:get_covered_commissions],
