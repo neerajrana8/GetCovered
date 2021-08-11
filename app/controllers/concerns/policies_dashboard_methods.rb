@@ -12,16 +12,15 @@ module PoliciesDashboardMethods
     bound_policies = bound_policy_count(@filtered_policies)
 
     @total = {
-      total_policies_sold: {
-        bound: bound_policies,
-        cancelled: cancelled_policy_count(@filtered_policies),
-        total_premium_paid: total_premium_paid,
-        average_premium_paid: (total_premium_paid.to_f / bound_policies).round,
-        agencies_commissions: commissions_collected(lics, recipient_type: 'Agency'),
-        get_covered_commissions: commissions_collected(lics, recipient_type: 'Agency', recipient_id: Agency::GET_COVERED_ID),
-        carriers_commissions: commissions_collected(lics, recipient_type: 'Carrier')
-      }
+      bound: bound_policies,
+      cancelled: cancelled_policy_count(@filtered_policies),
+      total_premium_paid: total_premium_paid,
+      average_premium_paid: (total_premium_paid.to_f / bound_policies).round,
+      agencies_commissions: commissions_collected(lics, recipient_type: 'Agency'),
+      get_covered_commissions: commissions_collected(lics, recipient_type: 'Agency', recipient_id: Agency::GET_COVERED_ID),
+      carriers_commissions: commissions_collected(lics, recipient_type: 'Carrier')
     }
+    @total[:premium_after_commissions] = @total[:total_premium_paid] - @total[:agencies_commissions] - @total[:carriers_commissions]
 
     render json: @total.to_json
   end
