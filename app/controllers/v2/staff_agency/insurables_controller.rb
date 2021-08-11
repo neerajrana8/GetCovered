@@ -245,6 +245,7 @@ module V2
           insurable_type_id: %i[scalar array],
           insurable_id: %i[scalar array],
           account_id: %i[scalar array],
+          confirmed: %i[scalar],
           created_at: %i[scalar array interval],
           updated_at: %i[scalar array interval],
           category: %i[scalar array],
