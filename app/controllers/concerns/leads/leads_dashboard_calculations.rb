@@ -22,6 +22,10 @@ module Leads
           campaign_source: [:scalar],
           campaign_medium: [:scalar],
           campaign_name: [:scalar]
+        },
+        branding_profile_id: %i[scalar array],
+        branding_profile: {
+          url: %i[scalar like]
         }
       }
     end
