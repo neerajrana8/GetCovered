@@ -157,7 +157,7 @@ module PoliciesMethods
       policy_users_attributes: [:user_id],
       policy_coverages_attributes: %i[id policy_application_id policy_id
                                       limit deductible enabled designation],
-      policy_application_attributes: [fields: {}]
+      policy_application_attributes: [fields: {}, extra_settings: {}]
     )
   end
 
