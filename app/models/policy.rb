@@ -140,7 +140,6 @@ class Policy < ApplicationRecord
 
   validate :correct_document_mime_type
   validate :is_allowed_to_update?, on: :update
-  validate :residential_account_present
   validate :status_allowed
   validate :carrier_agency_exists
   validate :master_policy, if: -> { policy_type&.master_coverage }
@@ -228,10 +227,6 @@ class Policy < ApplicationRecord
 
   def is_allowed_to_update?
     errors.add(:policy_in_system, I18n.t('policy_model.cannot_update')) if policy_in_system == true && !rent_garantee? && !residential?
-  end
-
-  def residential_account_present
-    errors.add(:account, I18n.t('policy_model.account_must_be_specified')) if ![4,5].include?(policy_type_id) && account.nil? && !self.primary_insurable&.account.nil?
   end
 
   def carrier_agency_exists
