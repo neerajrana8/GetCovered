@@ -78,6 +78,8 @@ class PolicyPremiumPaymentTerm < ApplicationRecord
   end
   
   def update_proration(new_first_moment, new_last_moment)
+    new_first_moment = self.first_moment if new_first_moment.nil?
+    new_last_moment = self.last_moment if new_last_moment.nil?
     if new_first_moment > new_last_moment
       self.errors.add(:proration_attempt, "failed, since provided last moment preceded provided first moment")
       return false
