@@ -311,7 +311,7 @@ class PolicyPremium < ApplicationRecord
         return "The requested new_last_moment #{new_last_moment.to_s} is invalid; it cannot be after the original or current prorated end of term (#{(self.prorated_last_moment || self.policy_rep.expiration_moment).to_s})"
       end
     end
-    o_return = nil
+    to_return = nil
     ActiveRecord::Base.transaction(requires_new: true) do
       # record the proration
       unless self.update(
