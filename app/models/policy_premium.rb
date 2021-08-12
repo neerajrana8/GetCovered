@@ -315,8 +315,8 @@ class PolicyPremium < ApplicationRecord
     ActiveRecord::Base.transaction(requires_new: true) do
       # record the proration
       unless self.update(
-        prorated_first_moment: new_first_moment || self.prorated_first_moment,
-        prorated_last_moment: new_last_moment || self.prorated_last_moment,
+        prorated_first_moment: new_first_moment || self.prorated_first_moment || self.policy_rep.effective_moment,
+        prorated_last_moment: new_last_moment || self.prorated_last_moment || self.policy_rep.expiration_moment,
         prorated: true,
         force_no_refunds: force_no_refunds
       )
