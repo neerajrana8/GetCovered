@@ -137,6 +137,7 @@
           post :add_commissions
           put :update_commission
           get :commission
+          get :available_agencies
 
           post :add_fee
           get :fees
