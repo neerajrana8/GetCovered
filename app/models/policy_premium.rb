@@ -314,9 +314,12 @@ class PolicyPremium < ApplicationRecord
     to_return = nil
     ActiveRecord::Base.transaction(requires_new: true) do
       # record the proration
+      pfm = new_first_moment || self.prorated_first_moment || self.policy_rep.effective_moment
+      plm = new_last_moment || self.prorated_last_moment || self.policy_rep.expiration_moment
+      plm = pfm if plm < pfm
       unless self.update(
-        prorated_first_moment: new_first_moment || self.prorated_first_moment || self.policy_rep.effective_moment,
-        prorated_last_moment: new_last_moment || self.prorated_last_moment || self.policy_rep.expiration_moment,
+        prorated_first_moment: pfm,
+        prorated_last_moment: plm,
         prorated: true,
         force_no_refunds: force_no_refunds
       )
