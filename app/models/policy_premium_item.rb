@@ -140,7 +140,7 @@ class PolicyPremiumItem < ApplicationRecord
             created = ppipt.line_item.line_item_reductions.create(
               reason: "Proration Adjustment",
               amount_interpretation: 'max_total_after_reduction',
-              amount: (ppipt.policy_premium_payment_term.unprorated_proportion * ppipt.preproration_total_due).ceil,
+              amount: (ppipt.policy_premium_payment_term.unprorated_proportion * ppipt.line_item.preproration_total_due).ceil,
               refundability: refunds_allowed ? 'cancel_or_refund' : 'cancel_only',
               proration_interaction: 'is_proration'
             )
