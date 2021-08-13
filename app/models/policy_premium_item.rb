@@ -299,7 +299,7 @@ class PolicyPremiumItem < ApplicationRecord
                 total_assigned = 0
                 payment_order = 0
                 self.recipient.get_chain.each do |cs|
-                  total_expected = (self.total_due * (self.recipient.percentage / 100.to_d)).floor - total_assigned
+                  total_expected = (self.total_due * (cs.percentage / 100.to_d)).floor - total_assigned
                   total_assigned += total_expected
                   external_mode = true if cs == self.collection_plan
                   ::PolicyPremiumItemCommission.create!(
