@@ -119,6 +119,8 @@ en:
      error_with_policy: "Error happened with policy issue"
      cancellation_reason_invalid: "Cancellation reason is invalid"
      policy_is_already_cancelled: "Policy is already cancelled"
+     cancellation_already_pending: "Policy cancellation is already pending"
+     proration_failed: "Encountered an error while prorating policy; cancellation marked as pending"
      document_wrong_format: "The document wrong format, only: PDF, DOC, DOCX, XLSX, XLS, CSV, JPG, JPEG, PNG, GIF, SVG, TXT"
   billing_strategy_model:
     must_be_assigned_to_carrier: "must be assigned to carrier:"

@@ -490,7 +490,7 @@ exit
         else
           if value.class == ::Array
             # array of scalars
-            to_return[:hash][key] = value if forms.include?(:array) # MOOSE WARNING: verify scalar nature of array elements?
+            to_return[:hash][key] = value.map{|v| v == '_NULL_' ? nil : v } if forms.include?(:array) # MOOSE WARNING: verify scalar nature of array elements?
           elsif value.class != ::Hash && value.class != ::ActiveSupport::HashWithIndifferentAccess
             # scalar
             to_return[:hash][key] = (value == '_NULL_' ? nil : value) if forms.include?(:scalar) # MOOSE WARNING: check string, integer, etc independently?

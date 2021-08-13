@@ -37,6 +37,14 @@ module V2
         @site_visits=@leads.last.lead_events.order("DATE(created_at)").group("DATE(created_at)").count.keys.size
         render 'v2/shared/leads/index'
       end
+      
+      def refund_policy
+        render json: standard_error(:refund_policy_error, "Dashboard cancellation facilities disabled for maintenance", nil)
+      end
+      
+      def cancel_policy
+        render json: standard_error(:cancel_policy_error, "Dashboard cancellation facilities disabled for maintenance", nil)
+      end
 
       private
 

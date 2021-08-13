@@ -311,12 +311,15 @@ class PolicyPremium < ApplicationRecord
         return "The requested new_last_moment #{new_last_moment.to_s} is invalid; it cannot be after the original or current prorated end of term (#{(self.prorated_last_moment || self.policy_rep.expiration_moment).to_s})"
       end
     end
-    o_return = nil
+    to_return = nil
     ActiveRecord::Base.transaction(requires_new: true) do
       # record the proration
+      pfm = new_first_moment || self.prorated_first_moment || self.policy_rep.effective_moment
+      plm = new_last_moment || self.prorated_last_moment || self.policy_rep.expiration_moment
+      plm = pfm if plm < pfm
       unless self.update(
-        prorated_first_moment: new_first_moment || self.prorated_first_moment,
-        prorated_last_moment: new_last_moment || self.prorated_last_moment,
+        prorated_first_moment: pfm,
+        prorated_last_moment: plm,
         prorated: true,
         force_no_refunds: force_no_refunds
       )
