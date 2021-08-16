@@ -20,7 +20,8 @@ module CarrierDcInsurable
         address2: pad.street_two.blank? ? nil : pad.street_two,
         city: pad.city,
         state: pad.state,
-        zip_code: pad.zip_code
+        zip_code: pad.zip_code,
+        eventable: self
       )
       # check for errors
       if result[:error]
@@ -92,7 +93,8 @@ module CarrierDcInsurable
           address2: pad.street_two.blank? ? nil : pad.street_two,
           city: pad.city,
           state: pad.state,
-          zip_code: pad.zip_code
+          zip_code: pad.zip_code,
+          eventable: building
         )
         if result[:error]
           next
@@ -191,7 +193,7 @@ module CarrierDcInsurable
   
   class_methods do
     
-    def deposit_choice_address_search(address1:, address2: nil, city:, state:, zip_code:)
+    def deposit_choice_address_search(address1:, address2: nil, city:, state:, zip_code:, eventable: nil)
       # make the address call
       dcs = DepositChoiceService.new
       dcs.build_request(:address, 
@@ -202,7 +204,7 @@ module CarrierDcInsurable
         zip_code: zip_code
       )
       event = Event.new(
-        eventable: nil,
+        eventable: eventable,
         verb: DepositChoiceService::HTTP_VERB_DICTIONARY[:address].to_s,
         format: 'json',
         interface: 'REST',
