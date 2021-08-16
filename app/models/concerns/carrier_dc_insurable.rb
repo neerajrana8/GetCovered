@@ -15,13 +15,13 @@ module CarrierDcInsurable
       # try to get info from dc
       pad = self.primary_address
       return ["Insurable has no primary address"] if pad.nil?
-      result = query_result_override || self.class.deposit_choice_address_search(
+      result = query_result_override || ins.class.deposit_choice_address_search(
         address1: pad.combined_street_address,
         address2: pad.street_two.blank? ? nil : pad.street_two,
         city: pad.city,
         state: pad.state,
         zip_code: pad.zip_code,
-        eventable: self
+        eventable: ins
       )
       # check for errors
       if result[:error]
@@ -156,13 +156,7 @@ module CarrierDcInsurable
         unit_id: unit_profile.external_carrier_id,
         effective_date: effective_date
       )
-      event = events.new(
-        verb: DepositChoiceService::HTTP_VERB_DICTIONARY[:rate].to_s,
-        format: 'json',
-        interface: 'REST',
-        endpoint: dcs.endpoint_for(:rate),
-        process: 'deposit_choice_rate'
-      )
+      event = self.events.new(dcs.event_params)
       event.request = dcs.message_content
       event.started = Time.now
       result = dcs.call
@@ -203,15 +197,8 @@ module CarrierDcInsurable
         state: state,
         zip_code: zip_code
       )
-      event = Event.new(
-        eventable: eventable,
-        verb: DepositChoiceService::HTTP_VERB_DICTIONARY[:address].to_s,
-        format: 'json',
-        interface: 'REST',
-        endpoint: dcs.endpoint_for(:address),
-        process: 'deposit_choice_address'
-      )
-      event.request = dcs.message_content.to_s
+      event = Event.new(dcs.event_params)
+      event.eventable = eventable
       event.started = Time.now
       result = dcs.call
       event.completed = Time.now
