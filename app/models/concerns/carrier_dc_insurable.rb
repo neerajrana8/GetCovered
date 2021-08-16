@@ -21,7 +21,7 @@ module CarrierDcInsurable
         city: pad.city,
         state: pad.state,
         zip_code: pad.zip_code,
-        eventable: ins
+        eventable: self
       )
       # check for errors
       if result[:error]
