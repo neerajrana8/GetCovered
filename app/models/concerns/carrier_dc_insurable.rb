@@ -204,6 +204,7 @@ module CarrierDcInsurable
       event.completed = Time.now
       event.response = result[:response].response.body
       event.request = result[:response].request.raw_body
+      event.endpoint = result[:response].request.uri.to_s
       event.status = result[:error] ? 'error' : 'success'
       event.save
       result[:event] = event
