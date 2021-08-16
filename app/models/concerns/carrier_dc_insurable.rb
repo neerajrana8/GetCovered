@@ -15,7 +15,7 @@ module CarrierDcInsurable
       # try to get info from dc
       pad = self.primary_address
       return ["Insurable has no primary address"] if pad.nil?
-      result = query_result_override || ins.class.deposit_choice_address_search(
+      result = query_result_override || self.class.deposit_choice_address_search(
         address1: pad.combined_street_address,
         address2: pad.street_two.blank? ? nil : pad.street_two,
         city: pad.city,
