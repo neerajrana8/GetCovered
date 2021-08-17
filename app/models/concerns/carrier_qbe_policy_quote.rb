@@ -29,7 +29,20 @@ module CarrierQbePolicyQuote
     # QBE build coverages
 
     def qbe_build_coverages
-      covs = []
+      self.policy_application.coverage_selections.each do |designation, data|
+        self.policy.policy_coverages.create(
+          policy_application: self.policy_application,
+          title: data['title'],
+          designation: designation,
+          limit: data['category'] == 'limit' ? data['selection']&.[]('value') : nil,
+          deductible: data['category'] == 'deductible' ? data['selection']&.[]('value') : nil,
+          special_deductible: nil,
+          enabled: true
+        )
+      end
+=begin
+# old code, left here for now in case we need it after all; maintains redandant data based on QBE rates
+      coves = []
       # liability
       covs.push(self.policy.policy_coverages.new({
         policy_application: self.policy_application,
@@ -79,6 +92,7 @@ module CarrierQbePolicyQuote
       end
       # save it all
       covs.each{|c| c.title ||= c.designation.titleize; c.save }
+=end
     end
 
     # QBE Bind
