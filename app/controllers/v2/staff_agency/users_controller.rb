@@ -11,6 +11,7 @@ module V2
 
       def index
         super(:@users, @agency.active_users, :profile, :accounts, :agencies)
+        render template: 'v2/shared/users/index', status: :ok
       end
 
       def search
@@ -21,7 +22,7 @@ module V2
 
       def show
         if @user
-          render :show, status: :ok
+          render template: 'v2/shared/users/show', status: :ok
         else
           render json: { user: 'not found' }, status: :not_found
         end
@@ -34,7 +35,7 @@ module V2
           @user.valid? if @user.errors.blank?
           @user.errors.messages.except!(:password)
           if @user.errors.none? && @user.invite_as(current_staff)
-            render :show,
+            render template: 'v2/shared/users/show',
               status: :created
           else
             render json: @user.errors,
@@ -49,8 +50,8 @@ module V2
       def update
         if update_allowed?
           if @user.update_as(current_staff, update_params)
-            render :show,
-              status: :ok
+            render template: 'v2/shared/users/show',
+                   status: :ok
           else
             render json: @user.errors,
                    status: :unprocessable_entity
@@ -109,7 +110,12 @@ module V2
         {
           created_at: [:scalar, :array, :interval],
           updated_at: [:scalar, :array, :interval],
-          accounts: { agency_id: [:scalar] }
+          accounts: { agency_id: %i[scalar array], id: %i[scalar array] },
+          profile: {
+            first_name: %i[scalar like],
+            last_name: %i[scalar like],
+            full_name: %i[scalar like]
+          }
         }
       end
 
