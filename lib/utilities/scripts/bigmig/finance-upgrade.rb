@@ -540,19 +540,20 @@ def perform_upgrade(idrange)
             collector: ::MsiService.carrier
           )
           premium.update_totals(persist: true)
-          ppis = { policy_fee: ppi_policy_fee, installment_fee: ppi_installment_fee, down_payment: ppi_down_payment, installment: ppi_installment }.compact
+          ppis = { policy_fee: ppi_policy_fee, installment_fee: ppi_installment_fee, premium_down_payment: ppi_down_payment, premium_installment: ppi_installment }.compact
           ppis.values.each{|ppiboi| ppiboi.policy_premium_item_commissions.update_all(status: 'active') } unless pq.policy.nil?
           # generate terms
           ppi_pts = ppis.map do |ppi_name, ppi|
             [
               ppi_name,
               pppts.map.with_index do |pppt, index|
-                next if (ppi_name == :policy_fee || ppi_name == :down_payment) && index > 0
-                next if (ppi_name == :installment_fee || ppi_name == :installment) && index == 0
+                next if (ppi_name == :policy_fee || ppi_name == :premium_down_payment) && index > 0
+                next if (ppi_name == :installment_fee || ppi_name == :premium_installment) && index == 0
                 ::PolicyPremiumItemPaymentTerm.create!(
                   policy_premium_item: ppi,
                   policy_premium_payment_term: pppt,
                   weight: ppi_name == :policy_fee ? msi_policy_fee
+                    : ppi_name == :premium_down_payment ? down_payment
                     : new_invoices[index].line_items.select{|li| li.category == (ppi_name == :installment_fee ? 'amortized_fees' : 'base_premium') }.inject(0){|s,l| s + l.price },
                   created_at: pppt.created_at,
                   updated_at: pppt.created_at

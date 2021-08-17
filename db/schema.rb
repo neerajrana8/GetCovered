@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_07_15_045543) do
+ActiveRecord::Schema.define(version: 2021_08_13_151827) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
@@ -819,6 +819,7 @@ ActiveRecord::Schema.define(version: 2021_07_15_045543) do
     t.bigint "agency_id"
     t.bigint "policy_type_ids", default: [], null: false, array: true
     t.boolean "preferred_ho4", default: false, null: false
+    t.boolean "confirmed", default: true, null: false
     t.boolean "occupied", default: false
     t.index ["account_id"], name: "index_insurables_on_account_id"
     t.index ["agency_id"], name: "index_insurables_on_agency_id"
@@ -875,6 +876,7 @@ ActiveRecord::Schema.define(version: 2021_07_15_045543) do
     t.datetime "updated_at", null: false
     t.bigint "policy_type_id"
     t.bigint "agency_id"
+    t.integer "branding_profile_id"
     t.index ["agency_id"], name: "index_lead_events_on_agency_id"
     t.index ["lead_id"], name: "index_lead_events_on_lead_id"
     t.index ["policy_type_id"], name: "index_lead_events_on_policy_type_id"
@@ -894,6 +896,7 @@ ActiveRecord::Schema.define(version: 2021_07_15_045543) do
     t.integer "agency_id"
     t.boolean "archived", default: false
     t.integer "account_id"
+    t.integer "branding_profile_id"
     t.index ["email"], name: "index_leads_on_email"
     t.index ["identifier"], name: "index_leads_on_identifier", unique: true
     t.index ["tracking_url_id"], name: "index_leads_on_tracking_url_id"
@@ -1167,7 +1170,7 @@ ActiveRecord::Schema.define(version: 2021_07_15_045543) do
     t.bigint "policy_id"
     t.integer "cancellation_reason"
     t.integer "branding_profile_id"
-    t.boolean "marked_for_cancellation", default: true, null: false
+    t.boolean "marked_for_cancellation", default: false, null: false
     t.string "marked_for_cancellation_info"
     t.datetime "marked_cancellation_time"
     t.string "marked_cancellation_reason"
@@ -1256,6 +1259,7 @@ ActiveRecord::Schema.define(version: 2021_07_15_045543) do
     t.jsonb "coverage_selections", default: [], null: false
     t.jsonb "extra_settings"
     t.jsonb "resolver_info"
+    t.bigint "tag_ids", default: [], null: false, array: true
     t.jsonb "tagging_data"
     t.string "error_message"
     t.integer "branding_profile_id"
@@ -1267,6 +1271,7 @@ ActiveRecord::Schema.define(version: 2021_07_15_045543) do
     t.index ["policy_application_group_id"], name: "index_policy_applications_on_policy_application_group_id"
     t.index ["policy_id"], name: "index_policy_applications_on_policy_id"
     t.index ["policy_type_id"], name: "index_policy_applications_on_policy_type_id"
+    t.index ["tag_ids"], name: "policy_application_tag_ids_index", using: :gin
   end
 
   create_table "policy_coverages", force: :cascade do |t|
@@ -1394,8 +1399,8 @@ ActiveRecord::Schema.define(version: 2021_07_15_045543) do
     t.integer "total_tax", default: 0, null: false
     t.integer "total", default: 0, null: false
     t.boolean "prorated", default: false, null: false
-    t.datetime "prorated_term_last_moment"
-    t.datetime "prorated_term_first_moment"
+    t.datetime "prorated_last_moment"
+    t.datetime "prorated_first_moment"
     t.boolean "force_no_refunds", default: false, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
@@ -1747,6 +1752,14 @@ ActiveRecord::Schema.define(version: 2021_07_15_045543) do
     t.bigint "stripe_charge_id"
     t.index ["refund_id"], name: "index_stripe_refunds_on_refund_id"
     t.index ["stripe_charge_id"], name: "index_stripe_refunds_on_stripe_charge_id"
+  end
+
+  create_table "tags", force: :cascade do |t|
+    t.string "title"
+    t.text "description"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["title"], name: "index_tags_on_title", unique: true
   end
 
   create_table "tracking_urls", force: :cascade do |t|

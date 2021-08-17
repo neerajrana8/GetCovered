@@ -5,6 +5,20 @@ module BrandingProfilesMethods
     before_action :validate_images_size, only: :attach_images
   end
 
+  def index
+    super(:@branding_profiles, relation)
+    render template: 'v2/shared/branding_profiles/index', status: :ok
+  end
+
+  def list
+    apply_filters(:@branding_profiles, relation)
+    render template: 'v2/shared/branding_profiles/list', status: :ok
+  end
+
+  def show
+    render template: 'v2/shared/branding_profiles/show', status: :ok
+  end
+
   def import
     file = params[:input_file].open
     branding_profile_import =

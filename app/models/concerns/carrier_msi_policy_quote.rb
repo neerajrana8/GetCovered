@@ -79,10 +79,10 @@ module CarrierMsiPolicyQuote
       carrier_agency = CarrierAgency.where(agency: agency, carrier_id: 5).take
       unit = policy_application.primary_insurable
       community = unit.parent_community
-      preferred = !(community.carrier_profile(5)&.external_carrier_id.nil?)
       address = unit.primary_address
       primary_insured = policy_application.primary_user
       additional_insured = policy_application.users.select{|u| u.id != primary_insured.id }
+      preferred = (unit.preferred_ho4 && !community.carrier_profile(5)&.external_carrier_id.nil?)
       additional_interest = preferred ?
         [unit.account || community.account].compact.select{|ai| ai&.title != "Nonpreferred Residential" }
         : msi_additional_interest_array_from_extra_settings(self.policy_application.extra_settings&.[]('additional_interest'))

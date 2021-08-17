@@ -6,7 +6,7 @@ json.quote do
   json.premium do
     json.partial! "v2/user/policy_premia/policy_premium_show_fields.json.jbuilder",
       policy_premium: @premium || @quote.policy_premium
-  end unless @premium || @quote.policy_premium.nil?
+  end unless @premium.nil? && @quote.policy_premium.nil?
 end
 json.user do
   json.id @application.primary_user.id

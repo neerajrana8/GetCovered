@@ -41,7 +41,7 @@ class LineItemChange < ApplicationRecord
             when 'total_due'
               # update the PPI
               unless ppi.update(total_due: ppi.total_due + self.amount)
-                error_message = "Failed to update PolicyPremiumItem! Errors: #{ppipt.errors.to_h}"
+                error_message = "Failed to update PolicyPremiumItem! Errors: #{ppi.errors.to_h}"
                 raise ActiveRecord::Rollback
               end
               # update the PPICs
@@ -58,7 +58,7 @@ class LineItemChange < ApplicationRecord
             when 'total_received'
               # update the PPI
               unless ppi.update(total_received: ppi.total_received + self.amount)
-                error_message = "Failed to update PolicyPremiumItem! Errors: #{ppipt.errors.to_h}"
+                error_message = "Failed to update PolicyPremiumItem! Errors: #{ppi.errors.to_h}"
                 raise ActiveRecord::Rollback
               end
               # update the PPICs

@@ -20,7 +20,7 @@ module PolicyApplicationMethods
         account_id = insurable.account_id if account_id.nil?
         agency_id = insurable.agency_id || insurable.account&.agency_id if agency_id.nil?
         # determine preferred status
-        @preferred = (insurable.parent_community || insurable).preferred_ho4
+        @preferred = insurable.preferred_ho4
         # get the carrier_id
         carrier_id = nil
         if @preferred
@@ -192,6 +192,7 @@ module PolicyApplicationMethods
     # grab community
     community = unit.parent_community
     cip       = !unit.preferred_ho4 ? nil : CarrierInsurableProfile.where(carrier_id: @msi_id, insurable_id: community&.id).take # possibly nil, for non-preferred
+    cip = nil unless cip&.external_carrier_id
     if community.nil?
       render json:   { error: I18n.t('policy_application_contr.msi_get_coverage_options.community_not_found') },
              status: :unprocessable_entity

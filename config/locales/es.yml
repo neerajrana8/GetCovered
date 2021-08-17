@@ -149,7 +149,7 @@ es:
     invalid_address_value: "Valor de dirección no válido"
     unable_deduce_unit: "No se puede deducir el título de la unidad de la dirección"
     not_standart_format: "no es un formato estándar (por ejemplo, 'Apartamento n. ° 2, Unidad 3, n. ° 5, etc.)"
-    request_residential_build_not_exist: "El ID de comunidad o edificio residencial solicitado no existe"
+    request_residential_build_not_exist: "El edificio/comunidad residencial solicitada no existe"
     unable_create_community_from_address: "No se pudo crear una comunidad desde la dirección"
     parent_community_not_exist: "La comunidad de padres solicitada no existe"
     parent_community_not_the_same: "La comunidad de padres solicitada no se encuentra en el mismo estado / código postal / ciudad"

@@ -6,7 +6,6 @@ module V2
   module Public
     class InsurablesController < PublicController
       include InsurablesMethods
-
     end
   end # module Public
 end

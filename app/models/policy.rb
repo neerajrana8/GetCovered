@@ -47,7 +47,7 @@ class Policy < ApplicationRecord
   include AgencyConfiePolicy
   include RecordChange
 
-  after_create :schedule_coverage_reminders, if: -> { policy_type&.designation == 'MASTER-COVERAGE' }
+  after_create :schedule_coverage_reminders, if: -> { policy_type&.master_coverage }
 
   # after_save :start_automatic_master_coverage_policy_issue, if: -> { policy_type&.designation == 'MASTER' }
 
@@ -140,15 +140,14 @@ class Policy < ApplicationRecord
 
   validate :correct_document_mime_type
   validate :is_allowed_to_update?, on: :update
-  validate :residential_account_present
   validate :status_allowed
   validate :carrier_agency_exists
-  validate :master_policy, if: -> { policy_type&.designation == 'MASTER-COVERAGE' }
+  validate :master_policy, if: -> { policy_type&.master_coverage }
   validates :agency, presence: true, if: :in_system?
   validates :carrier, presence: true, if: :in_system?
   validates :number, uniqueness: true
 
-  validates_presence_of :expiration_date, :effective_date, unless: -> { ['MASTER-COVERAGE', 'MASTER'].include?(policy_type&.designation) }
+  validates_presence_of :expiration_date, :effective_date, unless: -> { policy_type&.master || policy_type&.master_coverage }
 
   validate :date_order,
   unless: proc { |pol| pol.effective_date.nil? || pol.expiration_date.nil? }
@@ -230,10 +229,6 @@ class Policy < ApplicationRecord
     errors.add(:policy_in_system, I18n.t('policy_model.cannot_update')) if policy_in_system == true && !rent_garantee? && !residential?
   end
 
-  def residential_account_present
-    errors.add(:account, I18n.t('policy_model.account_must_be_specified')) if ![4,5].include?(policy_type_id) && account.nil?
-  end
-
   def carrier_agency_exists
     return unless in_system?
 
@@ -312,6 +307,7 @@ class Policy < ApplicationRecord
 
   # Cancels a policy; returns nil if no errors, otherwise a string explaining the error
   def cancel(reason, last_active_moment = Time.current.to_date.end_of_day)
+    last_active_moment = last_active_moment.end_of_day if last_active_moment.class == ::Date
     # Flee on invalid data
     return I18n.t('policy_model.cancellation_reason_invalid') unless self.class.cancellation_reasons.has_key?(reason)
     return I18n.t('policy_model.policy_is_already_cancelled') if self.status == 'CANCELLED'
