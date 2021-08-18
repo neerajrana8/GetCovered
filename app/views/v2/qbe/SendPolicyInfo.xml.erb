@@ -238,80 +238,38 @@
                     <Coverage>
                       <CoverageCd>DED</CoverageCd>
                       <Deductible>
-                        <FormatInteger><%= request[:data][:coverage_c].deductibles["all_peril"].to_i / 100 %></FormatInteger>
+                        <FormatInteger><%= ((request[:data][:coverage_selections]['all_peril']&.[]('value') || 0).to_d / 100).to_i %></FormatInteger>
                       </Deductible>
                     </Coverage>
                     
                     <Coverage>
                       <CoverageCd>PP</CoverageCd>
                       <Limit>
-                        <FormatInteger><%= request[:data][:coverage_c].coverage_limits["coverage_c"].to_i / 100 %></FormatInteger>
+                        <FormatInteger><%= ((request[:data][:coverage_selections]['coverage_c']&.[]('value') || 0).to_d / 100).to_i %></FormatInteger>
                       </Limit>
                     </Coverage>
                     
                     <Coverage>
                       <CoverageCd>LOU</CoverageCd>
                       <Limit>
-                        <FormatInteger><%= request[:data][:coverage_d].to_i / 100 %></FormatInteger>
+                        <FormatInteger><%= ((request[:data][:coverage_selections]['coverage_c']&.[]('value') || 0).to_d * (request[:data][:address].state == 'CT' ? 0.3 : 0.2) / 100).to_i %></FormatInteger>
                       </Limit>
                     </Coverage>
                     
-                    <% if request[:data][:optional_rates] %>
-                    <% request[:data][:optional_rates].each do |rate| %>
-                    
-                    <% if rate.sub_schedule == 'pet_damage' %>
+                    <% request[:data][:coverage_selections].select{|k,cs| cs['category'] == 'option' && ['pet_damage','water_backup','bedbug','equip','earthquake_coverage'].include?(k) }.each do |subschedule, covopt| %>
                     <Coverage>
-                      <CoverageCd>QBE_PetDam</CoverageCd>
+                      <CoverageCd><%= { 'pet_damage' => 'QBE_PetDam', 'water_backup' => 'SEWER_Sump', 'bedbug' => 'BEDBUG', 'equip' => 'EQUIP', 'earthquake_coverage' => 'ERQK' }[subschedule] %></CoverageCd>
                       <Limit>
-                        <FormatInteger>0</FormatInteger>
+                        <FormatInteger><%= subschedule != 'earthquake_coverage' ? 0 : ((request[:data][:coverage_selections]['coverage_c']&.[]('value') || 0).to_d / 100).to_i %></FormatInteger>
                       </Limit>
                     </Coverage>
-                    <% end %>
-                    
-                    <% if rate.sub_schedule == 'water_backup' %>
-                    <Coverage>
-                      <CoverageCd>SEWER_Sump</CoverageCd>
-                      <Limit>
-                        <FormatInteger>0</FormatInteger>
-                      </Limit>
-                    </Coverage>
-                    <% end %>
-                    
-                    <% if rate.sub_schedule == 'bedbug' %>
-                    <Coverage>
-                      <CoverageCd>BEDBUG</CoverageCd>
-                      <Limit>
-                        <FormatInteger>0</FormatInteger>
-                      </Limit>
-                    </Coverage>
-                    <% end %>
-                    
-                    <% if rate.sub_schedule == 'equip' %>
-                    <Coverage>
-                      <CoverageCd>EQUIP</CoverageCd>
-                      <Limit>
-                        <FormatInteger>0</FormatInteger>
-                      </Limit>
-                    </Coverage>
-                    <% end %>
-                    
-                    <% if rate.sub_schedule == 'earthquake_coverage' %>
-                    <Coverage>
-                      <CoverageCd>ERQK</CoverageCd>
-                      <Limit>
-                        <FormatInteger><%= rate.coverage_limits['coverage_c'].to_i / 100 %></FormatInteger>
-                      </Limit>
-                    </Coverage>
-                    <% end %>
-                    
-                    <% end %>
                     <% end %>
                     
                     <% if request[:data][:address].state == 'FL' %>
                     <Coverage>
                       <CoverageCd>QBE_HURRD</CoverageCd>
                       <Deductible>
-                        <FormatInteger><%= request[:data][:coverage_c].deductibles["hurricane"].to_i / 100 %></FormatInteger>
+                        <FormatInteger><%= ((request[:data][:coverage_selections]['hurricane']&.[]('value') || 0).to_d / 100).to_i %></FormatInteger>
                       </Deductible>
                     </Coverage>                    
                     <% end %>
@@ -327,13 +285,13 @@
                   <Coverage>
                     <CoverageCd>PL</CoverageCd>
                     <Limit>
-                      <FormatInteger><%= request[:data][:liability].coverage_limits["liability"].to_i / 100 %></FormatInteger>
+                      <FormatInteger><%= ((request[:data][:coverage_selections]['liability']&.[]('value') || 0).to_d / 100).to_i %></FormatInteger>
                     </Limit>
                   </Coverage>
                   <Coverage>
                     <CoverageCd>MEDPM</CoverageCd>
                     <Limit>
-                      <FormatInteger><%= request[:data][:liability].coverage_limits["medical"].to_i / 100 %></FormatInteger>
+                      <FormatInteger><%= ((request[:data][:coverage_selections]['medical']&.[]('value') || 0).to_d / 100).to_i %></FormatInteger>
                     </Limit>
                   </Coverage>
                 </HomeLineBusiness>

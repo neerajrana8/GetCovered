@@ -198,17 +198,12 @@ class QbeService
         application = obj.policy_application
         premium = obj.policy_premium
         address = application.primary_insurable().primary_address()
-        cov_c = application.insurable_rates.coverage_c.take
 
         options[:data] = {
           quote: obj,
           application: application,
           premium: premium,
           billing_strategy: application.billing_strategy,
-          optional_rates: application.insurable_rates.optional,
-          coverage_c: cov_c,
-          coverage_d: address.state == 'CT' ? (cov_c.coverage_limits['coverage_c'] * 0.3) : (cov_c.coverage_limits['coverage_c'] * 0.2),
-          liability: application.insurable_rates.liability.take,
           community: application.primary_insurable().parent_community(),
           carrier_profile: application.primary_insurable().parent_community().carrier_profile(1),
           address: address,
@@ -216,7 +211,8 @@ class QbeService
           users: application.policy_users.where.not(primary: true),
           unit: application.primary_insurable,
           account: application.account,
-          agency: application.agency
+          agency: application.agency,
+          coverage_selections: application.coverage_selections
         }
 
         options[:heading][:program][:ClientName] = args[:agent_code] || Rails.application.credentials.qbe[:agent_code]

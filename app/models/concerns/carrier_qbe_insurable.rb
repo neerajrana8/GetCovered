@@ -582,7 +582,7 @@ module CarrierQbeInsurable
         [
           name,
           {
-            'title' => name.titlecase,
+            'title' => name.titlecase, # MOOSE WARNING FIX
             'visible' => true,
             'requirement' => 'optional',
             'options_type' => 'none',
@@ -592,7 +592,7 @@ module CarrierQbeInsurable
       end).to_h
       # deduce any necessary rules
       # MOOSE WARNING: no need to do this, supposedly, but maybe implement at some point?
-      # (the idea would be to look for combinations of rates that aren't permitted)
+      # (the idea would be to look for combinations of rates that aren't permitted; in theory every combination is permitted)
       # done
       return coverage_options
     end
