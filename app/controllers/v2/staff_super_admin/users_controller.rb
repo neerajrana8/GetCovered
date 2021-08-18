@@ -9,7 +9,16 @@ module V2
       before_action :set_user, only: %i[show update]
       
       def index
-        super(:@users, ::User.all, :profile, :accounts, :agencies, :account_users, :policy_users, :lease_users)
+
+        query = ::User.all
+        if params[:community_like]
+          communities = Insurable.where(insurable_type_id: InsurableType::COMMUNITIES_IDS).where("title ILIKE ?", "%#{params[:community_like]}%")
+          unit_ids = communities.map{ |c| c.units.pluck(:id) }.flatten
+          policy_ids = PolicyInsurable.where(insurable_id: unit_ids).pluck(:policy_id)
+          query = query.references(:policy_users).includes(:policy_users).where(policy_users: { policy_id: policy_ids })
+        end
+
+        super(:@users, query, :profile, :accounts, :agencies)
         render template: 'v2/shared/users/index', status: :ok
       end
 
@@ -28,7 +37,7 @@ module V2
           render json: @user.errors, status: :unprocessable_entity
         end
       end
-      
+
       private
       
       def view_path
@@ -42,14 +51,16 @@ module V2
       def supported_filters(called_from_orders = false)
         @calling_supported_orders = called_from_orders
         {
-          created_at: %i[scalar array interval],
-          updated_at: %i[scalar array interval],
-          accounts: { agency_id: %i[scalar array], id: %i[scalar array] },
+          email: %i[scalar array like],
           profile: {
-            first_name: %i[scalar like],
-            last_name: %i[scalar like],
-            full_name: %i[scalar like]
-          }
+            full_name: %i[scalar array like]
+          },
+          policies: {
+            account: {
+              title: %i[scalar array like]
+            }
+          },
+          accounts: { agency_id: %i[scalar array], id: %i[scalar array] }
         }
       end
 
