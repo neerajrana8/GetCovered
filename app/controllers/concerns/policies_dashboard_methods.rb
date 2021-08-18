@@ -10,13 +10,14 @@ module PoliciesDashboardMethods
     lics = line_item_changes(@filtered_policies, date_params[:start]...date_params[:end])
     total_premium_paid = premium_collected(lics)
     bound_policies = bound_policy_count(@filtered_policies)
+    filtered_policies_count = @filtered_policies.count
 
     @total = {
-      all_policies_count: @filtered_policies.count,
+      all_policies_count: filtered_policies_count,
       bound: bound_policies,
       cancelled: cancelled_policy_count(@filtered_policies),
       total_premium_paid: total_premium_paid,
-      average_premium_paid: (total_premium_paid.to_f / @filtered_policies.count).round,
+      average_premium_paid: filtered_policies_count.zero? ? 0 : (total_premium_paid.to_f / filtered_policies_count).round,
       agencies_commissions: commissions_collected(lics, recipient_type: 'Agency'),
       get_covered_commissions: commissions_collected(lics, recipient_type: 'Agency', recipient_id: Agency::GET_COVERED_ID),
       carriers_commissions: commissions_collected(lics, recipient_type: 'Carrier')
