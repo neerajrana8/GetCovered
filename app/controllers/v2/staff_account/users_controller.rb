@@ -18,7 +18,7 @@ module V2
           query = query.references(:policy_users).includes(:policy_users).where(policy_users: { policy_id: policy_ids })
         end
 
-        super(:@users, query, :profile)
+        super(:@users, query, :profile, :accounts, :agencies, :policies, :insurables)
         render template: 'v2/shared/users/index', status: :ok
       end
 
@@ -124,10 +124,7 @@ module V2
           },
           created_at: %i[scalar array interval],
           updated_at: %i[scalar array interval],
-          accounts: { agency_id: %i[scalar array], id: %i[scalar array] },
-          profile: {
-            full_name: %i[scalar like]
-          }
+          accounts: { agency_id: %i[scalar array], id: %i[scalar array] }
         }
       end
 

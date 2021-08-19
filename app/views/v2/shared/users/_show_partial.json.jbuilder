@@ -40,3 +40,10 @@ end
 
 json.existing_policies user.policies.exists?
 json.current_lease user.leases.current.exists?
+
+community_titles = []
+user.insurables.each  do |insurable|
+  community_titles << insurable.parent_community_for_all.title
+end
+
+json.community_titles community_titles

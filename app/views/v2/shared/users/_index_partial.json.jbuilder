@@ -31,12 +31,25 @@ if user.agencies.present?
   subagencies = subagencies.uniq
   agencies = agencies.uniq
   json.subagencies do
-    json.partial! 'v2/shared/agencies/agencies', agencies: subagencies
+    json.array! subagencies do |agency|
+      json.id agency.id
+      json.title agency.title
+    end
   end
   json.agencies do
-    json.partial! 'v2/shared/agencies/agencies', agencies: agencies
+    json.array! agencies do |agency|
+      json.id agency.id
+      json.title agency.title
+    end
   end
 end
 
 json.existing_policies user.policies.exists?
 json.current_lease user.leases.current.exists?
+
+community_titles = []
+user.insurables.each  do |insurable|
+  community_titles << insurable.parent_community_for_all.title
+end
+
+json.community_titles community_titles

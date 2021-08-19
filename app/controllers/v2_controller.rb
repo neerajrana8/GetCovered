@@ -22,7 +22,11 @@ class V2Controller < ApplicationController
 #puts data_source.to_sql
 #exit
     prequery = build_prequery(data_source, includes, (params[:filter].nil? ? {} : params[:filter].to_unsafe_h).deep_merge(fixed_filters), params[:sort].nil? ? nil : params[:sort].to_unsafe_h)
+ap "Prequery: #{prequery}"
     query = build_query(data_source, prequery)
+
+print "\nQuery: #{query.to_sql}\n"
+
 =begin
 puts ''
 puts params
