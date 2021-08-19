@@ -130,7 +130,7 @@ module PoliciesDashboardMethods
       where(
         reason: line_item_changes,
         analytics_category: %w[policy_premium master_policy_premium],
-        commissions: { recipient: recipient }
+        commissions: recipient
       ).
       inject(0) { |sum, com| sum + com.amount }
   end
