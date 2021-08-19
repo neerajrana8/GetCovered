@@ -520,9 +520,9 @@ class InsurableRateConfiguration < ApplicationRecord
     end.compact.to_h.compact
   end
 
-
+  # 
   def self.get_coverage_options(carrier_policy_type, insurable, selections, effective_date, additional_insured_count, billing_strategy_carrier_code,    # required data
-                                eventable: nil, perform_estimate: true, estimate_default_on_billing_strategy_code_failure: :min,                        # execution options
+                                eventable: nil, perform_estimate: true, estimate_default_on_billing_strategy_code_failure: :min,                        # execution options (note: perform_estimate should be 'final' instead of true for QBE, if you want to trigger a getMinPrem request)
                                 add_selection_fields: false,
                                 additional_interest_count: nil, agency: nil, account: insurable.class == ::Insurable ? insurable.account : nil,         # optional/overridable data
                                 nonpreferred_final_premium_params: {})                                                                                  # special optional data
@@ -533,6 +533,25 @@ class InsurableRateConfiguration < ApplicationRecord
       insurable = insurable.parent_community
     end
     cip = (insurable.class != ::Insurable ? nil : insurable.carrier_profile(carrier_policy_type.carrier_id))
+    # perform prep
+    if carrier_policy_type.carrier_id == ::QbeService.carrier_id && insurable.class == ::Insurable
+      error = qbe_prepare_for_get_coverage_options(insurable, cip, 1 + additional_insured_count)
+      unless error.blank?
+        return {
+          valid: false,
+          coverage_options: {},
+          estimated_premium: nil,
+          estimated_installment: nil,
+          estimated_first_payment: nil,
+          installment_fee: 0,
+          errors: { internal: "qbe_prepare_for_get_coverage_options returned error '#{error}'", external: "Error retrieving data from carrier" },
+          annotated_selections: {}
+        }.merge(eventable.class != ::PolicyQuote ? {} : {
+          msi_data: nil
+          event: nil
+        })
+      end
+    end
     # get coverage options and selection errors
     selections = selections.select{|uid, sel| sel && sel['selection'] }
     irc = get_inherited_irc(carrier_policy_type, account || agency || carrier_policy_type.carrier, insurable, agency: agency)
@@ -630,13 +649,32 @@ class InsurableRateConfiguration < ApplicationRecord
             end # msi result handling (starts at if result[:error])
           end # event handling (starts at if !result)
         when ::QbeService.carrier_id
-        
-        
-          ####### MOOSE WARNING: PUT RATE CALCULATIONS HERE #########
-        
-        
-        
-        
+          if perform_estimate == 'final' && insurable.class == ::Insurable
+            # perform getMinPrem
+          else
+            # perform approximation using rates
+            interval = { 'FL' => 'annual', 'SA' => 'bi_annual', 'QT' => 'quarter', 'QBE_MoRe' => 'month' }[billing_strategy_carrier_code]
+            selected_rates = irc.rates['rates'][additional_insured_count + 1][interval].select do |rate|
+              next true if rate['sub_schedule'] == 'policy_fee'
+              next false if rate['liability_only']
+              next (rate['coverage_limits'] + rate['deductibles']).all?{|name,sel| selections[name]&.[]('selection')&.[]('value') == sel } &&
+                   (rate['schedule'] != 'optional' || selections[rate['sub_schedule']]['selection'])
+            end
+            total_premium = selected_rates.inject(0){|sum,sr| sum + sr['premium'] }
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+          end
         else # invalid carrier policy type for estimate performance
           estimated_premium_error = {
             internal: "Invalid carrier for estimation; carrier policy type provided was ##{carrier_policy_type.id}",
@@ -679,6 +717,11 @@ class InsurableRateConfiguration < ApplicationRecord
       event: event
     })
   end
+
+
+
+
+
 
 
 
@@ -728,6 +771,32 @@ class InsurableRateConfiguration < ApplicationRecord
           to_return = to_return.to_a.sort
       end
       return to_return
+    end
+
+    def self.qbe_prepare_for_get_coverage_options(community, cip, number_insured)
+      # build CIP if none exists
+      unless cip
+        community.create_carrier_profile(QbeService.carrier_id)
+        cip = community.carrier_profile(QbeService.carrier_id)
+        cip.traits['construction_year'] = 1996 # MOOSE WARNING: use some other defaults?
+        cip.traits['professionally_managed'] = true
+        cip.traits['professionally_managed_year'] = 1997
+        return "An error occurred while processing the address" unless cip.save
+      end
+      # perform get zip code if needed
+      unless cip.data["county_resolved"] || (insurable.get_qbe_zip_code && cip.reload)
+        return "Carrier failed to resolve address"
+      end
+      # perform get property info if needed
+      unless cip.data["property_info_resolved"] || (insurable.get_qbe_property_info && cip.reload)
+        return "Carrier failed to retrieve property information"
+      end
+      # perform get rates if needed
+      unless cip.data['rates_resolution'][number_insured] || (insurable.get_qbe_rates(number_insured) && cip.reload)
+        return "Carrier failed to retrieve coverage rates"
+      end
+      # all done
+      return nil
     end
     
     # Data type tools

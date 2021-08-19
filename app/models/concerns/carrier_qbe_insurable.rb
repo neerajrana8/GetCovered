@@ -647,15 +647,15 @@ module CarrierQbeInsurable
 	                coverage_limits = {}
 	                
 	                unless qbe_rate.attributes["covclimit"].nil?
-	                  coverage_limits["coverage_c"] = qbe_rate.attributes["covclimit"].value.to_i * 100
+	                  coverage_limits["coverage_c"] = (qbe_rate.attributes["covclimit"].value.to_d * 100).to_i
 	                end
 	                
 	                unless qbe_rate.attributes["liablimit"].nil?
-	                  coverage_limits["liability"] = qbe_rate.attributes["liablimit"].value.to_i * 100
+	                  coverage_limits["liability"] = (qbe_rate.attributes["liablimit"].value.to_d * 100).to_i
 	                end
 	                
 	                unless qbe_rate.attributes["medpaylimit"].nil?
-	                  coverage_limits["medical"] = qbe_rate.attributes["medpaylimit"].value.to_i * 100
+	                  coverage_limits["medical"] = (qbe_rate.attributes["medpaylimit"].value.to_d * 100).to_i
 	                end
 	                
 	                base_deductible_value = qbe_rate.attributes["deduct_amt"].nil? ? "0" : qbe_rate.attributes["deduct_amt"].value
@@ -666,15 +666,18 @@ module CarrierQbeInsurable
 	                  if base_deductible_value.include? "/" # if the the deductible includes a /, indicating a split must occur
 	                    split_deductibles = base_deductible_value.split("/")
 	                    
-	                    deductibles["all_peril"] = split_deductibles[0].to_i * 100
-	                    deductibles["hurricane"] = split_deductibles[1].to_i * 100
+	                    deductibles["all_peril"] = (split_deductibles[0].to_d * 100).to_i
+	                    deductibles["hurricane"] = (split_deductibles[1].to_d * 100).to_i
 	                    
 	                  else # if the deductible is 0
-	                    deductibles["all_peril"] = base_deductible_value.to_i * 100                    
+	                    deductibles["all_peril"] = (base_deductible_value.to_d * 100).to_i                   
 	                  end
 	                else # if the deductible does not need to be split, e.g. not florida
-	                  deductibles["all_peril"] = base_deductible_value.to_i * 100                   
+	                  deductibles["all_peril"] = (base_deductible_value.to_d * 100).to_i                   
 	                end
+                  
+                  coverage_limits.select!{|k,v| v != 0 }
+                  deductibles.select!{|k,v| v != 0 }
 	                                
 	                raw_schedule = qbe_rate.attributes["i"].value
 	                interval = "month"
@@ -699,6 +702,8 @@ module CarrierQbeInsurable
 	                  schedule = "optional"
 	                  sub_schedule = raw_schedule
 	                  same_price_across_the_board = true
+                  else
+                    next
 	                end
 	
 	                
@@ -710,7 +715,7 @@ module CarrierQbeInsurable
                       'sub_schedule' => sub_schedule,
                       'paid_in_full' => paid_in_full,
                       'liability_only' => liability_only,
-                      'premium' => (qbe_rate.attributes["v"].value.to_d * 100).to_i, # WARNING: used to just do value.to_i... this seems slightly safer
+                      'premium' => (qbe_rate.attributes["v"].value.to_d * 100).to_i,
                       'deductibles' => deductibles,
                       'coverage_limits' => coverage_limits
                     })
@@ -730,7 +735,7 @@ module CarrierQbeInsurable
                         'sub_schedule' => sub_schedule,
                         'paid_in_full' => paid_in_full,
                         'liability_only' => liability_only,
-                        'premium' => (qbe_rate.attributes["v"].value.to_d * 100).to_i, # WARNING: used to just do value.to_i... this seems slightly safer
+                        'premium' => (qbe_rate.attributes["v"].value.to_d * 100).to_i,
                         'deductibles' => deductibles,
                         'coverage_limits' => coverage_limits
                       })
