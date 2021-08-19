@@ -113,6 +113,7 @@ module PoliciesDashboardMethods
       joins("inner join policy_quotes on (invoices.invoiceable_type = 'PolicyQuote' and invoices.invoiceable_id = policy_quotes.id)").
       where(
         created_at: time_range,
+        field_changed: :total_received,
         analytics_category: %w[policy_premium master_policy_premium],
         policy_quotes: { policy_id: policies.ids }
       )
