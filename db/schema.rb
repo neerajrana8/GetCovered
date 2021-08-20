@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_08_20_152249) do
+ActiveRecord::Schema.define(version: 2021_08_20_152826) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
@@ -852,6 +852,7 @@ ActiveRecord::Schema.define(version: 2021_08_20_152249) do
     t.bigint "integratable_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "provider", default: 0
     t.index ["external_id"], name: "index_integrations_on_external_id", unique: true
     t.index ["integratable_type", "integratable_id"], name: "index_integrations_on_integratable_type_and_integratable_id"
   end
