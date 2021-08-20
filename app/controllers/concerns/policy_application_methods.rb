@@ -199,21 +199,18 @@ module PolicyApplicationMethods
       return
     end
     # grab billing strategy and make sure it's valid
-    billing_strategy_code = nil
     billing_strategy      = BillingStrategy.where(carrier_id: @msi_id, agency_id: @agency_id.to_i, policy_type_id: @ho4_policy_type_id, id: inputs[:billing_strategy_id].to_i).take
-    if billing_strategy.nil? && inputs[:estimate_premium]
+    if billing_strategy.nil?
       render json:   { error: I18n.t('policy_application_contr.msi_get_coverage_options.billing_strategy_must_belong_to_carrier') },
              status: :unprocessable_entity
       return
-    else
-      billing_strategy_code = billing_strategy&.carrier_code
     end
     # get a bit of extra nonsense
     carrier_policy_type = CarrierPolicyType.where(carrier_id: @msi_id, policy_type_id: @ho4_policy_type_id).take
     coverage_selections = inputs[:coverage_selections].map{|cs| [cs['uid'], { 'selection' => cs['selection'] }] }.to_h # WARNING: turn coverage selections into a hash
     # get coverage options
     results = ::InsurableRateConfiguration.get_coverage_options(
-      carrier_policy_type, unit, coverage_selections, inputs[:effective_date] ? Date.parse(inputs[:effective_date]) : nil, inputs[:additional_insured].to_i, billing_strategy_code,
+      carrier_policy_type, unit, coverage_selections, inputs[:effective_date] ? Date.parse(inputs[:effective_date]) : nil, inputs[:additional_insured].to_i, billing_strategy,
       **({
           # execution options
           eventable: unit, 

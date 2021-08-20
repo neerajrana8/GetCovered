@@ -117,7 +117,7 @@ module PoliciesMethods
         [{ 'category' => 'coverage', 'options_type' => 'none', 'uid' => '1010', 'selection' => true }],
         nil,
         0,
-        @policy.policy_premiums.last&.billing_strategy&.carrier_code,
+        @policy.policy_premiums.last&.billing_strategy,
         agency: @policy.agency,
         perform_estimate: false,
         eventable: @policy.primary_insurable,

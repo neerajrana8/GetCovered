@@ -25,7 +25,7 @@ module CarrierMsiPolicyApplication
       #    self.coverage_selections || [],
       #    self.effective_date,
       #    self.users.count - 1,
-      #    self.billing_strategy.carrier_code
+      #    self.billing_strategy
       #  )
       #  if result[:valid] && !result[:estimated_premium].blank?
       #    quote.update(
@@ -62,7 +62,7 @@ module CarrierMsiPolicyApplication
         self.update(status: 'quote_in_progress')
         # validate & make final premium call to msi
         results = ::InsurableRateConfiguration.get_coverage_options(
-          carrier_policy_type, unit, self.coverage_selections, self.effective_date, self.users.count - 1, self.billing_strategy.carrier_code,
+          carrier_policy_type, unit, self.coverage_selections, self.effective_date, self.users.count - 1, self.billing_strategy,
           # execution options
           eventable: quote, # by passing a PolicyQuote we ensure results[:msi_data], results[:event], and results[:annotated_selections] get passed back out
           perform_estimate: true,

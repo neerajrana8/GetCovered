@@ -521,12 +521,13 @@ class InsurableRateConfiguration < ApplicationRecord
   end
 
   # 
-  def self.get_coverage_options(carrier_policy_type, insurable, selections, effective_date, additional_insured_count, billing_strategy_carrier_code,    # required data
+  def self.get_coverage_options(carrier_policy_type, insurable, selections, effective_date, additional_insured_count, billing_strategy,                 # required data
                                 eventable: nil, perform_estimate: true, estimate_default_on_billing_strategy_code_failure: :min,                        # execution options (note: perform_estimate should be 'final' instead of true for QBE, if you want to trigger a getMinPrem request)
                                 add_selection_fields: false,
                                 additional_interest_count: nil, agency: nil, account: insurable.class == ::Insurable ? insurable.account : nil,         # optional/overridable data
                                 nonpreferred_final_premium_params: {})                                                                                  # special optional data
-    # clean up insurable info
+    # clean up params info
+    billing_strategy_carrier_code = billing_strategy.carrier_code
     unit = nil
     if insurable.class == ::Insurable && !::InsurableType::COMMUNITIES_IDS.include?(insurable.insurable_type_id)
       unit = insurable
@@ -649,8 +650,14 @@ class InsurableRateConfiguration < ApplicationRecord
             end # msi result handling (starts at if result[:error])
           end # event handling (starts at if !result)
         when ::QbeService.carrier_id
-          if perform_estimate == 'final' && insurable.class == ::Insurable
+          if false && perform_estimate == 'final' && insurable.class == ::Insurable
             # perform getMinPrem
+            
+            
+            
+            
+            
+            
           else
             # perform approximation using rates
             interval = { 'FL' => 'annual', 'SA' => 'bi_annual', 'QT' => 'quarter', 'QBE_MoRe' => 'month' }[billing_strategy_carrier_code]
@@ -660,20 +667,10 @@ class InsurableRateConfiguration < ApplicationRecord
               next (rate['coverage_limits'] + rate['deductibles']).all?{|name,sel| selections[name]&.[]('selection')&.[]('value') == sel } &&
                    (rate['schedule'] != 'optional' || selections[rate['sub_schedule']]['selection'])
             end
-            total_premium = selected_rates.inject(0){|sum,sr| sum + sr['premium'] }
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
+            estimated_premium = selected_rates.inject(0){|sum,sr| sum + sr['premium'] }
+            weight = billing_strategy.new_business['payments'].inject(0){|sum,w| sum + w }.to_d
+            estimated_first_payment = (billing_strategy.carrier_code == 'FL' ? 0 : (billing_strategy.new_business['payments'][0] / weight * estimated_premium).floor)
+            estimated_installment = (billing_strategy.carrier_code == 'FL' ? estimated_premium : (billing_strategy.new_business['payments'].drop(1).inject(0){|s,w| s + w } / (billing_strategy.new_business['payments'].count{|w| w > 0 } * weight) * estimated_premium).floor)
           end
         else # invalid carrier policy type for estimate performance
           estimated_premium_error = {
@@ -709,7 +706,6 @@ class InsurableRateConfiguration < ApplicationRecord
       estimated_premium: estimated_premium,
       estimated_installment: estimated_installment,
       estimated_first_payment: estimated_first_payment,
-      installment_fee: installment_fee,
       errors: estimated_premium_error,
       annotated_selections: selections
     }.merge(eventable.class != ::PolicyQuote ? {} : {
