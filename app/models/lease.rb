@@ -29,6 +29,9 @@ class Lease < ApplicationRecord
 
   has_many :histories, as: :recordable
 
+  has_many :integration_profiles,
+           as: :profileable
+
   accepts_nested_attributes_for :lease_users, :users
 
   # Validations
