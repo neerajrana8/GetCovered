@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_08_13_151827) do
+ActiveRecord::Schema.define(version: 2021_08_20_152249) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
@@ -819,14 +819,41 @@ ActiveRecord::Schema.define(version: 2021_08_13_151827) do
     t.bigint "agency_id"
     t.bigint "policy_type_ids", default: [], null: false, array: true
     t.boolean "preferred_ho4", default: false, null: false
-    t.boolean "confirmed", default: true, null: false
     t.boolean "occupied", default: false
+    t.boolean "confirmed", default: true, null: false
     t.index ["account_id"], name: "index_insurables_on_account_id"
     t.index ["agency_id"], name: "index_insurables_on_agency_id"
     t.index ["insurable_id"], name: "index_insurables_on_insurable_id"
     t.index ["insurable_type_id"], name: "index_insurables_on_insurable_type_id"
     t.index ["policy_type_ids"], name: "insurable_ptids_gin_index", using: :gin
     t.index ["preferred_ho4"], name: "index_insurables_on_preferred_ho4"
+  end
+
+  create_table "integration_profiles", force: :cascade do |t|
+    t.string "external_id"
+    t.jsonb "configuration", default: {}
+    t.boolean "enabled", default: false
+    t.bigint "integration_id"
+    t.string "profileable_type"
+    t.bigint "profileable_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["external_id"], name: "index_integration_profiles_on_external_id", unique: true
+    t.index ["integration_id"], name: "index_integration_profiles_on_integration_id"
+    t.index ["profileable_type", "profileable_id"], name: "index_integration_profiles_on_profileable"
+  end
+
+  create_table "integrations", force: :cascade do |t|
+    t.string "external_id"
+    t.jsonb "credentials", default: {}
+    t.jsonb "configuration", default: {}
+    t.boolean "enabled", default: false
+    t.string "integratable_type"
+    t.bigint "integratable_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["external_id"], name: "index_integrations_on_external_id", unique: true
+    t.index ["integratable_type", "integratable_id"], name: "index_integrations_on_integratable_type_and_integratable_id"
   end
 
   create_table "invoices", force: :cascade do |t|
@@ -1259,10 +1286,10 @@ ActiveRecord::Schema.define(version: 2021_08_13_151827) do
     t.jsonb "coverage_selections", default: [], null: false
     t.jsonb "extra_settings"
     t.jsonb "resolver_info"
-    t.bigint "tag_ids", default: [], null: false, array: true
     t.jsonb "tagging_data"
     t.string "error_message"
     t.integer "branding_profile_id"
+    t.bigint "tag_ids", default: [], null: false, array: true
     t.string "internal_error_message"
     t.index ["account_id"], name: "index_policy_applications_on_account_id"
     t.index ["agency_id"], name: "index_policy_applications_on_agency_id"
