@@ -79,9 +79,3 @@ json.invoices do
                 as: :invoice
   end
 end
-
-json.additional_interest do
-  if policy.policy_application&.extra_settings.present?
-    
-  end
-end
