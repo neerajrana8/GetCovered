@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_07_30_120553) do
+ActiveRecord::Schema.define(version: 2021_08_19_180654) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
@@ -820,7 +820,6 @@ ActiveRecord::Schema.define(version: 2021_07_30_120553) do
     t.bigint "agency_id"
     t.bigint "policy_type_ids", default: [], null: false, array: true
     t.boolean "preferred_ho4", default: false, null: false
-    t.boolean "confirmed", default: true, null: false
     t.boolean "occupied", default: false
     t.boolean "confirmed", default: true, null: false
     t.index ["account_id"], name: "index_insurables_on_account_id"
@@ -1261,7 +1260,6 @@ ActiveRecord::Schema.define(version: 2021_07_30_120553) do
     t.jsonb "coverage_selections", default: [], null: false
     t.jsonb "extra_settings"
     t.jsonb "resolver_info"
-    t.bigint "tag_ids", default: [], null: false, array: true
     t.jsonb "tagging_data"
     t.string "error_message"
     t.integer "branding_profile_id"
@@ -1820,6 +1818,8 @@ ActiveRecord::Schema.define(version: 2021_07_30_120553) do
     t.integer "mailchimp_category", default: 0
     t.string "qbe_id"
     t.integer "insured_address_id"
+    t.boolean "has_existing_policies", default: false
+    t.boolean "has_current_leases", default: false
     t.index ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["invitation_token"], name: "index_users_on_invitation_token", unique: true

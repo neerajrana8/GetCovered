@@ -134,6 +134,7 @@ class Policy < ApplicationRecord
   accepts_nested_attributes_for :policy_coverages, allow_destroy: true
   #  after_save :update_leases, if: :saved_changes_to_status?
 
+  after_create :update_users_status
   after_commit :update_insurables_coverage,
              if: Proc.new{ saved_change_to_status? || saved_change_to_effective_date? || saved_change_to_effective_date? }
   after_destroy_commit :update_insurables_coverage
@@ -182,7 +183,7 @@ class Policy < ApplicationRecord
     manual_cancellation_with_refunds:     7,     # no qbe code
     manual_cancellation_without_refunds:  8    # no qbe code
   }
-  
+
   def current_quote
     self.policy_quotes.accepted.order('created_at desc').first
   end
@@ -264,11 +265,11 @@ class Policy < ApplicationRecord
   def premium
     return policy_premiums.order("created_at").last
   end
-  
+
   def effective_moment
     self.effective_date.beginning_of_day
   end
-  
+
   def expiration_moment
     self.expiration_date.end_of_day
   end
@@ -450,5 +451,11 @@ class Policy < ApplicationRecord
 
   def update_insurables_coverage
     insurables.each { |insurable| Insurables::UpdateCoveredStatus.run!(insurable: insurable) }
+  end
+
+  def update_users_status
+    users.each do |user|
+      user.update(has_existing_policies: true)
+    end
   end
 end

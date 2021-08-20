@@ -47,7 +47,7 @@ module V2
       def set_user
         @user = ::User.all.find_by(id: params[:id])
       end
-        
+
       def supported_filters(called_from_orders = false)
         @calling_supported_orders = called_from_orders
         {
@@ -55,6 +55,10 @@ module V2
           profile: {
             full_name: %i[scalar array like]
           },
+          created_at: %i[scalar array interval],
+          updated_at: %i[scalar array interval],
+          has_existing_policies: %i[scalar array],
+          has_current_leases: %i[scalar array],
           accounts: { agency_id: %i[scalar array], id: %i[scalar array] }
         }
       end
