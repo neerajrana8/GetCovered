@@ -9,7 +9,17 @@ module V2
       before_action :set_user, only: %i[update show]
 
       def index
-        super(:@users, current_staff.organizable.active_users, :profile)
+
+        query = current_staff.organizable.active_users
+        if params[:community_like]
+          communities = Insurable.where(insurable_type_id: InsurableType::COMMUNITIES_IDS).where("title ILIKE ?", "%#{params[:community_like]}%")
+          unit_ids = communities.map{ |c| c.units.pluck(:id) }.flatten
+          policy_ids = PolicyInsurable.where(insurable_id: unit_ids).pluck(:policy_id)
+          query = query.references(:policy_users).includes(:policy_users).where(policy_users: { policy_id: policy_ids })
+        end
+
+        super(:@users, query, :profile, :accounts, :agencies, :policies, :insurables)
+        render template: 'v2/shared/users/index', status: :ok
       end
 
       def search
@@ -19,7 +29,7 @@ module V2
 
       def show
         if @user
-          render :show, status: :ok
+          render template: 'v2/shared/users/show', status: :ok
         else
           render json: { user: 'not found' }, status: :not_found
         end
@@ -32,7 +42,7 @@ module V2
           @user.valid? if @user.errors.blank?
           @user.errors.messages.except!(:password)
           if !@user.errors.any? && @user.invite_as(current_staff)
-            render :show,
+            render template: 'v2/shared/users/show',
                    status: :created
           else
             render json: @user.errors,
@@ -47,7 +57,7 @@ module V2
       def update
         if update_allowed?
           if @user.update_as(current_staff, update_params)
-            render :show,
+            render template: 'v2/shared/users/show',
                    status: :ok
           else
             render json: @user.errors,
@@ -108,16 +118,21 @@ module V2
       def supported_filters(called_from_orders = false)
         @calling_supported_orders = called_from_orders
         {
-          email: [ :scalar, :array, :like ],
+          email: %i[scalar array like],
+          profile: {
+            full_name: %i[scalar array like]
+          },
           created_at: %i[scalar array interval],
           updated_at: %i[scalar array interval],
+          has_existing_policies: %i[scalar array],
+          has_current_leases: %i[scalar array],
+          accounts: { agency_id: %i[scalar array], id: %i[scalar array] }
         }
       end
 
       def supported_orders
         supported_filters(true)
       end
-
     end
   end # module StaffAccount
 end
