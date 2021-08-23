@@ -54,7 +54,7 @@ es:
     create:
       invalid_auth_key: "Clave de autenticación no válida"
     update_residential:
-      invalid_address: "Please enter a valid address"
+      invalid_address: "Por favor ingrese una dirección residencial válida"
     rentguarantee_complete:
       inistructions_were_sent: "Se enviaron instrucciones"
     validate_policy_users_params:
