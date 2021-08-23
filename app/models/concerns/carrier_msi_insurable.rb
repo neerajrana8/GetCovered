@@ -14,10 +14,11 @@ module CarrierMsiInsurable
     def register_with_msi
       # load the stuff we need
       return ["Insurable must be a residential community"] if self.insurable_type.title != "Residential Community"
+      return ["Insurable must be confirmed"] if !self.confirmed
 	    @carrier = Carrier.where(id: msi_carrier_id).take
       return ["Unable to load carrier information"] if @carrier.nil?
 	    @carrier_profile = carrier_profile(@carrier.id)
-      return ["Unable to load carrier profile"] if @carrier_profile.nil?
+      self.create_carrier_profile(@carrier.id) if @carrier_profile.nil?
 	    @address = primary_address()
 	    return ["Community lacks a primary address"] if @address.nil?
       # try to build the request
