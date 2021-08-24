@@ -158,6 +158,13 @@
       path: "lease-types",
       only: [ :index ]
 
+    resources :leads_dashboard, only: [:index] do
+      collection do
+        get :get_filters
+      end
+    end
+    post :leads_dashboard_index, action: :index, controller: :leads_dashboard
+
     resources :notes,
       only: [ :create, :update, :destroy, :index, :show ]
 
