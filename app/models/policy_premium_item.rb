@@ -226,19 +226,20 @@ class PolicyPremiumItem < ApplicationRecord
         last_percentage += ppic.percentage
         new_total_received = (self.total_received * (last_percentage / approx_100)).floor - total_assigned
         total_assigned += new_total_received
+        acat = (reason.respond_to?(:analytics_category) ? reason.analytics_category : reason.respond_to?(:line_item) ? reason.line_item&.analytics_category : nil) || 'other'
         case self.commission_calculation
           when 'as_received'
             commission_items.push(::CommissionItem.new(
               amount: new_total_received - ppic.total_received,
               commission: locked_commission_hash[ppic.recipient],
               commissionable: ppic,
-              reason: reason
+              reason: reason,
+              analytics_category: acat
             )) unless ppic.total_received == new_total_received || !ppic.payable?
           when 'no_payments'
             # do nothing
           when 'group_by_transaction'
-            the_reason = reason.class == ::LineItemChange ? reason.reason : reason
-            acat = (reason.respond_to?(:analytics_category) ? reason.analytics_category : reason.respond_to?(:line_item) ? reason.line_item&.analytics_category : nil) || 'other'
+            the_reason = (reason.class == ::LineItemChange ? reason.reason : reason)
             transaction = ppits.find do |ppit|
               ppit.recipient_type == ppic.recipient_type && ppit.recipient_id == ppic.recipient_id &&
               ppit.commissionable_type == ppic.commissionable_type && ppit.commissionable_id == ppic.commissionable_id &&
