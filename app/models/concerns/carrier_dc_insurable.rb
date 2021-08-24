@@ -20,7 +20,8 @@ module CarrierDcInsurable
         address2: pad.street_two.blank? ? nil : pad.street_two,
         city: pad.city,
         state: pad.state,
-        zip_code: pad.zip_code
+        zip_code: pad.zip_code,
+        eventable: self
       )
       # check for errors
       if result[:error]
@@ -92,7 +93,8 @@ module CarrierDcInsurable
           address2: pad.street_two.blank? ? nil : pad.street_two,
           city: pad.city,
           state: pad.state,
-          zip_code: pad.zip_code
+          zip_code: pad.zip_code,
+          eventable: building
         )
         if result[:error]
           next
@@ -154,13 +156,7 @@ module CarrierDcInsurable
         unit_id: unit_profile.external_carrier_id,
         effective_date: effective_date
       )
-      event = events.new(
-        verb: DepositChoiceService::HTTP_VERB_DICTIONARY[:rate].to_s,
-        format: 'json',
-        interface: 'REST',
-        endpoint: dcs.endpoint_for(:rate),
-        process: 'deposit_choice_rate'
-      )
+      event = self.events.new(dcs.event_params)
       event.request = dcs.message_content
       event.started = Time.now
       result = dcs.call
@@ -191,7 +187,7 @@ module CarrierDcInsurable
   
   class_methods do
     
-    def deposit_choice_address_search(address1:, address2: nil, city:, state:, zip_code:)
+    def deposit_choice_address_search(address1:, address2: nil, city:, state:, zip_code:, eventable: nil)
       # make the address call
       dcs = DepositChoiceService.new
       dcs.build_request(:address, 
@@ -201,20 +197,14 @@ module CarrierDcInsurable
         state: state,
         zip_code: zip_code
       )
-      event = Event.new(
-        eventable: nil,
-        verb: DepositChoiceService::HTTP_VERB_DICTIONARY[:address].to_s,
-        format: 'json',
-        interface: 'REST',
-        endpoint: dcs.endpoint_for(:address),
-        process: 'deposit_choice_address'
-      )
-      event.request = dcs.message_content.to_s
+      event = Event.new(dcs.event_params)
+      event.eventable = eventable
       event.started = Time.now
       result = dcs.call
       event.completed = Time.now
       event.response = result[:response].response.body
       event.request = result[:response].request.raw_body
+      event.endpoint = result[:response].request.uri.to_s
       event.status = result[:error] ? 'error' : 'success'
       event.save
       result[:event] = event
