@@ -64,13 +64,13 @@ module CarrierQbePolicyApplication
 		  # "I" later - Dylan August 10, 2019
 		  if status_check && self.carrier_id == QbeService.carrier_id
         # grab some values
-        unit = primary_insurable()
-        unit_profile = unit.carrier_profile(carrier.id)
-        community = unit.parent_community()
-        community_profile = community.carrier_profile(carrier.id)
-        address = unit.primary_address()
-        carrier_agency = CarrierAgency.where(agency: account.agency, carrier: self.carrier).take
-        carrier_policy_type = CarrierPolicyType.where(carrier_id: QbeService.carrier_id, policy_type_id: PolicyType::RESIDENTIAL_ID).take
+        unit = self.primary_insurable
+        unit_profile = unit.carrier_profile(self.carrier_id)
+        community = unit.parent_community
+        community_profile = community.carrier_profile(self.carrier_id)
+        address = unit.primary_address
+        carrier_agency = CarrierAgency.where(agency_id: self.agency_id, carrier_id: self.carrier_id).take
+        carrier_policy_type = CarrierPolicyType.where(carrier_id: self.carrier_id, policy_type_id: PolicyType::RESIDENTIAL_ID).take
 
 				if community_profile.data['ho4_enabled'] == true # If community profile is ho4_enabled
 
