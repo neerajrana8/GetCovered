@@ -47,3 +47,10 @@ user.insurables.each  do |insurable|
 end
 
 json.community_titles community_titles
+
+json.address do
+  if user.address.present?
+    json.partial! 'v2/shared/addresses/fields.json.jbuilder',
+                  address: user.address
+  end
+end
