@@ -50,7 +50,7 @@
 @leases.each do |lease|
 # 	if rand(0..100) > 33 # Create a 66% Coverage Rate
 
-  if !lease.insurable.carrier_profile(@qbe_id).nil? && !ENV['SKIPQBE']
+  if false && !lease.insurable.carrier_profile(@qbe_id).nil? && !ENV['SKIPQBE']
     carrier_id = @qbe_id
 		#.insurable.carrier_profile(3)
 		policy_type = PolicyType.find(1)
@@ -171,10 +171,12 @@
 		else
 			pp application.errors	
 		end
+  end
   # end qbe
-  elsif !lease.insurable.carrier_profile(@msi_id).nil? && !ENV['SKIPMSI']
+  
+  carrier_id = (!lease.insurable.carrier_profile(@qbe_id).nil? && !ENV['SKIPQBE']) ? QbeService.carrier_id : (!lease.insurable.carrier_profile(@msi_id).nil? && !ENV['SKIPMSI']) ? MsiService.carrier_id : nil
+  if carrier_id
     # grab useful variables & set up application
-    carrier_id = @msi_id
 		policy_type = PolicyType.find(1)
 		billing_strategy = BillingStrategy.where(agency: lease.account.agency, policy_type: policy_type, carrier_id: carrier_id)
 		                                  .order("RANDOM()")
@@ -241,32 +243,49 @@
       else
         # create quote
         quote = application.estimate
-        #puts "Got quote #{quote.class.name} : #{quote.respond_to?(:id) ? quote.id : 'no id'}"
+        puts "  Got quote #{quote.class.name} : #{quote.respond_to?(:id) ? quote.id : 'no id'}"
         application.quote(quote.id)
         quote.reload
         if quote.id.nil? || quote.status != 'quoted'
           puts quote.errors.to_h.to_s unless quote.id
           puts "Application ID: #{ application.id } | Application Status: #{ application.status } | Quote ID: #{quote.id} | Quote Status: #{ quote.status }"
         else
-          # grab test payment data
-          test_payment_data = {
-            'payment_method' => 'card',
-            'payment_info' => @msi_test_card_data[quote.carrier_payment_data['product_id'].to_i][:card_info],
-            'payment_token' => @msi_test_card_data[quote.carrier_payment_data['product_id'].to_i][:token],
-          }
-          # accept quote
-          acceptance = quote.accept(bind_params: test_payment_data)
-          if !quote.reload.policy.nil?
-            # print a celebratory message
-            premium = quote.policy_premium
-            policy = quote.policy
-            message = "POLICY #{ policy.number } has been #{ policy.status.humanize }\n"
-            message += "Application ID: #{ application.id } | Application Status: #{ application.status } | Quote Status: #{ quote.status }\n" 
-            message += "Premium Base: $#{ '%.2f' % (premium.total_premium.to_f / 100) } | Taxes: $#{ '%.2f' % (premium.total_tax.to_f / 100) } | Fees: $#{ '%.2f' % (premium.total_fee.to_f / 100) } | Total: $#{ '%.2f' % (premium.total.to_f / 100) }"
-            puts message
-          else
-            puts "Application ID: #{ application.id } | Application Status: #{ application.status } | Quote Status: #{ quote.status }"
-          end  
+          if carrier_id == ::QbeService.carrier_id
+            acceptance = quote.accept
+            if acceptance[:success]
+              quote.reload
+              premium = quote.policy_premium
+              policy = quote.policy
+              message = "POLICY #{ policy.number } has been #{ policy.status.humanize }\n"
+              message += "Application ID: #{ application.id } | Application Status: #{ application.status } | Quote Status: #{ quote.status }\n" 
+              message += "Premium Base: $#{ '%.2f' % (premium.total_premium.to_f / 100) } | Taxes: $#{ '%.2f' % (premium.total_tax.to_f / 100) } | Fees: $#{ '%.2f' % (premium.total_fee.to_f / 100) } | Total: $#{ '%.2f' % (premium.total.to_f / 100) }"
+              puts message
+            else
+              message = "QBE Quote Failed: Application #{ application.id } | Application Status: #{ application.status } | Quote #{quote.id} | Quote Status: #{ quote.status }"
+              message += "\n  Accept message: #{acceptance[:message]}"
+              puts message
+            end    
+          elsif carrier_id == ::MsiService.carrier_id
+            # grab test payment data
+            test_payment_data = {
+              'payment_method' => 'card',
+              'payment_info' => @msi_test_card_data[quote.carrier_payment_data['product_id'].to_i][:card_info],
+              'payment_token' => @msi_test_card_data[quote.carrier_payment_data['product_id'].to_i][:token],
+            }
+            # accept quote
+            acceptance = quote.accept(bind_params: test_payment_data)
+            if !quote.reload.policy.nil?
+              # print a celebratory message
+              premium = quote.policy_premium
+              policy = quote.policy
+              message = "POLICY #{ policy.number } has been #{ policy.status.humanize }\n"
+              message += "Application ID: #{ application.id } | Application Status: #{ application.status } | Quote Status: #{ quote.status }\n" 
+              message += "Premium Base: $#{ '%.2f' % (premium.total_premium.to_f / 100) } | Taxes: $#{ '%.2f' % (premium.total_tax.to_f / 100) } | Fees: $#{ '%.2f' % (premium.total_fee.to_f / 100) } | Total: $#{ '%.2f' % (premium.total.to_f / 100) }"
+              puts message
+            else
+              puts "Application ID: #{ application.id } | Application Status: #{ application.status } | Quote Status: #{ quote.status }"
+            end 
+          end
         end
       end
     end

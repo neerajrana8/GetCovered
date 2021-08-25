@@ -176,7 +176,7 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
       # Create QBE Insurable Type for Residential Communities with fields required for integration
       carrier_insurable_type = CarrierInsurableType.create!(carrier: carrier, insurable_type: InsurableType.find(1),
                                                             enabled: true, profile_traits: {
-                                                              "pref_facility": "MDU",
+                                                              "pref_facility": "FIC",
                                                               "occupancy_type": "Other",
                                                               "construction_type": "F", # Options: F, MY, Superior
                                                               "protection_device_cd": "F", # Options: F, S, B, FB, SB
