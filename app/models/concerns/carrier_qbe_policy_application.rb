@@ -49,7 +49,7 @@ module CarrierQbePolicyApplication
         return nil
       end
       # save info
-      quote.update(est_premium: results[:estimated_premium], status: 'estimated')
+      quote.update(est_premium: results[:estimated_premium], status: 'estimated', carrier_payment_data: { 'policy_fee' => results[:policy_fee] })
       return quote
 		end
 
@@ -131,19 +131,21 @@ module CarrierQbePolicyApplication
 	 					    tax = xml_min_prem.attribute('tax').value.delete(".")
 	 					    base_premium = response_premium.to_i - tax.to_i
                 # create PolicyPremium
-                quote_method = "mark_failure"
+                succeeded = false
                 premium = PolicyPremium.create(policy_quote: quote)
+                policy_fee = quote.carrier_payment_data['policy_fee']
+                premium.fees.create(title: "Policy Fee", type: 'ORIGINATION', amount_type: 'FLAT', amount: policy_fee, enabled: true, ownerable: ::MsiService.carrier, hidden: true) unless policy_fee == 0
                 unless premium.id
                   puts "  Failed to create premium! #{premium.errors.to_h}"
                 else
-                  result = premium.initialize_all(base_premium.to_i, tax: tax.to_i, tax_recipient: quote.policy_application.carrier)
+                  result = premium.initialize_all(base_premium.to_i - policy_fee, tax: tax.to_i, tax_recipient: quote.policy_application.carrier)
                   unless result.nil?
                     puts "  Failed to initialize premium! #{result}"
                   else
-                    quote_method = "mark_successful"
+                    succeeded = true
                   end
                 end
-	 					    quote_method = premium.save ? "mark_successful" : "mark_failure"
+	 					    quote_method = succeeded && premium.save ? "mark_successful" : "mark_failure"
 	 					    quote.send(quote_method)
                 # end process
   	 						if quote.status == 'quoted'

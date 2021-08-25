@@ -559,6 +559,11 @@ class InsurableRateConfiguration < ApplicationRecord
     selection_errors = irc.get_selection_errors(selections, coverage_options, insert_invisible_requirements: true)
     valid = selection_errors.blank?
     estimated_premium_error = valid ? nil : { internal: selection_errors, external: selection_errors }
+    # initialize premium numbers variables unnecessarily
+    estimated_premium = nil
+    estimated_installment = nil
+    estimated_first_payment = nil
+    policy_fee = nil
     # perform the estimate, if requested
     if perform_estimate
       case carrier_policy_type.carrier_id
@@ -612,6 +617,7 @@ class InsurableRateConfiguration < ApplicationRecord
               end
             else
               # total premium
+              policy_fee = ((result[:data].dig("MSIACORD", "InsuranceSvcRs", "RenterPolicyQuoteInqRs", "PersPolicy", "MSI_PolicyFee", 'Amt') || 0).to_d * 100).to_i
               estimated_premium = [result[:data].dig("MSIACORD", "InsuranceSvcRs", "RenterPolicyQuoteInqRs", "PersPolicy", "PaymentPlan")].flatten
                                               .map do |plan|
                                                 [
@@ -651,17 +657,15 @@ class InsurableRateConfiguration < ApplicationRecord
         when ::QbeService.carrier_id
           if false && perform_estimate == 'final' && insurable.class == ::Insurable
             # perform getMinPrem
-            
-            
-            
-            
-            
-            
+            # WARNING: right now the if statement above is never satisfied, because we only invoke getMinPrem in the CarrierQbePolicyApplication concern, not here
           else
             # perform approximation using rates
             interval = { 'FL' => 'annual', 'SA' => 'bi_annual', 'QT' => 'quarter', 'QBE_MoRe' => 'month' }[billing_strategy_carrier_code]
             selected_rates = irc.rates['rates'][additional_insured_count + 1][interval].select do |rate|
-              next true if rate['sub_schedule'] == 'policy_fee'
+              if rate['sub_schedule'] == 'policy_fee'
+                policy_fee = rate['premium']
+                next true
+              end
               next false if rate['liability_only']
               next (rate['coverage_limits'] + rate['deductibles']).all?{|name,sel| selections[name]&.[]('selection')&.[]('value') == sel } &&
                    (rate['schedule'] != 'optional' || selections[rate['sub_schedule']]['selection'])
@@ -705,6 +709,7 @@ class InsurableRateConfiguration < ApplicationRecord
       estimated_premium: estimated_premium,
       estimated_installment: estimated_installment,
       estimated_first_payment: estimated_first_payment,
+      policy_fee: policy_fee,
       errors: estimated_premium_error,
       annotated_selections: selections
     }.merge(eventable.class != ::PolicyQuote ? {} : {

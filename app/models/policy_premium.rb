@@ -170,6 +170,7 @@ class PolicyPremium < ApplicationRecord
       proration_calculation: 'payment_term_exclusive',
       proration_refunds_allowed: false,
       # MOOSE WARNING: preprocessed
+      hidden: fee.hidden,
       recipient: recipient || fee.ownerable,
       collector: collector || self.carrier_agency_policy_type&.collector || ::PolicyPremium.default_collector,
       policy_premium_item_payment_terms: (
