@@ -10,6 +10,13 @@ module CarrierMsiInsurable
     def msi_carrier_id
       5
     end
+    
+    def msi_get_carrier_status(refresh: false)
+      @msi_get_carrier_status = nil if refresh
+      return @msi_get_carrier_status ||= !::InsurableType::RESIDENTIAL_IDS.include?(self.insurable_type_id) ?
+        nil
+        : (self.confirmed && self.parent_community&.carrier_profile(::MsiService.carrier_id)&.external_carrier_id ? :preferred : :nonpreferred)
+    end
 	  
     def register_with_msi
       # load the stuff we need

@@ -87,6 +87,26 @@ class Insurable < ApplicationRecord
       indexes :title, type: :text, analyzer: 'english'
     end
   end
+  
+  # returns carrier status, which may differ by carrier; for MSI and QBE, it returns :preferred or :nonpreferred
+  def get_carrier_status(carrier, refresh: nil)
+    carrier = case carrier
+      when ::Integer
+        case carrier
+          when ::MsiService.carrier_id;             'msi'
+          when ::QbeService.carrier_id;             'qbe'
+          when ::DepositChoiceService.carrier_id;   'dc'
+          when ::PensioService.carrier_id;          'pensio'
+          else;                                     Carrier.where(id: carrier).take&.integration_designation
+        end
+      when ::String;                                carrier
+      when ::Carrier;                               carrier.integration_designation
+      else;                                         nil
+    end
+    self.respond_to?("#{carrier}_get_carrier_status") ? self.send("#{carrier}_get_carrier_status", **{ refresh: refresh }.compact) : nil
+  end
+  
+  
   # Insurable.primary_address
   #
 
@@ -190,37 +210,15 @@ class Insurable < ApplicationRecord
   end
 
 	def parent_community
-		to_return = nil
-
-		unless insurable.nil?
-      if insurable_type.title.include? "Unit"
-        if insurable.insurable_type.title.include? "Building"
-          to_return = insurable.insurable
-        else
-          to_return = insurable
-        end
-      end
-		end
-
-		return to_return
+    return @parent_community ||= self if InsurableType::COMMUNITIES_IDS.include?(self.insurable_type_id)
+    return nil if self.insurable_id.nil?
+    return @parent_community ||= self.insurable if InsurableType::COMMUNITIES_IDS.include?(self.insurable&.insurable_type_id)
+    return @parent_community ||= self.insurable&.insurable if InsurableType::COMMUNITIES_IDS.include?(self.insurable&.insurable&.insurable_type_id)
+    return nil
   end
 
   def parent_community_for_all
-    to_return = nil
-
-    if insurable.present?
-      if InsurableType::UNITS_IDS.include?(insurable_type_id)
-        if InsurableType::BUILDINGS_IDS.include?(insurable.insurable_type_id)
-          to_return = insurable.insurable
-        else
-          to_return = insurable
-        end
-      elsif InsurableType::BUILDINGS_IDS.include?(insurable_type_id)
-        to_return = insurable
-      end
-    end
-
-    return to_return
+    parent_community
   end
 
   def parent_building

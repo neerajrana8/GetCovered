@@ -10,42 +10,76 @@ module CarrierQbePolicyApplication
 	  #
 
 	  def qbe_estimate(rates = nil, quote_id = nil)
-			raise ArgumentError, I18n.t('policy_app_model.qbe.rates_cannot_be_nil') if policy_rates.count == 0  && rates.nil?
-			raise ArgumentError, I18n.t('policy_app_model.qbe.rates_must_be_array') if policy_rates.count == 0  && !rates.is_a?(Array)
-
-		  quote = quote_id.nil? ? policy_quotes.create!(agency: agency, account: account) :
+      # get the quote
+		  quote = quote_id.nil? ? policy_quotes.create!(agency: agency, account: account) : quote_id.class == ::PolicyQuote ? quote_id : policy_quotes.find(quote_id)
+      quote_id = quote.id if quote_id.class == ::PolicyQuote
+      # grab some values
+      unit = self.primary_insurable
+      unit_profile = unit.carrier_profile(self.carrier_id)
+      community = unit.parent_community
+      community_profile = community.carrier_profile(self.carrier_id)
+      address = unit.primary_address
+      carrier_agency = CarrierAgency.where(agency_id: self.agency_id, carrier_id: self.carrier_id).take
+      carrier_policy_type = CarrierPolicyType.where(carrier_id: self.carrier_id, policy_type_id: PolicyType::RESIDENTIAL_ID).take
+      preferred = (unit.get_carrier_status == :preferred)
+      # get estimate
+      results = ::InsurableRateConfiguration.get_coverage_options(
+        carrier_policy_type, unit, self.coverage_selections, self.effective_date, self.users.count - 1, self.billing_strategy, # MOOSE WARNING: spouse nonsense
+        # execution options
+        eventable: quote, # by passing a PolicyQuote we ensure results[:event], and results[:annotated_selections] get passed back out
+        perform_estimate: true,
+        add_selection_fields: true,
+        # overrides
+        additional_interest_count: preferred ? nil : self.extra_settings['additional_interest'].blank? ? 0 : 1,
+        agency: self.agency,
+        account: self.account#,
+        # nonpreferred stuff
+        #nonpreferred_final_premium_params: {
+        #  address_line_two: unit.title.nil? ? nil : "Unit #{unit.title}",
+        #  number_of_units: self.extra_settings&.[]('number_of_units'),
+        #  years_professionally_managed: self.extra_settings&.[]('years_professionally_managed'),
+        #  year_built: self.extra_settings&.[]('year_built'),
+        #  gated: self.extra_settings&.[]('gated')
+        #}.compact
+      )
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+		  quote = quote_id.nil? ? policy_quotes.create!(agency: agency, account: account) : 
 		                          policy_quotes.find(quote_id)
-
-		  if quote.persisted?
-			  unless rates.nil?
-					rates.each { |rate| policy_rates.create!(insurable_rate: rate) unless insurable_rates.include?(rate) }
-				end
-
-				policy_fee = self.primary_insurable().parent_community().insurable_rates
-				                 .where(number_insured: self.fields[0]["value"],
-				                        interval: self.billing_strategy.title.downcase.sub(/ly/, '').gsub('-', '_'),
-				                        sub_schedule: "policy_fee").take
-
-				policy_rates.create!(insurable_rate: policy_fee) unless policy_fee.nil?
-
-				quote_rate_premiums = insurable_rates.map { |r| r.premium.to_f }
-				quote.update est_premium: quote_rate_premiums.inject { |sum, rate| sum + rate },
-				             status: "estimated"
-			end
+      quote.update(status: 'estimated')
+      return quote
+      
+			#raise ArgumentError, I18n.t('policy_app_model.qbe.rates_cannot_be_nil') if policy_rates.count == 0  && rates.nil?
+			#raise ArgumentError, I18n.t('policy_app_model.qbe.rates_must_be_array') if policy_rates.count == 0  && !rates.is_a?(Array)
+      #
+		  #quote = quote_id.nil? ? policy_quotes.create!(agency: agency, account: account) :
+		  #                        policy_quotes.find(quote_id)
+      #
+		  #if quote.persisted?
+			#  unless rates.nil?
+			#		rates.each { |rate| policy_rates.create!(insurable_rate: rate) unless insurable_rates.include?(rate) }
+			#	end
+      #
+			#	policy_fee = self.primary_insurable().parent_community().insurable_rates
+			#	                 .where(number_insured: self.fields[0]["value"],
+			#	                        interval: self.billing_strategy.title.downcase.sub(/ly/, '').gsub('-', '_'),
+			#	                        sub_schedule: "policy_fee").take
+      #
+			#	policy_rates.create!(insurable_rate: policy_fee) unless policy_fee.nil?
+      #
+			#	quote_rate_premiums = insurable_rates.map { |r| r.premium.to_f }
+			#	quote.update est_premium: quote_rate_premiums.inject { |sum, rate| sum + rate },
+			#	             status: "estimated"
+			#end
 		end
-
-		# QBE Add Policy Fee
-		#
-
-    def qbe_add_policy_fee
-      if available_rates(:optional, :policy_fee).count > 0
-
-        available_rates(:optional, :policy_fee).each do |policy_fee|
-          rates << policy_fee
-        end
-
-      end
-    end
 
 	  # QBE Quote
 	  #
@@ -72,7 +106,7 @@ module CarrierQbePolicyApplication
         carrier_agency = CarrierAgency.where(agency_id: self.agency_id, carrier_id: self.carrier_id).take
         carrier_policy_type = CarrierPolicyType.where(carrier_id: self.carrier_id, policy_type_id: PolicyType::RESIDENTIAL_ID).take
 
-				if community_profile.data['ho4_enabled'] == true # If community profile is ho4_enabled
+				if community_profile.data['ho4_enabled'] == true && community_profile.data['rates_resolution'][self.users.count] # MOOSE WARNING: spouse logic...
 
 					update status: 'quote_in_progress'
 	        event = events.new(

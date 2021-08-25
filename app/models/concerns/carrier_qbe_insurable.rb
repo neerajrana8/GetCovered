@@ -6,6 +6,13 @@ module CarrierQbeInsurable
   extend ActiveSupport::Concern
 
   included do
+  
+    def qbe_get_carrier_status(refresh: false)
+      @qbe_get_carrier_status = nil if refresh
+      return @qbe_get_carrier_status ||= !::InsurableType::RESIDENTIAL_IDS.include?(self.insurable_type_id) ?
+        nil
+        : (self.confirmed && self.parent_community&.carrier_profile(::QbeService.carrier_id) ? :preferred : :nonpreferred) # WARNING: change this at some point in case we confirm nonpreferred properties?
+    end
 	  
 	  # Get QBE Zip Code
 	  #
@@ -339,7 +346,7 @@ module CarrierQbeInsurable
 	        @carrier_profile.data['rates_resolution'][key] = false if force == true
 	      end  
 	    end
-	    # self.ho4_enabled = false
+	    self.ho4_enabled = false
 	    
 	    save()
 	    reload()
@@ -476,9 +483,9 @@ module CarrierQbeInsurable
 	          if rates
 		          
 	            @carrier_profile.data['rates_resolution']["#{ number_insured }"] = true
+              @carrier_profile.data["ho4_enabled"] = true # as long as we have rates for at least one number_insured choice, we say true now
 	            
 	            unless @carrier_profile.data['rates_resolution'].values.include? false
-	              @carrier_profile.data["ho4_enabled"] = true
 	              @carrier_profile.data["get_rates_resolved"] = true 
 	              @carrier_profile.data["get_rates_resolved_on"] = Time.current.strftime("%m/%d/%Y %I:%M %p")
 	            end
