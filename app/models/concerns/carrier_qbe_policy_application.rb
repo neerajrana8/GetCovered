@@ -93,6 +93,7 @@ module CarrierQbePolicyApplication
 	        qbe_service = QbeService.new(action: 'getMinPrem')
 
 	        qbe_request_options = {
+            pref_facility: preferred ? 'MDU' : 'FIC',
 	          prop_city: address.city,
 	          prop_county: address.county,
 	          prop_state: address.state,

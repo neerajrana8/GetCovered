@@ -11,7 +11,7 @@ module CarrierQbeInsurable
       @qbe_get_carrier_status = nil if refresh
       return @qbe_get_carrier_status ||= !::InsurableType::RESIDENTIAL_IDS.include?(self.insurable_type_id) ?
         nil
-        : (self.confirmed && self.parent_community&.carrier_profile(::QbeService.carrier_id) ? :preferred : :nonpreferred) # WARNING: change this at some point in case we confirm nonpreferred properties?
+        : (self.confirmed && self.parent_community&.carrier_profile(::QbeService.carrier_id)&.traits&.[]('pref_facility') == 'MDU' ? :preferred : :nonpreferred) # WARNING: change this at some point in case we confirm nonpreferred properties?
     end
 	  
 	  # Get QBE Zip Code
@@ -242,6 +242,7 @@ module CarrierQbeInsurable
 	        		          
 	          @carrier_profile.traits['ppc'] = xml_doc.css("PPC_Code").first.content unless xml_doc.css("PPC_Code").first.nil?
 	          @carrier_profile.traits['bceg'] = xml_doc.css("BCEG_Code").first.content unless xml_doc.css("BCEG_Code").first.nil?
+            @carrier_profile.traits['pref_facility'] = (self.confirmed ? 'MDU' : 'FIC') # MOOSE WARNING: maybe change how this workz?
 	        	
 	        	@carrier_profile.data["property_info_resolved"] = true
 	        	@carrier_profile.data["property_info_resolved_on"] = Time.current.strftime("%m/%d/%Y %I:%M %p")
@@ -405,6 +406,7 @@ module CarrierQbeInsurable
         )
 	      
 	      qbe_request_options = {
+          pref_facility: (self.get_carrier_status(@carrier) == :preferred ? 'MDU' : 'FIC'),
 	        prop_city: @address.city,
 	        prop_county: @address.county,
 	        prop_state: @address.state,
