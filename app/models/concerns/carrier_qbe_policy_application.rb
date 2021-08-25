@@ -42,43 +42,15 @@ module CarrierQbePolicyApplication
         #  gated: self.extra_settings&.[]('gated')
         #}.compact
       )
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-		  quote = quote_id.nil? ? policy_quotes.create!(agency: agency, account: account) : 
-		                          policy_quotes.find(quote_id)
-      quote.update(status: 'estimated')
+      # make sure we succeeded
+      if !results[:valid] # MOOSE WARNING: add error messages
+        return nil
+      elsif !self.update(coverage_selections: results[:annotated_selections]) # update our coverage selections with any annotations from the get_coverage_options call
+        return nil
+      end
+      # save info
+      quote.update(est_premium: results[:estimated_premium], status: 'estimated')
       return quote
-      
-			#raise ArgumentError, I18n.t('policy_app_model.qbe.rates_cannot_be_nil') if policy_rates.count == 0  && rates.nil?
-			#raise ArgumentError, I18n.t('policy_app_model.qbe.rates_must_be_array') if policy_rates.count == 0  && !rates.is_a?(Array)
-      #
-		  #quote = quote_id.nil? ? policy_quotes.create!(agency: agency, account: account) :
-		  #                        policy_quotes.find(quote_id)
-      #
-		  #if quote.persisted?
-			#  unless rates.nil?
-			#		rates.each { |rate| policy_rates.create!(insurable_rate: rate) unless insurable_rates.include?(rate) }
-			#	end
-      #
-			#	policy_fee = self.primary_insurable().parent_community().insurable_rates
-			#	                 .where(number_insured: self.fields[0]["value"],
-			#	                        interval: self.billing_strategy.title.downcase.sub(/ly/, '').gsub('-', '_'),
-			#	                        sub_schedule: "policy_fee").take
-      #
-			#	policy_rates.create!(insurable_rate: policy_fee) unless policy_fee.nil?
-      #
-			#	quote_rate_premiums = insurable_rates.map { |r| r.premium.to_f }
-			#	quote.update est_premium: quote_rate_premiums.inject { |sum, rate| sum + rate },
-			#	             status: "estimated"
-			#end
 		end
 
 	  # QBE Quote
@@ -96,7 +68,7 @@ module CarrierQbePolicyApplication
 		  # If application complete or quote_failed
 		  # and carrier is QBE will figure out the
 		  # "I" later - Dylan August 10, 2019
-		  if status_check && self.carrier_id == QbeService.carrier_id
+		  if status_check && self.carrier_id == QbeService.carrier_id && quote.status == 'estimated'
         # grab some values
         unit = self.primary_insurable
         unit_profile = unit.carrier_profile(self.carrier_id)
@@ -105,6 +77,7 @@ module CarrierQbePolicyApplication
         address = unit.primary_address
         carrier_agency = CarrierAgency.where(agency_id: self.agency_id, carrier_id: self.carrier_id).take
         carrier_policy_type = CarrierPolicyType.where(carrier_id: self.carrier_id, policy_type_id: PolicyType::RESIDENTIAL_ID).take
+        preferred = (unit.get_carrier_status == :preferred)
 
 				if community_profile.data['ho4_enabled'] == true && community_profile.data['rates_resolution'][self.users.count] # MOOSE WARNING: spouse logic...
 
@@ -151,15 +124,15 @@ module CarrierQbePolicyApplication
 		        event.status = qbe_data[:error] ? 'error' : 'success'
 		        if event.save # If event saves after QBE call
 			        unless qbe_data[:error] # QBE Response Success
+                # parse xml
 		            xml_doc = Nokogiri::XML(qbe_data[:data])
 		            xml_min_prem = xml_doc.css('//Additional_Premium')
-
 	 					    response_premium = xml_min_prem.attribute('total_premium').value.delete(".")
 	 					    tax = xml_min_prem.attribute('tax').value.delete(".")
 	 					    base_premium = response_premium.to_i - tax.to_i
-
+                # create PolicyPremium
                 quote_method = "mark_failure"
-                premium = PolicyPremium.create policy_quote: quote
+                premium = PolicyPremium.create(policy_quote: quote)
                 unless premium.id
                   puts "  Failed to create premium! #{premium.errors.to_h}"
                 else
@@ -172,7 +145,7 @@ module CarrierQbePolicyApplication
                 end
 	 					    quote_method = premium.save ? "mark_successful" : "mark_failure"
 	 					    quote.send(quote_method)
-                
+                # end process
   	 						if quote.status == 'quoted'
                   result = quote.generate_invoices_for_term
                   unless result.nil?

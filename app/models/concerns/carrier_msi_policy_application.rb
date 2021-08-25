@@ -57,8 +57,8 @@ module CarrierMsiPolicyApplication
         address = unit.primary_address
         carrier_agency = CarrierAgency.where(agency_id: self.agency_id, carrier_id: self.carrier_id).take
         carrier_policy_type = CarrierPolicyType.where(carrier_id: self.carrier_id, policy_type_id: PolicyType::RESIDENTIAL_ID).take
+        preferred = (unit.get_carrier_status == :preferred)
         # call getfinalpremium
-        preferred = unit.preferred_ho4 && community_profile&.external_carrier_id
         self.update(status: 'quote_in_progress')
         # validate & make final premium call to msi
         results = ::InsurableRateConfiguration.get_coverage_options(
@@ -68,11 +68,11 @@ module CarrierMsiPolicyApplication
           perform_estimate: true,
           add_selection_fields: true,
           # overrides
-          additional_interest_count: community_profile ? nil : self.extra_settings['additional_interest'].blank? ? 0 : 1,
+          additional_interest_count: preferred ? nil : self.extra_settings['additional_interest'].blank? ? 0 : 1,
           agency: self.agency,
           account: self.account,
           # nonpreferred stuff
-          nonpreferred_final_premium_params: {
+          nonpreferred_final_premium_params: preferred ? nil : {
             address_line_two: unit.title.nil? ? nil : "Unit #{unit.title}",
             number_of_units: self.extra_settings&.[]('number_of_units'),
             years_professionally_managed: self.extra_settings&.[]('years_professionally_managed'),
@@ -97,8 +97,6 @@ module CarrierMsiPolicyApplication
           quote.mark_failure("Internal Error (786)", interr)
           return false
         else
-          # save the beefed up coverage_selections
-          self.update_columns(coverage_selections: results[:annotated_selections])
           # grab msi payment amounts
           payment_plan = self.billing_strategy.carrier_code
           installment_count = MsiService::INSTALLMENT_COUNT[payment_plan]

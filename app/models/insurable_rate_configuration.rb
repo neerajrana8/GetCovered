@@ -524,7 +524,7 @@ class InsurableRateConfiguration < ApplicationRecord
                                 eventable: nil, perform_estimate: true, estimate_default_on_billing_strategy_code_failure: :min,                        # execution options (note: perform_estimate should be 'final' instead of true for QBE, if you want to trigger a getMinPrem request)
                                 add_selection_fields: false,
                                 additional_interest_count: nil, agency: nil, account: insurable.class == ::Insurable ? insurable.account : nil,         # optional/overridable data
-                                nonpreferred_final_premium_params: {})                                                                                  # special optional data
+                                nonpreferred_final_premium_params: nil)                                                                                  # special optional data
     # clean up params info
     billing_strategy_carrier_code = billing_strategy.carrier_code
     unit = nil
@@ -565,7 +565,7 @@ class InsurableRateConfiguration < ApplicationRecord
         when ::MsiService.carrier_id
           # fix up selections and get preferred status
           selections = automatically_select_options(coverage_options, selections) unless valid
-          preferred = cip && !cip.external_carrier_id.blank? && (unit.nil? || unit.account_id == insurable.account_id)
+          preferred = (unit || insurable).class == ::Insurable && (unit || insurable).get_carrier_status == :preferred
           # prepare the call
           msis = MsiService.new
           result = msis.build_request(:final_premium,
@@ -582,7 +582,7 @@ class InsurableRateConfiguration < ApplicationRecord
                                   end.compact,
             **(preferred ?
                 { community_id: cip.external_carrier_id }
-                : { address: insurable.primary_address }.merge(nonpreferred_final_premium_params.compact)
+                : { address: insurable.primary_address }.merge((nonpreferred_final_premium_params || {}).compact)
             ).merge({ line_breaks: true })
           )
           event = ::Event.new(msis.event_params.merge(eventable: eventable))
