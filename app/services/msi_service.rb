@@ -220,7 +220,7 @@ class MsiService
         }
       }
     },
-    threek: {
+    tenpercent: {
       loss_of_use: {
         'subject' => @@coverage_codes[:CoverageD][:code].to_s,
         'condition' => { 'coverage_selected' => @@coverage_codes[:CoverageC][:code].to_s },
@@ -333,7 +333,7 @@ class MsiService
         'subject' => @@coverage_codes[:WaterBackup][:code].to_s,
         'condition' => { 'coverage_selected' => @@coverage_codes[:CoverageC][:code].to_s },
         'rule' => {
-          'equal_to_fixed_or_percent' +> {
+          'equal_to_fixed_or_percent' => {
             'fixed' => { 'data_type' => 'currency', 'value' => 500000 },
             'percent' => 100,
             'object' => @@coverage_codes[:CoverageC][:code].to_s
@@ -904,7 +904,8 @@ class MsiService
   
   
   def extract_insurable_rate_configuration(product_definition_response, configurer: nil, configurable: nil, carrier_policy_type: nil, use_default_rules_for: nil)
-    irc = InsurableRateConfiguration.new(configurer: configurer, configurable: configurable, carrier_policy_type: carrier_insurable_type)
+    irc = InsurableRateConfiguration.new(configurer: configurer, configurable: configurable, carrier_policy_type: carrier_policy_type)
+    irc.configuration = { 'coverage_options' => {}, 'rules' => {} }
     unless product_definition_response.nil?
       # grab relevant bois from out da hood
       product = product_definition_response.dig("MSIACORD", "InsuranceSvcRs", "RenterPolicyQuoteInqRs", "MSI_ProductDefinition")
@@ -929,7 +930,6 @@ class MsiService
           }
         end.inject({}){|combined,single| combined.deep_merge(single) }
       }
-      irc.configuration = { 'coverage_options' => {}, 'rules' => {} }
       irc.configuration['coverage_options'] = (coverages.map do |cov|
           [cov["CoverageCd"].to_s, {
             "title"         => (TITLE_OVERRIDES[cov["CoverageCd"].to_s].class == ::Proc ?

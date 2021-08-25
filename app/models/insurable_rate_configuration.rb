@@ -859,7 +859,7 @@ class InsurableRateConfiguration < ApplicationRecord
     
     def validate_configuration
       error_hash = {}
-      result = self.class.validate_data_structure(self.configuration, CONFIGURATION_STRUCTURE, errors: error_hash)
+      result = self.class.validate_data_structure(self.configuration, carrier_policy_type.carrier_id == ::MsiService.carrier_id ? MSI_STRUCTURE : QBE_STRUCTURE, errors: error_hash)
       self.configuration = result
       self.apply_errors_from_hash(error_hash)
     end
