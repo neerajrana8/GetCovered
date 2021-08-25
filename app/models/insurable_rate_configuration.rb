@@ -30,7 +30,7 @@ class InsurableRateConfiguration < ApplicationRecord
   
   # Structurable structures used in this model (and a helpful rule-to-text method)
   
-  RULES_STRUCTURE => {
+  RULES_STRUCTURE = {
     'rules' => {
       'required' => false,
       'validity' => Proc.new{|v| v.class == ::Hash },
@@ -61,15 +61,15 @@ class InsurableRateConfiguration < ApplicationRecord
                     break "has invalid object '#{params['object']}' (expected a string representing a coverage UID)" unless params['object'].class == ::String
                   when 'compares_percent'
                     break "has invalid comparator '#{params['comparator']}'" if !['=','<','>','<=','>='].include?(params['comparator'])
-                    break "has invalid percent '#{params['percent']}' (expected a valid decimal number)" unless (BigDecimal(params['percent'], 3)
+                    break "has invalid percent '#{params['percent']}' (expected a valid decimal number)" unless (BigDecimal(params['percent'], 3) rescue false)
                     break "has invalid object '#{params['object']}' (expected a string representing a coverage UID)" unless params['object'].class == ::String
                   when 'equal_to_fixed_or_percent'
                     break "has invalid fixed '#{params['fixed']}' (expected a valid decimal number or a currency or percentage data type hash)" unless (BigDecimal(params['fixed'], 3) rescue false) || (params['fixed'].class == ::Hash && ['currency', 'percentage'].include?(params['fixed']['data_type']) && (BigDecimal(params['fixed']['value'], 3) rescue false))
-                    break "has invalid percent '#{params['percent']}' (expected a valid decimal number)" unless (BigDecimal(params['percent'], 3)
+                    break "has invalid percent '#{params['percent']}' (expected a valid decimal number)" unless (BigDecimal(params['percent'], 3) rescue false)
                     break "has invalid object '#{params['object']}' (expected a string representing a coverage UID)" unless params['object'].class == ::String
                   when 'greatest_of_fixed_or_percent'
                     break "has invalid fixed '#{params['fixed']}' (expected a valid decimal number or a currency or percentage data type hash)" unless (BigDecimal(params['fixed'], 3) rescue false) || (params['fixed'].class == ::Hash && ['currency', 'percentage'].include?(params['fixed']['data_type']) && (BigDecimal(params['fixed']['value'], 3) rescue false))
-                    break "has invalid percent '#{params['percent']}' (expected a valid decimal number)" unless (BigDecimal(params['percent'], 3)
+                    break "has invalid percent '#{params['percent']}' (expected a valid decimal number)" unless (BigDecimal(params['percent'], 3) rescue false)
                     break "has invalid object '#{params['object']}' (expected a string representing a coverage UID)" unless params['object'].class == ::String
                   else
                     break "includes invalid rule type '#{rule}'"
@@ -111,63 +111,65 @@ class InsurableRateConfiguration < ApplicationRecord
       subject_title = subject&.[]('title') || "Coverage Option #{rule['subject']}"
       # add in rule body
       to_return += rule['rule'].map do |rule_type, params|
-        when 'has_requirement'
-          "#{subject_title} must be #{params}"
-        when 'compares_fixed'
-          object = if params['object'].class != ::Hash
-            BigDecimal(params['object'], 3).to_s("F")
-          else
-            case params['object']['data_type']
-              when 'currency'
-                "$#{(BigDecimal(params['object']['value'], 2).to_s("F") + "00")[ /.*\..{2}/ ]}"
-              when 'percentage'
-                "#{BigDecimal(params['object']['value'], 3).to_s("F")}%"
-              else
-                throw 'fail'
+        case rule_type
+          when 'has_requirement'
+            "#{subject_title} must be #{params}"
+          when 'compares_fixed'
+            object = if params['object'].class != ::Hash
+              BigDecimal(params['object'], 3).to_s("F")
+            else
+              case params['object']['data_type']
+                when 'currency'
+                  "$#{(BigDecimal(params['object']['value'], 2).to_s("F") + "00")[ /.*\..{2}/ ]}"
+                when 'percentage'
+                  "#{BigDecimal(params['object']['value'], 3).to_s("F")}%"
+                else
+                  throw 'fail'
+              end
             end
-          end
-          "#{subject_title} must be #{params['comparator']} #{rule_type} #{object}"
-        when 'compares_coverage'
-          object = coverage_options[params['object']]&.[]('title') || "Coverage option #{params['object']}"
-          "#{subject_title} must be #{params['comparator']} #{rule} #{object}"
-        when 'compares_percent'
-          object = coverage_options[params['object']]&.[]('title') || "Coverage option #{params['object']}"
-          percent = "#{BigDecimal(params['percent'], 3).to_s("F")}%"
-          "#{subject_title} must be #{params['comparator']} #{percent} of #{object}"
-        when 'equal_to_fixed_or_percent'
-          fixed = if params['fixed'].class != ::Hash
-            BigDecimal(params['fixed'], 3).to_s("F")
-          else
-            case params['fixed']['data_type']
-              when 'currency'
-                "$#{(BigDecimal(params['fixed']['value'], 2).to_s("F") + "00")[ /.*\..{2}/ ]}"
-              when 'percentage'
-                "#{BigDecimal(params['fixed']['value'], 3).to_s("F")}%"
-              else
-                throw 'fail'
+            "#{subject_title} must be #{params['comparator']} #{rule_type} #{object}"
+          when 'compares_coverage'
+            object = coverage_options[params['object']]&.[]('title') || "Coverage option #{params['object']}"
+            "#{subject_title} must be #{params['comparator']} #{rule} #{object}"
+          when 'compares_percent'
+            object = coverage_options[params['object']]&.[]('title') || "Coverage option #{params['object']}"
+            percent = "#{BigDecimal(params['percent'], 3).to_s("F")}%"
+            "#{subject_title} must be #{params['comparator']} #{percent} of #{object}"
+          when 'equal_to_fixed_or_percent'
+            fixed = if params['fixed'].class != ::Hash
+              BigDecimal(params['fixed'], 3).to_s("F")
+            else
+              case params['fixed']['data_type']
+                when 'currency'
+                  "$#{(BigDecimal(params['fixed']['value'], 2).to_s("F") + "00")[ /.*\..{2}/ ]}"
+                when 'percentage'
+                  "#{BigDecimal(params['fixed']['value'], 3).to_s("F")}%"
+                else
+                  throw 'fail'
+              end
             end
-          end
-          object = coverage_options[params['object']]&.[]('title') || "Coverage option #{params['object']}"
-          percent = "#{BigDecimal(params['percent'], 3).to_s("F")}%"
-          "#{subject_title} must = #{fixed} or #{percent} of ##{object}"
-        when 'greatest_of_fixed_or_percent'
-          fixed = if params['fixed'].class != ::Hash
-            BigDecimal(params['fixed'], 3).to_s("F")
-          else
-            case params['fixed']['data_type']
-              when 'currency'
-                "$#{(BigDecimal(params['fixed']['value'], 2).to_s("F") + "00")[ /.*\..{2}/ ]}"
-              when 'percentage'
-                "#{BigDecimal(params['fixed']['value'], 3).to_s("F")}%"
-              else
-                throw 'fail'
+            object = coverage_options[params['object']]&.[]('title') || "Coverage option #{params['object']}"
+            percent = "#{BigDecimal(params['percent'], 3).to_s("F")}%"
+            "#{subject_title} must = #{fixed} or #{percent} of ##{object}"
+          when 'greatest_of_fixed_or_percent'
+            fixed = if params['fixed'].class != ::Hash
+              BigDecimal(params['fixed'], 3).to_s("F")
+            else
+              case params['fixed']['data_type']
+                when 'currency'
+                  "$#{(BigDecimal(params['fixed']['value'], 2).to_s("F") + "00")[ /.*\..{2}/ ]}"
+                when 'percentage'
+                  "#{BigDecimal(params['fixed']['value'], 3).to_s("F")}%"
+                else
+                  throw 'fail'
+              end
             end
-          end
-          object = coverage_options[params['object']]&.[]('title') || "Coverage option #{params['object']}"
-          percent = "#{BigDecimal(params['percent'], 3).to_s("F")}%"
-          "#{subject_title} must = the greater of #{fixed} or #{percent} of ##{object}"
-        else
-          throw 'fail'
+            object = coverage_options[params['object']]&.[]('title') || "Coverage option #{params['object']}"
+            percent = "#{BigDecimal(params['percent'], 3).to_s("F")}%"
+            "#{subject_title} must = the greater of #{fixed} or #{percent} of ##{object}"
+          else
+            throw 'fail'
+        end
       end.map.with_index{|strang, ind| ind == 0 ? strang : ind == rule['rule'].length - 1 ? ", and #{strang}" : ", #{strang}" }.join("")
     rescue
       return nil
@@ -220,7 +222,7 @@ class InsurableRateConfiguration < ApplicationRecord
           },
           'data_type' => {
             'required' => true,
-            'validity' = ['currency', 'percentage'],
+            'validity' => ['currency', 'percentage'],
             'default_overridability' => 0
           }
         }
@@ -547,7 +549,7 @@ class InsurableRateConfiguration < ApplicationRecord
           errors: { internal: "qbe_prepare_for_get_coverage_options returned error '#{error}'", external: "Error retrieving data from carrier" },
           annotated_selections: {}
         }.merge(eventable.class != ::PolicyQuote ? {} : {
-          msi_data: nil
+          msi_data: nil,
           event: nil
         })
       end
@@ -752,13 +754,13 @@ class InsurableRateConfiguration < ApplicationRecord
           address = configurable.primary_address
           to_return = [configurable] + ::InsurableGeographicalCategory.where(state: nil)
             .or(::InsurableGeographicalCategory.where(state: address.state, counties: nil))
-            .or(::InsurableGeographicalCategory.where(state: address.state).where('counties @> ARRAY[?]::varchar[]', address.county)
+            .or(::InsurableGeographicalCategory.where(state: address.state).where('counties @> ARRAY[?]::varchar[]', address.county))
             .to_a.sort
         when ::CarrierInsurableProfile
           address = configurable.insurable.primary_address
           to_return = [configurable] + ::InsurableGeographicalCategory.where(state: nil)
             .or(::InsurableGeographicalCategory.where(state: address.state, counties: nil))
-            .or(::InsurableGeographicalCategory.where(state: address.state).where('counties @> ARRAY[?]::varchar[]', address.county)
+            .or(::InsurableGeographicalCategory.where(state: address.state).where('counties @> ARRAY[?]::varchar[]', address.county))
             .to_a.sort
         when ::InsurableGeographicalCategory
           to_return = ::InsurableGeographicalCategory.where(state: nil)

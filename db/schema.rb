@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_08_13_151827) do
+ActiveRecord::Schema.define(version: 2021_08_25_220109) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
@@ -708,6 +708,7 @@ ActiveRecord::Schema.define(version: 2021_08_13_151827) do
     t.bigint "ownerable_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "hidden"
     t.index ["assignable_type", "assignable_id"], name: "index_fees_on_assignable_type_and_assignable_id"
     t.index ["ownerable_type", "ownerable_id"], name: "index_fees_on_ownerable_type_and_ownerable_id"
   end
@@ -753,16 +754,16 @@ ActiveRecord::Schema.define(version: 2021_08_13_151827) do
 
   create_table "insurable_rate_configurations", force: :cascade do |t|
     t.jsonb "carrier_info", default: {}, null: false
-    t.jsonb "coverage_options", default: [], null: false
-    t.jsonb "rules", default: {}, null: false
     t.string "configurable_type"
     t.bigint "configurable_id"
     t.string "configurer_type"
     t.bigint "configurer_id"
-    t.bigint "carrier_insurable_type_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["carrier_insurable_type_id"], name: "index_irc_cit"
+    t.jsonb "configuration", default: {}, null: false
+    t.jsonb "rates", default: {}, null: false
+    t.bigint "carrier_policy_type_id", null: false
+    t.index ["carrier_policy_type_id"], name: "index_irc_on_cpt"
     t.index ["configurable_type", "configurable_id"], name: "index_irc_configurable"
     t.index ["configurer_type", "configurer_id"], name: "index_irc_configurer"
   end
