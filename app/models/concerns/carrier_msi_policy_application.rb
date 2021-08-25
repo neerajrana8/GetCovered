@@ -57,7 +57,7 @@ module CarrierMsiPolicyApplication
         address = unit.primary_address
         carrier_agency = CarrierAgency.where(agency_id: self.agency_id, carrier_id: self.carrier_id).take
         carrier_policy_type = CarrierPolicyType.where(carrier_id: self.carrier_id, policy_type_id: PolicyType::RESIDENTIAL_ID).take
-        preferred = (unit.get_carrier_status == :preferred)
+        preferred = (unit.get_carrier_status(::MsiService.carrier_id) == :preferred)
         # call getfinalpremium
         self.update(status: 'quote_in_progress')
         # validate & make final premium call to msi

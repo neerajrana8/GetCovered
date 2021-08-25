@@ -572,7 +572,7 @@ class InsurableRateConfiguration < ApplicationRecord
         when ::MsiService.carrier_id
           # fix up selections and get preferred status
           selections = automatically_select_options(coverage_options, selections) unless valid
-          preferred = (unit || insurable).class == ::Insurable && (unit || insurable).get_carrier_status == :preferred
+          preferred = (unit || insurable).class == ::Insurable && (unit || insurable).get_carrier_status(carrier_policy_type.carrier_id) == :preferred
           # prepare the call
           msis = MsiService.new
           result = msis.build_request(:final_premium,

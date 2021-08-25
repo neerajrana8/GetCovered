@@ -21,7 +21,7 @@ module CarrierQbePolicyApplication
       address = unit.primary_address
       carrier_agency = CarrierAgency.where(agency_id: self.agency_id, carrier_id: self.carrier_id).take
       carrier_policy_type = CarrierPolicyType.where(carrier_id: self.carrier_id, policy_type_id: PolicyType::RESIDENTIAL_ID).take
-      preferred = (unit.get_carrier_status == :preferred)
+      preferred = (unit.get_carrier_status(::QbeService.carrier_id) == :preferred)
       # get estimate
       results = ::InsurableRateConfiguration.get_coverage_options(
         carrier_policy_type, unit, self.coverage_selections, self.effective_date, self.users.count - 1, self.billing_strategy, # MOOSE WARNING: spouse nonsense
@@ -77,7 +77,7 @@ module CarrierQbePolicyApplication
         address = unit.primary_address
         carrier_agency = CarrierAgency.where(agency_id: self.agency_id, carrier_id: self.carrier_id).take
         carrier_policy_type = CarrierPolicyType.where(carrier_id: self.carrier_id, policy_type_id: PolicyType::RESIDENTIAL_ID).take
-        preferred = (unit.get_carrier_status == :preferred)
+        preferred = (unit.get_carrier_status(::QbeService.carrier_id) == :preferred)
 
 				if community_profile.data['ho4_enabled'] == true && community_profile.data['rates_resolution'][self.users.count] # MOOSE WARNING: spouse logic...
 

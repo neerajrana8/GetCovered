@@ -82,9 +82,9 @@ module CarrierMsiPolicyQuote
       address = unit.primary_address
       primary_insured = policy_application.primary_user
       additional_insured = policy_application.users.select{|u| u.id != primary_insured.id }
-      preferred = (unit.preferred_ho4 && !community.carrier_profile(5)&.external_carrier_id.nil?)
+      preferred = (unit.get_carrier_status(::MsiService.carrier_id) == :preferred)
       additional_interest = preferred ?
-        [unit.account || community.account].compact.select{|ai| ai&.title != "Nonpreferred Residential" }
+        [unit.account || community.account].compact,
         : msi_additional_interest_array_from_extra_settings(self.policy_application.extra_settings&.[]('additional_interest'))
       # prepare for bind call
       msis = MsiService.new

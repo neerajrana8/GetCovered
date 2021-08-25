@@ -19,22 +19,10 @@ module PolicyApplicationMethods
         # fix up account and agency if needed
         account_id = insurable.account_id if account_id.nil?
         agency_id = insurable.agency_id || insurable.account&.agency_id if agency_id.nil?
-        # determine preferred status
-        @preferred = insurable.preferred_ho4
-        # get the carrier_id
-        carrier_id = nil
-        if @preferred
-          # MOOSE WARNING: eventually, use account_id/agency_id to determine which to select when there are multiple
-          cip        = insurable.carrier_insurable_profiles.where(carrier_id: policy_type.carrier_policy_types.map{|cpt| cpt.carrier_id }).order("created_at DESC").limit(1).take
-          carrier_id = cip&.carrier_id
-          if carrier_id.nil?
-            render json:   { error: I18n.t('policy_application_contr.new.invalid_unit') },
-                   status: :unprocessable_entity
-            return
-          end
-        else
-          carrier_id = 5
-        end
+        # get the carrier_id MOOSE WARNING: eventually, use account/agency and state to determine which to select
+        cip = insurable.carrier_insurable_profiles.where(carrier_id: [::MsiService.carrier_id, ::QbeService.carrier_id]).order('created_at DESC').limit(1).take
+        carrier_id = cip&.carrier_id || MsiService.carrier_id
+        @preferred = (insurable.get_carrier_status(carrier_id) == :preferred)
       elsif selected_policy_type == "commercial"
         carrier_id = 3
       elsif selected_policy_type == 'rent-guarantee'
@@ -217,7 +205,7 @@ module PolicyApplicationMethods
           perform_estimate: inputs[:estimate_premium] ? true : false,
           # overrides
           agency: Agency.where(id: msi_get_coverage_options_params[:agency_id].to_i || 0).take,
-          preferred: (cip ? true : false),
+          preferred: (unit.get_carrier_status(MsiService.carrier_id) == :preferred),
         }.merge(
           msi_get_coverage_options_params[:account_id].blank? ? {} : { account: Account.where(id: msi_get_coverage_options_params[:account_id]).take }
         ).merge(cip ? {} : {
