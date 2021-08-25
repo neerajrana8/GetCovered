@@ -158,6 +158,7 @@
       path: "lease-types",
       only: [ :index ]
 
+    resources :leads, only: [:index, :show, :update]
     resources :leads_dashboard, only: [:index] do
       collection do
         get :get_filters
