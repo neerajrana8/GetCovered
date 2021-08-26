@@ -59,16 +59,7 @@ module V2
       end
 
       def set_substrate
-        if @substrate.nil?
-          agencies_ids = [@agency.id, @agency.agencies.ids].flatten.compact
-          @substrate = Lead.where(agency_id: agencies_ids).presented.not_converted.includes(:profile, :tracking_url)
-          # need to delete after fix on ui
-          # if params[:filter].present? && params[:filter][:archived]
-          #   @substrate = access_model(::Lead).presented.not_converted.archived.includes(:profile, :tracking_url)
-          # elsif params[:filter].nil? || !!params[:filter][:archived]
-          #  @substrate = access_model(::Lead).presented.not_converted.not_archived.includes(:profile, :tracking_url)
-          # end
-        end
+        @substrate = access_model(::Lead)
       end
 
       def supported_filters(called_from_orders = false)
