@@ -132,11 +132,11 @@ class MsiService
   }
   
   def self.renew_descriptions
-    ::InsurableRateConfiguration.where(configurer_type: "Carrier", configurer_id: self.carrier_id).each do |irc|
-      next if irc.coverage_options.blank?
-      irc.coverage_options.each do |co|
-        unless !co['description'].blank? || co['uid'].blank? || MsiService::DESCRIPTIONS[co['uid']].blank?
-          irc.coverage_options.each{|co| co['description'] = MsiService::DESCRIPTIONS[co['uid']] }
+    ::InsurableRateConfiguration.where(carrier_policy_type: CarrierPolicyType.where(policy_type_id: PolicyType::RESIDENTIAL_ID, carrier_id: self.carrier_id).take, configurer_type: "Carrier", configurer_id: self.carrier_id).each do |irc|
+      next if irc.configuration['coverage_options'].blank?
+      irc.configuration['coverage_options'].each do |uid, co|
+        unless !co['description'].blank? || co['uid'].blank? || MsiService::DESCRIPTIONS[uid].blank?
+          irc.configuration['coverage_options'].each{|co| co['description'] = MsiService::DESCRIPTIONS[uid] }
           irc.save
         end
       end
@@ -144,7 +144,7 @@ class MsiService
   end
   
   def self.covopt_sort(a,b)
-    (a['uid'] == '1' ? 999999 : 0) <=> (b['uid'] == '1' ? 999999 : 0)
+    (a[0] == '1' ? 999999 : 0) <=> (b[0] == '1' ? 999999 : 0)
   end
   
   LOSS_OF_USE_VARIATIONS = {
@@ -936,20 +936,22 @@ class MsiService
               TITLE_OVERRIDES[cov["CoverageCd"].to_s].call(use_default_rules_for.to_s)
               : TITLE_OVERRIDES[cov["CoverageCd"].to_s]) || cov["CoverageDescription"].titleize,
             "requirement"   => (cov["MSI_IsMandatoryCoverage"] || "").strip == "True" ? 'required' : 'optional',
+            "visible"       => true,
             "category"      => "coverage",
             "options_type"  => cov["MSI_LimitList"].blank? ? "none" : "multiple_choice",
             "options"       => cov["MSI_LimitList"].blank? ? nil : arrayify(cov["MSI_LimitList"]["string"]).map{|v| { 'data_type' => 'currency', 'value' => (v.to_d*100).to_i } }
-          }]
+          }.compact]
         end + deductibles.map do |ded|
           [ded["MSI_DeductibleCd"].to_s, {
             "title"         => (TITLE_OVERRIDES[ded["MSI_DeductibleCd"].to_s].class == ::Proc ?
               TITLE_OVERRIDES[ded["MSI_DeductibleCd"].to_s].call(use_default_rules_for.to_s)
               : TITLE_OVERRIDES[ded["MSI_DeductibleCd"].to_s]) || ded["MSI_DeductibleName"].titleize,
             "requirement"   => 'required', #MOOSE WARNING: in special cases some are optional, address these
+            "visible"       => true,
             "category"      => "deductible",
             "options_type"  => ded["MSI_DeductibleOptionList"].blank? ? "none" : "multiple_choice",
             "options"       => ded["MSI_DeductibleOptionList"].blank? ? nil : arrayify(ded["MSI_DeductibleOptionList"]["Deductible"]).map{|d| d["Amt"] ? { 'data_type' => 'currency', 'value' => (d["Amt"].to_d*100).to_i } : { 'data_type' => 'percentage', 'value' => d["FormatPct"].to_d * 100 } }
-          }]
+          }.compact]
       end).sort{|a,b| MsiService.covopt_sort(a,b) }.to_h
     end
     # apply descriptions

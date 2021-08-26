@@ -79,7 +79,7 @@ module CarrierQbePolicyApplication
         carrier_policy_type = CarrierPolicyType.where(carrier_id: self.carrier_id, policy_type_id: PolicyType::RESIDENTIAL_ID).take
         preferred = (unit.get_carrier_status(::QbeService.carrier_id) == :preferred)
 
-				if community_profile.data['ho4_enabled'] == true && community_profile.data['rates_resolution'][self.users.count] # MOOSE WARNING: spouse logic...
+				if community_profile.data['ho4_enabled'] == true && community_profile.data['rates_resolution'][self.users.count.to_s] # MOOSE WARNING: spouse logic...
 
 					update status: 'quote_in_progress'
 	        event = events.new(

@@ -21,9 +21,6 @@ class InsurableRateConfiguration < ApplicationRecord
   
   # Callbacks
   
-  before_save :refresh_max_overridability,
-    if: Proc.new{|irc| irc.will_save_change_to_attribute?('configuration') } # MOOSE WARNING: should we apply copy_with_serialization?
-  
   # Validations
   
   validate :validate_configuration
@@ -187,7 +184,8 @@ class InsurableRateConfiguration < ApplicationRecord
     'visible' => {
       'required' => true,
       'validity' => [true, false],
-      'default_overridability' => 0
+      'default_overridability' => 0,
+      'default_value' => true
     },
     'requirement' => {
       'required' => true,
@@ -258,7 +256,7 @@ class InsurableRateConfiguration < ApplicationRecord
         }.merge(CRITICAL_SUBSTRUCTURE) # end coverage_options/special_data/structure
       } # end coverage_options/special_data
     } # end coverage_options
-  }
+  }.merge(RULES_STRUCTURE)
 
   MSI_STRUCTURE = {
     'coverage_options' => {
@@ -282,7 +280,24 @@ class InsurableRateConfiguration < ApplicationRecord
           }
         }.merge(CRITICAL_SUBSTRUCTURE) # end coverage_options/special_data/structure
       } # end coverage_options/special_data
-    }, # end coverage_options
+    }
+  }.merge({
+    'rules' => {
+      'required' => false,
+      'validity' => Proc.new{|v| v.class == ::Hash },
+      'default_overridability' => nil,
+      'default_value' => {},
+      
+      'special' => 'hash',
+      'special_data' => {
+        'structure' => {
+        }
+      }
+    }
+  })
+    
+=begin
+    , # end coverage_options
     'rules' => {
       'required' => false,
       'validity' => Proc.new{|v| v.class == ::Hash },
@@ -301,16 +316,16 @@ class InsurableRateConfiguration < ApplicationRecord
       } # end rules/special_data
     } # end rules
   } # end configuration
-  
+=end  
   
   # Class Methods
   
   
   # Returns an (unsaved) IRC representing the combined IRC formed by merging the entire inheritance hierarchy for some configurable
-  def self.get_inherited_irc(carrier_policy_type, configurer, configurable, agency: nil)
+  def self.get_inherited_irc(carrier_policy_type, configurer, configurable, agency: nil, moose: false)
     # Alternative: merge(get_hierarchy(carrier_policy_type, configurer, configurable, agency: agency).map{|ircs| merge(ircs, true) }, false)
-    hierarchy = get_hierarchy(carrier_policy_type, configurer, configurable, agency: agency)
-    merge(hierarchy.flatten, hierarchy.map.with_index{|ircs, index| ircs.map{|irc| index } }.flatten)
+    hierarchy = get_hierarchy(carrier_policy_type, configurer, configurable, agency: agency, moose: moose)
+    merge(hierarchy.flatten, hierarchy.map.with_index{|ircs, index| ircs.map{|irc| index } }.flatten, moose: moose)
   end
   
   
@@ -320,7 +335,13 @@ class InsurableRateConfiguration < ApplicationRecord
   #   override_level:     true to treat IRCs as having the same override level, false to treat them as having override levels equal to their indices, array of integers to provide explicit offsets
   # returns:
   #   an IRC representing the combination of all the IRCs in the array
-  def self.merge(irc_array, override_level)
+  def self.merge(irc_array, override_level, moose: false)
+    if moose
+      puts "MERGE DEBUG REPORTTT"
+      puts "  IRC COUNT: #{irc_array.count}"
+      puts "  IRC RATES:"
+      pp irc_array.map{|i| i.rates }
+    end
     # setup
     to_return = InsurableRateConfiguration.new(
       configurable_type: irc_array.drop(1).inject(irc_array.first&.configurable_type){|res,irc| break nil unless irc.configurable_type == res; res },
@@ -328,8 +349,7 @@ class InsurableRateConfiguration < ApplicationRecord
       configurer_type:   irc_array.drop(1).inject(irc_array.first&.configurer_type){|res,irc| break nil unless irc.configurer_type == res; res },
       configurer_id:     irc_array.drop(1).inject(irc_array.first&.configurer_id)  {|res,irc| break nil unless irc.configurer_id == res; res },
       carrier_info: {},
-      coverage_options: [],
-      rules: {}
+      rates: {}
     )
     # carrier info
     condemnation = nil # change to something like "__)C0nD3MN3d!!!<>(__" and do a "deep compact" after to avoid ambiguity in the meaning of nils
@@ -339,10 +359,12 @@ class InsurableRateConfiguration < ApplicationRecord
         v1 == v2 ? v1 : (v1.nil? ^ v2.nil?) ? (v1 || v2) : condemnation
       end
     end
+    # rates
+    to_return.rates = (override_level == true || override_level == false ? irc_array.reverse : irc_array.sort_by.with_index{|v,i| -override_level[i] }).find{|irc| !irc.rates.blank? && !irc.rates['rates'].blank? && !irc.rates['rates'].all?{|v| v.blank? } }&.rates || {}
     # configuration
-    offsets = override_level.class == ::Array ? override_level : override_level ? 0 : [0...-1].map{|irc| irc.max_overridability }.inject([0]){|arr,mo| arr.concat(arr.last + mo + 1) }
-    to_return.configuration = merge_data_structures(irc_array.map{|irc| irc.configuration }, CONFIGURATION_STRUCTURE, offsets)
-    to_return.refresh_max_overridability
+    offsets = override_level.class == ::Array ? override_level : override_level ? 0 : [0...-1].map{|irc| irc.max_overridability(refresh: true) }.inject([0]){|arr,mo| arr.concat(arr.last + mo + 1) }
+    to_return.configuration = merge_data_structures(irc_array.map{|irc| irc.configuration }, irc_array.find{|irc| !irc.carrier_policy_type.nil? }&.carrier_policy_type&.carrier_id == 1 ? QBE_STRUCTURE : MSI_STRUCTURE, offsets)
+    to_return.max_overridability(refresh: true)
     # done
     return to_return
   end
@@ -356,7 +378,7 @@ class InsurableRateConfiguration < ApplicationRecord
   #   agency:                 (optional) if configurer is an account, you can provide an agency to use instead of configurer.agency if desired
   # returns:
   #   an array (ordered from least to most specific configurer) of arrays (ordered from least to most specific configurable) of IRCs
-  def self.get_hierarchy(carrier_policy_type, configurer, configurable, agency: nil)
+  def self.get_hierarchy(carrier_policy_type, configurer, configurable, agency: nil, moose: false)
     # get configurer and configurable hierarchies
     configurers = get_configurer_hierarchy(configurer, carrier_policy_type.carrier, agency: agency)
     configurables = get_configurable_hierarchy(configurable)
@@ -367,6 +389,20 @@ class InsurableRateConfiguration < ApplicationRecord
       .sort_by{|configurable_index, ircs| configurable_index } # makes it into an array of [k,v] pairs
       .map{|val| val[1].sort_by{|irc| configurables.find_index{|c| irc.configurable_id == c.id && irc.configurable_type == c.class.name } } }
     # done
+    
+    if moose
+      puts "GET_HIERARCHY BUG REPORT"
+      puts "  cpt: #{carrier_policy_type.carrier.title}/#{carrier_policy_type.policy_type.title}"
+      puts "  configurer: #{configurer}"
+      puts "  configurable: #{configurable}"
+      puts "  agency: #{agency}"
+      puts "  result size: #{to_return.count}"
+      puts "  algo trace:"
+      puts "    configurers = #{configurers}"
+      puts "    configurables = #{configurables}"
+      
+    end
+    
     return to_return
   end
   
@@ -377,13 +413,18 @@ class InsurableRateConfiguration < ApplicationRecord
   
   
   # Instance Methods
+    
+  def max_overridability(refresh: true)
+    @max_overridability = nil if refresh
+    @max_overridability ||= self.class.get_overridability_ceiling(self.configuration)
+  end
   
   def annotate_options(coverage_selections, coverage_options = self.configuration['coverage_options'], rules = self.configuration['rules'], deserialize_selections: true)
     # WARNING: should be no need to do this for now... we handle the cases in the body, which is irritating. # ensure values are deserialized
     #coverage_options = self.class.copy_with_deserialization(coverage_options)
     #coverage_selections = deserialize_selections ? selections.replace(self.class.copy_with_deserialization(coverage_selections)) : self.class.copy_with_deserialization(coverage_selections)
     # execute rules
-    rules.values.sort{|a,b| (rules['overridabilities_'][a[0]] || Float::INFINITY) <=> (rules['overridabilities_'][b[0]] || Float::INFINITY) }.each do |rule_pair|
+    (rules || {}).values.sort{|a,b| (rules['overridabilities_'][a[0]] || Float::INFINITY) <=> (rules['overridabilities_'][b[0]] || Float::INFINITY) }.each do |rule_pair|
       subject = coverage_options[rule['subject']]
       next unless subject
       overridability = rules['overridabilities_'][rule_pair[0]] || Float::INFINITY
@@ -452,7 +493,7 @@ class InsurableRateConfiguration < ApplicationRecord
   # it is assumed that these will all have 'options_type' == 'none'; if some are 'multiple_choice', pass insert_invisible_requirements a hash mapping their UIDs to the desired selections. Otherwise, it will pick the first option automatically
   def get_selection_errors(selections, options = annotate_options(selections), use_titles: false, insert_invisible_requirements: true)
     to_return = {}
-    options.select{|uid,opt| opt['requirement'] == 'required' }.each do |opt|
+    options.select{|uid,opt| opt['requirement'] == 'required' }.each do |uid, opt|
       if !selections[uid] || !selections['selection']
         if opt['visible'] == false && insert_invisible_requirements
           selections[uid] ||= {}
@@ -471,7 +512,7 @@ class InsurableRateConfiguration < ApplicationRecord
         end
       end
     end 
-    selections.select{|uid,sel| sel }.each do |sel|
+    selections.select{|uid,sel| sel }.each do |uid, sel|
       #next if options[uid].nil? # WARNING: for now we just ignore selections that aren't in the options... NOPE, RESTORED ERROR. But left this here because I don't remember why it was here to begin with
       if options[uid].nil? || options[uid]['requirement'] == 'forbidden'
         (to_return[uid] ||= []).push("is not a valid coverage option")
@@ -537,7 +578,7 @@ class InsurableRateConfiguration < ApplicationRecord
     cip = (insurable.class != ::Insurable ? nil : insurable.carrier_profile(carrier_policy_type.carrier_id))
     # perform prep
     if carrier_policy_type.carrier_id == ::QbeService.carrier_id && insurable.class == ::Insurable
-      error = qbe_prepare_for_get_coverage_options(insurable, cip, 1 + additional_insured_count)
+      error = qbe_prepare_for_get_coverage_options(insurable, cip, additional_insured_count + 1)
       unless error.blank?
         return {
           valid: false,
@@ -556,8 +597,8 @@ class InsurableRateConfiguration < ApplicationRecord
     end
     # get coverage options and selection errors
     selections = selections.select{|uid, sel| sel && sel['selection'] }
-    irc = get_inherited_irc(carrier_policy_type, account || agency || carrier_policy_type.carrier, insurable, agency: agency)
-    coverage_options = irc.annotate_options(selections).select!{|co| co['enabled'] != false }
+    irc = get_inherited_irc(carrier_policy_type, account || agency || carrier_policy_type.carrier, insurable, agency: agency, moose: false) ############ MOOSE GOOSE
+    coverage_options = irc.annotate_options(selections).select{|co| co['enabled'] != false }
     selection_errors = irc.get_selection_errors(selections, coverage_options, insert_invisible_requirements: true)
     valid = selection_errors.blank?
     estimated_premium_error = valid ? nil : { internal: selection_errors, external: selection_errors }
@@ -735,7 +776,7 @@ class InsurableRateConfiguration < ApplicationRecord
   
     def self.get_configurer_hierarchy(configurer, carrier, agency: nil) # if configurer is an account, agency lets you choose an agency to use (default is account.agency)
       to_return = [configurer]
-      case configurer.class
+      case configurer
         when ::Carrier
           # do nothing
         when ::Agency
@@ -749,7 +790,7 @@ class InsurableRateConfiguration < ApplicationRecord
     
     def self.get_configurable_hierarchy(configurable)
       to_return = []
-      case configurable.class
+      case configurable
         when ::Insurable
           address = configurable.primary_address
           to_return = [configurable] + ::InsurableGeographicalCategory.where(state: nil)
@@ -786,16 +827,16 @@ class InsurableRateConfiguration < ApplicationRecord
         return "An error occurred while processing the address" unless cip.save
       end
       # perform get zip code if needed
-      unless cip.data["county_resolved"] || (insurable.get_qbe_zip_code && cip.reload)
+      unless cip.data["county_resolved"] || (community.get_qbe_zip_code && cip.reload)
         return "Carrier failed to resolve address"
       end
       # perform get property info if needed
-      unless cip.data["property_info_resolved"] || (insurable.get_qbe_property_info && cip.reload)
+      unless cip.data["property_info_resolved"] || (community.get_qbe_property_info && cip.reload)
         return "Carrier failed to retrieve property information"
       end
       # perform get rates if needed
-      unless cip.data['rates_resolution'][number_insured] || (insurable.get_qbe_rates(number_insured) && cip.reload)
-        return "Carrier failed to retrieve coverage rates"
+      unless cip.data['rates_resolution']&.[](number_insured.to_s) || (community.get_qbe_rates(number_insured) && cip.reload)
+        return "Carrier failed to retrieve coverage rates (error CR-#{number_insured})"
       end
       # all done
       return nil
@@ -847,12 +888,6 @@ class InsurableRateConfiguration < ApplicationRecord
         else
           var
       end
-    end
-    
-    # Callbacks
-    
-    def refresh_max_overridability
-      self.max_overridability = self.class.get_overridability_ceiling(self.configuration)
     end
     
     # Validations

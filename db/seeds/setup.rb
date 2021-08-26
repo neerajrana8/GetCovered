@@ -643,7 +643,7 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
         irc = msis.extract_insurable_rate_configuration(result[:data],
           configurer: carrier,
           configurable: igc,
-          carrier_insurable_type: carrier_insurable_type,
+          carrier_policy_type: carrier_policy_type,
           use_default_rules_for: state
         )
         irc.save!
@@ -653,7 +653,7 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
           irc = msis.extract_insurable_rate_configuration(nil,
             configurer: carrier,
             configurable: igc,
-            carrier_insurable_type: carrier_insurable_type,
+            carrier_policy_type: carrier_policy_type,
             use_default_rules_for: 'GA_COUNTIES'
           )
           irc.save!

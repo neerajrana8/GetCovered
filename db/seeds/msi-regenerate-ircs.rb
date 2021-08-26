@@ -2,7 +2,7 @@
 
 # delete IRCs and grab useful vars
 carrier = MsiService.carrier
-carrier_policy_type = CarrierInsurableType.where(carrier: carrier, carrier_policy_type: CarrierPolicy.where(carrier: carrier, policy_type_id: PolicyType::RESIDENTIAL_ID), enabled: true).take
+carrier_policy_type = CarrierPolicyType.where(carrier: carrier, policy_type_id: PolicyType::RESIDENTIAL_ID).take
 InsurableRateConfiguration.where(carrier_policy_type: carrier_policy_type, configurable_type: 'InsurableGeographicalCategory', configurer: carrier).delete_all
 InsurableGeographicalCategory.all.select{|igc| igc.insurable_rate_configurations.count == 0 }.each{|igc| igc.delete }
 msis = MsiService.new

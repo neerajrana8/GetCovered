@@ -99,7 +99,7 @@ module Structurable
         when ::NilClass, ::Integer
           return default_overridability
         when ::Proc
-          return check_default_overridability(default_overridability.call(value, datum, data_root, path), value, datum, data_root, path)
+          return get_default_overridability(default_overridability.call(value, datum, data_root, path), value, datum, data_root, path)
       end
       return nil
     end
@@ -240,7 +240,7 @@ module Structurable
           when 'hash'
             if result[prop].class == ::Hash
               # remove invalid keys
-              unless struc['special_data']['keys'].blank?
+              unless struc['special_data']&.[]('keys').blank?
                 invalid_keys = result.keys & struc['special_data']['keys']
                 unless invalid_keys.blank?
                   (errors[prop] ||= []).push("has invalid keys #{invalid_keys.map{|ik| "'#{ik}'" }.join(", ")}")

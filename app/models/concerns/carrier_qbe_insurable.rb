@@ -347,10 +347,8 @@ module CarrierQbeInsurable
 	        @carrier_profile.data['rates_resolution'][key] = false if force == true
 	      end  
 	    end
-	    self.ho4_enabled = false
-	    
-	    save()
-	    reload()
+      @carrier_profile.data["ho4_enabled"] = false
+	    @carrier_profile.save
 	    
 	    self.fix_qbe_rates(inline)
 	  end
@@ -362,7 +360,7 @@ module CarrierQbeInsurable
 	  #   >> @community.get_qbe_rates
 	  #   => nil
 	  
-	  def get_qbe_rates(number_insured, referesh_coverage_options: false)
+	  def get_qbe_rates(number_insured, refresh_coverage_options: false)
   	  
 	    return if self.insurable_type.title != "Residential Community"
 	    @carrier = ::QbeService.carrier
@@ -499,14 +497,22 @@ module CarrierQbeInsurable
 	            process_status[:error] = false
 	            
 							#check_carrier_process_error("qbe", false, { process: "get_qbe_rates_#{ number_insured }" })
-              if refresh_coverage_options || irc.coverage_options['coverage_options'].blank?
-                irc.configuration['coverage_options'] = qbe_extract_coverage_options_from_rates(rates.first) # options are the same for all number insured/billing strategy combos, supposedly
+              if refresh_coverage_options || irc.configuration['coverage_options'].blank?
+                irc.configuration['coverage_options'] = qbe_extract_coverage_options_from_rates(rates.values.first) # options are the same for all number insured/billing strategy combos, supposedly
               end
-              irc.save
+              unless irc.save
+                set_error = true
+                puts "IRC FAILURE #{irc.errors.to_h}"
+                irc.rates['rates'][number_insured] = []
+                irc.configuration['coverage_options'] = {} if irc.rates['rates'].values.all?{|rate_array| rate_array.blank? }
+                set_error = true
+                @carrier_profile.data["get_rates_resolved"] = false 
+                irc.save
+              end
 	          else
             
               irc.rates['rates'][number_insured] = []
-              irc.configuration['coverage_options'] = {} if irc.rates['rates'].all?{|rate_array| rate_array.blank? } # note: for index 0, rate_array will be nil instead of [] if blank
+              irc.configuration['coverage_options'] = {} if irc.rates['rates'].values.all?{|rate_array| rate_array.blank? } # note: for index 0, rate_array will be nil instead of [] if blank
 	                 
 	            set_error = true
 	            @carrier_profile.data["get_rates_resolved"] = false 
@@ -556,8 +562,8 @@ module CarrierQbeInsurable
         if r['schedule'] == 'optional'
           optionals.push(r['sub_schedule'])
         else
-          r['coverage_limits'].each{|cov,amt| limopts[cov] ||= []; limopts.push(amt) unless limopts.include?(amt) }
-          r['deductibles'].each{|cov,amt| dedopts[cov] ||= []; dedopts.push(amt) unless dedopts.include?(amt) }
+          r['coverage_limits'].each{|cov,amt| limopts[cov] ||= []; limopts[cov].push(amt) unless limopts[cov].include?(amt) }
+          r['deductibles'].each{|cov,amt| dedopts[cov] ||= []; dedopts[cov].push(amt) unless dedopts[cov].include?(amt) }
         end
       end
       limopts.each{|k,v| v.sort! }
