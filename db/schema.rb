@@ -708,7 +708,7 @@ ActiveRecord::Schema.define(version: 2021_08_25_220109) do
     t.bigint "ownerable_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.boolean "hidden"
+    t.boolean "hidden", default: false, null: false
     t.index ["assignable_type", "assignable_id"], name: "index_fees_on_assignable_type_and_assignable_id"
     t.index ["ownerable_type", "ownerable_id"], name: "index_fees_on_ownerable_type_and_ownerable_id"
   end

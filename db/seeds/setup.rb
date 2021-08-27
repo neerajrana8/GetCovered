@@ -605,7 +605,7 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
         # grab rates from MSI for this state
         result = nil
         unless ENV['real_msi_calls'] || Rails.env == 'production'
-          result = { data: FakedMsiResponses::RESPONSES[state] }
+          result = { data: FakedMsiResponses::RESPONSES[state.to_s] }
         else
           result = msis.build_request(:get_product_definition,
             effective_date: Time.current.to_date + 2.days,

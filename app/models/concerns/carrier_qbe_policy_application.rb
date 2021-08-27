@@ -9,7 +9,7 @@ module CarrierQbePolicyApplication
 	  # QBE Estimate
 	  #
 
-	  def qbe_estimate(rates = nil, quote_id = nil)
+	  def qbe_estimate(quote_id = nil)
       # get the quote
 		  quote = quote_id.nil? ? policy_quotes.create!(agency: agency, account: account) : quote_id.class == ::PolicyQuote ? quote_id : policy_quotes.find(quote_id)
       quote_id = quote.id if quote_id.class == ::PolicyQuote
@@ -43,13 +43,21 @@ module CarrierQbePolicyApplication
         #}.compact
       )
       # make sure we succeeded
-      if !results[:valid] # MOOSE WARNING: add error messages
+      if !results[:valid]
+        puts "Failed to perform QBE estimate: #{results[:errors]&.[](:internal)}"
+        quote.mark_failure("Failed to perform QBE estimate: #{results[:errors]&.[](:internal)}")
         return nil
       elsif !self.update(coverage_selections: results[:annotated_selections]) # update our coverage selections with any annotations from the get_coverage_options call
+        puts "Failed to update selections during QBE estimate: #{self.errors.to_h}"
+        quote.mark_failure("Failed to update selections during QBE estimate: #{self.errors.to_h}")
         return nil
       end
       # save info
-      quote.update(est_premium: results[:estimated_premium], status: 'estimated', carrier_payment_data: { 'policy_fee' => results[:policy_fee] })
+      unless quote.update(est_premium: results[:estimated_premium], status: 'estimated', carrier_payment_data: { 'policy_fee' => results[:policy_fee] })
+        puts "Failed to update quote during QBE estimate: #{quote.errors.to_h}"
+        quote.mark_failure("Failed to update quote during QBE estimate: #{quote.errors.to_h}")
+        return nil
+      end
       return quote
 		end
 
@@ -108,7 +116,7 @@ module CarrierQbePolicyApplication
 	          premium: quote.est_premium.to_f / 100,
 	          premium_pif: quote.est_premium.to_f / 100,
 	          num_insured: users.count,
-	          lia_amount: ((coverage_selections["liability"] || 0).to_d / 100).to_f,
+	          lia_amount: ((coverage_selections["liability"]&.[]('selection')&.[]('value') || 0).to_d / 100).to_f,
 	          agent_code: carrier_agency.external_carrier_id
 	        }
 

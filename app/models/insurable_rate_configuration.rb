@@ -256,7 +256,35 @@ class InsurableRateConfiguration < ApplicationRecord
         }.merge(CRITICAL_SUBSTRUCTURE) # end coverage_options/special_data/structure
       } # end coverage_options/special_data
     } # end coverage_options
-  }.merge(RULES_STRUCTURE)
+  }.merge({
+    'rules' => {
+      'required' => false,
+      'validity' => Proc.new{|v| v.class == ::Hash },
+      'default_overridability' => nil,
+      'default_value' => {},
+      
+      'special' => 'hash',
+      'special_data' => {
+        'structure' => {
+          'subject' => {
+            'required' => true,
+            'validity' => true,
+            'default_overridability' => 0
+          },
+          'rule' => {
+            'required' => true,
+            'validity' => true,
+            'default_overridability' => 0
+          },
+          'condition' => {
+            'required' => true,
+            'validity' => true,
+            'default_overridability' => 0
+          }
+        }
+      }
+    }
+  })
 
   MSI_STRUCTURE = {
     'coverage_options' => {
@@ -291,6 +319,21 @@ class InsurableRateConfiguration < ApplicationRecord
       'special' => 'hash',
       'special_data' => {
         'structure' => {
+          'subject' => {
+            'required' => true,
+            'validity' => true,
+            'default_overridability' => 0
+          },
+          'rule' => {
+            'required' => true,
+            'validity' => true,
+            'default_overridability' => 0
+          },
+          'condition' => {
+            'required' => true,
+            'validity' => true,
+            'default_overridability' => 0
+          }
         }
       }
     }
@@ -419,16 +462,18 @@ class InsurableRateConfiguration < ApplicationRecord
     @max_overridability ||= self.class.get_overridability_ceiling(self.configuration)
   end
   
-  def annotate_options(coverage_selections, coverage_options = self.configuration['coverage_options'], rules = self.configuration['rules'], deserialize_selections: true)
+  def annotate_options(
+    coverage_selections,
+    coverage_options = self.configuration['coverage_options'], rules = self.configuration['rules'], rule_overridabilities = self.configuration['overridabilities_']&.[]('rules') || {}, deserialize_selections: true)
     # WARNING: should be no need to do this for now... we handle the cases in the body, which is irritating. # ensure values are deserialized
     #coverage_options = self.class.copy_with_deserialization(coverage_options)
     #coverage_selections = deserialize_selections ? selections.replace(self.class.copy_with_deserialization(coverage_selections)) : self.class.copy_with_deserialization(coverage_selections)
     # execute rules
-    (rules || {}).values.sort{|a,b| (rules['overridabilities_'][a[0]] || Float::INFINITY) <=> (rules['overridabilities_'][b[0]] || Float::INFINITY) }.each do |rule_pair|
+    (rules || {}).to_a.sort{|a,b| (rule_overridabilities[a[0]] || Float::INFINITY) <=> (rule_overridabilities[b[0]] || Float::INFINITY) }.each do |rule_pair|
+      rule = rule_pair[1]
       subject = coverage_options[rule['subject']]
       next unless subject
-      overridability = rules['overridabilities_'][rule_pair[0]] || Float::INFINITY
-      rule = rule_pair[1]
+      overridability = rule_overridabilities[rule_pair[0]] || Float::INFINITY
       condition_satisfied =  rule['condition'] == true || (rule['condition'].class == ::Hash && rule['condition'].all? do |cond, params|
         case cond
           when 'coverage_selected'
@@ -494,7 +539,7 @@ class InsurableRateConfiguration < ApplicationRecord
   def get_selection_errors(selections, options = annotate_options(selections), use_titles: false, insert_invisible_requirements: true)
     to_return = {}
     options.select{|uid,opt| opt['requirement'] == 'required' }.each do |uid, opt|
-      if !selections[uid] || !selections['selection']
+      if !selections[uid] || !selections[uid]['selection']
         if opt['visible'] == false && insert_invisible_requirements
           selections[uid] ||= {}
           selections[uid]['selection'] = case opt['options_type']
@@ -559,7 +604,7 @@ class InsurableRateConfiguration < ApplicationRecord
       else
         next nil
       end
-    end.compact.to_h.compact
+    end.compact.to_h.compact.transform_values{|v| { 'selection' => remove_overridability_data!(v) } }
   end
 
   # 
@@ -710,8 +755,8 @@ class InsurableRateConfiguration < ApplicationRecord
                 next true
               end
               next false if rate['liability_only']
-              next (rate['coverage_limits'] + rate['deductibles']).all?{|name,sel| selections[name]&.[]('selection')&.[]('value') == sel } &&
-                   (rate['schedule'] != 'optional' || selections[rate['sub_schedule']]['selection'])
+              next (rate['coverage_limits'].merge(rate['deductibles'])).all?{|name,sel| selections[name]&.[]('selection')&.[]('value') == sel } &&
+                   (rate['schedule'] != 'optional' || selections[rate['sub_schedule']]&.[]('selection'))
             end
             estimated_premium = selected_rates.inject(0){|sum,sr| sum + sr['premium'] }
             weight = billing_strategy.new_business['payments'].inject(0){|sum,w| sum + w }.to_d
@@ -728,22 +773,31 @@ class InsurableRateConfiguration < ApplicationRecord
     end # end if perform_estimate
     # add fields to selections, if requestsed
     if add_selection_fields
-      selections = selections.map do |sel|
+      selections = selections.map do |uid, sel|
         covopt = coverage_options[uid]
-        next sel unless covopt
-        {
-          'selection' => sel
-        }.merge(case carrier_policy_type.carrier_id
-          when ::MsiService.carrier_id
-            {
-              'title' => covopt['title'],
-              'category' => covopt['category'],
-              'options_type' => covopt['options_type']
-            }
-          else
-            {}
-        end)
-      end
+        next [uid,sel] unless covopt
+        [
+          uid,
+          {
+            'selection' => sel
+          }.merge(case carrier_policy_type.carrier_id
+            when ::QbeService.carrier_id
+              remove_overridability_data!({
+                'title' => covopt['title'],
+                'category' => covopt['category'],
+                'options_type' => covopt['options_type']
+              })
+            when ::MsiService.carrier_id
+              remove_overridability_data!({
+                'title' => covopt['title'],
+                'category' => covopt['category'],
+                'options_type' => covopt['options_type']
+              })
+            else
+              {}
+          end)
+        ]
+      end.to_h
     end
     # done
     return {

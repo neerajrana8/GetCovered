@@ -104,6 +104,9 @@
         puts "Application ID: #{ application.id } | Application Status: #{ application.status } | Failed to find valid coverage options selection by #{max_iters}th iteration!!!"
         break
       elsif !result[:coverage_options].blank?
+        # just in case you want to see selections and errors from failed iterations:
+        #puts "Iteration #{iteration}; selections #{coverage_selections}"
+        #puts "Errors: #{result[:errors]&.[](:internal)}"
         coverage_selections = ::InsurableRateConfiguration.automatically_select_options(result[:coverage_options], coverage_selections)
       else
         application.update(status: 'quote_failed')
@@ -115,7 +118,7 @@
     # continue creating policy
     if result[:valid]
       # mark application complete and save it
-      application.coverage_selections = coverage_selections.select{|cs| cs['selection'] }
+      application.coverage_selections = coverage_selections.select{|k,cs| cs['selection'] }
       application.status = 'complete'
       if !application.save
         pp application.errors
