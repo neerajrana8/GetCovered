@@ -778,9 +778,7 @@ class InsurableRateConfiguration < ApplicationRecord
         next [uid,sel] unless covopt
         [
           uid,
-          {
-            'selection' => sel
-          }.merge(case carrier_policy_type.carrier_id
+          sel.merge(case carrier_policy_type.carrier_id
             when ::QbeService.carrier_id
               remove_overridability_data!({
                 'title' => covopt['title'],

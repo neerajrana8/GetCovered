@@ -238,21 +238,21 @@
                     <Coverage>
                       <CoverageCd>DED</CoverageCd>
                       <Deductible>
-                        <FormatInteger><%= ((request[:data][:coverage_selections]['all_peril']&.[]('value') || 0).to_d / 100).to_i %></FormatInteger>
+                        <FormatInteger><%= ((request[:data][:coverage_selections]['all_peril']&.[]('selection')&.[]('value') || 0).to_d / 100).to_i %></FormatInteger>
                       </Deductible>
                     </Coverage>
                     
                     <Coverage>
                       <CoverageCd>PP</CoverageCd>
                       <Limit>
-                        <FormatInteger><%= ((request[:data][:coverage_selections]['coverage_c']&.[]('value') || 0).to_d / 100).to_i %></FormatInteger>
+                        <FormatInteger><%= ((request[:data][:coverage_selections]['coverage_c']&.[]('selection')&.[]('value') || 0).to_d / 100).to_i %></FormatInteger>
                       </Limit>
                     </Coverage>
                     
                     <Coverage>
                       <CoverageCd>LOU</CoverageCd>
                       <Limit>
-                        <FormatInteger><%= ((request[:data][:coverage_selections]['coverage_c']&.[]('value') || 0).to_d * (request[:data][:address].state == 'CT' ? 0.3 : 0.2) / 100).to_i %></FormatInteger>
+                        <FormatInteger><%= ((request[:data][:coverage_selections]['coverage_c']&.[]('selection')&.[]('value') || 0).to_d * (request[:data][:address].state == 'CT' ? 0.3 : 0.2) / 100).to_i %></FormatInteger>
                       </Limit>
                     </Coverage>
                     
@@ -260,7 +260,7 @@
                     <Coverage>
                       <CoverageCd><%= { 'pet_damage' => 'QBE_PetDam', 'water_backup' => 'SEWER_Sump', 'bedbug' => 'BEDBUG', 'equip' => 'EQUIP', 'earthquake_coverage' => 'ERQK' }[subschedule] %></CoverageCd>
                       <Limit>
-                        <FormatInteger><%= subschedule != 'earthquake_coverage' ? 0 : ((request[:data][:coverage_selections]['coverage_c']&.[]('value') || 0).to_d / 100).to_i %></FormatInteger>
+                        <FormatInteger><%= subschedule != 'earthquake_coverage' ? 0 : ((request[:data][:coverage_selections]['coverage_c']&.[]('selection')&.[]('value') || 0).to_d / 100).to_i %></FormatInteger>
                       </Limit>
                     </Coverage>
                     <% end %>
@@ -269,7 +269,7 @@
                     <Coverage>
                       <CoverageCd>QBE_HURRD</CoverageCd>
                       <Deductible>
-                        <FormatInteger><%= ((request[:data][:coverage_selections]['hurricane']&.[]('value') || 0).to_d / 100).to_i %></FormatInteger>
+                        <FormatInteger><%= ((request[:data][:coverage_selections]['hurricane']&.[]('selection')&.[]('value') || 0).to_d / 100).to_i %></FormatInteger>
                       </Deductible>
                     </Coverage>                    
                     <% end %>
@@ -285,13 +285,13 @@
                   <Coverage>
                     <CoverageCd>PL</CoverageCd>
                     <Limit>
-                      <FormatInteger><%= ((request[:data][:coverage_selections]['liability']&.[]('value') || 0).to_d / 100).to_i %></FormatInteger>
+                      <FormatInteger><%= ((request[:data][:coverage_selections]['liability']&.[]('selection')&.[]('value') || 0).to_d / 100).to_i %></FormatInteger>
                     </Limit>
                   </Coverage>
                   <Coverage>
                     <CoverageCd>MEDPM</CoverageCd>
                     <Limit>
-                      <FormatInteger><%= ((request[:data][:coverage_selections]['medical']&.[]('value') || 0).to_d / 100).to_i %></FormatInteger>
+                      <FormatInteger><%= ((request[:data][:coverage_selections]['medical']&.[]('selection')&.[]('value') || 0).to_d / 100).to_i %></FormatInteger>
                     </Limit>
                   </Coverage>
                 </HomeLineBusiness>
