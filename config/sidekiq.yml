@@ -107,7 +107,10 @@ production:
     cron: '0 6 * * *' # Every day at 6:00 AM
     class: LeadsStatusUpdateJob
   # Leases
-  lease_status_update_job:
+  lease_start_check_job:
+    cron: '0 6 * * *' # Every day at 6:00 AM
+    class: LeaseStartCheckJob
+  lease_expiration_check_job:
     cron: '0 6 * * *' # Every day at 6:00 AM
     class: LeaseExpirationCheckJob
   # Emails
