@@ -669,7 +669,7 @@ class InsurableRateConfiguration < ApplicationRecord
                                     next nil unless sel && sel['selection']
                                     covopt = coverage_options[uid]
                                     next nil unless covopt
-                                    next { CoverageCd: uid }.merge(sel == true ? {} : {
+                                    next { CoverageCd: uid }.merge(sel['selection'] == true ? {} : {
                                       (covopt['category'] == 'deductible' ? :Deductible : :Limit) => { Amt: BigDecimal(sel['selection']['value']) / 100.to_d } # same whether sel['selection']['data_type'] is 'percentage' or 'currency', since currency stores number of cents
                                     })
                                   end.compact,
