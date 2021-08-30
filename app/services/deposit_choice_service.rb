@@ -46,7 +46,7 @@ class DepositChoiceService
   def event_params
     {
       verb: HTTP_VERB_DICTIONARY[self.action],
-      format: self.action == :address ? 'empty' : 'json',
+      format: [:address, :rate].include?(self.action) ? 'empty' : 'json',
       interface: 'REST',
       endpoint: self.endpoint_for(self.action),
       process: "deposit_choice_#{self.action.to_s}",
