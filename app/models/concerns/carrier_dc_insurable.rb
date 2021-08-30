@@ -102,7 +102,7 @@ module CarrierDcInsurable
         building_address_ids[building.id] = result[:data]["addressId"]
         unit_dc_ids.concat(result[:data]["units"].map{|u| u["unitId"] })
         # grab extra unit info
-        building.units.each do |unit|
+        building.units.confirmed.each do |unit|
           cip = unit.carrier_profile(@carrier_id) || unit.create_carrier_profile(@carrier_id)
           if cip.nil?
             units_ignored_for_lack_of_cip.push(unit.id)
