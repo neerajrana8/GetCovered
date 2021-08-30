@@ -9,8 +9,8 @@ module V2
         @agency
       end
 
-      def set_policies
-        @policies = Policy.not_master.where(agency: @agency)
+      def all_policies
+        Policy.not_master.where(agency: @agency)
       end
     end
   end

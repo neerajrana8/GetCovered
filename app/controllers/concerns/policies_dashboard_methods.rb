@@ -6,16 +6,15 @@ module PoliciesDashboardMethods
   end
 
   def total
-    apply_filters(:@filtered_policies, @policies)
-    lics = line_item_changes(@filtered_policies, date_params[:start]...date_params[:end])
+    lics = line_item_changes(all_policies, date_params[:start]...date_params[:end])
     total_premium_paid = premium_collected(lics)
-    bound_policies = bound_policy_count(@filtered_policies)
-    filtered_policies_count = @filtered_policies.count
+    bound_policies = bound_policy_count(all_policies)
+    filtered_policies_count = all_policies.count
 
     @total = {
       all_policies_count: filtered_policies_count,
       bound: bound_policies,
-      cancelled: cancelled_policy_count(@filtered_policies),
+      cancelled: cancelled_policy_count(all_policies),
       total_premium_paid: total_premium_paid,
       average_premium_paid: filtered_policies_count.zero? ? 0 : (total_premium_paid.to_f / filtered_policies_count).round,
       agencies_commissions: commissions_collected(lics, recipient_type: 'Agency'),
@@ -65,11 +64,15 @@ module PoliciesDashboardMethods
   private
 
   def set_policies
-    @policies = Policy.not_master
+    @policies = all_policies
+  end
+
+  def all_policies
+    Policy.not_master
   end
 
   def set_day_data(policies, date)
-    lics = line_item_changes(policies, params[:filter][:created_at])
+    lics = line_item_changes(all_policies, params[:filter][:created_at])
     @graphs[:graphs][date.to_s] = {
       total_new_policies: total_new_policies(policies),
       current_added_policies: policies.current.count,
@@ -114,8 +117,7 @@ module PoliciesDashboardMethods
       where(
         created_at: time_range,
         field_changed: :total_received,
-        analytics_category: %w[policy_premium master_policy_premium],
-        policy_quotes: { policy_id: policies.ids }
+        analytics_category: %w[policy_premium master_policy_premium]
       )
   end
 
