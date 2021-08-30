@@ -44,9 +44,6 @@ if user.agencies.present?
   end
 end
 
-json.has_existing_policies user.has_existing_policies?
-json.has_current_leases user.has_current_leases?
-
 community_titles = []
 user.insurables.each  do |insurable|
   community_titles << insurable.parent_community_for_all.title
