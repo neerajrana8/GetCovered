@@ -64,9 +64,9 @@ module PolicyApplicationMethods
   def get_coverage_options
     case (get_coverage_options_params[:carrier_id] || MsiService.carrier_id).to_i # we set the default to MSI for now since the form doesn't require a carrier_id input yet for this request
       when QbeService.carrier_id
-        qbe_get_coverage_options
+        residential_get_coverage_options((get_coverage_options_params[:carrier_id] || MsiService.carrier_id).to_i)
       when MsiService.carrier_id
-        msi_get_coverage_options
+        residential_get_coverage_options((get_coverage_options_params[:carrier_id] || MsiService.carrier_id).to_i)
       when DepositChoiceService.carrier_id
         deposit_choice_get_coverage_options
       else
@@ -112,33 +112,18 @@ module PolicyApplicationMethods
            status: :unprocessable_entity
   end
 
-  def msi_get_coverage_options
-    @msi_id                                  = MsiService.carrier_id
+  def residential_get_coverage_options(carrier_id)
     @residential_community_insurable_type_id = 1
     @residential_unit_insurable_type_id      = 4
     @ho4_policy_type_id                      = 1
     # grab params and validate 'em
-    inputs = msi_get_coverage_options_params
+    inputs = residential_get_coverage_options_params
     # define agency after inputs to solve error
     @agency_id                               = instance_variable_defined?(:@bearer) ? @bearer.id : inputs["agency_id"]
     if inputs[:insurable_id].nil?
       render json:   { error: I18n.t('policy_application_contr.deposit_choice_get_coverage_options.insurable_id_cannot_be_blank') },
              status: :unprocessable_entity
       return
-    end
-    unless inputs[:coverage_selections].nil?
-      if inputs[:coverage_selections].class != ::Array
-        render json:   { error: I18n.t('policy_application_contr.msi_get_coverage_options.coverage_selections_must_be_array') },
-               status: :unprocessable_entity
-        return
-      else
-        broken = inputs[:coverage_selections].select { |cs| cs[:uid].blank? }
-        unless broken.length == 0
-          render json:   { error: I18n.t('policy_application_contr.msi_get_coverage_options.must_include_uid') },
-                 status: :unprocessable_entity
-          return
-        end
-      end
     end
     if inputs[:estimate_premium]
       if @agency_id.nil?
@@ -179,36 +164,35 @@ module PolicyApplicationMethods
     end
     # grab community
     community = unit.parent_community
-    cip       = !unit.preferred_ho4 ? nil : CarrierInsurableProfile.where(carrier_id: @msi_id, insurable_id: community&.id).take # possibly nil, for non-preferred
-    cip = nil unless cip&.external_carrier_id
+    preferred = (unit.get_carrier_status(carrier_id) == :preferred)
     if community.nil?
       render json:   { error: I18n.t('policy_application_contr.msi_get_coverage_options.community_not_found') },
              status: :unprocessable_entity
       return
     end
     # grab billing strategy and make sure it's valid
-    billing_strategy      = BillingStrategy.where(carrier_id: @msi_id, agency_id: @agency_id.to_i, policy_type_id: @ho4_policy_type_id, id: inputs[:billing_strategy_id].to_i).take
+    billing_strategy      = BillingStrategy.where(carrier_id: carrier_id, agency_id: @agency_id.to_i, policy_type_id: @ho4_policy_type_id, id: inputs[:billing_strategy_id].to_i).take
     if billing_strategy.nil?
       render json:   { error: I18n.t('policy_application_contr.msi_get_coverage_options.billing_strategy_must_belong_to_carrier') },
              status: :unprocessable_entity
       return
     end
     # get a bit of extra nonsense
-    carrier_policy_type = CarrierPolicyType.where(carrier_id: @msi_id, policy_type_id: @ho4_policy_type_id).take
-    coverage_selections = inputs[:coverage_selections].map{|cs| [cs['uid'], { 'selection' => cs['selection'] }] }.to_h # WARNING: turn coverage selections into a hash
+    carrier_policy_type = CarrierPolicyType.where(carrier_id: carrier_id, policy_type_id: @ho4_policy_type_id).take
+    coverage_selections = inputs[:coverage_selections].map{|cs| [cs['uid'], { 'selection' => cs['selection'] }] }.to_h # WARNING: COVSEL turn coverage selections into a hash
     # get coverage options
     results = ::InsurableRateConfiguration.get_coverage_options(
       carrier_policy_type, unit, coverage_selections, inputs[:effective_date] ? Date.parse(inputs[:effective_date]) : nil, inputs[:additional_insured].to_i, billing_strategy,
       **({
           # execution options
-          eventable: unit, 
+          eventable: unit,
           perform_estimate: inputs[:estimate_premium] ? true : false,
           # overrides
           agency: Agency.where(id: msi_get_coverage_options_params[:agency_id].to_i || 0).take,
-          preferred: (unit.get_carrier_status(MsiService.carrier_id) == :preferred),
+          preferred: preferred,
         }.merge(
           msi_get_coverage_options_params[:account_id].blank? ? {} : { account: Account.where(id: msi_get_coverage_options_params[:account_id]).take }
-        ).merge(cip ? {} : {
+        ).merge(preferred ? {} : {
           nonpreferred_final_premium_params: {
             number_of_units: inputs[:number_of_units].to_i == 0 ? nil : inputs[:number_of_units].to_i,
             years_professionally_managed: inputs[:years_professionally_managed].blank? ? nil : inputs[:years_professionally_managed].to_i,
@@ -218,7 +202,7 @@ module PolicyApplicationMethods
         })
       )
     )
-    results[:coverage_options] = results[:coverage_options].map{|uid,sel| { 'uid' => uid, 'selection' => sel } } # WARNING: to let client keep using arrays
+    results[:coverage_options] = results[:coverage_options].map{|uid,sel| sel.merge({ 'uid' => uid }) } # WARNING: COVSEL to let client keep using arrays
     keys_to_keep = [:valid, :coverage_options, :estimated_premium, :estimated_installment, :estimated_first_payment, :installment_fee]
     response_tr = results.select{|k, v| keys_to_keep.include?(k) }.merge(results[:errors] ? { estimated_premium_errors: [results[:errors][:external]].flatten } : {})
     use_translations_for_msi_coverage_options!(response_tr)
@@ -258,7 +242,7 @@ module PolicyApplicationMethods
     params.permit(:insurable_id, :effective_date)
   end
 
-  def msi_get_coverage_options_params
+  def residential_get_coverage_options_params
     params.permit(:insurable_id, :agency_id, :account_id, :billing_strategy_id,
                   :effective_date, :additional_insured,
                   :estimate_premium,
