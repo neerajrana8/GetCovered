@@ -21,7 +21,6 @@ module PoliciesDashboardMethods
       get_covered_commissions: commissions_collected(lics, recipient_type: 'Agency', recipient_id: Agency::GET_COVERED_ID),
       carriers_commissions: commissions_collected(lics, recipient_type: 'Carrier')
     }
-    @total[:premium_after_commissions] = @total[:total_premium_paid] - @total[:agencies_commissions] - @total[:carriers_commissions]
 
     render json: @total.to_json
   end
@@ -37,8 +36,7 @@ module PoliciesDashboardMethods
         premium_collected: 0,
         agencies_commissions: 0,
         get_covered_commissions: 0,
-        carriers_commissions: 0,
-        premium_after_commissions: 0
+        carriers_commissions: 0
       },
       graphs: {}
     }
@@ -68,7 +66,11 @@ module PoliciesDashboardMethods
   end
 
   def all_policies
-    Policy.not_master
+    if params[:filter][:policy_type_id].present?
+      Policy.not_master.where(policy_type_id: params[:filter][:policy_type_id])
+    else
+      Policy.not_master
+    end
   end
 
   def set_day_data(policies, date)
@@ -82,19 +84,13 @@ module PoliciesDashboardMethods
       carriers_commissions: commissions_collected(lics, recipient_type: 'Carrier')
     }
 
-    @graphs[:graphs][date.to_s][:premium_after_commissions] =
-      @graphs[:graphs][date.to_s][:premium_collected] -
-      @graphs[:graphs][date.to_s][:agencies_commissions] -
-      @graphs[:graphs][date.to_s][:carriers_commissions]
-
     @graphs[:total] = {
       total_new_policies: @graphs[:total][:total_new_policies] += @graphs[:graphs][date.to_s][:total_new_policies],
       current_added_policies: @graphs[:total][:current_added_policies] += @graphs[:graphs][date.to_s][:current_added_policies],
       premium_collected: @graphs[:total][:premium_collected] += @graphs[:graphs][date.to_s][:premium_collected],
       agencies_commissions: @graphs[:total][:agencies_commissions] += @graphs[:graphs][date.to_s][:agencies_commissions],
       get_covered_commissions: @graphs[:total][:get_covered_commissions] += @graphs[:graphs][date.to_s][:get_covered_commissions],
-      carriers_commissions: @graphs[:total][:carriers_commissions] += @graphs[:graphs][date.to_s][:carriers_commissions],
-      premium_after_commissions: @graphs[:total][:premium_after_commissions] += @graphs[:graphs][date.to_s][:premium_after_commissions]
+      carriers_commissions: @graphs[:total][:carriers_commissions] += @graphs[:graphs][date.to_s][:carriers_commissions]
     }
   end
 

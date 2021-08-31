@@ -10,7 +10,11 @@ module V2
       end
 
       def all_policies
-        Policy.not_master.where(agency: @agency)
+        if params[:filter][:policy_type_id].present?
+          Policy.not_master.where(policy_type_id: params[:filter][:policy_type_id], agency: @agency)
+        else
+          Policy.not_master.where(agency: @agency)
+        end
       end
     end
   end
