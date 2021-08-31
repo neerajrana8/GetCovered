@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_08_19_180654) do
+ActiveRecord::Schema.define(version: 2021_08_30_182101) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
@@ -1171,7 +1171,7 @@ ActiveRecord::Schema.define(version: 2021_08_19_180654) do
     t.bigint "policy_id"
     t.integer "cancellation_reason"
     t.integer "branding_profile_id"
-    t.boolean "marked_for_cancellation", default: true, null: false
+    t.boolean "marked_for_cancellation", default: false, null: false
     t.string "marked_for_cancellation_info"
     t.datetime "marked_cancellation_time"
     t.string "marked_cancellation_reason"
@@ -1400,8 +1400,8 @@ ActiveRecord::Schema.define(version: 2021_08_19_180654) do
     t.integer "total_tax", default: 0, null: false
     t.integer "total", default: 0, null: false
     t.boolean "prorated", default: false, null: false
-    t.datetime "prorated_term_last_moment"
-    t.datetime "prorated_term_first_moment"
+    t.datetime "prorated_last_moment"
+    t.datetime "prorated_first_moment"
     t.boolean "force_no_refunds", default: false, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
@@ -1820,6 +1820,7 @@ ActiveRecord::Schema.define(version: 2021_08_19_180654) do
     t.integer "insured_address_id"
     t.boolean "has_existing_policies", default: false
     t.boolean "has_current_leases", default: false
+    t.boolean "has_leases", default: false
     t.index ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["invitation_token"], name: "index_users_on_invitation_token", unique: true

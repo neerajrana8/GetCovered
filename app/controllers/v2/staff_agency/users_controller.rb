@@ -19,7 +19,7 @@ module V2
           query = query.references(:policy_users).includes(:policy_users).where(policy_users: { policy_id: policy_ids })
         end
 
-        super(:@users, query, :profile, :accounts, :agencies, :policies, :insurables)
+        super(:@users, query, :profile, :accounts)
         render template: 'v2/shared/users/index', status: :ok
       end
 
