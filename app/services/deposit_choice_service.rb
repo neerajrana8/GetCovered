@@ -13,6 +13,10 @@ class DepositChoiceService
     6
   end
   
+  def self.carrier
+    @carrier ||= Carrier.where(id: self.carrier_id).take
+  end
+  
   def self.policy_type_id
     @ptid ||= PolicyType.where(designation: 'SECURITY-DEPOSIT').take&.id
   end
