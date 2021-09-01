@@ -225,9 +225,9 @@ class PolicyPremium < ApplicationRecord
     down_payment_revised_weight = nil
     if first_payment_down_payment
       total_weight = payment_terms.inject(0){|sum,pt| sum + pt.default_weight }.to_d
-      down_payment_amount = (payment_terms.first.default_weight * amount / total_weight).floor
+      down_payment_amount = ((payment_terms.first.default_weight * amount) / total_weight).floor
       if first_payment_down_payment_amount_override && first_payment_down_payment_amount_override < down_payment_amount
-        down_payment_revised_weight = ((down_payment_amount - first_payment_down_payment_amount_override.to_d) / down_payment_amount * payment_terms.first.default_weight).floor
+        down_payment_revised_weight = (((down_payment_amount - first_payment_down_payment_amount_override.to_d) * payment_terms.first.default_weight) / down_payment_amount).floor
         down_payment_amount = first_payment_down_payment_amount_override
       else
         down_payment_revised_weight = 0
@@ -259,7 +259,7 @@ class PolicyPremium < ApplicationRecord
         policy_premium: self,
         title: is_tax ? "Tax" : "Premium",
         category: is_tax ? "tax" : "premium",
-        rounding_error_distribution: "last_payment_multipass", #MOOSE WARNING: change default???
+        rounding_error_distribution: "first_payment_multipass",
         total_due: amount,
         proration_calculation: proratable,
         proration_refunds_allowed: refundable,
