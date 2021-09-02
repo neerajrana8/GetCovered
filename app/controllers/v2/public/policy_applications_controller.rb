@@ -21,10 +21,6 @@ module V2
                  status: 404
           return
         end
-        # MOOSE WARNING ARRAYHACK
-        if [MsiService.carrier_id, QbeService.carrier_id].include?(@policy_application.carrier_id) && @policy_application.coverage_selections
-          @policy_application.coverage_selections = @policy_application.coverage_selections.map{|uid, datum| datum.merge({ 'uid' => datum }) }
-        end
       end
 
       def create
@@ -356,11 +352,6 @@ module V2
           end
         end
 
-        # MOOSE WARNING ARRAYHACK
-        if @application.coverage_selections.class == ::Array
-          @application.coverage_selections = @application.coverage_selections.map{|datum| [datum['uid'], datum] }.to_h
-        end
-
         if @application.save
           update_users_result =
             PolicyApplications::UpdateUsers.run!(
@@ -460,11 +451,6 @@ module V2
           unless unsaved_pis.blank?
             unsaved_pis.first.primary = true if unsaved_pis.find{|pi| pi.primary }.nil?
             @replacement_policy_insurables = unsaved_pis
-          end
-          # fix coverage selections if needed
-          # MOOSE WARNING ARRAYHACK
-          if @policy_application.coverage_selections.class == ::Array
-            @policy_application.coverage_selections = @policy_application.coverage_selections.map{|datum| [datum['uid'], datum] }.to_h
           end
           # woot woot, try to update users and save
           update_users_result = update_policy_users_params.blank? ? true :
