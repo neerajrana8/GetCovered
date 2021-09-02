@@ -46,7 +46,7 @@
                   <QBE_BillingSystem>Q</QBE_BillingSystem>
                   
                   <CurrentTermAmt>
-                    <Amt><%= '%.2f' % ((request[:data][:premium].total_premium + request[:data][:premium].total_tax).to_f / 100) %></Amt>
+                    <Amt><%= '%.2f' % ((request[:data][:quote].carrier_payment_data['policy_fee'] + request[:data][:premium].total_premium + request[:data][:premium].total_tax).to_d / 100) %></Amt>
                   </CurrentTermAmt>
                   
                   <PayorCd>PD</PayorCd>
