@@ -47,20 +47,6 @@ module V2
         end
       end
 
-      def policies
-        insurable_units_ids =
-          if InsurableType::UNITS_IDS.include?(@insurable.insurable_type_id)
-            @insurable.id
-          else
-            [@insurable.units&.pluck(:id), @insurable.id, @insurable.insurables.ids].flatten.uniq.compact
-          end
-
-        policies_query = Policy.joins(:insurables).where(insurables: { id: insurable_units_ids }).order(created_at: :desc)
-
-        @policies = paginator(policies_query)
-        render :policies, status: :ok
-      end
-
       def related_insurables
         @insurables = super_index(:@insurables, @insurable.insurables)
         render :index, status: :ok
