@@ -35,6 +35,10 @@ module PolicyApplicationMethods
 
       @application = PolicyApplication.new(policy_type: policy_type, carrier: carrier, agency_id: agency_id, account_id: account_id)
       @application.build_from_carrier_policy_type
+      # MOOSE WARNING ARRAYHACK
+      if  @application.coverage_selections
+        @application.coverage_selections = @application.coverage_selections.map{|uid, datum| datum.merge({ 'uid' => datum }) }
+      end
       @primary_user = ::User.new
       @application.users << @primary_user
     else
@@ -206,7 +210,7 @@ module PolicyApplicationMethods
         })
       )
     )
-    #results[:coverage_options] = results[:coverage_options].map{|uid,sel| sel.merge({ 'uid' => uid }) } # MOOSE WARNING ARRAYHACK
+    results[:coverage_options] = results[:coverage_options].map{|uid,sel| sel.merge({ 'uid' => uid }) } # MOOSE WARNING ARRAYHACK
     keys_to_keep = [:valid, :coverage_options, :estimated_premium, :estimated_installment, :estimated_first_payment, :installment_fee]
     response_tr = results.select{|k, v| keys_to_keep.include?(k) }.merge(results[:errors] ? { estimated_premium_errors: [results[:errors][:external]].flatten } : {})
     use_translations_for_msi_coverage_options!(response_tr)

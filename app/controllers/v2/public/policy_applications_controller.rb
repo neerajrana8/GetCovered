@@ -22,9 +22,9 @@ module V2
           return
         end
         # MOOSE WARNING ARRAYHACK
-        #if [MsiService.carrier_id, QbeService.carrier_id].include?(@policy_application.carrier_id) && @policy_application.coverage_selections
-        #  @policy_application.coverage_selections.map{|uid, datum| datum.merge({ 'uid' => datum }) }
-        #end
+        if [MsiService.carrier_id, QbeService.carrier_id].include?(@policy_application.carrier_id) && @policy_application.coverage_selections
+          @policy_application.coverage_selections = @policy_application.coverage_selections.map{|uid, datum| datum.merge({ 'uid' => datum }) }
+        end
       end
 
       def create
