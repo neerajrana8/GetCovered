@@ -217,8 +217,9 @@ module V2
           end
         end
         
-        unless @application.coverage_selections.class != ::Array
-          @application.coverage_selections = @application.coverage_selections.map{|cs| [cs['uid'], { 'selection' => cs['selection'] }] }.to_h
+        # MOOSE WARNING: ARRAYHACK
+        if @application.coverage_selections.class == ::Array
+          @application.coverage_selections = @application.coverage_selections.map{|datum| [datum['uid'], datum] }.to_h
         end
 
         if @application.save
@@ -316,8 +317,9 @@ module V2
             @replacement_policy_insurables = unsaved_pis
           end
           # fix coverage options if needed
-          unless @policy_application.coverage_selections.blank? || @policy_application.coverage_selections.class != ::Array
-            @policy_application.coverage_selections = @policy_application.coverage_selections.map{|cs| [cs['uid'], { 'selection' => cs['selection'] }] }.to_h
+          # MOOSE WARNING: ARRAYHACK
+          if @policy_application.coverage_selections.class == ::Array
+            @policy_application.coverage_selections = @policy_application.coverage_selections.map{|datum| [datum['uid'], datum] }.to_h
           end
           # try to update users
           update_users_result = update_policy_users_params.blank? ? true :
@@ -466,7 +468,7 @@ module V2
                   :auto_renew, :billing_strategy_id, :account_id, :policy_type_id,
                   :carrier_id, :agency_id, fields: [:title, :value, options: []],
                   questions: [:title, :value, options: []],
-                  coverage_selections: [:uid, :selection, selection: [ :data_type, :value ]],
+                  coverage_selections: {}, #[:uid, :selection, selection: [ :data_type, :value ]],
                   extra_settings: [
                     # for MSI
                     :installment_day, :number_of_units, :years_professionally_managed, :year_built, :gated,
@@ -534,7 +536,7 @@ module V2
                   fields: {},
                   policy_rates_attributes: [:insurable_rate_id],
                   policy_insurables_attributes: [:insurable_id],
-                  coverage_selections: [:uid, :selection, selection: [ :data_type, :value ]],
+                  coverage_selections: {}, #[:uid, :selection, selection: [ :data_type, :value ]],
                   extra_settings: [
                     # for MSI
                     :installment_day, :number_of_units, :years_professionally_managed, :year_built, :gated,

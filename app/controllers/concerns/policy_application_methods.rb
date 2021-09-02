@@ -179,7 +179,11 @@ module PolicyApplicationMethods
     end
     # get a bit of extra nonsense
     carrier_policy_type = CarrierPolicyType.where(carrier_id: carrier_id, policy_type_id: @ho4_policy_type_id).take
-    coverage_selections = inputs[:coverage_selections].map{|cs| [cs['uid'], { 'selection' => cs['selection'] }] }.to_h # WARNING: COVSEL turn coverage selections into a hash
+    # MOOSE WARNING ARRAYHACK
+    coverage_selections = inputs[:coverage_selections]
+    if coverage_selections.class == ::Array
+      coverage_selections = coverage_selections.map{|datum| [datum['uid'], datum] }.to_h
+    end
     # get coverage options
     results = ::InsurableRateConfiguration.get_coverage_options(
       carrier_policy_type, unit, coverage_selections, inputs[:effective_date] ? Date.parse(inputs[:effective_date]) : nil, inputs[:additional_insured].to_i, billing_strategy,
@@ -202,7 +206,7 @@ module PolicyApplicationMethods
         })
       )
     )
-    results[:coverage_options] = results[:coverage_options].map{|uid,sel| sel.merge({ 'uid' => uid }) } # WARNING: COVSEL to let client keep using arrays
+    #results[:coverage_options] = results[:coverage_options].map{|uid,sel| sel.merge({ 'uid' => uid }) } # MOOSE WARNING ARRAYHACK
     keys_to_keep = [:valid, :coverage_options, :estimated_premium, :estimated_installment, :estimated_first_payment, :installment_fee]
     response_tr = results.select{|k, v| keys_to_keep.include?(k) }.merge(results[:errors] ? { estimated_premium_errors: [results[:errors][:external]].flatten } : {})
     use_translations_for_msi_coverage_options!(response_tr)
@@ -247,7 +251,8 @@ module PolicyApplicationMethods
                   :effective_date, :additional_insured,
                   :estimate_premium,
                   :number_of_units, :years_professionally_managed, :year_built, :gated, # nonpreferred stuff
-                  coverage_selections: [:uid, :selection, selection: [ :data_type, :value ]])
+                  coverage_selections: {}#[:uid, :selection, selection: [ :data_type, :value ]]
+                 )
   end
 
 end
