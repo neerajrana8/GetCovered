@@ -74,6 +74,10 @@
         delete :faq_question_delete, path: '/faqs/:faq_id/faq_question_delete/:faq_question_id'
         post :attach_images, path: '/attach_images'
       end
+
+      collection do
+        post :list
+      end
     end
 
     resources :branding_profile_attributes,

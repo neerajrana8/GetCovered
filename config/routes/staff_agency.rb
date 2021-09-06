@@ -115,6 +115,10 @@
           post :attach_images, path: '/attach_images'
         end
         post :import, on: :collection
+        
+        collection do
+          post :list
+        end
       end
 
     resources :branding_profile_attributes,
