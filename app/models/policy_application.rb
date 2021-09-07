@@ -80,6 +80,15 @@ class PolicyApplication < ApplicationRecord
                  quote_in_progress: 4, quote_failed: 5, quoted: 6,
                  more_required: 7, accepted: 8, rejected: 9 }
 
+
+  def effective_moment
+    self.effective_date&.beginning_of_day
+  end
+  
+  def expiration_moment
+    self.expiration_date&.end_of_day
+  end
+
   # get carrier_agency_authorization
   def carrier_agency_authorization
     state = self.primary_insurable&.primary_address&.state

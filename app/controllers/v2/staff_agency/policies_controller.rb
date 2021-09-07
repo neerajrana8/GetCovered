@@ -39,6 +39,14 @@ module V2
         ::Policies::SendProofOfCoverageJob.perform_later(params[:id])
         render json: { message: 'Documents were sent' }
       end
+      
+      def refund_policy
+        render json: standard_error(:refund_policy_error, "Dashboard cancellation facilities disabled for maintenance", nil)
+      end
+      
+      def cancel_policy
+        render json: standard_error(:cancel_policy_error, "Dashboard cancellation facilities disabled for maintenance", nil)
+      end
 
       private
       
