@@ -20,11 +20,3 @@ class PolicyPremiumItemPaymentTerm < ApplicationRecord
     return tr == 0 ? self.original_last_moment <=> other.original_last_moment : tr
   end
 end
-
-
-
-
-
-
-
-
