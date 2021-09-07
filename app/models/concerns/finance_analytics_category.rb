@@ -20,5 +20,4 @@ module FinanceAnalyticsCategory
       }[self.analytics_category]
     end
   end
-  
 end

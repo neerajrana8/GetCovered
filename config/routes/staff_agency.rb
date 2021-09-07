@@ -276,6 +276,13 @@
     end
     post :policies_index, action: :index, controller: :policies
 
+    resources :policies_dashboard, only: [] do
+      collection do
+        get 'total'
+        get 'graphs'
+      end
+    end
+
     resources :policy_cancellation_requests, only: [ :index, :show ] do
       member do
         put :approve

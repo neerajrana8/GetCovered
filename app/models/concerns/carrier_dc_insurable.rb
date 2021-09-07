@@ -10,7 +10,7 @@ module CarrierDcInsurable
     # should only be called on communities
     def obtain_dc_information(query_result_override: nil)
       @carrier_id = DepositChoiceService.carrier_id
-      @carrier_profile = carrier_profile(@carrier_id)
+      @carrier_profile = carrier_profile(@carrier_id) || self.create_carrier_profile(@carrier_id)
       return ["Unable to load carrier profile"] if @carrier_profile.nil?
       # try to get info from dc
       pad = self.primary_address
@@ -50,8 +50,8 @@ module CarrierDcInsurable
       units_not_in_dc_system = []
       entry_unit_ids_used = []
       unit_dc_ids = result[:data]["units"].map{|u| u["unitId"] }
-      self.units.each do |unit|
-        cip = unit.carrier_profile(@carrier_id)
+      self.units.confirmed.each do |unit|
+        cip = unit.carrier_profile(@carrier_id) || unit.create_carrier_profile(@carrier_id)
         if cip.nil?
           units_ignored_for_lack_of_cip.push(unit.id)
         else
@@ -83,7 +83,7 @@ module CarrierDcInsurable
       end
       # try to use buildings to fill out more unit info
       building_address_ids = {}
-      buildings = insurables.where(insurable_type_id: 7)
+      buildings = insurables.where(insurable_type_id: 7).confirmed
       buildings.each do |building|
         # try to get info from dc using building addresses
         pad = building.primary_address
@@ -102,8 +102,8 @@ module CarrierDcInsurable
         building_address_ids[building.id] = result[:data]["addressId"]
         unit_dc_ids.concat(result[:data]["units"].map{|u| u["unitId"] })
         # grab extra unit info
-        building.units.each do |unit|
-          cip = unit.carrier_profile(@carrier_id)
+        building.units.confirmed.each do |unit|
+          cip = unit.carrier_profile(@carrier_id) || unit.create_carrier_profile(@carrier_id)
           if cip.nil?
             units_ignored_for_lack_of_cip.push(unit.id)
           else
@@ -138,7 +138,7 @@ module CarrierDcInsurable
       @carrier_profile.update(
         data: @carrier_profile.data.merge({
           "building_address_ids" => building_address_ids,
-          "dc_units_not_in_system" => unit_dc_ids.uniq.select{|u| !entry_unit_ids_used.include?(u["unitId"]) },
+          "dc_units_not_in_system" => unit_dc_ids.uniq.select{|u| !entry_unit_ids_used.include?(u) },
           "units_not_in_dc_system" => units_not_in_dc_system.uniq,
           "units_ignored_for_lack_of_cip" => units_ignored_for_lack_of_cip.uniq
         })
@@ -163,6 +163,7 @@ module CarrierDcInsurable
       event.completed = Time.now
       event.response = result[:response].response.body
       event.request = result[:response].request.raw_body
+      event.endpoint = result[:response].request.uri.to_s
       event.status = result[:error] ? 'error' : 'success'
       event.save
       # make sure we succeeded

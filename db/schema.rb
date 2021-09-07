@@ -1818,6 +1818,9 @@ ActiveRecord::Schema.define(version: 2021_09_07_203745) do
     t.string "mailchimp_id"
     t.integer "mailchimp_category", default: 0
     t.string "qbe_id"
+    t.boolean "has_existing_policies", default: false
+    t.boolean "has_current_leases", default: false
+    t.boolean "has_leases", default: false
     t.index ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["invitation_token"], name: "index_users_on_invitation_token", unique: true
