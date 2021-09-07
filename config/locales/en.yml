@@ -53,7 +53,7 @@ en:
     create:
       invalid_auth_key: "Invalid Auth Key"
     update_residential:
-      invalid_address: "Please enter a valid address"
+      invalid_address: "Please enter a valid residential address"
     rentguarantee_complete:
       inistructions_were_sent: "Instructions were sent"
     validate_policy_users_params:

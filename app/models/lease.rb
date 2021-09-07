@@ -133,7 +133,7 @@ class Lease < ApplicationRecord
 
   def update_users_status
     users.each do |user|
-      user.update(has_current_leases: user.leases.current.exists?)
+      user.update(has_current_leases: user.leases.current.exists?, has_leases: user.leases.exists?)
     end
   end
 

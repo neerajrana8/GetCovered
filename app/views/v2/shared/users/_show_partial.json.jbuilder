@@ -41,9 +41,17 @@ end
 json.has_existing_policies user.has_existing_policies?
 json.has_current_leases user.has_current_leases?
 
-community_titles = []
+communities = []
 user.insurables.each  do |insurable|
-  community_titles << insurable.parent_community_for_all.title
+  parent_community = insurable.parent_community_for_all
+  communities << {id: parent_community.id, title: parent_community.title}
 end
 
-json.community_titles community_titles
+json.communities communities
+
+json.address do
+  if user.address.present?
+    json.partial! 'v2/shared/addresses/fields.json.jbuilder',
+                  address: user.address
+  end
+end

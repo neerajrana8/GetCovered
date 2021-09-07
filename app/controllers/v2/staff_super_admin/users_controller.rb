@@ -9,16 +9,15 @@ module V2
       before_action :set_user, only: %i[show update]
       
       def index
-
         query = ::User.all
         if params[:community_like]
-          communities = Insurable.where(insurable_type_id: InsurableType::COMMUNITIES_IDS).where("title ILIKE ?", "%#{params[:community_like]}%")
-          unit_ids = communities.map{ |c| c.units.pluck(:id) }.flatten
+          communities = Insurable.where(insurable_type_id: InsurableType::COMMUNITIES_IDS).where('title ILIKE ?', "%#{params[:community_like]}%")
+          unit_ids = communities.map { |c| c.units.pluck(:id) }.flatten
           policy_ids = PolicyInsurable.where(insurable_id: unit_ids).pluck(:policy_id)
           query = query.references(:policy_users).includes(:policy_users).where(policy_users: { policy_id: policy_ids })
         end
 
-        super(:@users, query, :profile, :accounts, :agencies, :policies, :insurables)
+        super(:@users, query, :profile, :accounts)
         render template: 'v2/shared/users/index', status: :ok
       end
 
@@ -75,7 +74,9 @@ module V2
                     profile_attributes: %i[
                       birth_date contact_email contact_phone first_name
                       job_title last_name middle_name suffix title gender salutation
-                    ]
+                    ],
+                    address_attributes: %i[city country state street_name street_two zip_code],
+                    insured_address_attributes: %i[city country state street_name street_two zip_code]
         )
       end
     end
