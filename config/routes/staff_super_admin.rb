@@ -382,7 +382,7 @@
     end
 
     resources :users,
-      only: [ :index, :show ] do
+      only: [ :index, :show, :update ] do
         member do
           get "histories",
             to: "histories#index_recordable",

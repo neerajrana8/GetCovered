@@ -17,6 +17,7 @@ class Lease < ApplicationRecord
                if: Proc.new{ saved_change_to_start_date? || saved_change_to_end_date? }
 
   after_commit :update_unit_occupation
+  after_commit :update_users_status
 
   belongs_to :account
 
@@ -128,6 +129,12 @@ class Lease < ApplicationRecord
 
   def update_unit_occupation
     insurable.update(occupied: insurable.leases.current.present?)
+  end
+
+  def update_users_status
+    users.each do |user|
+      user.update(has_current_leases: user.leases.current.exists?, has_leases: user.leases.exists?)
+    end
   end
 
   def related_records_list
