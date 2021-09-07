@@ -30,7 +30,7 @@ module CarrierQbePolicyApplication
         perform_estimate: true,
         add_selection_fields: true,
         # overrides
-        additional_interest_count: preferred ? nil : self.extra_settings['additional_interest'].blank? ? 0 : 1,
+        additional_interest_count: preferred ? nil : self.extra_settings&.[]('additional_interest').blank? ? 0 : 1,
         agency: self.agency,
         account: self.account#,
         # nonpreferred stuff
