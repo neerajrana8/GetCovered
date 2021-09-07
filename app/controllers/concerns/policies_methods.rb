@@ -9,6 +9,7 @@ module PoliciesMethods
           user.update_attributes(user_param)
         end
       end
+      Policies::UpdateDocuments.run!(policy: @policy)
       render :show, status: :ok
     else
       render json: @policy.errors, status: :unprocessable_entity
