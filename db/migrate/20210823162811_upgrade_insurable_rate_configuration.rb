@@ -25,6 +25,7 @@ class UpgradeInsurableRateConfiguration < ActiveRecord::Migration[5.2]
   end
   
   def regen_msi_ircs(specialz)
+    carrier = ::MsiService.carrier
     msis = ::MsiService.new
     # usa
     msis.extract_insurable_rate_configuration(nil,
