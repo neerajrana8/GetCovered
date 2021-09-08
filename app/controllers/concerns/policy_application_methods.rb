@@ -35,10 +35,6 @@ module PolicyApplicationMethods
 
       @application = PolicyApplication.new(policy_type: policy_type, carrier: carrier, agency_id: agency_id, account_id: account_id)
       @application.build_from_carrier_policy_type
-      # MOOSE WARNING ARRAYHACK
-      if  @application.coverage_selections
-        @application.coverage_selections = @application.coverage_selections.map{|uid, datum| datum.merge({ 'uid' => datum }) }
-      end
       @primary_user = ::User.new
       @application.users << @primary_user
     else
@@ -183,11 +179,7 @@ module PolicyApplicationMethods
     end
     # get a bit of extra nonsense
     carrier_policy_type = CarrierPolicyType.where(carrier_id: carrier_id, policy_type_id: @ho4_policy_type_id).take
-    # MOOSE WARNING ARRAYHACK
     coverage_selections = inputs[:coverage_selections]
-    if coverage_selections.class == ::Array
-      coverage_selections = coverage_selections.map{|datum| [datum['uid'], datum] }.to_h
-    end
     # get coverage options
     results = ::InsurableRateConfiguration.get_coverage_options(
       carrier_policy_type, unit, coverage_selections, inputs[:effective_date] ? Date.parse(inputs[:effective_date]) : nil, inputs[:additional_insured].to_i, billing_strategy,
@@ -209,7 +201,6 @@ module PolicyApplicationMethods
         })
       )
     )
-    results[:coverage_options] = results[:coverage_options].map{|uid,sel| sel.merge({ 'uid' => uid }) } # MOOSE WARNING ARRAYHACK
     keys_to_keep = [:valid, :coverage_options, :estimated_premium, :estimated_installment, :estimated_first_payment, :installment_fee]
     response_tr = results.select{|k, v| keys_to_keep.include?(k) }.merge(results[:errors] ? { estimated_premium_errors: [results[:errors][:external]].flatten } : {})
     use_translations_for_msi_coverage_options!(response_tr)

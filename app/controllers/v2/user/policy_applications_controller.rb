@@ -216,11 +216,6 @@ module V2
             return
           end
         end
-        
-        # MOOSE WARNING: ARRAYHACK
-        if @application.coverage_selections.class == ::Array
-          @application.coverage_selections = @application.coverage_selections.map{|datum| [datum['uid'], datum] }.to_h
-        end
 
         if @application.save
           update_users_result =
@@ -315,11 +310,6 @@ module V2
           unless unsaved_pis.blank?
             unsaved_pis.first.primary = true if unsaved_pis.find{|pi| pi.primary }.nil?
             @replacement_policy_insurables = unsaved_pis
-          end
-          # fix coverage options if needed
-          # MOOSE WARNING: ARRAYHACK
-          if @policy_application.coverage_selections.class == ::Array
-            @policy_application.coverage_selections = @policy_application.coverage_selections.map{|datum| [datum['uid'], datum] }.to_h
           end
           # try to update users
           update_users_result = update_policy_users_params.blank? ? true :
