@@ -8,7 +8,7 @@ class UpgradeInsurableRateConfiguration < ActiveRecord::Migration[5.2]
     remove_column :insurable_rate_configurations, :coverage_options
     remove_column :insurable_rate_configurations, :rules
     remove_reference :insurable_rate_configurations, :carrier_insurable_type
-    regen_msi_ircs({ carrier_policy_type: CarrierPolicyType.where(carrier_id: MsiService.carrier_id, policy_type_id: PolicyType::RESIDENTIAL_ID) }) unless irc_count == 0
+    regen_msi_ircs({ carrier_policy_type: CarrierPolicyType.where(carrier_id: MsiService.carrier_id, policy_type_id: PolicyType::RESIDENTIAL_ID).take }) unless irc_count == 0
   end
   
   def down
