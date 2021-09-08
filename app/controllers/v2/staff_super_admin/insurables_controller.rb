@@ -12,7 +12,29 @@ module V2
       before_action :set_agency, only: [:create]
 
       def index
-        super_index(:@insurables, Insurable.all)
+        query = Insurable.all
+
+        if params[:tenant]
+          query =
+            query.
+              joins(
+                leases: {
+                  lease_users: {
+                    user: :profile
+                  }
+                }
+              ).
+              where(
+                lease_users: {
+                  primary: true
+                },
+                leases: {
+                  status: 'current'
+                }
+              ).where('profiles.full_name ILIKE ?', "%#{params[:tenant]}%")
+        end
+
+        super_index(:@insurables, query)
       end
 
       def show; end

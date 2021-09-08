@@ -145,7 +145,7 @@ class Lease < ApplicationRecord
   
   def primary_user
     lease_user = lease_users.where(primary: true).take
-    lease_user.user.nil? ? nil : lease_user.user  
+    lease_user&.user
   end
   
   private
