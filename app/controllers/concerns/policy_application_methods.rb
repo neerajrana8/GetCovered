@@ -223,8 +223,7 @@ module PolicyApplicationMethods
   end
   
   def use_translations_for_msi_coverage_options!(response_tr)
-    response_tr[:coverage_options].each do |coverage_opt|
-      uid = coverage_opt["uid"]
+    response_tr[:coverage_options].each do |uid, coverage_opt|
       title = I18n.t("coverage_options.#{uid}_title")
       description = I18n.t("coverage_options.#{uid}_desc")
       coverage_opt["description"] = description unless description.include?('translation missing')
