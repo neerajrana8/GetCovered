@@ -28,7 +28,7 @@ class UpgradeInsurableRateConfiguration < ActiveRecord::Migration[5.2]
     msis = ::MsiService.new
     # usa
     msis.extract_insurable_rate_configuration(nil,
-      *{
+      **{
         configurer: carrier,
         configurable: ::InsurableGeographicalCategory.get_for(state: nil),
         use_default_rules_for: 'USA'
@@ -36,7 +36,7 @@ class UpgradeInsurableRateConfiguration < ActiveRecord::Migration[5.2]
     ).save!
     # ga counties
     msis.extract_insurable_rate_configuration(nil,
-      *{
+      **{
         configurer: carrier,
         configurable: ::InsurableGeographicalCategory.get_for(state: state, counties: ['Bryan', 'Camden', 'Chatham', 'Glynn', 'Liberty', 'McIntosh']),
         use_default_rules_for: 'GA_COUNTIES'
