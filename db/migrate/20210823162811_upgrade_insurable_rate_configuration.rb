@@ -45,7 +45,7 @@ class UpgradeInsurableRateConfiguration < ActiveRecord::Migration[5.2]
       }.merge(specialz)
     ).save!
     # get per-state igc data
-    by_igc = ::Event.where(process: 'msi_get_product_definition', status: 'success', eventable_type: "InsurableGeographicalCategory").group_by{|evt| evt.eventable }.transform_values do |evts|
+    by_igc = ::Event.where(process: 'msi_get_product_definition', status: 'success', eventable_type: "InsurableGeographicalCategory").group_by{|evt| evt.eventable }.select{|k,v| !k.nil? }.transform_values do |evts|
       resp = evts.max{|evt| evt.created_at }.response
       next (HTTParty::Parser.call(resp, :xml) rescue JSON.parse(resp.gsub("=>",":"))) # because legacy boiz were saving the hash, unfortunately
     end

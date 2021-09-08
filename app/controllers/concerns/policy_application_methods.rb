@@ -197,7 +197,6 @@ module PolicyApplicationMethods
           perform_estimate: inputs[:estimate_premium] ? true : false,
           # overrides
           agency: Agency.where(id: residential_get_coverage_options_params[:agency_id].to_i || 0).take,
-          preferred: preferred,
         }.merge(
           residential_get_coverage_options_params[:account_id].blank? ? {} : { account: Account.where(id: residential_get_coverage_options_params[:account_id]).take }
         ).merge(preferred ? {} : {
