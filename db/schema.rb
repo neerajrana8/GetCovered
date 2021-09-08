@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_08_30_182101) do
+ActiveRecord::Schema.define(version: 2021_09_03_082114) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
@@ -822,6 +822,7 @@ ActiveRecord::Schema.define(version: 2021_08_30_182101) do
     t.boolean "preferred_ho4", default: false, null: false
     t.boolean "occupied", default: false
     t.boolean "confirmed", default: true, null: false
+    t.jsonb "expanded_covered", default: {}, null: false
     t.index ["account_id"], name: "index_insurables_on_account_id"
     t.index ["agency_id"], name: "index_insurables_on_agency_id"
     t.index ["insurable_id"], name: "index_insurables_on_insurable_id"
