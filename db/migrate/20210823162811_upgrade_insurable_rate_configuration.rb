@@ -8,6 +8,7 @@ class UpgradeInsurableRateConfiguration < ActiveRecord::Migration[5.2]
     remove_column :insurable_rate_configurations, :coverage_options
     remove_column :insurable_rate_configurations, :rules
     remove_reference :insurable_rate_configurations, :carrier_insurable_type
+    InsurableRateConfiguration.reset_column_information
     regen_msi_ircs({ carrier_policy_type: CarrierPolicyType.where(carrier_id: MsiService.carrier_id, policy_type_id: PolicyType::RESIDENTIAL_ID).take }) unless irc_count == 0
   end
   
@@ -39,7 +40,7 @@ class UpgradeInsurableRateConfiguration < ActiveRecord::Migration[5.2]
     msis.extract_insurable_rate_configuration(nil,
       **{
         configurer: carrier,
-        configurable: ::InsurableGeographicalCategory.get_for(state: state, counties: ['Bryan', 'Camden', 'Chatham', 'Glynn', 'Liberty', 'McIntosh']),
+        configurable: ::InsurableGeographicalCategory.get_for(state: 'GA', counties: ['Bryan', 'Camden', 'Chatham', 'Glynn', 'Liberty', 'McIntosh']),
         use_default_rules_for: 'GA_COUNTIES'
       }.merge(specialz)
     ).save!
@@ -48,10 +49,13 @@ class UpgradeInsurableRateConfiguration < ActiveRecord::Migration[5.2]
       resp = evts.max{|evt| evt.created_at }.response
       next (HTTParty::Parser.call(resp, :xml) rescue JSON.parse(resp.gsub("=>",":"))) # because legacy boiz were saving the hash, unfortunately
     end
-    # uncomment this to get data from MSI for any missing states, as opposed to leaving them missing
-    (::InsurableGeographicalCategory::US_STATE_CODES.keys - by_igc.map{|k,v| k.state }).each do |state|
+    # get data from MSI for any missing states, as opposed to leaving them missing
+    #puts "USSC: #{::InsurableGeographicalCategory::US_STATE_CODES.keys}"
+    #puts "BIGC: #{by_igc.map{|k,v| k.state.to_sym }}"
+    #puts "MINS: #{(::InsurableGeographicalCategory::US_STATE_CODES.keys - by_igc.map{|k,v| k.state.to_sym })}"
+    (::InsurableGeographicalCategory::US_STATE_CODES.keys - by_igc.map{|k,v| k.state.to_sym }).each do |state|
       dat_igc = ::InsurableGeographicalCategory.get_for(state: state)
-      by_igc[dat_igc] = get_data_from_msi(msis, igc)
+      by_igc[dat_igc] = get_data_from_msi(msis, dat_igc)
     end
     # create per-state ircs
     by_igc.each do |igc, data|
