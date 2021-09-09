@@ -210,6 +210,7 @@
           end
     end
     post :insurables_index, action: :index, controller: :insurables
+    post 'insurables/:insurable_id/policies_index', controller: 'policies', action: :index
 
     resources :invoices, only: [ :update, :index, :show ]
 

@@ -55,6 +55,22 @@ module V2
         elsif !params[:substrate_association_provided]
           @substrate = @substrate.policies
         end
+
+        if params[:insurable_id].present?
+          insurable = Insurable.find(params[:insurable_id])
+          insurable_units_ids =
+            if InsurableType::UNITS_IDS.include?(insurable.insurable_type_id)
+              insurable.id
+            else
+              [
+                insurable.units&.pluck(:id),
+                insurable.id,
+                insurable.insurables.ids
+              ].flatten.uniq.compact
+            end
+
+          @substrate = @substrate.joins(:insurables).where(insurables: { id: insurable_units_ids })
+        end
       end
     end
   end
