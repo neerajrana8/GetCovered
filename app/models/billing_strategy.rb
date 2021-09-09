@@ -17,6 +17,10 @@ class BillingStrategy < ApplicationRecord
 
   accepts_nested_attributes_for :fees
 
+  # Scopes
+
+  scope :enabled, -> { where(enabled: true) }
+
   # Validations
 
   validates_presence_of :title, :slug

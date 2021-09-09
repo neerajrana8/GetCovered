@@ -23,7 +23,7 @@ module PolicyApplications
 
     def validate_primary_availability
       policy_users_params.each do |policy_user_params|
-        user = User.find_by_email(policy_user_params[:user_attributes][:email])
+        user = ::User.find_by_email(policy_user_params[:user_attributes][:email])
         if policy_user_params[:primary] && user.present? && user.invitation_accepted_at? && (user.email != current_user_email)
           return Failure(standard_error(:auth_error, I18n.t('policy_application_contr.validate_applicants.already_signup_with_this_email')))
         end

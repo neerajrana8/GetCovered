@@ -10,8 +10,9 @@ module V2
 
       before_action :set_carrier, only: %i[update show]
       before_action :set_substrate, only: %i[create index]
-      
+
       def index
+
         super(:@carriers, @substrate)
         render template: 'v2/shared/carriers/index', status: :ok
       end
@@ -20,19 +21,22 @@ module V2
         carrier_agencies = paginator(Carrier.find(params[:id]).agencies)
         render json: carrier_agencies, status: :ok
       end
-      
+
       def show
         render template: 'v2/shared/carriers/show', status: :ok
       end
-      
+
       def create
         if create_allowed?
-          @carrier = Carrier.create(create_params)
-          if @carrier.errors.blank?
-            render template: 'v2/shared/carriers/show', status: :created
-          else
-            render json: standard_error(:carrier_creation_error, nil, @carrier.errors.full_messages),
-                   status: :unprocessable_entity
+          ActiveRecord::Base.transaction do
+            @carrier = Carrier.create(create_params)
+            @carrier.get_or_create_universal_parent_commission_strategy if create_params[:commission_strategy_attributes].nil?
+            if @carrier.errors.blank? && @carrier.update(init_types_params)
+              render template: 'v2/shared/carriers/show', status: :created
+            else
+              render json: standard_error(:carrier_creation_error, nil, @carrier.errors.full_messages),
+                     status: :unprocessable_entity
+            end
           end
         else
           render json: { success: false, errors: ['Unauthorized Access'] },
@@ -41,64 +45,31 @@ module V2
       end
 
       def assign_agency_to_carrier
-        agency = Agency.find_by(id: params[:carrier_agency_id])
-        carrier = Carrier.find_by(id: params[:id])
-        policy_types = carrier.policy_types
-        carrier_agency = carrier.agencies
-        if carrier_agency.exists?(agency.id)
-          render json: { message: 'This agency has been already assigned to this carrier' }, status: :unprocessable_entity
-        else
-          carrier_agency << agency
-          policy_types.each do |policy_type|
-            BillingStrategy.create(carrier: carrier, agency: agency,
-                                   title: 'Monthly', enabled: true, policy_type: policy_type,
-                                   new_business: {
-                                     'payments' => [
-                                       8.37, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33
-                                     ],
-                                     'payments_per_term' => 12,
-                                     'remainder_added_to_deposit' => true
-                                   })
-            BillingStrategy.create(carrier: carrier, agency: agency,
-                                   title: 'Quarterly', enabled: true, policy_type: policy_type,
-                                   new_business: {
-                                     'payments' => [
-                                       25, 0, 0, 25, 0, 0, 25, 0, 0, 25, 0, 0
-                                     ],
-                                     'payments_per_term' => 4,
-                                     'remainder_added_to_deposit' => true
-                                   })
-            BillingStrategy.create(carrier: carrier, agency: agency,
-                                   title: 'Annually', enabled: true, policy_type: policy_type,
-                                   new_business: {
-                                     'payments' => [
-                                       100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-                                     ],
-                                     'payments_per_term' => 1,
-                                     'remainder_added_to_deposit' => true
-                                   })
-            BillingStrategy.create(carrier: carrier, agency: agency,
-                                   title: 'Bi-Annually', enabled: true, policy_type: policy_type,
-                                   new_business: {
-                                     'payments' => [
-                                       50, 0, 0, 0, 0, 0, 50, 0, 0, 0, 0, 0
-                                     ],
-                                     'payments_per_term' => 2,
-                                     'remainder_added_to_deposit' => true
-                                   })
+        agency = Agency.find_by(id: assign_to_carrier_params[:agency_id])
+        carrier = Carrier.find_by(id: assign_to_carrier_params[:carrier_id])
+
+        unless agency.nil? || carrier.nil?
+          if carrier.agencies.include?(agency)
+            render json: { message: 'This agency has been already assigned to this carrier' }, status: :unprocessable_entity
+          else
+            created = ::CarrierAgency.create(assign_to_carrier_params)
+            if created.id
+              render json: { message: 'Carrier was added to the agency' }, status: :ok
+            else
+              render json: standard_error(:something_went_wrong, "#{agency.title} could not be assigned to #{carrier.title}", created.errors.full_messages), status: :unprocessable_entity
+            end
           end
-          render json: { message: 'Carrier was added to the agency' }, status: :ok
         end
       end
 
       def billing_strategies_list
-        if params[:carrier_agency_id].present?
-          billing_strategies = paginator(BillingStrategy.where(carrier_id: params[:id], agency_id: params[:carrier_agency_id]).order(created_at: :desc))
-          render json: billing_strategies, status: :ok
-        else
-          billing_strategies = paginator(BillingStrategy.where(carrier_id: params[:id]).order(created_at: :desc))
-          render json: billing_strategies, status: :ok
-        end
+        @billing_strategies =
+          if params[:carrier_agency_id].present?
+            paginator(BillingStrategy.includes(:agency).where(carrier_id: params[:id], agency_id: params[:carrier_agency_id]).order(created_at: :desc))
+          else
+            paginator(BillingStrategy.includes(:agency).where(carrier_id: params[:id]).order(created_at: :desc))
+          end
+        render 'v2/shared/billing_strategies/index'
       end
 
       def toggle_billing_strategy
@@ -115,11 +86,14 @@ module V2
         carrier = Carrier.find(params[:id])
         agency = carrier.agencies.find_by(id: params[:carrier_agency_id])
         CarrierAgency.find_by(agency_id: agency.id, carrier_id: carrier).destroy
-        render json: { message: 'Agency was successfully unassign' }
+        render json: { message: 'Agency was successfully unassigned' }
       end
-      
+
       def update
         if update_allowed?
+          if update_params[:commission_strategy_attributes].nil? && @carrier.commission_strategy.nil?
+            @carrier.get_or_create_universal_parent_commission_strategy
+          end
           if @carrier.update(update_params)
             render template: 'v2/shared/carriers/show', status: :ok
           else
@@ -131,21 +105,21 @@ module V2
                  status: :unauthorized
         end
       end
-      
+
       private
-        
+
       def create_allowed?
         true
       end
-        
+
       def update_allowed?
         true
       end
-        
+
       def set_carrier
         @carrier = access_model(::Carrier, params[:id])
       end
-        
+
       def set_substrate
         super
         if @substrate.nil?
@@ -154,30 +128,55 @@ module V2
           @substrate = @substrate.carriers
         end
       end
-        
+      
+      def assign_to_carrier_params
+        params.require(:carrier_agency).permit(
+          :carrier_id,
+          :agency_id,
+          :external_carrier_id,
+          carrier_agency_policy_types_attributes: [
+            :policy_type_id,
+            commission_strategy_attributes: [
+              :percentage
+            ]
+          ]
+        )
+      end
+
       def create_params
         return({}) if params[:carrier].blank?
 
         to_return = params.require(:carrier).permit(
           :bindable, :call_sign, :enabled, :id,
           :integration_designation, :quotable, :rateable, :syncable,
-          :title, :verifiable, settings: {}, 
-                               carrier_policy_types_attributes: [
-                                 :policy_type_id, carrier_policy_type_availabilities_attributes: %i[state available zip_code_blacklist]
-                               ]
+          :title, :verifiable, settings: {}
         )
         to_return
       end
-        
+
+      def init_types_params
+        return({}) if params[:carrier].blank?
+
+        to_return = params.require(:carrier).permit(
+          carrier_policy_types_attributes: [
+           :policy_type_id,
+           commission_strategy_attributes: [:percentage],
+           carrier_policy_type_availabilities_attributes: %i[state available zip_code_blacklist]
+         ]
+        )
+        to_return
+      end
+
       def update_params
         return({}) if params[:carrier].blank?
 
         to_return = params.require(:carrier).permit(
           :bindable, :call_sign, :enabled, :id,
           :integration_designation, :quotable, :rateable, :syncable,
-          :title, :verifiable, 
+          :title, :verifiable,
           settings: {}, carrier_policy_types_attributes: [
             :id, :policy_type_id,
+            commission_strategy_attributes: [:percentage],
             carrier_policy_type_availabilities_attributes: %i[id state available zip_code_blacklist]
           ]
         )
@@ -192,10 +191,13 @@ module V2
         end
         to_return
       end
-        
+
       def supported_filters(called_from_orders = false)
         @calling_supported_orders = called_from_orders
         {
+          carrier_policy_types: {
+            policy_type_id: %i[scalar array]
+          }
         }
       end
 

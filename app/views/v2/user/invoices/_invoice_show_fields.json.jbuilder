@@ -1,6 +1,4 @@
-json.extract! invoice, :amount_refunded, :available_date, :created_at,
-  :invoiceable_id, :invoiceable_type,
-  :description, :due_date, :id, :number, :status, :external,
-  :status_changed, :subtotal, :tax, :term_first_date, :term_last_date,
-  :total
-
+json.extract! invoice, :number, :description, :available_date, :due_date, :created_at, :updated_at,
+  :external, :status, :status_changed, :under_review, :pending_charge_count, :pending_dispute_count, :was_missed, :was_missed_at,
+  :total_due, :total_payable, :total_pending, :total_received,
+  :invoiceable_id, :invoiceable_type

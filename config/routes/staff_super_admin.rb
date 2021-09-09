@@ -3,9 +3,7 @@
   # StaffSuperAdmin
   scope module: :staff_super_admin, path: "staff_super_admin" do
 
-    resources :accounts,
-      only: [ :index, :show ],
-      concerns: :reportable do
+    resources :accounts, only: [ :index, :show, :create, :update ], concerns: :reportable do
         member do
           get "histories",
             to: "histories#index_recordable",
@@ -27,8 +25,15 @@
           get "account_buildings",
             to: "accounts#account_buildings",
             via: "get"
+
+          put :enable
+          put :disable
         end
-      end
+    end
+
+    post :accounts_index, action: :index, controller: :accounts
+
+    resources :addresses, only: [:index]
 
     resources :refunds,
       only: [ :index, :create, :update] do
@@ -42,6 +47,13 @@
     get :buildings_communities, controller: 'dashboard', path: 'dashboard/:super_admin_id/buildings_communities'
     get :communities_list, controller: 'dashboard', path: 'dashboard/:super_admin_id/communities_list'
     get :uninsured_units, controller: 'dashboard', path: 'dashboard/:super_admin_id/uninsured_units'
+
+    resources :dashboard, only: [] do
+      collection do
+        get 'communities_data'
+        post 'communities_data_index', action: :communities_data
+      end
+    end
 
     resources :agencies,
       only: [ :create, :update, :index, :show ],
@@ -58,9 +70,10 @@
         end
 
         collection do
-          get :sub_agencies_index
+          get :sub_agencies
         end
-      end
+    end
+    post :agencies_index, action: :index, controller: :agencies
 
     resources :application_modules,
       path: "application-modules",
@@ -91,6 +104,11 @@
           delete :faq_question_delete, path: '/faqs/:faq_id/faq_question_delete/:faq_question_id'
           post :attach_images, path: '/attach_images'
         end
+
+        collection do
+          post :list
+        end
+
         post :import, on: :collection
       end
 
@@ -114,7 +132,6 @@
           get :toggle_billing_strategy
           get :billing_strategies_list
           get :commission_list
-          post :assign_agency_to_carrier
           post :unassign_agency_from_carrier
           post :add_billing_strategy
           post :add_commissions
@@ -125,9 +142,32 @@
           get :fees
           delete :destroy_fee
         end
-        post :assign_agency_to_carrier, path: 'assign-agency-to-carrier'
+        collection do
+          post :assign_agency_to_carrier
+        end
       end
-    resources :carrier_agencies, path: "carrier-agencies", only: [ :index, :show, :create, :update, :destroy ]
+
+    resources :carrier_agencies, path: "carrier-agencies", only: [ :index, :show, :create, :update, :destroy ] do
+      collection do
+        get "carrier/:carrier_id/agency/:agency_id",
+          to: "carrier_agencies#show",
+          via: "get"
+        put "carrier/:carrier_id/agency/:agency_id",
+          to: "carrier_agencies#update",
+          via: "put"
+        patch "carrier/:carrier_id/agency/:agency_id",
+          to: "carrier_agencies#update",
+          via: "patch"
+        post "carrier/:carrier_id/agency/:agency_id/info",
+          to: "carrier_agencies#parent_info",
+          via: "post"
+      end
+      member do
+        put :unassign
+        put :update_policy_types
+      end
+    end
+
     resources :carrier_agency_authorizations, path: "carrier-agency-authorizations", only: [ :update, :index, :show ] do
       member do
         post :add_fee
@@ -160,9 +200,12 @@
       end
     end
 
-    resources :commissions, only: [:index, :show, :update] do
+    resources :commissions, only: [:index, :show] do
       member do
-        put :approve
+        post :separate_for_approval
+        post :approve
+        post :mark_paid
+        post :pay_with_stripe
       end
     end
 
@@ -192,15 +235,34 @@
       end
     end
     get :agency_filters, controller: 'insurables', to: 'insurables#agency_filters', path: 'insurables/filters/agency_filters'
+    post :insurables_index, action: :index, controller: :insurables
 
     resources :insurable_types, path: "insurable-types", only: [ :index ]
 
     resources :leads, only: [:index, :show, :update]
-    resources :leads_dashboard, only: [:index]
+
+    resources :leads_dashboard, only: [:index] do
+      collection do
+        get :get_filters
+      end
+    end
+    post :leads_dashboard_index, action: :index, controller: :leads_dashboard
+
     resources :leads_dashboard_tracking_url, only: [:index]
 
-    get :get_filters, controller: 'leads_dashboard', path: 'leads_dashboard/get_filters'
+    resources :leases, only: [ :create, :update, :destroy, :index, :show ] do
+      member do
+        get "histories",
+            to: "histories#index_recordable",
+            via: "get",
+            defaults: { recordable_type: Lease }
+      end
 
+      collection do
+        post :bulk_create
+      end
+    end
+    
     resources :lease_types,
       path: "lease-types",
       only: [ :create, :update, :index, :show ]
@@ -213,13 +275,21 @@
       path: "lease-type-policy-types",
       only: [ :create, :update, :index, :show ]
 
-    resources :master_policies, path: 'master-policies', only: [ :index, :show ] do
+    resources :master_policies, path: 'master-policies', only: [:create, :update, :index, :show] do
       member do
         get :communities
         get :covered_units
+        get :available_top_insurables
         get :available_units
         get :historically_coverage_units
         get :master_policy_coverages
+        post :cover_unit
+        post :add_insurable
+        put :cancel
+        put :cancel_coverage
+        put :cancel_insurable
+        put :auto_assign_all
+        put :auto_assign_insurable
       end
     end
 
@@ -244,12 +314,21 @@
               to: "policies#get_leads",
               via: "get"
           put :update_coverage_proof
+          put :add_policy_documents
           delete :delete_policy_document
           put :refund_policy
           put :cancel_policy
         end
 
         get "search", to: 'policies#search', on: :collection
+    end
+    post :policies_index, action: :index, controller: :policies
+
+    resources :policies_dashboard, only: [] do
+      collection do
+        get 'total'
+        get 'graphs'
+      end
     end
 
     resources :policy_cancellation_requests, only: [ :index, :show ] do
@@ -310,7 +389,7 @@
     end
 
     resources :users,
-      only: [ :index, :show ] do
+      only: [ :index, :show, :update ] do
         member do
           get "histories",
             to: "histories#index_recordable",
@@ -322,5 +401,8 @@
             defaults: { authorable_type: User }
         end
       end
+
+    resources :notification_settings,
+              only: [ :index, :show, :update ]
   end
 # end

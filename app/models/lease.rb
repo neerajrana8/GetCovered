@@ -9,13 +9,15 @@ class Lease < ApplicationRecord
   # Active Record Callbacks
   after_initialize :initialize_lease
 
-  before_validation :set_type,
-    unless: proc { |lease| lease.insurable.nil? }
+  before_validation :set_type, unless: proc { |lease| lease.insurable.nil? }
 
-  before_validation :set_reference,
-    if: proc { |lease| lease.reference.nil? }
+  before_validation :set_reference, if: proc { |lease| lease.reference.nil? }
 
-  # after_commit :update_unit_occupation
+  after_commit :update_status,
+               if: Proc.new{ saved_change_to_start_date? || saved_change_to_end_date? }
+
+  after_commit :update_unit_occupation
+  after_commit :update_users_status
 
   belongs_to :account
 
@@ -49,9 +51,10 @@ class Lease < ApplicationRecord
   #  unless: Proc.new { |lease| lease.unit.nil? || account.nil? }
 
   # Allow use of .type without invoking STI
+
   self.inheritance_column = nil
 
-  enum status: %i[pending approved current expired rejected]
+  enum status: %i[pending current expired]
 
   settings index: { number_of_shards: 1 } do
     mappings dynamic: 'false' do
@@ -67,7 +70,7 @@ class Lease < ApplicationRecord
 
   # Lease.activate
   def activate
-    if status == 'approved'
+    if status != 'current' && (start_date..end_date === Time.zone.now)
       update status: 'current'
       # update covered: true if unit.covered
 
@@ -85,52 +88,66 @@ class Lease < ApplicationRecord
       related_records_list.each do |related|
         send(related)&.histories&.create(related_history)
       end
-
-      unless covered
-        # Create Coverage Required Notification Here...
-      end
-
     end
   end
 
   # Lease.deactivate
   def deactivate
-    if status == 'current'
-      update status: 'expired'
+    return unless status == 'current'
 
-      related_history = {
-        data: {
-          leases: {
-            model: 'Lease',
-            id: id,
-            message: "Lease ##{id} deactivated"
-          }
-        },
-        action: 'update_related'
-      }
+    update status: 'expired'
 
-      related_records_list.each do |related|
-        send(related)&.histories&.create(related_history)
-      end
+    related_history = {
+      data: {
+        leases: {
+          model: 'Lease',
+          id: id,
+          message: "Lease ##{id} deactivated"
+        }
+      },
+      action: 'update_related'
+    }
 
+    related_records_list.each do |related|
+      send(related)&.histories&.create(related_history)
     end
   end
 
+  def update_status
+
+    new_status =
+      if (start_date..end_date) === Time.zone.now.to_date
+        'current'
+      elsif Time.zone.now.to_date < start_date
+        'pending'
+      elsif Time.zone.now.to_date > end_date
+        'expired'
+      end
+
+    update(status: new_status) unless new_status.nil?
+  end
+
   def update_unit_occupation
-    unit.update_occupation
+    insurable.update(occupied: insurable.leases.current.present?)
+  end
+
+  def update_users_status
+    users.each do |user|
+      user.update(has_current_leases: user.leases.current.exists?, has_leases: user.leases.exists?)
+    end
   end
 
   def related_records_list
     %w[insurable account]
   end
-	
-	# Lease.primary_insurable
-	
-	def primary_user
-		lease_user = lease_users.where(primary: true).take
-		return lease_user.user.nil? ? nil : lease_user.user	
-	end
-	
+  
+  # Lease.primary_insurable
+  
+  def primary_user
+    lease_user = lease_users.where(primary: true).take
+    lease_user.user.nil? ? nil : lease_user.user  
+  end
+  
   private
 
   ## Initialize Lease

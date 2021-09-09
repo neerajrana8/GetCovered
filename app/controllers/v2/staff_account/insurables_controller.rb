@@ -21,6 +21,7 @@ module V2
       def create
         if create_allowed?
           @insurable = current_staff.organizable.insurables.new(insurable_params)
+          @insurable.confirmed = true
           if @insurable.errors.none? && @insurable.save_as(current_staff)
             render :show,
                    status: :created
@@ -168,11 +169,11 @@ module V2
       def set_master_policies
         if @insurable.unit?
           @master_policy_coverage =
-            @insurable.policies.current.where(policy_type_id: PolicyType::MASTER_COVERAGE_ID).take
+            @insurable.policies.current.where(policy_type_id: PolicyType::MASTER_COVERAGES_IDS).take
           @master_policy = @master_policy_coverage&.policy
         else
           @master_policy =
-            @insurable.policies.current.where(policy_type_id: PolicyType::MASTER_ID).take
+            @insurable.policies.current.where(policy_type_id: PolicyType::MASTER_IDS).take
           @master_policy_coverage = nil
         end
       end
@@ -186,7 +187,7 @@ module V2
       def bulk_create_params
         params.require(:insurables).permit(
           common_attributes: [
-            :category, :covered, :enabled, :insurable_id,
+            :category, :covered, :enabled, :insurable_id, :occupied,
             :insurable_type_id, addresses_attributes: %i[
               city country county id latitude longitude
               plus_four state street_name street_number
@@ -201,7 +202,7 @@ module V2
         return({}) if params[:insurable].blank?
 
         to_return = params.require(:insurable).permit(
-          :category, :covered, :enabled, :insurable_id,
+          :category, :covered, :enabled, :insurable_id, :occupied,
           :insurable_type_id, :title, addresses_attributes: %i[
             city country county id latitude longitude
             plus_four state street_name street_number
@@ -224,7 +225,7 @@ module V2
         return({}) if params[:insurable].blank?
 
         to_return = params.require(:insurable).permit(
-          :covered, :enabled, :insurable_id,
+          :covered, :enabled, :insurable_id, :occupied,
           :title, addresses_attributes: %i[
             city country county id latitude longitude
             plus_four state street_name street_number
@@ -251,7 +252,14 @@ module V2
           permissions: %i[scalar array],
           insurable_type_id: %i[scalar array],
           insurable_id: %i[scalar array],
-          account_id: %i[scalar array]
+          account_id: %i[scalar array],
+          confirmed: %i[scalar],
+          created_at: %i[scalar array interval],
+          updated_at: %i[scalar array interval],
+          category: %i[scalar array],
+          covered: %i[scalar array],
+          enabled: %i[scalar array],
+          occupied: %i[scalar array]
         }
       end
 

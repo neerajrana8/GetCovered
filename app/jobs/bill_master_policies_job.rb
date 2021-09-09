@@ -12,6 +12,7 @@ class BillMasterPoliciesJob < ApplicationJob
           ::MasterPolicies::NotifyAssignedStaffsJob.perform_later(master_policy.id, invoice.id)
         end
       rescue StandardError => exception
+puts "EXCEPTION #{exception.to_s}"
         Rails.logger.error "Error during the billing of the master policy with the id #{master_policy.id}. Exception #{exception.to_s}."
       end
     end
@@ -20,6 +21,6 @@ class BillMasterPoliciesJob < ApplicationJob
   private
 
   def master_policies
-    Policy.where(policy_type_id: PolicyType::MASTER_ID)
+    Policy.where(policy_type_id: PolicyType::MASTER_IDS)
   end
 end

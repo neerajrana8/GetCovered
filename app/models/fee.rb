@@ -49,6 +49,8 @@ class Fee < ApplicationRecord
       errors.add(:assignable, 'must belong to the same agency') unless assignable.agency_id == ownerable_id
     else
       # WARNING: do nothing for now, but maybe throw an error for an invalid type selection if sure no other combinations are allowed
+      # NOTE: fees now can have assignable_type PolicyPremium and ownerable_type Carrier/Agency/CommissionStrategy (i.e. the recipient of the fee);
+      #       but there is little point to this validation, so I haven't changed it...
     end
   end
 end

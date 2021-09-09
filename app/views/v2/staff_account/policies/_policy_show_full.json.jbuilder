@@ -26,7 +26,7 @@ end
 
 json.primary_campaign_name policy.primary_user&.lead&.tracking_url&.campaign_name
 
-json.policy_coverages policy.coverages
+json.partial! 'v2/shared/policies/policy_coverages.json.jbuilder', policy: policy
 
 json.primary_insurable do
   unless policy.primary_insurable.nil?
@@ -58,3 +58,13 @@ json.documents policy.documents do |document|
   json.url link_to_document(document)
   json.preview_url link_to_document_preview(document) if document.variable?
 end
+
+json.invoices do
+  if policy.invoices.any?
+    json.array! policy.invoices.order(due_date: :asc),
+                partial: 'v2/shared/invoices/full.json.jbuilder',
+                as: :invoice
+  end
+end
+
+json.branding_profile_url policy.branding_profile&.url

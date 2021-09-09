@@ -2,6 +2,7 @@
 # file: db/seeds/setup.rb
 
 require './db/seeds/functions'
+require './db/seeds/faked-msi-responses'
 
 ##
 # Setting up base Staff
@@ -15,15 +16,44 @@ require './db/seeds/functions'
 end
 
 ##
+# Setting up GetCovered (we need a master agency for various things to work right)
+
+@get_covered = Agency.create!(
+	title: "Get Covered",
+	enabled: true,
+	whitelabel: true,
+	tos_accepted: true,
+	tos_accepted_at: Time.current,
+	tos_acceptance_ip: nil,
+	verified: false,
+	stripe_id: nil,
+	master_agency: true,
+	addresses_attributes: [
+		{
+			street_number: "265",
+			street_name: "Canal St",
+			street_two: "#205",
+			city: "New York",
+			state: "NY",
+			county: "NEW YORK",
+			zip_code: "10013",
+			primary: true
+		}
+	]
+)
+
+##
 # Setting up base Policy Types
 
 @policy_types = [
-  { title: "Residential", designation: "HO4", enabled: true },
-  { title: "Master Policy", designation: "MASTER", enabled: true },
-  { title: "Master Policy Coverage", designation: "MASTER-COVERAGE", enabled: true },
-  { title: "Commercial", designation: "BOP", enabled: true },
-  { title: "Rent Guarantee", designation: "RENT-GUARANTEE", enabled: true },
-  { title: "Security Deposit Replacement", designation: "SECURITY-DEPOSIT", enabled: true }
+  { id: 1, title: "Residential", designation: "HO4", enabled: true },
+  { id: 2, title: "Master Policy", designation: "MASTER", enabled: true, master: true },
+  { id: 3, title: "Master Policy Coverage", designation: "MASTER-COVERAGE", enabled: true, master_coverage: true, master_policy_id: 2 },
+  { id: 4, title: "Commercial", designation: "BOP", enabled: true },
+  { id: 5, title: "Rent Guarantee", designation: "RENT-GUARANTEE", enabled: true },
+  { id: 6, title: "Security Deposit Replacement", designation: "SECURITY-DEPOSIT", enabled: true },
+  { id: 7, title: "Master Security Deposit Replacement", designation: "MASTER-SECURITY-DEPOSIT", enabled: true, master: true },
+  { id: 8, title: "Master Security Deposit Replacement Coverage", designation: "MASTER-SECURITY-DEPOSIT-COVERAGE", enabled: true, master_coverage: true, master_policy_id: 7 }
 ]
 
 @policy_types.each do |pt|
@@ -126,10 +156,16 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
 @carriers.each do |c|
   carrier = Carrier.new(c)
   if carrier.save!
-    puts "Initializing carrier ##{carrier.id}..."
+    puts "Initializing carrier ##{carrier.id} (#{carrier.title})..."
     
-    carrier_policy_type = carrier.carrier_policy_types.new(application_required: carrier.id == 2 ? false : true)
+    ::CommissionStrategy.create!(
+      title: "#{carrier.title} Parent Commission",
+      percentage: 100,
+      recipient: carrier
+    )
+    
     carrier.access_tokens.create!
+    carrier_policy_type = nil
 
     # Add Residential to Queensland Business Insurance
     if carrier.id == 1
@@ -184,8 +220,9 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
 	      carrier: carrier,
 	      policy_type: policy_type,
 				application_required: true,
-        premium_refundable: true,
+        premium_proration_refunds_allowed: true,
         max_days_for_full_refund: 30,
+        commission_strategy_attributes: { recipient: @get_covered, percentage: 30 },
 				application_fields: [
 			    {
 				  	title: "Number of Insured",
@@ -225,19 +262,51 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
 				    value: 'false',
 				    options: [true, false],
 				    questionId: "5"
-			    }	      																											
-				]	      
-      )             
-                                          
-    # Add Master to Queensland Business Specialty Insurance 
+			    }
+				]
+      )
+      51.times do |state|
+        available = state == 0 || state == 11 ? false : true
+        carrier_policy_availability = CarrierPolicyTypeAvailability.create!(state: state, available: available, carrier_policy_type: carrier_policy_type)
+        carrier_policy_availability.fees.create!(title: "Origination Fee", type: :ORIGINATION, amount: 2500, enabled: true, ownerable: carrier) unless carrier.id == 4
+      end
+      # create QBE master policy
+      [::PolicyType.find(2), ::PolicyType.find(3)].each do |master_policy_type|
+        carrier_policy_type = CarrierPolicyType.create!(
+          carrier: carrier,
+          policy_type: master_policy_type,
+          application_required: false,
+          commission_strategy_attributes: { recipient: @get_covered, percentage: 30 },
+          application_fields: [],
+          application_questions: []
+        )
+        51.times do |state|
+          available = state == 0 || state == 11 ? false : true
+          carrier_policy_availability = CarrierPolicyTypeAvailability.create!(state: state, available: available, carrier_policy_type: carrier_policy_type)
+          carrier_policy_availability.fees.create!(title: "Origination Fee", type: :ORIGINATION, amount: 2500, enabled: true, ownerable: carrier) unless carrier.id == 4
+        end
+      end
+    # Add Master to Queensland Business Specialty Insurance
     elsif carrier.id == 2
-      policy_type = PolicyType.find(2)
-      policy_sub_type = PolicyType.find(3)
-      
+      [::PolicyType.find(2), ::PolicyType.find(3)].each do |policy_type|
+        carrier_policy_type = CarrierPolicyType.create!(
+          carrier: carrier,
+          policy_type: policy_type,
+          application_required: false,
+          commission_strategy_attributes: { recipient: @get_covered, percentage: 30 },
+          application_fields: [],
+          application_questions: []
+        )
+        51.times do |state|
+          available = state == 0 || state == 11 ? false : true
+          carrier_policy_availability = CarrierPolicyTypeAvailability.create!(state: state, available: available, carrier_policy_type: carrier_policy_type)
+          carrier_policy_availability.fees.create!(title: "Origination Fee", type: :ORIGINATION, amount: 2500, enabled: true, ownerable: carrier) unless carrier.id == 4
+        end
+      end
     # Add Commercial to Crum & Forester
     elsif carrier.id == 3
 			crum_service = CrumService.new()
-			crum_service.refresh_all_class_codes()
+			# crum_service.refresh_all_class_codes()
 			
       policy_type = PolicyType.find(4)
 
@@ -245,8 +314,9 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
 	      carrier: carrier,
 	      policy_type: policy_type,
 				application_required: true,
-        premium_refundable: true,
+        premium_proration_refunds_allowed: true,
         max_days_for_full_refund: 30,
+        commission_strategy_attributes: { recipient: @get_covered, percentage: 30 },
 				application_fields: {
           "business": {
           	"number_of_insured": 1,
@@ -396,7 +466,13 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
 						]
 					}																									
 				]	      
-      )  
+      )
+
+      51.times do |state|
+        available = state == 0 || state == 11 ? false : true
+        carrier_policy_availability = CarrierPolicyTypeAvailability.create!(state: state, available: available, carrier_policy_type: carrier_policy_type)
+        carrier_policy_availability.fees.create!(title: "Origination Fee", type: :ORIGINATION, amount: 2500, enabled: true, ownerable: carrier) unless carrier.id == 4
+      end
 		      
 		# Add Rental Guarantee to Pensio
 		elsif carrier.id == 4
@@ -406,8 +482,9 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
 	      carrier: carrier,
 	      policy_type: policy_type,
 				application_required: true,
-        premium_refundable: false,
+        premium_proration_refunds_allowed: false,
         max_days_for_full_refund: 30,
+        commission_strategy_attributes: { recipient: @get_covered, percentage: 30 },
 				application_fields: {
   				"monthly_rent": 0,
       		"guarantee_option": 3,
@@ -455,7 +532,12 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
     				}
   				}   				
 				}
-		  )    
+		  )
+      51.times do |state|
+        available = state == 0 || state == 11 ? false : true
+        carrier_policy_availability = CarrierPolicyTypeAvailability.create!(state: state, available: available, carrier_policy_type: carrier_policy_type)
+        carrier_policy_availability.fees.create!(title: "Origination Fee", type: :ORIGINATION, amount: 2500, enabled: true, ownerable: carrier) unless carrier.id == 4
+      end
       
     elsif carrier.id == 5
     
@@ -486,8 +568,9 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
 	      carrier: carrier,
 	      policy_type: policy_type,
 				application_required: true,
-        premium_refundable: true,
+        premium_proration_refunds_allowed: true,
         max_days_for_full_refund: 30,
+        commission_strategy_attributes: { recipient: @get_covered, percentage: 30 },
 				application_fields: [
 			    {
 				  	title: "Number of Insured",
@@ -498,6 +581,11 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
 			    }									
 				]     
       )
+      51.times do |state|
+        available = state == 0 || state == 11 ? false : true
+        carrier_policy_availability = CarrierPolicyTypeAvailability.create!(state: state, available: available, carrier_policy_type: carrier_policy_type)
+        carrier_policy_availability.fees.create!(title: "Origination Fee", type: :ORIGINATION, amount: 2500, enabled: true, ownerable: carrier) unless carrier.id == 4
+      end
       
       # Set up MSI InsurableRateConfigurations
       msis = MsiService.new
@@ -515,36 +603,41 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
         # make carrier IGC for this state
         igc = ::InsurableGeographicalCategory.get_for(state: state)
         # grab rates from MSI for this state
-        result = msis.build_request(:get_product_definition,
-          effective_date: Time.current.to_date + 2.days,
-          state: state
-        )
-        unless result
-          pp msis.errors
-          puts "!!!!!MSI GET RATES FAILURE (#{state})!!!!!"
-          exit
-        end
-        event = ::Event.new(
-          eventable: igc,
-          verb: 'post',
-          format: 'xml',
-          interface: 'REST',
-          endpoint: msis.endpoint_for(:get_product_definition),
-          process: 'msi_get_product_definition'
-        )
-        event.request = msis.compiled_rxml
-        event.save!
-        event.started = Time.now
-        result = msis.call
-        event.completed = Time.now     
-        event.response = result[:data]
-        event.status = result[:error] ? 'error' : 'success'
-        event.save!
-        if result[:error]
-          pp result[:response]&.parsed_response
-          puts ""
-          puts "!!!!!MSI GET RATES FAILURE (#{state})!!!!!"
-          exit
+        result = nil
+        unless ENV['real_msi_calls'] || Rails.env == 'production'
+          result = { data: FakedMsiResponses::RESPONSES[state] }
+        else
+          result = msis.build_request(:get_product_definition,
+            effective_date: Time.current.to_date + 2.days,
+            state: state
+          )
+          unless result
+            pp msis.errors
+            puts "!!!!!MSI GET RATES FAILURE (#{state})!!!!!"
+            exit
+          end
+          event = ::Event.new(
+            eventable: igc,
+            verb: 'post',
+            format: 'xml',
+            interface: 'REST',
+            endpoint: msis.endpoint_for(:get_product_definition),
+            process: 'msi_get_product_definition'
+          )
+          event.request = msis.compiled_rxml
+          event.save!
+          event.started = Time.now
+          result = msis.call
+          event.completed = Time.now     
+          event.response = result[:data]
+          event.status = result[:error] ? 'error' : 'success'
+          event.save!
+          if result[:error]
+            pp result[:response]&.parsed_response
+            puts ""
+            puts "!!!!!MSI GET RATES FAILURE (#{state})!!!!!"
+            exit
+          end
         end
         # build IRC for this state
         irc = msis.extract_insurable_rate_configuration(result[:data],
@@ -556,7 +649,7 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
         irc.save!
         # build county IRCs if needed
         if state.to_s == 'GA'
-          igc = ::InsurableGeographicalCategory.get_for(state: state, counties: ['Bryan', 'Camden', 'Chatham', 'Glynn', 'Liberty', 'McIntosh'])
+          igc = ::InsurableGeographicalCategory.get_for(state: state, counties: ['Bryan', 'Camden', 'Chatham', 'Glynn', 'Liberty', 'McIntosh']) 
           irc = msis.extract_insurable_rate_configuration(nil,
             configurer: carrier,
             configurable: igc,
@@ -569,18 +662,6 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
 		  
     end
     
-    # Set policy type from if else block above
-    carrier_policy_type.policy_type = policy_type
-    
-    if carrier_policy_type.save()
-      51.times do |state|
-        available = state == 0 || state == 11 ? false : true
-        carrier_policy_availability = CarrierPolicyTypeAvailability.create(state: state, available: available, carrier_policy_type: carrier_policy_type)
-        carrier_policy_availability.fees.create(title: "Origination Fee", type: :ORIGINATION, amount: 2500, enabled: true, ownerable: carrier) unless carrier.id == 4
-      end      
-    else
-      pp carrier_policy_type.errors
-    end
   
   else
     pp carrier.errors

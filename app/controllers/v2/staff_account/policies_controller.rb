@@ -8,12 +8,16 @@ module V2
       include PoliciesMethods
 
       before_action :set_policy,
-                    only: %i[update show update_coverage_proof delete_policy_document refund_policy cancel_policy get_leads]
+                    only: %i[
+                      update show update_coverage_proof delete_policy_document refund_policy 
+                      cancel_policy get_leads add_policy_documents]
+      before_action :set_optional_coverages, only: [:show]
+      
 
       before_action :set_substrate, only: [:index]
 
       def index
-        super(:@policies, @substrate)
+        super(:@policies, @substrate, invoices: :line_items)
       end
 
       def search
@@ -32,6 +36,14 @@ module V2
         @leads = [@policy.primary_user.lead]
         @site_visits=@leads.last.lead_events.order("DATE(created_at)").group("DATE(created_at)").count.keys.size
         render 'v2/shared/leads/index'
+      end
+      
+      def refund_policy
+        render json: standard_error(:refund_policy_error, "Dashboard cancellation facilities disabled for maintenance", nil)
+      end
+      
+      def cancel_policy
+        render json: standard_error(:cancel_policy_error, "Dashboard cancellation facilities disabled for maintenance", nil)
       end
 
       private

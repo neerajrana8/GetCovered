@@ -8,3 +8,6 @@ json.account do
       account: insurable.account
   end
 end
+
+json.account_title insurable.account&.title
+json.agency_title  insurable.agency&.title

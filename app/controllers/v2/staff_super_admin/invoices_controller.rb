@@ -51,27 +51,26 @@ module V2
             updated_at: [:scalar, :array, :interval],
             number: [:scalar, :array],
             status: [:scalar, :array],
+            external: [:scalar],
+            available_date: [:scalar, :array, :interval],
             due_date: [:scalar, :array, :interval],
-            total: [:scalar, :array, :interval],
-            subtotal: [:scalar, :array, :interval],
-            tax: [:scalar, :array, :interval],
-            tax_percent: [:scalar, :array, :interval],
-            user_id: [:scalar, :array],
+            
+            total_due: [:scalar, :array, :interval],
+            total_payable: [:scalar, :array, :interval],
+            total_received: [:scalar, :array, :interval],
+            
+            was_missed: [:scalar],
+            was_missed_at: [:scalar, :array, :interval],
+            under_review: [:scalar],
+            pending_charge_count: [:scalar, :array, :interval],
+            pending_dispute_count: [:scalar, :array, :interval],
+            
             invoiceable_id: [:scalar, :array],
             invoiceable_type: [:scalar, :array],
-            #policy: {
-            #  id: [:scalar, :array],
-            #  number: [:scalar, :array],
-            #  account_id: [:scalar, :array]
-            #},
-            user: {
-              id: [:scalar, :array],
-              profile: {
-                first_name: [:scalar],
-                last_name: [:scalar],
-                full_name: [:scalar]
-              }
-            }
+            payer_id: [:scalar, :array],
+            payer_type: [:scalar, :array],
+            collector_type: [:scalar, :array],
+            collector_id: [:scalar, :array]
           }
         end
 

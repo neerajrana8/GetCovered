@@ -10,22 +10,34 @@ module V2
                     only: %i[update show destroy faqs faq_create faq_update
                              faq_question_create faq_question_update attach_images export update_from_file]
 
-      def index
-        super(:@branding_profiles, BrandingProfile.where(profileable_type: 'Agency', profileable_id: @agency.id))
-      end
-
-      def show; end
-
+      
       def create
-        if create_allowed?
-          @branding_profile = @agency.branding_profiles.new(branding_profile_params)
-          if @branding_profile.errors.none? && @branding_profile.save
-            render :show, status: :created
-          else
-            render json: @branding_profile.errors, status: :unprocessable_entity
+        profileable =
+          case branding_profile_params[:profileable_type]
+          when 'Account'
+            Account.find_by_id(branding_profile_params[:profileable_id])
+          when 'Agency'
+            Agency.find_by_id(branding_profile_params[:profileable_id])
           end
+
+        if profileable.present?
+          branding_profile_outcome =
+            case profileable
+            when Agency
+              BrandingProfiles::CreateFromDefault.run(agency: profileable)
+            when Account
+              BrandingProfiles::CreateFromDefault.run(account: profileable)
+            end
+
+          @branding_profile = branding_profile_outcome.result
+          render template: 'v2/shared/branding_profiles/show', status: :created
         else
-          render json: { success: false, errors: ['Unauthorized Access'] }, status: :unauthorized
+          render json: standard_error(
+                         :branding_profile_was_not_created,
+                         'Branding profile was not created',
+                         branding_profile_outcome.errors
+                       ),
+                 status: :unprocessable_entity
         end
       end
 
@@ -100,24 +112,9 @@ module V2
       def update
         if update_allowed?
           if @branding_profile.update(branding_profile_params)
-            render :show, status: :ok
+            render template: 'v2/shared/branding_profiles/show', status: :ok
           else
             render json: @branding_profile.errors, status: :unprocessable_entity
-          end
-        else
-          render json: { success: false, errors: ['Unauthorized Access'] }, status: :unauthorized
-        end
-      end
-
-      def attach_images
-        if update_allowed?
-          logo_status = get_image_url(:logo_url) if attach_images_params[:logo_url].present?
-          logo_jpeg_status = get_image_url(:logo_jpeg_url) if attach_images_params[:logo_jpeg_url].present?
-          footer_status = get_image_url(:footer_logo_url) if attach_images_params[:footer_logo_url].present?
-          if logo_status == 'error' || logo_jpeg_status == 'error' || footer_status == 'error'
-            render json: { success: false }, status: :unprocessable_entity
-          else
-            render json: { logo_url: logo_status, logo_jpeg_url: logo_jpeg_status, footer_logo_url: footer_status }, status: :ok
           end
         else
           render json: { success: false, errors: ['Unauthorized Access'] }, status: :unauthorized
@@ -131,8 +128,14 @@ module V2
         {
           profileable_type: [:scalar],
           profileable_id: [:scalar],
-          enabled: [:scalar]
+          enabled: [:scalar],
+          url: [:scalar, :like]
         }
+      end
+      
+      def relation
+        BrandingProfile.where(profileable_type: 'Agency', profileable_id: @agency.id).
+          or BrandingProfile.where(profileable_type: 'Account', profileable_id: @agency.accounts&.ids)
       end
 
       def supported_orders
@@ -152,7 +155,7 @@ module V2
       end
 
       def set_branding_profile
-        @branding_profile = access_model(::BrandingProfile, params[:id])
+        @branding_profile = @agency.branding_profiles.find_by_id(params[:id]) || BrandingProfile.where(profileable_type: 'Account', profileable_id: @agency.accounts.ids).find_by_id(params[:id])
       end
 
       def branding_profile_params
@@ -160,9 +163,9 @@ module V2
 
         params.require(:branding_profile).permit(
           :default, :profileable_id, :profileable_type,
-          :url, :footer_logo_url, :logo_url, :subdomain, :subdomain_test, :enabled, images: [],
-                                                                                    branding_profile_attributes_attributes: %i[id name value attribute_type],
-                                                                                    styles: {}
+          :footer_logo_url, :logo_url, :subdomain, :subdomain_test, :enabled, images: [],
+                                                                              branding_profile_attributes_attributes: %i[id name value attribute_type],
+                                                                              styles: {}
         )
       end
 
@@ -184,18 +187,6 @@ module V2
         return({}) if params.blank?
 
         params.permit(:question, :answer, :faq_id, :question_order)
-      end
-
-      def attach_images_params
-        return({}) if params.blank?
-
-        params.require(:images).permit(:logo_url, :logo_jpeg_url, :footer_logo_url)
-      end
-
-      def get_image_url(field_name)
-        images = @branding_profile.images.attach(attach_images_params[field_name])
-        img_url = rails_blob_url(images.last)
-        img_url.present? && @branding_profile.update_column(field_name, img_url) ? img_url : 'error'
       end
     end
   end # module StaffAgency

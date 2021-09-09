@@ -8,12 +8,14 @@ module V2
       include PoliciesMethods
 
       before_action :set_policy,
-                    only: %i[update show refund_policy cancel_policy update_coverage_proof delete_policy_document get_leads]
+                    only: %i[update show refund_policy cancel_policy update_coverage_proof delete_policy_document
+                             get_leads add_policy_documents]
+      before_action :set_optional_coverages, only: [:show]
 
       before_action :set_substrate, only: [:index]
 
       def index
-        super(:@policies, @substrate)
+        super(:@policies, @substrate, :agency, :account, :primary_user, :primary_insurable, :carrier, :policy_type, invoices: :line_items)
       end
 
       def show; end
@@ -25,7 +27,7 @@ module V2
 
       def get_leads
         @leads = [@policy.primary_user.lead]
-        @site_visits=@leads.last.lead_events.order("DATE(created_at)").group("DATE(created_at)").count.keys.size
+        @site_visits = @leads.last.lead_events.order("DATE(created_at)").group("DATE(created_at)").count.keys.size
         render 'v2/shared/leads/index'
       end
 

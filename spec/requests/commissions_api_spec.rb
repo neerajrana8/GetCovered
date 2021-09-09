@@ -2,6 +2,7 @@ require 'rails_helper'
 include ActionController::RespondWith
 
 describe 'Commissions API spec', type: :request do
+=begin
   ActiveJob::Base.queue_adapter = :test
   before :all do
     @carrier = Carrier.first
@@ -73,5 +74,5 @@ describe 'Commissions API spec', type: :request do
     
     
   end
-  
+=end
 end 

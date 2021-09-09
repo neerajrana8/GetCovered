@@ -29,14 +29,9 @@ module CoverageReport
   # select only commercial and residential units in children and base insurables
   def insurables_units
     if self.class == ::Insurable
-      units_ids = units&.pluck(:id)
-      if units_ids.present?
-        Insurable.where(id: units_ids)
-      else
-        Insurable.none
-      end
+      units.confirmed
     else # in other cases it's a relation insurables that contains units, buildings and communities
-      insurables.units
+      insurables.units.confirmed
     end
   end
 
@@ -52,7 +47,7 @@ module CoverageReport
   def insurables_covered_by_master_policy
     insurables_units
       .joins(:policies)
-      .where(policies: { policy_type_id: PolicyType.master_policies.ids })
+      .where(policies: { policy_type_id: PolicyType.master_coverages.ids })
       .distinct
       .count
   end
@@ -61,7 +56,7 @@ module CoverageReport
     Policy.joins(:insurables).
       where(insurables: { id: insurables_units.ids }).
       distinct.
-      where.not(policy_type_id: PolicyType.master_policies.ids).
+      where.not(policy_type_id: PolicyType.master_coverages.ids).
       where(status: 'CANCELLED').
       count
   end
@@ -70,7 +65,7 @@ module CoverageReport
     Policy.joins(:insurables).
       where(insurables: { id: insurables_units.ids }).
       distinct.
-      where.not(policy_type_id: PolicyType.master_policies.ids).
+      where.not(policy_type_id: PolicyType.master_coverages.ids).
       where('expiration_date > ?', Time.zone.now).
       current
   end

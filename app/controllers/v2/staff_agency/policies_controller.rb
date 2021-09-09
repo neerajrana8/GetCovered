@@ -7,17 +7,20 @@ module V2
     class PoliciesController < StaffAgencyController
       include PoliciesMethods
       before_action :set_policy,
-                    only: %i[update show update_coverage_proof delete_policy_document refund_policy cancel_policy]
-
+                    only: %i[update show update_coverage_proof delete_policy_document refund_policy cancel_policy add_policy_documents]
+      before_action :set_optional_coverages, only: [:show]
       before_action :set_substrate, only: %i[create index add_coverage_proof]
       check_privileges 'policies.policies'
 
       def index
-        if current_staff.getcovered_agent? && params[:agency_id].nil?
-          super(:@policies, Policy.all)
-        else
-          super(:@policies, Policy.where(agency: @agency))
-        end
+        relation =
+          if current_staff.getcovered_agent? && params[:agency_id].nil?
+            Policy.all
+          else
+            Policy.where(agency: @agency)
+          end
+
+        super(:@policies, relation, :agency, :account, :primary_user, :primary_insurable, :carrier, :policy_type, invoices: :line_items)
       end
 
       def search
@@ -35,6 +38,14 @@ module V2
       def resend_policy_documents
         ::Policies::SendProofOfCoverageJob.perform_later(params[:id])
         render json: { message: 'Documents were sent' }
+      end
+      
+      def refund_policy
+        render json: standard_error(:refund_policy_error, "Dashboard cancellation facilities disabled for maintenance", nil)
+      end
+      
+      def cancel_policy
+        render json: standard_error(:cancel_policy_error, "Dashboard cancellation facilities disabled for maintenance", nil)
       end
 
       private

@@ -54,7 +54,7 @@ es:
     create:
       invalid_auth_key: "Clave de autenticación no válida"
     update_residential:
-      invalid_address: "Please enter a valid address"
+      invalid_address: "Por favor ingrese una dirección residencial válida"
     rentguarantee_complete:
       inistructions_were_sent: "Se enviaron instrucciones"
     validate_policy_users_params:
@@ -149,7 +149,7 @@ es:
     invalid_address_value: "Valor de dirección no válido"
     unable_deduce_unit: "No se puede deducir el título de la unidad de la dirección"
     not_standart_format: "no es un formato estándar (por ejemplo, 'Apartamento n. ° 2, Unidad 3, n. ° 5, etc.)"
-    request_residential_build_not_exist: "El ID de comunidad o edificio residencial solicitado no existe"
+    request_residential_build_not_exist: "El edificio/comunidad residencial solicitada no existe"
     unable_create_community_from_address: "No se pudo crear una comunidad desde la dirección"
     parent_community_not_exist: "La comunidad de padres solicitada no existe"
     parent_community_not_the_same: "La comunidad de padres solicitada no se encuentra en el mismo estado / código postal / ciudad"
@@ -164,6 +164,8 @@ es:
     commercial: 'Política de propietarios de empresas'
     rent_guarantee: 'Garantía de alquiler'
     security_deposit_replacement: 'Este Insoranke'
+    master_security_deposit_replacement: 'Security Deposit Replacement'
+    master_security_deposit_replacement_coverage: 'Security Deposit Replacement Coverage'
   policy_quote_model:
     no_policy_for_qbe: "Ninguna política vinculante para QBE Specialty"
     error_with_policy_bund: "Se produjo un error con la vinculación de la política"
@@ -263,6 +265,17 @@ es:
   msi_service:
     invalid_address: "Por favor introduce una dirección válida"
     invalid_effective_date: "La fecha de vigencia no es válida"
+    additional_interest:
+      invalid_entity_type: "Por favor, elija si el administrador de la propiedad es un individuo o una empresa"
+      company_name_required: "El nombre de la empresa del administrador de la propiedad no puede estar en blanco"
+      company_name_too_long: "El nombre de la empresa del administrador de la propiedad no puede tener más de 100 caracteres"
+      invalid_email: "El correo electrónico del administrador de la propiedad no es válido"
+      invalid_phone_number: "El número de teléfono del administrador de la propiedad no es válido"
+      first_name_required: "El nombre del administrador de la propiedad no puede estar en blanco"
+      first_name_too_long: "El nombre del administrador de la propiedad no puede tener más de 50 caracteres"
+      last_name_required: "El apellido del administrador de la propiedad no puede estar en blanco"
+      last_name_too_long: "El apellido del administrador de la propiedad no puede tener más de 50 caracteres"
+      middle_name_too_long: "El segundo nombre del administrador de la propiedad no puede tener más de 50 caracteres"
   coverage_options:
     estimated_premium_errors: 'Se requiere selección de contenido'
     cannot_be_blank_counties: "no puede dejarse en blanco si se especifican condados"

@@ -21,6 +21,7 @@ class Account < ApplicationRecord
   
   # belongs_to relationships
   belongs_to :agency
+  belongs_to :staff, optional: true # the owner
   
   # has_many relationships
   has_many :staff,

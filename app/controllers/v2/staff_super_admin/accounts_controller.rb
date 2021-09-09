@@ -5,11 +5,9 @@
 module V2
   module StaffSuperAdmin
     class AccountsController < StaffSuperAdminController
-      before_action :set_account,
-                    only: [:show]
+      before_action :set_account, only: %i[show update enable disable]
 
-      before_action :set_substrate,
-                    only: [:index]
+      before_action :set_substrate, only: [:index]
 
       def index
         if params[:short]
@@ -47,7 +45,68 @@ module V2
         render :show, status: :ok
       end
 
+      def create
+        @account = Account.new(account_params)
+
+        if @account.errors.none? && @account.save_as(current_staff)
+          render :show, status: :created
+        else
+          render json: @account.errors, status: :unprocessable_entity
+        end
+      end
+
+      def update
+        if @account.update_as(current_staff, account_params)
+          render :show, status: :ok
+        else
+          render json: @account.errors, status: :unprocessable_entity
+        end
+      end
+
+
+      def disable
+        result = Accounts::Disable.run(account: @account)
+        if result.valid?
+          render :show, status: :ok
+        else
+          render json: standard_error(:disabling_failed, 'Account was not disabled', result.errors),
+                 status: 422
+        end
+      end
+
+      def enable
+        result = Accounts::Enable.run(account: @account)
+        if result.valid?
+          render :show, status: :ok
+        else
+          render json: standard_error(:disabling_failed, 'Account was not disabled', result.errors),
+                 status: 422
+        end
+      end
+
       private
+
+      def account_params
+        permitted_params =
+          params.require(:account).permit(
+            :enabled, :staff_id, :title, :whitelabel, :agency_id, contact_info: {},
+                                                                  settings: {}, addresses_attributes: %i[
+                                                                    city country county id latitude longitude
+                                                                    plus_four state street_name street_number
+                                                                    street_two timezone zip_code
+                                                                  ]
+          )
+        existed_ids = permitted_params[:addresses_attributes]&.map { |addr| addr[:id] }
+
+        unless existed_ids.nil? || existed_ids.compact.blank?
+          (@account.addresses.pluck(:id) - existed_ids).each do |id|
+            permitted_params[:addresses_attributes] <<
+              ActionController::Parameters.new(id: id, _destroy: true).permit(:id, :_destroy)
+          end
+        end
+
+        permitted_params
+      end
 
       def view_path
         super + '/accounts'
@@ -70,6 +129,9 @@ module V2
         @calling_supported_orders = called_from_orders
         {
           id: %i[scalar array],
+          title: %i[scalar like],
+          created_at: %i[scalar array interval],
+          updated_at: %i[scalar array interval],
           agency: {
             title: %i[scalar like]
           },

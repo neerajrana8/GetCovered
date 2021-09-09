@@ -1,7 +1,7 @@
 # Confie Service Model
 # file: app/services/confie_service.rb
 #
- 
+
 require 'base64'
 require 'fileutils'
 
@@ -11,11 +11,58 @@ class ConfieService
     @agency ||= ::Agency.where(integration_designation: "confie").take
     @agency_id ||= @agency&.id
   end
-  
+
   def self.agency
     @agency ||= ::Agency.where(integration_designation: "confie").take
   end
-  
+
+  def self.create_confie_lead(application)
+    return "Policy application is for a non-Confie agency" unless application.agency_id == ::ConfieService.agency_id
+    cs = ::ConfieService.new
+    return "Failed to build create_lead request" unless (cs.build_request(:create_lead,
+      user: application.primary_user,
+      lead_id: application.id,
+      #address: application.primary_address # leaving disabled for now; will default to user.address instead
+      line_breaks: true
+    ) rescue false)
+    event = application.events.new(cs.event_params)
+    event.started = Time.now
+    result = cs.call
+    event.completed = Time.now
+    event.request = result[:response].request.raw_body
+    event.response = result[:response].response.body
+    event.status = result[:error] ? 'error' : 'success'
+    event.save
+    return "Request resulted in error" if result[:error]
+    media_code = (result[:response].parsed_response.dig("data", "media_code") rescue nil)
+    unless media_code.blank?
+      application.update(tagging_data: (application.tagging_data || {}).merge({
+        'confie_mediacode' => media_code.to_s,
+        'confie_reported' => true
+      }))
+    end
+    return nil
+  end
+
+  REQUESTS = {
+    online_policy_sale: {
+      format: 'xml',
+      endpoint: Rails.application.credentials.confie[:uri][ENV['RAILS_ENV'].to_sym]
+    },
+    create_lead: {
+      format: 'json',
+      endpoint: [
+        Rails.application.credentials.confie[:lead_uri][:create][ENV['RAILS_ENV'].to_sym],
+        Rails.application.credentials.confie[:partner_password_key][ENV['RAILS_ENV'].to_sym],
+        Rails.application.credentials.confie[:campaign][ENV['RAILS_ENV'].to_sym],
+      ].map{|v| v.chomp('/') }.join('/')
+    },
+    update_lead: {
+      format: 'json',
+      endpoint: Rails.application.credentials.confie[:lead_uri][:update][ENV['RAILS_ENV'].to_sym]
+    }
+  }
+
   STATUS_MAP = {
     'started' => 'in_progress',
     'in_progress' => 'in_progress',
@@ -28,24 +75,24 @@ class ConfieService
     'accepted' => 'accepted',
     'rejected' => 'quoted'
   }
-  
+
   include HTTParty
   include ActiveModel::Validations
   include ActiveModel::Conversion
   extend ActiveModel::Naming
-  
+
   attr_accessor :compiled_rxml, :message_content,
     :errors,
     :request,
     :action,
     :rxml,
     :coverage_codes
-  
+
   def initialize
     self.action = nil
     self.errors = nil
   end
-  
+
   def event_params
     {
       verb: 'post',
@@ -56,7 +103,7 @@ class ConfieService
       request: self.action == :online_policy_sale ? self.compiled_rxml : self.message_content
     }
   end
-  
+
   def build_request(action_name, **args)
     self.action = action_name
     self.errors = nil
@@ -67,15 +114,11 @@ class ConfieService
     end
     return self.errors.blank?
   end
-  
+
   def endpoint_for(which_call) # MOOSE WARNING: apparently the endpoint is constant
-    if which_call == :online_policy_sale
-      Rails.application.credentials.confie[:uri][ENV['RAILS_ENV'].to_sym]
-    else # :lead_info
-      Rails.application.credentials.confie[:lead_uri][ENV['RAILS_ENV'].to_sym]
-    end
+    return REQUESTS[which_call][:endpoint]
   end
-  
+
   def call
     # try to call
     call_data = {
@@ -85,84 +128,98 @@ class ConfieService
       response: nil,
       data: nil
     }
-    if self.action == :online_policy_sale
-      begin
-        call_data[:response] = HTTParty.post(endpoint_for(self.action),
-          body: compiled_rxml,
-          headers: {
-            'Content-Type' => 'text/xml',
-            'SOAPAction' => "http://appone.onesystemsinc.com/services/IInsuranceSubmissionService/SubmitPolicy"
-          },
-          ssl_version: :TLSv1_2
-        )
-      rescue StandardError => e
-        call_data = {
-          error: true,
-          code: 500,
-          message: 'Request Timeout',
-          response: e
-        }
-        puts "\nERROR\n"
-      end
-      # handle response
-      if call_data[:error]
-        puts 'ERROR ERROR ERROR'.red
-        pp call_data
-      else
-        call_data[:data] = call_data[:response].parsed_response
-        # Bad result:   {"Envelope"=>{"Body"=>{"SubmitPolicyResponse"=>{"SubmitPolicyResult"=>{"ExternalId"=>nil, "SubmissionState"=>"UnexpectedError", "SubmissionStateDescription"=>"An error has occurred during parsing policy data", "PolicyId"=>nil}}}}}
-        # Good result:  {"Envelope"=>{"Body"=>{"SubmitPolicyResponse"=>{"SubmitPolicyResult"=>{"ExternalId"=>"GC-1606249897-219099128", "SubmissionState"=>"Scheduled", "SubmissionStateDescription"=>"Policy has been scheduled for Import.", "PolicyId"=>nil}}}}}
-        case call_data[:data].dig("Envelope", "Body", "SubmitPolicyResponse", "SubmitPolicyResult", "SubmissionState")
-          when 'Scheduled'
-            # it worked! yay and hooray! let the jubilation begin!!!
-          when 'UnexpectedError'
-            call_data[:error] = true
-            call_data[:message] = "Request failed externally"
-            call_data[:external_message] = call_data[:data].dig("Envelope", "Body", "SubmitPolicyResponse", "SubmitPolicyResult", "SubmissionStateDescription")
-            call_data[:code] = 400 # the actual Response object gives code 200, what the heck?
-          else
-            call_data[:error] = true
-            call_data[:message] = "Request failed externally"
-            call_data[:external_message] = "No state description submitted"
-            call_data[:code] = 400
+    case self.action
+      when :online_policy_sale
+        begin
+          call_data[:response] = HTTParty.post(endpoint_for(self.action),
+            body: compiled_rxml,
+            headers: {
+              'Content-Type' => 'text/xml',
+              'SOAPAction' => "http://appone.onesystemsinc.com/services/IInsuranceSubmissionService/SubmitPolicy"
+            },
+            ssl_version: :TLSv1_2
+          )
+        rescue StandardError => e
+          call_data = {
+            error: true,
+            code: 500,
+            message: 'Request Timeout',
+            response: e
+          }
+          puts "\nERROR\n"
         end
-      end
-    elsif self.action == :lead_info
-      begin
-        call_data[:response] = HTTParty.post(endpoint_for(self.action),
-          body: message_content,
-          headers: {
-            'Content-Type' => 'application/json'
-          },
-          ssl_version: :TLSv1_2
-        )
-      rescue StandardError => e
-        call_data = {
-          error: true,
-          code: 500,
-          message: 'Request Timeout',
-          response: e
-        }
-        puts "\nERROR\n"
-      end
-      # handle response
-      if call_data[:error]
-        puts 'ERROR ERROR ERROR'.red
-        pp call_data
-      else
-        call_data[:code] = call_data[:response].code
-        if call_data[:code] != 200
-          call_data[:error] = true
-          call_data[:message] = "Request failed externally"
-          call_data[:external_message] = case call_data[:response].code
-            when 404;   "Lead not found"
-            when 422;   "Mediacode is invalid"
-            when 1001;  "Lead update contains invalid data"
-            when 1003;  "Lead outside updateable time range"
-            else;       "Unknown Error"
+        # handle response
+        if call_data[:error]
+          puts 'ERROR ERROR ERROR'.red
+          pp call_data
+        else
+          call_data[:data] = call_data[:response].parsed_response
+          # Bad result:   {"Envelope"=>{"Body"=>{"SubmitPolicyResponse"=>{"SubmitPolicyResult"=>{"ExternalId"=>nil, "SubmissionState"=>"UnexpectedError", "SubmissionStateDescription"=>"An error has occurred during parsing policy data", "PolicyId"=>nil}}}}}
+          # Good result:  {"Envelope"=>{"Body"=>{"SubmitPolicyResponse"=>{"SubmitPolicyResult"=>{"ExternalId"=>"GC-1606249897-219099128", "SubmissionState"=>"Scheduled", "SubmissionStateDescription"=>"Policy has been scheduled for Import.", "PolicyId"=>nil}}}}}
+          case call_data[:data].dig("Envelope", "Body", "SubmitPolicyResponse", "SubmitPolicyResult", "SubmissionState")
+            when 'Scheduled'
+              # it worked! yay and hooray! let the jubilation begin!!!
+            when 'UnexpectedError'
+              call_data[:error] = true
+              call_data[:message] = "Request failed externally"
+              call_data[:external_message] = call_data[:data].dig("Envelope", "Body", "SubmitPolicyResponse", "SubmitPolicyResult", "SubmissionStateDescription")
+              call_data[:code] = 400 # the actual Response object gives code 200, what the heck?
+            else
+              call_data[:error] = true
+              call_data[:message] = "Request failed externally"
+              call_data[:external_message] = "No state description submitted"
+              call_data[:code] = 400
           end
         end
-      end
+      when :create_lead, :update_lead
+        begin
+          call_data[:response] = HTTParty.post(endpoint_for(self.action),
+            body: self.action == :create_lead ? "data=#{message_content}" : message_content,
+            headers: self.action == :create_lead ? {} : {
+              'Content-Type' => 'application/json'
+            },
+            ssl_version: :TLSv1_2
+          )
+        rescue StandardError => e
+          call_data = {
+            error: true,
+            code: 500,
+            message: 'Request Timeout',
+            response: e
+          }
+          puts "\nERROR\n"
+        end
+        # handle response
+        if call_data[:error]
+          puts 'ERROR ERROR ERROR'.red
+          pp call_data
+        else
+          case self.action
+            when :create_lead
+              call_data[:code] = call_data[:response].code
+              if call_data[:response].code == 200
+                call_data[:code] = call_data[:response].parsed_response&.[]('statuscode') || 500
+              end
+              if call_data[:code] != 200
+                call_data[:error] = true
+                call_data[:message] = "Request failed externally"
+                call_data[:external_message] = (call_data[:response].parsed_response&.dig("error", "user_msg") rescue nil)
+              end
+            when :update_lead
+              call_data[:code] = call_data[:response].code
+              if call_data[:code] != 200
+                call_data[:error] = true
+                call_data[:message] = "Request failed externally"
+                call_data[:external_message] = case call_data[:response].code
+                  when 404;   "Lead not found"
+                  when 422;   "Mediacode is invalid"
+                  when 1001;  "Lead update contains invalid data"
+                  when 1003;  "Lead outside updateable time range"
+                  else;       "Unknown Error"
+                end
+              end
+          end
+        end
     end
     # scream to the console for the benefit of any watchers
     display_status = call_data[:error] ? 'ERROR' : 'SUCCESS'
@@ -171,28 +228,64 @@ class ConfieService
     # all done
     return call_data
   end
-  
-  def build_lead_info(
+
+  def build_create_lead(
+    user:,
+    lead_id:,
+    address: user.address,
+    **compilation_args
+  )
+    if address.nil?
+      self.errors = { address: "cannot be blank" }
+      return false
+    end
+    # put the request together
+    self.action = :create_lead
+    self.errors = nil
+    self.message_content = {
+      lead: {
+        jornaya_lead_id: ENV['RAILS_ENV'] == 'production' ? nil : "8197cd0c-ff37-650b-0e7c-test",
+        jornaya_lead_provider_code: ENV['RAILS_ENV'] == 'production' ? nil : "8197cd0c-ff37-650b-0e7c-test",
+        id_lead: lead_id.to_s,
+        date_partner: "#{ Time.now.strftime('%Y-%m-%d') }"
+      }.compact,
+      client: {
+        first_name: user.profile.first_name,
+        last_name: user.profile.last_name,
+        phone: user.profile.contact_phone,
+        email: user.email,
+        gender: {'male'=>'male','female'=>'female','other'=>'non-binary'}[user.profile.gender],
+        zipcode: address.nil? ? nil : user.address.zip_code,
+        middle_name: user.profile.middle_name,
+        address: address.nil? ? nil : address.combined_street_address,
+        apt_suite: address.nil? ? nil : address.street_two,
+        birth_date: user.profile.birth_date.strftime('%Y-%m-%d'),
+        birth_month: user.profile.birth_date.strftime('%m')
+      }.compact
+    }.to_json # no auth here apparently... merge(get_auth_json).to_json
+    return errors.blank?
+  end
+
+  def build_update_lead(
     id:,
     mediacode:,
     status:,
     **compilation_args
   )
     # put the request together
-    self.action = :lead_info
+    self.action = :update_lead
     self.errors = nil
     self.message_content = {
       id: id.to_s,
-      mediacode: mediacode.to_s,
+      mediacode: mediacode&.to_s,
       data: {
         lead: {
           gc_status: ConfieService::STATUS_MAP[status]
         }
       }
-    }.merge(get_auth_json).to_json
+    }.compact.merge(get_auth_json).to_json
     return errors.blank?
   end
-  
 
   def build_online_policy_sale(
     policy:,
@@ -219,7 +312,7 @@ class ConfieService
           }.merge(get_insured_or_principal_for(
             policy.primary_user,
             nil,
-            for_insurable: policy.primary_insurable
+            for_insurable: policy.primary_insurable || (policy.policy_type_id == ::PolicyType::RENT_GUARANTEE_ID ? true : nil)
           ))
         ),
         "com.a1_Policy": {
@@ -234,16 +327,16 @@ class ConfieService
           LanguageCd: "EN",
           PolicyNumber: policy.number,
           CurrentTermAmt: {
-            Amt: (first_invoice.total.to_d / 100.to_d).to_s
+            Amt: (first_invoice.total_due.to_d / 100.to_d).to_s
           },
           FullTermAmt: {
             Amt: (policy.policy_quotes.accepted.order("created_at desc").limit(1).take.policy_premium.total / 100.to_d).to_s
           },
           "com.a1_Payment": payment_info(
             policy.carrier.uses_stripe? ?
-              first_invoice&.charges&.succeeded&.take
+              first_invoice&.stripe_charges&.succeeded&.take
               : first_invoice
-          ) || { MethodPaymentCd: "CreditCard", Amount: { Amt: (first_invoice.total.to_d / 100.to_d).to_s } },
+          ) || { MethodPaymentCd: "CreditCard", Amount: { Amt: (first_invoice.total_due.to_d / 100.to_d).to_s } },
           "com.a1_OnlineSalesFee": {
             Amt: "0.00"
           }
@@ -260,23 +353,18 @@ class ConfieService
           : nil
         )
       }.transform_values{|v| v.blank? ? nil : v }.compact)
-      
+
     }, **compilation_args)
     return errors.blank?
   end
-  
-  
-  
-  
-  
-  
-private
+
+  private
 
     def payment_info(charge)
       if charge.class.name == 'Invoice'
         return {
           MethodPaymentCd: "CreditCard",
-          Amount: { Amt: (charge.total.to_d / 100.to_d).to_s },
+          Amount: { Amt: (charge.total_due.to_d / 100.to_d).to_s },
           "com.a1_CreditCardInfo": {
             Number: 'NoData',
             "com.a1_CardHolder": {
@@ -321,7 +409,7 @@ private
       end
       return nil
     end
-    
+
     def address_from_stripe_source(source)
       if source.address_city && source.address_line1 && source.address_state && source.address_zip
         {
@@ -359,12 +447,12 @@ private
 
     def get_a1_policy_codes_for_policy_type(policy_type_id)
       case policy_type_id
-        when ::PolicyType::RENT_GUARANTEE_ID        
+        when ::PolicyType::RENT_GUARANTEE_ID
           return {
             "com.a1_CarrierCd": "RE",
             "com.a1_ProgramCd": "NGU"
           }
-        when ::PolicyType::RESIDENTIAL_ID        
+        when ::PolicyType::RESIDENTIAL_ID
           return {
             "com.a1_CarrierCd": "GC",
             "com.a1_ProgramCd": "REN"
@@ -398,7 +486,7 @@ private
         api_key: Rails.application.credentials.confie[:lead_key][ENV['RAILS_ENV'].to_sym]
       }
     end
-    
+
     def json_to_xml(obj, abbreviate_nils: true, closeless: false,  indent: nil, line_breaks: false, internal: false)
       # dynamic default parameters
       line_breaks = true unless indent.nil?
@@ -447,7 +535,7 @@ private
         child_string: child_string
       } : child_string
     end
-  
+
     def compile_xml(obj, line_breaks: false, **other_args)
       xml_data = json_to_xml({
         ACORD: obj
@@ -457,7 +545,7 @@ private
       )
       apply_soap_wrapper(xml_data, line_breaks: line_breaks)
     end
-    
+
     def apply_soap_wrapper(some_xml, line_breaks: true)
       json_to_xml({
         "s:Envelope": {
@@ -482,20 +570,5 @@ private
         }
       }, line_breaks: line_breaks)
     end
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+
 end
-
-

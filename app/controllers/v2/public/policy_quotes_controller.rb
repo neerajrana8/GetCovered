@@ -7,7 +7,7 @@ module V2
     class PolicyQuotesController < PublicController
       before_action :set_policy_quote
 
-      def update
+      def update # only for commercial
         @application = @policy_quote.policy_application
 
         if @policy_quote.quoted? &&
@@ -53,11 +53,13 @@ module V2
 
           if @policy_quote.policy_premium.base >= 500_000
             BillingStrategy.where(agency: @policy_quote.policy_application.agency_id, policy_type: @policy_quote.policy_application.policy_type).each do |bs|
-              response[:billing_strategies] << { id: bs.id, title: bs.title }
+              @extra_fields ||= { billing_strategies: [] }
+              @extra_fields[:billing_strategies] << { id: bs.id, title: bs.title }
             end
           end
-
-          render json: response.to_json, status: 200
+          @application = @policy_quote.policy_application
+          @quote = @policy_quote
+          render template: 'v2/public/policy_applications/create.json', status: 200
         else
           render json: { error: I18n.t('policy_quote_controller.quote_unavailable_update'), message:  I18n.t('policy_quote_controller.unable_to_update_quote') }, status: 422
         end
@@ -185,7 +187,7 @@ module V2
                 insurable = @policy_quote.policy_application.policy&.primary_insurable
                 Insurables::UpdateCoveredStatus.run!(insurable: insurable) if insurable.present? # MOOSE WARNING: shouldn't we only be running this on ho4? or, really, shouldn't this entire system be overhauled since it's from the QBE-only days?
 
-                invite_primary_user(@policy_quote.policy_application)
+                invite_primary_user(@policy_quote.policy_application) rescue nil # MOOSE WARNING: we should record it somewhere if the invitation fails...
                 
                 if @policy_quote.policy_application.carrier_id == DepositChoiceService.carrier_id
                   dcb = @policy_quote.policy.signable_documents.deposit_choice_bond.take
@@ -204,7 +206,8 @@ module V2
               render json: {
                 error: ("#{@policy_type_identifier} #{I18n.t('policy_quote_controller.could_not_be_accepted')}" unless @quote_attempt[:success]),
                 message: ("#{@policy_type_identifier} #{I18n.t('policy_quote_controller.accepted')} " if @quote_attempt[:success]).to_s + @quote_attempt[:message],
-                password_filled: @user.encrypted_password.present?
+                password_filled: @user.encrypted_password.present?,
+                policy_number:  @policy_quote&.policy&.number
               }.compact.merge(@signature_access_token.nil? ? {} : {
                 document_token: @signature_access_token.to_urlparam
               }), status: @quote_attempt[:success] ? 200 : 500

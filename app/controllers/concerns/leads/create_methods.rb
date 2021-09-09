@@ -25,7 +25,7 @@ module Leads
       tracking_url = TrackingUrl.find_by(landing_page: unescape_param(tracking_url_params["landing_page"]), campaign_source: unescape_param(tracking_url_params["campaign_source"]),
                                          campaign_medium: unescape_param(tracking_url_params["campaign_medium"]), campaign_term: unescape_param(tracking_url_params["campaign_term"]),
                                          campaign_content: unescape_param(tracking_url_params["campaign_content"]), campaign_name: unescape_param(tracking_url_params["campaign_name"]),
-                                         agency_id: agency.id) if tracking_url_params.present?
+                                         branding_profile_id: tracking_url_params["branding_profile_id"]) if tracking_url_params.present?
 
       @klaviyo_helper.lead = @lead if @lead.present?
 
@@ -35,7 +35,17 @@ module Leads
           create_params.merge({tracking_url_id: tracking_url.id}) if tracking_url.present?
           create_params.merge({agency_id: agency.id}) if agency.present?
 
-          @lead = Lead.create(create_params)
+          begin
+            @lead = Lead.create(create_params)
+          rescue ActiveRecord::RecordNotUnique
+            @lead = Lead.find_by_identifier(lead_params[:email])
+            # @lead = if lead_params[:identifier].present?
+            #   Lead.find_by_identifier(lead_params[:identifier])
+            # elsif lead_params[:email].present?
+            #   Lead.find_by_email(lead_params[:email])
+            # end
+          end
+
           Address.create(lead_address_attributes.merge(addressable: @lead)) if lead_address_attributes
           Profile.create(lead_profile_attributes.merge(profileable: @lead)) if lead_profile_attributes
           @klaviyo_helper.lead = @lead
@@ -68,7 +78,7 @@ module Leads
     end
 
     def lead_params
-      permitted = params.permit(:email, :identifier, :last_visited_page, :agency_id)
+      permitted = params.permit(:email, :identifier, :last_visited_page, :agency_id, :account_id, :branding_profile_id)
       permitted[:email] = permitted[:email].downcase
       permitted[:last_visited_page] = params[:lead_event_attributes][:data][:last_visited_page] if params[:lead_event_attributes] &&
           params[:lead_event_attributes][:data] && permitted[:last_visited_page].blank?
@@ -105,7 +115,7 @@ module Leads
       end
       permitted ||= params.
           require(:lead_event_attributes).
-          permit(:tag, :latitude, :longitude, :agency_id, :policy_type_id).tap do |whitelisted|
+          permit(:tag, :latitude, :longitude, :agency_id, :account_id, :policy_type_id, :branding_profile_id).tap do |whitelisted|
         whitelisted[:data] = data.permit!
       end
     end
@@ -114,7 +124,7 @@ module Leads
       if params[:tracking_url].present?
         params.
             require(:tracking_url).
-            permit(%i[landing_page campaign_source campaign_medium campaign_term campaign_content campaign_name])
+            permit(%i[landing_page campaign_source campaign_medium campaign_term campaign_content campaign_name branding_profile_id])
       end
     end
 

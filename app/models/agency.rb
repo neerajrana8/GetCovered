@@ -54,10 +54,9 @@ class Agency < ApplicationRecord
   has_many :branding_profiles,
     as: :profileable
 
-  has_many :commission_strategies, as: :commissionable
-
-  has_many :commissions, as: :commissionable
-  has_many :commission_deductions, as: :deductee
+  has_many :commission_strategies, as: :recipient
+  has_many :commissions, as: :recipient
+  has_many :commission_items, through: :commissions
 
   has_many :billing_strategies
 
@@ -88,6 +87,9 @@ class Agency < ApplicationRecord
   has_many :leads
 
   has_one :global_agency_permission
+
+  has_many :access_tokens,
+           as: :bearer
 
   accepts_nested_attributes_for :addresses, allow_destroy: true
   accepts_nested_attributes_for :global_agency_permission, update_only: true
@@ -216,6 +218,16 @@ class Agency < ApplicationRecord
       self.producer_code = rand(36**12).to_s(36).upcase
       break unless Agency.exists?(producer_code: producer_code)
     end
+  end
+  
+  def get_ancestor_chain
+    to_return = [self]
+    selected = self.agency
+    while !selected.nil?
+      to_return.push(selected)
+      selected = selected.agency
+    end
+    return to_return
   end
 
   private
