@@ -191,10 +191,13 @@ en:
     quote_documents_recieved: "Quote documents recieved"
     quote_inneligable_to_download: "Quote inneligable to download documents"
   msi_policy_quote:
+    carrier_must_be_qbe: "Carrier must be MSI to bind residential quote"
     invalid_payment_data: "Invalid payment data for binding policy"
     failed_to_build_bind_request: "Failed to build bind request"
+    status_must_be_quoted_or_error: "Status must be quoted or error to bind quote"
     msi_bind_failure: "MSI bind failure (Event ID:"
     msi_error: "MSI Error:"
+    invalid_pm_email: "Invalid property manager email provided"
   dc_policy_quote:
     security_deposit_replacement: "Security Deposit Replacement Bond"
     carrier_must_be_deposit_choice: "Carrier must be Deposit Choice to bind security deposit replacement quote"
