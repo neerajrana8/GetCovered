@@ -48,6 +48,7 @@ module CarrierDcInsurable
       units_ignored_for_lack_of_cip = []
       dc_units_not_in_system = []
       units_not_in_dc_system = []
+      units_entered = []
       entry_unit_ids_used = []
       unit_dc_ids = result[:data]["units"].map{|u| u["unitId"] }
       self.units.confirmed.each do |unit|
@@ -55,7 +56,7 @@ module CarrierDcInsurable
         if cip.nil?
           units_ignored_for_lack_of_cip.push(unit.id)
         else
-          entry = result[:data]["units"].find{|ue| ue["unitValue"].strip == unit.title.strip }
+          entry = result[:data]["units"].find{|ue| ue["unitValue"].strip == (unit.title&.strip || pad.street_number.strip) }
           if entry.nil?
             units_not_in_dc_system.push(unit.id)
             cip.update(
@@ -68,6 +69,7 @@ module CarrierDcInsurable
               })
             )
           else
+            units_entered.push(unit.id)
             entry_unit_ids_used.push(entry["unitId"])
             cip.update(
               external_carrier_id: entry["unitId"],
@@ -78,6 +80,7 @@ module CarrierDcInsurable
                 "dc_unit_id" => entry["unitId"]
               })
             )
+            unit.update(policy_type_ids: ((unit.policy_type_ids || []) + [::DepositChoiceService.policy_type_id]).uniq)
           end
         end
       end
@@ -107,7 +110,7 @@ module CarrierDcInsurable
           if cip.nil?
             units_ignored_for_lack_of_cip.push(unit.id)
           else
-            entry = result[:data]["units"].find{|ue| ue["unitValue"].strip == unit.title.strip }
+            entry = result[:data]["units"].find{|ue| ue["unitValue"].strip == (unit.title&.strip || pad.street_number.strip) }
             if entry.nil?
               units_not_in_dc_system.push(unit.id)
               cip.update(
@@ -120,6 +123,7 @@ module CarrierDcInsurable
                 })
               )
             else
+              units_entered.push(unit.id)
               entry_unit_ids_used.push(entry["unitId"])
               cip.update(
                 external_carrier_id: entry["unitId"],
@@ -130,19 +134,22 @@ module CarrierDcInsurable
                   "dc_unit_id" => entry["unitId"]
                 })
               )
+              unit.update(policy_type_ids: ((unit.policy_type_ids || []) + [::DepositChoiceService.policy_type_id]).uniq)
             end
           end
         end
       end
-      # save any missing unit info
+      # save log of relevant info
       @carrier_profile.update(
         data: @carrier_profile.data.merge({
           "building_address_ids" => building_address_ids,
           "dc_units_not_in_system" => unit_dc_ids.uniq.select{|u| !entry_unit_ids_used.include?(u) },
           "units_not_in_dc_system" => units_not_in_dc_system.uniq,
-          "units_ignored_for_lack_of_cip" => units_ignored_for_lack_of_cip.uniq
+          "units_ignored_for_lack_of_cip" => units_ignored_for_lack_of_cip.uniq,
+          "units_matched" => units_entered
         })
       )
+      self.update(policy_type_ids: ((self.policy_type_ids || []) + [::DepositChoiceService.policy_type_id]).uniq) unless units_entered.blank?
       # return success
       return nil
     end
