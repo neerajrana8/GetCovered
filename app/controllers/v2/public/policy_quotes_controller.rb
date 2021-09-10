@@ -196,7 +196,7 @@ module V2
               end
               unless @quote_attempt[:success]
                 render json: {
-                    error: "#{@policy_type_identifier} #{I18n.t('policy_quote_controller.could_not_be_accepted')}",
+                    error: @quote_attempt[:client_message] || "#{@policy_type_identifier} #{I18n.t('policy_quote_controller.could_not_be_accepted')}",
                     message: @quote_attempt[:message], # MOOSE WARNING: translation???
                     password_filled: @user.encrypted_password.present?
                   }.compact, status: 500
