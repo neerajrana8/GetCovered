@@ -494,7 +494,7 @@ class InsurableRateConfiguration < ApplicationRecord
               object = case rule_type
                 when 'compares_fixed';      (params.class == ::Hash ? { 'data_type' => params['data_type'], 'value' => BigDecimal(params['value'], 3) } : BigDecimal(params, 3) rescue false)
                 when 'compares_coverage';   coverage_selections[params['object']]['selection']
-                when 'compares_percent';    ({ 'data_type' => coverage_selections[params['object']]['selection']['data_type'], 'value' => (BigDecimal(coverage_selections[params['object']]['selection'], 3) * BigDecimal(params['percent'], 3) / 100.to_d).truncate(coverage_selections[params['object']]['selection']['data_type'] == 'currency' ? 0 : 3) } rescue false)
+                when 'compares_percent';    ({ 'data_type' => coverage_selections[params['object']]['selection']['data_type'], 'value' => (BigDecimal(coverage_selections[params['object']]['selection']['value'], 3) * BigDecimal(params['percent'], 3) / 100.to_d).truncate(coverage_selections[params['object']]['selection']['data_type'] == 'currency' ? 0 : 3) } rescue false)
               end
               next if object == false
               required_data_type = (object.is_a?(::Hash) ? object['data_type'] : nil)
@@ -509,7 +509,7 @@ class InsurableRateConfiguration < ApplicationRecord
               fixed = (params['fixed'].class == ::Hash ? { 'data_type' => params['fixed']['data_type'], 'value' => BigDecimal(params['fixed']['value'], 3) } : BigDecimal(params['fixed'], 3) rescue false)
               fixed_required_data_type = (fixed.class == ::Hash ? fixed['data_type'] : nil)
               fixed = (fixed.class == ::Hash ? fixed['value'] : fixed)
-              object = ({ 'data_type' => coverage_selections[params['object']]['selection']['data_type'], 'value' => (BigDecimal(coverage_selections[params['object']]['selection'], 3) * BigDecimal(params['percent'], 3) / 100.to_d).truncate(coverage_selections[params['object']]['selection']['data_type'] == 'currency' ? 0 : 3) } rescue false)
+              object = ({ 'data_type' => coverage_selections[params['object']]['selection']['data_type'], 'value' => (BigDecimal(coverage_selections[params['object']]['selection']['value'], 3) * BigDecimal(params['percent'], 3) / 100.to_d).truncate(coverage_selections[params['object']]['selection']['data_type'] == 'currency' ? 0 : 3) } rescue false)
               next if fixed == false || object == false
               required_data_type = (object.is_a?(::Hash) ? object['data_type'] : nil)
               object = (object.is_a?(::Hash) ? object['value'] : object)
