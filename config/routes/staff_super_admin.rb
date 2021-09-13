@@ -234,6 +234,8 @@
         get 'refresh-rates', to: 'insurable_rates#refresh_rates', on: :collection
       end
     end
+
+    post 'insurables/:insurable_id/policies_index', controller: 'policies', action: :index
     get :agency_filters, controller: 'insurables', to: 'insurables#agency_filters', path: 'insurables/filters/agency_filters'
     post :insurables_index, action: :index, controller: :insurables
 

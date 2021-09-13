@@ -108,7 +108,7 @@ class PolicyQuote < ApplicationRecord
         
         if bind_request[:error]
           logger.error "Bind Failure; Message: #{bind_request[:message]}"
-          quote_attempt[:message] = I18n.t('policy_quote_model.unable_to_bind_policy')
+          quote_attempt[:message] = (bind_request[:client_message] || I18n.t('policy_quote_model.unable_to_bind_policy'))
         else
           if policy_application.policy_type.title == "Residential"
             policy_number = bind_request[:data][:policy_number]
