@@ -44,6 +44,7 @@ class Account < ApplicationRecord
   has_many :policy_quotes
 
   has_many :leases
+  has_many :leads
   
   has_many :account_users
   
