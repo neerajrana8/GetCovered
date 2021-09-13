@@ -497,8 +497,8 @@ class InsurableRateConfiguration < ApplicationRecord
                 when 'compares_percent';    ({ 'data_type' => coverage_selections[params['object']]['selection']['data_type'], 'value' => (BigDecimal(coverage_selections[params['object']]['selection'], 3) * BigDecimal(params['percent'], 3) / 100.to_d).truncate(coverage_selections[params['object']]['selection']['data_type'] == 'currency' ? 0 : 3) } rescue false)
               end
               next if object == false
-              required_data_type = (object.class == ::Hash ? object['data_type'] : nil)
-              object = (object.class == ::Hash ? object['value'] : object)
+              required_data_type = (object.is_a?(::Hash) ? object['data_type'] : nil)
+              object = (object.is_a?(::Hash) ? object['value'] : object)
               # filter the options
               subject['options'] = subject['options'].select do |opt|
                 next true if required_data_type && required_data_type != opt['data_type']
@@ -511,8 +511,8 @@ class InsurableRateConfiguration < ApplicationRecord
               fixed = (fixed.class == ::Hash ? fixed['value'] : fixed)
               object = ({ 'data_type' => coverage_selections[params['object']]['selection']['data_type'], 'value' => (BigDecimal(coverage_selections[params['object']]['selection'], 3) * BigDecimal(params['percent'], 3) / 100.to_d).truncate(coverage_selections[params['object']]['selection']['data_type'] == 'currency' ? 0 : 3) } rescue false)
               next if fixed == false || object == false
-              required_data_type = (object.class == ::Hash ? object['data_type'] : nil)
-              object = (object.class == ::Hash ? object['value'] : object)
+              required_data_type = (object.is_a?(::Hash) ? object['data_type'] : nil)
+              object = (object.is_a?(::Hash) ? object['value'] : object)
               # filter the options
               subject['options'] = subject['options'].select do |opt|
                 opt_value = (opt['data_type'] == 'currency' ? Integer(opt['value']) : BigDecimal(opt['value'], 3))
