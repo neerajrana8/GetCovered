@@ -16,7 +16,7 @@ class Event < ApplicationRecord
               'patch', 'delete', 'options'], 
               _suffix: true 
               
-  enum format: ['json', 'xml']
+  enum format: ['json', 'xml', 'empty']
   
   enum interface: ['REST', 'SOAP']
   

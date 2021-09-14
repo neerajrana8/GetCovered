@@ -53,7 +53,7 @@ module CarrierDcPolicyApplication
           unless created_fee.id
             puts "  Failed to create fee! #{created_fee.errors.to_h}"
           else
-            result = premium.initialize_all(base_premium.to_i, collector: ::DepositChoiceService.carrier, filter_fees: Proc.new{|f| f.id == created_fee.id })
+            result = premium.initialize_all(chosen["ratedPremium"], collector: ::DepositChoiceService.carrier, filter_fees: Proc.new{|f| f.id == created_fee.id })
             unless result.nil?
               puts "  Failed to initialize premium! #{result}"
             else

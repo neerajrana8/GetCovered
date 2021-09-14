@@ -10,22 +10,30 @@ module CarrierMsiInsurable
     def msi_carrier_id
       5
     end
+    
+    def msi_get_carrier_status(refresh: false)
+      @msi_get_carrier_status = nil if refresh
+      return @msi_get_carrier_status ||= !::InsurableType::RESIDENTIAL_IDS.include?(self.insurable_type_id) ?
+        nil
+        : (self.confirmed && self.parent_community&.carrier_profile(::MsiService.carrier_id)&.external_carrier_id ? :preferred : :nonpreferred)
+    end
 	  
     def register_with_msi
       # load the stuff we need
       return ["Insurable must be a residential community"] if self.insurable_type.title != "Residential Community"
-	    @carrier = Carrier.where(title: 'Millennial Services Insurance').take
+      return ["Insurable must be confirmed"] if !self.confirmed
+	    @carrier = Carrier.where(id: msi_carrier_id).take
       return ["Unable to load carrier information"] if @carrier.nil?
 	    @carrier_profile = carrier_profile(@carrier.id)
-      return ["Unable to load carrier profile"] if @carrier_profile.nil?
+      self.create_carrier_profile(@carrier.id) if @carrier_profile.nil?
 	    @address = primary_address()
 	    return ["Community lacks a primary address"] if @address.nil?
       # try to build the request
-      msi_service = MsiService.new
-      succeeded = msi_service.build_request(:get_or_create_community,
+      msis = MsiService.new
+      succeeded = msis.build_request(:get_or_create_community,
         community_name:                 self.title,
-        number_of_units:                units.where(preferred_ho4: true, account_id: self.account_id).count,
-        property_manager_name:          account.title,
+        number_of_units:                residential_units.confirmed.count,
+        property_manager_name:          account&.title,
         years_professionally_managed:   (@carrier_profile.traits['professionally_managed'] != false) ?
                                           (@carrier_profile.traits['professionally_managed_year'].nil? ?
                                             6 :
@@ -41,21 +49,21 @@ module CarrierMsiInsurable
         zip:                            @address.zip_code
       )
       if !succeeded
-        if msi_service.errors.blank?
+        if msis.errors.blank?
           return ["Building GetOrCreateCommunity request failed"]
         else
-          return msi_service.errors.map{|err| "GetOrCreateCommunity service call error: #{err}" }
+          return msis.errors.map{|err| "GetOrCreateCommunity service call error: #{err}" }
         end
       end
-      event = events.new(msi_service.event_params)
-      event.request = msi_service.compiled_rxml
+      event = events.new(msis.event_params)
+      event.request = msis.compiled_rxml
       # try to execute the request
       if !event.save
         return ["Failed to save service call status-tracking Event: #{event.errors.to_h}"]
       else
         # execute & log
         event.started = Time.now
-        msi_data = msi_service.call
+        msi_data = msis.call
         event.completed = Time.now
         event.response = msi_data[:response].response.body
         event.status = msi_data[:error] ? 'error' : 'success'
@@ -108,7 +116,11 @@ module CarrierMsiInsurable
           @carrier_profile.data['msi_external_id'] = external_id
           @carrier_profile.data['registered_with_msi'] = true
           @carrier_profile.data['registered_with_msi_on'] = Time.current.strftime("%m/%d/%Y %I:%M %p")
-          self.update(preferred_ho4: true) if @carrier_profile.save
+          if @carrier_profile.save
+            subinsurables = self.query_for_full_hierarchy.where(account_id: self.account_id, insurable_type_id: ::InsurableType::RESIDENTIAL_IDS).confirmed
+            subinsurables.update_all(preferred_ho4: true)
+            subinsurables.each{|si| si.create_carrier_profile(5) }
+          end
         end
       end
       # finished successfully

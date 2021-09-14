@@ -219,29 +219,42 @@ class Agency < ApplicationRecord
       break unless Agency.exists?(producer_code: producer_code)
     end
   end
+  
+  def agency_hierarchy(include_self: true)
+    to_return = include_self ? [self] : []
+    to_add = self
+    while !(to_add = to_add.agency).nil?
+      to_return.push(to_add)
+    end
+    return to_return
+  end
+  
+  def get_agency_chain # not sure if any branches still use this name... leaving it just in case
+    agency_hierarchy
+  end
 
   private
 
-  def initialize_agency
-   # Blank for now...
-  end
-
-  def set_producer_code
-    loop do
-      self.producer_code = rand(36**12).to_s(36).upcase
-      break unless Agency.exists?(producer_code: producer_code)
+    def initialize_agency
+     # Blank for now...
     end
-  end
 
-  def parent_agency_exist
-    unless self.agency_id.nil? || parent_agencies_ids.include?(self.agency_id)
-      errors.add(:agency, I18n.t('agency_model.parent_id_incorrect'))
+    def set_producer_code
+      loop do
+        self.producer_code = rand(36**12).to_s(36).upcase
+        break unless Agency.exists?(producer_code: producer_code)
+      end
     end
-  end
 
-  def agency_to_sub_disabled
-    errors.add(:agency, I18n.t('agency_model.agency_cannot_be_updated')) if parent_agencies_ids.include?(self.agency_id) &&
-                                                                    parent_agencies_ids.include?(self.id)
-  end
+    def parent_agency_exist
+      unless self.agency_id.nil? || parent_agencies_ids.include?(self.agency_id)
+        errors.add(:agency, I18n.t('agency_model.parent_id_incorrect'))
+      end
+    end
+
+    def agency_to_sub_disabled
+      errors.add(:agency, I18n.t('agency_model.agency_cannot_be_updated')) if parent_agencies_ids.include?(self.agency_id) &&
+                                                                      parent_agencies_ids.include?(self.id)
+    end
 
 end

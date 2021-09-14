@@ -21,14 +21,6 @@ module V2
                  status: 404
           return
         end
-        if @policy_application.carrier_id == MsiService.carrier_id
-          @policy_application.coverage_selections.each do |cs|
-            if (Float(cs['selection']) rescue false)
-              cs['selection'] = { 'data_type' => 'currency', 'value' => (cs['selection'].to_d * 100.to_d).to_i }
-            end
-          end
-          @policy_application.coverage_selections = @policy_application.coverage_selections.select{|cs| cs['uid'] != '1010' && cs['uid'] != 1010 }
-        end
       end
 
       def create
@@ -121,7 +113,7 @@ module V2
           :agency => @access_token.bearer,
           :policy_type => PolicyType.find(policy_type),
           :carrier => policy_type == 1 ? Carrier.find(5) : Carrier.find(4),
-          :account => policy_type == 1 ? Account.first : nil,
+          :account => nil,
           :effective_date => place_holder_date,
           :expiration_date => place_holder_date + 1.year
         }
@@ -286,7 +278,7 @@ module V2
         @application = PolicyApplication.new(create_security_deposit_replacement_params)
         @application.agency = @application.account&.agency || Agency.where(master_agency: true).take if @application.agency.nil?
         @application.account = @application.primary_insurable&.account if @application.account.nil?
-        @application.billing_strategy = BillingStrategy.where(carrier_id: DepositChoiceService.carrier_id, agency_id: @application.agency_id).take if @application.billing_strategy.nil? # WARNING: there should only be one (annual) right now
+        @application.billing_strategy = BillingStrategy.where(carrier_id: DepositChoiceService.carrier_id, agency_id: @application.agency_id).take # WARNING: there should only be one (annual) right now
         @application.expiration_date = @application.effective_date + 1.year unless @application.effective_date.nil?
         # try to save
         unless @application.save
@@ -351,27 +343,13 @@ module V2
         @application.agency = @application.account&.agency || Agency.where(master_agency: true).take if @application.agency.nil?
         @application.account = @application.primary_insurable&.account if @application.account.nil?
 
-        if @application.extra_settings && !@application.extra_settings['additional_interest'].blank?
+        if @application.carrier_id == MsiService.carrier_id && @application.extra_settings && !@application.extra_settings['additional_interest'].blank?
           error_message = ::MsiService.validate_msi_additional_interest(@application.extra_settings['additional_interest'])
           unless error_message.nil?
             render json: standard_error(:policy_application_save_error, I18n.t(error_message)),
                    status: 400
             return
           end
-        end
-
-        unless @application.coverage_selections.blank?
-          @application.coverage_selections.each do |cs|
-            if [ActionController::Parameters, ActiveSupport::HashWithIndifferentAccess, ::Hash].include?(cs['selection'].class)
-              cs['selection']['value'] = cs['selection']['value'].to_d / 100.to_d if cs['selection']['data_type'] == 'currency'
-              cs['selection'] = cs['selection']['value']
-            elsif [ActionController::Parameters, ::Hash].include?(cs[:selection].class)
-              cs[:selection][:value] = cs[:selection][:value].to_d / 100.to_d if cs[:selection][:data_type] == 'currency'
-              cs[:selection] = cs[:selection][:value]
-            end
-          end
-          @application.coverage_selections.select!{|cs| cs['selection'] || cs[:selection] }
-          @application.coverage_selections.push({ 'category' => 'coverage', 'options_type' => 'none', 'uid' => '1010', 'selection' => true }) unless @application.coverage_selections.any?{|co| co['uid'] == '1010' }
         end
 
         if @application.save
@@ -473,20 +451,6 @@ module V2
           unless unsaved_pis.blank?
             unsaved_pis.first.primary = true if unsaved_pis.find{|pi| pi.primary }.nil?
             @replacement_policy_insurables = unsaved_pis
-          end
-          # fix coverage options if needed
-          unless @policy_application.coverage_selections.blank?
-            @policy_application.coverage_selections.each do |cs|
-              if [ActionController::Parameters, ActiveSupport::HashWithIndifferentAccess, ::Hash].include?(cs['selection'].class)
-                cs['selection']['value'] = cs['selection']['value'].to_d / 100.to_d if cs['selection']['data_type'] == 'currency'
-                cs['selection'] = cs['selection']['value']
-              elsif [ActionController::Parameters, ::Hash].include?(cs[:selection].class)
-                cs[:selection][:value] = cs[:selection][:value].to_d / 100.to_d if cs[:selection][:data_type] == 'currency'
-                cs[:selection] = cs[:selection][:value]
-              end
-            end
-            @policy_application.coverage_selections = @policy_application.coverage_selections.select{|cs| cs['selection'] || cs[:selection] }
-            @policy_application.coverage_selections.push({ 'category' => 'coverage', 'options_type' => 'none', 'uid' => '1010', 'selection' => true }) unless @policy_application.coverage_selections.any?{|co| co['uid'] == '1010' }
           end
           # woot woot, try to update users and save
           update_users_result = update_policy_users_params.blank? ? true :
@@ -660,7 +624,7 @@ module V2
                   :auto_renew, :billing_strategy_id, :account_id, :policy_type_id,
                   :carrier_id, :agency_id, fields: [:title, :value, options: []],
                   questions:                       [:title, :value, options: []],
-                  coverage_selections: [:category, :uid, :selection, selection: [ :data_type, :value ]],
+                  coverage_selections: {}, #[:uid, :selection, selection: [ :data_type, :value ]],
                   extra_settings: [
                     # for MSI
                     :installment_day, :number_of_units, :years_professionally_managed, :year_built, :gated,

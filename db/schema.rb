@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_07_15_045543) do
+ActiveRecord::Schema.define(version: 2021_09_07_203745) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
@@ -708,6 +708,7 @@ ActiveRecord::Schema.define(version: 2021_07_15_045543) do
     t.bigint "ownerable_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "hidden", default: false, null: false
     t.index ["assignable_type", "assignable_id"], name: "index_fees_on_assignable_type_and_assignable_id"
     t.index ["ownerable_type", "ownerable_id"], name: "index_fees_on_ownerable_type_and_ownerable_id"
   end
@@ -753,16 +754,16 @@ ActiveRecord::Schema.define(version: 2021_07_15_045543) do
 
   create_table "insurable_rate_configurations", force: :cascade do |t|
     t.jsonb "carrier_info", default: {}, null: false
-    t.jsonb "coverage_options", default: [], null: false
-    t.jsonb "rules", default: {}, null: false
     t.string "configurable_type"
     t.bigint "configurable_id"
     t.string "configurer_type"
     t.bigint "configurer_id"
-    t.bigint "carrier_insurable_type_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["carrier_insurable_type_id"], name: "index_irc_cit"
+    t.jsonb "configuration", default: {}, null: false
+    t.jsonb "rates", default: {}, null: false
+    t.bigint "carrier_policy_type_id", null: false
+    t.index ["carrier_policy_type_id"], name: "index_irc_on_cpt"
     t.index ["configurable_type", "configurable_id"], name: "index_irc_configurable"
     t.index ["configurer_type", "configurer_id"], name: "index_irc_configurer"
   end
@@ -819,6 +820,7 @@ ActiveRecord::Schema.define(version: 2021_07_15_045543) do
     t.bigint "agency_id"
     t.bigint "policy_type_ids", default: [], null: false, array: true
     t.boolean "preferred_ho4", default: false, null: false
+    t.boolean "confirmed", default: true, null: false
     t.boolean "occupied", default: false
     t.index ["account_id"], name: "index_insurables_on_account_id"
     t.index ["agency_id"], name: "index_insurables_on_agency_id"
@@ -875,6 +877,7 @@ ActiveRecord::Schema.define(version: 2021_07_15_045543) do
     t.datetime "updated_at", null: false
     t.bigint "policy_type_id"
     t.bigint "agency_id"
+    t.integer "branding_profile_id"
     t.index ["agency_id"], name: "index_lead_events_on_agency_id"
     t.index ["lead_id"], name: "index_lead_events_on_lead_id"
     t.index ["policy_type_id"], name: "index_lead_events_on_policy_type_id"
@@ -894,6 +897,7 @@ ActiveRecord::Schema.define(version: 2021_07_15_045543) do
     t.integer "agency_id"
     t.boolean "archived", default: false
     t.integer "account_id"
+    t.integer "branding_profile_id"
     t.index ["email"], name: "index_leads_on_email"
     t.index ["identifier"], name: "index_leads_on_identifier", unique: true
     t.index ["tracking_url_id"], name: "index_leads_on_tracking_url_id"
@@ -1167,7 +1171,7 @@ ActiveRecord::Schema.define(version: 2021_07_15_045543) do
     t.bigint "policy_id"
     t.integer "cancellation_reason"
     t.integer "branding_profile_id"
-    t.boolean "marked_for_cancellation", default: true, null: false
+    t.boolean "marked_for_cancellation", default: false, null: false
     t.string "marked_for_cancellation_info"
     t.datetime "marked_cancellation_time"
     t.string "marked_cancellation_reason"
@@ -1254,8 +1258,9 @@ ActiveRecord::Schema.define(version: 2021_07_15_045543) do
     t.boolean "auto_pay", default: true
     t.bigint "policy_application_group_id"
     t.jsonb "coverage_selections", default: [], null: false
-    t.jsonb "extra_settings"
+    t.jsonb "extra_settings", default: {}
     t.jsonb "resolver_info"
+    t.bigint "tag_ids", default: [], null: false, array: true
     t.jsonb "tagging_data"
     t.string "error_message"
     t.integer "branding_profile_id"
@@ -1267,6 +1272,7 @@ ActiveRecord::Schema.define(version: 2021_07_15_045543) do
     t.index ["policy_application_group_id"], name: "index_policy_applications_on_policy_application_group_id"
     t.index ["policy_id"], name: "index_policy_applications_on_policy_id"
     t.index ["policy_type_id"], name: "index_policy_applications_on_policy_type_id"
+    t.index ["tag_ids"], name: "policy_application_tag_ids_index", using: :gin
   end
 
   create_table "policy_coverages", force: :cascade do |t|
@@ -1394,8 +1400,8 @@ ActiveRecord::Schema.define(version: 2021_07_15_045543) do
     t.integer "total_tax", default: 0, null: false
     t.integer "total", default: 0, null: false
     t.boolean "prorated", default: false, null: false
-    t.datetime "prorated_term_last_moment"
-    t.datetime "prorated_term_first_moment"
+    t.datetime "prorated_last_moment"
+    t.datetime "prorated_first_moment"
     t.boolean "force_no_refunds", default: false, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
@@ -1749,6 +1755,14 @@ ActiveRecord::Schema.define(version: 2021_07_15_045543) do
     t.index ["stripe_charge_id"], name: "index_stripe_refunds_on_stripe_charge_id"
   end
 
+  create_table "tags", force: :cascade do |t|
+    t.string "title"
+    t.text "description"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["title"], name: "index_tags_on_title", unique: true
+  end
+
   create_table "tracking_urls", force: :cascade do |t|
     t.string "landing_page"
     t.string "campaign_source"
@@ -1804,6 +1818,9 @@ ActiveRecord::Schema.define(version: 2021_07_15_045543) do
     t.string "mailchimp_id"
     t.integer "mailchimp_category", default: 0
     t.string "qbe_id"
+    t.boolean "has_existing_policies", default: false
+    t.boolean "has_current_leases", default: false
+    t.boolean "has_leases", default: false
     t.index ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["invitation_token"], name: "index_users_on_invitation_token", unique: true

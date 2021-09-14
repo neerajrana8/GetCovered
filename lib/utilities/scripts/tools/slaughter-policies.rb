@@ -45,13 +45,6 @@ def slaughter_policy(pr, be_merciful: false, no_repeat: [])
       condemned.push(pq)
       if pq.policy
         condemned += slaughter_policy(pq.policy_application, be_merciful: true, no_repeat: no_repeat + [pr])
-      
-        #condemned.push(pq.policy.policy_group)
-        #condemned += pq.policy.policy_coverages.to_a
-        #condemned += pq.policy.policy_users.to_a
-        #condemned += pq.policy.policy_insurables.to_a
-        #condemned += pq.policy.policy_premiums.to_a
-        #condemned.push(pq.policy)
       end
     end
     condemned.push(pr)
@@ -111,7 +104,7 @@ def kill_dem_problemz(really_kill: false)
           end
         end
       end
-      ::PolicyQuote.all.select{|pq| pq.invoices.blank? || pq.invoices.any?{|i| i.payer.nil? } }.each do |pq|
+      ::PolicyQuote.where(id: (1000...2000)).where.not(status: ['estimated', 'quote_failed']).select{|pq| pq.invoices.blank? || pq.invoices.any?{|i| i.payer.nil? } }.each do |pq|
         if really_kill
           slaughter_policy(pq)
         else

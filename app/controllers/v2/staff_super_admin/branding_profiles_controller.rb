@@ -8,14 +8,7 @@ module V2
                              faq_question_update faq_delete faq_question_delete attach_images export update_from_file]
 
       before_action :set_agency, only: [:import]
-
-      def index
-        super(:@branding_profiles, BrandingProfile)
-        render template: 'v2/shared/branding_profiles/index', status: :ok
-      end
-
-      def show; end
-
+      
       def create
         profileable = 
           case branding_profile_params[:profileable_type]
@@ -155,8 +148,13 @@ module V2
         {
           profileable_type: [:scalar],
           profileable_id: [:scalar],
+          url: [:scalar, :like],
           enabled: [:scalar]
         }
+      end
+
+      def relation
+        BrandingProfile
       end
 
       def supported_orders

@@ -115,6 +115,10 @@
           post :attach_images, path: '/attach_images'
         end
         post :import, on: :collection
+        
+        collection do
+          post :list
+        end
       end
 
     resources :branding_profile_attributes,
@@ -210,6 +214,7 @@
           end
     end
     post :insurables_index, action: :index, controller: :insurables
+    post 'insurables/:insurable_id/policies_index', controller: 'policies', action: :index
 
     resources :invoices, only: [ :update, :index, :show ]
 
@@ -275,6 +280,13 @@
       get "search", to: 'policies#search', on: :collection
     end
     post :policies_index, action: :index, controller: :policies
+
+    resources :policies_dashboard, only: [] do
+      collection do
+        get 'total'
+        get 'graphs'
+      end
+    end
 
     resources :policy_cancellation_requests, only: [ :index, :show ] do
       member do

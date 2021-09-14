@@ -35,6 +35,7 @@ class Commission < ApplicationRecord
     unless recipients.length == found.length
       found = ::Commission.where(recipient: recipients, status: 'collating')
       unless recipients.length == found.length
+        found = found.to_a
         (recipients - found.map{|f| f.recipient }).each do |rec|
           found.push(::Commission.find_or_create_by(recipient: rec, status: 'collating'))
         end

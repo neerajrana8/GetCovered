@@ -120,6 +120,11 @@
           delete :faq_question_delete, path: '/faqs/:faq_id/faq_question_delete/:faq_question_id'
           post :attach_images, path: '/attach_images'
         end
+
+        collection do
+          post :list
+        end
+
         post :import, on: :collection
       end
 
@@ -143,7 +148,6 @@
           get :toggle_billing_strategy
           get :billing_strategies_list
           get :commission_list
-          post :assign_agency_to_carrier
           post :unassign_agency_from_carrier
           post :add_billing_strategy
           post :add_commissions
@@ -154,9 +158,32 @@
           get :fees
           delete :destroy_fee
         end
-        post :assign_agency_to_carrier, path: 'assign-agency-to-carrier'
+        collection do
+          post :assign_agency_to_carrier
+        end
       end
-    resources :carrier_agencies, path: "carrier-agencies", only: [ :index, :show, :create, :update, :destroy ]
+
+    resources :carrier_agencies, path: "carrier-agencies", only: [ :index, :show, :create, :update, :destroy ] do
+      collection do
+        get "carrier/:carrier_id/agency/:agency_id",
+          to: "carrier_agencies#show",
+          via: "get"
+        put "carrier/:carrier_id/agency/:agency_id",
+          to: "carrier_agencies#update",
+          via: "put"
+        patch "carrier/:carrier_id/agency/:agency_id",
+          to: "carrier_agencies#update",
+          via: "patch"
+        post "carrier/:carrier_id/agency/:agency_id/info",
+          to: "carrier_agencies#parent_info",
+          via: "post"
+      end
+      member do
+        put :unassign
+        put :update_policy_types
+      end
+    end
+
     resources :carrier_agency_authorizations, path: "carrier-agency-authorizations", only: [ :update, :index, :show ] do
       member do
         post :add_fee
@@ -223,6 +250,8 @@
         get 'refresh-rates', to: 'insurable_rates#refresh_rates', on: :collection
       end
     end
+
+    post 'insurables/:insurable_id/policies_index', controller: 'policies', action: :index
     get :agency_filters, controller: 'insurables', to: 'insurables#agency_filters', path: 'insurables/filters/agency_filters'
     post :insurables_index, action: :index, controller: :insurables
 
@@ -313,6 +342,13 @@
     end
     post :policies_index, action: :index, controller: :policies
 
+    resources :policies_dashboard, only: [] do
+      collection do
+        get 'total'
+        get 'graphs'
+      end
+    end
+
     resources :policy_cancellation_requests, only: [ :index, :show ] do
       member do
         put :approve
@@ -371,7 +407,7 @@
     end
 
     resources :users,
-      only: [ :index, :show ] do
+      only: [ :index, :show, :update ] do
         member do
           get "histories",
             to: "histories#index_recordable",

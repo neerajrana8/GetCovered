@@ -47,7 +47,7 @@ class Policy < ApplicationRecord
   include AgencyConfiePolicy
   include RecordChange
 
-  after_create :schedule_coverage_reminders, if: -> { policy_type&.designation == 'MASTER-COVERAGE' }
+  after_create :schedule_coverage_reminders, if: -> { policy_type&.master_coverage }
 
   # after_save :start_automatic_master_coverage_policy_issue, if: -> { policy_type&.designation == 'MASTER' }
 
@@ -128,27 +128,28 @@ class Policy < ApplicationRecord
     joins(:policy_quotes).where(policy_quotes: { status: 'accepted'})
   }
   scope :master_policy_coverages, -> { where(policy_type_id: PolicyType::MASTER_COVERAGES_IDS) }
+  scope :not_master, -> { where.not(policy_type_id: PolicyType::MASTER_IDS) }
 
   accepts_nested_attributes_for :policy_premiums,
   :insurables, :policy_users, :policy_insurables, :policy_application
   accepts_nested_attributes_for :policy_coverages, allow_destroy: true
   #  after_save :update_leases, if: :saved_changes_to_status?
 
+  after_create :update_users_status
   after_commit :update_insurables_coverage,
              if: Proc.new{ saved_change_to_status? || saved_change_to_effective_date? || saved_change_to_effective_date? }
   after_destroy_commit :update_insurables_coverage
 
   validate :correct_document_mime_type
   validate :is_allowed_to_update?, on: :update
-  validate :residential_account_present
   validate :status_allowed
   validate :carrier_agency_exists
-  validate :master_policy, if: -> { policy_type&.designation == 'MASTER-COVERAGE' }
+  validate :master_policy, if: -> { policy_type&.master_coverage }
   validates :agency, presence: true, if: :in_system?
   validates :carrier, presence: true, if: :in_system?
   validates :number, uniqueness: true
 
-  validates_presence_of :expiration_date, :effective_date, unless: -> { ['MASTER-COVERAGE', 'MASTER'].include?(policy_type&.designation) }
+  validates_presence_of :expiration_date, :effective_date, unless: -> { policy_type&.master || policy_type&.master_coverage }
 
   validate :date_order,
   unless: proc { |pol| pol.effective_date.nil? || pol.expiration_date.nil? }
@@ -182,7 +183,7 @@ class Policy < ApplicationRecord
     manual_cancellation_with_refunds:     7,     # no qbe code
     manual_cancellation_without_refunds:  8    # no qbe code
   }
-  
+
   def current_quote
     self.policy_quotes.accepted.order('created_at desc').first
   end
@@ -230,10 +231,6 @@ class Policy < ApplicationRecord
     errors.add(:policy_in_system, I18n.t('policy_model.cannot_update')) if policy_in_system == true && !rent_garantee? && !residential?
   end
 
-  def residential_account_present
-    errors.add(:account, I18n.t('policy_model.account_must_be_specified')) if ![4,5].include?(policy_type_id) && account.nil?
-  end
-
   def carrier_agency_exists
     return unless in_system?
 
@@ -264,11 +261,11 @@ class Policy < ApplicationRecord
   def premium
     return policy_premiums.order("created_at").last
   end
-  
+
   def effective_moment
     self.effective_date.beginning_of_day
   end
-  
+
   def expiration_moment
     self.expiration_date.end_of_day
   end
@@ -312,6 +309,7 @@ class Policy < ApplicationRecord
 
   # Cancels a policy; returns nil if no errors, otherwise a string explaining the error
   def cancel(reason, last_active_moment = Time.current.to_date.end_of_day)
+    last_active_moment = last_active_moment.end_of_day if last_active_moment.class == ::Date
     # Flee on invalid data
     return I18n.t('policy_model.cancellation_reason_invalid') unless self.class.cancellation_reasons.has_key?(reason)
     return I18n.t('policy_model.policy_is_already_cancelled') if self.status == 'CANCELLED'
@@ -450,5 +448,11 @@ class Policy < ApplicationRecord
 
   def update_insurables_coverage
     insurables.each { |insurable| Insurables::UpdateCoveredStatus.run!(insurable: insurable) }
+  end
+
+  def update_users_status
+    users.each do |user|
+      user.update(has_existing_policies: true)
+    end
   end
 end

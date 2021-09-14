@@ -9,6 +9,7 @@ module PoliciesMethods
           user.update_attributes(user_param)
         end
       end
+      Policies::UpdateDocuments.run!(policy: @policy)
       render :show, status: :ok
     else
       render json: @policy.errors, status: :unprocessable_entity
@@ -82,9 +83,9 @@ module PoliciesMethods
   end
 
   def refund_policy
-    @policy.cancel('manual_cancellation_with_refunds', Time.zone.now.to_date)
-    if @policy.errors.any?
-      render json: standard_error(:refund_policy_error, nil, @policy.errors.full_messages)
+    error = @policy.cancel('manual_cancellation_with_refunds', Time.current.to_date.end_of_day)
+    if !error.nil?
+      render json: standard_error(:refund_policy_error, error, @policy.errors.full_messages)
     else
       Policies::CancellationMailer.
         with(policy: @policy, without_request: true).
@@ -95,9 +96,9 @@ module PoliciesMethods
   end
 
   def cancel_policy
-    @policy.cancel('manual_cancellation_without_refunds', Time.zone.now.to_date)
-    if @policy.errors.any?
-      render json: standard_error(:cancel_policy_error, nil, @policy.errors.full_messages)
+    error = @policy.cancel('manual_cancellation_without_refunds', Time.current.to_date.end_of_day)
+    if !error.nil?
+      render json: standard_error(:cancel_policy_error, error, @policy.errors.full_messages)
     else
       Policies::CancellationMailer.
         with(policy: @policy, without_request: true).
@@ -117,7 +118,7 @@ module PoliciesMethods
         [{ 'category' => 'coverage', 'options_type' => 'none', 'uid' => '1010', 'selection' => true }],
         nil,
         0,
-        @policy.policy_premiums.last&.billing_strategy&.carrier_code,
+        @policy.policy_premiums.last&.billing_strategy,
         agency: @policy.agency,
         perform_estimate: false,
         eventable: @policy.primary_insurable,
@@ -157,7 +158,7 @@ module PoliciesMethods
       policy_users_attributes: [:user_id],
       policy_coverages_attributes: %i[id policy_application_id policy_id
                                       limit deductible enabled designation],
-      policy_application_attributes: [fields: {}]
+      policy_application_attributes: [fields: {}, extra_settings: {}]
     )
   end
 
@@ -248,6 +249,9 @@ module PoliciesMethods
       policy_in_system: %i[scalar like],
       effective_date: %i[scalar like],
       expiration_date: %i[scalar like],
+      policy_insurables: {
+        insurable_id: %i[scalar array]
+      },
       users: {
         id: %i[scalar array],
         email: %i[scalar like],

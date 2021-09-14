@@ -74,6 +74,10 @@
         delete :faq_question_delete, path: '/faqs/:faq_id/faq_question_delete/:faq_question_id'
         post :attach_images, path: '/attach_images'
       end
+
+      collection do
+        post :list
+      end
     end
 
     resources :branding_profile_attributes,
@@ -137,7 +141,8 @@
           end
       end
     post :insurables_index, action: :index, controller: :insurables
-
+    post 'insurables/:insurable_id/policies_index', controller: 'policies', action: :index
+    
     resources :insurable_types, path: "insurable-types", only: [ :index ]
 
     resources :leases,
@@ -157,6 +162,14 @@
     resources :lease_types,
       path: "lease-types",
       only: [ :index ]
+
+    resources :leads, only: [:index, :show, :update]
+    resources :leads_dashboard, only: [:index] do
+      collection do
+        get :get_filters
+      end
+    end
+    post :leads_dashboard_index, action: :index, controller: :leads_dashboard
 
     resources :notes,
       only: [ :create, :update, :destroy, :index, :show ]

@@ -26,7 +26,7 @@ module AddressesMethods
               created_at: i.created_at,
               updated_at: i.updated_at,
               addresses: i.addresses,
-              insurables: i.units.select{|u| u.enabled }
+              insurables: i.units.select{|u| u.enabled && (params[:policy_type_id].to_i != ::DepositChoiceService.policy_type_id || u.policy_type_ids.include?(::DepositChoiceService.policy_type_id)) }
           )
         end
       end

@@ -10,6 +10,14 @@ require 'fileutils'
 
 class QbeService
 
+  def self.carrier_id
+    1
+  end
+  
+  def self.carrier
+    @carrier ||= ::Carrier.find(1)
+  end
+  
   include HTTParty
   include ActiveModel::Validations
   include ActiveModel::Conversion
@@ -133,7 +141,7 @@ class QbeService
         prop_county: 'SAN FRANCISCO',
         prop_state: 'CA',
         prop_zipcode: 94_115,
-        pref_facility: 'MDU',
+        pref_facility: 'FIC',
         occupancy_type: 'OTHER',
         units_on_site: 156,
         age_of_facility: 1991,
@@ -164,7 +172,7 @@ class QbeService
         prop_state: 'CA',
         prop_zipcode: 94_115,
         city_limit: 0,
-        pref_facility: 'MDU',
+        pref_facility: 'FIC',
         occupancy_type: 'OTHER',
         units_on_site: 156,
         age_of_facility: 1991,
@@ -190,17 +198,12 @@ class QbeService
         application = obj.policy_application
         premium = obj.policy_premium
         address = application.primary_insurable().primary_address()
-        cov_c = application.insurable_rates.coverage_c.take
 
         options[:data] = {
           quote: obj,
           application: application,
           premium: premium,
           billing_strategy: application.billing_strategy,
-          optional_rates: application.insurable_rates.optional,
-          coverage_c: cov_c,
-          coverage_d: address.state == 'CT' ? (cov_c.coverage_limits['coverage_c'] * 0.3) : (cov_c.coverage_limits['coverage_c'] * 0.2),
-          liability: application.insurable_rates.liability.take,
           community: application.primary_insurable().parent_community(),
           carrier_profile: application.primary_insurable().parent_community().carrier_profile(1),
           address: address,
@@ -208,7 +211,8 @@ class QbeService
           users: application.policy_users.where.not(primary: true),
           unit: application.primary_insurable,
           account: application.account,
-          agency: application.agency
+          agency: application.agency,
+          coverage_selections: application.coverage_selections
         }
 
         options[:heading][:program][:ClientName] = args[:agent_code] || Rails.application.credentials.qbe[:agent_code]

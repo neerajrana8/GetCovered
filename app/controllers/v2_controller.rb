@@ -22,7 +22,11 @@ class V2Controller < ApplicationController
 #puts data_source.to_sql
 #exit
     prequery = build_prequery(data_source, includes, (params[:filter].nil? ? {} : params[:filter].to_unsafe_h).deep_merge(fixed_filters), params[:sort].nil? ? nil : params[:sort].to_unsafe_h)
+ap "Prequery: #{prequery}"
     query = build_query(data_source, prequery)
+
+print "\nQuery: #{query.to_sql}\n"
+
 =begin
 puts ''
 puts params
@@ -490,7 +494,7 @@ exit
         else
           if value.class == ::Array
             # array of scalars
-            to_return[:hash][key] = value if forms.include?(:array) # MOOSE WARNING: verify scalar nature of array elements?
+            to_return[:hash][key] = value.map{|v| v == '_NULL_' ? nil : v } if forms.include?(:array) # MOOSE WARNING: verify scalar nature of array elements?
           elsif value.class != ::Hash && value.class != ::ActiveSupport::HashWithIndifferentAccess
             # scalar
             to_return[:hash][key] = (value == '_NULL_' ? nil : value) if forms.include?(:scalar) # MOOSE WARNING: check string, integer, etc independently?

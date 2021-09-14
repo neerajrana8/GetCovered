@@ -7,7 +7,7 @@ module V2
     class LeasesController < StaffSuperAdminController
       include LeasesMethods
 
-      before_action :set_lease, only: [:update, :destroy, :show]
+      before_action :set_lease, only: %i[update destroy show]
       before_action :parse_input_file, only: %i[bulk_create]
             
       def index
@@ -130,14 +130,15 @@ module V2
         )
       end
         
-        def update_params
-          return({}) if params[:lease].blank?
-          params.require(:lease).permit(
-            :covered, :end_date, :start_date, :status, :account_id, :insurable_id,
-            lease_users_attributes: [ :user_id ],
-            users_attributes: [ :id, :email, :password ]
-          )
-        end
+      def update_params
+        return({}) if params[:lease].blank?
+
+        params.require(:lease).permit(
+          :covered, :end_date, :start_date, :status, :account_id, :insurable_id,
+          lease_users_attributes: [:user_id],
+          users_attributes: %i[id email password]
+        )
+      end
         
       def supported_filters(called_from_orders = false)
         @calling_supported_orders = called_from_orders
@@ -149,7 +150,8 @@ module V2
           status: %i[scalar array],
           covered: [:scalar],
           insurable_id: %i[scalar array],
-          account_id: %i[scalar array]
+          account_id: %i[scalar array],
+          lease_users: { user_id: %i[scalar array] }
         }
       end
 

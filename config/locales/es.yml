@@ -54,7 +54,7 @@ es:
     create:
       invalid_auth_key: "Clave de autenticación no válida"
     update_residential:
-      invalid_address: "Please enter a valid address"
+      invalid_address: "Por favor ingrese una dirección residencial válida"
     rentguarantee_complete:
       inistructions_were_sent: "Se enviaron instrucciones"
     validate_policy_users_params:
@@ -69,8 +69,6 @@ es:
       effective_date_cannot_be_blank: "Effective_date no puede estar en blanco"
       no_security_deposit_replacement: "No hay planes de reemplazo de depósito de seguridad disponibles para esta propiedad (código de error"
     msi_get_coverage_options:
-      coverage_selections_must_be_array: "Cobertura_selecciones debe ser un conjunto de selecciones de cobertura."
-      must_include_category_and_uid: "todas las entradas de las selecciones de cobertura deben incluir una categoría y un uid"
       agency_cannot_be_blank: "agency_id no puede estar en blanco"
       effective_date_must_be_valid_date: "Effective_date debe ser una fecha válida"
       additional_insured_cannot_be_blank: "additional_insured no puede dejarse en blanco"
@@ -149,7 +147,7 @@ es:
     invalid_address_value: "Valor de dirección no válido"
     unable_deduce_unit: "No se puede deducir el título de la unidad de la dirección"
     not_standart_format: "no es un formato estándar (por ejemplo, 'Apartamento n. ° 2, Unidad 3, n. ° 5, etc.)"
-    request_residential_build_not_exist: "El ID de comunidad o edificio residencial solicitado no existe"
+    request_residential_build_not_exist: "El edificio/comunidad residencial solicitada no existe"
     unable_create_community_from_address: "No se pudo crear una comunidad desde la dirección"
     parent_community_not_exist: "La comunidad de padres solicitada no existe"
     parent_community_not_the_same: "La comunidad de padres solicitada no se encuentra en el mismo estado / código postal / ciudad"
@@ -192,8 +190,11 @@ es:
   msi_policy_quote:
     invalid_payment_data: "Datos de pago no válidos para la política vinculante"
     failed_to_build_bind_request: "Error al compilar la solicitud de vinculación"
+    status_must_be_quoted_or_error: "El estado debe estar entre comillas o error para vincular la cita"
+    carrier_must_be_msi: "El transportista debe ser MSI para vincular la cotización residencial"
     msi_bind_failure: "Error de enlace de MSI (ID de evento:"
     msi_error: "Error de MSI:"
+    invalid_pm_email: "Se proporcionó un correo electrónico del administrador de la propiedad no válido"
   dc_policy_quote:
     security_deposit_replacement: "Fianza de reemplazo de depósito de seguridad"
     carrier_must_be_deposit_choice: "El transportista debe ser Deposit Choice para vincular la cotización de reemplazo del depósito de seguridad"
