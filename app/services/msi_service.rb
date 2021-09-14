@@ -87,17 +87,17 @@ class MsiService
   OVERRIDE_SPECIFICATION = {
     'CA' =>           {@@coverage_codes[:EarthquakeDeductible][:code].to_s => { 'category' => 'deductible', 'requirement' => 'forbidden' }},                # forbid earthquake ded unless earthquake cov selected
     'FL' =>           {
-                        @@coverage_codes[:WindHailExclusion][:code].to_s => { 'category' => 'coverage', 'requirement' => 'forbidden', 'enabled' => false }, # disable Wind/Hail Exclusion in FL
+                        @@coverage_codes[:WindHailExclusion][:code].to_s => { 'category' => 'coverage', 'requirement' => 'forbidden' },                     # disable Wind/Hail Exclusion in FL
                         @@coverage_codes[:Hurricane][:code].to_s =>         { 'category' => 'deductible', 'requirement' => 'required' }                     # mandate Hurricane coverage
                       },
-    'GA' =>           {@@coverage_codes[:WindHail][:code].to_s => { 'category' => 'deductible', 'enabled' => false }},                                      # disable WindHail
-    'GA_COUNTIES' =>  {@@coverage_codes[:WindHail][:code].to_s => { 'category' => 'deductible', 'enabled' => true, 'requirement' => 'required' }},          # enable WindHail & make sure it's required for counties ['Bryan', 'Camden', 'Chatham', 'Glynn', 'Liberty', 'McIntosh']
-    'MD' =>           {@@coverage_codes[:HomeDayCare][:code].to_s => { 'category' => 'coverage', 'enabled' => false }},                                     # disable HomeDayCare in MD
+    'GA' =>           {@@coverage_codes[:WindHail][:code].to_s => { 'category' => 'deductible', 'requirement' => 'forbidden' }},                            # disable WindHail
+    'GA_COUNTIES' =>  {@@coverage_codes[:WindHail][:code].to_s => { 'category' => 'deductible', 'requirement' => 'required' }},                             # enable WindHail & make sure it's required for counties ['Bryan', 'Camden', 'Chatham', 'Glynn', 'Liberty', 'McIntosh']
+    'MD' =>           {@@coverage_codes[:HomeDayCare][:code].to_s => { 'category' => 'coverage', 'requirement' => 'forbidden' }},                           # disable HomeDayCare in MD
   }.deep_merge(['AK', 'CO', 'HI', 'KY', 'ME', 'MT', 'NC', 'NJ', 'UT', 'VT', 'WA'].map do |state|
     # disable theft deductibles for selected states
     [
       state,
-      {@@coverage_codes[:Theft][:code].to_s => { 'category' => 'deductible', 'enabled' => false }}
+      {@@coverage_codes[:Theft][:code].to_s => { 'category' => 'deductible', 'requirement' => 'forbidden' }}
     ]
   end.to_h){|k,a,b| a + b }
   
@@ -958,7 +958,7 @@ class MsiService
     irc.configuration['coverage_options'].each{|uid, co| co['description'] = DESCRIPTIONS[uid] unless DESCRIPTIONS[uid].blank? }
     # apply universal disablings
     irc.configuration['coverage_options'].select{|uid, co| UNIVERSALLY_DISABLED_COVERAGE_OPTIONS.any?{|udco| udco == uid } }
-                                         .each{|uid, co| co['enabled'] = false }
+                                         .each{|uid, co| co['requirement'] = 'forbidden' }
     # apply overrides, if any
     (OVERRIDE_SPECIFICATION[use_default_rules_for.to_s] || []).each do |uid, ovrd|
       irc.configuration['coverage_options'][uid] ||= {}

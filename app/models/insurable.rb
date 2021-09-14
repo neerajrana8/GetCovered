@@ -279,7 +279,14 @@ class Insurable < ApplicationRecord
     end
   end
 
-
+  def insurable_hierarchy(include_self: true)
+    to_return = include_self ? [self] : []
+    to_add = self
+    while !(to_add = to_add.insurable).nil?
+      to_return.push(to_add)
+    end
+    return to_return
+  end
 
   # RETURNS EITHER:
   #   nil:                      no match was found and creation wasn't allowed

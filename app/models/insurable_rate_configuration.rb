@@ -365,9 +365,9 @@ class InsurableRateConfiguration < ApplicationRecord
   
   
   # Returns an (unsaved) IRC representing the combined IRC formed by merging the entire inheritance hierarchy for some configurable
-  def self.get_inherited_irc(carrier_policy_type, configurer, configurable, agency: nil, moose: false)
+  def self.get_inherited_irc(carrier_policy_type, configurer, configurable, agency: nil, exclude_configurer: false, moose: false)
     # Alternative: merge(get_hierarchy(carrier_policy_type, configurer, configurable, agency: agency).map{|ircs| merge(ircs, true) }, false)
-    hierarchy = get_hierarchy(carrier_policy_type, configurer, configurable, agency: agency, moose: moose)
+    hierarchy = get_hierarchy(carrier_policy_type, configurer, configurable, agency: agency, exclude_configurer: exclude_configurer, moose: moose)
     merge(hierarchy.flatten, hierarchy.map.with_index{|ircs, index| ircs.map{|irc| index } }.flatten, moose: moose)
   end
   
@@ -417,13 +417,13 @@ class InsurableRateConfiguration < ApplicationRecord
   # params:
   #   carrier_policy_type:    the CPT for which to pull IRCs
   #   configurer:             an account/agency/carrier
-  #   configurable:           an InsurableGeographicalCategory or an insurable's CarrierInsurableProfile
+  #   configurable:           an InsurableGeographicalCategory or an insurable
   #   agency:                 (optional) if configurer is an account, you can provide an agency to use instead of configurer.agency if desired
   # returns:
   #   an array (ordered from least to most specific configurer) of arrays (ordered from least to most specific configurable) of IRCs
-  def self.get_hierarchy(carrier_policy_type, configurer, configurable, agency: nil, moose: false)
+  def self.get_hierarchy(carrier_policy_type, configurer, configurable, agency: nil, exclude_configurer: false, moose: false)
     # get configurer and configurable hierarchies
-    configurers = get_configurer_hierarchy(configurer, carrier_policy_type.carrier, agency: agency)
+    configurers = get_configurer_hierarchy(configurer, carrier_policy_type.carrier, agency: agency, exclude_first_level: exclude_configurer)
     configurables = get_configurable_hierarchy(configurable)
     # get the insurable rate configurations
     to_return = ::InsurableRateConfiguration.where(configurer: configurers, configurable: configurables, carrier_policy_type: carrier_policy_type)
@@ -447,11 +447,6 @@ class InsurableRateConfiguration < ApplicationRecord
     end
     
     return to_return
-  end
-  
-
-  def self.postprocess_coverage_options(options)
-    options.select{|uid,opt| opt['visible'] != false }
   end
   
   
@@ -643,7 +638,7 @@ class InsurableRateConfiguration < ApplicationRecord
     # get coverage options and selection errors
     selections = selections.select{|uid, sel| sel && sel['selection'] }
     irc = get_inherited_irc(carrier_policy_type, account || agency || carrier_policy_type.carrier, insurable, agency: agency, moose: false) ############ MOOSE GOOSE
-    coverage_options = irc.annotate_options(selections).select{|co| co['enabled'] != false }
+    coverage_options = irc.annotate_options(selections)
     selection_errors = irc.get_selection_errors(selections, coverage_options, insert_invisible_requirements: true)
     valid = selection_errors.blank?
     estimated_premium_error = valid ? nil : { internal: selection_errors, external: selection_errors }
@@ -745,7 +740,7 @@ class InsurableRateConfiguration < ApplicationRecord
         when ::QbeService.carrier_id
           if false && perform_estimate == 'final' && insurable.class == ::Insurable
             # perform getMinPrem
-            # WARNING: right now the if statement above is never satisfied, because we only invoke getMinPrem in the CarrierQbePolicyApplication concern, not here
+            # WARNING: right now the if statement above is never satisfied, because we invoke getMinPrem directly in the CarrierQbePolicyApplication concern, not here
           else
             # perform approximation using rates
             interval = { 'FL' => 'annual', 'SA' => 'bi_annual', 'QT' => 'quarter', 'QBE_MoRe' => 'month' }[billing_strategy_carrier_code]
@@ -800,7 +795,7 @@ class InsurableRateConfiguration < ApplicationRecord
     # done
     return {
       valid: valid,
-      coverage_options: coverage_options.select{|k,v| v['visible'] },
+      coverage_options: remove_overridability_data!(coverage_options.select{|k,v| v['visible'] && v['requirement'] != 'forbidden' }),
       estimated_premium: estimated_premium,
       estimated_installment: estimated_installment,
       estimated_first_payment: estimated_first_payment,
@@ -826,7 +821,7 @@ class InsurableRateConfiguration < ApplicationRecord
   
     # Class Methods
   
-    def self.get_configurer_hierarchy(configurer, carrier, agency: nil) # if configurer is an account, agency lets you choose an agency to use (default is account.agency)
+    def self.get_configurer_hierarchy(configurer, carrier, agency: nil, exclude_first_level: false) # if configurer is an account, agency lets you choose an agency to use (default is account.agency)
       to_return = [configurer]
       case configurer
         when ::Carrier
@@ -836,6 +831,7 @@ class InsurableRateConfiguration < ApplicationRecord
         when ::Account
           to_return.concat((agency || configurer.agency).agency_hierarchy(include_self: true) + [carrier])
       end
+      to_return = to_return.drop(1) if exclude_first_level
       return(to_return)
     end
     
@@ -845,16 +841,17 @@ class InsurableRateConfiguration < ApplicationRecord
       case configurable
         when ::Insurable
           address = configurable.primary_address
-          to_return = [configurable] + ::InsurableGeographicalCategory.where(state: nil)
+          to_return = configurable.insurable_hierarchy + ::InsurableGeographicalCategory.where(state: nil)
             .or(::InsurableGeographicalCategory.where(state: address.state, counties: nil))
             .or(::InsurableGeographicalCategory.where(state: address.state).where('counties @> ARRAY[?]::varchar[]', address.county))
             .to_a.sort
-        when ::CarrierInsurableProfile
-          address = configurable.insurable.primary_address
-          to_return = [configurable] + ::InsurableGeographicalCategory.where(state: nil)
-            .or(::InsurableGeographicalCategory.where(state: address.state, counties: nil))
-            .or(::InsurableGeographicalCategory.where(state: address.state).where('counties @> ARRAY[?]::varchar[]', address.county))
-            .to_a.sort
+        # used to use CIPs, but now just use Insurables directly... below is disabled but here as a museum piece in case needed l8ur
+        #when ::CarrierInsurableProfile
+        #  address = configurable.insurable.primary_address
+        #  to_return = [configurable] + ::InsurableGeographicalCategory.where(state: nil)
+        #    .or(::InsurableGeographicalCategory.where(state: address.state, counties: nil))
+        #    .or(::InsurableGeographicalCategory.where(state: address.state).where('counties @> ARRAY[?]::varchar[]', address.county))
+        #    .to_a.sort
         when ::InsurableGeographicalCategory
           to_return = ::InsurableGeographicalCategory.where(state: nil)
           unless configurable.state.nil?

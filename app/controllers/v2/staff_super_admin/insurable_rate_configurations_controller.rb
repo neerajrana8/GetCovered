@@ -7,53 +7,26 @@ module V2
         return if Rails.env == 'production' # just in case since this is temporary
         # grab params
         return unless unpack_params
-        # grab the configurable IGC and the hierarchy of configurers
+        # grab our boyo
         configurable = InsurableGeographicalCategory.get_for(state: nil)
-        configurer_list = [@agency].compact
-        configurer_list.push(configurer_list.last.agency) while !configurer_list.last.agency.nil?
-        configurer_list = [[@carrier], configurer_list.reverse]
-        configurer_list.push([@account]) unless @account.nil?
-        # drop our actual entity from the configurer list
-        if @account
-          configurer_list.pop
-        else
-          configurer_list.last.shift
-          configurer_list.pop if configurer_list.last.blank?
-        end
-        # get IRC hierarchy
-        irc_hierarchy = ::InsurableRateConfiguration.where(configurer: configurer_list.flatten, configurable_type: "InsurableGeographicalCategory", carrier_insurable_type: @carrier_insurable_type)
-        irc_hierarchy = configurer_list.map do |array|
-          ::InsurableRateConfiguration.merge(
-            array.map do |configurer|
-              ::InsurableRateConfiguration.new(
-                carrier_insurable_type: @carrier_insurable_type,
-                configurer: configurer,
-                configurable: configurable,
-                carrier_info: {},
-                rules: {},
-                coverage_options: combine_option_sets(
-                  *irc_hierarchy.select{|irc| irc.configurer == configurer }
-                               .map{|irc| irc.coverage_options }
-                ).values
-              )
-            end,
-            mutable: true,
-            allow_new_coverages: true
-          )
-        end
-        # get configurer options
-        coverage_options = []
-        irc_hierarchy.each do |irc|
-          irc.merge_parent_options!(coverage_options, mutable: false, allow_new_coverages: ::InsurableRateConfiguration::COVERAGE_ADDING_CONFIGURERS.include?(irc.configurer_type))
-          coverage_options = irc.coverage_options
-        end
-        coverage_options.select!{|co| co['enabled'] != false }
+        configurer = (@account || @agency || @carrier)
+        irc = ::InsurableRateConfiguration.get_inherited_irc(@carrier_policy_type, configurer, configurable, agency: @agency, exclude_configurer: true) # MOOSE WARNING: WRONG
+        coverage_options = ::InsurableRateConfiguration.remove_overridability_data!(
+          irc.configuration['coverage_options'].select do |uid, co|
+            co['options_type'] == 'multiple_choice'
+            &&
+            (
+              co['requirement'] != 'forbidden'
+              ||
+              irc.configuration['rules'].any?{|rule_name, rule_data| rule_data['subject'] == uid && rule_data['rule'].any?{|rewl, parmz| rewl == 'has_requirement' && parmz != 'forbidden' } }
+            )
+          end
+        ) # MOOSE WARNING: we don't do any overridability checks here, but we really should
         # get our target entity's options
-        entity_irc = ::InsurableRateConfiguration.where(carrier_insurable_type: @carrier_insurable_type, configurer: @account || @agency, configurable: configurable).take || ::InsurableRateConfiguration.new(coverage_options: [])
+        entity_irc = ::InsurableRateConfiguration.where(carrier_policy_type: @carrier_policy_type, configurer: configurer, configurable: configurable).take || ::InsurableRateConfiguration.new(configuration: { 'coverage_options' => {} })
         # annotate with our stuff
-        coverage_options.select!{|co| co['options_type'] == 'multiple_choice' }
-        coverage_options.each do |opt|
-          found = agency_irc.coverage_options.find{|co| co['uid'] == opt['uid'] }
+        coverage_options.each do |uid, opt|
+          found = entity_irc.configuration['coverage_options'][uid]
           if found.nil?
             opt['allowed_options'] = opt['options'].dup
           elsif found['enabled'] == false
@@ -80,29 +53,31 @@ module V2
         end
         # grab models
         configurable = InsurableGeographicalCategory.get_for(state: nil)
-        entity_irc = ::InsurableRateConfiguration.where(carrier_insurable_type: @carrier_insurable_type, configurer: @account || @agency, configurable: configurable).take ||
-                     ::InsurableRateConfiguration.new(carrier_insurable_type: @carrier_insurable_type, configurer: @account || @agency, configurable: configurable, coverage_options: [])
+        configurer = @account || @agency
+        entity_irc = ::InsurableRateConfiguration.where(carrier_policy_type: @carrier_policy_type, configurer: configurer, configurable: configurable).take ||
+                     ::InsurableRateConfiguration.new(carrier_policy_type: @carrier_policy_type, configurer: configurer, configurable: configurable, configuration: { 'coverage_options' => {} })
+        entity_covopts = entity_irc.configuration['coverage_options']
         # update options
-        covopts.each do |opt|
+        covopts.each do |uid, opt|
           opt['options'] = opt['allowed_options'] # simple way to let the user pass 'allowed_options' instead but leave this code IRC generic
-          found_index = entity_irc.coverage_options.find_index{|co| co&.[]('uid') == opt['uid'] }
+          found = entity_covopts[uid]
           if opt['options'].nil?
-            entity_irc.coverage_options[found_index] = nil unless found_index.nil?
+            entity_covopts[uid] = nil unless found.nil?
           elsif opt['options'].blank?
-            if found_index.nil?
-              entity_irc.coverage_options.push({ 'uid' => opt['uid'], 'category' => opt['category'], 'enabled' => false })
+            if found.nil?
+              entity_covopts[uid] = { 'requirement' => 'forbidden' }
             else
-              entity_irc.coverage_options[found_index]['enabled'] = false
+              found['requirement'] = 'forbidden'
             end
           else
-            if found_index.nil?
-              entity_irc.coverage_options.push({ 'uid' => opt['uid'], 'category' => opt['category'], 'options' => opt['options'] })
+            if found.nil?
+              entity_covopts[uid] = { 'options' => opt['options'] }
             else
-              entity_irc.coverage_options[found_index]['options'] = opt['options']
+              found['options'] = opt['options']
             end
           end
         end
-        entity_irc.coverage_options.compact!
+        entity_covopts.compact!
         if entity_irc.save
           render json: { success: true}, status: :ok
         else
@@ -115,7 +90,7 @@ module V2
       private
       
         def set_options_params
-          params.require(:insurable_rate_configuration).permit(coverage_options: [:uid, :category, allowed_options: [] ])
+          params.require(:insurable_rate_configuration).permit(coverage_options: {})
         end
         
         def unpack_params
@@ -143,29 +118,29 @@ module V2
               status: 422
             return
           end
-          # get carrier, insurable type, & carrier_insurable_type
+          # get carrier, policy type id, & carrier_policy_type
           @carrier = nil
-          @insurable_type_id = nil
-          @carrier_insurable_type = nil
-          if params[:carrier_insurable_type_id]
-            @carrier_insurable_type = ::CarrierInsurableType.where(id: params[:carrier_insurable_type_id].to_i).take
-            @carrier = @carrier_insurable_type&.carrier
-            @insurable_type_id = @carrier_insurable_type&.insurable_type_id
+          @policy_type_id = nil
+          @carrier_policy_type = nil
+          if params[:carrier_policy_type_id]
+            @carrier_policy_type = ::CarrierPolicyType.where(id: params[:carrier_policy_type_id].to_i).take
+            @carrier = @carrier_policy_type&.carrier
+            @policy_type_id = @carrier_policy_type&.policy_type_id
           else
             @carrier = ::Carrier.where(id: params[:carrier_id].to_i).take
-            @insurable_type_id = params[:insurable_type_id].nil? ? nil : params[:insurable_type_id].to_i
-            @carrier_insurable_type = ::CarrierInsurableType.where(carrier_id: @carrier&.id, insurable_type_id: @insurable_type_id).take
+            @policy_type_id = params[:policy_type_id].nil? ? nil : params[:policy_type_id].to_i
+            @carrier_policy_type = ::CarrierPolicyType.where(carrier_id: @carrier&.id, policy_type_id: @policy_type_id).take
           end
-          if !params[:carrier_insurable_type_id] && @carrier.nil?
+          if !params[:carrier_policy_type_id] && @carrier.nil?
             render json: standard_error(:carrier_not_found, "No carrier with id #{@carrier.id || 'null'} was found", nil),
               status: 422
             return
-          elsif !params[:carrier_insurable_type_id] && @insurable_type_id.nil?
-            render json: standard_error(:insurable_type_not_found, "No insurable type with id #{@insurable_type_id || 'null'} was found", nil),
+          elsif !params[:carrier_policy_type_id] && @policy_type_id.nil?
+            render json: standard_error(:policy_type_not_found, "No policy type with id #{@policy_type_id || 'null'} was found", nil),
               status: 422
             return
-          elsif @carrier_insurable_type.nil?
-            render json: standard_error(:carrier_insurable_type_not_found, "No carrier insurable type with #{params[:carrier_insurable_type_id] ? "id #{params[:carrier_insurable_type_id]}" : "carrier id #{@carrier&.id || 'null'} and insurable type id #{@insurable_type_id || 'null'}"} was found", nil),
+          elsif @carrier_policy_type.nil?
+            render json: standard_error(:carrier_policy_type_not_found, "No carrier policy type with #{params[:carrier_policy_type_id] ? "id #{params[:carrier_policy_type_id]}" : "carrier id #{@carrier&.id || 'null'} and policy type id #{@policy_type_id || 'null'}"} was found", nil),
               status: 422
             return
           end
