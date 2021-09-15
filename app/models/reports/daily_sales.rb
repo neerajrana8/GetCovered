@@ -27,6 +27,10 @@ module Reports
 
     private
 
+    def set_defaults
+      self.duration = 'range'
+    end
+
     def site_visits
       visits = 0
       all_reportable_leads.each do |lead|

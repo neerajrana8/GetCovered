@@ -49,7 +49,7 @@ module V2
             render json: { success: false }, status: :unprocessable_entity
           end
         else
-          render json: { success: false, errors: ['Unauthorized Access'] },status: :unauthorized
+          render json: { success: false, errors: ['Unauthorized Access'] }, status: :unauthorized
         end
       end
       

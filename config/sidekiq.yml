@@ -23,11 +23,8 @@ production:
     class: Insurables::MasterPolicyAutoAssignJob
   # Reports
   consolidated_reports_aggregate:
-    cron:  '0 4 1 * *'   # Each first day of month at 4:00 AM
-    class: Reports::ConsolidatedReports::AggregateReportJob
-  consolidated_reports_by_agency:
-    cron:  '0 4 1 * *'   # Each first day of month at 4:00 AM
-    class: Reports::ConsolidatedReports::AgencyReportsJob
+    cron:  '0 4 * * *'   # Each day at 4:00 AM
+    class: Reports::DailySalesAllJob
   coverage_reports_job:
     cron: '0 2 * * *'   # Every day at 2:00 AM
     class: Reports::CoverageReportsJob
