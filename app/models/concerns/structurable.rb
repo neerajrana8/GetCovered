@@ -310,8 +310,8 @@ module Structurable
     
     
     # Merge data structures.
-    #   structure: hash describing data structure (for coverage_options, use COVERAGE_OPTIONS_STRUCTURE)
-    #   datas: array of exemplars of the provided structure; given an array of ircs and some uid, this might be ircs.map{|irc| irc.coverage_options[uid] }
+    #   structure: hash describing data structure schema
+    #   datas: array of exemplars of the provided structure
     #   overridability_offsets: an array of offsets so that the nth element of datas has innate overridability level overridability_offsets[n]
     #     pass an array: it will use that array (make sure it's the same length as datas, it doesn't check!)
     #     pass an integer: it will use that integer for all offsets
