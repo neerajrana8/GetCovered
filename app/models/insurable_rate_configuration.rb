@@ -536,7 +536,7 @@ class InsurableRateConfiguration < ApplicationRecord
   
   # insert_invisible_requirements will insert visible == false, requirement == 'required' options into the selections hash;
   # it is assumed that these will all have 'options_type' == 'none'; if some are 'multiple_choice', pass insert_invisible_requirements a hash mapping their UIDs to the desired selections. Otherwise, it will pick the first option automatically
-  def get_selection_errors(selections, options = annotate_options(selections), use_titles: false, insert_invisible_requirements: true)
+  def get_selection_errors(selections, options = annotate_options(selections), use_titles: true, insert_invisible_requirements: true)
     to_return = {}
     options.select{|uid,opt| opt['requirement'] == 'required' }.each do |uid, opt|
       if !selections[uid] || !selections[uid]['selection']
