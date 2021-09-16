@@ -16,7 +16,7 @@ module V2
               (start_date.all_day.first...end_date.all_day.last)
             end
         end
-        
+
         super(:@leads, @substrate, :account, :agency, :branding_profile)
         if need_to_download?
           ::Leads::RecentLeadsReportJob.perform_later(@leads.pluck(:id), params.as_json, current_staff.email)
@@ -44,6 +44,12 @@ module V2
           render json: { success: false, errors: [I18n.t('user_users_controler.unauthorized_access')] },
                  status: :unauthorized
         end
+      end
+
+      def get_products
+        products_id = LeadEvent.includes(:policy_type).pluck(:policy_type_id, :title)&.uniq&.compact
+        products = products_id&.map { |el| %w[id title].zip(el).to_h }
+        render json: products, status: :ok
       end
 
       private
