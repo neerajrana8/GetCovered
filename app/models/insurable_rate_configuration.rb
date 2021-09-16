@@ -536,7 +536,7 @@ class InsurableRateConfiguration < ApplicationRecord
   
   # insert_invisible_requirements will insert visible == false, requirement == 'required' options into the selections hash;
   # it is assumed that these will all have 'options_type' == 'none'; if some are 'multiple_choice', pass insert_invisible_requirements a hash mapping their UIDs to the desired selections. Otherwise, it will pick the first option automatically
-  def get_selection_errors(selections, options = annotate_options(selections), use_titles: true, insert_invisible_requirements: true)
+  def get_selection_errors(selections, options = annotate_options(selections), use_titles: false, insert_invisible_requirements: true)
     to_return = {}
     options.select{|uid,opt| opt['requirement'] == 'required' }.each do |uid, opt|
       if !selections[uid] || !selections[uid]['selection']
@@ -646,7 +646,7 @@ class InsurableRateConfiguration < ApplicationRecord
     coverage_options = irc.annotate_options(selections).select{|co| co['enabled'] != false }
     selection_errors = irc.get_selection_errors(selections, coverage_options, insert_invisible_requirements: true)
     valid = selection_errors.blank?
-    estimated_premium_error = valid ? nil : { internal: selection_errors.map{|k,v| v.map{|vv| "#{k} #{vv}" }.join('; ') }.join('; '), external: selection_errors }
+    estimated_premium_error = valid ? nil : { internal: selection_errors.to_s, external: selection_errors.select{|uid| coverage_options[uid] }.map{|uid,errz| errz.map{|errz| "#{coverage_options[uid]['title']} #{errz}" }.join("; ") }.join("; ") }
     # initialize premium numbers variables unnecessarily
     estimated_premium = nil
     estimated_installment = nil
