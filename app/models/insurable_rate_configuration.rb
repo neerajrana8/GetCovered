@@ -641,7 +641,7 @@ class InsurableRateConfiguration < ApplicationRecord
     coverage_options = irc.annotate_options(selections)
     selection_errors = irc.get_selection_errors(selections, coverage_options, insert_invisible_requirements: true)
     valid = selection_errors.blank?
-    estimated_premium_error = valid ? nil : { internal: selection_errors, external: selection_errors }
+    estimated_premium_error = valid ? nil : { internal: selection_errors.to_s, external: selection_errors.select{|uid| coverage_options[uid] }.map{|uid,errz| errz.map{|errz| "#{coverage_options[uid]['title']} #{errz}" }.join("; ") }.join("; ") }
     # initialize premium numbers variables unnecessarily
     estimated_premium = nil
     estimated_installment = nil
