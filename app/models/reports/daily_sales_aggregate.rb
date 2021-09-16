@@ -12,7 +12,52 @@ module Reports
       self
     end
 
+    def to_csv
+      CSV.generate do |csv|
+        csv << [
+          'Total', 'Type', 'Parent Agency', 'Status',
+          '', '', '', '', '', '', '', '', '', '',
+          '', '', '', '', '', 'Prior 7 Days', '', '', '', '',
+          '', '', '', '', '', 'Prior 30 Days', '', '', '', ''
+        ]
+
+        csv << [
+          '', '', '', '',
+          '', '', '', '', '', range_start.yesterday.to_date, '', '', '', '',
+          '', '', '', '', '', "(#{(range_start - 7.days).to_date}  - #{range_start.yesterday.to_date})", '', '', '', '',
+          '', '', '', '', '', "(#{(range_start - 30.days).to_date} - #{range_start.yesterday.to_date})", '', '', '', ''
+        ]
+        csv << [
+          '', '', '', '',
+          'Site Visits', 'Total Visitors', 'Apps Started', 'Subm', 'Leads', 'Conv', 'Conv %', 'Total Premiums', 'Partner Comm\'n', 'GC Comm\'n',
+          'Site Visits', 'Total Visitors', 'Apps Started', 'Subm', 'Leads', 'Conv', 'Conv %', 'Total Premiums', 'Partner Comm\'n', 'GC Comm\'n',
+          'Site Visits', 'Total Visitors', 'Apps Started', 'Subm', 'Leads', 'Conv', 'Conv %', 'Total Premiums', 'Partner Comm\'n', 'GC Comm\'n'
+        ]
+
+        csv << [
+          'TOTAL', '', '', '',
+          *data['totals']['yesterday'].values_at(*daily_sales_headers),
+          *data['totals']['prior_seven_days'].values_at(*daily_sales_headers),
+          *data['totals']['prior_thirty_days'].values_at(*daily_sales_headers)
+        ]
+
+        data['rows'].each do |row|
+          csv << [
+            *row.values_at(*%w[title type parent_agency]), row['status'] ? 'Active' : 'Inactive',
+            *row['data']['yesterday'].values_at(*daily_sales_headers),
+            *row['data']['prior_seven_days'].values_at(*daily_sales_headers),
+            *row['data']['prior_thirty_days'].values_at(*daily_sales_headers)
+          ]
+        end
+      end
+    end
+
     private
+
+    def daily_sales_headers
+      %w[site_visits total_visitors applications_started submissions leads conversions
+         total_premiums partner_commissions get_covered_commissions conversions_percentage]
+    end
 
     def aggregate_report
       agency_report(Agency.get_covered)
