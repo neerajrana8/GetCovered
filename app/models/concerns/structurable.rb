@@ -341,7 +341,7 @@ module Structurable
               insertion_requirement = data_insertion_requirement if data_insertion_requirement < insertion_requirement
             end
             keys.select!{|k| struc['special_data']['keys'].include?(k) } unless struc['special_data']['keys'].nil?
-            result['overridabilities_'][prop] = insertion_requirement
+            result['overridabilities_'][prop] = insertion_requirement unless union_mode
             # merge hash elements
             result[prop] = {}
             keys.each do |k|
@@ -363,7 +363,7 @@ module Structurable
               gd_insertion_requirement = (datas[gd_index]['overridabilities_']&.[](prop) || Float::INFINITY) + overridability_offsets[gd_index]
               insertion_requirement = gd_insertion_requirement if gd_insertion_requirement < insertion_requirement
             end
-            result['overridabilities_'][prop] = insertion_requirement
+            result['overridabilities_'][prop] = insertion_requirement unless union_mode
             # merge array elements
             extant_grouped_datas = grouped_datas.map.with_index{|gd, gd_index| datas[gd_index][prop].nil? ? nil : gd }
             result[prop] = []
@@ -390,15 +390,13 @@ module Structurable
               next unless data&.has_key?(prop)
               # if the data is allowed to override the current result, override it
               overridability = result['overridabilities_'][prop] || Float::INFINITY
-              if overridability >= overridability_offsets[data_index]
-                data_overridability = (data['overridabilities_']&.[](prop) || Float::INFINITY) + overridability_offsets[data_index]
-                if union_mode
-                  result[prop] ||= []
-                  result[prop].push(data[prop]) unless result[prop].include?(data[prop])
-                else
-                  result[prop] = data[prop]
-                end
-                result['overridabilities_'][prop] = data_overridability if union_mode ? data_overridability > overridability : data_overridability < overridability # overridability becomes the most restrictive of the combined overridabilities (vice versa in union mode)
+              data_overridability = (data['overridabilities_']&.[](prop) || Float::INFINITY) + overridability_offsets[data_index]
+              if union_mode
+                result[prop] ||= []
+                result[prop].push(data[prop]) unless result[prop].include?(data[prop])
+              elsif overridability >= data_overridability
+                result[prop] = data[prop]
+                result['overridabilities_'][prop] = data_overridability # overridability becomes the most restrictive of the combined overridabilities
               end
             end
         end
