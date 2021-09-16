@@ -8,6 +8,8 @@ module Reports
       elsif reportable.is_a?(Agency)
         agency_report
       end
+
+      self
     end
 
     private
@@ -26,17 +28,17 @@ module Reports
             reportable: line_reportable,
             range_start: range_start.yesterday.all_day,
             range_end: range_start.yesterday.all_day
-          ).data,
+          )&.data,
         'prior_seven_days' => DailySales.find_by(
           reportable: line_reportable,
           range_start: (range_start - 7.days).all_day,
           range_end: range_start.yesterday.all_day
-        ).data,
+        )&.data,
         'prior_thirty_days' => DailySales.find_by(
           reportable: line_reportable,
           range_start: (range_start - 30.days).all_day,
           range_end: range_start.yesterday.all_day
-        ).data
+        )&.data
       }
     end
 
@@ -56,6 +58,9 @@ module Reports
 
     def add_item_report(item)
       item_data = line_data(item)
+
+      return if item_data.value?(nil)
+
       data['rows'] << {
         'title' => item.title,
         'type' => item.class.to_s,
@@ -67,8 +72,6 @@ module Reports
 
       update_totals(item_data)
     end
-
-
 
     def update_totals(line_data)
       line_data.each do |period, period_data|
@@ -84,11 +87,44 @@ module Reports
 
     def set_defaults
       self.duration = 'day'
-      self.data = {
+      self.data     = {
         'totals' => {
-          'yesterday' => Hash.new(0),
-          'prior_seven_days' => Hash.new(0),
-          'prior_thirty_days' => Hash.new(0)
+          'yesterday' => {
+            'site_visits' => 0,
+            'total_visitors' => 0,
+            'applications_started' => 0,
+            'submissions' => 0,
+            'leads' => 0,
+            'conversions' => 0,
+            'total_premiums' => 0,
+            'partner_commissions' => 0,
+            'get_covered_commissions' => 0,
+            'conversions_percentage' => 0
+          },
+          'prior_seven_days' => {
+            'site_visits' => 0,
+            'total_visitors' => 0,
+            'applications_started' => 0,
+            'submissions' => 0,
+            'leads' => 0,
+            'conversions' => 0,
+            'total_premiums' => 0,
+            'partner_commissions' => 0,
+            'get_covered_commissions' => 0,
+            'conversions_percentage' => 0
+          },
+          'prior_thirty_days' => {
+            'site_visits' => 0,
+            'total_visitors' => 0,
+            'applications_started' => 0,
+            'submissions' => 0,
+            'leads' => 0,
+            'conversions' => 0,
+            'total_premiums' => 0,
+            'partner_commissions' => 0,
+            'get_covered_commissions' => 0,
+            'conversions_percentage' => 0
+          }
         },
         'rows' => []
       }
