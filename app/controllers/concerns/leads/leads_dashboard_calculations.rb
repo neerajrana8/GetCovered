@@ -26,6 +26,9 @@ module Leads
         branding_profile_id: %i[scalar array],
         branding_profile: {
           url: %i[scalar like]
+        },
+        lead_events: {
+            product_type: %i[scalar array]
         }
       }
     end
