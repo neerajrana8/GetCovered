@@ -7,8 +7,9 @@ module Reports
         new(
           reportable_id: reportable_id,
           reportable_type: reportable_type,
-          range_start: range_start,
-          range_end: range_end).
+          range_start: Time.zone.at(range_start),
+          range_end: Time.zone.at(range_end)
+        ).
         generate.
         save
     end
