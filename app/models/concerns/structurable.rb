@@ -317,7 +317,7 @@ module Structurable
     #     pass an integer: it will use that integer for all offsets
     #     pass Float::INFINITY: it will use Float::INFINITY for all offsets (this will result in ALL overridabilities being set to infinity!)
     #     leave blank or pass nil: will use the index of each data as its offset
-    def merge_data_structures(datas, structure, overridability_offsets = (0...datas.length).to_a)
+    def merge_data_structures(datas, structure, overridability_offsets = (0...datas.length).to_a, union_mode: false)
       case overridability_offsets
         when ::Integer
           overridability_offsets = (0...(datas.length)).map{|n| overridability_offsets }
@@ -347,7 +347,7 @@ module Structurable
             keys.each do |k|
               nested_structure = struc['special_data']&.[]('structure_by_key')&.[](k) || struc['special_data']['structure']
               next if nested_structure.nil?
-              merged_element = merge_data_structures(datas.map{|d| (d[prop] || {})[k] || {} }, nested_structure, overridability_offsets)
+              merged_element = merge_data_structures(datas.map{|d| (d[prop] || {})[k] || {} }, nested_structure, overridability_offsets, union_mode: union_mode)
               result[prop][k] = merged_element unless merged_element.blank?
             end
           when 'array'
@@ -379,9 +379,9 @@ module Structurable
               elsif struc['special_data']['remove_missing']
                 # remove if any non-nil entry is missing ik
                 next if extant_grouped_datas.any?{|egd| !egd.nil? && !egd.has_key?(ik) }
-              end
+              end unless union_mode # in union mode we don't remove anything
               # merge array entries and insert
-              merged_element = merge_data_structures(grouped_datas.map{|gd| gd[ik] || {} }, struc['special_data']['structure'], overridability_offsets)
+              merged_element = merge_data_structures(grouped_datas.map{|gd| gd[ik] || {} }, struc['special_data']['structure'], overridability_offsets, union_mode: union_mode)
               result[prop].push(merged_element) unless merged_element.blank?
             end
           else
@@ -392,8 +392,13 @@ module Structurable
               overridability = result['overridabilities_'][prop] || Float::INFINITY
               if overridability >= overridability_offsets[data_index]
                 data_overridability = (data['overridabilities_']&.[](prop) || Float::INFINITY) + overridability_offsets[data_index]
-                result[prop] = data[prop]
-                result['overridabilities_'][prop] = data_overridability if data_overridability < overridability # overridability becomes the most restrictive of the combined overridabilities
+                if union_mode
+                  result[prop] ||= []
+                  result[prop].push(data[prop]) unless result[prop].include?(data[prop])
+                else
+                  result[prop] = data[prop]
+                end
+                result['overridabilities_'][prop] = data_overridability if union_mode ? data_overridability > overridability : data_overridability < overridability # overridability becomes the most restrictive of the combined overridabilities (vice versa in union mode)
               end
             end
         end
