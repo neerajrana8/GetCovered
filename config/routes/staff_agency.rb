@@ -115,7 +115,7 @@
           post :attach_images, path: '/attach_images'
         end
         post :import, on: :collection
-        
+
         collection do
           post :list
         end
@@ -228,6 +228,8 @@
       end
     end
     post :leads_dashboard_index, action: :index, controller: :leads_dashboard
+
+    get :get_products, controller: 'leads', path: 'leads/filters/get_products'
 
     resources :leads_dashboard_tracking_url, only: [:index]
 

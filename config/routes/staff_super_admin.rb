@@ -250,6 +250,8 @@
     end
     post :leads_dashboard_index, action: :index, controller: :leads_dashboard
 
+    get :get_products, controller: 'leads', path: 'leads/filters/get_products'
+
     resources :leads_dashboard_tracking_url, only: [:index]
 
     resources :leases, only: [ :create, :update, :destroy, :index, :show ] do
@@ -264,7 +266,7 @@
         post :bulk_create
       end
     end
-    
+
     resources :lease_types,
       path: "lease-types",
       only: [ :create, :update, :index, :show ]
