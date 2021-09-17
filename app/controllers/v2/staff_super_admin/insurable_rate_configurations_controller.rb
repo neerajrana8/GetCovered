@@ -13,11 +13,9 @@ module V2
         irc = ::InsurableRateConfiguration.get_inherited_irc(@carrier_policy_type, configurer, configurable, agency: @agency, exclude_configurer: true) # MOOSE WARNING: WRONG
         coverage_options = ::InsurableRateConfiguration.remove_overridability_data!(
           irc.configuration['coverage_options'].select do |uid, co|
-            co['options_type'] == 'multiple_choice'
-            &&
+            co['options_type'] == 'multiple_choice' &&
             (
-              co['requirement'] != 'forbidden'
-              ||
+              co['requirement'] != 'forbidden' ||
               irc.configuration['rules'].any?{|rule_name, rule_data| rule_data['subject'] == uid && rule_data['rule'].any?{|rewl, parmz| rewl == 'has_requirement' && parmz != 'forbidden' } }
             )
           end

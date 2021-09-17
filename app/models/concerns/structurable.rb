@@ -341,7 +341,7 @@ module Structurable
               insertion_requirement = data_insertion_requirement if data_insertion_requirement < insertion_requirement
             end
             keys.select!{|k| struc['special_data']['keys'].include?(k) } unless struc['special_data']['keys'].nil?
-            result['overridabilities_'][prop] = insertion_requirement unless union_mode
+            result['overridabilities_'][prop] = insertion_requirement
             # merge hash elements
             result[prop] = {}
             keys.each do |k|
@@ -363,7 +363,7 @@ module Structurable
               gd_insertion_requirement = (datas[gd_index]['overridabilities_']&.[](prop) || Float::INFINITY) + overridability_offsets[gd_index]
               insertion_requirement = gd_insertion_requirement if gd_insertion_requirement < insertion_requirement
             end
-            result['overridabilities_'][prop] = insertion_requirement unless union_mode
+            result['overridabilities_'][prop] = insertion_requirement
             # merge array elements
             extant_grouped_datas = grouped_datas.map.with_index{|gd, gd_index| datas[gd_index][prop].nil? ? nil : gd }
             result[prop] = []
@@ -380,6 +380,9 @@ module Structurable
                 # remove if any non-nil entry is missing ik
                 next if extant_grouped_datas.any?{|egd| !egd.nil? && !egd.has_key?(ik) }
               end unless union_mode # in union mode we don't remove anything
+              
+# MOOSE WARNING: in union mode the above works as normal, except that the presence of a nil entry with the same overridability suffices for preservation... it's a little more complex I suppose
+              
               # merge array entries and insert
               merged_element = merge_data_structures(grouped_datas.map{|gd| gd[ik] || {} }, struc['special_data']['structure'], overridability_offsets, union_mode: union_mode)
               result[prop].push(merged_element) unless merged_element.blank?
@@ -391,11 +394,13 @@ module Structurable
               # if the data is allowed to override the current result, override it
               overridability = result['overridabilities_'][prop] || Float::INFINITY
               data_overridability = (data['overridabilities_']&.[](prop) || Float::INFINITY) + overridability_offsets[data_index]
-              if union_mode
-                result[prop] ||= []
-                result[prop].push(data[prop]) unless result[prop].include?(data[prop])
-              elsif overridability >= data_overridability
-                result[prop] = data[prop]
+              if overridability >= data_overridability
+                if union_mode
+                  result[prop] ||= []
+                  result[prop].push(data[prop]) unless result[prop].include?(data[prop])
+                else
+                  result[prop] = data[prop]
+                end
                 result['overridabilities_'][prop] = data_overridability # overridability becomes the most restrictive of the combined overridabilities
               end
             end
