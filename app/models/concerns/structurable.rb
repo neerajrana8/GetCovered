@@ -370,19 +370,16 @@ module Structurable
             identity_keys.each do |ik|
               # skip if removal condition is met
               if struc['special_data']['remove_missing'] == 'different_overridabilities'
-                # remove if any non-nil entry is missing ik and no entry with the same overridability possesses ik
+                # remove if any non-nil entry is missing ik and no entry with the same overridability possesses ik (if union_mode, also keep if an entry w the same ovrdblty is nil, since it would inherit)
                 next unless (extant_grouped_datas.map.with_index do |egd, gd_index|
                   egd.nil? || egd.has_key?(ik) ? nil : (datas[gd_index]['overridabilities_']&.[](prop) || Float::INFINITY) + overridability_offsets[gd_index]
                 end.compact - extant_grouped_datas.map.with_index do |egd, gd_index|
-                  egd.nil? || !egd.has_key?(ik) ? nil : (datas[gd_index]['overridabilities_']&.[](prop) || Float::INFINITY) + overridability_offsets[gd_index]
+                  (egd.nil? && !union_mode) || !egd.has_key?(ik) ? nil : (datas[gd_index]['overridabilities_']&.[](prop) || Float::INFINITY) + overridability_offsets[gd_index]
                 end.compact).blank?
               elsif struc['special_data']['remove_missing']
-                # remove if any non-nil entry is missing ik
-                next if extant_grouped_datas.any?{|egd| !egd.nil? && !egd.has_key?(ik) }
-              end unless union_mode # in union mode we don't remove anything
-              
-# MOOSE WARNING: in union mode the above works as normal, except that the presence of a nil entry with the same overridability suffices for preservation... it's a little more complex I suppose
-              
+                # remove if any non-nil entry is missing ik (if union_mode, keep if at least one is nil)
+                next if extant_grouped_datas.any?{|egd| !egd.nil? && !egd.has_key?(ik) } && (!union_mode || !extant_grouped_datas.any?{|egd| egd.nil? })
+              end
               # merge array entries and insert
               merged_element = merge_data_structures(grouped_datas.map{|gd| gd[ik] || {} }, struc['special_data']['structure'], overridability_offsets, union_mode: union_mode)
               result[prop].push(merged_element) unless merged_element.blank?
