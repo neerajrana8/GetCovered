@@ -52,6 +52,18 @@ module Reports
       end
     end
 
+    def generate_csv
+      document_title = "#{reportable&.title || 'All partners'}-Daily-Report-#{range_start.strftime('%B %-d %Y')}.csv".downcase
+                                                                                                   .tr(' ', '-')
+      save_path = Rails.root.join('tmp', document_title)
+
+      File.open(save_path, 'wb') do |file|
+        file << to_csv
+      end
+
+      save_path
+    end
+
     private
 
     def daily_sales_headers
