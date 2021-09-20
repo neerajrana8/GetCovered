@@ -5,6 +5,7 @@ class DailySalesReportMailer < ApplicationMailer
     @partner = partner
     @date = date
     @branding_profile = BrandingProfile.global_default
+    @agency = Agency.get_covered
 
     attachments["Daily Sales Report - #{partner} - Renters Insurance - #{date}.csv"] = open(report_path).read
 
