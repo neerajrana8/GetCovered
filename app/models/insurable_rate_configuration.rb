@@ -365,10 +365,10 @@ class InsurableRateConfiguration < ApplicationRecord
   
   
   # Returns an (unsaved) IRC representing the combined IRC formed by merging the entire inheritance hierarchy for some configurable
-  def self.get_inherited_irc(carrier_policy_type, configurer, configurable, agency: nil, exclude_configurer: false, moose: false)
-    # Alternative: merge(get_hierarchy(carrier_policy_type, configurer, configurable, agency: agency).map{|ircs| merge(ircs, true) }, false)
-    hierarchy = get_hierarchy(carrier_policy_type, configurer, configurable, agency: agency, exclude_configurer: exclude_configurer, moose: moose)
-    merge(hierarchy.flatten, hierarchy.map.with_index{|ircs, index| ircs.map{|irc| index } }.flatten, moose: moose)
+  def self.get_inherited_irc(carrier_policy_type, configurer, configurable, agency: nil, exclude: nil, union_mode: false)
+    # Alternative: merge(get_hierarchy(carrier_policy_type, configurer, configurable, agency: agency).map{|ircs| merge(ircs, true) }, false)... but this won't work in union_mode since it stores arrays of all encountered values
+    hierarchy = get_hierarchy(carrier_policy_type, configurer, configurable, agency: agency, exclude: exclude, union_mode: union_mode)
+    merge(hierarchy.flatten, hierarchy.map.with_index{|ircs, index| ircs.map{|irc| index } }.flatten, union_mode: union_mode)
   end
   
   
@@ -378,13 +378,7 @@ class InsurableRateConfiguration < ApplicationRecord
   #   override_level:     true to treat IRCs as having the same override level, false to treat them as having override levels equal to their indices, array of integers to provide explicit offsets
   # returns:
   #   an IRC representing the combination of all the IRCs in the array
-  def self.merge(irc_array, override_level, moose: false)
-    if moose
-      puts "MERGE DEBUG REPORTTT"
-      puts "  IRC COUNT: #{irc_array.count}"
-      puts "  IRC RATES:"
-      pp irc_array.map{|i| i.rates }
-    end
+  def self.merge(irc_array, override_level, union_mode: false)
     # setup
     to_return = InsurableRateConfiguration.new(
       configurable_type: irc_array.drop(1).inject(irc_array.first&.configurable_type){|res,irc| break nil unless irc.configurable_type == res; res },
@@ -406,7 +400,7 @@ class InsurableRateConfiguration < ApplicationRecord
     to_return.rates = (override_level == true || override_level == false ? irc_array.reverse : irc_array.sort_by.with_index{|v,i| -override_level[i] }).find{|irc| !irc.rates.blank? && !irc.rates['rates'].blank? && !irc.rates['rates'].all?{|v| v.blank? } }&.rates || {}
     # configuration
     offsets = override_level.class == ::Array ? override_level : override_level ? 0 : [0...-1].map{|irc| irc.max_overridability(refresh: true) }.inject([0]){|arr,mo| arr.concat(arr.last + mo + 1) }
-    to_return.configuration = merge_data_structures(irc_array.map{|irc| irc.configuration }, irc_array.find{|irc| !irc.carrier_policy_type.nil? }&.carrier_policy_type&.carrier_id == 1 ? QBE_STRUCTURE : MSI_STRUCTURE, offsets)
+    to_return.configuration = merge_data_structures(irc_array.map{|irc| irc.configuration }, irc_array.find{|irc| !irc.carrier_policy_type.nil? }&.carrier_policy_type&.carrier_id == 1 ? QBE_STRUCTURE : MSI_STRUCTURE, offsets, union_mode: union_mode)
     to_return.max_overridability(refresh: true)
     # done
     return to_return
@@ -421,31 +415,46 @@ class InsurableRateConfiguration < ApplicationRecord
   #   agency:                 (optional) if configurer is an account, you can provide an agency to use instead of configurer.agency if desired
   # returns:
   #   an array (ordered from least to most specific configurer) of arrays (ordered from least to most specific configurable) of IRCs
-  def self.get_hierarchy(carrier_policy_type, configurer, configurable, agency: nil, exclude_configurer: false, moose: false)
+  def self.get_hierarchy(carrier_policy_type, configurer, configurable, agency: nil, exclude: nil, union_mode: false)
     # get configurer and configurable hierarchies
-    configurers = get_configurer_hierarchy(configurer, carrier_policy_type.carrier, agency: agency, exclude_first_level: exclude_configurer)
-    configurables = get_configurable_hierarchy(configurable)
+    configurers = get_configurer_hierarchy(configurer, carrier_policy_type.carrier, agency: agency)
+    configurables = get_configurable_hierarchy(configurable, union_mode: union_mode)
     # get the insurable rate configurations
     to_return = ::InsurableRateConfiguration.where(configurer: configurers, configurable: configurables, carrier_policy_type: carrier_policy_type)
     # sort into hierarchy (i.e. array (ordered by configurer) of arrays (ordered by configurable))
     to_return = to_return.group_by{|irc| configurers.find_index{|c| irc.configurer_id == c.id && irc.configurer_type == c.class.name } }
       .sort_by{|configurable_index, ircs| configurable_index } # makes it into an array of [k,v] pairs
       .map{|val| val[1].sort_by{|irc| configurables.find_index{|c| irc.configurable_id == c.id && irc.configurable_type == c.class.name } } }
+    # handle exclusions
+    case exclude
+      when :configurer
+        to_return.pop if to_return.last&.first&.configurer == configurer
+      when :configurable
+        to_return.select!{|arr| arr.select!{|val| val.configurable != configurable }; !arr.blank? }
+      when :exact_match
+        to_return.last&.select!{|val| val.configurable != configurable }
+        to_return.pop if to_return.last&.blank?
+      when :children_inclusive, :children_exclusive
+        if to_return.last&.first&.configurer == configurer
+          index = case configurable
+            when ::InsurableGeographicalCategory
+              to_return.last.find_index{|val| (val <=> configurable) >= 0 }
+            else
+              (to_return.last.last == configurable) ? to_return.length - 1 : nil
+            else
+              nil
+          end
+          unless index.nil?
+            index += 1 if exclude == :children_exclusive && to_return.last[index] == configurable
+            if index == 0
+              to_return.pop
+            else
+              to_return.last.pop(to_return.length - index)
+            end
+          end
+        end
+    end if exclude # hopefully optimizes away some checks since exclude is usually nil
     # done
-    
-    if moose
-      puts "GET_HIERARCHY BUG REPORT"
-      puts "  cpt: #{carrier_policy_type.carrier.title}/#{carrier_policy_type.policy_type.title}"
-      puts "  configurer: #{configurer}"
-      puts "  configurable: #{configurable}"
-      puts "  agency: #{agency}"
-      puts "  result size: #{to_return.count}"
-      puts "  algo trace:"
-      puts "    configurers = #{configurers}"
-      puts "    configurables = #{configurables}"
-      
-    end
-    
     return to_return
   end
   
@@ -821,7 +830,7 @@ class InsurableRateConfiguration < ApplicationRecord
   
     # Class Methods
   
-    def self.get_configurer_hierarchy(configurer, carrier, agency: nil, exclude_first_level: false) # if configurer is an account, agency lets you choose an agency to use (default is account.agency)
+    def self.get_configurer_hierarchy(configurer, carrier, agency: nil) # if configurer is an account, agency lets you choose an agency to use (default is account.agency)
       to_return = [configurer]
       case configurer
         when ::Carrier
@@ -831,16 +840,15 @@ class InsurableRateConfiguration < ApplicationRecord
         when ::Account
           to_return.concat((agency || configurer.agency).agency_hierarchy(include_self: true) + [carrier])
       end
-      to_return = to_return.drop(1) if exclude_first_level
       return(to_return)
     end
     
     
-    def self.get_configurable_hierarchy(configurable)
+    def self.get_configurable_hierarchy(configurable, union_mode: false)
       to_return = []
       case configurable
-        when ::Insurable
-          address = configurable.primary_address
+        when ::Insurable, ::Address
+          address = (configurable.class == ::Address ? configurable : configurable.primary_address)
           to_return = configurable.insurable_hierarchy + ::InsurableGeographicalCategory.where(state: nil)
             .or(::InsurableGeographicalCategory.where(state: address.state, counties: nil))
             .or(::InsurableGeographicalCategory.where(state: address.state).where('counties @> ARRAY[?]::varchar[]', address.county))
@@ -853,13 +861,8 @@ class InsurableRateConfiguration < ApplicationRecord
         #    .or(::InsurableGeographicalCategory.where(state: address.state).where('counties @> ARRAY[?]::varchar[]', address.county))
         #    .to_a.sort
         when ::InsurableGeographicalCategory
-          to_return = ::InsurableGeographicalCategory.where(state: nil)
-          unless configurable.state.nil?
-            to_return = to_return.or(::InsurableGeographicalCategory.where(state: configurable.state, counties: nil))
-            unless configurable.counties.blank?
-              to_return = to_return.or(::InsurableGeographicalCategory.where(state: configurable.state).where('counties @> ARRAY[?]::varchar[]', configurable.counties))
-            end
-          end
+          to_return = configurable.query_for_parents
+          to_return = to_return.or(configurable.query_for_children) if union_mode
           to_return = to_return.to_a.sort
       end
       return to_return

@@ -48,6 +48,25 @@ class InsurableGeographicalCategory < ApplicationRecord
     end
     return to_return
   end
+  
+  def query_for_parents(include_self: true)
+    to_return = include_self ? ::InsurableGeographicalCategory.where(state: nil) : ::InsurableGeographicalCategory.where(id: 0) # hacky mchackington
+    unless self.state.nil?
+      to_return = to_return.or(::InsurableGeographicalCategory.where(state: self.state, counties: nil))
+      unless self.counties.blank?
+        to_return = to_return.or(::InsurableGeographicalCategory.where(state: self.state).where('counties @> ARRAY[?]::varchar[]', self.counties))
+      end
+    end
+    return to_return
+  end
+  
+  def query_for_children(include_self: true)
+    to_return = ::InsurableGeographicalCategory.all
+    to_return = to_return.where(state: self.state) unless self.state.nil?
+    to_return = to_return.where('counties <@ ARRAY[?]::varchar[]', self.counties) unless self.counties.blank?
+    to_return = to_return.where.not(id: self.id) if !include_self
+    return to_return
+  end
 
   # Sorts them from most general to most specific;
   # sorting an array of IGCs will ensure that if one contains another,
