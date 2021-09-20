@@ -161,7 +161,7 @@ class Insurable < ApplicationRecord
     return ::Insurable.where(insurable_type_id: unit_type_ids, insurable_id: nonunit_parent_ids) # WARNING: some code (msi insurable concern) expects query rather than array output here (uses scopes on this call)
   end
   
-  def query_for_full_hierarchy
+  def query_for_full_hierarchy(exclude_self: false)
     # WARNING: at some point, we can use an activerecord callback to store all nonunit child insurable ids in a field and thus skip the loop
     # loopy schloopy
     ids = []
@@ -170,6 +170,7 @@ class Insurable < ApplicationRecord
       ids.concat(found)
       found = ::Insurable.where(insurable_id: found).where.not(id: ids).order(:id).group(:id).pluck(:id)
     end
+    ids = ids.shift if exclude_self
     # return everything
     return ::Insurable.where(id: ids)
   end
