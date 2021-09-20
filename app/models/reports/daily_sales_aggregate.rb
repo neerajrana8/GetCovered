@@ -17,15 +17,15 @@ module Reports
         csv << [
           'Total', 'Type', 'Parent Agency', 'Status',
           '', '', '', '', '', '', '', '', '', '',
-          '', '', '', '', '', 'Prior 7 Days', '', '', '', '',
-          '', '', '', '', '', 'Prior 30 Days', '', '', '', ''
+          'Prior 7 Days', '', '', '', '', '', '', '', '', '',
+          'Prior 30 Days', '', '', '', '', '', '', '', '', ''
         ]
 
         csv << [
           '', '', '', '',
-          '', '', '', '', '', range_start.yesterday.to_date, '', '', '', '',
-          '', '', '', '', '', "(#{(range_start - 7.days).to_date}  - #{range_start.yesterday.to_date})", '', '', '', '',
-          '', '', '', '', '', "(#{(range_start - 30.days).to_date} - #{range_start.yesterday.to_date})", '', '', '', ''
+          range_start.yesterday.to_date, '', '', '', '', '', '', '', '', '',
+          "(#{(range_start - 7.days).to_date}  - #{range_start.yesterday.to_date})", '', '', '', '', '', '', '', '', '',
+          "(#{(range_start - 30.days).to_date} - #{range_start.yesterday.to_date})", '', '', '', '', '', '', '', '', ''
         ]
         csv << [
           '', '', '', '',
