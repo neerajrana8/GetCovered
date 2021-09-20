@@ -8,7 +8,7 @@ class Lead < ApplicationRecord
 
   PAGES_RESIDENTIAL = ['Basic Info Section', 'Insurance Info Section', 'Coverage Limits Section', 'Insured Details Section', 'Payment Section']
 
-  PAGES_DEPOSIT_CHOICE = ['Deposit Basic Info Section', 'Deposit Bond Section', 'Deposit Additional occupants', 'Deposit Payment Section', '']
+  PAGES_DEPOSIT_CHOICE = ['Deposit Basic Info Section', 'Deposit Bond Section', 'Deposit Additional occupants', 'Payment Deposit Section']
 
   belongs_to :user, optional: true
   belongs_to :tracking_url, optional: true
@@ -62,7 +62,7 @@ class Lead < ApplicationRecord
               PAGES_RESIDENTIAL
             else
               PAGES_DEPOSIT_CHOICE
-            end 
+            end
     pages.index(current_page) > (pages.index(self.last_visited_page) || 0)
   end
 
