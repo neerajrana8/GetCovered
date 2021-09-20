@@ -5,8 +5,8 @@ module Reports
     def perform
       range_start = Time.zone.now
       report_path = Reports::DailySalesAggregate.new(range_start: range_start).generate.generate_csv
-      recipients = Agency.get_covered.staff.pluck(:email)
-      DailySalesReportMailer.send_report(recipients, report_path, 'All partners', range_start.to_date.to_s)
+      recipients = Agency.get_covered.staff.enabled.pluck(:email)
+      DailySalesReportMailer.send_report(recipients, report_path, 'All partners', range_start.to_date.to_s).deliver
     end
   end
 end
