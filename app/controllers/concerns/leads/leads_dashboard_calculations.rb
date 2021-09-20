@@ -28,6 +28,7 @@ module Leads
           url: %i[scalar like]
         },
         lead_events: {
+            policy_type_id: %i[scalar array],
           policy_type: %i[scalar array]
         }
       }

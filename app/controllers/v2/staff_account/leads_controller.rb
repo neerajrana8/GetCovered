@@ -84,6 +84,7 @@ module V2
             campaign_name: %i[scalar array]
           },
           lead_events: {
+              policy_type_id: %i[scalar array],
             policy_type: %i[scalar array]
           },
           branding_profile: {
