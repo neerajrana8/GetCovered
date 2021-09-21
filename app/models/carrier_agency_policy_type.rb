@@ -65,76 +65,76 @@ class CarrierAgencyPolicyType < ApplicationRecord
                  :disable_billing_strategies
 
   private
-  
-  def create_authorizations
-    # Prevent Alaska & Hawaii as being set as available; prevent already-created CAAs from being recreated
-    blocked_states = [0, 11]
-    skipped_states = ::CarrierAgencyAuthorization.where(carrier_agency_id: carrier_agency_id, policy_type_id: policy_type_id).map { |caa| caa.read_attribute_before_type_cast(:state) }
-    51.times do |state|
-      next if skipped_states.include?(state)
+    
+    def create_authorizations
+      # Prevent Alaska & Hawaii as being set as available; prevent already-created CAAs from being recreated
+      blocked_states = [0, 11]
+      skipped_states = ::CarrierAgencyAuthorization.where(carrier_agency_id: carrier_agency_id, policy_type_id: policy_type_id).map { |caa| caa.read_attribute_before_type_cast(:state) }
+      51.times do |state|
+        next if skipped_states.include?(state)
 
-      ::CarrierAgencyAuthorization.create!(
-        carrier_agency_id: carrier_agency_id,
-        policy_type_id: policy_type_id,
-        state: state,
-        available: blocked_states.include?(state) ? false : true
-      )
+        ::CarrierAgencyAuthorization.create!(
+          carrier_agency_id: carrier_agency_id,
+          policy_type_id: policy_type_id,
+          state: state,
+          available: blocked_states.include?(state) ? false : true
+        )
+      end
     end
-  end
 
-  def refuse_to_perish_if_a_parent
-    chillenz = self.child_carrier_agency_policy_types(true)
-    unless chillenz.blank?
-      errors.add(:base, "cannot be destroyed due to presence of child CAPTs (IDs #{chillenz.map{|c| c.id }.join(', ')})")
-      raise ActiveRecord::RecordNotDestroyed, self
+    def refuse_to_perish_if_a_parent
+      chillenz = self.child_carrier_agency_policy_types(true)
+      unless chillenz.blank?
+        errors.add(:base, "cannot be destroyed due to presence of child CAPTs (IDs #{chillenz.map{|c| c.id }.join(', ')})")
+        raise ActiveRecord::RecordNotDestroyed, self
+      end
     end
-  end
 
-  def set_billing_strategies
-    # Create billing strategies as dups of GC's billing strategies, unless we already have some
-    return if agency.master_agency
+    def set_billing_strategies
+      # Create billing strategies as dups of GC's billing strategies, unless we already have some
+      return if agency.master_agency
 
-    strats = ::BillingStrategy.where(agency_id: [agency_id, ::Agency.where(master_agency: true).take.id], carrier_id: carrier_id, policy_type: policy_type_id).order("created_at desc")
-    if strats.any? { |bs| bs.agency_id == agency_id }
-      # our agency already has billing strats... so for each enabled GC billing strategy, verify we have a corresponding enabled one; otherwise enable one of ours that corresponds, or create a new one for us
-      strats = strats.group_by{|bs| bs.agency_id == agency_id }
-                     .transform_values{|bses| bses.group_by{|bs| "#{bs.title}#{bs.carrier_code}" } }
-      strats[false]&.each do |tcc, bses|
-        gc_bs = bses.find{|bumble| bumble.enabled }
-        next unless gc_bs
-        # make sure at least one is enabled
-        ag_bses = strats[true][tcc] || []
-        unless ag_bses.any?{|bs| bs.enabled }
-          if ag_bses.blank?
-            new_bs = gc_bs.dup
-            new_bs.agency_id = agency_id
-            new_bs.save!
-          else
-            ag_bses.first.update!(enabled: true)
+      strats = ::BillingStrategy.where(agency_id: [agency_id, ::Agency.where(master_agency: true).take.id], carrier_id: carrier_id, policy_type: policy_type_id).order("created_at desc")
+      if strats.any? { |bs| bs.agency_id == agency_id }
+        # our agency already has billing strats... so for each enabled GC billing strategy, verify we have a corresponding enabled one; otherwise enable one of ours that corresponds, or create a new one for us
+        strats = strats.group_by{|bs| bs.agency_id == agency_id }
+                       .transform_values{|bses| bses.group_by{|bs| "#{bs.title}#{bs.carrier_code}" } }
+        strats[false]&.each do |tcc, bses|
+          gc_bs = bses.find{|bumble| bumble.enabled }
+          next unless gc_bs
+          # make sure at least one is enabled
+          ag_bses = strats[true][tcc] || []
+          unless ag_bses.any?{|bs| bs.enabled }
+            if ag_bses.blank?
+              new_bs = gc_bs.dup
+              new_bs.agency_id = agency_id
+              new_bs.save!
+            else
+              ag_bses.first.update!(enabled: true)
+            end
           end
         end
-      end
-    else
-      # only GC billing strategies exist, so create some for our agency
-      strats.each do |bs|
-        new_bs = bs.dup
-        new_bs.agency_id = agency_id
-        new_bs.save!
+      else
+        # only GC billing strategies exist, so create some for our agency
+        strats.each do |bs|
+          new_bs = bs.dup
+          new_bs.agency_id = agency_id
+          new_bs.save!
+        end
       end
     end
-  end
 
-  def remove_authorizations
-    carrier_agency_authorizations.destroy_all
-  end
+    def remove_authorizations
+      carrier_agency_authorizations.destroy_all
+    end
 
-  def disable_authorizations
-    carrier_agency_authorizations.each { |caa| caa.update available: false } # this isn't actually used right now...
-  end
+    def disable_authorizations
+      carrier_agency_authorizations.each { |caa| caa.update available: false } # this isn't actually used right now...
+    end
 
-  def disable_billing_strategies
-    billing_strategies.update_all(enabled: false)
-  end
+    def disable_billing_strategies
+      billing_strategies.update_all(enabled: false)
+    end
     
     # fills out appropriate defaults for passed CommissionStrategy nested attributes or unsaved associated model;
     # if no commission strategy is passed and our parent CommissionStrategy (i.e. our parent agency's corresponding CAPT's commission strategy, or if no parent agency, our corresponding CarrierPolicyType's commission strategy)
