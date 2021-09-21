@@ -132,7 +132,7 @@ module V2
         if @carrier_agency.update_as(current_staff, update_types_params)
           render template: 'v2/shared/carrier_agencies/show', status: :ok
         else
-          render json: standard_error(:carrier_agency_update_errors, nil, @carrier_agency.errors.full_messages),
+          render json: standard_error(:carrier_agency_update_errors, nil, update_types_params.to_unsafe_h),#@carrier_agency.errors.full_messages),
                  status: :unprocessable_entity
         end
       end
