@@ -94,8 +94,28 @@ class CarrierAgencyPolicyType < ApplicationRecord
     # Create billing strategies as dups of GC's billing strategies, unless we already have some
     return if agency.master_agency
 
-    strats = ::BillingStrategy.where(agency_id: [agency_id, ::Agency.where(master_agency: true).take.id], carrier_id: carrier_id, policy_type: policy_type_id)
-    unless strats.any? { |bs| bs.agency_id == agency_id }
+    strats = ::BillingStrategy.where(agency_id: [agency_id, ::Agency.where(master_agency: true).take.id], carrier_id: carrier_id, policy_type: policy_type_id).order("created_at desc")
+    if strats.any? { |bs| bs.agency_id == agency_id }
+      # our agency already has billing strats... so for each enabled GC billing strategy, verify we have a corresponding enabled one; otherwise enable one of ours that corresponds, or create a new one for us
+      strats = strats.group_by{|bs| bs.agency_id == agency_id }
+                     .transform_values{|bses| bses.group_by{|bs| "#{bs.title}#{bs.carrier_code}" } }
+      strats[false]&.each do |tcc, bses|
+        gc_bs = bses.find{|bumble| bumble.enabled }
+        next unless gc_bs
+        # make sure at least one is enabled
+        ag_bses = strats[true][tcc] || []
+        unless ag_bses.any?{|bs| bs.enabled }
+          if ag_bses.blank?
+            new_bs = gc_bs.dup
+            new_bs.agency_id = agency_id
+            new_bs.save!
+          else
+            ag_bses.first.update!(enabled: true)
+          end
+        end
+      end
+    else
+      # only GC billing strategies exist, so create some for our agency
       strats.each do |bs|
         new_bs = bs.dup
         new_bs.agency_id = agency_id
