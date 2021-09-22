@@ -88,7 +88,10 @@ class ApplicationRecord < ActiveRecord::Base
   end
   
   def gc_ar_base_correct_dirty_after_transaction
+
+    if ApplicationRecord.transaction_id != @gc_ar_base_correct_dirty_tid
     @gc_ar_base_correct_dirty_mbls.pop
+    end
   end
   
   def lock!(*meth, **am, &phetamine)
