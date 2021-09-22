@@ -264,7 +264,7 @@ class Insurable < ApplicationRecord
   end
 
   def refresh_policy_type_ids(and_save: false)
-    self.policy_type_ids = self.carrier_insurable_profiles.any?{|cip| cip.carrier_id == DepositChoiceService.carrier_id } ? [DepositChoiceService.policy_type_id] : []
+    self.policy_type_ids = self.carrier_insurable_profiles.any?{|cip| cip.carrier_id == DepositChoiceService.carrier_id && cip.external_carrier_id } ? [DepositChoiceService.policy_type_id] : []
     
     
     # THIS IS TURNED OFF FOR NOW, IT'S GOTTEN INSANELY MORE COMPLICATED SO WE'RE RESTRICTING TO DEPOSIT CHOICE:
