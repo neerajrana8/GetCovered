@@ -1,4 +1,7 @@
 
+
+
+
 # hideous monkey patch
 module ActiveRecord
   module ConnectionAdapters
@@ -64,7 +67,7 @@ class ApplicationRecord < ActiveRecord::Base
     if @gc_ar_base_correct_dirty_mbls && @gc_ar_base_correct_dirty_mbls.last
     
       # THIS IS A BETTER WAY OF DOING IT -- but setting @attributes this way doesn't solve our problem. We need to make a proper mutationtracker when mutations_before_last_save is a NullMutationTracker. And I don't know how yet. Workaround below.
-      self.instance_variable_set(:@mutations_before_last_save, ActiveModel::MutationTracker.new(self.instance_variable_get(:@attributes))) if self.send(:mutations_before_last_save).class == ActiveModel::NullMutationTracker
+      self.instance_variable_set(:@mutations_before_last_save, ActiveModel::AttributeMutationTracker.new(self.instance_variable_get(:@attributes))) if self.send(:mutations_before_last_save).class == ActiveModel::NullMutationTracker
       @gc_ar_base_correct_dirty_mbls.last.each do |field, changez|
         if self.send(:mutations_before_last_save).send(:attributes)[field].instance_variable_get(:@original_attribute).nil?
           self.send(:mutations_before_last_save).send(:attributes)[field].instance_variable_set(:@original_attribute, self.send(:mutations_from_database).send(:attributes)[field].dup)
@@ -102,3 +105,6 @@ class ApplicationRecord < ActiveRecord::Base
   end
   
 end
+
+
+
