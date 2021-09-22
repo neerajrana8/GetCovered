@@ -31,6 +31,7 @@ class ApplicationRecord < ActiveRecord::Base
     @gc_ar_base_correct_dirty_transaction_id = (@gc_ar_base_correct_dirty_transaction_id + 1) & @gc_ar_base_correct_dirty_mask
   end
   
+  before_save :gc_ar_base_correct_dirty_before_transaction
   after_save :gc_ar_base_correct_dirty_for_transaction
   after_commit :gc_ar_base_correct_dirty_after_transaction
   after_rollback :gc_ar_base_correct_dirty_after_transaction
