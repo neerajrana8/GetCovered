@@ -38,7 +38,7 @@ class ApplicationRecord < ActiveRecord::Base
   def gc_ar_base_correct_dirty_before_transaction
     # MOOSE WARNING: if we are in a new transaction we want to push a new mbls hash onto the stack
     if ApplicationRecord.transaction_id != @gc_ar_base_correct_dirty_tid
-      @gc_ar_base_correct_dirty_tid = ActiveRecord::Base.transaction_id
+      @gc_ar_base_correct_dirty_tid = ApplicationRecord.transaction_id
       (@gc_ar_base_correct_dirty_mbls ||= []).push({})
     end
   end
