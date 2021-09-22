@@ -46,7 +46,7 @@ class ApplicationRecord < ActiveRecord::Base
     if ApplicationRecord.transaction_id != @gc_ar_base_correct_dirty_tid
       @gc_ar_base_correct_dirty_tid = ApplicationRecord.transaction_id
       (@gc_ar_base_correct_dirty_mbls ||= []).push({})
-      gc_ar_base_correct_dirty_restoration_time
+      gc_ar_base_correct_dirty_restoration_time(true)
     end
   end
   
@@ -62,9 +62,9 @@ class ApplicationRecord < ActiveRecord::Base
     gc_ar_base_correct_dirty_restoration_time
   end
   
-  def gc_ar_base_correct_dirty_restoration_time
+  def gc_ar_base_correct_dirty_restoration_time(force_clear = false)
     if @gc_ar_base_correct_dirty_mbls && @gc_ar_base_correct_dirty_mbls.last
-      self.instance_variable_set(:@mutations_before_last_save, ActiveModel::AttributeMutationTracker.new(self.instance_variable_get(:@attributes))) if self.send(:mutations_before_last_save).class == ActiveModel::NullMutationTracker
+      self.instance_variable_set(:@mutations_before_last_save, ActiveModel::AttributeMutationTracker.new(self.instance_variable_get(:@attributes))) if force_clear || self.send(:mutations_before_last_save).class == ActiveModel::NullMutationTracker
       @gc_ar_base_correct_dirty_mbls.last.each do |field, changez|
         if self.send(:mutations_before_last_save).send(:attributes)[field].instance_variable_get(:@original_attribute).nil?
           self.send(:mutations_before_last_save).send(:attributes)[field].instance_variable_set(:@original_attribute, self.send(:mutations_from_database).send(:attributes)[field].dup)
