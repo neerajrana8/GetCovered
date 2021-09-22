@@ -27,10 +27,15 @@ module Reports
 
     def emails_for_reportable(reportable)
       recipients =
-        [
-          reportable.owner&.profile&.contact_email || reportable.owner&.email,
-          reportable.contact_info['contact_email']
-        ].uniq.compact
+        if Rails.env == 'production'
+          [
+            reportable.owner&.profile&.contact_email || reportable.owner&.email,
+            reportable.contact_info['contact_email']
+          ].uniq.compact
+        else
+          ['testing@getcovered.io', 'ivaniln@nitka.com']
+        end
+
 
       if recipients.any?
         report_path =
