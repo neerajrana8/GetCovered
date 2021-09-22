@@ -64,27 +64,27 @@ class ApplicationRecord < ActiveRecord::Base
     if @gc_ar_base_correct_dirty_mbls && @gc_ar_base_correct_dirty_mbls.last
     
       # THIS IS A BETTER WAY OF DOING IT -- but setting @attributes this way doesn't solve our problem. We need to make a proper mutationtracker when mutations_before_last_save is a NullMutationTracker. And I don't know how yet. Workaround below.
-      #@attributes = ActiveModel::AttributeSet.new({}) if self.send(:mutations_before_last_save).class == ActiveModel::NullMutationTracker
-      #@gc_ar_base_correct_dirty_mbls.last.each do |field, changez|
-      #  if self.send(:mutations_before_last_save).send(:attributes)[field].instance_variable_get(:@original_attribute).nil?
-      #    self.send(:mutations_before_last_save).send(:attributes)[field].instance_variable_set(:@original_attribute, self.send(:mutations_from_database).send(:attributes)[field].dup)
-      #  end
-      #  self.send(:mutations_before_last_save).send(:attributes)[field].instance_variable_get(:@original_attribute).instance_variable_set(:@value_before_type_cast, changez[0])
-      #  self.send(:mutations_before_last_save).send(:attributes)[field].instance_variable_get(:@original_attribute).instance_variable_set(:@value, changez[0])
-      #  self.send(:mutations_before_last_save).send(:attributes)[field].instance_variable_set(:@value_before_type_cast, changez[1])
-      #  self.send(:mutations_before_last_save).send(:attributes)[field].instance_variable_set(:@value, changez[1])
-      #end
-      
+      self.instance_variable_set(:@mutations_before_last_save, ActiveModel::MutationTracker.new(self.instance_variable_get(:@attributes))) if self.send(:mutations_before_last_save).class == ActiveModel::NullMutationTracker
       @gc_ar_base_correct_dirty_mbls.last.each do |field, changez|
-        if self.send(:mutations_from_database).send(:attributes)[field].instance_variable_get(:@original_attribute).nil?
-          self.send(:mutations_from_database).send(:attributes)[field].instance_variable_set(:@original_attribute, self.send(:mutations_from_database).send(:attributes)[field].dup)
+        if self.send(:mutations_before_last_save).send(:attributes)[field].instance_variable_get(:@original_attribute).nil?
+          self.send(:mutations_before_last_save).send(:attributes)[field].instance_variable_set(:@original_attribute, self.send(:mutations_from_database).send(:attributes)[field].dup)
         end
-        self.send(:mutations_from_database).send(:attributes)[field].instance_variable_get(:@original_attribute)&.instance_variable_set(:@value_before_type_cast, changez[0])
-        self.send(:mutations_from_database).send(:attributes)[field].instance_variable_get(:@original_attribute)&.instance_variable_set(:@value, changez[0])
-        self.send(:mutations_from_database).send(:attributes)[field].instance_variable_set(:@value_before_type_cast, changez[1])
-        self.send(:mutations_from_database).send(:attributes)[field].instance_variable_set(:@value, changez[1])
+        self.send(:mutations_before_last_save).send(:attributes)[field].instance_variable_get(:@original_attribute).instance_variable_set(:@value_before_type_cast, changez[0])
+        self.send(:mutations_before_last_save).send(:attributes)[field].instance_variable_get(:@original_attribute).instance_variable_set(:@value, changez[0])
+        self.send(:mutations_before_last_save).send(:attributes)[field].instance_variable_set(:@value_before_type_cast, changez[1])
+        self.send(:mutations_before_last_save).send(:attributes)[field].instance_variable_set(:@value, changez[1])
       end
-      self.send(:changes_applied)
+      
+      #@gc_ar_base_correct_dirty_mbls.last.each do |field, changez|
+      #  if self.send(:mutations_from_database).send(:attributes)[field].instance_variable_get(:@original_attribute).nil?
+      #    self.send(:mutations_from_database).send(:attributes)[field].instance_variable_set(:@original_attribute, self.send(:mutations_from_database).send(:attributes)[field].dup)
+      #  end
+      #  self.send(:mutations_from_database).send(:attributes)[field].instance_variable_get(:@original_attribute)&.instance_variable_set(:@value_before_type_cast, changez[0])
+      #  self.send(:mutations_from_database).send(:attributes)[field].instance_variable_get(:@original_attribute)&.instance_variable_set(:@value, changez[0])
+      #  self.send(:mutations_from_database).send(:attributes)[field].instance_variable_set(:@value_before_type_cast, changez[1])
+      #  self.send(:mutations_from_database).send(:attributes)[field].instance_variable_set(:@value, changez[1])
+      #end
+      #self.send(:changes_applied)
     end
   end
   
