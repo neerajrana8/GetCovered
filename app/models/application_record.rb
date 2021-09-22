@@ -7,7 +7,9 @@ module ActiveRecord
     
       def transaction(*largs, **kargs, &barg)
         ApplicationRecord.increment_transaction_id if ActiveRecord::Base.connection.open_transactions == 0
+        puts "TRANNY ENTER #{ApplicationRecord.instance_variable_get(:@gc_ar_base_correct_dirty_tid)}" if ActiveRecord::Base.connection.open_transactions == 0
         old_trans(*largs, **kargs, &barg)
+        puts "TRANNY EXIT #{ApplicationRecord.instance_variable_get(:@gc_ar_base_correct_dirty_tid)}" if ActiveRecord::Base.connection.open_transactions == 0
       end
     end
   end
@@ -38,6 +40,7 @@ class ApplicationRecord < ActiveRecord::Base
   
   def gc_ar_base_correct_dirty_before_transaction
     # MOOSE WARNING: if we are in a new transaction we want to push a new mbls hash onto the stack
+    puts "CHECKING #{ApplicationRecord.transaction_id} != #{@gc_ar_base_correct_dirty_tid}"
     if ApplicationRecord.transaction_id != @gc_ar_base_correct_dirty_tid
       @gc_ar_base_correct_dirty_tid = ApplicationRecord.transaction_id
       (@gc_ar_base_correct_dirty_mbls ||= []).push({})
