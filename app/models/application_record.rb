@@ -44,6 +44,7 @@ class ApplicationRecord < ActiveRecord::Base
     if ApplicationRecord.transaction_id != @gc_ar_base_correct_dirty_tid
       @gc_ar_base_correct_dirty_tid = ApplicationRecord.transaction_id
       (@gc_ar_base_correct_dirty_mbls ||= []).push({})
+      gc_ar_base_correct_dirty_restoration_time
     end
   end
   
@@ -90,7 +91,8 @@ class ApplicationRecord < ActiveRecord::Base
   def gc_ar_base_correct_dirty_after_transaction
 
     if ApplicationRecord.transaction_id != @gc_ar_base_correct_dirty_tid
-    @gc_ar_base_correct_dirty_mbls.pop
+      @gc_ar_base_correct_dirty_mbls.pop
+      gc_ar_base_correct_dirty_restoration_time
     end
   end
   
