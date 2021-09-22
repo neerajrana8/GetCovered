@@ -201,7 +201,7 @@ class UpgradeFinanceSystem < ActiveRecord::Migration[5.2]
       t.integer     :total_received, null: false, default: 0            # the total that has actually been received
       t.integer     :total_undistributable, null: false, default: 0     # if we receive a payment and the line items totals have somehow changed so that what we charged for has become less than the total, the extra is recorded here
       # associations
-      t.references :invoiceable, polymorphic: true
+      t.references :invoiceable, polymorphic: true, index: { name: 'index_invoices_on_invoiceable_type_and_invoiceable_id' }
       t.references :payer, polymorphic: true
       t.references :collector, polymorphic: true # MOOSE WARNING: auto-set .external based on this???
       # garbage
