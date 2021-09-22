@@ -17,7 +17,7 @@ module Reports
 
       data['conversions_percentage'] =
         if data['total_visitors'].positive?
-          (data['conversions'] / data['total_visitors']).round(2)
+          (data['conversions'].to_f / data['total_visitors'].to_f * 100).round(2)
         else
           0
         end

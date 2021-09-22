@@ -7,6 +7,8 @@ module Reports
         aggregate_report
       elsif reportable.is_a?(Agency)
         agency_report
+      elsif reportable.is_a?(Account)
+        add_item_report(reportable)
       end
 
       self
@@ -15,7 +17,7 @@ module Reports
     def to_csv
       CSV.generate do |csv|
         csv << [
-          'Total', 'Type', 'Parent Agency', 'Status',
+          'Partner', 'Type', 'Parent Agency', 'Status',
           '', '', '', '', '', '', '', '', '', '',
           'Prior 7 Days', '', '', '', '', '', '', '', '', '',
           'Prior 30 Days', '', '', '', '', '', '', '', '', ''
@@ -34,27 +36,43 @@ module Reports
           'Site Visits', 'Total Visitors', 'Apps Started', 'Subm', 'Leads', 'Conv', 'Conv %', 'Total Premiums', 'Partner Comm\'n', 'GC Comm\'n'
         ]
 
-        csv << [
-          'TOTAL', '', '', '',
-          *data['totals']['yesterday'].values_at(*daily_sales_headers),
-          *data['totals']['prior_seven_days'].values_at(*daily_sales_headers),
-          *data['totals']['prior_thirty_days'].values_at(*daily_sales_headers)
-        ]
+        unless reportable.is_a?(Account)
+          csv << [
+            'TOTAL', '', '', '',
+            *data['totals']['yesterday'].values_at(*daily_sales_columns[:without_formatting]),
+            *data['totals']['yesterday'].values_at(*daily_sales_columns[:percent]).map { |value| "%#{value}" },
+            *data['totals']['yesterday'].values_at(*daily_sales_columns[:money]).map { |value| "$#{value}" },
+            *data['totals']['prior_seven_days'].values_at(*daily_sales_columns[:without_formatting]),
+            *data['totals']['prior_seven_days'].values_at(*daily_sales_columns[:percent]).map { |value| "%#{value}" },
+            *data['totals']['prior_seven_days'].values_at(*daily_sales_columns[:money]).map { |value| "$#{value}" },
+            *data['totals']['prior_thirty_days'].values_at(*daily_sales_columns[:without_formatting]),
+            *data['totals']['prior_thirty_days'].values_at(*daily_sales_columns[:percent]).map { |value| "%#{value}" },
+            *data['totals']['prior_thirty_days'].values_at(*daily_sales_columns[:money]).map { |value| "$#{value}" }
+
+          ]
+        end
 
         data['rows'].each do |row|
           csv << [
-            *row.values_at(*%w[title type parent_agency]), row['status'] ? 'Active' : 'Inactive',
-            *row['data']['yesterday'].values_at(*daily_sales_headers),
-            *row['data']['prior_seven_days'].values_at(*daily_sales_headers),
-            *row['data']['prior_thirty_days'].values_at(*daily_sales_headers)
+            *row.values_at(*%w[title type parent_agency status]),
+            *row['data']['yesterday'].values_at(*daily_sales_columns[:without_formatting]),
+            *row['data']['yesterday'].values_at(*daily_sales_columns[:percent]).map { |value| "%#{value}" },
+            *row['data']['yesterday'].values_at(*daily_sales_columns[:money]).map { |value| "$#{value}" },
+            *row['data']['prior_seven_days'].values_at(*daily_sales_columns[:without_formatting]),
+            *row['data']['prior_seven_days'].values_at(*daily_sales_columns[:percent]).map { |value| "%#{value}" },
+            *row['data']['prior_seven_days'].values_at(*daily_sales_columns[:money]).map { |value| "$#{value}" },
+            *row['data']['prior_thirty_days'].values_at(*daily_sales_columns[:without_formatting]),
+            *row['data']['prior_thirty_days'].values_at(*daily_sales_columns[:percent]).map { |value| "%#{value}" },
+            *row['data']['prior_thirty_days'].values_at(*daily_sales_columns[:money]).map { |value| "$#{value}" }
           ]
         end
       end
     end
 
     def generate_csv
-      document_title = "#{reportable&.title || 'All partners'}-Daily-Report-#{range_start.strftime('%B %-d %Y')}.csv".downcase
-                                                                                                   .tr(' ', '-')
+      document_title =
+        "#{reportable&.title || 'All partners'}-Daily-Report-#{range_start.strftime('%B %-d %Y')}.csv".downcase.tr(' ', '-')
+
       save_path = Rails.root.join('tmp', document_title)
 
       File.open(save_path, 'wb') do |file|
@@ -66,9 +84,12 @@ module Reports
 
     private
 
-    def daily_sales_headers
-      %w[site_visits total_visitors applications_started submissions leads conversions
-         total_premiums partner_commissions get_covered_commissions conversions_percentage]
+    def daily_sales_columns
+      {
+        without_formatting: %w[site_visits total_visitors applications_started submissions leads conversions],
+        percent:            %w[conversions_percentage],
+        money:              %w[total_premiums partner_commissions get_covered_commissions]
+      }
     end
 
     def aggregate_report
@@ -80,21 +101,21 @@ module Reports
 
     def line_data(line_reportable)
       {
-        'yesterday' =>
+        'yesterday'         =>
           DailySales.find_by(
-            reportable: line_reportable,
+            reportable:  line_reportable,
             range_start: range_start.yesterday.all_day,
-            range_end: range_start.yesterday.all_day
+            range_end:   range_start.yesterday.all_day
           )&.data,
-        'prior_seven_days' => DailySales.find_by(
-          reportable: line_reportable,
+        'prior_seven_days'  => DailySales.find_by(
+          reportable:  line_reportable,
           range_start: (range_start - 7.days).all_day,
-          range_end: range_start.yesterday.all_day
+          range_end:   range_start.yesterday.all_day
         )&.data,
         'prior_thirty_days' => DailySales.find_by(
-          reportable: line_reportable,
+          reportable:  line_reportable,
           range_start: (range_start - 30.days).all_day,
-          range_end: range_start.yesterday.all_day
+          range_end:   range_start.yesterday.all_day
         )&.data
       }
     end
@@ -116,18 +137,19 @@ module Reports
     def add_item_report(item)
       item_data = line_data(item)
 
-      return if item_data.value?(nil)
+      # ignore if we did not generated reports or partner inactive and  all columns are zeroes
+      return if item_data.value?(nil) || (!item.enabled? && item_data.values.map(&:values).flatten.uniq == [0])
 
       data['rows'] << {
-        'title' => item.title,
-        'type' => item.class.to_s,
-        'id' => item.id,
+        'title'         => item.title,
+        'type'          => (item.is_a?(Agency) && item.agency_id.present?) ? 'Sub-Agency' : item.class.to_s,
+        'id'            => item.id,
         'parent_agency' => item.agency&.title,
-        'status' => item.enabled,
-        'data' => item_data
+        'status'        => item.enabled? ? 'Active' : 'Inactive',
+        'data'          => item_data
       }
 
-      update_totals(item_data)
+      update_totals(item_data) unless item.is_a?(Account)
     end
 
     def update_totals(line_data)
@@ -146,44 +168,44 @@ module Reports
       self.duration = 'day'
       self.data     = {
         'totals' => {
-          'yesterday' => {
-            'site_visits' => 0,
-            'total_visitors' => 0,
-            'applications_started' => 0,
-            'submissions' => 0,
-            'leads' => 0,
-            'conversions' => 0,
-            'total_premiums' => 0,
-            'partner_commissions' => 0,
+          'yesterday'         => {
+            'site_visits'             => 0,
+            'total_visitors'          => 0,
+            'applications_started'    => 0,
+            'submissions'             => 0,
+            'leads'                   => 0,
+            'conversions'             => 0,
+            'total_premiums'          => 0,
+            'partner_commissions'     => 0,
             'get_covered_commissions' => 0,
-            'conversions_percentage' => 0
+            'conversions_percentage'  => 0
           },
-          'prior_seven_days' => {
-            'site_visits' => 0,
-            'total_visitors' => 0,
-            'applications_started' => 0,
-            'submissions' => 0,
-            'leads' => 0,
-            'conversions' => 0,
-            'total_premiums' => 0,
-            'partner_commissions' => 0,
+          'prior_seven_days'  => {
+            'site_visits'             => 0,
+            'total_visitors'          => 0,
+            'applications_started'    => 0,
+            'submissions'             => 0,
+            'leads'                   => 0,
+            'conversions'             => 0,
+            'total_premiums'          => 0,
+            'partner_commissions'     => 0,
             'get_covered_commissions' => 0,
-            'conversions_percentage' => 0
+            'conversions_percentage'  => 0
           },
           'prior_thirty_days' => {
-            'site_visits' => 0,
-            'total_visitors' => 0,
-            'applications_started' => 0,
-            'submissions' => 0,
-            'leads' => 0,
-            'conversions' => 0,
-            'total_premiums' => 0,
-            'partner_commissions' => 0,
+            'site_visits'             => 0,
+            'total_visitors'          => 0,
+            'applications_started'    => 0,
+            'submissions'             => 0,
+            'leads'                   => 0,
+            'conversions'             => 0,
+            'total_premiums'          => 0,
+            'partner_commissions'     => 0,
             'get_covered_commissions' => 0,
-            'conversions_percentage' => 0
+            'conversions_percentage'  => 0
           }
         },
-        'rows' => []
+        'rows'   => []
       }
     end
   end
