@@ -7,9 +7,9 @@ module ActiveRecord
     
       def transaction(*largs, **kargs, &barg)
         ApplicationRecord.increment_transaction_id if ActiveRecord::Base.connection.open_transactions == 0
-        puts "TRANNY ENTER #{ApplicationRecord.instance_variable_get(:@gc_ar_base_correct_dirty_tid)}" if ActiveRecord::Base.connection.open_transactions == 0
+        puts "TRANNY ENTER #{ApplicationRecord.instance_variable_get(:@gc_ar_base_correct_dirty_transaction_id)}" if ActiveRecord::Base.connection.open_transactions == 0
         old_trans(*largs, **kargs, &barg)
-        puts "TRANNY EXIT #{ApplicationRecord.instance_variable_get(:@gc_ar_base_correct_dirty_tid)}" if ActiveRecord::Base.connection.open_transactions == 0
+        puts "TRANNY EXIT #{ApplicationRecord.instance_variable_get(:@gc_ar_base_correct_dirty_transaction_id)}" if ActiveRecord::Base.connection.open_transactions == 0
       end
     end
   end
