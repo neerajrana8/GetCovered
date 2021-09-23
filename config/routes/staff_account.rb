@@ -164,6 +164,8 @@
       only: [ :index ]
 
     resources :leads, only: [:index, :show, :update]
+    post :leads_recent_index, action: :index, controller: :leads
+
     resources :leads_dashboard, only: [:index] do
       collection do
         get :get_filters

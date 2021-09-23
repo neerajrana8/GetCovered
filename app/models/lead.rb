@@ -58,6 +58,30 @@ class Lead < ApplicationRecord
     pages.index(current_page) > (pages.index(self.last_visited_page) || 0)
   end
 
+  def first_name
+    self&.profile.first_name
+  end
+
+  def last_name
+    self&.profile.last_name
+  end
+
+  def policy_type
+    self.lead_events&.last&.policy_type&.title
+  end
+
+  def premium_total
+    self&.user&.policy_applications&.last&.policy_quotes&.last&.policy_premium&.total
+  end
+
+  def billing_strategy
+    self&.user&.policy_applications&.last&.policy_quotes&.last&.policy_premium&.billing_strategy&.title
+  end
+
+  def campaign_name
+    self&.tracking_url&.campaign_name
+  end
+
   private
 
   # DO NOT CHANGE! CAN BRAKE IDENTIFIERS UNIQUENESS
@@ -116,29 +140,4 @@ class Lead < ApplicationRecord
       end
     end
   end
-
-  def first_name
-    self&.profile.first_name
-  end
-
-  def last_name
-    self&.profile.last_name
-  end
-
-  def policy_type
-    self.lead_events&.last&.policy_type&.title
-  end
-
-  def premium_total
-    self&.user&.policy_applications&.last&.policy_quotes&.last&.policy_premium&.total
-  end
-
-  def billing_strategy
-    self&.user&.policy_applications&.last&.policy_quotes&.last&.policy_premium&.billing_strategy&.title
-  end
-
-  def campaign_name
-    self&.tracking_url&.campaign_name
-  end
-
 end
