@@ -7,7 +7,7 @@ module Reports
       report_path = Reports::DailySalesAggregate.new(range_start: range_start).generate.generate_csv
       recipients = 
         if Rails.env == 'production'
-          ['policysold@getcovered.io']
+          ['salesreports@getcovered.io']
         else
           ['testing@getcovered.io', 'ivaniln@nitka.com']
         end

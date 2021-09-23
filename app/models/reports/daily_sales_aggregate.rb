@@ -41,13 +41,13 @@ module Reports
           csv << [
             'TOTAL', '', '', '',
             *data['totals']['yesterday'].values_at(*daily_sales_columns[:without_formatting]),
-            *data['totals']['yesterday'].values_at(*daily_sales_columns[:percent]).map { |value| "#{value}%" },
+            *data['totals']['yesterday'].values_at(*daily_sales_columns[:percent]).map { |value| value.zero? ? 0 : "#{value}%" },
             *data['totals']['yesterday'].values_at(*daily_sales_columns[:money]).map { |value| "$#{(value / 100.0).to_s(:delimited)}" },
             *data['totals']['prior_seven_days'].values_at(*daily_sales_columns[:without_formatting]),
-            *data['totals']['prior_seven_days'].values_at(*daily_sales_columns[:percent]).map { |value| "#{value}%" },
+            *data['totals']['prior_seven_days'].values_at(*daily_sales_columns[:percent]).map { |value| value.zero? ? 0 : "#{value}%" },
             *data['totals']['prior_seven_days'].values_at(*daily_sales_columns[:money]).map { |value| "$#{(value / 100.0).to_s(:delimited)}" },
             *data['totals']['prior_thirty_days'].values_at(*daily_sales_columns[:without_formatting]),
-            *data['totals']['prior_thirty_days'].values_at(*daily_sales_columns[:percent]).map { |value| "#{value}%" },
+            *data['totals']['prior_thirty_days'].values_at(*daily_sales_columns[:percent]).map { |value| value.zero? ? 0 : "#{value}%" },
             *data['totals']['prior_thirty_days'].values_at(*daily_sales_columns[:money]).map { |value| "$#{(value / 100.0).to_s(:delimited)}" }
           ]
         end
@@ -56,13 +56,13 @@ module Reports
           csv << [
             *row.values_at('title', 'type', 'parent_agency', 'status'),
             *row['data']['yesterday'].values_at(*daily_sales_columns[:without_formatting]),
-            *row['data']['yesterday'].values_at(*daily_sales_columns[:percent]).map { |value| "#{value}%" },
+            *row['data']['yesterday'].values_at(*daily_sales_columns[:percent]).map { |value| value.zero? ? 0 : "#{value}%" },
             *row['data']['yesterday'].values_at(*daily_sales_columns[:money]).map { |value| "$#{(value / 100.0).to_s(:delimited)}" },
             *row['data']['prior_seven_days'].values_at(*daily_sales_columns[:without_formatting]),
-            *row['data']['prior_seven_days'].values_at(*daily_sales_columns[:percent]).map { |value| "#{value}%" },
+            *row['data']['prior_seven_days'].values_at(*daily_sales_columns[:percent]).map { |value| value.zero? ? 0 : "#{value}%" },
             *row['data']['prior_seven_days'].values_at(*daily_sales_columns[:money]).map { |value| "$#{(value / 100.0).to_s(:delimited)}" },
             *row['data']['prior_thirty_days'].values_at(*daily_sales_columns[:without_formatting]),
-            *row['data']['prior_thirty_days'].values_at(*daily_sales_columns[:percent]).map { |value| "#{value}%" },
+            *row['data']['prior_thirty_days'].values_at(*daily_sales_columns[:percent]).map { |value| value.zero? ? 0 : "#{value}%" },
             *row['data']['prior_thirty_days'].values_at(*daily_sales_columns[:money]).map { |value| "$#{(value / 100.0).to_s(:delimited)}" }
           ]
         end
