@@ -76,6 +76,8 @@ class Account < ApplicationRecord
   has_many :reports,
     as: :reportable
 
+  scope :enabled, -> { where(enabled: true) }
+
   accepts_nested_attributes_for :addresses, allow_destroy: true
 
   # Validations

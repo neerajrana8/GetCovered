@@ -16,7 +16,7 @@ module Reports
         agency.agencies.enabled.each do |sub_agency|
           emails_for_reportable(sub_agency)
 
-          sub_agency.accounts.active.each do |account|
+          sub_agency.accounts.enabled.each do |account|
             emails_for_reportable(account)
           end
         end
