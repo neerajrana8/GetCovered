@@ -105,6 +105,12 @@ describe 'Leads API spec', type: :request do
       expect(response_body2['first_name'].present?).to eq(true)
     end
 
+    it 'should view recent lead index json with filtration' do
+      response_body = filter_recent_leads(leads_filtering)
+      expect(response.status).to eq(200)
+      expect(response_body.size).to eq(2)
+    end
+
   end
 
   it 'should create new Lead from external api call' do
@@ -145,6 +151,11 @@ describe 'Leads API spec', type: :request do
   def show_admin_leads(id)
     get "/v2/staff_super_admin/leads/#{id}", headers: @headers
     response
+  end
+
+  def filter_recent_leads(params)
+    post '/v2/staff_super_admin/leads_recent_index', headers: @headers, params: params
+    JSON.parse response.body
   end
 
   def new_event_params(email, identifier, last_visited_page, lead_step, lead_field_name, lead_step_value = Faker::Name.name)
@@ -253,6 +264,29 @@ describe 'Leads API spec', type: :request do
                     }
                 }
             ]
+        }
+    }
+  end
+
+  def leads_filtering
+    {
+        "sort":{
+            "column":"last_visit",
+            "direction":"desc"
+        },
+        "filter":{
+            "last_visit":{
+                "start": (Date.today - 1.day).to_s,
+                "end": (Date.today + 1.day).to_s
+            },
+            "agency_id":[
+                @agency.id
+            ],
+            "lead_events":{
+                "policy_type_id":[
+                    5
+                ]
+            }
         }
     }
   end
