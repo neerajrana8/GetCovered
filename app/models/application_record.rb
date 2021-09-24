@@ -2,6 +2,8 @@
 
 # hideous monkey patch
 module ActiveRecord
+  GC_MONKEY_HAS_RUN_WILD = true
+
   module ConnectionAdapters
     module DatabaseStatements
       alias :old_trans :transaction
@@ -12,7 +14,7 @@ module ActiveRecord
       end
     end
   end
-end
+end unless ActiveRecord.const_defined?('GC_MONKEY_HAS_RUN_WILD')
 
 
 class ApplicationRecord < ActiveRecord::Base
@@ -31,61 +33,12 @@ class ApplicationRecord < ActiveRecord::Base
     @gc_ar_base_correct_dirty_transaction_id ||= 0
     @gc_ar_base_correct_dirty_transaction_id = (@gc_ar_base_correct_dirty_transaction_id + 1) & @gc_ar_base_correct_dirty_mask
   end
-  
-  
-  
-  def mutations_within_transaction
-    @mutations_within_transactions&.last || ActiveModel::NullMutationTracker.instance
+
+  def lock!(*rabbits, **play, &in_the_woods)
+    rescued_from_oblivion = self.instance_variable_get(:@mutations_before_last_save)
+    to_return = super(*rabbits, **play, &in_the_woods)
+    self.instance_variable_set(:@mutations_before_last_save, rescued_from_oblivion)
+    to_return
   end
-  
-  def saved_change_to_attribute_within_transaction?(attr_name, **options)
-    mutations_within_transaction.changed?(attr_name, **options)
-  end
-  
-  
-  
-  
-  
-  before_save :gc_ar_base_correct_dirty_before_transaction
-  after_save :gc_ar_base_correct_dirty_for_transaction
-  after_commit :gc_ar_base_correct_dirty_after_transaction
-  after_rollback :gc_ar_base_correct_dirty_after_transaction
-  
-  def gc_ar_base_correct_dirty_before_transaction
-    if ApplicationRecord.transaction_id != @gc_ar_base_correct_dirty_tid
-      @gc_ar_base_correct_dirty_tid = ApplicationRecord.transaction_id
-      (@mutations_within_transactions ||= []).push(ActiveModel::AttributeMutationTracker.new(self.instance_variable_get(:@attributes)))
-    end
-  end
-  
-  
-  def gc_ar_base_correct_dirty_apply_changes
-    lord_of_mutants = @mutations_within_transactions.last
-    self.previous_changes.each do |field, changez|
-      if lord_of_mutants.send(:attributes)[field].instance_variable_get(:@original_attribute).nil?
-        lord_of_mutants.send(:attributes)[field].instance_variable_set(:@original_attribute, self.send(:mutations_from_database).send(:attributes)[field].dup)
-        #lord_of_mutants.send(:attributes)[field].instance_variable_get(:@original_attribute).instance_variable_set(:@value_before_type_cast, changez[0])
-        #lord_of_mutants.send(:attributes)[field].instance_variable_get(:@original_attribute).instance_variable_set(:@value, changez[0])
-      end
-      lord_of_mutants.send(:attributes)[field].instance_variable_set(:@value_before_type_cast, changez[1])
-      lord_of_mutants.send(:attributes)[field].instance_variable_set(:@value, changez[1])
-    end
-  end
-  
-  
-  def gc_ar_base_correct_dirty_for_transaction
-    gc_ar_base_correct_dirty_apply_changes
-  end
-  
-  def gc_ar_base_correct_dirty_after_transaction
-    if ApplicationRecord.transaction_id != @gc_ar_base_correct_dirty_tid
-      @mutations_within_transactions.pop
-    end
-  end
-  
-  #def lock!(*meth, **am, &phetamine)
-  #  super(*meth, **am, &phetamine)
-  #  gc_ar_base_correct_dirty_restoration_time
-  #end
   
 end
