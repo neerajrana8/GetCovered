@@ -31,7 +31,7 @@ class Account < ApplicationRecord
   alias staffs staff
       
   has_many :branding_profiles, as: :profileable
-  has_many :payment_profiles, as: :payer
+  has_many :payment_profiles,  as: :payer
   
   has_many :insurables 
   
@@ -66,6 +66,8 @@ class Account < ApplicationRecord
 
   has_many :events,
     as: :eventable
+
+  has_many :notification_settings, as: :notifyable
   
   has_many :addresses,
     as: :addressable,
