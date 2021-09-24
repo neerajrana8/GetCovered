@@ -1,7 +1,5 @@
 
 
-
-
 # hideous monkey patch
 module ActiveRecord
   module ConnectionAdapters
@@ -10,9 +8,7 @@ module ActiveRecord
     
       def transaction(*largs, **kargs, &barg)
         ApplicationRecord.increment_transaction_id if ActiveRecord::Base.connection.open_transactions == 0
-        #puts "TRANNY ENTER #{ApplicationRecord.instance_variable_get(:@gc_ar_base_correct_dirty_transaction_id)}" if ActiveRecord::Base.connection.open_transactions == 0
         old_trans(*largs, **kargs, &barg)
-        #puts "TRANNY EXIT #{ApplicationRecord.instance_variable_get(:@gc_ar_base_correct_dirty_transaction_id)}" if ActiveRecord::Base.connection.open_transactions == 0
       end
     end
   end
@@ -31,7 +27,6 @@ class ApplicationRecord < ActiveRecord::Base
   end
   
   def self.increment_transaction_id
-    puts "Incrementing transaction id"
     @gc_ar_base_correct_dirty_mask ||= 2**64 - 1
     @gc_ar_base_correct_dirty_transaction_id ||= 0
     @gc_ar_base_correct_dirty_transaction_id = (@gc_ar_base_correct_dirty_transaction_id + 1) & @gc_ar_base_correct_dirty_mask
@@ -40,7 +35,7 @@ class ApplicationRecord < ActiveRecord::Base
   
   
   def mutations_within_transaction
-    @mutations_within_transaction ||= ActiveModel::NullMutationTracker.new
+    @mutations_within_transactions&.last || ActiveModel::NullMutationTracker.instance
   end
   
   def saved_change_to_attribute_within_transaction?(attr_name, **options)
@@ -57,57 +52,40 @@ class ApplicationRecord < ActiveRecord::Base
   after_rollback :gc_ar_base_correct_dirty_after_transaction
   
   def gc_ar_base_correct_dirty_before_transaction
-    #puts "CHECKING #{ApplicationRecord.transaction_id} != #{@gc_ar_base_correct_dirty_tid}"
     if ApplicationRecord.transaction_id != @gc_ar_base_correct_dirty_tid
-      puts "Pushing stack for #{self.class.name} #{self.id}"
       @gc_ar_base_correct_dirty_tid = ApplicationRecord.transaction_id
-      (@gc_ar_base_correct_dirty_mbls ||= []).push({})
-      gc_ar_base_correct_dirty_restoration_time(true)
+      (@mutations_within_transactions ||= []).push(ActiveModel::AttributeMutationTracker.new(self.instance_variable_get(:@attributes)))
     end
   end
+  
+  
+  def gc_ar_base_correct_dirty_apply_changes
+    lord_of_mutants = @mutations_within_transactions.last
+    self.previous_changes.each do |field, changez|
+      if lord_of_mutants.send(:attributes)[field].instance_variable_get(:@original_attribute).nil?
+        lord_of_mutants.send(:attributes)[field].instance_variable_set(:@original_attribute, self.send(:mutations_from_database).send(:attributes)[field].dup)
+        #lord_of_mutants.send(:attributes)[field].instance_variable_get(:@original_attribute).instance_variable_set(:@value_before_type_cast, changez[0])
+        #lord_of_mutants.send(:attributes)[field].instance_variable_get(:@original_attribute).instance_variable_set(:@value, changez[0])
+      end
+      lord_of_mutants.send(:attributes)[field].instance_variable_set(:@value_before_type_cast, changez[1])
+      lord_of_mutants.send(:attributes)[field].instance_variable_set(:@value, changez[1])
+    end
+  end
+  
   
   def gc_ar_base_correct_dirty_for_transaction
-    self.previous_changes.each do |field, changez|
-      # correct field history in our internal moosehopper
-      if @gc_ar_base_correct_dirty_mbls.last.has_key?(field)
-        @gc_ar_base_correct_dirty_mbls.last[field][1] = changez[1]
-      else
-        @gc_ar_base_correct_dirty_mbls.last[field] = [changez[0], changez[1]]
-      end
-    end
-    gc_ar_base_correct_dirty_restoration_time
-  end
-  
-  def gc_ar_base_correct_dirty_restoration_time(force_clear = false)
-    if @gc_ar_base_correct_dirty_mbls && @gc_ar_base_correct_dirty_mbls.last
-      instvar = :@mutations_within_transaction # was overwriting :@mutations_before_last_save but that broke expected values for some callbacks
-      self.instance_variable_set(instvar, ActiveModel::AttributeMutationTracker.new(self.instance_variable_get(:@attributes))) if force_clear || self.instance_variable_get(instvar).class == ActiveModel::NullMutationTracker
-      @gc_ar_base_correct_dirty_mbls.last.each do |field, changez|
-        if self.instance_variable_get(instvar).send(:attributes)[field].instance_variable_get(:@original_attribute).nil?
-          self.instance_variable_get(instvar).send(:attributes)[field].instance_variable_set(:@original_attribute, self.send(:mutations_from_database).send(:attributes)[field].dup)
-        end
-        self.instance_variable_get(instvar).send(:attributes)[field].instance_variable_get(:@original_attribute).instance_variable_set(:@value_before_type_cast, changez[0])
-        self.instance_variable_get(instvar).send(:attributes)[field].instance_variable_get(:@original_attribute).instance_variable_set(:@value, changez[0])
-        self.instance_variable_get(instvar).send(:attributes)[field].instance_variable_set(:@value_before_type_cast, changez[1])
-        self.instance_variable_get(instvar).send(:attributes)[field].instance_variable_set(:@value, changez[1])
-      end
-    end
+    gc_ar_base_correct_dirty_apply_changes
   end
   
   def gc_ar_base_correct_dirty_after_transaction
     if ApplicationRecord.transaction_id != @gc_ar_base_correct_dirty_tid
-      puts "Popping stack for #{self.class.name} #{self.id}"
-      @gc_ar_base_correct_dirty_mbls.pop
-      gc_ar_base_correct_dirty_restoration_time
+      @mutations_within_transactions.pop
     end
   end
   
-  def lock!(*meth, **am, &phetamine)
-    super(*meth, **am, &phetamine)
-    gc_ar_base_correct_dirty_restoration_time
-  end
+  #def lock!(*meth, **am, &phetamine)
+  #  super(*meth, **am, &phetamine)
+  #  gc_ar_base_correct_dirty_restoration_time
+  #end
   
 end
-
-
-
