@@ -1,8 +1,10 @@
 module StaffNotificationSettingsMethods
   extend ActiveSupport::Concern
 
-  before_action :set_notifyable
-  before_action :set_notification_setting, except: :index
+  included do
+    before_action :set_notifyable
+    before_action :set_notification_setting, except: :index
+  end
 
   def index
     @notification_settings = @notifyable.notification_settings
