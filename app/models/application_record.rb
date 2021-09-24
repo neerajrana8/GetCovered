@@ -31,6 +31,7 @@ class ApplicationRecord < ActiveRecord::Base
   end
   
   def self.increment_transaction_id
+    puts "Incrementing transaction id"
     @gc_ar_base_correct_dirty_mask ||= 2**64 - 1
     @gc_ar_base_correct_dirty_transaction_id ||= 0
     @gc_ar_base_correct_dirty_transaction_id = (@gc_ar_base_correct_dirty_transaction_id + 1) & @gc_ar_base_correct_dirty_mask
@@ -44,6 +45,7 @@ class ApplicationRecord < ActiveRecord::Base
   def gc_ar_base_correct_dirty_before_transaction
     #puts "CHECKING #{ApplicationRecord.transaction_id} != #{@gc_ar_base_correct_dirty_tid}"
     if ApplicationRecord.transaction_id != @gc_ar_base_correct_dirty_tid
+      puts "Pushing stack for #{self.class.name} #{self.id}"
       @gc_ar_base_correct_dirty_tid = ApplicationRecord.transaction_id
       (@gc_ar_base_correct_dirty_mbls ||= []).push({})
       gc_ar_base_correct_dirty_restoration_time(true)
@@ -79,6 +81,7 @@ class ApplicationRecord < ActiveRecord::Base
   
   def gc_ar_base_correct_dirty_after_transaction
     if ApplicationRecord.transaction_id != @gc_ar_base_correct_dirty_tid
+      puts "Popping stack for #{self.class.name} #{self.id}"
       @gc_ar_base_correct_dirty_mbls.pop
       gc_ar_base_correct_dirty_restoration_time
     end
