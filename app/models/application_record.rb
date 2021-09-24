@@ -37,6 +37,20 @@ class ApplicationRecord < ActiveRecord::Base
     @gc_ar_base_correct_dirty_transaction_id = (@gc_ar_base_correct_dirty_transaction_id + 1) & @gc_ar_base_correct_dirty_mask
   end
   
+  
+  
+  def mutations_within_transaction
+    @mutations_within_transaction ||= ActiveModel::NullMutationTracker.new
+  end
+  
+  def saved_change_to_attribute_within_transaction?(attr_name, **options)
+    mutations_within_transaction.changed?(attr_name, **options)
+  end
+  
+  
+  
+  
+  
   before_save :gc_ar_base_correct_dirty_before_transaction
   after_save :gc_ar_base_correct_dirty_for_transaction
   after_commit :gc_ar_base_correct_dirty_after_transaction
@@ -66,15 +80,16 @@ class ApplicationRecord < ActiveRecord::Base
   
   def gc_ar_base_correct_dirty_restoration_time(force_clear = false)
     if @gc_ar_base_correct_dirty_mbls && @gc_ar_base_correct_dirty_mbls.last
-      self.instance_variable_set(:@mutations_before_last_save, ActiveModel::AttributeMutationTracker.new(self.instance_variable_get(:@attributes))) if force_clear || self.send(:mutations_before_last_save).class == ActiveModel::NullMutationTracker
+      instvar = :@mutations_within_transaction # was overwriting :@mutations_before_last_save but that broke expected values for some callbacks
+      self.instance_variable_set(instvar, ActiveModel::AttributeMutationTracker.new(self.instance_variable_get(:@attributes))) if force_clear || self.instance_variable_get(instvar).class == ActiveModel::NullMutationTracker
       @gc_ar_base_correct_dirty_mbls.last.each do |field, changez|
-        if self.send(:mutations_before_last_save).send(:attributes)[field].instance_variable_get(:@original_attribute).nil?
-          self.send(:mutations_before_last_save).send(:attributes)[field].instance_variable_set(:@original_attribute, self.send(:mutations_from_database).send(:attributes)[field].dup)
+        if self.instance_variable_get(instvar).send(:attributes)[field].instance_variable_get(:@original_attribute).nil?
+          self.instance_variable_get(instvar).send(:attributes)[field].instance_variable_set(:@original_attribute, self.send(:mutations_from_database).send(:attributes)[field].dup)
         end
-        self.send(:mutations_before_last_save).send(:attributes)[field].instance_variable_get(:@original_attribute).instance_variable_set(:@value_before_type_cast, changez[0])
-        self.send(:mutations_before_last_save).send(:attributes)[field].instance_variable_get(:@original_attribute).instance_variable_set(:@value, changez[0])
-        self.send(:mutations_before_last_save).send(:attributes)[field].instance_variable_set(:@value_before_type_cast, changez[1])
-        self.send(:mutations_before_last_save).send(:attributes)[field].instance_variable_set(:@value, changez[1])
+        self.instance_variable_get(instvar).send(:attributes)[field].instance_variable_get(:@original_attribute).instance_variable_set(:@value_before_type_cast, changez[0])
+        self.instance_variable_get(instvar).send(:attributes)[field].instance_variable_get(:@original_attribute).instance_variable_set(:@value, changez[0])
+        self.instance_variable_get(instvar).send(:attributes)[field].instance_variable_set(:@value_before_type_cast, changez[1])
+        self.instance_variable_get(instvar).send(:attributes)[field].instance_variable_set(:@value, changez[1])
       end
     end
   end
