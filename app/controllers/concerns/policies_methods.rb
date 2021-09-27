@@ -115,7 +115,8 @@ module PoliciesMethods
       results = ::InsurableRateConfiguration.get_coverage_options(
         ::CarrierPolicyType.where(carrier_id: @policy.carrier_id, policy_type_id: @policy.policy_type_id).take,
         @policy.primary_insurable,
-        [{ 'category' => 'coverage', 'options_type' => 'none', 'uid' => '1010', 'selection' => true }],
+        {},
+        #[{ 'category' => 'coverage', 'options_type' => 'none', 'uid' => '1010', 'selection' => true }],
         @policy.effective_date,
         @policy.policy_users.count - 1,
         @policy.policy_premiums.last&.billing_strategy,
