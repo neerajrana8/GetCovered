@@ -4,6 +4,8 @@
 # file: app/models/invoice.rb
 
 class Invoice < ApplicationRecord
+  include DirtyTransactionTracker
+
   attr_accessor :callbacks_disabled
 
   belongs_to :invoiceable, polymorphic: true
@@ -29,7 +31,7 @@ class Invoice < ApplicationRecord
   before_update :set_missed_record,
     if: Proc.new{|i| i.will_save_change_to_attribute?('status') && i.status == 'missed' && !i.callbacks_disabled }
   after_commit :send_status_change_notifications,
-    if: Proc.new{|i| i.saved_change_to_attribute?('status') && !i.callbacks_disabled }
+    if: Proc.new{|i| i.saved_change_to_attribute_within_trnasaction?('status') && !i.callbacks_disabled }
     
   scope :internal, -> { where(external: false) }
   scope :external, -> { where(external: true) }

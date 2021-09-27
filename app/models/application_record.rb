@@ -1,4 +1,9 @@
 
+  
+# below is a fix for the AR bug where locking a record destroys its previous_changes dirty data;
+# there is also code to enable the differentiation of the current top-level transaction via ApplicationRecord.transaction_id, which is used in the DirtyTransactionTracker model concern
+  
+  
 
 # hideous monkey patch
 module ActiveRecord
@@ -19,10 +24,6 @@ end unless ActiveRecord.const_defined?('GC_MONKEY_HAS_RUN_WILD')
 
 class ApplicationRecord < ActiveRecord::Base
   self.abstract_class = true
-  
-  # below is a fix for:
-  #  1) The AR bug where locking a record destroys its previous_changes dirty data, and
-  #  2) The AR design oversight where previous_changes isn't cumulative within a transaction (and thus after_commit can't determine what was changed over the course of a transaction)
   
   def self.transaction_id
     connection.open_transactions == 0 ? nil : @gc_ar_base_correct_dirty_transaction_id
