@@ -39,6 +39,8 @@ describe 'Bill due invoice spec', type: :request do
     expect(@invoices.include?(@invoice)).to eq(true)
     
     puts "!!!!!!!!! RESULT #{@invoice.pay(stripe_source: :default, allow_missed: true)}"
+    puts "!!!!!!!!! #{@invoice.status}"
+    puts "!!!!!!!!! #{@invoice.reload.status}"
     expect(true).to eq(false)
     
     puts BillDueInvoicesJob.perform_now
