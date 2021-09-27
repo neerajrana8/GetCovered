@@ -13,6 +13,11 @@ module DirtyTransactionTracker
       mutations_within_transaction.changed?(attr_name, **options)
     end
     
+    def previous_changes_within_transaction
+      @previously_changed_within_transaction ||= ActiveSupport::HashWithIndifferentAccess.new
+      @previously_changed_within_transaction.merge(mutations_within_transaction.changes)
+    end
+    
     before_save :dtt___before_transaction
     after_save :dtt___for_transaction
     after_commit :dtt___after_transaction
