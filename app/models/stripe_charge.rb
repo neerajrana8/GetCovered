@@ -177,7 +177,7 @@ puts "????????????STRIPE CHARGE SUCCEEDED #{saved_change_to_attribute_within_tra
   
     def set_status_changed_at
 
-puts "????????????STRIPE CHARGE SETTING STATUSCHANGEDAT #{saved_change_to_attribute_within_transaction?('status')
+puts "????????????STRIPE CHARGE SETTING STATUSCHANGEDAT #{saved_change_to_attribute_within_transaction?('status')}"
       self.status_changed_at = Time.current
     end
   
