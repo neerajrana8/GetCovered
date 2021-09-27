@@ -36,7 +36,7 @@ describe 'Bill due invoice spec', type: :request do
                           Invoice.where(invoiceable_type: 'Policy', invoiceable_id: policy_ids)
                        ).where("due_date <= '#{Time.current.to_date.to_s(:db)}'").where(status: ['available', 'missed'], external: false).order("(invoiceable_type, invoiceable_id, due_date) ASC")
     expect(@invoices.include?(@invoice)).to eq(true)
-    BillDueInvoicesJob.perform_now
+    puts BillDueInvoicesJob.perform_now
     expect(@invoice.reload.status).to eq('complete')
   end
   
