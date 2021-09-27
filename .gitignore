@@ -42,4 +42,4 @@ dump.rdb
 .rakeTasks
 /coverage/*
 
-.irb_history
+/.irb_history
