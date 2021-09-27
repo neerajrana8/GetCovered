@@ -1,6 +1,6 @@
 FROM ubuntu:14.04
-FROM ruby:2.5.1 
-MAINTAINER dylan@getcoveredllc.com
+FROM ruby:3.0.1
+MAINTAINER dylan@getcovered.io
 
 # Install apt based dependencies required to run Rails as 
 # well as RubyGems. As the Ruby image itself is based on a 
@@ -46,7 +46,7 @@ ENTRYPOINT ["entrypoint.sh"]
 # from the outside.
 EXPOSE 3000
 
-LABEL maintainer="Dylan Gaines <dylan@getcoveredllc.com>"
+LABEL maintainer="Dylan Gaines <dylan@getcovered.io>"
 
 # Start the main process.
 CMD ["bundle", "exec", "sidekiq"]
