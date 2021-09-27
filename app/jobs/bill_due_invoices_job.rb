@@ -53,7 +53,7 @@ class BillDueInvoicesJob < ApplicationJob
       # and policy_in_system are true.                          #
       #                                                         #
       # ******************************************************* #
-      policy_ids = Policy.select(:id).policy_in_system(true).current.where(auto_pay: true)
+      policy_ids = Policy.select(:id).policy_in_system(true).current.where(auto_pay: true).pluck(:id)
       @invoices = Invoice.where(invoiceable_type: 'PolicyQuote', invoiceable_id: PolicyQuote.select(:id).where(status: 'accepted', policy_id: policy_ids)).or(
                             Invoice.where(invoiceable_type: 'PolicyGroupQuote', invoiceable_id: PolicyGroupQuote.select(:id).where(status: 'accepted', policy_group_id: PolicyGroup.select(:id).policy_in_system(true).current.where(auto_pay: true)))
                          ).or(
