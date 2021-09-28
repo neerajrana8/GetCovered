@@ -58,6 +58,6 @@ class BillDueInvoicesJob < ApplicationJob
                             Invoice.where(invoiceable_type: 'PolicyGroupQuote', invoiceable_id: PolicyGroupQuote.select(:id).where(status: 'accepted', policy_group_id: PolicyGroup.select(:id).policy_in_system(true).current.where(auto_pay: true)))
                          ).or(
                             Invoice.where(invoiceable_type: 'Policy', invoiceable_id: policy_ids)
-                         ).where("due_date <= '#{Time.current.to_date.to_s(:db)}'").where(status: ['available', 'missed'], external: false).order("(invoiceable_type, invoiceable_id, due_date) ASC")
+                         ).where("due_date <= '#{Time.current.to_date.to_s(:db)}'").where(status: ['available', 'missed'], external: false).order("invoiceable_type ASC, invoiceable_id ASC, due_date ASC")
     end
 end
