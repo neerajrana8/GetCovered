@@ -153,7 +153,7 @@ class StripeCharge < ApplicationRecord
           client_error: ::StripeCharge.errorify('stripe_charge_model.payment_processor_rejection', code: "#{stripe_charge['failure_code'] || 'unknown reason'}")
         )
       when 'succeeded'
-puts "????????????STRIPE CHARGE SUCCEEDED #{saved_change_to_attribute_within_transaction?('status')
+puts "????????????STRIPE CHARGE SUCCEEDED #{saved_change_to_attribute_within_transaction?('status')}"
         return self.update(
           status: 'succeeded',
           stripe_id: stripe_charge['id']
