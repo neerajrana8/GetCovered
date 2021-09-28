@@ -31,6 +31,13 @@ module LeasesMethods
 
         if lease_user.present?
           lease_user.update(primary: user_params[:primary])
+          user = lease_user.user.update(user_params)
+          if user.errors.any?
+            render json: standard_error(:user_update_error, nil, user.errors.full_messages),
+                   status: :unprocessable_entity
+            return
+          end
+
         else
           user = ::User.find_by(id: user_params[:user][:id]) || ::User.find_by(email: user_params[:user][:email])
 
@@ -38,6 +45,14 @@ module LeasesMethods
             user = ::User.new(user_params[:user])
             user.password = SecureRandom.base64(12)
             user.invite! if user.save
+          else
+            user.update(user_params[:user])
+
+            if user.errors.any?
+              render json: standard_error(:user_update_error, nil, user.errors.full_messages),
+                     status: :unprocessable_entity
+              return
+            end
           end
 
           LeaseUser.create(lease: @lease, user: user, primary: user_params[:primary])
