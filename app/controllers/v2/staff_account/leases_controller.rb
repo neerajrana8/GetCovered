@@ -152,7 +152,8 @@ module V2
           status: %i[scalar array],
           covered: [:scalar],
           insurable_id: %i[scalar array],
-          account_id: %i[scalar array]
+          account_id: %i[scalar array],
+          lease_users: {user_id: %i[scalar array]}
         }
       end
 

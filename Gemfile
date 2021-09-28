@@ -60,7 +60,7 @@ gem 'stripe'
 gem 'money'
 
 gem 'plaid'
-
+gem 'rack-timeout'
 
 # Sidekiq for background job processing
 gem 'sidekiq'

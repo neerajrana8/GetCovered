@@ -132,7 +132,7 @@ module V2
         if @carrier_agency.update_as(current_staff, update_types_params)
           render template: 'v2/shared/carrier_agencies/show', status: :ok
         else
-          render json: standard_error(:carrier_agency_update_errors, nil, @carrier_agency.errors.full_messages),
+          render json: standard_error(:carrier_agency_update_errors, nil, update_types_params.to_unsafe_h),#@carrier_agency.errors.full_messages),
                  status: :unprocessable_entity
         end
       end
@@ -167,7 +167,7 @@ module V2
           :agency_id,
           :external_carrier_id,
           # commented out for now because they are automatically created by callback in the model at the moment, without checks for whether the user has manually supplied them
-          #carrier_agency_authorizations_attributes: %i[state available policy_type_id zip_code_blacklist],
+          #DISABLED UNTIL WE ADD PER-STATE SETTINGS TO CLIENT carrier_agency_authorizations_attributes: %i[state available policy_type_id zip_code_blacklist],
           carrier_agency_policy_types_attributes: [
             :policy_type_id,
             commission_strategy_attributes: [
@@ -201,7 +201,8 @@ module V2
       def update_params
         to_return = params.require(:carrier_agency).permit(
           :carrier_id, :agency_id, :external_carrier_id,
-          carrier_agency_authorizations_attributes: %i[id _destroy state available policy_type_id zip_code_blacklist],
+          # commented out for now because they are automatically created by callback in the model at the moment, without checks for whether the user has manually supplied them
+          #DISABLED UNTIL WE ADD PER-STATE SETTINGS TO CLIENT carrier_agency_authorizations_attributes: %i[id _destroy state available policy_type_id zip_code_blacklist],
           carrier_agency_policy_types_attributes: [
             :id,
             :_destroy,

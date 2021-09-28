@@ -22,6 +22,12 @@ production:
     cron: '0 3 * * *'   # Every day at 3:00 AM
     class: Insurables::MasterPolicyAutoAssignJob
   # Reports
+  daily_sales_reports:
+    cron:  '0 4 * * *'   # Each day at 4:00 AM
+    class: Reports::DailySalesAllJob
+  daily_sales_internal_send_emails:
+    cron:  '0 5 * * *'   # Each day at 5:00 AM
+    class: Reports::DailySalesInternalSendEmailsJob
   coverage_reports_job:
     cron: '0 2 * * *'   # Every day at 2:00 AM
     class: Reports::CoverageReportsJob
@@ -107,7 +113,10 @@ production:
     cron: '0 6 * * *' # Every day at 6:00 AM
     class: LeadsStatusUpdateJob
   # Leases
-  lease_status_update_job:
+  lease_start_check_job:
+    cron: '0 6 * * *' # Every day at 6:00 AM
+    class: LeaseStartCheckJob
+  lease_expiration_check_job:
     cron: '0 6 * * *' # Every day at 6:00 AM
     class: LeaseExpirationCheckJob
   # Emails

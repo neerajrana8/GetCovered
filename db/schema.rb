@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_08_20_152826) do
+ActiveRecord::Schema.define(version: 2021_09_03_082114) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
@@ -111,6 +111,7 @@ ActiveRecord::Schema.define(version: 2021_08_20_152826) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.boolean "searchable", default: false
+    t.boolean "verified", default: false
     t.index ["addressable_type", "addressable_id"], name: "index_addresses_on_addressable_type_and_addressable_id"
   end
 
@@ -821,6 +822,7 @@ ActiveRecord::Schema.define(version: 2021_08_20_152826) do
     t.boolean "preferred_ho4", default: false, null: false
     t.boolean "occupied", default: false
     t.boolean "confirmed", default: true, null: false
+    t.jsonb "expanded_covered", default: {}, null: false
     t.index ["account_id"], name: "index_insurables_on_account_id"
     t.index ["agency_id"], name: "index_insurables_on_agency_id"
     t.index ["insurable_id"], name: "index_insurables_on_insurable_id"
@@ -1292,6 +1294,7 @@ ActiveRecord::Schema.define(version: 2021_08_20_152826) do
     t.integer "branding_profile_id"
     t.bigint "tag_ids", default: [], null: false, array: true
     t.string "internal_error_message"
+    t.bigint "tag_ids", default: [], null: false, array: true
     t.index ["account_id"], name: "index_policy_applications_on_account_id"
     t.index ["agency_id"], name: "index_policy_applications_on_agency_id"
     t.index ["billing_strategy_id"], name: "index_policy_applications_on_billing_strategy_id"
@@ -1570,7 +1573,6 @@ ActiveRecord::Schema.define(version: 2021_08_20_152826) do
     t.jsonb "carrier_payment_data"
     t.index ["account_id"], name: "index_policy_quotes_on_account_id"
     t.index ["agency_id"], name: "index_policy_quotes_on_agency_id"
-    t.index ["external_id"], name: "index_policy_quotes_on_external_id", unique: true
     t.index ["policy_application_id"], name: "index_policy_quotes_on_policy_application_id"
     t.index ["policy_group_quote_id"], name: "index_policy_quotes_on_policy_group_quote_id"
     t.index ["policy_id"], name: "index_policy_quotes_on_policy_id"
@@ -1845,6 +1847,10 @@ ActiveRecord::Schema.define(version: 2021_08_20_152826) do
     t.string "mailchimp_id"
     t.integer "mailchimp_category", default: 0
     t.string "qbe_id"
+    t.integer "insured_address_id"
+    t.boolean "has_existing_policies", default: false
+    t.boolean "has_current_leases", default: false
+    t.boolean "has_leases", default: false
     t.index ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["invitation_token"], name: "index_users_on_invitation_token", unique: true

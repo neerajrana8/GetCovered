@@ -9,6 +9,7 @@ module PoliciesMethods
           user.update_attributes(user_param)
         end
       end
+      Policies::UpdateDocuments.run!(policy: @policy)
       render :show, status: :ok
     else
       render json: @policy.errors, status: :unprocessable_entity
@@ -157,7 +158,7 @@ module PoliciesMethods
       policy_users_attributes: [:user_id],
       policy_coverages_attributes: %i[id policy_application_id policy_id
                                       limit deductible enabled designation],
-      policy_application_attributes: [fields: {}]
+      policy_application_attributes: [fields: {}, extra_settings: {}]
     )
   end
 

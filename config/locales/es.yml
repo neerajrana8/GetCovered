@@ -54,7 +54,7 @@ es:
     create:
       invalid_auth_key: "Clave de autenticación no válida"
     update_residential:
-      invalid_address: "Please enter a valid address"
+      invalid_address: "Por favor ingrese una dirección residencial válida"
     rentguarantee_complete:
       inistructions_were_sent: "Se enviaron instrucciones"
     validate_policy_users_params:
@@ -192,8 +192,11 @@ es:
   msi_policy_quote:
     invalid_payment_data: "Datos de pago no válidos para la política vinculante"
     failed_to_build_bind_request: "Error al compilar la solicitud de vinculación"
+    status_must_be_quoted_or_error: "El estado debe estar entre comillas o error para vincular la cita"
+    carrier_must_be_msi: "El transportista debe ser MSI para vincular la cotización residencial"
     msi_bind_failure: "Error de enlace de MSI (ID de evento:"
     msi_error: "Error de MSI:"
+    invalid_pm_email: "Se proporcionó un correo electrónico del administrador de la propiedad no válido"
   dc_policy_quote:
     security_deposit_replacement: "Fianza de reemplazo de depósito de seguridad"
     carrier_must_be_deposit_choice: "El transportista debe ser Deposit Choice para vincular la cotización de reemplazo del depósito de seguridad"

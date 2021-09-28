@@ -71,3 +71,5 @@ json.invoices do
                 as: :invoice
   end
 end
+
+json.branding_profile_url policy.branding_profile&.url

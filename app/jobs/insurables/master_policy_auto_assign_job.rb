@@ -23,7 +23,7 @@ module Insurables
               policy_coverage.attributes.slice('limit', 'deductible', 'enabled', 'designation', 'title')
             end,
             number: policy_number,
-            policy_type_id: policy.coverage,
+            policy_type_id: policy.policy_type.coverage,
             policy: policy,
             effective_date: Time.zone.now,
             expiration_date: policy.expiration_date,

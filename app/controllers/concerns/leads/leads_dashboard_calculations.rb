@@ -16,6 +16,7 @@ module Leads
       @calling_supported_orders = called_from_orders
       {
         agency_id: %i[scalar array],
+        agency: %i[scalar array],
         account_id: %i[scalar array],
         last_visit: %i[interval scalar],
         tracking_url: {
@@ -26,6 +27,10 @@ module Leads
         branding_profile_id: %i[scalar array],
         branding_profile: {
           url: %i[scalar like]
+        },
+        lead_events: {
+            policy_type_id: %i[scalar array],
+          policy_type: %i[scalar array]
         }
       }
     end

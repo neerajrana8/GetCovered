@@ -9,6 +9,10 @@ json.agency do
   json.title policy.agency&.title
 end
 
+json.account do
+  json.title policy.account&.title
+end
+
 json.policy_type_title policy&.policy_type&.title
 
 json.primary_insurable do
