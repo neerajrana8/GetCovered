@@ -22,6 +22,7 @@ module DirtyTransactionTracker
     after_save :dtt___for_transaction
     after_commit :dtt___after_transaction
     after_rollback :dtt___after_transaction
+  
     
     private
 	  
@@ -41,6 +42,8 @@ module DirtyTransactionTracker
         self.previous_changes.each do |field, changez|
           if lord_of_mutants.send(:attributes)[field].instance_variable_get(:@original_attribute).nil?
             lord_of_mutants.send(:attributes)[field].instance_variable_set(:@original_attribute, self.send(:mutations_from_database).send(:attributes)[field].dup)
+            lord_of_mutants.send(:attributes)[field].instance_variable_get(:@original_attribute).instance_variable_set(:@value_before_type_cast, changez[0])
+            lord_of_mutants.send(:attributes)[field].instance_variable_get(:@original_attribute).instance_variable_set(:@value, changez[0])
           end
           lord_of_mutants.send(:attributes)[field].instance_variable_set(:@value_before_type_cast, changez[1])
           lord_of_mutants.send(:attributes)[field].instance_variable_set(:@value, changez[1])
