@@ -81,11 +81,11 @@ class Insurable < ApplicationRecord
     return results
   end
 
-  settings index: { number_of_shards: 1 } do
-    mappings dynamic: 'false' do
-      indexes :title, type: :text, analyzer: 'english'
-    end
-  end
+  #settings index: { number_of_shards: 1 } do
+  #  mappings dynamic: 'false' do
+  #    indexes :title, type: :text, analyzer: 'english'
+  #  end
+  #end
   
   # returns carrier status, which may differ by carrier; for MSI and QBE, it returns :preferred or :nonpreferred
   def get_carrier_status(carrier, refresh: nil)
