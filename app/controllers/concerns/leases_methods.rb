@@ -71,7 +71,7 @@ module LeasesMethods
     params.permit(users: [:primary, user: [
                                             :id, :email, :agency_id,
                                             profile_attributes: %i[birth_date contact_phone first_name gender job_title last_name salutation],
-                                            address_attributes: %i[city country county state street_name street_two zip_code]
+                                            address_attributes: %i[city country county state street_number street_name street_two zip_code]
                                           ]])
   end
 end
