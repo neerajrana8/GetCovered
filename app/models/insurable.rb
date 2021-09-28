@@ -3,7 +3,6 @@
 
 class Insurable < ApplicationRecord
   # Concerns
-  include ElasticsearchSearchable
   include CarrierQbeInsurable
   include CarrierMsiInsurable
   include CarrierDcInsurable
