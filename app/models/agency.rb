@@ -229,7 +229,7 @@ class Agency < ApplicationRecord
     return to_return
   end
   
-  def get_agency_chain # not sure if any branches still use this name... leaving it just in case
+  def get_ancestor_chain # not sure if any branches still use this name... leaving it just in case
     agency_hierarchy
   end
 
