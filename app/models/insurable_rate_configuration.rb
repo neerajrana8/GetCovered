@@ -426,36 +426,78 @@ class InsurableRateConfiguration < ApplicationRecord
       .sort_by{|configurable_index, ircs| configurable_index } # makes it into an array of [k,v] pairs
       .map{|val| val[1].sort_by{|irc| configurables.find_index{|c| irc.configurable_id == c.id && irc.configurable_type == c.class.name } } }
     # handle exclusions
-    case exclude
-      when :configurer
-        to_return.pop if to_return.last&.first&.configurer == configurer
-      when :configurable
-        to_return.select!{|arr| arr.select!{|val| val.configurable != configurable }; !arr.blank? }
-      when :exact_match
-        to_return.last&.select!{|val| val.configurable != configurable }
-        to_return.pop if to_return.last&.blank?
-      when :children_inclusive, :children_exclusive
-        if to_return.last&.first&.configurer == configurer
-          index = case configurable
-            when ::InsurableGeographicalCategory
-              to_return.last.find_index{|val| (val <=> configurable) >= 0 }
-            else
-              (to_return.last.last == configurable) ? to_return.length - 1 : nil
-            else
-              nil
-          end
-          unless index.nil?
-            index += 1 if exclude == :children_exclusive && to_return.last[index] == configurable
-            if index == 0
-              to_return.pop
-            else
-              to_return.last.pop(to_return.length - index)
-            end
-          end
-        end
-    end if exclude # hopefully optimizes away some checks since exclude is usually nil
+    cull_hierarchy!(to_return, exclude, configurer, configurable) if exclude # optimize away some culling runs since exclude is usually nil
     # done
     return to_return
+  end
+  
+  # Takes an IRC hierarchy (i.e. [ [ircs for top configurer, ordered from least to most specific configurable], [ircs for next configurer], ...]) and culls entries based on an exclusion rule.
+  # Mutates the hierarchy directly rather than returning a modified version. Also returns the modified hierarchy.
+  # The available exclusion rules are:
+  #   configurer:             removes the entries for a particular configurer
+  #   configurable:           removes the entries for a particular configurable
+  #   exact_match:            removes the entries for a particular configurer/configurable pair
+  #   chilren_inclusive:      removes entries for the given configurer and any children of the given configurable, including the given configurable itself
+  #   chilren_exclusive:      removes entries for the given configurer and any children of the given configurable, excluding the given configurable itself
+  #   chilren_inclusive_all:  removes entries for all configurers for any children of the given configurable, including the given configurable itself
+  #   chilren_exclusive_all:  removes entries for all configurers for any children of the given configurable, excluding the given configurable itself
+  #   parent_...:             same as children rules, except culls parents
+  def self.cull_hierarchy!(hierarchy, exclude, configurer, configurable)
+    configurer_indices_to_kill = []
+    case exclude
+      when :configurer
+        configurer_index = hierarchy.find_index{|entries| entries.first&.configurer == configurer }
+        configurer_indices_to_kill.push(configurer_index) unless configurer_index.nil?
+      when :configurable
+        hierarchy.select!{|arr| arr.select!{|val| val.configurable != configurable }; !arr.blank? }
+      when :exact_match
+        configurer_index = hierarchy.find_index{|entries| entries.first&.configurer == configurer }
+        if configurer_index
+          hierarchy[configurer_index].select!{|val| val.configurable != configurable }
+          configurer_indices_to_kill.push(configurer_index) if hierarchy[configurer_index].blank?
+        end
+      when :children_inclusive, :children_exclusive, :children_inclusive_all, :children_exclusive_all,
+           :parents_inclusive, :parents_exclusive, :parents_inclusive_all, :parents_exclusive_all
+        for_all = [:children_inclusive_all, :children_exclusive_all, :parents_inclusive_all, :parents_exclusive_all].include?(exclude)
+        parent_mode = [:parents_inclusive, :parents_exclusive, :parents_inclusive_all, :parents_exclusive_all].include?(exclude)
+        exclusive_mode = [:children_exclusive, :children_exclusive_all, :parents_exclusive, :parents_exclusive_all].include?(exclude)
+        configurer_index = (for_all ? 0 : hierarchy.find_index{|entries| entries.first&.configurer == configurer }) # if not for all, apply only to the configurer itself if present; if for all, apply to all
+        if configurer_index
+          stop_configurer_index = (for_all ? hierarchy.length : configurer_index + 1)
+          while configurer_index < hierarchy.length
+            # grab irc array
+            entries = hierarchy[configurer_index]
+            configurer_index += 1
+            # get the index of IRC for the given configurable, or for the first one past it
+            index = case configurable
+              when ::InsurableGeographicalCategory
+                entries.find_index{|val| (val.configurable <=> configurable) >= 0 }
+              else
+                (entries.last&.configurable == configurable) ? hierarchy.length - 1 : nil # if not an IGC it must be the last entry since it will have no children
+              else
+                nil
+            end
+            # chop out the children/parents
+            unless index.nil?
+              if exclusive_mode && entries[index].configurable == configurable
+                index += (parent_mode ? -1 : 1) # if we're exclusive, make sure we don't kill our target itself
+              elsif parent_mode
+                index -= 1 # if configurables don't match, the configurable itself isn't in the list and we have the index of its first CHILD; so back up 1 step to go to the first PARENT
+              end
+              if (parent_mode ? (index == entries.length - 1) : (index == 0))
+                configurer_indices_to_kill.push(configurer_index)
+              else
+                if parent_mode
+                  entries.shift(index + 1)
+                else
+                  entries.pop(entries.length - index)
+                end
+              end
+            end
+          end # end while
+        end # end if configurer_index
+    end
+    hierarchy.select!.with_index{|entries, configurer_index| !configuer_indices_to_kill.include?(configurer_index) }
   end
   
   
