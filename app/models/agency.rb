@@ -91,6 +91,9 @@ class Agency < ApplicationRecord
   has_many :access_tokens,
            as: :bearer
 
+  has_many :integrations,
+           as: :integratable
+
   accepts_nested_attributes_for :addresses, allow_destroy: true
   accepts_nested_attributes_for :global_agency_permission, update_only: true
 

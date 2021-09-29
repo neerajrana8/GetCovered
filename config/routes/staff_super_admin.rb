@@ -242,6 +242,7 @@
     resources :insurable_types, path: "insurable-types", only: [ :index ]
 
     resources :leads, only: [:index, :show, :update]
+    post :leads_recent_index, action: :index, controller: :leads
 
     resources :leads_dashboard, only: [:index] do
       collection do
@@ -249,6 +250,8 @@
       end
     end
     post :leads_dashboard_index, action: :index, controller: :leads_dashboard
+
+    get :get_products, controller: 'leads', path: 'leads/filters/get_products'
 
     resources :leads_dashboard_tracking_url, only: [:index]
 
@@ -264,7 +267,7 @@
         post :bulk_create
       end
     end
-    
+
     resources :lease_types,
       path: "lease-types",
       only: [ :create, :update, :index, :show ]

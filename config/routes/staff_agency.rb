@@ -115,7 +115,7 @@
           post :attach_images, path: '/attach_images'
         end
         post :import, on: :collection
-        
+
         collection do
           post :list
         end
@@ -221,6 +221,7 @@
     resources :insurable_types, path: "insurable-types", only: [ :index ]
 
     resources :leads, only: [:index, :show, :update]
+    post :leads_recent_index, action: :index, controller: :leads
 
     resources :leads_dashboard, only: [:index] do
       collection do
@@ -228,6 +229,8 @@
       end
     end
     post :leads_dashboard_index, action: :index, controller: :leads_dashboard
+
+    get :get_products, controller: 'leads', path: 'leads/filters/get_products'
 
     resources :leads_dashboard_tracking_url, only: [:index]
 
