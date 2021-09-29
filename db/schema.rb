@@ -830,6 +830,34 @@ ActiveRecord::Schema.define(version: 2021_09_07_203745) do
     t.index ["preferred_ho4"], name: "index_insurables_on_preferred_ho4"
   end
 
+  create_table "integration_profiles", force: :cascade do |t|
+    t.string "external_id"
+    t.jsonb "configuration", default: {}
+    t.boolean "enabled", default: false
+    t.bigint "integration_id"
+    t.string "profileable_type"
+    t.bigint "profileable_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["external_id"], name: "index_integration_profiles_on_external_id", unique: true
+    t.index ["integration_id"], name: "index_integration_profiles_on_integration_id"
+    t.index ["profileable_type", "profileable_id"], name: "index_integration_profiles_on_profileable"
+  end
+
+  create_table "integrations", force: :cascade do |t|
+    t.string "external_id"
+    t.jsonb "credentials", default: {}
+    t.jsonb "configuration", default: {}
+    t.boolean "enabled", default: false
+    t.string "integratable_type"
+    t.bigint "integratable_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.integer "provider", default: 0
+    t.index ["external_id"], name: "index_integrations_on_external_id", unique: true
+    t.index ["integratable_type", "integratable_id"], name: "index_integrations_on_integratable_type_and_integratable_id"
+  end
+
   create_table "invoices", force: :cascade do |t|
     t.string "number", null: false
     t.text "description"
@@ -1264,6 +1292,7 @@ ActiveRecord::Schema.define(version: 2021_09_07_203745) do
     t.jsonb "tagging_data"
     t.string "error_message"
     t.integer "branding_profile_id"
+    t.bigint "tag_ids", default: [], null: false, array: true
     t.string "internal_error_message"
     t.index ["account_id"], name: "index_policy_applications_on_account_id"
     t.index ["agency_id"], name: "index_policy_applications_on_agency_id"

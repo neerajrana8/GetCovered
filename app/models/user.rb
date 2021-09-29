@@ -45,6 +45,9 @@ class User < ApplicationRecord
   has_many :claims, as: :claimant
   has_many :events, as: :eventable
 
+  has_many :integration_profiles,
+           as: :profileable
+
   has_many :active_account_users,
     -> { where status: 'enabled' },
     class_name: "AccountUser"

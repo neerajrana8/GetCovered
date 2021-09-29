@@ -39,7 +39,7 @@
       end
 
     resources :addresses, only: [:index]
-    
+
     get :total_dashboard, controller: 'dashboard', path: 'dashboard/:account_id/total_dashboard'
     get :buildings_communities, controller: 'dashboard', path: 'dashboard/:account_id/buildings_communities'
     get :communities_list, controller: 'dashboard', path: 'dashboard/:account_id/communities_list'
@@ -142,7 +142,7 @@
       end
     post :insurables_index, action: :index, controller: :insurables
     post 'insurables/:insurable_id/policies_index', controller: 'policies', action: :index
-    
+
     resources :insurable_types, path: "insurable-types", only: [ :index ]
 
     resources :leases,
@@ -164,12 +164,16 @@
       only: [ :index ]
 
     resources :leads, only: [:index, :show, :update]
+    post :leads_recent_index, action: :index, controller: :leads
+
     resources :leads_dashboard, only: [:index] do
       collection do
         get :get_filters
       end
     end
     post :leads_dashboard_index, action: :index, controller: :leads_dashboard
+
+    get :get_products, controller: 'leads', path: 'leads/filters/get_products'
 
     resources :notes,
       only: [ :create, :update, :destroy, :index, :show ]
