@@ -474,8 +474,6 @@ class InsurableRateConfiguration < ApplicationRecord
                 entries.find_index{|val| (val.configurable <=> configurable) >= 0 }
               else
                 (entries.last&.configurable == configurable) ? hierarchy.length - 1 : nil # if not an IGC it must be the last entry since it will have no children
-              else
-                nil
             end
             # chop out the children/parents
             unless index.nil?
