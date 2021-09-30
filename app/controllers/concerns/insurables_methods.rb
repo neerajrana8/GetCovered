@@ -45,8 +45,8 @@ module InsurablesMethods
         create_if_ambiguous: get_or_create_params[:create_if_ambiguous],
         disallow_creation: (get_or_create_params[:allow_creation] != true),
         communities_only: get_or_create_params[:communities_only],
-        titleless: get_or_create_params[:titleless] ? true : false#,
-        diagnostics: diagnostics
+        titleless: get_or_create_params[:titleless] ? true : false
+        #, diagnostics: diagnostics
     }.compact)
     case result
     when ::NilClass
@@ -57,18 +57,7 @@ module InsurablesMethods
     when ::Insurable
       render json: {
           results_type: 'confirmed_match',
-          results: [insurable_prejson(result)],
-          diagnostics: diagnostics,
-          parameters: params.to_unsafe_h,
-          used_parameters: {
-              address: get_or_create_params[:address],
-              unit: get_or_create_params[:unit],
-              insurable_id: get_or_create_params[:insurable_id].to_i == 0 ? nil : get_or_create_params[:insurable_id].to_i,
-              create_if_ambiguous: get_or_create_params[:create_if_ambiguous],
-              disallow_creation: (get_or_create_params[:allow_creation] != true),
-              communities_only: get_or_create_params[:communities_only],
-              titleless: get_or_create_params[:titleless] ? true : false#
-          }
+          results: [insurable_prejson(result)]
       }, status: 200
     when ::Array
       render json: {
