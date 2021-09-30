@@ -51,6 +51,7 @@ module Leads
               policy_type: %i[scalar array],
               policy_type_id: %i[scalar array]
           },
+          branding_profile_id: %i[scalar array],
           branding_profile: {
               url: %i[scalar like]
           }
