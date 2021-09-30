@@ -686,7 +686,7 @@ class InsurableRateConfiguration < ApplicationRecord
     end
     # get coverage options and selection errors
     selections = selections.select{|uid, sel| sel && sel['selection'] }
-    irc = get_inherited_irc(carrier_policy_type, account || agency || carrier_policy_type.carrier, insurable, agency: agency, moose: false) ############ MOOSE GOOSE
+    irc = get_inherited_irc(carrier_policy_type, account || agency || carrier_policy_type.carrier, insurable, agency: agency)
     coverage_options = irc.annotate_options(selections)
     selection_errors = irc.get_selection_errors(selections, coverage_options, insert_invisible_requirements: true)
     valid = selection_errors.blank?
