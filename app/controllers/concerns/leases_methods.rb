@@ -24,14 +24,15 @@ module LeasesMethods
   def update
     if @lease.update_as(current_staff, update_params)
       users_ids = users_params[:users]&.map { |user_params| user_params[:user][:id] }&.compact
-      @lease.lease_users.where.not(id: users_ids).destroy_all
+      @lease.lease_users.where.not(user_id: users_ids).destroy_all
 
       users_params[:users]&.each do |user_params|
         lease_user = @lease.lease_users.find_by(user_id: user_params[:user][:id])
 
         if lease_user.present?
           lease_user.update(primary: user_params[:primary])
-          user = lease_user.user.update(user_params[:user])
+          user = lease_user.user
+          user.update(user_params[:user])
           if user.errors.any?
             render json: standard_error(:user_update_error, nil, user.errors.full_messages),
                    status: :unprocessable_entity
