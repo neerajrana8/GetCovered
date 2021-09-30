@@ -31,7 +31,7 @@ module LeasesMethods
 
         if lease_user.present?
           lease_user.update(primary: user_params[:primary])
-          user = lease_user.user.update(user_params)
+          user = lease_user.user.update(user_params[:user])
           if user.errors.any?
             render json: standard_error(:user_update_error, nil, user.errors.full_messages),
                    status: :unprocessable_entity
