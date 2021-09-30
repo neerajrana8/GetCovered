@@ -98,7 +98,7 @@ module Reports
 
     def aggregate_report
       agency_report(Agency.get_covered)
-      Agency.where.not(id: Agency::GET_COVERED_ID).each do |agency|
+      Agency.main_agencies.where.not(id: Agency::GET_COVERED_ID).each do |agency|
         agency_report(agency)
       end
     end
