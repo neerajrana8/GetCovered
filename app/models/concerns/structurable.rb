@@ -318,6 +318,7 @@ module Structurable
     #     pass Float::INFINITY: it will use Float::INFINITY for all offsets (this will result in ALL overridabilities being set to infinity!)
     #     leave blank or pass nil: will use the index of each data as its offset
     def merge_data_structures(datas, structure, overridability_offsets = (0...datas.length).to_a, union_mode: false)
+      # convert shorthand overridability_offset value into an array if needed
       case overridability_offsets
         when ::Integer
           overridability_offsets = (0...(datas.length)).map{|n| overridability_offsets }
@@ -327,6 +328,11 @@ module Structurable
           overridability_offsets = (0...datas.length).to_a
       end
       result = { 'overridabilities_' => {} }
+      # in union mode, we need to process overridability offset groups, so we sort the input to make those groups contiguous
+      if union_mode
+        datas.sort_by!.with_index{|datum,index| overridability_offsets[index] }
+        overridability_offets.sort! 
+      end
       structure.each do |prop, struc|
         case struc['special']
           when 'hash'
