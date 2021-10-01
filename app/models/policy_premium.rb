@@ -64,7 +64,7 @@ class PolicyPremium < ApplicationRecord
   def initialize_all(premium_amount, tax: nil, taxes: nil, term_group: nil, collector: nil, filter_fees: nil, tax_recipient: nil, first_payment_down_payment: false, first_payment_down_payment_override: nil, first_tax_payment_down_payment_override: nil)
     tax = taxes if tax.nil? && !taxes.nil?
     return "Tax must be >= 0" if tax && tax < 0
-    return "Tax recipient must be specified" unless !tax || tax == 0
+    return "Tax recipient must be specified" unless !tax || tax == 0 || !tax_recipient.nil?
     return "PolicyPremium must be persisted to the database before initializing" unless self.id
     result = nil
     ActiveRecord::Base.transaction do

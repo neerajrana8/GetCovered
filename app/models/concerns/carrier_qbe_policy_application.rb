@@ -154,8 +154,8 @@ module CarrierQbePolicyApplication
                     succeeded = true
                   end
                 end
-	 					    quote_method = succeeded && premium.save ? "mark_successful" : "mark_failure"
-	 					    quote.send(quote_method)
+	 					    quote_method = (succeeded && premium.save ? ["mark_successful"] : ["mark_failure", result || "Premium save failure: #{premium.errors.to_h}"])
+	 					    quote.send(*quote_method)
                 # end process
   	 						if quote.status == 'quoted'
                   result = quote.generate_invoices_for_term
