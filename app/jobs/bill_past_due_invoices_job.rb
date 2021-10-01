@@ -6,7 +6,7 @@ class BillPastDueInvoicesJob < ApplicationJob
 
   def perform(*_args)
     @invoices.each do |invoice|
-      if invoice.charges.failed.where('created_at >= ?', invoice.due_date.midnight + 1.day).count < PAYMENT_ATTEMPTS
+      if invoice.stripe_charges.failed.where('created_at >= ?', invoice.due_date.midnight + 1.day).count < PAYMENT_ATTEMPTS
         invoice.pay(allow_missed: true, stripe_source: :default)
         invoice.reload
         rent_guarantee_notify(invoice) if rent_guarantee_notify?(invoice)
@@ -29,7 +29,7 @@ class BillPastDueInvoicesJob < ApplicationJob
 
   def rent_guarantee_notify?(invoice)
     invoice.status != 'complete' &&
-      invoice.charges.failed.where('created_at >= ?', invoice.due_date.midnight + 1.day).count == PAYMENT_ATTEMPTS &&
+      invoice.stripe_charges.failed.where('created_at >= ?', invoice.due_date.midnight + 1.day).count == PAYMENT_ATTEMPTS &&
       invoice.invoiceable_type == 'PolicyQuote' &&
       invoice.invoiceable.policy_application&.policy_type_id == PolicyType::RENT_GUARANTEE_ID
   end
