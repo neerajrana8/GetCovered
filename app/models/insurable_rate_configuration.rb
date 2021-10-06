@@ -184,17 +184,20 @@ class InsurableRateConfiguration < ApplicationRecord
     'visible' => {
       'required' => true,
       'validity' => [true, false],
+      'union' => Proc.new{|ancient, noob| ancient || noob },
       'default_overridability' => 0,
       'default_value' => true
     },
     'requirement' => {
       'required' => true,
       'validity' => ['optional', 'required', 'forbidden'],
+      'union' => Proc.new{|ancient, noob| ['required', 'forbidden'].find{|x| ancient == x || noob == x } || 'optional' },
       'default_overridability' => Proc.new{|v| v == 'optional' ? nil : 0 }
     },
     'options_type' => {
       'required' => true,
       'validity' => ['multiple_choice', 'none'],
+      'union' => Proc.new{|ancient, noob| ancient == 'multiple_choice' ? ancient : noob },
       'default_overridability' => 0
     },
     'options' => {
