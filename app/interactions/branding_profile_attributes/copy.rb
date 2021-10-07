@@ -8,7 +8,7 @@ module BrandingProfileAttributes
 
     def execute
       branding_profiles.each do |branding_profile|
-        yield update_attributes(branding_profile)
+        yield update(branding_profile)
       end
 
       Success()
@@ -22,7 +22,7 @@ module BrandingProfileAttributes
 
     def update_attributes(branding_profile)
       branding_profile_attributes.each do |branding_profile_attribute|
-        yield update_attribute(branding_profile, branding_profile_attribute.name, branding_profile_attribute.value)
+        yield update(branding_profile, branding_profile_attribute.name, branding_profile_attribute.value)
       end
       Success()
     end
