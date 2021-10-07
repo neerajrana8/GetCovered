@@ -331,7 +331,7 @@ module Structurable
       # in union mode, we need to process overridability offset groups, so we sort the input to make those groups contiguous
       if union_mode && union_mode != 'sorted'
         datas.sort_by!.with_index{|datum,index| overridability_offsets[index] }
-        overridability_offets.sort! 
+        overridability_offsets.sort! 
         union_mode = 'sorted' # still truthy, but lets us know to skip this in recursive calls
       end
       structure.each do |prop, struc|
