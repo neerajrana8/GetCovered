@@ -377,7 +377,7 @@ class InsurableRateConfiguration < ApplicationRecord
       unionized = merge(unionized.flatten, unionized.map.with_index{|ircs, index| ircs.map{|irc| index } }.flatten, union_mode: true)
       # do an intersection merge of all the parents
       intersectional = cull_hierarchy!(hierarchy, :children_exclusive_all, configurer, configurable, preserve_empties: true)
-      intersectional = merge(intersectional.flatten, intersectional.with_index{|ircs, index| ircs.map{|irc| index } }.flatten, union_mode: true)
+      intersectional = merge(intersectional.flatten, intersectional.map.with_index{|ircs, index| ircs.map{|irc| index } }.flatten, union_mode: false)
       # do an intersection merge of the two boyos we got, with no offsets (they retain overridability numbers as determined during the previous merges)
       merge([intersectional, unionized], [0, 0], union_mode: false)
     else
