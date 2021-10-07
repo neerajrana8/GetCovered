@@ -361,7 +361,7 @@ module Structurable
               keys.concat(data[prop].keys).uniq!
               insertion_requirement = data_insertion_requirement unless union_mode
             end
-            insertion_requirement = group_requirement if union_mode && group_requirement < insertion_requirement
+            insertion_requirement = group_requirement if union_mode && group_requirement&.<(insertion_requirement)
             keys.select!{|k| struc['special_data']['keys'].include?(k) } unless struc['special_data']['keys'].nil?
             result['overridabilities_'][prop] = insertion_requirement
             # merge hash elements
@@ -449,7 +449,7 @@ module Structurable
               end
               insertion_requirement = data_insertion_requirement unless union_mode
             end
-            insertion_requirement = group_requirement if union_mode && group_requirement < insertion_requirement
+            insertion_requirement = group_requirement if union_mode && group_requirement&.<(insertion_requirement)
             result['overridabilities_'][prop] = insertion_requirement
         end
       end
