@@ -509,7 +509,7 @@ class InsurableRateConfiguration < ApplicationRecord
           end # end while
         end # end if configurer_index
     end
-    hierarchy.select!.with_index{|entries, configurer_index| !configuer_indices_to_kill.include?(configurer_index) } unless preserve_empties
+    hierarchy.select!.with_index{|entries, configurer_index| !configurer_indices_to_kill.include?(configurer_index) } unless preserve_empties
     return hierarchy
   end
   
