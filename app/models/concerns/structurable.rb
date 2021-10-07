@@ -352,7 +352,7 @@ module Structurable
                   group_requirement = data_insertion_requirement if data_insertion_requirement > group_requirement
                 else
                   # we've rolled over into a new offset group; new entries can be inserted only if they can override the least restrictive overridability in the previous groups 
-                  next unless insertion_requirement >= group_requirement # ir is about to be = to gr; this entry would fail the overridability test; so don't count it as a valid rollover, just continue to the next
+                  next unless group_requirement.nil? || insertion_requirement >= group_requirement # ir is about to be = to gr; this entry would fail the overridability test; so don't count it as a valid rollover, just continue to the next
                   insertion_requirement = group_requirement if group_requirement&.<(insertion_requirement)
                   group_requirement = data_insertion_requirement
                   group_offset = overridability_offsets[data_index]
@@ -388,8 +388,8 @@ module Structurable
                 if group_offset == overridability_offsets[gd_index]
                   group_requirement = gd_insertion_requirement if gd_insertion_requirement > group_requirement
                 else
-                  next unless insertion_requirement >= group_requirement
-                  insertion_requirement = group_requirement if group_requirement < insertion_requirement
+                  next unless group_requirement.nil? || insertion_requirement >= group_requirement
+                  insertion_requirement = group_requirement if group_requirement&.<(insertion_requirement)
                   group_requirement = gd_insertion_requirement
                   group_offset = overridability_offsets[gd_index]
                 end
@@ -434,7 +434,7 @@ module Structurable
                 if group_offset == overridability_offsets[data_index]
                   group_requirement = data_insertion_requirement if data_insertion_requirement > group_requirement
                 else
-                  next unless insertion_requirement >= group_requirement
+                  next unless group_requirement.nil? || insertion_requirement >= group_requirement
                   insertion_requirement = group_requirement if group_requirement&.<(insertion_requirement)
                   group_requirement = data_insertion_requirement
                   group_offset = overridability_offsets[data_index]
