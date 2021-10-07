@@ -10,16 +10,16 @@ module V2
         # grab our boyo
         configurable = InsurableGeographicalCategory.get_for(state: nil)
         configurer = (@account || @agency || @carrier)
-        irc = ::InsurableRateConfiguration.get_inherited_irc(@carrier_policy_type, configurer, configurable, agency: @agency, exclude: :children_inclusive, union_mode: true) # MOOSE WARNING: DOES UNION_MODE WORK???
+        irc = ::InsurableRateConfiguration.get_inherited_irc(@carrier_policy_type, configurer, configurable, agency: @agency, exclude: :children_inclusive, union_mode: true) # WARNING: DOES UNION_MODE WORK???
         coverage_options = ::InsurableRateConfiguration.remove_overridability_data!(
           irc.configuration['coverage_options'].select do |uid, co|
-            co['options_type'].include?('multiple_choice') &&
+            co['options_type'] == 'multiple_choice' &&
             (
-              co['requirement'].include?('forbidden') ||
-              irc.configuration['rules'].any?{|rule_name, rule_datas| rule_datas.any?{|rule_data| rule_data['subject'] == uid && rule_data['rule'].any?{|rewl, parmz| rewl == 'has_requirement' && parmz != 'forbidden' } } }
-            )
+              co['requirement'] != 'forbidden' ||
+              irc.configuration['rules'].any?{|rule_name, rule_data| rule_data['subject'] == uid && rule_data['rule'].any?{|rewl, parmz| rewl == 'has_requirement' && parmz != 'forbidden' } }
+            ) # WARNING: we don't do any overridability checks here, but we really should... a rule that can't override the requirement value shouldn't count.
           end
-        ) # MOOSE WARNING: we don't do any overridability checks here, but we really should
+        )
         # get our target entity's options
         entity_irc = ::InsurableRateConfiguration.where(carrier_policy_type: @carrier_policy_type, configurer: configurer, configurable: configurable).take || ::InsurableRateConfiguration.new(configuration: { 'coverage_options' => {} })
         # annotate with our stuff

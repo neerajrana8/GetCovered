@@ -371,7 +371,18 @@ class InsurableRateConfiguration < ApplicationRecord
   def self.get_inherited_irc(carrier_policy_type, configurer, configurable, agency: nil, exclude: nil, union_mode: false)
     # Alternative: merge(get_hierarchy(carrier_policy_type, configurer, configurable, agency: agency).map{|ircs| merge(ircs, true) }, false)... but this won't work in union_mode since it stores arrays of all encountered values
     hierarchy = get_hierarchy(carrier_policy_type, configurer, configurable, agency: agency, exclude: exclude, union_mode: union_mode)
-    merge(hierarchy.flatten, hierarchy.map.with_index{|ircs, index| ircs.map{|irc| index } }.flatten, union_mode: union_mode)
+    if union_mode
+      # do a union merge of all the children
+      unionized = cull_hierarchy!(copy_hierarchy(hierarchy), :parents_inclusive_all, configurer, configurable, preserve_empties: true) # cut out all IRCs for configurables >= configurable, leaving only children; preserve empties so if a configurer's entires are all destroyed, we still assign the same overridability offsets
+      unionized = merge(unionized.flatten, unionized.map.with_index{|ircs, index| ircs.map{|irc| index } }.flatten, union_mode: true)
+      # do an intersection merge of all the parents
+      intersectional = cull_hierarchy!(hierarchy, :children_exclusive_all, configurer, configurable, preserve_empties: true)
+      intersectional = merge(intersectional.flatten, intersectional.with_index{|ircs, index| ircs.map{|irc| index } }.flatten, union_mode: true)
+      # do an intersection merge of the two boyos we got, with no offsets (they retain overridability numbers as determined during the previous merges)
+      merge([intersectional, unionized], [0, 0], union_mode: false)
+    else
+      merge(hierarchy.flatten, hierarchy.map.with_index{|ircs, index| ircs.map{|irc| index } }.flatten, union_mode: false)
+    end
   end
   
   
@@ -445,14 +456,14 @@ class InsurableRateConfiguration < ApplicationRecord
   #   chilren_inclusive_all:  removes entries for all configurers for any children of the given configurable, including the given configurable itself
   #   chilren_exclusive_all:  removes entries for all configurers for any children of the given configurable, excluding the given configurable itself
   #   parent_...:             same as children rules, except culls parents
-  def self.cull_hierarchy!(hierarchy, exclude, configurer, configurable)
+  def self.cull_hierarchy!(hierarchy, exclude, configurer, configurable, preserve_empties: false)
     configurer_indices_to_kill = []
     case exclude
       when :configurer
         configurer_index = hierarchy.find_index{|entries| entries.first&.configurer == configurer }
         configurer_indices_to_kill.push(configurer_index) unless configurer_index.nil?
       when :configurable
-        hierarchy.select!{|arr| arr.select!{|val| val.configurable != configurable }; !arr.blank? }
+        hierarchy.select!{|arr| arr.select!{|val| val.configurable != configurable }; preserve_empties || !arr.blank? }
       when :exact_match
         configurer_index = hierarchy.find_index{|entries| entries.first&.configurer == configurer }
         if configurer_index
@@ -498,9 +509,13 @@ class InsurableRateConfiguration < ApplicationRecord
           end # end while
         end # end if configurer_index
     end
-    hierarchy.select!.with_index{|entries, configurer_index| !configuer_indices_to_kill.include?(configurer_index) }
+    hierarchy.select!.with_index{|entries, configurer_index| !configuer_indices_to_kill.include?(configurer_index) } unless preserve_empties
+    return hierarchy
   end
   
+  def self.copy_hierarchy(hierarchy)
+    hierarchy.map{|harr| harr.clone } # clone arrays of ircs
+  end
   
   # Instance Methods
     
