@@ -43,7 +43,7 @@ module V2
       def set_options
         return if Rails.env == 'production' # just in case since this is temporary
         # grab params
-        return unless unpack_params
+        return unless unpack_params(default_carrier_policy_type: CarrierPolicyType.where(carrier_id: 5, policy_type_id: 1).take)
         covopts = set_options_params[:coverage_options]
         if covopts.blank?
           render json: { success: true }, status: :ok
