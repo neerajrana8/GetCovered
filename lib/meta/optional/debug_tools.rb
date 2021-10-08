@@ -36,7 +36,8 @@ class Buglord
       pol.policy_premiums.first.policy_premium_payment_terms.to_a,
       pol.policy_premiums.first.policy_premium_payment_terms.map{|pppt| pppt.policy_premium_item_payment_terms.to_a },
       pol.invoices.to_a,
-      pol.invoices.map{|i| i.line_items.to_a }
+      pol.invoices.map{|i| i.line_items.to_a },
+      pol.invoices.map{|i| i.line_items.map{|li| li.line_item_changes.to_a } }
     ].flatten.uniq
     tr = condemned.group_by{|c| c.class.name }.transform_values{|cs| cs.map{|cs| cs.id } }
     unless be_merciful
