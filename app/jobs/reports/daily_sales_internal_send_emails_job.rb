@@ -3,7 +3,7 @@ module Reports
     queue_as :default
 
     def perform
-      range_start = Time.zone.now
+      range_start = Time.zone.now.in_time_zone('Eastern Time (US & Canada)')
       report_path = Reports::DailySalesAggregate.new(range_start: range_start).generate.generate_csv
       recipients = 
         if Rails.env == 'production'
