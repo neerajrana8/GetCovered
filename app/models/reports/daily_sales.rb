@@ -112,7 +112,7 @@ module Reports
       query =
         case reportable_type
         when 'Agency'
-          Lead.where(agency: reportable_id)
+          Lead.where(agency: reportable_id, account_id: nil)
         when 'Account'
           Lead.where(account: reportable_id)
         end
@@ -122,7 +122,7 @@ module Reports
     def all_reportable_policies
       case reportable_type
       when 'Agency'
-        Policy.where(agency: reportable_id)
+        Policy.where(agency: reportable_id, account_id: nil)
       when 'Account'
         Policy.where(account: reportable_id)
       end
