@@ -6,6 +6,7 @@ production:
 
 :queues:
   - default
+  - authtrail
   - stripe
   - elasticsearch
   - mailer
