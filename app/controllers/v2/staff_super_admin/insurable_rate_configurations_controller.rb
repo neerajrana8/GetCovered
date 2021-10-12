@@ -21,10 +21,14 @@ module V2
           end
         )
         # get our target entity's options
-        entity_irc = ::InsurableRateConfiguration.where(carrier_policy_type: @carrier_policy_type, configurer: configurer, configurable: configurable).take || ::InsurableRateConfiguration.new(configuration: { 'coverage_options' => {} })
+        entity_covopts = ::InsurableRateConfiguration.remove_overridability_data!(
+          (
+            ::InsurableRateConfiguration.where(carrier_policy_type: @carrier_policy_type, configurer: configurer, configurable: configurable).take || ::InsurableRateConfiguration.new(configuration: { 'coverage_options' => {} })
+          ).configuration['coverage_options']
+        )
         # annotate with our stuff
         coverage_options.each do |uid, opt|
-          found = entity_irc.configuration['coverage_options'][uid]
+          found = entity_covopts[uid]
           if found.nil?
             opt['allowed_options'] = opt['options'].dup
           elsif found['enabled'] == false
