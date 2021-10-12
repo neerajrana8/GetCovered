@@ -898,7 +898,7 @@ class InsurableRateConfiguration < ApplicationRecord
         when ::Account
           to_return.concat((agency || configurer.agency).agency_hierarchy(include_self: true) + [carrier])
       end
-      return(to_return)
+      return(to_return.reverse)
     end
     
     
