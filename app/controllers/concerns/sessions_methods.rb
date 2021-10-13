@@ -5,6 +5,7 @@ module SessionsMethods
 
   included do
 
+    # redefine method from the DeviseTokenAuth::SessionsController to enable remember_me functional  without cookies
     def create
       # Check
       field = (resource_params.keys.map(&:to_sym) & resource_class.authentication_keys).first
@@ -22,8 +23,11 @@ module SessionsMethods
           return render_create_error_bad_credentials
         end
 
+        # Begin of the modified fragment
         lifespan = params[:remember_me] == 'true' ? Devise.remember_for : DeviseTokenAuth.token_lifespan
         @token = @resource.create_token(lifespan: lifespan)
+        # End of the modified fragment
+
         @resource.save
 
         sign_in(:user, @resource, store: false, bypass: false)
