@@ -181,7 +181,7 @@ en:
     security_deposit_replacement: 'Security Deposit Replacement'
     master_security_deposit_replacement: 'Security Deposit Replacement'
     master_security_deposit_replacement_coverage: 'Security Deposit Replacement Coverage'
-  policy_bind_warning_notification_job: 
+  policy_bind_warning_notification_job:
     get_covered_bind_warning: "Get Covered Bind Warning"
   qbe_policy_quote:
     qbe_bind_failure: "QBE Bind Failure"
@@ -325,6 +325,7 @@ en:
     1020_title: "Spp Men's Jewelry"
     1021_title: "Spp Women's Jewelry"
     1043_title: "Increased Property Limits   Jewelry, Watches"
+    1043_desc:  "The base policy includes a theft sublimit of $1,000 for jewelry, watches, and furs. This enhanced coverage provides the option of increasing that sublimit without scheduling the items."
     1060_title: "Animal Liability Buy Back"
     1060_desc:  "This option provides an increased amount of liability protection when an insured is held liable for damages by a pet."
     1061_title: "Earthquake"
