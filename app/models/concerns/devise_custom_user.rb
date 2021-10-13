@@ -7,12 +7,16 @@ module DeviseCustomUser
     now = Time.zone.now
 
     last_token = tokens.fetch(client, {})
-    token = create_token(
+
+    token_params = {
       client: client,
       last_token: last_token['token'],
-      updated_at: now,
-      expiry: last_token['expiry']
-    )
+      updated_at: now
+    }
+
+    token_params[:expiry] = last_token['expiry'] if last_token['expiry'].present?
+    
+    token = create_token(token_params)
 
     update_auth_header(token.token, token.client)
   end
