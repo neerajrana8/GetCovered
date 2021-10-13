@@ -8,9 +8,8 @@ module V2
         # grab params
         return unless unpack_params(default_carrier_policy_type: CarrierPolicyType.where(carrier_id: 5, policy_type_id: 1).take)
         # grab our boyo
-        configurable = InsurableGeographicalCategory.get_for(state: nil)
         configurer = (@account || @agency || @carrier)
-        irc = ::InsurableRateConfiguration.get_inherited_irc(@carrier_policy_type, configurer, configurable, agency: @agency, exclude: :children_inclusive, union_mode: true) # WARNING: DOES UNION_MODE WORK???
+        irc = ::InsurableRateConfiguration.get_inherited_irc(@carrier_policy_type, configurer, @configurable, agency: @agency, exclude: :children_inclusive, union_mode: true) # WARNING: DOES UNION_MODE WORK???
         coverage_options = ::InsurableRateConfiguration.remove_overridability_data!(
           irc.configuration['coverage_options'].select do |uid, co|
             co['options_type'] == 'multiple_choice' &&
@@ -23,7 +22,7 @@ module V2
         # get our target entity's options
         entity_covopts = ::InsurableRateConfiguration.remove_overridability_data!(
           (
-            ::InsurableRateConfiguration.where(carrier_policy_type: @carrier_policy_type, configurer: configurer, configurable: configurable).take || ::InsurableRateConfiguration.new(configuration: { 'coverage_options' => {} })
+            ::InsurableRateConfiguration.where(carrier_policy_type: @carrier_policy_type, configurer: configurer, configurable: @configurable).take || ::InsurableRateConfiguration.new(configuration: { 'coverage_options' => {} })
           ).configuration['coverage_options']
         )
         # annotate with our stuff
@@ -54,10 +53,9 @@ module V2
           return
         end
         # grab models
-        configurable = InsurableGeographicalCategory.get_for(state: nil)
-        configurer = @account || @agency
-        entity_irc = ::InsurableRateConfiguration.where(carrier_policy_type: @carrier_policy_type, configurer: configurer, configurable: configurable).take ||
-                     ::InsurableRateConfiguration.new(carrier_policy_type: @carrier_policy_type, configurer: configurer, configurable: configurable, configuration: { 'coverage_options' => {} })
+        configurer = @account || @agency # WARNING: no carrier option, because we don't want people screwing up the carrier configurations
+        entity_irc = ::InsurableRateConfiguration.where(carrier_policy_type: @carrier_policy_type, configurer: configurer, configurable: @configurable).take ||
+                     ::InsurableRateConfiguration.new(carrier_policy_type: @carrier_policy_type, configurer: configurer, configurable: @configurable, configuration: { 'coverage_options' => {} })
         entity_covopts = entity_irc.configuration['coverage_options']
         # update options
         covopts.each do |uid, opt|
@@ -96,9 +94,10 @@ module V2
         end
         
         def unpack_params(default_carrier_policy_type: nil)
-          # get account & agency
+          # get account & agency & configurable
           @account = nil
           @agency = nil
+          @configurable = nil
           case params[:type]
             when 'Account'
               @account = Account.where(id: params[:id].to_i).take
@@ -110,6 +109,20 @@ module V2
               @agency = @account.agency
             when 'Agency'
               @agency = Agency.where(id: params[:id].to_i).take
+            when 'Insurable'
+              @configurable = Insurable.where(id: params[:id].to_i).take
+              if @configurable.nil?
+                render json: standard_error(:insurable_not_found, "No insurable with the provided id (#{params[:id] || 'null'}) was found", nil),
+                  status: 422
+                return
+              end
+              @account = @configurable&.account
+              if @account.nil?
+                render json: standard_error(:account_not_found, "The selected insurable is not associated with a property manager account; its rates cannot be customized", nil),
+                  status: 422
+                return
+              end
+              @agency = @account&.agency
             else
               render json: standard_error(:unsupported_configurable, "It is not possible to customize rates for an object of type '#{params[:type] || 'null'}'", nil),
                 status: 422
@@ -120,6 +133,7 @@ module V2
               status: 422
             return
           end
+          @configurable ||= InsurableGeographicalCategory.get_for(state: nil)
           # get carrier, policy type id, & carrier_policy_type
           @carrier = nil
           @policy_type_id = nil
@@ -149,46 +163,6 @@ module V2
           # return success
           return true
         end
-
-        def combine_option_sets(*option_sets)
-          return [] if option_sets.blank?
-          req_rankings = { 'forbidden' => 0, 'required' => 1, 'optional' => 2 }
-          to_return = {}
-          option_sets.each do |opts|
-            opts.select{|opt| opt['enabled'] != false && opt['options_type'] == 'multiple_choice' }.each do |opt|
-              if to_return[opt['uid']].blank?
-                to_return[opt['uid']] = {
-                  'uid' => opt['uid'],
-                  'title' => opt['title'],
-                  'enabled' => true,
-                  'category' => opt['category'],
-                  'requirement' => opt['requirement'],
-                  'options_type' => opt['options_type'],
-                  'options_format' => opt['options_format'],
-                  'options' => opt['options']
-                }
-              else
-                to_return[opt['uid']]['options'] += (opt['options'] || [])
-                to_return[opt['uid']]['options'].uniq!
-                to_return[opt['uid']]['options'].sort!
-                to_return[opt['uid']]['requirement'] = opt['requirement'] if req_rankings[opt['requirement']] > req_rankings[to_return[opt['uid']]['requirement']]
-              end
-            end
-            opts.select{|opt| opt['enabled'] != false && opt['options_type'] == 'none' }.each do |opt|
-              next if to_return.has_key?(opt['uid'])
-              to_return[opt['uid']] = {
-                'uid' => opt['uid'],
-                'title' => opt['title'],
-                'enabled' => true,
-                'category' => opt['category'],
-                'requirement' => opt['requirement'],
-                'options_type' => opt['options_type']
-              }
-            end
-          end
-          return to_return
-        end
-
 
     end
   end
