@@ -115,16 +115,20 @@ module V2
                 render json: standard_error(:insurable_not_found, "No insurable with the provided id (#{params[:id] || 'null'}) was found", nil),
                   status: 422
                 return
+              elsif !InsurableType::RESIDENTIAL_COMMUNITIES_IDS.include?(@configurable.insurable_type_id)
+                render json: standard_error(:insurable_invalid, "The requested insurable has type '#{@configurable.insurable_type.title}'; only residential community types support customized coverage options", nil),
+                  status: 422
+                return
               end
               @account = @configurable&.account
               if @account.nil?
-                render json: standard_error(:account_not_found, "The selected insurable is not associated with a property manager account; its rates cannot be customized", nil),
+                render json: standard_error(:account_not_found, "The selected insurable is not associated with a property manager account; its coverage options cannot be customized", nil),
                   status: 422
                 return
               end
               @agency = @account&.agency
             else
-              render json: standard_error(:unsupported_configurable, "It is not possible to customize rates for an object of type '#{params[:type] || 'null'}'", nil),
+              render json: standard_error(:unsupported_configurable, "It is not possible to customize coverage options for an object of type '#{params[:type] || 'null'}'", nil),
                 status: 422
               return
           end

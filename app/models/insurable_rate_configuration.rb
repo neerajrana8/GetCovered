@@ -487,7 +487,7 @@ class InsurableRateConfiguration < ApplicationRecord
               when ::InsurableGeographicalCategory
                 entries.find_index{|val| (val.configurable <=> configurable) >= 0 }
               else
-                (entries.last&.configurable == configurable) ? hierarchy.length - 1 : nil # if not an IGC it must be the last entry since it will have no children
+                (entries.last&.configurable == configurable) ? entries.length - 1 : nil # if not an IGC it must be the last entry since it will have no children
             end
             # chop out the children/parents
             unless index.nil?
