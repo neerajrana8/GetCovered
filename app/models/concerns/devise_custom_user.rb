@@ -16,7 +16,7 @@ module DeviseCustomUser
 
     token_params[:expiry] = last_token['expiry'] if last_token['expiry'].present?
     
-    token = create_token(token_params)
+    token = create_token(**token_params)
 
     update_auth_header(token.token, token.client)
   end
