@@ -71,7 +71,7 @@
                       </FromAcct>
                     </ElectronicFundsTransfer> 
                   </PaymentOption>
-                  
+                  <% if request[:data][:account] %>
                   <AdditionalInterest>
                     <GeneralPartyInfo>
                       <NameInfo>
@@ -95,7 +95,7 @@
                       <NatureInterestCd>PM</NatureInterestCd>
                     </AdditionalInterestInfo>
                   </AdditionalInterest>
-                  
+                  <% end %>
                   <% unless request[:data][:users].nil? %>
                   <% request[:data][:users].each do |policy_user| %>
                   <% if policy_user.spouse == false %>

@@ -210,7 +210,7 @@ class QbeService
           user: application.policy_users.where(primary: true).take,
           users: application.policy_users.where.not(primary: true),
           unit: application.primary_insurable,
-          account: application.account,
+          account: application.account_id == application.primary_insurable.account_id ? application.account : nil, # PM account is passed as additional interest WARNING: doesn't access msi-style client provided PM info
           agency: application.agency,
           coverage_selections: application.coverage_selections
         }
