@@ -497,6 +497,7 @@ class InsurableRateConfiguration < ApplicationRecord
                 index -= 1 # if configurables don't match, the configurable itself isn't in the list and we have the index of its first CHILD; so back up 1 step to go to the first PARENT
               end
               if (parent_mode ? (index == entries.length - 1) : (index == 0))
+                entries.clear
                 configurer_indices_to_kill.push(configurer_index)
               else
                 if parent_mode
