@@ -25,7 +25,7 @@ module SessionsMethods
 
         # Begin of the modified fragment
         #
-        ap "ENV header: #{request.headers.env['HTTP_REMEMBER_ME']}, is_header: #{request.headers.key?('remember-me')}"
+        Rails.logger.error "ENV header: #{request.headers.env['HTTP_REMEMBER_ME']}, is_header: #{request.headers.key?('remember-me')}"
         lifespan = request.headers.env['HTTP_REMEMBER_ME'] == 'true' ? Devise.remember_for : DeviseTokenAuth.token_lifespan
         @token = @resource.create_token(lifespan: lifespan)
         # End of the modified fragment
