@@ -95,6 +95,33 @@
                       <NatureInterestCd>PM</NatureInterestCd>
                     </AdditionalInterestInfo>
                   </AdditionalInterest>
+                  <% elsif !request[:data][:pm_info].blank? %>
+                  <AdditionalInterest>
+                    <GeneralPartyInfo>
+                      <NameInfo><% if request[:data][:pm_info]['entity_type'] == 'company' %>
+                        <CommlName>
+                          <CommercialName><%= request[:data][:pm_info]['company_name'] %></CommercialName>
+                        </CommlName><% else %>
+                        <CommlName>
+                          <CommercialName><%= ['first_name', 'middle_name', 'last_name'].map{|prop| request[:data][:pm_info][prop]&.strip }.select{|v| !v.blank? }.join(" ") %></CommercialName>
+                        </CommlName><% end %>
+                      </NameInfo>
+                      <Addr>
+                        <Addr1><%= request[:data][:pm_info]['addr1'] %></Addr1>
+                        <% if request[:data][:pm_info]['addr2'].blank? %>
+                        <Addr2 />
+                        <% else %>
+                        <Addr2><%= request[:data][:pm_info]['addr2'] %></Addr2>
+                        <% end %>
+                        <City><%= request[:data][:pm_info]['city'] %></City>
+                        <StateProvCd><%= request[:data][:pm_info]['state']&.upcase %></StateProvCd>
+                        <PostalCode><%= request[:data][:pm_info]['zip'] %></PostalCode>
+                      </Addr>
+                    </GeneralPartyInfo>
+                    <AdditionalInterestInfo>
+                      <NatureInterestCd>PM</NatureInterestCd>
+                    </AdditionalInterestInfo>
+                  </AdditionalInterest>
                   <% end %>
                   <% unless request[:data][:users].nil? %>
                   <% request[:data][:users].each do |policy_user| %>
@@ -228,12 +255,12 @@
                       <OccupancyTypeCd><%= request[:data][:carrier_profile].traits["occupancy_type"] %></OccupancyTypeCd>
                     </DwellOccupancy>
                     <BldgProtection>
-                      <NumFireDivisions><%= request[:data][:community].insurables.count %></NumFireDivisions>
+                      <NumFireDivisions><%= units_on_site %></NumFireDivisions>
                       <% if request[:data][:address].state == 'FL' %>
                       <FireProtectionClassCd><%= request[:data][:carrier_profile].traits["ppc"] %></FireProtectionClassCd>
                       <OtherProtectionDesc><%= request[:data][:carrier_profile].traits["protection_device_cd"] %></OtherProtectionDesc>
                       <% end %>    
-                    </BldgProtection>
+                    </BldgProtection>a
                     
                     <Coverage>
                       <CoverageCd>DED</CoverageCd>

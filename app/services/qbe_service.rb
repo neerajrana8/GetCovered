@@ -10,6 +10,13 @@ require 'fileutils'
 
 class QbeService
 
+  FIC_DEFAULTS = {
+    nil => {
+      "units" => 1
+      "gated" => false
+    }
+  }
+
   def self.carrier_id
     1
   end
@@ -210,8 +217,10 @@ class QbeService
           user: application.policy_users.where(primary: true).take,
           users: application.policy_users.where.not(primary: true),
           unit: application.primary_insurable,
-          account: application.account_id == application.primary_insurable.account_id ? application.account : nil, # PM account is passed as additional interest WARNING: doesn't access msi-style client provided PM info
+          account: application.primary_insurable.account_id ? application.primary_insurable.account : nil, # PM account is passed as additional interest
+          pm_info: application.extra_settings&.[]('additional_interest'), # if account is nil, will use this instead unless blank
           agency: application.agency,
+          units_on_site: application.primary_insurable.parent_community.units.confirmed.count,
           coverage_selections: application.coverage_selections
         }
 
@@ -581,10 +590,30 @@ class QbeService
   def production_device_codes
     %w[F S B FB SB]
   end
+  
+  
+  def self.validate_qbe_additional_interest(hash)
+    case hash['entity_type']
+      when 'company'
+        return 'msi_service.additional_interest.company_name_required' if hash['company_name'].blank?
+      when 'person'
+        return 'msi_service.additional_interest.first_name_required' if hash['first_name'].blank?
+        return 'msi_service.additional_interest.last_name_required' if hash['last_name'].blank?
+      else
+        return 'msi_service.additional_interest.invalid_entity_type'
+    end
+    return 'qbe_service.additional_interest.address_line_1_required' if hash['addr1'].blank?
+    return 'qbe_service.additional_interest.address_city_required' if hash['city'].blank?
+    return 'qbe_service.additional_interest.address_state_required' if hash['state'].blank?
+    return 'qbe_service.additional_interest.address_state_invalid' if !hash['state'].blank? && !::Address.states.keys.include?(hash['state'].upcase)
+    return 'qbe_service.additional_interest.address_zip_required' if hash['zip'].blank?
+    return 'qbe_service.additional_interest.address_zip_invalid' if !hash['zip'].blank? && (case hash['zip'].size; when 5; !hash['zip'].scan(/\D/).blank?; when 10; hash['zip'][5] != '-' || hash['zip'].scan(/\D/) != '-'; else; true; end)
+    return nil
+  end
 
   private
 
-  def auth_headers
-    Base64.encode64("#{Rails.application.credentials.qbe[:un]}:#{Rails.application.credentials.qbe[:pw][ENV["RAILS_ENV"].to_sym]}")
-  end
+    def auth_headers
+      Base64.encode64("#{Rails.application.credentials.qbe[:un]}:#{Rails.application.credentials.qbe[:pw][ENV["RAILS_ENV"].to_sym]}")
+    end
 end

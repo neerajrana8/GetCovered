@@ -277,6 +277,14 @@ es:
       last_name_required: "El apellido del administrador de la propiedad no puede estar en blanco"
       last_name_too_long: "El apellido del administrador de la propiedad no puede tener más de 50 caracteres"
       middle_name_too_long: "El segundo nombre del administrador de la propiedad no puede tener más de 50 caracteres"
+  qbe_service:
+    additional_interest:
+      address_line_1_required: "Se requiere la línea 1 de la dirección del administrador de la propiedad"
+      address_city_required: "Se requiere la ciudad de la dirección del administrador de la propiedad"
+      address_state_required: "Se requiere el estado de la dirección del administrador de la propiedad"
+      address_zip_required: "Se requiere el código postal de la dirección del administrador de la propiedad"
+      address_state_invalid: "El estado de la dirección del administrador de la propiedad no es válido"
+      address_zip_required: "El código postal de la dirección del administrador de la propiedad no es válido"
   coverage_options:
     estimated_premium_errors: 'Se requiere selección de contenido'
     cannot_be_blank_counties: "no puede dejarse en blanco si se especifican condados"
