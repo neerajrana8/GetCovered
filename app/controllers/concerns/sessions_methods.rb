@@ -24,7 +24,7 @@ module SessionsMethods
         end
 
         # Begin of the modified fragment
-        lifespan = request.headers['remember-me'] == 'true' ? Devise.remember_for : DeviseTokenAuth.token_lifespan
+        lifespan = request.headers['HTTP_REMEMBER_ME'] == 'true' ? Devise.remember_for : DeviseTokenAuth.token_lifespan
         @token = @resource.create_token(lifespan: lifespan)
         # End of the modified fragment
 
