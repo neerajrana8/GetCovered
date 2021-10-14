@@ -202,18 +202,28 @@ module V2
         @application.agency = @application.account&.agency || Agency.where(master_agency: true).take if @application.agency.nil?
         @application.account = @application.primary_insurable&.account if @application.account.nil?
         if @application.carrier_id == 5
-          if @application.extra_settings && !@application.extra_settings['additional_interest'].blank?
+          if !@application.effective_date.nil? && (@application.effective_date >= Time.current.to_date + 90.days || @application.effective_date < Time.current.to_date)
+            render json: { "effective_date" => [I18n.t('user_policy_application_controller.must_be_within_the_next_90_days')] }.to_json,
+                   status: 422
+            return
+          end
+        end
+
+        if @application.extra_settings && !@application.extra_settings['additional_interest'].blank?
+          if @application.carrier_id == ::MsiService.carrier_id
             error_message = ::MsiService.validate_msi_additional_interest(@application.extra_settings['additional_interest'])
             unless error_message.nil?
               render json: standard_error(:policy_application_save_error, I18n.t(error_message)),
                      status: 400
               return
             end
-          end
-          if !@application.effective_date.nil? && (@application.effective_date >= Time.current.to_date + 90.days || @application.effective_date < Time.current.to_date)
-            render json: { "effective_date" => [I18n.t('user_policy_application_controller.must_be_within_the_next_90_days')] }.to_json,
-                   status: 422
-            return
+          elsif @application.carrier_id == ::QbeService.carrier_id
+            error_message = ::MsiService.validate_qbe_additional_interest(@application.extra_settings['additional_interest'])
+            unless error_message.nil?
+              render json: standard_error(:policy_application_save_error, I18n.t(error_message)),
+                     status: 400
+              return
+            end
           end
         end
 
@@ -294,11 +304,20 @@ module V2
           @policy_application.account = @policy_application.primary_insurable&.account if @policy_application.account.nil?
           # flee if nonsense is passed for additional interest
           if @policy_application.extra_settings && !@policy_application.extra_settings['additional_interest'].blank?
-            error_message = ::MsiService.validate_msi_additional_interest(@policy_application.extra_settings['additional_interest'])
-            unless error_message.nil?
-              render json: standard_error(:policy_application_save_error, I18n.t(error_message)),
-                     status: 400
-              return
+            if @policy_application.carrier_id == ::MsiService.carrier_id
+              error_message = ::MsiService.validate_msi_additional_interest(@policy_application.extra_settings['additional_interest'])
+              unless error_message.nil?
+                render json: standard_error(:policy_application_save_error, I18n.t(error_message)),
+                       status: 400
+                return
+              end
+            elsif @policy_application.carrier_id == ::QbeService.carrier_id
+              error_message = ::MsiService.validate_qbe_additional_interest(@policy_application.extra_settings['additional_interest'])
+              unless error_message.nil?
+                render json: standard_error(:policy_application_save_error, I18n.t(error_message)),
+                       status: 400
+                return
+              end
             end
           end
           # remove duplicate pis
