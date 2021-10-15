@@ -30,7 +30,7 @@ module V2
           found = entity_covopts[uid]
           if found.nil?
             opt['allowed_options'] = opt['options'].dup
-          elsif found['enabled'] == false
+          elsif found['requirement'] == 'forbidden'
             opt['allowed_options'] = []
           elsif found['options'].nil?
             opt['allowed_options'] = opt['options'].dup
