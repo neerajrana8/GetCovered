@@ -226,6 +226,16 @@ module V2
             end
           end
         end
+        
+        if @application.carrier_id == ::QbeService.carrier_id && @application.primary_insurable.account.nil?
+          defaults = ::QbeService::FIC_DEFAULTS[@application.primary_insurable.primary_address.state] || ::QbeService::FIC_DEFAULTS[nil]
+          missing_fic_info = ::QbeService::FIC_DEFAULT_KEYS.select{|k| @application.extra_settings&.has_key?(k) || defaults.has_key(k) }
+          unless missing_fic_info.blank?
+            render json: standard_error(:community_information_missing, I18n.t('policy_application_contr.qbe_application.missing_fic_info', missing_list: missing_fic_info.map{|v| I18n.t("policy_application_contr.qbe_application.#{v}") }.join(", "))),
+              status: 400
+            return
+          end
+        end
 
         if @application.save
           update_users_result =
@@ -318,6 +328,16 @@ module V2
                        status: 400
                 return
               end
+            end
+          end
+          # scream if we are missing critical community information          
+          if @policy_application.carrier_id == ::QbeService.carrier_id && @policy_application.primary_insurable.account.nil?
+            defaults = ::QbeService::FIC_DEFAULTS[@policy_application.primary_insurable.primary_address.state] || ::QbeService::FIC_DEFAULTS[nil]
+            missing_fic_info = ::QbeService::FIC_DEFAULT_KEYS.select{|k| @policy_application.extra_settings&.has_key?(k) || defaults.has_key(k) }
+            unless missing_fic_info.blank?
+              render json: standard_error(:community_information_missing, I18n.t('policy_application_contr.qbe_application.missing_fic_info', missing_list: missing_fic_info.map{|v| I18n.t("policy_application_contr.qbe_application.#{v}") }.join(", "))),
+                status: 400
+              return
             end
           end
           # remove duplicate pis
@@ -479,8 +499,8 @@ module V2
                   questions: [:title, :value, options: []],
                   coverage_selections: {}, #[:uid, :selection, selection: [ :data_type, :value ]],
                   extra_settings: [
-                    # for MSI
-                    :installment_day, :number_of_units, :years_professionally_managed, :year_built, :gated,
+                    :installment_day, # for MSI
+                    :number_of_units, :years_professionally_managed, :year_built, :gated, :in_city_limits, # for QBE and MSI non-preferred
                     additional_interest: [
                       :entity_type, :email_address, :phone_number,
                       :company_name,
@@ -549,8 +569,8 @@ module V2
                   policy_insurables_attributes: [:insurable_id],
                   coverage_selections: {}, #[:uid, :selection, selection: [ :data_type, :value ]],
                   extra_settings: [
-                    # for MSI
-                    :installment_day, :number_of_units, :years_professionally_managed, :year_built, :gated,
+                    :installment_day, # for MSI
+                    :number_of_units, :years_professionally_managed, :year_built, :gated, :in_city_limits, # for QBE and MSI non-preferred
                     additional_interest: [
                       :entity_type, :email_address, :phone_number,
                       :company_name,

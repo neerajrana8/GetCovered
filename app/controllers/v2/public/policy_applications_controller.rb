@@ -342,7 +342,7 @@ module V2
         @application.expiration_date = @application.effective_date&.send(:+, 1.year)
         @application.agency = @application.account&.agency || Agency.where(master_agency: true).take if @application.agency.nil?
         @application.account = @application.primary_insurable&.account if @application.account.nil?
-
+        # flee if nonsense is passed for additional interest
         if @application.extra_settings && !@application.extra_settings['additional_interest'].blank?
           if @application.carrier_id == ::MsiService.carrier_id
             error_message = ::MsiService.validate_msi_additional_interest(@application.extra_settings['additional_interest'])
@@ -360,7 +360,17 @@ module V2
             end
           end
         end
-
+        # scream if we are missing critical community information          
+        if @application.carrier_id == ::QbeService.carrier_id && @application.primary_insurable.account.nil?
+          defaults = ::QbeService::FIC_DEFAULTS[@application.primary_insurable.primary_address.state] || ::QbeService::FIC_DEFAULTS[nil]
+          missing_fic_info = ::QbeService::FIC_DEFAULT_KEYS.select{|k| @application.extra_settings&.has_key?(k) || defaults.has_key(k) }
+          unless missing_fic_info.blank?
+            render json: standard_error(:community_information_missing, I18n.t('policy_application_contr.qbe_application.missing_fic_info', missing_list: missing_fic_info.map{|v| I18n.t("policy_application_contr.qbe_application.#{v}") }.join(", "))),
+              status: 400
+            return
+          end
+        end
+        # go wild
         if @application.save
           update_users_result =
             PolicyApplications::UpdateUsers.run!(
@@ -458,6 +468,16 @@ module V2
                        status: 400
                 return
               end
+            end
+          end
+          # scream if we are missing critical community information          
+          if @policy_application.carrier_id == ::QbeService.carrier_id && @policy_application.primary_insurable.account.nil?
+            defaults = ::QbeService::FIC_DEFAULTS[@policy_application.primary_insurable.primary_address.state] || ::QbeService::FIC_DEFAULTS[nil]
+            missing_fic_info = ::QbeService::FIC_DEFAULT_KEYS.select{|k| @policy_application.extra_settings&.has_key?(k) || defaults.has_key(k) }
+            unless missing_fic_info.blank?
+              render json: standard_error(:community_information_missing, I18n.t('policy_application_contr.qbe_application.missing_fic_info', missing_list: missing_fic_info.map{|v| I18n.t("policy_application_contr.qbe_application.#{v}") }.join(", "))),
+                status: 400
+              return
             end
           end
           # remove duplicate pis
@@ -644,8 +664,8 @@ module V2
                   questions:                       [:title, :value, options: []],
                   coverage_selections: {}, #[:uid, :selection, selection: [ :data_type, :value ]],
                   extra_settings: [
-                    # for MSI
-                    :installment_day, :number_of_units, :years_professionally_managed, :year_built, :gated,
+                    :installment_day, # for MSI
+                    :number_of_units, :years_professionally_managed, :year_built, :gated, :in_city_limits, # for QBE and MSI non-preferred
                     additional_interest: [
                       :entity_type, :email_address, :phone_number,
                       :company_name,
