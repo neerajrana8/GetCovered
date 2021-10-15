@@ -68,6 +68,7 @@ Rails.application.routes.draw do
     draw :staff_account
     draw :staff_agency
     draw :staff_super_admin
+    draw :staff_policy_support
     draw :public
     draw :sdk
   end
