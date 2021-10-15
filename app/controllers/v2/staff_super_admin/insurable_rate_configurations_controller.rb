@@ -65,7 +65,7 @@ module V2
             entity_covopts[uid] = nil unless found.nil?
           elsif opt['options'].blank?
             if found.nil?
-              entity_covopts[uid] = { 'requirement' => 'forbidden' }
+              entity_covopts[uid] = { 'requirement' => 'forbidden' } # MOOSE WARNING: rules from carrier that set requirement to optional will still override this... which should NOT be the case. Only setting req to 'required' should override this. Fix it to work that way.
             else
               found['requirement'] = 'forbidden'
             end
