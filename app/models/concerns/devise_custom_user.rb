@@ -26,12 +26,18 @@ module DeviseCustomUser
   # remove the oldest used token instead of the first expired
   def clean_old_tokens
     if tokens.present? && max_client_tokens_exceeded?
-      # Using Enumerable#sort_by on a Hash will typecast it into an associative
-      #   Array (i.e. an Array of key-value Array pairs). However, since Hashes
-      #   have an internal order in Ruby 1.9+, the resulting sorted associative
-      #   Array can be converted back into a Hash, while maintaining the sorted
-      #   order.
-      self.tokens = tokens.sort_by { |_cid, v| v[:updated_at]&.to_datetime || v['updated_at']&.to_datetime }.to_h
+      self.tokens = tokens.sort do |a, b|
+
+        a_converted = a[1][:updated_at]&.to_datetime || a[1]['updated_at']&.to_datetime
+        b_converted = b[1][:updated_at]&.to_datetime || b[1]['updated_at']&.to_datetime
+        ap "A conv: #{a_converted}"
+        ap "B conv: #{b_converted}"
+        if a_converted && b_converted
+          a_converted <=> b_converted
+        else
+          a_converted ? -1 : 1
+        end
+      end.to_h
 
       # Since the tokens are sorted by expiry, shift the oldest client token
       #   off the Hash until it no longer exceeds the maximum number of clients
