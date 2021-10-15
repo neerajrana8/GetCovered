@@ -31,7 +31,7 @@ module DeviseCustomUser
       #   have an internal order in Ruby 1.9+, the resulting sorted associative
       #   Array can be converted back into a Hash, while maintaining the sorted
       #   order.
-      self.tokens = tokens.sort_by { |_cid, v| v[:updated_at]&.to_datetime || v['updated_at']&.to_datetime }.reverse.to_h
+      self.tokens = tokens.sort_by { |_cid, v| v[:updated_at]&.to_datetime || v['updated_at']&.to_datetime }.to_h
 
       # Since the tokens are sorted by expiry, shift the oldest client token
       #   off the Hash until it no longer exceeds the maximum number of clients
