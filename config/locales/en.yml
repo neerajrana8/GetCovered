@@ -84,6 +84,13 @@ en:
       cant_update_user: "Can't update user"
       cant_create_user: "Can't create user"
       cant_update_address: "Can't update address"
+    qbe_application:
+      missing_fic_info: "Missing required community information: #{missing_list}"
+      year_built: "year built"
+      number_of_units: "number of units"
+      gated: "gated community"
+      years_professionally_managed: "years managed by property manager"
+      in_city_limits: "community in city limits"
   policy_app_model:
     billing_strategy_must_belong: "billing strategy must belong to the same agency"
     billing_strategy_must_be_valid: "must be a valid billing strategy for the current carrier"
@@ -278,6 +285,14 @@ en:
       last_name_required: "Property manager last name cannot be blank"
       last_name_too_long: "Property manager last name cannot be more than 50 characters"
       middle_name_too_long: "Property manager middle name cannot be more than 50 characters"
+  qbe_service:
+    additional_interest:
+      address_line_1_required: "Property manager address line 1 is required"
+      address_city_required: "Property manager address city is required"
+      address_state_required: "Property manager address state is required"
+      address_zip_required: "Property manager address zip is required"
+      address_state_invalid: "Property manager address state is invalid"
+      address_zip_required: "Property manager address zip is invalid"
   coverage_options:
     estimated_premium_errors: 'Contents selection is required'
     cannot_be_blank_counties: "cannot be blank if counties are specified"

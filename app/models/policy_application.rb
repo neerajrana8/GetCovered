@@ -16,6 +16,7 @@ class PolicyApplication < ApplicationRecord
   after_initialize :initialize_policy_application
 
   before_validation :set_reference, if: proc { |app| app.reference.nil? }
+  before_validation :set_extra_settings_address
 
   after_create :set_up_application_answers
 
@@ -270,6 +271,19 @@ class PolicyApplication < ApplicationRecord
     end
 
     return_status
+  end
+  
+  def set_extra_settings_address
+    # this is because MSI expects 'address' and QBE expects a broken-down address into fieldy_boiz... this is a hack to let the client send up just fieldy boiz for now
+    if self.extra_settings && self.extra_settings['additional_interest']
+      fieldy_boiz = ['addr1', 'addr2', 'city', 'state', 'zip']
+      unless (fieldy_boiz - ['addr2']).all?{|fb| self.extra_settings['additional_interest'][fb].blank? }
+        self.extra_settings['additional_interest']['address'] = fieldy_boiz.map{|fb| self.extra_settings['additional_interest'][fb] }
+                                                                           .map.with_index{|val, ind| (ind == 2 || ind == 4) && !val.blank? ? ", #{val}" : val }
+                                                                           .select{|val| !val.blank? }
+                                                                           .join(" ")
+      end
+    end
   end
 
   def set_up_application_answers

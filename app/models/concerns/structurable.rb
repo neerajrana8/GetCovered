@@ -329,9 +329,10 @@ module Structurable
       end
       result = { 'overridabilities_' => {} }
       # in union mode, we need to process overridability offset groups, so we sort the input to make those groups contiguous
-      if union_mode
+      if union_mode && union_mode != 'sorted'
         datas.sort_by!.with_index{|datum,index| overridability_offsets[index] }
-        overridability_offets.sort! 
+        overridability_offsets.sort! 
+        union_mode = 'sorted' # still truthy, but lets us know to skip this in recursive calls
       end
       structure.each do |prop, struc|
         case struc['special']
@@ -339,13 +340,28 @@ module Structurable
             # collect valid keys to the hash, ignoring elements whose insertion is forbidden
             insertion_requirement = result['overridabilities_'][prop] || Float::INFINITY
             keys = []
+            group_offset = nil # for union mode
+            group_requirement = nil # for union mode
             datas.each.with_index do |data, data_index|
-              next unless insertion_requirement >= overridability_offsets[data_index]
               next if !data.has_key?(prop)
-              keys.concat(data[prop].keys).uniq!
               data_insertion_requirement = (data['overridabilities_']&.[](prop) || Float::INFINITY) + overridability_offsets[data_index]
-              insertion_requirement = data_insertion_requirement if data_insertion_requirement < insertion_requirement
+              next unless insertion_requirement >= data_insertion_requirement
+              if union_mode
+                if group_offset == overridability_offsets[data_index]
+                  # within an offset group, we track the least restrictive (largest) overridability
+                  group_requirement = data_insertion_requirement if data_insertion_requirement > group_requirement
+                else
+                  # we've rolled over into a new offset group; new entries can be inserted only if they can override the least restrictive overridability in the previous groups 
+                  next unless group_requirement.nil? || insertion_requirement >= group_requirement # ir is about to be = to gr; this entry would fail the overridability test; so don't count it as a valid rollover, just continue to the next
+                  insertion_requirement = group_requirement if group_requirement&.<(insertion_requirement)
+                  group_requirement = data_insertion_requirement
+                  group_offset = overridability_offsets[data_index]
+                end
+              end
+              keys.concat(data[prop].keys).uniq!
+              insertion_requirement = data_insertion_requirement unless union_mode
             end
+            insertion_requirement = group_requirement if union_mode && group_requirement&.<(insertion_requirement)
             keys.select!{|k| struc['special_data']['keys'].include?(k) } unless struc['special_data']['keys'].nil?
             result['overridabilities_'][prop] = insertion_requirement
             # merge hash elements
@@ -363,19 +379,34 @@ module Structurable
             # collect identity keys, ignoring elements whose insertion is forbidden
             insertion_requirement = result['overridabilities_'][prop] || Float::INFINITY
             identity_keys = [] # now we're going to use this to store the full list of element identities instead of the keys that generate them
+            group_offset = nil # for union mode
+            group_requirement = nil # for union mode
             grouped_datas.each.with_index do |gd, gd_index|
-              next unless insertion_requirement >= overridability_offsets[gd_index]
-              identity_keys.concat(gd.keys).uniq!
               gd_insertion_requirement = (datas[gd_index]['overridabilities_']&.[](prop) || Float::INFINITY) + overridability_offsets[gd_index]
-              insertion_requirement = gd_insertion_requirement if gd_insertion_requirement < insertion_requirement
+              next unless insertion_requirement >= gd_insertion_requirement
+              if union_mode # see hash handling above for comments on this block; it is identical except with the prefix data_ instead of gd_
+                if group_offset == overridability_offsets[gd_index]
+                  group_requirement = gd_insertion_requirement if gd_insertion_requirement > group_requirement
+                else
+                  next unless group_requirement.nil? || insertion_requirement >= group_requirement
+                  insertion_requirement = group_requirement if group_requirement&.<(insertion_requirement)
+                  group_requirement = gd_insertion_requirement
+                  group_offset = overridability_offsets[gd_index]
+                end
+              end
+              identity_keys.concat(gd.keys).uniq!
+              insertion_requirement = gd_insertion_requirement unless union_mode
             end
+            insertion_requirement = group_requirement if union_mode && group_requirement&.<(insertion_requirement)
             result['overridabilities_'][prop] = insertion_requirement
             # merge array elements
             extant_grouped_datas = grouped_datas.map.with_index{|gd, gd_index| datas[gd_index][prop].nil? ? nil : gd }
             result[prop] = []
             identity_keys.each do |ik|
               # skip if removal condition is met
-              if struc['special_data']['remove_missing'] == 'different_overridabilities'
+              if union_mode
+                # skip entire removal process in union mode. the logic below is sensitive to union_mode so as to not remove things in some instances, but better to just not remove ANYTHING since the way we use union_mode has evolved.
+              elsif struc['special_data']['remove_missing'] == 'different_overridabilities'
                 # remove if any non-nil entry is missing ik and no entry with the same overridability possesses ik (if union_mode, also keep if an entry w the same ovrdblty is nil, since it would inherit)
                 next unless (extant_grouped_datas.map.with_index do |egd, gd_index|
                   egd.nil? || egd.has_key?(ik) ? nil : (datas[gd_index]['overridabilities_']&.[](prop) || Float::INFINITY) + overridability_offsets[gd_index]
@@ -391,22 +422,35 @@ module Structurable
               result[prop].push(merged_element) unless merged_element.blank?
             end
           else
-            # merge scalar values    
+            # merge scalar values
+            insertion_requirement = result['overridabilities_'][prop] || Float::INFINITY
+            group_offset = nil # for union mode
+            group_requirement = nil # for union mode
             datas.each.with_index do |data, data_index|
-              next unless data&.has_key?(prop)
-              # if the data is allowed to override the current result, override it
-              overridability = result['overridabilities_'][prop] || Float::INFINITY
-              data_overridability = (data['overridabilities_']&.[](prop) || Float::INFINITY) + overridability_offsets[data_index]
-              if overridability >= data_overridability
-                if union_mode
-                  result[prop] ||= []
-                  result[prop].push(data[prop]) unless result[prop].include?(data[prop])
+              next if !data.has_key?(prop)
+              data_insertion_requirement = (data['overridabilities_']&.[](prop) || Float::INFINITY) + overridability_offsets[data_index]
+              next unless insertion_requirement >= data_insertion_requirement
+              if union_mode
+                if group_offset == overridability_offsets[data_index]
+                  group_requirement = data_insertion_requirement if data_insertion_requirement > group_requirement
+                else
+                  next unless group_requirement.nil? || insertion_requirement >= group_requirement
+                  insertion_requirement = group_requirement if group_requirement&.<(insertion_requirement)
+                  group_requirement = data_insertion_requirement
+                  group_offset = overridability_offsets[data_index]
+                end
+                if struc['union'] && result.has_key?(prop)
+                  result[prop] = struc['union'].call(result[prop], prop)
                 else
                   result[prop] = data[prop]
                 end
-                result['overridabilities_'][prop] = data_overridability # overridability becomes the most restrictive of the combined overridabilities
+              else
+                result[prop] = data[prop]
               end
+              insertion_requirement = data_insertion_requirement unless union_mode
             end
+            insertion_requirement = group_requirement if union_mode && group_requirement&.<(insertion_requirement)
+            result['overridabilities_'][prop] = insertion_requirement
         end
       end
       return result

@@ -15,21 +15,6 @@ post 'qbe/communities/show',
 
 scope module: :public do
 
-  if Rails.env != 'production' # just in case, this is temporary
-    resources :agencies, only: [] do
-      member do
-        get 'coverage-options',
-          to: 'insurable_rate_configurations#get_parent_options'
-          
-        post 'coverage-options',
-          to: 'insurable_rate_configurations#set_options'
-      end
-    end
-  end
-
-
-
-
   resources :addresses,
   	only: [:index]
 

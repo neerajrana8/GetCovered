@@ -10,6 +10,45 @@ require 'fileutils'
 
 class QbeService
 
+  FIC_DEFAULT_KEYS = [ # add new entries to policy_application_contr.qbe_application in the locale files when adding to this
+    "year_built",
+    "number_of_units",
+    "gated",
+    "years_professionally_managed",
+    "in_city_limits"
+  ]
+
+  FIC_DEFAULTS = {
+    nil => { # default defaults
+      "year_built" => '1996',
+      "number_of_units" => 40,
+      "gated" => false,
+      "years_professionally_managed" => 0,
+      "in_city_limits" => false
+    },
+    'AZ' => {
+      "year_built" => '1994',
+      "number_of_units" => 150,
+      "gated" => false,
+      "years_professionally_managed" => 2,
+      "in_city_limits" => false
+    },
+    'WA' => {
+      "in_city_limits" => false
+    },
+    'FL' => {
+      "in_city_limits" => false
+    }
+  }.merge(['CO', 'DC', 'GA', 'IL', 'IN', 'LA', 'MA', 'MD', 'MI', 'MO', 'NV', 'OH', 'PA', 'SC', 'TN', 'TX', 'UT', 'VA'].map do |state|
+    [state, {
+      "year_built" => '1996',
+      "number_of_units" => 1,
+      "gated" => false,
+      "years_professionally_managed" => 0,
+      "in_city_limits" => false
+    }]
+  end.to_h)
+
   def self.carrier_id
     1
   end
@@ -161,24 +200,24 @@ class QbeService
       # / getRates
     elsif action == 'getMinPrem'
 
-      options[:data] = {
+      options[:data] = { # values that reeeally shouldn't be defaulted if not provided are commented out here
         type: 'Quote',
         senderID: Rails.application.credentials.qbe[:un],
         receiverID: 32_917,
         agent_id: Rails.application.credentials.qbe[:agent_code],
         current_system_date: Time.current.strftime('%m/%d/%Y'),
-        prop_city: 'San Francisco',
-        prop_county: 'SAN FRANCISCO',
-        prop_state: 'CA',
-        prop_zipcode: 94_115,
-        city_limit: 0,
+        # prop_city: 'San Francisco',
+        # prop_county: 'SAN FRANCISCO',
+        # prop_state: 'CA',
+        # prop_zipcode: 94_115,
         pref_facility: 'FIC',
         occupancy_type: 'OTHER',
-        units_on_site: 156,
-        age_of_facility: 1991,
-        gated_community: 0,
-        prof_managed: 1,
-        prof_managed_year: 1991,
+        # city_limit: 0,
+        # units_on_site: 156,
+        # age_of_facility: 1991,
+        # gated_community: 0,
+        # prof_managed: 1,
+        # prof_managed_year: 1991,
         effective_date: Time.current.strftime('%m/%d/%Y'),
         premium: 1.00,
         premium_pif: 0.75,
@@ -210,8 +249,10 @@ class QbeService
           user: application.policy_users.where(primary: true).take,
           users: application.policy_users.where.not(primary: true),
           unit: application.primary_insurable,
-          account: application.account,
+          account: application.primary_insurable.account_id ? application.primary_insurable.account : nil, # PM account is passed as additional interest
+          pm_info: application.extra_settings&.[]('additional_interest'), # if account is nil, will use this instead unless blank
           agency: application.agency,
+          units_on_site: application.primary_insurable.parent_community.units.confirmed.count,
           coverage_selections: application.coverage_selections
         }
 
@@ -581,10 +622,30 @@ class QbeService
   def production_device_codes
     %w[F S B FB SB]
   end
+  
+  
+  def self.validate_qbe_additional_interest(hash)
+    case hash['entity_type']
+      when 'company'
+        return 'msi_service.additional_interest.company_name_required' if hash['company_name'].blank?
+      when 'person'
+        return 'msi_service.additional_interest.first_name_required' if hash['first_name'].blank?
+        return 'msi_service.additional_interest.last_name_required' if hash['last_name'].blank?
+      else
+        return 'msi_service.additional_interest.invalid_entity_type'
+    end
+    return 'qbe_service.additional_interest.address_line_1_required' if hash['addr1'].blank?
+    return 'qbe_service.additional_interest.address_city_required' if hash['city'].blank?
+    return 'qbe_service.additional_interest.address_state_required' if hash['state'].blank?
+    return 'qbe_service.additional_interest.address_state_invalid' if !hash['state'].blank? && !::Address.states.keys.include?(hash['state'].upcase)
+    return 'qbe_service.additional_interest.address_zip_required' if hash['zip'].blank?
+    return 'qbe_service.additional_interest.address_zip_invalid' if !hash['zip'].blank? && (case hash['zip'].size; when 5; !hash['zip'].scan(/\D/).blank?; when 10; hash['zip'][5] != '-' || hash['zip'].scan(/\D/) != '-'; else; true; end)
+    return nil
+  end
 
   private
 
-  def auth_headers
-    Base64.encode64("#{Rails.application.credentials.qbe[:un]}:#{Rails.application.credentials.qbe[:pw][ENV["RAILS_ENV"].to_sym]}")
-  end
+    def auth_headers
+      Base64.encode64("#{Rails.application.credentials.qbe[:un]}:#{Rails.application.credentials.qbe[:pw][ENV["RAILS_ENV"].to_sym]}")
+    end
 end
