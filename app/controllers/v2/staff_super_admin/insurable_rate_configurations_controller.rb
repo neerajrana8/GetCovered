@@ -73,6 +73,7 @@ module V2
             if found.nil?
               entity_covopts[uid] = { 'options' => opt['options'] }
             else
+              found.delete('requirement') if found['requirement'] == 'forbidden'
               found['options'] = opt['options']
             end
           end
