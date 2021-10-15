@@ -483,8 +483,10 @@ module V2
                     :installment_day, :number_of_units, :years_professionally_managed, :year_built, :gated,
                     additional_interest: [
                       :entity_type, :email_address, :phone_number,
-                      :company_name, :address,
-                      :first_name, :last_name, :middle_name
+                      :company_name,
+                      :first_name, :last_name, :middle_name,
+                      :address, # for msi; qbe terms are below:
+                      :addr1, :addr2, :city, :state, :zip
                     ]
                   ],
                   policy_rates_attributes: [:insurable_rate_id],
@@ -551,8 +553,10 @@ module V2
                     :installment_day, :number_of_units, :years_professionally_managed, :year_built, :gated,
                     additional_interest: [
                       :entity_type, :email_address, :phone_number,
-                      :company_name, :address,
-                      :first_name, :last_name, :middle_name
+                      :company_name,
+                      :first_name, :last_name, :middle_name,
+                      :address, # for msi; qbe terms are below:
+                      :addr1, :addr2, :city, :state, :zip
                     ]
                   ])
       end
