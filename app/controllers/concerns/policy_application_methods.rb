@@ -8,6 +8,7 @@ module PolicyApplicationMethods
       policy_type = PolicyType.find_by_slug(selected_policy_type)
 
       if selected_policy_type == "residential"
+        # get basic parameters
         agency_id    = defined?(@bearer) ? @bearer : new_residential_params[:agency_id].to_i
         account_id   = new_residential_params[:account_id].to_i
         insurable_id = ((new_residential_params[:policy_insurables_attributes] || []).first || { id: nil })[:id]
@@ -16,12 +17,10 @@ module PolicyApplicationMethods
         if insurable.nil?
           render(json: standard_error(:unit_not_found, I18n.t('policy_application_contr.new.unit_not_found')), status: :unprocessable_entity) and return
         end
-        # fix up account and agency if needed
         account_id = insurable.account_id if account_id.nil?
         agency_id = insurable.agency_id || insurable.account&.agency_id if agency_id.nil?
-        # get the carrier_id MOOSE WARNING: eventually, use account/agency and state to determine which to select
-        cip = insurable.carrier_insurable_profiles.where(carrier_id: [::MsiService.carrier_id, ::QbeService.carrier_id]).order('created_at DESC').limit(1).take
-        carrier_id = cip&.carrier_id || MsiService.carrier_id
+        # get carrier id
+        carrier_id = Agency.find(agency_id).providing_carrier_id(policy_type.id, insurable){|cid| (insurable.get_carrier_status(carrier_id) == :preferred) ? true : nil }
         @preferred = (insurable.get_carrier_status(carrier_id) == :preferred)
       elsif selected_policy_type == "commercial"
         carrier_id = 3

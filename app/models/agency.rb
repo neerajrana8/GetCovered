@@ -115,7 +115,27 @@ class Agency < ApplicationRecord
   GET_COVERED_ID = 1
 
   def self.get_covered
-    Agency.find(GET_COVERED_ID)
+    @gcag ||= Agency.find(GET_COVERED_ID)
+  end
+  
+  # returns the carrier id to use for a given policy type and insurable
+  # accepts an optional block for additional filtering which should take a carrier id as its only parameter and return:
+  #   true if the id should be used
+  #   false if it should not be used
+  #   nil if it should not be used UNLESS all available ids return nil, in which case the method will make the default choice from among the nil-returners
+  #   or a numeric value; if no true keys exist, we will take the default choice from among those returning the least numeric value present, if any
+  def providing_carrier_id(policy_type_id, insurable, &blck)
+    state = insurable.primary_address.state
+    carrier_ids = self.carrier_selections.dig('by_policy_type', policy_type_id.to_s, state) || []
+    caas = CarrierAgencyAuthorization.references(:carrier_agency).includes(:carrier_agencies)
+                                     .where(carrier_agencies: { carrier_id: carrier_ids, agency_id: self.id }, policy_type_id: policy_type_id, available: true)
+    carrier_ids = carrier_ids.select{|cid| caas.any?{|caa| caa.carrier_agency.carrier_id == cid } }
+    if blck
+      by_filter_value = carrier_ids.group_by{|cid| blck.call(cid) }
+      min_priority = by_filter_value.keys.select{|k| k != true && k != false && !k.nil? }.min # selects lowest numeric key, or nil if none
+      return by_filter_value[true]&.first || by_filter_value[min_priority_key]&.first
+    end
+    return carrier_ids.first
   end
 
   def default_branding_profile

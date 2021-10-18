@@ -81,7 +81,6 @@ class PolicyApplication < ApplicationRecord
                  quote_in_progress: 4, quote_failed: 5, quoted: 6,
                  more_required: 7, accepted: 8, rejected: 9 }
 
-
   def effective_moment
     self.effective_date&.beginning_of_day
   end
