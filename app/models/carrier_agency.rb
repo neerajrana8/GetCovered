@@ -15,6 +15,7 @@ class CarrierAgency < ApplicationRecord
     through: :carrier_agency_policy_types
   has_many :carrier_agency_authorizations, dependent: :destroy
   has_many :histories, as: :recordable
+  has_many :carrier_agency_policy_types
   def billing_strategies; ::BillingStrategy.where(carrier_id: self.carrier_id, agency_id: self.agency_id); end
   
   accepts_nested_attributes_for :carrier_agency_policy_types,
