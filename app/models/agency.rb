@@ -126,7 +126,7 @@ class Agency < ApplicationRecord
   #   or a numeric value; if no true keys exist, we will take the default choice from among those returning the least numeric value present, if any
   def providing_carrier_id(policy_type_id, insurable, &blck)
     state = insurable.primary_address.state
-    carrier_ids = self.carrier_selections.dig('by_policy_type', policy_type_id.to_s, state) || []
+    carrier_ids = self.carrier_selections.dig('by_policy_type', policy_type_id.to_s, state, 'carrier_ids') || []
     caas = CarrierAgencyAuthorization.references(:carrier_agency).includes(:carrier_agencies)
                                      .where(carrier_agencies: { carrier_id: carrier_ids, agency_id: self.id }, policy_type_id: policy_type_id, available: true)
     carrier_ids = carrier_ids.select{|cid| caas.any?{|caa| caa.carrier_agency.carrier_id == cid } }
