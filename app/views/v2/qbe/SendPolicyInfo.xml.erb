@@ -255,7 +255,7 @@
                       <OccupancyTypeCd><%= request[:data][:carrier_profile].traits["occupancy_type"] %></OccupancyTypeCd>
                     </DwellOccupancy>
                     <BldgProtection>
-                      <NumFireDivisions><%= units_on_site %></NumFireDivisions>
+                      <NumFireDivisions><%= request[:data][:units_on_site] %></NumFireDivisions>
                       <% if request[:data][:address].state == 'FL' %>
                       <FireProtectionClassCd><%= request[:data][:carrier_profile].traits["ppc"] %></FireProtectionClassCd>
                       <OtherProtectionDesc><%= request[:data][:carrier_profile].traits["protection_device_cd"] %></OtherProtectionDesc>
