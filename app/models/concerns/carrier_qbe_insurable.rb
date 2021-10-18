@@ -50,7 +50,7 @@ module CarrierQbeInsurable
 	        end: nil
 	      }
 	      
-	      carrier_agency = CarrierAgency.where(agency: account.agency, carrier: @carrier).take
+	      carrier_agency = CarrierAgency.where(agency_id: agency_id || account&.agency_id || Agency::GET_COVERED_ID, carrier: @carrier).take
 	      
 	      qbe_service = QbeService.new(:action => 'getZipCode')
 	      qbe_service.build_request({ prop_zipcode: @address.zip_code, agent_code: carrier_agency.external_carrier_id })
@@ -201,7 +201,7 @@ module CarrierQbeInsurable
 	      }
 	      
 	      qbe_service = QbeService.new(:action => 'PropertyInfo')
-	      carrier_agency = CarrierAgency.where(agency: account.agency, carrier: @carrier).take
+	      carrier_agency = CarrierAgency.where(agency_id: agency_id || account&.agency_id || Agency::GET_COVERED_ID, carrier: @carrier).take
 	      
 	      qbe_service.build_request({ prop_number: @address.street_number,
 	                                  prop_street: @address.street_name,
@@ -392,7 +392,7 @@ module CarrierQbeInsurable
 	        end: nil
 	      }
 	      
-	      carrier_agency = CarrierAgency.where(agency: account.agency, carrier: @carrier).take
+	      carrier_agency = CarrierAgency.where(agency_id: agency_id || account&.agency_id || Agency::GET_COVERED_ID, carrier: @carrier).take
         
         carrier_policy_type = CarrierPolicyType.where(carrier: @carrier, policy_type_id: ::PolicyType::RESIDENTIAL_ID).take
         irc = ::InsurableRateConfiguration.where(carrier_policy_type: carrier_policy_type, configurer: @carrier, configurable: self).take || ::InsurableRateConfiguration.new(
