@@ -30,8 +30,6 @@ module DeviseCustomUser
 
         a_converted = a[1][:updated_at]&.to_datetime || a[1]['updated_at']&.to_datetime
         b_converted = b[1][:updated_at]&.to_datetime || b[1]['updated_at']&.to_datetime
-        ap "A conv: #{a_converted}"
-        ap "B conv: #{b_converted}"
         if a_converted && b_converted
           a_converted <=> b_converted
         else
