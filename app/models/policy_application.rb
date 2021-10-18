@@ -128,19 +128,13 @@ class PolicyApplication < ApplicationRecord
   # PolicyApplication.primary_insurable
 
   def primary_insurable
-    policy_insurable = policy_insurables.where(primary: true).take
-    policy_insurable&.insurable
+    policy_insurable = policy_insurables.find{|pi| pi.primary }&.insurable
   end
 
   # PolicyApplication.primary_insurable
 
   def primary_user
-    policy_user = policy_users.where(primary: true).take
-    unless policy_user.nil?
-      return policy_user.user.nil? ? nil : policy_user.user
-    else
-      return nil
-    end
+    return policy_users.find{|pi| pi.primary }&.user
   end
 
   # PolicyApplication.available_rates
