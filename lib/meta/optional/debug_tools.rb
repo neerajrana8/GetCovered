@@ -38,7 +38,7 @@ class Buglord
       pol.invoices.to_a,
       pol.invoices.map{|i| i.line_items.to_a },
       pol.invoices.map{|i| i.line_items.map{|li| li.line_item_changes.to_a } }
-    ].flatten.uniq
+    ].flatten.compact.uniq
     tr = condemned.group_by{|c| c.class.name }.transform_values{|cs| cs.map{|cs| cs.id } }
     unless be_merciful
       begin
