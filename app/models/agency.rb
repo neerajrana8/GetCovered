@@ -132,7 +132,7 @@ class Agency < ApplicationRecord
     carrier_ids = carrier_ids.select{|cid| caas.any?{|caa| caa.carrier_agency.carrier_id == cid } }
     if blck
       by_filter_value = carrier_ids.group_by{|cid| blck.call(cid) }
-      min_priority = by_filter_value.keys.select{|k| k != true && k != false && !k.nil? }.min # selects lowest numeric key, or nil if none
+      min_priority_key = by_filter_value.keys.select{|k| k != true && k != false && !k.nil? }.min # selects lowest numeric key, or nil if none
       return by_filter_value[true]&.first || by_filter_value[min_priority_key]&.first
     end
     return carrier_ids.first
