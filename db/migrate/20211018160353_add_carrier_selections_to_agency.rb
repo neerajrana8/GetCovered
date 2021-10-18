@@ -16,7 +16,7 @@ class AddCarrierSelectionsToAgency < ActiveRecord::Migration[5.2]
         agency.carrier_preferences['by_policy_type'][capt.policy_type_id.to_s].push(capt.carrier_agency.carrier_id)
       end
     end
-    agencies.each do |a|
+    agencies.each do |aid, a|
       a.carrier_preferences['by_policy_type'].transform_values!{|v| states.map{|s| [s, { 'carrier_ids' => v }] }.to_h }
       a.save!
     end
