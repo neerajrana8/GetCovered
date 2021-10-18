@@ -85,7 +85,7 @@ en:
       cant_create_user: "Can't create user"
       cant_update_address: "Can't update address"
     qbe_application:
-      missing_fic_info: "Missing required community information: #{missing_list}"
+      missing_fic_info: "Missing required community information: %{missing_list}"
       year_built: "year built"
       number_of_units: "number of units"
       gated: "gated community"
