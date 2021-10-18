@@ -938,15 +938,15 @@ class InsurableRateConfiguration < ApplicationRecord
         return "An error occurred while processing the address" unless cip.save
       end
       # perform get zip code if needed
-      unless cip.data["county_resolved"] || (community.get_qbe_zip_code && cip.reload)
+      unless cip.data["county_resolved"] || (community.get_qbe_zip_code && cip.reload.data["county_resolved"])
         return "Carrier failed to resolve address"
       end
       # perform get property info if needed
-      unless cip.data["property_info_resolved"] || (community.get_qbe_property_info && cip.reload)
+      unless cip.data["property_info_resolved"] || (community.get_qbe_property_info && cip.reload.data["property_info_resolved"])
         return "Carrier failed to retrieve property information"
       end
       # perform get rates if needed
-      unless cip.data['rates_resolution']&.[](number_insured.to_s) || (community.get_qbe_rates(number_insured) && cip.reload)
+      unless cip.data['rates_resolution']&.[](number_insured.to_s) || (community.get_qbe_rates(number_insured) && cip.reload.data['rates_resolution']&.[](number_insured.to_s))
         return "Carrier failed to retrieve coverage rates (error CR-#{number_insured})"
       end
       # all done
