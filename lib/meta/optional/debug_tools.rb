@@ -21,7 +21,7 @@ class Buglord
 
 
 
-  def self.slaughter_policy_without_pa(be_merciful: false)
+  def self.slaughter_policy_without_pa(pol, be_merciful: false)
     unless pol.invoices.map{|i| i.line_items.to_a.map{|li| li.line_item_changes.to_a } }.flatten.select{|lic| lic.field_changed == 'total_received' }.blank?
       return "You cannot slaughter this policy because it has associated line items with total_recieved LineItemChanges... we can't just erase the financial data, and automatically correcting commissions here would be dangerous; therefore I merely scream instead. YOU CAN'T DO IT, SLIMEFACE!!!"
     end
@@ -29,12 +29,12 @@ class Buglord
       pol,
       pol.policy_quotes.first,
       pol.policy_premiums.first,
-      pol.policy_premiums.first.policy_premium_items.to_a,
-      pol.policy_premiums.first.policy_premium_item_commissions.to_a,
+      pol.policy_premiums.first&.policy_premium_items&.to_a,
+      pol.policy_premiums.first&.policy_premium_item_commissions&.to_a,
       # shouldn't exist without payments: pol.policy_premiums.first.policy_premium_items.map{|ppi| ppi.policy_premium_item_transactions.to_a },                                                               # should only be around for master policies
       # shouldn't exist without payments: pol.policy_premiums.first.policy_premium_items.map{|ppi| ppi.policy_premium_item_transactions.map{|ppit| ppit.policy_premium_item_transaction_memberships.to_a } }, # should only be around for master policies
-      pol.policy_premiums.first.policy_premium_payment_terms.to_a,
-      pol.policy_premiums.first.policy_premium_payment_terms.map{|pppt| pppt.policy_premium_item_payment_terms.to_a },
+      pol.policy_premiums.first&.policy_premium_payment_terms&.to_a,
+      pol.policy_premiums.first&.policy_premium_payment_terms&.map{|pppt| pppt.policy_premium_item_payment_terms.to_a },
       pol.invoices.to_a,
       pol.invoices.map{|i| i.line_items.to_a },
       pol.invoices.map{|i| i.line_items.map{|li| li.line_item_changes.to_a } }
