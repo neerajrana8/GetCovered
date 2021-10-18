@@ -1,6 +1,6 @@
 class AddCarrierSelectionsToAgency < ActiveRecord::Migration[5.2]
   def change
-    add_column :agencies, :carrier_preferences, :jsonb, null: false, default: {}
+    add_column :agencies, :carrier_preferences, :jsonb, null: false, default: { 'by_policy_type' => {} }
     
     Agency.reset_column_information
     states = Address::US_STATE_CODES.keys.map{|s| s.to_s }
@@ -8,7 +8,6 @@ class AddCarrierSelectionsToAgency < ActiveRecord::Migration[5.2]
     CarrierAgencyPolicyType.references(:carrier_agencies).includes(:carrier_agency).each do |capt|
       agency = agencies[capt.carrier_agency.agency_id]
       next if agency.nil?
-      agency.carrier_preferences['by_policy_type'] ||= {}
       agency.carrier_preferences['by_policy_type'][capt.policy_type_id.to_s] ||= []
       if capt.policy_type_id == ::PolicyType::RESIDENTIAL_ID && capt.carrier_agency.carrier_id == 5 # residential defaults to MSI wherever possible
         agency.carrier_preferences['by_policy_type'][capt.policy_type_id.to_s].unshift(capt.carrier_agency.carrier_id)
