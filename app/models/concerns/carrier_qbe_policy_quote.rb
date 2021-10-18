@@ -115,7 +115,7 @@ module CarrierQbePolicyQuote
 	          endpoint: Rails.application.credentials.qbe[:uri][ENV["RAILS_ENV"].to_sym]
 	        )
 
-          carrier_agency = CarrierAgency.where(agency: account.agency, carrier: self.policy_application.carrier).take
+          carrier_agency = CarrierAgency.where(agency: self.policy_application.agency, carrier: self.policy_application.carrier).take
 
 	        qbe_service = QbeService.new(:action => 'SendPolicyInfo')
 	        qbe_service.build_request({ agent_code: carrier_agency.external_carrier_id }, true, true, self, self.policy_application.users)
