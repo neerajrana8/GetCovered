@@ -339,6 +339,7 @@ module V2
 
       def create_residential
         @application = PolicyApplication.new(create_residential_params)
+        @application.policy_insurables.first.primary = true if @application.policy_insurables.length == 1 # ensure that .primary_insurable actually works before save
         @application.expiration_date = @application.effective_date&.send(:+, 1.year)
         @application.agency = @application.account&.agency || Agency.where(master_agency: true).take if @application.agency.nil?
         @application.account = @application.primary_insurable&.account if @application.account.nil?
