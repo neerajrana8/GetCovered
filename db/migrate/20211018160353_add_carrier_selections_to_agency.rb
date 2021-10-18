@@ -4,7 +4,7 @@ class AddCarrierSelectionsToAgency < ActiveRecord::Migration[5.2]
     
     states = Address::US_STATE_CODES.keys.map{|s| s.to_s }
     agencies = Agency.all.map{|a| [a.id, a] }.to_h
-    CarrierAgencyPolicyType.references(:carrier_agencies).includes(:carrier_agency).where(available: true).each do |capt|
+    CarrierAgencyPolicyType.references(:carrier_agencies).includes(:carrier_agency).each do |capt|
       agency = agencies[capt.carrier_agency.agency_id]
       next if agency.nil?
       agency.carrier_selections['by_policy_type'] ||= {}
