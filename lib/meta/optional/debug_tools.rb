@@ -21,8 +21,9 @@ class Buglord
 
 
 
-  def self.slaughter_policy_without_pa(pol, be_merciful: false)
+  def self.slaughter_policy_without_pa(pol, be_merciful: false, force_unsafe: false)
     unless pol.invoices.map{|i| i.line_items.to_a.map{|li| li.line_item_changes.to_a } }.flatten.select{|lic| lic.field_changed == 'total_received' }.blank?
+      return slaughter_policy_unsafely(pol) if be_merciful == false && force_unsafe == "I am emperor over all meese; no moose shall usurp me!"
       return "You cannot slaughter this policy because it has associated line items with total_recieved LineItemChanges... we can't just erase the financial data, and automatically correcting commissions here would be dangerous; therefore I merely scream instead. YOU CAN'T DO IT, SLIMEFACE!!!"
     end
     condemned = [
@@ -51,6 +52,13 @@ class Buglord
     end
     return tr
   end
+  
+  
+  private
+  
+    def self.slaughter_policy_unsafely(pol)
+      cis = CommissionItem.where(
+    end
 
 
 end

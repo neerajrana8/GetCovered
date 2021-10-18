@@ -50,6 +50,9 @@ class Insurable < ApplicationRecord
 
   has_many :integration_profiles,
            as: :profileable
+  
+  has_many :insurable_rate_configurations,
+           as: :configurable
 
   accepts_nested_attributes_for :addresses, allow_destroy: true
 
