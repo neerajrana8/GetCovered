@@ -930,11 +930,13 @@ class InsurableRateConfiguration < ApplicationRecord
     def self.qbe_prepare_for_get_coverage_options(community, cip, number_insured)
       # build CIP if none exists
       unless cip
+        return "Carrier failed to resolve building information" unless community.account_id.nil? # really, this error  means "this guy is registered under an account but has no carrier profile for QBE"
         community.create_carrier_profile(QbeService.carrier_id)
         cip = community.carrier_profile(QbeService.carrier_id)
-        cip.traits['construction_year'] = 1996 # MOOSE WARNING: use some other defaults?
-        cip.traits['professionally_managed'] = true
-        cip.traits['professionally_managed_year'] = 1997
+        fic_defaults = (QbeService::FIC_DEFAULTS[community.primary_address.state] || QbeService::FIC_DEFAULTS[nil])
+        cip.traits['construction_year'] = fic_defaults['year_built'] || 1996 # we set defaults here even if they don't actually exist
+        cip.traits['professionally_managed'] = fic_defaults['years_professionally_managed'].to_i == 0 ? false : true
+        cip.traits['professionally_managed_year'] = Time.current.to_date.year - fic_defaults['years_professionally_managed'].to_i
         return "An error occurred while processing the address" unless cip.save
       end
       # perform get zip code if needed
