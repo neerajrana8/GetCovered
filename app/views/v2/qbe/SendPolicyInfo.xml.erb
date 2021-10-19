@@ -134,8 +134,8 @@
                         </CommlName>
                       </NameInfo>
                       <Addr>
-                        <Addr1><%= request[:data][:address].combined_street_address() %></Addr1>
-                        <Addr2><%= request[:data][:unit].title.gsub(/[^0-9,.]/, "") %></Addr2>
+                        <Addr1><%= request[:data][:address].combined_street_address() %></Addr1><% unless request[:data][:unit].title.blank? %>
+                        <Addr2><%= request[:data][:unit].title.gsub(/[^0-9,.]/, "") %></Addr2><% end %>
                         <City><%= request[:data][:address].city %></City>
                         <StateProvCd><%= request[:data][:address].state %></StateProvCd>
                         <PostalCode><%= request[:data][:address].zip_code %></PostalCode>
@@ -178,8 +178,8 @@
                     </NameInfo>
                     <Addr>
                       <AddrTypeCd>InsuredsAddress</AddrTypeCd>
-                      <Addr1><%= request[:data][:address].combined_street_address() %></Addr1>
-                      <Addr2><%= request[:data][:unit].title.gsub(/[^0-9,.]/, "") %></Addr2>
+                      <Addr1><%= request[:data][:address].combined_street_address() %></Addr1><% unless request[:data][:unit].title.blank? %>
+                      <Addr2><%= request[:data][:unit].title.gsub(/[^0-9,.]/, "") %></Addr2><% end %>
                       <City><%= request[:data][:address].city %></City>
                       <StateProvCd><%= request[:data][:address].state %></StateProvCd>
                       <PostalCode><%= request[:data][:address].zip_code %></PostalCode>
@@ -227,8 +227,8 @@
                 <Location id="0">
                   <Addr>
                     <AddrTypeCd>InsuredsAddress</AddrTypeCd>
-                    <Addr1><%= request[:data][:address].combined_street_address() %></Addr1>
-                    <Addr2><%= request[:data][:unit].title.gsub(/[^0-9,.]/, "") %></Addr2>
+                    <Addr1><%= request[:data][:address].combined_street_address() %></Addr1><% unless request[:data][:unit].title.blank? %>
+                    <Addr2><%= request[:data][:unit].title.gsub(/[^0-9,.]/, "") %></Addr2><% end %>
                     <City><%= request[:data][:address].city %></City>
                     <StateProvCd><%= request[:data][:address].state %></StateProvCd>
                     <PostalCode><%= request[:data][:address].zip_code %></PostalCode>
