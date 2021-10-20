@@ -821,6 +821,7 @@ class InsurableRateConfiguration < ApplicationRecord
               next (rate['coverage_limits'].merge(rate['deductibles'])).all?{|name,sel| selections[name]&.[]('selection')&.[]('value') == sel } &&
                    (rate['schedule'] != 'optional' || selections[rate['sub_schedule']]&.[]('selection'))
             end
+            policy_fee = 0 if policy_fee.nil?
             estimated_premium = selected_rates.inject(0){|sum,sr| sum + sr['premium'] }
             weight = billing_strategy.new_business['payments'].inject(0){|sum,w| sum + w }.to_d
             estimated_first_payment = (billing_strategy.carrier_code == 'FL' ? 0 : (billing_strategy.new_business['payments'][0] / weight * estimated_premium).floor)
