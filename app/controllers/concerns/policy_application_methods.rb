@@ -202,7 +202,7 @@ module PolicyApplicationMethods
     )
     keys_to_keep = [:valid, :coverage_options, :estimated_premium, :estimated_installment, :estimated_first_payment, :installment_fee]
     response_tr = results.select{|k, v| keys_to_keep.include?(k) }.merge(results[:errors] ? { estimated_premium_errors: [results[:errors][:external]].flatten } : {})
-    use_translations_for_msi_coverage_options!(response_tr)
+    use_translations_for_coverage_options!(response_tr)
 
     render json: response_tr,
            status: 200
@@ -221,7 +221,7 @@ module PolicyApplicationMethods
     return ["residential", "commercial", "rent-guarantee", "security-deposit-replacement"]
   end
   
-  def use_translations_for_msi_coverage_options!(response_tr)
+  def use_translations_for_coverage_options!(response_tr)
     response_tr[:coverage_options].each do |uid, coverage_opt|
       title = I18n.t("coverage_options.#{uid}_title")
       description = I18n.t("coverage_options.#{uid}_desc")
