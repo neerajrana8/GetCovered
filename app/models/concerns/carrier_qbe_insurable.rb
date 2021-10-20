@@ -560,7 +560,7 @@ module CarrierQbeInsurable
       optionals = []
       rates.each do |r|
         if r['schedule'] == 'optional'
-          optionals.push(r['sub_schedule'])
+          optionals.push(r['sub_schedule']) unless r['sub_schedule'] == 'policy_fee'
         else
           r['coverage_limits'].each{|cov,amt| limopts[cov] ||= []; limopts[cov].push(amt) unless limopts[cov].include?(amt) }
           r['deductibles'].each{|cov,amt| dedopts[cov] ||= []; dedopts[cov].push(amt) unless dedopts[cov].include?(amt) }
