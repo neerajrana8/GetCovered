@@ -870,6 +870,7 @@ GEM
       msgpack (~> 1.0)
     bootsnap (1.4.1-java)
       msgpack (~> 1.0)
+    browser (5.3.1)
     builder (3.2.3)
     byebug (11.0.1)
     caxlsx (3.0.1)
@@ -1328,6 +1329,7 @@ DEPENDENCIES
   awesome_print
   aws-sdk (~> 3)
   bootsnap (>= 1.1.0)
+  browser
   byebug
   caxlsx
   colorize
