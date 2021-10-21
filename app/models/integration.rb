@@ -10,7 +10,10 @@ class Integration < ApplicationRecord
   validate :one_provider_per_integratable
 
   private
+
   def one_provider_per_integratable
-    errors.add(:integratable, "#{ integratable.title } already has a #{ self.provider.titlecase } integration") if integratable.integrations.exists?(provider: self.provider)
+    if integratable.integrations.where.not(id: id).exists?(provider: self.provider)
+      errors.add(:integratable, "#{ integratable.title } already has a #{ self.provider.titlecase } integration")
+    end
   end
 end
