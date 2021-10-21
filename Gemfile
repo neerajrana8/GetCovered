@@ -121,7 +121,6 @@ gem 'minuteman'
 
 gem 'rack-attack'
 gem 'dry-monads'
-gem 'savon', '~> 2.12.0'
 
 gem 'rails-i18n', '~> 5.1'
 
