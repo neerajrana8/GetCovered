@@ -22,11 +22,4 @@ RSpec.describe Page, :type => :model do
     subject.branding_profile = nil
     expect(subject).to_not be_valid
   end
-
-  it "must sanitize script tag" do
-    subject.content = "<p>Lorem ipsum <script>dangerous javascript</script></p>"
-    expect(subject.content).to include "<script>dangerous javascript</script>"
-    subject.save
-    expect(subject.content).not_to include "<script>dangerous javascript</script>"
-  end
 end
