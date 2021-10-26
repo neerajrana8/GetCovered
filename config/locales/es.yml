@@ -111,6 +111,12 @@ es:
       rates_cannot_be_nil: "Las 'tasas' de argumento no pueden ser nulas"
       rates_must_be_array: "El argumento 'tarifas' debe ser una matriz"
       quote_id_cannot_be_nil: "El argumento 'quote_id' no puede ser nulo"
+      questions:
+        question_1: "¿Tiene un negocio en su apartamento / casa de alquiler?"
+        question_2: "¿Algún animal que usted o sus compañeros de cuarto posean alguna vez mordió a una persona o la mascota de otra persona?"
+        question_3: "¿Usted o sus compañeros de cuarto poseen serpientes, animales exóticos o salvajes?"
+        question_4: "¿Su (s) perro (s) es alguna de estas razas: Akita, Pit Bull (Staffordshire Bull Terrier, America Pit Bull Terrier, American Staffordshire Terrier, Bull Terrier), Chow, Rottweiler, Wolf Hybrid, Malamute o cualquier mezcla de las razas mencionadas anteriormente?"
+        question_5: "¿Ha tenido algún reclamo de responsabilidad, ya sea que se haya realizado un pago o no, en los últimos 3 años?"
   agency_model:
     parent_id_incorrect: "Identificación de padre incorrecta"
     agency_cannot_be_updated: "La agencia no se puede actualizar a sub-agencia"

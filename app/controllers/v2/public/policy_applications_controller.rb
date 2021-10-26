@@ -415,6 +415,7 @@ module V2
                    'installment_fee' => @quote.carrier_payment_data['installment_fee'],
                    'installment_total' => @quote.carrier_payment_data['installment_total']
                   } if @application.carrier_id == 5
+                  use_translations_for_application_questions!(@application) # this is from the policy application methods concern... just here in case they switched languages after calling .new
                   render template: 'v2/public/policy_applications/create.json', status: 200
 
                 else
@@ -549,6 +550,7 @@ module V2
                      'installment_fee' => @quote.carrier_payment_data['installment_fee'],
                      'installment_total' => @quote.carrier_payment_data['installment_total']
                     } if @application.carrier_id == 5
+                    use_translations_for_application_questions!(@application) # this is from the policy application methods concern... just here in case they switched languages after calling .new
                     render template: 'v2/public/policy_applications/create.json', status: 200
 
                   else

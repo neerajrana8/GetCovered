@@ -230,6 +230,15 @@ module PolicyApplicationMethods
     end
   end
   
+  def use_translations_for_application_questions!(appl)
+    if appl.carrier_id == QbeService.carrier_id
+      appl.questions&.each do |q|
+        transl = I18n.t("policy_app_model.qbe.questions.question_#{q["questionId"]}")
+        q["title"] = transl unless transl.include?('translation missing')
+      end
+    end
+  end
+  
   def get_coverage_options_params
     params.permit(:carrier_id, :policy_type_id)
   end
