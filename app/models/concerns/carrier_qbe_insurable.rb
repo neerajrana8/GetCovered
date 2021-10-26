@@ -111,7 +111,7 @@ module CarrierQbeInsurable
 	  
 	            case @carrier_profile.data["county_resolution"]["matches"].length
 	              when 0
-	                @carrier_profile.data["county_resolution"]["available"] = false # MOOSE WARNING: this is a temporary answer to the question of how to handle nonempty results with empty matches.
+	                @carrier_profile.data["county_resolution"]["available"] = false # WARNING: this is a temporary answer to the question of how to handle nonempty results with empty matches: we just treat them as if no county info came down at all
 	              when 1
 	                @carrier_profile.data["county_resolution"]["selected"] = @carrier_profile.data["county_resolution"]["matches"][0][:seq]
 	                @carrier_profile.data["county_resolved"] = true
