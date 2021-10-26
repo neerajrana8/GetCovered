@@ -106,7 +106,7 @@ module CarrierQbeInsurable
 	            if @address.county.nil?
 	              @carrier_profile.data["county_resolution"]["matches"].select! { |opt| opt[:locality] == @address.city }
 	            else
-	              @carrier_profile.data["county_resolution"]["matches"].select! { |opt| opt[:locality] == @address.city && opt[:county] == @address.county.upcase }        
+	              @carrier_profile.data["county_resolution"]["matches"].select! { |opt| opt[:locality] == @address.city && opt[:county].chomp(" COUNTY") == @address.county.upcase.chomp(" COUNTY") } # just in case one is "Whatever County" and the other is just "Whatever"      
 	            end
 	  
 	            case @carrier_profile.data["county_resolution"]["matches"].length
