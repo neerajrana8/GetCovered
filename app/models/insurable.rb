@@ -299,6 +299,7 @@ class Insurable < ApplicationRecord
   #   a hash:                   an error occurred; will have keys [:error_type, :message, :details], with :details optional
   def self.get_or_create(
     address: nil,                 # an address string (required unless unit title and insurable_id provided)
+    county: nil,                  # an optional county string (will be used during creation, or applied to all countyless matching addresses)
     unit: nil,                    # true to search for units, false to search for buildings/communities, a string to search for a specific unit title; nil means search for a unit if address has line 2 and a community otherwise
     insurable_id: nil,            # optional; the community/building the sought insurable must belong to
     create_if_ambiguous: false,   # pass true to force insurable creation if there's any ambiguity (example: if you've already called this and got 'multiple' type results, none of which were what you wanted)
@@ -380,6 +381,10 @@ class Insurable < ApplicationRecord
     end
     address.id = nil
     address.street_two = nil if ignore_street_two
+    # set county if provided
+    unless county.blank?
+      address.county = county
+    end
     # try to figure out unit title if applicable
     seeking_unit = unit ? true : unit.nil? ? !address.street_two.blank? : false
     diagnostics[:unit_mode] = seeking_unit if diagnostics
@@ -506,6 +511,9 @@ class Insurable < ApplicationRecord
           insurable_id: insurable_id
         }.compact
       )
+      if county # set counties on results if missing but provided (result primary addresses all have the same postal address up to line 2 hence the same county)
+        Adress.where(id: results.map{|r| r.primary_address.county.blank? ? r.primary_address.id : nil }.compact).update_all(county: county)
+      end
       diagnostics[:parent_count] = results.count if diagnostics
       unless address.street_two.blank?
         with_street_two = results.select{|res| res.primary_address.street_two&.strip == address.street_two.strip }
