@@ -100,10 +100,12 @@ module CarrierQbePolicyApplication
 
 	        qbe_service = QbeService.new(action: 'getMinPrem')
 
+          county = community_profile.data&.[]("county_resolution")&.[]("matches")&.find{|m| m["seq"] == community_profile.data["county_resolution"]["selected"] }&.[]("county") || address.county # we use the QBE formatted one in case .titlecase killed dashes etc.
+
 	        qbe_request_options = {
             pref_facility: preferred ? 'MDU' : 'FIC',
 	          prop_city: address.city,
-	          prop_county: address.county,
+	          prop_county: county,
 	          prop_state: address.state,
 	          prop_zipcode: address.combined_zip_code,
             effective_date: effective_date.strftime("%m/%d/%Y"),

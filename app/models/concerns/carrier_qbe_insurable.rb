@@ -106,7 +106,7 @@ module CarrierQbeInsurable
 	            if @address.county.nil?
 	              @carrier_profile.data["county_resolution"]["matches"].select! { |opt| opt[:locality] == @address.city }
 	            else
-	              @carrier_profile.data["county_resolution"]["matches"].select! { |opt| opt[:locality] == @address.city && opt[:county].chomp(" COUNTY") == @address.county.upcase.chomp(" COUNTY") } # just in case one is "Whatever County" and the other is just "Whatever"      
+	              @carrier_profile.data["county_resolution"]["matches"].select! { |opt| opt[:locality] == @address.city && opt[:county].chomp(" COUNTY").gsub(/[^a-z]/i, ' ') == @address.county.upcase.chomp(" COUNTY").gsub(/[^a-z]/i, ' ') } # just in case one is "Whatever County" and the other is just "Whatever", one has a dash and one doesn't, etc
 	            end
 	  
 	            case @carrier_profile.data["county_resolution"]["matches"].length
@@ -402,11 +402,13 @@ module CarrierQbeInsurable
           configuration: { 'coverage_options' => {}, "rules" => {} },
           rates: { 'rates' => [nil, [], [], [], [], []] }
         )
+        
+        county = @carrier_profile.data&.[]("county_resolution")&.[]("matches")&.find{|m| m["seq"] == @carrier_profile.data["county_resolution"]["selected"] }&.[]("county") || @address.county # we use the QBE formatted one in case .titlecase killed dashes etc.
 	      
 	      qbe_request_options = {
           pref_facility: (self.get_carrier_status(@carrier) == :preferred ? 'MDU' : 'FIC'),
 	        prop_city: @address.city,
-	        prop_county: @address.county,
+	        prop_county: county,
 	        prop_state: @address.state,
 	        prop_zipcode: @address.combined_zip_code,
 	        units_on_site: units.confirmed.count,

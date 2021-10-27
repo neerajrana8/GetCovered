@@ -236,7 +236,7 @@
                     <QBE_InsideCityLimitInd>N</QBE_InsideCityLimitInd>
                   </Addr>
                   <TaxCodeInfo>
-                    <TaxCd><%= request[:data][:address].county %></TaxCd>
+                    <TaxCd><%= request[:data][:county] || request[:data][:address].county %></TaxCd>
                     <TaxTypeCd>CountyProp</TaxTypeCd>
                   </TaxCodeInfo>
                 </Location>

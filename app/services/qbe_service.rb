@@ -237,6 +237,7 @@ class QbeService
         application = obj.policy_application
         premium = obj.policy_premium
         address = application.primary_insurable().primary_address()
+        cip = application.primary_insurable.parent_community.carrier_profile(1)
 
         options[:data] = {
           quote: obj,
@@ -246,6 +247,7 @@ class QbeService
           community: application.primary_insurable().parent_community(),
           carrier_profile: application.primary_insurable().parent_community().carrier_profile(1),
           address: address,
+          county: cip.data&.[]("county_resolution")&.[]("matches")&.find{|m| m["seq"] == cip.data["county_resolution"]["selected"] }&.[]("county") || address.county, # we use the QBE formatted one in case .titlecase killed dashes etc.
           user: application.policy_users.where(primary: true).take,
           users: application.policy_users.where.not(primary: true),
           unit: application.primary_insurable,
