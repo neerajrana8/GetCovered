@@ -512,7 +512,7 @@ class Insurable < ApplicationRecord
         }.compact
       )
       if county # set counties on results if missing but provided (result primary addresses all have the same postal address up to line 2 hence the same county)
-        Adress.where(id: results.map{|r| r.primary_address.county.blank? ? r.primary_address.id : nil }.compact).update_all(county: county)
+        Address.where(id: results.map{|r| r.primary_address.county.blank? ? r.primary_address.id : nil }.compact).update_all(county: county)
       end
       diagnostics[:parent_count] = results.count if diagnostics
       unless address.street_two.blank?
