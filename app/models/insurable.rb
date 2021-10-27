@@ -334,6 +334,7 @@ class Insurable < ApplicationRecord
     elsif address.blank? && ([true,false,nil].include?(unit) || insurable_id.nil?)
       raise ArgumentError.new(I18n.t('insurable_model.either_address_must_be_provided'))
     end
+    county = nil if county.blank?
     # if we have a unit title and an insurable id, get or create the unit without dealing with address nonsense
     unit_title = [true,false,nil].include?(unit) ? nil : clean_unit_title(unit)
     unit_title = :titleless if titleless
