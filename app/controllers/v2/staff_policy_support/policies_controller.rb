@@ -14,7 +14,7 @@ module V2
       before_action :set_substrate, only: [:index]
 
       def index
-        super(:@policies.where(policy_in_system: false), @substrate, :agency, :account, :primary_user, :primary_insurable, :carrier, :policy_type, invoices: :line_items)
+        super(:@policies, @substrate, :agency, :account, :primary_user, :primary_insurable, :carrier, :policy_type, invoices: :line_items)
       end
 
       def show; end
@@ -31,7 +31,7 @@ module V2
       def set_substrate
         super
         if @substrate.nil?
-          @substrate = access_model(::Policy)
+          @substrate = access_model(::Policy.where(policy_in_system: false))
         elsif !params[:substrate_association_provided]
           @substrate = @substrate.policies
         end
