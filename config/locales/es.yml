@@ -243,7 +243,7 @@ es:
     state_must_be_valid_us: "El estado debe ser una abreviatura válida del estado de EE. UU."
     postal_code_must_be_valid: "El código postal debe ser un código postal válido"
   insurable_geographical_category:
-    cannot_be_blank_if_counties_are_specified: "no puede dejarse en blanco si se especifican condados"
+    cannot_be_blank_if_data_are_specified: "no puede dejarse en blanco si se especifican condados, códigos postales o ciudades"
   user_controller:
     invalid_token: "Simbolo no valido."
   user_policy_application_controller:

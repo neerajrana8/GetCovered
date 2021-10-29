@@ -244,7 +244,7 @@ en:
     state_must_be_valid_us: "State must be a valid US state abbreviation"
     postal_code_must_be_valid: "Postal code must be a valid zip code"
   insurable_geographical_category:
-    cannot_be_blank_if_counties_are_specified: "cannot be blank if counties are specified"
+    cannot_be_blank_if_data_are_specified: "cannot be blank if counties, zip codes, or cities are specified"
   user_controller:
     invalid_token: "Invalid token."
   user_policy_application_controller:
