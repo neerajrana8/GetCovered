@@ -32,6 +32,7 @@ module CarrierQbeInsurable
 	    
 	    unless @address.nil? ||
 	           @carrier_profile.data["county_resolved"] == true
+
 	      # When an @address and county resolved
 	      event = events.new(
 	        verb: 'post', 
@@ -101,11 +102,20 @@ module CarrierQbeInsurable
 	              
 	            end
 	            
-	            @carrier_profile.data["county_resolution"]["matches"] = @carrier_profile.data["county_resolution"]["results"].dup
+	            @carrier_profile.data["county_resolution"]["matches"] = @carrier_profile.data["county_resolution"]["results"].dup              
 	            
 	            if @address.county.nil?
 	              @carrier_profile.data["county_resolution"]["matches"].select! { |opt| opt[:locality] == @address.city }
-	            else
+                if @carrier_profile.data["county_resolution"]["matches"].length > 1
+                  @address.geocode if @address.latitude.blank?
+                  unless @address.latitude.blank?
+                    @address.send(:get_county_from_fcc)
+                    @address.save unless @address.county.blank?
+                  end
+                end
+              end
+              
+	            if !@address.county.nil?
 	              @carrier_profile.data["county_resolution"]["matches"].select! { |opt| opt[:locality] == @address.city && opt[:county].chomp(" COUNTY").gsub(/[^a-z]/i, ' ') == @address.county.upcase.chomp(" COUNTY").gsub(/[^a-z]/i, ' ') } # just in case one is "Whatever County" and the other is just "Whatever", one has a dash and one doesn't, etc
 	            end
 	  
