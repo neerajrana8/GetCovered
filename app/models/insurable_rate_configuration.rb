@@ -909,17 +909,7 @@ class InsurableRateConfiguration < ApplicationRecord
       case configurable
         when ::Insurable, ::Address
           address = (configurable.class == ::Address ? configurable : configurable.primary_address)
-          to_return = configurable.insurable_hierarchy + ::InsurableGeographicalCategory.where(state: nil)
-            .or(::InsurableGeographicalCategory.where(state: address.state, counties: nil))
-            .or(::InsurableGeographicalCategory.where(state: address.state).where('counties @> ARRAY[?]::varchar[]', address.county))
-            .to_a.sort
-        # used to use CIPs, but now just use Insurables directly... below is disabled but here as a museum piece in case needed l8ur
-        #when ::CarrierInsurableProfile
-        #  address = configurable.insurable.primary_address
-        #  to_return = [configurable] + ::InsurableGeographicalCategory.where(state: nil)
-        #    .or(::InsurableGeographicalCategory.where(state: address.state, counties: nil))
-        #    .or(::InsurableGeographicalCategory.where(state: address.state).where('counties @> ARRAY[?]::varchar[]', address.county))
-        #    .to_a.sort
+          to_return = address.parent_insurable_geographical_categories.to_a.sort + (configurable.class == ::Insurable ? configurable.insurable_hierarchy : [])
         when ::InsurableGeographicalCategory
           to_return = configurable.query_for_parents
           to_return = to_return.or(configurable.query_for_children) if union_mode

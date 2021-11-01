@@ -258,6 +258,17 @@ class Address < ApplicationRecord
       end
     end
   end
+  
+  def parent_insurable_geographical_categories
+    temp_igc = ::InsurableGeographicalCategory.new(
+      state: self.state,
+      counties: [self.county].compact,
+      zip_codes: [self.zip_code].compact,
+      cities: [self.city].compact
+    )
+    temp_igc.valid? # ensure before_validation callbacks run
+    return temp_igc.query_for_parents(include_self: false)
+  end
 
   def standardize
     fields = [:street_number, :street_name, :street_two, :city]
