@@ -38,9 +38,8 @@ module InsurablesMethods
 
   def get_or_create
     #diagnostics = {}
-    result = ::Insurable.get_or_create(**{
+    result = ::Insurable.get_or_create(**{ # WARNING: the 'county' option is not here because we don't want randos submitting wrong counties--we ask the FCC for counties now in an Address callback. BUT it is still an available input to this method for use in the terminal.
         address: get_or_create_params[:address],
-        county: get_or_create_params[:county],
         unit: get_or_create_params[:unit],
         insurable_id: get_or_create_params[:insurable_id].to_i == 0 ? nil : get_or_create_params[:insurable_id].to_i,
         create_if_ambiguous: get_or_create_params[:create_if_ambiguous],
@@ -107,7 +106,7 @@ module InsurablesMethods
   end
 
   def get_or_create_params
-    params.permit(:address, :county, :unit, :insurable_id, :create_if_ambiguous, :allow_creation, :communities_only, :titleless)
+    params.permit(:address, :unit, :insurable_id, :create_if_ambiguous, :allow_creation, :communities_only, :titleless)
   end
 
   # output stuff with essentially the same format as in the Address search
