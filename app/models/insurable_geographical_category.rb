@@ -122,12 +122,13 @@ class InsurableGeographicalCategory < ApplicationRecord
 
     def normalize_data
       VARCHAR_ARRAYS.each do |prop|
-      if self.send(prop).blank?
-        self.send("#{prop}=", nil)
-      else
-        self.send(prop).map!{|v| self.class.send("normalize_#{prop}_entry", v) }
-        self.send(prop).sort!
-        self.send(prop).uniq!
+        if self.send(prop).blank?
+          self.send("#{prop}=", nil)
+        else
+          self.send(prop).map!{|v| self.class.send("normalize_#{prop}_entry", v) }
+          self.send(prop).sort!
+          self.send(prop).uniq!
+        end
       end
     end
 
