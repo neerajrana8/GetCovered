@@ -11,11 +11,11 @@ module ActiveRecord
 
   module ConnectionAdapters
     module DatabaseStatements
-      alias :old_trans :transaction
+      alias :gc_active_record_transaction :transaction
     
       def transaction(*largs, **kargs, &barg)
         ApplicationRecord.increment_transaction_id if ActiveRecord::Base.connection.open_transactions == 0
-        old_trans(*largs, **kargs, &barg)
+        gc_active_record_transaction(*largs, **kargs, &barg)
       end
     end
   end

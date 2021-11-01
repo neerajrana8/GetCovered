@@ -251,8 +251,8 @@ class Address < ApplicationRecord
     if self.latitude && self.longitude && self.county.blank?
       # WARNING: we don't save an event for this because it's so trivial and because the address is generally not yet saved at this point
       fccs = FccService.new
-      fs.build_request(:area, lat: self.latitude, lon: self.longitude)
-      result = (fs.call[:data]["results"].map{|r| r["county_name"] }.uniq rescue [])
+      fccs.build_request(:area, lat: self.latitude, lon: self.longitude)
+      result = (fccs.call[:data]["results"].map{|r| r["county_name"] }.uniq rescue [])
       if result.length == 1
         self.county = result.first
       end
