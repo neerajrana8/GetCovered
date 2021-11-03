@@ -369,8 +369,11 @@ module CarrierQbeInsurable
 	  #   >> @community = Community.find(1)
 	  #   >> @community.get_qbe_rates
 	  #   => nil
-	  
-	  def get_qbe_rates(number_insured, refresh_coverage_options: false, traits_override: {})
+	  # Passing refresh_coverage_options: true will reset the coverage options in the community's IRC regardless of whether they're already set (as opposed to just resetting the rates);
+    # Passing traits_override allows custom overrides to the request options normally derived from the community's CIP (useful for FIC properties where the CIP is empty and we need to apply defaults from the policy application);
+    # Passing diagnostics_hash as a hash will cause diagnostic info to be inserted into it (since the return value is set up to indicate success via a boolean, we can't use it to return information)
+    #   - the only diagnostic returned right now is diagnostics_hash[:event] = the event recording the getRates call
+	  def get_qbe_rates(number_insured, refresh_coverage_options: false, traits_override: {}, diagnostics_hash: nil)
   	  
 	    return if self.insurable_type.title != "Residential Community"
 	    @carrier = ::QbeService.carrier
@@ -485,6 +488,8 @@ module CarrierQbeInsurable
 	        
 	        event.response = qbe_data[:data]
 	        event.status = qbe_data[:error] ? 'error' : 'success'
+          
+          diagnostics_hash[:event] = event if diagnostics_hash.class == ::Hash
 	        
 	        unless qbe_data[:error] # QBE Response Success
 	          

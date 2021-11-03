@@ -396,4 +396,11 @@ es:
     coverage_d_desc: "La cobertura le reembolsa el gasto de mantener una forma de vida prácticamente idéntica después de una desgracia cubierta que supera sus costos habituales."
     windstorm_title: "Exclusión de tormentas de viento"
     windstorm_desc: ""
+  insurable_rate_configuration:
+    qbe:
+      account_property_without_cip: "El operador no pudo resolver la información del edificio"
+      cip_save_failure: "Ocurrió un error al procesar la dirección"
+      county_failure: "El operador no pudo resolver la dirección"
+      property_info_failure: "El transportista no pudo recuperar la información de la propiedad"
+      rates_failure: "El operador no pudo recuperar las tasas de cobertura"
     

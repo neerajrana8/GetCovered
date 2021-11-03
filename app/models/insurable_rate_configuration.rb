@@ -695,7 +695,7 @@ class InsurableRateConfiguration < ApplicationRecord
           estimated_installment: nil,
           estimated_first_payment: nil,
           installment_fee: 0,
-          errors: { internal: "qbe_prepare_for_get_coverage_options returned error '#{error}'", external: "Error retrieving data from carrier" },
+          errors: { internal: "qbe_prepare_for_get_coverage_options returned error '#{error}'", external: I18n.t(error) },
           annotated_selections: {}
         }.merge(eventable.class != ::PolicyQuote ? {} : {
           msi_data: nil,
@@ -921,7 +921,7 @@ class InsurableRateConfiguration < ApplicationRecord
     def self.qbe_prepare_for_get_coverage_options(community, cip, number_insured, traits_override: {})
       # build CIP if none exists
       unless cip
-        return "Carrier failed to resolve building information" unless community.account_id.nil? # really, this error  means "this guy is registered under an account but has no carrier profile for QBE"
+        return "insurable_rate_configuration.qbe.account_property_without_cip" unless community.account_id.nil? # really, this error  means "this guy is registered under an account but has no carrier profile for QBE"
         community.create_carrier_profile(QbeService.carrier_id)
         # The below is disabled because we don't want to create an FIC CIP with values that aren't actually fully known. The traits_override functionality was implemented to replace this block of code.
         #cip = community.carrier_profile(QbeService.carrier_id)
@@ -929,19 +929,23 @@ class InsurableRateConfiguration < ApplicationRecord
         #cip.traits['construction_year'] = fic_defaults['year_built'] || 1996 # we set defaults here even if they don't actually exist
         #cip.traits['professionally_managed'] = fic_defaults['years_professionally_managed'].to_i == 0 ? false : true
         #cip.traits['professionally_managed_year'] = Time.current.to_date.year - fic_defaults['years_professionally_managed'].to_i
-        return "An error occurred while processing the address" unless cip.save
+        return "insurable_rate_configuration.qbe.cip_save_failure" unless cip.save
       end
       # perform get zip code if needed
       unless cip.data["county_resolved"] || (community.get_qbe_zip_code && cip.reload.data["county_resolved"])
-        return "Carrier failed to resolve address"
+        return "insurable_rate_configuration.qbe.county_failure"
       end
       # perform get property info if needed
       unless cip.data["property_info_resolved"] || (community.get_qbe_property_info && cip.reload.data["property_info_resolved"])
-        return "Carrier failed to retrieve property information"
+        return "insurable_rate_configuration.qbe.property_info_failure"
       end
       # perform get rates if needed
-      unless cip.data['rates_resolution']&.[](number_insured.to_s) || (community.get_qbe_rates(number_insured, traits_override: traits_override) && cip.reload.data['rates_resolution']&.[](number_insured.to_s))
-        return "Carrier failed to retrieve coverage rates (error CR-#{number_insured})"
+      unless cip.data['rates_resolution']&.[](number_insured.to_s)
+        diagnostics_hash = {}
+        unless (community.get_qbe_rates(number_insured, traits_override: traits_override, diagnostics_hash: diagnostics_hash) && cip.reload.data['rates_resolution']&.[](number_insured.to_s))
+          # WARNING: diagnostics_hash[:event] will contain the event recording the getRates call (assuming such an event was successfully saved); we can use it to return custom failures for custom situations
+          return "insurable_rate_configuration.qbe.rates_failure"
+        end
       end
       # all done
       return nil
