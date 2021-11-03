@@ -32,15 +32,8 @@ module CarrierQbePolicyApplication
         # overrides
         additional_interest_count: preferred ? nil : self.extra_settings&.[]('additional_interest').blank? ? 0 : 1,
         agency: self.agency,
-        account: self.account#,
-        # nonpreferred stuff
-        #nonpreferred_final_premium_params: {
-        #  address_line_two: unit.title.nil? ? nil : "Unit #{unit.title}",
-        #  number_of_units: self.extra_settings&.[]('number_of_units'),
-        #  years_professionally_managed: self.extra_settings&.[]('years_professionally_managed'),
-        #  year_built: self.extra_settings&.[]('year_built'),
-        #  gated: self.extra_settings&.[]('gated')
-        #}.compact
+        account: self.account,
+        nonpreferred_final_premium_params: self.get_qbe_traits(force_defaults: true, community: community, community_profile: community_profile, community_address: address)
       )
       # make sure we succeeded
       if !results[:valid]
@@ -114,30 +107,7 @@ module CarrierQbePolicyApplication
 	          num_insured: users.count,
 	          lia_amount: ((coverage_selections["liability"]&.[]('selection')&.[]('value') || 0).to_d / 100).to_f,
 	          agent_code: carrier_agency.external_carrier_id
-	        }.merge(
-            if !community.account_id.nil?
-              {
-                city_limit: community_profile.traits['city_limit'] == true ? 1 : 0,
-                units_on_site: community.units.confirmed.count,
-                age_of_facility: community_profile.traits['construction_year'],
-                gated_community: community_profile.traits['gated'] == true ? 1 : 0,
-                prof_managed: community_profile.traits['professionally_managed'] == true ? 1 : 0,
-                prof_managed_year: community_profile.traits['professionally_managed_year'] == true ? "" : community_profile.traits['professionally_managed_year']
-              }
-            else
-              # we leave guys nil if they are not provided here or via defaults; this will presumably cause an error. the policy application controllers filter to ensure that the required fields are provided
-              defaults = ::QbeService::FIC_DEFAULTS[address.state] || ::QbeService::FIC_DEFAULTS[nil]
-              pmy = (self.extra_settings&.[]('years_professionally_managed') ? self.extra_settings&.[]('years_professionally_managed').to_i.abs : defaults&.[]('years_professionally_managed'))
-              {
-                city_limit: { true => 1, false => 0, nil => nil }[self.extra_settings&.has_key?('in_city_limits') ? self.extra_settings['in_city_limits'] : defaults&.[]('in_city_limits')],
-                units_on_site: self.extra_settings&.[]('number_of_units') || defaults&.[]('number_of_units'),
-                age_of_facility: self.extra_settings&.[]('year_built') || defaults&.[]('year_built'),
-                gated_community: { true => 1, false => 0, nil => nil }[self.extra_settings.has_key?('gated') ? self.extra_settings['gated'] : defaults&.[]('gated')],
-                prof_managed: pmy.nil? ? nil : pmy == 0 ? 0 : 1,
-                prof_managed_year: pmy.nil? ? nil : pmy == 0 ? "" : (Time.current.to_date.year - pmy).to_s
-              }
-            end
-          )
+	        }.merge(self.get_qbe_traits)
 
 	        qbe_service.build_request(qbe_request_options)
 

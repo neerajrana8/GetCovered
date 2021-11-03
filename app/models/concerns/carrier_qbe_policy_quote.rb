@@ -41,7 +41,7 @@ module CarrierQbePolicyQuote
         )
       end
 =begin
-# old code, left here for now in case we need it after all; maintains redandant data based on QBE rates
+# old code, left here for now in case we need to reference it at some point; maintains redandant data based on QBE rates, unlike the new code
       coves = []
       # liability
       covs.push(self.policy.policy_coverages.new({

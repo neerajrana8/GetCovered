@@ -1,12 +1,12 @@
 class GetInsurableRatesJob < ApplicationJob
   queue_as :default
 
-  def perform(community, number_insured = 1)
+  def perform(community, number_insured = 1, traits_override: {})
     
     unless community.nil? ||
            community.insurable_type_id != 1
       
-      community.get_qbe_rates(number_insured) 
+      community.get_qbe_rates(number_insured, traits_override: traits_override) 
       
       community.reload()
       

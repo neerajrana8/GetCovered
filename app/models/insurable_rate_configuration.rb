@@ -675,7 +675,7 @@ class InsurableRateConfiguration < ApplicationRecord
                                 eventable: nil, perform_estimate: true, estimate_default_on_billing_strategy_code_failure: :min,                        # execution options (note: perform_estimate should be 'final' instead of true for QBE, if you want to trigger a getMinPrem request)
                                 add_selection_fields: false,
                                 additional_interest_count: nil, agency: nil, account: insurable.class == ::Insurable ? insurable.account : nil,         # optional/overridable data
-                                nonpreferred_final_premium_params: nil)                                                                                  # special optional data
+                                nonpreferred_final_premium_params: nil)                                                                                 # special optional data
     # clean up params info
     billing_strategy_carrier_code = billing_strategy.carrier_code
     unit = nil
@@ -686,7 +686,7 @@ class InsurableRateConfiguration < ApplicationRecord
     cip = (insurable.class != ::Insurable ? nil : insurable.carrier_profile(carrier_policy_type.carrier_id))
     # perform prep
     if carrier_policy_type.carrier_id == ::QbeService.carrier_id && insurable.class == ::Insurable
-      error = qbe_prepare_for_get_coverage_options(insurable, cip, additional_insured_count + 1)
+      error = qbe_prepare_for_get_coverage_options(insurable, cip, additional_insured_count + 1, traits_override: nonpreferred_final_premium_params)
       unless error.blank?
         return {
           valid: false,
@@ -918,16 +918,17 @@ class InsurableRateConfiguration < ApplicationRecord
       return to_return
     end
 
-    def self.qbe_prepare_for_get_coverage_options(community, cip, number_insured)
+    def self.qbe_prepare_for_get_coverage_options(community, cip, number_insured, traits_override: {})
       # build CIP if none exists
       unless cip
         return "Carrier failed to resolve building information" unless community.account_id.nil? # really, this error  means "this guy is registered under an account but has no carrier profile for QBE"
         community.create_carrier_profile(QbeService.carrier_id)
-        cip = community.carrier_profile(QbeService.carrier_id)
-        fic_defaults = (QbeService::FIC_DEFAULTS[community.primary_address.state] || QbeService::FIC_DEFAULTS[nil])
-        cip.traits['construction_year'] = fic_defaults['year_built'] || 1996 # we set defaults here even if they don't actually exist
-        cip.traits['professionally_managed'] = fic_defaults['years_professionally_managed'].to_i == 0 ? false : true
-        cip.traits['professionally_managed_year'] = Time.current.to_date.year - fic_defaults['years_professionally_managed'].to_i
+        # The below is disabled because we don't want to create an FIC CIP with values that aren't actually fully known. The traits_override functionality was implemented to replace this block of code.
+        #cip = community.carrier_profile(QbeService.carrier_id)
+        #fic_defaults = (QbeService::FIC_DEFAULTS[community.primary_address.state] || QbeService::FIC_DEFAULTS[nil])
+        #cip.traits['construction_year'] = fic_defaults['year_built'] || 1996 # we set defaults here even if they don't actually exist
+        #cip.traits['professionally_managed'] = fic_defaults['years_professionally_managed'].to_i == 0 ? false : true
+        #cip.traits['professionally_managed_year'] = Time.current.to_date.year - fic_defaults['years_professionally_managed'].to_i
         return "An error occurred while processing the address" unless cip.save
       end
       # perform get zip code if needed
@@ -939,7 +940,7 @@ class InsurableRateConfiguration < ApplicationRecord
         return "Carrier failed to retrieve property information"
       end
       # perform get rates if needed
-      unless cip.data['rates_resolution']&.[](number_insured.to_s) || (community.get_qbe_rates(number_insured) && cip.reload.data['rates_resolution']&.[](number_insured.to_s))
+      unless cip.data['rates_resolution']&.[](number_insured.to_s) || (community.get_qbe_rates(number_insured, traits_override: traits_override) && cip.reload.data['rates_resolution']&.[](number_insured.to_s))
         return "Carrier failed to retrieve coverage rates (error CR-#{number_insured})"
       end
       # all done

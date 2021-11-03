@@ -295,7 +295,7 @@ module CarrierQbeInsurable
   
 	  # Fix QBE Carrier Rates
 	  
-	  def fix_qbe_rates(inline = false)
+	  def fix_qbe_rates(inline = false, traits_override: {})
 	    @carrier = ::QbeService.carrier
 	    @carrier_profile = carrier_profile(@carrier.id)
 	    
@@ -308,10 +308,10 @@ module CarrierQbeInsurable
 	      
 	      broken_rates.each_with_index do |num, index|
 		      if inline
-						get_qbe_rates(num)		      
+						get_qbe_rates(num, traits_override: traits_override)		      
 			    else
 		        delay = index
-		        GetInsurableRatesJob.set(wait: delay.minutes).perform_later(self, num)  
+		        GetInsurableRatesJob.set(wait: delay.minutes).perform_later(self, num, traits_override: traits_override)  
 	        end
 	      end
 	    end
@@ -324,7 +324,7 @@ module CarrierQbeInsurable
 	  #   >> @community.queue_qbe_rates([1, 2, 3, 4, 5])
 	  #   >> true
 	  
-	  def queue_qbe_rates(insured_options = [])
+	  def queue_qbe_rates(insured_options = [], traits_override: {})
 	    request_errors = {}
 	    
 	    unless insured_options.empty?
@@ -336,7 +336,7 @@ module CarrierQbeInsurable
 	        if i.class == Integer &&
 	           i > 0 && 
 	           i <= 5
-	          request_errors["#{i}"] = get_qbe_rates(i) 
+	          request_errors["#{i}"] = get_qbe_rates(i, traits_override: traits_override) 
 	        end
 	      end
 	      
@@ -347,7 +347,7 @@ module CarrierQbeInsurable
 	  
 	  # Reset QBE Carrier Rates
 	  
-	  def reset_qbe_rates(force = false, inline = false)
+	  def reset_qbe_rates(force = false, inline = false, traits_override: {})
 	    @carrier = ::QbeService.carrier
 	    @carrier_profile = carrier_profile(@carrier.id)
 	    
@@ -360,7 +360,7 @@ module CarrierQbeInsurable
       @carrier_profile.data["ho4_enabled"] = false
 	    @carrier_profile.save
 	    
-	    self.fix_qbe_rates(inline)
+	    self.fix_qbe_rates(inline, traits_override: traits_override)
 	  end
 
 	  # Get QBE Rates
@@ -370,7 +370,7 @@ module CarrierQbeInsurable
 	  #   >> @community.get_qbe_rates
 	  #   => nil
 	  
-	  def get_qbe_rates(number_insured, refresh_coverage_options: false)
+	  def get_qbe_rates(number_insured, refresh_coverage_options: false, traits_override: {})
   	  
 	    return if self.insurable_type.title != "Residential Community"
 	    @carrier = ::QbeService.carrier
@@ -432,7 +432,7 @@ module CarrierQbeInsurable
 	        ppc_code: @carrier_profile.traits['ppc'],
 	        bceg_code: @carrier_profile.traits['bceg'],
 	        agent_code: carrier_agency.external_carrier_id     
-	      }
+	      }.merge(traits_override)
 	      
 # 	      qbe_request_options = {
 # 	        num_insured: number_insured,
@@ -585,7 +585,7 @@ module CarrierQbeInsurable
         [
           name,
           {
-            'title' => name.titlecase, # MOOSE WARNING FIX
+            'title' => name.titlecase, # This may not produce an optimal name. But it doesn't ever produce a name that isn't clear, and the translation files are used for displaying names to customers.
             'visible' => true,
             'requirement' => 'required',
             'options_type' => 'multiple_choice',
@@ -597,7 +597,7 @@ module CarrierQbeInsurable
         [
           name,
           {
-            'title' => name.titlecase, # MOOSE WARNING FIX
+            'title' => name.titlecase,
             'visible' => true,
             'requirement' => 'required',
             'options_type' => 'multiple_choice',
@@ -609,7 +609,7 @@ module CarrierQbeInsurable
         [
           name,
           {
-            'title' => name.titlecase, # MOOSE WARNING FIX
+            'title' => name.titlecase,
             'visible' => true,
             'requirement' => 'optional',
             'options_type' => 'none',
@@ -618,8 +618,8 @@ module CarrierQbeInsurable
         ]
       end).to_h
       # deduce any necessary rules
-      # MOOSE WARNING: no need to do this, supposedly, but maybe implement at some point?
-      # (the idea would be to look for combinations of rates that aren't permitted; in theory every combination is permitted)
+      # WARNING: no need to do this, supposedly, but maybe implement at some point?
+      # (the idea would be to look for combinations of rates that aren't in QBE's list, and dynamically generate IRC rules forbidding them; but in theory every combination is permitted, so we don't do this right now)
       # done
       return coverage_options
     end
