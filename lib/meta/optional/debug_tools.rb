@@ -102,7 +102,7 @@ class Buglord
                   notes: "To cancel out commission item ##{ci.id}; this commission item was paid out for Policy ##{number}, a policy erroneously entered into the system which has since been removed",
                   commission: Commission.collating_commision_for(ci.recipient)
                 )
-                ci.update!(commissionable: nil, reason: ci,
+                ci.update!(commissionable: ci, reason: ci,
                   notes: "This commission item was for policy ##{number}, a policy erroneously entered into the system which has since been removed; it was cancelled out by commission item ##{boyo.id}"
                 )
               end
