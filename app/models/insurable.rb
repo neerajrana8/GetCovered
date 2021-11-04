@@ -611,7 +611,7 @@ class Insurable < ApplicationRecord
         city_limit: { true => 1, false => 0, nil => nil }[extra_settings&.has_key?('in_city_limits') ? extra_settings['in_city_limits'] : defaults&.[]('in_city_limits')],
         units_on_site: extra_settings&.[]('number_of_units') || defaults&.[]('number_of_units'),
         age_of_facility: extra_settings&.[]('year_built') || defaults&.[]('year_built'),
-        gated_community: { true => 1, false => 0, nil => nil }[extra_settings.has_key?('gated') ? extra_settings['gated'] : defaults&.[]('gated')],
+        gated_community: { true => 1, false => 0, nil => nil }[extra_settings&.has_key?('gated') ? extra_settings['gated'] : defaults&.[]('gated')],
         prof_managed: pmy.nil? ? nil : pmy == 0 ? 0 : 1,
         prof_managed_year: pmy.nil? ? nil : pmy == 0 ? "" : (Time.current.to_date.year - pmy).to_s
       }
