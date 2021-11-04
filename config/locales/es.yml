@@ -403,4 +403,11 @@ es:
       county_failure: "El operador no pudo resolver la dirección"
       property_info_failure: "El transportista no pudo recuperar la información de la propiedad"
       rates_failure: "El operador no pudo recuperar las tasas de cobertura"
+  insurables_controller:
+    qbe:
+      no_cip: "El operador no pudo resolver la información del edificio"
+      county_already_resolved: "El condado de esta dirección ya está resuelto"
+      cip_save_error: "Ocurrió un error del operador"
+      invalid_county_selection_error: "Selección de condado no válida"
+      no_counties_available: "El transportista no puede proporcionar una lista de condados para esta dirección"
     

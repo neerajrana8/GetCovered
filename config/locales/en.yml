@@ -404,6 +404,13 @@ en:
       county_failure: "Carrier failed to resolve address"
       property_info_failure: "Carrier failed to retrieve property information"
       rates_failure: "Carrier failed to retrieve coverage rates"
+  insurables_controller:
+    qbe:
+      no_cip: "Carrier failed to resolve building information"
+      county_already_resolved: "The county for this address is already resolved"
+      cip_save_error: "Carrier error occurred"
+      invalid_county_selection_error: "Invalid county selection"
+      no_counties_available: "The carrier is unable to provide a county list for this address"
 
 # I18n.t('agency_model.no_branding')
 # I18n.t('policy_application_contr.new.unit_not_found')

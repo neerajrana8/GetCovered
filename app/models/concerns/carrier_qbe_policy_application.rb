@@ -33,7 +33,7 @@ module CarrierQbePolicyApplication
         additional_interest_count: preferred ? nil : self.extra_settings&.[]('additional_interest').blank? ? 0 : 1,
         agency: self.agency,
         account: self.account,
-        nonpreferred_final_premium_params: self.get_qbe_traits(force_defaults: true, community: community, community_profile: community_profile, community_address: address)
+        nonpreferred_final_premium_params: community.get_qbe_traits(force_defaults: true, extra_settings: self.extra_settings, community: community, community_profile: community_profile, community_address: address)
       )
       # make sure we succeeded
       if !results[:valid]
@@ -107,7 +107,7 @@ module CarrierQbePolicyApplication
 	          num_insured: users.count,
 	          lia_amount: ((coverage_selections["liability"]&.[]('selection')&.[]('value') || 0).to_d / 100).to_f,
 	          agent_code: carrier_agency.external_carrier_id
-	        }.merge(self.get_qbe_traits)
+	        }.merge(community.get_qbe_traits(force_defaults: false, extra_settings: self.extra_settings, community: community, community_profile: community_profile, community_address: address))
 
 	        qbe_service.build_request(qbe_request_options)
 

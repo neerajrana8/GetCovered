@@ -191,12 +191,12 @@ module PolicyApplicationMethods
         }.merge(
           residential_get_coverage_options_params[:account_id].blank? ? {} : { account: Account.where(id: residential_get_coverage_options_params[:account_id]).take }
         ).merge(preferred ? {} : {
-          nonpreferred_final_premium_params: {
+          nonpreferred_final_premium_params: (carrier_id == QbeService.carrier_id ? community.get_qbe_traits(force_defaults: true) : {}).merge({
             number_of_units: inputs[:number_of_units].to_i == 0 ? nil : inputs[:number_of_units].to_i,
             years_professionally_managed: inputs[:years_professionally_managed].blank? ? nil : inputs[:years_professionally_managed].to_i,
             year_built: inputs[:year_built].to_i == 0 ? nil : inputs[:year_built].to_i,
             gated: inputs[:gated].nil? ? nil : inputs[:gated] ? true : false
-          }.compact
+          }.compact)
         })
       )
     )

@@ -3,7 +3,7 @@ module InsurablesMethods
 
   included do
     before_action :set_insurable,
-                  only: [:show]
+                  only: [:show, :get_qbe_county_options, :set_qbe_county]
 
     before_action :set_substrate,
                   only: [:index]
@@ -34,6 +34,72 @@ module InsurablesMethods
     msi_id = doc.xpath("//MSI_CommunityID").text
     community = CarrierInsurableProfile.where(carrier_id: 5, external_carrier_id: msi_id.to_s).take&.insurable
     @units = community&.units&.confirmed&.order("title ASC") || []
+  end
+  
+  def get_qbe_county_options
+    # get community and make sure we actually have a cip with county options
+    @insurable = @insurable.parent_community unless ::InsurableType::RESIDENTIAL_COMMUNITIES_IDS.include?(@insurable.insurable_type_id)
+    cip = @insurable.carrier_profile(1)
+    if cip.nil?
+      unless insurable.account_id.nil? # really, this error  means "this guy is registered under an account but has no carrier profile for QBE"
+        render json: standard_error("Carrier Error", I18n.t('insurables_controller.qbe.no_cip')),
+               status: 422
+        return
+      end
+      @insurable.create_carrier_profile(QbeService.carrier_id)
+      cip = @insurable.carrier_profile(1)
+    end
+    unless cip.data&.[]("county_resolution")&.[]("available")
+      @insurable.get_qbe_zip_code
+      cip.reload
+      unless cip.data&.[]("county_resolution")&.[]("available")
+        # no counties available
+        render json: standard_error("No County Available", I18n.t('insurables_controller.qbe.no_counties_available')),
+               status: 422
+        return
+      end
+    end
+    # get the options
+    options = cip&.data&.[]('county_resolution')&.[]('matches')&.map{|match| match['county'].titlecase }.uniq || []
+    resolved = cip&.data&.[]('county_resolved')
+    render json: { resolved: resolved, options: options },
+      status: 200
+  end
+  
+  def set_qbe_county
+    @insurable = @insurable.parent_community unless ::InsurableType::RESIDENTIAL_COMMUNITIES_IDS.include?(@insurable.insurable_type_id)
+    cip = @insurable.carrier_profile(1)
+    if cip.nil? || cip.data&.[]('county_resolution').nil?
+      # ain't no qbe boyoz
+      render json: standard_error("Carrier Error", I18n.t('insurables_controller.qbe.no_cip')),
+             status: 422
+      return
+    elsif cip.data['county_resolved']
+      # already resolved
+      render json: standard_error("County Already Resolved", I18n.t('insurables_controller.qbe.county_already_resolved')),
+             status: 422
+      return
+    else
+      cip.data['county_resolution']['matches'].select!{|opt| opt[:county].chomp(" COUNTY").gsub(/[^a-z]/i, ' ') == (params[:county] || "").upcase.chomp(" COUNTY").gsub(/[^a-z]/i, ' ') } # just in case one is "Whatever County" and the other is just "Whatever", one has a dash and one doesn't, etc
+      if cip.data['county_resolution']['matches'].length == 1
+        cip.data['county_resolution']['selected'] = cip.data["county_resolution"]["matches"][0]['seq']
+        cip.data['county_resolution']['county_resolved_on'] = Time.current.strftime("%m/%d/%Y %I:%M %p")
+        cip.data['county_resolved'] = true
+        unless cip.save
+          # render save error :(
+          render json: standard_error("Carrier Error", I18n.t('insurables_controller.qbe.cip_save_error')),
+                 status: 422
+          return
+        end
+      else
+        # render invalid county selection error
+        render json: standard_error("Invalid County", I18n.t('insurables_controller.qbe.invalid_county_selection_error')),
+               status: 422
+        return
+      end
+    end
+    render json: { success: true },
+      status: 200
   end
 
   def get_or_create

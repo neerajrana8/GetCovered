@@ -929,7 +929,7 @@ class InsurableRateConfiguration < ApplicationRecord
         #cip.traits['construction_year'] = fic_defaults['year_built'] || 1996 # we set defaults here even if they don't actually exist
         #cip.traits['professionally_managed'] = fic_defaults['years_professionally_managed'].to_i == 0 ? false : true
         #cip.traits['professionally_managed_year'] = Time.current.to_date.year - fic_defaults['years_professionally_managed'].to_i
-        return "insurable_rate_configuration.qbe.cip_save_failure" unless cip.save
+        #return "insurable_rate_configuration.qbe.cip_save_failure" unless cip.save
       end
       # perform get zip code if needed
       unless cip.data["county_resolved"] || (community.get_qbe_zip_code && cip.reload.data["county_resolved"])

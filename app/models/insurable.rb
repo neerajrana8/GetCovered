@@ -584,6 +584,47 @@ class Insurable < ApplicationRecord
   def refresh_insurable_data
     InsurablesData::Refresh.run!(insurable: self)
   end
+  
+  def get_qbe_traits(
+    force_defaults: false,  # pass true here to force defaults even if the property's state does not support QBE defaults for final bind
+    extra_settings: nil,    # pass policy_application.extra_settings if you have any
+    # you can optionally pass these to avoid unnecessary queries, for efficiency:
+    community: nil, community_profile: nil, community_address: nil
+  )
+    community ||= self.parent_community
+    to_return = if !community.account_id.nil?
+      community_profile ||= community.carrier_profile(1)
+      {
+        city_limit: community_profile.traits['city_limit'] == true ? 1 : 0,
+        units_on_site: community.units.confirmed.count,
+        age_of_facility: community_profile.traits['construction_year'],
+        gated_community: community_profile.traits['gated'] == true ? 1 : 0,
+        prof_managed: community_profile.traits['professionally_managed'] == true ? 1 : 0,
+        prof_managed_year: community_profile.traits['professionally_managed_year'] == true ? "" : community_profile.traits['professionally_managed_year']
+      }
+    else
+      # we leave these guys nil if they are not provided here or via defaults
+      community_address ||= community.primary_address
+      defaults = ::QbeService::FIC_DEFAULTS[community_address.state] || ::QbeService::FIC_DEFAULTS[nil]
+      pmy = (extra_settings&.[]('years_professionally_managed') ? extra_settings&.[]('years_professionally_managed').to_i.abs : defaults&.[]('years_professionally_managed'))
+      {
+        city_limit: { true => 1, false => 0, nil => nil }[extra_settings&.has_key?('in_city_limits') ? extra_settings['in_city_limits'] : defaults&.[]('in_city_limits')],
+        units_on_site: extra_settings&.[]('number_of_units') || defaults&.[]('number_of_units'),
+        age_of_facility: extra_settings&.[]('year_built') || defaults&.[]('year_built'),
+        gated_community: { true => 1, false => 0, nil => nil }[extra_settings.has_key?('gated') ? extra_settings['gated'] : defaults&.[]('gated')],
+        prof_managed: pmy.nil? ? nil : pmy == 0 ? 0 : 1,
+        prof_managed_year: pmy.nil? ? nil : pmy == 0 ? "" : (Time.current.to_date.year - pmy).to_s
+      }
+    end
+    if force_defaults
+      to_return[:city_limit] ||= false
+      to_return[:units_on_site] ||= 40
+      to_return[:age_of_facility] ||= 1996
+      to_return[:prof_managed] = 0 if to_return[:prof_managed].nil?
+      to_return[:prof_managed_year] = 0 if to_return[:prof_managed_year].nil?
+    end
+    return to_return
+  end
 
   private
 

@@ -123,7 +123,7 @@ module CarrierQbeInsurable
 	              when 0
 	                @carrier_profile.data["county_resolution"]["available"] = false # WARNING: this is a temporary answer to the question of how to handle nonempty results with empty matches: we just treat them as if no county info came down at all
 	              when 1
-	                @carrier_profile.data["county_resolution"]["selected"] = @carrier_profile.data["county_resolution"]["matches"][0][:seq]
+	                @carrier_profile.data["county_resolution"]["selected"] = @carrier_profile.data["county_resolution"]["matches"][0]['seq']
 	                @carrier_profile.data["county_resolved"] = true
 	                @carrier_profile.data["county_resolved_on"] = Time.current.strftime("%m/%d/%Y %I:%M %p")
 	                
@@ -373,7 +373,7 @@ module CarrierQbeInsurable
     # Passing traits_override allows custom overrides to the request options normally derived from the community's CIP (useful for FIC properties where the CIP is empty and we need to apply defaults from the policy application);
     # Passing diagnostics_hash as a hash will cause diagnostic info to be inserted into it (since the return value is set up to indicate success via a boolean, we can't use it to return information)
     #   - the only diagnostic returned right now is diagnostics_hash[:event] = the event recording the getRates call
-	  def get_qbe_rates(number_insured, refresh_coverage_options: false, traits_override: {}, diagnostics_hash: nil)
+	  def get_qbe_rates(number_insured, refresh_coverage_options: false, traits_override: self.get_qbe_traits(), diagnostics_hash: nil)
   	  
 	    return if self.insurable_type.title != "Residential Community"
 	    @carrier = ::QbeService.carrier
@@ -424,18 +424,19 @@ module CarrierQbeInsurable
 	        prop_county: county,
 	        prop_state: @address.state,
 	        prop_zipcode: @address.combined_zip_code,
-	        units_on_site: units.confirmed.count,
-	        age_of_facility: @carrier_profile.traits['construction_year'],
-	        gated_community: @carrier_profile.traits['gated_access'] == true ? 1 : 0,
-	        prof_managed: @carrier_profile.traits['professionally_managed'] == true ? 1 : 0,
-	        prof_managed_year: @carrier_profile.traits['professionally_managed_year'].nil? ? "" : @carrier_profile.traits['professionally_managed_year'],
+          # The commented out properties all come from get_qbe_traits
+	        #units_on_site: units.confirmed.count,
+	        #age_of_facility: @carrier_profile.traits['construction_year'],
+	        #gated_community: @carrier_profile.traits['gated_access'] == true ? 1 : 0,
+	        #prof_managed: @carrier_profile.traits['professionally_managed'] == true ? 1 : 0,
+	        #prof_managed_year: @carrier_profile.traits['professionally_managed_year'].nil? ? "" : @carrier_profile.traits['professionally_managed_year'],
 	        num_insured: number_insured,
 	        protection_device_code: @carrier_profile.traits['protection_device_cd'],
 	        constr_type: @carrier_profile.traits['construction_type'],
 	        ppc_code: @carrier_profile.traits['ppc'],
 	        bceg_code: @carrier_profile.traits['bceg'],
 	        agent_code: carrier_agency.external_carrier_id     
-	      }.merge(traits_override)
+	      }..merge(self.get_qbe_traits()).merge(traits_override)
 	      
 # 	      qbe_request_options = {
 # 	        num_insured: number_insured,
