@@ -40,6 +40,27 @@ module CarrierQbePolicyQuote
           enabled: true
         )
       end
+      # coverage d
+      covc = self.policy_application.coverage_selections['coverage_c']&.[]('selection')&.[]('value') || 0 # covc must always be present, but we'd rather not have a 500 error if not
+      self.policy.policy_coverages.create(
+        policy_application: self.policy_application,
+        title: "Loss of Use",
+        designation: "coverage_d",
+        limit: (covc.to_d * (self.policy_application.primary_insurable.primary_address.state == 'CT' ? 0.3 : 0.2)).to_i,
+        deductible: nil,
+        special_deductible: nil,
+        enabled: true
+      )
+      # wind/hail
+      self.policy.policy_coverages.create(
+        policy_application: self.policy_application,
+        title: "Wind/Hail",
+        designation: "wind_hail",
+        limit: nil,
+        deductible: 1000 * 100, # this makes cents bro
+        special_deductible: nil,
+        enabled: true
+      )
 =begin
 # old code, left here for now in case we need to reference it at some point; maintains redandant data based on QBE rates, unlike the new code
       coves = []

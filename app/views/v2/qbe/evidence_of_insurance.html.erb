@@ -285,53 +285,41 @@
           <h2>COVERAGEINFORMATION</h2>
         </div>
         <div class="coverage_main_blk clearfix">
-          <div class="coverage_in flt_lt">
+          <div class="coverage_in flt_lt"><% covs_by_des = @policy.coverages.group_by{|cov| cov.designation }.transform_values{|vs| vs.first }; other_coverages = @policy.coverages.select{|cov| !['coverage_c', 'wind_hail', 'coverage_d', 'liability', 'medical'].include?(cov.designation) } %>
             <h4>COVERAGE/PERIL/FORMS</h4>
             <h2>&nbsp;</h2>
             <h2>C - Personal Property</h2>
             <h2>Wind/Hail Deductible</h2>
             <h2>D - Loss of Use</h2>
             <h2>E - Personal Liability (Limit)</h2>
-            <h2 <% if @policy.insurable_rates.optional.nil? %>class="last_br_btm"<% end %>>F - Medical Payments (Limit)</h2>
-            <% unless @policy.insurable_rates.optional.nil? %>
-            <% @policy.insurable_rates.optional.each do |rate, index| %>
-            <% unless rate.sub_schedule == 'policy_fee' %>
-            <h2 <% if index == (@policy.insurable_rates.optional.count - 2) %>class="last_br_btm"<% end %>><%= rate.sub_schedule.humanize %></h2>
-            <% end %>
-            <% end %>
+            <h2 <% if other_coverages.blank? %>class="last_br_btm"<% end %>>F - Medical Payments (Limit)</h2>
+            <% other_coverages.each.with_index do |cov, index| %>
+            <h2 <% if index == other_coverages.length - 1 %>class="last_br_btm"<% end %>><%= cov.title %></h2>
             <% end %>
           </div>
           <div class="amount_in flt_lt">
             <h4>AMOUNT OF INSURANCE</h4>
             <h2>&nbsp;</h2>
-            <h2><%= ActionController::Base.helpers.number_to_currency(@policy.coverages.find_by(designation: "coverage_c")&.limit&.to_f / 100) %></h2>
+            <h2><%= ActionController::Base.helpers.number_to_currency((covs_by_des['coverage_c']&.limit&.to_f || 0) / 100) %></h2>
             <h2>&nbsp;</h2>
-            <h2><%= ActionController::Base.helpers.number_to_currency(@policy.coverages.find_by(designation: "loss_of_use")&.limit&.to_f / 100) %></h2>
-            <h2><%= ActionController::Base.helpers.number_to_currency(@policy.coverages.find_by(designation: "liability")&.limit&.to_f / 100) %></h2>
-            <h2 <% if @policy.insurable_rates.optional.nil? %>class="last_br_btm"<% end %>><%= ActionController::Base.helpers.number_to_currency(@policy.coverages.find_by(designation: "medical")&.limit&.to_f / 100) %></h2>
-            <% unless @policy.insurable_rates.optional.nil? %>
-            <% @policy.insurable_rates.optional.each do |rate, index| %>
-            <% unless rate.sub_schedule == 'policy_fee' %>
-            <h2 <% if index == (@policy.insurable_rates.optional.count - 2) %>class="last_br_btm"<% end %>>Included</h2>
-            <% end %>
-            <% end %>
-            <% end %>            
+            <h2><%= ActionController::Base.helpers.number_to_currency((covs_by_des['coverage_d']&.limit&.to_f || 0) / 100) %></h2>
+            <h2><%= ActionController::Base.helpers.number_to_currency((covs_by_des['liability']&.limit&.to_f || 0) / 100) %></h2>
+            <h2 <% if other_coverages.blank? %>class="last_br_btm"<% end %>><%= ActionController::Base.helpers.number_to_currency((covs_by_des['medical']&.limit&.to_f || 0) / 100) %></h2>
+            <% other_coverages.each.with_index do |cov, index| %>
+            <h2 <% if index == other_coverages.length - 1 %>class="last_br_btm"<% end %>><%= cov.limit ? ActionController::Base.helpers.number_to_currency(cov.limit.to_f / 100) : cov.deductible ? "&nbsp;" : "Included" %></h2>
+            <% end %>           
           </div>
           <div class="deduct_in flt_lt">
             <h4>DEDUCTIBLE</h4>
             <h2 class="last_br_rt">&nbsp;</h2>
             <h2 class="last_br_rt"><%= ActionController::Base.helpers.number_to_currency(@policy.coverages.find_by(designation: "coverage_c").deductible.to_f / 100) %></h2>
-            <h2 class="last_br_rt">$1,000</h2>
+            <h2 class="last_br_rt"><%= ActionController::Base.helpers.number_to_currency((covs_by_des['wind_hail']&.deductible&.to_f || 0) / 100) %></h2>
             <h2 class="last_br_rt">&nbsp;</h2>
             <h2 class="last_br_rt">&nbsp;</h2>
-            <h2 class="<% if @policy.insurable_rates.optional.nil? %>last_br_btm <% end %>last_br_rt">&nbsp;</h2>
-            <% unless @policy.insurable_rates.optional.nil? %>
-            <% @policy.insurable_rates.optional.each do |rate, index| %>
-            <% unless rate.sub_schedule == 'policy_fee' %>
-            <h2 <% if index == (@policy.insurable_rates.optional.count - 2) %>class="last_br_btm last_br_rt"<% end %>>&nbsp;</h2>
-            <% end %>
-            <% end %>
-            <% end %>
+            <h2 class="<% if @other_coverages.blank? %>last_br_btm <% end %>last_br_rt">&nbsp;</h2>
+            <% other_coverages.each.with_index do |cov, index| %>
+            <h2 <% if index == other_coverages.length - 1 %>class="last_br_btm"<% end %>><%= cov.deductible ? ActionController::Base.helpers.number_to_currency(cov.deductible.to_f / 100) : "&nbsp;" %></h2>
+            <% end %> 
           </div>
         </div>
         <div class="remarks_head">
@@ -341,11 +329,11 @@
           <table cellpadding="5" cellspacing="0" style="border: none;">
             <tr>
               <td><h4>Premium:</h4></td>
-              <td><h4><%= ActionController::Base.helpers.number_to_currency((@policy.premium.total_premium + @policy.premium.total_tax).to_f / 100) %></h4></td>
+              <td><h4><%= ActionController::Base.helpers.number_to_currency((@policy.premium.total_premium + @policy.premium.total_tax + @policy.premium.total_hidden_fee).to_f / 100) %></h4></td>
             </tr>
             <tr>
               <td><h4>Admin Fees:</h4></td>
-              <td><h4><%= ActionController::Base.helpers.number_to_currency(@policy.premium.total_fees.to_f / 100) %></h4></td>
+              <td><h4><%= ActionController::Base.helpers.number_to_currency((@policy.premium.total_fee - @policy.premium.total_hidden_fee).to_f / 100) %></h4></td>
             </tr>
             <tr>
               <td><h2>Total:</h2></td>
