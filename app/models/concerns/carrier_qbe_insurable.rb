@@ -104,6 +104,7 @@ module CarrierQbeInsurable
 	            
 	            @carrier_profile.data["county_resolution"]["matches"] = @carrier_profile.data["county_resolution"]["results"].dup              
 	            
+              # if address has no county, restrict by city and try to get the county if necessary
 	            if @address.county.nil?
 	              @carrier_profile.data["county_resolution"]["matches"].select! { |opt| opt[:locality] == @address.city }
                 if @carrier_profile.data["county_resolution"]["matches"].length > 1
@@ -114,14 +115,15 @@ module CarrierQbeInsurable
                   end
                 end
               end
-              
+
+              # if address has a county, restrict by it
 	            if !@address.county.nil?
-	              @carrier_profile.data["county_resolution"]["matches"].select! { |opt| opt[:locality] == @address.city && opt[:county].chomp(" COUNTY").gsub(/[^a-z]/i, ' ') == @address.county.upcase.chomp(" COUNTY").gsub(/[^a-z]/i, ' ') } # just in case one is "Whatever County" and the other is just "Whatever", one has a dash and one doesn't, etc
+	              @carrier_profile.data["county_resolution"]["matches"].select! { |opt| opt[:locality] == @address.city && qbe_standardize_county_string(opt[:county]) == qbe_standardize_county_string(@address.county) } # just in case one is "Whatever County" and the other is just "Whatever", one has a dash and one doesn't, etc
 	            end
 	  
 	            case @carrier_profile.data["county_resolution"]["matches"].length
 	              when 0
-	                @carrier_profile.data["county_resolution"]["available"] = false # WARNING: this is a temporary answer to the question of how to handle nonempty results with empty matches: we just treat them as if no county info came down at all
+	                @carrier_profile.data["county_resolution"]["available"] = false # WARNING: this is a temporary answer to the question of how to handle nonempty results with empty matches: we just treat them as if no county info came down at all. this will cause this process to be rerun too, which may be good
 	              when 1
 	                @carrier_profile.data["county_resolution"]["selected"] = @carrier_profile.data["county_resolution"]["matches"][0]['seq']
 	                @carrier_profile.data["county_resolved"] = true
@@ -902,4 +904,13 @@ module CarrierQbeInsurable
 	  end
 	  
 	end
+  
+  
+  # used for comparing county strings that may come from sources other than QBE
+  def qbe_standardize_county_string(county_string)
+    county_string.upcase.chomp(" COUNTY").chomp(" PARISH")
+                 .gsub(/St\s|St\./, Hash.new("Saint").merge({ 'St ' => 'Saint '  }))
+                 .gsub(/Mt\s|Mt\./, Hash.new("Mount").merge({ 'Mt ' => 'Mount '  }))
+                 .gsub(/[^a-z]/i, '')
+  end
 end
