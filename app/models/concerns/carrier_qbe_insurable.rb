@@ -909,8 +909,8 @@ module CarrierQbeInsurable
   # used for comparing county strings that may come from sources other than QBE
   def qbe_standardize_county_string(county_string)
     county_string.upcase.chomp(" COUNTY").chomp(" PARISH")
-                 .gsub("Saint", "St") # since we remove all non-alpha characters this works just as well as .gsub(/St\s|St\./, Hash.new("Saint").merge({ 'St ' => 'Saint '  }))
-                 .gsub("Mount", "Mt")
+                 .gsub("SAINT", "ST") # since we remove all non-alpha characters this works just as well as .gsub(/St\s|St\./, Hash.new("Saint").merge({ 'St ' => 'Saint '  }))
+                 .gsub("MOUNT", "MT")
                  .gsub(/[^a-z]/i, '')
   end
 end
