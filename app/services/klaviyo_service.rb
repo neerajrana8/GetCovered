@@ -46,7 +46,7 @@ class KlaviyoService
                       customer_properties: identify_customer_properties(identify_properties))
   end
 
-  #need to send to lead to prod only in prod
+  #TODO: need to send to lead to prod only in prod
   def track_event(event_description, event_details = {})
     customer_properties = {}
     identify_lead(event_description)
@@ -190,7 +190,7 @@ class KlaviyoService
 
   def map_pm_account(event_details)
     result = Account.find(@lead.account_id)&.title if @lead.account_id.present?
-    if result.blank? && event_details["data"].present?
+    if result.blank? && event_details["data"].present? && event_details["data"]["insurable_id"]&.present?
       result = Insurable.find(event_details["data"]["insurable_id"])&.account&.title
     end
     result
