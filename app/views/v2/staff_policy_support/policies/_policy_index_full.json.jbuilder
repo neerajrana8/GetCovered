@@ -17,7 +17,7 @@ json.policy_type_title policy&.policy_type&.title
 
 json.primary_insurable do
   unless policy.primary_insurable.nil?
-    json.partial! "v2/staff_agency/insurables/insurable_short_fields.json.jbuilder",
+    json.partial! "v2/staff_policy_support/insurables/insurable_show_full.json.jbuilder",
                   insurable: policy.primary_insurable
 
   end
