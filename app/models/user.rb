@@ -9,7 +9,7 @@ class User < ApplicationRecord
   devise :database_authenticatable, :registerable, :recoverable, :rememberable,
          :trackable, :validatable, :invitable, validate_on_invite: true
   include RecordChange
-  include DeviseTokenAuth::Concerns::User
+  include DeviseCustomUser
   include ElasticsearchSearchable
   include SessionRecordable
 
