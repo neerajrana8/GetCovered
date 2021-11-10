@@ -182,7 +182,8 @@ class KlaviyoService
 
   def map_branding_profile_url(event_details)
     if event_details["data"].present?
-      BrandingProfile.find(event_details["data"]["branding_profile_id"])&.url
+      branding_id = event_details["data"]["branding_profile_id"]
+      BrandingProfile.find(branding_id)&.url if branding_id
     else
       ""
     end
