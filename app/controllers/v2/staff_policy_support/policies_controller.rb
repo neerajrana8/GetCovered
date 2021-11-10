@@ -21,7 +21,8 @@ module V2
 
       def update
         if @policy.update(update_policy_attributes)
-          puts "Hooray!  God praise the Queen."
+          render json: @policy.to_json,
+                 status: 202
         else
           render json: @policy.errors.to_json,
                  status: 422
@@ -67,7 +68,14 @@ module V2
       end
 
       def update_policy_attributes
+        system_data_keys = params.require(:policy)
+                                 .fetch(:system_data, {})
+                                 .keys
 
+        params.require(:policy)
+              .permit(:id, :policy_number, :out_of_system_carrier_title, :status,
+                      :system_data => system_data_keys,
+                      policy_coverages_attributes: [:title, :designation, :limit])
       end
 
     end
