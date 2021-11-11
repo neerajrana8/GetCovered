@@ -1,10 +1,9 @@
 module Integrations
   module Yardi
-    class Voyager < Integrations::Yardi::Base
+    class BaseVoyager < Integrations::Yardi::Base
       DICTIONARY = {
         'common_data' => 'http://tempuri.org/YSI.Interfaces.WebServices/ItfCommonData',
         'renters_insurance' => 'http://tempuri.org/YSI.Interfaces.WebServices/ItfRentersInsurance30',
-        
         'resident_data' => 'http://tempuri.org/YSI.Interfaces.WebServices/ItfResidentData'
       }
       
@@ -12,16 +11,7 @@ module Integrations
         "#{DICTIONARY[self.type]}/#{self.class.name.demodulize}"
       end
       
-      def property_id
-        if self.class.name.demodulize == "GetPropertyConfigurations"
-          nil
-        else
-          "getcov00"
-        end
-      end
-      
-      def request_template
-        prop_id = self.property_id
+      def request_template(**params)
         <<~XML
         <?xml version="1.0" encoding="utf-8"?>
         <soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -36,7 +26,7 @@ module Integrations
               <Platform>SQL Server</Platform>
               <InterfaceEntity>#{Rails.application.credentials.yardi[ENV['RAILS_ENV'].to_sym][:renters_insurance_entity]}</InterfaceEntity>
               <InterfaceLicense>#{Rails.application.credentials.yardi[ENV['RAILS_ENV'].to_sym][:renters_insurance_license]}</InterfaceLicense>
-              #{prop_id.nil? ? "" : "<YardiPropertyId>#{prop_id}</YardiPropertyId>"}
+              #{params.map{|k,v| "<#{k}>#{v}</#{k}>" }.join("\n      ")}
             </#{self.class.name.demodulize}>
           </soap:Body>
         </soap:Envelope>

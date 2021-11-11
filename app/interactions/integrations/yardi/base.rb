@@ -3,13 +3,9 @@ module Integrations
     class Base < ActiveInteraction::Base
       object :integration
 
-      def execute
-        response = request
-      end
-
-      def request
+      def execute(**params)
         HTTParty.post(integration.credentials['urls'][type],
-          body: request_template,
+          body: request_template(params),
           headers: {
             'Content-Type' => 'text/xml;charset=utf-8',
             'Host' => 'www.yardipcv.com',
