@@ -1,14 +1,11 @@
 module Integrations
   module Yardi
     class BaseVoyager < Integrations::Yardi::Base
-      DICTIONARY = {
-        'common_data' => 'http://tempuri.org/YSI.Interfaces.WebServices/ItfCommonData',
-        'renters_insurance' => 'http://tempuri.org/YSI.Interfaces.WebServices/ItfRentersInsurance30',
-        'resident_data' => 'http://tempuri.org/YSI.Interfaces.WebServices/ItfResidentData'
-      }
-      
+    
+      # subclasses should define methods :type and :xmlns
+    
       def soap_action
-        "#{DICTIONARY[self.type]}/#{self.class.name.demodulize}"
+        "#{self.xmlns}/#{self.class.name.demodulize}"
       end
       
       def request_template(**params)
@@ -18,7 +15,7 @@ module Integrations
                        xmlns:xsd="http://www.w3.org/2001/XMLSchema"
                        xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
           <soap:Body>
-            <#{self.class.name.demodulize} xmlns="#{DICTIONARY[self.type]}">
+            <#{self.class.name.demodulize} xmlns="#{self.xmlns}">
               <UserName>#{integration.credentials['voyager']['username']}</UserName>
               <Password>#{integration.credentials['voyager']['password']}</Password>
               <ServerName>#{integration.credentials['voyager']['database_server']}</ServerName>
@@ -26,11 +23,15 @@ module Integrations
               <Platform>SQL Server</Platform>
               <InterfaceEntity>#{Rails.application.credentials.yardi[ENV['RAILS_ENV'].to_sym][:renters_insurance_entity]}</InterfaceEntity>
               <InterfaceLicense>#{Rails.application.credentials.yardi[ENV['RAILS_ENV'].to_sym][:renters_insurance_license]}</InterfaceLicense>
-              #{params.map{|k,v| "<#{k}>#{v}</#{k}>" }.join("\n      ")}
+              #{params.map{|k,v| "<#{k}>#{stringify(v)}</#{k}>" }.join("\n      ")}
             </#{self.class.name.demodulize}>
           </soap:Body>
         </soap:Envelope>
         XML
+      end
+      
+      def stringify(val)
+        val.to_s
       end
     end
   end

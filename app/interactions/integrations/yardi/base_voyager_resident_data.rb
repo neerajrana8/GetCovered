@@ -4,6 +4,10 @@ module Integrations
       def type
         "resident_data"
       end
+      
+      def xlmns
+        'http://tempuri.org/YSI.Interfaces.WebServices/ItfResidentData'
+      end
     end
   end
 end
