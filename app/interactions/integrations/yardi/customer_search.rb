@@ -2,6 +2,7 @@ module Integrations
   module Yardi
     class CustomerSearch < Integrations::Yardi::BaseVoyagerRentersInsurance
       string :property_id #getcov00
+      # these are all optional boyos to restrict the search
       string :first_name, default: nil
       string :last_name, default: nil
       string :description, default: nil
@@ -35,10 +36,6 @@ module Integrations
             </Request>
           </CustomerSearch>
         XML
-      end
-      
-      def xml_block(tag, value)
-        value.nil? ? "<#{tag} />" : "<#{tag}>#{value}</#{tag}>"
       end
       
     end

@@ -33,6 +33,12 @@ module Integrations
       def stringify(val)
         val.to_s
       end
+      
+      # useful for little derived buddies
+      def xml_block(tag, value)
+        value.nil? ? "<#{tag} />" : "<#{tag}>#{value}</#{tag}>"
+      end
+      
     end
   end
 end
