@@ -24,7 +24,7 @@ module CarrierQbePolicyApplication
       preferred = (unit.get_carrier_status(::QbeService.carrier_id) == :preferred)
       # get estimate
       results = ::InsurableRateConfiguration.get_coverage_options(
-        carrier_policy_type, unit, self.coverage_selections, self.effective_date, self.users.count - 1, self.billing_strategy, # MOOSE WARNING: spouse nonsense
+        carrier_policy_type, unit, self.coverage_selections, self.effective_date, address.state == 'MO' && self.policy_users.any?{|pu| pu.spouse } ? users.count - 2 : self.users.count - 1, self.billing_strategy, # MOOSE WARNING: spouse nonsense
         # execution options
         eventable: quote, # by passing a PolicyQuote we ensure results[:event], and results[:annotated_selections] get passed back out
         perform_estimate: true,
@@ -104,7 +104,7 @@ module CarrierQbePolicyApplication
             effective_date: effective_date.strftime("%m/%d/%Y"),
 	          premium: quote.est_premium.to_f / 100,
 	          premium_pif: quote.est_premium.to_f / 100,
-	          num_insured: users.count,
+	          num_insured: address.state == 'MO' && self.policy_users.any?{|pu| pu.spouse } ? users.count - 1 : users.count,
 	          lia_amount: ((coverage_selections["liability"]&.[]('selection')&.[]('value') || 0).to_d / 100).to_f,
 	          agent_code: carrier_agency.external_carrier_id
 	        }.merge(community.get_qbe_traits(force_defaults: false, extra_settings: self.extra_settings, community: community, community_profile: community_profile, community_address: address))
