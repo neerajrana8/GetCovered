@@ -347,17 +347,56 @@
         <div class="cancel_in">
           <h2>SHOULD ANY OF THE ABOVE DESCRIBED POLICIES BE CANCELLED BEFORE THE EXPIRATION DATE THEREOF, NOTICE WILL BE DELIVERED IN ACCORDANCE WITH THE POLICY PROVISIONS.</h2>
         </div>
-        <% if @policy.account %>
+      <% if @policy.primary_insurable.account %>
         <div class="cancel_head">
           <h2>ADDITIONAL INTEREST</h2>
         </div>
         <div class="add_main_blk clearfix">
           <div class="name_left flt_lt">
             <h4>NAME AND ADDRESS</h4>
-            <h2><%= @policy.account.title %></h2>
+            <h2><%= @policy.primary_insurable.account.title %></h2>
+            <address><% if @policy.primary_insurable.account.primary_address; addr = @policy.primary_insurable.account.primary_address %>
+              <%= addr.combined_street_address %> Apt. <%= addr.street_two %><br>
+              <%= addr.city %>, <%= addr.state %>, <%= addr.combined_zip_code() %>
+            <% end %></address>
+          </div>
+          <div class="sign_blk flt_lt clearfix">
+            <div class="close flt_lt">
+              <h2>X</h2>
+            </div>
+            <div class="pm_in flt_lt">
+              <h3>PM</h3>
+            </div>
+            <div class="emp1 flt_lt">
+              &nbsp;
+            </div>
+            <div class="emp2 flt_lt">
+              &nbsp;
+            </div>
+            <div class="clearfix"></div>
+            <div class="last_loan">
+              <h4>LOAN #</h4>
+            </div>
+            <div class="auth">
+              <h4>AUTHORIZED REPRESENTATIVE</h4>
+              <figure>
+                <img alt="sign" height="35" src="<%= Rails.root.join("public", "assets", "#{ @agency.slug }-signature.png").to_s %>" width="136">
+              </figure>
+            </div>
+          </div>
+        </div>
+      <% elsif !@policy_application.extra_settings&.[]('additional_interest').blank? %>
+      <% pm_info = @policy_application.extra_settings&.[]('additional_interest') %>
+        <div class="cancel_head">
+          <h2>ADDITIONAL INTEREST</h2>
+        </div>
+        <div class="add_main_blk clearfix">
+          <div class="name_left flt_lt">
+            <h4>NAME AND ADDRESS</h4>
+            <h2><%= pm_info['entity_type'] == 'company' ? pm_info['company_name'] : [pm_info['first_name'], pm_info['middle_name'], pm_info['last_name']].select{|v| !v.blank? }.join(" ") %></h2>
             <address>
-              <%= @policy.primary_insurable.primary_address.combined_street_address %> Apt. <%= @policy.primary_insurable.primary_address.street_two %><br>
-              <%= @policy.primary_insurable.primary_address.city %>, <%= @policy.primary_insurable.primary_address.state %>, <%= @policy.primary_insurable.primary_address.combined_zip_code() %>
+              <%= pm_info['addr1'] %><%= pm_info['addr2'].blank? ? '' : ", #{pm_info['addr2']}" %><br>
+              <%= pm_info['city'] %>, <%= pm_info['state'] %> <%= pm_info['zip'] %>
             </address>
           </div>
           <div class="sign_blk flt_lt clearfix">
@@ -385,7 +424,7 @@
             </div>
           </div>
         </div>
-        <% end %>
+      <% end %>
         <footer>
           <div class="acord_text">
             <p>ACORD27 (2001/12)</p>

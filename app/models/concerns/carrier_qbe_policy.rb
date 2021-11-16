@@ -21,6 +21,7 @@ module CarrierQbePolicy
           "v2/qbe/evidence_of_insurance", 
           locals: { 
             :@policy => self,
+            :@policy_application => self.policy_application,
             :@agency => self.agency,
             :@address => self.agency.primary_address(),
             :@carrier_agency => CarrierAgency.where(carrier_id: self.carrier_id, agency_id: self.agency_id).take }
