@@ -353,7 +353,7 @@ module V2
               return
             end
           elsif @application.carrier_id == ::QbeService.carrier_id
-            error_message = ::MsiService.validate_qbe_additional_interest(@application.extra_settings['additional_interest'])
+            error_message = ::QbeService.validate_qbe_additional_interest(@application.extra_settings['additional_interest'])
             unless error_message.nil?
               render json: standard_error(:policy_application_save_error, I18n.t(error_message)),
                      status: 400
@@ -464,7 +464,7 @@ module V2
                 return
               end
             elsif @policy_application.carrier_id == ::QbeService.carrier_id
-              error_message = ::MsiService.validate_qbe_additional_interest(@policy_application.extra_settings['additional_interest'])
+              error_message = ::QbeService.validate_qbe_additional_interest(@policy_application.extra_settings['additional_interest'])
               unless error_message.nil?
                 render json: standard_error(:policy_application_save_error, I18n.t(error_message)),
                        status: 400

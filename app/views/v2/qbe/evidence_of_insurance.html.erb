@@ -347,6 +347,7 @@
         <div class="cancel_in">
           <h2>SHOULD ANY OF THE ABOVE DESCRIBED POLICIES BE CANCELLED BEFORE THE EXPIRATION DATE THEREOF, NOTICE WILL BE DELIVERED IN ACCORDANCE WITH THE POLICY PROVISIONS.</h2>
         </div>
+        <% if @policy.account %>
         <div class="cancel_head">
           <h2>ADDITIONAL INTEREST</h2>
         </div>
@@ -384,6 +385,7 @@
             </div>
           </div>
         </div>
+        <% end %>
         <footer>
           <div class="acord_text">
             <p>ACORD27 (2001/12)</p>
