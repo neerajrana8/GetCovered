@@ -6,9 +6,10 @@ module Reports
       if reportable.nil?
         aggregate_report
       elsif reportable.is_a?(Agency)
-        agency_report
+        report = agency_report
+        flatten_agency_report(report)
       elsif reportable.is_a?(Account)
-        add_item_report(reportable)
+        data['rows'] << item_report(reportable)
       end
 
       calculate_total_conversion_percentages
@@ -26,9 +27,9 @@ module Reports
 
         csv << [
           '', '', '', '',
-          range_start.yesterday.to_date, '', '', '', '', '', '', '', '', '',
-          "(#{(range_start - 7.days).to_date}  - #{range_start.yesterday.to_date})", '', '', '', '', '', '', '', '', '',
-          "(#{(range_start - 30.days).to_date} - #{range_start.yesterday.to_date})", '', '', '', '', '', '', '', '', ''
+          range_start_edt.yesterday.to_date, '', '', '', '', '', '', '', '', '',
+          "(#{(range_start - 7.days).to_date}  - #{range_start_edt.yesterday.to_date})", '', '', '', '', '', '', '', '', '',
+          "(#{(range_start - 30.days).to_date} - #{range_start_edt.yesterday.to_date})", '', '', '', '', '', '', '', '', ''
         ]
         csv << [
           '', '', '', '',
@@ -71,7 +72,7 @@ module Reports
 
     def generate_csv
       document_title =
-        "#{reportable&.title || 'All partners'}-Daily-Report-#{range_start.strftime('%B %-d %Y')}.csv".downcase.tr(' ', '-')
+        "#{reportable&.title || 'All partners'}-Daily-Report-#{range_start_edt.strftime('%B %-d %Y')}.csv".downcase.tr(' ', '-')
 
       save_path = Rails.root.join('tmp', document_title)
 
@@ -83,6 +84,10 @@ module Reports
     end
 
     private
+
+    def range_start_edt
+      @range_start_edt ||= range_start.in_time_zone('Eastern Time (US & Canada)')
+    end
 
     def daily_sales_columns
       {
@@ -97,9 +102,33 @@ module Reports
     end
 
     def aggregate_report
-      agency_report(Agency.get_covered)
-      Agency.where.not(id: Agency::GET_COVERED_ID).each do |agency|
+      get_covered_report = agency_report(Agency.get_covered)
+
+      agencies_reports = Agency.main_agencies.where.not(id: Agency::GET_COVERED_ID).map do |agency|
         agency_report(agency)
+      end.compact
+
+      agencies_reports = agencies_reports.sort_by { |row| [row[:agency_data]['any_activity'] ? 0 : 1] }
+
+      flatten_agency_report(get_covered_report)
+
+      agencies_reports.each do |agency_report|
+        flatten_agency_report(agency_report)
+      end
+    end
+
+    def flatten_agency_report(agency_report)
+      data['rows'] << agency_report[:agency_data]
+
+      agency_report[:accounts].each do |account_report|
+        data['rows'] << account_report
+      end
+
+      agency_report[:subagencies].each do |subagency|
+        data['rows'] << subagency[:subagency_data]
+        subagency[:subagency_accounts].each do |subagency_account_report|
+          data['rows'] << subagency_account_report
+        end
       end
     end
 
@@ -108,52 +137,71 @@ module Reports
         'yesterday' =>
           DailySales.find_by(
             reportable: line_reportable,
-            range_start: range_start.yesterday.all_day,
-            range_end: range_start.yesterday.all_day
+            range_start: range_start_edt.yesterday.all_day,
+            range_end: range_start_edt.yesterday.all_day
           )&.data,
         'prior_seven_days' => DailySales.find_by(
           reportable: line_reportable,
-          range_start: (range_start - 7.days).all_day,
-          range_end: range_start.yesterday.all_day
+          range_start: (range_start_edt - 7.days).all_day,
+          range_end: range_start_edt.yesterday.all_day
         )&.data,
         'prior_thirty_days' => DailySales.find_by(
           reportable: line_reportable,
-          range_start: (range_start - 30.days).all_day,
-          range_end: range_start.yesterday.all_day
+          range_start: (range_start_edt - 30.days).all_day,
+          range_end: range_start_edt.yesterday.all_day
         )&.data
       }
     end
 
     def agency_report(agency = reportable)
-      add_item_report(agency)
-      agency.accounts.each do |account|
-        add_item_report(account)
-      end
+      agency_report = item_report(agency)
 
-      agency.agencies.each do |subagency|
-        add_item_report(subagency)
-        subagency.accounts.each do |account|
-          add_item_report(account)
-        end
-      end
+      return unless agency_report.present?
+
+      accounts_reports = agency.accounts.map do |account|
+        item_report(account)
+      end.compact
+
+      subagencies_reports = agency.agencies.map do |subagency|
+        subagency_report = item_report(subagency)
+
+        next unless subagency_report.present?
+
+        subagency_accounts_reports =
+          subagency.accounts.map do |account|
+            item_report(account)
+          end.compact
+
+        {
+          subagency_data: item_report(subagency),
+          subagency_accounts: subagency_accounts_reports.sort_by { |row| [row['any_activity'] ? 0 : 1] }
+        }
+      end.compact
+
+      {
+        agency_data: agency_report,
+        subagencies: subagencies_reports.sort_by { |row| [row[:subagency_data]['any_activity'] ? 0 : 1] },
+        accounts: accounts_reports.sort_by { |row| [row['any_activity'] ? 0 : 1] }
+      }
     end
 
-    def add_item_report(item)
+    def item_report(item)
       item_data = line_data(item)
 
       # ignore if we did not generated reports or partner inactive and  all columns are zeroes
       return if item_data.value?(nil) || (!item.enabled? && item_data.values.map(&:values).flatten.uniq == [0])
 
-      data['rows'] << {
+      update_totals(item_data) unless reportable.is_a?(Account)
+
+      {
         'title' => item.title,
         'type' => item.is_a?(Agency) && item.agency_id.present? ? 'Sub-Agency' : item.class.to_s,
         'id' => item.id,
         'parent_agency' => item.agency&.title,
         'status' => item.enabled? ? 'Active' : 'Inactive',
-        'data' => item_data
+        'data' => item_data,
+        'any_activity' => item_data.values.map(&:values).flatten.uniq != [0]
       }
-
-      update_totals(item_data) unless item.is_a?(Account)
     end
 
     def update_totals(line_data)

@@ -9,7 +9,7 @@ class Staff < ApplicationRecord
 
   include SetAsOwner
   include RecordChange
-  include DeviseTokenAuth::Concerns::User
+  include DeviseCustomUser
   include ElasticsearchSearchable
   include SessionRecordable
 

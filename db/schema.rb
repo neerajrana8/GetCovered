@@ -432,7 +432,7 @@ ActiveRecord::Schema.define(version: 2021_08_30_182101) do
   create_table "carrier_agency_policy_types", force: :cascade do |t|
     t.bigint "carrier_agency_id"
     t.bigint "policy_type_id"
-    t.bigint "commission_strategy_id", null: false
+    t.bigint "commission_strategy_id"
     t.string "collector_type"
     t.bigint "collector_id"
     t.index ["carrier_agency_id"], name: "index_carrier_agency_policy_types_on_carrier_agency_id"
@@ -510,7 +510,7 @@ ActiveRecord::Schema.define(version: 2021_08_30_182101) do
     t.datetime "updated_at", null: false
     t.integer "max_days_for_full_refund", default: 31, null: false
     t.integer "days_late_before_cancellation", default: 30, null: false
-    t.bigint "commission_strategy_id", null: false
+    t.bigint "commission_strategy_id"
     t.string "premium_proration_calculation", default: "per_payment_term", null: false
     t.boolean "premium_proration_refunds_allowed", default: true, null: false
     t.index ["carrier_id"], name: "index_carrier_policy_types_on_carrier_id"
