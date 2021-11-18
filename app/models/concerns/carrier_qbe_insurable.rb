@@ -438,7 +438,7 @@ module CarrierQbeInsurable
 	        ppc_code: @carrier_profile.traits['ppc'],
 	        bceg_code: @carrier_profile.traits['bceg'],
 	        agent_code: carrier_agency.external_carrier_id     
-	      }.merge(self.get_qbe_traits()).merge(traits_override)
+	      }.merge(self.get_qbe_traits()).merge(traits_override || {})
 	      
 # 	      qbe_request_options = {
 # 	        num_insured: number_insured,
