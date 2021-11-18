@@ -1,12 +1,7 @@
 module Integrations
   module Yardi
-    class Base < ActiveInteraction::Base
+    class Importer < ActiveInteraction::Base
       object :integration
-      
-      # subclasses are expected to define:
-      #   request_template
-      #   soap_action
-      #   
 
       def execute(**params)
         HTTParty.post(integration.credentials['urls'][type],
@@ -20,6 +15,20 @@ module Integrations
           ssl_version: :TLSv1_2
         )
       end
+      
+      
+      
+      
+      
+      
+      def import_communities(integration)
+        result = Integrations::Yardi::GetPropertyConfigurations.run!(integration: integration)
+      end
+      
+      
+      
+      
+      
     end
     
   end
