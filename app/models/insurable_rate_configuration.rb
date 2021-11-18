@@ -940,7 +940,7 @@ class InsurableRateConfiguration < ApplicationRecord
         return "insurable_rate_configuration.qbe.property_info_failure"
       end
       # perform get rates if needed
-      unless cip.data['rates_resolution']&.[](number_insured.to_s)
+      unless cip.data['rates_resolution']&.[](number_insured.to_s) && ::InsurableRateConfiguration.where(configurer_type: "Carrier", configurer_id: QbeService.carrier_id, configurable: community, carrier_policy_type: CarrierPolicyType.where(carrier_id: QbeService.carrier_id, policy_type_id: ::PolicyType::RESIDENTIAL_ID).take).take
         diagnostics_hash = {}
         unless (community.get_qbe_rates(number_insured, traits_override: traits_override, diagnostics_hash: diagnostics_hash) && cip.reload.data['rates_resolution']&.[](number_insured.to_s))
           # WARNING: diagnostics_hash[:event] will contain the event recording the getRates call (assuming such an event was successfully saved); we can use it to return custom failures for custom situations
