@@ -153,8 +153,8 @@
                   <QBE_BusinessType><%= request[:data][:carrier_profile].traits["pref_facility"] %></QBE_BusinessType>
                   <QBE_MDU_CommName><%= request[:data][:community].title %></QBE_MDU_CommName>
                   <QBE_MDU_CommID><%= request[:data][:carrier_profile].external_carrier_id %></QBE_MDU_CommID>
-                  <% if request[:data][:carrier_profile].traits["professionally_managed"] == true %>
-                  <QBE_MDU_ProfManagedDt><%= request[:data][:carrier_profile].traits["professionally_managed_year"] %></QBE_MDU_ProfManagedDt>
+                  <% if request[:data][:prof_managed] == true %>
+                  <QBE_MDU_ProfManagedDt><%= request[:data][:prof_managed_year] %></QBE_MDU_ProfManagedDt>
                   <% end %>
                 </PersPolicy>
                 
@@ -233,7 +233,7 @@
                     <StateProvCd><%= request[:data][:address].state %></StateProvCd>
                     <PostalCode><%= request[:data][:address].zip_code %></PostalCode>
                     <QBE_UnitID><%= request[:data][:unit].carrier_profile(1).external_carrier_id %></QBE_UnitID>
-                    <QBE_InsideCityLimitInd>N</QBE_InsideCityLimitInd>
+                    <QBE_InsideCityLimitInd><%= request[:data][:city_limit] == 1 ? "Y" : "N" %></QBE_InsideCityLimitInd>
                   </Addr>
                   <TaxCodeInfo>
                     <TaxCd><%= request[:data][:county] || request[:data][:address].county %></TaxCd>
@@ -248,8 +248,8 @@
                       <% if request[:data][:address].state == 'FL' %>
                       <ConstructionCd><%= request[:data][:carrier_profile].traits["construction_type"] %></ConstructionCd>
                       <BldgCodeEffectivenessGradeCd>03</BldgCodeEffectivenessGradeCd>
-                      <% end %>                   
-                      <YearBuilt><%= request[:data][:carrier_profile].traits["construction_year"] %></YearBuilt>
+                      <% end %>
+                      <YearBuilt><%= request[:data][:age_of_facility] %></YearBuilt>
                     </Construction>
                     <DwellOccupancy>
                       <OccupancyTypeCd><%= request[:data][:carrier_profile].traits["occupancy_type"] %></OccupancyTypeCd>
@@ -303,7 +303,7 @@
                     
                     <QuestionAnswer>
                       <QuestionCd>QBEPL00040</QuestionCd>
-                      <YesNoCd><%= request[:data][:carrier_profile].traits["gated"] == true ? "Y" : "N" %></YesNoCd>
+                      <YesNoCd><%= request[:data][:gated_community] == 1 ? "Y" : "N" %></YesNoCd>
                     </QuestionAnswer>
                     
                     <QBE_WH_Ded>1000</QBE_WH_Ded>

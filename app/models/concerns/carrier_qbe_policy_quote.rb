@@ -141,9 +141,14 @@ module CarrierQbePolicyQuote
           end
       
           carrier_agency = CarrierAgency.where(agency: self.policy_application.agency, carrier: self.policy_application.carrier).take
+          community = self.policy_application.primary_insurable.parent_community
 
 	        qbe_service = QbeService.new(:action => 'SendPolicyInfo')
-	        qbe_service.build_request({ agent_code: carrier_agency.external_carrier_id }, true, true, self, self.policy_application.users)
+	        qbe_service.build_request({
+              agent_code: carrier_agency.external_carrier_id
+            }.merge(community.get_qbe_traits(force_defaults: false, extra_settings: self.policy_application.extra_settings, community: community)),
+            true, true, self, self.policy_application.users
+          )
 
  	        event.request = qbe_service.compiled_rxml
  			 		event.started = Time.now

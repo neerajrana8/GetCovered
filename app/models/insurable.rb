@@ -593,7 +593,7 @@ class Insurable < ApplicationRecord
   )
     community ||= self.parent_community
     community_profile ||= community.carrier_profile(QbeService.carrier_id)
-    to_return = if !community.account_id.nil? && !community_profile.nil? && community_profile.traits["pref_facility"] != "FIC"
+    to_return = if !community.account_id.nil? && !community_profile.nil? && community_profile.traits["pref_facility"] != "FIC" # MOOSE WARNING: ideally even if it's FIC, if we have the data we should use the data... but if we have it, we should be able to use it as MDU, so this is fine for now
       {
         city_limit: community_profile.traits['city_limit'] == true ? 1 : 0,
         units_on_site: community.units.confirmed.count,
@@ -617,7 +617,7 @@ class Insurable < ApplicationRecord
       }
     end
     if force_defaults
-      to_return[:city_limit] ||= false
+      to_return[:city_limit] = false if to_return[:city_limit].nil?
       to_return[:units_on_site] ||= 40
       to_return[:age_of_facility] ||= 1996
       to_return[:prof_managed] = 0 if to_return[:prof_managed].nil?
