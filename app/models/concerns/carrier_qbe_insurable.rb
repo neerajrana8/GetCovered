@@ -254,8 +254,7 @@ module CarrierQbeInsurable
 	        		          
 	          @carrier_profile.traits['ppc'] = xml_doc.css("PPC_Code").first.content unless xml_doc.css("PPC_Code").first.nil?
 	          @carrier_profile.traits['bceg'] = xml_doc.css("BCEG_Code").first.content unless xml_doc.css("BCEG_Code").first.nil?
-            @carrier_profile.traits['pref_facility'] = (self.confirmed ? 'MDU' : 'FIC') # MOOSE WARNING: maybe change how this workz?
-	        	
+            # this is disabled; everything defaults to FIC on CIP creation, we manually set some to MDU later @carrier_profile.traits['pref_facility'] = (self.confirmed &&  ? 'MDU' : 'FIC') 
 	        	@carrier_profile.data["property_info_resolved"] = true
 	        	@carrier_profile.data["property_info_resolved_on"] = Time.current.strftime("%m/%d/%Y %I:%M %p")
 	        	

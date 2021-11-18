@@ -79,8 +79,9 @@ module CarrierQbePolicyApplication
         carrier_agency = CarrierAgency.where(agency_id: self.agency_id, carrier_id: self.carrier_id).take
         carrier_policy_type = CarrierPolicyType.where(carrier_id: self.carrier_id, policy_type_id: PolicyType::RESIDENTIAL_ID).take
         preferred = (unit.get_carrier_status(::QbeService.carrier_id) == :preferred)
+        user_count = (address.state == 'MO' && self.policy_users.any?{|pu| pu.spouse } ? self.users.count - 1 : self.users.count)
 
-				if community_profile.data['ho4_enabled'] == true && community_profile.data['rates_resolution'][self.users.count.to_s] # MOOSE WARNING: spouse logic...
+				if community_profile.data['ho4_enabled'] == true && community_profile.data['rates_resolution'][user_count.to_s]
 
 					update status: 'quote_in_progress'
 	        event = events.new(
@@ -104,7 +105,7 @@ module CarrierQbePolicyApplication
             effective_date: effective_date.strftime("%m/%d/%Y"),
 	          premium: quote.est_premium.to_f / 100,
 	          premium_pif: quote.est_premium.to_f / 100,
-	          num_insured: address.state == 'MO' && self.policy_users.any?{|pu| pu.spouse } ? users.count - 1 : users.count,
+	          num_insured: user_count,
 	          lia_amount: ((coverage_selections["liability"]&.[]('selection')&.[]('value') || 0).to_d / 100).to_f,
 	          agent_code: carrier_agency.external_carrier_id
 	        }.merge(community.get_qbe_traits(force_defaults: false, extra_settings: self.extra_settings, community: community, community_profile: community_profile, community_address: address))
