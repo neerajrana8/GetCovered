@@ -592,8 +592,8 @@ class Insurable < ApplicationRecord
     community: nil, community_profile: nil, community_address: nil
   )
     community ||= self.parent_community
-    to_return = if !community.account_id.nil? && !community.carrier_profile(QbeService.carrier_id).nil?
-      community_profile ||= community.carrier_profile(QbeService.carrier_id)
+    community_profile ||= community.carrier_profile(QbeService.carrier_id)
+    to_return = if !community.account_id.nil? && !community_profile.nil? && community_profile.traits["pref_facility"] != "FIC"
       {
         city_limit: community_profile.traits['city_limit'] == true ? 1 : 0,
         units_on_site: community.units.confirmed.count,

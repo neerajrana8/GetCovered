@@ -921,7 +921,7 @@ class InsurableRateConfiguration < ApplicationRecord
     def self.qbe_prepare_for_get_coverage_options(community, cip, number_insured, traits_override: {})
       # build CIP if none exists
       unless cip
-        return "insurable_rate_configuration.qbe.account_property_without_cip" unless community.account_id.nil? # really, this error  means "this guy is registered under an account but has no carrier profile for QBE"
+        # This error is disabled for now... we just create a crap FIC CIP instead >__> return "insurable_rate_configuration.qbe.account_property_without_cip" unless community.account_id.nil? # really, this error  means "this guy is registered under an account but has no carrier profile for QBE"
         community.create_carrier_profile(QbeService.carrier_id)
         cip = community.carrier_profile(QbeService.carrier_id)
         # The below is disabled because we don't want to create an FIC CIP with values that aren't actually fully known. The traits_override functionality was implemented to replace this block of code.
