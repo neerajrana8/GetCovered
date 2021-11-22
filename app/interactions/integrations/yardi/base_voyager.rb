@@ -4,6 +4,10 @@ module Integrations
     
       # subclasses should define methods :type and :xmlns
     
+      def get_event_process
+        self.class.name.demodulize.underscore
+      end
+    
       def soap_action
         "#{self.xmlns}/#{self.class.name.demodulize}"
       end
