@@ -87,6 +87,7 @@ class Agency < ApplicationRecord
   has_many :leads
 
   has_one :global_agency_permission
+  has_one :global_permission
 
   has_many :access_tokens,
            as: :bearer
@@ -101,6 +102,7 @@ class Agency < ApplicationRecord
 
   accepts_nested_attributes_for :addresses, allow_destroy: true
   accepts_nested_attributes_for :global_agency_permission, update_only: true
+  accepts_nested_attributes_for :global_permission, update_only: true
 
   scope :enabled, -> { where(enabled: true) }
   scope :sub_agencies, -> { where.not(agency_id: nil) }
