@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_09_03_082114) do
+ActiveRecord::Schema.define(version: 2021_11_29_192209) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
@@ -432,7 +432,7 @@ ActiveRecord::Schema.define(version: 2021_09_03_082114) do
   create_table "carrier_agency_policy_types", force: :cascade do |t|
     t.bigint "carrier_agency_id"
     t.bigint "policy_type_id"
-    t.bigint "commission_strategy_id"
+    t.bigint "commission_strategy_id", null: false
     t.string "collector_type"
     t.bigint "collector_id"
     t.index ["carrier_agency_id"], name: "index_carrier_agency_policy_types_on_carrier_agency_id"
@@ -510,7 +510,7 @@ ActiveRecord::Schema.define(version: 2021_09_03_082114) do
     t.datetime "updated_at", null: false
     t.integer "max_days_for_full_refund", default: 31, null: false
     t.integer "days_late_before_cancellation", default: 30, null: false
-    t.bigint "commission_strategy_id"
+    t.bigint "commission_strategy_id", null: false
     t.string "premium_proration_calculation", default: "per_payment_term", null: false
     t.boolean "premium_proration_refunds_allowed", default: true, null: false
     t.index ["carrier_id"], name: "index_carrier_policy_types_on_carrier_id"
@@ -819,9 +819,8 @@ ActiveRecord::Schema.define(version: 2021_09_03_082114) do
     t.bigint "agency_id"
     t.bigint "policy_type_ids", default: [], null: false, array: true
     t.boolean "preferred_ho4", default: false, null: false
-    t.boolean "occupied", default: false
     t.boolean "confirmed", default: true, null: false
-    t.jsonb "expanded_covered", default: {}, null: false
+    t.boolean "occupied", default: false
     t.index ["account_id"], name: "index_insurables_on_account_id"
     t.index ["agency_id"], name: "index_insurables_on_agency_id"
     t.index ["insurable_id"], name: "index_insurables_on_insurable_id"
@@ -839,7 +838,8 @@ ActiveRecord::Schema.define(version: 2021_09_03_082114) do
     t.bigint "profileable_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["external_id"], name: "index_integration_profiles_on_external_id", unique: true
+    t.string "external_context"
+    t.index ["integration_id", "external_context", "external_id"], name: "index_integration_profiles_on_externals", unique: true
     t.index ["integration_id"], name: "index_integration_profiles_on_integration_id"
     t.index ["profileable_type", "profileable_id"], name: "index_integration_profiles_on_profileable"
   end
@@ -1288,10 +1288,10 @@ ActiveRecord::Schema.define(version: 2021_09_03_082114) do
     t.jsonb "coverage_selections", default: [], null: false
     t.jsonb "extra_settings"
     t.jsonb "resolver_info"
+    t.bigint "tag_ids", default: [], null: false, array: true
     t.jsonb "tagging_data"
     t.string "error_message"
     t.integer "branding_profile_id"
-    t.bigint "tag_ids", default: [], null: false, array: true
     t.string "internal_error_message"
     t.index ["account_id"], name: "index_policy_applications_on_account_id"
     t.index ["agency_id"], name: "index_policy_applications_on_agency_id"
