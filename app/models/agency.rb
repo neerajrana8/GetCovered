@@ -20,7 +20,7 @@ class Agency < ApplicationRecord
 
   # belongs_to relationships
   belongs_to :agency,
-    optional: true
+             optional: true
 
   has_many :agencies
   has_many :tracking_urls
@@ -38,10 +38,10 @@ class Agency < ApplicationRecord
   has_many :staff, as: :organizable
 
   has_many :account_staff,
-    through: :accounts,
-    as: :organizable,
-    source: :staff,
-    class_name: 'Staff'
+           through: :accounts,
+           as: :organizable,
+           source: :staff,
+           class_name: 'Staff'
 
   has_many :policies
   has_many :claims, through: :policies
@@ -87,16 +87,16 @@ class Agency < ApplicationRecord
   has_many :leads
 
   has_one :global_agency_permission
-  has_one :global_permission
+  has_one :global_permission, as: :ownerable
 
   has_many :access_tokens,
            as: :bearer
 
   has_many :notification_settings, as: :notifyable
-  
+
   has_many :integrations,
            as: :integratable
-  
+
   has_many :insurable_rate_configurations,
            as: :configurer
 
