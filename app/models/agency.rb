@@ -20,8 +20,7 @@ class Agency < ApplicationRecord
 
   # belongs_to relationships
   belongs_to :agency,
-             optional: true
-
+    optional: true
   has_many :agencies
   has_many :tracking_urls
 
@@ -38,11 +37,10 @@ class Agency < ApplicationRecord
   has_many :staff, as: :organizable
 
   has_many :account_staff,
-           through: :accounts,
-           as: :organizable,
-           source: :staff,
-           class_name: 'Staff'
-
+    through: :accounts,
+    as: :organizable,
+    source: :staff,
+    class_name: 'Staff'
   has_many :policies
   has_many :claims, through: :policies
   has_many :invoices, through: :policies
@@ -229,7 +227,7 @@ class Agency < ApplicationRecord
       break unless Agency.exists?(producer_code: producer_code)
     end
   end
-  
+
   def get_ancestor_chain
     to_return = [self]
     selected = self.agency

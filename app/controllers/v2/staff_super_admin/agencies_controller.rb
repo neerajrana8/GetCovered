@@ -9,11 +9,11 @@ module V2
 
       def index
         relation =
-            if params[:with_subagencies].present?
-              Agency.all
-            else
-              Agency.where(agency_id: nil)
-            end
+          if params[:with_subagencies].present?
+            Agency.all
+          else
+            Agency.where(agency_id: nil)
+          end
         super(:@agencies, relation, :agency)
       end
 
@@ -45,10 +45,10 @@ module V2
         @agencies.select(required_fields).each do |agency|
           sub_agencies = agency.agencies.select(required_fields)
           result << if sub_agencies.any?
-                      agency.attributes.reverse_merge(agencies: sub_agencies.map(&:attributes))
-                    else
-                      agency.attributes
-                    end
+            agency.attributes.reverse_merge(agencies: sub_agencies.map(&:attributes))
+          else
+            agency.attributes
+          end
         end
 
         render json: result.to_json
@@ -77,7 +77,7 @@ module V2
           render json: { success: false, errors: ['Agency does not have a branding profile'] }, status: :not_found
         end
       end
-      
+
       def disable
         result = Agencies::Disable.run(agency: @agency)
         if result.valid?
@@ -97,13 +97,13 @@ module V2
                  status: 422
         end
       end
-      
+
       def get_policy_types
         pts = CarrierAgencyPolicyType.includes(:policy_type, carrier_agency: :carrier).references(:policy_types, carrier_agencies: :carriers).where(carrier_agencies: { agency_id: params[:id].to_i })
                                      .group_by{|capt| capt.policy_type_id }
                                      .transform_values{|capts| { id: capts.first.policy_type_id, title: capts.first.policy_type.title, carriers: capts.map{|capt| { id: capt.carrier_agency.carrier_id, title: capt.carrier_agency.carrier.title } }.uniq } }
                                      .values.sort_by{|v| v[:title] }
-          
+
         render json: pts,
           status: 200
       end
@@ -134,12 +134,11 @@ module V2
         passed_carriers_filters = params[:policy_type_id].present? || params[:carrier_id].present?
 
         relation =
-            if passed_carriers_filters
-              Agency.left_joins(carrier_agencies: :carrier_agency_policy_types)
-            else
-              Agency
-            end
-
+          if passed_carriers_filters
+            Agency.left_joins(carrier_agencies: :carrier_agency_policy_types)
+          else
+            Agency
+          end
         relation = relation.where(agency_id: sub_agency_filter_params)
         relation = relation.where(carrier_agencies: { carrier_id: params[:carrier_id] }) if params[:carrier_id].present?
         if params[:policy_type_id].present?
@@ -153,13 +152,13 @@ module V2
         return({}) if params[:agency].blank?
 
         to_return = params.require(:agency).permit(
-            :agency_id, :enabled, :staff_id, :title, :tos_accepted, :producer_code,
-            :whitelabel, contact_info: {}, addresses_attributes: %i[
+          :agency_id, :enabled, :staff_id, :title, :tos_accepted, :producer_code,
+          :whitelabel, contact_info: {}, addresses_attributes: %i[
             city country county id latitude longitude
             plus_four state street_name street_number
             street_two timezone zip_code
           ], global_agency_permission_attributes: { permissions: {} },
-            global_permission_attributes: { permissions: {} }
+          global_permission_attributes: { permissions: {} }
         )
         to_return
       end
@@ -168,13 +167,13 @@ module V2
         return({}) if params[:agency].blank?
 
         to_return = params.require(:agency).permit(
-            :agency_id, :enabled, :staff_id, :title, :tos_accepted, :whitelabel, :producer_code,
-            contact_info: {}, settings: {}, addresses_attributes: %i[
+          :agency_id, :enabled, :staff_id, :title, :tos_accepted, :whitelabel, :producer_code,
+          contact_info: {}, settings: {}, addresses_attributes: %i[
             city country county id latitude longitude
             plus_four state street_name street_number
             street_two timezone zip_code
           ], global_agency_permission_attributes: { permissions: {} },
-            global_permission_attributes: { permissions: {} }
+          global_permission_attributes: { permissions: {} }
         )
 
         existed_ids = to_return[:addresses_attributes]&.map { |addr| addr[:id] }
@@ -182,7 +181,7 @@ module V2
         unless @agency.blank? || existed_ids.nil? || existed_ids.compact.blank?
           (@agency.addresses.pluck(:id) - existed_ids).each do |id|
             to_return[:addresses_attributes] <<
-                ActionController::Parameters.new(id: id, _destroy: true).permit(:id, :_destroy)
+              ActionController::Parameters.new(id: id, _destroy: true).permit(:id, :_destroy)
           end
         end
         to_return
@@ -192,11 +191,11 @@ module V2
         @calling_supported_orders = called_from_orders
 
         {
-            agency_id: %i[scalar array],
-            id: %i[scalar array],
-            created_at: %i[scalar array interval],
-            title: %i[scalar array interval like],
-            enabled: %i[scalar array]
+          agency_id: %i[scalar array],
+          id: %i[scalar array],
+          created_at: %i[scalar array interval],
+          title: %i[scalar array interval like],
+          enabled: %i[scalar array]
         }
       end
 
