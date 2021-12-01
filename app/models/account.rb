@@ -31,7 +31,7 @@ class Account < ApplicationRecord
   alias staffs staff
       
   has_many :branding_profiles, as: :profileable
-  has_many :payment_profiles,  as: :payer
+  has_many :payment_profiles, as: :payer
   
   has_many :insurables 
   
@@ -68,7 +68,7 @@ class Account < ApplicationRecord
     as: :eventable
 
   has_many :notification_settings, as: :notifyable
-  
+
   has_many :addresses,
     as: :addressable,
     autosave: true
@@ -81,13 +81,17 @@ class Account < ApplicationRecord
 
   has_many :integrations,
            as: :integratable
-           
+
   has_many :insurable_rate_configurations,
            as: :configurer
-  
+
+  has_one :global_permission, as: :ownerable
+  has_many :global_permissions, through: :staff
+
   scope :enabled, -> { where(enabled: true) }
 
   accepts_nested_attributes_for :addresses, allow_destroy: true
+  accepts_nested_attributes_for :global_permission, update_only: true
 
   # Validations
 

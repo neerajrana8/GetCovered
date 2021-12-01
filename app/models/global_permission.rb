@@ -6,9 +6,11 @@ class GlobalPermission < ApplicationRecord
 
   validate :subagency_permissions_restrictions, if: -> { ownerable.is_a? Agency and ownerable.parent_agency.present? }
   validate :staff_permissions_restrictions, if: -> { ownerable.is_a? Staff }
+  validate :account_permissions_restrictions, if: -> { ownerable.is_a? Account }
 
   after_update :update_subagencies_permissions
   after_update :update_staff_permissions
+  after_update :update_subaccounts_permissions
 
   private
 
@@ -50,24 +52,61 @@ class GlobalPermission < ApplicationRecord
       next unless value && !global_permission&.permissions&.[](key)
 
       errors.add(
-          :permissions,
-          I18n.t('staff_permission_model.cant_be_enabled', translated_key: I18n.t("permissions.#{key}"))
+        :permissions,
+        I18n.t('staff_permission_model.cant_be_enabled', translated_key: I18n.t("permissions.#{key}"))
       )
     end
   end
 
   def update_staff_permissions
     # Update staff permissions if agency permissions change
-    if ownerable.is_a? Agency
-      ownerable.global_permissions.each do |staff_permission|
-        permissions.each do |key, value|
-          # Sync permissions for agency owners
-          staff_permission.permissions[key] = value if staff_permission.ownerable_id == ownerable.staff_id
+    if ownerable.is_a? Agency or ownerable.is_a? Account
+      ownerable.staff.each do |staff|
+        staff_permission = staff.global_permission
 
-          # Only disable for other stuff
-          staff_permission.permissions[key] = false if value == false
+        if staff_permission.nil?
+          GlobalPermission.create(ownerable: staff, permissions: permissions)
+        else
+          permissions.each do |key, value|
+            # Sync permissions for agency owners
+            staff_permission.permissions[key] = value if staff_permission.ownerable_id == ownerable.staff_id
+
+            # Only disable for other stuff
+            staff_permission.permissions[key] = false if value == false
+          end
+          staff_permission.save
         end
-        staff_permission.save
+      end
+    end
+  end
+
+  def account_permissions_restrictions
+    parent_agency_permission = ownerable.agency.global_permission
+
+    permissions.each do |key, value|
+      next unless value && !parent_agency_permission.permissions[key]
+
+      errors.add(
+        :permissions,
+        I18n.t('global_agency_permission_model.cant_be_enabled', translated_key: I18n.t("permissions.#{key}"))
+      )
+    end
+  end
+
+  def update_subaccounts_permissions
+    if ownerable.is_a? Agency
+      ownerable.accounts.each do |child_account|
+        account_permissions = child_account.global_permission
+
+        if account_permissions.nil?
+          GlobalPermission.create(ownerable: child_account, permissions: permissions)
+        else
+          permissions.each do |key, value|
+            account_permissions.permissions[key] = false if value == false
+          end
+
+          account_permissions.save
+        end
       end
     end
   end
