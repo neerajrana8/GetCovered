@@ -542,7 +542,7 @@ class Insurable < ApplicationRecord
           # create community (or building, if there was a parent provided)
           address.id = nil
           address.primary = true
-          created = ::Insurable.new(
+          created = (parent || ::Insurable).new(
               title: created_community_title || address.combined_street_address,
               insurable_type: ::InsurableType.where(title: parent.nil? ? "Residential Community" : "Residential Building").take,
               enabled: true, preferred_ho4: false, category: 'property',
