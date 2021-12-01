@@ -5,8 +5,10 @@ class GlobalPermission < ApplicationRecord
   serialize :permissions, HashSerializer
 
   validate :subagency_permissions_restrictions, if: -> { ownerable.is_a? Agency and ownerable.parent_agency.present? }
+  validate :staff_permissions_restrictions, if: -> { ownerable.is_a? Staff }
 
   after_update :update_subagencies_permissions
+  after_update :update_staff_permissions
 
   private
 
@@ -37,6 +39,35 @@ class GlobalPermission < ApplicationRecord
 
           agency_permissions.save
         end
+      end
+    end
+  end
+
+  def staff_permissions_restrictions
+    permissions.each do |key, value|
+      # Get global permission from staff's agency
+      global_permission = ownerable.organizable.global_permission
+      next unless value && !global_permission&.permissions&.[](key)
+
+      errors.add(
+          :permissions,
+          I18n.t('staff_permission_model.cant_be_enabled', translated_key: I18n.t("permissions.#{key}"))
+      )
+    end
+  end
+
+  def update_staff_permissions
+    # Update staff permissions if agency permissions change
+    if ownerable.is_a? Agency
+      ownerable.global_permissions.each do |staff_permission|
+        permissions.each do |key, value|
+          # Sync permissions for agency owners
+          staff_permission.permissions[key] = value if staff_permission.ownerable_id == ownerable.staff_id
+
+          # Only disable for other stuff
+          staff_permission.permissions[key] = false if value == false
+        end
+        staff_permission.save
       end
     end
   end

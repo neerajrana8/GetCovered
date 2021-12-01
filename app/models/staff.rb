@@ -41,6 +41,7 @@ class Staff < ApplicationRecord
   # has_one relationships
   has_one :profile, as: :profileable, autosave: true
   has_one :staff_permission
+  has_one :global_permission, as: :ownerable
 
   has_many :reports, as: :reportable
 
@@ -139,7 +140,7 @@ class Staff < ApplicationRecord
 
   def set_permissions_for_agent
     if role == 'agent'
-      StaffPermission.create(staff: self)
+      GlobalPermission.create(ownerable: self, permissions: organizable&.global_permission.permissions)
     end
   end
 

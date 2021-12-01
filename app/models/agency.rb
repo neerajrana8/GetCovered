@@ -35,6 +35,7 @@ class Agency < ApplicationRecord
   has_many :leases, through: :accounts
   has_many :insurable_rates
   has_many :staff, as: :organizable
+  has_many :global_permissions, through: :staff
 
   has_many :account_staff,
     through: :accounts,
