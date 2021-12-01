@@ -542,13 +542,14 @@ class Insurable < ApplicationRecord
           # create community (or building, if there was a parent provided)
           address.id = nil
           address.primary = true
-          created = (parent || ::Insurable).new(
+          created = ::Insurable.new(
               title: created_community_title || address.combined_street_address,
               insurable_type: ::InsurableType.where(title: parent.nil? ? "Residential Community" : "Residential Building").take,
               enabled: true, preferred_ho4: false, category: 'property',
               addresses: [ address ],
               account_id: account_id || nil
             )
+          created.insurable_id = parent.id if parent
           unless created.save
             message = parent.nil? ? I18n.t('insurable_model.unable_to_create_from_address') : I18n.t('insurable_model.unable_to_create_building_from_address')
            return { error_type: :"invalid_#{parent.nil? ? 'community' : 'building'}",
