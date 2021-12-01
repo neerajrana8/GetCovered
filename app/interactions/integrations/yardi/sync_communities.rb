@@ -3,13 +3,15 @@ module Integrations
     class SyncCommunities < ActiveInteraction::Base
       object :integration
       hash :parsed_response, default: nil
-      boolean :sync_units, default: nil # true: sync units, false: do not sync units, nil: sync units for new communities only
+      boolean :sync_units, default: true # true: sync units, false: do not sync units, nil: sync units for new communities only
+      boolean :sync_tenants, default: true # true: sync tenants (user and lease/policy data)--will force sync_units true if provided; false: do not sync tenants
       
       # returns thing that says status: error/succes. If success, has :results which is an array of similar things with these statuses:
       #   :already_in_system
       #   :created_integration_profile
       #   :error
       def execute
+        sync_units = true if sync_tenants
         # scream if integration is invalid
         return { status: :error, message: "No yardi integration provided" } unless integration
         return { status: :error, message: "Invalid yardi integration provided" } unless integration.provider == 'yardi'
@@ -85,18 +87,23 @@ module Integrations
             community: community
           }
         end
-        # handle units
+        # handle units and tenants
+        tenant_results = nil
         unless sync_units == false
+          tenant_array = (sync_tenants ? [] : nil)
           property_results.each do |pr|
             # skip suckos
             next if pr[:status] == :error
             next if sync_units.nil? && pr[:status] == :already_in_system
             # sync dem units
-            pr[:unit_sync] = Integrations::Yardi::SyncUnits.run!(integration: integration, community_address: pr[:community].primary_address, property_id: pr[:integration].external_id)
+            pr[:unit_sync] = Integrations::Yardi::SyncUnits.run!(integration: integration, community_address: pr[:community].primary_address, property_id: pr[:integration].external_id, sync_tenants: sync_tenants, tenant_array: tenant_array)
+          end
+          unless tenant_array.blank?
+            tenant_results = Integrations::Yardi::SyncUnits.run!(integration: integration, tenant_array: tenant_array)
           end
         end
         # done
-        return { status: :success, results: property_results, error_count: error_count, event: diagnostics[:event] }
+        return { status: :success, results: property_results, error_count: error_count, event: diagnostics[:event], tenant_results: tenant_results }
       end
       
       

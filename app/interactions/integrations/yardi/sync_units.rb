@@ -4,7 +4,9 @@ module Integrations
       object :integration
       object :community
       string :property_id
+      boolean :sync_tenants, default: true # true: sync tenants, false: don't sync tenants
       hash :community_address, default: nil
+      array :tenant_array, default: nil # pass an array to have it filled with tenant data rather than processing internally
       
       # returns thing that says status: error/succes. If success, has :results which is an array of similar things with these statuses:
       #   :already_in_system
@@ -45,7 +47,7 @@ module Integrations
         property_results = properties.map do |prop|
           # flee if already in the system
           found = already_in_system.find{|ip| ip.external_id == prop["UnitId"] }
-          next { status: :already_in_system, insurable_id: found.profileable_id, integration_profile: found } unless found.nil?
+          next { status: :already_in_system, unit: found.profileable, integration_profile: found } unless found.nil?
           # get the unit
           parent_insurable = nil
           unit = nil
@@ -104,7 +106,8 @@ module Integrations
           created_profile = IntegrationProfile.create(
             integration: integration,
             profileable: unit,
-            external_id: prop["UnitId"], # MOOSE WARNING: THIS AIN'T GONNA WORK BRO
+            external_context: "unit_in_community_#{property_id}",
+            external_id: prop["UnitId"],
             configuration: {
               'synced_at' => Time.current.to_s,
               'external_data' => prop
@@ -120,8 +123,20 @@ module Integrations
             unit: unit
           }
         end
+        # handle tenant information
+        tenant_info = !sync_tenants ? {} : property_results.map do |pr|
+          next if pr[:status] == :error || pr[:yardi_property_data]["Resident"].blank?
+          (pr[:yardi_property_data]["Resident"].class == ::Array ? pr[:yardi_property_data]["Resident"] : [pr[:yardi_property_data]["Resident"]]).map do |res|
+            res["gc_unit"] = pr[:unit]
+          end
+        end.compact.flatten(1)
+        if tenant_array
+          tenant_array.concat(tenant_info)
+        else
+          tenant_info = Integrations::Yardi::SyncUnits.run!(integration: integration, tenant_array: tenant_array)
+        end
         # done
-        return { status: :success, results: property_results, error_count: error_count, event: diagnostics[:event] }
+        return { status: :success, results: property_results, error_count: error_count, event: diagnostics[:event] }.merge(sync_tenants && tenant_array.nil? ? { tenant_results: tenant_info } : {})
       end
       
       
