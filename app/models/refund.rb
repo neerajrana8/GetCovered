@@ -38,7 +38,7 @@ class Refund < ApplicationRecord
         # stripe refund creation (since refunds are on specific charges, and since we want to keep single stripe_reasons together, we may need to create several StripeRefunds--usually this will be overkill and we will just create one)
         charges = self.invoice.stripe_charges.succeeded.order(id: :asc).lock!.to_a
         amount_actually_refunded = 0
-        self.line_item_reductions.cancel_or_refund.group_by{|lir| lir.stripe_reason || 'requested_by_customer' }
+        self.line_item_reductions.cancel_or_refund.group_by{|lir| lir.stripe_refund_reason || 'requested_by_customer' }
                                                   .transform_values do |lirs| {
                                                       amount: lirs.inject(0){|sum,lir| sum + lir.amount_refunded },
                                                       reasons: lirs.map{|lir| lir.reason }
