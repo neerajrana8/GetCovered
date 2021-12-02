@@ -24,11 +24,11 @@ class Refund < ApplicationRecord
           case lir.refundability
             when 'cancel_or_refund'
               self.amount += lir.amount_refunded
-              self.reasons.push(lir.reason)
+              self.refund_reasons.push(lir.reason)
             when 'dispute_resolution'
               self.amount += lir.amount_refunded
               self.amount_returned_by_dispute += lir.amount_refunded
-              self.reasons.push(lir.reason)
+              self.refund_reasons.push(lir.reason)
             else
               # ignore
           end
