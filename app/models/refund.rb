@@ -23,11 +23,11 @@ class Refund < ApplicationRecord
         self.line_item_reductions.each do |lir|
           case lir.refundability
             when 'cancel_or_refund'
-              self.amount += lir.total_refunded
+              self.amount += lir.amount_refunded
               self.reasons.push(lir.reason)
             when 'dispute_resolution'
-              self.amount += lir.total_refunded
-              self.amount_returned_by_dispute += lir.total_refunded
+              self.amount += lir.amount_refunded
+              self.amount_returned_by_dispute += lir.amount_refunded
               self.reasons.push(lir.reason)
             else
               # ignore
@@ -40,7 +40,7 @@ class Refund < ApplicationRecord
         amount_actually_refunded = 0
         self.line_item_reductions.cancel_or_refund.group_by{|lir| lir.stripe_reason || 'requested_by_customer' }
                                                   .transform_values do |lirs| {
-                                                      amount: lirs.inject(0){|sum,lir| sum + lir.total_refunded },
+                                                      amount: lirs.inject(0){|sum,lir| sum + lir.amount_refunded },
                                                       reasons: lirs.map{|lir| lir.reason }
                                                     }
                                                   end.each do |stripe_reason, refund_info|
