@@ -385,7 +385,7 @@ class Invoice < ApplicationRecord
               raise ActiveRecord::Rollback
             end
             # lir
-            refund_object ||= ::Refund.create
+            refund_object ||= ::Refund.create(invoice: self)
             if refund_object.id.nil?
               error_message = "Failure: error while creating Refund: #{refund_object.errors.to_h}"
               raise ActiveRecord::Rollback
