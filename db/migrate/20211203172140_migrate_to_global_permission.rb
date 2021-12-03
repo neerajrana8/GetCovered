@@ -2,11 +2,11 @@ class MigrateToGlobalPermission < ActiveRecord::Migration[5.2]
   def up
     # Migrate agencies
     Agency.in_batches.each_record do |agency|
-      if agency.agency.present?
-        if agency.agency.global_permission
-          permissions = agency.agency.global_permission.permissions
+      if agency.parent_agency.present?
+        if agency.parent_agency.global_permission
+          permissions = agency.parent_agency.global_permission.permissions
         else
-          permissions = agency.agency.global_agency_permission.permissions
+          permissions = agency.parent_agency.global_agency_permission.permissions
         end
       else
         permissions = agency.global_agency_permission&.permissions
