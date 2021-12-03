@@ -720,6 +720,14 @@ ActiveRecord::Schema.define(version: 2021_11_29_192209) do
     t.index ["agency_id"], name: "index_global_agency_permissions_on_agency_id"
   end
 
+  create_table "global_permissions", force: :cascade do |t|
+    t.jsonb "permissions"
+    t.bigint "ownerable_id"
+    t.string "ownerable_type"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
   create_table "histories", force: :cascade do |t|
     t.integer "action", default: 0
     t.json "data", default: {}
