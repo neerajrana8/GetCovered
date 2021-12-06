@@ -418,7 +418,7 @@ class Invoice < ApplicationRecord
       # create refund
       unless refund_object.nil?
         refund_error_message = refund_object.execute
-        unless refund_error_message.nil
+        unless refund_error_message.nil?
           error_message = "Failure: error while executing refund: #{refund_error_message}"
           raise ActiveRecord::Rollback
         end
