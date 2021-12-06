@@ -36,7 +36,7 @@ module V2
       elsif args.is_a?(Hash)
         args.each do |key, actions|
           before_action only: actions do
-            validate_permission(key)  if key.is_a?(String)
+            validate_permission(key) if key.is_a?(String)
             validate_permissions(key) if key.is_a?(Array)
           end
         end
@@ -44,17 +44,27 @@ module V2
     end
 
     def validate_permission(permission)
-      permitted = current_staff.staff_permission.permissions[permission]
+      if current_staff.global_permission
+        permitted = current_staff.global_permission.permissions[permission]
+      else
+        permitted = current_staff.staff_permission.permissions[permission]
+      end
+
       render(json: standard_error(:permission_not_enabled), status: :unauthorized) unless permitted
     end
 
     def validate_permissions(permissions)
-      permitted = current_staff.staff_permission.permissions.values_at(*permissions).include?(true)
+      if current_staff.global_permission
+        permitted = current_staff.global_permission.permissions.values_at(*permissions).include?(true)
+      else
+        permitted = current_staff.staff_permission.permissions.values_at(*permissions).include?(true)
+      end
+
       render(json: standard_error(:permission_not_enabled), status: :unauthorized) unless permitted
     end
 
     def is_agent?
-      render json: { error: 'Unauthorized access' }, status: :unauthorized unless current_staff.agent?
+      render json: {error: 'Unauthorized access'}, status: :unauthorized unless current_staff.agent?
     end
 
     def view_path

@@ -159,7 +159,7 @@ module V2
           profile_attributes: %i[
             id birth_date contact_email contact_phone first_name
             job_title last_name middle_name suffix title
-          ]
+          ], global_permission_attributes: {permissions: {}}
         )
       end
 

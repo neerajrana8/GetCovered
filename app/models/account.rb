@@ -18,7 +18,8 @@ class Account < ApplicationRecord
 
   # Active Record Callbacks
   after_initialize :initialize_agency
-  
+  after_create :create_permissions
+
   # belongs_to relationships
   belongs_to :agency
   belongs_to :staff, optional: true # the owner
@@ -180,6 +181,12 @@ class Account < ApplicationRecord
     
     def initialize_agency
       # Blank for now...
+    end
+
+    def create_permissions
+      unless self.global_permission
+        GlobalPermission.create(ownerable: self, permissions: agency.global_permission.permissions)
+      end
     end
 
     # get an array [first, last] presenting self.title as if it were a name;

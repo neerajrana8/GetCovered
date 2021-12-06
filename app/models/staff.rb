@@ -54,6 +54,7 @@ class Staff < ApplicationRecord
 
   accepts_nested_attributes_for :profile, update_only: true
   accepts_nested_attributes_for :staff_permission, update_only: true
+  accepts_nested_attributes_for :global_permission, update_only: true
 
   settings index: { number_of_shards: 1 } do
     mappings dynamic: 'false' do

@@ -151,7 +151,7 @@ module V2
             city country county id latitude longitude
             plus_four state street_name street_number
             street_two timezone zip_code
-          ]
+          ], global_permission_attributes: { permissions: {} }
         )
         to_return
       end
@@ -165,7 +165,7 @@ module V2
             city country county id latitude longitude
             plus_four state street_name street_number
             street_two timezone zip_code
-          ]
+          ], global_permission_attributes: { permissions: {} }
         )
 
         existed_ids = to_return[:addresses_attributes]&.map { |addr| addr[:id] }
