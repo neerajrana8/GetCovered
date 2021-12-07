@@ -283,6 +283,6 @@ class PolicyApplication < ApplicationRecord
     
     def user_age
       pu = self.primary_user
-      errors.add(:policy_holder, I18n.t('policy_app_model.user_age', name: [pu.profile.first_name, pu.profile.last_name].join(" "))) unless pu.nil? || pu.profile.birth_date > 18.years.ago
+      errors.add(:policy_holder, I18n.t('policy_app_model.user_age', name: [pu.profile.first_name, pu.profile.last_name].join(" "))) unless pu.nil? || pu.profile.birth_date&.>=(18.years.ago)
     end
 end
