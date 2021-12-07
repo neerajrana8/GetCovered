@@ -13,7 +13,6 @@ class Profile < ApplicationRecord
 
   # Validations(remove validation for profiles for leads)
   validates_presence_of :first_name, :last_name, unless: -> { [Lead].include?(profileable.class) }
-  validate :user_age,                            unless: -> { [Lead].include?(profileable.class) }
 
   enum gender: { unspecified: 0, male: 1, female: 2, other: 4 }, _suffix: true
   enum salutation: { unspecified: 0, mr: 1, mrs: 2, miss: 3, dr: 4, lord: 5 }
@@ -25,10 +24,6 @@ class Profile < ApplicationRecord
       indexes :last_name, type: :text, analyzer: 'english'
       indexes :full_name, type: :text, analyzer: 'english'
     end
-  end
-
-  def user_age
-    errors.add(:birth_date, 'user should be over 18 years old.') if profileable && profileable_type == "User" && (birth_date.nil? || birth_date > 18.years.ago)
   end
 
   private
