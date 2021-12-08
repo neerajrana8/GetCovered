@@ -203,7 +203,7 @@ unless ENV['section'] == 'test'
 @cambridge_agencies.each do |ca|
   cambridge_agency = Agency.new(ca)
   if cambridge_agency.save
-
+    cambridge_agency = cambridge_agency.reload
     site_staff = [
       { email: "dylan@#{ cambridge_agency.slug }.com", password: 'TestingPassword1234', password_confirmation: 'TestingPassword1234', role: 'agent', enabled: true, organizable: cambridge_agency,
         profile_attributes: { first_name: 'Dylan', last_name: 'Gaines', job_title: 'Chief Technical Officer', birth_date: '04-01-1989'.to_date }},
@@ -290,6 +290,8 @@ end
 @get_covered_agencies.each do |gca|
   gc_qbesub_agency = Agency.new(gca)
   if gc_qbesub_agency.save
+
+    gc_qbesub_agency = gc_qbesub_agency.reload
 
     site_staff = [
       { email: "dylan@#{ gc_qbesub_agency.slug }.com", password: 'TestingPassword1234', password_confirmation: 'TestingPassword1234', role: 'agent', enabled: true, organizable: gc_qbesub_agency,

@@ -86,6 +86,7 @@ end
     																 addresses_attributes: [@addresses[account_count]]) 
 
 	if demo_account.save
+    demo_account = demo_account.reload
 	  site_staff = [
 	    { email: "dylan@#{ demo_account.slug }.com", password: 'TestingPassword1234', password_confirmation: 'TestingPassword1234', role: 'staff', enabled: true, organizable: demo_account, 
   	    profile_attributes: { first_name: 'Dylan', last_name: 'Gaines', job_title: 'Chief Technical Officer', birth_date: '04-01-1989'.to_date }},

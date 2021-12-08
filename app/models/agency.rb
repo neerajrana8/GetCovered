@@ -17,6 +17,7 @@ class Agency < ApplicationRecord
   # Active Record Callbacks
   after_initialize :initialize_agency
   before_validation :set_producer_code, on: :create
+  after_create :check_permissions
 
   # belongs_to relationships
   belongs_to :agency,
@@ -243,6 +244,12 @@ class Agency < ApplicationRecord
 
   def initialize_agency
    # Blank for now...
+  end
+
+  def check_permissions
+    unless global_permission.present?
+      GlobalPermission.create(ownerable: self, permissions: {})
+    end
   end
 
   def set_producer_code
