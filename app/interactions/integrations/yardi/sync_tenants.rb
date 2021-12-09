@@ -97,24 +97,15 @@ module Integrations
         # update expired old leases
         in_system = IntegrationProfile.where(integration: integration, external_context: 'lease', external_id: past_tenants.map{|l| l['Id'] }, profileable_type: "Lease")
         Lease.where(id: in_system.map{|is| is.profileable_id }, status: 'current').each do |l| # MOOSE WARNING: add end date modifications?
-          if l.update(status: 'expired')
+          if l.update({ status: 'expired' }.compact)
             to_return[:results].push({ status: :marked_lease_expired, lease_id: l.id })
           else
             to_return[:error_count] += 1
             to_return[:results].push({ status: :error, message: "Failed to update lease ##{l.id} to mark as expired; errors: #{l.errors.to_h}" })
           end
-        end 
-        
-        
-        
-        
-        
-        
-        
-        
-        
+        end
         # done
-        #return { success: true, results: by_id.values, error_count: error_count }
+        return to_return
       end
       
       
