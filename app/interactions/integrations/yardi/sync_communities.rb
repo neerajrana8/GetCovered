@@ -36,12 +36,12 @@ module Integrations
         end
         # prepare to cull already-in-system boyos
         account_id = integration.integratable_type == "Account" ? integration.integratable_id : nil
-        already_in_system = IntegrationProfile.where(integration: integration, profileable_type: "Insurable", external_id: properties.map{|p| p["Code"] })
+        already_in_system = IntegrationProfile.references(:insurables).includes(:insurable).where(integration: integration, profileable_type: "Insurable", external_id: properties.map{|p| p["Code"] })
         error_count = 0
         property_results = properties.map do |prop|
           # flee if already in the system
           found = already_in_system.find{|ip| ip.external_id == prop["Code"] }
-          next { status: :already_in_system, insurable_id: found.profileable_id, integration_profile: found } unless found.nil?
+          next { status: :already_in_system, community: found.insurable, integration_profile: found, yardi_property_data: prop } unless found.nil?
           # get the community property
           address_string = "#{prop["AddressLine1"]}#{prop["AddressLine2"].blank? ? "" : ", #{prop["AddressLine2"]}"}#{prop["AddressLine3"].blank? ? "" : ", #{prop["AddressLine3"]}"}, #{prop["City"]}, #{prop["State"]} #{prop["PostalCode"]}".strip
           community = ::Insurable.get_or_create(
@@ -101,7 +101,7 @@ module Integrations
             next if pr[:status] == :error
             next if do_sync_units.nil? && pr[:status] == :already_in_system
             # sync dem units
-            pr[:unit_sync] = Integrations::Yardi::SyncUnits.run!(integration: integration, community_address: pr[:community].primary_address, property_id: pr[:integration_profile].external_id, do_sync_tenants: do_sync_tenants, tenant_array: tenant_array)
+            pr[:unit_sync] = Integrations::Yardi::SyncUnits.run!(integration: integration, community: pr[:community], community_address: pr[:yardi_property_data], property_id: pr[:integration_profile].external_id, do_sync_tenants: do_sync_tenants, tenant_array: tenant_array)
           end
           unless tenant_array.blank?
             tenant_results = Integrations::Yardi::SyncUnits.run!(integration: integration, tenant_array: tenant_array)
