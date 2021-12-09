@@ -11,20 +11,25 @@ module Integrations
       #   :created_integration_profile
       #   :error
       def execute
-        sync_units = true if sync_tenants
+        # because ActiveIntegration is hideous garbage and `sync_units = true if sync_tenants` will set sync_units to nil for no freaking reason, we have to copy the parameters
+        do_sync_units = sync_units
+        do_sync_tenants = sync_tenants
+        the_response = parsed_response
+        # mod sync units
+        do_sync_units = true if do_sync_tenants
         # scream if integration is invalid
         return { status: :error, message: "No yardi integration provided" } unless integration
         return { status: :error, message: "Invalid yardi integration provided" } unless integration.provider == 'yardi'
         # perform the call and validate results
         diagnostics = {}
-        if parsed_response.nil?
+        if the_response.nil?
           result = Integrations::Yardi::GetPropertyConfigurations.run!(integration: integration, diagnostics: diagnostics)
           if result.code != 200
             return { status: :error, message: "Yardi server error (request failed)", event: diagnostics[:event] }
           end
-          parsed_response = result.parsed_response
+          the_response = result.parsed_response
         end
-        properties = parsed_response.dig("Envelope", "Body", "GetPropertyConfigurationsResponse", "GetPropertyConfigurationsResult", "Properties", "Property")
+        properties = the_response.dig("Envelope", "Body", "GetPropertyConfigurationsResponse", "GetPropertyConfigurationsResult", "Properties", "Property")
         if properties.class != ::Array
           properties = [properties] # we do this instead of erroring cause if there's only one response... xml sucks
           #return { status: :error, message: "Yardi server error (invalid response)", event: diagnostics[:event] }
@@ -89,14 +94,14 @@ module Integrations
         end
         # handle units and tenants
         tenant_results = nil
-        unless sync_units == false
-          tenant_array = (sync_tenants ? [] : nil)
+        unless do_sync_units == false
+          tenant_array = (do_sync_tenants ? [] : nil)
           property_results.each do |pr|
             # skip suckos
             next if pr[:status] == :error
-            next if sync_units.nil? && pr[:status] == :already_in_system
+            next if do_sync_units.nil? && pr[:status] == :already_in_system
             # sync dem units
-            pr[:unit_sync] = Integrations::Yardi::SyncUnits.run!(integration: integration, community_address: pr[:community].primary_address, property_id: pr[:integration].external_id, sync_tenants: sync_tenants, tenant_array: tenant_array)
+            pr[:unit_sync] = Integrations::Yardi::SyncUnits.run!(integration: integration, community_address: pr[:community].primary_address, property_id: pr[:integration_profile].external_id, do_sync_tenants: do_sync_tenants, tenant_array: tenant_array)
           end
           unless tenant_array.blank?
             tenant_results = Integrations::Yardi::SyncUnits.run!(integration: integration, tenant_array: tenant_array)

@@ -13,6 +13,8 @@ module Integrations
       #   :created_integration_profile
       #   :error
       def execute
+        # escape from ActiveInteraction's hideous garbage bugs (see sync_communities.rb for details)
+        
         # scream if integration is invalid
         return { status: :error, message: "No yardi integration provided" } unless integration
         return { status: :error, message: "Invalid yardi integration provided" } unless integration.provider == 'yardi'
@@ -132,8 +134,8 @@ module Integrations
         end.compact.flatten(1)
         if tenant_array
           tenant_array.concat(tenant_info)
-        else
-          tenant_info = Integrations::Yardi::SyncUnits.run!(integration: integration, tenant_array: tenant_array)
+        elsif sync_tenants
+          tenant_info = Integrations::Yardi::SyncUnits.run!(integration: integration, tenant_array: tenant_info)
         end
         # done
         return { status: :success, results: property_results, error_count: error_count, event: diagnostics[:event] }.merge(sync_tenants && tenant_array.nil? ? { tenant_results: tenant_info } : {})
