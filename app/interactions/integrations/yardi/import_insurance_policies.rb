@@ -2,17 +2,59 @@ module Integrations
   module Yardi
     class ImportInsurancePolicies < Integrations::Yardi::BaseVoyagerRentersInsurance
       string :property_id #getcov00
-      policy :string # some xml
+      object :policy # a policy object
+      string :policy_xml, default: nil #some xml
+      
       def execute
-        throw "NOT ALLOWED RIGHT NOW BRO"
         super(**{
           YardiPropertyId: property_id,
-          Policy: policy
+          Policy: policy_xml || get_new_policy_xml
         }.compact)
       end
       
       
       def get_new_policy_xml
+        
+        unit_ip = policy.primary_insurable.integration_profile.where(integration: integration).take
+        lease_ips = IntegrationProfile.references(:leases).includes(:lease).where(integration: integration, profileable_type: "Lease", external_context: "lease", profileable_id: policy.primary_insurable.leases.map{|l| l.id })
+        user_ip = policy.primary_user.integration_profile.where(integration: integration, profileable_type: "User", external_context: lease_ips.map{|lip| "tenant_#{lip.external_id}" }).take
+        
+        <<~XML
+          <InsurancePolicy Type="new">
+            <Customer>
+              <MITS:Identification IDType="Resident ID">
+                <MITS:IDValue>#{user_ip.external_id}</MITS:IDValue>
+              </MITS:Identification>
+              <MITS:Name>
+                <MITS:FirstName>#{policy.primary_user.profile.first_name}</MITS:FirstName>
+                <MITS:LastName>#{policy.primary_user.profile.last_name}</MITS:LastName>
+              </MITS:Name>
+            </Customer>
+            <Insurer>
+              <Name>#{policy.carrier.title}</Name>
+            </Insurer>
+            <PolicyNumber>#{policy.number}</PolicyNumber>
+            <PolicyTitle>#{policy.policy_type.title} Policy ##{policy.number}</PolicyTitle>
+            <PolicyDetails>
+              <EffectiveDate>#{policy.effective_date.to_s}</EffectiveDate>
+              <ExpirationDate>#{policy.expiration_date.to_s}</ExpirationDate>
+              <IsRenew>#{policy.auto_renew ? 'true' : 'false'}</IsRenew>
+              <LiabilityAmount>#{policy.get_liability / 100}</LiabilityAmount>
+              <Notes></Notes>
+              <IsRequiredForMoveIn>true</IsRequiredForMoveIn>
+              <IsPMInterestedParty>#{policy.account_id == integration.integratable_id && integration.integratable_type == 'Account'}</IsPMInterestedParty>
+            </PolicyDetails>
+          </InsurancePolicy>
+        XML
+        
+        # MOOSE WARNING question: what should policy title be???
+        # MOOSE WARNING question: wtf to do with "IsRequiredForMoveIn"?
+      end
+      
+      
+      
+      
+      def example_new_policy_xml
         <<~XML
           <InsurancePolicy Type="new">
             <Customer>
@@ -42,7 +84,7 @@ module Integrations
         XML
       end
       
-      def get_new_policy_xml
+      def example_changed_policy_xml
         <<~XML
           <InsurancePolicy Type="change">
           <Customer>

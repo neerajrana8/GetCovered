@@ -186,6 +186,16 @@ class Policy < ApplicationRecord
     manual_cancellation_with_refunds:     7,     # no qbe code
     manual_cancellation_without_refunds:  8    # no qbe code
   }
+  
+  def get_liability
+    if self.carrier_id == MsiService.carrier_id
+      self.coverages.where(designation: "1005").take&.limit
+    elsif self.carrier_id == QbeService.carrier_id
+      self.coverages.where(designation: "liability").take&.limit
+    else
+      nil
+    end || 0
+  end
 
   def current_quote
     self.policy_quotes.accepted.order('created_at desc').first

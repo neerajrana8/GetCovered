@@ -1,9 +1,8 @@
 module Integrations
   module Yardi
-    class SyncTenants < ActiveInteraction::Base
+    class SyncTenants < ActiveInteraction::Base # MOOSE WARNING: we don't have logic for tenant additions/removals, only full lease additions/removals
       object :integration
       array :tenant_array # array of yardi Resident hashes with an added entry "gc_unit" => some_unit_object. Will be modified.
-      boolean :only_update_existing, default: false
       
       RESIDENT_STATUSES = {
         'past' => ['Past', 'Canceled', 'Cancelled'],
