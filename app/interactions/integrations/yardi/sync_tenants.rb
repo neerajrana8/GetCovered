@@ -3,7 +3,7 @@ module Integrations
     class SyncTenants < ActiveInteraction::Base
       object :integration
       array :tenant_array # array of yardi Resident hashes with an added entry "gc_unit" => some_unit_object. Will be modified.
-      bool :only_update_existing, default: false
+      boolean :only_update_existing, default: false
       
       RESIDENT_STATUSES = {
         'past' => ['Past', 'Canceled', 'Cancelled'],
@@ -25,15 +25,21 @@ module Integrations
         to_return = { status: :success, results: [], error_count: 0 }
         # group resident leases
         tenant_arrays = tenant_array.group_by{|td| td["Status"] }
-        present_tenants = (RESIDENT_STATUSES['present'] + RESIDENT_STATUSES['nonfuture'].select{|td| td['MoveOut'].blank? || (Date.parse(td['MoveOut']) rescue nil)&.>=(Time.current.to_date) }).map{|s| tenant_arrays[s] }.flatten
-        past_tenants = (RESIDENT_STATUSES['past'] + RESIDENT_STATUSES['nonfuture'].select{|td| !td['MoveOut'].blank? && (Date.parse(td['MoveOut']) rescue nil)&.<(Time.current.to_date) }).map{|s| tenant_arrays[s] }.flatten
+        present_tenants = (
+          RESIDENT_STATUSES['present'].map{|s| tenant_arrays[s] || [] } +
+          RESIDENT_STATUSES['nonfuture'].map{|s| (tenant_arrays[s] || []).select{|td| td['MoveOut'].blank? || (Date.parse(td['MoveOut']) rescue nil)&.>=(Time.current.to_date) } }
+        ).flatten
+        past_tenants = (
+          RESIDENT_STATUSES['past'].map{|s| tenant_arrays[s] || [] } +
+          RESIDENT_STATUSES['nonfuture'].map{|s| (tenant_arrays[s] || []).select{|td| !td['MoveOut'].blank? && (Date.parse(td['MoveOut']) rescue nil)&.<(Time.current.to_date) } }
+        ).flatten
         # create active new leases
         in_system = IntegrationProfile.where(integration: integration, external_context: 'lease', external_id: present_tenants.map{|l| l['Id'] }, profileable_type: "Lease").pluck(:external_id)
         present_tenants.each do |tenant|
           next if in_system.include?(tenant["Id"])
           # get the users
           da_tenants = [tenant] + (tenant["Roommate"].nil? ? [] : tenant["Roommate"].class == ::Array ? tenant["Roommate"] : [tenant["Roommate"]])
-          userobjs = ::User.where(email: da_tenants.map{|t| t["Email"] }.compact)
+          userobjs = ::User.where(email: da_tenants.map{|t| t["Email"] }.compact) # (compact to leave out any nil email boyos) we are only using email here because this lease is not in the system; since tenant IDs are lease-specific, no IPs are going to exist with these tenant ids
           userobjs = da_tenants.map.with_index do |ten, ind|
             # get or create the user object
             userobj = userobjs.find{|u| u.email == ten["Email"] } # MOOSE WARNING: what if emails match but names don't....?
@@ -95,9 +101,11 @@ module Integrations
           to_return[:results].push({ status: :created_lease, lease_id: lease.id, lease_yardi_id: tenant["Id"] })
         end
         # update expired old leases
-        in_system = IntegrationProfile.where(integration: integration, external_context: 'lease', external_id: past_tenants.map{|l| l['Id'] }, profileable_type: "Lease")
-        Lease.where(id: in_system.map{|is| is.profileable_id }, status: 'current').each do |l| # MOOSE WARNING: add end date modifications?
-          if l.update({ status: 'expired' }.compact)
+        in_system = IntegrationProfile.references(:leases).includes(:lease).where(integration: integration, external_context: 'lease', external_id: past_tenants.map{|l| l['Id'] }, profileable_type: "Lease", leases: { status: ['current', 'pending'] })
+        in_system.each do |ip|
+          rec = past_tenants.find{|l| l['Id'] == ip.external_id }
+          l = ip.lease
+          if l.update({ end_date: rec["MoveOut"] || rec["LeaseTo"] }.compact) # MOOSE WARNING: ask yardi if MoveOut might apply only to the primary tenant (in which case the lease don't end)
             to_return[:results].push({ status: :marked_lease_expired, lease_id: l.id })
           else
             to_return[:error_count] += 1

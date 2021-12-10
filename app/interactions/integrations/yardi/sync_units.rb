@@ -50,12 +50,12 @@ module Integrations
         end
         # prepare to cull already-in-system boyos
         account_id = integration.integratable_type == "Account" ? integration.integratable_id : nil
-        already_in_system = IntegrationProfile.where(integration: integration, profileable_type: "Insurable", external_id: properties.map{|p| p["UnitId"] })
+        already_in_system = IntegrationProfile.references(:insurables).includes(:insurable).where(integration: integration, profileable_type: "Insurable", external_context: "unit_in_comm_#{prop_id}", external_id: properties.map{|p| p["UnitId"] })
         error_count = 0
         property_results = properties.map do |prop|
           # flee if already in the system
           found = already_in_system.find{|ip| ip.external_id == prop["UnitId"] }
-          next { status: :already_in_system, unit: found.profileable, integration_profile: found, yardi_property_data: prop } unless found.nil?
+          next { status: :already_in_system, unit: found.insurable, integration_profile: found, yardi_property_data: prop } unless found.nil?
           # get the unit
           parent_insurable = nil
           unit = nil
@@ -128,7 +128,8 @@ module Integrations
           next {
             status: :created_integration_profile,
             integration_profile: created_profile,
-            unit: unit
+            unit: unit,
+            yardi_property_data: prop
           }
         end
         # handle tenant information

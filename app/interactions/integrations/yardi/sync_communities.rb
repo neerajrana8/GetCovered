@@ -104,7 +104,7 @@ module Integrations
             pr[:unit_sync] = Integrations::Yardi::SyncUnits.run!(integration: integration, community: pr[:community], community_address: pr[:yardi_property_data], property_id: pr[:integration_profile].external_id, do_sync_tenants: do_sync_tenants, tenant_array: tenant_array)
           end
           unless tenant_array.blank?
-            tenant_results = Integrations::Yardi::SyncUnits.run!(integration: integration, tenant_array: tenant_array)
+            tenant_results = Integrations::Yardi::SyncTenants.run!(integration: integration, tenant_array: tenant_array)
           end
         end
         # done
