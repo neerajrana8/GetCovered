@@ -1,6 +1,6 @@
 module Integrations
   module Yardi
-    class BaseVoyager < Integrations::Yardi::Base
+    class Voyager < Integrations::Yardi::Base
     
       # subclasses should define methods :type and :xmlns
     
