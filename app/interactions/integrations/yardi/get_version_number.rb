@@ -1,6 +1,6 @@
 module Integrations
   module Yardi
-    class GetVersionNumber < Integrations::Yardi::BaseVoyagerResidentData
+    class GetVersionNumber < Integrations::Yardi::BaseVoyagerRentersInsurance
       def request_template(**params)
         <<~XML
         <?xml version="1.0" encoding="utf-8"?>
@@ -8,7 +8,7 @@ module Integrations
                        xmlns:xsd="http://www.w3.org/2001/XMLSchema"
                        xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
           <soap:Body>
-            <#{self.class.name.demodulize} xmlns="#{DICTIONARY[self.type]}" />
+            <#{self.class.name.demodulize} xmlns="#{self.xmlns}" />
           </soap:Body>
         </soap:Envelope>
         XML

@@ -2,7 +2,7 @@ module Integrations
   module Yardi
     class ImportInsurancePolicies < Integrations::Yardi::BaseVoyagerRentersInsurance
       string :property_id #getcov00
-      object :policy # a policy object
+      object :policy, default: nil # a policy object (required unless policy_xml is supplied)
       string :policy_xml, default: nil #some xml
       
       def execute
@@ -41,7 +41,7 @@ module Integrations
               <IsRenew>#{policy.auto_renew ? 'true' : 'false'}</IsRenew>
               <LiabilityAmount>#{policy.get_liability / 100}</LiabilityAmount>
               <Notes></Notes>
-              <IsRequiredForMoveIn>true</IsRequiredForMoveIn>
+              <IsRequiredForMoveIn>false</IsRequiredForMoveIn>
               <IsPMInterestedParty>#{policy.account_id == integration.integratable_id && integration.integratable_type == 'Account'}</IsPMInterestedParty>
             </PolicyDetails>
           </InsurancePolicy>

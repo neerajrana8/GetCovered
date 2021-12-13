@@ -4,6 +4,9 @@ module Integrations
       object :integration
       string :property_id
       
+      def execute
+      end
+=begin
       
       
       object :community, class: Insurable
@@ -151,11 +154,9 @@ module Integrations
         return { status: :success, results: property_results, error_count: error_count, event: diagnostics[:event] }.merge(do_sync_tenants && the_tenant_array.nil? ? { tenant_results: tenant_info } : {})
       end
       
-      
-      
+=end
       
       
     end
-    
   end
 end
