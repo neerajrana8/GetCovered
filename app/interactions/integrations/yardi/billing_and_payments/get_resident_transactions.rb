@@ -2,6 +2,7 @@ module Integrations
   module Yardi
     module BillingAndPayments
       class GetResidentTransactions < Integrations::Yardi::BillingAndPayments::Base
+      
         string :property_id
         
         def execute
@@ -10,7 +11,7 @@ module Integrations
           }.compact)
         end
         
-        def demodulized
+        def action # override action to add the goofy "_Login"
           "GetResidentTransactions_Login"
         end
         

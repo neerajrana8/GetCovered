@@ -2,7 +2,7 @@ module Integrations
   module Yardi
     module RentersInsurance
       class CustomerSearch < Integrations::Yardi::RentersInsurance::Base
-        string :property_id #getcov00
+        string :property_id
         # these are all optional boyos to restrict the search
         string :first_name, default: nil
         string :last_name, default: nil

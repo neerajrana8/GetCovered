@@ -2,7 +2,7 @@ module Integrations
   module Yardi
     module RentersInsurance
       class GetInsurancePolicies < Integrations::Yardi::RentersInsurance::Base
-        string :property_id #getcov00
+        string :property_id
         string :tenant_id, default: nil
         string :policy_number, default: nil
         date_time :policy_date_last_modified, default: nil
