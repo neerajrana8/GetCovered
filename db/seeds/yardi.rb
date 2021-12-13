@@ -17,6 +17,12 @@ Integration.create!(
       'database_server' => 'afqoml_itf70dev7',
       'database_name' => 'afqoml_itf70dev7'
     },
+    'billing' => {
+      'username' => 'getcoveredws',
+      'password' => '101912',
+      'database_server' => 'afqoml_itf70dev7',
+      'database_name' => 'afqoml_itf70dev7'
+    },
     'urls' => {
       'billing_and_payments' => 'https://www.yardipcv.com/8223tp7s7dev/Webservices/ItfResidentTransactions20.asmx',
       'renters_insurance' => 'https://www.yardipcv.com/8223tp7s7dev/Webservices/ItfRentersinsurance.asmx',
