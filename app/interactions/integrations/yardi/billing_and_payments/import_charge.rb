@@ -8,7 +8,7 @@ module Integrations
         
         def execute
           super(**{
-            Charges: charge_xml || get_new_charge_xml # docs say TransactionXml
+            TransactionXml: charge_xml || get_new_charge_xml # use Charges to get "Object reference not set to an instance of an object." error; docs say TransactionXml
           }.compact)
         end
         
@@ -23,38 +23,32 @@ module Integrations
           
           
           return <<~XML
+            <ResidentTransactions xmins="">
+            <Property>
+            <RT_Customer>
+            <RTServiceTransactions>
+            <Transactions>
             <Charge>
               <Detail>
                 <Description>Test Charge</Description>
                 <TransactionDate>2021-12-15</TransactionDate>
-                <ServiceFromDate>2021-11-01</ServiceFromDate>
                 <ServiceToDate>2021-11-31</ServiceToDate>
                 <ChargeCode>admin</ChargeCode>
-                <GLAccountNumber>4910-0000</GLAccountNumber>
                 <CustomerID>t0067659</CustomerID>
                 <Amount>45.00</Amount>
                 <Comment>This is a test charge</Comment>
-                <PropertyPrimaryID>getcov01</PropertyPrimaryID>
+                <PropertyPrimaryID>getcov02</PropertyPrimaryID>
               </Detail>
             </Charge>
+            </Transactions>
+            </RTServiceTransactions>
+            </RT_Customer>
+            </Property>
+            </ResidentTransactions>
           XML
+          
+          # left out cuz isn't the right number: <GLAccountNumber>4910-0000</GLAccountNumber>
         
-          <<~XML
-            <Charge>
-              <Detail>
-                <Description>Charge1</Description>
-                <TransactionDate>2018-12-21</TransactionDate>
-                <ServiceToDate>2017-01-01</ServiceToDate>
-                <ChargeCode>admin</ChargeCode>
-                <GLAccountNumber>4910-0000</GLAccountNumber>
-                <CustomerID>t0002172</CustomerID>
-                <Amount>18.00</Amount>
-                <Comment>Charge from web service</Comment>
-                <PropertyPrimaryID>ares319</PropertyPrimaryID>
-                <AdditionalFields Type="DisplayType" Value="Condo International" />
-              </Detail>
-            </Charge>
-          XML
         end
         
       end

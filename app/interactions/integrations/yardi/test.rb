@@ -24,6 +24,10 @@ module Integrations
             return Integrations::Yardi::BillingAndPayments::GetVersionNumber.run!(integration: integration, diagnostics: diagnostics)
           when "BillingAndPayments::GetPropertyConfigurations"
             return Integrations::Yardi::BillingAndPayments::GetPropertyConfigurations.run!(integration: integration, diagnostics: diagnostics)
+          when "BillingAndPayments::GetResidentTransactions_Login", "BillingAndPayments::GetResidentTransactions"
+            return Integrations::Yardi::BillingAndPayments::GetResidentTransactions.run!(integration: integration, property_id: 'getcov02')
+          when "BillingAndPayments::GetChargeTypes_Login", "BillingAndPayments::GetChargeTypes"
+            return Integrations::Yardi::BillingAndPayments::GetChargeTypes.run!(integration: integration)
           # RI problems
           when "RentersInsurance::ImportInsurancePolicies"
             policy_xml = <<~XML
@@ -57,21 +61,30 @@ module Integrations
           # BAP problems
           when "BillingAndPayments::ImportCharge_Login", "BillingAndPayments::ImportCharge"
             charge_xml = <<~XML
-              <Charge>
-                <Detail>
-                  <Description>Test Charge</Description>
-                  <TransactionDate>2021-12-15</TransactionDate>
-                  <ServiceFromDate>2021-11-01</ServiceFromDate>
-                  <ServiceToDate>2021-11-31</ServiceToDate>
-                  <ChargeCode>admin</ChargeCode>
-                  <GLAccountNumber>4910-0000</GLAccountNumber>
-                  <CustomerID>t0067659</CustomerID>
-                  <Amount>45.00</Amount>
-                  <Comment>This is a test charge</Comment>
-                  <PropertyPrimaryID>getcov01</PropertyPrimaryID>
-                </Detail>
-              </Charge>
+              <ResidentTransactions xmins="">
+                <Property>
+                  <RT_Customer>
+                    <RTServiceTransactions>
+                      <Transactions>
+                        <Charge>
+                          <Detail>
+                            <Description>Test Charge</Description>
+                            <TransactionDate>2021-12-15</TransactionDate>
+                            <ServiceToDate>2021-11-31</ServiceToDate>
+                            <ChargeCode>insur</ChargeCode>
+                            <CustomerID>t0067659</CustomerID>
+                            <Amount>45.00</Amount>
+                            <Comment>This is a test charge</Comment>
+                            <PropertyPrimaryID>getcov02</PropertyPrimaryID>
+                          </Detail>
+                        </Charge>
+                      </Transactions>
+                    </RTServiceTransactions>
+                  </RT_Customer>
+                </Property>
+              </ResidentTransactions>
             XML
+            #      <GLAccountNumber>4910-0000</GLAccountNumber> left out cause it's the wrong number and the docs said to
             return Integrations::Yardi::BillingAndPayments::ImportCharge.run!(integration: integration, charge_xml: charge_xml, diagnostics: diagnostics)
         end
       end
