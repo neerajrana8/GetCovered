@@ -6,8 +6,8 @@ module Integrations
         object :policy, default: nil # a policy object (required unless policy_xml is supplied)
         string :policy_xml, default: nil #some xml
         
-        def execute
-          super(**{
+        def execute(**params)
+          super(**params, **{
             YardiPropertyId: property_id,
             Policy: policy_xml || get_new_policy_xml
           }.compact)
@@ -21,31 +21,33 @@ module Integrations
           user_ip = policy.primary_user.integration_profile.where(integration: integration, profileable_type: "User", external_context: lease_ips.map{|lip| "tenant_#{lip.external_id}" }).take
           
           <<~XML
-            <InsurancePolicy Type="new">
-              <Customer>
-                <MITS:Identification IDType="Resident ID">
-                  <MITS:IDValue>#{user_ip.external_id}</MITS:IDValue>
-                </MITS:Identification>
-                <MITS:Name>
-                  <MITS:FirstName>#{policy.primary_user.profile.first_name}</MITS:FirstName>
-                  <MITS:LastName>#{policy.primary_user.profile.last_name}</MITS:LastName>
-                </MITS:Name>
-              </Customer>
-              <Insurer>
-                <Name>#{policy.carrier.title}</Name>
-              </Insurer>
-              <PolicyNumber>#{policy.number}</PolicyNumber>
-              <PolicyTitle>#{policy.policy_type.title} Policy ##{policy.number}</PolicyTitle>
-              <PolicyDetails>
-                <EffectiveDate>#{policy.effective_date.to_s}</EffectiveDate>
-                <ExpirationDate>#{policy.expiration_date.to_s}</ExpirationDate>
-                <IsRenew>#{policy.auto_renew ? 'true' : 'false'}</IsRenew>
-                <LiabilityAmount>#{policy.get_liability / 100}</LiabilityAmount>
-                <Notes></Notes>
-                <IsRequiredForMoveIn>false</IsRequiredForMoveIn>
-                <IsPMInterestedParty>#{policy.account_id == integration.integratable_id && integration.integratable_type == 'Account'}</IsPMInterestedParty>
-              </PolicyDetails>
-            </InsurancePolicy>
+            <RenterInsurance xmlns="http://yardi.com/RentersInsurance30" xmlns:MITS="http://my-company.com/namespace" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://yardi.com/RentersInsurance30 D:\YSI.NET_600822Plug-in8\Source\Interfaces\XSD\RentersInsurance.xsd">
+              <InsurancePolicy Type="new">
+                <Customer>
+                  <MITS:Identification IDType="Resident ID">
+                    <MITS:IDValue>#{user_ip.external_id}</MITS:IDValue>
+                  </MITS:Identification>
+                  <MITS:Name>
+                    <MITS:FirstName>#{policy.primary_user.profile.first_name}</MITS:FirstName>
+                    <MITS:LastName>#{policy.primary_user.profile.last_name}</MITS:LastName>
+                  </MITS:Name>
+                </Customer>
+                <Insurer>
+                  <Name>#{policy.carrier.title}</Name>
+                </Insurer>
+                <PolicyNumber>#{policy.number}</PolicyNumber>
+                <PolicyTitle>#{policy.policy_type.title} Policy ##{policy.number}</PolicyTitle>
+                <PolicyDetails>
+                  <EffectiveDate>#{policy.effective_date.to_s}</EffectiveDate>
+                  <ExpirationDate>#{policy.expiration_date.to_s}</ExpirationDate>
+                  <IsRenew>#{policy.auto_renew ? 'true' : 'false'}</IsRenew>
+                  <LiabilityAmount>#{policy.get_liability / 100}</LiabilityAmount>
+                  <Notes></Notes>
+                  <IsRequiredForMoveIn>false</IsRequiredForMoveIn>
+                  <IsPMInterestedParty>#{policy.account_id == integration.integratable_id && integration.integratable_type == 'Account'}</IsPMInterestedParty>
+                </PolicyDetails>
+              </InsurancePolicy>
+            </RenterInsurance>
           XML
           
           # MOOSE WARNING question: what should policy title be???

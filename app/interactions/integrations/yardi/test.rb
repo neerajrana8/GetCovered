@@ -31,37 +31,39 @@ module Integrations
           # RI problems
           when "RentersInsurance::ImportInsurancePolicies"
             policy_xml = <<~XML
-              <InsurancePolicy Type="new">
-                <Customer>
-                  <MITS:Identification IDType="Resident ID">
-                    <MITS:IDValue>t0067659</MITS:IDValue>
-                  </MITS:Identification>
-                  <MITS:Name>
-                    <MITS:FirstName>Kathy</MITS:FirstName>
-                    <MITS:LastName>Norman</MITS:LastName>
-                  </MITS:Name>
-                </Customer>
-                <Insurer>
-                  <Name>Imaginary Carrier</Name>
-                </Insurer>
-                <PolicyNumber>IC000001</PolicyNumber>
-                <PolicyTitle>Imaginary Policy #1</PolicyTitle>
-                <PolicyDetails>
-                  <EffectiveDate>2021-01-01</EffectiveDate>
-                  <ExpirationDate>2021-06-30</ExpirationDate>
-                  <IsRenew>true</IsRenew>
-                  <LiabilityAmount>50000</LiabilityAmount>
-                  <Notes></Notes>
-                  <IsRequiredForMoveIn>false</IsRequiredForMoveIn>
-                  <IsPMInterestedParty>true</IsPMInterestedParty>
-                </PolicyDetails>
-              </InsurancePolicy>
+              <RenterInsurance xmlns="http://yardi.com/RentersInsurance30" xmlns:MITS="http://my-company.com/namespace" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://yardi.com/RentersInsurance30 D:\YSI.NET_600822Plug-in8\Source\Interfaces\XSD\RentersInsurance.xsd">
+                <InsurancePolicy Type="new">
+                  <Customer>
+                    <MITS:Identification IDType="Resident ID">
+                      <MITS:IDValue>t0067659</MITS:IDValue>
+                    </MITS:Identification>
+                    <MITS:Name>
+                      <MITS:FirstName>Kathy</MITS:FirstName>
+                      <MITS:LastName>Norman</MITS:LastName>
+                    </MITS:Name>
+                  </Customer>
+                  <Insurer>
+                    <Name>Imaginary Carrier</Name>
+                  </Insurer>
+                  <PolicyNumber>IC000001</PolicyNumber>
+                  <PolicyTitle>Imaginary Policy #1</PolicyTitle>
+                  <PolicyDetails>
+                    <EffectiveDate>2021-01-01</EffectiveDate>
+                    <ExpirationDate>2021-06-30</ExpirationDate>
+                    <IsRenew>true</IsRenew>
+                    <LiabilityAmount>50000</LiabilityAmount>
+                    <Notes></Notes>
+                    <IsRequiredForMoveIn>false</IsRequiredForMoveIn>
+                    <IsPMInterestedParty>true</IsPMInterestedParty>
+                  </PolicyDetails>
+                </InsurancePolicy>
+              </RenterInsurance>
             XML
             return Integrations::Yardi::RentersInsurance::ImportInsurancePolicies.run!(integration: integration, property_id: 'getcov02', policy_xml: policy_xml, diagnostics: diagnostics)
           # BAP problems
           when "BillingAndPayments::ImportCharge_Login", "BillingAndPayments::ImportCharge"
             charge_xml = <<~XML
-              <ResidentTransactions xmins="">
+              <ResidentTransactions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://yardi.com/ResidentTransactions20" xsi:schemaLocation="http://yardi.com/ResidentTransactions20 C:\Users\kylec\Documents\_QA\_Interfaces\XSD\Itf_MITS_ResidentTransactions2.0.xsd">
                 <Property>
                   <RT_Customer>
                     <RTServiceTransactions>

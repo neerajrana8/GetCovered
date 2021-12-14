@@ -23,7 +23,7 @@ module Integrations
           
           
           return <<~XML
-            <ResidentTransactions xmins="">
+            <ResidentTransactions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://yardi.com/ResidentTransactions20" xsi:schemaLocation="http://yardi.com/ResidentTransactions20 C:\Users\kylec\Documents\_QA\_Interfaces\XSD\Itf_MITS_ResidentTransactions2.0.xsd">
             <Property>
             <RT_Customer>
             <RTServiceTransactions>

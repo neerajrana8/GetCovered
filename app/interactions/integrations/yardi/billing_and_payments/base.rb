@@ -4,7 +4,7 @@ module Integrations
       class Base < Integrations::Yardi::Base
       
         def execute(**params)
-          super(**params, **{
+          super(**{
             UserName: integration.credentials['billing']['username'],
             Password: integration.credentials['billing']['password'],
             ServerName: integration.credentials['billing']['database_server'],
@@ -12,7 +12,7 @@ module Integrations
             Platform: "SQL Server",
             InterfaceEntity: Rails.application.credentials.yardi[ENV['RAILS_ENV'].to_sym][:billing_entity],
             InterfaceLicense: Rails.application.credentials.yardi[ENV['RAILS_ENV'].to_sym][:billing_license]
-          })
+          }, **params)
         end
         
         def type

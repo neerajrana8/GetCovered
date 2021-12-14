@@ -34,22 +34,22 @@ module Integrations
 
       def request_template(**params)
         <<~XML
-        <?xml version="1.0" encoding="utf-8"?>
-        <soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                       xmlns:xsd="http://www.w3.org/2001/XMLSchema"
-                       xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
-          <soap:Body>
-            <#{self.action} xmlns="#{self.xmlns}">
-              #{params.map{|k,v| k.blank? ? stringify(v) : "<#{k}>#{stringify(v)}</#{k}>" }.join("\n      ")}
-            </#{self.action}>
-          </soap:Body>
-        </soap:Envelope>
+          <?xml version="1.0" encoding="utf-8"?>
+          <soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                         xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                         xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+            <soap:Body>
+              <#{self.action} xmlns="#{self.xmlns}">
+                #{params.map{|k,v| k.blank? ? stringify(v) : "<#{k}>#{stringify(v)}</#{k}>" }.join("\n      ")}
+              </#{self.action}>
+            </soap:Body>
+          </soap:Envelope>
         XML
       end
     
       def execute(**params)
         # prepare the event
-        request_body = self.request_template(params)
+        request_body = self.request_template(**params)
         event = Event.new(
           eventable: self.get_eventable,
           verb: 'post',
@@ -63,7 +63,7 @@ module Integrations
         event.started = Time.now
         # make the call
         result = HTTParty.post(integration.credentials['urls'][type],
-          body: request_template(params),
+          body: request_body,
           headers: {
             'Content-Type' => 'text/xml;charset=utf-8',
             'Host' => 'www.yardipcv.com',
