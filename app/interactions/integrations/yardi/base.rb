@@ -40,7 +40,7 @@ module Integrations
                        xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
           <soap:Body>
             <#{self.action} xmlns="#{self.xmlns}">
-              #{params.map{|k,v| "<#{k}>#{stringify(v)}</#{k}>" }.join("\n      ")}
+              #{params.map{|k,v| k.blank? ? stringify(v) : "<#{k}>#{stringify(v)}</#{k}>" }.join("\n      ")}
             </#{self.action}>
           </soap:Body>
         </soap:Envelope>
