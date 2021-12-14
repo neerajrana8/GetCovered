@@ -2,7 +2,7 @@ module Integrations
   module Yardi
     class Base < ActiveInteraction::Base
       object :integration
-      hash :diagnostics, default: {}
+      hash :diagnostics, default: {}, strip: false
       
       # subclasses are expected to define:
       #   get_eventable

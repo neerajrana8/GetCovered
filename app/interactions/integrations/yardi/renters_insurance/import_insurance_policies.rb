@@ -5,13 +5,49 @@ module Integrations
         string :property_id #getcov00
         object :policy, default: nil # a policy object (required unless policy_xml is supplied)
         string :policy_xml, default: nil #some xml
+        hash :policy_hash, default: nil, strip: false # some hash to convert into xml
+        boolean :change, default: false # set to true to do change mode
         
         def execute(**params)
           super(**params, **{
             YardiPropertyId: property_id,
-            Policy: policy_xml || get_new_policy_xml
+            Policy: policy_xml || get_policy_xml_from_hash || get_new_policy_xml
           }.compact)
         end
+        
+        
+        def get_policy_xml_from_hash
+          harsh = policy_hash.deep_stringify_keys
+          strang = '<RenterInsurance xmlns="http://yardi.com/RentersInsurance30" xmlns:MITS="http://my-company.com/namespace" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://yardi.com/RentersInsurance30 D:\YSI.NET_600822Plug-in8\Source\Interfaces\XSD\RentersInsurance.xsd">' + "\n"
+          strang += "<InsurancePolicy Type=\"#{change ? "change" : "new"}\">\n"
+          strang += "<Customer>\n"
+            strang += "  <MITS:Identification IDType=\"#{harsh["Customer"]["Identification"]["IDType"] || "Resident ID"}\">\n"
+            strang += "    <MITS:IDValue>#{harsh["Customer"]["Identification"]["IDValue"]}</MITS:IDValue>\n"
+            strang += "  </MITS:Identification>\n"
+            strang += "  <MITS:Name>\n"
+            strang += "    <MITS:FirstName>#{harsh["Customer"]["Name"]["FirstName"]}</MITS:FirstName>\n"
+            if(harsh["Customer"]["Name"]["MiddleName"])
+              strang += "    <MITS:MiddleName>#{harsh["Customer"]["Name"]["MiddleName"]}</MITS:MiddleName>\n"
+            end
+            strang += "    <MITS:LastName>#{harsh["Customer"]["Name"]["LastName"]}</MITS:LastName>\n"
+            strang += "  </MITS:Name>\n"
+          strang += "</Customer>\n"
+          strang += "<Insurer><Name>#{harsh["Insurer"]["Name"]}</Name></Insurer>\n"
+          strang += "<PolicyNumber>#{harsh["PolicyNumber"]}</PolicyNumber>\n"
+          strang += "<PolicyTitle>#{harsh["PolicyTitle"]}</PolicyTitle>\n"
+          if(harsh["PremiumAmount"])
+            strang += "<PremiumAmount>#{harsh["PremiumAmount"]}</PremiumAmount>\n"
+          end
+          strang += "<PolicyDetails>\n"
+          harsh["PolicyDetails"].each do |pd,v|
+            strang += "  <#{pd}>#{v}</#{pd}>\n"
+          end
+          strang += "</PolicyDetails>\n"
+          strang += "</InsurancePolicy>\n"
+          strang += "</RenterInsurance>"
+          return strang
+        end
+        
         
         
         def get_new_policy_xml

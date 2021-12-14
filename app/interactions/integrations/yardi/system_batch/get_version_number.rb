@@ -1,7 +1,7 @@
 module Integrations
   module Yardi
-    module BillingAndPayments
-      class GetVersionNumber < Integrations::Yardi::BillingAndPayments::Base
+    module SystemBatch
+      class GetVersionNumber < Integrations::Yardi::SystemBatch::Base
         def request_template(**params)
           <<~XML
             <?xml version="1.0" encoding="utf-8"?>
