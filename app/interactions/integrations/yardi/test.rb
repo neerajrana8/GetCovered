@@ -88,7 +88,7 @@ module Integrations
                 </InsurancePolicy>
               </RenterInsurance>
             XML
-            return Integrations::Yardi::RentersInsurance::ImportInsurancePolicies.run!(integration: integration, property_id: 'resca01', policy_hash: policy_hash, change: true, diagnostics: diagnostics, **paramz)
+            return Integrations::Yardi::RentersInsurance::ImportInsurancePolicies.run!(integration: integration, property_id: 'resca01', policy_hash: policy_hash, change: false, diagnostics: diagnostics, **paramz)
           # BAP problems
           when "BillingAndPayments::ImportResidentTransactions_Login", "BillingAndPayments::ImportResidentTransactions"
             charge_hash = { # for QA
@@ -100,7 +100,7 @@ module Integrations
               CustomerID: "t0020164",
               Amount: "125.00",
               Comment: "Renter's Insurance Charge",
-              PropertyPrimaryId: "resca01"
+              PropertyPrimaryID: "resca01"
             }
             #charge_hash = { # for est env
             #  Description: "Test Charge",
