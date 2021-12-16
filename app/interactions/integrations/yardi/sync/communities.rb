@@ -3,7 +3,7 @@ module Integrations
     module Sync
       class Communities < ActiveInteraction::Base
         object :integration
-        hash :parsed_response, default: nil
+        hash :parsed_response, default: nil # provide if you've done the GetPropertyConfigurations call manually so it's not done again here
         boolean :sync_units, default: true # true: sync units, false: do not sync units, nil: sync units for new communities only
         boolean :sync_tenants, default: true # true: sync tenants (user and lease/policy data)--will force sync_units true if provided; false: do not sync tenants
         
@@ -24,11 +24,11 @@ module Integrations
           # perform the call and validate results
           diagnostics = {}
           if the_response.nil?
-            result = Integrations::Yardi::RentersInsurance::GetPropertyConfigurations.run!(integration: integration, diagnostics: diagnostics)
-            if result.code != 200
-              return { status: :error, message: "Yardi server error (request failed)", event: diagnostics[:event] }
+            result = Integrations::Yardi::RentersInsurance::GetPropertyConfigurations.run!(integration: integration)
+            if !result[:success]
+              return { status: :error, message: "Yardi server error (request failed)", event: result[:event] }
             end
-            the_response = result.parsed_response
+            the_response = result[:parsed_response]
           end
           properties = the_response.dig("Envelope", "Body", "GetPropertyConfigurationsResponse", "GetPropertyConfigurationsResult", "Properties", "Property")
           if properties.class != ::Array

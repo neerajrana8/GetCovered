@@ -19,7 +19,8 @@ module Integrations
         def get_new_charge_xml_from_hash
           harsh = charge_hash.deep_stringify_keys
           strang = ""
-          strang += '<ResidentTransactions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://yardi.com/ResidentTransactions20" xsi:schemaLocation="http://yardi.com/ResidentTransactions20 C:\Users\kylec\Documents\_QA\_Interfaces\XSD\Itf_MITS_ResidentTransactions2.0.xsd">' + "\n"
+          #strang += '<ResidentTransactions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://yardi.com/ResidentTransactions20" xsi:schemaLocation="http://yardi.com/ResidentTransactions20 C:\Users\kylec\Documents\_QA\_Interfaces\XSD\Itf_MITS_ResidentTransactions2.0.xsd">' + "\n"
+          strang += '<ResidentTransactions>' + "\n"
           strang += "  <Property>\n"
           strang += "    <RT_Customer>\n"
           strang += "      <RTServiceTransactions>\n"
@@ -34,7 +35,7 @@ module Integrations
           strang += "        </Transactions>\n"
           strang += "      </RTServiceTransactions>\n"
           strang += "    </RT_Customer>\n"
-          strang += "  <Property>\n"
+          strang += "  </Property>\n"
           strang += "</ResidentTransactions>"
           return strang
         end

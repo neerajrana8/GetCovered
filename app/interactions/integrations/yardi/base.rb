@@ -2,7 +2,6 @@ module Integrations
   module Yardi
     class Base < ActiveInteraction::Base
       object :integration
-      hash :diagnostics, default: {}, strip: false
       
       # subclasses are expected to define:
       #   get_eventable
@@ -29,7 +28,7 @@ module Integrations
       
       # useful for little derived buddies
       def xml_block(tag, value)
-        value.nil? ? "<#{tag} />" : "<#{tag}>#{value}</#{tag}>"
+        value.nil? ? "<#{tag} />" : value.class == ::Array ? value.map{|v| "<#{tag}>#{v}</#{tag}>" }.join("") : "<#{tag}>#{value}</#{tag}>"
       end
 
       def request_template(**params)
@@ -40,7 +39,7 @@ module Integrations
                          xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
             <soap:Body>
               <#{self.action} xmlns="#{self.xmlns}">
-                #{params.map{|k,v| k.blank? ? stringify(v) : "<#{k}>#{stringify(v)}</#{k}>" }.join("\n      ")}
+                #{params.map{|k,v| k.blank? ? stringify(v) : v.class == ::Array ? v.map{|vv| "<#{k}>#{vv}</#{k}>" }.join("") : "<#{k}>#{stringify(v)}</#{k}>" }.join("\n      ")}
               </#{self.action}>
             </soap:Body>
           </soap:Envelope>
@@ -68,7 +67,7 @@ module Integrations
             'Content-Type' => 'text/xml;charset=utf-8',
             'Host' => 'www.yardipcv.com',
             'SOAPAction' => soap_action,
-            'Content-Length' => request_template.length.to_s
+            'Content-Length' => request_body.length.to_s
           },
           ssl_version: :TLSv1_2
         )
@@ -78,9 +77,12 @@ module Integrations
         event.status = (result.code == 200 ? 'success' : 'error')
         event.save
         # all done, broski
-        diagnostics[:event] = event
-        diagnostics[:code] = result.code
-        return result
+        return {
+          success: (event.status == 'success'),
+          event: event,
+          request: result,
+          parsed_response: (result.parsed_response || {} rescue {})
+        }
       end
     end
     

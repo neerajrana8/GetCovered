@@ -5,10 +5,10 @@ module Integrations
         object :integration
         object :community, class: Insurable
         string :property_id
-        hash :community_address, default: nil
+        hash :community_address, default: nil # should be a yardi compatible hash { "AddressLine1"=>, "City"=>, "State"=>, "PostalCode"=> }... leave blank to derive it from the community object
         boolean :sync_tenants, default: true # true: sync tenants, false: don't sync tenants
         array :tenant_array, default: nil # pass an array to have it filled with tenant data rather than processing internally
-        hash :parsed_response, default: nil
+        hash :parsed_response, default: nil # provide if you've already done hte GetUnitConfiguration call and want to skip it
         
         # returns thing that says status: error/succes. If success, has :results which is an array of similar things with these statuses:
         #   :already_in_system
@@ -36,13 +36,12 @@ module Integrations
             }
           end
           # perform the call and validate results
-          diagnostics = {}
           if the_response.nil?
-            result = Integrations::Yardi::RentersInsurance::GetUnitConfiguration.run!(integration: integration, property_id: prop_id, diagnostics: diagnostics)
-            if result.code != 200
-              return { status: :error, message: "Yardi server error (request failed)", event: diagnostics[:event] }
+            result = Integrations::Yardi::RentersInsurance::GetUnitConfiguration.run!(integration: integration, property_id: prop_id)
+            if !result[:success]
+              return { status: :error, message: "Yardi server error (request failed)", event: result[:event] }
             end
-            the_response = result.parsed_response
+            the_response = result[:parsed_response]
           end
           properties = the_response.dig("Envelope", "Body", "GetUnitConfigurationResponse", "GetUnitConfigurationResult", "Units", "Unit")
           if properties.class != ::Array
