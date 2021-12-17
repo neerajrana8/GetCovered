@@ -27,8 +27,8 @@ module Integrations
             return Integrations::Yardi::BillingAndPayments::GetVersionNumber.run!(integration: integration, **paramz)
           when "BillingAndPayments::GetPropertyConfigurations"
             return Integrations::Yardi::BillingAndPayments::GetPropertyConfigurations.run!(integration: integration, **paramz)
-          when "BillingAndPayments::GetResidentTransactions_Login", "BillingAndPayments::GetResidentTransactions"
-            return Integrations::Yardi::BillingAndPayments::GetResidentTransactions.run!(integration: integration, property_id: 'resca01', **paramz)
+          #when "BillingAndPayments::GetResidentTransactions_Login", "BillingAndPayments::GetResidentTransactions"
+          #  return Integrations::Yardi::BillingAndPayments::GetResidentTransactions.run!(integration: integration, property_id: 'resca01', **paramz)
           when "BillingAndPayments::GetChargeTypes_Login", "BillingAndPayments::GetChargeTypes"
             return Integrations::Yardi::BillingAndPayments::GetChargeTypes.run!(integration: integration, **paramz)
           # RI problems
@@ -61,14 +61,14 @@ module Integrations
           # BAP problems
           when "BillingAndPayments::ImportResidentTransactions_Login", "BillingAndPayments::ImportResidentTransactions"
             charge_hash = { # for QA
-              Description: "Test Charge",
+              Description: "QA Test Charge",
               TransactionDate: "2021-12-14",
               ServiceToDate: "2021-12-30",
               ChargeCode: "rentins",
               GLAccountNumber: "49750000",
               CustomerID: "t0020164",
-              Amount: "125.00",
-              Comment: "Renter's Insurance Charge",
+              Amount: "102.00",
+              Comment: "Test Charge for QA",
               PropertyPrimaryID: "resca01"
             }
             return Integrations::Yardi::BillingAndPayments::ImportResidentTransactions.run!(integration: integration, charge_hash: charge_hash, **paramz)
