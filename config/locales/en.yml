@@ -173,6 +173,7 @@ en:
     no_build_coverages_for_crum: 'No build coverages for Crum'
     no_build_coverages_for_pensio: 'No build coverages for Pensio'
     error_with_build_coverages: 'Error happened with build coverages'
+    invoice_gen_failed: "We encountered an error while processing your application."
   policy_type_model:
     residential: 'Residential'
     master_policy: 'Residential'
