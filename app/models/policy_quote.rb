@@ -368,10 +368,9 @@ class PolicyQuote < ApplicationRecord
           end
         ]
       end.to_h
-      return dat_problemo unless dat_problemo.nil?
     end
     # all done
-    return nil
+    return dat_problemo
   end
 
   private
