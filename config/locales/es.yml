@@ -191,6 +191,7 @@ es:
     no_build_coverages_for_crum: 'No hay coberturas de construcción para Crum'
     no_build_coverages_for_pensio: 'No hay coberturas de construcción para Pensio'
     error_with_build_coverages: 'Se produjo un error con las coberturas de compilación'
+    invoice_gen_failed: "Encontramos un error al procesar su solicitud."
   policy_bind_warning_notification_job:
     get_covered_bind_warning: "Obtenga una advertencia de enlace cubierto"
   qbe_policy_quote:
