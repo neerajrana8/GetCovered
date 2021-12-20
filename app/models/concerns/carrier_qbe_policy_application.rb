@@ -151,7 +151,7 @@ module CarrierQbePolicyApplication
                   result = quote.generate_invoices_for_term
                   unless result.nil?
                     puts result[:internal] # MOOSE WARNING: [:external] contains an I81n key for a user-displayable message, if desired
-                    quote.mark_failure(result[:internal])
+                    quote.mark_failure(I18n.t(result[:external]), result[:internal])
                     return false
                   end
 		 							return true
