@@ -121,6 +121,7 @@ class PolicyApplication < ApplicationRecord
   # if the method exists.
 
   def quote(*args)
+    self.reload
     method = "#{carrier.integration_designation}_quote"
     respond_to?(method) ? send(*([method] + args)) : false
   end
