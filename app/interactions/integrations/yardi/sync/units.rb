@@ -22,6 +22,7 @@ module Integrations
           do_sync_tenants = sync_tenants
           the_tenant_array = tenant_array
           the_response = parsed_response
+          the_event = nil
           # scream if integration is invalid
           return { status: :error, message: "No yardi integration provided" } unless integration
           return { status: :error, message: "Invalid yardi integration provided" } unless integration.provider == 'yardi'
@@ -42,6 +43,7 @@ module Integrations
               return { status: :error, message: "Yardi server error (request failed)", event: result[:event] }
             end
             the_response = result[:parsed_response]
+            the_event = result[:event]
           end
           properties = the_response.dig("Envelope", "Body", "GetUnitConfigurationResponse", "GetUnitConfigurationResult", "Units", "Unit")
           if properties.class != ::Array
@@ -145,7 +147,7 @@ module Integrations
             tenant_info = Integrations::Yardi::Sync::Tenants.run!(integration: integration, tenant_array: tenant_info)
           end
           # done
-          return { status: :success, results: property_results, error_count: error_count, event: diagnostics[:event] }.merge(do_sync_tenants && the_tenant_array.nil? ? { tenant_results: tenant_info } : {})
+          return { status: :success, results: property_results, error_count: error_count, event: the_event }.merge(do_sync_tenants && the_tenant_array.nil? ? { tenant_results: tenant_info } : {})
         end
         
         

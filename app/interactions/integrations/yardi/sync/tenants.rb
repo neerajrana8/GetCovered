@@ -58,7 +58,7 @@ module Integrations
                 created_profile = IntegrationProfile.create(
                   integration: integration,
                   profileable: userobj,
-                  external_context: "tenant_#{tenant["Id"]}",
+                  external_context: "resident",
                   external_id: ten["Id"],
                   configuration: {
                     'synced_at' => Time.current.to_s
@@ -105,7 +105,7 @@ module Integrations
           in_system.each do |ip|
             rec = past_tenants.find{|l| l['Id'] == ip.external_id }
             l = ip.lease
-            if l.update({ end_date: rec["MoveOut"] || rec["LeaseTo"] }.compact) # MOOSE WARNING: ask yardi if MoveOut might apply only to the primary tenant (in which case the lease don't end)
+            if l.update({ end_date: rec["MoveOut"] || rec["LeaseTo"] }.compact) # MOOSE WARNING: ask yardi if MoveOut might apply only to the primary tenant (in which case the lease doesn't end on this date necessarily...)
               to_return[:results].push({ status: :marked_lease_expired, lease_id: l.id })
             else
               to_return[:error_count] += 1

@@ -189,11 +189,11 @@ class Policy < ApplicationRecord
   
   def get_liability
     if self.carrier_id == MsiService.carrier_id
-      self.coverages.where(designation: "1005").take&.limit
+      self.coverages.find{|cov| cov.designation == "1005" }&.limit
     elsif self.carrier_id == QbeService.carrier_id
-      self.coverages.where(designation: "liability").take&.limit
+      self.coverages.find{|cov| cov.designation == "liability" }&.limit
     else
-      nil
+      self.coverages.find{|cov| !(["LiabilityAmount", "Liability", "Liability Amount", "Liability Limit", "LiabilityLimit", "liability"] & [cov.designation, cov.title]).blank? }&.limit
     end || 0
   end
 
