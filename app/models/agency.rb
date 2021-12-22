@@ -21,11 +21,9 @@ class Agency < ApplicationRecord
 
   # belongs_to relationships
   belongs_to :agency,
-    optional: true
+    optional: true# has_many relationships
   has_many :agencies
   has_many :tracking_urls
-
-  # has_many relationships
   has_many :carrier_agencies
   has_many :carriers, through: :carrier_agencies
   has_many :carrier_agency_authorizations, through: :carrier_agencies
@@ -35,14 +33,11 @@ class Agency < ApplicationRecord
   has_many :insurable_rates
   has_many :leases, through: :accounts
   has_many :insurable_rates
-  has_many :staff, as: :organizable
-  has_many :global_permissions, through: :staff
+  has_many :staff_roles, as: :organizable
+  has_many :staff, through: :staff_roles
+  has_many :global_permissions, through: :staff_roles
 
-  has_many :account_staff,
-    through: :accounts,
-    as: :organizable,
-    source: :staff,
-    class_name: 'Staff'
+  has_many :account_staff, through: :accounts, as: :organizable, source: :staff, class_name: 'Staff'
   has_many :policies
   has_many :claims, through: :policies
   has_many :invoices, through: :policies
@@ -51,8 +46,7 @@ class Agency < ApplicationRecord
   has_many :policy_applications
   has_many :policy_quotes
 
-  has_many :branding_profiles,
-    as: :profileable
+  has_many :branding_profiles, as: :profileable
 
   has_many :commission_strategies, as: :recipient
   has_many :commissions, as: :recipient
@@ -60,25 +54,18 @@ class Agency < ApplicationRecord
 
   has_many :billing_strategies
 
-  has_many :fees,
-    as: :ownerable
+  has_many :fees, as: :ownerable
 
   has_many :events,
     as: :eventable
 
-  has_many :addresses,
-    as: :addressable,
-    autosave: true
+  has_many :addresses, as: :addressable, autosave: true
 
-  has_many :reports,
-    as: :reportable
+  has_many :reports, as: :reportable
 
-  has_many :active_account_users,
-    through: :accounts
+  has_many :active_account_users, through: :accounts
 
-  has_many :active_users,
-    through: :active_account_users,
-    source: :user
+  has_many :active_users, through: :active_account_users, source: :user
 
   has_many :histories, as: :recordable
 
@@ -86,6 +73,15 @@ class Agency < ApplicationRecord
 
   has_many :leads
 
+  has_many :access_tokens, as: :bearer
+
+  has_many :integrations, as: :integratable
+
+  has_many :insurable_rate_configurations, as: :configurer
+
+  has_many :notification_settings, as: :notifyable
+
+  # has_one relations
   has_one :global_agency_permission
   has_one :global_permission, as: :ownerable
 
