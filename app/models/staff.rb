@@ -42,19 +42,18 @@ class Staff < ApplicationRecord
   has_many :payment_profiles, as: :payer
   has_many :notification_settings, as: :notifyable
   has_many :staff_roles
-  has_many :agencies, through: :staff_roles, source_type: "Agency", source: :organizable
-  has_many :accounts, through: :staff_roles, source_type: "Account", source: :organizable
+  has_many :agencies, through: :staff_roles, source_type: 'Agency', source: :organizable
+  has_many :accounts, through: :staff_roles, source_type: 'Account', source: :organizable
 
   # has_one relationships
   has_one :profile, as: :profileable, autosave: true
   has_one :staff_permission
-  has_one :global_permission, as: :ownerable
 
   scope :enabled, -> { where(enabled: true) }
 
   accepts_nested_attributes_for :profile, update_only: true
   accepts_nested_attributes_for :staff_permission, update_only: true
-  accepts_nested_attributes_for :global_permission, update_only: true
+  accepts_nested_attributes_for :staff_roles
 
   settings index: { number_of_shards: 1 } do
     mappings dynamic: 'false' do
