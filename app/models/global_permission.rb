@@ -5,7 +5,7 @@ class GlobalPermission < ApplicationRecord
   serialize :permissions, HashSerializer
 
   validate :subagency_permissions_restrictions, if: -> { ownerable.is_a? Agency and ownerable.parent_agency.present? }
-  validate :staff_permissions_restrictions, if: -> { ownerable.is_a? Staff }
+  validate :staff_permissions_restrictions, if: -> { ownerable.is_a? StaffRole }
   validate :account_permissions_restrictions, if: -> { ownerable.is_a? Account }
 
   after_update :update_subagencies_permissions
