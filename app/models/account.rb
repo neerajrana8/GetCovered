@@ -23,14 +23,13 @@ class Account < ApplicationRecord
   # belongs_to relationships
   belongs_to :agency
   belongs_to :staff, optional: true # the owner
-  
-  # has_many relationships
-  has_many :staff,
-    as: :organizable
 
-  # ActiveSupport +pluralize+ method doesn't work correctly for this word(returns staffs). So I added alias for it
-  alias staffs staff
-      
+  # has_many relationships
+  has_many :staff_roles, as: :organizable
+  has_many :staff, through: :staff_roles
+  has_many :owned, as: :owner
+  has_many :ownerships, as: :owned
+
   has_many :branding_profiles, as: :profileable
   has_many :payment_profiles, as: :payer
   
@@ -49,45 +48,40 @@ class Account < ApplicationRecord
   
   has_many :account_users
   
-  has_many :users,
-    through: :account_users
+  has_many :users, through: :account_users
   
   has_many :active_account_users,
     -> { where status: 'enabled' }, 
     class_name: 'AccountUser'
   
-  has_many :active_users,
-    through: :active_account_users,
-    source: :user
+  has_many :active_users, through: :active_account_users, source: :user
   
   has_many :commission_strategies, as: :commissionable
   
   has_many :commissions, as: :commissionable
   has_many :commission_deductions, as: :deductee
 
-  has_many :events,
-    as: :eventable
+  has_many :events, as: :eventable
 
   has_many :notification_settings, as: :notifyable
 
-  has_many :addresses,
-    as: :addressable,
-    autosave: true
+  has_many :addresses, as: :addressable, autosave: true
 
-  has_many :histories,
-    as: :recordable
+  has_many :histories, as: :recordable
 
-  has_many :reports,
-    as: :reportable
+  has_many :reports, as: :reportable
 
-  has_many :integrations,
-           as: :integratable
+  has_many :integrations, as: :integratable
 
-  has_many :insurable_rate_configurations,
-           as: :configurer
+  has_many :insurable_rate_configurations, as: :configurer
 
+  has_many :global_permissions, through: :staff_roles
+
+  # has_one relations
   has_one :global_permission, as: :ownerable
-  has_many :global_permissions, through: :staff
+
+  # ActiveSupport +pluralize+ method doesn't work correctly for this word(returns staffs). So I added alias for it
+  alias staffs staff
 
   scope :enabled, -> { where(enabled: true) }
 
@@ -101,11 +95,11 @@ class Account < ApplicationRecord
   def owner
     staff.where(id: staff_id).take
   end
-  
+
   def primary_address
     addresses.where(primary: true).take 
   end
-  
+
   # Override as_json to always include agency and addresses information
   def as_json(options = {})
     json = super(options.reverse_merge(include: %i[agency primary_address owner]))
@@ -131,7 +125,7 @@ class Account < ApplicationRecord
       indexes :call_sign, type: :text, analyzer: 'english'
     end
   end
-  
+
   
   # Get Msi General Party Info
   #
