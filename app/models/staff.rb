@@ -37,18 +37,18 @@ class Staff < ApplicationRecord
   has_many :histories, as: :recordable, class_name: 'History', foreign_key: :recordable_id
 
   has_many :assignments
+  has_many :reports, as: :reportable
+  has_many :invoices, as: :invoiceable
+  has_many :payment_profiles, as: :payer
+  has_many :notification_settings, as: :notifyable
+  has_many :staff_roles
+  has_many :agencies, through: :staff_roles, source_type: "Agency", source: :organizable
+  has_many :accounts, through: :staff_roles, source_type: "Account", source: :organizable
 
   # has_one relationships
   has_one :profile, as: :profileable, autosave: true
   has_one :staff_permission
   has_one :global_permission, as: :ownerable
-
-  has_many :reports, as: :reportable
-
-  has_many :invoices, as: :invoiceable
-  has_many :payment_profiles, as: :payer
-
-  has_many :notification_settings, as: :notifyable
 
   scope :enabled, -> { where(enabled: true) }
 
