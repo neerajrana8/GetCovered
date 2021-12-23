@@ -142,7 +142,7 @@ module V2
             render json: standard_error(:integration_not_found, "This interface has not yet been updated with support for #{@provider.titleize} integrations."),
               status: 422
         end
-        return
+        return 
       end
       
       
