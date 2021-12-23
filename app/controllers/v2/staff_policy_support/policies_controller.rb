@@ -19,8 +19,8 @@ module V2
 
       def show
         if @policy.primary_insurable.nil?
-          @max_liability = 10000
-          @min_liability = 300000
+          @min_liability = 1000000
+          @max_liability = 30000000
         else
           insurable = @policy.primary_insurable.parent_community
           account = insurable.account
@@ -31,6 +31,8 @@ module V2
           @max_liability = liability_options&.map{|opt| opt['value'].to_i }&.max
           @min_liability = liability_options&.map{|opt| opt['value'].to_i }&.min
         end
+        @min_liability.nil? ? 1000000 : @min_liability
+        @max_liability.nil? ? 30000000 : @max_liability
       end
 
       def update
