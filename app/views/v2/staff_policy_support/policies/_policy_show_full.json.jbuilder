@@ -12,20 +12,11 @@ json.compliance do
   json.liability_max @max_liability
 end
 
-json.policy_application_group_id policy.policy_group&.policy_application_group&.id
-
-json.policy_application do
-  if policy.policy_application.present?
-    json.partial! 'v2/staff_policy_support/policy_applications/policy_application_show_fields.json.jbuilder',
-                  policy_application: policy.policy_application
-  end
-end
-
 json.users do
   json.array! policy.policy_users do |policy_user|
     json.primary policy_user.primary
     json.spouse policy_user.spouse
-    json.partial! "v2/staff_policy_support/users/user_show_full.json.jbuilder", user: policy_user.user
+    json.partial! "v2/staff_super_admin/users/user_show_full.json.jbuilder", user: policy_user.user
   end
 end
 
