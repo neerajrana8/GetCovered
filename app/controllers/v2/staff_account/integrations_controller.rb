@@ -24,7 +24,7 @@ module V2
                   database_name: nil,
                   url: nil,
                   enabled: nil,
-                  active: false
+                  active: false,
                   problems: "The integration has not been set up yet."
                 },
                 billing_and_payments: {
