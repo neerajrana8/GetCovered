@@ -31,8 +31,14 @@ module V2
           @max_liability = liability_options&.map{|opt| opt['value'].to_i }&.max
           @min_liability = liability_options&.map{|opt| opt['value'].to_i }&.min
         end
-        @min_liability.nil? ? 1000000 : @min_liability
-        @max_liability.nil? ? 30000000 : @max_liability
+
+        if @min_liability.nil? || @min_liability == 0 || @min_liability == "null"
+          @min_liability = 1000000
+        end
+
+        if @max_liability.nil? || @max_liability == 0 || @max_liability == "null"
+          @max_liability = 30000000
+        end
       end
 
       def update
