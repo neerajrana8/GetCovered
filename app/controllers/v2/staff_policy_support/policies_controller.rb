@@ -17,7 +17,18 @@ module V2
         super(:@policies, @substrate, :agency, :account, :primary_user, :primary_insurable, :carrier, :policy_type, invoices: :line_items)
       end
 
-      def show; end
+      def show
+=begin
+        account = staff.organizable
+        insurable = @policy.primary_insurable.parent_community
+        carrier_id = account.agency.providing_carrier_id(PolicyType::RESIDENTIAL_ID, insurable){|cid| (insurable.get_carrier_status(carrier_id) == :preferred) ? true : nil }
+        carrier_policy_type = CarrierPolicyType.where(carrier_id: carrier_id, policy_type_id: PolicyType::RESIDENTIAL_ID).take
+        uid = (carrier_id == ::MsiService.carrier_id ? '1005' : carrier_id == ::QbeService.carrier_id ? 'liability' : nil)
+        liability_options = ::InsurableRateConfiguration.get_inherited_irc(carrier_policy_type, account, insurable).configuration['coverage_options']&.[](uid)&.[]('options')
+        @max_liability = liability_options&.map{|opt| opt['value'].to_i }&.max
+        @min_liability = liability_options&.map{|opt| opt['value'].to_i }&.min
+=end
+      end
 
       def update
         if @policy.update(update_policy_attributes)
