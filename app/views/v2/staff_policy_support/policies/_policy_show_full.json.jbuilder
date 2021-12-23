@@ -7,6 +7,11 @@ json.agency policy.agency
 
 json.account policy.account
 
+json.compliance do
+  liability_min @min_liability
+  liability_max @max_liability
+end
+
 json.policy_application_group_id policy.policy_group&.policy_application_group&.id
 
 json.policy_application do
