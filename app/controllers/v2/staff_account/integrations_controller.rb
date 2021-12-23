@@ -72,7 +72,7 @@ module V2
                 password: @integration.credentials['billing']['password'],
                 database_server: @integration.credentials['billing']['database_server'],
                 database_name: @integration.credentials['billing']['database_name'],
-                url: @integration.credentials['urls']['billing_and_payments'],,
+                url: @integration.credentials['urls']['billing_and_payments'],
                 enabled: @integration.configuration['billing_and_payments']['enabled'],
                 active: @integration.configuration['billing_and_payments']['active'],
                 problems: @integration.configuration['billing_and_payments']['configuration_problems']
@@ -188,32 +188,3 @@ module V2
 end
 
 
-
-
-
-
-
-
-
-  integratable: @account,
-  provider: 'yardi',
-  enabled: true,
-  credentials: {
-    'voyager' => {
-      'username' => 'getcoveredqa',
-      'password' => '101915',
-      'database_server' => 'afqoml_itf_70QA',
-      'database_name' => 'afqoml_itf_70QA'
-    },
-    'billing' => {
-      'username' => 'getcoveredqa',
-      'password' => '101915',
-      'database_server' => 'afqoml_itf_70QA',
-      'database_name' => 'afqoml_itf_70QA'
-    },
-    'urls' => {
-      'billing_and_payments' => 'https://www.yardipcv.com/8223tp7s7qa/Webservices/ItfResidentTransactions20.asmx',
-      'renters_insurance' => 'https://www.yardipcv.com/8223tp7s7qa/Webservices/ItfRentersinsurance.asmx',
-      'system_batch' => 'https://www.yardipcv.com/8223tp7s7qa/Webservices/ItfResidentTransactions20_SysBatch.asmx'
-    }
-  }
