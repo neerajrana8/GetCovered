@@ -16,6 +16,7 @@ class StaffRole < ApplicationRecord
 
   # callbacks
   after_create :set_first_as_primary_on_staff
+  after_create :create_permissions
 
   accepts_nested_attributes_for :global_permission, update_only: true
 
@@ -29,6 +30,12 @@ class StaffRole < ApplicationRecord
   def set_first_as_primary_on_staff
     if staff&.staff_roles.count.eql?(1)
       update_attribute(:primary, true)
+    end
+  end
+
+  def create_permissions
+    if !self.global_permission and role === 'agent'
+      GlobalPermission.create(ownerable: self, permissions: {})
     end
   end
 end
