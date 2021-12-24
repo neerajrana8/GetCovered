@@ -27,3 +27,10 @@ json.branding_profiles do
     end
   end
 end
+
+json.global_permissions do
+  if account.global_permission
+    json.partial! 'v2/shared/global_permissions/full.json.jbuilder',
+                  global_permission: account.global_permission
+  end
+end

@@ -1,4 +1,6 @@
-json.agency_id global_permission.ownerable_id
+json.agency_id global_permission.ownerable_id if global_permission.ownerable_type === 'Agency'
+json.account_id global_permission.ownerable_id if global_permission.ownerable_type === 'Account'
+
 json.permissions do
   json.array! GlobalPermission::AVAILABLE_PERMISSIONS.keys.each do |key|
     json.key key
@@ -10,10 +12,12 @@ json.permissions do
   end
 end
 
-json.parent_global_agency_permission do
-  if global_permission.ownerable.parent_agency.present?
-    json.partial! 'v2/shared/global_permissions/full.json.jbuilder',
-                  global_permission: global_permission.ownerable.parent_agency.global_permission
+if global_permission.ownerable_type === 'Agency'
+  json.parent_global_agency_permission do
+    if global_permission.ownerable.parent_agency.present?
+      json.partial! 'v2/shared/global_permissions/full.json.jbuilder',
+                    global_permission: global_permission.ownerable.parent_agency.global_permission
 
+    end
   end
 end

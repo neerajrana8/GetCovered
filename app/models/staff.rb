@@ -41,7 +41,7 @@ class Staff < ApplicationRecord
   has_many :invoices, as: :invoiceable
   has_many :payment_profiles, as: :payer
   has_many :notification_settings, as: :notifyable
-  has_many :staff_roles
+  has_many :staff_roles, dependent: :destroy
   has_many :agencies, through: :staff_roles, source_type: 'Agency', source: :organizable
   has_many :accounts, through: :staff_roles, source_type: 'Account', source: :organizable
 
