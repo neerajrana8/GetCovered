@@ -36,6 +36,13 @@ json.global_agency_permission do
   end
 end
 
+json.global_permission do
+  if agency.global_permission
+    json.partial! 'v2/shared/global_permissions/full.json.jbuilder',
+                  global_permission: agency.global_permission
+  end
+end
+
 json.carriers do
   json.array! agency.carriers.each do |carrier|
     json.id carrier.id

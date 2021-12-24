@@ -54,7 +54,7 @@ module V2
             @staff.valid? if @staff.errors.blank?
             #because it had FrozenError (can't modify frozen Hash: {:password=>["can't be blank"]}):
             #@staff.errors.messages.except!(:password)
-            if (@staff.errors.none? || only_password_blank_error?(@staff.errors) ) && @staff.invite_as(current_staff)
+            if (@staff.errors.none? || only_password_blank_error?(@staff.errors) ) && @staff.invite_as!(current_staff)
               render :show,
                      status: :created
             else
@@ -118,6 +118,9 @@ module V2
           profile_attributes: %i[
             birth_date contact_email contact_phone first_name
             job_title last_name middle_name suffix title
+          ], staff_roles_attributes: [
+            :organizable_id, :organizable_type, :role,
+            global_permission_attributes: {permissions: {}}
           ]
         )
         to_return
@@ -159,7 +162,9 @@ module V2
           profile_attributes: %i[
             id birth_date contact_email contact_phone first_name
             job_title last_name middle_name suffix title
-          ], global_permission_attributes: {permissions: {}}
+          ], staff_roles_attributes: [
+            :id, global_permission_attributes: {permissions: {}}
+          ]
         )
       end
 

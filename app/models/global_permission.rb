@@ -61,11 +61,11 @@ class GlobalPermission < ApplicationRecord
   def update_staff_permissions
     # Update staff permissions if agency permissions change
     if ownerable.is_a? Agency or ownerable.is_a? Account
-      ownerable.staff.each do |staff|
-        staff_permission = staff.global_permission
+      ownerable.staff_roles.where(role: 'agent').each do |staff_role|
+        staff_permission = staff_role.global_permission
 
         if staff_permission.nil?
-          GlobalPermission.create(ownerable: staff, permissions: permissions)
+          GlobalPermission.create(ownerable: staff_role, permissions: permissions)
         else
           permissions.each do |key, value|
             # Sync permissions for agency owners

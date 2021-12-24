@@ -19,8 +19,8 @@ class Staff < ApplicationRecord
        _prefix: true
 
 
-  validate :proper_role
-  validates :organizable, presence: true, unless: -> { super_admin? }
+  # validate :proper_role
+  # validates :organizable, presence: true, unless: -> { super_admin? }
 
   # Active Record Callbacks
   after_initialize :initialize_staff
