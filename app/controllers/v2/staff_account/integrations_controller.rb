@@ -150,7 +150,7 @@ module V2
       private # call as v2/integrations/yardi
       
         def set_provider
-          @provider = params[:provider]
+          @provider = params[:provider].to_s
         end
         
         def set_integration
