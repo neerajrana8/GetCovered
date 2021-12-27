@@ -103,7 +103,7 @@ module V2
               render json: standard_error(:error_creating_integration, "#{created.errors.to_h}"),
                 status: 422
             else
-              @integration = Integrations::Yardi::Refresh(integration: @integration)
+              @integration = Integrations::Yardi::Refresh.run!(integration: @integration)
               show # we just call show to render what we've made
             end
           else
@@ -135,7 +135,7 @@ module V2
               render json: standard_error(:error_creating_integration, "#{created.errors.to_h}"),
                 status: 422
             else
-              @integration = Integrations::Yardi::Refresh(integration: @integration)
+              @integration = Integrations::Yardi::Refresh.run!(integration: @integration)
               show # we just call show to render the updates
             end
           else
