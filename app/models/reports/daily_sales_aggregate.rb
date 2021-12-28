@@ -173,7 +173,7 @@ module Reports
           end.compact
 
         {
-          subagency_data: item_report(subagency),
+          subagency_data: subagency_report,
           subagency_accounts: subagency_accounts_reports.sort_by { |row| [row['any_activity'] ? 0 : 1] }
         }
       end.compact
