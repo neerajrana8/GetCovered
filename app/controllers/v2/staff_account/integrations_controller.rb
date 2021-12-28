@@ -94,11 +94,19 @@ module V2
         end
         case @provider
           when 'yardi'
-            created = ::Integration.create(
+            created = ::Integration.new(
               integratable: current_staff.organizable,
               provider: @provider,
-              credentials: create_params
+              credentials: {},
+              configuration: {}
             )
+            { renters_insurance: :voyager, billing_and_payments: :billing }.each do |interface, cred_section|
+              [:username, :password, :database_server, :database_name].each do |field|
+                created.credentials[cred_section.to_s][field.to_s] = yardi_update_params[interface][field] if yardi_update_params[interface]&.has_key?(field)
+              end
+              created.credentials['urls'][interface.to_s] = yardi_update_params[interface]['url'] if yardi_update_params[interface]&.has_key?('url')
+              created.configuration[interface.to_s]['enabled'] = yardi_update_params[interface]['enabled'] if yardi_update_params[interface]&.has_key?('enabled')
+            end
             if !created.id
               render json: standard_error(:error_creating_integration, "#{created.errors.to_h}"),
                 status: 422
@@ -125,10 +133,10 @@ module V2
             # update @interface's fields
             { renters_insurance: :voyager, billing_and_payments: :billing }.each do |interface, cred_section|
               [:username, :password, :database_server, :database_name].each do |field|
-                @integration.credentials[cred_section.to_s][field.to_s] = update_params[interface][field] if update_params[interface]&.has_key?(field)
+                @integration.credentials[cred_section.to_s][field.to_s] = yardi_update_params[interface][field] if yardi_update_params[interface]&.has_key?(field)
               end
-              @integration.credentials['urls'][interface.to_s] = update_params[interface]['url'] if update_params[interface]&.has_key?('url')
-              @integration.configuration[interface.to_s]['enabled'] = update_params[interface]['enabled'] if update_params[interface]&.has_key?('enabled')
+              @integration.credentials['urls'][interface.to_s] = yardi_update_params[interface]['url'] if yardi_update_params[interface]&.has_key?('url')
+              @integration.configuration[interface.to_s]['enabled'] = yardi_update_params[interface]['enabled'] if yardi_update_params[interface]&.has_key?('enabled')
             end
             # try saving
             if !@integration.save
@@ -157,14 +165,14 @@ module V2
           @integration = ::Integration.where(integratable: current_staff.organizable, provider: params[:provider].to_s).take # WARNING: does not throw error via .find() like some controllers
         end
 
-        def create_params
+        def yardi_create_params
           params.permit(
             renters_insurance: [:username, :password, :database_server, :database_name, :url, :enabled],
             billing_and_payments: [:username, :password, :database_server, :database_name, :url, :enabled]
           )
         end
 
-        def update_params
+        def yardi_update_params
           params.permit(
             renters_insurance: [:username, :password, :database_server, :database_name, :url, :enabled],
             billing_and_payments: [:username, :password, :database_server, :database_name, :url, :enabled]
