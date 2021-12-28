@@ -19,7 +19,7 @@ module Integrations
         # renters stuff
         renters_issues = []
         missing_fields = [:username, :password, :database_server, :database_name].map{|s| s.to_s }.select{|field| integration.credentials['voyager'][field].blank? }
-        missing_fields.push("url") if integration['urls']['renters_insurance'].blank?
+        missing_fields.push("url") if integration.credentials['urls']['renters_insurance'].blank?
         renters_issues.push("Your renters insurance configuration is missing fields: #{missing_fields.join(", ")}") unless missing_fields.blank?
         renters_issues.push("You have not enabled renter's insurance integration.") if !integration.configuration['renters_insurance']['enabled']
         if renters_issues.blank?
@@ -31,7 +31,7 @@ module Integrations
         # billing stuff
         billing_issues = []
         missing_fields = [:username, :password, :database_server, :database_name].map{|s| s.to_s }.select{|field| integration.credentials['billing'][field].blank? }
-        missing_fields.push("url") if integration['urls']['billing_and_payments'].blank?
+        missing_fields.push("url") if integration.credentials['urls']['billing_and_payments'].blank?
         billing_issues.push("Your billing & payments configuration is missing fields: #{missing_fields.join(", ")}") unless missing_fields.blank?
         renters_issues.push("You have not enabled billing & payments integration.") if !integration.configuration['billing_and_payments']['enabled']
         if billing_issues.blank?
