@@ -3,7 +3,7 @@ module V2
     class IntegrationsController < StaffAccountController
       before_action :set_substrate, only: :index
       before_action :set_provider, except: :index
-      before_action :set_integration, only: %i[update show create] # yes, even in create; we want to see if the thing exists already
+      before_action :set_integration, except: :index # yes, even in create; we want to see if the thing exists already
       
       def index
         render json: standard_error(:does_not_exist, "No integration index functionality exists yet."),
@@ -13,7 +13,7 @@ module V2
       def show
         # render a blank integration inside of here, no need to bother returning
         if @integration.nil?
-          case provider
+          case @provider
             when 'yardi'
               render json: {
                 exists: false,
@@ -46,7 +46,7 @@ module V2
         end
         unimplemented_provider = false
         # render an integration inside of here, no need to bother returning
-        case provider
+        case @provider
           when 'yardi'
             @integration.credentials ||= {}
             @integration.credentials['voyager'] ||= {}
@@ -96,7 +96,7 @@ module V2
           when 'yardi'
             created = ::Integration.create(
               integratable: current_staff.organizable,
-              provider: provider,
+              provider: @provider,
               credentials: create_params
             )
             if !created.id
@@ -154,7 +154,7 @@ module V2
         end
         
         def set_integration
-          @integration = ::Integration.where(integratable: current_staff.organizable, provider: params[:provider]).take # WARNING: does not throw error via .find() like some controllers
+          @integration = ::Integration.where(integratable: current_staff.organizable, provider: params[:provider].to_s).take # WARNING: does not throw error via .find() like some controllers
         end
 
         def create_params
