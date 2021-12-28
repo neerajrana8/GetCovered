@@ -16,7 +16,12 @@ module BrandingProfilesMethods
   end
 
   def show
-    render template: 'v2/shared/branding_profiles/show', status: :ok
+    if @branding_profile.nil?
+      render json: standard_error(error: :branding_profile_not_found, message: "Branding profile not found"),
+             status: :not_found
+    else
+      render template: 'v2/shared/branding_profiles/show', status: :ok
+    end
   end
 
   def import
