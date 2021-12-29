@@ -10,7 +10,7 @@ module V2
 
     private
       def is_super_admin?
-        render json: { error: "Unauthorized access"}, status: :unauthorized unless current_staff.super_admin?
+        render json: { error: "Unauthorized access"}, status: :unauthorized unless current_staff.staff_roles.where(role: 'super_admin').count > 0
       end
 
       def view_path
