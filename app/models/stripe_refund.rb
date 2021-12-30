@@ -35,7 +35,6 @@ class StripeRefund < ApplicationRecord
         created_refund = Stripe::Refund.create({
           charge: self.stripe_charge.stripe_id,
           amount: self.amount,
-          currency: 'usd',
           reason: self.stripe_reason,
           metadata: {
             metadata_version: 1,
