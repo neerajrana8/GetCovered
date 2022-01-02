@@ -115,7 +115,19 @@ class Staff < ApplicationRecord
   end
 
   def getcovered_agent?
-    organizable_type == 'Agency' && organizable_id == ::Agency::GET_COVERED_ID
+    self.staff_roles.where(organizable: 'Agency', organizable_id: ::Agency::GET_COVERED_ID).count > 0
+  end
+
+  def current_role(organizable: nil)
+    conditions = {
+      primary: true
+    }
+
+    if organizable
+      conditions[:organizable_type] = organizable
+    end
+
+    self.staff_roles.where(conditions).first
   end
 
   private
