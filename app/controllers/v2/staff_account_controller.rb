@@ -12,7 +12,7 @@ module V2
     private
 
     def is_staff?
-      render json: { error: "Unauthorized access"}, status: :unauthorized unless current_staff.staff?
+      render json: { error: "Unauthorized access"}, status: :unauthorized unless current_staff.current_role.staff?
     end
 
     def view_path
@@ -26,8 +26,8 @@ module V2
 
     def set_account
       @account =
-        if current_staff.organizable.present? && current_staff.organizable.is_a?(::Account)
-          current_staff.organizable
+        if current_staff.current_role('Account').present? && current_staff.current_role('Account').organizable.is_a?(::Account)
+          current_staff.current_role('Account').organizable
         end
     end
   end
