@@ -62,6 +62,8 @@ Rails.application.routes.draw do
           get :close_all_sessions
         end
       end
+
+      resources :roles, only: [:update]
     end
 
     draw :user

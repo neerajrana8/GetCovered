@@ -55,6 +55,8 @@ class Staff < ApplicationRecord
   accepts_nested_attributes_for :staff_permission, update_only: true
   accepts_nested_attributes_for :staff_roles
 
+  alias available_roles staff_roles
+
   settings index: { number_of_shards: 1 } do
     mappings dynamic: 'false' do
       indexes :email, type: :text
