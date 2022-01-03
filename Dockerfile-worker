@@ -8,8 +8,7 @@ MAINTAINER dylan@getcoveredllc.com
 RUN apt-get update && apt-get install -y \
   build-essential \
   locales \
-  nodejs \
-  imagemagick
+  nodejs
 
 # Use en_US.UTF8 as our locale
 RUN locale-gen en_US.UTF8
@@ -28,14 +27,14 @@ WORKDIR /getcovered
 # will be cached unless changes to one of those two files
 # are made.
 COPY Gemfile Gemfile.lock ./
-RUN gem install bundler && RAILS_ENV=production bundle install --jobs 20 --retry 5
+RUN gem install bundler && RAILS_ENV=development bundle install --jobs 20 --retry 5
 
 # Copy the main application.
 RUN bundle config --global frozen 1
 COPY Gemfile /getcovered/
 COPY Gemfile.lock /getcovered/
 
-RUN RAILS_ENV=production bundle install --path /bundle
+RUN RAILS_ENV=development bundle install --path /bundle
 COPY . /getcovered
 
 # Add a script to be executed every time the container starts.
@@ -43,7 +42,11 @@ COPY entrypoint.sh /usr/bin/
 RUN chmod +x /usr/bin/entrypoint.sh
 ENTRYPOINT ["entrypoint.sh"]
 
-LABEL maintainer="Dylan Gaines <dylan@getcovered.io>"
+# Expose port 3000 to the Docker host, so we can access it
+# from the outside.
+EXPOSE 3000
+
+LABEL maintainer="Dylan Gaines <dylan@getcoveredllc.com>"
 
 # Start the main process.
 CMD ["bundle", "exec", "sidekiq"]
