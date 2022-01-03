@@ -126,6 +126,9 @@ module V2
           profile_attributes: %i[ id
             birth_date contact_email contact_phone first_name
             job_title last_name middle_name suffix title
+          ], staff_roles_attributes: [
+            :organizable_id, :organizable_type, :role,
+            global_permission_attributes: {permissions: {}}
           ]
         )
         to_return
