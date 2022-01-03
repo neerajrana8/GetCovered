@@ -15,10 +15,6 @@
 # it.
 #
 # See http://rubydoc.info/gems/rspec-core/RSpec/Core/Configuration
-require 'elasticsearch/model'
-include Elasticsearch::Model
-include Elasticsearch::Model::Callbacks
-include Elasticsearch::Model::Indexing
 
 require 'simplecov'
 SimpleCov.start 'rails' do
@@ -108,21 +104,8 @@ RSpec.configure do |config|
   #   # as the one that triggered the failure.
   #   Kernel.srand config.seed
 
-  Elasticsearch::Model.client = Elasticsearch::Client.new host: 'http://localhost:9200', log: false
-
-  ES_CLASSES = %w[Account Address Agency Carrier Insurable Profile Staff User PolicyApplication PolicyQuote Policy].freeze # removed Invoice, Lease, PolicyApplication, PolicyQuote, Policy
-
   config.before :each, type: :controller do
     request.env['HTTP_ACCEPT_LANGUAGE'] = "en"
-  end
-
-  config.around :each, elasticsearch: true do |example|
-    ES_CLASSES.each do |esc|
-      klass = esc.constantize
-      klass.__elasticsearch__.create_index!
-      klass.__elasticsearch__.refresh_index!
-    end
-    example.run
   end
   
   
