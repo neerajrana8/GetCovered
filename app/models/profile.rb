@@ -7,7 +7,6 @@ class Profile < ApplicationRecord
 
   before_validation :format_contact_phone
   before_save :set_full_name, :fix_phone_number
-  after_commit :update_relations, unless: -> { [Lead].include?(profileable.class) }
 
   # Validations(remove validation for profiles for leads)
   validates_presence_of :first_name, :last_name, unless: -> { [Lead].include?(profileable.class) }
@@ -22,12 +21,6 @@ class Profile < ApplicationRecord
   end
 
   private
-
-    def update_relations
-      Staff.update_profile(self)
-    end
-
-
     # Profile.format_contact_phone
     def format_contact_phone
       if self.contact_phone == ""
