@@ -1,6 +1,6 @@
 FROM ubuntu:14.04
-FROM ruby:3.0.1
-MAINTAINER dylan@getcovered.io
+FROM ruby:2.5.1
+MAINTAINER dylan@getcoveredllc.com
 
 # Install apt based dependencies required to run Rails as
 # well as RubyGems. As the Ruby image itself is based on a
@@ -28,12 +28,14 @@ WORKDIR /getcovered
 # will be cached unless changes to one of those two files
 # are made.
 COPY Gemfile Gemfile.lock ./
-RUN gem install bundler && RAILS_ENV=development bundle install --jobs 20 --retry 5
+RUN gem install bundler && RAILS_ENV=production bundle install --jobs 20 --retry 5
 
 # Copy the main application.
 RUN bundle config --global frozen 1
 COPY Gemfile /getcovered/
 COPY Gemfile.lock /getcovered/
+
+RUN RAILS_ENV=production bundle install --path /bundle
 COPY . /getcovered
 
 # Add a script to be executed every time the container starts.
