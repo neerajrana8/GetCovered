@@ -4,20 +4,15 @@
 # An account is an entity which owns or lists property and entity's either in need
 # of coverage or to track existing coverage.  Accounts are controlled by staff who 
 # have been assigned the Account in their organizable relationship.
-# export PUBLISHABLE_KEY="pk_test_EfYPHgUKyZYzJjWegJmBr2DR"
-# export SECRET_KEY="sk_test_IBSW1QDuu306wJQCUQkattsa"
 
 class Account < ApplicationRecord
+
   # Concerns
-  include ElasticsearchSearchable
   include SetSlug
   include SetCallSign
   include EarningsReport
   include CoverageReport
   include RecordChange
-
-  # Active Record Callbacks
-  after_initialize :initialize_agency
   
   # belongs_to relationships
   belongs_to :agency
@@ -101,22 +96,12 @@ class Account < ApplicationRecord
     commission_deductions.map(&:unearned_balance).reduce(:+) || 0
   end
 
-
   # Attach Payment Source
   #
   # Attach a stripe source token to a user (Stripe Customer)
-  
   def attach_payment_source(token = nil, make_default = true)
     AttachPaymentSource.run(account: self, token: token, make_default: make_default)
   end
-
-  settings index: { number_of_shards: 1 } do
-    mappings dynamic: 'false' do
-      indexes :title, type: :text, analyzer: 'english'
-      indexes :call_sign, type: :text, analyzer: 'english'
-    end
-  end
-  
   
   # Get Msi General Party Info
   #
@@ -163,10 +148,6 @@ class Account < ApplicationRecord
   end
   
   private
-    
-    def initialize_agency
-      # Blank for now...
-    end
 
     # get an array [first, last] presenting self.title as if it were a name;
     # guarantees nonempty first and last with length at most 50 characters;

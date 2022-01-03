@@ -38,7 +38,6 @@
 
 class Policy < ApplicationRecord
   # Concerns
-  include ElasticsearchSearchable
   include CarrierPensioPolicy
   include CarrierCrumPolicy
   include CarrierQbePolicy
@@ -401,12 +400,6 @@ class Policy < ApplicationRecord
 
   def rent_garantee?
     policy_type == PolicyType.rent_garantee
-  end
-
-  settings index: { number_of_shards: 1 } do
-    mappings dynamic: 'false' do
-      indexes :number, type: :text
-    end
   end
 
   def refund_available_days
