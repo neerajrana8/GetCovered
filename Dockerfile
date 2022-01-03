@@ -24,12 +24,7 @@ WORKDIR /getcovered
 # the RubyGems. This is a separate step so the dependencies
 # will be cached unless changes to one of those two files
 # are made.
-# COPY Gemfile Gemfile.lock ./
-# RUN gem install bundler && RAILS_ENV=development bundle install --jobs 20 --retry 5
-
-# Copy the main application.
-COPY Gemfile /getcovered/
-COPY Gemfile.lock /getcovered/
+COPY Gemfile Gemfile.lock ./
 
 RUN gem install bundler --version $BUNDLE_VERSION
 RUN bundle config --global frozen 1
