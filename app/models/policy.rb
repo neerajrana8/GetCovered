@@ -48,6 +48,7 @@ class Policy < ApplicationRecord
   include RecordChange
 
   after_create :schedule_coverage_reminders, if: -> { policy_type&.master_coverage }
+  after_create_commit :create_necessary_policy_coverages_for_external, if: -> { policy_in_system == false }
 
   # after_save :start_automatic_master_coverage_policy_issue, if: -> { policy_type&.designation == 'MASTER' }
 
@@ -453,6 +454,17 @@ class Policy < ApplicationRecord
   def update_users_status
     users.each do |user|
       user.update(has_existing_policies: true)
+    end
+  end
+
+  def create_necessary_policy_coverages_for_external
+    unless self.policy_coverages.where(designation: "liability").count > 0
+      self.policy_coverages.create!(
+        title: "Liability",
+        designation: "liability",
+        limit: 0,
+        enabled: true
+      )
     end
   end
 end
