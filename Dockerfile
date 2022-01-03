@@ -34,8 +34,6 @@ RUN gem install bundler && RAILS_ENV=development bundle install --jobs 20 --retr
 RUN bundle config --global frozen 1
 COPY Gemfile /getcovered/
 COPY Gemfile.lock /getcovered/
-
-RUN RAILS_ENV=development bundle install --path /bundle
 COPY . /getcovered
 
 # Add a script to be executed every time the container starts.
