@@ -29,7 +29,7 @@ gem 'authtrail', '~> 0.4.1'
 gem 'bootsnap', '>= 1.9.1', require: false
 
 # NokoGiri
-gem 'nokogiri', '>= 1.12.4'
+gem 'nokogiri', '>= 1.12.5'
 
 # HTTParty
 gem 'httparty'
