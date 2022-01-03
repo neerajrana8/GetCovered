@@ -1,3 +1,4 @@
+=begin
 require 'aws-sdk-elasticsearchservice'
 
 config = {
@@ -12,3 +13,4 @@ if File.exists?("config/elasticsearch.yml")
 end
 
 Elasticsearch::Model.client = Elasticsearch::Client.new(config)
+=end
