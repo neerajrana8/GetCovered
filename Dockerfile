@@ -1,4 +1,4 @@
-FROM ubuntu:20.04.3
+FROM ubuntu:20.04
 FROM ruby:3.0.1
 MAINTAINER dylan@getcoveredllc.com
 
