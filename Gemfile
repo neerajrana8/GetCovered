@@ -82,9 +82,6 @@ gem 'premailer-rails'
 gem 'geocoder', '~> 1.6.7'
 gem 'StreetAddress', require: 'street_address'
 
-gem 'elasticsearch-model', github: 'elastic/elasticsearch-rails', branch: '6.x'
-gem 'elasticsearch-rails', github: 'elastic/elasticsearch-rails', branch: '6.x'
-
 # Colorizing console output to highlight stuffs
 gem 'colorize'
 gem 'faker'
