@@ -1,5 +1,5 @@
 FROM ubuntu:14.04
-FROM ruby:2.5.1
+FROM ruby:3.0.1
 MAINTAINER dylan@getcoveredllc.com
 
 # Install apt based dependencies required to run Rails as
