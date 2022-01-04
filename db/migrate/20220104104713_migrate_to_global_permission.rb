@@ -1,4 +1,4 @@
-class MigrateToGlobalPermission < ActiveRecord::Migration[5.2]
+class MigrateToGlobalPermission < ActiveRecord::Migration[6.1]
   def up
     # Migrate agencies
     Agency.in_batches.each_record do |agency|
@@ -6,7 +6,7 @@ class MigrateToGlobalPermission < ActiveRecord::Migration[5.2]
         if agency.parent_agency.global_permission
           permissions = agency.parent_agency.global_permission.permissions
         else
-          permissions = agency.parent_agency.global_agency_permission.permissions
+          permissions = agency.parent_agency.global_agency_permission&.permissions
         end
       else
         permissions = agency.global_agency_permission&.permissions
@@ -16,7 +16,7 @@ class MigrateToGlobalPermission < ActiveRecord::Migration[5.2]
 
     # Migrate Account
     Account.in_batches.each_record do |account|
-      permissions = account.agency.global_permission.permissions
+      permissions = account.agency.global_permission&.permissions
 
       GlobalPermission.create(ownerable: account, permissions: permissions)
     end
@@ -26,7 +26,7 @@ class MigrateToGlobalPermission < ActiveRecord::Migration[5.2]
       next unless staff.organizable.present?
       permissions = staff.organizable.global_permission&.permissions
 
-      GlobalPermission.create(ownerable: staff, permissions: permissions) if permissions
+      StaffRole.create(role: staff.role, global_permission_attributes: {permissions: permissions}, staff: staff, organizable: staff.organizable)
     end
   end
 
