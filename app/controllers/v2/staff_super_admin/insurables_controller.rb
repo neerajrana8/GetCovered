@@ -55,6 +55,42 @@ module V2
         end
       end
 
+      def bulk_create
+        agency = Agency.find_by_id bulk_create_params[:common_attributes][:agency_id]
+        unless agency.present?
+          render json: standard_error(:agency_was_not_found), status: :not_found
+          return
+        end
+
+        account = agency.accounts.find_by_id(bulk_create_params[:common_attributes][:account_id])
+        unless account.present?
+          render json: { success: false, errors: ['account_id should be present and relate to this agency'] },
+                 status: :unprocessable_entity
+          return
+        end
+
+        already_created_insurables =
+          Insurable.where(insurable_id: bulk_create_params[:common_attributes][:insurable_id],
+                          insurable_type_id: bulk_create_params[:common_attributes][:insurable_type_id],
+                          title: insurables_titles).pluck(:title)
+        new_insurables_titles = insurables_titles - already_created_insurables
+        new_insurables_params = new_insurables_titles.reduce([]) do |result, title|
+          result << bulk_create_params[:common_attributes].merge(title: title)
+        end
+
+        @insurables = account.insurables.create(new_insurables_params)
+
+        errors = @insurables.
+          reject(&:valid?).
+          map { |insurable| { title: insurable.title, errors: insurable.errors.full_messages } }
+
+        render json: {
+          created: @insurables.select(&:valid?),
+          already_created: already_created_insurables,
+          errors: errors
+        }
+      end
+
       def coverage_report
         render json: @insurable.coverage_report
       end
@@ -167,6 +203,21 @@ module V2
           end
         end
         to_return
+      end
+
+      def insurables_titles
+        bulk_create_params[:ranges].reduce([]) do |result, range_string|
+          result | Range.new(*range_string.split('..')).to_a
+        end
+      end
+
+      def bulk_create_params
+        params.require(:insurables).permit(
+          common_attributes: [
+            :category, :account_id, :insurable_type_id, :insurable_id, :enabled, :agency_id
+          ],
+          ranges: []
+        )
       end
 
       def update_params

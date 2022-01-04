@@ -229,6 +229,10 @@
         get 'related-insurables', to: 'insurables#related_insurables'
       end
 
+      collection do
+        post :bulk_create
+      end
+
       resources :insurable_rates,
                 path: "insurable-rates",
                 defaults: {
