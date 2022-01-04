@@ -38,7 +38,7 @@ module RecordChange
       send_invite: send_invite
     }
     performed_object = new_record? ? PassingObjectSerializer.serialize(self) : self
-    RecordChangeInviteAs.perform_later(performed_object, params)
+    RecordChangeInviteAs.perform_later(performed_object, **params)
   end
 
   def invite_as!(inviter, invite_as_params = nil, send_invite: true)

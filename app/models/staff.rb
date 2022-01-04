@@ -91,7 +91,7 @@ class Staff < ApplicationRecord
   end
 
   def set_first_as_primary_on_organizable
-    if organizable&.staff&.count&.eql?(1)
+    if organizable&.staff&.count&.eql?(1) || organizable&.staff&.count&.eql?(0)
       organizable.update staff_id: id
       update_attribute(:owner, true)
     end
