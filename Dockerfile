@@ -29,7 +29,7 @@ COPY Gemfile Gemfile.lock ./
 RUN gem install bundler --version $BUNDLE_VERSION
 RUN bundle config --global frozen 1
 RUN bundle config set --local path '/bundle'
-RUN RAILS_ENV=development bundle install
+RUN RAILS_ENV=production bundle install
 COPY . /getcovered
 
 # Add a script to be executed every time the container starts.
@@ -40,3 +40,5 @@ ENTRYPOINT ["entrypoint.sh"]
 # Expose port 3000 to the Docker host, so we can access it
 # from the outside.
 EXPOSE 3000
+
+CMD ["bundle", "exec", "puma", "-C", "config/puma.rb"]
