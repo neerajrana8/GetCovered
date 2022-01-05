@@ -67,6 +67,10 @@
 
           put :enable
           put :disable
+          
+          get "policy-types",
+            to: "agencies#get_policy_types",
+            via: "get"
         end
 
         collection do
