@@ -6,6 +6,7 @@ production:
 
 :queues:
   - default
+  - authtrail
   - stripe
   - elasticsearch
   - mailer
@@ -28,9 +29,6 @@ production:
   daily_sales_internal_send_emails:
     cron:  '0 5 * * *'   # Each day at 5:00 AM
     class: Reports::DailySalesInternalSendEmailsJob
-  daily_sales_external_send_emails:
-    cron:  '0 5 * * *'   # Each day at 5:00 AM
-    class: Reports::DailySalesExternalSendEmailsJob
   coverage_reports_job:
     cron: '0 2 * * *'   # Every day at 2:00 AM
     class: Reports::CoverageReportsJob

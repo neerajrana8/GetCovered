@@ -7,8 +7,8 @@ module Reports
         new(
           reportable_id: reportable_id,
           reportable_type: reportable_type,
-          range_start: Time.zone.at(range_start),
-          range_end: Time.zone.at(range_end)
+          range_start: Time.zone.at(range_start).in_time_zone('Eastern Time (US & Canada)'),
+          range_end: Time.zone.at(range_end).in_time_zone('Eastern Time (US & Canada)')
         ).
         generate.
         save

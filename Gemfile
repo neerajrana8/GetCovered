@@ -25,6 +25,8 @@ gem 'redis', '~> 4.0'
 # gem 'capistrano-rails', group: :development
 
 gem 'authtrail'
+gem 'browser'
+
 # Reduces boot times through caching; required in config/boot.rb
 gem 'bootsnap', '>= 1.1.0', require: false
 

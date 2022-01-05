@@ -48,6 +48,9 @@ class Insurable < ApplicationRecord
 
   has_many :histories, as: :recordable
 
+  has_many :integration_profiles,
+           as: :profileable
+
   accepts_nested_attributes_for :addresses, allow_destroy: true
 
   enum category: %w[property entity]
