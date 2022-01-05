@@ -552,6 +552,7 @@ class Insurable < ApplicationRecord
               addresses: [ address ],
               account_id: account_id || nil
             )
+          created.insurable_id = parent.id if parent
           unless created.save
             message = parent.nil? ? I18n.t('insurable_model.unable_to_create_from_address') : I18n.t('insurable_model.unable_to_create_building_from_address')
            return { error_type: :"invalid_#{parent.nil? ? 'community' : 'building'}",
