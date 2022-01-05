@@ -360,7 +360,7 @@ class PolicyQuote < ApplicationRecord
             unless created.id
               dat_problemo = {
                 internal: "Failed to generate invoice for collector #{collector.class.name} ##{collector.id} and PolicyPremiumPaymentTerm #{pppt.id}; errors were #{created.errors.to_h}",
-                external: "policy_quote.invoice_gen_failed"
+                external: "policy_quote_model.invoice_gen_failed"
               }
               raise ActiveRecord::Rollback
             end
@@ -368,10 +368,9 @@ class PolicyQuote < ApplicationRecord
           end
         ]
       end.to_h
-      return dat_problemo unless dat_problemo.nil?
     end
     # all done
-    return nil
+    return dat_problemo
   end
 
   private

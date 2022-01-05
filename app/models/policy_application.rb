@@ -72,9 +72,9 @@ class PolicyApplication < ApplicationRecord
   validate :check_commercial_question_responses,
     if: proc { |pol| pol.policy_type.title == "Commercial" }
   validates_presence_of :expiration_date, :effective_date
-
   validate :date_order,
-           unless: proc { |pol| pol.effective_date.nil? || pol.expiration_date.nil? }
+    unless: proc { |pol| pol.effective_date.nil? || pol.expiration_date.nil? }
+  validate :user_age
 
   enum status: { started: 0, in_progress: 1, complete: 2, abandoned: 3,
                  quote_in_progress: 4, quote_failed: 5, quoted: 6,
@@ -121,6 +121,7 @@ class PolicyApplication < ApplicationRecord
   # if the method exists.
 
   def quote(*args)
+    self.reload
     method = "#{carrier.integration_designation}_quote"
     respond_to?(method) ? send(*([method] + args)) : false
   end
@@ -248,36 +249,41 @@ class PolicyApplication < ApplicationRecord
 
   private
 
-  def initialize_policy_application; end
+    def initialize_policy_application; end
 
-  def date_order
-    errors.add(:expiration_date, I18n.t('policy_app_model.expiration_date_cannot_be_before_effective')) if expiration_date < effective_date
-  end
+    def date_order
+      errors.add(:expiration_date, I18n.t('policy_app_model.expiration_date_cannot_be_before_effective')) if expiration_date < effective_date
+    end
 
-  def set_reference
-    return_status = false
+    def set_reference
+      return_status = false
 
-    if reference.nil?
-      loop do
-        parent_entity = account.nil? ? agency : account
-        self.reference = "#{parent_entity.call_sign}-#{rand(36**12).to_s(36).upcase}"
-        return_status = true
+      if reference.nil?
+        loop do
+          parent_entity = account.nil? ? agency : account
+          self.reference = "#{parent_entity.call_sign}-#{rand(36**12).to_s(36).upcase}"
+          return_status = true
 
-        break unless PolicyApplication.exists?(reference: reference)
+          break unless PolicyApplication.exists?(reference: reference)
+        end
+      end
+
+      return_status
+    end
+
+    def set_up_application_answers
+      carrier.policy_application_fields
+        .where(policy_type: policy_type, enabled: true)
+        .each do |field|
+
+        policy_application_answers.create!(
+          policy_application_field: field
+        )
       end
     end
-
-    return_status
-  end
-
-  def set_up_application_answers
-    carrier.policy_application_fields
-      .where(policy_type: policy_type, enabled: true)
-      .each do |field|
-
-      policy_application_answers.create!(
-        policy_application_field: field
-      )
+    
+    def user_age
+      pu = self.primary_user
+      errors.add(:policy_holder, I18n.t('policy_app_model.user_age', name: [pu.profile.first_name, pu.profile.last_name].join(" "))) unless pu.nil? || pu.profile.birth_date&.<=(18.years.ago)
     end
-  end
 end

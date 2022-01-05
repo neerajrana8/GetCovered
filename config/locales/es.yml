@@ -88,6 +88,7 @@ es:
       cant_create_user: "No se puede crear un usuario"
       cant_update_address: "No se puede actualizar la dirección"
   policy_app_model:
+    user_age: "%{name} debe tener al menos 18 años"
     billing_strategy_must_belong: "la estrategia de facturación debe pertenecer a la misma agencia"
     billing_strategy_must_be_valid: "debe ser una estrategia de facturación válida para el operador actual"
     billing_strategy_must_be_enabled: "la estrategia de facturación debe estar habilitada"
@@ -180,6 +181,7 @@ es:
     no_build_coverages_for_crum: 'No hay coberturas de construcción para Crum'
     no_build_coverages_for_pensio: 'No hay coberturas de construcción para Pensio'
     error_with_build_coverages: 'Se produjo un error con las coberturas de compilación'
+    invoice_gen_failed: "Encontramos un error al procesar su solicitud."
   policy_bind_warning_notification_job:
     get_covered_bind_warning: "Obtenga una advertencia de enlace cubierto"
   qbe_policy_quote:
