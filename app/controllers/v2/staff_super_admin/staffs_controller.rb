@@ -93,7 +93,7 @@ module V2
       def is_bulk_creation?
         params&.keys&.include?("property_managers_attributes")
       end
-
+        
       def only_password_blank_error?(staff_errors)
         staff_errors.messages.keys == [:password]
       end
