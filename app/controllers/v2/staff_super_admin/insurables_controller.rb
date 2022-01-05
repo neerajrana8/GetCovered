@@ -12,7 +12,29 @@ module V2
       before_action :set_agency, only: [:create]
 
       def index
-        super_index(:@insurables, Insurable.all)
+        query = Insurable.all
+
+        if params[:tenant]
+          query =
+            query.
+              joins(
+                leases: {
+                  lease_users: {
+                    user: :profile
+                  }
+                }
+              ).
+              where(
+                lease_users: {
+                  primary: true
+                },
+                leases: {
+                  status: 'current'
+                }
+              ).where('profiles.full_name ILIKE ?', "%#{params[:tenant]}%")
+        end
+
+        super_index(:@insurables, query)
       end
 
       def show; end
@@ -45,20 +67,6 @@ module V2
           render json: { success: false },
                  status: :unprocessable_entity
         end
-      end
-
-      def policies
-        insurable_units_ids =
-          if InsurableType::UNITS_IDS.include?(@insurable.insurable_type_id)
-            @insurable.id
-          else
-            [@insurable.units&.pluck(:id), @insurable.id, @insurable.insurables.ids].flatten.uniq.compact
-          end
-
-        policies_query = Policy.joins(:insurables).where(insurables: { id: insurable_units_ids }).order(created_at: :desc)
-
-        @policies = paginator(policies_query)
-        render :policies, status: :ok
       end
 
       def related_insurables
@@ -193,6 +201,8 @@ module V2
           insurable_type_id: %i[scalar array],
           insurable_id: %i[scalar array],
           account_id: %i[scalar array],
+          agency_id: %i[scalar array],
+          confirmed: %i[scalar],
           created_at: %i[scalar array interval],
           updated_at: %i[scalar array interval],
           category: %i[scalar array],

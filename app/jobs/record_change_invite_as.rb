@@ -1,7 +1,7 @@
 class RecordChangeInviteAs < ApplicationJob
   # pass serialized string
-  def perform(object, inviter:, invite_as_params: nil, send_invite: true)
+  def perform(object, params)
     performing_object = object.class == String ? PassingObjectSerializer.deserialize(object) : object
-    performing_object.invite_as!(inviter, invite_as_params, send_invite: send_invite)
+    performing_object.invite_as!(params[:inviter], params[:invite_as_params], send_invite: params[:send_invite] || true)
   end
 end

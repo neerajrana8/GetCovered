@@ -44,12 +44,12 @@ module CarrierMsiPolicyQuote
       }
       # handle common failure scenarios
       unless policy_application.carrier_id == 5
-        @bind_response[:message] = I18n.t('qbe_policy_quote.carrier_must_be_qbe')
+        @bind_response[:message] = I18n.t('msi_policy_quote.carrier_must_be_msi')
         #PolicyBindWarningNotificationJob.perform_later(message: @bind_response[:message])
         return @bind_response
       end
 		 	unless accepted? && policy.nil?
-		 		@bind_response[:message] = I18n.t('qbe_policy_quote.status_must_be_quoted_or_error')
+		 		@bind_response[:message] = I18n.t('msi_policy_quote.status_must_be_quoted_or_error')
         #PolicyBindWarningNotificationJob.perform_later(message: @bind_response[:message])
         return @bind_response
 		 	end
@@ -138,6 +138,7 @@ module CarrierMsiPolicyQuote
       if result[:error]
         @bind_response[:message] = "#{I18n.t('msi_policy_quote.msi_bind_failure')} #{event.id || event.errors.to_h})\n#{I18n.t('msi_policy_quote.msi_error')} #{result[:external_message]}\n#{result[:extended_external_message]}"
         #PolicyBindWarningNotificationJob.perform_later(message: @bind_response[:message])
+        @bind_response[:client_message] = I18n.t('msi_policy_quote.invalid_pm_email') if event.response&.index("An email address is required for the Additional Interest included within the XML request.")
         return @bind_response
       end
       # handle successful bind

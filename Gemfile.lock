@@ -870,6 +870,7 @@ GEM
       msgpack (~> 1.0)
     bootsnap (1.4.1-java)
       msgpack (~> 1.0)
+    browser (5.3.1)
     builder (3.2.3)
     byebug (11.0.1)
     caxlsx (3.0.1)
@@ -1132,6 +1133,7 @@ GEM
       rack
     rack-test (1.1.0)
       rack (>= 1.0, < 3)
+    rack-timeout (0.6.0)
     rails (5.2.2.1)
       actioncable (= 5.2.2.1)
       actionmailer (= 5.2.2.1)
@@ -1327,6 +1329,7 @@ DEPENDENCIES
   awesome_print
   aws-sdk (~> 3)
   bootsnap (>= 1.1.0)
+  browser
   byebug
   caxlsx
   colorize
@@ -1371,6 +1374,7 @@ DEPENDENCIES
   puma (~> 3.12.6)
   rack-attack
   rack-cors (>= 1.0.5)
+  rack-timeout
   rails (~> 5.2.2.1)
   rails-controller-testing
   rails-erd

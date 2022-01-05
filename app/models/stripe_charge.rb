@@ -2,6 +2,8 @@
 # file: app/models/stripe_charge.rb
 
 class StripeCharge < ApplicationRecord
+  include DirtyTransactionTracker
+
   attr_accessor :callbacks_disabled
 
   belongs_to :invoice
@@ -14,7 +16,7 @@ class StripeCharge < ApplicationRecord
   before_save :set_status_changed_at,
     if: Proc.new{|sc| sc.will_save_change_to_attribute?('status') && !sc.callbacks_disabled }
   after_commit :process,
-    if: Proc.new{|sc| !sc.processed && sc.status != 'processing' && sc.saved_change_to_attribute?('status') && !sc.callbacks_disabled }
+    if: Proc.new{|sc| !sc.processed && sc.status != 'processing' && sc.saved_change_to_attribute_within_transaction?('status') && !sc.callbacks_disabled }
   
   enum status: {
     processing: 0, # must stay 0, it's the DB default

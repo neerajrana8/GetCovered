@@ -90,7 +90,7 @@ class PolicyPremiumItem < ApplicationRecord
         reversal = (self.rounding_error_distribution == 'dynamic_reverse' ? :reverse : :itself)
         to_return = to_return.send(reversal)
         to_return.each do |li|
-          li.original_total_due = ((li.chargeable.weight / weight_left) * total_left).floor
+          li.original_total_due = ((li.chargeable.weight * total_left) / weight_left).floor
           total_left -= li.original_total_due
           weight_left -= li.chargeable.weight
         end
@@ -101,7 +101,7 @@ class PolicyPremiumItem < ApplicationRecord
         loop do
           distributed = 0
           to_return.each do |li|
-            li_total = ((li.chargeable.weight / total_weight) * to_distribute).floor
+            li_total = ((li.chargeable.weight * to_distribute) / total_weight).floor
             li.original_total_due += li_total
             distributed += li_total
           end
@@ -140,7 +140,7 @@ class PolicyPremiumItem < ApplicationRecord
             created = ppipt.line_item.line_item_reductions.create(
               reason: "Proration Adjustment",
               amount_interpretation: 'max_total_after_reduction',
-              amount: (ppipt.policy_premium_payment_term.unprorated_proportion * ppipt.preproration_total_due).ceil,
+              amount: (ppipt.policy_premium_payment_term.unprorated_proportion * ppipt.line_item.preproration_total_due).ceil,
               refundability: refunds_allowed ? 'cancel_or_refund' : 'cancel_only',
               proration_interaction: 'is_proration'
             )
@@ -212,7 +212,7 @@ class PolicyPremiumItem < ApplicationRecord
       last_percentage = 0.to_d
       ppics.each do |ppic|
         last_percentage += ppic.percentage
-        ppic.total_expected = (self.total_due * (last_percentage / approx_100)).floor - total_assigned
+        ppic.total_expected = ((self.total_due * last_percentage) / approx_100).floor - total_assigned
         total_assigned += ppic.total_expected
       end
       ppics.each{|ppic| return { success: false, error: ppic.errors.to_h.to_s, record: ppic } unless ppic.save }
@@ -224,21 +224,22 @@ class PolicyPremiumItem < ApplicationRecord
       last_percentage = 0.to_d
       ppics.each do |ppic|
         last_percentage += ppic.percentage
-        new_total_received = (self.total_received * (last_percentage / approx_100)).floor - total_assigned
+        new_total_received = ((self.total_received * last_percentage) / approx_100).floor - total_assigned
         total_assigned += new_total_received
+        acat = (reason.respond_to?(:analytics_category) ? reason.analytics_category : reason.respond_to?(:line_item) ? reason.line_item&.analytics_category : nil) || 'other'
         case self.commission_calculation
           when 'as_received'
             commission_items.push(::CommissionItem.new(
               amount: new_total_received - ppic.total_received,
               commission: locked_commission_hash[ppic.recipient],
               commissionable: ppic,
-              reason: reason
+              reason: reason,
+              analytics_category: acat
             )) unless ppic.total_received == new_total_received || !ppic.payable?
           when 'no_payments'
             # do nothing
           when 'group_by_transaction'
-            the_reason = reason.class == ::LineItemChange ? reason.reason : reason
-            acat = (reason.respond_to?(:analytics_category) ? reason.analytics_category : reason.respond_to?(:line_item) ? reason.line_item&.analytics_category : nil) || 'other'
+            the_reason = (reason.class == ::LineItemChange ? reason.reason : reason)
             transaction = ppits.find do |ppit|
               ppit.recipient_type == ppic.recipient_type && ppit.recipient_id == ppic.recipient_id &&
               ppit.commissionable_type == ppic.commissionable_type && ppit.commissionable_id == ppic.commissionable_id &&
@@ -299,7 +300,7 @@ class PolicyPremiumItem < ApplicationRecord
                 total_assigned = 0
                 payment_order = 0
                 self.recipient.get_chain.each do |cs|
-                  total_expected = (self.total_due * (self.recipient.percentage / 100.to_d)).floor - total_assigned
+                  total_expected = ((self.total_due * cs.percentage) / 100.to_d).floor - total_assigned
                   total_assigned += total_expected
                   external_mode = true if cs == self.collection_plan
                   ::PolicyPremiumItemCommission.create!(

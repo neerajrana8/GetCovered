@@ -39,6 +39,14 @@ module V2
         ::Policies::SendProofOfCoverageJob.perform_later(params[:id])
         render json: { message: 'Documents were sent' }
       end
+      
+      def refund_policy
+        render json: standard_error(:refund_policy_error, "Dashboard cancellation facilities disabled for maintenance", nil)
+      end
+      
+      def cancel_policy
+        render json: standard_error(:cancel_policy_error, "Dashboard cancellation facilities disabled for maintenance", nil)
+      end
 
       private
       
@@ -69,6 +77,22 @@ module V2
           @substrate = access_model(::Policy)
         elsif !params[:substrate_association_provided]
           @substrate = @substrate.policies
+        end
+
+        if params[:insurable_id].present?
+          insurable = Insurable.find(params[:insurable_id])
+          insurable_units_ids =
+            if InsurableType::UNITS_IDS.include?(insurable.insurable_type_id)
+              insurable.id
+            else
+              [
+                insurable.units&.pluck(:id),
+                insurable.id,
+                insurable.insurables.ids
+              ].flatten.uniq.compact
+            end
+
+          @substrate = @substrate.joins(:insurables).where(insurables: { id: insurable_units_ids })
         end
       end
     end

@@ -11,6 +11,6 @@ class HandleLineItemChangesJob < ApplicationJob
   private
 
     def set_lics
-      @lics = ::LineItemChange.references(:line_items).includes(:line_item).where(handled: false)
+      @lics = ::LineItemChange.references(:line_items).includes(:line_item).where(handled: false).order(created_at: :asc)
     end
 end

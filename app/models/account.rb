@@ -44,6 +44,7 @@ class Account < ApplicationRecord
   has_many :policy_quotes
 
   has_many :leases
+  has_many :leads
   
   has_many :account_users
   
@@ -75,6 +76,11 @@ class Account < ApplicationRecord
 
   has_many :reports,
     as: :reportable
+
+  has_many :integrations,
+           as: :integratable
+  
+  scope :enabled, -> { where(enabled: true) }
 
   accepts_nested_attributes_for :addresses, allow_destroy: true
 

@@ -53,7 +53,7 @@ en:
     create:
       invalid_auth_key: "Invalid Auth Key"
     update_residential:
-      invalid_address: "Please enter a valid address"
+      invalid_address: "Please enter a valid residential address"
     rentguarantee_complete:
       inistructions_were_sent: "Instructions were sent"
     validate_policy_users_params:
@@ -119,6 +119,8 @@ en:
      error_with_policy: "Error happened with policy issue"
      cancellation_reason_invalid: "Cancellation reason is invalid"
      policy_is_already_cancelled: "Policy is already cancelled"
+     cancellation_already_pending: "Policy cancellation is already pending"
+     proration_failed: "Encountered an error while prorating policy; cancellation marked as pending"
      document_wrong_format: "The document wrong format, only: PDF, DOC, DOCX, XLSX, XLS, CSV, JPG, JPEG, PNG, GIF, SVG, TXT"
   billing_strategy_model:
     must_be_assigned_to_carrier: "must be assigned to carrier:"
@@ -179,7 +181,7 @@ en:
     security_deposit_replacement: 'Security Deposit Replacement'
     master_security_deposit_replacement: 'Security Deposit Replacement'
     master_security_deposit_replacement_coverage: 'Security Deposit Replacement Coverage'
-  policy_bind_warning_notification_job: 
+  policy_bind_warning_notification_job:
     get_covered_bind_warning: "Get Covered Bind Warning"
   qbe_policy_quote:
     qbe_bind_failure: "QBE Bind Failure"
@@ -189,10 +191,13 @@ en:
     quote_documents_recieved: "Quote documents recieved"
     quote_inneligable_to_download: "Quote inneligable to download documents"
   msi_policy_quote:
+    carrier_must_be_qbe: "Carrier must be MSI to bind residential quote"
     invalid_payment_data: "Invalid payment data for binding policy"
     failed_to_build_bind_request: "Failed to build bind request"
+    status_must_be_quoted_or_error: "Status must be quoted or error to bind quote"
     msi_bind_failure: "MSI bind failure (Event ID:"
     msi_error: "MSI Error:"
+    invalid_pm_email: "Invalid property manager email provided"
   dc_policy_quote:
     security_deposit_replacement: "Security Deposit Replacement Bond"
     carrier_must_be_deposit_choice: "Carrier must be Deposit Choice to bind security deposit replacement quote"
@@ -320,6 +325,7 @@ en:
     1020_title: "Spp Men's Jewelry"
     1021_title: "Spp Women's Jewelry"
     1043_title: "Increased Property Limits   Jewelry, Watches"
+    1043_desc:  "The base policy includes a theft sublimit of $1,000 for jewelry, watches, and furs. This enhanced coverage provides the option of increasing that sublimit without scheduling the items."
     1060_title: "Animal Liability Buy Back"
     1060_desc:  "This option provides an increased amount of liability protection when an insured is held liable for damages by a pet."
     1061_title: "Earthquake"

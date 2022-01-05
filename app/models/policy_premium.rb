@@ -225,9 +225,9 @@ class PolicyPremium < ApplicationRecord
     down_payment_revised_weight = nil
     if first_payment_down_payment
       total_weight = payment_terms.inject(0){|sum,pt| sum + pt.default_weight }.to_d
-      down_payment_amount = (payment_terms.first.default_weight * amount / total_weight).floor
+      down_payment_amount = ((payment_terms.first.default_weight * amount) / total_weight).floor
       if first_payment_down_payment_amount_override && first_payment_down_payment_amount_override < down_payment_amount
-        down_payment_revised_weight = ((down_payment_amount - first_payment_down_payment_amount_override.to_d) / down_payment_amount * payment_terms.first.default_weight).floor
+        down_payment_revised_weight = (((down_payment_amount - first_payment_down_payment_amount_override.to_d) * payment_terms.first.default_weight) / down_payment_amount).floor
         down_payment_amount = first_payment_down_payment_amount_override
       else
         down_payment_revised_weight = 0
@@ -259,7 +259,7 @@ class PolicyPremium < ApplicationRecord
         policy_premium: self,
         title: is_tax ? "Tax" : "Premium",
         category: is_tax ? "tax" : "premium",
-        rounding_error_distribution: "last_payment_multipass", #MOOSE WARNING: change default???
+        rounding_error_distribution: "first_payment_multipass",
         total_due: amount,
         proration_calculation: proratable,
         proration_refunds_allowed: refundable,
@@ -311,12 +311,15 @@ class PolicyPremium < ApplicationRecord
         return "The requested new_last_moment #{new_last_moment.to_s} is invalid; it cannot be after the original or current prorated end of term (#{(self.prorated_last_moment || self.policy_rep.expiration_moment).to_s})"
       end
     end
-    o_return = nil
+    to_return = nil
     ActiveRecord::Base.transaction(requires_new: true) do
       # record the proration
+      pfm = new_first_moment || self.prorated_first_moment || self.policy_rep.effective_moment
+      plm = new_last_moment || self.prorated_last_moment || self.policy_rep.expiration_moment
+      plm = pfm if plm < pfm
       unless self.update(
-        prorated_first_moment: new_first_moment || self.prorated_first_moment,
-        prorated_last_moment: new_last_moment || self.prorated_last_moment,
+        prorated_first_moment: pfm,
+        prorated_last_moment: plm,
         prorated: true,
         force_no_refunds: force_no_refunds
       )

@@ -23,6 +23,8 @@ class PolicyType < ApplicationRecord
     MASTER_SECURITY_DEPOSIT_ID => [SECURITY_DEPOSIT_ID, MASTER_SECURITY_COVERAGE_ID]
   }.freeze
 
+  MASTER_TYPES_IDS = [MASTER_ID, MASTER_COVERAGE_ID].freeze
+
   after_initialize :initialize_policy_type
 
   # Relationships
@@ -70,6 +72,10 @@ class PolicyType < ApplicationRecord
     self.designation == 'BOP'
   end
 
+  def security_deposit?
+    self.designation == 'SECURITY-DEPOSIT'
+  end
+
   class << self
     def residential
       find_by!(slug: 'residential')
@@ -77,6 +83,10 @@ class PolicyType < ApplicationRecord
 
     def rent_garantee
       find_by!(slug: 'rent-guarantee')
+    end
+
+    def security_deposit
+      find_by!(slug: 'security-deposit-replacement')
     end
   end
 

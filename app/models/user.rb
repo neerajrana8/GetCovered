@@ -9,7 +9,7 @@ class User < ApplicationRecord
   devise :database_authenticatable, :registerable, :recoverable, :rememberable,
          :trackable, :validatable, :invitable, validate_on_invite: true
   include RecordChange
-  include DeviseTokenAuth::Concerns::User
+  include DeviseCustomUser
   include ElasticsearchSearchable
   include SessionRecordable
 
@@ -45,6 +45,9 @@ class User < ApplicationRecord
   has_many :claims, as: :claimant
   has_many :events, as: :eventable
 
+  has_many :integration_profiles,
+           as: :profileable
+
   has_many :active_account_users,
     -> { where status: 'enabled' },
     class_name: "AccountUser"
@@ -66,6 +69,7 @@ class User < ApplicationRecord
 
   has_many :agencies, through: :accounts
   has_many :notification_settings, as: :notifyable
+  has_many :insurables, through: :policies
 
   accepts_nested_attributes_for :payment_profiles, :address
   accepts_nested_attributes_for :profile, update_only: true

@@ -235,12 +235,15 @@
         get 'refresh-rates', to: 'insurable_rates#refresh_rates', on: :collection
       end
     end
+
+    post 'insurables/:insurable_id/policies_index', controller: 'policies', action: :index
     get :agency_filters, controller: 'insurables', to: 'insurables#agency_filters', path: 'insurables/filters/agency_filters'
     post :insurables_index, action: :index, controller: :insurables
 
     resources :insurable_types, path: "insurable-types", only: [ :index ]
 
     resources :leads, only: [:index, :show, :update]
+    post :leads_recent_index, action: :index, controller: :leads
 
     resources :leads_dashboard, only: [:index] do
       collection do
@@ -248,6 +251,8 @@
       end
     end
     post :leads_dashboard_index, action: :index, controller: :leads_dashboard
+
+    get :get_products, controller: 'leads', path: 'leads/filters/get_products'
 
     resources :leads_dashboard_tracking_url, only: [:index]
 
@@ -263,7 +268,7 @@
         post :bulk_create
       end
     end
-    
+
     resources :lease_types,
       path: "lease-types",
       only: [ :create, :update, :index, :show ]
@@ -325,6 +330,13 @@
     end
     post :policies_index, action: :index, controller: :policies
 
+    resources :policies_dashboard, only: [] do
+      collection do
+        get 'total'
+        get 'graphs'
+      end
+    end
+
     resources :policy_cancellation_requests, only: [ :index, :show ] do
       member do
         put :approve
@@ -383,7 +395,7 @@
     end
 
     resources :users,
-      only: [ :index, :show ] do
+      only: [ :index, :show, :update ] do
         member do
           get "histories",
             to: "histories#index_recordable",

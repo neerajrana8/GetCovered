@@ -141,7 +141,7 @@ module V2
         @application = PolicyApplication.new(create_security_deposit_replacement_params)
         @application.agency = @application.account&.agency || Agency.where(master_agency: true).take if @application.agency.nil?
         @application.account = @application.primary_insurable&.account if @application.account.nil?
-        @application.billing_strategy = BillingStrategy.where(carrier_id: DepositChoiceService.carrier_id).take if @application.billing_strategy.nil? # WARNING: there should only be one (annual) right now
+        @application.billing_strategy = BillingStrategy.where(carrier_id: DepositChoiceService.carrier_id, agency_id: @application.agency_id).take # WARNING: there should only be one (annual) right now
         @application.expiration_date = @application.effective_date + 1.year unless @application.effective_date.nil?
         # try to save
         unless @application.save

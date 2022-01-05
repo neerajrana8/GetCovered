@@ -17,10 +17,32 @@ module V2
       check_privileges 'insurables.create' => [:create]
 
       def index
+        query = @agency.insurables
+
+        if params[:tenant]
+          query =
+            query.
+              joins(
+                leases: {
+                  lease_users: {
+                    user: :profile
+                  }
+                }
+              ).
+              where(
+                lease_users: {
+                  primary: true
+                },
+                leases: {
+                  status: 'current'
+                }
+              ).where('profiles.full_name ILIKE ?', "%#{params[:tenant]}%")
+        end
+
         if params[:short]
-          super_index(:@insurables, @agency.insurables)
+          super_index(:@insurables, query)
         else
-          super_index(:@insurables, @agency.insurables, :account, :carrier_insurable_profiles)
+          super_index(:@insurables, query, :account, :carrier_insurable_profiles)
         end
       end
 
@@ -245,6 +267,7 @@ module V2
           insurable_type_id: %i[scalar array],
           insurable_id: %i[scalar array],
           account_id: %i[scalar array],
+          confirmed: %i[scalar],
           created_at: %i[scalar array interval],
           updated_at: %i[scalar array interval],
           category: %i[scalar array],
