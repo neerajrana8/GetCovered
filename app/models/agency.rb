@@ -91,6 +91,8 @@ class Agency < ApplicationRecord
   has_many :access_tokens,
            as: :bearer
 
+  has_many :notification_settings, as: :notifyable
+  
   has_many :integrations,
            as: :integratable
 
