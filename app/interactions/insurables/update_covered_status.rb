@@ -1,59 +1,85 @@
 module Insurables
-  # Updates the ++covered++ column for all units with policies or for the single insurable if it was passed
+  # Updates the ++covered++ and ++expanded_covered++ column for all insurables with policies or for the single insurable if it was passed
   class UpdateCoveredStatus < ActiveInteraction::Base
     object :insurable, default: nil
     # firstly this method updates all insurables with not active policies, after it sets `covered: true` for units
     # with at least one active policy
     def execute
       if insurable.present?
-        update_insurable
+        update_insurable(insurable)
       else
-        update_all_units
+        update_units
+        update_buildings
+        update_communities
       end
     end
 
     private
 
-    def update_insurable
-      coverage_status = insurable.policies.where(active_policies_condition).any?
-      insurable.update(covered: coverage_status)
+    def update_insurable(insurable)
+      related_policy_types =
+        case insurable.insurable_type_id
+        when *InsurableType::UNITS_IDS
+          unit_policy_types
+        when *InsurableType::BUILDINGS_IDS
+          building_policy_types
+        when *InsurableType::COMMUNITIES_IDS
+          community_policy_types
+        end
+
+      coverages_statuses =
+        insurable.
+          policies.
+          where(active_policies_condition(related_policy_types)).
+          select(:policy_type_id, 'array_agg(policies.id)').
+          group(:policy_type_id).
+          pluck(:policy_type_id, 'array_agg(policies.id)').
+          to_h
+
+      insurable.update(expanded_covered: coverages_statuses, covered: coverages_statuses.any?)
     end
 
-    def update_all_units
-      not_covered_insurables.update_all(covered: false)
-      covered_insurables.update_all(covered: true)
+    def update_units
+      Insurable.units.each do |insurable|
+        update_insurable(insurable)
+      end
     end
 
-    # We need only units with policies
-    def base_query
-      Insurable.
-        joins(:policies).
-        where(insurables: { insurable_type_id: InsurableType::UNITS_IDS })
+    def update_buildings
+      Insurable.buildings.each do |insurable|
+        update_insurable(insurable)
+      end
     end
 
-    def covered_insurables
-      base_query.where(active_policies_condition)
+    def update_communities
+      Insurable.communities.each do |insurable|
+        update_insurable(insurable)
+      end
     end
 
-    def not_covered_insurables
-      base_query.where.not(active_policies_condition)
-    end
-
-    def active_policies_condition
+    def active_policies_condition(related_policy_types)
       <<-SQL
-        policies.policy_type_id IN (#{related_policy_types})
-        AND policies.status IN (#{active_statuses})
+        policies.policy_type_id IN (#{related_policy_types.join(', ')})
+        AND policies.status IN (#{active_statuses.join(', ')})
         AND policies.effective_date <= '#{Time.zone.now}'
         AND policies.expiration_date > '#{Time.zone.now}'
       SQL
     end
 
-    def related_policy_types
-      [PolicyType::MASTER_COVERAGE_ID, PolicyType::RESIDENTIAL_ID].join(', ')
+    def active_statuses
+      Policy.statuses.values_at(*Policy.active_statuses)
     end
 
-    def active_statuses
-      Policy.statuses.values_at('BOUND', 'BOUND_WITH_WARNING').join(', ')
+    def unit_policy_types
+      PolicyType.where(master: false).ids
+    end
+
+    def community_policy_types
+      PolicyType::MASTER_IDS
+    end
+
+    def building_policy_types
+      PolicyType::MASTER_IDS
     end
   end
 end
