@@ -24,17 +24,46 @@ module V2
 
       def create
         if create_allowed?
-          @staff = ::Staff.new(create_params)
-          # remove password issues from errors since this is a Devise model
-          @staff.valid? if @staff.errors.blank?
-          @staff.errors.messages.except!(:password)
-          if @staff.errors.none? && @staff.invite_as(current_staff)
-            render :show,
-                   status: :created
+          if is_bulk_creation?
+            created_staffs = [], errors_staffs = []
+            bulk_create_params["property_managers_attributes"].each do |pm_create_params|
+              @staff = ::Staff.new(pm_create_params)
+              # remove password issues from errors since this is a Devise model
+              @staff.valid? if @staff.errors.blank?
+              #because it had FrozenError (can't modify frozen Hash: {:password=>["can't be blank"]}):
+              #@staff.errors.messages.except!(:password)
+              if (@staff.errors.none? || only_password_blank_error?(@staff.errors) ) && @staff.invite_as(current_staff)
+                created_staffs << @staff
+                #render :show,
+                #       status: :created
+              else
+                errors_staffs << {"staff": @staff, "errors": @staff.errors.full_messages}
+                #render json: @staff.errors,
+                #      status: :unprocessable_entity
+              end
+            end
+
+            render json: {
+                created: created_staffs,
+                #already_created: already_created_insurables,
+                errors: errors_staffs
+            }
           else
-            render json: @staff.errors,
-                   status: :unprocessable_entity
+            @staff = ::Staff.new(create_params)
+            # remove password issues from errors since this is a Devise model
+            @staff.valid? if @staff.errors.blank?
+            #because it had FrozenError (can't modify frozen Hash: {:password=>["can't be blank"]}):
+            #@staff.errors.messages.except!(:password)
+            if (@staff.errors.none? || only_password_blank_error?(@staff.errors) ) && @staff.invite_as(current_staff)
+              render :show,
+                     status: :created
+            else
+              render json: @staff.errors,
+                     status: :unprocessable_entity
+            end
+
           end
+
         else
           render json: { success: false, errors: ['Unauthorized Access'] },
                  status: :unauthorized
@@ -61,6 +90,14 @@ module V2
 
       private
 
+      def is_bulk_creation?
+        params&.keys&.include?("property_managers_attributes")
+      end
+        
+      def only_password_blank_error?(staff_errors)
+        staff_errors.messages.keys == [:password]
+      end
+
       def view_path
         super + '/staffs'
       end
@@ -75,7 +112,6 @@ module V2
 
       def create_params
         return({}) if params[:staff].blank?
-
         to_return = params.require(:staff).permit(
           :email, :enabled, :organizable_id, :organizable_type, :role,
           notification_options: {}, settings: {},
@@ -87,10 +123,37 @@ module V2
         to_return
       end
 
+      def bulk_create_params
+        return({}) if params[:staff].blank?
+        to_return = params.require(:staff).permit(
+            property_managers_attributes: [:email, :enabled, :organizable_id, :organizable_type, :role,
+                                           notification_options: {}, settings: {},
+                                           profile_attributes: %i[
+                                              birth_date contact_email contact_phone first_name
+                                              job_title last_name middle_name suffix title ]
+                                           ]
+        )
+        to_return
+      end
+
+      def bulk_create_params_example
+        params.require(:insurables).permit(
+            common_attributes: [
+                :category, :covered, :enabled, :insurable_id, :occupied,
+                :insurable_type_id, :account_id, addresses_attributes: %i[
+              city country county id latitude longitude
+              plus_four state street_name street_number
+              street_two timezone zip_code
+            ]
+            ],
+            ranges: []
+        )
+      end
+
       def update_params
         params.permit(
           :email, :password, :password_confirmation,
-          notification_options: {}, 
+          notification_options: {},
           settings: {},
           staff_permission_attributes: [permissions: {}],
           profile_attributes: %i[

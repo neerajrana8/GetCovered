@@ -18,6 +18,8 @@
 
 class V2Controller < ApplicationController
 
+  around_action :set_timezone
+
   def index(instance_symbol, data_source, *includes)
 #puts data_source.to_sql
 #exit
@@ -529,6 +531,15 @@ exit
       where_hash: to_return[:hash],
       where_strings: to_return[:string]
     })
+  end
+
+  def set_timezone
+    if request.headers['HTTP_TIMEZONE'].present?
+      zone = request.headers['HTTP_TIMEZONE']
+      Time.use_zone(zone) { yield }
+    else
+      yield
+    end
   end
 
 	def health_check

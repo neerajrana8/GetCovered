@@ -33,9 +33,8 @@ class StripeRefund < ApplicationRecord
       # try to create the refund
       begin
         created_refund = Stripe::Refund.create({
-          charge: self.charge.stripe_id,
+          charge: self.stripe_charge.stripe_id,
           amount: self.amount,
-          currency: 'usd',
           reason: self.stripe_reason,
           metadata: {
             metadata_version: 1,
@@ -53,7 +52,7 @@ class StripeRefund < ApplicationRecord
       end
       # update ourselves, woot woot
       begin
-        new_status = status_from_stripe_status(refund_hash['status'])
+        new_status = status_from_stripe_status(created_refund.status)
         unless self.update(
           stripe_id: created_refund.id,
           failure_reason: created_refund.respond_to?(:failure_reason) ? created_refund.failure_reason : nil,

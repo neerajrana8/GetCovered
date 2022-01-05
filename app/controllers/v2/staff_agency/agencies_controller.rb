@@ -6,7 +6,7 @@ module V2
   module StaffAgency
     class AgenciesController < StaffAgencyController
 
-      before_action :set_agency, only: [:update, :show, :branding_profile]
+      before_action :set_agency, only: [:update, :show, :branding_profile, :get_policy_types]
       check_privileges 'agencies.details' => %i[create show]
 
       def index
@@ -82,6 +82,16 @@ module V2
         else
           render json: { success: false, errors: ['Agency does not have a branding profile'] }, status: :not_found
         end
+      end
+      
+      def get_policy_types
+        pts = CarrierAgencyPolicyType.includes(:policy_type, carrier_agency: :carrier).references(:policy_types, carrier_agencies: :carriers).where(carrier_agencies: { agency_id: @agency&.id })
+                                     .group_by{|capt| capt.policy_type_id }
+                                     .transform_values{|capts| { id: capts.first.policy_type_id, title: capts.first.policy_type.title, carriers: capts.map{|capt| { id: capt.carrier_agency.carrier_id, title: capt.carrier_agency.carrier.title } }.uniq } }
+                                     .values.sort_by{|v| v[:title] }
+          
+        render json: pts,
+          status: 200
       end
 
       private

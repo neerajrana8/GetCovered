@@ -67,6 +67,10 @@
 
           put :enable
           put :disable
+          
+          get "policy-types",
+            to: "agencies#get_policy_types",
+            via: "get"
         end
 
         collection do
@@ -137,6 +141,7 @@
           post :add_commissions
           put :update_commission
           get :commission
+          get :available_agencies
 
           post :add_fee
           get :fees

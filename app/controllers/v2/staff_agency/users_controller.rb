@@ -42,8 +42,9 @@ module V2
           @user = ::User.new(create_params)
           # remove password issues from errors since this is a Devise model
           @user.valid? if @user.errors.blank?
-          @user.errors.messages.except!(:password)
-          if @user.errors.none? && @user.invite_as(current_staff)
+          #because it had FrozenError (can't modify frozen Hash: {:password=>["can't be blank"]}):
+          #@user.errors.messages.except!(:password)
+          if (!@user.errors.any?|| only_password_blank_error?(@user.errors) ) && @user.invite_as!(current_staff)
             render template: 'v2/shared/users/show',
               status: :created
           else
@@ -72,6 +73,10 @@ module V2
       end
 
       private
+
+      def only_password_blank_error?(user_errors)
+        user_errors.messages.keys == [:password]
+      end
 
       def view_path
         super + '/users'
