@@ -26,8 +26,8 @@ module V2
 
     def set_account
       @account =
-        if current_staff.current_role('Account').present? && current_staff.current_role('Account').organizable.is_a?(::Account)
-          current_staff.current_role('Account').organizable
+        if current_staff.current_role(organizable: 'Account').present? && current_staff.current_role(organizable: 'Account').organizable.is_a?(::Account)
+          current_staff.current_role(organizable: 'Account').organizable
         end
     end
   end

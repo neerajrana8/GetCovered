@@ -35,7 +35,8 @@ class StaffRole < ApplicationRecord
 
   def create_permissions
     if !self.global_permission and role === 'agent'
-      GlobalPermission.create(ownerable: self, permissions: {})
+      permissions = self.organizable&.global_permission&.permissions || {}
+      GlobalPermission.create(ownerable: self, permissions: permissions)
     end
   end
 end

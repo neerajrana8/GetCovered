@@ -243,7 +243,7 @@ class Agency < ApplicationRecord
   end
 
   def check_permissions
-    unless global_permission.present?
+    unless self.global_permission.present?
       GlobalPermission.create(ownerable: self, permissions: {})
     end
   end

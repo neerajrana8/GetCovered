@@ -12,13 +12,13 @@ module V2
       agency_id = params[:agency_id]&.to_i
       @agency =
         if agency_id.blank?
-          current_staff.current_role('Agency').organizable
+          current_staff.current_role(organizable: 'Agency').organizable
         elsif current_staff.getcovered_agent?
           Agency.find(agency_id)
         elsif current_staff.agencies.ids.include?(agency_id)
           current_staff.agencies.find(agency_id)
         else
-          current_staff.current_role('Agency').organizable
+          current_staff.current_role(organizable: 'Agency').organizable
         end
     end
 
@@ -45,7 +45,7 @@ module V2
 
     def validate_permission(permission)
       if current_staff.staff_roles
-        permitted = current_staff.current_role('Agency').global_permission.permissions[permission]
+        permitted = current_staff.current_role(organizable: 'Agency').global_permission.permissions[permission]
       else
         permitted = current_staff.staff_permission.permissions[permission]
       end
@@ -55,7 +55,7 @@ module V2
 
     def validate_permissions(permissions)
       if current_staff.staff_roles
-        permitted = current_staff.current_role('Agency').global_permission.permissions.values_at(*permissions).include?(true)
+        permitted = current_staff.current_role(organizable: 'Agency').global_permission.permissions.values_at(*permissions).include?(true)
       else
         permitted = current_staff.staff_permission.permissions.values_at(*permissions).include?(true)
       end

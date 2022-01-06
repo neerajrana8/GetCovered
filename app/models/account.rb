@@ -179,7 +179,8 @@ class Account < ApplicationRecord
 
     def create_permissions
       unless self.global_permission
-        GlobalPermission.create(ownerable: self, permissions: agency.global_permission.permissions)
+        permissions = self.agency.global_permission&.permissions || {}
+        GlobalPermission.create(ownerable: self, permissions: permissions)
       end
     end
 

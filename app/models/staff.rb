@@ -153,9 +153,7 @@ class Staff < ApplicationRecord
   end
 
   def set_permissions_for_agent
-    if role == 'agent'
-      GlobalPermission.create(ownerable: self, permissions: organizable&.global_permission.permissions)
-    end
+    StaffRole.create(staff: self, organizable: self.organizable, role: self.role)
   end
 
   def build_notification_settings
