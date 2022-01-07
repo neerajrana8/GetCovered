@@ -64,10 +64,8 @@ module Integrations
             if prop["City"] == comm_address["City"] && prop["Address"].start_with?(comm_address["AddressLine1"]) && prop["State"] == comm_address["State"] && prop["PostalCode"] == comm_address["PostalCode"]
               # the unit belongs directly to the comm
               parent_insurable = comm
-              possible_unit_title = prop["Address"][comm_address.length..-1].strip
-              unit = comm.units.find{|u| u.title == possible_unit_title } ||
-                     comm.units.find{|u| u.title == prop["UnitId"] } ||
-                     ::Insurable.get_or_create(
+              possible_unit_title = prop["UnitId"]
+              goc_params = {
                 address: "#{comm_address["AddressLine1"]}, #{prop["City"]}, #{prop["State"]} #{prop["PostalCode"]}",
                 unit: possible_unit_title.blank? ? true : possible_unit_title,
                 titleless: possible_unit_title.blank?,
@@ -75,10 +73,13 @@ module Integrations
                 insurable_id: parent_insurable.id,
                 create_if_ambiguous: true,
                 account_id: account_id
-              )
+              }
+              unit = comm.units.find{|u| u.title == possible_unit_title } ||
+                     comm.units.find{|u| u.title == prop["UnitId"] } ||
+                     ::Insurable.get_or_create(goc_params)
               unless unit.class == ::Insurable
                 error_count += 1
-                next { status: :error, message: "Unable to create unit in comm", get_or_create_response: unit, yardi_property_data: prop }
+                next { status: :error, message: "Unable to create unit in community", get_or_create_response: unit, yardi_property_data: prop, get_or_create_params: goc_params }
               end
             else
               # the unit belongs to a sub-building

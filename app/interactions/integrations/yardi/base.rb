@@ -75,6 +75,9 @@ module Integrations
         event.completed = Time.now
         event.response = result.response.body
         event.status = (result.code == 200 ? 'success' : 'error')
+        if result.code == 200 && result.response.body.index("Login failed.")
+          event.status = 'error'
+        end
         event.save
         # all done, broski
         return {

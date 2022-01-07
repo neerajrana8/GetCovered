@@ -28,7 +28,7 @@ module Integrations
             if !result[:success]
               return { status: :error, message: "Yardi server error (request failed)", event: result[:event] }
             end
-            the_response = result[:parsed_response]
+            the_response = result[:parsed_response] || []
           end
           properties = the_response.dig("Envelope", "Body", "GetPropertyConfigurationsResponse", "GetPropertyConfigurationsResult", "Properties", "Property")
           if properties.class != ::Array
