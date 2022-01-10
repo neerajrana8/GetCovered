@@ -65,7 +65,6 @@ module Integrations
           body: request_body,
           headers: {
             'Content-Type' => 'text/xml;charset=utf-8',
-            'Host' => 'www.yardipcv.com',
             'SOAPAction' => soap_action,
             'Content-Length' => request_body.length.to_s
           },
