@@ -47,7 +47,7 @@ require './db/seeds/functions'
 	      end
 		  end
 		  
-		  @lease.primary_user().attach_payment_source("tok_visa", true)
+		  @lease.primary_user&.attach_payment_source("tok_visa", true)
 		else
 		
 			pp @lease.errors
