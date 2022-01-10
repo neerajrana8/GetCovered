@@ -3,19 +3,6 @@ include ActionController::RespondWith
 
 describe 'Admin Policy spec', type: :request do
   before :all do
-#<<<<<<< HEAD
-    Policy.__elasticsearch__.client.indices.delete index: Policy.index_name rescue nil
-    Policy.__elasticsearch__.create_index!
-    Policy.import force: true
-#=======
-#    begin
-#      Policy.__elasticsearch__.client.indices.delete index: Policy.index_name
-#    rescue StandardError
-#      nil
-#    end
-#    Policy.__elasticsearch__.create_index!
-#    Policy.import force: true
-#>>>>>>> master
     @user = create_user
     @agency = Agency.find(1)
     @account = FactoryBot.create(:account, agency: @agency)

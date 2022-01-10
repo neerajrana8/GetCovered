@@ -10,7 +10,6 @@ class PolicyQuote < ApplicationRecord
   include CarrierCrumPolicyQuote
   include CarrierMsiPolicyQuote
   include CarrierDcPolicyQuote
-  #include ElasticsearchSearchable
 
   before_save :set_status_updated_on,
     if: Proc.new { |quote| quote.status_changed? }
@@ -40,13 +39,6 @@ class PolicyQuote < ApplicationRecord
   enum status: { awaiting_estimate: 0, estimated: 1, quoted: 2,
                  quote_failed: 3, accepted: 4, declined: 5,
                  abandoned: 6, expired: 7, error: 8 }
-
-  #settings index: { number_of_shards: 1 } do
-  #  mappings dynamic: 'false' do
-  #    indexes :reference, type: :text, analyzer: 'english'
-  #    indexes :external_reference, type: :text, analyzer: 'english'
-  #  end
-  #end
   
   def primary_user
     self.policy_application.primary_user

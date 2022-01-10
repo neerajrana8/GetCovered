@@ -6,7 +6,7 @@ module PoliciesMethods
       if update_user_params[:users].is_a? Array
         update_user_params[:users].each do |user_param|
           user = ::User.find_by(id: user_param[:id])
-          user.update_attributes(user_param)
+          user.update(user_param)
         end
       end
       Policies::UpdateDocuments.run!(policy: @policy)

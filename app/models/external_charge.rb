@@ -1,8 +1,7 @@
 class ExternalCharge < ApplicationRecord
   include DirtyTransactionTracker
-  
   belongs_to :invoice
-  
+
   before_save :handle_status_change,
     if: Proc.new{|ec| ec.will_save_change_to_attribute?('status') }
   after_commit :process,

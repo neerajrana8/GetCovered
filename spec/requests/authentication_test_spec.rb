@@ -90,7 +90,7 @@ describe 'Whether authentication is ocurring properly', type: :request do
     end
     
     it 'should not authenticate not enabled and non-owner staff' do
-      @staff.update_attributes(enabled: false, owner: false)
+      @staff.update(enabled: false, owner: false)
       login_staff @staff
       
       result = JSON.parse response.body

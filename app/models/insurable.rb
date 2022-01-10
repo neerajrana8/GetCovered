@@ -3,7 +3,6 @@
 
 class Insurable < ApplicationRecord
   # Concerns
-  #include ElasticsearchSearchable
   include CarrierQbeInsurable
   include CarrierMsiInsurable
   include CarrierDcInsurable
@@ -112,10 +111,8 @@ class Insurable < ApplicationRecord
     self.respond_to?("#{carrier}_get_carrier_status") ? self.send("#{carrier}_get_carrier_status", **{ refresh: refresh }.compact) : nil
   end
   
-  
   # Insurable.primary_address
   #
-
   def primary_address
     if addresses.count.zero?
       return insurable.primary_address unless insurable.nil?
@@ -126,7 +123,6 @@ class Insurable < ApplicationRecord
 
   # Insurable.primary_staff
   #
-
   def primary_staff
     assignment = assignments.find_by(primary: true)
     assignment.staff.nil? ? nil : assignment.staff
@@ -134,7 +130,6 @@ class Insurable < ApplicationRecord
 
   # Insurable.create_carrier_profile(carrier_id)
   #
-
   def create_carrier_profile(carrier_id, data: nil, traits: nil)
     cit = CarrierInsurableType.where(carrier_id: carrier_id, insurable_type_id: insurable_type_id).take
     unless cit.nil?
@@ -146,7 +141,6 @@ class Insurable < ApplicationRecord
 
   # Insurable.carrier_profile(carrier_id)
   #
-
   def carrier_profile(carrier_id)
     return carrier_insurable_profiles.where(carrier_id: carrier_id).take unless carrier_id.nil?
   end

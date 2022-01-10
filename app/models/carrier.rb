@@ -3,7 +3,6 @@
 # file: +app/models/carrier.rb+
 
 class Carrier < ApplicationRecord
-  include ElasticsearchSearchable
   include SetCallSign
   include SetSlug
   include RecordChange
@@ -52,13 +51,6 @@ class Carrier < ApplicationRecord
   validates_presence_of :slug, :call_sign
 
   accepts_nested_attributes_for :carrier_policy_types, allow_destroy: true
-
-  settings index: { number_of_shards: 1 } do
-    mappings dynamic: 'false' do
-      indexes :title, type: :text, analyzer: 'english'
-      indexes :call_sign, type: :text, analyzer: 'english'
-    end
-  end
   
   def uses_stripe?
     return(![5,6].include?(self.id))
