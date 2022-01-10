@@ -821,6 +821,7 @@ ActiveRecord::Schema.define(version: 2021_11_29_192209) do
     t.boolean "preferred_ho4", default: false, null: false
     t.boolean "confirmed", default: true, null: false
     t.boolean "occupied", default: false
+    t.jsonb "expanded_covered", default: {}, null: false
     t.index ["account_id"], name: "index_insurables_on_account_id"
     t.index ["agency_id"], name: "index_insurables_on_agency_id"
     t.index ["insurable_id"], name: "index_insurables_on_insurable_id"
