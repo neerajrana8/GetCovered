@@ -29,7 +29,8 @@ while !line[0].blank?
     create_if_ambiguous: true,
     disallow_creation: false,
     communities_only: true,
-    titleless: false
+    titleless: false,
+    created_community_title: line[9].blank? ? nil : line[9].strip
   }.compact)
   if community.class != ::Insurable
     puts "Failed to get/create community on line #{n}, got results of type #{community.class.name}#{community.class == ::Hash ? " contents #{community.to_s}" : ""}"
