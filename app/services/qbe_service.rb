@@ -256,7 +256,7 @@ class QbeService
           agency: application.agency,
           units_on_site: application.primary_insurable.parent_community.units.confirmed.count,
           coverage_selections: application.coverage_selections
-        }
+        }.merge!(args)
 
         options[:heading][:program][:ClientName] = args[:agent_code] || Rails.application.credentials.qbe[:agent_code]
 
