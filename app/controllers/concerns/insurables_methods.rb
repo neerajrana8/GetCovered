@@ -80,7 +80,7 @@ module InsurablesMethods
              status: 422
       return
     else
-      cip.data['county_resolution']['matches'].select!{|opt| opt[:county].chomp(" COUNTY").gsub(/[^a-z]/i, ' ') == (params[:county] || "").upcase.chomp(" COUNTY").gsub(/[^a-z]/i, ' ') } # just in case one is "Whatever County" and the other is just "Whatever", one has a dash and one doesn't, etc
+      cip.data['county_resolution']['matches'].select!{|opt| opt['county'].chomp(" COUNTY").gsub(/[^a-z]/i, ' ') == (params[:county] || "").upcase.chomp(" COUNTY").gsub(/[^a-z]/i, ' ') } # just in case one is "Whatever County" and the other is just "Whatever", one has a dash and one doesn't, etc
       if cip.data['county_resolution']['matches'].length == 1
         cip.data['county_resolution']['selected'] = cip.data["county_resolution"]["matches"][0]['seq']
         cip.data['county_resolution']['county_resolved_on'] = Time.current.strftime("%m/%d/%Y %I:%M %p")
