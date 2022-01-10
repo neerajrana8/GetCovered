@@ -118,7 +118,6 @@ ActiveRecord::Schema.define(version: 2021_11_29_192209) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.boolean "searchable", default: false
-    t.boolean "verified", default: false
     t.index ["addressable_type", "addressable_id"], name: "index_addresses_on_addressable"
   end
 
@@ -1149,17 +1148,6 @@ ActiveRecord::Schema.define(version: 2021_11_29_192209) do
     t.index ["notifiable_type", "notifiable_id"], name: "index_notifications_on_notifiable"
   end
 
-  create_table "ownerships", force: :cascade do |t|
-    t.string "owner_type"
-    t.bigint "owner_id"
-    t.string "owned_type"
-    t.bigint "owned_id"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["owned_type", "owned_id"], name: "index_ownerships_on_owned"
-    t.index ["owner_type", "owner_id"], name: "index_ownerships_on_owner"
-  end
-
   create_table "pages", force: :cascade do |t|
     t.text "content"
     t.string "title"
@@ -1688,19 +1676,6 @@ ActiveRecord::Schema.define(version: 2021_11_29_192209) do
     t.string "type"
     t.index ["reportable_type", "reportable_id", "created_at"], name: "reports_index"
     t.index ["reportable_type", "reportable_id"], name: "index_reports_on_reportable"
-  end
-
-  create_table "search_contents", force: :cascade do |t|
-    t.string "field"
-    t.string "value"
-    t.string "searchable_type"
-    t.bigint "searchable_id"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.tsvector "vectorized"
-    t.index "to_tsvector('english'::regconfig, (COALESCE(value, ''::character varying))::text)", name: "sc_vectorized_index", using: :gin
-    t.index ["searchable_type", "searchable_id"], name: "index_search_contents_on_searchable"
-    t.index ["vectorized"], name: "searchindex", using: :gin
   end
 
   create_table "signable_documents", force: :cascade do |t|
