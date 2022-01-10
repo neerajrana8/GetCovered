@@ -92,6 +92,7 @@ en:
       years_professionally_managed: "years managed by property manager"
       in_city_limits: "community in city limits"
   policy_app_model:
+    user_age: "%{name} must be at least 18 years old"
     billing_strategy_must_belong: "billing strategy must belong to the same agency"
     billing_strategy_must_be_valid: "must be a valid billing strategy for the current carrier"
     billing_strategy_must_be_enabled: "billing strategy must be enabled"

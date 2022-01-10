@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_10_28_172506) do
+ActiveRecord::Schema.define(version: 2021_11_29_192209) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
@@ -441,7 +441,7 @@ ActiveRecord::Schema.define(version: 2021_10_28_172506) do
   create_table "carrier_agency_policy_types", force: :cascade do |t|
     t.bigint "carrier_agency_id"
     t.bigint "policy_type_id"
-    t.bigint "commission_strategy_id"
+    t.bigint "commission_strategy_id", null: false
     t.string "collector_type"
     t.bigint "collector_id"
     t.index ["carrier_agency_id"], name: "index_carrier_agency_policy_types_on_carrier_agency_id"
@@ -519,7 +519,7 @@ ActiveRecord::Schema.define(version: 2021_10_28_172506) do
     t.datetime "updated_at", null: false
     t.integer "max_days_for_full_refund", default: 31, null: false
     t.integer "days_late_before_cancellation", default: 30, null: false
-    t.bigint "commission_strategy_id"
+    t.bigint "commission_strategy_id", null: false
     t.string "premium_proration_calculation", default: "per_payment_term", null: false
     t.boolean "premium_proration_refunds_allowed", default: true, null: false
     t.index ["carrier_id"], name: "index_carrier_policy_types_on_carrier_id"
@@ -851,7 +851,8 @@ ActiveRecord::Schema.define(version: 2021_10_28_172506) do
     t.bigint "profileable_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["external_id"], name: "index_integration_profiles_on_external_id", unique: true
+    t.string "external_context"
+    t.index ["integration_id", "external_context", "external_id"], name: "index_integration_profiles_on_externals", unique: true
     t.index ["integration_id"], name: "index_integration_profiles_on_integration_id"
     t.index ["profileable_type", "profileable_id"], name: "index_integration_profiles_on_profileable"
   end

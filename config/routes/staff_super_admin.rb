@@ -83,6 +83,10 @@
           post 'coverage-options',
             to: 'insurable_rate_configurations#set_options',
             defaults: { type: 'Agency', carrier_id: 5, insurable_type_id: ::InsurableType::RESIDENTIAL_UNITS_IDS.first }
+
+          get "policy-types",
+            to: "agencies#get_policy_types",
+            via: "get"
         end
 
         collection do
@@ -153,6 +157,7 @@
           post :add_commissions
           put :update_commission
           get :commission
+          get :available_agencies
 
           post :add_fee
           get :fees

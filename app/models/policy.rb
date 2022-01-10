@@ -109,6 +109,9 @@ class Policy < ApplicationRecord
   has_many :change_requests, as: :changeable
 
   has_many :signable_documents, as: :referent
+  
+  has_many :integration_profiles,
+    as: :profileable
 
   has_many_attached :documents
 

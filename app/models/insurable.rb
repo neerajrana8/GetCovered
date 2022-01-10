@@ -50,6 +50,9 @@ class Insurable < ApplicationRecord
 
   has_many :integration_profiles,
            as: :profileable
+  
+  has_many :insurable_rate_configurations,
+           as: :configurable
 
   accepts_nested_attributes_for :addresses, allow_destroy: true
 
@@ -563,6 +566,7 @@ class Insurable < ApplicationRecord
               addresses: [ address ],
               account_id: account_id || nil
             )
+          created.insurable_id = parent.id if parent
           unless created.save
             message = parent.nil? ? I18n.t('insurable_model.unable_to_create_from_address') : I18n.t('insurable_model.unable_to_create_building_from_address')
            return { error_type: :"invalid_#{parent.nil? ? 'community' : 'building'}",

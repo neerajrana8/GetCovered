@@ -339,11 +339,14 @@ class Invoice < ApplicationRecord
   end
   
   def process_reductions
-    return if self.pending_charge_count > 0 || self.pending_dispute_count > 0
+    return "Failure: awaiting resolution of pending charges" if self.pending_charge_count > 0
+    return "Failure: awaiting resolution fo pending disputes" if self.pending_dispute_count > 0
+    error_message = "Success"
     self.with_payment_lock do |line_item_array|
-      return if self.pending_charge_count > 0 || self.pending_dispute_count > 0
+      return "Failure: awaiting resolution of pending charges" if self.pending_charge_count > 0
+      return "Failure: awaiting resolution fo pending disputes" if self.pending_dispute_count > 0
       lirs = self.line_item_reductions.pending.order(refundability: :desc, created_at: :asc).group_by{|lir| lir.line_item }
-      return if lirs.blank?
+      return "Success: no LIRs exist for this invoice" if lirs.blank?
       refund_object = nil
       # handle reductions
       total_due_change = 0
@@ -363,7 +366,11 @@ class Invoice < ApplicationRecord
             when 'reduced';     li.preproration_total_due -= to_reduce
           end
           lir.amount_successful += to_reduce
-          raise ActiveRecord::Rollback unless to_reduce == 0 || !li.line_item_changes.create(field_changed: 'total_due', amount: -to_reduce, reason: lir, new_value: li.total_due).id.nil?
+          newborn = li.line_item_changes.create(field_changed: 'total_due', amount: -to_reduce, reason: lir, new_value: li.total_due)
+          unless to_reduce == 0 || !newborn.id.nil?
+            error_message = "Failure: error while creating LIC (total_due for LI #{li.id} and LIR #{lir.id}): #{newborn.errors.to_h}"
+            raise ActiveRecord::Rollback
+          end
           total_due_change -= to_reduce
           # calculate change to total_received
           to_unpay = (lir.refundability == 'cancel_only' ? 0 : [to_reduce, li.total_received - li.total_due].min)
@@ -372,32 +379,52 @@ class Invoice < ApplicationRecord
             li.total_received -= to_unpay
             total_received_change -= to_unpay
             # lic
-            raise ActiveRecord::Rollback unless to_unpay == 0 || !li.line_item_changes.create(field_changed: 'total_received', amount: -to_unpay, reason: lir, new_value: li.total_received).id.nil?
+            newborn = li.line_item_changes.create(field_changed: 'total_received', amount: -to_unpay, reason: lir, new_value: li.total_received)
+            unless to_unpay == 0 || !newborn.id.nil?
+              error_message = "Failure: error while creating LIC (total_received for LI #{li.id} and LIR #{lir.id}): #{newborn.errors.to_h}"
+              raise ActiveRecord::Rollback
+            end
             # lir
-            refund_object ||= ::Refund.create
-            raise ActiveRecord::Rollback if refund_object.id.nil?
+            refund_object ||= ::Refund.create(invoice: self)
+            if refund_object.id.nil?
+              error_message = "Failure: error while creating Refund: #{refund_object.errors.to_h}"
+              raise ActiveRecord::Rollback
+            end
             lir.refund = refund_object
             lir.amount_refunded += to_unpay
             total_to_refund -= to_unpay
           end
           # the LIR has now been handled
           lir.pending = false
-          lir.save! rescue raise ActiveRecord::Rollback
+          unless lir.save
+            error_message = "Failure: error while saving LIR #{lir.id} (for LI #{li.id}): #{lir.errors.to_h}"
+            raise ActiveRecord::Rollback
+          end
         end
-        li.save! rescue raise ActiveRecord::Rollback
+        unless li.save
+          error_message = "Failure: error while saving LI #{li.id}: #{li.errors.to_h}"
+          raise ActiveRecord::Rollback
+        end
       end
-      raise ActiveRecord::Rollback unless self.update(
+      unless self.update(
         total_due: self.total_due + self.total_reducing + total_due_change,
         total_payable: [self.total_due + self.total_reducing + total_due_change - (self.total_received + total_received_change), 0].max,
         total_reducing: 0,
         total_received: self.total_received + total_received_change
       )
+        error_message = "Failure: error while updating invoice totals: #{self.errors.to_h}"
+        raise ActiveRecord::Rollback 
+      end
       # create refund
       unless refund_object.nil?
         refund_error_message = refund_object.execute
-        raise ActiveRecord::Rollback unless refund_error_message.nil?
+        unless refund_error_message.nil?
+          error_message = "Failure: error while executing refund: #{refund_error_message}"
+          raise ActiveRecord::Rollback
+        end
       end
     end # end payment_lock
+    return error_message
   end
 
   # WARNING: only called from stripe charges right now, not external charges!

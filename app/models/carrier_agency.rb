@@ -38,6 +38,10 @@ class CarrierAgency < ApplicationRecord
     disable_authorizations
     disable_billing_strategies
   end
+
+  def parent_carrier_agency
+    CarrierAgency.find_by(carrier: carrier, agency: agency.agency) if agency.agency.present?
+  end
   
   private
 
