@@ -82,7 +82,7 @@ class Address < ApplicationRecord
   end
 
   def self.from_string(dat_strang, validate_properties: true)
-    address = Address.new(full: dat_strang)
+    address = Address.new(full: dat_strang.titlecase)
     parsed_address = StreetAddress::US.parse(dat_strang)
     if parsed_address.nil?
       address.errors.add(:address_string, I18n.t('address_model.is_not_a_valid_state'))

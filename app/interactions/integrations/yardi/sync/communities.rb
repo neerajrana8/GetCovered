@@ -3,7 +3,7 @@ module Integrations
     module Sync
       class Communities < ActiveInteraction::Base
         object :integration
-        hash :parsed_response, default: nil # provide if you've done the GetPropertyConfigurations call manually so it's not done again here
+        hash :parsed_response, default: nil, strip: false # provide if you've done the GetPropertyConfigurations call manually so it's not done again here
         boolean :sync_units, default: true # true: sync units, false: do not sync units, nil: sync units for new communities only
         boolean :sync_tenants, default: true # true: sync tenants (user and lease/policy data)--will force sync_units true if provided; false: do not sync tenants
         
