@@ -9,12 +9,7 @@ class Staff < ApplicationRecord
 
   include SetAsOwner
   include RecordChange
-<<<<<<< GCV2-4135-ruby-rails-upgrade-to-latest-versions
-  include DeviseTokenAuth::Concerns::User
-=======
   include DeviseCustomUser
-  include ElasticsearchSearchable
->>>>>>> master
   include SessionRecordable
 
   enum role: { staff: 0, agent: 1, owner: 2, super_admin: 3 }
