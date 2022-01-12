@@ -37,6 +37,10 @@ class CarrierAgency < ApplicationRecord
     disable_authorizations
     disable_billing_strategies
   end
+
+  def parent_carrier_agency
+    CarrierAgency.find_by(carrier: carrier, agency: agency.agency) if agency.agency.present?
+  end
   
   private
 
@@ -62,7 +66,7 @@ class CarrierAgency < ApplicationRecord
       return true if ::CarrierAgency::BLOCKED_POLICY_TYPES.include?(attrs['policy_type_id'])
       return true if self.carrier_agency_policy_types.any? do |capt|
         capt.id && capt.policy_type_id == attrs['policy_type_id'] && (attrs['commission_strategy_attributes'].blank? || attrs['commission_strategy_attributes'].all? do |csa|
-          capt.send(csa.first) == csa.second
+          capt.commission_strategy&.send(csa.first) == csa.second
         end)
       end
       return false

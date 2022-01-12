@@ -88,6 +88,7 @@ es:
       cant_create_user: "No se puede crear un usuario"
       cant_update_address: "No se puede actualizar la dirección"
   policy_app_model:
+    user_age: "%{name} debe tener al menos 18 años"
     billing_strategy_must_belong: "la estrategia de facturación debe pertenecer a la misma agencia"
     billing_strategy_must_be_valid: "debe ser una estrategia de facturación válida para el operador actual"
     billing_strategy_must_be_enabled: "la estrategia de facturación debe estar habilitada"
@@ -180,6 +181,7 @@ es:
     no_build_coverages_for_crum: 'No hay coberturas de construcción para Crum'
     no_build_coverages_for_pensio: 'No hay coberturas de construcción para Pensio'
     error_with_build_coverages: 'Se produjo un error con las coberturas de compilación'
+    invoice_gen_failed: "Encontramos un error al procesar su solicitud."
   policy_bind_warning_notification_job:
     get_covered_bind_warning: "Obtenga una advertencia de enlace cubierto"
   qbe_policy_quote:
@@ -324,6 +326,7 @@ es:
     1020_title: "Joyería de los hombres de Spp"
     1021_title: "Joyería de mujer Spp"
     1043_title: "Aumento de los límites de propiedad Joyas, Relojes"
+    1043_desc:  "La póliza básica incluye un sublímite de robo de $1,000 para joyas, relojes y pieles. Esta cobertura mejorada brinda la opción de aumentar ese sublímite sin programar los elementos."
     1060_title: "Recompra de responsabilidad animal"
     1060_desc:  "Esta opción proporciona una cantidad mayor de protección de responsabilidad cuando un asegurado asume la responsabilidad por daños causados ​​por una mascota."
     1061_title: "Terremoto"

@@ -11,7 +11,7 @@ namespace :gc do
     	
     	['setup', 'agency', 'account', 'insurable-residential',
        'insurable-cambridge', 'insurable-commercial', 'user', 
-       'policy-residential'].each do |section|
+       'policy-residential', 'branding-profiles', 'set-permissions'].each do |section|
     		system("rails db:seed section=#{ section }")
     	end
     end  
@@ -23,7 +23,7 @@ namespace :gc do
     	
     	['setup', 'agency', 'account', 'insurable-residential',
        'insurable-cambridge', 'insurable-commercial', 'user', 
-       'policy-residential'].each do |section|
+       'policy-residential', 'branding-profiles', 'set-permissions'].each do |section|
     		system("rails db:seed section=#{ section }")
     	end
     end
@@ -44,7 +44,7 @@ namespace :gc do
   		        
       	['setup', 'agency', 'account', 'insurable-residential',
       	 'insurable-cambridge', 'insurable-commercial', 'user', 
-      	 'policy-residential', 'policy-commercial'].each do |section|
+      	 'policy-residential', 'policy-commercial', 'branding-profiles', 'set-permissions'].each do |section|
       		system("rails db:seed section=#{ section }")
       	end        
       end

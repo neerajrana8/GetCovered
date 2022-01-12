@@ -106,6 +106,7 @@ module PoliciesDashboardMethods
     policies_relation.count
   end
 
+  # policies - ActiveRecord::Relation
   def line_item_changes(policies, time_range)
     LineItemChange.
       joins(line_item: :invoice).
@@ -114,7 +115,8 @@ module PoliciesDashboardMethods
         created_at: time_range,
         field_changed: :total_received,
         analytics_category: %w[policy_premium master_policy_premium]
-      )
+      ).
+      where("policy_quotes.policy_id IN (#{policies.select(:id).to_sql})")
   end
 
   def premium_collected(line_item_changes)

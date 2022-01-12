@@ -47,6 +47,12 @@ class Insurable < ApplicationRecord
 
   has_many :histories, as: :recordable
 
+  has_many :integration_profiles,
+           as: :profileable
+  
+  has_many :insurable_rate_configurations,
+           as: :configurable
+
   accepts_nested_attributes_for :addresses, allow_destroy: true
 
   enum category: %w[property entity]
@@ -151,7 +157,7 @@ class Insurable < ApplicationRecord
     return ::Insurable.where(insurable_type_id: unit_type_ids, insurable_id: nonunit_parent_ids) # WARNING: some code (msi insurable concern) expects query rather than array output here (uses scopes on this call)
   end
   
-  def query_for_full_hierarchy
+  def query_for_full_hierarchy(exclude_self: false)
     # WARNING: at some point, we can use an activerecord callback to store all nonunit child insurable ids in a field and thus skip the loop
     # loopy schloopy
     ids = []
@@ -160,6 +166,7 @@ class Insurable < ApplicationRecord
       ids.concat(found)
       found = ::Insurable.where(insurable_id: found).where.not(id: ids).order(:id).group(:id).pluck(:id)
     end
+    ids = ids.shift if exclude_self
     # return everything
     return ::Insurable.where(id: ids)
   end
@@ -254,7 +261,7 @@ class Insurable < ApplicationRecord
   end
 
   def refresh_policy_type_ids(and_save: false)
-    self.policy_type_ids = self.carrier_insurable_profiles.any?{|cip| cip.carrier_id == DepositChoiceService.carrier_id } ? [DepositChoiceService.policy_type_id] : []
+    self.policy_type_ids = self.carrier_insurable_profiles.any?{|cip| cip.carrier_id == DepositChoiceService.carrier_id && cip.external_carrier_id } ? [DepositChoiceService.policy_type_id] : []
     
     
     # THIS IS TURNED OFF FOR NOW, IT'S GOTTEN INSANELY MORE COMPLICATED SO WE'RE RESTRICTING TO DEPOSIT CHOICE:
@@ -533,6 +540,7 @@ class Insurable < ApplicationRecord
               addresses: [ address ],
               account_id: account_id || nil
             )
+          created.insurable_id = parent.id if parent
           unless created.save
             message = parent.nil? ? I18n.t('insurable_model.unable_to_create_from_address') : I18n.t('insurable_model.unable_to_create_building_from_address')
            return { error_type: :"invalid_#{parent.nil? ? 'community' : 'building'}",

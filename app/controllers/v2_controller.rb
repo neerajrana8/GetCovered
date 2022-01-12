@@ -18,14 +18,16 @@
 
 class V2Controller < ApplicationController
 
+  around_action :set_timezone
+
   def index(instance_symbol, data_source, *includes)
 #puts data_source.to_sql
 #exit
     prequery = build_prequery(data_source, includes, (params[:filter].nil? ? {} : params[:filter].to_unsafe_h).deep_merge(fixed_filters), params[:sort].nil? ? nil : params[:sort].to_unsafe_h)
-ap "Prequery: #{prequery}"
+#ap "Prequery: #{prequery}"
     query = build_query(data_source, prequery)
 
-print "\nQuery: #{query.to_sql}\n"
+#print "\nQuery: #{query.to_sql}\n"
 
 =begin
 puts ''
@@ -529,6 +531,15 @@ exit
       where_hash: to_return[:hash],
       where_strings: to_return[:string]
     })
+  end
+
+  def set_timezone
+    if request.headers['HTTP_TIMEZONE'].present?
+      zone = request.headers['HTTP_TIMEZONE']
+      Time.use_zone(zone) { yield }
+    else
+      yield
+    end
   end
 
 	def health_check

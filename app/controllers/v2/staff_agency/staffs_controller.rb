@@ -20,7 +20,7 @@ module V2
           super(:@staffs, @agency.staff, :profile)
         end
       end
-      
+
       def show
         if show_allowed?
           render :show, status: :ok
@@ -29,7 +29,7 @@ module V2
         end
 
       end
-      
+
       def create
         if create_allowed?
           @staff = ::Staff.new(create_params)
@@ -47,7 +47,7 @@ module V2
           render json: { success: false, errors: ['Unauthorized Access'] }, status: :unauthorized
         end
       end
-      
+
       def update
         if @staff.update_as(current_staff, update_params)
           render :show, status: :ok
@@ -65,7 +65,7 @@ module V2
                  status: :unprocessable_entity
         end
       end
-      
+
       def search
         @staff = ::Staff.search(params[:query]).records.where(organizable_id: @agency.id)
         render json: @staff.to_json, status: 200
@@ -79,7 +79,7 @@ module V2
           render json: { success: false, errors: ['Unauthorized Access'] }, status: :unauthorized
         end
       end
-      
+
       private
 
       def only_password_blank_error?(staff_errors)
@@ -101,7 +101,7 @@ module V2
 
         false
       end
-        
+
       def create_allowed?
         return false if create_params[:role] == 'super_admin'
 
@@ -110,14 +110,14 @@ module V2
         return true if create_params[:organizable_type] == 'Agency' && (@agency.id == create_params[:organizable_id]&.to_i || @agency.agencies.ids.include?(create_params[:organizable_id]&.to_i))
 
         return false if create_params[:organizable_type] == 'Account' && !@agency&.accounts&.ids&.include?(create_params[:organizable_id])
-        
+
         true
       end
-        
+
       def set_staff
         @staff = ::Staff.find(params[:id])
       end
-                
+
       def create_params
         return({}) if params[:staff].blank?
 
@@ -131,7 +131,7 @@ module V2
         )
         to_return
       end
-        
+
       def update_params
         return({}) if params[:staff].blank?
 
@@ -146,7 +146,7 @@ module V2
           ]
         )
       end
-        
+
       def supported_filters(called_from_orders = false)
         @calling_supported_orders = called_from_orders
         {

@@ -105,6 +105,12 @@ describe 'Leads API spec', type: :request do
       expect(response_body2['first_name'].present?).to eq(true)
     end
 
+    it 'should view recent lead index json with filtration' do
+      response_body = filter_recent_leads(leads_filtering)
+      expect(response.status).to eq(200)
+      expect(response_body.size).to eq(2)
+    end
+
   end
 
   it 'should create new Lead from external api call' do
@@ -118,7 +124,7 @@ describe 'Leads API spec', type: :request do
     PolicyApplication.any_instance.stub(:billing_strategy){ billing_strategy }
     PolicyApplication.any_instance.stub(:agency){ agency_partner }
 
-    result = external_api_call(external_api_call_params(test_email), get_external_access_token_headers(agency_partner))
+    result = external_api_call(external_api_call_params(test_email, branding_profile), get_external_access_token_headers(agency_partner))
     expect(response.status).to eq(200)
     expect(result['reference']).to_not eq(nil)
     expect(Lead.find_by(email: test_email)).to_not eq(nil)
@@ -147,11 +153,17 @@ describe 'Leads API spec', type: :request do
     response
   end
 
+  def filter_recent_leads(params)
+    post '/v2/staff_super_admin/leads_recent_index', headers: @headers, params: params
+    JSON.parse response.body
+  end
+
   def new_event_params(email, identifier, last_visited_page, lead_step, lead_field_name, lead_step_value = Faker::Name.name)
     {
         "email": email,
         "identifier": "",
         "agency_id": @agency.id,
+        "branding_profile_id": @branding_profile.id,
         "lead_event_attributes": {
             "tag": TEST_TAG,
             "latitude": Faker::Address.latitude,
@@ -162,7 +174,8 @@ describe 'Leads API spec', type: :request do
                       "action_type": "new",
                       "lead_step": lead_step,
                       "lead_field_name": lead_field_name,
-                      "lead_step_value": lead_step_value
+                      "lead_step_value": lead_step_value,
+                      "branding_profile_id": @branding_profile.id
             }
         }
     }
@@ -172,6 +185,7 @@ describe 'Leads API spec', type: :request do
     {
         "email": email,
         "agency_id": @agency.id,
+        "branding_profile_id": @branding_profile.id,
         "lead_event_attributes": {
             "tag": TEST_TAG,
             "latitude":"",
@@ -179,7 +193,8 @@ describe 'Leads API spec', type: :request do
             "agency_id": @agency.id,
             "policy_type_id":"5",
             "data": {
-                "last_visited_page": "Landing Page"
+                "last_visited_page": "Landing Page",
+                "branding_profile_id": @branding_profile.id
             }
        }
     }
@@ -190,6 +205,7 @@ describe 'Leads API spec', type: :request do
         "email": email,
         "identifier": identifier,
         "agency_id": @agency.id,
+        "branding_profile_id": @branding_profile.id,
         "lead_event_attributes": {
             "tag": TEST_TAG,
             "latitude": Faker::Address.latitude,
@@ -200,7 +216,8 @@ describe 'Leads API spec', type: :request do
                       "action_type": "new",
                       "lead_step": "fill name",
                       "lead_field_name": "first_name",
-                      "lead_step_value": Faker::Name.name
+                      "lead_step_value": Faker::Name.name,
+                      "branding_profile_id": @branding_profile.id,
             }
     },
         "profile_attributes": {
@@ -227,12 +244,13 @@ describe 'Leads API spec', type: :request do
             "campaign_name": "nnn",
             "campaign_source": "sss",
             "campaign_term": "ttt",
-            "landing_page": "rentguarantee"
+            "landing_page": "rentguarantee",
+            "branding_profile_id": @branding_profile.id
         }
     }
   end
 
-  def external_api_call_params(test_email)
+  def external_api_call_params(test_email, branding_profile)
     {
         "policy_application":{
             "policy_type_id":1,
@@ -244,6 +262,7 @@ describe 'Leads API spec', type: :request do
                     "primary":true,
                     "user_attributes":{
                         "email": test_email,
+                        branding_profile_id: branding_profile.id,
                         "profile_attributes":{
                             "first_name":Faker::Name.name,
                             "last_name":Faker::Name.name,
@@ -253,6 +272,29 @@ describe 'Leads API spec', type: :request do
                     }
                 }
             ]
+        }
+    }
+  end
+
+  def leads_filtering
+    {
+        "sort":{
+            "column":"last_visit",
+            "direction":"desc"
+        },
+        "filter":{
+            "last_visit":{
+                "start": (Date.today - 1.day).to_s,
+                "end": (Date.today + 1.day).to_s
+            },
+            "agency_id":[
+                @agency.id
+            ],
+            "lead_events":{
+                "policy_type_id":[
+                    5
+                ]
+            }
         }
     }
   end

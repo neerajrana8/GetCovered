@@ -72,6 +72,10 @@ class PolicyType < ApplicationRecord
     self.designation == 'BOP'
   end
 
+  def security_deposit?
+    self.designation == 'SECURITY-DEPOSIT'
+  end
+
   class << self
     def residential
       find_by!(slug: 'residential')
@@ -79,6 +83,10 @@ class PolicyType < ApplicationRecord
 
     def rent_garantee
       find_by!(slug: 'rent-guarantee')
+    end
+
+    def security_deposit
+      find_by!(slug: 'security-deposit-replacement')
     end
   end
 

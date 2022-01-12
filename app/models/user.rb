@@ -10,7 +10,7 @@ class User < ApplicationRecord
          :trackable, :validatable, :invitable, validate_on_invite: true
 
   include RecordChange
-  include DeviseTokenAuth::Concerns::User
+  include DeviseCustomUser
   include SessionRecordable
 
   # Active Record Callbacks
@@ -44,6 +44,9 @@ class User < ApplicationRecord
   has_many :account_users
   has_many :claims, as: :claimant
   has_many :events, as: :eventable
+
+  has_many :integration_profiles,
+           as: :profileable
 
   has_many :active_account_users,
     -> { where status: 'enabled' },

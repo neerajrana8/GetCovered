@@ -35,3 +35,10 @@ json.global_agency_permission do
 
   end
 end
+
+json.carriers do
+  json.array! agency.carriers.each do |carrier|
+    json.id carrier.id
+    json.title carrier.title
+  end
+end

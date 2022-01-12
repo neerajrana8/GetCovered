@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_09_27_195749) do
+ActiveRecord::Schema.define(version: 2021_11_29_192209) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
@@ -834,6 +834,35 @@ ActiveRecord::Schema.define(version: 2021_09_27_195749) do
     t.index ["insurable_type_id"], name: "index_insurables_on_insurable_type_id"
     t.index ["policy_type_ids"], name: "insurable_ptids_gin_index", using: :gin
     t.index ["preferred_ho4"], name: "index_insurables_on_preferred_ho4"
+  end
+
+  create_table "integration_profiles", force: :cascade do |t|
+    t.string "external_id"
+    t.jsonb "configuration", default: {}
+    t.boolean "enabled", default: false
+    t.bigint "integration_id"
+    t.string "profileable_type"
+    t.bigint "profileable_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.string "external_context"
+    t.index ["integration_id", "external_context", "external_id"], name: "index_integration_profiles_on_externals", unique: true
+    t.index ["integration_id"], name: "index_integration_profiles_on_integration_id"
+    t.index ["profileable_type", "profileable_id"], name: "index_integration_profiles_on_profileable"
+  end
+
+  create_table "integrations", force: :cascade do |t|
+    t.string "external_id"
+    t.jsonb "credentials", default: {}
+    t.jsonb "configuration", default: {}
+    t.boolean "enabled", default: false
+    t.string "integratable_type"
+    t.bigint "integratable_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.integer "provider", default: 0
+    t.index ["external_id"], name: "index_integrations_on_external_id", unique: true
+    t.index ["integratable_type", "integratable_id"], name: "index_integrations_on_integratable_type_and_integratable_id"
   end
 
   create_table "invoices", force: :cascade do |t|
