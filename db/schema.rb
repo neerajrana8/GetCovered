@@ -828,6 +828,7 @@ ActiveRecord::Schema.define(version: 2021_11_29_192209) do
     t.boolean "preferred_ho4", default: false, null: false
     t.boolean "confirmed", default: true, null: false
     t.boolean "occupied", default: false
+    t.jsonb "expanded_covered", default: {}, null: false
     t.index ["account_id"], name: "index_insurables_on_account_id"
     t.index ["agency_id"], name: "index_insurables_on_agency_id"
     t.index ["insurable_id"], name: "index_insurables_on_insurable_id"
@@ -862,7 +863,7 @@ ActiveRecord::Schema.define(version: 2021_11_29_192209) do
     t.datetime "updated_at", null: false
     t.integer "provider", default: 0
     t.index ["external_id"], name: "index_integrations_on_external_id", unique: true
-    t.index ["integratable_type", "integratable_id"], name: "index_integrations_on_integratable_type_and_integratable_id"
+    t.index ["integratable_type", "integratable_id"], name: "index_integrations_on_integratable"
   end
 
   create_table "invoices", force: :cascade do |t|
