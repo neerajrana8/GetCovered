@@ -77,13 +77,14 @@ describe 'Admin Policy spec', type: :request do
     end
 
     it 'should search policies by number' do
-      policy = FactoryBot.create(:policy, number: 'n0101', agency: @agency, carrier: @carrier, account: @account, policy_type: @policy_type)
-      sleep 5
-      get '/v2/staff_account/policies/search', params: { 'query' => policy.number }, headers: @headers
-      result = JSON.parse response.body
-      expect(response.status).to eq(200)
-      expect(result.count).to eq(1)
-      expect(result.first['number']).to eq(policy.number)
+      # policy = FactoryBot.create(:policy, number: 'n0101', agency: @agency, carrier: @carrier, account: @account, policy_type: @policy_type)
+      # sleep 5
+      # get '/v2/staff_account/policies/search', params: { 'query' => policy.number }, headers: @headers
+      # result = JSON.parse response.body
+      # expect(response.status).to eq(200)
+      # expect(result.count).to eq(1)
+      # expect(result.first['number']).to eq(policy.number)
+      pending "#{__FILE__} Needs to be updated after removing elasticsearch tests"
     end
   end
 
@@ -156,13 +157,14 @@ describe 'Admin Policy spec', type: :request do
     end
 
     it 'should search policies by number' do
-      policy = FactoryBot.create(:policy, number: 'nagency0101', agency: @agency, carrier: @carrier, account: @account, policy_type: @policy_type)
-      sleep 5
-      get '/v2/staff_agency/policies/search', params: { 'query' => policy.number }, headers: @headers
-      result = JSON.parse response.body
-      expect(response.status).to eq(200)
-      expect(result.count).to eq(1)
-      expect(result.first['number']).to eq(policy.number)
+      # policy = FactoryBot.create(:policy, number: 'nagency0101', agency: @agency, carrier: @carrier, account: @account, policy_type: @policy_type)
+      # sleep 5
+      # get '/v2/staff_agency/policies/search', params: { 'query' => policy.number }, headers: @headers
+      # result = JSON.parse response.body
+      # expect(response.status).to eq(200)
+      # expect(result.count).to eq(1)
+      # expect(result.first['number']).to eq(policy.number)
+      pending "#{__FILE__} Needs to be updated after removing elasticsearch tests"
     end
   end
 
