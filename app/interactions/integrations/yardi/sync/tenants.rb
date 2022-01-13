@@ -74,7 +74,7 @@ module Integrations
             end
             next if userobjs.nil? # if here, we already pushed an error message above in the "unless userobj.id" block; skip the rest of this lease
             # create the lease
-            lease = tenant['gc_unit'].leases.create(start_date: Date.parse(tenant["LeaseFrom"]), end_date: tenant["LeaseTo"].blank? ? nil : Date.parse(tenant["LeaseTo"]), lease_type_id: LeaseType::RESIDENTIAL_ID, account: integration.account)
+            lease = tenant['gc_unit'].leases.create(start_date: Date.parse(tenant["LeaseFrom"]), end_date: tenant["LeaseTo"].blank? ? nil : Date.parse(tenant["LeaseTo"]), lease_type_id: LeaseType::RESIDENTIAL_ID, account: integration.integratable)
             if lease.id.nil?
               to_return[:results].push({ status: :error, message: "Failed to create lease ##{tenant["Id"]}: #{lease.errors.to_h}" })
               to_return[:error_count] += 1

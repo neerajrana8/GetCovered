@@ -40,9 +40,15 @@ module Integrations
         end
         integration.configuration['billing_and_payments']['active'] = billing_issues.blank?
         integration.configuration['billing_and_payments']['configuration_problems'] = billing_issues
+        # make sure the proper sync-related stuff is set up
+        prepare_sync_fields
         # save changes and return the integration
         integration.save
         return integration
+      end
+      
+      def prepare_sync_fields
+        integration.configuration['sync'] ||= {}
       end
       
     end

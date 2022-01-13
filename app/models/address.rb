@@ -31,6 +31,8 @@ class Address < ApplicationRecord
 
   geocoded_by :full
 
+  before_save :standardize_case
+
   before_save :set_full,
               :set_full_searchable,
               :from_full
@@ -106,6 +108,13 @@ class Address < ApplicationRecord
              .join(', ')
              .gsub(/\s+/, ' ')
              .strip
+  end
+  
+  # force titlecase everywhere so things are predictable
+  def standardize_case
+    ["street_name", "street_two", "city", "county"].each do |prop|
+      self.send("#{prop}=", self.send(prop)&.titlecase)
+    end
   end
 
   # Address.set_full
