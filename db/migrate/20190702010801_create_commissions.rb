@@ -10,7 +10,7 @@ class CreateCommissions < ActiveRecord::Migration[5.2]
       t.string :stripe_transaction_id
       t.references :policy_premium
       t.references :commission_strategy
-      t.references :commissionable, polymorphic: true
+      t.references :commissionable, polymorphic: true, index: { name: "index_commissions_on_commissionable_type_and_commissionable_id" }
 
       t.timestamps
     end

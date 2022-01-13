@@ -1,6 +1,6 @@
 module BrandingProfiles
   class FindByObject < ActiveInteraction::Base
-    interface :object
+    interface :object, default: nil
 
     def execute
       send(object.class.name.underscore) unless object.nil?

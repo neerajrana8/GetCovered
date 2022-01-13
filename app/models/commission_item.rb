@@ -17,11 +17,6 @@ class CommissionItem < ApplicationRecord
 
   validates_presence_of :amount
 
-
-
-
-
-
   private
 
     def set_analytics_fields
@@ -42,10 +37,5 @@ class CommissionItem < ApplicationRecord
       self.commission.lock!
       self.commission.update(total: self.commission.total + self.amount)
     end
-    
-    
-    
-    
-    
     
 end

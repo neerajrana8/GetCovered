@@ -3,7 +3,6 @@
 
 class Insurable < ApplicationRecord
   # Concerns
-  include ElasticsearchSearchable
   include CarrierQbeInsurable
   include CarrierMsiInsurable
   include CarrierDcInsurable
@@ -88,14 +87,8 @@ class Insurable < ApplicationRecord
     return results
   end
 
-  settings index: { number_of_shards: 1 } do
-    mappings dynamic: 'false' do
-      indexes :title, type: :text, analyzer: 'english'
-    end
-  end
   # Insurable.primary_address
   #
-
   def primary_address
     if addresses.count.zero?
       return insurable.primary_address unless insurable.nil?
@@ -106,7 +99,6 @@ class Insurable < ApplicationRecord
 
   # Insurable.primary_staff
   #
-
   def primary_staff
     assignment = assignments.find_by(primary: true)
     assignment.staff.nil? ? nil : assignment.staff
@@ -114,7 +106,6 @@ class Insurable < ApplicationRecord
 
   # Insurable.create_carrier_profile(carrier_id)
   #
-
   def create_carrier_profile(carrier_id, data: nil, traits: nil)
     cit = CarrierInsurableType.where(carrier_id: carrier_id, insurable_type_id: insurable_type_id).take
     unless cit.nil?
@@ -126,7 +117,6 @@ class Insurable < ApplicationRecord
 
   # Insurable.carrier_profile(carrier_id)
   #
-
   def carrier_profile(carrier_id)
     return carrier_insurable_profiles.where(carrier_id: carrier_id).take unless carrier_id.nil?
   end
@@ -287,8 +277,6 @@ class Insurable < ApplicationRecord
       self.save
     end
   end
-
-
 
   # RETURNS EITHER:
   #   nil:                      no match was found and creation wasn't allowed

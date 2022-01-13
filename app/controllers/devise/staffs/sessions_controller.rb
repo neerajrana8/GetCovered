@@ -1,6 +1,10 @@
 class Devise::Staffs::SessionsController < DeviseTokenAuth::SessionsController
   include SessionsMethods
 
+  def create
+    super
+  end
+
   protected
 
   def render_create_success

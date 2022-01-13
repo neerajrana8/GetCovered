@@ -7,7 +7,6 @@
 
 class Agency < ApplicationRecord
   # Concerns
-  include ElasticsearchSearchable
   include SetSlug
   include SetCallSign
   include CoverageReport
@@ -204,13 +203,6 @@ class Agency < ApplicationRecord
 
   def commission_balance
     commission_deductions.map(&:unearned_balance).reduce(:+) || 0
-  end
-
-  settings index: { number_of_shards: 1 } do
-    mappings dynamic: 'false' do
-      indexes :title, type: :text, analyzer: 'english'
-      indexes :call_sign, type: :text, analyzer: 'english'
-    end
   end
 
   def parent_agencies_ids

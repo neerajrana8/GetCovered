@@ -3,7 +3,7 @@
 
 class Claim < ApplicationRecord
   # Concerns
-  include RecordChange, ElasticsearchSearchable
+  include RecordChange
 
   # Active Record Callbacks
   after_initialize :initialize_claim
@@ -37,15 +37,6 @@ class Claim < ApplicationRecord
   enum status: %i[pending approved declined]
 
   enum type_of_loss: { OTHER: 0, FIRE: 1, WATER: 2, THEFT: 3 }
-
-  settings index: { number_of_shards: 1 } do
-    mappings dynamic: 'false' do
-      indexes :subject, type: :text, analyzer: 'english'
-      indexes :description, type: :text, analyzer: 'english'
-      indexes :claimant_type, type: :text, analyzer: 'english'
-      indexes :time_of_loss, type: :date
-    end
-  end
 
   def claimant_full_name
     claimant&.profile&.full_name

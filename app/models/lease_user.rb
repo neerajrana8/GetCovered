@@ -19,7 +19,7 @@ class LeaseUser < ApplicationRecord
   private
     
   def set_first_as_primary
-    self.primary = true if lease.lease_users.count == 0 && primary.nil?
+    self.primary = true unless lease.lease_users.exists?(primary: true)
   end
    
   def set_account_user

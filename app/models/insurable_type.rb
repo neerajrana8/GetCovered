@@ -1,5 +1,4 @@
 class InsurableType < ApplicationRecord
-  include ElasticsearchSearchable
   include SetSlug
 
   COMMUNITIES_IDS = [1, 2, 3].freeze

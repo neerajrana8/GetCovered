@@ -12,7 +12,7 @@ module SessionRecordable
     client = changed_token.keys.sample
     if client && token_changes.first[client].present? #works only on sign_in NOT ON CREATE TOKEN
       login_record = login_activities.find_by(client: client) || login_activities.where(client: nil).last
-      login_record.update_attributes(client: client, expiry: changed_token[client]['expiry']) if login_record
+      login_record.update(client: client, expiry: changed_token[client]['expiry']) if login_record
     end
     #on delete tokens
     if token_changes.second.size < token_changes.first.size
