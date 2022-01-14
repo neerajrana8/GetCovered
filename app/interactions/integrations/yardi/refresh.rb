@@ -49,6 +49,30 @@ module Integrations
       
       def prepare_sync_fields
         integration.configuration['sync'] ||= {}
+        integration.configuration['sync']['syncable_communities'] ||= {}
+        integration.configuration['sync']['sync_history'] ||= []
+        integration.configuration['sync']['next_sync'] ||= nil
+        
+        # set up syncable_communities
+        result = Integrations::Yardi::RentersInsurance::GetPropertyConfigurations.run!(integration: integration)
+        if result[:success] && result[:parsed_response].class == ::Hash
+          result[:comms] = result[:parsed_response].dig("Envelope", "Body", "GetPropertyConfigurationsResponse", "GetPropertyConfigurationsResult", "Properties", "Property")
+          if result[:comms].class == ::Array
+            integration.configuration['sync']['syncable_communities'] = result[:comms].map{|c| [c["Code"], {
+              'name' => c["MarketingName"],
+              'gc_id' => (integration.configuration['sync']['syncable_communities'] || {})[c["Code"]]&.[]('gc_id'), # MOOSE WARNING: modify sync to fill this out
+              'enabled' => (integration.configuration['sync']['syncable_communities'] || {})[c["Code"]]&.[]('enabled') ? true : false
+            }] }.to_h
+          end
+        end
+        # set up next sync if needed
+        if integration.configuration['sync']['next_sync'].nil?
+          integration.configuration['sync']['next_sync'] = {
+            datetime: (Time.current + 1.day).beginning_of_day
+          }
+          # MOOSE WARNING: add sync job call
+        end
+        
       end
       
     end
