@@ -108,4 +108,5 @@ scope module: :public do
   post 'secret_authentication/:secret_token/authenticate', to: '/v2/public/secret_authentication#authenticate'
 
   get 'communities/:id' => 'communities#accounts'
+  get 'units/:id' => 'units#communities'
 end
