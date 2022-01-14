@@ -106,4 +106,6 @@ scope module: :public do
   post 'staffs/check_email', to: '/v2/check_email#staff'
 
   post 'secret_authentication/:secret_token/authenticate', to: '/v2/public/secret_authentication#authenticate'
+
+  get 'communities/:id' => 'communities#accounts'
 end
