@@ -28,7 +28,7 @@ WORKDIR /getcovered
 # will be cached unless changes to one of those two files
 # are made.
 COPY Gemfile Gemfile.lock ./
-RUN gem install bundler && RAILS_ENV=development bundle install --jobs 20 --retry 5
+RUN gem install bundler -v 2.2.27 && RAILS_ENV=development bundle install --jobs 20 --retry 5
 
 # Copy the main application.
 RUN bundle config --global frozen 1

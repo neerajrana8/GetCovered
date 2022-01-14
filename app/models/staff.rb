@@ -9,7 +9,7 @@ class Staff < ApplicationRecord
 
   include SetAsOwner
   include RecordChange
-  include DeviseTokenAuth::Concerns::User
+  include DeviseCustomUser
   include SessionRecordable
 
   enum role: { staff: 0, agent: 1, owner: 2, super_admin: 3 }

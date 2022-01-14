@@ -10,7 +10,7 @@ class User < ApplicationRecord
          :trackable, :validatable, :invitable, validate_on_invite: true
 
   include RecordChange
-  include DeviseTokenAuth::Concerns::User
+  include DeviseCustomUser
   include SessionRecordable
 
   # Active Record Callbacks
