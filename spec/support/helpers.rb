@@ -14,11 +14,10 @@ module Helpers
   end
 
   def create_agent_for(agency = nil, attributes = {})
-    attributes.reverse_merge!(
-      organizable: agency,
-      role: 'agent'
-    )
-    FactoryBot.create(:staff, attributes)
+    staff = FactoryBot.create(:staff, attributes)
+    FactoryBot.create(:staff_role, :for_agency, staff: staff, organizable: agency, role: 'agent')
+
+    staff
   end
 
   def create_account_for(agency = nil)

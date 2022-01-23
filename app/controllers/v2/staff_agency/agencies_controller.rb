@@ -46,7 +46,7 @@ module V2
         if create_allowed?
           outcome = Agencies::Create.run(
             agency_params: create_params.to_h,
-            parent_agency: current_staff.organizable,
+            parent_agency: current_staff.current_role(organizable: 'Agency').organizable,
             creator: current_staff
           )
           if outcome.valid?

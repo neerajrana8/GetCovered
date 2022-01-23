@@ -145,7 +145,7 @@ RSpec.configure do |config|
       # if we can't call pg_dump, reset the db before every test set
       ENV['section'] = 'test'
       Rake::Task["db:reset"].invoke
-      ::Agency.all.each{|agency| agency.global_agency_permission ||= FactoryBot.build(:global_agency_permission, agency: agency) }
+      ::Agency.all.each{|agency| agency.global_permission ||= FactoryBot.build(:global_permission, ownerable: agency) }
     else
       # if we can call pg_dump, restore the seeded database
       Rake::Task["db:restore"].invoke("#{Rails.root}/tmp/spec.dump", false, false)
@@ -163,7 +163,7 @@ RSpec.configure do |config|
         # if we can call pg_dump, reset/seed the db and cache it
         ENV['section'] = 'test'
         Rake::Task["db:reset"].invoke
-        ::Agency.all.each{|agency| agency.global_agency_permission ||= FactoryBot.build(:global_agency_permission, agency: agency) }
+        ::Agency.all.each{|agency| agency.global_permission ||= FactoryBot.build(:global_permission, ownerable: agency) }
         Rake::Task["db:dump"].invoke("#{Rails.root}/tmp/spec.dump", false, false)
       end
     end

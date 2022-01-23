@@ -3,7 +3,7 @@ FactoryBot.define do
     title { 'Get Covered' }
     carriers { [Carrier.first] }
     after(:create) do |agency|
-      agency.global_agency_permission ||= FactoryBot.build(:global_agency_permission, agency: agency)
+      agency.global_permission = FactoryBot.create(:global_permission, :for_agency, ownerable: agency)
     end
   end
 

@@ -32,8 +32,8 @@ describe 'Agency invitation spec', type: :request do
       title: 'New test agency',
       tos_accepted: true,
       whitelabel: false,
-      global_agency_permission_attributes: {
-        permissions: GlobalAgencyPermission::AVAILABLE_PERMISSIONS
+      global_permission_attributes: {
+        permissions: GlobalPermission::AVAILABLE_PERMISSIONS
       }
     }
   end
@@ -141,8 +141,8 @@ describe 'Agency api spec', type: :request do
       title: 'New test agency',
       tos_accepted: true,
       whitelabel: false,
-      global_agency_permission_attributes: {
-        permissions: GlobalAgencyPermission::AVAILABLE_PERMISSIONS
+      global_permission_attributes: {
+        permissions: GlobalPermission::AVAILABLE_PERMISSIONS
       }
     }
   end
@@ -153,8 +153,8 @@ describe 'Agency api spec', type: :request do
       tos_accepted: true,
       whitelabel: false,
       agency_id: agency_id,
-      global_agency_permission_attributes: {
-        permissions: GlobalAgencyPermission::AVAILABLE_PERMISSIONS
+      global_permission_attributes: {
+        permissions: GlobalPermission::AVAILABLE_PERMISSIONS
       }
     }
   end
@@ -170,8 +170,8 @@ describe 'Agency api spec', type: :request do
       agency_id: @agency.id,
       enabled: 'true',
       whitelabel: 'true',
-      global_agency_permission_attributes: {
-        permissions: GlobalAgencyPermission::AVAILABLE_PERMISSIONS
+      global_permission_attributes: {
+        permissions: GlobalPermission::AVAILABLE_PERMISSIONS
       },
       contact_info: { "contact_email": '', "contact_phone": '', "contact_fax": '' } }
   end

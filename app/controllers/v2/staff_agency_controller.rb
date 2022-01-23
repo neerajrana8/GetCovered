@@ -64,7 +64,7 @@ module V2
     end
 
     def is_agent?
-      render json: {error: 'Unauthorized access'}, status: :unauthorized unless current_staff.current_role.agent?
+      render json: {error: 'Unauthorized access'}, status: :unauthorized unless current_staff.current_role(organizable: 'Agency').agent?
     end
 
     def view_path
