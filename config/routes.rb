@@ -63,7 +63,7 @@ Rails.application.routes.draw do
         end
       end
 
-      resources :roles, only: [:update]
+      resources :roles, only: [:update, :index]
     end
 
     draw :user
