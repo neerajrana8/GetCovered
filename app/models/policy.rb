@@ -41,6 +41,7 @@ class Policy < ApplicationRecord
   include CarrierPensioPolicy
   include CarrierCrumPolicy
   include CarrierQbePolicy
+  include CarrierQbeMasterPolicy
   include CarrierMsiPolicy
   include CarrierDcPolicy
   include AgencyConfiePolicy
