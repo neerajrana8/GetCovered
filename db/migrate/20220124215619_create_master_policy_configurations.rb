@@ -11,10 +11,11 @@ class CreateMasterPolicyConfigurations < ActiveRecord::Migration[6.1]
       t.integer :program_delay, :default => 0
       t.integer :placement_cost, :default => 0
       t.integer :force_placement_cost
-      t.references :carrier_policy_type, null: false, foreign_key: true
+      t.references :carrier_policy_type, null: false, index: false
       t.references :configurable, polymorphic: true, null: false
 
       t.timestamps
     end
+    add_index :master_policy_configurations, [:carrier_policy_type_id, :configurable_type, :configurable_id], unique: true
   end
 end
