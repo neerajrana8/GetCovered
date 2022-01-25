@@ -1094,6 +1094,8 @@ ActiveRecord::Schema.define(version: 2022_01_24_215619) do
     t.boolean "consolidate_billing", default: true
     t.datetime "program_start_date"
     t.integer "program_delay", default: 0
+    t.integer "placement_cost", default: 0
+    t.integer "force_placement_cost"
     t.bigint "carrier_policy_type_id", null: false
     t.string "configurable_type", null: false
     t.bigint "configurable_id", null: false

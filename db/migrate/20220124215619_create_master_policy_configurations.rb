@@ -9,6 +9,8 @@ class CreateMasterPolicyConfigurations < ActiveRecord::Migration[6.1]
       t.boolean :consolidate_billing, :default => true
       t.datetime :program_start_date
       t.integer :program_delay, :default => 0
+      t.integer :placement_cost, :default => 0
+      t.integer :force_placement_cost
       t.references :carrier_policy_type, null: false, foreign_key: true
       t.references :configurable, polymorphic: true, null: false
 
