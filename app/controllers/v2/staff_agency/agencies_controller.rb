@@ -133,8 +133,8 @@ module V2
 
       def set_agency
         @agency =
-          if current_staff.organizable_type == 'Agency' && current_staff.organizable_id.to_s == params[:id]
-            current_staff.organizable
+          if current_staff.current_role(organizable: 'Agency') && current_staff.current_role(organizable: 'Agency').organizable_id.to_s == params[:id]
+            current_staff.current_role(organizable: 'Agency').organizable
           elsif current_staff.getcovered_agent?
             Agency.find(params[:id])
           else

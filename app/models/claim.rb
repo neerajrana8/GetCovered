@@ -83,8 +83,8 @@ class Claim < ApplicationRecord
   def policy_of_claimant
     policies_ids = []
     if claimant.is_a?(Staff)
-      return if claimant.role == 'super_admin'
-      policies_ids = claimant.organizable.policies.ids
+      return if claimant.current_role.role == 'super_admin'
+      policies_ids = claimant.current_role.organizable.policies.ids
     elsif claimant.is_a? User
       policies_ids = claimant.policies.ids
     end

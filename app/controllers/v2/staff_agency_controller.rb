@@ -72,8 +72,8 @@ module V2
     end
 
     def access_model(model_class, model_id = nil)
-      @agency ||= current_staff.organizable
-      return @agency if model_class == ::Agency && model_id&.to_i == current_staff.organizable_id
+      @agency ||= current_staff.current_role(organizable: 'Agency')
+      return @agency if model_class == ::Agency && model_id&.to_i == current_staff.current_role(organizable: 'Agency').organizable_id
 
       begin
         return @agency.send(model_class.name.underscore.pluralize).send(*(model_id.nil? ? [:itself] : [:find, model_id]))
