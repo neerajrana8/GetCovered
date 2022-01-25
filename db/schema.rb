@@ -1101,7 +1101,7 @@ ActiveRecord::Schema.define(version: 2022_01_24_215619) do
     t.bigint "configurable_id", null: false
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
-    t.index ["carrier_policy_type_id"], name: "index_master_policy_configurations_on_carrier_policy_type_id"
+    t.index ["carrier_policy_type_id", "configurable_type", "configurable_id"], name: "index_cpt_and_conf_on_mpc", unique: true
     t.index ["configurable_type", "configurable_id"], name: "index_master_policy_configurations_on_configurable"
   end
 
@@ -1891,7 +1891,6 @@ ActiveRecord::Schema.define(version: 2022_01_24_215619) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
-  add_foreign_key "master_policy_configurations", "carrier_policy_types"
   add_foreign_key "policy_coverages", "policies"
   add_foreign_key "policy_coverages", "policy_applications"
   add_foreign_key "policy_types", "policy_types", column: "master_policy_id"
