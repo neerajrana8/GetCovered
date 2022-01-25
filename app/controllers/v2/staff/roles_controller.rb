@@ -7,6 +7,10 @@ module V2
           current_role = current_staff.current_role
           current_role.update(primary: false) if current_role
           current_staff.staff_roles.find(params[:id]).update(primary: true)
+        else
+          render json: {
+            status: false
+          }, status: :unprocessable_entity and return
         end
 
         render json: {
