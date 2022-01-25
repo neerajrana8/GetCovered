@@ -93,9 +93,8 @@ module V2
                                                                   settings: {}, addresses_attributes: %i[
                                                                     city country county id latitude longitude
                                                                     plus_four state street_name street_number
-                                                                    street_two timezone zip_code,
-                                                                    global_permission_attributes: { permissions: {} }
-                                                                  ]
+                                                                    street_two timezone zip_code
+                                                                  ], global_permission_attributes: { permissions: {} }
           )
         existed_ids = permitted_params[:addresses_attributes]&.map { |addr| addr[:id] }
 
