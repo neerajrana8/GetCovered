@@ -27,6 +27,7 @@ class Account < ApplicationRecord
       
   has_many :branding_profiles, as: :profileable
   has_many :payment_profiles,  as: :payer
+  has_many :master_policy_configurations, as: :configurable
 
   has_many :insurables 
   

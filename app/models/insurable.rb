@@ -34,6 +34,8 @@ class Insurable < ApplicationRecord
   has_many :policies, through: :policy_insurables
   has_many :policy_applications, through: :policy_insurables
 
+  has_many :master_policy_configurations, as: :configurable
+
   has_many :events, as: :eventable
 
   has_many :assignments, as: :assignable
