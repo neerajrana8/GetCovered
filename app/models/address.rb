@@ -84,7 +84,7 @@ class Address < ApplicationRecord
   end
 
   def self.from_string(dat_strang, validate_properties: true)
-    address = Address.new(full: dat_strang.titlecase)
+    address = Address.new(full: dat_strang)
     parsed_address = StreetAddress::US.parse(dat_strang)
     if parsed_address.nil?
       address.errors.add(:address_string, I18n.t('address_model.is_not_a_valid_state'))
@@ -161,6 +161,14 @@ class Address < ApplicationRecord
               self.plus_four = parsed_address.postal_code_ext
             end
           end
+        end
+      end
+    end
+    ['street_name', 'city'].each do |prop|
+      lastchar = ' '
+      (0...self.send(prop).length).each do |chr|
+        if self.send(prop)[chr] == self.send(prop)[chr].upcase && lastchar != ' ' && lastchar != '-'
+          self.send(prop)[chr] = self.send(prop)[chr].downcase
         end
       end
     end
