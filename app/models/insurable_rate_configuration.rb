@@ -686,7 +686,7 @@ class InsurableRateConfiguration < ApplicationRecord
     cip = (insurable.class != ::Insurable ? nil : insurable.carrier_profile(carrier_policy_type.carrier_id))
     # perform prep
     if carrier_policy_type.carrier_id == ::QbeService.carrier_id && insurable.class == ::Insurable
-      error = qbe_prepare_for_get_coverage_options(insurable, cip, additional_insured_count + 1, traits_override: nonpreferred_final_premium_params)
+      error = qbe_prepare_for_get_coverage_options(insurable, cip, additional_insured_count + 1, traits_override: nonpreferred_final_premium_params, force_address_specific_rates: (eventable.class == ::PolicyQuote))
       unless error.blank?
         return {
           valid: false,
@@ -806,27 +806,22 @@ class InsurableRateConfiguration < ApplicationRecord
             end # msi result handling (starts at if result[:error])
           end # event handling (starts at if !result)
         when ::QbeService.carrier_id
-          if false && perform_estimate == 'final' && insurable.class == ::Insurable
-            # perform getMinPrem
-            # WARNING: right now the if statement above is never satisfied, because we invoke getMinPrem directly in the CarrierQbePolicyApplication concern, not here
-          else
-            # perform approximation using rates
-            interval = { 'FL' => 'annual', 'SA' => 'bi_annual', 'QT' => 'quarter', 'QBE_MoRe' => 'month' }[billing_strategy_carrier_code]
-            selected_rates = irc.rates['rates'][additional_insured_count + 1][interval].select do |rate|
-              if rate['sub_schedule'] == 'policy_fee'
-                policy_fee = rate['premium']
-                next true
-              end
-              next false if rate['liability_only']
-              next (rate['coverage_limits'].merge(rate['deductibles'])).all?{|name,sel| selections[name]&.[]('selection')&.[]('value') == sel } &&
-                   (rate['schedule'] != 'optional' || selections[rate['sub_schedule']]&.[]('selection'))
+          # perform approximation using rates
+          interval = { 'FL' => 'annual', 'SA' => 'bi_annual', 'QT' => 'quarter', 'QBE_MoRe' => 'month' }[billing_strategy_carrier_code]
+          selected_rates = irc.rates['rates'][additional_insured_count + 1][interval].select do |rate|
+            if rate['sub_schedule'] == 'policy_fee'
+              policy_fee = rate['premium']
+              next true
             end
-            policy_fee = 0 if policy_fee.nil?
-            estimated_premium = selected_rates.inject(0){|sum,sr| sum + sr['premium'] }
-            weight = billing_strategy.new_business['payments'].inject(0){|sum,w| sum + w }.to_d
-            estimated_first_payment = (billing_strategy.carrier_code == 'FL' ? 0 : (billing_strategy.new_business['payments'][0] / weight * estimated_premium).floor)
-            estimated_installment = (billing_strategy.carrier_code == 'FL' ? estimated_premium : (billing_strategy.new_business['payments'].drop(1).inject(0){|s,w| s + w } / (billing_strategy.new_business['payments'].count{|w| w > 0 } * weight) * estimated_premium).floor)
+            next false if rate['liability_only']
+            next (rate['coverage_limits'].merge(rate['deductibles'])).all?{|name,sel| selections[name]&.[]('selection')&.[]('value') == sel } &&
+                 (rate['schedule'] != 'optional' || selections[rate['sub_schedule']]&.[]('selection'))
           end
+          policy_fee = 0 if policy_fee.nil?
+          estimated_premium = selected_rates.inject(0){|sum,sr| sum + sr['premium'] }
+          weight = billing_strategy.new_business['payments'].inject(0){|sum,w| sum + w }.to_d
+          estimated_first_payment = (billing_strategy.carrier_code == 'FL' ? 0 : (billing_strategy.new_business['payments'][0] / weight * estimated_premium).floor)
+          estimated_installment = (billing_strategy.carrier_code == 'FL' ? estimated_premium : (billing_strategy.new_business['payments'].drop(1).inject(0){|s,w| s + w } / (billing_strategy.new_business['payments'].count{|w| w > 0 } * weight) * estimated_premium).floor)
         else # invalid carrier policy type for estimate performance
           estimated_premium_error = {
             internal: "Invalid carrier for estimation; carrier policy type provided was ##{carrier_policy_type.id}",
@@ -918,7 +913,9 @@ class InsurableRateConfiguration < ApplicationRecord
       return to_return
     end
 
-    def self.qbe_prepare_for_get_coverage_options(community, cip, number_insured, traits_override: {})
+    # traits_override is used to override the traits normally provided by the CarrierInsurableProfile, so that for nonpreferred we don't actually make a CIP with bogus default values
+    # force_address_specific_rates is used to compel synchronous fetching of rates for our specific community, instead of using cached regional rates
+    def self.qbe_prepare_for_get_coverage_options(community, cip, number_insured, traits_override: {}, force_address_specific_rates: false)
       # build CIP if none exists
       unless cip
         # This error is disabled for now... we just create a crap FIC CIP instead >__> return "insurable_rate_configuration.qbe.account_property_without_cip" unless community.account_id.nil? # really, this error  means "this guy is registered under an account but has no carrier profile for QBE"
@@ -940,12 +937,41 @@ class InsurableRateConfiguration < ApplicationRecord
         return "insurable_rate_configuration.qbe.property_info_failure"
       end
       # perform get rates if needed
-      unless cip.data['rates_resolution']&.[](number_insured.to_s) && ::InsurableRateConfiguration.where(configurer_type: "Carrier", configurer_id: QbeService.carrier_id, configurable: community, carrier_policy_type: CarrierPolicyType.where(carrier_id: QbeService.carrier_id, policy_type_id: ::PolicyType::RESIDENTIAL_ID).take).take
-        diagnostics_hash = {}
-        unless (community.get_qbe_rates(number_insured, traits_override: traits_override, diagnostics_hash: diagnostics_hash) && cip.reload.data['rates_resolution']&.[](number_insured.to_s))
-          # WARNING: diagnostics_hash[:event] will contain the event recording the getRates call (assuming such an event was successfully saved); we can use it to return custom failures for custom situations
-          return "insurable_rate_configuration.qbe.rates_failure"
+      cpt = nil
+      unless cip.data['rates_resolution']&.[](number_insured.to_s) && ::InsurableRateConfiguration.where(configurer_type: "Carrier", configurer_id: ::QbeService.carrier_id, configurable: community, carrier_policy_type: (cpt = CarrierPolicyType.where(carrier_id: QbeService.carrier_id, policy_type_id: ::PolicyType::RESIDENTIAL_ID).take)).take
+        # MOOSE WARNING: if force_address_specific_rates is true and the property is nonpreferred, we may need to refresh the rates EVEN IF THEY ALREADY EXIST (i.e. the the unless statement above diverts away from this block),
+        #   because the user-entered details could potentially change the prices... (for preferred we shouldn't be using traits_override)
+      
+        # try strategies involving not getting the rates if we can
+        do_synchronous_get = false
+        if force_address_specific_rates
+          do_synchronous_get = true
+        else
+          # we use the regional rate and run the address-specific rate fetch in the background--unless there is no regional rate, in which case we also do that synchronously
+          igc = community.primary_address.parent_insurable_geographical_categories.to_a.sort.find{|cat| cat.special_usage == 'qbe_ho4' && !cat.insurable_id.nil? }
+          if igc.nil?
+            do_synchronous_get = true
+          else
+            irc = igc.insurable_rate_configurations.where(configurer_type: "Carrier", configurer_id: ::QbeService.carrier_id, configurable: igc, carrier_policy_type: cpt).take
+            if irc.nil? || irc.rates&.[]('rates')&.[](number_insured.to_i).blank?
+              # the regional IRC hasn't yet been filled with rates we can use; fall back to synchronous get
+              do_synchronous_get = true
+            else
+              # the regional IRC has plenty of rates for us to use; there's nothing else we need to do
+            end
+          end
         end
+        # actually get the rates
+        if do_synchronous_get
+          # we synchronously pull the rates we need
+          diagnostics_hash = {}
+          unless (community.get_qbe_rates(number_insured, traits_override: traits_override, diagnostics_hash: diagnostics_hash) && cip.reload.data['rates_resolution']&.[](number_insured.to_s))
+            # WARNING: diagnostics_hash[:event] will contain the event recording the getRates call (assuming such an event was successfully saved); we can use it to return custom failures for custom situations
+            return "insurable_rate_configuration.qbe.rates_failure"
+          end
+        end
+        # queue up detailed rate pulls to speed things up later, if any rates are missing
+        community.fix_qbe_rates(false, traits_override: traits_override, delay: 0)
       end
       # all done
       return nil

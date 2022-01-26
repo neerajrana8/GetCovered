@@ -4,6 +4,8 @@ class InsurableGeographicalCategory < ApplicationRecord
 
   has_many :insurable_rate_configurations,
     as: :configurable
+  belongs_to :insurable,  # used to associate a sample insurable with each QBE region, for rate caching
+    optional: true
 
   # ActiveRecord Callbacks
 
@@ -25,6 +27,7 @@ class InsurableGeographicalCategory < ApplicationRecord
                 WV: 49, WY: 50 } # WARNING: this should always match the state codes in Address (use a concern?)
 
   enum state: US_STATE_CODES
+  enum special_usage: ['qbe_ho4']
   
   VARCHAR_ARRAYS = ['counties', 'zip_codes', 'cities'] # this gives the list of fields of type varchar array; an IGC represents all regions which are (1) in the given state and (2) for each non-empty varchar array, are in one of the listed locations
   

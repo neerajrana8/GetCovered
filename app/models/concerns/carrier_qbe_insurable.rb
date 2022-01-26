@@ -296,7 +296,7 @@ module CarrierQbeInsurable
   
 	  # Fix QBE Carrier Rates
 	  
-	  def fix_qbe_rates(inline = false, traits_override: {})
+	  def fix_qbe_rates(inline = false, traits_override: {}, delay: 1)
 	    @carrier = ::QbeService.carrier
 	    @carrier_profile = carrier_profile(@carrier.id)
 	    
@@ -307,43 +307,12 @@ module CarrierQbeInsurable
 	        broken_rates.push(key.to_i) if value == false
 	      end
 	      
-	      broken_rates.each_with_index do |num, index|
-		      if inline
-						get_qbe_rates(num, traits_override: traits_override)		      
-			    else
-		        delay = index
-		        GetInsurableRatesJob.set(wait: delay.minutes).perform_later(self, num, traits_override: traits_override)  
-	        end
-	      end
+        if inline
+          broken_rates.each{|br| get_qbe_rates(br, traits_override: traits_override) }
+        else
+          FetchInsurableRatesJob.perform_later(self, number_insured: broken_rates, traits_override: traits_override, delay: delay)
+        end
 	    end
-	  end
-	  
-	  # Queue QBE Rates
-	  #
-	  # Example:
-	  #   >> @community = Community.find(1)
-	  #   >> @community.queue_qbe_rates([1, 2, 3, 4, 5])
-	  #   >> true
-	  
-	  def queue_qbe_rates(insured_options = [], traits_override: {})
-	    request_errors = {}
-	    
-	    unless insured_options.empty?
-	      
-	      # Make sure insured_options are valid 
-	      # and unique
-	      insured_options = insured_options.uniq
-	      insured_options.each do |i|
-	        if i.class == Integer &&
-	           i > 0 && 
-	           i <= 5
-	          request_errors["#{i}"] = get_qbe_rates(i, traits_override: traits_override) 
-	        end
-	      end
-	      
-	    end
-	    
-	    # return !request_errors.values.include? true
 	  end
 	  
 	  # Reset QBE Carrier Rates
@@ -359,9 +328,8 @@ module CarrierQbeInsurable
 	      end  
 	    end
       @carrier_profile.data["ho4_enabled"] = false
-	    @carrier_profile.save
-	    
-	    self.fix_qbe_rates(inline, traits_override: traits_override)
+      @carrier_profile.save
+      self.fix_qbe_rates(inline, traits_override: traits_override)
 	  end
 
 	  # Get QBE Rates
@@ -374,7 +342,8 @@ module CarrierQbeInsurable
     # Passing traits_override allows custom overrides to the request options normally derived from the community's CIP (useful for FIC properties where the CIP is empty and we need to apply defaults from the policy application);
     # Passing diagnostics_hash as a hash will cause diagnostic info to be inserted into it (since the return value is set up to indicate success via a boolean, we can't use it to return information)
     #   - the only diagnostic returned right now is diagnostics_hash[:event] = the event recording the getRates call
-	  def get_qbe_rates(number_insured, refresh_coverage_options: false, traits_override: self.get_qbe_traits(), diagnostics_hash: nil)
+    # Passing irc_configurable_override will cause an IRC to be created for a DIFFERENT configurable, rather than this insurable. This is used to create IRCs for IGCs for rate caching, since the IGC rates are calculated with fixed parameters that may not match those of its sample insurable.
+	  def get_qbe_rates(number_insured, refresh_coverage_options: false, traits_override: self.get_qbe_traits(), diagnostics_hash: nil, irc_configurable_override: nil)
   	  
 	    return if self.insurable_type.title != "Residential Community"
 	    @carrier = ::QbeService.carrier
@@ -409,10 +378,10 @@ module CarrierQbeInsurable
 	      carrier_agency = CarrierAgency.where(agency_id: agency_id || account&.agency_id || Agency::GET_COVERED_ID, carrier: @carrier).take
         
         carrier_policy_type = CarrierPolicyType.where(carrier: @carrier, policy_type_id: ::PolicyType::RESIDENTIAL_ID).take
-        irc = ::InsurableRateConfiguration.where(carrier_policy_type: carrier_policy_type, configurer: @carrier, configurable: self).take || ::InsurableRateConfiguration.new(
+        irc = ::InsurableRateConfiguration.where(carrier_policy_type: carrier_policy_type, configurer: @carrier, configurable: irc_configurable_override || self).take || ::InsurableRateConfiguration.new(
           carrier_policy_type: carrier_policy_type,
           configurer: @carrier,
-          configurable: self,
+          configurable: irc_configurable_override || self,
           configuration: { 'coverage_options' => {}, "rules" => {} },
           rates: { 'rates' => [nil, [], [], [], [], []] }
         )
@@ -459,7 +428,8 @@ module CarrierQbeInsurable
 	      
 	      qbe_service.build_request(qbe_request_options)
 	            
-	      event = events.new(
+	      event = Event.new(
+          eventable: irc_configurable_override || self,
 	        verb: 'post', 
 	        format: 'xml', 
 	        interface: 'SOAP',
@@ -509,7 +479,7 @@ module CarrierQbeInsurable
 	              @carrier_profile.data["get_rates_resolved_on"] = Time.current.strftime("%m/%d/%Y %I:%M %p")
 	            end
 	            
-	            @carrier_profile.save()
+	            @carrier_profile.save() unless irc_configurable_override
 	            
               irc.rates['rates'][number_insured] = rates      
 	            
@@ -536,7 +506,7 @@ module CarrierQbeInsurable
 	            set_error = true
 	            @carrier_profile.data["get_rates_resolved"] = false 
 							# check_carrier_process_error("qbe", true, { error: qbe_data[:code], process: "get_qbe_rates_#{ number_insured }", message: qbe_data[:message] }) 
-							@carrier_profile.save()
+							@carrier_profile.save() unless irc_configurable_override
               irc.save
 	          end
 	        	

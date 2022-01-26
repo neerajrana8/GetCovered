@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_11_29_192209) do
+ActiveRecord::Schema.define(version: 2022_01_25_215937) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
@@ -760,6 +760,8 @@ ActiveRecord::Schema.define(version: 2021_11_29_192209) do
     t.datetime "updated_at", null: false
     t.string "zip_codes", array: true
     t.string "cities", array: true
+    t.bigint "insurable_id"
+    t.index ["insurable_id"], name: "index_insurable_geographical_categories_on_insurable_id"
   end
 
   create_table "insurable_rate_configurations", force: :cascade do |t|
