@@ -1711,7 +1711,7 @@ GEM
     websocket-extensions (0.1.5)
     wicked_pdf (2.1.0)
       activesupport
-    wkhtmltopdf-binary (0.12.6.5)
+    wkhtmltopdf-binary (0.12.5)
     zeitwerk (2.5.3)
 
 PLATFORMS
@@ -1793,7 +1793,7 @@ DEPENDENCIES
   twilio-ruby (~> 4.11.1)
   tzinfo-data
   wicked_pdf
-  wkhtmltopdf-binary
+  wkhtmltopdf-binary (= 0.12.5)
 
 RUBY VERSION
    ruby 3.0.1p64

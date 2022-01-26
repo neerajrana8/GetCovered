@@ -16,6 +16,10 @@
     table.twoBodyTableTop { border-bottom: none; margin-bottom: 0px; }
     table.twoBodyTableBottom { margin-top: 0px; }
 
+    table.columnContent { border: none; margin: 0px 0px; }
+    table.columnContent tr { border: none; }
+    table.columnContent tr td { border: none; }
+
     p { font-size: 9pt; margin: 0 0 1em; }
 
     strong { font-weight: bold; }
@@ -26,9 +30,9 @@
     #documentContainer { width: 90%; max-width: 468pt; margin: 0 auto; }
     #imageHeader img { width: 150px; margin: 2em 0 0; }
 
-    .contentRow { display: flex; width: 100%; }
-    .contentRow .contentColumn { display: block; }
-    .contentRow .contentColumn.halfWidth { width: 50%; }
+    .contentRow { width: 100%; display: flex; flex-direction: row; flex-wrap: nowrap; justify-content: space-evenly; }
+    .contentRow .contentColumn { display: block; float: left; width: 50%;}
+    /*.contentRow .contentColumn.halfWidth { width: 49%; }*/
     .contentRow .contentColumn:first-child { padding: 0 0.5em 0 0; }
     .contentRow .contentColumn:last-child { padding: 0 0 0 0.5em; }
 

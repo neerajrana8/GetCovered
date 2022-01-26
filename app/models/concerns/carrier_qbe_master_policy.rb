@@ -9,13 +9,16 @@ module CarrierQbeMasterPolicy
     def qbe_generate_master_document(document, args)
       # ["evidence_of_insurance"].include?(document)
 
-      document_file_title = "eoi-master-#{ id }-#{ Time.current.strftime("%Y%m%d") }.pdf"
+      document_file_title = "eoi-qbe-master-#{ id }-#{ document }-#{ Time.current.strftime("%Y%m%d-%H%M%S") }.pdf"
 
       pdf = WickedPdf.new.pdf_from_string(
         ActionController::Base.new.render_to_string(
           "v2/qbe_specialty/#{ document }",
           locals: args
-        )
+        ),
+        page_size: 'A4',
+        encoding: 'UTF-8',
+        disable_smart_shrinking: true
       )
 
       # then save to a file
@@ -26,9 +29,9 @@ module CarrierQbeMasterPolicy
         file << pdf
       end
 
-      # if documents.attach(io: File.open(save_path), filename: "evidence-of-insurance.pdf", content_type: 'application/pdf')
-      #   File.delete(save_path) if File.exist?(save_path)
-      # end
+      if documents.attach(io: File.open(save_path), filename: "evidence-of-insurance.pdf", content_type: 'application/pdf')
+        File.delete(save_path) if File.exist?(save_path)
+      end
     end
 
   end
