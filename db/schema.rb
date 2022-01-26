@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_11_29_192209) do
+ActiveRecord::Schema.define(version: 2022_01_26_212054) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
@@ -1322,6 +1322,7 @@ ActiveRecord::Schema.define(version: 2021_11_29_192209) do
     t.datetime "updated_at", null: false
     t.boolean "enabled", default: false, null: false
     t.integer "special_deductible"
+    t.integer "occurrence_limit"
     t.index ["policy_application_id"], name: "index_policy_coverages_on_policy_application_id"
     t.index ["policy_id"], name: "index_policy_coverages_on_policy_id"
   end
