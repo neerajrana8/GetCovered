@@ -3,13 +3,12 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>A Basic HTML5 Template</title>
+    <title>QBE Master Policy Evidence of Insurance</title>
     <%= render "v2/qbe_specialty/reset" %>
     <%= render "v2/qbe_specialty/styles" %>
 </head>
 
 <body>
-
     <div id="documentContainer">
 
         <div id="documentHeader">
@@ -34,17 +33,17 @@
                     </td>
                     <td>
                         <p class="tableLabel">Policy Number</p>
-                        <p class="tableContent"></p>
+                        <p class="tableContent"><%= @coverage.number %></p>
                     </td>
                 </tr>
                 <tr>
                     <td>
                         <p class="tableLabel">Named Insured</p>
-                        <p class="tableContent"></p>
+                        <p class="tableContent"><%= @user.profile.full_name %></p>
                     </td>
                     <td>
                         <p class="tableLabel">Community Name</p>
-                        <p class="tableContent"></p>
+                        <p class="tableContent"><%= @coverage.primary_insurable.parent_community.title %></p>
                     </td>
                 </tr>
                 <tr>
@@ -67,45 +66,94 @@
                     </td>
                     <td class="quarterWidth">
                         <p class="tableLabel">Coverage Effective Date</p>
+                        <p class="tableContent"><%= @coverage.effective_date.strftime('%B %-d, %Y') %></p>
                     </td>
                     <td class="quarterWidth">
                         <p class="tableLabel">Apartment Number</p>
+                      <p class="tableContent"><%= @coverage.primary_insurable.title %></p>
                     </td>
                 </tr>
             </table>
             <table class="twoBodyTableBottom">
+
+              <% if @master_policy.policy_coverages.exists?(designation: "tenant_contingent_contents") %>
+              <% tenant_contingent_contents = @master_policy.policy_coverages.where(designation: "tenant_contingent_contents").take %>
                 <tr>
                     <td class="quarterWidth">
                         <p class="tableLabel">Tenant's Person Property Coverage</p>
                         <p class="tableContent">
-                            <span class="c28">☐ </span><span class="c27">Yes </span>
+                            <span class="c28">☑</span><span class="c27">Yes </span>
                             <span class="c28">☐</span><span class="c4">&nbsp;No </span>
                         </p>
                     </td>
                     <td class="quarterWidth">
                         <p class="tableLabel">Tenant's Personal Property Limit</p>
-                        <p class="tableContent">$5,000 per claim</p>
+                        <p class="tableContent"><%= ActionController::Base.helpers.number_to_currency(tenant_contingent_contents.occurrence_limit.to_f / 100) %> per claim</p>
                     </td>
                     <td>
                         <p class="tableLabel">Tenant’s Personal Property Aggregate Limit of Liability</p>
+                        <p class="tableContent"><%= ActionController::Base.helpers.number_to_currency(tenant_contingent_contents.limit.to_f / 100) %></p>
                     </td>
                 </tr>
+              <% else %>
+                <tr>
+                  <td class="quarterWidth">
+                    <p class="tableLabel">Tenant's Person Property Coverage</p>
+                    <p class="tableContent">
+                      <span class="c28">☐</span><span class="c27">Yes </span>
+                      <span class="c28">☑</span><span class="c4">&nbsp;No </span>
+                    </p>
+                  </td>
+                  <td class="quarterWidth">
+                    <p class="tableLabel">Tenant's Personal Property Limit</p>
+                    <p class="tableContent">$0.00 per claim</p>
+                  </td>
+                  <td>
+                    <p class="tableLabel">Tenant’s Personal Property Aggregate Limit of Liability</p>
+                    <p class="tableContent">$0.00</p>
+                  </td>
+                </tr>
+              <% end %>
+
+              <% if @master_policy.policy_coverages.exists?(designation: "liability_coverage") %>
+              <% liability_coverage = @master_policy.policy_coverages.where(designation: "liability_coverage").take %>
                 <tr>
                     <td class="quarterWidth">
                         <p class="tableLabel">Tenant’s Premises Liability Coverage</p>
                         <p class="tableContent">
-                            <span class="c28">☐ </span><span class="c27">Yes </span>
+                            <span class="c28">☑</span><span class="c27">Yes </span>
                             <span class="c28">☐</span><span class="c4">&nbsp;No </span>
                         </p>
                     </td>
                     <td class="quarterWidth">
                         <p class="tableLabel">Tenant’s Premises Liability Coverage Limit</p>
-                        <p class="tableContent">$25,000 per “occurrence”</p>
+                        <p class="tableContent"><%= ActionController::Base.helpers.number_to_currency(liability_coverage.occurrence_limit.to_f / 100) %> per “occurrence”</p>
                     </td>
                     <td>
                         <p class="tableLabel">Tenant’s Premises Liability Aggregate Limit</p>
+                        <p class="tableContent"><%= ActionController::Base.helpers.number_to_currency(liability_coverage.limit.to_f / 100) %></p>
                     </td>
                 </tr>
+              <% else %>
+                <tr>
+                  <td class="quarterWidth">
+                    <p class="tableLabel">Tenant’s Premises Liability Coverage</p>
+                    <p class="tableContent">
+                      <span class="c28">☐</span><span class="c27">Yes </span>
+                      <span class="c28">☑</span><span class="c4">&nbsp;No </span>
+                    </p>
+                  </td>
+                  <td class="quarterWidth">
+                    <p class="tableLabel">Tenant’s Premises Liability Coverage Limit</p>
+                    <p class="tableContent">$0.00 per “occurrence”</p>
+                  </td>
+                  <td>
+                    <p class="tableLabel">Tenant’s Premises Liability Aggregate Limit</p>
+                    <p class="tableContent">$0.00</p>
+                  </td>
+                </tr>
+              <% end %>
+
             </table>
         </div>
 

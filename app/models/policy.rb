@@ -297,7 +297,11 @@ class Policy < ApplicationRecord
     when 'qbe'
       qbe_issue_policy
     when 'qbe_specialty'
-      { error: I18n.t('policy_model.no_policy_issue_for_qbe') }
+      if self.policy_type_id == 3
+        qbe_specialty_issue_policy()
+      else
+        { error: I18n.t('policy_model.no_policy_issue_for_qbe') }
+      end
     when 'crum'
       crum_issue_policy
     when 'msi'
