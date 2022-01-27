@@ -761,6 +761,9 @@ ActiveRecord::Schema.define(version: 2022_01_25_215937) do
     t.string "zip_codes", array: true
     t.string "cities", array: true
     t.bigint "insurable_id"
+    t.integer "special_usage"
+    t.string "special_designation"
+    t.jsonb "special_settings"
     t.index ["insurable_id"], name: "index_insurable_geographical_categories_on_insurable_id"
   end
 
