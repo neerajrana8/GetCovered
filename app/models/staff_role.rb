@@ -30,6 +30,7 @@ class StaffRole < ApplicationRecord
   def set_first_as_primary_on_staff
     if staff&.staff_roles.count.eql?(1)
       update_attribute(:primary, true)
+      update_attribute(:active, true)
     end
   end
 

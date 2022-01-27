@@ -120,9 +120,17 @@ class Staff < ApplicationRecord
     self.staff_roles.where(organizable: 'Agency', organizable_id: ::Agency::GET_COVERED_ID).count > 0
   end
 
-  def current_role(organizable: nil)
+  def primary_role
     conditions = {
       primary: true
+    }
+
+    self.staff_roles.where(conditions).first
+  end
+
+  def current_role(organizable: nil)
+    conditions = {
+      active: true
     }
 
     if organizable

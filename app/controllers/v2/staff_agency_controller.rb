@@ -13,7 +13,7 @@ module V2
       @agency =
         if agency_id.blank?
           current_staff.current_role(organizable: 'Agency').organizable
-        elsif current_staff.getcovered_agent?
+        elsif current_staff.current_role.getcovered_agent?
           Agency.find(agency_id)
         elsif current_staff.agencies.ids.include?(agency_id)
           current_staff.agencies.find(agency_id)
