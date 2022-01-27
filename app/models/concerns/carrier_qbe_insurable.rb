@@ -296,7 +296,7 @@ module CarrierQbeInsurable
   
 	  # Fix QBE Carrier Rates
 	  
-	  def fix_qbe_rates(inline = false, traits_override: {}, delay: 1)
+	  def fix_qbe_rates(inline = false, effective_date = nil, traits_override: {}, delay: 1)
 	    @carrier = ::QbeService.carrier
 	    @carrier_profile = carrier_profile(@carrier.id)
 	    
@@ -308,9 +308,9 @@ module CarrierQbeInsurable
 	      end
 	      
         if inline
-          broken_rates.each{|br| get_qbe_rates(br, traits_override: traits_override) }
+          broken_rates.each{|br| get_qbe_rates(br, effective_date, traits_override: traits_override) }
         else
-          FetchInsurableRatesJob.perform_later(self, number_insured: broken_rates, traits_override: traits_override, delay: delay)
+          FetchInsurableRatesJob.perform_later(self, number_insured: broken_rates, effective_date: effective_date, traits_override: traits_override, delay: delay)
         end
 	    end
 	  end
@@ -343,7 +343,7 @@ module CarrierQbeInsurable
     # Passing diagnostics_hash as a hash will cause diagnostic info to be inserted into it (since the return value is set up to indicate success via a boolean, we can't use it to return information)
     #   - the only diagnostic returned right now is diagnostics_hash[:event] = the event recording the getRates call
     # Passing irc_configurable_override will cause an IRC to be created for a DIFFERENT configurable, rather than this insurable. This is used to create IRCs for IGCs for rate caching, since the IGC rates are calculated with fixed parameters that may not match those of its sample insurable.
-	  def get_qbe_rates(number_insured, refresh_coverage_options: false, traits_override: self.get_qbe_traits(), diagnostics_hash: nil, irc_configurable_override: nil)
+	  def get_qbe_rates(number_insured, effective_date = nil, refresh_coverage_options: false, traits_override: self.get_qbe_traits(), diagnostics_hash: nil, irc_configurable_override: nil)
   	  
 	    return if self.insurable_type.title != "Residential Community"
 	    @carrier = ::QbeService.carrier
@@ -405,7 +405,8 @@ module CarrierQbeInsurable
 	        constr_type: @carrier_profile.traits['construction_type'],
 	        ppc_code: @carrier_profile.traits['ppc'],
 	        bceg_code: @carrier_profile.traits['bceg'],
-	        agent_code: carrier_agency.external_carrier_id     
+	        agent_code: carrier_agency.external_carrier_id,
+          effective_date: (effective_date || (Time.current.to_date + 1.day)).strftime('%m/%d/%Y')
 	      }.merge(self.get_qbe_traits()).merge(traits_override || {})
 	      
 # 	      qbe_request_options = {

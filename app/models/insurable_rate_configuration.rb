@@ -686,7 +686,7 @@ class InsurableRateConfiguration < ApplicationRecord
     cip = (insurable.class != ::Insurable ? nil : insurable.carrier_profile(carrier_policy_type.carrier_id))
     # perform prep
     if carrier_policy_type.carrier_id == ::QbeService.carrier_id && insurable.class == ::Insurable
-      error = qbe_prepare_for_get_coverage_options(insurable, cip, additional_insured_count + 1, traits_override: nonpreferred_final_premium_params, force_address_specific_rates: (eventable.class == ::PolicyQuote))
+      error = qbe_prepare_for_get_coverage_options(insurable, cip, additional_insured_count + 1, effective_date, traits_override: nonpreferred_final_premium_params, force_address_specific_rates: (eventable.class == ::PolicyQuote))
       unless error.blank?
         return {
           valid: false,
@@ -915,7 +915,8 @@ class InsurableRateConfiguration < ApplicationRecord
 
     # traits_override is used to override the traits normally provided by the CarrierInsurableProfile, so that for nonpreferred we don't actually make a CIP with bogus default values
     # force_address_specific_rates is used to compel synchronous fetching of rates for our specific community, instead of using cached regional rates
-    def self.qbe_prepare_for_get_coverage_options(community, cip, number_insured, traits_override: {}, force_address_specific_rates: false)
+    def self.qbe_prepare_for_get_coverage_options(community, cip, number_insured, effective_date, traits_override: {}, force_address_specific_rates: false)
+      effective_date = Time.current.to_date + 1.day if effective_date.nil?
       # build CIP if none exists
       unless cip
         # This error is disabled for now... we just create a crap FIC CIP instead >__> return "insurable_rate_configuration.qbe.account_property_without_cip" unless community.account_id.nil? # really, this error  means "this guy is registered under an account but has no carrier profile for QBE"
@@ -965,7 +966,7 @@ class InsurableRateConfiguration < ApplicationRecord
         if do_synchronous_get
           # we synchronously pull the rates we need
           diagnostics_hash = {}
-          unless (community.get_qbe_rates(number_insured, traits_override: traits_override, diagnostics_hash: diagnostics_hash) && cip.reload.data['rates_resolution']&.[](number_insured.to_s))
+          unless (community.get_qbe_rates(number_insured, effective_date, traits_override: traits_override, diagnostics_hash: diagnostics_hash) && cip.reload.data['rates_resolution']&.[](number_insured.to_s))
             # WARNING: diagnostics_hash[:event] will contain the event recording the getRates call (assuming such an event was successfully saved); we can use it to return custom failures for custom situations
             return "insurable_rate_configuration.qbe.rates_failure"
           end

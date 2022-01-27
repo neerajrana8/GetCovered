@@ -192,7 +192,7 @@ class QbeService
         constr_type: 'M',
         ppc_code: nil,
         bceg_code: nil,
-        effective_date: Time.current.strftime('%m/%d/%Y')
+        effective_date: (Time.current + 1.day).strftime('%m/%d/%Y')
       }.merge!(args)
 
       options[:heading][:program][:ClientName] = args[:agent_code] || Rails.application.credentials.qbe[:agent_code]
