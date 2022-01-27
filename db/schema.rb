@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2022_01_17_122832) do
+ActiveRecord::Schema.define(version: 2022_01_27_104625) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
@@ -1701,6 +1701,19 @@ ActiveRecord::Schema.define(version: 2022_01_17_122832) do
     t.datetime "updated_at", null: false
     t.index ["global_agency_permission_id"], name: "index_staff_permissions_on_global_agency_permission_id"
     t.index ["staff_id"], name: "index_staff_permissions_on_staff_id"
+  end
+
+  create_table "staff_roles", force: :cascade do |t|
+    t.integer "role", default: 0
+    t.boolean "primary", default: false
+    t.bigint "staff_id", null: false
+    t.string "organizable_type"
+    t.bigint "organizable_id"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.boolean "active", default: false
+    t.index ["organizable_type", "organizable_id"], name: "index_staff_roles_on_organizable_type_and_organizable_id"
+    t.index ["staff_id"], name: "index_staff_roles_on_staff_id"
   end
 
   create_table "staffs", force: :cascade do |t|
