@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2022_01_27_163140) do
+ActiveRecord::Schema.define(version: 2022_01_27_171158) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
@@ -626,6 +626,17 @@ ActiveRecord::Schema.define(version: 2022_01_27_163140) do
     t.index ["approved_by_id"], name: "index_commissions_on_approved_by_id"
     t.index ["marked_paid_by_id"], name: "index_commissions_on_marked_paid_by_id"
     t.index ["recipient_type", "recipient_id"], name: "index_commissions_on_recipient_type_and_recipient_id"
+  end
+
+  create_table "contact_records", force: :cascade do |t|
+    t.integer "direction", default: 0
+    t.integer "approach", default: 0
+    t.integer "status", default: 1
+    t.string "contactable_type"
+    t.bigint "contactable_id"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["contactable_id"], name: "index_contact_records_on_contactable_id"
   end
 
   create_table "disputes", force: :cascade do |t|

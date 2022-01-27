@@ -12,7 +12,7 @@ module V2
     private
 
     def is_staff?
-      render json: { error: "Unauthorized access"}, status: :unauthorized unless current_staff.current_role.staff?
+      render json: { error: "Unauthorized access"}, status: :unauthorized unless current_staff.current_role(organizable: 'Account').staff?
     end
 
     def view_path
@@ -20,8 +20,8 @@ module V2
     end
 
     def access_model(model_class, model_id = nil)
-      return current_staff.organizable if model_class == ::Account && model_id&.to_i == current_staff.organizable_id
-      return current_staff.organizable.send(model_class.name.underscore.pluralize).send(*(model_id.nil? ? [:itself] : [:find, model_id])) rescue nil
+      return current_staff.current_role(organizable: 'Account').organizable if model_class == ::Account && model_id&.to_i == current_staff.current_role(organizable: 'Account').organizable_id
+      return current_staff.current_role(organizable: 'Account').organizable.send(model_class.name.underscore.pluralize).send(*(model_id.nil? ? [:itself] : [:find, model_id])) rescue nil
     end
 
     def set_account
