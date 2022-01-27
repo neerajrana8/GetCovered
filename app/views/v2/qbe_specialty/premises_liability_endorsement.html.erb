@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>QBE Master Policy Evidence of Insurance</title>
+  <%= render "v2/qbe_specialty/reset" %>
+  <%= render "v2/qbe_specialty/styles" %>
+</head>
+
+<body>
+<div id="documentContainer">
+
+  <div id="documentHeader">
+    <div id="imageHeader">
+      <img src="https://gc-public-prod.s3.us-west-2.amazonaws.com/images/QBE-Specialty-Insurance-Co-LOGO.png">
+    </div>
+    <div id="titleHeader">
+      <h1 class="textCenter">THIS ENDORSEMENT CHANGES THE POLICY.  PLEASE READ IT CAREFULLY.</h1>
+      <h1 class="textCenter">TENANT’S PERSONAL PROPERTY COVERAGE ENDORSEMENT</h1>
+    </div>
+  </div>
+
+  <div id="tableContainers">
+    <table>
+      <tr>
+        <td><p><strong>Name of Insured:</strong></p></td>
+        <td><p class="tableContent"><%= @user.profile.full_name %></p></td>
+      </tr>
+      <tr>
+        <td><p><strong>Policy Number:</strong></p></td>
+        <td><p class="tableContent"><%= @master_policy.number %></p></td>
+      </tr>
+      <tr>
+        <td><p><strong>Endorsement Number:</strong></p></td>
+        <td><p class="tableContent"><%= @coverage.number %></p></td>
+      </tr>
+      <tr>
+        <td><p><strong>Effective Date of Endorsement:</strong></p></td>
+        <td><p class="tableContent"><%= @coverage.effective_date.strftime('%B %d, %Y') %></p></td>
+      </tr>
+      <tr>
+        <td><p><strong>Name of Insurer:</strong></p></td>
+        <td><p class="tableContent">QBE Specialty</p></td>
+      </tr>
+    </table>
+
+    <p>This endorsement modifies insurance provided under the following:</p>
+    <p>PROPERTY MANAGER AND LANDLORD PROTECTION POLICY</p>
+    <p class="textCenter">PROPERTY MANAGER AND LANDLORD PROTECTION POLICY</p>
+
+    <table>
+      <tr>
+        <td><p><strong>Tenant:</strong></p></td>
+        <td></td>
+      </tr>
+      <tr>
+        <td><p><strong>Residence Premises Location:</strong></p></td>
+        <td></td>
+      </tr>
+      <tr>
+        <td><p><strong>Tenant's Personal Personal Property Limit of Liability:</strong></p></td>
+        <td></td>
+      </tr>
+      <tr>
+        <td><p><strong>Deductible:</strong></p></td>
+        <td><p>$500.00 per "occurrence"</p></td>
+      </tr>
+      <tr>
+        <td><p><strong>Tenant's Personal Property Aggregate Limit of Liability:</strong></p></td>
+        <td></td>
+      </tr>
+      <tr>
+        <td><p><strong>Special Limits of Liability:</strong></p></td>
+        <td></td>
+      </tr>
+      <tr>
+        <td><p><strong>Money, bank notes and other items in A.2.a below:</strong></p></td>
+        <td><p>$50.00 per "occurrence"</p></td>
+      </tr>
+      <tr>
+        <td><p><strong>Jewelry, watches, furs and other items in A.2.a below:</strong></p></td>
+        <td><p>$50.00 per "occurrence"</p></td>
+      </tr>
+      <tr>
+        <td><p><strong>Business property items in A.2.a below:</strong></p></td>
+        <td><p>$50.00 per "occurrence"</p></td>
+      </tr>
+      <tr>
+        <td><p><strong>Additional Coverages:</strong></p></td>
+        <td></td>
+      </tr>
+      <tr>
+        <td><p><strong>Debris Removal:</strong></p></td>
+        <td><p>$100.00 per "occurrence"</p></td>
+      </tr>
+      <tr>
+        <td><p><strong>Building Additions and Alterations</strong>:</strong></p></td>
+        <td><p>$200.00 per "occurrence"</p></td>
+      </tr>
+      <tr>
+        <td><p><strong>Glass or Safety Glazing Material:</strong></p></td>
+        <td><p>$100.00 per "occurrence"</p></td>
+      </tr>
+      <tr>
+        <td><p><strong>Mold, Fungus or Wet Rot:</strong></p></td>
+        <td><p>$250.00 per "occurrence"</p></td>
+      </tr>
+    </table>
+
+    <p><strong>AGREEMENT</strong></p>
+
+    <p>We will provide the insurance described in this Coverage Part in return for the payment of the premium by the
+      Named Insured and compliance with all provisions of the Policy applicable to the Named Insured and the “tenant”
+      respectively. For the purpose of the coverage provided in this Coverage Part, the “tenant” shall be considered
+      an insured.</p>
+
+    <p><strong>PROPERTY COVERAGES</strong></p>
+
+    <ol>
+      <li>
+        <p><strong>Personal Property</strong></p>
+        <p>We shall pay up to the amount shown in the Tenant’s Personal Property Limit of Liability per “occurrence” for
+          any claim by a “tenant” under this Coverage Part, and subject to the Tenant’s Personal Property Aggregate Limit
+          of Liability for all claims for the “tenant” in a twelve month period coinciding with the renewal date of the
+          “tenant’s lease.  A deductible as shown in the Schedule applies to each claim.</p>
+        <ol>
+          <li>
+            <p><strong>Covered Property</strong></p>
+            <p>We cover personal property owned by the “tenant” while located within that part of the “insured location”
+              occupied by the “tenant” as the “residence premises”. Coverage shall be limited to eligible “residence premises”
+              properly reported to us under the Property Manager and Landlord Protection Policy coverage. Such coverage shall
+              cease for each eligible “residence premises” upon the earlier of:</p>
+            <ol>
+              <li>The Policy cancellation or expiration date;</li>
+              <li>Termination of the “tenant’s” lease for the “residence premises, or cessation of the Coverage Period for the “tenant” for any other reason; or</li>
+              <li>Termination of the Property Manager and Landlord Protection Policy coverage to which this coverage part attaches.</li>
+            </ol>
+          </li>
+          <li>
+            <p><strong>Special Limits Of Liability</strong></p>
+            <p>The special limit for each category shown below is the total limit for each loss for all personal property
+              in that category. These special limits do not increase the Personal Property Limit of Liability.</p>
+            <ol>
+              <li>Up to the amount shown in the Schedule for money, bank notes, bullion, gold other than goldware, silver other than silverware, platinum other than platinumware, coins, medals, scrip, stored value cards and smart cards, securities, accounts, deeds, evidences of debt, letters of credit, notes other than bank notes, manuscripts, personal records, passports, tickets and stamps. This dollar limit applies to these categories regardless of the medium (such as paper or computer software) on which the material exists. This limit includes the cost to research, replace or restore the information from the lost or damaged material.</li>
+              <li>Up to the amount shown in the Schedule for jewelry, watches, furs, precious and semiprecious stones, firearms, silverware, silver-plated ware, goldware, gold-plated ware, platinumware, platinum-plated ware and pewterware. This includes flatware, hollowware, tea sets, trays and trophies made of or including silver, gold or pewter.</li>
+              <li>Up to the amount shown in the Schedule for property used primarily for “business” purposes.</li>
+            </ol>
+          </li>
+        </ol>
+      </li>
+    </ol>
+
+  </div>
+</body>

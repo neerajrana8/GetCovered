@@ -41,11 +41,13 @@ module CarrierQbeMasterPolicy
 
     def qbe_specialty_issue_policy
       users.each do |user|
-        qbe_generate_master_document("evidence_of_insurance", {
-          :@user => user,
-          :@coverage => self,
-          :@master_policy => self.policy
-        })
+        %w[evidence_of_insurance premises_liability_endorsement property_coverage_endorsement].each do |document|
+          qbe_generate_master_document(document, {
+            :@user => user,
+            :@coverage => self,
+            :@master_policy => self.policy
+          })
+        end
       end
     end
 
@@ -54,7 +56,7 @@ module CarrierQbeMasterPolicy
         "#{ document.gsub("_", " ").titlecase } no supported"
       ) unless %w[evidence_of_insurance premises_liability_endorsement property_coverage_endorsement].include?(document)
 
-      document_file_title = "eoi-qbe-master-#{ id }-#{ document }-#{ Time.current.strftime("%Y%m%d-%H%M%S") }.pdf"
+      document_file_title = "qbe-master-#{ document.gsub('_', '-') }-#{ id }-#{ Time.current.strftime("%Y%m%d-%H%M%S") }.pdf"
 
       pdf = WickedPdf.new.pdf_from_string(
         ActionController::Base.new.render_to_string(
@@ -67,16 +69,16 @@ module CarrierQbeMasterPolicy
       )
 
       # then save to a file
-      FileUtils::mkdir_p "#{ Rails.root }/tmp/eois"
-      save_path = Rails.root.join('tmp/eois', document_file_title)
+      FileUtils::mkdir_p "#{ Rails.root }/tmp/eois/qbe/master-policy"
+      save_path = Rails.root.join('tmp/eois/qbe/master-policy', document_file_title)
 
       File.open(save_path, 'wb') do |file|
         file << pdf
       end
 
-      # if documents.attach(io: File.open(save_path), filename: "evidence-of-insurance.pdf", content_type: 'application/pdf')
-      #   File.delete(save_path) if File.exist?(save_path) unless %w[local development].include?(ENV["RAILS_ENV"])
-      # end
+      if documents.attach(io: File.open(save_path), filename: "evidence-of-insurance.pdf", content_type: 'application/pdf')
+        File.delete(save_path) if File.exist?(save_path) unless %w[local development].include?(ENV["RAILS_ENV"])
+      end
     end
 
   end

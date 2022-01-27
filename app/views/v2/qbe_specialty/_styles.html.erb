@@ -20,7 +20,11 @@
     table.columnContent tr { border: none; }
     table.columnContent tr td { border: none; }
 
-    p { font-size: 9pt; margin: 0 0 1em; }
+    ol, p { font-size: 9pt; margin: 0 0 1em; }
+
+    ol { list-style-type: upper-alpha; list-style-position:inside; }
+    ol li { display: block; padding: 0 0 1em; }
+    ol li ol { list-style-type: decimal; padding: 0 0 1em 1em;  }
 
     strong { font-weight: bold; }
 
