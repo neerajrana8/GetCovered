@@ -158,7 +158,7 @@
           <div class="logo">
             <a href="#">
             <figure>
-              <img alt="logo" height="31" src="<%= Rails.root.join("public", "assets", "logo.png").to_s %>" width="71">
+              <img alt="logo" height="31" src="https://gc-public-prod.s3.us-west-2.amazonaws.com/assets/logo.png" width="71">
             </figure></a>
             <h1>EVIDENCE OF PERSONAL PROPERTY INSURANCE</h1>
           </div>
@@ -209,11 +209,13 @@
                 <%= @policy.primary_insurable.primary_address.combined_street_address %> Apt. <br>
                 <%= @policy.primary_insurable.primary_address.city %>, <%= @policy.primary_insurable.primary_address.state %>, <%= @policy.primary_insurable.primary_address.combined_zip_code() %>
               </address>
-              <% unless @policy.users.nil? %>
+              <% unless @policy.users.nil? || @policy.users.count == 1 %>
               <h2>
                 Additional Insured: 
-                <% @policy.users.each do |u, index| %>
-                <%= u.profile.full_name %><%= ", " if index == @policy.users.count %>
+                <% @policy.users.each_with_index do |u, index| %>
+                  <% unless u.id == @policy.primary_user.id %>
+                     <%= u.profile.full_name %><%= ", " unless index == (@policy.users.count - 2) %>
+                  <% end %>
                 <% end %>
               </h2>
               <% end %>
@@ -391,7 +393,7 @@
             <div class="auth">
               <h4>AUTHORIZED REPRESENTATIVE</h4>
               <figure>
-                <img alt="sign" height="35" src="<%= Rails.root.join("public", "assets", "#{ @agency.slug }-signature.png").to_s %>" width="136">
+                <img alt="sign" height="35" src="https://gc-public-prod.s3.us-west-2.amazonaws.com/assets/signature.png" width="136">
               </figure>
             </div>
           </div>
