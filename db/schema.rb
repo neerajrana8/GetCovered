@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2022_01_27_104625) do
+ActiveRecord::Schema.define(version: 2022_01_27_163140) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
@@ -1082,7 +1082,25 @@ ActiveRecord::Schema.define(version: 2022_01_27_104625) do
     t.boolean "active", default: true
     t.index ["identity"], name: "index_login_activities_on_identity"
     t.index ["ip"], name: "index_login_activities_on_ip"
-    t.index ["user_type", "user_id"], name: "index_login_activities_on_user_type_and_user_id"
+    t.index ["user_type", "user_id"], name: "index_login_activities_on_user"
+  end
+
+  create_table "master_policy_configurations", force: :cascade do |t|
+    t.integer "program_type", default: 0
+    t.integer "grace_period", default: 0
+    t.string "integration_charge_code"
+    t.boolean "prorate_charges", default: false
+    t.boolean "auto_post_charges", default: true
+    t.boolean "consolidate_billing", default: true
+    t.datetime "program_start_date"
+    t.integer "program_delay", default: 0
+    t.bigint "carrier_policy_type_id", null: false
+    t.string "configurable_type", null: false
+    t.bigint "configurable_id", null: false
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["carrier_policy_type_id"], name: "index_master_policy_configurations_on_carrier_policy_type_id"
+    t.index ["configurable_type", "configurable_id"], name: "index_master_policy_configurations_on_configurable"
   end
 
   create_table "model_errors", force: :cascade do |t|
