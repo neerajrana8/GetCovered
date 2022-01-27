@@ -628,17 +628,6 @@ ActiveRecord::Schema.define(version: 2022_01_27_171158) do
     t.index ["recipient_type", "recipient_id"], name: "index_commissions_on_recipient_type_and_recipient_id"
   end
 
-  create_table "contact_records", force: :cascade do |t|
-    t.integer "direction", default: 0
-    t.integer "approach", default: 0
-    t.integer "status", default: 1
-    t.string "contactable_type"
-    t.bigint "contactable_id"
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
-    t.index ["contactable_id"], name: "index_contact_records_on_contactable_id"
-  end
-
   create_table "disputes", force: :cascade do |t|
     t.string "stripe_id", null: false
     t.integer "amount", null: false
