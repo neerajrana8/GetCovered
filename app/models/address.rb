@@ -113,7 +113,7 @@ class Address < ApplicationRecord
   # force pseudo-titlecase everywhere so things are predictable
   def standardize_case
     ["street_name", "street_two", "city", "county"].each do |prop|
-
+      next if self.send(prop).blank?
       lastchar = ' '
       (0...self.send(prop).length).each do |chr|
         if self.send(prop)[chr] == self.send(prop)[chr].upcase && lastchar != ' ' && lastchar != '-'
