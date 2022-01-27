@@ -42,22 +42,6 @@ module CarrierQbePolicy
 				File.delete(save_path) if File.exist?(save_path) unless %w[local development].include?(ENV["RAILS_ENV"])
 			end
       
-      # document.file = Rails.root.join('tmp/eois', document_file_title).open
-      
-      # if document.save!
-      #   insured.each { |u| document.users << u }
-      #   community.staffs.each { |s| document.staffs << s }
-      #   agency.agents.each { |a| document.agents << a }
-      #   document.downloads.create()
-        
-      #   FileUtils::remove_entry(save_path)
-        
-      #   return true
-      # else
-        
-      #   return false
-      # end
-      
     end
     
   end
