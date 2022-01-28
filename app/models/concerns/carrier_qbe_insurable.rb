@@ -310,7 +310,7 @@ module CarrierQbeInsurable
         if inline
           broken_rates.each{|br| get_qbe_rates(br, effective_date, traits_override: traits_override) }
         else
-          FetchInsurableRatesJob.perform_later(self, number_insured: broken_rates, effective_date: effective_date, traits_override: traits_override, delay: delay)
+          FetchQbeRatesJob.perform_later(self, number_insured: broken_rates, effective_date: effective_date, traits_override: traits_override, delay: delay)
         end
 	    end
 	  end
