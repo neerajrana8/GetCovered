@@ -22,6 +22,16 @@ module V2
         render template: 'v2/shared/master_policies/index', status: :ok
       end
 
+      def new
+        @master_policy = Policy.new(
+          effective_date: (Time.current + 1.months).at_beginning_of_month,
+          policy_type_id: 2,
+          carrier: Carrier.find(2)
+        )
+        @master_policy.qbe_master_build_coverage_options
+        render @master_policy.as_json(include: :policy_coverages)
+      end
+
       def set_policy
         @master_policy = Policy.find_by(policy_type_id: PolicyType::MASTER_IDS, id: params[:id])
         render(json: { error: :not_found, message: 'Master policy not found' }, status: :not_found) if @master_policy.blank?

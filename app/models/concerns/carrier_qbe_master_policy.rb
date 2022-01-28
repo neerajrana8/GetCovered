@@ -6,17 +6,23 @@ module CarrierQbeMasterPolicy
 
   included do
 
-    def build_coverage_options
+    def qbe_master_build_coverage_options
       [
-        { title: "Liability Coverage", designation: "liability_coverage", limit: 10000000, occurrence_limit: 1000000, deductible: 0, enabled: true },
-        { title: "Expanded Liability Coverage", designation: "expanded_liability", limit: 10000000, occurrence_limit: 1000000, deductible: 0, enabled: true },
-        { title: "Pet Damage", designation: "pet_damage", limit: 10000000, occurrence_limit: 1000000, deductible: rand(25000..100000).round(-3), enabled: true },
-        { title: "Loss of Rent", designation: "loss_of_rents", limit: 10000000, occurrence_limit: 1000000, deductible: 0, enabled: true },
-        { title: "Tenant Contingent Contents", designation: "tenant_contingent_contents", limit: 10000000, occurrence_limit: 1000000, deductible: 0, enabled: true },
-        { title: "Contingent Contents", designation: "contingent_liability_options", limit: 10000000, occurrence_limit: 1000000, deductible: 0, enabled: true },
-        { title: "Landlord Supplemental", designation: "landlord_supplemental", limit: 10000000, occurrence_limit: 1000000, deductible: 0, enabled: true }
+        { title: "Liability Coverage", designation: "liability_coverage", limit: 0, occurrence_limit: 0, deductible: 0, enabled: false },
+        { title: "Expanded Liability Coverage", designation: "expanded_liability", limit: 0, occurrence_limit: 0, deductible: 0, enabled: false },
+        { title: "Pet Damage", designation: "pet_damage", limit: 0, occurrence_limit: 0, deductible: 0, enabled: false },
+        { title: "Loss of Rent", designation: "loss_of_rents", limit: 0, occurrence_limit: 0, deductible: 0, enabled: false },
+        { title: "Tenant Contingent Contents", designation: "tenant_contingent_contents", limit: 0, occurrence_limit: 0, deductible: 0, enabled: false },
+        { title: "Landlord Supplemental", designation: "landlord_supplemental", limit: 0, occurrence_limit: 0, deductible: 0, enabled: false },
+        { title: "Bed Bug Remediation", designation: "bed_bug_remediation", limit: 0, occurrence_limit: 0, deductible: 0, enabled: false },
+        { title: "Mold Remediation", designation: "mold_remediation", limit: 0, occurrence_limit: 0, deductible: 0, enabled: false },
+        { title: "Bodily Injury", designation: "bodily_injury", limit: 0, occurrence_limit: 0, deductible: 0, enabled: false },
+        { title: "Additional Living Expense", designation: "additional_living_expense", limit: 0, occurrence_limit: 0, deductible: 0, enabled: false },
+        { title: "Automatic Coverage", designation: "automatic_coverage", limit: 0, occurrence_limit: 0, deductible: 0, enabled: false },
+        { title: "Intentional Damage", designation: "intentional_damage", limit: 0, occurrence_limit: 0, deductible: 0, enabled: false },
+        { title: "Break in Damage", designation: "break_in_damage", limit: 0, occurrence_limit: 0, deductible: 0, enabled: false }
       ].each do |coverage|
-        self.policy_coverages.create!(coverage)
+        self.policy_coverages.new(coverage)
       end
     end
 
