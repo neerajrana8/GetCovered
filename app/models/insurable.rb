@@ -211,10 +211,10 @@ class Insurable < ApplicationRecord
   end
 
 	def parent_community
-    return @parent_community ||= self if InsurableType::COMMUNITIES_IDS.include?(self.insurable_type_id)
+    return self if InsurableType::COMMUNITIES_IDS.include?(self.insurable_type_id)
     return nil if self.insurable_id.nil?
-    return @parent_community ||= self.insurable if InsurableType::COMMUNITIES_IDS.include?(self.insurable&.insurable_type_id)
-    return @parent_community ||= self.insurable&.insurable if InsurableType::COMMUNITIES_IDS.include?(self.insurable&.insurable&.insurable_type_id)
+    return self.insurable if InsurableType::COMMUNITIES_IDS.include?(self.insurable&.insurable_type_id)
+    return self.insurable&.insurable if InsurableType::COMMUNITIES_IDS.include?(self.insurable&.insurable&.insurable_type_id)
     return nil
   end
 
