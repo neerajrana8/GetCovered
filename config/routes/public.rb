@@ -109,4 +109,5 @@ scope module: :public do
 
   get 'communities/:id' => 'communities#accounts'
   get 'units/:id' => 'units#communities'
+  get 'buildings/:id' => 'buildings#community'
 end
