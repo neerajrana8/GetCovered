@@ -2,6 +2,7 @@ class UserClaimMailer < ApplicationMailer
   before_action { @user = params[:user] }
   before_action { @claim = params[:claim] }
   before_action :check_user_presence
+  after_action :record_mail
 
   default from: -> { @user.email }
 
@@ -28,5 +29,16 @@ class UserClaimMailer < ApplicationMailer
 
   def check_user_presence
     return false if @user.nil?
+  end
+
+  def record_mail
+    contact_record = ContactRecord.new(
+      approach: 'email',
+      direction: 'outgoing',
+      status: 'sent',
+      contactable: @user
+    )
+
+    contact_record.save
   end
 end
