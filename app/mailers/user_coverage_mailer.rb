@@ -29,6 +29,19 @@ class UserCoverageMailer < ApplicationMailer
 
   end
 
+  def qbe_proof_of_coverage
+    @user_name = @user&.profile&.full_name
+    I18n.locale = @user&.profile&.language if @user&.profile&.language&.present?
+    @accepted_on = Time.current.strftime('%m/%d/%y')
+    @site = whitelabel_host(@policy.agency)
+
+    attachments["evidence-of-insurance.pdf"] = open(@policy.documents.last.service_url).read
+
+    mail(subject: I18n.t('user_coverage_mailer.all_documents.other_title'),
+         text: I18n.t('user_coverage_mailer.all_documents.other_text'),
+         site: @site, accepted_on: @accepted_on, documents: documents, user_name: @user_name)
+  end
+
   def proof_of_coverage
     attach_all_documents
 
