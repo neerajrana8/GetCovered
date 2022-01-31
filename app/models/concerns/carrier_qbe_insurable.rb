@@ -13,6 +13,16 @@ module CarrierQbeInsurable
         nil
         : (self.confirmed && self.parent_community&.carrier_profile(::QbeService.carrier_id)&.traits&.[]('pref_facility') == 'MDU' ? :preferred : :nonpreferred) # WARNING: change this at some point in case we confirm nonpreferred properties?
     end
+    
+    def qbe_mark_preferred
+      return "The insurable is not a community" unless ::InsurableType::RESIDENTIAL_COMMUNITIES_IDS.include?(self.insurable_type_id)
+      return "The insurable has a 'confirmed' value of false; it must be assigned to an account and marked as confirmed before being registered as preferred" unless self.confirmed
+      cp = self.carrier_profile(::QbeService.carrier_id)
+      return "The community has no CarrierInsurableProfile for QBE" if cp.nil?
+      cp.traits['pref_facility'] = 'MDU'
+      cp.save
+      return nil
+    end
 	  
 	  # Get QBE Zip Code
 	  #
