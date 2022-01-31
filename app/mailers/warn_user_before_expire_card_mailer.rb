@@ -13,5 +13,19 @@ class WarnUserBeforeExpireCardMailer < ApplicationMailer
     subject = t('warn_user_before_expire_card_mailer.send_warn_expire_card.subject', agency_title: @agency.title)
 
     mail(from: 'support@' + @branding_profile.url, to: @user.email, subject: subject)
+    record_mail(@user)
+  end
+
+  private
+
+  def record_mail(user)
+    contact_record = ContactRecord.new(
+      approach: 'email',
+      direction: 'outgoing',
+      status: 'sent',
+      contactable: user
+    )
+
+    contact_record.save
   end
 end
