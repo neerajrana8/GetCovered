@@ -88,7 +88,7 @@ class Staff < ApplicationRecord
   has_many :payment_profiles, as: :payer
 
   has_many :notification_settings, as: :notifyable
-
+  has_many :contact_records, as: :contactable
   scope :enabled, -> { where(enabled: true) }
 
   accepts_nested_attributes_for :profile, update_only: true
