@@ -1,6 +1,7 @@
 module Policies
   class CancellationMailer < ApplicationMailer
     before_action :set_variables
+    after_action :record_mail
 
     default to: -> { @user.email },
             from: -> { 'no-reply@getcoveredinsurance.com' }
@@ -42,6 +43,19 @@ module Policies
 
       @policy_type_title = I18n.t("policy_type_model.#{@policy.policy_type.title.parameterize.underscore}")
       @agency_policy_type = "#{@agency.title} - #{@policy_type_title}"
+    end
+
+    def record_mail
+      user = @policy.primary_user
+
+      contact_record = ContactRecord.new(
+        direction: 'outgoing',
+        approach: 'email',
+        status: 'sent',
+        contactable: user
+      )
+
+      contact_record.save
     end
   end
 end
