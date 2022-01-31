@@ -179,9 +179,11 @@ module PolicyApplicationMethods
     # get a bit of extra nonsense
     carrier_policy_type = CarrierPolicyType.where(carrier_id: carrier_id, policy_type_id: @ho4_policy_type_id).take
     coverage_selections = inputs[:coverage_selections]&.to_unsafe_h || {}
+    effective_date = inputs[:effective_date] ? Date.parse(inputs[:effective_date]) : nil
+    effective_date = nil if effective_date && effective_date < Time.current.to_date
     # get coverage options
     results = ::InsurableRateConfiguration.get_coverage_options(
-      carrier_policy_type, unit, coverage_selections, inputs[:effective_date] ? Date.parse(inputs[:effective_date]) : nil, inputs[:additional_insured].to_i, billing_strategy,
+      carrier_policy_type, unit, coverage_selections, effective_date, inputs[:additional_insured].to_i, billing_strategy,
       **({
           # execution options
           eventable: unit,
