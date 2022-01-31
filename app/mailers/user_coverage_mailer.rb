@@ -4,6 +4,7 @@ class UserCoverageMailer < ApplicationMailer
   before_action { @quote = params[:quote] }
   before_action { @links = params[:links] }
   before_action :check_user_preference
+  after_action :record_mail
 
   default to: -> { @user.email },
           from: -> { 'no-reply@getcoveredinsurance.com' }
@@ -207,5 +208,16 @@ class UserCoverageMailer < ApplicationMailer
 
   def check_user_preference
     return false if @user.nil?
+  end
+
+  def record_mail
+    contact_record = ContactRecord.new(
+      approach: 'email',
+      direction: 'outgoing',
+      status: 'sent',
+      contactable: @user
+    )
+
+    contact_record.save
   end
 end
