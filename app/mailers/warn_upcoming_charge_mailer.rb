@@ -17,5 +17,19 @@ class WarnUpcomingChargeMailer < ApplicationMailer
                 agency_title: @agency.title,
                 policy_number: @policy.number)
     mail(from: @from, to: @user.email, subject: subject)
+    record_mail(@user)
+  end
+
+  private
+
+  def record_mail(user)
+    contact_record = ContactRecord.new(
+      approach: 'email',
+      direction: 'outgoing',
+      status: 'sent',
+      contactable: user
+    )
+
+    contact_record.save
   end
 end
