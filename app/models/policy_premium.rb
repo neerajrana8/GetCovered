@@ -165,7 +165,7 @@ class PolicyPremium < ApplicationRecord
       policy_premium: self,
       title: fee.title || "#{(fee.amortize || fee.per_payment) ? "Amortized " : ""} Fee",
       category: "fee",
-      rounding_error_distribution: "first_payment_simple",
+      rounding_error_distribution: "first_payment_multipass",
       total_due: payments_total,
       proration_calculation: 'payment_term_exclusive',
       proration_refunds_allowed: false,
