@@ -8,6 +8,7 @@ module CarrierQBE
       raise ArgumentError.new("Policy must be residential") unless policy.policy_type_id == 1
       raise ArgumentError.new("Policy must be issued by QBE") unless policy.carrier_id == 1
 
+      policy.reload()
       policy.qbe_issue_policy() if policy.absent?
     end
 

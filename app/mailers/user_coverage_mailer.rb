@@ -30,6 +30,7 @@ class UserCoverageMailer < ApplicationMailer
   end
 
   def qbe_proof_of_coverage
+    @policy.reload()
     unless @policy.sent?
       @user_name = @user&.profile&.full_name
       I18n.locale = @user&.profile&.language if @user&.profile&.language&.present?

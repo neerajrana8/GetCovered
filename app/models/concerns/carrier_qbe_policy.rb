@@ -42,6 +42,7 @@ module CarrierQbePolicy
       end
 
       self.update document_status: "present"
+      self.reload()
 
       self.update document_status: "sent" if UserCoverageMailer.with(user: self.primary_user, policy: self).qbe_proof_of_coverage.deliver_now
       # CarrierQBE::PoliciesMailer.with(user: self.primary_user, policy: self).proof_of_coverage.deliver_now
