@@ -37,7 +37,7 @@ class UserCoverageMailer < ApplicationMailer
 
     @content = {
       subject: I18n.t('user_coverage_mailer.all_documents.other_title'),
-      text: "Your Renters Insurance Policy has been accepted on #{ @accepted_on }. Please log in to <a href=\"#{@site}\" our site for more information."
+      text: "Your Renters Insurance Policy has been accepted on #{ @accepted_on }. Please log in to <a href=\"#{@site}\">our site</a> for more information."
     }
 
     attachments["evidence-of-insurance.pdf"] = {
