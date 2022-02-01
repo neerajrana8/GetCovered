@@ -53,10 +53,10 @@ class UpgradeInsurableRateConfiguration < ActiveRecord::Migration[5.2]
     #puts "USSC: #{::InsurableGeographicalCategory::US_STATE_CODES.keys}"
     #puts "BIGC: #{by_igc.map{|k,v| k.state.to_sym }}"
     #puts "MINS: #{(::InsurableGeographicalCategory::US_STATE_CODES.keys - by_igc.map{|k,v| k.state.to_sym })}"
-    (::InsurableGeographicalCategory::US_STATE_CODES.keys - by_igc.map{|k,v| k.state.to_sym }).each do |state|
-      dat_igc = ::InsurableGeographicalCategory.get_for(state: state)
-      by_igc[dat_igc] = get_data_from_msi(msis, dat_igc)
-    end
+    #(::InsurableGeographicalCategory::US_STATE_CODES.keys - by_igc.map{|k,v| k.state.to_sym }).each do |state|
+    #  dat_igc = ::InsurableGeographicalCategory.get_for(state: state)
+    #  by_igc[dat_igc] = get_data_from_msi(msis, dat_igc)
+    #end
     # create per-state ircs
     by_igc.each do |igc, data|
       next if igc.nil? || !igc.counties.blank? # just in case
