@@ -5,7 +5,7 @@ class PolicyQuoteStartBillingJob < ApplicationJob
     return if policy.nil?
     # send documents
     unless !policy.respond_to?(issue) || policy.carrier_id == 5 # MOOSE WARNING: disable for MSI for now...
-      policy.send(issue)
+      policy.send(issue) unless policy.sent?
       UserCoverageMailer.with(policy: policy, user: policy.primary_user).proof_of_coverage.deliver if policy.policy_type_id != 5
       UserCoverages::RentGuaranteeMailer.with(policy: policy, user: policy.primary_user).proof_of_coverage.deliver if policy.policy_type_id == 5
     end

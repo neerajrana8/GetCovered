@@ -57,41 +57,45 @@ class UserCoverageMailer < ApplicationMailer
   end
 
   def proof_of_coverage
-    attach_all_documents
+    unless @policy.carrier_id == 1
+      attach_all_documents
 
-    @user_name = @user&.profile&.full_name
-    I18n.locale = @user&.profile&.language if @user&.profile&.language&.present?
-    @accepted_on = Time.current.strftime('%m/%d/%y')
-    @site = whitelabel_host(@policy.agency)
+      @user_name = @user&.profile&.full_name
+      I18n.locale = @user&.profile&.language if @user&.profile&.language&.present?
+      @accepted_on = Time.current.strftime('%m/%d/%y')
+      @site = whitelabel_host(@policy.agency)
 
-    @content =
-      if @policy.policy_type_id == 5
-        documents =
-          if @policy&.documents&.any?
-            I18n.t('user_coverage_mailer.all_documents.rent_guarantee_documents')
-          else
-            ''
-          end
-        {
-          subject: I18n.t('user_coverage_mailer.all_documents.rent_guarantee_title'),
-          text: I18n.t('user_coverage_mailer.all_documents.rent_guarantee_text',
-                       site: @site, accepted_on: @accepted_on, documents: documents, user_name: @user_name)
-        }
-      else
-        documents =
-          if @policy&.documents&.any?
-            I18n.t('user_coverage_mailer.all_documents.other_documents')
-          else
-            ''
-          end
-        {
-          subject: I18n.t('user_coverage_mailer.all_documents.other_title'),
-          text: I18n.t('user_coverage_mailer.all_documents.other_text',
-                       site: @site, accepted_on: @accepted_on, documents: documents, user_name: @user_name)
-        }
-      end
+      @content =
+        if @policy.policy_type_id == 5
+          documents =
+            if @policy&.documents&.any?
+              I18n.t('user_coverage_mailer.all_documents.rent_guarantee_documents')
+            else
+              ''
+            end
+          {
+            subject: I18n.t('user_coverage_mailer.all_documents.rent_guarantee_title'),
+            text: I18n.t('user_coverage_mailer.all_documents.rent_guarantee_text',
+                         site: @site, accepted_on: @accepted_on, documents: documents, user_name: @user_name)
+          }
+        else
+          documents =
+            if @policy&.documents&.any?
+              I18n.t('user_coverage_mailer.all_documents.other_documents')
+            else
+              ''
+            end
+          {
+            subject: I18n.t('user_coverage_mailer.all_documents.other_title'),
+            text: I18n.t('user_coverage_mailer.all_documents.other_text',
+                         site: @site, accepted_on: @accepted_on, documents: documents, user_name: @user_name)
+          }
+        end
 
-    mail(:subject => @content[:subject])
+      mail(:subject => @content[:subject])
+    else
+      return false
+    end
   end
   
   def all_documents
