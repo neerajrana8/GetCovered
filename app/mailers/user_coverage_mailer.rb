@@ -30,24 +30,29 @@ class UserCoverageMailer < ApplicationMailer
   end
 
   def qbe_proof_of_coverage
-    @user_name = @user&.profile&.full_name
-    I18n.locale = @user&.profile&.language if @user&.profile&.language&.present?
-    @accepted_on = Time.current.strftime('%m/%d/%y')
-    @site = whitelabel_host(@policy.agency)
+    unless @policy.sent?
+      @user_name = @user&.profile&.full_name
+      I18n.locale = @user&.profile&.language if @user&.profile&.language&.present?
+      @accepted_on = Time.current.strftime('%m/%d/%y')
+      @site = whitelabel_host(@policy.agency)
 
-    @content = {
-      subject: I18n.t('user_coverage_mailer.all_documents.other_title'),
-      text: 'Your Renters Insurance Policy has been accepted on ' + @accepted_on  +'.</br>
-             Please log in to <a href="' + @site + '">our site</a> for more information.'
-    }
+      @content = {
+        subject: I18n.t('user_coverage_mailer.all_documents.other_title'),
+        text: 'Your Renters Insurance Policy has been accepted on ' + @accepted_on  +'.</br>
+               Please log in to <a href="' + @site + '">our site</a> for more information.'
+      }
 
-    attachments["evidence-of-insurance.pdf"] = {
-      mime_type: "application/pdf",
-      encoding: "base64",
-      content: Base64.strict_encode64(@policy.documents.last.download)
-    }
+      attachments["evidence-of-insurance.pdf"] = {
+        mime_type: "application/pdf",
+        encoding: "base64",
+        content: Base64.strict_encode64(@policy.documents.last.download)
+      }
 
-    mail(subject: @content[:subject])
+      mail(subject: @content[:subject])
+      return true
+    else
+      return false
+    end
   end
 
   def proof_of_coverage
