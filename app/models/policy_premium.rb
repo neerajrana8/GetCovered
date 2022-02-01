@@ -158,7 +158,7 @@ class PolicyPremium < ApplicationRecord
     # add item for fee
     payments_count = payment_terms.count
     payments_total = case fee.amount_type
-      when "FLAT";        fee.amount * (fee.per_payment ? payments_count : 1)
+      when "FLAT";        fee.amount.to_i * (fee.per_payment ? payments_count : 1)
       when "PERCENTAGE";  ((fee.amount.to_d / 100) * percentage_basis).ceil * (fee.per_payment ? payments_count : 1) # MOOSE WARNING: is .ceil acceptable?
     end
     created = ::PolicyPremiumItem.create(
