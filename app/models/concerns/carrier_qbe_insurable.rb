@@ -20,7 +20,10 @@ module CarrierQbeInsurable
       cp = self.carrier_profile(::QbeService.carrier_id)
       return "The community has no CarrierInsurableProfile for QBE" if cp.nil?
       cp.traits['pref_facility'] = 'MDU'
-      cp.save
+      unless cp.save
+        return "The modified preferred status failed to save"
+      end
+      FetchQbeRatesJob.perform_later(self)
       return nil
     end
 	  
