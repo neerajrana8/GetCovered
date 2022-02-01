@@ -301,11 +301,16 @@ module CarrierDcInsurable
         end
         begin
           community.create_carrier_profile(DepositChoiceService.carrier_id)
+          community.update(policy_type_ids: ((community.policy_type_ids || []) + [::DepositChoiceService.policy_type_id]).uniq)
         rescue ActiveRecord::RecordInvalid => e
           return_errors =  e.record.errors.to_h.transform_keys{|k| "Community Profile #{k.to_s}" }
           raise ActiveRecord::Rollback
         end
         # create units
+        if response["units"].blank?
+          return_errors = "Response from Deposit Choice specified a community with no units"
+          raise ActiveRecord::Rollback
+        end
         unit_insurable_type = InsurableType.where(title: "Residential Unit").take
         response["units"].each do |unit_entry|
           unit = community.insurables.new({
@@ -322,6 +327,7 @@ module CarrierDcInsurable
           end
           begin
             unit.create_carrier_profile(DepositChoiceService.carrier_id)
+            unit.update(policy_type_ids: ((unit.policy_type_ids || []) + [::DepositChoiceService.policy_type_id]).uniq)
           rescue ActiveRecord::RecordInvalid => e
             return_errors =  e.record.errors.to_h.transform_keys{|k| "Unit #{unit_entry["unitValue"]} Profile #{k.to_s}" }
             raise ActiveRecord::Rollback

@@ -68,8 +68,6 @@ en:
       effective_date_cannot_be_blank:  "effective_date cannot be blank"
       no_security_deposit_replacement: "There are no security deposit replacement plans available for this property (error code"
     msi_get_coverage_options:
-      coverage_selections_must_be_array: "coverage_selections must be an array of coverage selections"
-      must_include_category_and_uid:  "all entries of coverage_selections must include a category and uid"
       agency_cannot_be_blank:  "agency_id cannot be blank"
       effective_date_must_be_valid_date:  "effective_date must be a valid date"
       additional_insured_cannot_be_blank:  "additional_insured cannot be blank"
@@ -86,6 +84,13 @@ en:
       cant_update_user: "Can't update user"
       cant_create_user: "Can't create user"
       cant_update_address: "Can't update address"
+    qbe_application:
+      missing_fic_info: "Missing required community information: %{missing_list}"
+      year_built: "year built"
+      number_of_units: "number of units"
+      gated: "gated community"
+      years_professionally_managed: "years managed by property manager"
+      in_city_limits: "community in city limits"
   policy_app_model:
     user_age: "%{name} must be at least 18 years old"
     billing_strategy_must_belong: "billing strategy must belong to the same agency"
@@ -106,6 +111,12 @@ en:
       rates_cannot_be_nil: "Argument 'rates' cannot be nil"
       rates_must_be_array: "Argument 'rates' must be an array"
       quote_id_cannot_be_nil: "Argument 'quote_id' cannot be nil"
+      questions:
+        question_1: "Do you operate a business in your rental apartment/home?"
+        question_2: "Has any animal that you or your roommate(s) own ever bitten a person or someone else’s pet?"
+        question_3: "Do you or your roommate(s) own snakes, exotic or wild animals?"
+        question_4: "Is your dog(s) any of these breeds: Akita, Pit Bull (Staffordshire Bull Terrier, America Pit Bull Terrier, American Staffordshire Terrier, Bull Terrier), Chow, Rottweiler, Wolf Hybrid, Malamute or any mix of the above listed breeds?"
+        question_5: "Have you had any liability claims, whether or not a payment was made, in the last 3 years?"
   agency_model:
     parent_id_incorrect: "Parent id incorrect"
     agency_cannot_be_updated: "Agency can't be updated to sub-agency"
@@ -235,7 +246,7 @@ en:
     state_must_be_valid_us: "State must be a valid US state abbreviation"
     postal_code_must_be_valid: "Postal code must be a valid zip code"
   insurable_geographical_category:
-    cannot_be_blank_if_counties_are_specified: "cannot be blank if counties are specified"
+    cannot_be_blank_if_data_are_specified: "cannot be blank if counties, zip codes, or cities are specified"
   user_controller:
     invalid_token: "Invalid token."
   user_policy_application_controller:
@@ -282,6 +293,14 @@ en:
       last_name_required: "Property manager last name cannot be blank"
       last_name_too_long: "Property manager last name cannot be more than 50 characters"
       middle_name_too_long: "Property manager middle name cannot be more than 50 characters"
+  qbe_service:
+    additional_interest:
+      address_line_1_required: "Property manager address line 1 is required"
+      address_city_required: "Property manager address city is required"
+      address_state_required: "Property manager address state is required"
+      address_zip_required: "Property manager address zip is required"
+      address_state_invalid: "Property manager address state is invalid"
+      address_zip_required: "Property manager address zip is invalid"
   coverage_options:
     estimated_premium_errors: 'Contents selection is required'
     cannot_be_blank_counties: "cannot be blank if counties are specified"
@@ -356,6 +375,45 @@ en:
     1082_title: "Limited Rental To Others"
     1082_desc:  "The policy may be endorsed to insure against loss by theft when all or part of the residence."
     1083_title: "Home System Breakdown"
+    all_peril_title: "All Other Peril"
+    all_peril_desc: "The insurer will deduct from a loss because of different risk that is unlisted (i.e., theft, typhoon, or wind) before paying up to its coverage limits."
+    hurricane_title: "Hurricane Deductible"
+    hurricane_desc: "The amount the insurer will deduct from a loss resulting from a hurricane before paying up to its policy limits."
+    coverage_c_title: "Contents"
+    coverage_c_desc: "Individual property coverage that ensures your own things and property"
+    liability_title: "Liability"
+    liability_desc: "Liability coverage protects you in an event of negligent damage to your apartment, the community, or other residents."
+    medical_title: "Med Payment"
+    medical_desc: "Coverage designed to pay for medical costs to others who are by chance injured on an insured property up to the policy's limits."
+    pet_damage_title: "Pet Damage"
+    pet_damage_desc: "This option covers up to $500 for accidental damage caused by a pet such as stained carpet or chewed baseboards."
+    water_backup_title: "Water Backup"
+    water_backup_desc: "This option covers your personal property in the event there's water/sewer damage in your covered dwelling that begins off premises."
+    equip_title: "Equipment Protection"
+    equip_desc: "Coverage includes direct physical damage to covered electronics (ie. tv, cell phone, laptop, ipad, etc.) including 'electronic circuitry impairment'."
+    earthquake_coverage_title: "Earthquake"
+    earthquake_coverage_desc: "This option covers your personal property (up to $5,000) in the event of an earthquake."
+    bedbug_title: "Bed Bug"
+    bedbug_desc: "This option provides coverage to treat, remediate and eliminate a bed bug infestation in the residence."
+    # not used, possibly wrong uids (cov d is LOU and windx is absent in sendpolicyinfo)"
+    coverage_d_title: "Loss of Use"
+    coverage_d_desc: "Coverage repays you for the expense of keeping a practically identical way of life following a covered misfortune that surpasses your typical costs."
+    windstorm_title: "Windstorm Exclusion"
+    windstorm_desc: ""
+  insurable_rate_configuration:
+    qbe:
+      account_property_without_cip: "Carrier failed to resolve building information"
+      cip_save_failure: "An error occurred while processing the address"
+      county_failure: "Carrier failed to resolve address"
+      property_info_failure: "Carrier failed to retrieve property information"
+      rates_failure: "Carrier failed to retrieve coverage rates"
+  insurables_controller:
+    qbe:
+      no_cip: "Carrier failed to resolve building information"
+      county_already_resolved: "The county for this address is already resolved"
+      cip_save_error: "Carrier error occurred"
+      invalid_county_selection_error: "Invalid county selection"
+      no_counties_available: "The carrier is unable to provide a county list for this address"
 
 # I18n.t('agency_model.no_branding')
 # I18n.t('policy_application_contr.new.unit_not_found')

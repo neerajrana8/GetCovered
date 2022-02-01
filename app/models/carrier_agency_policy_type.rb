@@ -58,6 +58,7 @@ class CarrierAgencyPolicyType < ApplicationRecord
                unless: proc { |capt| capt.callbacks_disabled }
   after_create :set_billing_strategies,
     unless: Proc.new{|capt| capt.callbacks_disabled }
+  after_create :set_carrier_preferences
   after_update :repair_commission_strategy_tree,
     if: Proc.new{|capt| !capt.disable_tree_repair && capt.saved_change_to_attribute?('commission_strategy_id') }
   before_destroy :refuse_to_perish_if_a_parent
@@ -134,6 +135,17 @@ class CarrierAgencyPolicyType < ApplicationRecord
 
     def disable_billing_strategies
       billing_strategies.update_all(enabled: false)
+    end
+    
+    def set_carrier_preferences
+      cs = self.agency.reload.carrier_preferences
+      cs ||= { 'by_policy_type' => {} }
+      cs['by_policy_type'][self.policy_type_id.to_s] ||= ::Address.states.keys.map{|s| [s.to_s, { 'carrier_ids' => [] }] }.to_h
+      ::Address.states.keys.each do |state|
+        cs['by_policy_type'][self.policy_type_id.to_s][state.to_s] ||= { 'carrier_ids' => [] }
+        cs['by_policy_type'][self.policy_type_id.to_s][state.to_s]['carrier_ids'].push(self.carrier_id) unless cs['by_policy_type'][self.policy_type_id.to_s][state.to_s]['carrier_ids']&.include?(self.carrier_id)
+      end
+      self.agency.update(carrier_preferences: cs)
     end
     
     # fills out appropriate defaults for passed CommissionStrategy nested attributes or unsaved associated model;

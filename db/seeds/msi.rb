@@ -453,6 +453,7 @@ end
     cip = CarrierInsurableProfile.where(carrier_id: carrier_id, insurable_id: community.id).take
     effective_date = application.effective_date
     additional_insured_count = application.users.count - 1
+    cpt = CarrierPolicyType.where(carrier_id: carrier_id, policy_type_id: 1).take
     # choose rates
     coverage_options = []
     coverage_selections = []
@@ -462,12 +463,7 @@ end
     loop do
       iteration += 1
       result = ::InsurableRateConfiguration.get_coverage_options(
-        carrier_id,
-        cip,
-        coverage_selections,
-        application.effective_date,
-        additional_insured_count,
-        billing_strategy.carrier_code,
+        cpt, community, coverage_selections, effective_date, additional_insured_count, billing_strategy,
         perform_estimate: false
       )
       if result[:valid]

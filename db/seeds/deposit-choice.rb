@@ -122,13 +122,23 @@ puts "  Creating DC test insurables..."
 
 @created_communities = []
 
-@addresses = [{
-  street_number: '1392',
-  street_name: 'Post Oak Dr',
-  city: 'Clarkston',
-  state: 'GA',
-  zip_code: '30021'
-}]
+@addresses = [
+  #  This one apparently no longer works on DC's end
+  #{
+  #  street_number: '1392',
+  #  street_name: 'Post Oak Dr',
+  #  city: 'Clarkston',
+  #  state: 'GA',
+  #  zip_code: '30021'
+  #},
+  {
+    street_number: '123',
+    street_name: 'S Pennsylvania St',
+    city: 'Denver',
+    state: 'CO',
+    zip_code: '80209'
+  }
+]
 
 
 building_name_options = ['Estates', 'Gardens', 'Homes', 'Place']

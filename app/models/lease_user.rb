@@ -19,6 +19,8 @@ class LeaseUser < ApplicationRecord
   private
     
   def set_first_as_primary
+    # use this instead if you need to support manually setting false on the first one...
+    #self.primary = true if lease.lease_users.find{|lu| lu != self }.nil? && primary.nil?
     self.primary = true unless lease.lease_users.exists?(primary: true)
   end
    

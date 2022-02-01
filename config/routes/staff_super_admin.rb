@@ -28,6 +28,14 @@
 
           put :enable
           put :disable
+          
+          get 'coverage-options',
+            to: 'insurable_rate_configurations#get_parent_options',
+            defaults: { type: 'Account', carrier_id: 5, insurable_type_id: ::InsurableType::RESIDENTIAL_UNITS_IDS.first }
+            
+          post 'coverage-options',
+            to: 'insurable_rate_configurations#set_options',
+            defaults: { type: 'Account', carrier_id: 5, insurable_type_id: ::InsurableType::RESIDENTIAL_UNITS_IDS.first }
         end
     end
 
@@ -68,6 +76,14 @@
           put :enable
           put :disable
           
+          get 'coverage-options',
+            to: 'insurable_rate_configurations#get_parent_options',
+            defaults: { type: 'Agency', carrier_id: 5, insurable_type_id: ::InsurableType::RESIDENTIAL_UNITS_IDS.first }
+            
+          post 'coverage-options',
+            to: 'insurable_rate_configurations#set_options',
+            defaults: { type: 'Agency', carrier_id: 5, insurable_type_id: ::InsurableType::RESIDENTIAL_UNITS_IDS.first }
+
           get "policy-types",
             to: "agencies#get_policy_types",
             via: "get"
@@ -227,6 +243,13 @@
         get :coverage_report
         get :policies
         get 'related-insurables', to: 'insurables#related_insurables'
+        
+        get 'coverage-options',
+          to: 'insurable_rate_configurations#get_parent_options',
+          defaults: { type: 'Insurable', carrier_id: 5, insurable_type_id: ::InsurableType::RESIDENTIAL_UNITS_IDS.first }
+        post 'coverage-options',
+          to: 'insurable_rate_configurations#set_options',
+          defaults: { type: 'Insurable', carrier_id: 5, insurable_type_id: ::InsurableType::RESIDENTIAL_UNITS_IDS.first }
       end
 
       resources :insurable_rates,

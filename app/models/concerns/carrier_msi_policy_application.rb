@@ -25,7 +25,7 @@ module CarrierMsiPolicyApplication
       #    self.coverage_selections || [],
       #    self.effective_date,
       #    self.users.count - 1,
-      #    self.billing_strategy.carrier_code
+      #    self.billing_strategy
       #  )
       #  if result[:valid] && !result[:estimated_premium].blank?
       #    quote.update(
@@ -48,7 +48,7 @@ module CarrierMsiPolicyApplication
       status_check = self.complete? || self.quote_failed?
       quote = quote_id ? self.policy_quotes.find(quote_id) : self.msi_estimate # WARNING: create quote if nil or reinstate: raise ArgumentError, 'Argument "quote_id" cannot be nil' if quote_id.nil?
     
-      if status_check && self.carrier == ::Carrier.find_by_call_sign('MSI')
+      if status_check && self.carrier_id == ::MsiService.carrier_id
         # grab some values
         unit = self.primary_insurable
         unit_profile = unit.carrier_profile(self.carrier_id)
@@ -56,28 +56,29 @@ module CarrierMsiPolicyApplication
         community_profile = community.carrier_profile(self.carrier_id)
         address = unit.primary_address
         carrier_agency = CarrierAgency.where(agency_id: self.agency_id, carrier_id: self.carrier_id).take
+        carrier_policy_type = CarrierPolicyType.where(carrier_id: self.carrier_id, policy_type_id: PolicyType::RESIDENTIAL_ID).take
+        preferred = (unit.get_carrier_status(::MsiService.carrier_id) == :preferred)
         # call getfinalpremium
-        preferred = unit.preferred_ho4 && community_profile&.external_carrier_id
         self.update(status: 'quote_in_progress')
         # validate & make final premium call to msi
         results = ::InsurableRateConfiguration.get_coverage_options(
-          5, # msi id
-          community_profile || address,
-          self.coverage_selections,
-          self.effective_date,
-          self.users.count - 1,
-          self.billing_strategy.carrier_code,
-          additional_interest_count: community_profile ? nil : self.extra_settings['additional_interest'].blank? ? 0 : 1,
+          carrier_policy_type, unit, self.coverage_selections, self.effective_date, self.users.count - 1, self.billing_strategy,
+          # execution options
+          eventable: quote, # by passing a PolicyQuote we ensure results[:msi_data], results[:event], and results[:annotated_selections] get passed back out
+          perform_estimate: true,
+          add_selection_fields: true,
+          # overrides
+          additional_interest_count: preferred ? nil : self.extra_settings['additional_interest'].blank? ? 0 : 1,
           agency: self.agency,
-          nonpreferred_final_premium_params: {
+          account: self.account,
+          # nonpreferred stuff
+          nonpreferred_final_premium_params: preferred ? nil : {
             address_line_two: unit.title.nil? ? nil : "Unit #{unit.title}",
             number_of_units: self.extra_settings&.[]('number_of_units'),
             years_professionally_managed: self.extra_settings&.[]('years_professionally_managed'),
             year_built: self.extra_settings&.[]('year_built'),
             gated: self.extra_settings&.[]('gated')
-          }.compact,
-          perform_estimate: true,
-          eventable: quote # by passing a PolicyQuote we ensure results[:msi_data], results[:event], and results[:annotated_selections] get passed back out
+          }.compact
         )
         # make sure we succeeded
         if !results[:valid]

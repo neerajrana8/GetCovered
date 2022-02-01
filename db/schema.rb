@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_11_29_192209) do
+ActiveRecord::Schema.define(version: 2022_01_25_215937) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
@@ -141,6 +141,7 @@ ActiveRecord::Schema.define(version: 2021_11_29_192209) do
     t.bigint "staff_id"
     t.string "integration_designation"
     t.string "producer_code"
+    t.jsonb "carrier_preferences", default: {"by_policy_type"=>{}}, null: false
     t.index ["agency_id"], name: "index_agencies_on_agency_id"
     t.index ["call_sign"], name: "index_agencies_on_call_sign", unique: true
     t.index ["integration_designation"], name: "index_agencies_on_integration_designation", unique: true
@@ -715,6 +716,7 @@ ActiveRecord::Schema.define(version: 2021_11_29_192209) do
     t.bigint "ownerable_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "hidden", default: false, null: false
     t.index ["assignable_type", "assignable_id"], name: "index_fees_on_assignable"
     t.index ["ownerable_type", "ownerable_id"], name: "index_fees_on_ownerable"
   end
@@ -756,20 +758,27 @@ ActiveRecord::Schema.define(version: 2021_11_29_192209) do
     t.string "counties", array: true
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "zip_codes", array: true
+    t.string "cities", array: true
+    t.bigint "insurable_id"
+    t.integer "special_usage"
+    t.string "special_designation"
+    t.jsonb "special_settings"
+    t.index ["insurable_id"], name: "index_insurable_geographical_categories_on_insurable_id"
   end
 
   create_table "insurable_rate_configurations", force: :cascade do |t|
     t.jsonb "carrier_info", default: {}, null: false
-    t.jsonb "coverage_options", default: [], null: false
-    t.jsonb "rules", default: {}, null: false
     t.string "configurable_type"
     t.bigint "configurable_id"
     t.string "configurer_type"
     t.bigint "configurer_id"
-    t.bigint "carrier_insurable_type_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["carrier_insurable_type_id"], name: "index_irc_cit"
+    t.jsonb "configuration", default: {}, null: false
+    t.jsonb "rates", default: {}, null: false
+    t.bigint "carrier_policy_type_id", null: false
+    t.index ["carrier_policy_type_id"], name: "index_irc_on_cpt"
     t.index ["configurable_type", "configurable_id"], name: "index_irc_configurable"
     t.index ["configurer_type", "configurer_id"], name: "index_irc_configurer"
   end
@@ -1294,7 +1303,7 @@ ActiveRecord::Schema.define(version: 2021_11_29_192209) do
     t.boolean "auto_pay", default: true
     t.bigint "policy_application_group_id"
     t.jsonb "coverage_selections", default: [], null: false
-    t.jsonb "extra_settings"
+    t.jsonb "extra_settings", default: {}
     t.jsonb "resolver_info"
     t.bigint "tag_ids", default: [], null: false, array: true
     t.jsonb "tagging_data"
