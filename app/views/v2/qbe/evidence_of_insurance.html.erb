@@ -308,7 +308,7 @@
             <h2><%= ActionController::Base.helpers.number_to_currency((covs_by_des['liability']&.limit&.to_f || 0) / 100) %></h2>
             <h2 <% if other_coverages.blank? %>class="last_br_btm"<% end %>><%= ActionController::Base.helpers.number_to_currency((covs_by_des['medical']&.limit&.to_f || 0) / 100) %></h2>
             <% other_coverages.each.with_index do |cov, index| %>
-            <h2 <% if index == other_coverages.length - 1 %>class="last_br_btm"<% end %>><%= cov.limit ? ActionController::Base.helpers.number_to_currency(cov.limit.to_f / 100) : cov.deductible ? "&nbsp;" : "Included" %></h2>
+            <h2 <% if index == other_coverages.length - 1 %>class="last_br_btm"<% end %>><%= cov.limit ? ActionController::Base.helpers.number_to_currency(cov.limit.to_f / 100) : cov.deductible ? raw("&nbsp;") : "Included" %></h2>
             <% end %>           
           </div>
           <div class="deduct_in flt_lt">
@@ -320,7 +320,7 @@
             <h2 class="last_br_rt">&nbsp;</h2>
             <h2 class="<% if @other_coverages.blank? %>last_br_btm <% end %>last_br_rt">&nbsp;</h2>
             <% other_coverages.each.with_index do |cov, index| %>
-            <h2 <% if index == other_coverages.length - 1 %>class="last_br_btm"<% end %>><%= cov.deductible ? ActionController::Base.helpers.number_to_currency(cov.deductible.to_f / 100) : "&nbsp;" %></h2>
+            <h2 <% if index == other_coverages.length - 1 %>class="last_br_btm"<% end %>><%= cov.deductible ? ActionController::Base.helpers.number_to_currency(cov.deductible.to_f / 100) : raw("&nbsp;") %></h2>
             <% end %> 
           </div>
         </div>
