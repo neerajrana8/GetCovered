@@ -20,7 +20,7 @@ module PolicyApplicationMethods
         account_id = insurable.account_id if account_id.nil?
         agency_id = insurable.agency_id || insurable.account&.agency_id if agency_id.nil?
         # get carrier id
-        carrier_id = Agency.find(agency_id).providing_carrier_id(policy_type.id, insurable) # DISABLED FOR NOW: block causing qbe preferred communities to default to QBE when the agency supports both qbe and msi, regardless of their default: {|carrier_id| (carrier_id == ::QbeService.carrier_id && insurable.get_carrier_status(carrier_id) == :preferred) ? true : nil }
+        carrier_id = Agency.find(agency_id).providing_carrier_id(policy_type.id, insurable){|carrier_id| (carrier_id == ::QbeService.carrier_id && insurable.get_carrier_status(carrier_id) == :preferred) ? true : nil }
         @preferred = (insurable.get_carrier_status(carrier_id) == :preferred)
       elsif selected_policy_type == "commercial"
         carrier_id = 3
