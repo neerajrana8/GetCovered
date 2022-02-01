@@ -133,7 +133,7 @@ module CarrierQbePolicyApplication
                 succeeded = false
                 premium = PolicyPremium.create(policy_quote: quote)
                 policy_fee = quote.carrier_payment_data['policy_fee']
-                premium.fees.create(title: "Policy Fee", type: 'ORIGINATION', amount_type: 'FLAT', amount: policy_fee, enabled: true, ownerable: ::MsiService.carrier, hidden: true) unless policy_fee == 0
+                premium.fees.create(title: "Policy Fee", type: 'ORIGINATION', amount_type: 'FLAT', amount: policy_fee, enabled: true, ownerable_type: "Carrier", ownerable_id: ::QbeService.carrier_id, hidden: true) unless policy_fee == 0
                 unless premium.id
                   puts "  Failed to create premium! #{premium.errors.to_h}"
                 else

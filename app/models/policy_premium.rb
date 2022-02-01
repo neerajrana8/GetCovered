@@ -125,7 +125,7 @@ class PolicyPremium < ApplicationRecord
       : self.policy_application&.fields&.class == ::Hash ? self.policy_application.fields&.[]("premise")&.[](0)&.[]("address")&.[]("state")
       : nil # MOOSE WARNING what about pensio's hideous hack with no insurables :(?
     regional_availability = ::CarrierPolicyTypeAvailability.where(state: state, carrier_policy_type: carrier_policy_type).take
-    return (regional_availability&.fees || []) + (self.policy_application&.billing_strategy&.fees || []) + self.fees
+    return (carrier_policy_type&.fees || []) + (regional_availability&.fees || []) + (self.policy_application&.billing_strategy&.fees || []) + self.fees
   end
   
   def itemize_fees(percentage_basis, and_update_totals: true, term_group: nil, payment_terms: nil, collector: nil, filter: nil)
