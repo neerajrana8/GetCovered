@@ -24,7 +24,7 @@ module CarrierQbePolicyApplication
       preferred = (unit.get_carrier_status(::QbeService.carrier_id) == :preferred)
       # get estimate
       results = ::InsurableRateConfiguration.get_coverage_options(
-        carrier_policy_type, unit, self.coverage_selections, self.effective_date, address.state == 'MO' && self.policy_users.any?{|pu| pu.spouse } ? users.count - 2 : self.users.count - 1, self.billing_strategy,
+        carrier_policy_type, unit, self.coverage_selections, self.effective_date, address.state == 'MO' && self.policy_users.any?{|pu| pu.spouse } ? self.users.count - 2 : self.users.count - 1, self.billing_strategy,
         # execution options
         eventable: quote, # by passing a PolicyQuote we ensure results[:event], and results[:annotated_selections] get passed back out
         perform_estimate: true,
