@@ -296,7 +296,7 @@
             <h2>E - Personal Liability (Limit)</h2>
             <h2 <% if other_coverages.blank? %>class="last_br_btm"<% end %>>F - Medical Payments (Limit)</h2>
             <% other_coverages.each.with_index do |cov, index| %>
-            <h2 <% if index == other_coverages.length - 1 %>class="last_br_btm"<% end %>><%= cov.title %></h2>
+            <h2 <% if index == other_coverages.length - 1 %>class="last_br_btm"<% end %>><%= cov.title %> <%= index %></h2>
             <% end %>
           </div>
           <div class="amount_in flt_lt">
@@ -382,7 +382,7 @@
             <div class="auth">
               <h4>AUTHORIZED REPRESENTATIVE</h4>
               <figure>
-                <img alt="sign" height="35" src="<%= Rails.root.join("public", "assets", "#{ @agency.slug }-signature.png").to_s %>" width="136">
+                <img alt="ryan" height="35" src="https://gc-public-prod.s3.us-west-2.amazonaws.com/assets/ryan-signature.png" width="136">
               </figure>
             </div>
           </div>
@@ -421,7 +421,7 @@
             <div class="auth">
               <h4>AUTHORIZED REPRESENTATIVE</h4>
               <figure>
-                <img alt="sign" height="35" src="https://gc-public-prod.s3.us-west-2.amazonaws.com/assets/signature.png" width="136">
+                <img alt="ryan" height="35" src="https://gc-public-prod.s3.us-west-2.amazonaws.com/assets/ryan-signature.png" width="136">
               </figure>
             </div>
           </div>

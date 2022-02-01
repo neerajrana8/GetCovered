@@ -11,8 +11,6 @@ module CarrierQbePolicy
     def qbe_issue_policy
       return nil unless policy_in_system?
       
-      # document = documents.create!(:title => "Policy ##{ id } Evidence of Insurance #{ Time.current.strftime("%m/%d/%Y") }", :system_generated => true, :file_type => "evidence_of_insurance")
-      
       document_file_title = "qbe-residential-eoi-#{ id }-#{ Time.current.strftime("%Y%m%d-%H%M%S") }.pdf"
       
       # create a pdf from string using templates, layouts and content option for header or footer
@@ -44,7 +42,8 @@ module CarrierQbePolicy
 			end
 
       UserCoverageMailer.with(user: self.primary_user, policy: self).qbe_proof_of_coverage.deliver_now
-      
+      # CarrierQBE::PoliciesMailer.with(user: self.primary_user, policy: self).proof_of_coverage.deliver_now
+
     end
     
   end
