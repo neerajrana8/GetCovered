@@ -83,7 +83,7 @@ module PolicyApplications
     end
 
     def add_policy_user(user, policy_user_params)
-      policy_user = PolicyUser.create(policy_user_params.merge(policy_application: policy_application, user: user))
+      policy_user = policy_application.policy_users.create(policy_user_params.merge(policy_application: policy_application, user: user))
       if policy_user.errors.empty?
         Success(policy_user)
       else

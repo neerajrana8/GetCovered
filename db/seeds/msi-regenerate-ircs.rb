@@ -1,9 +1,9 @@
 
 
 # delete IRCs and grab useful vars
-carrier = Carrier.find(5)
-carrier_insurable_type = CarrierInsurableType.where(carrier: carrier, insurable_type: InsurableType.find(4), enabled: true).take
-InsurableRateConfiguration.where(carrier_insurable_type: carrier_insurable_type, configurable_type: 'InsurableGeographicalCategory', configurer: carrier).delete_all
+carrier = MsiService.carrier
+carrier_policy_type = CarrierPolicyType.where(carrier: carrier, policy_type_id: PolicyType::RESIDENTIAL_ID).take
+InsurableRateConfiguration.where(carrier_policy_type: carrier_policy_type, configurable_type: 'InsurableGeographicalCategory', configurer: carrier).delete_all
 InsurableGeographicalCategory.all.select{|igc| igc.insurable_rate_configurations.count == 0 }.each{|igc| igc.delete }
 msis = MsiService.new
 # IRC for US
@@ -11,7 +11,7 @@ igc = ::InsurableGeographicalCategory.get_for(state: nil)
 irc = msis.extract_insurable_rate_configuration(nil,
   configurer: carrier,
   configurable: igc,
-  carrier_insurable_type: carrier_insurable_type,
+  carrier_policy_type: carrier_policy_type,
   use_default_rules_for: 'USA'
 )
 irc.save!
@@ -43,7 +43,7 @@ puts state
   event.started = Time.now
   result = msis.call
   event.completed = Time.now     
-  event.response = result[:data]
+  event.response = result[:response]&.response
   event.status = result[:error] ? 'error' : 'success'
   event.save!
   if result[:error]
@@ -56,7 +56,7 @@ puts state
   irc = msis.extract_insurable_rate_configuration(result[:data],
     configurer: carrier,
     configurable: igc,
-    carrier_insurable_type: carrier_insurable_type,
+    carrier_policy_type: carrier_policy_type,
     use_default_rules_for: state
   )
   irc.save!
@@ -66,7 +66,7 @@ puts state
     irc = msis.extract_insurable_rate_configuration(nil,
       configurer: carrier,
       configurable: igc,
-      carrier_insurable_type: carrier_insurable_type,
+      carrier_policy_type: carrier_policy_type,
       use_default_rules_for: 'GA_COUNTIES'
     )
     irc.save!

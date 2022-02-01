@@ -23,6 +23,7 @@ gem 'redis', '~> 4.4.0'
 
 # Use Capistrano for deployment
 # gem 'capistrano-rails', group: :development
+
 gem 'authtrail'
 gem 'browser'
 

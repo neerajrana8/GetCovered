@@ -287,53 +287,41 @@
           <h2>COVERAGEINFORMATION</h2>
         </div>
         <div class="coverage_main_blk clearfix">
-          <div class="coverage_in flt_lt">
+          <div class="coverage_in flt_lt"><% covs_by_des = @policy.coverages.group_by{|cov| cov.designation }.transform_values{|vs| vs.first }; other_coverages = @policy.coverages.select{|cov| !['coverage_c', 'wind_hail', 'coverage_d', 'liability', 'medical'].include?(cov.designation) } %>
             <h4>COVERAGE/PERIL/FORMS</h4>
             <h2>&nbsp;</h2>
             <h2>C - Personal Property</h2>
             <h2>Wind/Hail Deductible</h2>
             <h2>D - Loss of Use</h2>
             <h2>E - Personal Liability (Limit)</h2>
-            <h2 <% if @policy.insurable_rates.optional.nil? %>class="last_br_btm"<% end %>>F - Medical Payments (Limit)</h2>
-            <% unless @policy.insurable_rates.optional.nil? %>
-            <% @policy.insurable_rates.optional.each do |rate, index| %>
-            <% unless rate.sub_schedule == 'policy_fee' %>
-            <h2 <% if index == (@policy.insurable_rates.optional.count - 2) %>class="last_br_btm"<% end %>><%= rate.sub_schedule.humanize %></h2>
-            <% end %>
-            <% end %>
+            <h2 <% if other_coverages.blank? %>class="last_br_btm"<% end %>>F - Medical Payments (Limit)</h2>
+            <% other_coverages.each.with_index do |cov, index| %>
+            <h2 <% if index == other_coverages.length - 1 %>class="last_br_btm"<% end %>><%= cov.title %></h2>
             <% end %>
           </div>
           <div class="amount_in flt_lt">
             <h4>AMOUNT OF INSURANCE</h4>
             <h2>&nbsp;</h2>
-            <h2><%= ActionController::Base.helpers.number_to_currency(@policy.coverages.find_by(designation: "coverage_c")&.limit&.to_f / 100) %></h2>
+            <h2><%= ActionController::Base.helpers.number_to_currency((covs_by_des['coverage_c']&.limit&.to_f || 0) / 100) %></h2>
             <h2>&nbsp;</h2>
-            <h2><%= ActionController::Base.helpers.number_to_currency(@policy.coverages.find_by(designation: "loss_of_use")&.limit&.to_f / 100) %></h2>
-            <h2><%= ActionController::Base.helpers.number_to_currency(@policy.coverages.find_by(designation: "liability")&.limit&.to_f / 100) %></h2>
-            <h2 <% if @policy.insurable_rates.optional.nil? %>class="last_br_btm"<% end %>><%= ActionController::Base.helpers.number_to_currency(@policy.coverages.find_by(designation: "medical")&.limit&.to_f / 100) %></h2>
-            <% unless @policy.insurable_rates.optional.nil? %>
-            <% @policy.insurable_rates.optional.each do |rate, index| %>
-            <% unless rate.sub_schedule == 'policy_fee' %>
-            <h2 <% if index == (@policy.insurable_rates.optional.count - 2) %>class="last_br_btm"<% end %>>Included</h2>
-            <% end %>
-            <% end %>
-            <% end %>            
+            <h2><%= ActionController::Base.helpers.number_to_currency((covs_by_des['coverage_d']&.limit&.to_f || 0) / 100) %></h2>
+            <h2><%= ActionController::Base.helpers.number_to_currency((covs_by_des['liability']&.limit&.to_f || 0) / 100) %></h2>
+            <h2 <% if other_coverages.blank? %>class="last_br_btm"<% end %>><%= ActionController::Base.helpers.number_to_currency((covs_by_des['medical']&.limit&.to_f || 0) / 100) %></h2>
+            <% other_coverages.each.with_index do |cov, index| %>
+            <h2 <% if index == other_coverages.length - 1 %>class="last_br_btm"<% end %>><%= cov.limit ? ActionController::Base.helpers.number_to_currency(cov.limit.to_f / 100) : cov.deductible ? "&nbsp;" : "Included" %></h2>
+            <% end %>           
           </div>
           <div class="deduct_in flt_lt">
             <h4>DEDUCTIBLE</h4>
             <h2 class="last_br_rt">&nbsp;</h2>
             <h2 class="last_br_rt"><%= ActionController::Base.helpers.number_to_currency(@policy.coverages.find_by(designation: "coverage_c").deductible.to_f / 100) %></h2>
-            <h2 class="last_br_rt">$1,000</h2>
+            <h2 class="last_br_rt"><%= ActionController::Base.helpers.number_to_currency((covs_by_des['wind_hail']&.deductible&.to_f || 0) / 100) %></h2>
             <h2 class="last_br_rt">&nbsp;</h2>
             <h2 class="last_br_rt">&nbsp;</h2>
-            <h2 class="<% if @policy.insurable_rates.optional.nil? %>last_br_btm <% end %>last_br_rt">&nbsp;</h2>
-            <% unless @policy.insurable_rates.optional.nil? %>
-            <% @policy.insurable_rates.optional.each do |rate, index| %>
-            <% unless rate.sub_schedule == 'policy_fee' %>
-            <h2 <% if index == (@policy.insurable_rates.optional.count - 2) %>class="last_br_btm last_br_rt"<% end %>>&nbsp;</h2>
-            <% end %>
-            <% end %>
-            <% end %>
+            <h2 class="<% if @other_coverages.blank? %>last_br_btm <% end %>last_br_rt">&nbsp;</h2>
+            <% other_coverages.each.with_index do |cov, index| %>
+            <h2 <% if index == other_coverages.length - 1 %>class="last_br_btm"<% end %>><%= cov.deductible ? ActionController::Base.helpers.number_to_currency(cov.deductible.to_f / 100) : "&nbsp;" %></h2>
+            <% end %> 
           </div>
         </div>
         <div class="remarks_head">
@@ -343,11 +331,11 @@
           <table cellpadding="5" cellspacing="0" style="border: none;">
             <tr>
               <td><h4>Premium:</h4></td>
-              <td><h4><%= ActionController::Base.helpers.number_to_currency((@policy.premium.total_premium + @policy.premium.total_tax).to_f / 100) %></h4></td>
+              <td><h4><%= ActionController::Base.helpers.number_to_currency((@policy.premium.total_premium + @policy.premium.total_tax + @policy.premium.total_hidden_fee).to_f / 100) %></h4></td>
             </tr>
             <tr>
               <td><h4>Admin Fees:</h4></td>
-              <td><h4><%= ActionController::Base.helpers.number_to_currency(@policy.premium.total_fees.to_f / 100) %></h4></td>
+              <td><h4><%= ActionController::Base.helpers.number_to_currency((@policy.premium.total_fee - @policy.premium.total_hidden_fee).to_f / 100) %></h4></td>
             </tr>
             <tr>
               <td><h2>Total:</h2></td>
@@ -361,16 +349,56 @@
         <div class="cancel_in">
           <h2>SHOULD ANY OF THE ABOVE DESCRIBED POLICIES BE CANCELLED BEFORE THE EXPIRATION DATE THEREOF, NOTICE WILL BE DELIVERED IN ACCORDANCE WITH THE POLICY PROVISIONS.</h2>
         </div>
+      <% if @policy.primary_insurable.account %>
         <div class="cancel_head">
           <h2>ADDITIONAL INTEREST</h2>
         </div>
         <div class="add_main_blk clearfix">
           <div class="name_left flt_lt">
             <h4>NAME AND ADDRESS</h4>
-            <h2><%= @policy.account.title %></h2>
+            <h2><%= @policy.primary_insurable.account.title %></h2>
+            <address><% if @policy.primary_insurable.account.primary_address; addr = @policy.primary_insurable.account.primary_address %>
+              <%= addr.combined_street_address %> Apt. <%= addr.street_two %><br>
+              <%= addr.city %>, <%= addr.state %>, <%= addr.combined_zip_code() %>
+            <% end %></address>
+          </div>
+          <div class="sign_blk flt_lt clearfix">
+            <div class="close flt_lt">
+              <h2>X</h2>
+            </div>
+            <div class="pm_in flt_lt">
+              <h3>PM</h3>
+            </div>
+            <div class="emp1 flt_lt">
+              &nbsp;
+            </div>
+            <div class="emp2 flt_lt">
+              &nbsp;
+            </div>
+            <div class="clearfix"></div>
+            <div class="last_loan">
+              <h4>LOAN #</h4>
+            </div>
+            <div class="auth">
+              <h4>AUTHORIZED REPRESENTATIVE</h4>
+              <figure>
+                <img alt="sign" height="35" src="<%= Rails.root.join("public", "assets", "#{ @agency.slug }-signature.png").to_s %>" width="136">
+              </figure>
+            </div>
+          </div>
+        </div>
+      <% elsif !@policy_application.extra_settings&.[]('additional_interest').blank? %>
+      <% pm_info = @policy_application.extra_settings&.[]('additional_interest') %>
+        <div class="cancel_head">
+          <h2>ADDITIONAL INTEREST</h2>
+        </div>
+        <div class="add_main_blk clearfix">
+          <div class="name_left flt_lt">
+            <h4>NAME AND ADDRESS</h4>
+            <h2><%= pm_info['entity_type'] == 'company' ? pm_info['company_name'] : [pm_info['first_name'], pm_info['middle_name'], pm_info['last_name']].select{|v| !v.blank? }.join(" ") %></h2>
             <address>
-              <%= @policy.primary_insurable.primary_address.combined_street_address %> Apt. <%= @policy.primary_insurable.primary_address.street_two %><br>
-              <%= @policy.primary_insurable.primary_address.city %>, <%= @policy.primary_insurable.primary_address.state %>, <%= @policy.primary_insurable.primary_address.combined_zip_code() %>
+              <%= pm_info['addr1'] %><%= pm_info['addr2'].blank? ? '' : ", #{pm_info['addr2']}" %><br>
+              <%= pm_info['city'] %>, <%= pm_info['state'] %> <%= pm_info['zip'] %>
             </address>
           </div>
           <div class="sign_blk flt_lt clearfix">
@@ -398,6 +426,7 @@
             </div>
           </div>
         </div>
+      <% end %>
         <footer>
           <div class="acord_text">
             <p>ACORD27 (2001/12)</p>
