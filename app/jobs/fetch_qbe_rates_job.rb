@@ -25,7 +25,7 @@ class FetchQbeRatesJob < ApplicationJob
         cip = community.carrier_profile(QbeService.carrier_id)
       end
       return unless cip.data['county_resolved'] || (target.get_qbe_zip_code && cip.reload.data['county_resolved'])
-      return unless cip.data['property_info_resolved'] || (target.get_qbe_property_info && target.reload.data['property_info_resolved'])
+      return unless cip.data['property_info_resolved'] || (target.get_qbe_property_info && cip.reload.data['property_info_resolved'])
     end
     # get the rates
     target.get_qbe_rates(number_insured.first, traits_override: traits_override, irc_configurable_override: igc)
