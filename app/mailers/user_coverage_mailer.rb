@@ -35,20 +35,18 @@ class UserCoverageMailer < ApplicationMailer
     @accepted_on = Time.current.strftime('%m/%d/%y')
     @site = whitelabel_host(@policy.agency)
 
-    tmp = Tempfile.new(encoding: 'ascii-8bit')
-    tmp.write(@policy.documents.last.download)
-
-    attachments["evidence-of-insurance.pdf"] = tmp
-
     @content = {
-      subject: I18n.t('user_coverage_mailer.all_documents.rent_guarantee_title'),
-      text: I18n.t('user_coverage_mailer.all_documents.rent_guarantee_text',
-                   site: @site, accepted_on: @accepted_on, documents: @policy.documents, user_name: @user_name)
+      subject: I18n.t('user_coverage_mailer.all_documents.other_title'),
+      text: "Your Renters Insurance Policy has been accepted on #{ @accepted_on }. Please log in to <a href=\"#{@site}\" our site for more information."
     }
 
-    mail(subject: I18n.t('user_coverage_mailer.all_documents.other_title'),
-         text: I18n.t('user_coverage_mailer.all_documents.other_text'),
-         site: @site, accepted_on: @accepted_on, user_name: @user_name)
+    attachments["evidence-of-insurance.pdf"] = {
+      mime_type: "application/pdf",
+      encoding: "base64",
+      content: Base64.strict_encode64(@policy.documents.last.download)
+    }
+
+    mail(subject: @content[:subject])
   end
 
   def proof_of_coverage

@@ -42,7 +42,7 @@ module CarrierQbePolicy
 				File.delete(save_path) if File.exist?(save_path) unless %w[local development].include?(ENV["RAILS_ENV"])
 			end
 
-      Policies::SendProofOfCoverageJob.perform_later(id)
+      UserCoverageMailer.with(user: self.primary_user, policy: self).qbe_proof_of_coverage.deliver_now
       
     end
     
