@@ -39,9 +39,13 @@ module CarrierQbePolicy
       
       if documents.attach(io: File.open(save_path), filename: "#{ number }-evidence-of-insurance.pdf", content_type: 'application/pdf')
 				File.delete(save_path) if File.exist?(save_path) unless %w[local development].include?(ENV["RAILS_ENV"])
-			end
+      end
+
+      self.update document_status: "present"
 
       UserCoverageMailer.with(user: self.primary_user, policy: self).qbe_proof_of_coverage.deliver_now
+
+      self.update document_status: "sent"
       # CarrierQBE::PoliciesMailer.with(user: self.primary_user, policy: self).proof_of_coverage.deliver_now
 
     end

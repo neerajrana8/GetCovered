@@ -186,6 +186,12 @@ class Policy < ApplicationRecord
     manual_cancellation_without_refunds:  8    # no qbe code
   }
 
+  enum document_status: {
+    absent: 0,
+    present: 1,
+    sent: 2
+  }
+
   def current_quote
     self.policy_quotes.accepted.order('created_at desc').first
   end

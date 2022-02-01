@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2022_02_01_164542) do
+ActiveRecord::Schema.define(version: 2022_02_01_200451) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
@@ -1220,6 +1220,7 @@ ActiveRecord::Schema.define(version: 2022_02_01_164542) do
     t.string "marked_for_cancellation_info"
     t.datetime "marked_cancellation_time"
     t.string "marked_cancellation_reason"
+    t.integer "document_status", default: 0
     t.index ["account_id"], name: "index_policies_on_account_id"
     t.index ["agency_id"], name: "index_policies_on_agency_id"
     t.index ["carrier_id"], name: "index_policies_on_carrier_id"
