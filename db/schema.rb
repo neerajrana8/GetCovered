@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2022_01_27_171158) do
+ActiveRecord::Schema.define(version: 2022_02_02_153208) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
@@ -628,6 +628,17 @@ ActiveRecord::Schema.define(version: 2022_01_27_171158) do
     t.index ["recipient_type", "recipient_id"], name: "index_commissions_on_recipient_type_and_recipient_id"
   end
 
+  create_table "contact_records", force: :cascade do |t|
+    t.integer "direction", default: 0
+    t.integer "approach", default: 0
+    t.integer "status", default: 1
+    t.string "contactable_type"
+    t.bigint "contactable_id"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["contactable_id"], name: "index_contact_records_on_contactable_id"
+  end
+
   create_table "disputes", force: :cascade do |t|
     t.string "stripe_id", null: false
     t.integer "amount", null: false
@@ -757,6 +768,13 @@ ActiveRecord::Schema.define(version: 2022_01_27_171158) do
     t.string "counties", array: true
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "zip_codes", array: true
+    t.string "cities", array: true
+    t.bigint "insurable_id"
+    t.integer "special_usage"
+    t.string "special_designation"
+    t.jsonb "special_settings"
+    t.index ["insurable_id"], name: "index_insurable_geographical_categories_on_insurable_id"
   end
 
   create_table "insurable_rate_configurations", force: :cascade do |t|
@@ -1094,6 +1112,8 @@ ActiveRecord::Schema.define(version: 2022_01_27_171158) do
     t.boolean "consolidate_billing", default: true
     t.datetime "program_start_date"
     t.integer "program_delay", default: 0
+    t.integer "placement_cost", default: 0
+    t.integer "force_placement_cost"
     t.bigint "carrier_policy_type_id", null: false
     t.string "configurable_type", null: false
     t.bigint "configurable_id", null: false

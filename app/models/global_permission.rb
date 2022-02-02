@@ -46,15 +46,17 @@ class GlobalPermission < ApplicationRecord
   end
 
   def staff_permissions_restrictions
-    permissions.each do |key, value|
-      # Get global permission from staff's agency
-      global_permission = ownerable.organizable.global_permission
-      next unless value && !global_permission&.permissions&.[](key)
+    unless ownerable.super_admin? or ownerable.policy_support?
+      permissions.each do |key, value|
+        # Get global permission from staff's agency
+        global_permission = ownerable.organizable.global_permission
+        next unless value && !global_permission&.permissions&.[](key)
 
-      errors.add(
-        :permissions,
-        I18n.t('staff_permission_model.cant_be_enabled', translated_key: I18n.t("permissions.#{key}"))
-      )
+        errors.add(
+          :permissions,
+          I18n.t('staff_permission_model.cant_be_enabled', translated_key: I18n.t("permissions.#{key}"))
+        )
+      end
     end
   end
 
