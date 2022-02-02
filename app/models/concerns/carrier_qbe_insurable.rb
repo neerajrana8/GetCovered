@@ -600,14 +600,15 @@ module CarrierQbeInsurable
           }
         ]
       end + optionals.map do |name, options|
+        ot = (options.length == 0 || (options.length == 1 && options.first == 0)) ? 'none' : 'multiple_choice'
         [
           name,
           {
             'title' => name.titlecase,
             'visible' => true,
             'requirement' => 'optional',
-            'options_type' => (options.length <= 1 ? 'none' : 'multiple_choice'),
-            'options' => (options.length <= 1 ? nil : options.map{|opt| { 'data_type' => 'currency', 'value' => opt } }),
+            'options_type' => ot,
+            'options' => (ot == 'none' ? nil : options.map{|opt| { 'data_type' => 'currency', 'value' => opt } }),
             'category' => 'option'
           }.compact
         ]

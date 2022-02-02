@@ -817,7 +817,7 @@ class InsurableRateConfiguration < ApplicationRecord
             next (rate['coverage_limits'].merge(rate['deductibles'])).all?{|name,sel| selections[name]&.[]('selection')&.[]('value') == sel } &&
                  (rate['schedule'] != 'optional' || 
                   (
-                    selections[rate['sub_schedule']]&.[]('selection') == true ||
+                    (selections[rate['sub_schedule']]&.[]('selection') == true && (rate['individual_limit'] == 0 || rate['individual_limit'].nil?)) ||
                     (selections[rate['sub_schedule']]&.[]('selection')&.[]('value') == rate['individual_limit'])
                   )
                  )
