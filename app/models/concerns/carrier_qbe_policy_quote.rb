@@ -27,8 +27,13 @@ module CarrierQbePolicyQuote
     end
 
     # QBE build coverages
-
+    
     def qbe_build_coverages
+      # grab info on calculating weird deductibles
+      deductible_calculation = ::QbeService::DEDUCTIBLE_CALCULATIONS[self.policy_application.primary_insurable.primary_address.state] || ::QbeService::DEDUCTIBLE_CALCULATIONS["DEFAULT"]
+      all_peril = self.policy_application.coverage_selections['all_peril']&.[]('selection')&.[]('value') || 0
+      all_peril = (all_peril / 100.to_d).to_i
+      # go wild
       self.policy_application.coverage_selections.each do |designation, data|
         self.policy.policy_coverages.create(
           policy_application: self.policy_application,
@@ -51,16 +56,30 @@ module CarrierQbePolicyQuote
         special_deductible: nil,
         enabled: true
       )
+      # theft
+      unless deductible_calculation['theft_absent']
+        self.policy.policy_coverages.create(
+          policy_application: self.policy_application,
+          title: "Theft",
+          designation: "theft",
+          limit: nil,
+          deductible: (deductible_calculation[all_peril]&.[]('theft') || all_peril) * 100, # this makes cents bro
+          special_deductible: nil,
+          enabled: true
+        )
+      end
       # wind/hail
-      self.policy.policy_coverages.create(
-        policy_application: self.policy_application,
-        title: "Wind/Hail",
-        designation: "wind_hail",
-        limit: nil,
-        deductible: 1000 * 100, # this makes cents bro
-        special_deductible: nil,
-        enabled: true
-      )
+      unless deductible_calculation['wind_absent']
+        self.policy.policy_coverages.create(
+          policy_application: self.policy_application,
+          title: "Wind/Hail",
+          designation: "wind_hail",
+          limit: nil,
+          deductible: (deductible_calculation[all_peril]&.[]('wind') || all_peril) * 100, # this makes cents bro
+          special_deductible: nil,
+          enabled: true
+        )
+      end
 =begin
 # old code, left here for now in case we need to reference it at some point; maintains redandant data based on QBE rates, unlike the new code
       coves = []

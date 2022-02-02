@@ -48,6 +48,31 @@ class QbeService
       "in_city_limits" => false
     }]
   end.to_h)
+  
+  DEDUCTIBLE_CALCULATIONS = { # WARNING: note that this is in dollars for readability
+    'DEFAULT' =>  => {
+      250 => { 'wind' => 1000, 'theft' => 500 },
+      500 => { 'wind' => 1000 }
+    },
+    'AR' => {
+      'wind_absent' => true,
+      250 =>  { 'theft' => 500 },
+      500 =>  {},
+      1000 => {}
+    },
+    'CT' => {
+      'wind_absent' => true,
+      250 => { 'theft' => 500 },
+      500 => {}
+      1000 => {}
+    },
+    'FL' => { 'wind_absent' => true, 'theft_absent' => true }, #MOOSE WARNING: nothing said about theft & wind... 
+    'NC' => {},
+    'NY' => {
+      'wind_absent' => true,
+      250 => { 'theft' => 500 }
+    }
+  }
 
   def self.carrier_id
     1
