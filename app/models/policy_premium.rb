@@ -125,7 +125,7 @@ class PolicyPremium < ApplicationRecord
       : self.policy_application&.fields&.class == ::Hash ? self.policy_application.fields&.[]("premise")&.[](0)&.[]("address")&.[]("state")
       : nil # MOOSE WARNING what about pensio's hideous hack with no insurables :(?
     regional_availability = ::CarrierPolicyTypeAvailability.where(state: state, carrier_policy_type: carrier_policy_type).take
-    return (regional_availability&.fees || []) + (self.policy_application&.billing_strategy&.fees || []) + self.fees
+    return (carrier_policy_type&.fees || []) + (regional_availability&.fees || []) + (self.policy_application&.billing_strategy&.fees || []) + self.fees
   end
   
   def itemize_fees(percentage_basis, and_update_totals: true, term_group: nil, payment_terms: nil, collector: nil, filter: nil)
@@ -158,7 +158,7 @@ class PolicyPremium < ApplicationRecord
     # add item for fee
     payments_count = payment_terms.count
     payments_total = case fee.amount_type
-      when "FLAT";        fee.amount * (fee.per_payment ? payments_count : 1)
+      when "FLAT";        fee.amount.to_i * (fee.per_payment ? payments_count : 1)
       when "PERCENTAGE";  ((fee.amount.to_d / 100) * percentage_basis).ceil * (fee.per_payment ? payments_count : 1) # MOOSE WARNING: is .ceil acceptable?
     end
     created = ::PolicyPremiumItem.create(

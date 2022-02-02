@@ -725,7 +725,7 @@ class InsurableRateConfiguration < ApplicationRecord
           # prepare the call
           msis = MsiService.new
           result = msis.build_request(:final_premium,
-            effective_date: effective_date, 
+            effective_date: effective_date || (Time.current.to_date + 1.day), 
             additional_insured_count: additional_insured_count,
             additional_interest_count: additional_interest_count || (insurable.class == ::Insurable && (!insurable.account_id.nil? || !insurable.parent_community&.account_id.nil?) ? 1 : 0),
             coverages_formatted:  selections.map do |uid, sel|

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2022_02_01_200451) do
+ActiveRecord::Schema.define(version: 2022_02_01_210542) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
@@ -703,7 +703,7 @@ ActiveRecord::Schema.define(version: 2022_02_01_200451) do
   create_table "fees", force: :cascade do |t|
     t.string "title"
     t.string "slug"
-    t.integer "amount", default: 0, null: false
+    t.decimal "amount", default: "0.0", null: false
     t.integer "amount_type", default: 0, null: false
     t.integer "type", default: 0, null: false
     t.boolean "per_payment", default: false, null: false

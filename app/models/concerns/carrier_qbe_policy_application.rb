@@ -24,7 +24,7 @@ module CarrierQbePolicyApplication
       preferred = (unit.get_carrier_status(::QbeService.carrier_id) == :preferred)
       # get estimate
       results = ::InsurableRateConfiguration.get_coverage_options(
-        carrier_policy_type, unit, self.coverage_selections, self.effective_date, address.state == 'MO' && self.policy_users.any?{|pu| pu.spouse } ? users.count - 2 : self.users.count - 1, self.billing_strategy, # MOOSE WARNING: spouse nonsense
+        carrier_policy_type, unit, self.coverage_selections, self.effective_date, address.state == 'MO' && self.policy_users.any?{|pu| pu.spouse } ? self.users.count - 2 : self.users.count - 1, self.billing_strategy,
         # execution options
         eventable: quote, # by passing a PolicyQuote we ensure results[:event], and results[:annotated_selections] get passed back out
         perform_estimate: true,
@@ -133,7 +133,7 @@ module CarrierQbePolicyApplication
                 succeeded = false
                 premium = PolicyPremium.create(policy_quote: quote)
                 policy_fee = quote.carrier_payment_data['policy_fee']
-                premium.fees.create(title: "Policy Fee", type: 'ORIGINATION', amount_type: 'FLAT', amount: policy_fee, enabled: true, ownerable: ::MsiService.carrier, hidden: true) unless policy_fee == 0
+                premium.fees.create(title: "Policy Fee", type: 'ORIGINATION', amount_type: 'FLAT', amount: policy_fee, enabled: true, ownerable_type: "Carrier", ownerable_id: ::QbeService.carrier_id, hidden: true) unless policy_fee == 0
                 unless premium.id
                   puts "  Failed to create premium! #{premium.errors.to_h}"
                 else
