@@ -286,6 +286,9 @@
 
   <!-- Coverage Information -->
   <% covs_by_des = @policy.coverages.group_by{|cov| cov.designation }.transform_values{|vs| vs.first }; other_coverages = @policy.coverages.select{|cov| !['coverage_c', 'wind_hail', 'coverage_d', 'liability', 'medical'].include?(cov.designation) } %>
+  <% theft_deductible = @policy.coverages.where(:designation => "theft").take %>
+  <% wind_hail = @policy.coverages.where(:designation => 'wind_hail').take %>
+  <% all_peril = @policy.coverages.where(:designation => 'all_peril').take %>
   <h4>COVERAGE INFORMATION</h4>
   <table id="coverageTable">
     <tr>
@@ -296,13 +299,22 @@
     <tr>
       <td>C - Personal Property</td>
       <td><%= ActionController::Base.helpers.number_to_currency((covs_by_des['coverage_c']&.limit&.to_f || 0) / 100) %></td>
-      <td>$500 All Other Perils</td>
+      <td><%= ActionController::Base.helpers.number_to_currency((all_peril&.deductible&.to_f || 0) / 100) %> All Other Perils</td>
     </tr>
+    <% unless wind_hail.nil? %>
     <tr>
       <td></td>
       <td></td>
-      <td>Wind / Hail</td>
+      <td><%= ActionController::Base.helpers.number_to_currency((wind_hail&.deductible&.to_f || 0) / 100) %> Wind / Hail</td>
     </tr>
+    <% end %>
+    <% unless theft_deductible.nil? %>
+    <tr>
+      <td></td>
+      <td></td>
+      <td><%= ActionController::Base.helpers.number_to_currency((theft_deductible&.deductible&.to_f || 0) / 100) %> Theft</td>
+    </tr>
+    <% end %>
     <tr>
       <td>D - Loss of Use</td>
       <td><%= ActionController::Base.helpers.number_to_currency((covs_by_des['coverage_d']&.limit&.to_f || 0) / 100) %></td>
