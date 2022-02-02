@@ -29,7 +29,7 @@ class PolicyQuoteStartBillingJob < ApplicationJob
     # invite policy users
     policy.policy_users.each(&:invite)
 
-    if policy.primary_user.email == "dylan@getcovered.io"
+    if policy.system_data["policy_quote_start_billing"]["count"].to_i > 1
 
       content = "Policy ##{ policy.number } Start Billing Job has been queued\n"
       content += "Policy Status: #{ policy.status.titlecase }\n\n\n"
@@ -44,7 +44,7 @@ class PolicyQuoteStartBillingJob < ApplicationJob
 
       ActionMailer::Base.mail(
         from: "no-reply-#{ ENV['RAILS_ENV'] }@getcoveredinsurance.com",
-        to: "dylan@getcovered.io",
+        to: "dev@getcovered.io",
         subject: "#{ policy.number } background job queued",
         body: content
       ).deliver_now
