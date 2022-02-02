@@ -11,8 +11,6 @@ module CarrierQbePolicy
     def qbe_issue_policy
       return nil unless policy_in_system?
       
-      # document = documents.create!(:title => "Policy ##{ id } Evidence of Insurance #{ Time.current.strftime("%m/%d/%Y") }", :system_generated => true, :file_type => "evidence_of_insurance")
-      
       document_file_title = "qbe-residential-eoi-#{ id }-#{ Time.current.strftime("%Y%m%d-%H%M%S") }.pdf"
       
       # create a pdf from string using templates, layouts and content option for header or footer
@@ -41,10 +39,14 @@ module CarrierQbePolicy
       
       if documents.attach(io: File.open(save_path), filename: "#{ number }-evidence-of-insurance.pdf", content_type: 'application/pdf')
 				File.delete(save_path) if File.exist?(save_path) unless %w[local development].include?(ENV["RAILS_ENV"])
-			end
+      end
 
-      UserCoverageMailer.with(user: self.primary_user, policy: self).qbe_proof_of_coverage.deliver_now
-      
+      self.update document_status: "at_hand"
+      self.reload()
+
+      self.update document_status: "sent" if UserCoverageMailer.with(user: self.primary_user, policy: self).qbe_proof_of_coverage.deliver_now
+      # CarrierQBE::PoliciesMailer.with(user: self.primary_user, policy: self).proof_of_coverage.deliver_now
+
     end
     
   end

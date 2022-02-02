@@ -1220,6 +1220,7 @@ ActiveRecord::Schema.define(version: 2022_02_01_210542) do
     t.string "marked_for_cancellation_info"
     t.datetime "marked_cancellation_time"
     t.string "marked_cancellation_reason"
+    t.integer "document_status", default: 0
     t.index ["account_id"], name: "index_policies_on_account_id"
     t.index ["agency_id"], name: "index_policies_on_agency_id"
     t.index ["carrier_id"], name: "index_policies_on_carrier_id"
@@ -1331,6 +1332,8 @@ ActiveRecord::Schema.define(version: 2022_02_01_210542) do
     t.datetime "updated_at", null: false
     t.boolean "enabled", default: false, null: false
     t.integer "special_deductible"
+    t.integer "occurrence_limit"
+    t.boolean "is_carrier_fee", default: false
     t.index ["policy_application_id"], name: "index_policy_coverages_on_policy_application_id"
     t.index ["policy_id"], name: "index_policy_coverages_on_policy_id"
   end
