@@ -761,7 +761,7 @@ module CarrierQbeInsurable
                         'premium' => (qbe_rate.attributes["v"].value.to_d * 100).to_i,
                         'deductibles' => deductibles,
                         'coverage_limits' => coverage_limits,
-                        'individual_limit' => (qbe_rate.attributes["indvllimit"]&.value&.to_d * 100).to_i
+                        'individual_limit' => ((qbe_rate.attributes["indvllimit"]&.value || 0).to_d * 100).to_i
                       })
                     
                       set_error = false          
