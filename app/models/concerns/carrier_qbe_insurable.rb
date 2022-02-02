@@ -669,18 +669,18 @@ module CarrierQbeInsurable
 	                coverage_limits = {}
 	                
 	                unless qbe_rate.attributes["covclimit"].nil?
-	                  coverage_limits["coverage_c"] = (qbe_rate.attributes["covclimit"].value.to_d * 100).to_i
+	                  coverage_limits["coverage_c"] = (qbe_rate.attributes["covclimit"].value.delete(',').to_d * 100).to_i
 	                end
 	                
 	                unless qbe_rate.attributes["liablimit"].nil?
-	                  coverage_limits["liability"] = (qbe_rate.attributes["liablimit"].value.to_d * 100).to_i
+	                  coverage_limits["liability"] = (qbe_rate.attributes["liablimit"].value.delete(',').to_d * 100).to_i
 	                end
 	                
 	                unless qbe_rate.attributes["medpaylimit"].nil?
-	                  coverage_limits["medical"] = (qbe_rate.attributes["medpaylimit"].value.to_d * 100).to_i
+	                  coverage_limits["medical"] = (qbe_rate.attributes["medpaylimit"].value.delete(',').to_d * 100).to_i
 	                end
 	                
-	                base_deductible_value = qbe_rate.attributes["deduct_amt"].nil? ? "0" : qbe_rate.attributes["deduct_amt"].value
+	                base_deductible_value = qbe_rate.attributes["deduct_amt"].nil? ? "0" : qbe_rate.attributes["deduct_amt"].value.delete(',')
 	                
 	                deductibles = {}
 	                
@@ -688,14 +688,14 @@ module CarrierQbeInsurable
 	                  if base_deductible_value.include? "/" # if the the deductible includes a /, indicating a split must occur
 	                    split_deductibles = base_deductible_value.split("/")
 	                    
-	                    deductibles["all_peril"] = (split_deductibles[0].to_d * 100).to_i
-	                    deductibles["hurricane"] = (split_deductibles[1].to_d * 100).to_i
+	                    deductibles["all_peril"] = (split_deductibles[0].delete(',').to_d * 100).to_i
+	                    deductibles["hurricane"] = (split_deductibles[1].delete(',').to_d * 100).to_i
 	                    
 	                  else # if the deductible is 0
-	                    deductibles["all_peril"] = (base_deductible_value.to_d * 100).to_i                   
+	                    deductibles["all_peril"] = (base_deductible_value.delete(',').to_d * 100).to_i                   
 	                  end
 	                else # if the deductible does not need to be split, e.g. not florida
-	                  deductibles["all_peril"] = (base_deductible_value.to_d * 100).to_i                   
+	                  deductibles["all_peril"] = (base_deductible_value.delete(',').to_d * 100).to_i                   
 	                end
                   
                   coverage_limits.select!{|k,v| v != 0 }
@@ -737,10 +737,10 @@ module CarrierQbeInsurable
                       'sub_schedule' => sub_schedule,
                       'paid_in_full' => paid_in_full,
                       'liability_only' => liability_only,
-                      'premium' => (qbe_rate.attributes["v"].value.to_d * 100).to_i,
+                      'premium' => (qbe_rate.attributes["v"].value.delete(',').to_d * 100).to_i,
                       'deductibles' => deductibles,
                       'coverage_limits' => coverage_limits,
-                      'individual_limit' => ((qbe_rate.attributes["indvllimit"]&.value || 0).to_d * 100).to_i
+                      'individual_limit' => ((qbe_rate.attributes["indvllimit"]&.value&.delete(',') || 0).to_d * 100).to_i
                     })
                     
                     set_error = false          
@@ -758,10 +758,10 @@ module CarrierQbeInsurable
                         'sub_schedule' => sub_schedule,
                         'paid_in_full' => paid_in_full,
                         'liability_only' => liability_only,
-                        'premium' => (qbe_rate.attributes["v"].value.to_d * 100).to_i,
+                        'premium' => (qbe_rate.attributes["v"].value.delete(',').to_d * 100).to_i,
                         'deductibles' => deductibles,
                         'coverage_limits' => coverage_limits,
-                        'individual_limit' => ((qbe_rate.attributes["indvllimit"]&.value || 0).to_d * 100).to_i
+                        'individual_limit' => ((qbe_rate.attributes["indvllimit"]&.value&.delete(',') || 0).to_d * 100).to_i
                       })
                     
                       set_error = false          
