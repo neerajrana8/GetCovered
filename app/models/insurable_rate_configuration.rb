@@ -815,7 +815,12 @@ class InsurableRateConfiguration < ApplicationRecord
             end
             next false if rate['liability_only']
             next (rate['coverage_limits'].merge(rate['deductibles'])).all?{|name,sel| selections[name]&.[]('selection')&.[]('value') == sel } &&
-                 (rate['schedule'] != 'optional' || selections[rate['sub_schedule']]&.[]('selection'))
+                 (rate['schedule'] != 'optional' || 
+                  (
+                    (selections[rate['sub_schedule']]&.[]('selection') == true && (rate['individual_limit'] == 0 || rate['individual_limit'].nil?)) ||
+                    (selections[rate['sub_schedule']]&.[]('selection')&.[]('value') == rate['individual_limit'])
+                  )
+                 )
           end
           policy_fee = 0 if policy_fee.nil?
           estimated_premium = selected_rates.inject(0){|sum,sr| sum + sr['premium'] }

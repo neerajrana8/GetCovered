@@ -125,7 +125,8 @@ class Address < ApplicationRecord
 
   after_validation :geocode
   
-  after_validation :get_county_from_fcc
+  # qbe concern calls this manually when needed. to avoid spamming the FCC it's currently off here, but can be turned on if really needed.
+  #after_validation :get_county_from_fcc
 
   after_save :refresh_insurable_policy_type_ids,
     if: Proc.new{|addr| addr.addressable_type == "Insurable" }
