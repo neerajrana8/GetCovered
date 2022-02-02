@@ -221,19 +221,28 @@ class PolicyPremium < ApplicationRecord
       return "Proration 'refundable' property was not set to a boolean value; you must pass one, or the appropriate CarrierPolicyType must exist and have a valid premium_proration_refunds_allowed value"
     end
     # make the item(s)
+debuggo = ["amount is #{amount}"]
     down_payment = nil
     amortized_premium = nil
     down_payment_revised_weight = nil
     if first_payment_down_payment
+debuggo.push("first_payment_down_payment is true")
       total_weight = payment_terms.inject(0){|sum,pt| sum + pt.default_weight }.to_d
+debuggo.push("total_weight = #{total_weight}")
       down_payment_amount = ((payment_terms.first.default_weight * amount) / total_weight).floor
+debuggo.push("down_payment_amount = #{down_payment_amount}")
       if first_payment_down_payment_amount_override && first_payment_down_payment_amount_override < down_payment_amount
+debuggo.push("down payment override enabled and less than down_payment_amount (it is #{first_payment_down_payment_amount_override})")
         down_payment_revised_weight = (((down_payment_amount - first_payment_down_payment_amount_override.to_d) * payment_terms.first.default_weight) / down_payment_amount).floor
+debuggo.push("down_payment_revised_weight = #{down_payment_revised_weight}")
         down_payment_amount = first_payment_down_payment_amount_override
+debuggo.push("down_payment_amount = #{down_payment_amount}")
       else
+debuggo.push("down payment override disabled or >= than down_payment_amount (it is #{first_payment_down_payment_amount_override}); setting down_payment_revised_weight = 0")
         down_payment_revised_weight = 0
       end
       amount -= down_payment_amount
+debuggo.push("subtracted down_payment_amount from amount; new total #{amount}")
       unless down_payment_amount == 0 
         down_payment = ::PolicyPremiumItem.new(
           policy_premium: self,
@@ -243,7 +252,6 @@ class PolicyPremium < ApplicationRecord
           total_due: down_payment_amount,
           proration_calculation: 'no_proration',
           proration_refunds_allowed: false,
-          # MOOSE WARNING: preprocessed
           recipient: recipient || self.commission_strategy,
           collector: collector || self.carrier_agency_policy_type&.collector || ::PolicyPremium.default_collector,
           policy_premium_item_payment_terms: [payment_terms.first].map do |pt|
@@ -254,6 +262,7 @@ class PolicyPremium < ApplicationRecord
           end
         )
       end
+debuggo.push("set up the down payment: #{down_payment.inspect}")
     end
     unless amount == 0
       amortized_premium = ::PolicyPremiumItem.new(
@@ -264,7 +273,6 @@ class PolicyPremium < ApplicationRecord
         total_due: amount,
         proration_calculation: proratable,
         proration_refunds_allowed: refundable,
-        # MOOSE WARNING: preprocessed
         recipient: self.commission_strategy,
         collector: collector || self.carrier_agency_policy_type&.collector || ::PolicyPremium.default_collector,
         policy_premium_item_payment_terms: payment_terms.map.with_index do |pt, index|
@@ -275,6 +283,7 @@ class PolicyPremium < ApplicationRecord
           )
         end.compact
       )
+debuggo.push("set up the amortized premium: #{amortized_premium.inspect}")
     end
     # save the item(s)
     save_error = nil
@@ -286,7 +295,7 @@ class PolicyPremium < ApplicationRecord
         amortized_premium.save! unless amortized_premium.nil?
       rescue ActiveRecord::RecordInvalid => rie
         # MOOSE WARNING: error! should we really just throw the hash back at the caller?
-        save_error = "Failed to create PolicyPremiumItem for #{step}; errors: #{rie.record.errors.to_h.to_s}"
+        save_error = "Failed to create PolicyPremiumItem for #{step}; errors: #{rie.record.errors.to_h.to_s}\n\nDEBUG LOG:\n#{debuggo.join("\n")}"
         raise ActiveRecord::Rollback
       end
     end
