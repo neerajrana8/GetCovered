@@ -818,7 +818,7 @@ class InsurableRateConfiguration < ApplicationRecord
                  (rate['schedule'] != 'optional' || 
                   (
                     selections[rate['sub_schedule']]&.[]('selection') == true ||
-                    (selections[rate['sub_schedule']]&.[]('selection') == rate['individual_limit'])
+                    (selections[rate['sub_schedule']]&.[]('selection')&.[]('value') == rate['individual_limit'])
                   )
                  )
           end
