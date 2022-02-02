@@ -609,7 +609,7 @@ module CarrierQbeInsurable
             'requirement' => 'optional',
             'options_type' => ot,
             'options' => (ot == 'none' ? nil : options.map{|opt| { 'data_type' => 'currency', 'value' => opt } }),
-            'category' => 'option'
+            'category' => (ot == 'none' ? 'option' : 'limit')
           }.compact
         ]
       end).to_h
