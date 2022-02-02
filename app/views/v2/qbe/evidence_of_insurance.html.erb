@@ -335,7 +335,7 @@
       <% unless ['wind_hail', 'theft', 'all_peril'].include?(cov.designation) %>
       <tr>
         <td><%= cov.title %></td>
-        <td></td>
+        <td><%= cov.limit == 0 || cov.limit.nil? ? '(included)' : cov.limit %></td>
         <td></td>
       </tr>
       <% end %>
