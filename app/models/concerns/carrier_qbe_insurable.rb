@@ -119,7 +119,7 @@ module CarrierQbeInsurable
 	            
               # if address has no county, restrict by city and try to get the county if necessary
 	            if @address.county.nil?
-	              @carrier_profile.data["county_resolution"]["matches"].select! { |opt| opt[:locality] == @address.city }
+	              @carrier_profile.data["county_resolution"]["matches"].select! { |opt| opt[:locality].downcase == @address.city.downcase }
                 if @carrier_profile.data["county_resolution"]["matches"].length > 1
                   @address.geocode if @address.latitude.blank?
                   unless @address.latitude.blank?
@@ -131,7 +131,7 @@ module CarrierQbeInsurable
 
               # if address has a county, restrict by it
 	            if !@address.county.nil?
-	              @carrier_profile.data["county_resolution"]["matches"].select! { |opt| opt[:locality] == @address.city && qbe_standardize_county_string(opt[:county]) == qbe_standardize_county_string(@address.county) } # just in case one is "Whatever County" and the other is just "Whatever", one has a dash and one doesn't, etc
+	              @carrier_profile.data["county_resolution"]["matches"].select! { |opt| opt[:locality].downcase == @address.city.downcase && qbe_standardize_county_string(opt[:county]) == qbe_standardize_county_string(@address.county) } # just in case one is "Whatever County" and the other is just "Whatever", one has a dash and one doesn't, etc
 	            end
 	  
 	            case @carrier_profile.data["county_resolution"]["matches"].length
