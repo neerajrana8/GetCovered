@@ -50,7 +50,7 @@ class QbeService
   end.to_h)
   
   DEDUCTIBLE_CALCULATIONS = { # WARNING: note that this is in dollars for readability
-    'DEFAULT' =>  => {
+    'DEFAULT' => {
       250 => { 'wind' => 1000, 'theft' => 500 },
       500 => { 'wind' => 1000 }
     },
