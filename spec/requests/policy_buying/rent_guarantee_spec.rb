@@ -62,9 +62,6 @@ describe 'Policy buying' do
 
         policy = policy_application.policy
 
-        pp policy_application
-        pp policy
-
         expect(policy).to be_present
         expect(policy.status).to eq('BOUND')
         expect(policy.billing_status).to eq('CURRENT')

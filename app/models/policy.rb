@@ -188,7 +188,7 @@ class Policy < ApplicationRecord
 
   enum document_status: {
     absent: 0,
-    present: 1,
+    at_hand: 1,
     sent: 2
   }
 

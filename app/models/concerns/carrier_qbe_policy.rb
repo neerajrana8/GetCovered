@@ -41,7 +41,7 @@ module CarrierQbePolicy
 				File.delete(save_path) if File.exist?(save_path) unless %w[local development].include?(ENV["RAILS_ENV"])
       end
 
-      self.update document_status: "present"
+      self.update document_status: "at_hand"
       self.reload()
 
       self.update document_status: "sent" if UserCoverageMailer.with(user: self.primary_user, policy: self).qbe_proof_of_coverage.deliver_now
