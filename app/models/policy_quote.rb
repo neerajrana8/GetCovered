@@ -164,7 +164,7 @@ class PolicyQuote < ApplicationRecord
                policy_application.update(policy: policy, status: "accepted") &&
                policy_premium.update(policy: policy)
 
-              PolicyQuoteStartBillingJob.perform_later(policy: policy, issue: quote_attempt[:issue_method])
+              PolicyQuoteStartBillingJob.perform_later(policy: policy, issue: quote_attempt[:issue_method], queued_by: "PolicyQuote #{ self.id }")
               policy_type_identifier = policy_application.policy_type_id == 5 ? "Rental Guarantee" : "Policy"
               policy_msg = policy_application.policy_type_id == 5 ? I18n.t('policy_quote_model.rent_guarantee_has_been_accepted') : I18n.t('policy_quote_model.policy_has_been_accepted')
               quote_attempt[:message] = "##{ policy.number } #{ policy_msg }"
