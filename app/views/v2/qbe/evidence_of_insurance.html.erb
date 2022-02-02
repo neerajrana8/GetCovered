@@ -188,6 +188,7 @@
 
         <p class="table-padded">
           <small>Insured</small><br><br>
+          <%= @policy.primary_user.profile.full_name %><br>
           <%= @policy.primary_insurable.primary_address.combined_street_address %> <%= @policy.primary_insurable.title.nil? ? '' : "Apt. #{ @policy.primary_insurable.title }" %><br>
           <%= @policy.primary_insurable.primary_address.city %>, <%= @policy.primary_insurable.primary_address.state %>, <%= @policy.primary_insurable.primary_address.combined_zip_code() %>
           <% unless @policy.users.nil? || @policy.users.count == 1 %>
@@ -331,11 +332,13 @@
       <td></td>
     </tr>
     <% other_coverages.each.with_index do |cov, index| %>
+      <% unless ['wind_hail', 'theft', 'all_peril'].include?(cov.designation) %>
       <tr>
         <td><%= cov.title %></td>
         <td></td>
         <td></td>
       </tr>
+      <% end %>
     <% end %>
   </table>
   <!-- / Coverage Information -->
@@ -371,18 +374,21 @@
     <tr class="split-width">
       <td>
         <p>
-          <strong>NAME &amp; ADDRESS</strong><br><br>
           <% if @policy.primary_insurable.account %>
+            <strong>NAME &amp; ADDRESS</strong><br><br>
             <strong><%= @policy.primary_insurable.account.title %></strong><br>
             <% if @policy.primary_insurable.account.primary_address; addr = @policy.primary_insurable.account.primary_address %>
               <%= addr.combined_street_address %> Apt. <%= addr.street_two %><br>
               <%= addr.city %>, <%= addr.state %>, <%= addr.combined_zip_code() %>
             <% end %>
           <% elsif !@policy_application.extra_settings&.[]('additional_interest').blank? %>
+            <strong>NAME &amp; ADDRESS</strong><br><br>
             <% pm_info = @policy_application.extra_settings&.[]('additional_interest') %>
             <strong>><%= pm_info['entity_type'] == 'company' ? pm_info['company_name'] : [pm_info['first_name'], pm_info['middle_name'], pm_info['last_name']].select{|v| !v.blank? }.join(" ") %></strong>
             <%= pm_info['addr1'] %><%= pm_info['addr2'].blank? ? '' : ", #{pm_info['addr2']}" %><br>
             <%= pm_info['city'] %>, <%= pm_info['state'] %> <%= pm_info['zip'] %>
+          <% else %>
+            <strong>No Additional Interest</strong>
           <% end %>
         </p>
       </td>
