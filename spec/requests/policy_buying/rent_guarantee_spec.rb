@@ -61,6 +61,10 @@ describe 'Policy buying' do
         expect(policy_application.policy_quotes.last.invoices.order(:due_date).first.status).to eq('complete')
 
         policy = policy_application.policy
+
+        pp policy_application
+        pp policy
+
         expect(policy).to be_present
         expect(policy.status).to eq('BOUND')
         expect(policy.billing_status).to eq('CURRENT')
