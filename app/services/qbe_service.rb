@@ -63,7 +63,7 @@ class QbeService
     'CT' => {
       'wind_absent' => true,
       250 => { 'theft' => 500 },
-      500 => {}
+      500 => {},
       1000 => {}
     },
     'FL' => { 'wind_absent' => true, 'theft_absent' => true }, #MOOSE WARNING: nothing said about theft & wind... 
