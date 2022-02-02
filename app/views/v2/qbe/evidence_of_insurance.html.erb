@@ -133,7 +133,7 @@
             <td class="no-border-left no-border-bottom">
               <small>
                 AGENCY<br>
-                <%= @agency.contact_info["legal_name"] %>
+                <%= @agency.title %>
               </small>
             </td>
             <td class="no-border-right">
@@ -349,9 +349,9 @@
     <tr>
       <td>
         <p>
-          <small>Premium: <%= ActionController::Base.helpers.number_to_currency((@policy.premium.total_premium + @policy.premium.total_tax + @policy.premium.total_hidden_fee).to_f / 100) %></small><br>
-          <small>Admin Fees: <%= ActionController::Base.helpers.number_to_currency((@policy.premium.total_fee - @policy.premium.total_hidden_fee).to_f / 100) %></small><br><br>
-          Total: <%= ActionController::Base.helpers.number_to_currency(@policy.premium.total.to_f / 100) %>
+          <small>Premium: <%= ActionController::Base.helpers.number_to_currency((@policy.premium.total_premium + @policy.premium.total_hidden_fee).to_f / 100) %></small><br>
+          <small>Tax: <%= ActionController::Base.helpers.number_to_currency(@policy.premium.total_tax.to_f / 100) %></small><br><br>
+          Total: <%= ActionController::Base.helpers.number_to_currency((@policy.premium.total_premium + @policy.premium.total_hidden_fee + @policy.premium.total_tax).to_f / 100) %>
         </p>
       </td>
     </tr>
