@@ -560,10 +560,13 @@ module CarrierQbeInsurable
       # grab the options
       limopts = {}
       dedopts = {}
-      optionals = []
+      optionals = {}
       rates.each do |r|
         if r['schedule'] == 'optional'
-          optionals.push(r['sub_schedule']) unless r['sub_schedule'] == 'policy_fee'
+          unless r['sub_schedule'] == 'policy_fee'
+            optionals[r['sub_schedule']] ||= []
+            optionals[r['sub_schedule']].push(r['individual_limit']) unless optionals[r['sub_schedule']].include?(r['individual_limit'])
+          end
         else
           r['coverage_limits'].each{|cov,amt| limopts[cov] ||= []; limopts[cov].push(amt) unless limopts[cov].include?(amt) }
           r['deductibles'].each{|cov,amt| dedopts[cov] ||= []; dedopts[cov].push(amt) unless dedopts[cov].include?(amt) }
@@ -596,16 +599,17 @@ module CarrierQbeInsurable
             'category' => 'deductible'
           }
         ]
-      end + optionals.map do |name|
+      end + optionals.map do |name, options|
         [
           name,
           {
             'title' => name.titlecase,
             'visible' => true,
             'requirement' => 'optional',
-            'options_type' => 'none',
+            'options_type' => (options.length <= 1 ? 'none' : 'multiple_choice'),
+            'options' => (options.length <= 1 ? nil : options.map{|opt| { 'data_type' => 'currency', 'value' => opt } }),
             'category' => 'option'
-          }
+          }.compact
         ]
       end).to_h
       # deduce any necessary rules
@@ -735,7 +739,8 @@ module CarrierQbeInsurable
                       'liability_only' => liability_only,
                       'premium' => (qbe_rate.attributes["v"].value.to_d * 100).to_i,
                       'deductibles' => deductibles,
-                      'coverage_limits' => coverage_limits
+                      'coverage_limits' => coverage_limits,
+                      'individual_limit' => (qbe_rate.attributes["indvllimit"]&.value&.to_d * 100).to_i
                     })
                     
                     set_error = false          
@@ -755,7 +760,8 @@ module CarrierQbeInsurable
                         'liability_only' => liability_only,
                         'premium' => (qbe_rate.attributes["v"].value.to_d * 100).to_i,
                         'deductibles' => deductibles,
-                        'coverage_limits' => coverage_limits
+                        'coverage_limits' => coverage_limits,
+                        'individual_limit' => (qbe_rate.attributes["indvllimit"]&.value&.to_d * 100).to_i
                       })
                     
                       set_error = false          
