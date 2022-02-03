@@ -6,8 +6,9 @@ module V2
   module StaffSuperAdmin
     class CommunitiesController < StaffSuperAdminController
       def index
-        if params[:search].presence
-          @insurables = Insurable.communities.where(
+        if params[:search].presence && params[:account_id].presence
+          account = Account.find(params[:account_id])
+          @insurables = Insurable.where(account_id: account.id).communities.where(
             "title ILIKE '%#{ params[:search] }%'"
           )
 
