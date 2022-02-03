@@ -106,9 +106,9 @@ module CarrierQbeInsurable
 	            xml_zip_codes.each do |opt|
 	              
 	              tmp_opt = {
-	                :seq => opt.attributes["seq_no"].value,
-	                :locality => opt.attributes["city_name"].value,
-	                :county => opt.attributes["county"].value
+	                'seq' => opt.attributes["seq_no"].value,
+	                'locality' => opt.attributes["city_name"].value,
+	                'county' => opt.attributes["county"].value
 	              }
 	              
 	              @carrier_profile.data["county_resolution"]["results"].push(tmp_opt)
