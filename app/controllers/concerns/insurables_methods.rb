@@ -221,7 +221,7 @@ module InsurablesMethods
         }.merge(short_mode ? {} : {
           enabled: ins.enabled, preferred_ho4: preferred,
           category: ins.category, primary_address: insurable_prejson(ins.primary_address, agency_id: agency_id, policy_type_id: policy_type_id, carrier_id: carrier_id),
-          units: ins.preferred && ins.enabled ? ins.units.confirmed.select{|u| u.enabled }.map{|u| insurable_prejson(u, short_mode: true, agency_id: agency_id, policy_type_id: policy_type_id, carrier_id: carrier_id) } : nil, # WARNING: we don't bother recursing with short mode here
+          units: preferred && ins.enabled ? ins.units.confirmed.select{|u| u.enabled }.map{|u| insurable_prejson(u, short_mode: true, agency_id: agency_id, policy_type_id: policy_type_id, carrier_id: carrier_id) } : nil, # WARNING: we don't bother recursing with short mode here
           community: insurable_prejson(com, short_mode: true, agency_id: agency_id, policy_type_id: policy_type_id, carrier_id: carrier_id)
         }.compact)
       else
