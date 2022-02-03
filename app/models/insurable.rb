@@ -598,7 +598,7 @@ class Insurable < ApplicationRecord
         age_of_facility: community_profile.traits['construction_year'],
         gated_community: community_profile.traits['gated'] == true ? 1 : 0,
         prof_managed: community_profile.traits['professionally_managed'] == true ? 1 : 0,
-        prof_managed_year: community_profile.traits['professionally_managed_year'] == true ? "" : community_profile.traits['professionally_managed_year']
+        prof_managed_year: (community_profile.traits['professionally_managed'] == true && !community_profile.traits['professionally_managed_year'].blank?) ? community_profile.traits['professionally_managed_year'] : ""
       }
     else
       # we leave these guys nil if they are not provided here or via defaults
