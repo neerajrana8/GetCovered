@@ -184,9 +184,12 @@ module InsurablesMethods
     short_mode: false,
     agency_id: nil,
     policy_type_id: nil,
-    carrier_id: Agency.find(agency_id || ins.account&.agency_id || ins.agency_id || Agency.where(master_agency: true).take.id).
-                providing_carrier_id(policy_type_id || ::PolicyType::RESIDENTIAL_ID, ins){|carrier_id| (carrier_id == ::QbeService.carrier_id && ins.get_carrier_status(carrier_id) == :preferred) ? true : nil }
+    carrier_id: nil
   )
+    if carrier_id.nil?
+      carrier_id = Agency.find(agency_id || ins.account&.agency_id || ins.agency_id || Agency.where(master_agency: true).take.id).
+                   providing_carrier_id(policy_type_id || ::PolicyType::RESIDENTIAL_ID, ins){|carrier_id| (carrier_id == ::QbeService.carrier_id && ins.get_carrier_status(carrier_id) == :preferred) ? true : nil }
+    end
     case ins
     when ::Insurable
       if ::InsurableType::RESIDENTIAL_UNITS_IDS.include?(ins.insurable_type_id)
