@@ -153,7 +153,7 @@
                   <QBE_BusinessType><%= request[:data][:carrier_profile].traits["pref_facility"] %></QBE_BusinessType>
                   <QBE_MDU_CommName><%= request[:data][:community].title %></QBE_MDU_CommName>
                   <QBE_MDU_CommID><%= request[:data][:carrier_profile].external_carrier_id %></QBE_MDU_CommID>
-                  <% if request[:data][:prof_managed] == true %>
+                  <% if request[:data][:prof_managed] == 1 %>
                   <QBE_MDU_ProfManagedDt><%= request[:data][:prof_managed_year] %></QBE_MDU_ProfManagedDt>
                   <% end %>
                 </PersPolicy>

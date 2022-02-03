@@ -123,12 +123,12 @@ module InsurablesMethods
     when ::Insurable
       render json: {
           results_type: 'confirmed_match',
-          results: [insurable_prejson(result)]
+          results: [insurable_prejson(result, agency_id: get_or_create_params[:agency_id], policy_type_id: get_or_create_params[:policy_type_id], carrier_id: get_or_create_params[:carrier_id])]
       }, status: 200
     when ::Array
       render json: {
           results_type: 'possible_match',
-          results: result.map{|r| insurable_prejson(r) }
+          results: result.map{|r| insurable_prejson(r, agency_id: get_or_create_params[:agency_id], policy_type_id: get_or_create_params[:policy_type_id], carrier_id: get_or_create_params[:carrier_id]) }
       }, status: 200
     when ::Hash
       render json: standard_error(result[:error_type], result[:message], result[:details]),
@@ -172,11 +172,24 @@ module InsurablesMethods
   end
 
   def get_or_create_params
-    params.permit(:address, :unit, :insurable_id, :create_if_ambiguous, :allow_creation, :communities_only, :titleless)
+    params.permit(:address, :unit, :insurable_id, :create_if_ambiguous, :allow_creation, :communities_only, :titleless,
+      # optional:
+      :agency_id, :policy_type_id, :carrier_id
+    )
   end
 
   # output stuff with essentially the same format as in the Address search
-  def insurable_prejson(ins, short_mode: false, carrier_id: ins.class != ::Insurable ? nil : ins.carrier_insurable_profiles.order("created_at desc").first&.carrier_id || MsiService.carrier_id)
+  def insurable_prejson(
+    ins,
+    short_mode: false,
+    agency_id: nil,
+    policy_type_id: nil,
+    carrier_id: nil
+  )
+    if carrier_id.nil?
+      carrier_id = Agency.find(agency_id || ins.account&.agency_id || ins.agency_id || Agency.where(master_agency: true).take.id).
+                   providing_carrier_id(policy_type_id || ::PolicyType::RESIDENTIAL_ID, ins){|carrier_id| (carrier_id == ::QbeService.carrier_id && ins.get_carrier_status(carrier_id) == :preferred) ? true : nil }
+    end
     case ins
     when ::Insurable
       if ::InsurableType::RESIDENTIAL_UNITS_IDS.include?(ins.insurable_type_id)
@@ -187,8 +200,8 @@ module InsurablesMethods
           account_id: ins.account_id, agency_id: ins.agency_id, insurable_type_id: ins.insurable_type_id
         }.merge(short_mode ? {} : {
           enabled: ins.enabled, preferred_ho4: preferred,
-          category: ins.category, primary_address: insurable_prejson(ins.primary_address),
-          community: insurable_prejson(com, short_mode: true, carrier_id: carrier_id)
+          category: ins.category, primary_address: insurable_prejson(ins.primary_address, agency_id: agency_id, policy_type_id: policy_type_id, carrier_id: carrier_id),
+          community: insurable_prejson(com, short_mode: true, agency_id: agency_id, policy_type_id: policy_type_id, carrier_id: carrier_id)
         }.compact)
       elsif ::InsurableType::RESIDENTIAL_COMMUNITIES_IDS.include?(ins.insurable_type_id)
         preferred = (ins.get_carrier_status(carrier_id) == :preferred)
@@ -196,8 +209,8 @@ module InsurablesMethods
           id: ins.id, title: ins.title, enabled: ins.enabled, preferred_ho4: preferred,
           account_id: ins.account_id, agency_id: ins.agency_id, insurable_type_id: ins.insurable_type_id
         }.merge(short_mode ? {} : {
-          category: ins.category, primary_address: insurable_prejson(ins.primary_address),
-          units: preferred && ins.enabled ? ins.units.confirmed.select{|u| u.enabled }.map{|u| insurable_prejson(u, short_mode: true, carrier_id: carrier_id) } : nil
+          category: ins.category, primary_address: insurable_prejson(ins.primary_address, agency_id: agency_id, policy_type_id: policy_type_id, carrier_id: carrier_id),
+          units: preferred && ins.enabled ? ins.units.confirmed.select{|u| u.enabled }.map{|u| insurable_prejson(u, short_mode: true, agency_id: agency_id, policy_type_id: policy_type_id, carrier_id: carrier_id) } : nil
         }).compact
       elsif ::InsurableType::RESIDENTIAL_BUILDINGS_IDS.include?(ins.insurable_type_id)
         com = ins.parent_community
@@ -207,9 +220,9 @@ module InsurablesMethods
           account_id: ins.account_id, agency_id: ins.agency_id, insurable_type_id: ins.insurable_type_id,
         }.merge(short_mode ? {} : {
           enabled: ins.enabled, preferred_ho4: preferred,
-          category: ins.category, primary_address: insurable_prejson(ins.primary_address),
-          units: ins.preferred && ins.enabled ? ins.units.confirmed.select{|u| u.enabled }.map{|u| insurable_prejson(u, short_mode: true, carrier_id: carrier_id) } : nil, # WARNING: we don't bother recursing with short mode here
-          community: insurable_prejson(com, short_mode: true, carrier_id: carrier_id)
+          category: ins.category, primary_address: insurable_prejson(ins.primary_address, agency_id: agency_id, policy_type_id: policy_type_id, carrier_id: carrier_id),
+          units: ins.preferred && ins.enabled ? ins.units.confirmed.select{|u| u.enabled }.map{|u| insurable_prejson(u, short_mode: true, agency_id: agency_id, policy_type_id: policy_type_id, carrier_id: carrier_id) } : nil, # WARNING: we don't bother recursing with short mode here
+          community: insurable_prejson(com, short_mode: true, agency_id: agency_id, policy_type_id: policy_type_id, carrier_id: carrier_id)
         }.compact)
       else
         return nil
