@@ -26,13 +26,13 @@ class Event < ApplicationRecord
   
   validates_presence_of :verb, :format, :interface, :status, :process, :endpoint
   
-  validates :request, 
-    presence: true,
-    if: Proc.new { |ev| ev.format == 'json' || ev.format == 'xml'  }
-  
-  validates :response, 
-    presence: true,
-    if: Proc.new { |ev| (ev.format == 'json' || ev.format == 'xml')  && !ev.completed.nil? }
+  # These are commented out because I am sick of bugs where events don't exist that turn out to be a result of unexpectedly empty requests/responses:
+  #validates :request, 
+  #  presence: true,
+  #  if: Proc.new { |ev| ev.format == 'json' || ev.format == 'xml'  }
+  #validates :response, 
+  #  presence: true,
+  #  if: Proc.new { |ev| (ev.format == 'json' || ev.format == 'xml')  && !ev.completed.nil? }
 
 	def duration
 		return started.nil? || completed.nil? ? nil : (completed - started) * 1000.0
