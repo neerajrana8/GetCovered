@@ -820,7 +820,7 @@ module CarrierQbeInsurable
 	        self.carrier_settings['qbe']['county_resolution']['selected'] = county_number_string
 	        self.carrier_settings['qbe']['county_resolved_on'] = Time.current
 	        self.carrier_settings['qbe']['county_resolved'] = true
-	        return count_option['county'].downcase.titlecase
+	        return county_option['county'].downcase.titlecase
 	      end
 	    end
 	    self.errors.add(:county, "the selected county was not found")
