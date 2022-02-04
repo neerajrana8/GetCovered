@@ -142,7 +142,7 @@ module CarrierQbeInsurable
 	                @carrier_profile.data["county_resolved"] = true
 	                @carrier_profile.data["county_resolved_on"] = Time.current.strftime("%m/%d/%Y %I:%M %p")
 	                
-	                @address.update_column :county, @carrier_profile.data["county_resolution"]["matches"][0]['county'].titlecase
+	                @address.update_column :county, @carrier_profile.data["county_resolution"]["matches"][0]['county'].downcase.titlecase
 	            end
 	            
 	            @carrier_profile.save
@@ -820,7 +820,7 @@ module CarrierQbeInsurable
 	        self.carrier_settings['qbe']['county_resolution']['selected'] = county_number_string
 	        self.carrier_settings['qbe']['county_resolved_on'] = Time.current
 	        self.carrier_settings['qbe']['county_resolved'] = true
-	        return count_option['county'].titlecase
+	        return count_option['county'].downcase.titlecase
 	      end
 	    end
 	    self.errors.add(:county, "the selected county was not found")
