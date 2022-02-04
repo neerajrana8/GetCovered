@@ -126,9 +126,9 @@ module CarrierQbePolicyApplication
                 # parse xml
                 xml_doc = Nokogiri::XML(qbe_data[:data])
                 xml_min_prem = xml_doc.css('//Additional_Premium')
-                response_premium = xml_min_prem.attribute('total_premium').value.delete(",")
-                tax = xml_min_prem.attribute('tax').value.delete(",")
-                base_premium = ((response_premium.to_d - tax.to_d) * 100).to_i
+                response_premium = (xml_min_prem.attribute('total_premium').value.delete(",").to_d * 100).to_i
+                tax = (xml_min_prem.attribute('tax').value.delete(",").to_d * 100).to_i
+                base_premium = response_premium - tax
                 # create PolicyPremium
                 succeeded = false
                 premium = PolicyPremium.create(policy_quote: quote)
@@ -137,7 +137,7 @@ module CarrierQbePolicyApplication
                 unless premium.id
                   puts "  Failed to create premium! #{premium.errors.to_h}"
                 else
-                  result = premium.initialize_all(base_premium.to_i - policy_fee, tax: tax.to_i, tax_recipient: quote.policy_application.carrier)
+                  result = premium.initialize_all(base_premium - policy_fee, tax: tax, tax_recipient: quote.policy_application.carrier)
                   unless result.nil?
                     puts "  Failed to initialize premium! #{result}"
                   else
