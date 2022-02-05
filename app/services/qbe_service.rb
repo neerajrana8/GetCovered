@@ -353,6 +353,7 @@ class QbeService
 
       begin
         call_data[:response] = HTTParty.post(Rails.application.credentials.qbe[:uri][ENV['RAILS_ENV'].to_sym],
+          timeout: 90, # added to prevent timeout after 15s
           body: compiled_rxml,
           headers: {
             'PreAuthenticate' => 'TRUE',
