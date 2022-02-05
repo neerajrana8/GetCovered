@@ -171,14 +171,37 @@ module CarrierQbePolicyQuote
 
  	        event.request = qbe_service.compiled_rxml
  			 		event.started = Time.now
-
-			 		qbe_data = qbe_service.call()
-
-			 		event.completed = Time.now
-			 		event.response = qbe_data[:data]
- 			 		event.status = qbe_data[:error] ? 'error' : 'success'
-
-			 		event.save
+          
+          qbe_data = { error: true }
+          begin
+            qbe_data = qbe_service.call()
+            
+            event.completed = Time.now
+            event.response = qbe_data[:data]
+            event.status = qbe_data[:error] ? 'error' : 'success'
+            event.save
+          rescue Rack::Timeout::RequestTimeoutException => e
+            event.completed = Time.now
+            event.response = "TIMEOUT"
+            event.status = 'error'
+            event.save
+            event = events.new(
+              verb: 'post',
+              format: 'xml',
+              interface: 'SOAP',
+              process: 'send_qbe_policy_info',
+              endpoint: Rails.application.credentials.qbe[:uri][ENV["RAILS_ENV"].to_sym]
+            )
+            event.request = qbe_service.compiled_rxml
+            event.started = Time.now
+            
+            qbe_data = qbe_service.call()  
+            
+            event.completed = Time.now
+            event.response = qbe_data[:data]
+            event.status = qbe_data[:error] ? 'error' : 'success'
+            event.save
+          end
 
           unless qbe_data[:error] # QBE Response success
 
