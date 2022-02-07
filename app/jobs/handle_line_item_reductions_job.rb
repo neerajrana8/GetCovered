@@ -8,7 +8,7 @@ class HandleLineItemReductionsJob < ApplicationJob
       LineItemReduction.references(:line_items).includes(:line_item).pending.order("line_items.invoice_id ASC").group("line_items.invoice_id").pluck("line_items.invoice_id")
     end if invoice_ids.nil?
     
-    @invoice_ids.each do |invid|
+    invoice_ids.each do |invid|
       ::Invoice.where(id: invid).take&.process_reductions
     end
   end
