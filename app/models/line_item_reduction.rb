@@ -57,7 +57,7 @@ class LineItemReduction < ApplicationRecord
   
   def queue_for_processing
     # give it a brief delay in case we're creating several LIRs at once (so they get put on the same Refund object)
-    HandleLineItemReductionsJob.set(wait: 30.seconds).perform_later(invoice_id: self.invoice_id)
+    HandleLineItemReductionsJob.set(wait: 30.seconds).perform_later(invoice_id: self.line_item.invoice_id)
   end
 
   private
