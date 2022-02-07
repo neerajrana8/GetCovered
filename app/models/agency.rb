@@ -119,7 +119,27 @@ class Agency < ApplicationRecord
   GET_COVERED_ID = 1
 
   def self.get_covered
-    Agency.find(GET_COVERED_ID)
+    @gcag ||= Agency.find(GET_COVERED_ID)
+  end
+  
+  # returns the carrier id to use for a given policy type and insurable
+  # accepts an optional block for additional filtering which should take a carrier id as its only parameter and return:
+  #   true if the id should be used
+  #   false if it should not be used
+  #   nil if it should not be used UNLESS all available ids return nil, in which case the method will make the default choice from among the nil-returners
+  #   or a numeric value; if no true keys exist, we will take the default choice from among those returning the least numeric value present, if any
+  def providing_carrier_id(policy_type_id, insurable, &blck)
+    state = insurable.primary_address.state
+    carrier_ids = self.carrier_preferences.dig('by_policy_type', policy_type_id.to_s, state, 'carrier_ids') || []
+    caas = CarrierAgencyAuthorization.references(:carrier_agencies).includes(:carrier_agency)
+                                     .where(carrier_agencies: { carrier_id: carrier_ids, agency_id: self.id }, policy_type_id: policy_type_id, available: true)
+    carrier_ids = carrier_ids.select{|cid| caas.any?{|caa| caa.carrier_agency.carrier_id == cid } }
+    if blck
+      by_filter_value = carrier_ids.group_by{|cid| blck.call(cid) }
+      min_priority_key = by_filter_value.keys.select{|k| k != true && k != false && !k.nil? }.min # selects lowest numeric key, or nil if none
+      return by_filter_value[true]&.first || by_filter_value[min_priority_key]&.first
+    end
+    return carrier_ids.first
   end
 
   def default_branding_profile
@@ -220,38 +240,41 @@ class Agency < ApplicationRecord
     end
   end
   
-  def get_ancestor_chain
-    to_return = [self]
-    selected = self.agency
-    while !selected.nil?
-      to_return.push(selected)
-      selected = selected.agency
+  def agency_hierarchy(include_self: true)
+    to_return = include_self ? [self] : []
+    to_add = self
+    while !(to_add = to_add.agency).nil?
+      to_return.push(to_add)
     end
     return to_return
+  end
+  
+  def get_ancestor_chain # not sure if any branches still use this name... leaving it just in case
+    agency_hierarchy
   end
 
   private
 
-  def initialize_agency
-   # Blank for now...
-  end
-
-  def set_producer_code
-    loop do
-      self.producer_code = rand(36**12).to_s(36).upcase
-      break unless Agency.exists?(producer_code: producer_code)
+    def initialize_agency
+     # Blank for now...
     end
-  end
 
-  def parent_agency_exist
-    unless self.agency_id.nil? || parent_agencies_ids.include?(self.agency_id)
-      errors.add(:agency, I18n.t('agency_model.parent_id_incorrect'))
+    def set_producer_code
+      loop do
+        self.producer_code = rand(36**12).to_s(36).upcase
+        break unless Agency.exists?(producer_code: producer_code)
+      end
     end
-  end
 
-  def agency_to_sub_disabled
-    errors.add(:agency, I18n.t('agency_model.agency_cannot_be_updated')) if parent_agencies_ids.include?(self.agency_id) &&
-                                                                    parent_agencies_ids.include?(self.id)
-  end
+    def parent_agency_exist
+      unless self.agency_id.nil? || parent_agencies_ids.include?(self.agency_id)
+        errors.add(:agency, I18n.t('agency_model.parent_id_incorrect'))
+      end
+    end
+
+    def agency_to_sub_disabled
+      errors.add(:agency, I18n.t('agency_model.agency_cannot_be_updated')) if parent_agencies_ids.include?(self.agency_id) &&
+                                                                      parent_agencies_ids.include?(self.id)
+    end
 
 end

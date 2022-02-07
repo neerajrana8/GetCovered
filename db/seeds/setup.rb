@@ -176,7 +176,7 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
       # Create QBE Insurable Type for Residential Communities with fields required for integration
       carrier_insurable_type = CarrierInsurableType.create!(carrier: carrier, insurable_type: InsurableType.find(1),
                                                             enabled: true, profile_traits: {
-                                                              "pref_facility": "MDU",
+                                                              "pref_facility": "FIC",
                                                               "occupancy_type": "Other",
                                                               "construction_type": "F", # Options: F, MY, Superior
                                                               "protection_device_cd": "F", # Options: F, S, B, FB, SB
@@ -594,7 +594,7 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
       irc = msis.extract_insurable_rate_configuration(nil,
         configurer: carrier,
         configurable: igc,
-        carrier_insurable_type: carrier_insurable_type,
+        carrier_policy_type: carrier_policy_type,
         use_default_rules_for: 'USA'
       )
       irc.save!
@@ -605,7 +605,7 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
         # grab rates from MSI for this state
         result = nil
         unless ENV['real_msi_calls'] || Rails.env == 'production'
-          result = { data: FakedMsiResponses::RESPONSES[state] }
+          result = { data: FakedMsiResponses::RESPONSES[state.to_s] }
         else
           result = msis.build_request(:get_product_definition,
             effective_date: Time.current.to_date + 2.days,
@@ -643,7 +643,7 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
         irc = msis.extract_insurable_rate_configuration(result[:data],
           configurer: carrier,
           configurable: igc,
-          carrier_insurable_type: carrier_insurable_type,
+          carrier_policy_type: carrier_policy_type,
           use_default_rules_for: state
         )
         irc.save!
@@ -653,7 +653,7 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
           irc = msis.extract_insurable_rate_configuration(nil,
             configurer: carrier,
             configurable: igc,
-            carrier_insurable_type: carrier_insurable_type,
+            carrier_policy_type: carrier_policy_type,
             use_default_rules_for: 'GA_COUNTIES'
           )
           irc.save!

@@ -9,6 +9,7 @@ class CarrierPolicyType < ApplicationRecord
   belongs_to :policy_type
   belongs_to :commission_strategy
 
+  has_many :fees, as: :assignable
   has_many :carrier_policy_type_availabilities, dependent: :destroy
 
   accepts_nested_attributes_for :commission_strategy

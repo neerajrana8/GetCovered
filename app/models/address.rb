@@ -124,6 +124,9 @@ class Address < ApplicationRecord
   before_create :standardize
 
   after_validation :geocode
+  
+  # qbe concern calls this manually when needed. to avoid spamming the FCC it's currently off here, but can be turned on if really needed.
+  #after_validation :get_county_from_fcc
 
   after_save :refresh_insurable_policy_type_ids,
     if: Proc.new{|addr| addr.addressable_type == "Insurable" }
@@ -305,6 +308,29 @@ class Address < ApplicationRecord
   def refresh_insurable_policy_type_ids
     # update policy type ids (in case a newly created or changed address alters which policy types an insurable supports)
     self.addressable&.refresh_policy_type_ids(and_save: true)
+  end
+  
+  def get_county_from_fcc
+    if self.latitude && self.longitude && self.county.blank?
+      # WARNING: we don't save an event for this because it's so trivial and because the address is generally not yet saved at this point
+      fccs = FccService.new
+      fccs.build_request(:area, lat: self.latitude, lon: self.longitude)
+      result = (fccs.call[:data]["results"].map{|r| r["county_name"] }.uniq rescue [])
+      if result.length == 1
+        self.county = result.first
+      end
+    end
+  end
+  
+  def parent_insurable_geographical_categories
+    temp_igc = ::InsurableGeographicalCategory.new(
+      state: self.state,
+      counties: [self.county].compact,
+      zip_codes: [self.zip_code].compact,
+      cities: [self.city].compact
+    )
+    temp_igc.valid? # ensure before_validation callbacks run
+    return temp_igc.query_for_parents(include_self: false)
   end
 
   def standardize
