@@ -1094,6 +1094,26 @@ ActiveRecord::Schema.define(version: 2022_02_01_210542) do
     t.index ["user_type", "user_id"], name: "index_login_activities_on_user"
   end
 
+  create_table "master_policy_configurations", force: :cascade do |t|
+    t.integer "program_type", default: 0
+    t.integer "grace_period", default: 0
+    t.string "integration_charge_code"
+    t.boolean "prorate_charges", default: false
+    t.boolean "auto_post_charges", default: true
+    t.boolean "consolidate_billing", default: true
+    t.datetime "program_start_date"
+    t.integer "program_delay", default: 0
+    t.integer "placement_cost", default: 0
+    t.integer "force_placement_cost"
+    t.bigint "carrier_policy_type_id", null: false
+    t.string "configurable_type", null: false
+    t.bigint "configurable_id", null: false
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["carrier_policy_type_id", "configurable_type", "configurable_id"], name: "index_cpt_and_conf_on_mpc", unique: true
+    t.index ["configurable_type", "configurable_id"], name: "index_master_policy_configurations_on_configurable"
+  end
+
   create_table "model_errors", force: :cascade do |t|
     t.string "model_type"
     t.bigint "model_id"
