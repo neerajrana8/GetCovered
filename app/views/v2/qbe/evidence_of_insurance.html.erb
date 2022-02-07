@@ -189,7 +189,7 @@
         <p class="table-padded">
           <small>Insured</small><br><br>
           <%= @policy.primary_user.profile.full_name %><br>
-          <%= @policy.primary_insurable.primary_address.combined_street_address %> <%= @policy.primary_insurable.title.nil? ? '' : "Apt. #{ @policy.primary_insurable.title }" %><br>
+          <%= @policy.primary_insurable.primary_address.combined_street_address %> <%= @policy.primary_insurable.title.nil? ? '' : "#{ @policy.primary_insurable.title }" %><br>
           <%= @policy.primary_insurable.primary_address.city %>, <%= @policy.primary_insurable.primary_address.state %>, <%= @policy.primary_insurable.primary_address.combined_zip_code() %>
           <% unless @policy.users.nil? || @policy.users.count == 1 %>
           <br><br>
@@ -267,7 +267,7 @@
       <td>
         <p><small>Location Description</small></p><br>
         <p>
-          <%= @policy.primary_insurable.primary_address.combined_street_address %> <%= @policy.primary_insurable.title.nil? ? '' : "Apt. #{ @policy.primary_insurable.title }" %><br>
+          <%= @policy.primary_insurable.primary_address.combined_street_address %> <%= @policy.primary_insurable.title.nil? ? '' : "#{ @policy.primary_insurable.title }" %><br>
           <%= @policy.primary_insurable.primary_address.city %>, <%= @policy.primary_insurable.primary_address.state %><br>
           <%= @policy.primary_insurable.primary_address.combined_zip_code() %>
         </p>
@@ -378,7 +378,7 @@
             <strong>NAME &amp; ADDRESS</strong><br><br>
             <strong><%= @policy.primary_insurable.account.title %></strong><br>
             <% if @policy.primary_insurable.account.primary_address; addr = @policy.primary_insurable.account.primary_address %>
-              <%= addr.combined_street_address %> Apt. <%= addr.street_two %><br>
+              <%= addr.combined_street_address %> <%= addr.street_two %><br>
               <%= addr.city %>, <%= addr.state %>, <%= addr.combined_zip_code() %>
             <% end %>
           <% elsif !@policy_application.extra_settings&.[]('additional_interest').blank? %>
