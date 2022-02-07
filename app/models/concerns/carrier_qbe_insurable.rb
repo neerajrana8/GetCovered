@@ -6,6 +6,26 @@ module CarrierQbeInsurable
   extend ActiveSupport::Concern
 
   included do
+  
+    def qbe_get_carrier_status(refresh: false)
+      @qbe_get_carrier_status = nil if refresh
+      return @qbe_get_carrier_status ||= !::InsurableType::RESIDENTIAL_IDS.include?(self.insurable_type_id) ?
+        nil
+        : (self.confirmed && self.parent_community&.carrier_profile(::QbeService.carrier_id)&.traits&.[]('pref_facility') == 'MDU' ? :preferred : :nonpreferred) # WARNING: change this at some point in case we confirm nonpreferred properties?
+    end
+    
+    def qbe_mark_preferred
+      return "The insurable is not a community" unless ::InsurableType::RESIDENTIAL_COMMUNITIES_IDS.include?(self.insurable_type_id)
+      return "The insurable has a 'confirmed' value of false; it must be assigned to an account and marked as confirmed before being registered as preferred" unless self.confirmed
+      cp = self.carrier_profile(::QbeService.carrier_id)
+      return "The community has no CarrierInsurableProfile for QBE" if cp.nil?
+      cp.traits['pref_facility'] = 'MDU'
+      unless cp.save
+        return "The modified preferred status failed to save"
+      end
+      FetchQbeRatesJob.perform_later(self)
+      return nil
+    end
 	  
 	  # Get QBE Zip Code
 	  #
@@ -17,7 +37,7 @@ module CarrierQbeInsurable
 	  def get_qbe_zip_code
 	    
 	    return if self.insurable_type.title != "Residential Community"
-	    @carrier = Carrier.where(title: 'Queensland Business Insurance').take
+	    @carrier = ::QbeService.carrier
 	    @carrier_profile = carrier_profile(@carrier.id)
 	    @address = primary_address()
 	    
@@ -25,6 +45,7 @@ module CarrierQbeInsurable
 	    
 	    unless @address.nil? ||
 	           @carrier_profile.data["county_resolved"] == true
+
 	      # When an @address and county resolved
 	      event = events.new(
 	        verb: 'post', 
@@ -43,7 +64,7 @@ module CarrierQbeInsurable
 	        end: nil
 	      }
 	      
-	      carrier_agency = CarrierAgency.where(agency: account.agency, carrier: @carrier).take
+	      carrier_agency = CarrierAgency.where(agency_id: agency_id || account&.agency_id || Agency::GET_COVERED_ID, carrier: @carrier).take
 	      
 	      qbe_service = QbeService.new(:action => 'getZipCode')
 	      qbe_service.build_request({ prop_zipcode: @address.zip_code, agent_code: carrier_agency.external_carrier_id })
@@ -85,32 +106,43 @@ module CarrierQbeInsurable
 	            xml_zip_codes.each do |opt|
 	              
 	              tmp_opt = {
-	                :seq => opt.attributes["seq_no"].value,
-	                :locality => opt.attributes["city_name"].value,
-	                :county => opt.attributes["county"].value
+	                'seq' => opt.attributes["seq_no"].value,
+	                'locality' => opt.attributes["city_name"].value,
+	                'county' => opt.attributes["county"].value
 	              }
 	              
 	              @carrier_profile.data["county_resolution"]["results"].push(tmp_opt)
 	              
 	            end
 	            
-	            @carrier_profile.data["county_resolution"]["matches"] = @carrier_profile.data["county_resolution"]["results"].dup
+	            @carrier_profile.data["county_resolution"]["matches"] = @carrier_profile.data["county_resolution"]["results"].dup              
 	            
+              # if address has no county, restrict by city and try to get the county if necessary
 	            if @address.county.nil?
-	              @carrier_profile.data["county_resolution"]["matches"].select! { |opt| opt[:locality] == @address.city }
-	            else
-	              @carrier_profile.data["county_resolution"]["matches"].select! { |opt| opt[:locality] == @address.city && opt[:county] == @address.county.upcase }        
+	              @carrier_profile.data["county_resolution"]["matches"].select! { |opt| opt['locality'].downcase == @address.city.downcase }
+                if @carrier_profile.data["county_resolution"]["matches"].length > 1
+                  @address.geocode if @address.latitude.blank?
+                  unless @address.latitude.blank?
+                    @address.send(:get_county_from_fcc)
+                    @address.save unless @address.county.blank?
+                  end
+                end
+              end
+
+              # if address has a county, restrict by it
+	            if !@address.county.nil?
+	              @carrier_profile.data["county_resolution"]["matches"].select! { |opt| opt['locality'].downcase == @address.city.downcase && qbe_standardize_county_string(opt['county']) == qbe_standardize_county_string(@address.county) } # just in case one is "Whatever County" and the other is just "Whatever", one has a dash and one doesn't, etc
 	            end
 	  
 	            case @carrier_profile.data["county_resolution"]["matches"].length
 	              when 0
-	                @carrier_profile.data["county_resolution"]["available"] = false # MOOSE WARNING: this is a temporary answer to the question of how to handle nonempty results with empty matches.
+	                @carrier_profile.data["county_resolution"]["available"] = false # WARNING: this is a temporary answer to the question of how to handle nonempty results with empty matches: we just treat them as if no county info came down at all. this will cause this process to be rerun too, which may be good
 	              when 1
-	                @carrier_profile.data["county_resolution"]["selected"] = @carrier_profile.data["county_resolution"]["matches"][0][:seq]
+	                @carrier_profile.data["county_resolution"]["selected"] = @carrier_profile.data["county_resolution"]["matches"][0]['seq']
 	                @carrier_profile.data["county_resolved"] = true
 	                @carrier_profile.data["county_resolved_on"] = Time.current.strftime("%m/%d/%Y %I:%M %p")
 	                
-	                @address.update_column :county, @carrier_profile.data["county_resolution"]["matches"][0][:county].titlecase
+	                @address.update_column :county, @carrier_profile.data["county_resolution"]["matches"][0]['county'].downcase.titlecase
 	            end
 	            
 	            @carrier_profile.save
@@ -168,7 +200,7 @@ module CarrierQbeInsurable
 	  def get_qbe_property_info
   	  
 	    return if self.insurable_type.title != "Residential Community"
-	    @carrier = Carrier.where(title: 'Queensland Business Insurance').take
+	    @carrier = ::QbeService.carrier
 	    @carrier_profile = carrier_profile(@carrier.id)
 	    @address = primary_address()  	  
 	    
@@ -194,7 +226,7 @@ module CarrierQbeInsurable
 	      }
 	      
 	      qbe_service = QbeService.new(:action => 'PropertyInfo')
-	      carrier_agency = CarrierAgency.where(agency: account.agency, carrier: @carrier).take
+	      carrier_agency = CarrierAgency.where(agency_id: agency_id || account&.agency_id || Agency::GET_COVERED_ID, carrier: @carrier).take
 	      
 	      qbe_service.build_request({ prop_number: @address.street_number,
 	                                  prop_street: @address.street_name,
@@ -235,7 +267,7 @@ module CarrierQbeInsurable
 	        		          
 	          @carrier_profile.traits['ppc'] = xml_doc.css("PPC_Code").first.content unless xml_doc.css("PPC_Code").first.nil?
 	          @carrier_profile.traits['bceg'] = xml_doc.css("BCEG_Code").first.content unless xml_doc.css("BCEG_Code").first.nil?
-	        	
+            # this is disabled; everything defaults to FIC on CIP creation, we manually set some to MDU later @carrier_profile.traits['pref_facility'] = (self.confirmed &&  ? 'MDU' : 'FIC') 
 	        	@carrier_profile.data["property_info_resolved"] = true
 	        	@carrier_profile.data["property_info_resolved_on"] = Time.current.strftime("%m/%d/%Y %I:%M %p")
 	        	
@@ -277,8 +309,8 @@ module CarrierQbeInsurable
   
 	  # Fix QBE Carrier Rates
 	  
-	  def fix_qbe_rates(inline = false)
-	    @carrier = Carrier.where(title: 'Queensland Business Insurance').take
+	  def fix_qbe_rates(inline = false, effective_date = nil, traits_override: {}, delay: 1)
+	    @carrier = ::QbeService.carrier
 	    @carrier_profile = carrier_profile(@carrier.id)
 	    
 	    if @carrier_profile.data['rates_resolution'].values.include? false
@@ -288,49 +320,18 @@ module CarrierQbeInsurable
 	        broken_rates.push(key.to_i) if value == false
 	      end
 	      
-	      broken_rates.each_with_index do |num, index|
-		      if inline
-						get_qbe_rates(num)		      
-			    else
-		        delay = index
-		        GetInsurableRatesJob.set(wait: delay.minutes).perform_later(self, num)  
-	        end
-	      end
+        if inline
+          broken_rates.each{|br| get_qbe_rates(br, effective_date, traits_override: traits_override) }
+        else
+          FetchQbeRatesJob.perform_later(self, number_insured: broken_rates, effective_date: effective_date, traits_override: traits_override, delay: delay)
+        end
 	    end
-	  end
-	  
-	  # Queue QBE Rates
-	  #
-	  # Example:
-	  #   >> @community = Community.find(1)
-	  #   >> @community.queue_qbe_rates([1, 2, 3, 4, 5])
-	  #   >> true
-	  
-	  def queue_qbe_rates(insured_options = [])
-	    request_errors = {}
-	    
-	    unless insured_options.empty?
-	      
-	      # Make sure insured_options are valid 
-	      # and unique
-	      insured_options = insured_options.uniq
-	      insured_options.each do |i|
-	        if i.class == Integer &&
-	           i > 0 && 
-	           i <= 5
-	          request_errors["#{i}"] = get_qbe_rates(i) 
-	        end
-	      end
-	      
-	    end
-	    
-	    # return !request_errors.values.include? true
 	  end
 	  
 	  # Reset QBE Carrier Rates
 	  
-	  def reset_qbe_rates(force = false, inline = false)
-	    @carrier = Carrier.where(title: 'Queensland Business Insurance').take
+	  def reset_qbe_rates(force = false, inline = false, traits_override: {})
+	    @carrier = ::QbeService.carrier
 	    @carrier_profile = carrier_profile(@carrier.id)
 	    
 	    ['1', '2', '3', '4', '5'].each do |key|
@@ -339,12 +340,9 @@ module CarrierQbeInsurable
 	        @carrier_profile.data['rates_resolution'][key] = false if force == true
 	      end  
 	    end
-	    # self.ho4_enabled = false
-	    
-	    save()
-	    reload()
-	    
-	    self.fix_qbe_rates(inline)
+      @carrier_profile.data["ho4_enabled"] = false
+      @carrier_profile.save
+      self.fix_qbe_rates(inline, traits_override: traits_override)
 	  end
 
 	  # Get QBE Rates
@@ -353,11 +351,15 @@ module CarrierQbeInsurable
 	  #   >> @community = Community.find(1)
 	  #   >> @community.get_qbe_rates
 	  #   => nil
-	  
-	  def get_qbe_rates(number_insured)
+	  # Passing refresh_coverage_options: true will reset the coverage options in the community's IRC regardless of whether they're already set (as opposed to just resetting the rates);
+    # Passing traits_override allows custom overrides to the request options normally derived from the community's CIP (useful for FIC properties where the CIP is empty and we need to apply defaults from the policy application);
+    # Passing diagnostics_hash as a hash will cause diagnostic info to be inserted into it (since the return value is set up to indicate success via a boolean, we can't use it to return information)
+    #   - the only diagnostic returned right now is diagnostics_hash[:event] = the event recording the getRates call
+    # Passing irc_configurable_override will cause an IRC to be created for a DIFFERENT configurable, rather than this insurable. This is used to create IRCs for IGCs for rate caching, since the IGC rates are calculated with fixed parameters that may not match those of its sample insurable.
+	  def get_qbe_rates(number_insured, effective_date = nil, refresh_coverage_options: false, traits_override: self.get_qbe_traits(), diagnostics_hash: nil, irc_configurable_override: nil)
   	  
 	    return if self.insurable_type.title != "Residential Community"
-	    @carrier = Carrier.where(title: 'Queensland Business Insurance').take
+	    @carrier = ::QbeService.carrier
 	    @carrier_profile = carrier_profile(@carrier.id)
 	    @address = primary_address()  
 	    
@@ -386,25 +388,39 @@ module CarrierQbeInsurable
 	        end: nil
 	      }
 	      
-	      carrier_agency = CarrierAgency.where(agency: account.agency, carrier: @carrier).take
+	      carrier_agency = CarrierAgency.where(agency_id: agency_id || account&.agency_id || Agency::GET_COVERED_ID, carrier: @carrier).take
+        
+        carrier_policy_type = CarrierPolicyType.where(carrier: @carrier, policy_type_id: ::PolicyType::RESIDENTIAL_ID).take
+        irc = ::InsurableRateConfiguration.where(carrier_policy_type: carrier_policy_type, configurer: @carrier, configurable: irc_configurable_override || self).take || ::InsurableRateConfiguration.new(
+          carrier_policy_type: carrier_policy_type,
+          configurer: @carrier,
+          configurable: irc_configurable_override || self,
+          configuration: { 'coverage_options' => {}, "rules" => {} },
+          rates: { 'rates' => [nil, [], [], [], [], []] }
+        )
+        
+        county = @carrier_profile.data&.[]("county_resolution")&.[]("matches")&.find{|m| m["seq"] == @carrier_profile.data["county_resolution"]["selected"] }&.[]("county") || @address.county # we use the QBE formatted one in case .titlecase killed dashes etc.
 	      
 	      qbe_request_options = {
+          pref_facility: (self.get_carrier_status(@carrier) == :preferred ? 'MDU' : 'FIC'),
 	        prop_city: @address.city,
-	        prop_county: @address.county,
+	        prop_county: county,
 	        prop_state: @address.state,
 	        prop_zipcode: @address.combined_zip_code,
-	        units_on_site: units.confirmed.count,
-	        age_of_facility: @carrier_profile.traits['construction_year'],
-	        gated_community: @carrier_profile.traits['gated_access'] == true ? 1 : 0,
-	        prof_managed: @carrier_profile.traits['professionally_managed'] == true ? 1 : 0,
-	        prof_managed_year: @carrier_profile.traits['professionally_managed_year'].nil? ? "" : @carrier_profile.traits['professionally_managed_year'],
+          # The commented out properties all come from get_qbe_traits
+	        #units_on_site: units.confirmed.count,
+	        #age_of_facility: @carrier_profile.traits['construction_year'],
+	        #gated_community: @carrier_profile.traits['gated_access'] == true ? 1 : 0,
+	        #prof_managed: @carrier_profile.traits['professionally_managed'] == true ? 1 : 0,
+	        #prof_managed_year: @carrier_profile.traits['professionally_managed_year'].nil? ? "" : @carrier_profile.traits['professionally_managed_year'],
 	        num_insured: number_insured,
 	        protection_device_code: @carrier_profile.traits['protection_device_cd'],
 	        constr_type: @carrier_profile.traits['construction_type'],
 	        ppc_code: @carrier_profile.traits['ppc'],
 	        bceg_code: @carrier_profile.traits['bceg'],
-	        agent_code: carrier_agency.external_carrier_id     
-	      }
+	        agent_code: carrier_agency.external_carrier_id,
+          effective_date: (effective_date || (Time.current.to_date + 1.day)).strftime('%m/%d/%Y')
+	      }.merge(self.get_qbe_traits()).merge(traits_override || {})
 	      
 # 	      qbe_request_options = {
 # 	        num_insured: number_insured,
@@ -426,7 +442,8 @@ module CarrierQbeInsurable
 	      
 	      qbe_service.build_request(qbe_request_options)
 	            
-	      event = events.new(
+	      event = Event.new(
+          eventable: irc_configurable_override || self,
 	        verb: 'post', 
 	        format: 'xml', 
 	        interface: 'SOAP',
@@ -457,40 +474,54 @@ module CarrierQbeInsurable
 	        
 	        event.response = qbe_data[:data]
 	        event.status = qbe_data[:error] ? 'error' : 'success'
+          
+          diagnostics_hash[:event] = event if diagnostics_hash.class == ::Hash
 	        
 	        unless qbe_data[:error] # QBE Response Success
 	          
 	          set_error = false
 	          
-	          if create_qbe_rates(qbe_data[:data], split_deductible, number_insured)
+            rates = create_qbe_rates(qbe_data[:data], split_deductible, number_insured)
+            
+	          if rates
 		          
 	            @carrier_profile.data['rates_resolution']["#{ number_insured }"] = true
+              @carrier_profile.data["ho4_enabled"] = true # as long as we have rates for at least one number_insured choice, we say true now
 	            
 	            unless @carrier_profile.data['rates_resolution'].values.include? false
-	              @carrier_profile.data["ho4_enabled"] = true
 	              @carrier_profile.data["get_rates_resolved"] = true 
 	              @carrier_profile.data["get_rates_resolved_on"] = Time.current.strftime("%m/%d/%Y %I:%M %p")
 	            end
 	            
-	            @carrier_profile.save()
+	            @carrier_profile.save() unless irc_configurable_override
 	            
-	            insurable_rates.activated
-	                 					 .where("created_at < ? and number_insured = ?", start_time, number_insured)
-									 					 .update_all(:activated => false)            
+              irc.rates['rates'][number_insured] = rates      
 	            
 	            process_status[:error] = false
 	            
 							#check_carrier_process_error("qbe", false, { process: "get_qbe_rates_#{ number_insured }" })
+              if refresh_coverage_options || irc.configuration['coverage_options'].blank?
+                irc.configuration['coverage_options'] = qbe_extract_coverage_options_from_rates(rates.values.first) # options are the same for all number insured/billing strategy combos, supposedly
+              end
+              unless irc.save
+                set_error = true
+                puts "IRC FAILURE #{irc.errors.to_h}"
+                irc.rates['rates'][number_insured] = []
+                irc.configuration['coverage_options'] = {} if irc.rates['rates'].values.all?{|rate_array| rate_array.blank? }
+                set_error = true
+                @carrier_profile.data["get_rates_resolved"] = false 
+                irc.save
+              end
 	          else
-	          
-	            rates.activated
-	                 .where(number_insured: number_insured)
-	                 .update_all(:activated => false)
+            
+              irc.rates['rates'][number_insured] = []
+              irc.configuration['coverage_options'] = {} if irc.rates['rates'].values.all?{|rate_array| rate_array.blank? } # note: for index 0, rate_array will be nil instead of [] if blank
 	                 
 	            set_error = true
 	            @carrier_profile.data["get_rates_resolved"] = false 
 							# check_carrier_process_error("qbe", true, { error: qbe_data[:code], process: "get_qbe_rates_#{ number_insured }", message: qbe_data[:message] }) 
-							@carrier_profile.save()
+							@carrier_profile.save() unless irc_configurable_override
+              irc.save
 	          end
 	        	
 	        else # QBE Response Failure
@@ -523,6 +554,71 @@ module CarrierQbeInsurable
 	    # true for success, false for failure
 	    return process_status[:error] == true ? false : true
 	  end
+    
+    # Extracts IRC coverage options hash from rates array
+    def qbe_extract_coverage_options_from_rates(rates)
+      # grab the options
+      limopts = {}
+      dedopts = {}
+      optionals = {}
+      rates.each do |r|
+        if r['schedule'] == 'optional'
+          unless r['sub_schedule'] == 'policy_fee'
+            optionals[r['sub_schedule']] ||= []
+            optionals[r['sub_schedule']].push(r['individual_limit']) unless optionals[r['sub_schedule']].include?(r['individual_limit'])
+          end
+        else
+          r['coverage_limits'].each{|cov,amt| limopts[cov] ||= []; limopts[cov].push(amt) unless limopts[cov].include?(amt) }
+          r['deductibles'].each{|cov,amt| dedopts[cov] ||= []; dedopts[cov].push(amt) unless dedopts[cov].include?(amt) }
+        end
+      end
+      limopts.each{|k,v| v.sort! }
+      dedopts.each{|k,v| v.sort! }
+      # build the proper coverage options hash
+      coverage_options = (limopts.map do |name, options|
+        [
+          name,
+          {
+            'title' => name.titlecase, # This may not produce an optimal name. But it doesn't ever produce a name that isn't clear, and the translation files are used for displaying names to customers.
+            'visible' => true,
+            'requirement' => 'required',
+            'options_type' => 'multiple_choice',
+            'options' => options.map{|opt| { 'data_type' => 'currency', 'value' => opt } },
+            'category' => 'limit'
+          }
+        ]
+      end + dedopts.map do |name, options|
+        [
+          name,
+          {
+            'title' => name.titlecase,
+            'visible' => true,
+            'requirement' => 'required',
+            'options_type' => 'multiple_choice',
+            'options' => options.map{|opt| { 'data_type' => 'currency', 'value' => opt } },
+            'category' => 'deductible'
+          }
+        ]
+      end + optionals.map do |name, options|
+        ot = (options.length == 0 || (options.length == 1 && options.first == 0)) ? 'none' : 'multiple_choice'
+        [
+          name,
+          {
+            'title' => name.titlecase,
+            'visible' => true,
+            'requirement' => 'optional',
+            'options_type' => ot,
+            'options' => (ot == 'none' ? nil : options.map{|opt| { 'data_type' => 'currency', 'value' => opt } }),
+            'category' => (ot == 'none' ? 'option' : 'limit')
+          }.compact
+        ]
+      end).to_h
+      # deduce any necessary rules
+      # WARNING: no need to do this, supposedly, but maybe implement at some point?
+      # (the idea would be to look for combinations of rates that aren't in QBE's list, and dynamically generate IRC rules forbidding them; but in theory every combination is permitted, so we don't do this right now)
+      # done
+      return coverage_options
+    end
 	  
 	  # Create QBE Rates
 	  #
@@ -538,7 +634,7 @@ module CarrierQbeInsurable
 	  def create_qbe_rates(qbe_data = nil, split_deductible = false, num_base = 1)
   	  
 	    return if self.insurable_type.title != "Residential Community"
-	    @carrier = Carrier.where(title: 'Queensland Business Insurance').take
+	    @carrier = ::QbeService.carrier
 	    @carrier_profile = carrier_profile(@carrier.id)
 	    
 	    set_error = true
@@ -547,9 +643,10 @@ module CarrierQbeInsurable
 	      :error => true,
 	      :step => 'start'
 	    }
+      
+      rates = {}
 	    
 	    unless qbe_data.nil?
-	      qbe = Carrier.where(:title => "QBE").first
 	      unless qbe_data.class == Hash && 
 	             qbe_data.key?(:error) && 
 	             qbe_data.key?(:error) == true
@@ -573,18 +670,18 @@ module CarrierQbeInsurable
 	                coverage_limits = {}
 	                
 	                unless qbe_rate.attributes["covclimit"].nil?
-	                  coverage_limits["coverage_c"] = qbe_rate.attributes["covclimit"].value.to_i * 100
+	                  coverage_limits["coverage_c"] = (qbe_rate.attributes["covclimit"].value.delete(',').to_d * 100).to_i
 	                end
 	                
 	                unless qbe_rate.attributes["liablimit"].nil?
-	                  coverage_limits["liability"] = qbe_rate.attributes["liablimit"].value.to_i * 100
+	                  coverage_limits["liability"] = (qbe_rate.attributes["liablimit"].value.delete(',').to_d * 100).to_i
 	                end
 	                
 	                unless qbe_rate.attributes["medpaylimit"].nil?
-	                  coverage_limits["medical"] = qbe_rate.attributes["medpaylimit"].value.to_i * 100
+	                  coverage_limits["medical"] = (qbe_rate.attributes["medpaylimit"].value.delete(',').to_d * 100).to_i
 	                end
 	                
-	                base_deductible_value = qbe_rate.attributes["deduct_amt"].nil? ? "0" : qbe_rate.attributes["deduct_amt"].value
+	                base_deductible_value = qbe_rate.attributes["deduct_amt"].nil? ? "0" : qbe_rate.attributes["deduct_amt"].value.delete(',')
 	                
 	                deductibles = {}
 	                
@@ -592,15 +689,18 @@ module CarrierQbeInsurable
 	                  if base_deductible_value.include? "/" # if the the deductible includes a /, indicating a split must occur
 	                    split_deductibles = base_deductible_value.split("/")
 	                    
-	                    deductibles["all_peril"] = split_deductibles[0].to_i * 100
-	                    deductibles["hurricane"] = split_deductibles[1].to_i * 100
+	                    deductibles["all_peril"] = (split_deductibles[0].delete(',').to_d * 100).to_i
+	                    deductibles["hurricane"] = (split_deductibles[1].delete(',').to_d * 100).to_i
 	                    
 	                  else # if the deductible is 0
-	                    deductibles["all_peril"] = base_deductible_value.to_i * 100                    
+	                    deductibles["all_peril"] = (base_deductible_value.delete(',').to_d * 100).to_i                   
 	                  end
 	                else # if the deductible does not need to be split, e.g. not florida
-	                  deductibles["all_peril"] = base_deductible_value.to_i * 100                   
+	                  deductibles["all_peril"] = (base_deductible_value.delete(',').to_d * 100).to_i                   
 	                end
+                  
+                  coverage_limits.select!{|k,v| v != 0 }
+                  deductibles.select!{|k,v| v != 0 }
 	                                
 	                raw_schedule = qbe_rate.attributes["i"].value
 	                interval = "month"
@@ -625,45 +725,27 @@ module CarrierQbeInsurable
 	                  schedule = "optional"
 	                  sub_schedule = raw_schedule
 	                  same_price_across_the_board = true
+                  else
+                    next
 	                end
 	
 	                
 	                if paid_in_full
-	                  
-	                  rate = self.insurable_rates.new(
-	                    :schedule => schedule,
-	                    :sub_schedule => sub_schedule,
-	                    :paid_in_full => paid_in_full,
-	                    :liability_only => liability_only,
-	                    :interval => interval,
-	                    :premium => (qbe_rate.attributes["v"].value.to_i * 100),
-	                    :number_insured => num_base,
-	                    :deductibles => deductibles,
-	                    :coverage_limits => coverage_limits,
-                      :carrier => @carrier,
-                      :agency => account.agency,
-	                    :activated => true
-	                  )
-	                  
-	                  if rate.save
-	                    set_error = false          
-	                    process_status[:error] = false
-	                  else
-	                    
-	                    set_error = true
-	                    process_status[:error] = true
-	                    process_status[:step] = 'create_rate_paid_in_full'                    
-	                    pp rate.errors
-	                    
-	                    self.staff.each do |staff|
-	                      notifications.create!(
-	                          notifiable: staff, 
-	                          action: "community_rates_sync",
-	                          code: "error",
-	                          subject: "#{ name } Rate Sync Failure", 
-	                          message: "A rate has failed to sync \n#{ rate.errors.to_json.to_s }")                        
-	                    end
-	                  end
+                  
+                    rates[interval] ||= []
+                    rates[interval].push({
+                      'schedule' => schedule,
+                      'sub_schedule' => sub_schedule,
+                      'paid_in_full' => paid_in_full,
+                      'liability_only' => liability_only,
+                      'premium' => (qbe_rate.attributes["v"].value.delete(',').to_d * 100).to_i,
+                      'deductibles' => deductibles,
+                      'coverage_limits' => coverage_limits,
+                      'individual_limit' => ((qbe_rate.attributes["indvllimit"]&.value&.delete(',') || 0).to_d * 100).to_i
+                    })
+                    
+                    set_error = false          
+                    process_status[:error] = false
 	                  
 	                else
 	                  interval_options = ["month", "quarter", "bi_annual"]
@@ -671,33 +753,20 @@ module CarrierQbeInsurable
 	                  
 	                  interval_options.each do |cur_interval|
 	                    
-	                    rate = self.insurable_rates.new(
-	                      :schedule => schedule,
-	                      :sub_schedule => sub_schedule,
-	                      :paid_in_full => cur_interval == "annual" ? true : false,
-	                      :liability_only => liability_only,
-	                      :interval => cur_interval,
-	                      :premium => (qbe_rate.attributes["v"].value.to_i * 100),
-	                      :number_insured => num_base,
-	                      :deductibles => deductibles,
-	                      :coverage_limits => coverage_limits,
-	                      :carrier => @carrier,
-	                      :agency => account.agency,
-	                      :activated => true
-	                    )
-	                    
-	                    if rate.save
-	                      set_error = false
-	                      process_status[:error] = false
-	                    else
-	                      set_error = true
-	                      process_status[:error] = true
-	                      process_status[:step] = "create_rate_#{ rate.interval }" 
-	                      pp rate.errors
-	                      
-	                      self.report_rate_failure("#{ name } Rate Sync Failure", "A rate has failed to sync \n#{ rate.errors.to_json.to_s }")
-	                      
-	                    end
+                      rates[cur_interval] ||= []
+                      rates[cur_interval].push({
+                        'schedule' => schedule,
+                        'sub_schedule' => sub_schedule,
+                        'paid_in_full' => paid_in_full,
+                        'liability_only' => liability_only,
+                        'premium' => (qbe_rate.attributes["v"].value.delete(',').to_d * 100).to_i,
+                        'deductibles' => deductibles,
+                        'coverage_limits' => coverage_limits,
+                        'individual_limit' => ((qbe_rate.attributes["indvllimit"]&.value&.delete(',') || 0).to_d * 100).to_i
+                      })
+                    
+                      set_error = false          
+                      process_status[:error] = false
 	                    
 	                  end
 	                end
@@ -733,9 +802,8 @@ module CarrierQbeInsurable
 	      end      
 	    end
 	    
-	    # return bool inverse of process_status[:error], 
-	    # true for success, false for failure
-	    return process_status[:error] == true ? false : true
+      # return false for failure, rates hash (which is truthy) for success
+	    return process_status[:error] == true ? false : rates
 	  end
 
 	  def update_county_data(county_number_string)
@@ -752,7 +820,7 @@ module CarrierQbeInsurable
 	        self.carrier_settings['qbe']['county_resolution']['selected'] = county_number_string
 	        self.carrier_settings['qbe']['county_resolved_on'] = Time.current
 	        self.carrier_settings['qbe']['county_resolved'] = true
-	        return count_option['county'].titlecase
+	        return county_option['county'].downcase.titlecase
 	      end
 	    end
 	    self.errors.add(:county, "the selected county was not found")
@@ -826,4 +894,12 @@ module CarrierQbeInsurable
 	  end
 	  
 	end
+  
+  
+  # used for comparing county strings that may come from sources other than QBE
+  def qbe_standardize_county_string(county_string)
+    county_string.upcase.chomp(" COUNTY").chomp(" PARISH")
+                 .gsub(/SAINT|STREET|ROAD|MOUNT/, { "SAINT" => "ST", "STREET" => "ST", "ROAD" => "RD", "MOUNT" => "MT" })
+                 .gsub(/[^a-z]/i, '')
+  end
 end

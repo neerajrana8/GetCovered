@@ -23,6 +23,7 @@ gem 'redis', '~> 4.4.0'
 
 # Use Capistrano for deployment
 # gem 'capistrano-rails', group: :development
+
 gem 'authtrail'
 gem 'browser'
 
@@ -96,7 +97,7 @@ gem 'mini_magick'
 gem 'net-sftp', '~> 3.0.0'
 
 # PDF gems
-gem 'wkhtmltopdf-binary'
+gem 'wkhtmltopdf-binary', '0.12.6'
 gem 'wicked_pdf'
 gem "docraptor"
 gem "pdf-reader"

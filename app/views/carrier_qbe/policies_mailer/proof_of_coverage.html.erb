@@ -1,0 +1,61 @@
+<!doctype html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width" />
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <title>Get Covered | <%= @content[:subject] %> <%= t('shared.accepted')%></title>
+  <link rel="stylesheet" href="<%= Rails.application.credentials.uri[ENV["RAILS_ENV"].to_sym]["api"] %>/assets/mail.css">
+</head>
+<body class="">
+<table border="0" cellpadding="0" cellspacing="0" class="body">
+  <tr>
+    <td>&nbsp;</td>
+    <td class="container">
+      <div class="content">
+
+        <!-- START CENTERED WHITE CONTAINER -->
+        <span class="preheader"><%= @content[:subject] %> <%= @policy.number %> <%= t('shared.accepted')%></span>
+        <% @policy&.documents.each do |doc| %>
+          <% file_urls = "#{Rails.application.routes.url_helpers.rails_blob_url(doc, disposition: 'attachment', host: Rails.application.credentials[:uri][ENV['RAILS_ENV'].to_sym][:api])}" %>
+          <% attachments[doc.filename.to_s] = open(file_urls).read %>
+        <% end %>
+        <table class="main">
+
+          <!-- START MAIN CONTENT AREA -->
+          <tr>
+            <td class="wrapper">
+              <table border="0" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td>
+
+                    <p><%= raw(@content[:text]) %></p>
+
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- END MAIN CONTENT AREA -->
+        </table>
+
+        <!-- START FOOTER -->
+        <div class="footer">
+          <table border="0" cellpadding="0" cellspacing="0">
+            <tr>
+              <td class="content-block">
+                <span class="apple-link">Get Covered LLC, 270 Lafayette St, New York, NY 10012</span>
+              </td>
+            </tr>
+          </table>
+        </div>
+        <!-- END FOOTER -->
+
+        <!-- END CENTERED WHITE CONTAINER -->
+      </div>
+    </td>
+    <td>&nbsp;</td>
+  </tr>
+</table>
+</body>
+</html>

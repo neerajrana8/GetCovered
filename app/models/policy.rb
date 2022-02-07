@@ -188,6 +188,12 @@ class Policy < ApplicationRecord
     manual_cancellation_without_refunds:  8    # no qbe code
   }
 
+  enum document_status: {
+    absent: 0,
+    at_hand: 1,
+    sent: 2
+  }
+
   def current_quote
     self.policy_quotes.accepted.order('created_at desc').first
   end
@@ -296,7 +302,7 @@ class Policy < ApplicationRecord
   def issue
     case policy_application&.carrier&.integration_designation
     when 'qbe'
-      qbe_issue_policy
+      CarrierQBE::GenerateAndSendEvidenceOfInsuranceJob.perform_now(self)
     when 'qbe_specialty'
       { error: I18n.t('policy_model.no_policy_issue_for_qbe') }
     when 'crum'
