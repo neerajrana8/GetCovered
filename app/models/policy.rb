@@ -336,8 +336,8 @@ class Policy < ApplicationRecord
           end
         end
       when :early_cancellation
-        max_days_for_full_refund = (CarrierPolicyType.where(policy_type_id: self.policy_type_id, carrier_id: self.carrier_id).take&.max_days_for_full_refund || 0).days
-        if last_active_moment < (self.created_at.to_date + max_days_for_full_refund.days).end_of_day
+        max_days_for_full_refund = CarrierPolicyType.where(policy_type_id: self.policy_type_id, carrier_id: self.carrier_id).take&.max_days_for_full_refund || 0
+        if max_days_for_full_refund != 0 && last_active_moment < (self.created_at.to_date + max_days_for_full_refund.days).end_of_day
           pq.policy_premium.policy_premium_items.where(category: ['premium', 'tax']).each do |ppi|
             ppi.line_items.each do |li|
               ::LineItemReduction.create!(
