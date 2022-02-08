@@ -27,6 +27,8 @@ module CarrierQbeMasterPolicy
     end
 
     def qbe_specialty_issue_coverage(insurable, users, start_coverage)
+      to_return = false
+
       coverage = self.policies.new(
         number: "#{ self.number }-" + (self.policies.count + 1).to_s,
         effective_date: start_coverage,
@@ -38,22 +40,23 @@ module CarrierQbeMasterPolicy
       )
 
       if coverage.save!
+        to_return = true
         coverage.insurables << insurable
         users.each do |user|
           coverage.users << user
         end
       end
+
+      return to_return
     end
 
     def qbe_specialty_issue_policy
-      users.each do |user|
-        %w[evidence_of_insurance premises_liability_endorsement property_coverage_endorsement].each do |document|
-          qbe_generate_master_document(document, {
-            :@user => user,
-            :@coverage => self,
-            :@master_policy => self.policy
-          })
-        end
+      %w[evidence_of_insurance premises_liability_endorsement property_coverage_endorsement].each do |document|
+        qbe_generate_master_document(document, {
+          :@user => primary_user(),
+          :@coverage => self,
+          :@master_policy => self.policy
+        })
       end
     end
 

@@ -20,10 +20,11 @@
     table.columnContent tr { border: none; }
     table.columnContent tr td { border: none; }
 
-    ol, p { font-size: 9pt; margin: 0 0 1em; }
+    ol, p { font-size: 9pt; margin: 0 0 1em; display: inline-block; }
 
-    ol { list-style-type: upper-alpha; list-style-position:inside; }
-    ol li { display: block; padding: 0 0 1em; }
+    ol { list-style-type: upper-alpha; list-style-position:outside; display: block; width: 98%; float: right; }
+    ol li { display: list-item; padding: 0 0 1em; }
+    ol li div.list-content { float: right; }
     ol li ol { list-style-type: decimal; padding: 0 0 1em 1em;  }
 
     strong { font-weight: bold; }
@@ -39,6 +40,5 @@
     /*.contentRow .contentColumn.halfWidth { width: 49%; }*/
     .contentRow .contentColumn:first-child { padding: 0 0.5em 0 0; }
     .contentRow .contentColumn:last-child { padding: 0 0 0 0.5em; }
-
 
 </style>
