@@ -370,7 +370,7 @@ class InsurableRateConfiguration < ApplicationRecord
   # Returns an (unsaved) IRC representing the combined IRC formed by merging the entire inheritance hierarchy for some configurable
   def self.get_inherited_irc(carrier_policy_type, configurer, configurable, agency: nil, exclude: nil, union_mode: false, &blck)
     # Alternative: merge(get_hierarchy(carrier_policy_type, configurer, configurable, agency: agency).map{|ircs| merge(ircs, true) }, false)... but this won't work in union_mode since it stores arrays of all encountered values
-    hierarchy = get_hierarchy(carrier_policy_type, configurer, configurable, &blck, agency: agency, exclude: exclude, union_mode: union_mode)
+    hierarchy = get_hierarchy(carrier_policy_type, configurer, configurable, agency: agency, exclude: exclude, union_mode: union_mode, &blck)
     if union_mode
       # do a union merge of all the children
       unionized = cull_hierarchy!(copy_hierarchy(hierarchy), :parents_inclusive_all, configurer, configurable, preserve_empties: true) # cut out all IRCs for configurables >= configurable, leaving only children; preserve empties so if a configurer's entires are all destroyed, we still assign the same overridability offsets
@@ -712,7 +712,7 @@ class InsurableRateConfiguration < ApplicationRecord
     end
     # get coverage options and selection errors
     selections = selections.select{|uid, sel| sel && sel['selection'] }
-    irc = get_inherited_irc(carrier_policy_type, account || agency || carrier_policy_type.carrier, insurable, &irc_filter_block, agency: agency)
+    irc = get_inherited_irc(carrier_policy_type, account || agency || carrier_policy_type.carrier, insurable, agency: agency, &irc_filter_block)
     coverage_options = irc.annotate_options(selections)
     selection_errors = irc.get_selection_errors(selections, coverage_options, insert_invisible_requirements: true)
     valid = selection_errors.blank?
