@@ -40,6 +40,7 @@ RSpec.describe Invoice, elasticsearch: false, type: :model do
       amount: 1000,
       line_item: @invoice.line_items.first
     )
+    HandleLineItemReductionsJob.perform_now
     @invoice.reload
     created.reload
     expect(@invoice.total_due).to eq(@invoice.original_total_due - 1000)
@@ -56,6 +57,7 @@ RSpec.describe Invoice, elasticsearch: false, type: :model do
       amount: 1000,
       line_item: @invoice.line_items.first
     )
+    HandleLineItemReductionsJob.perform_now
     @invoice.reload
     created.reload
     expect(@invoice.total_due).to eq(@invoice.original_total_due - 1000)
@@ -80,6 +82,7 @@ RSpec.describe Invoice, elasticsearch: false, type: :model do
       amount: 2000,
       line_item: @invoice.line_items.first
     )
+    HandleLineItemReductionsJob.perform_now
     @invoice.reload
     created.reload
     
