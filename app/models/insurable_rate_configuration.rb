@@ -368,7 +368,7 @@ class InsurableRateConfiguration < ApplicationRecord
   
   
   # Returns an (unsaved) IRC representing the combined IRC formed by merging the entire inheritance hierarchy for some configurable
-  def self.get_inherited_irc(carrier_policy_type, configurer, configurable, &blck, agency: nil, exclude: nil, union_mode: false)
+  def self.get_inherited_irc(carrier_policy_type, configurer, configurable, agency: nil, exclude: nil, union_mode: false, &blck)
     # Alternative: merge(get_hierarchy(carrier_policy_type, configurer, configurable, agency: agency).map{|ircs| merge(ircs, true) }, false)... but this won't work in union_mode since it stores arrays of all encountered values
     hierarchy = get_hierarchy(carrier_policy_type, configurer, configurable, &blck, agency: agency, exclude: exclude, union_mode: union_mode)
     if union_mode
@@ -430,7 +430,7 @@ class InsurableRateConfiguration < ApplicationRecord
   #   blck:                   (optional) a block for extra culling; will be called with IRC as parameter, returns true to keep, false to discard
   # returns:
   #   an array (ordered from least to most specific configurer) of arrays (ordered from least to most specific configurable) of IRCs
-  def self.get_hierarchy(carrier_policy_type, configurer, configurable, &blck, agency: nil, exclude: nil, union_mode: false)
+  def self.get_hierarchy(carrier_policy_type, configurer, configurable, agency: nil, exclude: nil, union_mode: false, &blck)
     # get configurer and configurable hierarchies
     configurers = get_configurer_hierarchy(configurer, carrier_policy_type.carrier, agency: agency)
     configurables = get_configurable_hierarchy(configurable, union_mode: union_mode)
