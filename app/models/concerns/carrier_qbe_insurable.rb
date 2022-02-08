@@ -398,8 +398,7 @@ module CarrierQbeInsurable
         
         
         irc = ::InsurableRateConfiguration.where(carrier_policy_type: carrier_policy_type, configurer: @carrier, configurable: irc_configurable_override || self)
-            .find{|irc| irc_configurable_override || irc.rates['applicability'] == applicability }
-            || ::InsurableRateConfiguration.new(
+            .find{|irc| irc_configurable_override || irc.rates['applicability'] == applicability } || ::InsurableRateConfiguration.new(
           carrier_policy_type: carrier_policy_type,
           configurer: @carrier,
           configurable: irc_configurable_override || self,
