@@ -22,6 +22,7 @@ module CarrierQbePolicyApplication
       carrier_agency = CarrierAgency.where(agency_id: self.agency_id, carrier_id: self.carrier_id).take
       carrier_policy_type = CarrierPolicyType.where(carrier_id: self.carrier_id, policy_type_id: PolicyType::RESIDENTIAL_ID).take
       preferred = (unit.get_carrier_status(::QbeService.carrier_id) == :preferred)
+      community_traits = community.get_qbe_traits(force_defaults: true, extra_settings: self.extra_settings, community: community, community_profile: community_profile, community_address: address)
       # get estimate
       results = ::InsurableRateConfiguration.get_coverage_options(
         carrier_policy_type, unit, self.coverage_selections, self.effective_date, address.state == 'MO' && self.policy_users.any?{|pu| pu.spouse } ? self.users.count - 2 : self.users.count - 1, self.billing_strategy,
@@ -33,7 +34,7 @@ module CarrierQbePolicyApplication
         additional_interest_count: preferred ? nil : self.extra_settings&.[]('additional_interest').blank? ? 0 : 1,
         agency: self.agency,
         account: self.account,
-        nonpreferred_final_premium_params: community.get_qbe_traits(force_defaults: true, extra_settings: self.extra_settings, community: community, community_profile: community_profile, community_address: address)
+        nonpreferred_final_premium_params: community_traits
       )
       # make sure we succeeded
       if !results[:valid]

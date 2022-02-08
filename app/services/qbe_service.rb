@@ -73,6 +73,20 @@ class QbeService
       250 => { 'theft' => 500 }
     }
   }
+  
+  def self.get_applicability(community, traits, cip: nil)
+    # get the CIP
+    cip = community.carrier_profile(1) if cip.nil?
+    if cip.nil?
+      community.create_carrier_profile(1)
+      cip = community.carrier_profile(1)
+    end
+    # filter the traits
+    traits = traits.transform_keys{|k| k.to_s }
+    return cip.map do |k,v|
+      [k, traits.has_key?(k) ? traits[k] : v]
+    end.to_h
+  end
 
   def self.carrier_id
     1

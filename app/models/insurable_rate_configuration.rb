@@ -674,7 +674,6 @@ class InsurableRateConfiguration < ApplicationRecord
 
   # 
   def self.get_coverage_options(carrier_policy_type, insurable, selections, effective_date, additional_insured_count, billing_strategy,                 # required data
-                                &irc_filter_block,                                                                                                      # optional block that will be passed IRCs (one by one in different calls) and should return true to keep, false to discard
                                 eventable: nil, perform_estimate: true, estimate_default_on_billing_strategy_code_failure: :min,                        # execution options (note: perform_estimate should be 'final' instead of true for QBE, if you want to trigger a getMinPrem request)
                                 add_selection_fields: false,
                                 additional_interest_count: nil, agency: nil, account: insurable.class == ::Insurable ? insurable.account : nil,         # optional/overridable data
@@ -687,8 +686,13 @@ class InsurableRateConfiguration < ApplicationRecord
       insurable = insurable.parent_community
     end
     cip = (insurable.class != ::Insurable ? nil : insurable.carrier_profile(carrier_policy_type.carrier_id))
+    irc_filter_block = nil
     # perform prep
     if carrier_policy_type.carrier_id == ::QbeService.carrier_id && insurable.class == ::Insurable
+      # add irc filter block to ensure we only use IRCs with rates for the right insurable traits
+      applicability = QbeService.get_applicability(insurable, nonpreferred_final_premium_params || {}, cip: cip)
+      irc_filter_block = Proc.new{|irc| irc.configurable_type != 'Insurable' || irc.configurable_id != insurable.id || irc.rates['applicability'] == applicability }
+      # ensure we're prepared
       error = qbe_prepare_for_get_coverage_options(insurable, cip, additional_insured_count + 1, effective_date, traits_override: nonpreferred_final_premium_params, force_address_specific_rates: (eventable.class == ::PolicyQuote))
       unless error.blank?
         return {
@@ -923,7 +927,8 @@ class InsurableRateConfiguration < ApplicationRecord
 
     # traits_override is used to override the traits normally provided by the CarrierInsurableProfile, so that for nonpreferred we don't actually make a CIP with bogus default values
     # force_address_specific_rates is used to compel synchronous fetching of rates for our specific community, instead of using cached regional rates
-    def self.qbe_prepare_for_get_coverage_options(community, cip, number_insured, effective_date, traits_override: {}, force_address_specific_rates: false)
+    #   -- fasr is by defualt ON right now, because we aren't using regional rates... regional rates need to be updated to support the new "applicability" functionality
+    def self.qbe_prepare_for_get_coverage_options(community, cip, number_insured, effective_date, traits_override: {}, force_address_specific_rates: true)
       effective_date = Time.current.to_date + 1.day if effective_date.nil?
       # build CIP if none exists
       unless cip
@@ -946,11 +951,17 @@ class InsurableRateConfiguration < ApplicationRecord
         return "insurable_rate_configuration.qbe.property_info_failure"
       end
       # perform get rates if needed
-      cpt = nil
-      unless cip.data['rates_resolution']&.[](number_insured.to_s) && ::InsurableRateConfiguration.where(configurer_type: "Carrier", configurer_id: ::QbeService.carrier_id, configurable: community, carrier_policy_type: (cpt = CarrierPolicyType.where(carrier_id: QbeService.carrier_id, policy_type_id: ::PolicyType::RESIDENTIAL_ID).take)).take
-        # MOOSE WARNING: if force_address_specific_rates is true and the property is nonpreferred, we may need to refresh the rates EVEN IF THEY ALREADY EXIST (i.e. the the unless statement above diverts away from this block),
-        #   because the user-entered details could potentially change the prices... (for preferred we shouldn't be using traits_override)
-      
+      cpt = CarrierPolicyType.where(carrier_id: QbeService.carrier_id, policy_type_id: ::PolicyType::RESIDENTIAL_ID).take
+      applicability = QbeService.get_applicability(community, traits_override, cip: cip)
+      unless cip.data['rates_resolution']&.[](number_insured.to_s) &&
+            ::InsurableRateConfiguration.where(
+              configurer_type: "Carrier", configurer_id: ::QbeService.carrier_id, configurable: community, carrier_policy_type: cpt,
+            ).find{|irc| irc.rates['applicability'] == applicability && irc.rates['rates']&.[](number_insured.to_i) }
+        # begin 'unless' code here, sorry for the hideous indentation
+        if cip.data['rates_resolution']&.[](number_insured.to_s)
+          cip.data['rates_resolution'][number_insured.to_s] = false
+          cip.save
+        end
         # try strategies involving not getting the rates if we can
         do_synchronous_get = false
         if force_address_specific_rates
