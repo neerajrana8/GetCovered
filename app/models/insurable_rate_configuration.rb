@@ -368,9 +368,9 @@ class InsurableRateConfiguration < ApplicationRecord
   
   
   # Returns an (unsaved) IRC representing the combined IRC formed by merging the entire inheritance hierarchy for some configurable
-  def self.get_inherited_irc(carrier_policy_type, configurer, configurable, agency: nil, exclude: nil, union_mode: false)
+  def self.get_inherited_irc(carrier_policy_type, configurer, configurable, &blck, agency: nil, exclude: nil, union_mode: false)
     # Alternative: merge(get_hierarchy(carrier_policy_type, configurer, configurable, agency: agency).map{|ircs| merge(ircs, true) }, false)... but this won't work in union_mode since it stores arrays of all encountered values
-    hierarchy = get_hierarchy(carrier_policy_type, configurer, configurable, agency: agency, exclude: exclude, union_mode: union_mode)
+    hierarchy = get_hierarchy(carrier_policy_type, configurer, configurable, &blck, agency: agency, exclude: exclude, union_mode: union_mode)
     if union_mode
       # do a union merge of all the children
       unionized = cull_hierarchy!(copy_hierarchy(hierarchy), :parents_inclusive_all, configurer, configurable, preserve_empties: true) # cut out all IRCs for configurables >= configurable, leaving only children; preserve empties so if a configurer's entires are all destroyed, we still assign the same overridability offsets
@@ -427,14 +427,16 @@ class InsurableRateConfiguration < ApplicationRecord
   #   configurer:             an account/agency/carrier
   #   configurable:           an InsurableGeographicalCategory or an insurable
   #   agency:                 (optional) if configurer is an account, you can provide an agency to use instead of configurer.agency if desired
+  #   blck:                   (optional) a block for extra culling; will be called with IRC as parameter, returns true to keep, false to discard
   # returns:
   #   an array (ordered from least to most specific configurer) of arrays (ordered from least to most specific configurable) of IRCs
-  def self.get_hierarchy(carrier_policy_type, configurer, configurable, agency: nil, exclude: nil, union_mode: false)
+  def self.get_hierarchy(carrier_policy_type, configurer, configurable, &blck, agency: nil, exclude: nil, union_mode: false)
     # get configurer and configurable hierarchies
     configurers = get_configurer_hierarchy(configurer, carrier_policy_type.carrier, agency: agency)
     configurables = get_configurable_hierarchy(configurable, union_mode: union_mode)
     # get the insurable rate configurations
-    to_return = ::InsurableRateConfiguration.where(configurer: configurers, configurable: configurables, carrier_policy_type: carrier_policy_type)
+    to_return = ::InsurableRateConfiguration.where(configurer: configurers, configurable: configurables, carrier_policy_type: carrier_policy_type).to_a
+    to_return.select! &blck unless blck.nil?
     # sort into hierarchy (i.e. array (ordered by configurer) of arrays (ordered by configurable))
     to_return = to_return.group_by{|irc| configurers.find_index{|c| irc.configurer_id == c.id && irc.configurer_type == c.class.name } }
       .sort_by{|configurable_index, ircs| configurable_index } # makes it into an array of [k,v] pairs
@@ -672,6 +674,7 @@ class InsurableRateConfiguration < ApplicationRecord
 
   # 
   def self.get_coverage_options(carrier_policy_type, insurable, selections, effective_date, additional_insured_count, billing_strategy,                 # required data
+                                &irc_filter_block,                                                                                                      # optional block that will be passed IRCs (one by one in different calls) and should return true to keep, false to discard
                                 eventable: nil, perform_estimate: true, estimate_default_on_billing_strategy_code_failure: :min,                        # execution options (note: perform_estimate should be 'final' instead of true for QBE, if you want to trigger a getMinPrem request)
                                 add_selection_fields: false,
                                 additional_interest_count: nil, agency: nil, account: insurable.class == ::Insurable ? insurable.account : nil,         # optional/overridable data
@@ -705,7 +708,7 @@ class InsurableRateConfiguration < ApplicationRecord
     end
     # get coverage options and selection errors
     selections = selections.select{|uid, sel| sel && sel['selection'] }
-    irc = get_inherited_irc(carrier_policy_type, account || agency || carrier_policy_type.carrier, insurable, agency: agency)
+    irc = get_inherited_irc(carrier_policy_type, account || agency || carrier_policy_type.carrier, insurable, &irc_filter_block, agency: agency)
     coverage_options = irc.annotate_options(selections)
     selection_errors = irc.get_selection_errors(selections, coverage_options, insert_invisible_requirements: true)
     valid = selection_errors.blank?

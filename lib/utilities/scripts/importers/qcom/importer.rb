@@ -27,7 +27,7 @@ by_account = {}
 
 
 puts "Reading spreadsheet..."
-lines = Roo::Spreadsheet.open(Rails.root.join('lib/utilities/scripts/importers/bandb/bandb.csv').to_s)
+lines = Roo::Spreadsheet.open(Rails.root.join('lib/utilities/scripts/importers/bandb/qcom/insurables.csv').to_s)
 n = 2
 line = lines.row(n)
 while !line[0].blank?
