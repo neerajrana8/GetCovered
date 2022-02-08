@@ -41,6 +41,7 @@ class Policy < ApplicationRecord
   include CarrierPensioPolicy
   include CarrierCrumPolicy
   include CarrierQbePolicy
+  include CarrierQbeMasterPolicy
   include CarrierMsiPolicy
   include CarrierDcPolicy
   include AgencyConfiePolicy
@@ -304,7 +305,11 @@ class Policy < ApplicationRecord
     when 'qbe'
       CarrierQBE::GenerateAndSendEvidenceOfInsuranceJob.perform_now(self)
     when 'qbe_specialty'
-      { error: I18n.t('policy_model.no_policy_issue_for_qbe') }
+      if self.policy_type_id == 3
+        qbe_specialty_issue_policy()
+      else
+        { error: I18n.t('policy_model.no_policy_issue_for_qbe') }
+      end
     when 'crum'
       crum_issue_policy
     when 'msi'
