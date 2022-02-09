@@ -111,6 +111,13 @@ scope module: :public do
     end
   end
 
+  resources :policies, only: [ :index, :show ] do
+    collection do
+      post :add_coverage_proof
+      delete :delete_coverage_proof_documents
+    end
+  end
+
   post 'users/check_email', to: '/v2/check_email#user'
   post 'staffs/check_email', to: '/v2/check_email#staff'
 
