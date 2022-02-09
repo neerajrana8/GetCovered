@@ -57,13 +57,13 @@ while !line[0].blank?
   end
   position.push({
     'title' => line[UNIT_ADDRESS2],
-    'display_title' => line[UNIT_DISPLAY_NAME]
+    'display_title' => line[UNIT_DISPLAY_NAME],
+    'line' => n
   })
   # increment
   n += 1
   line = lines.row(n)
 end
-
 
 puts "Postprocessing spreadsheet data..."
 by_account.values.map{|v| v['by_community'] }.each do |x|
@@ -83,6 +83,7 @@ import_success = false
 ActiveRecord::Base.transaction do
   by_account.each do |account_id, ba|
     ba['by_community'].each do |com, bc|
+      puts "Creating community ##{bc['line']}: #{com[0]}"
       # get the community
       parmz = {}
       community = ::Insurable.get_or_create(**(parmz = {
@@ -93,8 +94,20 @@ ActiveRecord::Base.transaction do
         create_if_ambiguous: true,
         disallow_creation: false,
         communities_only: true,
-        titleless: false
+        titleless: false,
+        created_community_title: com[0]
       }.compact))
+      if (community.class == ::Insurable && (community.title != com[0] || community.primary_address.street_two != com[2])) ||
+         (community.class == ::Array && community.all?{|c| c.title != com[0] || c.primary_address.street_two != com[2] })
+        addr = Address.from_string(com.drop(1).select{|x| !x.blank? }.join(", "))
+        addr.primary = true
+        community = ::Insurable.create!(
+          insurable_id: nil,
+          title: com[0], insurable_type_id: 1, enabled: true, category: 'property',
+          account_id: account_id, confirmed: !account_id.nil?,
+          addresses: [addr]
+        )
+      end
       if community.class != ::Insurable
         errors.push "Failed to get/create community on line #{bc['line']} (title '#{com[0]}'); get-or-create returned results of type #{community.class.name}#{community.class == ::Hash ? " contents #{community.to_s}" : "" }... GOC parameters were: #{parmz}!"
         raise ActiveRecord::Rollback
@@ -113,6 +126,7 @@ ActiveRecord::Base.transaction do
       end
       # go wild
       bc['units'].each do |u|
+          puts "[com ##{bc['line']}:#{com[0]}] Creating unit #{u['line']}: #{u['title']}..."
         ::Insurable.create!(
           insurable_id: community.id,
           title: u['title'], insurable_type_id: 4, enabled: true, category: 'property',
@@ -120,12 +134,17 @@ ActiveRecord::Base.transaction do
         )
       end
       bc['by_building'].each do |bldg, bb|
+        puts "[com ##{bc['line']}:#{com[0]}] Creating building ##{bb['line']}: #{bldg[0]}..."
+        addr = Address.from_string(bldg.select{|y| !y.blank? }.join(", "))
+        addr.primary = true
         building = ::Insurable.create!(
           insurable_id: community.id,
           title: bldg[0], insurable_type_id: 7, enabled: true, category: 'property',
-          account_id: account_id, confirmed: !account_id.nil?
+          account_id: account_id, confirmed: !account_id.nil?,
+          addresses: [addr]
         )
         bb['units'].each do |u|
+          puts "[com ##{bc['line']}:#{com[0]}][bldg ##{bb['line']}:#{bldg[0]}] Creating unit #{u['line']}: #{u['title']}..."
           ::Insurable.create!(
             insurable_id: building.id,
             title: u['title'], insurable_type_id: 4, enabled: true, category: 'property',
