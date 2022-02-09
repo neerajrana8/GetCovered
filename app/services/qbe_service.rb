@@ -83,7 +83,7 @@ class QbeService
     end
     # filter the traits
     traits = traits.transform_keys{|k| k.to_s }
-    return cip.map do |k,v|
+    return cip.traits.map do |k,v|
       [k, traits.has_key?(k) ? traits[k] : v]
     end.to_h
   end
