@@ -691,7 +691,7 @@ class InsurableRateConfiguration < ApplicationRecord
     if carrier_policy_type.carrier_id == ::QbeService.carrier_id && insurable.class == ::Insurable
       # add irc filter block to ensure we only use IRCs with rates for the right insurable traits
       applicability = QbeService.get_applicability(insurable, nonpreferred_final_premium_params || {}, cip: cip)
-      irc_filter_block = Proc.new{|irc| irc.configurable_type != 'Insurable' || irc.configurable_id != insurable.id || irc.rates['applicability'] == applicability }
+      irc_filter_block = Proc.new{|irc| irc.configurable_type != 'Insurable' || irc.configurable_id != insurable.id || irc.configurer_type != 'Carrier' || irc.configurer_id != ::QbeService.carrier_id || irc.rates['applicability'] == applicability }
       # ensure we're prepared
       error = qbe_prepare_for_get_coverage_options(insurable, cip, additional_insured_count + 1, effective_date, traits_override: nonpreferred_final_premium_params, force_address_specific_rates: (eventable.class == ::PolicyQuote))
       unless error.blank?
@@ -927,8 +927,9 @@ class InsurableRateConfiguration < ApplicationRecord
 
     # traits_override is used to override the traits normally provided by the CarrierInsurableProfile, so that for nonpreferred we don't actually make a CIP with bogus default values
     # force_address_specific_rates is used to compel synchronous fetching of rates for our specific community, instead of using cached regional rates
-    #   -- fasr is by defualt ON right now, because we aren't using regional rates... regional rates need to be updated to support the new "applicability" functionality
-    def self.qbe_prepare_for_get_coverage_options(community, cip, number_insured, effective_date, traits_override: {}, force_address_specific_rates: true)
+    #   -- fasr is forced ON right now, because we aren't using regional rates... regional rates need to be updated to support the new "applicability" functionality
+    def self.qbe_prepare_for_get_coverage_options(community, cip, number_insured, effective_date, traits_override: {}, force_address_specific_rates: false)
+      force_address_specific_rates = true # MOOSE WARNING: see note above. need to update regional system before allowing this to work.
       effective_date = Time.current.to_date + 1.day if effective_date.nil?
       # build CIP if none exists
       unless cip
