@@ -11,7 +11,7 @@ UNIT_COUNTY = 5
 UNIT_STATE = 6
 UNIT_ZIP = 7
 COMMUNITY_YEAR_BUILT = 8
-COMMUNITY_NAME = 9
+COMMUNITY_TITLE = 9
 UNIT_DISPLAY_NAME = 10
 COMMUNITY_ADDRESS1 = 11
 COMMUNITY_ADDRESS2 = 12
@@ -66,12 +66,14 @@ end
 
 
 puts "Postprocessing spreadsheet data..."
-by_account.values.map{|v| v['by_community'] }.each do |com, bc|
-  if !bc['by_building'].blank? && !bc['units'].blank?
-    bc['by_building'][
-      com[1], com[3], com[4], com[5]
-    ] = { 'line' => bc['line'], 'units' => bc['units'] }
-    bc['units'] = []
+by_account.values.map{|v| v['by_community'] }.each do |x|
+  x.each do |com, bc|
+    if !bc['by_building'].blank? && !bc['units'].blank?
+      bc['by_building'][
+        com[1], com[3], com[4], com[5]
+      ] = { 'line' => bc['line'], 'units' => bc['units'] }
+      bc['units'] = []
+    end
   end
 end
 
