@@ -37,7 +37,7 @@ while !line[0].blank?
     [
       line[COMMUNITY_TITLE],
       line[COMMUNITY_ADDRESS1],
-      line[COMMUNITY_ADDRESS2],
+      !line[COMMUNITY_ADDRESS2].blank? && (0..9).any?{|d| d.to_s == line[COMMUNITY_ADDRESS2][0] } ? "Unit #{line[COMMUNITY_ADDRESS2]}" : line[COMMUNITY_ADDRESS2],
       line[COMMUNITY_CITY],
       line[COMMUNITY_STATE],
       zipper.call(line[COMMUNITY_ZIP])
@@ -70,7 +70,7 @@ by_account.values.map{|v| v['by_community'] }.each do |x|
   x.each do |com, bc|
     if !bc['by_building'].blank? && !bc['units'].blank?
       bc['by_building'][
-        com[1], com[3], com[4], com[5]
+        [com[1], com[3], com[4], com[5]]
       ] = { 'line' => bc['line'], 'units' => bc['units'] }
       bc['units'] = []
     end
@@ -84,7 +84,8 @@ ActiveRecord::Base.transaction do
   by_account.each do |account_id, ba|
     ba['by_community'].each do |com, bc|
       # get the community
-      community = ::Insurable.get_or_create(**{
+      parmz = {}
+      community = ::Insurable.get_or_create(**(parmz = {
         account_id: account_id,
         address: com.drop(1).select{|x| !x.blank? }.join(", "),
         unit: false,
@@ -93,9 +94,9 @@ ActiveRecord::Base.transaction do
         disallow_creation: false,
         communities_only: true,
         titleless: false
-      }.compact)
+      }.compact))
       if community.class != ::Insurable
-        errors.push "Failed to get/create community on line #{bc['line']} (title '#{com[0]}'); get-or-create returned results of type #{community.class.name}#{community.class == ::Hash ? " contents #{community.to_s}" : ""}!"
+        errors.push "Failed to get/create community on line #{bc['line']} (title '#{com[0]}'); get-or-create returned results of type #{community.class.name}#{community.class == ::Hash ? " contents #{community.to_s}" : "" }... GOC parameters were: #{parmz}!"
         raise ActiveRecord::Rollback
       elsif !community.account_id.nil? && community.account_id != account_id
         errors.push "Found community on line #{bc['line']} (title '#{com[0]}'), but already belongs to account ##{community.account_id} (#{community.account&.title})!"
@@ -114,20 +115,20 @@ ActiveRecord::Base.transaction do
       bc['units'].each do |u|
         ::Insurable.create!(
           insurable_id: community.id,
-          title: u['title'], insurable_type: 4, enabled: true, category: 'property',
+          title: u['title'], insurable_type_id: 4, enabled: true, category: 'property',
           account_id: account_id, confirmed: !account_id.nil?
         )
       end
       bc['by_building'].each do |bldg, bb|
         building = ::Insurable.create!(
           insurable_id: community.id,
-          title: bldg[0], insurable_type: 7, enabled: true, category: 'property',
+          title: bldg[0], insurable_type_id: 7, enabled: true, category: 'property',
           account_id: account_id, confirmed: !account_id.nil?
         )
         bb['units'].each do |u|
           ::Insurable.create!(
             insurable_id: building.id,
-            title: u['title'], insurable_type: 4, enabled: true, category: 'property',
+            title: u['title'], insurable_type_id: 4, enabled: true, category: 'property',
             account_id: account_id, confirmed: !account_id.nil?
           )
         end
