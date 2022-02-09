@@ -11,17 +11,19 @@ ActiveRecord::Base.transaction do
 @residential_unit_insurable_type = InsurableType.find(4)
 @succeeded = false
 
+@zipper = Proc.new{|zip| tr = zip.strip.split("-")[0]; "#{(0...(5 - tr.length)).map{|n| "0"}.join("")}#{tr}" }
+
 # create communities/units from spreadsheet
 puts "Importing properties from spreadsheet..."
 lines = Roo::Spreadsheet.open(Rails.root.join('lib/utilities/scripts/importers/bandb/bandb.csv').to_s)
 n = 2
 line = lines.row(n)
 while !line[0].blank?
-  address = Address.from_string("#{line[2].strip.titleize}, #{line[4].strip.titleize}, #{line[6].strip.upcase} #{line[7].strip.split("-")[0]}")
+  address = Address.from_string("#{line[2].strip.titleize}, #{line[4].strip.titleize}, #{line[6].strip.upcase} #{@zipper.call(line[7])}")
   # get or create community
   community = ::Insurable.get_or_create(**{
     account_id: line[0].to_i,
-    address: "#{line[2].strip.titleize}, #{line[4].strip.titleize}, #{line[6].strip.upcase} #{line[7].strip.split("-")[0]}",
+    address: "#{line[2].strip.titleize}, #{line[4].strip.titleize}, #{line[6].strip.upcase} #{@zipper.call(line[7])}",
     unit: false,
     insurable_id: nil,
     create_if_ambiguous: true,
@@ -66,7 +68,7 @@ while !line[0].blank?
   # handle unit situation
   unit = ::Insurable.get_or_create(**{
     account_id: line[0].to_i,
-    address: "#{line[2].strip.titleize}, #{line[4].strip.titleize}, #{line[6].strip.upcase} #{line[7].strip.split("-")[0]}",
+    address: "#{line[2].strip.titleize}, #{line[4].strip.titleize}, #{line[6].strip.upcase} #{@zipper.call(line[7])}",
     unit: line[3].blank? ? true : line[3],
     insurable_id: community.id,
     create_if_ambiguous: true,

@@ -68,6 +68,10 @@
             via: "get",
             defaults: { recordable_type: Agency }
           get 'branding_profile'
+          
+          get "policy-types",
+            to: "agencies#get_policy_types",
+            via: "get"
         end
 
         collection do

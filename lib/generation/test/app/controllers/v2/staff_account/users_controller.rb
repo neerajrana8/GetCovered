@@ -5,13 +5,13 @@
 module V2
   module StaffAccount
     class UsersController < StaffAccountController
-      
+
       before_action :set_user,
         only: [:update, :show]
-            
+
       before_action :set_substrate,
         only: [:create, :index]
-      
+
       def index
         if params[:short]
           super(:@users, :profile)
@@ -19,17 +19,18 @@ module V2
           super(:@users, :profile)
         end
       end
-      
+
       def show
       end
-      
+
       def create
         if create_allowed?
           @user = @substrate.new(create_params)
           # remove password issues from errors since this is a Devise model
           @user.valid? if @user.errors.blank?
-          @user.errors.messages.except!(:password)
-          if !@user.errors.any? && @user.invite_as!(current_staff)
+          #because it had FrozenError (can't modify frozen Hash: {:password=>["can't be blank"]}):
+          #@user.errors.messages.except!(:password)
+          if (!@user.errors.any?|| only_password_blank_error?(@user.errors) ) && @user.invite_as!(current_staff)
             render :show,
               status: :created
           else
@@ -41,7 +42,7 @@ module V2
             status: :unauthorized
         end
       end
-      
+
       def update
         if update_allowed?
           if @user.update_as(current_staff, update_params)
@@ -56,26 +57,30 @@ module V2
             status: :unauthorized
         end
       end
-      
-      
+
+
       private
-      
+
+        def only_password_blank_error?(user_errors)
+          user_errors.messages.keys == [:password]
+        end
+
         def view_path
           super + "/users"
         end
-        
+
         def create_allowed?
           true
         end
-        
+
         def update_allowed?
           true
         end
-        
+
         def set_user
           @user = access_model(::User, params[:id])
         end
-        
+
         def set_substrate
           super
           if @substrate.nil?
@@ -95,7 +100,7 @@ module V2
           )
           return(to_return)
         end
-        
+
         def update_params
           return({}) if params[:user].blank?
           params.require(:user).permit(
@@ -106,7 +111,7 @@ module V2
             ]
           )
         end
-        
+
         def supported_filters(called_from_orders = false)
           @calling_supported_orders = called_from_orders
           {
@@ -116,7 +121,7 @@ module V2
         def supported_orders
           supported_filters(true)
         end
-        
+
     end
   end # module StaffAccount
 end

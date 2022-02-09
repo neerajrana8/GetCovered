@@ -27,9 +27,9 @@ module Reports
 
         csv << [
           '', '', '', '',
-          range_start.yesterday.to_date, '', '', '', '', '', '', '', '', '',
-          "(#{(range_start - 7.days).to_date}  - #{range_start.yesterday.to_date})", '', '', '', '', '', '', '', '', '',
-          "(#{(range_start - 30.days).to_date} - #{range_start.yesterday.to_date})", '', '', '', '', '', '', '', '', ''
+          range_start_edt.yesterday.to_date, '', '', '', '', '', '', '', '', '',
+          "(#{(range_start - 7.days).to_date}  - #{range_start_edt.yesterday.to_date})", '', '', '', '', '', '', '', '', '',
+          "(#{(range_start - 30.days).to_date} - #{range_start_edt.yesterday.to_date})", '', '', '', '', '', '', '', '', ''
         ]
         csv << [
           '', '', '', '',
@@ -72,7 +72,7 @@ module Reports
 
     def generate_csv
       document_title =
-        "#{reportable&.title || 'All partners'}-Daily-Report-#{range_start.strftime('%B %-d %Y')}.csv".downcase.tr(' ', '-')
+        "#{reportable&.title || 'All partners'}-Daily-Report-#{range_start_edt.strftime('%B %-d %Y')}.csv".downcase.tr(' ', '-')
 
       save_path = Rails.root.join('tmp', document_title)
 
@@ -84,6 +84,10 @@ module Reports
     end
 
     private
+
+    def range_start_edt
+      @range_start_edt ||= range_start.in_time_zone('Eastern Time (US & Canada)')
+    end
 
     def daily_sales_columns
       {
@@ -133,18 +137,18 @@ module Reports
         'yesterday' =>
           DailySales.find_by(
             reportable: line_reportable,
-            range_start: range_start.yesterday.all_day,
-            range_end: range_start.yesterday.all_day
+            range_start: range_start_edt.yesterday.all_day,
+            range_end: range_start_edt.yesterday.all_day
           )&.data,
         'prior_seven_days' => DailySales.find_by(
           reportable: line_reportable,
-          range_start: (range_start - 7.days).all_day,
-          range_end: range_start.yesterday.all_day
+          range_start: (range_start_edt - 7.days).all_day,
+          range_end: range_start_edt.yesterday.all_day
         )&.data,
         'prior_thirty_days' => DailySales.find_by(
           reportable: line_reportable,
-          range_start: (range_start - 30.days).all_day,
-          range_end: range_start.yesterday.all_day
+          range_start: (range_start_edt - 30.days).all_day,
+          range_end: range_start_edt.yesterday.all_day
         )&.data
       }
     end

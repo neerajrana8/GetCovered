@@ -5,7 +5,6 @@ module Reports
     def perform
       @range_start = Time.zone.now
 
-
       Agency.enabled.each do |agency|
         emails_for_reportable(agency)
 
@@ -27,15 +26,14 @@ module Reports
 
     def emails_for_reportable(reportable)
       recipients =
-        if Rails.env == 'production'
-          [
-            reportable.owner&.profile&.contact_email || reportable.owner&.email,
-            reportable.contact_info['contact_email']
-          ].uniq.compact
-        else
-          ['testing@getcovered.io', 'ivaniln@nitka.com']
-        end
+        owner_email =
+          if reportable.owner.present? && permitted?(reportable.owner, 'daily_sales_report')
+            reportable.owner.profile&.contact_email || reportable.owner.email
+          end
+        reportable_email =
+          (reportable.contact_info['contact_email'] if permitted?(reportable, 'daily_sales_report'))
 
+        [owner_email, reportable_email].uniq.compact
 
       if recipients.any?
         report_path =

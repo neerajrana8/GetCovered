@@ -1,413 +1,418 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8">
-    
-    <title>Evidence of Insurance</title>
-    <!-- SET: STYLESHEET -->
-    <style>
-      /*====================================== reset.css is here ========================================*/
-      *{margin:0; padding:0; box-sizing:border-box; }
-      table {	border-collapse:collapse; border-spacing:0;}
-      fieldset,img{border:0;}
-      address,caption,cite,code,dfn,em,strong,th,var {font-style:normal; font-weight:normal; }
-      ol,ul { list-style:none;}
-      caption,th {text-align:left;}
-      h1,h2,h3,h4,h5,h6 {	font-size:100%;	font-weight:bold;}
-      q:before,q:after {content:'';}
-      abbr,acronym { border:0;}
-      .clear{clear:both; font-size:1px;line-height:1px; display:block; height:0;}
-      .clearfix:after{content:"";display:block;clear:both;}
-      .last	{margin:0 !important;}
-      .pad_last{padding:0 !important;}
-      .no_bg {background:none !important;}
-      .no_bor{border:0 none !important; }
-      header,nav,section,article,aside,footer,hgroup,figure {display: block; }
-      /**************************************************************************************/
-      a {color:#000; text-decoration:none; outline:0 none !important; }
-      h1 {font-size:24px;color: #000}
-      h2 {font-size:8.04px;color: #000;font-weight: 700}
-      h3 {font-size:7.91px;color: #000;font-weight: 700;}
-      h4 {font-size:6px;color: #000;font-weight: 700}
-      h5 {font-size:5.88px;color: #000;font-weight: 700}
-      h6 {font-size:14px;color: #000;font-weight: 700}
-      p {font-size: 12px;color: #000}
-      /*---------------------------------------------------*/
-      html {}
-      body {color:#b1b1b1; font-family:"Arial", Verdana, Tahoma; font-size:12px;}
-      .flt_lt {float:left; display:inline;}
-      .flt_rt {float:right; display:inline;}
-      
-      /*-----------LayOut Start here-----------------------*/
-      .wrapper									{width: 612px; margin:0 auto;}
-      .container									{width:552px; margin:0 auto;}
-      
-      .head_section {padding: 10px 0 0 0}
-      .logo {width: 453px;float: left}
-      .logo a {float: left}
-      .logo h1 {font-size: 14.04px;line-height: 16.04px;font-weight: 700;text-align: center;padding: 12px 0 0 0;}
-      .date_sec {width: 99px;border: 1px solid #000;float: left;text-align: center;padding: 10px 0 8px 0}
-      .date_sec h4 {font-weight: 700;}
-      .date_sec h3 {font-weight: 400}
-      .evid_main_blk {border: 1px solid #000;margin: 0 0 10px 0}
-      .para_1 p {font-size: 7.91px;line-height: 9.91px;font-weight: 700;padding: 1px 3px}
-      .para_1 {border-bottom: 1px solid #000;}
-      .agency_main {width: 50%}
-      .agency_left {width: 93px;padding: 2px 3px 2px 3px;}
-      .agency_right {width: 182px;border: 1px solid
-      #000;border-top: none;border-right: none;padding: 1px 0 0 3px;}
-      .agency_right h4 {font-weight: 700;}
-      .agency_right h4 span {font-size: 5.11px;font-weight: 700}
-      .agency_right h2 {font-weight: normal;}
-      .agency_left h4 {font-weight: 700;padding: 0 0 10px 0}
-      .agency_left h2 {font-weight: normal;padding: 0 0 0 5px;}
-      .agency_left address {font-size: 8.04px;color: #000;padding: 0 0 0 5px}
-      .fax_in h4 {font-weight: 700;}
-      .fax_in h4 span {font-size: 8.01px;font-weight: normal;padding: 0 0 0 3px;}
-      .fax_in {border-bottom: 1px solid #000;border-top: 1px solid #000;padding: 1px 3px;}
-      .code_in .code {width: 35%;padding: 1px 0 1px 3px;}
-      .code_in .sub_code {width: 65%}
-      .code h4 {font-weight: 700}
-      .code h2 {font-weight: normal}
-      .sub_code h4 {font-weight: 700}
-      .code_in {border-bottom: 1px solid #000}
-      .cust_id h4 {font-weight: 700;}
-      .cust_id span {font-size: 8.04px;font-weight: normal;padding: 0 0 0 3px;}
-      .cust_id {padding: 1px 0 1px 3px;border-bottom: 1px solid #000;}
-      .insured_in h4, .name_left h4 {font-weight: 700; padding: 0 0 10px 0}
-      .insured_in address, .name_left address {color: #000;font-size: 8.04px;font-weight: normal;padding: 0 0 0 5px}
-      .insured_in h2, .name_left h2 {font-weight: normal;padding: 0 0 0 5px;}
-      .insured_in {padding: 0 0 15px 3px;}
-      .company_main {width: 50%;border-left: 1px solid #000}
-      .comp_in {padding: 0 0 0px 3px;border-bottom: 1px solid #000;}
-      .comp_in h4 {font-weight: 700;padding: 0 0 6px 0;}
-      .comp_in address {font-weight: normal;font-size: 8.04px;color: #000;padding: 0 0 8px 20px;}
-      .comp_in h2 {padding: 0 0 8px 0;font-weight: normal;}
-      .loan_left {width: 50%;padding: 1px 0 0 3px;}
-      .loan_right {width: 50%;padding: 1px 0 0 0}
-      .loan_right span {font-size: 8.04px;color: #000;font-weight: normal}
-      .loan_in {border-bottom: 1px solid #000}
-      .effect_in {padding: 0px 0 0 3px;border-bottom: 1px solid #000}
-      .eff_date {width: 25%}
-      .exp_date {width: 25%}
-      .cross {width: 6%;border-left: 1px solid #000;border-right: 1px solid #000;padding: 6px 0 6.5px 5px}
-      .conti_in {width: 44%}
-      .conti_in h4 {margin: 0px 0 0 5px}
-      .effect_in h4 {padding: 1px 0 0 0}
-      .exp_date span {font-size: 8.04px;color: #000}
-      .eff_date span {font-size: 8.04px;color: #000}
-      .prior {border-bottom: 1px solid #000;padding: 1px 0 0 3px;}
-      .empty {border-left: 0.5px solid #000;font-size: 10px;line-height: 12px}
-      .property_main_blk {border: 1px solid #000;margin: 0 0 10px 0}
-      .prop_loca address {font-size: 8.04px;color: #000;padding: 0 0 0 5px}
-      .prop_loca h4 {padding: 0 0 10px 0}
-      .prop_loca {padding: 1px 0 8px 3px;border-bottom: 1px solid #000;}
-      .prop_cont h2 {font-weight: normal}
-      .prop_cont {padding: 1px 4px 0 3px;}
-      
-      .coverage_main_blk {border: 1px solid #000;margin: 0 0 10px 0}
-      .coverage_in {width: 60%}
-      .amount_in {width: 20%}
-      .deduct_in {width: 20%}
-      .coverage_in h4 {text-align: center;border-right: 1px solid #000;padding: 0 0 3px 0;border-bottom: 1px solid #000}
-      .amount_in h4 {text-align: center;border-right: 1px solid #000;padding: 0 0 3px 0;border-bottom: 1px solid #000;}
-      .deduct_in h4 {text-align: center;padding: 0 0 3px 0;border-bottom: 1px solid #000}
-      .coverage_in h2 {border-bottom: 1px solid #000;border-right: 1px solid #000; padding: 0 0 2px 10px;font-weight: normal}
-      .last_br_btm {border-bottom: none !important}
-      .last_br_rt {border-right: none !important}
-      .amount_in h2 {border-bottom: 1px solid #000;border-right: 1px solid #000;font-weight: normal;padding: 0 5px 2px 0;text-align: right}
-      .deduct_in h2 {border-bottom: 1px solid #000;border-right: 1px solid #000;font-weight: normal;padding: 0 5px 2px 0;text-align: right}
-      
-      .remarks_head span {}
-      .premium_in {border: 1px solid #000;padding: 1px 0 5px 3px;margin: 0 0 3px 0;}
-      .premium_in h2 {font-weight: normal}
-      .cancel_in {border: 1px solid #000;padding: 1px 0 0 3px;margin: 0 0 3px 0}
-      .add_main_blk {border: 1px solid #000;margin: 0 0 96px 0}
-      .name_left {width: 50%;padding: 0 0 0 3px;}
-      .sign_blk {width: 50%;border-left: 1px solid #000}
-      .close h2 {font-weight: normal;padding: 2px 0 3px 4px;}
-      .pm_in h3 {font-weight: normal;padding: 1px 0 0px 3px;}
-      .close {border-right: 1px solid #000;width: 6%;}
-      .pm_in {width: 44%}
-      .emp1 {width: 6%;border-left: 1px solid #000;border-right: 1px solid #000}
-      .emp2 {width: 44%}
-      .last_loan {border-bottom: 1px solid #000;padding: 0 0 3px 2px;border-top: 1px solid #000 }
-      .auth figure img {margin: 2px 69px}
-      .auth h4 {padding: 0 0 0 3px}
-      .acord_text p {display: inline-block;font-size: 8.04px;font-weight: 700;width: 50%;float: left}
-      .copy_right p {display: inline-block;font-size: 8.04px;font-weight: 700;width: 50%;float: left;text-align: right}
-      .footer_cont p {font-size: 8.04px;text-align: center;font-weight: 700}
-      footer {padding: 0 0 36px 0}
-      
-      /* -------Don't Remove this---------------*/
-      input[type="text"], input[type="password"], input[type="datetime"], input[type="datetime-local"], input[type="date"], input[type="month"], input[type="time"], input[type="week"], input[type="number"], input[type="email"], input[type="url"], input[type="search"], input[type="tel"], input[type="color"], textarea, button, select {
-          -webkit-appearance: none; /*Safari/Chrome*/
-          -moz-appearance: none; /*Firefox*/
-          -ms-appearance: none; /*IE*/
-          -o-appearance: none; /*Opera*/
-          appearance: none;
-          -webkit-border-radius: 0; 
-      }      
-    </style>
-  </head>
-  <body>
-    <!-- wrapper starts -->
-    <div class="wrapper">
-      <div class="container">
-        <div class="head_section">
-          <div class="logo">
-            <a href="#">
-            <figure>
-              <img alt="logo" height="31" src="<%= Rails.root.join("public", "assets", "logo.png").to_s %>" width="71">
-            </figure></a>
-            <h1>EVIDENCE OF PERSONAL PROPERTY INSURANCE</h1>
-          </div>
-          <div class="date_sec last_br_btm">
-            <h4>DATE(DD/MM/YYYY)</h4>
-            <h3><%= Time.current.strftime("%m/%d/%Y") %></h3>
-          </div>
-          <div class="clearfix"></div>
-        </div>
-        <div class="evid_main_blk">
-          <div class="para_1">
-            <p>THIS EVIDENCE OF PROPERTY INSURANCE IS ISSUED AS A MATTER OF INFORMATION ONLY AND CONFERS NO RIGHTS UPON THE ADDITIONAL INTEREST NAMED BELOW. THIS EVIDENCE DOES NOT AFFIRMATIVELY OR NEGATIVELY AMEND, EXTEND OR ALTER THE COVERAGE AFFORDED BY THE POLICIES BELOW. THIS EVIDENCE OF INSURANCE DOES NOT CONSTITUTE A CONTRACT BETWEEN THE ISSUING INSURER(S), AUTHORIZED REPRESENTATIVE OR PRODUCER, AND THE ADDITIONAL INTEREST.</p>
-          </div>
-          <div class="agency_main flt_lt">
-            <div class="agency_left flt_lt">
-              <h4>AGENCY</h4>
-              <h2><%= @agency.contact_info["legal_name"] %></h2>
-              <address>
-                <%= @address.combined_street_address %> <%= @address.street_two %><br>
-                <%= @address.city %>, <%= @address.state %>, <%= @address.zip_code %>
-              </address>
-            </div>
-            <div class="agency_right flt_lt">
-              <h4>PHONE(<span>A/C, No, Ext</span>):</h4>
-              <h2><%= @agency.contact_info["phone"] %></h2>
-            </div>
-            <div class="clearfix"></div>
-            <div class="fax_in">
-              <h4>FAX (A/C No Ext):<span><%= @agency.contact_info["fax"] %></span></h4>
-              <h4>EMAIL ADDRESS:<span><%= @agency.contact_info["email"] %></span></h4>
-            </div>
-            <div class="code_in clearfix">
-              <div class="code flt_lt">
-                <h4>CODE:</h4>
-                <h2><%= @carrier_agency.external_carrier_id %></h2>
-              </div>
-              <div class="sub_code flt_lt">
-                <h4>SUBCODE:</h4>
-              </div>
-            </div>
-            <div class="cust_id">
-              <h4>AGENCY CUSTOMER ID #:<span><%= @policy.primary_user.qbe_id %></span></h4>
-            </div>
-            <div class="insured_in">
-              <h4>INSURED</h4>
-              <h2><%= @policy.primary_user.profile.full_name %></h2>
-              <address>
-                <%= @policy.primary_insurable.primary_address.combined_street_address %> Apt. <br>
-                <%= @policy.primary_insurable.primary_address.city %>, <%= @policy.primary_insurable.primary_address.state %>, <%= @policy.primary_insurable.primary_address.combined_zip_code() %>
-              </address>
-              <% unless @policy.users.nil? %>
-              <h2>
-                Additional Insured: 
-                <% @policy.users.each do |u, index| %>
-                <%= u.profile.full_name %><%= ", " if index == @policy.users.count %>
-                <% end %>
-              </h2>
-              <% end %>
-            </div>
-          </div>
-          <div class="company_main flt_lt">
-            <div class="comp_in">
-              <h4>COMPANY</h4>
-              <address>
-                Praetorian Insurance Company<br>
-                One General Drive<br>
-                Sun Prairie, WI 53596
-              </address>
-              <h2>Please remit payment, including policy number, to:</h2>
-              <address>
-                QBE<br>
-                PO Box 3109<br>
-                Milwaukee, WI 53201-3109
-              </address>
-            </div>
-            <div class="loan_in clearfix">
-              <div class="loan_left flt_lt">
-                <h4>LOAN NUMBER</h4>
-              </div>
-              <div class="loan_right flt_lt">
-                <h4>POLICY NUMBER</h4><span><%= @policy.number %></span>
-              </div>
-            </div>
-            <div class="effect_in clearfix">
-              <div class="eff_date flt_lt">
-                <h4>EFFECTIVE DATE</h4><span><%= @policy.effective_date.strftime("%m/%d/%Y") %></span>
-              </div>
-              <div class="exp_date flt_lt">
-                <h4>EXPIRATION DATE</h4><span><%= @policy.expiration_date.strftime("%m/%d/%Y") %></span>
-              </div>
-              <div class="cross flt_lt">
-                <h2><%= @policy.auto_renew == true ? "X" : raw("&nbsp;") %></h2>
-              </div>
-              <div class="conti_in flt_lt">
-                <h4>CONTINUED UNTIL<br>
-                TERMINATED IF CHECKED</h4>
-              </div>
-            </div>
-            <div class="prior">
-              <h4>THIS REPLACES PRIOR EVIDENCE DATED:</h4>
-            </div>
-            <div class="empty">
-              &nbsp;
-            </div>
-          </div>
-          <div class="clearfix"></div>
-        </div>
-        <div class="prop_head">
-          <h2>PROPERTY INFORMATION</h2>
-        </div>
-        <div class="property_main_blk">
-          <div class="prop_loca">
-            <h4>LOCATION/DESCRIPTION</h4>
-            <address>
-              <%= @policy.primary_insurable.primary_address.combined_street_address %> Apt. <br>
-              <%= @policy.primary_insurable.primary_address.city %>, <%= @policy.primary_insurable.primary_address.state %>, <%= @policy.primary_insurable.primary_address.combined_zip_code() %>
-            </address>
-          </div>
-          <div class="prop_cont">
-            <h2>THE POLICIES OF INSURANCE LISTED BELOW HAVE BEEN ISSUED TO THE INSURED NAMED ABOVE FOR THE POLICY PERIOD INDICATED. NOTWITHSTANDING ANY REQUIREMENT, TERM OR CONDITION OF ANY CONTRACT OR OTHER DOCUMENT WITH RESPECT TO WHICH THIS EVIDENCE OF PROPERTY INSURANCE MAY BE ISSUED OR MAY PERTAIN, THE INSURANCE AFFORDED BY THE POLICIES DESCRIBED HEREIN IS SUBJECT TO ALL THE TERMS, EXCLUSIONS AND CONDITIONS OF SUCH POLICIES. LIMITS SHOWN MAY HAVE BEEN REDUCED BY PAID CLAIMS.</h2>
-          </div>
-        </div>
-        <div class="coverage_head">
-          <h2>COVERAGEINFORMATION</h2>
-        </div>
-        <div class="coverage_main_blk clearfix">
-          <div class="coverage_in flt_lt">
-            <h4>COVERAGE/PERIL/FORMS</h4>
-            <h2>&nbsp;</h2>
-            <h2>C - Personal Property</h2>
-            <h2>Wind/Hail Deductible</h2>
-            <h2>D - Loss of Use</h2>
-            <h2>E - Personal Liability (Limit)</h2>
-            <h2 <% if @policy.insurable_rates.optional.nil? %>class="last_br_btm"<% end %>>F - Medical Payments (Limit)</h2>
-            <% unless @policy.insurable_rates.optional.nil? %>
-            <% @policy.insurable_rates.optional.each do |rate, index| %>
-            <% unless rate.sub_schedule == 'policy_fee' %>
-            <h2 <% if index == (@policy.insurable_rates.optional.count - 2) %>class="last_br_btm"<% end %>><%= rate.sub_schedule.humanize %></h2>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>QBE Master Policy Evidence of Insurance</title>
+  <style>
+      /* http://meyerweb.com/eric/tools/css/reset/
+         v2.0 | 20110126
+         License: none (public domain)
+      */
+
+      html, body, div, span, applet, object, iframe,
+      h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+      a, abbr, acronym, address, big, cite, code,
+      del, dfn, em, img, ins, kbd, q, s, samp,
+      small, strike, strong, sub, sup, tt, var,
+      b, u, i, center,
+      dl, dt, dd, ol, ul, li,
+      fieldset, form, label, legend,
+      table, caption, tbody, tfoot, thead, tr, th, td,
+      article, aside, canvas, details, embed,
+      figure, figcaption, footer, header, hgroup,
+      menu, nav, output, ruby, section, summary,
+      time, mark, audio, video {
+          margin: 0;
+          padding: 0;
+          border: 0;
+          font-size: 100%;
+          font: inherit;
+          vertical-align: baseline;
+      }
+      /* HTML5 display-role reset for older browsers */
+      article, aside, details, figcaption, figure,
+      footer, header, hgroup, menu, nav, section {
+          display: block;
+      }
+      body {
+          line-height: 1;
+      }
+      ol, ul {
+          list-style: none;
+      }
+      blockquote, q {
+          quotes: none;
+      }
+      blockquote:before, blockquote:after,
+      q:before, q:after {
+          content: '';
+          content: none;
+      }
+      table {
+          border-collapse: collapse;
+          border-spacing: 0;
+      }
+  </style>
+
+  <style>
+      body { font-family: "Arial", Verdana, Tahoma; }
+
+      #documentContainer { width: 90%; max-width: 468pt; margin: 0 auto; padding: 2em 0; }
+      .text-center { text-align: center; }
+      .text-right { text-align: right;}
+      .font-weight-normal { font-weight: normal; }
+      .table-padded { padding: 10px; }
+
+      p { font-size: 9px; }
+      p.float-left { width: 50%; float: left; padding: 3em 0 1em; }
+      small { font-size: 7px; }
+
+      h3 { font-size: 16px; font-weight: bold; }
+      h4 { font-size: 10px; font-weight: bold; padding: 1em 0 0.5em; }
+
+      table { width: 100%; }
+      table#coverageTable tr td:first-child { width: 50%; }
+      table#coverageTable tr td:nth-child(2),
+      table#coverageTable tr td:nth-child(3) { width: 25%; }
+      table tr { border-bottom: 1px #000000 solid; }
+      table tr.no-border-bottom { border-bottom: none; }
+      table tr.border-top { border-top: 1px #000000 solid; }
+      table tr.split-width td { width: 50%; }
+      table tr td { padding: 5px 10px; text-align: start; vertical-align: middle; border: 1px #000000 solid; font-size: 9px; }
+      table tr td.no-border { border: none; }
+      table tr td.no-border-top { border-top: none; }
+      table tr td.no-border-left { border-left: none; }
+      table tr td.no-border-bottom { border-bottom: none; }
+      table tr td.no-border-right { border-right: none; }
+      table tr td.unpadded { padding: 0px; }
+      table tr td.v-align-top { vertical-align: top; }
+      table tr td table tr td { border-top: none; }
+
+  </style>
+</head>
+
+<body>
+<div id="documentContainer">
+
+  <!-- Header -->
+  <table>
+    <tr>
+      <td class="no-border">
+        <img alt="logo" height="31" src="https://gc-public-prod.s3.us-west-2.amazonaws.com/assets/logo.png" width="71">
+      </td>
+      <td class="no-border">
+        <h3 class="text-center"><strong>EVIDENCE OF PERSONAL PROPERTY INSURANCE</strong></h3>
+      </td>
+      <td>
+        <p>
+          <small>DATE(DD/MM/YYYY)</small><br>
+          <strong><%= Time.current.strftime("%m/%d/%Y") %></strong>
+        </p>
+      </td>
+    </tr>
+  </table>
+
+  <table>
+    <tr>
+      <td class="no-border-top">
+        <p>THIS EVIDENCE OF PROPERTY INSURANCE IS ISSUED AS A MATTER OF INFORMATION ONLY AND CONFERS NO RIGHTS
+          UPON THE ADDITIONAL INTEREST NAMED BELOW. THIS EVIDENCE DOES NOT AFFIRMATIVELY OR NEGATIVELY AMEND,
+          EXTEND OR ALTER THE COVERAGE AFFORDED BY THE POLICIES BELOW. THIS EVIDENCE OF INSURANCE DOES NOT
+          CONSTITUTE A CONTRACT BETWEEN THE ISSUING INSURER(S), AUTHORIZED REPRESENTATIVE OR PRODUCER, AND
+          THE ADDITIONAL INTEREST.</p>
+      </td>
+    </tr>
+  </table>
+
+  <table>
+    <tr class="split-width">
+      <td class="no-border-top unpadded v-align-top">
+        <table>
+          <tr class="no-border-bottom">
+            <td class="no-border-left no-border-bottom">
+              <small>
+                AGENCY<br>
+                <%= @agency.title %>
+              </small>
+            </td>
+            <td class="no-border-right">
+              <small>
+                PHONE(A/C, No, Ext):<br>
+                <%= @agency.contact_info["phone"] %>
+              </small>
+            </td>
+          </tr>
+        </table>
+
+        <p class="table-padded">
+          <%= @address.combined_street_address %> <%= @address.street_two %><br>
+          <%= @address.city %>, <%= @address.state %>, <%= @address.zip_code %>
+        </p>
+
+        <table>
+          <tr class="border-top">
+            <td class="no-border-left no-border-right">
+              <small>
+                <strong>FAX (A/C No Ext):</strong> <%= @agency.contact_info["fax"] %><br>
+                <strong>EMAIL ADDRESS:</strong> <%= @agency.contact_info["email"] %>
+              </small>
+            </td>
+          </tr>
+        </table>
+
+        <table>
+          <tr class="no-border-top">
+            <td class="no-border-left no-border-right">
+              <p>
+                <small>CODE:</small><br>
+                <%= @carrier_agency.external_carrier_id %>
+              </p>
+            </td>
+            <td class="no-border-left no-border-right">
+              <p>
+                <small>SUBCODE:</small><br>
+
+              </p>
+            </td>
+          </tr>
+        </table>
+
+        <table>
+          <tr class="no-border-top">
+            <td class="no-border-left no-border-right">
+              <small>AGENCY CUSTOMER ID: <%= @policy.primary_user.qbe_id %></small>
+            </td>
+          </tr>
+        </table>
+
+        <p class="table-padded">
+          <small>Insured</small><br><br>
+          <%= @policy.primary_user.profile.full_name %><br>
+          <%= @policy.primary_insurable.primary_address.combined_street_address %> <%= @policy.primary_insurable.title.nil? ? '' : "#{ @policy.primary_insurable.title }" %><br>
+          <%= @policy.primary_insurable.primary_address.city %>, <%= @policy.primary_insurable.primary_address.state %>, <%= @policy.primary_insurable.primary_address.combined_zip_code() %>
+          <% unless @policy.users.nil? || @policy.users.count == 1 %>
+          <br><br>
+          <strong>Additional Insured:</strong><br>
+          <% @policy.users.each_with_index do |u, index| %>
+            <% unless u.id == @policy.primary_user.id %>
+              <%= u.profile.full_name %><%= ", " unless index == (@policy.users.count - 2) %>
             <% end %>
+          <% end %>
+          <% end %>
+        </p>
+
+      </td>
+      <td class="no-border-top unpadded v-align-top">
+        <p class="table-padded" style="margin-bottom: 22px">
+          <small>COMPANY</small><br><br>
+          Praetorian Insurance Company<br>
+          One General Drive<br>
+          Sun Prairie, WI 53596
+        </p>
+
+        <table>
+          <tr class="border-top">
+            <td class="no-border-left no-border-right">
+              <p>
+                <small>LOAN NUMBER:</small><br>
+
+              </p>
+            </td>
+            <td class="no-border-left no-border-right">
+              <p>
+                <small>POLICY NUMBER:</small><br>
+                <%= @policy.number %>
+              </p>
+            </td>
+          </tr>
+        </table>
+
+        <table>
+          <tr>
+            <td class="no-border-left no-border-right">
+              <p>
+                <small>Effective Date:</small><br>
+                <%= @policy.effective_date.strftime("%m/%d/%Y") %>
+              </p>
+            </td>
+            <td class="no-border-left no-border-right">
+              <p>
+                <small>Expiration Date:</small><br>
+                <%= @policy.expiration_date.strftime("%m/%d/%Y") %>
+              </p>
+            </td>
+            <td class="text-center"><strong><%= @policy.auto_renew == true ? "X" : raw("&nbsp;") %></strong></td>
+            <td class="no-border-right"><small>CONTINUED UNTIL<br>TERMINATED IF CHECKED</small></td>
+          </tr>
+        </table>
+
+        <table>
+          <tr class="no-border-bottom">
+            <td class="no-border-right no-border-left no-border-bottom">
+              <small>THIS REPLACES PRIOR EVIDENCE DATED:</small>
+            </td>
+          </tr>
+        </table>
+
+      </td>
+    </tr>
+  </table>
+  <!-- /Header -->
+
+  <!-- Property Information -->
+  <h4>PROPERTY INFORMATION</h4>
+  <table>
+    <tr>
+      <td>
+        <p><small>Location Description</small></p><br>
+        <p>
+          <%= @policy.primary_insurable.primary_address.combined_street_address %> <%= @policy.primary_insurable.title.nil? ? '' : "#{ @policy.primary_insurable.title }" %><br>
+          <%= @policy.primary_insurable.primary_address.city %>, <%= @policy.primary_insurable.primary_address.state %><br>
+          <%= @policy.primary_insurable.primary_address.combined_zip_code() %>
+        </p>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <p>THE POLICIES OF INSURANCE LISTED BELOW HAVE BEEN ISSUED TO THE INSURED NAMED ABOVE FOR THE POLICY
+          PERIOD INDICATED. NOTWITHSTANDING ANY REQUIREMENT, TERM OR CONDITION OF ANY CONTRACT OR OTHER
+          DOCUMENT WITH RESPECT TO WHICH THIS EVIDENCE OF PROPERTY INSURANCE MAY BE ISSUED OR MAY PERTAIN,
+          THE INSURANCE AFFORDED BY THE POLICIES DESCRIBED HEREIN IS SUBJECT TO ALL THE TERMS, EXCLUSIONS
+          AND CONDITIONS OF SUCH POLICIES. LIMITS SHOWN MAY HAVE BEEN REDUCED BY PAID CLAIMS.</p>
+      </td>
+    </tr>
+  </table>
+  <!-- / Property Information -->
+
+  <!-- Coverage Information -->
+  <% covs_by_des = @policy.coverages.group_by{|cov| cov.designation }.transform_values{|vs| vs.first }; other_coverages = @policy.coverages.select{|cov| !['coverage_c', 'wind_hail', 'coverage_d', 'liability', 'medical'].include?(cov.designation) } %>
+  <% theft_deductible = @policy.coverages.where(:designation => "theft").take %>
+  <% wind_hail = @policy.coverages.where(:designation => 'wind_hail').take %>
+  <% all_peril = @policy.coverages.where(:designation => 'all_peril').take %>
+  <h4>COVERAGE INFORMATION</h4>
+  <table id="coverageTable">
+    <tr>
+      <td><p class="text-center">COVERAGE / PERIL / FORMS</p></td>
+      <td><p class="text-center">AMOUNT OF INSURANCE</p></td>
+      <td><p class="text-center">DEDUCTIBLE</p></td>
+    </tr>
+    <tr>
+      <td>C - Personal Property</td>
+      <td><%= ActionController::Base.helpers.number_to_currency((covs_by_des['coverage_c']&.limit&.to_f || 0) / 100) %></td>
+      <td><%= ActionController::Base.helpers.number_to_currency((all_peril&.deductible&.to_f || 0) / 100) %> All Other Perils</td>
+    </tr>
+    <% unless wind_hail.nil? %>
+    <tr>
+      <td></td>
+      <td></td>
+      <td><%= ActionController::Base.helpers.number_to_currency((wind_hail&.deductible&.to_f || 0) / 100) %> Wind / Hail</td>
+    </tr>
+    <% end %>
+    <% unless theft_deductible.nil? %>
+    <tr>
+      <td></td>
+      <td></td>
+      <td><%= ActionController::Base.helpers.number_to_currency((theft_deductible&.deductible&.to_f || 0) / 100) %> Theft</td>
+    </tr>
+    <% end %>
+    <tr>
+      <td>D - Loss of Use</td>
+      <td><%= ActionController::Base.helpers.number_to_currency((covs_by_des['coverage_d']&.limit&.to_f || 0) / 100) %></td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>E - Personal Liability (Limit)</td>
+      <td><%= ActionController::Base.helpers.number_to_currency((covs_by_des['liability']&.limit&.to_f || 0) / 100) %></td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>F - Medical Payments (Limit)</td>
+      <td><%= ActionController::Base.helpers.number_to_currency((covs_by_des['medical']&.limit&.to_f || 0) / 100) %></td>
+      <td></td>
+    </tr>
+    <% other_coverages.each.with_index do |cov, index| %>
+      <% unless ['wind_hail', 'theft', 'all_peril'].include?(cov.designation) %>
+      <tr>
+        <td><%= cov.title %></td>
+        <td><%= cov.limit == 0 || cov.limit.nil? ? '(included)' : cov.limit %></td>
+        <td></td>
+      </tr>
+      <% end %>
+    <% end %>
+  </table>
+  <!-- / Coverage Information -->
+
+  <!-- Remarks -->
+  <h4>REMARKS <span class="font-weight-normal">(Including Special Conditions)</span></h4>
+  <table>
+    <tr>
+      <td>
+        <p>
+          <small>Premium: <%= ActionController::Base.helpers.number_to_currency((@policy.premium.total_premium + @policy.premium.total_hidden_fee).to_f / 100) %></small><br>
+          <small>Tax: <%= ActionController::Base.helpers.number_to_currency(@policy.premium.total_tax.to_f / 100) %></small><br><br>
+          Total: <%= ActionController::Base.helpers.number_to_currency((@policy.premium.total_premium + @policy.premium.total_hidden_fee + @policy.premium.total_tax).to_f / 100) %>
+        </p>
+      </td>
+    </tr>
+  </table>
+  <!-- / Remarks -->
+
+  <!-- Cancellation -->
+  <h4>CANCELLATION</h4>
+  <table>
+    <tr>
+      <td>
+        <p>SHOULD ANY OF THE ABOVE DESCRIBED POLICIES BE CANCELLED BEFORE THE EXPIRATION DATE THEREOF, NOTICE WILL BE DELIVERED IN ACCORDANCE WITH THE POLICY PROVISIONS.</p>
+      </td>
+    </tr>
+  </table>
+  <!-- / Cancellation -->
+
+  <h4>ADDITIONAL INTEREST</h4>
+  <table>
+    <tr class="split-width">
+      <td>
+        <p>
+          <% if @policy.primary_insurable.account %>
+            <strong>NAME &amp; ADDRESS</strong><br><br>
+            <strong><%= @policy.primary_insurable.account.title %></strong><br>
+            <% if @policy.primary_insurable.account.primary_address; addr = @policy.primary_insurable.account.primary_address %>
+              <%= addr.combined_street_address %> <%= addr.street_two %><br>
+              <%= addr.city %>, <%= addr.state %>, <%= addr.combined_zip_code() %>
             <% end %>
-            <% end %>
-          </div>
-          <div class="amount_in flt_lt">
-            <h4>AMOUNT OF INSURANCE</h4>
-            <h2>&nbsp;</h2>
-            <h2><%= ActionController::Base.helpers.number_to_currency(@policy.coverages.find_by(designation: "coverage_c")&.limit&.to_f / 100) %></h2>
-            <h2>&nbsp;</h2>
-            <h2><%= ActionController::Base.helpers.number_to_currency(@policy.coverages.find_by(designation: "loss_of_use")&.limit&.to_f / 100) %></h2>
-            <h2><%= ActionController::Base.helpers.number_to_currency(@policy.coverages.find_by(designation: "liability")&.limit&.to_f / 100) %></h2>
-            <h2 <% if @policy.insurable_rates.optional.nil? %>class="last_br_btm"<% end %>><%= ActionController::Base.helpers.number_to_currency(@policy.coverages.find_by(designation: "medical")&.limit&.to_f / 100) %></h2>
-            <% unless @policy.insurable_rates.optional.nil? %>
-            <% @policy.insurable_rates.optional.each do |rate, index| %>
-            <% unless rate.sub_schedule == 'policy_fee' %>
-            <h2 <% if index == (@policy.insurable_rates.optional.count - 2) %>class="last_br_btm"<% end %>>Included</h2>
-            <% end %>
-            <% end %>
-            <% end %>            
-          </div>
-          <div class="deduct_in flt_lt">
-            <h4>DEDUCTIBLE</h4>
-            <h2 class="last_br_rt">&nbsp;</h2>
-            <h2 class="last_br_rt"><%= ActionController::Base.helpers.number_to_currency(@policy.coverages.find_by(designation: "coverage_c").deductible.to_f / 100) %></h2>
-            <h2 class="last_br_rt">$1,000</h2>
-            <h2 class="last_br_rt">&nbsp;</h2>
-            <h2 class="last_br_rt">&nbsp;</h2>
-            <h2 class="<% if @policy.insurable_rates.optional.nil? %>last_br_btm <% end %>last_br_rt">&nbsp;</h2>
-            <% unless @policy.insurable_rates.optional.nil? %>
-            <% @policy.insurable_rates.optional.each do |rate, index| %>
-            <% unless rate.sub_schedule == 'policy_fee' %>
-            <h2 <% if index == (@policy.insurable_rates.optional.count - 2) %>class="last_br_btm last_br_rt"<% end %>>&nbsp;</h2>
-            <% end %>
-            <% end %>
-            <% end %>
-          </div>
-        </div>
-        <div class="remarks_head">
-          <h2>REMARKS(Including SpecialConditions)</h2>
-        </div>
-        <div class="premium_in">
-          <table cellpadding="5" cellspacing="0" style="border: none;">
-            <tr>
-              <td><h4>Premium:</h4></td>
-              <td><h4><%= ActionController::Base.helpers.number_to_currency((@policy.premium.total_premium + @policy.premium.total_tax).to_f / 100) %></h4></td>
-            </tr>
-            <tr>
-              <td><h4>Admin Fees:</h4></td>
-              <td><h4><%= ActionController::Base.helpers.number_to_currency(@policy.premium.total_fees.to_f / 100) %></h4></td>
-            </tr>
-            <tr>
-              <td><h2>Total:</h2></td>
-              <td><h2><%= ActionController::Base.helpers.number_to_currency(@policy.premium.total.to_f / 100) %></h2></td>
-            </tr>
-          </table>
-        </div>
-        <div class="cancel_head">
-          <h2>CANCELLATION</h2>
-        </div>
-        <div class="cancel_in">
-          <h2>SHOULD ANY OF THE ABOVE DESCRIBED POLICIES BE CANCELLED BEFORE THE EXPIRATION DATE THEREOF, NOTICE WILL BE DELIVERED IN ACCORDANCE WITH THE POLICY PROVISIONS.</h2>
-        </div>
-        <div class="cancel_head">
-          <h2>ADDITIONAL INTEREST</h2>
-        </div>
-        <div class="add_main_blk clearfix">
-          <div class="name_left flt_lt">
-            <h4>NAME AND ADDRESS</h4>
-            <h2><%= @policy.account.title %></h2>
-            <address>
-              <%= @policy.primary_insurable.primary_address.combined_street_address %> Apt. <%= @policy.primary_insurable.primary_address.street_two %><br>
-              <%= @policy.primary_insurable.primary_address.city %>, <%= @policy.primary_insurable.primary_address.state %>, <%= @policy.primary_insurable.primary_address.combined_zip_code() %>
-            </address>
-          </div>
-          <div class="sign_blk flt_lt clearfix">
-            <div class="close flt_lt">
-              <h2>X</h2>
-            </div>
-            <div class="pm_in flt_lt">
-              <h3>PM</h3>
-            </div>
-            <div class="emp1 flt_lt">
-              &nbsp;
-            </div>
-            <div class="emp2 flt_lt">
-              &nbsp;
-            </div>
-            <div class="clearfix"></div>
-            <div class="last_loan">
-              <h4>LOAN #</h4>
-            </div>
-            <div class="auth">
-              <h4>AUTHORIZED REPRESENTATIVE</h4>
-              <figure>
-                <img alt="sign" height="35" src="<%= Rails.root.join("public", "assets", "#{ @agency.slug }-signature.png").to_s %>" width="136">
-              </figure>
-            </div>
-          </div>
-        </div>
-        <footer>
-          <div class="acord_text">
-            <p>ACORD27 (2001/12)</p>
-          </div>
-          <div class="copy_right">
-            <p>© 1993-2009 ACORD CORPORATION. All rightsreserved.</p>
-          </div>
-          <div class="footer_cont">
-            <p>The ACORD name and logo are registered marks of ACORD</p>
-          </div>
-        </footer>
-      </div>
-    </div><!-- wrapper ends -->
-  </body>
+          <% elsif !@policy_application.extra_settings&.[]('additional_interest').blank? %>
+            <strong>NAME &amp; ADDRESS</strong><br><br>
+            <% pm_info = @policy_application.extra_settings&.[]('additional_interest') %>
+            <strong>><%= pm_info['entity_type'] == 'company' ? pm_info['company_name'] : [pm_info['first_name'], pm_info['middle_name'], pm_info['last_name']].select{|v| !v.blank? }.join(" ") %></strong>
+            <%= pm_info['addr1'] %><%= pm_info['addr2'].blank? ? '' : ", #{pm_info['addr2']}" %><br>
+            <%= pm_info['city'] %>, <%= pm_info['state'] %> <%= pm_info['zip'] %>
+          <% else %>
+            <strong>No Additional Interest</strong>
+          <% end %>
+        </p>
+      </td>
+      <td class="unpadded v-align-top">
+
+        <table>
+          <tr>
+            <td style="width: 10%" class="no-border-left"><strong>X</strong></td>
+            <td style="width: 40%">PM</td>
+            <td style="width: 10%"></td>
+            <td style="width: 40%" class="no-border-right"></td>
+          </tr>
+        </table>
+
+        <p class="table-padded"><strong>AUTHORIZED REPRESENTATIVE</strong>
+        <img class="table-padded" alt="ryan" height="35" src="https://gc-public-prod.s3.us-west-2.amazonaws.com/assets/ryan-signature.png" width="136">
+
+      </td>
+    </tr>
+  </table>
+
+  <p class="float-left">ACORD27 (2001/12)</p>
+  <p class="float-left text-right">&copy; 1993-2009 ACORD CORPORATION. All rightsreserved.</p>
+  <p class="text-center">The ACORD name and logo are registered marks of ACORD</p>
+</div>
+</body>
 </html>

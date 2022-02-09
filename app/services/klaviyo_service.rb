@@ -46,7 +46,7 @@ class KlaviyoService
                       customer_properties: identify_customer_properties(identify_properties))
   end
 
-  #need to send to lead to prod only in prod
+  #TODO: need to send to lead to prod only in prod
   def track_event(event_description, event_details = {})
     customer_properties = {}
     identify_lead(event_description)
@@ -65,6 +65,8 @@ class KlaviyoService
 
     customer_properties[:last_visited_page_url] = map_last_visited_url(event_details)
     customer_properties[:last_visited_page]     = map_last_visited_page(event_details) if page_set?(event_details)
+    customer_properties[:branding_profile_url]  = map_branding_profile_url(event_details)
+    customer_properties[:pm_account_title]  = map_pm_account(event_details)
 
     # TODO: check retriable gem?
     begin
@@ -176,6 +178,23 @@ class KlaviyoService
 
   def page_set?(event_details)
     event_details['last_visited_page'] || (event_details["data"] && event_details["data"]["last_visited_page"])
+  end
+
+  def map_branding_profile_url(event_details)
+    if event_details["data"].present?
+      branding_id = event_details["data"]["branding_profile_id"]
+      BrandingProfile.find(branding_id)&.url if branding_id
+    else
+      ""
+    end
+  end
+
+  def map_pm_account(event_details)
+    result = Account.find(@lead.account_id)&.title if @lead.account_id.present?
+    if result.blank? && event_details["data"].present? && event_details["data"]["insurable_id"]&.present?
+      result = Insurable.find(event_details["data"]["insurable_id"])&.account&.title
+    end
+    result
   end
 
   def map_last_visited_page(event_details)

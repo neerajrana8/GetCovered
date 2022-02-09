@@ -176,7 +176,7 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
       # Create QBE Insurable Type for Residential Communities with fields required for integration
       carrier_insurable_type = CarrierInsurableType.create!(carrier: carrier, insurable_type: InsurableType.find(1),
                                                             enabled: true, profile_traits: {
-                                                              "pref_facility": "MDU",
+                                                              "pref_facility": "FIC",
                                                               "occupancy_type": "Other",
                                                               "construction_type": "F", # Options: F, MY, Superior
                                                               "protection_device_cd": "F", # Options: F, S, B, FB, SB
@@ -233,36 +233,18 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
 			    }	      																											
 				],
 				application_questions: [
-			    {
-				    title: "Do you operate a business in your rental apartment/home?",
-				    value: 'false',
-				    options: [true, false],
-				    questionId: "1"
-			    },
-			    {
-				    title: "Has any animal that you or your roommate(s) own ever bitten a person or someone else’s pet?",
-				    value: 'false',
-				    options: [true, false],
-				    questionId: "2"
-			    },
-			    {
-				    title: "Do you or your roommate(s) own snakes, exotic or wild animals?",
-				    value: 'false',
-				    options: [true, false],
-				    questionId: "3"
-			    },
-			    {
-				    title: "Is your dog(s) any of these breeds: Akita, Pit Bull (Staffordshire Bull Terrier, America Pit Bull Terrier, American Staffordshire Terrier, Bull Terrier), Chow, Rottweiler, Wolf Hybrid, Malamute or any mix of the above listed breeds?",
-				    value: 'false',
-				    options: [true, false],
-				    questionId: "4"
-			    },
-			    {
-				    title: "Have you had any liability claims, whether or not a payment was made, in the last 3 years?",
-				    value: 'false',
-				    options: [true, false],
-				    questionId: "5"
-			    }
+          {
+            title: "Do You Conduct Any Business In Your Rental Apartment/Home?",
+            value: 'false',
+            options: [true, false],
+            questionId: 1
+          },
+          {
+						title: "Have You Or Anyone In The House Filed A Liability Claim, Including Any Animal Related Claims?",
+						value: 'false',
+						options: [true, false],
+						questionId: 2
+          }
 				]
       )
       51.times do |state|
@@ -594,7 +576,7 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
       irc = msis.extract_insurable_rate_configuration(nil,
         configurer: carrier,
         configurable: igc,
-        carrier_insurable_type: carrier_insurable_type,
+        carrier_policy_type: carrier_policy_type,
         use_default_rules_for: 'USA'
       )
       irc.save!
@@ -605,7 +587,7 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
         # grab rates from MSI for this state
         result = nil
         unless ENV['real_msi_calls'] || Rails.env == 'production'
-          result = { data: FakedMsiResponses::RESPONSES[state] }
+          result = { data: FakedMsiResponses::RESPONSES[state.to_s] }
         else
           result = msis.build_request(:get_product_definition,
             effective_date: Time.current.to_date + 2.days,
@@ -643,7 +625,7 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
         irc = msis.extract_insurable_rate_configuration(result[:data],
           configurer: carrier,
           configurable: igc,
-          carrier_insurable_type: carrier_insurable_type,
+          carrier_policy_type: carrier_policy_type,
           use_default_rules_for: state
         )
         irc.save!
@@ -653,7 +635,7 @@ LeaseType.find(2).policy_types << PolicyType.find(4)
           irc = msis.extract_insurable_rate_configuration(nil,
             configurer: carrier,
             configurable: igc,
-            carrier_insurable_type: carrier_insurable_type,
+            carrier_policy_type: carrier_policy_type,
             use_default_rules_for: 'GA_COUNTIES'
           )
           irc.save!

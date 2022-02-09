@@ -64,7 +64,7 @@ class PolicyPremium < ApplicationRecord
   def initialize_all(premium_amount, tax: nil, taxes: nil, term_group: nil, collector: nil, filter_fees: nil, tax_recipient: nil, first_payment_down_payment: false, first_payment_down_payment_override: nil, first_tax_payment_down_payment_override: nil)
     tax = taxes if tax.nil? && !taxes.nil?
     return "Tax must be >= 0" if tax && tax < 0
-    return "Tax recipient must be specified" unless !tax || tax == 0
+    return "Tax recipient must be specified" unless !tax || tax == 0 || !tax_recipient.nil?
     return "PolicyPremium must be persisted to the database before initializing" unless self.id
     result = nil
     ActiveRecord::Base.transaction do
@@ -125,7 +125,7 @@ class PolicyPremium < ApplicationRecord
       : self.policy_application&.fields&.class == ::Hash ? self.policy_application.fields&.[]("premise")&.[](0)&.[]("address")&.[]("state")
       : nil # MOOSE WARNING what about pensio's hideous hack with no insurables :(?
     regional_availability = ::CarrierPolicyTypeAvailability.where(state: state, carrier_policy_type: carrier_policy_type).take
-    return (regional_availability&.fees || []) + (self.policy_application&.billing_strategy&.fees || []) + self.fees
+    return (carrier_policy_type&.fees || []) + (regional_availability&.fees || []) + (self.policy_application&.billing_strategy&.fees || []) + self.fees
   end
   
   def itemize_fees(percentage_basis, and_update_totals: true, term_group: nil, payment_terms: nil, collector: nil, filter: nil)
@@ -158,18 +158,19 @@ class PolicyPremium < ApplicationRecord
     # add item for fee
     payments_count = payment_terms.count
     payments_total = case fee.amount_type
-      when "FLAT";        fee.amount * (fee.per_payment ? payments_count : 1)
+      when "FLAT";        fee.amount.to_i * (fee.per_payment ? payments_count : 1)
       when "PERCENTAGE";  ((fee.amount.to_d / 100) * percentage_basis).ceil * (fee.per_payment ? payments_count : 1) # MOOSE WARNING: is .ceil acceptable?
     end
     created = ::PolicyPremiumItem.create(
       policy_premium: self,
       title: fee.title || "#{(fee.amortize || fee.per_payment) ? "Amortized " : ""} Fee",
       category: "fee",
-      rounding_error_distribution: "first_payment_simple",
+      rounding_error_distribution: "first_payment_multipass",
       total_due: payments_total,
       proration_calculation: 'payment_term_exclusive',
       proration_refunds_allowed: false,
       # MOOSE WARNING: preprocessed
+      hidden: fee.hidden,
       recipient: recipient || fee.ownerable,
       collector: collector || self.carrier_agency_policy_type&.collector || ::PolicyPremium.default_collector,
       policy_premium_item_payment_terms: (

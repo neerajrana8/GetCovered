@@ -27,70 +27,113 @@ module CarrierQbePolicyQuote
     end
 
     # QBE build coverages
-
+    
     def qbe_build_coverages
-      policy_application.insurable_rates.each do |rate|
-        if rate.schedule == 'liability'
-          liability_coverage = self.policy.policy_coverages.new
-          liability_coverage.policy_application = self.policy_application
-          liability_coverage.designation = 'liability'
-          liability_coverage.limit = rate.coverage_limits['liability']
-          liability_coverage.deductible = rate.deductibles["all_peril"]
-          liability_coverage.special_deductible = rate.deductibles["hurricane"] if rate.deductibles.key?("hurricane")
-          liability_coverage.enabled = true
-
-          medical_coverage = self.policy.policy_coverages.new
-          medical_coverage.policy_application = self.policy_application
-          medical_coverage.designation = 'medical'
-          medical_coverage.limit = rate.coverage_limits['medical']
-          medical_coverage.deductible = rate.deductibles["all_peril"]
-          medical_coverage.special_deductible = rate.deductibles["hurricane"] if rate.deductibles.key?("hurricane")
-          medical_coverage.enabled = true
-
-          liability_coverage.save
-          medical_coverage.save
-        elsif rate.schedule == 'coverage_c'
-          coverage = self.policy.policy_coverages.new
-          coverage.policy_application = self.policy_application
-          coverage.designation = rate.schedule
-          coverage.title = coverage.designation.titleize
-          coverage.limit = rate.coverage_limits[rate.schedule]
-          coverage.deductible = rate.deductibles["all_peril"]
-          coverage.special_deductible = rate.deductibles["hurricane"] if rate.deductibles.key?("hurricane")
-          coverage.enabled = true
-
-          coverage_d = self.policy.policy_coverages.new
-          coverage_d.policy_application = self.policy_application
-          coverage_d.designation = "loss_of_use"
-          coverage.title = coverage.designation.titleize
-          coverage_d.limit = rate.coverage_limits[rate.schedule] * 0.2
-          coverage_d.deductible = rate.deductibles["all_peril"]
-          coverage_d.special_deductible = rate.deductibles["hurricane"] if rate.deductibles.key?("hurricane")
-          coverage_d.enabled = true
-
-          coverage.save
-          coverage_d.save
-        elsif rate.schedule == 'optional'
-          designation = nil
-
-          if rate.sub_schedule == "policy_fee"
-            designation = "qbe_fee"
-          else
-            designation = rate.sub_schedule
-          end
-
-          coverage = self.policy.policy_coverages.new
-          coverage.policy_application = self.policy_application
-          coverage.designation = designation
-          coverage.title = coverage.designation.titleize
-          coverage.limit = rate.coverage_limits["coverage_c"]
-          coverage.deductible = rate.deductibles["all_peril"]
-          coverage.special_deductible = rate.deductibles["hurricane"] if rate.deductibles.key?("hurricane")
-          coverage.enabled = true
-
-          coverage.save
-        end
+      # grab info on calculating weird deductibles
+      deductible_calculation = ::QbeService::DEDUCTIBLE_CALCULATIONS[self.policy_application.primary_insurable.primary_address.state] || ::QbeService::DEDUCTIBLE_CALCULATIONS["DEFAULT"]
+      all_peril = self.policy_application.coverage_selections['all_peril']&.[]('selection')&.[]('value') || 0
+      all_peril = (all_peril / 100.to_d).to_i
+      # go wild
+      self.policy_application.coverage_selections.each do |designation, data|
+        self.policy.policy_coverages.create(
+          policy_application: self.policy_application,
+          title: data.has_key?('title') && !data['title'].blank? ? data['title'] : designation.gsub('_', '').titlecase,
+          designation: designation,
+          limit: data['category'] == 'limit' ? data['selection']&.[]('value') : nil,
+          deductible: data['category'] == 'deductible' ? data['selection']&.[]('value') : nil,
+          special_deductible: nil,
+          enabled: true,
+          is_carrier_fee: designation.include?('fee')
+        )
       end
+      # coverage d
+      covc = self.policy_application.coverage_selections['coverage_c']&.[]('selection')&.[]('value') || 0 # covc must always be present, but we'd rather not have a 500 error if not
+      self.policy.policy_coverages.create(
+        policy_application: self.policy_application,
+        title: "Loss of Use",
+        designation: "coverage_d",
+        limit: (covc.to_d * (self.policy_application.primary_insurable.primary_address.state == 'CT' ? 0.3 : 0.2)).to_i,
+        deductible: nil,
+        special_deductible: nil,
+        enabled: true
+      )
+      # theft
+      unless deductible_calculation['theft_absent']
+        self.policy.policy_coverages.create(
+          policy_application: self.policy_application,
+          title: "Theft",
+          designation: "theft",
+          limit: nil,
+          deductible: (deductible_calculation[all_peril]&.[]('theft') || all_peril) * 100, # this makes cents bro
+          special_deductible: nil,
+          enabled: true
+        )
+      end
+      # wind/hail
+      unless deductible_calculation['wind_absent']
+        self.policy.policy_coverages.create(
+          policy_application: self.policy_application,
+          title: "Wind/Hail",
+          designation: "wind_hail",
+          limit: nil,
+          deductible: (deductible_calculation[all_peril]&.[]('wind') || all_peril) * 100, # this makes cents bro
+          special_deductible: nil,
+          enabled: true
+        )
+      end
+=begin
+# old code, left here for now in case we need to reference it at some point; maintains redandant data based on QBE rates, unlike the new code
+      coves = []
+      # liability
+      covs.push(self.policy.policy_coverages.new({
+        policy_application: self.policy_application,
+        designation: 'liability',
+        limit: self.policy_application.coverage_selections['liability']&.[]('selection')&.[]('value')&.to_d,
+        deductible: self.policy_application.coverage_selections['all_peril']&.[]('selection')&.[]('value')&.to_d,
+        special_deductible: self.policy_application.coverage_selections['hurricane']&.[]('selection')&.[]('value')&.to_d,
+        enabled: true
+      }.compact))
+      # medical
+      covs.push(self.policy.policy_coverages.new({
+        policy_application: self.policy_application,
+        designation: 'medical',
+        limit: self.policy_application.coverage_selections['medical']&.[]('selection')&.[]('value')&.to_d,
+        deductible: self.policy_application.coverage_selections['all_peril']&.[]('selection')&.[]('value')&.to_d,
+        special_deductible: self.policy_application.coverage_selections['hurricane']&.[]('selection')&.[]('value')&.to_d,
+        enabled: true
+      }.compact))
+      # coverage c
+      covs.push(self.policy.policy_coverages.new({
+        policy_application: self.policy_application,
+        designation: 'coverage_c',
+        limit: self.policy_application.coverage_selections['coverage_c']&.[]('selection')&.[]('value')&.to_d,
+        deductible: self.policy_application.coverage_selections['all_peril']&.[]('selection')&.[]('value')&.to_d,
+        special_deductible: self.policy_application.coverage_selections['hurricane']&.[]('selection')&.[]('value')&.to_d,
+        enabled: true
+      }.compact))
+      # coverage d
+      covs.push(self.policy.policy_coverages.new({
+        policy_application: self.policy_application,
+        designation: 'loss_of_use',
+        limit: (self.policy_application.coverage_selections['loss_of_use']&.[]('selection')&.[]('value')&.to_d || 0) * 0.2,
+        deductible: self.policy_application.coverage_selections['all_peril']&.[]('selection')&.[]('value')&.to_d,
+        special_deductible: self.policy_application.coverage_selections['hurricane']&.[]('selection')&.[]('value')&.to_d,
+        enabled: true
+      }.compact))
+      # optionals
+      nonopts = ['liability', 'all_peril', 'hurricane', 'coverage_c', 'loss_of_use']
+      self.policy_application.coverage_selections.select{|k,v| !nonopts.include?(k) }.each do |uid, sel|
+        covs.push(self.policy.policy_coverages.new({
+          designation: (uid == 'policy_fee' ? 'qbe_fee' : uid),
+          limit: self.policy_application.coverage_selections['coverage_c']&.[]('selection')&.[]('value')&.to_d,
+          deductible: self.policy_application.coverage_selections['all_peril']&.[]('selection')&.[]('value')&.to_d,
+          special_deductible: self.policy_application.coverage_selections['hurricane']&.[]('selection')&.[]('value')&.to_d,
+          enabled: true
+        }.compact))
+      end
+      # save it all
+      covs.each{|c| c.title ||= c.designation.titleize; c.save }
+=end
     end
 
     # QBE Bind
@@ -113,21 +156,53 @@ module CarrierQbePolicyQuote
 	          endpoint: Rails.application.credentials.qbe[:uri][ENV["RAILS_ENV"].to_sym]
 	        )
 
-          carrier_agency = CarrierAgency.where(agency: account.agency, carrier: self.policy_application.carrier).take
+          if self.policy_application.primary_insurable.carrier_profile(1).nil?
+            self.policy_application.primary_insurable.create_carrier_profile(1) # because even for non-preferred QBE needs a stupid autogenerated unit id
+          end
+      
+          carrier_agency = CarrierAgency.where(agency: self.policy_application.agency, carrier: self.policy_application.carrier).take
+          community = self.policy_application.primary_insurable.parent_community
 
 	        qbe_service = QbeService.new(:action => 'SendPolicyInfo')
-	        qbe_service.build_request({ agent_code: carrier_agency.external_carrier_id }, true, true, self, self.policy_application.users)
+	        qbe_service.build_request({
+              agent_code: carrier_agency.external_carrier_id
+            }.merge(community.get_qbe_traits(force_defaults: false, extra_settings: self.policy_application.extra_settings, community: community)),
+            true, true, self, self.policy_application.users
+          )
 
  	        event.request = qbe_service.compiled_rxml
  			 		event.started = Time.now
-
-			 		qbe_data = qbe_service.call()
-
-			 		event.completed = Time.now
-			 		event.response = qbe_data[:data]
- 			 		event.status = qbe_data[:error] ? 'error' : 'success'
-
-			 		event.save
+          
+          qbe_data = { error: true }
+          begin
+            qbe_data = qbe_service.call()
+            
+            event.completed = Time.now
+            event.response = qbe_data[:data]
+            event.status = qbe_data[:error] ? 'error' : 'success'
+            event.save
+          rescue Rack::Timeout::RequestTimeoutException => e
+            event.completed = Time.now
+            event.response = "TIMEOUT"
+            event.status = 'error'
+            event.save
+            event = events.new(
+              verb: 'post',
+              format: 'xml',
+              interface: 'SOAP',
+              process: 'send_qbe_policy_info',
+              endpoint: Rails.application.credentials.qbe[:uri][ENV["RAILS_ENV"].to_sym]
+            )
+            event.request = qbe_service.compiled_rxml
+            event.started = Time.now
+            
+            qbe_data = qbe_service.call()  
+            
+            event.completed = Time.now
+            event.response = qbe_data[:data]
+            event.status = qbe_data[:error] ? 'error' : 'success'
+            event.save
+          end
 
           unless qbe_data[:error] # QBE Response success
 

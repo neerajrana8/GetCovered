@@ -6,11 +6,11 @@ module V2
   module StaffAccount
     class NotificationSettingsController < StaffAccountController
       include StaffNotificationSettingsMethods
-      before_action :set_notification_setting, except: :index
 
       private
-      def set_notification_setting
-        @notification_setting = current_staff.notification_settings.find(params[:id])
+
+      def permitted_notifyable?(notifyable)
+        notifyable.is_a?(Account) && notifyable.owner == current_user
       end
     end
   end

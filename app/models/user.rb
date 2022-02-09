@@ -8,9 +8,9 @@ class User < ApplicationRecord
   # :confirmable, :lockable, :timeoutable and :omniauthable
   devise :database_authenticatable, :registerable, :recoverable, :rememberable,
          :trackable, :validatable, :invitable, validate_on_invite: true
+
   include RecordChange
-  include DeviseTokenAuth::Concerns::User
-  include ElasticsearchSearchable
+  include DeviseCustomUser
   include SessionRecordable
 
   # Active Record Callbacks
@@ -86,39 +86,13 @@ class User < ApplicationRecord
 
   # Override payment_method attribute getters and setters to store data
   # as encrypted
-#   def payment_methods=(methods)
-#     super(EncryptionService.encrypt(methods))
-#   end
-#
-#   def payment_methods
-#     super.nil? ? super : EncryptionService.decrypt(super)
-#   end
-  article_es_settings = {
-    index: {
-      analysis: {
-        filter: {
-          autocomplete_filter: {
-            type: "edge_ngram",
-            min_gram: 1,
-            max_gram: 20
-          }
-        },
-        analyzer:{
-          autocomplete: {
-            type: "custom",
-            tokenizer: "standard",
-            filter: ["lowercase", "autocomplete_filter"]
-          }
-        }
-      }
-    }
-  }
-
-  settings article_es_settings do
-    mapping do
-      indexes :email, type: 'string', analyzer: 'autocomplete'
-    end
-  end
+  #   def payment_methods=(methods)
+  #     super(EncryptionService.encrypt(methods))
+  #   end
+  #
+  #    def payment_methods
+  #     super.nil? ? super : EncryptionService.decrypt(super)
+  #   end
 
   # Set Stripe ID
   #
@@ -159,12 +133,6 @@ class User < ApplicationRecord
 
   def attach_payment_source(token = nil, make_default = true)
     AttachPaymentSource.run(user: self, token: token, make_default: make_default)
-  end
-
-  settings index: { number_of_shards: 1 } do
-    mappings dynamic: 'false' do
-      indexes :email, type: :text, analyzer: 'english'
-    end
   end
 
   def convert_prospect_to_customer

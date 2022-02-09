@@ -24,7 +24,7 @@
                     <tr>
                       <td>
 
-                      
+
                         <p>Hi there <%= @resource&.profile&.full_name %>,</p>
                         <p><%= t("devise.mailer.invitation_instructions.someone_invited_you", url: ENV["DASH_URL"]) %></p>
                         <table border="0" cellpadding="0" cellspacing="0" class="btn btn-primary">
@@ -63,7 +63,7 @@
               <table border="0" cellpadding="0" cellspacing="0">
                 <tr>
                   <td class="content-block">
-                    <span class="apple-link">Get Covered LLC</span>
+                    <span class="apple-link"><%= t("devise.mailer.shared.copyright") %></span>
                   </td>
                 </tr>
               </table>

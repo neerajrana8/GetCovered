@@ -38,9 +38,10 @@ module GetCovered
     config.time_zone = 'Pacific Time (US & Canada)'
     config.i18n.default_locale = :en
     config.i18n.available_locales = [:en, :es]
+    config.i18n.fallbacks = [I18n.default_locale]
 
     # Add folders with ActiveInteraction
-    config.autoload_paths += Dir.glob("#{config.root}/app/interactions/*")
+    config.autoload_paths += Dir.glob("#{config.root}/app/interactions/**")
     config.autoload_paths += Dir.glob("#{config.root}/app/queries/*")
 
     config.email_images_url = 'https://gc-public-dev-ww.s3-us-west-2.amazonaws.com/email_images'

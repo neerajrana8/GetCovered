@@ -4,21 +4,16 @@
 # An account is an entity which owns or lists property and entity's either in need
 # of coverage or to track existing coverage.  Accounts are controlled by staff who 
 # have been assigned the Account in their organizable relationship.
-# export PUBLISHABLE_KEY="pk_test_EfYPHgUKyZYzJjWegJmBr2DR"
-# export SECRET_KEY="sk_test_IBSW1QDuu306wJQCUQkattsa"
 
 class Account < ApplicationRecord
+
   # Concerns
-  include ElasticsearchSearchable
   include SetSlug
   include SetCallSign
   include EarningsReport
   include CoverageReport
   include RecordChange
 
-  # Active Record Callbacks
-  after_initialize :initialize_agency
-  
   # belongs_to relationships
   belongs_to :agency
   belongs_to :staff, optional: true # the owner
@@ -31,8 +26,9 @@ class Account < ApplicationRecord
   alias staffs staff
       
   has_many :branding_profiles, as: :profileable
-  has_many :payment_profiles, as: :payer
-  
+  has_many :payment_profiles,  as: :payer
+  has_many :master_policy_configurations, as: :configurable
+
   has_many :insurables 
   
   has_many :policies
@@ -66,6 +62,8 @@ class Account < ApplicationRecord
 
   has_many :events,
     as: :eventable
+
+  has_many :notification_settings, as: :notifyable
   
   has_many :addresses,
     as: :addressable,
@@ -79,6 +77,9 @@ class Account < ApplicationRecord
 
   has_many :integrations,
            as: :integratable
+           
+  has_many :insurable_rate_configurations,
+           as: :configurer
   
   scope :enabled, -> { where(enabled: true) }
 
@@ -106,22 +107,12 @@ class Account < ApplicationRecord
     commission_deductions.map(&:unearned_balance).reduce(:+) || 0
   end
 
-
   # Attach Payment Source
   #
   # Attach a stripe source token to a user (Stripe Customer)
-  
   def attach_payment_source(token = nil, make_default = true)
     AttachPaymentSource.run(account: self, token: token, make_default: make_default)
   end
-
-  settings index: { number_of_shards: 1 } do
-    mappings dynamic: 'false' do
-      indexes :title, type: :text, analyzer: 'english'
-      indexes :call_sign, type: :text, analyzer: 'english'
-    end
-  end
-  
   
   # Get Msi General Party Info
   #
@@ -168,15 +159,11 @@ class Account < ApplicationRecord
   end
   
   private
-    
-    def initialize_agency
-      # Blank for now...
-    end
 
-    # get an array [first, last] presenting self.title as if it were a name;
-    # guarantees nonempty first and last with length at most 50 characters;
-    # will separate along space boundaries with the first name as short as possible when it can
-    def get_pseudoname
+  # get an array [first, last] presenting self.title as if it were a name;
+  # guarantees nonempty first and last with length at most 50 characters;
+  # will separate along space boundaries with the first name as short as possible when it can
+  def get_pseudoname
     pseudoname = ['','']
     the_title = self.title.strip
     space_index = the_title.index(' ')

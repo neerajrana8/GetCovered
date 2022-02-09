@@ -97,6 +97,16 @@ module V2
                  status: 422
         end
       end
+      
+      def get_policy_types
+        pts = CarrierAgencyPolicyType.includes(:policy_type, carrier_agency: :carrier).references(:policy_types, carrier_agencies: :carriers).where(carrier_agencies: { agency_id: params[:id].to_i })
+                                     .group_by{|capt| capt.policy_type_id }
+                                     .transform_values{|capts| { id: capts.first.policy_type_id, title: capts.first.policy_type.title, carriers: capts.map{|capt| { id: capt.carrier_agency.carrier_id, title: capt.carrier_agency.carrier.title } }.uniq } }
+                                     .values.sort_by{|v| v[:title] }
+          
+        render json: pts,
+          status: 200
+      end
 
       private
 

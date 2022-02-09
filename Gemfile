@@ -24,12 +24,14 @@ gem 'redis', '~> 4.4.0'
 # Use Capistrano for deployment
 # gem 'capistrano-rails', group: :development
 
-gem 'authtrail', '~> 0.4.1'
+gem 'authtrail'
+gem 'browser'
+
 # Reduces boot times through caching; required in config/boot.rb
 gem 'bootsnap', '>= 1.9.1', require: false
 
 # NokoGiri
-gem 'nokogiri', '>= 1.12.4'
+gem 'nokogiri', '>= 1.12.5'
 
 # HTTParty
 gem 'httparty'
@@ -82,9 +84,6 @@ gem 'premailer-rails'
 gem 'geocoder', '~> 1.6.7'
 gem 'StreetAddress', require: 'street_address'
 
-gem 'elasticsearch-model', github: 'elastic/elasticsearch-rails', branch: '6.x'
-gem 'elasticsearch-rails', github: 'elastic/elasticsearch-rails', branch: '6.x'
-
 # Colorizing console output to highlight stuffs
 gem 'colorize'
 gem 'faker'
@@ -99,7 +98,7 @@ gem 'image_processing', '~> 1.2'
 gem 'net-sftp', '~> 3.0.0'
 
 # PDF gems
-gem 'wkhtmltopdf-binary'
+gem 'wkhtmltopdf-binary', '0.12.6'
 gem 'wicked_pdf'
 gem "docraptor"
 gem "pdf-reader"

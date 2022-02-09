@@ -55,11 +55,11 @@ json.policy_type do
 end
 
 json.insurables do
-  unless policy.residential?
+  #unless policy.residential?
     json.array! policy.insurables do |insurable|
       json.partial! 'v2/user/insurables/insurable_select_full.json.jbuilder', insurable: insurable
     end
-  end
+  #end
 end
 
 json.change_requests do

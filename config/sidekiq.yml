@@ -6,6 +6,7 @@ production:
 
 :queues:
   - default
+  - authtrail
   - stripe
   - elasticsearch
   - mailer
@@ -131,6 +132,9 @@ production:
     cron: '0 0 * * *' # Every day at midnight
     class: RemoveExpiredAccessTokensJob
   # Commissions
+  handle_line_item_reductions_job:
+    cron: '0 2 * * *' # Every day at 2:00 AM
+    class: HandleLineItemReductionsJob
   handle_line_item_changes_job:
     cron: '0 3 * * *' # Every day at 3:00 AM
     class: HandleLineItemChangesJob

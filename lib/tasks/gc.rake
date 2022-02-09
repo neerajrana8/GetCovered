@@ -7,12 +7,11 @@ namespace :gc do
     desc "total Get Covered local reset"
     task total: :environment do
     	Rake::Task['gc:flush:schema'].invoke
-    	Rake::Task['gc:flush:elasticsearch'].invoke
     	Rake::Task['gc:flush:redis'].invoke
     	
     	['setup', 'agency', 'account', 'insurable-residential',
        'insurable-cambridge', 'insurable-commercial', 'user', 
-       'policy-residential'].each do |section|
+       'policy-residential', 'branding-profiles', 'set-permissions'].each do |section|
     		system("rails db:seed section=#{ section }")
     	end
     end  
@@ -20,12 +19,11 @@ namespace :gc do
     desc "data Get Covered local reset"
     task data: :environment do
     	Rake::Task['gc:flush:all'].invoke
-    	Rake::Task['gc:flush:elasticsearch'].invoke
     	Rake::Task['gc:flush:redis'].invoke
     	
     	['setup', 'agency', 'account', 'insurable-residential',
        'insurable-cambridge', 'insurable-commercial', 'user', 
-       'policy-residential'].each do |section|
+       'policy-residential', 'branding-profiles', 'set-permissions'].each do |section|
     		system("rails db:seed section=#{ section }")
     	end
     end
@@ -33,7 +31,6 @@ namespace :gc do
     desc "data Get Covered local reset"
     task test: :environment do
     	Rake::Task['gc:flush:all'].invoke
-    	Rake::Task['gc:flush:elasticsearch'].invoke
     	Rake::Task['gc:flush:redis'].invoke
     	
     	['setup', 'agency', 'account'].each do |section|
@@ -44,12 +41,10 @@ namespace :gc do
     namespace :aws do
       desc "total Get Covered AWS Dev Reset"
       task :dev do
-        system("curl -XDELETE https://search-gc-nonprod-esd-sv27jbj3vohqctw5o5672xg3a4.us-west-2.es.amazonaws.com/_all")
-  		  puts "\n"
   		        
       	['setup', 'agency', 'account', 'insurable-residential',
       	 'insurable-cambridge', 'insurable-commercial', 'user', 
-      	 'policy-residential', 'policy-commercial'].each do |section|
+      	 'policy-residential', 'policy-commercial', 'branding-profiles', 'set-permissions'].each do |section|
       		system("rails db:seed section=#{ section }")
       	end        
       end
@@ -66,10 +61,8 @@ namespace :gc do
 		desc "Reset Production Environment and Database"
 		task production: :environment do
 		  system("rails db:seed section=reset")
-      system("curl -XDELETE https://search-gc-prod-esd-kv6es7qb5gn5zdoie2nng6nsaa.us-west-2.es.amazonaws.com/_all")
 		  puts "\n"
-			Rake::Task['db:migrate'].invoke		
-			system("rails db:seed section=elasticsearch")	
+			Rake::Task['db:migrate'].invoke
 			system("rails db:seed section=production")
 		end  
 		  
@@ -93,12 +86,6 @@ namespace :gc do
     	Rake::Task['db:create'].invoke
     	Rake::Task['db:migrate'].invoke
     end
-    
-    desc "remove all elasticsearch indexes"
-		task elasticsearch: :environment do
-			system("curl -XDELETE http://localhost:9200/_all")
-		  puts "\n"
-		end   
 		
 		desc "remove all redis keys"
 		task redis: :environment do

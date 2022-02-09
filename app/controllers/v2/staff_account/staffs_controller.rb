@@ -6,14 +6,14 @@ module V2
   module StaffAccount
     class StaffsController < StaffAccountController
       include StaffsMethods
-      
+
       before_action :set_staff, only: %i[update show toggle_enabled re_invite]
       before_action :validate_password_changing, only: %i[update]
-            
+
       def index
         super(:@staffs, current_staff.organizable.staff, :profile)
       end
-      
+
       def show; end
 
       def create
@@ -21,8 +21,9 @@ module V2
           @staff = current_staff.organizable.staff.new(create_params)
           # remove password issues from errors since this is a Devise model
           @staff.valid? if @staff.errors.blank?
-          @staff.errors.messages.except!(:password)
-          if @staff.errors.none? && @staff.invite_as(current_staff)
+          #because it had FrozenError (can't modify frozen Hash: {:password=>["can't be blank"]}):
+          #@staff.errors.messages.except!(:password)
+          if (@staff.errors.none? || only_password_blank_error?(@staff.errors) ) && @staff.invite_as(current_staff)
             render :show,
                    status: :created
           else
@@ -34,7 +35,7 @@ module V2
                  status: :unauthorized
         end
       end
-      
+
       def update
         if update_allowed?
           if @staff.update_as(current_staff, update_params)
@@ -63,25 +64,29 @@ module V2
           render json: { success: false, errors: ['Unauthorized Access'] }, status: :unauthorized
         end
       end
-      
+
       private
-      
+
+      def only_password_blank_error?(staff_errors)
+        staff_errors.messages.keys == [:password]
+      end
+
       def view_path
         super + '/staffs'
       end
-        
+
       def create_allowed?
         true
       end
-        
+
       def update_allowed?
         true
       end
-        
+
       def set_staff
         @staff = current_staff.organizable.staff.find_by(id: params[:id])
       end
-                
+
       def create_params
         return({}) if params[:staff].blank?
 
@@ -94,7 +99,7 @@ module V2
         )
         to_return
       end
-        
+
       def update_params
         return({}) if params[:staff].blank?
 
@@ -109,7 +114,7 @@ module V2
           ]
         )
       end
-        
+
       def supported_filters(called_from_orders = false)
         @calling_supported_orders = called_from_orders
         {

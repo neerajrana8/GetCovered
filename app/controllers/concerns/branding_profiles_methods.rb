@@ -16,7 +16,12 @@ module BrandingProfilesMethods
   end
 
   def show
-    render template: 'v2/shared/branding_profiles/show', status: :ok
+    if @branding_profile.nil?
+      render json: standard_error(error: :branding_profile_not_found, message: "Branding profile not found"),
+             status: :not_found
+    else
+      render template: 'v2/shared/branding_profiles/show', status: :ok
+    end
   end
 
   def import
@@ -88,9 +93,13 @@ module BrandingProfilesMethods
   def process_image(field_name)
     resize_image(field_name)
     rename_image(field_name)
-    images = @branding_profile.images.attach(attach_images_params[field_name])
-    img_url = rails_blob_url(images.last)
-    img_url.present? && @branding_profile.update_column(field_name, img_url) ? img_url : 'error'
+    image_attached = @branding_profile.images.attach(attach_images_params[field_name])
+    if image_attached
+      img_url = rails_blob_url(@branding_profile.images.last)
+      img_url.present? && @branding_profile.update_column(field_name, img_url) ? img_url : 'error'
+    else
+      'error'
+    end
   end
 
   def resize_image(field_name)

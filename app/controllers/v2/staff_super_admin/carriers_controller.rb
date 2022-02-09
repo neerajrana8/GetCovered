@@ -8,7 +8,7 @@ module V2
       include FeesMethods
       include Carriers::CommissionsMethods
 
-      before_action :set_carrier, only: %i[update show]
+      before_action :set_carrier, only: %i[update show available_agencies]
       before_action :set_substrate, only: %i[create index]
 
       def index
@@ -20,6 +20,41 @@ module V2
       def carrier_agencies
         carrier_agencies = paginator(Carrier.find(params[:id]).agencies)
         render json: carrier_agencies, status: :ok
+      end
+
+      def available_agencies
+        result          = []
+        required_fields = %i[id title agency_id enabled]
+
+        agencies =
+          Agency.
+            includes(carrier_agencies: :carrier_agency_policy_types).
+            where(agencies: { agency_id: nil })
+
+
+        agencies.select(required_fields).each do |agency|
+          carrier_agency = agency.carrier_agencies.find_by(carrier: @carrier)
+          result <<
+            if carrier_agency.present? && agency.agencies.any?
+              sub_agencies = agency.agencies.select(required_fields)
+              available_sub_agencies =
+                sub_agencies.select do |subagency|
+                  subagency.carrier_agencies.find_by(carrier: @carrier).nil?
+                end.map(&:attributes)
+
+              if available_sub_agencies.any?
+                agency.attributes.reverse_merge(
+                  agencies: available_sub_agencies,
+                  available_policy_types: carrier_agency.carrier_agency_policy_types.pluck(:policy_type_id),
+                  already_assigned: true
+                )
+              end
+            else
+              agency.attributes.reverse_merge(already_assigned: false)
+            end
+        end
+
+        render json: result.compact.to_json
       end
 
       def show

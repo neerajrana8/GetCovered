@@ -82,22 +82,22 @@ class MsiService
   
   INSTALLMENT_COUNT = { "Annual" => 0, "SemiAnnual" => 1, "Quarterly" => 3, "Monthly" => 10 }
   
-  UNIVERSALLY_DISABLED_COVERAGE_OPTIONS = (1011..1021).map{|uid| { 'category' => 'coverage', 'uid' => uid.to_s } }
+  UNIVERSALLY_DISABLED_COVERAGE_OPTIONS = (1011..1021).to_a.map{|uid| uid.to_s }
   
   OVERRIDE_SPECIFICATION = {
-    'CA' =>           [{ 'category' => 'deductible', 'uid' => @@coverage_codes[:EarthquakeDeductible][:code].to_s, 'requirement' => 'forbidden' }], # forbid earthquake ded unless earthquake cov selected
-    'FL' =>           [
-                        { 'category' => 'coverage', 'uid' => @@coverage_codes[:WindHailExclusion][:code].to_s, 'requirement' => 'forbidden', 'enabled' => false },  # disable Wind/Hail Exclusion in FL
-                        { 'category' => 'deductible', 'uid' => @@coverage_codes[:Hurricane][:code].to_s, 'requirement' => 'required' }                              # mandate Hurricane coverage
-                      ],
-    'GA' =>           [{ 'category' => 'deductible', 'uid' => @@coverage_codes[:WindHail][:code].to_s, 'enabled' => false }],                                       # disable WindHail
-    'GA_COUNTIES' =>  [{ 'category' => 'deductible', 'uid' => @@coverage_codes[:WindHail][:code].to_s, 'enabled' => true, 'requirement' => 'required' }],           # enable WindHail & make sure it's required for counties ['Bryan', 'Camden', 'Chatham', 'Glynn', 'Liberty', 'McIntosh']
-    'MD' =>           [{ 'category' => 'coverage', 'uid' => @@coverage_codes[:HomeDayCare][:code].to_s, 'enabled' => false }],                                      # disable HomeDayCare in MD
-  }.merge(['AK', 'CO', 'HI', 'KY', 'ME', 'MT', 'NC', 'NJ', 'UT', 'VT', 'WA'].map do |state|
+    'CA' =>           {@@coverage_codes[:EarthquakeDeductible][:code].to_s => { 'category' => 'deductible', 'requirement' => 'forbidden' }},                # forbid earthquake ded unless earthquake cov selected
+    'FL' =>           {
+                        @@coverage_codes[:WindHailExclusion][:code].to_s => { 'category' => 'coverage', 'requirement' => 'forbidden' },                     # disable Wind/Hail Exclusion in FL
+                        @@coverage_codes[:Hurricane][:code].to_s =>         { 'category' => 'deductible', 'requirement' => 'required' }                     # mandate Hurricane coverage
+                      },
+    'GA' =>           {@@coverage_codes[:WindHail][:code].to_s => { 'category' => 'deductible', 'requirement' => 'forbidden' }},                            # disable WindHail
+    'GA_COUNTIES' =>  {@@coverage_codes[:WindHail][:code].to_s => { 'category' => 'deductible', 'requirement' => 'required' }},                             # enable WindHail & make sure it's required for counties ['Bryan', 'Camden', 'Chatham', 'Glynn', 'Liberty', 'McIntosh']
+    'MD' =>           {@@coverage_codes[:HomeDayCare][:code].to_s => { 'category' => 'coverage', 'requirement' => 'forbidden' }},                           # disable HomeDayCare in MD
+  }.deep_merge(['AK', 'CO', 'HI', 'KY', 'ME', 'MT', 'NC', 'NJ', 'UT', 'VT', 'WA'].map do |state|
     # disable theft deductibles for selected states
     [
       state,
-      [{ 'category' => 'deductible', 'uid' => @@coverage_codes[:Theft][:code].to_s, 'enabled' => false }]
+      {@@coverage_codes[:Theft][:code].to_s => { 'category' => 'deductible', 'requirement' => 'forbidden' }}
     ]
   end.to_h){|k,a,b| a + b }
   
@@ -132,11 +132,11 @@ class MsiService
   }
   
   def self.renew_descriptions
-    ::InsurableRateConfiguration.where(configurer_type: "Carrier", configurer_id: self.carrier_id).each do |irc|
-      next if irc.coverage_options.blank?
-      irc.coverage_options.each do |co|
-        unless !co['description'].blank? || co['uid'].blank? || MsiService::DESCRIPTIONS[co['uid']].blank?
-          irc.coverage_options.each{|co| co['description'] = MsiService::DESCRIPTIONS[co['uid']] }
+    ::InsurableRateConfiguration.where(carrier_policy_type: CarrierPolicyType.where(policy_type_id: PolicyType::RESIDENTIAL_ID, carrier_id: self.carrier_id).take, configurer_type: "Carrier", configurer_id: self.carrier_id).each do |irc|
+      next if irc.configuration['coverage_options'].blank?
+      irc.configuration['coverage_options'].each do |uid, co|
+        unless !co['description'].blank? || co['uid'].blank? || MsiService::DESCRIPTIONS[uid].blank?
+          irc.configuration['coverage_options'].each{|co| co['description'] = MsiService::DESCRIPTIONS[uid] }
           irc.save
         end
       end
@@ -144,222 +144,220 @@ class MsiService
   end
   
   def self.covopt_sort(a,b)
-    (a['uid'] == '1' ? 999999 : 0) <=> (b['uid'] == '1' ? 999999 : 0)
+    (a[0] == '1' ? 999999 : 0) <=> (b[0] == '1' ? 999999 : 0)
   end
   
   LOSS_OF_USE_VARIATIONS = {
     standard: {
-      'message' => 'Cov D must be greater of $2000 or 20% of Cov C, unless Additional Protection Added (then 40%)',
-      'code' => ['if', ['selected', 'coverage', @@coverage_codes[:CoverageC][:code]],
-        ['=',
-          ['value', 'coverage', @@coverage_codes[:CoverageD][:code]],
-          ['max',
-            ['*', 
-              ['if', ['selected', 'coverage', @@coverage_codes[:TenantsAdditionalProtection][:code]],
-                0.4,
-                0.2
-              ],
-              ['value', 'coverage', @@coverage_codes[:CoverageC][:code]]
-            ],
-            2000
-          ]
-        ]
-      ]
+      loss_of_use: {
+        'subject' => @@coverage_codes[:CoverageD][:code].to_s,
+        'condition' => { 'coverage_selected' => @@coverage_codes[:CoverageC][:code].to_s, 'coverage_not_selected' => @@coverage_codes[:TenantsAdditionalProtection][:code].to_s },
+        'rule' => {
+          'greatest_of_fixed_or_percent' => {
+            'fixed' => { 'data_type' => 'currency', 'value' => 200000 },
+            'percent' => 20,
+            'object' => @@coverage_codes[:CoverageC][:code].to_s
+          }
+        }
+      },
+      loss_of_use_with_additional_protection: {
+        'subject' => @@coverage_codes[:CoverageD][:code].to_s,
+        'condition' => { 'coverage_selected' => [@@coverage_codes[:CoverageC][:code].to_s, @@coverage_codes[:TenantsAdditionalProtection][:code].to_s] },
+        'rule' => {
+          'greatest_of_fixed_or_percent' => {
+            'fixed' => { 'data_type' => 'currency', 'value' => 200000 },
+            'percent' => 40,
+            'object' => @@coverage_codes[:CoverageC][:code].to_s
+          }
+        }
+      }
     },
     fourk: {
-      'message' => 'Cov D must be greater of $2000 or 20% of Cov C, unless Additional Protection Added (then $4000 or 40%)',
-      'code' => ['if', ['selected', 'coverage', @@coverage_codes[:CoverageC][:code]],
-        ['=',
-          ['value', 'coverage', @@coverage_codes[:CoverageD][:code]],
-          ['if', ['selected', 'coverage', @@coverage_codes[:TenantsAdditionalProtection][:code]],
-            ['max',
-              ['*', 0.4, ['value', 'coverage', @@coverage_codes[:CoverageC][:code]]],
-              4000
-            ],
-            ['max',
-              ['*', 0.2, ['value', 'coverage', @@coverage_codes[:CoverageC][:code]]],
-              2000
-            ]
-          ]
-        ]
-      ]
+      loss_of_use: {
+        'subject' => @@coverage_codes[:CoverageD][:code].to_s,
+        'condition' => { 'coverage_selected' => @@coverage_codes[:CoverageC][:code].to_s, 'coverage_not_selected' => @@coverage_codes[:TenantsAdditionalProtection][:code].to_s },
+        'rule' => {
+          'greatest_of_fixed_or_percent' => {
+            'fixed' => { 'data_type' => 'currency', 'value' => 200000 },
+            'percent' => 20,
+            'object' => @@coverage_codes[:CoverageC][:code].to_s
+          }
+        }
+      },
+      loss_of_use_with_additional_protection: {
+        'subject' => @@coverage_codes[:CoverageD][:code].to_s,
+        'condition' => { 'coverage_selected' => [@@coverage_codes[:CoverageC][:code].to_s, @@coverage_codes[:TenantsAdditionalProtection][:code].to_s] },
+        'rule' => {
+          'greatest_of_fixed_or_percent' => {
+            'fixed' => { 'data_type' => 'currency', 'value' => 400000 },
+            'percent' => 40,
+            'object' => @@coverage_codes[:CoverageC][:code].to_s
+          }
+        }
+      }
     },
     threek: {
-      'message' => 'Cov D must be greater of $3000 or 30% of Cov C, unless Additional Protection Added (then 40%)',
-      'code' => ['if', ['selected', 'coverage', @@coverage_codes[:CoverageC][:code]],
-        ['=',
-          ['value', 'coverage', @@coverage_codes[:CoverageD][:code]],
-          ['max',
-            ['*', 
-              ['if', ['selected', 'coverage', @@coverage_codes[:TenantsAdditionalProtection][:code]],
-                0.4,
-                0.3
-              ],
-              ['value', 'coverage', @@coverage_codes[:CoverageC][:code]]
-            ],
-            3000
-          ]
-        ]
-      ]
+      loss_of_use: {
+        'subject' => @@coverage_codes[:CoverageD][:code].to_s,
+        'condition' => { 'coverage_selected' => @@coverage_codes[:CoverageC][:code].to_s, 'coverage_not_selected' => @@coverage_codes[:TenantsAdditionalProtection][:code].to_s },
+        'rule' => {
+          'greatest_of_fixed_or_percent' => {
+            'fixed' => { 'data_type' => 'currency', 'value' => 300000 },
+            'percent' => 30,
+            'object' => @@coverage_codes[:CoverageC][:code].to_s
+          }
+        }
+      },
+      loss_of_use_with_additional_protection: {
+        'subject' => @@coverage_codes[:CoverageD][:code].to_s,
+        'condition' => { 'coverage_selected' => [@@coverage_codes[:CoverageC][:code].to_s, @@coverage_codes[:TenantsAdditionalProtection][:code].to_s] },
+        'rule' => {
+          'greatest_of_fixed_or_percent' => {
+            'fixed' => { 'data_type' => 'currency', 'value' => 300000 },
+            'percent' => 40,
+            'object' => @@coverage_codes[:CoverageC][:code].to_s
+          }
+        }
+      }
     },
     tenpercent: {
-      'message' => 'Cov D must be 10% of Cov C',
-      'code' => ['if', ['selected', 'coverage', @@coverage_codes[:CoverageC][:code]],
-        ['=',
-          ['value', 'coverage', @@coverage_codes[:CoverageD][:code]],
-          ['*',
-            ['value', 'coverage', @@coverage_codes[:CoverageC][:code]],
-            0.1
-          ]
-        ]
-      ]
+      loss_of_use: {
+        'subject' => @@coverage_codes[:CoverageD][:code].to_s,
+        'condition' => { 'coverage_selected' => @@coverage_codes[:CoverageC][:code].to_s },
+        'rule' => {
+          'compares_percent' => {
+            'comparator' => '=',
+            'percent' => 10,
+            'object' => @@coverage_codes[:CoverageC][:code].to_s
+          }
+        }
+      }#,
+      #loss_of_use_with_additional_protection: nil
     }
   }
   
   RULE_SPECIFICATION = {
     'USA' => {
-      'cov_e_100k_max' => { # MOOSE WARNING: after redux, make the option disabled instead of banning it by rule
-        'message' => 'Liability limit must be at most $100k',
-        'code' => ['=',
-          ['value', 'coverage', @@coverage_codes[:CoverageE][:code]],
-          ['[]',
-            0,
-            100000
-          ]
-        ]
+      'cov_e_100k_max' => { # 'Liability limit must be at most $100k'
+        'subject' => @@coverage_codes[:CoverageE][:code].to_s,
+        'condition' => true,
+        'rule' => {
+          'compares_fixed' => {
+            'comparator' => '<=',
+            'object' => { 'data_type' => 'currency', 'value' => 10000000 }
+          }
+        }
       },
-      'animal_liability_300k_max' => { # MOOSE WARNING: after redux, make the option disabled instead of banning it by rule
-        'message' => 'Animal Liability Buyback limit must be less than $300k',
-        'code' => ['=',
-          ['value', 'coverage', @@coverage_codes[:AnimalLiability][:code]],
-          ['[)',
-            0,
-            300000
-          ]
-        ]
+      'animal_liability_less_than_300k' => { # 'Animal Liability Buyback limit must be less than $300k'
+        'subject' => @@coverage_codes[:AnimalLiability][:code].to_s,
+        'condition' => true,
+        'rule' => {
+          'compares_fixed' => {
+            'comparator' => '<',
+            'object' => { 'data_type' => 'currency', 'value' => 30000000 }
+          }
+        }
       },
-      'animal_liability_max' => {
-        'message' => 'Animal Liability Buyback cannot exceed Coverage E (Liability) limit',
-        'code' => ['if', ['selected', 'coverage', @@coverage_codes[:CoverageE][:code]],
-          ['=',
-            ['value', 'coverage', @@coverage_codes[:AnimalLiability][:code]],
-            ['[]',
-              0.0,
-              ['value', 'coverage', @@coverage_codes[:CoverageE][:code]]
-            ]
-          ]
-        ]
+      'animal_liability_max' => { # 'Animal liability cannot exceed Coverage E'
+        'subject' => @@coverage_codes[:AnimalLiability][:code].to_s,
+        'condition' => { 'coverage_selected' => @@coverage_codes[:CoverageE][:code].to_s },
+        'rule' => {
+          'compares_coverage' => {
+            'comparator' => '<=',
+            'object' => @@coverage_codes[:CoverageE][:code].to_s
+          }
+        }
       },
-      'loss_of_use' => LOSS_OF_USE_VARIATIONS[:standard],
-      'theft_deductible' => {
-        'message' => 'Theft deductible cannot be less than the all perils deductible',
-        'code' => ['if', ['selected', 'deductible', @@coverage_codes[:AllOtherPeril][:code]],
-          ['=',
-            ['value', 'deductible', @@coverage_codes[:Theft][:code]],
-            ['[)',
-              ['value', 'deductible', @@coverage_codes[:AllOtherPeril][:code]],
-              'Infinity'
-            ]
-          ]
-        ]
+      'theft_deductible' => { # 'Theft deductible cannot be less than the all perils deductible'
+        'subject' => @@coverage_codes[:Theft][:code].to_s,
+        'condition' => { 'coverage_selected' => @@coverage_codes[:AllOtherPeril][:code].to_s },
+        'rule' => {
+          'compares_coverage' => {
+            'comparator' => '>=',
+            'object' => @@coverage_codes[:AllOtherPeril][:code].to_s
+          }
+        }
       }
-    },
+    }.merge(LOSS_OF_USE_VARIATIONS[:standard]),
     'CA' => {
-      'earthquake_deductible' => {
-        'message' => 'Earthquake deductible must be nonzero when earthquake coverage is selected',
-        'code' => ['if', ['selected', 'coverage', @@coverage_codes[:Earthquake][:code]],
-          [';',
-            ['=',
-              ['requirement', 'deductible', @@coverage_codes[:EarthquakeDeductible][:code]],
-              'required'
-            ],
-            ['=',
-              ['value', 'deductible', @@coverage_codes[:EarthquakeDeductible][:code]],
-              ['()',
-                0,
-                'Infinity'
-              ]
-            ]
-          ]
-        ]
+      'earthquake_deductible' => { # 'Earthquake deductible must be nonzero when earthquake coverage is selected'
+        'subject' => @@coverage_codes[:EarthquakeDeductible][:code].to_s,
+        'condition' => { 'coverage_selected' => @@coverage_codes[:Earthquake][:code].to_s },
+        'rule' => {
+          'has_requirement' => 'required',
+          'compares_fixed' => {
+            'comparator' => '>',
+            'object' => 0
+          }
+        }
       }
     },
-    'CO' => {
-      'loss_of_use' => LOSS_OF_USE_VARIATIONS[:fourk]
-    },
-    'CT' => {
-      'loss_of_use' => LOSS_OF_USE_VARIATIONS[:threek]
-    },
+    'CO' => LOSS_OF_USE_VARIATIONS[:fourk],
+    'CT' => LOSS_OF_USE_VARIATIONS[:threek],
     'FL' => {
-      'loss_of_use' => LOSS_OF_USE_VARIATIONS[:tenpercent],
-      'ordinance_or_law' => {
-        'message' => 'Ordinance Or Law limit must be 2.5% of Coverage C limit',
-        'code' => ['if', ['selected', 'coverage', @@coverage_codes[:CoverageC][:code]],
-          ['=',
-            ['value', 'coverage', @@coverage_codes[:OrdinanceOrLaw][:code]],
-            ['*',
-              0.025,
-              ['value', 'coverage', @@coverage_codes[:CoverageC][:code]]
-            ]
-          ]
-        ]
+      'ordinance_or_law' => { # 'Ordinance Or Law limit must be 2.5% of Coverage C limit'
+        'subject' => @@coverage_codes[:OrdinanceOrLaw][:code].to_s,
+        'condition' => { 'coverage_selected' => @@coverage_codes[:CoverageC][:code].to_s },
+        'rule' => {
+          'compares_percent' => {
+            'comparator' => '=',
+            'percent' => 2.5.to_d,
+            'object' => @@coverage_codes[:CoverageC][:code].to_s
+          }
+        }
       },
-      'five_hundred_only_hurricane_deductible' => {
-        'message' => 'Hurricane deductible must be $500',
-        'code' => ['=',
-          ['value', 'deductible', @@coverage_codes[:Hurricane][:code]],
-          500
-        ]
+      'five_hundred_only_hurricane_deductible' => { #'Hurricane deductible must be $500'
+        'subject' => @@coverage_codes[:Hurricane][:code].to_s,
+        'condition' => true,
+        'rule' => {
+          'compares_fixed' => {
+            'comparator' => '=',
+            'object' => { 'data_type' => 'currency', 'value' => 50000 }
+          }
+        }
       },
-      'no_1000_all_peril' => {
-        'message' => 'All Perils must be less than $1000',
-        'code' => ['if', ['selected', 'deductible', @@coverage_codes[:AllOtherPeril][:code]],
-          ['=',
-            ['value', 'deductible', @@coverage_codes[:AllOtherPeril][:code]],
-            ['[)',
-              0,
-              1000
-            ]
-          ]
-        ]
+      'no_1000_all_peril' => { # 'All Perils must be less than $1000'
+        'subject' => @@coverage_codes[:AllOtherPeril][:code].to_s,
+        'condition' => true,
+        'rule' => {
+          'compares_fixed' => {
+            'comparator' => '<',
+            'object' => { 'data_type' => 'currency', 'value' => 100000 }
+          }
+        }
       }
-    },
-    'KY' => {
-      'loss_of_use' => LOSS_OF_USE_VARIATIONS[:fourk]
-    },
+    }.merge(LOSS_OF_USE_VARIATIONS[:tenpercent]),
+    'KY' => LOSS_OF_USE_VARIATIONS[:fourk],
     'MD' => {
-      'water_backup' => {
-        'message' => 'Water backup must be $5000 or equal to Coverage C limit',
-        'code' => ['=', ['value', 'coverage', @@coverage_codes[:WaterBackup][:code]],
-          ['if', ['selected', 'coverage', @@coverage_codes[:CoverageC][:code]],
-            ['|',
-              5000,
-              ['value', 'coverage', @@coverage_codes[:CoverageC][:code]]
-            ],
-            5000
-          ]
-        ]
+      'water_backup' => { # 'Water backup must be $5000 or equal to Coverage C limit'
+        'subject' => @@coverage_codes[:WaterBackup][:code].to_s,
+        'condition' => { 'coverage_selected' => @@coverage_codes[:CoverageC][:code].to_s },
+        'rule' => {
+          'equal_to_fixed_or_percent' => {
+            'fixed' => { 'data_type' => 'currency', 'value' => 500000 },
+            'percent' => 100,
+            'object' => @@coverage_codes[:CoverageC][:code].to_s
+          }
+        }
       }
     },
-    'ME' => {
-      'loss_of_use' => LOSS_OF_USE_VARIATIONS[:fourk]
-    },
-    'MT' => {
-      'loss_of_use' => LOSS_OF_USE_VARIATIONS[:fourk]
-    },
-    'UT' => {
-      'loss_of_use' => LOSS_OF_USE_VARIATIONS[:fourk]
-    },
-    'WA' => {
-      'loss_of_use' => LOSS_OF_USE_VARIATIONS[:fourk]
-    }
+    'ME' => LOSS_OF_USE_VARIATIONS[:fourk],
+    'MT' => LOSS_OF_USE_VARIATIONS[:fourk],
+    'UT' => LOSS_OF_USE_VARIATIONS[:fourk],
+    'WA' => LOSS_OF_USE_VARIATIONS[:fourk],
   }.deep_merge(["AL", "CA", "DC", "MA", "NJ", "NV", "NY", "PA", "SC", "VA", "WI", "WY"].map do |st|
     [
       st,
       {
-        'no_huge_all_perils_allowed' => {
-          'message' => 'There is no theft deductible large enough to let a $1000 all perils deductible be selected',
-          'code' => ['=', ['value', 'deductible', @@coverage_codes[:AllOtherPeril][:code]], ['[)', 0, 1000]]
+        'no_huge_all_peril' => { # 'There is no theft deductible large enough to let a $1000 all perils deductible be selected'
+          'subject' => @@coverage_codes[:AllOtherPeril][:code].to_s,
+          'condition' => true,
+          'rule' => {
+            'compares_fixed' => {
+              'comparator' => '<',
+              'object' => { 'data_type' => 'currency', 'value' => 100000 }
+            }
+          }
         }
       }
     ]
@@ -905,8 +903,9 @@ class MsiService
   
   
   
-  def extract_insurable_rate_configuration(product_definition_response, configurer: nil, configurable: nil, carrier_insurable_type: nil, use_default_rules_for: nil)
-    irc = InsurableRateConfiguration.new(configurer: configurer, configurable: configurable, carrier_insurable_type: carrier_insurable_type)
+  def extract_insurable_rate_configuration(product_definition_response, configurer: nil, configurable: nil, carrier_policy_type: nil, use_default_rules_for: nil)
+    irc = InsurableRateConfiguration.new(configurer: configurer, configurable: configurable, carrier_policy_type: carrier_policy_type)
+    irc.configuration = { 'coverage_options' => {}, 'rules' => {} }
     unless product_definition_response.nil?
       # grab relevant bois from out da hood
       product = product_definition_response.dig("MSIACORD", "InsuranceSvcRs", "RenterPolicyQuoteInqRs", "MSI_ProductDefinition")
@@ -931,48 +930,42 @@ class MsiService
           }
         end.inject({}){|combined,single| combined.deep_merge(single) }
       }
-      irc.coverage_options = (coverages.map do |cov|
-          {
-            "uid"           => cov["CoverageCd"],
+      irc.configuration['coverage_options'] = (coverages.map do |cov|
+          [cov["CoverageCd"].to_s, {
             "title"         => (TITLE_OVERRIDES[cov["CoverageCd"].to_s].class == ::Proc ?
               TITLE_OVERRIDES[cov["CoverageCd"].to_s].call(use_default_rules_for.to_s)
               : TITLE_OVERRIDES[cov["CoverageCd"].to_s]) || cov["CoverageDescription"].titleize,
             "requirement"   => (cov["MSI_IsMandatoryCoverage"] || "").strip == "True" ? 'required' : 'optional',
+            "visible"       => true,
             "category"      => "coverage",
             "options_type"  => cov["MSI_LimitList"].blank? ? "none" : "multiple_choice",
-            "options_format"=> cov["MSI_LimitList"].blank? ? "none" : "currency",
-            "options"       => cov["MSI_LimitList"].blank? ? nil : arrayify(cov["MSI_LimitList"]["string"]).map{|v| v.to_d }
-          }
+            "options"       => cov["MSI_LimitList"].blank? ? nil : arrayify(cov["MSI_LimitList"]["string"]).map{|v| { 'data_type' => 'currency', 'value' => (v.to_d*100).to_i } }
+          }.compact]
         end + deductibles.map do |ded|
-          {
-            "uid"           => ded["MSI_DeductibleCd"],
+          [ded["MSI_DeductibleCd"].to_s, {
             "title"         => (TITLE_OVERRIDES[ded["MSI_DeductibleCd"].to_s].class == ::Proc ?
               TITLE_OVERRIDES[ded["MSI_DeductibleCd"].to_s].call(use_default_rules_for.to_s)
               : TITLE_OVERRIDES[ded["MSI_DeductibleCd"].to_s]) || ded["MSI_DeductibleName"].titleize,
             "requirement"   => 'required', #MOOSE WARNING: in special cases some are optional, address these
+            "visible"       => true,
             "category"      => "deductible",
             "options_type"  => ded["MSI_DeductibleOptionList"].blank? ? "none" : "multiple_choice",
-            "options"       => ded["MSI_DeductibleOptionList"].blank? ? nil : arrayify(ded["MSI_DeductibleOptionList"]["Deductible"]).map{|d| d["Amt"] ? d["Amt"].to_d : d["FormatPct"].to_d * 100 }, # MOOSE WARNING: handle percents in special way?
-            "options_format"=> ded["MSI_DeductibleOptionList"].blank? ? "none" : arrayify(ded["MSI_DeductibleOptionList"]["Deductible"]).first["Amt"] ? "currency" : "percent"
-          }
-      end).sort{|a,b| MsiService.covopt_sort(a,b) }
+            "options"       => ded["MSI_DeductibleOptionList"].blank? ? nil : arrayify(ded["MSI_DeductibleOptionList"]["Deductible"]).map{|d| d["Amt"] ? { 'data_type' => 'currency', 'value' => (d["Amt"].to_d*100).to_i } : { 'data_type' => 'percentage', 'value' => d["FormatPct"].to_d * 100 } }
+          }.compact]
+      end).sort{|a,b| MsiService.covopt_sort(a,b) }.to_h
     end
     # apply descriptions
-    irc.coverage_options.each{|co| co['description'] = DESCRIPTIONS[co['uid'].to_s] unless DESCRIPTIONS[co['uid'].to_s].blank? }
+    irc.configuration['coverage_options'].each{|uid, co| co['description'] = DESCRIPTIONS[uid] unless DESCRIPTIONS[uid].blank? }
     # apply universal disablings
-    irc.coverage_options.select{|co| UNIVERSALLY_DISABLED_COVERAGE_OPTIONS.any?{|udco| udco['category'] == co['category'] && udco['uid'] == co['uid'] } }
-                        .each{|co| co['enabled'] = false }
+    irc.configuration['coverage_options'].select{|uid, co| UNIVERSALLY_DISABLED_COVERAGE_OPTIONS.any?{|udco| udco == uid } }
+                                         .each{|uid, co| co['requirement'] = 'forbidden' }
     # apply overrides, if any
-    (OVERRIDE_SPECIFICATION[use_default_rules_for.to_s] || []).each do |ovrd|
-      found = irc.coverage_options.find{|co| co['category'] == ovrd['category'] && co['uid'].to_s == ovrd['uid'].to_s }
-      if found.nil?
-        irc.coverage_options.push(ovrd)
-      else
-        found.merge!(ovrd)
-      end
+    (OVERRIDE_SPECIFICATION[use_default_rules_for.to_s] || []).each do |uid, ovrd|
+      irc.configuration['coverage_options'][uid] ||= {}
+      irc.configuration['coverage_options'][uid].merge!(ovrd)
     end
     # set rules, if any
-    irc.rules = RULE_SPECIFICATION[use_default_rules_for.to_s] || {}
+    irc.configuration['rules'] = RULE_SPECIFICATION[use_default_rules_for.to_s] || {}
     return irc
   end
   
