@@ -103,22 +103,6 @@ ActiveRecord::Base.transaction do
         raise ActiveRecord::Rollback
       end
       bc['in_system'] = community
-      # create the qbe profile
-      cip = community.carrier_profile(1)
-      if cip.nil?
-        community.create_carrier_profile(1)
-        cip = community.carrier_profile(1)
-      end
-      cip.traits['pref_facility'] = (account_id.nil? ? 'FIC' : 'MDU')
-      cip.traits['construction_type'] ||= 'F'
-      cip.traits['protection_device_cd'] ||= 'F'
-      cip.traits['alarm_credit'] = false if cip.traits['alarm_credit'].nil?
-      cip.traits['professionally_managed'] = (account_id.nil? ? false : true)
-      cip.traits['professionally_managed_year'] = 1996 unless !cip.traits['professionally_managed_year'].blank?
-      cip.traits['construction_year'] = (bc['info']['year_built'].blank? ? 1996 : bc['info']['year_built']) unless !cip.traits['construction_year'].blank?
-      cip.traits['gated'] = false if cip.traits['gated'].nil?
-      cip.traits['city_limit'] = true if cip.traits['city_limit'].nil?
-      cip.save!
       # get the buildings and units
       unless community.insurables.blank?
         errors.push "Community on line #{bc['line']} (title '#{com[0]}') already has insurables! Update the importer to add support for this situation."
@@ -164,7 +148,7 @@ else
   
   by_account.each do |account_id, ba|
     ba['by_community'].values.each do |bc|
-      FetchQbeRatesJob.perform_later(bc['in_system'])
+      bc['in_system'].qbe_mark_preferred(strict: false, apply_defaults: true)
     end
   end
   puts "QBE calls queued."
