@@ -14,12 +14,30 @@ module CarrierQbeInsurable
         : (self.confirmed && self.parent_community&.carrier_profile(::QbeService.carrier_id)&.traits&.[]('pref_facility') == 'MDU' ? :preferred : :nonpreferred) # WARNING: change this at some point in case we confirm nonpreferred properties?
     end
     
-    def qbe_mark_preferred
+    def qbe_mark_preferred(strict: false, apply_defaults: !strict)
       return "The insurable is not a community" unless ::InsurableType::RESIDENTIAL_COMMUNITIES_IDS.include?(self.insurable_type_id)
       return "The insurable has a 'confirmed' value of false; it must be assigned to an account and marked as confirmed before being registered as preferred" unless self.confirmed
       cp = self.carrier_profile(::QbeService.carrier_id)
-      return "The community has no CarrierInsurableProfile for QBE" if cp.nil?
+      if cp.nil?
+        if strict
+          return "The community has no CarrierInsurableProfile for QBE"
+        else
+          self.create_carrier_profile(::QbeService.carrier_id)
+          cp = self.carrier_profile(::QbeService.carrier_id)
+        end
+      end
       cp.traits['pref_facility'] = 'MDU'
+      if apply_defaults
+        cp.traits['occupancy_type'] ||= 'Other'
+        cp.traits['construction_type'] ||= 'F'
+        cp.traits['protection_device_cd'] ||= 'F'
+        cp.traits['alarm_credit'] = false if cp.traits['alarm_credit'].nil?
+        cp.traits['professionally_managed'] = true
+        cp.traits['professionally_managed_year'] ||= 2015
+        cp.traits['construction_year'] ||= 1996
+        cp.traits['gated'] = false if cp.traits['gated'].nil?
+        cp.traits['city_limit'] = true if cp.traits['city_limit'].nil?
+      end
       unless cp.save
         return "The modified preferred status failed to save"
       end

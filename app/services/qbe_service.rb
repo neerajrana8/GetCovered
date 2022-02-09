@@ -82,7 +82,7 @@ class QbeService
       cip = community.carrier_profile(1)
     end
     # filter the traits
-    traits = traits.transform_keys{|k| k.to_s }
+    traits = traits.nil? ? {} : traits.transform_keys{|k| k.to_s }
     return cip.traits.map do |k,v|
       [k, traits.has_key?(k) ? traits[k] : v]
     end.to_h
