@@ -85,7 +85,13 @@ class QbeService
     traits = traits.nil? ? {} : traits.transform_keys{|k| k.to_s }
     return cip.traits.map do |k,v|
       [k, traits.has_key?(k) ? traits[k] : v]
-    end.to_h
+    end.to_h.map do |k,v|
+      if v == 0 || v == 1 && ['city_limit', 'gated', 'professionally_managed', 'alarm_credit'].include?(k)
+        v == 0 ? false : true
+      else
+        v
+      end
+    end
   end
 
   def self.carrier_id
