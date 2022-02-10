@@ -308,6 +308,7 @@ class Insurable < ApplicationRecord
     communities_only: false,      # if true, in unit mode does nothing; out of unit mode, searches only for communities with the address (no buildings)
     ignore_street_two: false,     # if true, will strip out street_two address data
     titleless: false,             # if true and unit is true, will seek a unit without a title
+    neighborhood: nil,            # if provided, should be a string; this will populate Address#neighborhood if a single result is found & that field is empty
     diagnostics: nil              # pass a hash to get diagnostics; these will be the following fields, though applicable to code not encountered may be nil:
                                   #   address_used:               true if address used, false if we didn't need it
                                   #   title_derivation_tried:     true if we tried to derive a unit title from address line 2
@@ -351,6 +352,7 @@ class Insurable < ApplicationRecord
             return { error_type: :invalid_community, message: "The requested residential building/community does not exist" }
           end
           community = (results.parent_community || results)
+          community.primary_addres.update(neighborhood: neighborhood) if !neighborhood.blank? && community.primary_address.neighborhood.blank?
           unit = results.insurables.new(
             title: unit_title == :titleless ? nil : unit_title,
             insurable_type: ::InsurableType.where(title: "Residential Unit").take,
@@ -381,6 +383,7 @@ class Insurable < ApplicationRecord
     end
     address.id = nil
     address.street_two = nil if ignore_street_two
+    address.neighborhood = neighborhood
     # set county if provided
     unless county.blank?
       address.county = county
@@ -442,6 +445,7 @@ class Insurable < ApplicationRecord
       end
       # handle the units returned by the query
       diagnostics[:unit_count] = results.count if diagnostics
+      results.map{|wst| wst.primary_address }.select{|a| a && a.neighborhood.blank? }.each{|a| a.update(neighborhood: neighborhood) } unless neighborhood.blank?
       case results.count
         when 0
           # unit does not exist; find a parent we can create on
@@ -521,6 +525,7 @@ class Insurable < ApplicationRecord
           diagnostics[:tried_street_two_match] = true
           diagnostics[:street_two_match_count] = with_street_two.count
         end
+        with_street_two.map{|wst| wst.primary_address }.select{|a| a && a.neighborhood.blank? }.each{|a| a.update(neighborhood: neighborhood) } unless neighborhood.blank?
         case with_street_two.count
           when 0
             # we can create a community with the exact specified line 2, or we can drop back to the blank street two block and return the partial matches
@@ -535,6 +540,7 @@ class Insurable < ApplicationRecord
             return with_street_two.to_a
         end
       end
+      results.map{|wst| wst.primary_address }.select{|a| a && a.neighborhood.blank? }.each{|a| a.update(neighborhood: neighborhood) } unless neighborhood.blank?
       case results.count
         when 0
           return nil if disallow_creation

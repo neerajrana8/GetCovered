@@ -85,7 +85,7 @@ module CarrierQbeInsurable
 	      carrier_agency = CarrierAgency.where(agency_id: agency_id || account&.agency_id || Agency::GET_COVERED_ID, carrier: @carrier).take
 	      
 	      qbe_service = QbeService.new(:action => 'getZipCode')
-	      qbe_service.build_request({ prop_zipcode: @address.zip_code, agent_code: carrier_agency.external_carrier_id })
+	      qbe_service.build_request({ prop_zipcode: @address.zip_code, agent_code: carrier_agency.get_agent_code })
 	      event.request = qbe_service.compiled_rxml  
 	      
 	      if event.save  
@@ -137,7 +137,7 @@ module CarrierQbeInsurable
 	            
               # if address has no county, restrict by city and try to get the county if necessary
 	            if @address.county.nil?
-	              @carrier_profile.data["county_resolution"]["matches"].select! { |opt| opt['locality'].downcase == @address.city.downcase }
+	              @carrier_profile.data["county_resolution"]["matches"].select! { |opt| opt['locality'].downcase == @address.city.downcase || opt['locality'].downcase == @address.neighborhood&.downcase }
                 if @carrier_profile.data["county_resolution"]["matches"].length > 1
                   @address.geocode if @address.latitude.blank?
                   unless @address.latitude.blank?
@@ -149,7 +149,7 @@ module CarrierQbeInsurable
 
               # if address has a county, restrict by it
 	            if !@address.county.nil?
-	              @carrier_profile.data["county_resolution"]["matches"].select! { |opt| opt['locality'].downcase == @address.city.downcase && qbe_standardize_county_string(opt['county']) == qbe_standardize_county_string(@address.county) } # just in case one is "Whatever County" and the other is just "Whatever", one has a dash and one doesn't, etc
+	              @carrier_profile.data["county_resolution"]["matches"].select! { |opt| (opt['locality'].downcase == @address.city.downcase || opt['locality'].downcase == @address.neighborhood&.downcase) && qbe_standardize_county_string(opt['county']) == qbe_standardize_county_string(@address.county) } # just in case one is "Whatever County" and the other is just "Whatever", one has a dash and one doesn't, etc
 	            end
 	  
 	            case @carrier_profile.data["county_resolution"]["matches"].length
@@ -245,13 +245,14 @@ module CarrierQbeInsurable
 	      
 	      qbe_service = QbeService.new(:action => 'PropertyInfo')
 	      carrier_agency = CarrierAgency.where(agency_id: agency_id || account&.agency_id || Agency::GET_COVERED_ID, carrier: @carrier).take
+        city = @carrier_profile.data&.[]("county_resolution")&.[]("matches")&.find{|m| m["seq"] == @carrier_profile.data["county_resolution"]["selected"] }&.[]("locality") || @address.city
 	      
 	      qbe_service.build_request({ prop_number: @address.street_number,
 	                                  prop_street: @address.street_name,
-	                                  prop_city: @address.city,
+	                                  prop_city: city,
 	                                  prop_state: @address.state,
 	                                  prop_zipcode: @address.zip_code, 
-	                                  agent_code: carrier_agency.external_carrier_id })
+	                                  agent_code: carrier_agency.get_agent_code })
 	
 	      event.request = qbe_service.compiled_rxml
         
@@ -409,6 +410,7 @@ module CarrierQbeInsurable
         
 	      carrier_agency = CarrierAgency.where(agency_id: agency_id || account&.agency_id || Agency::GET_COVERED_ID, carrier: @carrier).take
         carrier_policy_type = CarrierPolicyType.where(carrier: @carrier, policy_type_id: ::PolicyType::RESIDENTIAL_ID).take
+        city = @carrier_profile.data&.[]("county_resolution")&.[]("matches")&.find{|m| m["seq"] == @carrier_profile.data["county_resolution"]["selected"] }&.[]("locality") || @address.city
         county = @carrier_profile.data&.[]("county_resolution")&.[]("matches")&.find{|m| m["seq"] == @carrier_profile.data["county_resolution"]["selected"] }&.[]("county") || @address.county # we use the QBE formatted one in case .titlecase killed dashes etc.
         carrier_status = self.get_carrier_status(@carrier)
         full_traits_override = self.get_qbe_traits().merge(traits_override || {})
@@ -428,7 +430,7 @@ module CarrierQbeInsurable
         
 	      qbe_request_options = {
           pref_facility: (carrier_status == :preferred ? 'MDU' : 'FIC'),
-	        prop_city: @address.city,
+	        prop_city: city,
 	        prop_county: county,
 	        prop_state: @address.state,
 	        prop_zipcode: @address.combined_zip_code,
@@ -443,7 +445,7 @@ module CarrierQbeInsurable
 	        constr_type: @carrier_profile.traits['construction_type'],
 	        ppc_code: @carrier_profile.traits['ppc'],
 	        bceg_code: @carrier_profile.traits['bceg'],
-	        agent_code: carrier_agency.external_carrier_id,
+	        agent_code: carrier_agency.get_agent_code,
           effective_date: (effective_date || (Time.current.to_date + 1.day)).strftime('%m/%d/%Y')
 	      }.merge(full_traits_override)
 	      
@@ -462,7 +464,7 @@ module CarrierQbeInsurable
 # 	        gated_community: @carrier_profile.traits['gated_access'] == true ? 1 : 0,
 # 	        prof_managed: @carrier_profile.traits['professionally_managed'] == true ? 1 : 0,
 # 	        prof_managed_year: @carrier_profile.traits['professionally_managed_year'].nil? ? "" : @carrier_profile.traits['professionally_managed_year'], 
-# 	        agent_code: carrier_agency.external_carrier_id
+# 	        agent_code: carrier_agency.get_agent_code
 # 	      }
 	      
 	      qbe_service.build_request(qbe_request_options)

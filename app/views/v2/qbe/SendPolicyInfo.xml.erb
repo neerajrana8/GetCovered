@@ -238,7 +238,7 @@ end
                     <AddrTypeCd>InsuredsAddress</AddrTypeCd>
                     <Addr1><%= sanitize(request[:data][:address].combined_street_address()) %></Addr1><% unless request[:data][:unit].title.blank? %>
                     <Addr2><%= sanitize(request[:data][:unit].title.gsub(/[^0-9,.]/, "")) %></Addr2><% end %>
-                    <City><%= sanitize(request[:data][:address].city) %></City>
+                    <City><%= sanitize(request[:data][:city] || request[:data][:address].city) %></City>
                     <StateProvCd><%= request[:data][:address].state %></StateProvCd>
                     <PostalCode><%= request[:data][:address].zip_code %></PostalCode>
                     <QBE_UnitID><%= request[:data][:unit].carrier_profile(1).external_carrier_id %></QBE_UnitID>

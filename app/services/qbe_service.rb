@@ -86,12 +86,14 @@ class QbeService
     return cip.traits.map do |k,v|
       [k, traits.has_key?(k) ? traits[k] : v]
     end.to_h.map do |k,v|
-      if v == 0 || v == 1 && ['city_limit', 'gated', 'professionally_managed', 'alarm_credit'].include?(k)
-        v == 0 ? false : true
-      else
-        v
-      end
-    end
+      [k,
+        if v == 0 || v == 1 && ['city_limit', 'gated', 'professionally_managed', 'alarm_credit'].include?(k)
+          v == 0 ? false : true
+        else
+          v
+        end
+      ]
+    end.to_h
   end
 
   def self.carrier_id
@@ -292,6 +294,7 @@ class QbeService
           community: application.primary_insurable().parent_community(),
           carrier_profile: application.primary_insurable().parent_community().carrier_profile(1),
           address: address,
+          city: cip.data&.[]("county_resolution")&.[]("matches")&.find{|m| m["seq"] == cip.data["county_resolution"]["selected"] }&.[]("locality") || address.city,
           county: cip.data&.[]("county_resolution")&.[]("matches")&.find{|m| m["seq"] == cip.data["county_resolution"]["selected"] }&.[]("county") || address.county, # we use the QBE formatted one in case .titlecase killed dashes etc.
           user: application.policy_users.where(primary: true).take,
           users: application.policy_users.where.not(primary: true),
