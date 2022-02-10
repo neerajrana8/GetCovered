@@ -85,7 +85,7 @@ module CarrierQbeInsurable
 	      carrier_agency = CarrierAgency.where(agency_id: agency_id || account&.agency_id || Agency::GET_COVERED_ID, carrier: @carrier).take
 	      
 	      qbe_service = QbeService.new(:action => 'getZipCode')
-	      qbe_service.build_request({ prop_zipcode: @address.zip_code, agent_code: carrier_agency.external_carrier_id })
+	      qbe_service.build_request({ prop_zipcode: @address.zip_code, agent_code: carrier_agency.get_agent_code })
 	      event.request = qbe_service.compiled_rxml  
 	      
 	      if event.save  
@@ -251,7 +251,7 @@ module CarrierQbeInsurable
 	                                  prop_city: @address.city,
 	                                  prop_state: @address.state,
 	                                  prop_zipcode: @address.zip_code, 
-	                                  agent_code: carrier_agency.external_carrier_id })
+	                                  agent_code: carrier_agency.get_agent_code })
 	
 	      event.request = qbe_service.compiled_rxml
         
@@ -443,7 +443,7 @@ module CarrierQbeInsurable
 	        constr_type: @carrier_profile.traits['construction_type'],
 	        ppc_code: @carrier_profile.traits['ppc'],
 	        bceg_code: @carrier_profile.traits['bceg'],
-	        agent_code: carrier_agency.external_carrier_id,
+	        agent_code: carrier_agency.get_agent_code,
           effective_date: (effective_date || (Time.current.to_date + 1.day)).strftime('%m/%d/%Y')
 	      }.merge(full_traits_override)
 	      
@@ -462,7 +462,7 @@ module CarrierQbeInsurable
 # 	        gated_community: @carrier_profile.traits['gated_access'] == true ? 1 : 0,
 # 	        prof_managed: @carrier_profile.traits['professionally_managed'] == true ? 1 : 0,
 # 	        prof_managed_year: @carrier_profile.traits['professionally_managed_year'].nil? ? "" : @carrier_profile.traits['professionally_managed_year'], 
-# 	        agent_code: carrier_agency.external_carrier_id
+# 	        agent_code: carrier_agency.get_agent_code
 # 	      }
 	      
 	      qbe_service.build_request(qbe_request_options)

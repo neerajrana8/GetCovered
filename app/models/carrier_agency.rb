@@ -43,6 +43,19 @@ class CarrierAgency < ApplicationRecord
     CarrierAgency.find_by(carrier: carrier, agency: agency.agency) if agency.agency.present?
   end
   
+  def get_agent_code
+    if self.carrier_id == QbeService.carrier_id
+      return self.external_carrier_id unless self.external_carrier_id.blank?
+      self.agency.agency_hierarchy(include_self: false).each do |ag|
+        val = ::CarrierAgency.where(carrier_id: self.carrier_id, agency: ag).take&.external_carrier_id
+        return val unless val.blank?
+      end
+      return CarrierAgency.includes(:agency).references(:agencies).where(agencies: { master_agency: true }, carrier_id: self.carrier_id).take&.external_carrier_id
+    else
+      return self.external_carrier_id
+    end
+  end
+  
   private
 
     def remove_authorizations

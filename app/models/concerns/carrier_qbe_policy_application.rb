@@ -108,7 +108,7 @@ module CarrierQbePolicyApplication
 	          premium_pif: quote.est_premium.to_f / 100,
 	          num_insured: user_count,
 	          lia_amount: ((coverage_selections["liability"]&.[]('selection')&.[]('value') || 0).to_d / 100).to_f,
-	          agent_code: carrier_agency.external_carrier_id
+	          agent_code: carrier_agency.get_agent_code
 	        }.merge(community.get_qbe_traits(force_defaults: false, extra_settings: self.extra_settings, community: community, community_profile: community_profile, community_address: address))
 
 	        qbe_service.build_request(qbe_request_options)
