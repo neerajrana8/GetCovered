@@ -934,15 +934,8 @@ class InsurableRateConfiguration < ApplicationRecord
       effective_date = Time.current.to_date + 1.day if effective_date.nil?
       # build CIP if none exists
       unless cip
-        # This error is disabled for now... we just create a crap FIC CIP instead >__> return "insurable_rate_configuration.qbe.account_property_without_cip" unless community.account_id.nil? # really, this error  means "this guy is registered under an account but has no carrier profile for QBE"
         community.create_carrier_profile(QbeService.carrier_id)
         cip = community.carrier_profile(QbeService.carrier_id)
-        # The below is disabled because we don't want to create an FIC CIP with values that aren't actually fully known. The traits_override functionality was implemented to replace this block of code.
-        #fic_defaults = (QbeService::FIC_DEFAULTS[community.primary_address.state] || QbeService::FIC_DEFAULTS[nil])
-        #cip.traits['construction_year'] = fic_defaults['year_built'] || 1996 # we set defaults here even if they don't actually exist
-        #cip.traits['professionally_managed'] = fic_defaults['years_professionally_managed'].to_i == 0 ? false : true
-        #cip.traits['professionally_managed_year'] = Time.current.to_date.year - fic_defaults['years_professionally_managed'].to_i
-        #return "insurable_rate_configuration.qbe.cip_save_failure" unless cip.save
       end
       # perform get zip code if needed
       unless cip.data["county_resolved"] || (community.get_qbe_zip_code && cip.reload.data["county_resolved"])
