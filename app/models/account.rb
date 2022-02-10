@@ -13,7 +13,7 @@ class Account < ApplicationRecord
   include EarningsReport
   include CoverageReport
   include RecordChange
-  
+
   # belongs_to relationships
   belongs_to :agency
   belongs_to :staff, optional: true # the owner
@@ -27,7 +27,8 @@ class Account < ApplicationRecord
       
   has_many :branding_profiles, as: :profileable
   has_many :payment_profiles,  as: :payer
-  
+  has_many :master_policy_configurations, as: :configurable
+
   has_many :insurables 
   
   has_many :policies
@@ -159,10 +160,10 @@ class Account < ApplicationRecord
   
   private
 
-    # get an array [first, last] presenting self.title as if it were a name;
-    # guarantees nonempty first and last with length at most 50 characters;
-    # will separate along space boundaries with the first name as short as possible when it can
-    def get_pseudoname
+  # get an array [first, last] presenting self.title as if it were a name;
+  # guarantees nonempty first and last with length at most 50 characters;
+  # will separate along space boundaries with the first name as short as possible when it can
+  def get_pseudoname
     pseudoname = ['','']
     the_title = self.title.strip
     space_index = the_title.index(' ')

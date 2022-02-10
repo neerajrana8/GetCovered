@@ -11,6 +11,7 @@ class CarrierPolicyType < ApplicationRecord
 
   has_many :fees, as: :assignable
   has_many :carrier_policy_type_availabilities, dependent: :destroy
+  has_many :master_policy_configurations
 
   accepts_nested_attributes_for :commission_strategy
   accepts_nested_attributes_for :carrier_policy_type_availabilities, allow_destroy: true

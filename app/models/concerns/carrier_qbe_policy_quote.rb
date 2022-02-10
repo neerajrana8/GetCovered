@@ -37,12 +37,13 @@ module CarrierQbePolicyQuote
       self.policy_application.coverage_selections.each do |designation, data|
         self.policy.policy_coverages.create(
           policy_application: self.policy_application,
-          title: data['title'],
+          title: data.has_key?('title') && !data['title'].blank? ? data['title'] : designation.gsub('_', '').titlecase,
           designation: designation,
           limit: data['category'] == 'limit' ? data['selection']&.[]('value') : nil,
           deductible: data['category'] == 'deductible' ? data['selection']&.[]('value') : nil,
           special_deductible: nil,
-          enabled: true
+          enabled: true,
+          is_carrier_fee: designation.include?('fee')
         )
       end
       # coverage d

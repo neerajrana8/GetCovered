@@ -308,7 +308,7 @@
       path: "lease-type-policy-types",
       only: [ :create, :update, :index, :show ]
 
-    resources :master_policies, path: 'master-policies', only: [:create, :update, :index, :show] do
+    resources :master_policies, path: 'master-policies', only: [:create, :update, :index, :show, :new] do
       member do
         get :communities
         get :covered_units

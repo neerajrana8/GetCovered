@@ -41,6 +41,7 @@ class Policy < ApplicationRecord
   include CarrierPensioPolicy
   include CarrierCrumPolicy
   include CarrierQbePolicy
+  include CarrierQbeMasterPolicy
   include CarrierMsiPolicy
   include CarrierDcPolicy
   include AgencyConfiePolicy
@@ -85,6 +86,8 @@ class Policy < ApplicationRecord
   class_name: 'User',
   through: :primary_policy_user,
   source: :user
+
+  has_one :master_policy_configuration, as: :configurable
 
   has_one :primary_policy_insurable, -> { where(primary: true) }, class_name: 'PolicyInsurable'
   has_one :primary_insurable, class_name: 'Insurable', through: :primary_policy_insurable, source: :insurable
@@ -184,6 +187,12 @@ class Policy < ApplicationRecord
     test_policy:                6,     # no qbe code
     manual_cancellation_with_refunds:     7,     # no qbe code
     manual_cancellation_without_refunds:  8    # no qbe code
+  }
+
+  enum document_status: {
+    absent: 0,
+    at_hand: 1,
+    sent: 2
   }
 
   def current_quote
@@ -294,9 +303,13 @@ class Policy < ApplicationRecord
   def issue
     case policy_application&.carrier&.integration_designation
     when 'qbe'
-      qbe_issue_policy
+      CarrierQBE::GenerateAndSendEvidenceOfInsuranceJob.perform_now(self)
     when 'qbe_specialty'
-      { error: I18n.t('policy_model.no_policy_issue_for_qbe') }
+      if self.policy_type_id == 3
+        qbe_specialty_issue_policy()
+      else
+        { error: I18n.t('policy_model.no_policy_issue_for_qbe') }
+      end
     when 'crum'
       crum_issue_policy
     when 'msi'

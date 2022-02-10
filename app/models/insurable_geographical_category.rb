@@ -72,7 +72,7 @@ class InsurableGeographicalCategory < ApplicationRecord
   # instance methods
   
   def query_for_parents(include_self: true)
-    to_return = include_self ? ::InsurableGeographicalCategory.where(state: nil) : ::InsurableGeographicalCategory.where(id: 0) # hacky mchackington
+    to_return = ::InsurableGeographicalCategory.where(state: nil)
     unless self.state.nil?
       to_return = to_return.or(
         VARCHAR_ARRAYS.inject(::InsurableGeographicalCategory.all) do |query, prop|
@@ -84,6 +84,7 @@ class InsurableGeographicalCategory < ApplicationRecord
         end.where(state: self.state)
       )
     end
+    to_return = to_return.where.not(id: self.id) if !include_self && !self.id.nil?
     return to_return
   end
   
@@ -91,7 +92,7 @@ class InsurableGeographicalCategory < ApplicationRecord
     to_return = ::InsurableGeographicalCategory.all
     to_return = to_return.where(state: self.state) unless self.state.nil?
     VARCHAR_ARRAYS.each{|prop| next if self.send(prop).blank?; to_return = to_return.where("#{prop} <@ ARRAY[?]::varchar[]", self.send(prop)) }
-    to_return = to_return.where.not(id: self.id) if !include_self
+    to_return = to_return.where.not(id: self.id) if !include_self && !self.id.nil?
     return to_return
   end
 
