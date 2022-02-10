@@ -208,7 +208,6 @@ module PoliciesMethods
   end
 
   def coverage_proof_params
-    binding.pry
     params.require(:policy).permit(:number, :status,
                                    :account_id, :agency_id, :policy_type_id,
                                    :carrier_id, :effective_date, :expiration_date, :out_of_system_carrier_title,
