@@ -990,6 +990,7 @@ class InsurableRateConfiguration < ApplicationRecord
             # WARNING: diagnostics_hash[:event] will contain the event recording the getRates call (assuming such an event was successfully saved); we can use it to return custom failures for custom situations
             return "insurable_rate_configuration.qbe.rates_failure"
           end
+          community.insurable_rate_configurations.reload
         end
         # queue up detailed rate pulls to speed things up later, if any rates are missing
         community.fix_qbe_rates(false, traits_override: traits_override, delay: 0)
