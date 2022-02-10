@@ -245,10 +245,11 @@ module CarrierQbeInsurable
 	      
 	      qbe_service = QbeService.new(:action => 'PropertyInfo')
 	      carrier_agency = CarrierAgency.where(agency_id: agency_id || account&.agency_id || Agency::GET_COVERED_ID, carrier: @carrier).take
+        city = @carrier_profile.data&.[]("county_resolution")&.[]("matches")&.find{|m| m["seq"] == @carrier_profile.data["county_resolution"]["selected"] }&.[]("locality") || @address.city
 	      
 	      qbe_service.build_request({ prop_number: @address.street_number,
 	                                  prop_street: @address.street_name,
-	                                  prop_city: @address.city,
+	                                  prop_city: city,
 	                                  prop_state: @address.state,
 	                                  prop_zipcode: @address.zip_code, 
 	                                  agent_code: carrier_agency.get_agent_code })
@@ -409,6 +410,7 @@ module CarrierQbeInsurable
         
 	      carrier_agency = CarrierAgency.where(agency_id: agency_id || account&.agency_id || Agency::GET_COVERED_ID, carrier: @carrier).take
         carrier_policy_type = CarrierPolicyType.where(carrier: @carrier, policy_type_id: ::PolicyType::RESIDENTIAL_ID).take
+        city = @carrier_profile.data&.[]("county_resolution")&.[]("matches")&.find{|m| m["seq"] == @carrier_profile.data["county_resolution"]["selected"] }&.[]("locality") || @address.city
         county = @carrier_profile.data&.[]("county_resolution")&.[]("matches")&.find{|m| m["seq"] == @carrier_profile.data["county_resolution"]["selected"] }&.[]("county") || @address.county # we use the QBE formatted one in case .titlecase killed dashes etc.
         carrier_status = self.get_carrier_status(@carrier)
         full_traits_override = self.get_qbe_traits().merge(traits_override || {})
@@ -428,7 +430,7 @@ module CarrierQbeInsurable
         
 	      qbe_request_options = {
           pref_facility: (carrier_status == :preferred ? 'MDU' : 'FIC'),
-	        prop_city: @address.city,
+	        prop_city: city,
 	        prop_county: county,
 	        prop_state: @address.state,
 	        prop_zipcode: @address.combined_zip_code,

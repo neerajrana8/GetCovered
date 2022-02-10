@@ -292,6 +292,7 @@ class QbeService
           community: application.primary_insurable().parent_community(),
           carrier_profile: application.primary_insurable().parent_community().carrier_profile(1),
           address: address,
+          city: cip.data&.[]("county_resolution")&.[]("matches")&.find{|m| m["seq"] == cip.data["county_resolution"]["selected"] }&.[]("locality") || address.city,
           county: cip.data&.[]("county_resolution")&.[]("matches")&.find{|m| m["seq"] == cip.data["county_resolution"]["selected"] }&.[]("county") || address.county, # we use the QBE formatted one in case .titlecase killed dashes etc.
           user: application.policy_users.where(primary: true).take,
           users: application.policy_users.where.not(primary: true),
