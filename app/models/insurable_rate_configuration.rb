@@ -689,12 +689,13 @@ class InsurableRateConfiguration < ApplicationRecord
     irc_filter_block = nil
     # perform prep
     if carrier_policy_type.carrier_id == ::QbeService.carrier_id && insurable.class == ::Insurable
-      # add irc filter block to ensure we only use IRCs with rates for the right insurable traits
-      applicability = QbeService.get_applicability(insurable, nonpreferred_final_premium_params || {}, cip: cip)
-      irc_filter_block = Proc.new{|irc| irc.configurable_type != 'Insurable' || irc.configurable_id != insurable.id || irc.configurer_type != 'Carrier' || irc.configurer_id != ::QbeService.carrier_id || irc.rates['applicability'] == applicability }
       # ensure we're prepared
       error = qbe_prepare_for_get_coverage_options(insurable, cip, additional_insured_count + 1, effective_date, traits_override: nonpreferred_final_premium_params, force_address_specific_rates: (eventable.class == ::PolicyQuote))
-      unless error.blank?
+      if error.blank?
+        # add irc filter block to ensure we only use IRCs with rates for the right insurable traits
+        applicability = QbeService.get_applicability(insurable, nonpreferred_final_premium_params || {}, cip: cip.reload)
+        irc_filter_block = Proc.new{|irc| irc.configurable_type != 'Insurable' || irc.configurable_id != insurable.id || irc.configurer_type != 'Carrier' || irc.configurer_id != ::QbeService.carrier_id || irc.rates['applicability'] == applicability }
+      else
         return {
           valid: false,
           coverage_options: {},
@@ -990,7 +991,6 @@ class InsurableRateConfiguration < ApplicationRecord
             # WARNING: diagnostics_hash[:event] will contain the event recording the getRates call (assuming such an event was successfully saved); we can use it to return custom failures for custom situations
             return "insurable_rate_configuration.qbe.rates_failure"
           end
-          community.insurable_rate_configurations.reload
         end
         # queue up detailed rate pulls to speed things up later, if any rates are missing
         community.fix_qbe_rates(false, traits_override: traits_override, delay: 0)
