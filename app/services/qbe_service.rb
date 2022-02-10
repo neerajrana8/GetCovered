@@ -86,12 +86,14 @@ class QbeService
     return cip.traits.map do |k,v|
       [k, traits.has_key?(k) ? traits[k] : v]
     end.to_h.map do |k,v|
-      if v == 0 || v == 1 && ['city_limit', 'gated', 'professionally_managed', 'alarm_credit'].include?(k)
-        v == 0 ? false : true
-      else
-        v
-      end
-    end
+      [k,
+        if v == 0 || v == 1 && ['city_limit', 'gated', 'professionally_managed', 'alarm_credit'].include?(k)
+          v == 0 ? false : true
+        else
+          v
+        end
+      ]
+    end.to_h
   end
 
   def self.carrier_id
