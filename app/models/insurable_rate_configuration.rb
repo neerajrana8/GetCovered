@@ -703,7 +703,7 @@ class InsurableRateConfiguration < ApplicationRecord
           estimated_installment: nil,
           estimated_first_payment: nil,
           installment_fee: 0,
-          errors: { internal: "qbe_prepare_for_get_coverage_options returned error '#{error}'", external: I18n.t(error) },
+          errors: { internal: "qbe_prepare_for_get_coverage_options returned error '#{error}'", external: I18n.t(error), special: error == "insurable_rate_configuration.qbe.county_failure" ? "county_resolution_failure" : nil },
           annotated_selections: {}
         }.merge(eventable.class != ::PolicyQuote ? {} : {
           msi_data: nil,

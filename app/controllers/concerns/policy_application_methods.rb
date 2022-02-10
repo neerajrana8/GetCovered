@@ -202,8 +202,10 @@ module PolicyApplicationMethods
         })
       )
     )
+    special_error_flags = [results[:errors]&.[](:special)].flatten.compact
     keys_to_keep = [:valid, :coverage_options, :estimated_premium, :estimated_installment, :estimated_first_payment, :installment_fee]
     response_tr = results.select{|k, v| keys_to_keep.include?(k) }.merge(results[:errors] ? { estimated_premium_errors: [results[:errors][:external]].flatten } : {})
+                                                                  .merge(special_error_flags.blank? ? {} : { special_error_flags: special_error_flags })
     use_translations_for_coverage_options!(response_tr)
 
     render json: response_tr,
