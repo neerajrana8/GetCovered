@@ -49,7 +49,7 @@ namespace :db do
     private
 
     def with_config
-      yield Rails.application.class.parent_name.underscore,
+      yield Rails.application.class.module_parent.name.underscore,
       ActiveRecord::Base.connection_config[:host] || 'localhost',
       ActiveRecord::Base.connection_config[:database],
       ActiveRecord::Base.connection_config[:username]

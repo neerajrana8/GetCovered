@@ -40,6 +40,13 @@ scope module: :public do
 			resources :insurable_rates,
 				path: 'rates',
 				only: [:index]
+        
+      get '/qbe-county',
+        to: 'insurables#get_qbe_county_options',
+        as: :get_qbe_county_options
+      post '/qbe-county',
+        to: 'insurables#set_qbe_county',
+        as: :set_qbe_county_options
 	  end
     collection do
       post '/get-or-create',

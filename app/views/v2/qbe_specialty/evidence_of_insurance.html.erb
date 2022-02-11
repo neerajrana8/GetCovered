@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>QBE Master Policy Evidence of Insurance</title>
+    <%= render "v2/qbe_specialty/reset" %>
+    <%= render "v2/qbe_specialty/styles" %>
+</head>
+
+<body>
+    <div id="documentContainer">
+
+        <div id="documentHeader">
+            <div id="imageHeader">
+                <img src="https://gc-public-prod.s3.us-west-2.amazonaws.com/images/QBE-Specialty-Insurance-Co-LOGO.png">
+            </div>
+            <div id="titleHeader">
+                <h1 class="textCenter">Notice and Evidence of Insurance</h1>
+            </div>
+            <div id="subHeader">
+                <p>A policy of insurance (the “Policy”) has been purchased for the interests of the Named Insured.  The Policy may provide certain limited insurance coverage to the Tenant as specified herein.</p>
+            </div>
+        </div>
+
+        <div id="tableContainers">
+            <h4 class="textCenter">Policy Details</h4>
+            <table>
+                <tr>
+                    <td>
+                        <p class="tableLabel">Insurer</p>
+                        <p class="tableContent">QBE Specialty Insurance Company</p>
+                    </td>
+                    <td>
+                        <p class="tableLabel">Policy Number</p>
+                        <p class="tableContent"><%= @coverage.number %></p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <p class="tableLabel">Named Insured</p>
+                        <p class="tableContent"><%= @user.profile.full_name %></p>
+                    </td>
+                    <td>
+                        <p class="tableLabel">Community Name</p>
+                        <p class="tableContent"><%= @coverage.primary_insurable.parent_community.title %></p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <p class="tableLabel">Claim Submission</p>
+                        <p class="tableContent"></p>
+                    </td>
+                    <td>
+                        <p class="tableLabel">To obtain information about, or a copy of Policy contact</p>
+                        <p class="tableContent"></p>
+                    </td>
+                </tr>
+            </table>
+
+            <h4 class="textCenter">Tenant's Schedule</h4>
+            <table class="twoBodyTableTop">
+                <tr>
+                    <td>
+                        <p class="tableLabel">Tenant</p>
+                    </td>
+                    <td class="quarterWidth">
+                        <p class="tableLabel">Coverage Effective Date</p>
+                        <p class="tableContent"><%= @coverage.effective_date.strftime('%B %-d, %Y') %></p>
+                    </td>
+                    <td class="quarterWidth">
+                        <p class="tableLabel">Apartment Number</p>
+                      <p class="tableContent"><%= @coverage.primary_insurable.title %></p>
+                    </td>
+                </tr>
+            </table>
+            <table class="twoBodyTableBottom">
+
+              <% if @master_policy.policy_coverages.exists?(designation: "tenant_contingent_contents") %>
+              <% tenant_contingent_contents = @master_policy.policy_coverages.where(designation: "tenant_contingent_contents").take %>
+                <tr>
+                    <td class="quarterWidth">
+                        <p class="tableLabel">Tenant's Person Property Coverage</p>
+                        <p class="tableContent">
+                            <span class="c28">☑</span><span class="c27">Yes </span>
+                            <span class="c28">☐</span><span class="c4">&nbsp;No </span>
+                        </p>
+                    </td>
+                    <td class="quarterWidth">
+                        <p class="tableLabel">Tenant's Personal Property Limit</p>
+                        <p class="tableContent"><%= ActionController::Base.helpers.number_to_currency(tenant_contingent_contents.occurrence_limit.to_f / 100) %> per claim</p>
+                    </td>
+                    <td>
+                        <p class="tableLabel">Tenant’s Personal Property Aggregate Limit of Liability</p>
+                        <p class="tableContent"><%= ActionController::Base.helpers.number_to_currency(tenant_contingent_contents.limit.to_f / 100) %></p>
+                    </td>
+                </tr>
+              <% else %>
+                <tr>
+                  <td class="quarterWidth">
+                    <p class="tableLabel">Tenant's Person Property Coverage</p>
+                    <p class="tableContent">
+                      <span class="c28">☐</span><span class="c27">Yes </span>
+                      <span class="c28">☑</span><span class="c4">&nbsp;No </span>
+                    </p>
+                  </td>
+                  <td class="quarterWidth">
+                    <p class="tableLabel">Tenant's Personal Property Limit</p>
+                    <p class="tableContent">$0.00 per claim</p>
+                  </td>
+                  <td>
+                    <p class="tableLabel">Tenant’s Personal Property Aggregate Limit of Liability</p>
+                    <p class="tableContent">$0.00</p>
+                  </td>
+                </tr>
+              <% end %>
+
+              <% if @master_policy.policy_coverages.exists?(designation: "liability_coverage") %>
+              <% liability_coverage = @master_policy.policy_coverages.where(designation: "liability_coverage").take %>
+                <tr>
+                    <td class="quarterWidth">
+                        <p class="tableLabel">Tenant’s Premises Liability Coverage</p>
+                        <p class="tableContent">
+                            <span class="c28">☑</span><span class="c27">Yes </span>
+                            <span class="c28">☐</span><span class="c4">&nbsp;No </span>
+                        </p>
+                    </td>
+                    <td class="quarterWidth">
+                        <p class="tableLabel">Tenant’s Premises Liability Coverage Limit</p>
+                        <p class="tableContent"><%= ActionController::Base.helpers.number_to_currency(liability_coverage.occurrence_limit.to_f / 100) %> per “occurrence”</p>
+                    </td>
+                    <td>
+                        <p class="tableLabel">Tenant’s Premises Liability Aggregate Limit</p>
+                        <p class="tableContent"><%= ActionController::Base.helpers.number_to_currency(liability_coverage.limit.to_f / 100) %></p>
+                    </td>
+                </tr>
+              <% else %>
+                <tr>
+                  <td class="quarterWidth">
+                    <p class="tableLabel">Tenant’s Premises Liability Coverage</p>
+                    <p class="tableContent">
+                      <span class="c28">☐</span><span class="c27">Yes </span>
+                      <span class="c28">☑</span><span class="c4">&nbsp;No </span>
+                    </p>
+                  </td>
+                  <td class="quarterWidth">
+                    <p class="tableLabel">Tenant’s Premises Liability Coverage Limit</p>
+                    <p class="tableContent">$0.00 per “occurrence”</p>
+                  </td>
+                  <td>
+                    <p class="tableLabel">Tenant’s Premises Liability Aggregate Limit</p>
+                    <p class="tableContent">$0.00</p>
+                  </td>
+                </tr>
+              <% end %>
+
+            </table>
+        </div>
+
+        <div id="contentContainers">
+            <div id="contentHeader">
+                <h4 class="textCenter">
+                    <u>DISCLOSURE AND STATEMENT OF TENANT’S COVERAGE</u>
+                </h4>
+
+                <p>Coverages available to Tenant are summarized below. This Notice and Evidence of Insurance is not
+                    an insurance policy.  It does not affirmatively or negatively amend, extend or alter the coverage
+                    afforded by the Policy. Tenant is encouraged to review the Policy which sets forth all applicable
+                    terms, conditions, limitations and exclusions. Coverage may be narrower than a traditional
+                    renter’s insurance policy.</p>
+            </div>
+            <table class="columnContent">
+              <tr>
+                <td>
+                  <p><strong>Tenant’s Personal Property Endorsement (the “Personal Property Endorsement”):  This coverage
+                    is provided only if “Yes” is indicated next to Tenant’s Personal Property Coverage in the Tenant
+                    Schedule set forth above.</strong></p>
+
+                  <p>The contents coverage offered to the Tenant under the Personal Property Endorsement provides protection
+                    for Tenant’s belongings extending to specific named perils (including Burglary) subject to the terms
+                    of the Policy and the Personal Property Endorsement. Tenant is not the Named Insured under the Policy,
+                    but is an insured under the Personal Property Endorsement to the extent of Tenant’s ownership interest
+                    in property insured hereunder. This contents coverage is subject to the aggregate limit of the Tenant’s
+                    Personal Property Endorsement which may limit the availability of such coverage or reduce the stated per
+                    claim contents limit.</p>
+
+                  <p><strong>Deductible:</strong> $500 per claim.</p>
+
+                  <p><strong>Notice:</strong> After a loss, Tenant is responsible for giving prompt notice to the Insurer
+                    (see Claim Submission information set forth above) with details of the loss, notifying the police if
+                    a law has been broken, and protecting their property from any further damage, as provided in the
+                    Personal Property Endorsement.</p>
+
+                  <p>In the event of a loss, the insurance carrier may require proof of Tenant’s ownership of covered contents.
+                    Receipts and/or photographs can be satisfactory and can expedite the claims process. We recommend that
+                    Tenants take an inventory of and photograph all personal possessions and store the documentation in a
+                    secure location.</p>
+                </td>
+                <td>
+                  <p><strong>Tenant’s Premises Liability Endorsement (the “Premises Liability Endorsement”): This coverage
+                    is provided only if “Yes” is indicated next to the Tenant’s Premises Liability Coverage in the
+                    Tenant Schedule set forth above.</strong></p>
+
+                  <p>The premises liability coverage offered to the Tenant under the Premises Liability Endorsement provides
+                    the Tenant with Premises Liability coverage for “bodily injury” or “property damage” caused by an
+                    “occurrence”, and coverage for Medical Payments to Others as defined in the Premises Liability Endorsement.
+                    Tenant is not the Named Insured under the Policy, but is an insured under the Premises Liability Endorsement
+                    to the extent of Tenant’s maintenance or use of the “residence premises”. This premises liability
+                    coverage is subject to the aggregate limit of the Tenant’s Premises Liability Coverage Endorsement
+                    which may limit the availability of such coverage or reduce the stated per occurrence liability limit.</p>
+
+                  <p><strong>Deductible:</strong> No deductible applies to this coverage.</p>
+
+                  <p><strong>Notice:</strong> After a loss, Tenant is responsible for giving prompt notice to the Insurer
+                    (see Claim Submission information set forth above) with details of the loss, as provided in the
+                    Premises Liability Endorsement.</p>
+                </td>
+              </tr>
+            </table>
+        </div>
+
+        <div id="document footer">
+
+        </div>
+
+    </div>
+</body>
+</html>

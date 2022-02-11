@@ -35,11 +35,12 @@ module V2
           @staff = ::Staff.new(create_params)
           # remove password issues from errors since this is a Devise model
           @staff.valid? if @staff.errors.blank?
-          #because it had FrozenError (can't modify frozen Hash: {:password=>["can't be blank"]}):
-          #@staff.errors.messages.except!(:password)
+          # because it had FrozenError (can't modify frozen Hash: {:password=>["can't be blank"]}):
+          # @staff.errors.messages.except!(:password)
           if (@staff.errors.none? || only_password_blank_error?(@staff.errors) ) && @staff.invite_as(current_staff)
             render :show, status: :created
           else
+            pp @staff.errors
             render json: @staff.errors, status: :unprocessable_entity
           end
         else

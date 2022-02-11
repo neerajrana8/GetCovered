@@ -10,7 +10,6 @@ class PolicyQuote < ApplicationRecord
   include CarrierCrumPolicyQuote
   include CarrierMsiPolicyQuote
   include CarrierDcPolicyQuote
-  include ElasticsearchSearchable
 
   before_save :set_status_updated_on,
     if: Proc.new { |quote| quote.status_changed? }
@@ -40,13 +39,6 @@ class PolicyQuote < ApplicationRecord
   enum status: { awaiting_estimate: 0, estimated: 1, quoted: 2,
                  quote_failed: 3, accepted: 4, declined: 5,
                  abandoned: 6, expired: 7, error: 8 }
-
-  settings index: { number_of_shards: 1 } do
-    mappings dynamic: 'false' do
-      indexes :reference, type: :text, analyzer: 'english'
-      indexes :external_reference, type: :text, analyzer: 'english'
-    end
-  end
   
   def primary_user
     self.policy_application.primary_user
@@ -172,7 +164,7 @@ class PolicyQuote < ApplicationRecord
                policy_application.update(policy: policy, status: "accepted") &&
                policy_premium.update(policy: policy)
 
-              PolicyQuoteStartBillingJob.perform_later(policy: policy, issue: quote_attempt[:issue_method])
+              PolicyQuoteStartBillingJob.perform_later(policy: policy, issue: quote_attempt[:issue_method], queued_by: "PolicyQuote #{ self.id }")
               policy_type_identifier = policy_application.policy_type_id == 5 ? "Rental Guarantee" : "Policy"
               policy_msg = policy_application.policy_type_id == 5 ? I18n.t('policy_quote_model.rent_guarantee_has_been_accepted') : I18n.t('policy_quote_model.policy_has_been_accepted')
               quote_attempt[:message] = "##{ policy.number } #{ policy_msg }"

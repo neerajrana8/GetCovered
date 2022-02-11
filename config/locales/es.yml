@@ -69,8 +69,6 @@ es:
       effective_date_cannot_be_blank: "Effective_date no puede estar en blanco"
       no_security_deposit_replacement: "No hay planes de reemplazo de depósito de seguridad disponibles para esta propiedad (código de error"
     msi_get_coverage_options:
-      coverage_selections_must_be_array: "Cobertura_selecciones debe ser un conjunto de selecciones de cobertura."
-      must_include_category_and_uid: "todas las entradas de las selecciones de cobertura deben incluir una categoría y un uid"
       agency_cannot_be_blank: "agency_id no puede estar en blanco"
       effective_date_must_be_valid_date: "Effective_date debe ser una fecha válida"
       additional_insured_cannot_be_blank: "additional_insured no puede dejarse en blanco"
@@ -87,6 +85,13 @@ es:
       cant_update_user: "No se puede actualizar el usuario"
       cant_create_user: "No se puede crear un usuario"
       cant_update_address: "No se puede actualizar la dirección"
+    qbe_application:
+      missing_fic_info: "Falta la información de la comunidad requerida: %{missing_list}"
+      year_built: "año de construcción"
+      number_of_units: "número de unidades"
+      gated: "comunidad cerrada"
+      years_professionally_managed: "años gestionados por el administrador de la propiedad"
+      in_city_limits: "comunidad en los límites de la ciudad"
   policy_app_model:
     user_age: "%{name} debe tener al menos 18 años"
     billing_strategy_must_belong: "la estrategia de facturación debe pertenecer a la misma agencia"
@@ -107,6 +112,12 @@ es:
       rates_cannot_be_nil: "Las 'tasas' de argumento no pueden ser nulas"
       rates_must_be_array: "El argumento 'tarifas' debe ser una matriz"
       quote_id_cannot_be_nil: "El argumento 'quote_id' no puede ser nulo"
+      questions:
+        question_1: "¿Tiene un negocio en su apartamento / casa de alquiler?"
+        question_2: "¿Algún animal que usted o sus compañeros de cuarto posean alguna vez mordió a una persona o la mascota de otra persona?"
+        question_3: "¿Usted o sus compañeros de cuarto poseen serpientes, animales exóticos o salvajes?"
+        question_4: "¿Su (s) perro (s) es alguna de estas razas: Akita, Pit Bull (Staffordshire Bull Terrier, America Pit Bull Terrier, American Staffordshire Terrier, Bull Terrier), Chow, Rottweiler, Wolf Hybrid, Malamute o cualquier mezcla de las razas mencionadas anteriormente?"
+        question_5: "¿Ha tenido algún reclamo de responsabilidad, ya sea que se haya realizado un pago o no, en los últimos 3 años?"
   agency_model:
     parent_id_incorrect: "Identificación de padre incorrecta"
     agency_cannot_be_updated: "La agencia no se puede actualizar a sub-agencia"
@@ -234,7 +245,7 @@ es:
     state_must_be_valid_us: "El estado debe ser una abreviatura válida del estado de EE. UU."
     postal_code_must_be_valid: "El código postal debe ser un código postal válido"
   insurable_geographical_category:
-    cannot_be_blank_if_counties_are_specified: "no puede dejarse en blanco si se especifican condados"
+    cannot_be_blank_if_data_are_specified: "no puede dejarse en blanco si se especifican condados, códigos postales o ciudades"
   user_controller:
     invalid_token: "Simbolo no valido."
   user_policy_application_controller:
@@ -281,6 +292,14 @@ es:
       last_name_required: "El apellido del administrador de la propiedad no puede estar en blanco"
       last_name_too_long: "El apellido del administrador de la propiedad no puede tener más de 50 caracteres"
       middle_name_too_long: "El segundo nombre del administrador de la propiedad no puede tener más de 50 caracteres"
+  qbe_service:
+    additional_interest:
+      address_line_1_required: "Se requiere la línea 1 de la dirección del administrador de la propiedad"
+      address_city_required: "Se requiere la ciudad de la dirección del administrador de la propiedad"
+      address_state_required: "Se requiere el estado de la dirección del administrador de la propiedad"
+      address_zip_required: "Se requiere el código postal de la dirección del administrador de la propiedad"
+      address_state_invalid: "El estado de la dirección del administrador de la propiedad no es válido"
+      address_zip_required: "El código postal de la dirección del administrador de la propiedad no es válido"
   coverage_options:
     estimated_premium_errors: 'Se requiere selección de contenido'
     cannot_be_blank_counties: "no puede dejarse en blanco si se especifican condados"
@@ -355,3 +374,43 @@ es:
     1082_title: "Alquiler limitado a otros"
     1082_desc:  "La póliza puede estar respaldada para asegurar contra pérdidas por robo cuando sea total o parcial la residencia."
     1083_title: "Avería del sistema doméstico"
+    all_peril_title: "Todos los demás peligros"
+    all_peril_desc: "La aseguradora deducirá de una pérdida debido a un riesgo diferente que no está listado (es decir, robo, tifón o viento) antes de pagar hasta sus límites de cobertura."
+    hurricane_title: "Huracán"
+    hurricane_desc: "El monto que la aseguradora deducirá de una pérdida resultante de un huracán antes de pagar hasta los límites de su póliza."
+    coverage_c_title: "Cobertura C Contenido"
+    coverage_c_desc: "Cobertura de propiedad individual que asegura sus propias cosas y propiedad"
+    liability_title: "Cobertura E Responsabilidad"
+    liability_desc: "La cobertura de responsabilidad lo protege en caso de daños por negligencia en su apartamento, la comunidad u otros residentes."
+    medical_title: "Cobertura F Médico"
+    medical_desc: "Cobertura diseñada para pagar los costos médicos de otras personas que por casualidad resulten lesionadas en una propiedad asegurada hasta los límites de la póliza."
+    pet_damage_title: "Daño de mascota"
+    pet_damage_desc: "Esta opción cubre hasta $ 500 por daños accidentales causados ​​por una mascota, como una alfombra manchada o zócalos masticados."
+    water_backup_title: "Respaldo de agua"
+    water_backup_desc: "Esta opción cubre su propiedad personal en caso de que haya daños por agua / alcantarillado en su vivienda cubierta que comience fuera de las instalaciones."
+    equip_title: "Protección de equipos"
+    equip_desc: "La cobertura incluye daños físicos directos a los dispositivos electrónicos cubiertos (es decir, televisión, teléfono celular, computadora portátil, ipad, etc.), incluido el 'deterioro de los circuitos electrónicos'."
+    earthquake_coverage_title: "Terremoto"
+    earthquake_coverage_desc: "Esta opción cubre su propiedad personal (hasta $ 5,000) en caso de un terremoto."
+    bedbug_title: "Ácaro"
+    bedbug_desc: "Esta opción brinda cobertura para tratar, remediar y eliminar una infestación de chinches en la residencia."
+    # not used, possibly wrong uids (cov d is LOU and windx is absent in sendpolicyinfo)"
+    coverage_d_title: "Cobertura D Pérdida de uso"
+    coverage_d_desc: "La cobertura le reembolsa el gasto de mantener una forma de vida prácticamente idéntica después de una desgracia cubierta que supera sus costos habituales."
+    windstorm_title: "Exclusión de tormentas de viento"
+    windstorm_desc: ""
+  insurable_rate_configuration:
+    qbe:
+      account_property_without_cip: "El operador no pudo resolver la información del edificio"
+      cip_save_failure: "Ocurrió un error al procesar la dirección"
+      county_failure: "El operador no pudo resolver la dirección"
+      property_info_failure: "El transportista no pudo recuperar la información de la propiedad"
+      rates_failure: "El operador no pudo recuperar las tasas de cobertura"
+  insurables_controller:
+    qbe:
+      no_cip: "El operador no pudo resolver la información del edificio"
+      county_already_resolved: "El condado de esta dirección ya está resuelto"
+      cip_save_error: "Ocurrió un error del operador"
+      invalid_county_selection_error: "Selección de condado no válida"
+      no_counties_available: "El transportista no puede proporcionar una lista de condados para esta dirección"
+    

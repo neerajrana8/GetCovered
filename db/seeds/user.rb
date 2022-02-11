@@ -38,7 +38,14 @@ require './db/seeds/functions'
                                                                contact_phone: "5555555555"
                                                              })
 						if user.save
-							@lease.users << user
+              lease_user = @lease.lease_users.create(user: user, primary: (tc == 0))
+              unless lease_user.id
+                puts "LEASE USER FAILED LEASE USER FAILED OMG #{lease_user.errors.to_h}"
+                exit
+              end
+            else
+              puts "USER FAILED USER FAILED OMG #{user.errors.to_h}"
+              exit
 	        	end
 	        	
 	        	break        
@@ -46,8 +53,16 @@ require './db/seeds/functions'
 
 	      end
 		  end
-		  
-		  @lease.primary_user.attach_payment_source("tok_visa", true)
+      
+      begin
+        @lease.reload.primary_user.attach_payment_source("tok_visa", true)
+      rescue
+        puts "Well mate, everything is FUCKED."
+        puts "Lease users: #{@lease.lease_users.to_a}"
+        puts "Lease PU: #{@lease.primary_user}"
+        throw "it's all broken"
+      end
+      
 		else
 		
 			pp @lease.errors

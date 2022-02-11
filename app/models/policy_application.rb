@@ -5,7 +5,6 @@
 class PolicyApplication < ApplicationRecord
 
   # Concerns
-#   include ElasticsearchSearchable
   include CarrierPensioPolicyApplication
   include CarrierCrumPolicyApplication
   include CarrierQbePolicyApplication
@@ -16,6 +15,7 @@ class PolicyApplication < ApplicationRecord
   after_initialize :initialize_policy_application
 
   before_validation :set_reference, if: proc { |app| app.reference.nil? }
+  before_validation :set_extra_settings_address
 
   after_create :set_up_application_answers
 
@@ -80,7 +80,6 @@ class PolicyApplication < ApplicationRecord
                  quote_in_progress: 4, quote_failed: 5, quoted: 6,
                  more_required: 7, accepted: 8, rejected: 9 }
 
-
   def effective_moment
     self.effective_date&.beginning_of_day
   end
@@ -129,19 +128,13 @@ class PolicyApplication < ApplicationRecord
   # PolicyApplication.primary_insurable
 
   def primary_insurable
-    policy_insurable = policy_insurables.where(primary: true).take
-    policy_insurable&.insurable
+    policy_insurable = policy_insurables.find{|pi| pi.primary }&.insurable
   end
 
   # PolicyApplication.primary_insurable
 
   def primary_user
-    policy_user = policy_users.where(primary: true).take
-    unless policy_user.nil?
-      return policy_user.user.nil? ? nil : policy_user.user
-    else
-      return nil
-    end
+    return policy_users.find{|pi| pi.primary }&.user
   end
 
   # PolicyApplication.available_rates
@@ -155,13 +148,6 @@ class PolicyApplication < ApplicationRecord
       .count > 0 ? primary_insurable.insurable_rates.where(query) :
                                            primary_insurable.insurable.insurable_rates.where(query)
   end
-
-#   settings index: { number_of_shards: 1 } do
-#     mappings dynamic: 'true' do
-#       indexes :reference, type: :text, analyzer: 'english'
-#       indexes :external_reference, type: :text, analyzer: 'english'
-#     end
-#   end
 
   def check_address(insurable)
     throw :no_address if insurable.primary_address.nil?
@@ -197,12 +183,14 @@ class PolicyApplication < ApplicationRecord
   end
 
   def check_residential_question_responses
-	  liability_limit = insurable_rates.liability.take
-		questions.each do |question|
-			if question["value"] == "true" && liability_limit.coverage_limits["liability"] == 30000000
-				errors.add(:questions, "#{ question["title"] } #{I18n.t('policy_app_model.cannot_be_true_with_liability_limit')}")
-			end
-		end
+    if self.carrier_id == QbeService.carrier_id
+      liability_number = self.coverage_selections&.[]("liability")&.[]("selection")&.[]("value")
+      if liability_number == 30000000
+        self.questions.select{|q| q['value'] == 'true' }.each do |question|
+          errors.add(:questions, "#{ question["title"] } #{I18n.t('policy_app_model.cannot_be_true_with_liability_limit')}")
+        end
+      end
+    end
 	end
 
   def check_commercial_question_responses
@@ -279,6 +267,19 @@ class PolicyApplication < ApplicationRecord
         policy_application_answers.create!(
           policy_application_field: field
         )
+      end
+    end
+  
+    def set_extra_settings_address
+      # this is because MSI expects 'address' and QBE expects a broken-down address into fieldy_boiz... this is a hack to let the client send up just fieldy boiz for now
+      if self.extra_settings && self.extra_settings['additional_interest']
+        fieldy_boiz = ['addr1', 'addr2', 'city', 'state', 'zip']
+        unless (fieldy_boiz - ['addr2']).all?{|fb| self.extra_settings['additional_interest'][fb].blank? }
+          self.extra_settings['additional_interest']['address'] = fieldy_boiz.map{|fb| self.extra_settings['additional_interest'][fb] }
+                                                                             .map.with_index{|val, ind| (ind == 2 || ind == 4) && !val.blank? ? ", #{val}" : val }
+                                                                             .select{|val| !val.blank? }
+                                                                             .join(" ")
+        end
       end
     end
     

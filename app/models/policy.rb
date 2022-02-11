@@ -38,10 +38,10 @@
 
 class Policy < ApplicationRecord
   # Concerns
-  include ElasticsearchSearchable
   include CarrierPensioPolicy
   include CarrierCrumPolicy
   include CarrierQbePolicy
+  include CarrierQbeMasterPolicy
   include CarrierMsiPolicy
   include CarrierDcPolicy
   include AgencyConfiePolicy
@@ -86,6 +86,8 @@ class Policy < ApplicationRecord
   class_name: 'User',
   through: :primary_policy_user,
   source: :user
+
+  has_one :master_policy_configuration, as: :configurable
 
   has_one :primary_policy_insurable, -> { where(primary: true) }, class_name: 'PolicyInsurable'
   has_one :primary_insurable, class_name: 'Insurable', through: :primary_policy_insurable, source: :insurable
@@ -197,6 +199,12 @@ class Policy < ApplicationRecord
     end || 0
   end
 
+  enum document_status: {
+    absent: 0,
+    at_hand: 1,
+    sent: 2
+  }
+
   def current_quote
     self.policy_quotes.accepted.order('created_at desc').first
   end
@@ -220,7 +228,7 @@ class Policy < ApplicationRecord
   SPECIAL_CANCELLATION_REFUND_LOGIC = {
     'insured_request' =>          :early_cancellation,
     'nonpayment'      =>          :no_refund,
-    'test_policy'     =>          :no_refund,
+    'test_policy'     =>          :full_refund,
     'manual_cancellation_with_refunds' => :early_cancellation,
     'manual_cancellation_without_refunds' => :no_refund
   }
@@ -305,9 +313,13 @@ class Policy < ApplicationRecord
   def issue
     case policy_application&.carrier&.integration_designation
     when 'qbe'
-      qbe_issue_policy
+      CarrierQBE::GenerateAndSendEvidenceOfInsuranceJob.perform_now(self)
     when 'qbe_specialty'
-      { error: I18n.t('policy_model.no_policy_issue_for_qbe') }
+      if self.policy_type_id == 3
+        qbe_specialty_issue_policy()
+      else
+        { error: I18n.t('policy_model.no_policy_issue_for_qbe') }
+      end
     when 'crum'
       crum_issue_policy
     when 'msi'
@@ -334,9 +346,21 @@ class Policy < ApplicationRecord
     case special_logic
       when :prorated_refund
        result =  pq.policy_premium.prorate(new_last_moment: last_active_moment)
+      when :full_refund
+        pq.policy_premium.policy_premium_items.each do |ppi|
+          ppi.line_items.each do |li|
+            ::LineItemReduction.create!(
+              reason: "Test Policy Refund",
+              refundability: 'cancel_or_refund',
+              amount_interpretation: 'max_total_after_reduction',
+              amount: 0,
+              line_item: li
+            )
+          end
+        end
       when :early_cancellation
-        max_days_for_full_refund = (CarrierPolicyType.where(policy_type_id: self.policy_type_id, carrier_id: self.carrier_id).take&.max_days_for_full_refund || 0).days
-        if last_active_moment < (self.created_at.to_date + max_days_for_full_refund.days).end_of_day
+        max_days_for_full_refund = CarrierPolicyType.where(policy_type_id: self.policy_type_id, carrier_id: self.carrier_id).take&.max_days_for_full_refund || 0
+        if max_days_for_full_refund != 0 && last_active_moment < (self.created_at.to_date + max_days_for_full_refund.days).end_of_day
           pq.policy_premium.policy_premium_items.where(category: ['premium', 'tax']).each do |ppi|
             ppi.line_items.each do |li|
               ::LineItemReduction.create!(
@@ -353,8 +377,11 @@ class Policy < ApplicationRecord
       else # :no_refund will end up here; by default we don't refund
         result = pq.policy_premium.prorate(new_last_moment: last_active_moment, force_no_refunds: true)
     end
-    # Handle proration error
-    unless result.nil?
+    # Mark cancelled or handle proration error
+    if result.nil?
+      update_columns(status: 'CANCELLED', cancellation_reason: reason, cancellation_date: last_active_moment.to_date)
+      RentGuaranteeCancellationEmailJob.perform_later(self) if self.policy_type.slug == 'rent-guarantee'
+    else
       update_columns(
         marked_for_cancellation: true,
         marked_for_cancellation_info: result,
@@ -363,9 +390,6 @@ class Policy < ApplicationRecord
       )
       return I18n.t('policy_model.proration_failed')
     end
-    # Mark cancelled
-    update_columns(status: 'CANCELLED', cancellation_reason: reason, cancellation_date: last_active_moment.to_date)
-    RentGuaranteeCancellationEmailJob.perform_later(self) if self.policy_type.slug == 'rent-guarantee'
     # done
     return nil
   end
@@ -414,12 +438,6 @@ class Policy < ApplicationRecord
 
   def rent_garantee?
     policy_type == PolicyType.rent_garantee
-  end
-
-  settings index: { number_of_shards: 1 } do
-    mappings dynamic: 'false' do
-      indexes :number, type: :text
-    end
   end
 
   def refund_available_days

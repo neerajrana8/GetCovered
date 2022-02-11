@@ -1,27 +1,6 @@
 # frozen_string_literal: true
 
 RSpec.describe PolicyApplication, type: :model do
-  it 'PolicyApplication with reference Test should be indexed' do
-    pending('should be fixed')
-    agency = FactoryBot.create(:agency)
-    account = FactoryBot.create(:account, agency: agency)
-    carrier = Carrier.first
-    carrier.agencies << [agency]
-    FactoryBot.create(:policy_application, carrier: carrier, agency: agency, account: account, reference: 'Test')
-    PolicyApplication.__elasticsearch__.refresh_index!
-    expect(PolicyApplication.search('Test').records.length).to eq(1)
-  end
-
-  it 'PolicyApplication with reference Wrong should not be indexed' do
-    agency = FactoryBot.create(:agency)
-    account = FactoryBot.create(:account, agency: agency)
-    carrier = Carrier.first
-    carrier.agencies << [agency]
-    policy_application = FactoryBot.create(:policy_application, carrier: carrier, agency: agency, account: account, reference: 'Test')
-    PolicyApplication.__elasticsearch__.refresh_index!
-    expect(PolicyApplication.search('Wrong').records.length).to eq(0)
-  end
-
   it 'cannot add Insurable without address' do
     pending('should be fixed')
     agency = FactoryBot.create(:agency)

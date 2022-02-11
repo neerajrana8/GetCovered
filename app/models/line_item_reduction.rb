@@ -12,7 +12,7 @@ class LineItemReduction < ApplicationRecord
   
   before_create :update_associated_models,
     unless: Proc.new{|lir| lir.callbacks_disabled }
-  after_commit :attempt_immediate_processing,
+  after_commit :queue_for_processing,
     unless: Proc.new{|lir| lir.callbacks_disabled }
 
   scope :pending, -> { where(pending: true) }
@@ -55,9 +55,9 @@ class LineItemReduction < ApplicationRecord
     return to_reduce
   end
   
-  def attempt_immediate_processing
-    # if there are pending charges/disputes, this will return without doing anything; if there aren't, it will go ahead and fully process this reduction
-    self.invoice.process_reductions
+  def queue_for_processing
+    # give it a brief delay in case we're creating several LIRs at once (so they get put on the same Refund object)
+    HandleLineItemReductionsJob.set(wait: 30.seconds).perform_later(invoice_id: self.line_item.invoice_id)
   end
 
   private

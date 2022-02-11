@@ -3,7 +3,6 @@
 
 class Lease < ApplicationRecord
   # Concerns
-  include ElasticsearchSearchable
   include RecordChange
   
   RESIDENTIAL_ID = 1
@@ -61,12 +60,6 @@ class Lease < ApplicationRecord
   self.inheritance_column = nil
 
   enum status: %i[pending current expired]
-
-  settings index: { number_of_shards: 1 } do
-    mappings dynamic: 'false' do
-      indexes :reference, type: :text, analyzer: 'english'
-    end
-  end
 
   # Lease.active?
   def active?
@@ -150,8 +143,7 @@ class Lease < ApplicationRecord
   # Lease.primary_insurable
   
   def primary_user
-    lease_user = lease_users.where(primary: true).take
-    lease_user&.user
+    lease_users.where(primary: true).take&.user
   end
   
   private
