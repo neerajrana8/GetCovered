@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2022_02_01_210542) do
+ActiveRecord::Schema.define(version: 2022_02_09_231258) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
@@ -118,6 +118,7 @@ ActiveRecord::Schema.define(version: 2022_02_01_210542) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.boolean "searchable", default: false
+    t.string "neighborhood"
     t.index ["addressable_type", "addressable_id"], name: "index_addresses_on_addressable"
   end
 

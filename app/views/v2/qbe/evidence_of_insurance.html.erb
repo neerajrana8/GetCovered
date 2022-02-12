@@ -1,4 +1,4 @@
-<!doctype html>
+<!doctype html><% @true_city = @policy.primary_insurable.parent_community.carrier_profile(1).data&.[]("county_resolution")&.[]("matches")&.find{|m| m["seq"] == @policy.primary_insurable.parent_community.carrier_profile(1).data["county_resolution"]["selected"] }&.[]("locality") || @policy.primary_insurable.primary_address.city %>
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -166,7 +166,7 @@
             <td class="no-border-left no-border-right">
               <p>
                 <small>CODE:</small><br>
-                <%= @carrier_agency.external_carrier_id %>
+                <%= @carrier_agency.get_agent_code %>
               </p>
             </td>
             <td class="no-border-left no-border-right">
@@ -190,7 +190,7 @@
           <small>Insured</small><br><br>
           <%= @policy.primary_user.profile.full_name %><br>
           <%= @policy.primary_insurable.primary_address.combined_street_address %> <%= @policy.primary_insurable.title.nil? ? '' : "#{ @policy.primary_insurable.title }" %><br>
-          <%= @policy.primary_insurable.primary_address.city %>, <%= @policy.primary_insurable.primary_address.state %>, <%= @policy.primary_insurable.primary_address.combined_zip_code() %>
+          <%= @true_city %>, <%= @policy.primary_insurable.primary_address.state %>, <%= @policy.primary_insurable.primary_address.combined_zip_code() %>
           <% unless @policy.users.nil? || @policy.users.count == 1 %>
           <br><br>
           <strong>Additional Insured:</strong><br>
@@ -268,7 +268,7 @@
         <p><small>Location Description</small></p><br>
         <p>
           <%= @policy.primary_insurable.primary_address.combined_street_address %> <%= @policy.primary_insurable.title.nil? ? '' : "#{ @policy.primary_insurable.title }" %><br>
-          <%= @policy.primary_insurable.primary_address.city %>, <%= @policy.primary_insurable.primary_address.state %><br>
+          <%= @true_city %>, <%= @policy.primary_insurable.primary_address.state %><br>
           <%= @policy.primary_insurable.primary_address.combined_zip_code() %>
         </p>
       </td>

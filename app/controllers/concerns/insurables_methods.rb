@@ -111,7 +111,8 @@ module InsurablesMethods
         create_if_ambiguous: get_or_create_params[:create_if_ambiguous],
         disallow_creation: (get_or_create_params[:allow_creation] != true),
         communities_only: get_or_create_params[:communities_only],
-        titleless: get_or_create_params[:titleless] ? true : false
+        titleless: get_or_create_params[:titleless] ? true : false,
+        neighborhood: get_or_create_params[:neighborhood]
         #, diagnostics: diagnostics
     }.compact)
     case result
@@ -172,7 +173,7 @@ module InsurablesMethods
   end
 
   def get_or_create_params
-    params.permit(:address, :unit, :insurable_id, :create_if_ambiguous, :allow_creation, :communities_only, :titleless,
+    params.permit(:address, :unit, :insurable_id, :create_if_ambiguous, :allow_creation, :communities_only, :titleless, :neighborhood,
       # optional:
       :agency_id, :policy_type_id, :carrier_id
     )

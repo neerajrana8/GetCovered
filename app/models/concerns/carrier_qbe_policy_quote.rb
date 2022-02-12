@@ -165,7 +165,7 @@ module CarrierQbePolicyQuote
 
 	        qbe_service = QbeService.new(:action => 'SendPolicyInfo')
 	        qbe_service.build_request({
-              agent_code: carrier_agency.external_carrier_id
+              agent_code: carrier_agency.get_agent_code
             }.merge(community.get_qbe_traits(force_defaults: false, extra_settings: self.policy_application.extra_settings, community: community)),
             true, true, self, self.policy_application.users
           )

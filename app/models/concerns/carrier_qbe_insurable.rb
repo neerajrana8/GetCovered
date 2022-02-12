@@ -14,12 +14,30 @@ module CarrierQbeInsurable
         : (self.confirmed && self.parent_community&.carrier_profile(::QbeService.carrier_id)&.traits&.[]('pref_facility') == 'MDU' ? :preferred : :nonpreferred) # WARNING: change this at some point in case we confirm nonpreferred properties?
     end
     
-    def qbe_mark_preferred
+    def qbe_mark_preferred(strict: false, apply_defaults: !strict)
       return "The insurable is not a community" unless ::InsurableType::RESIDENTIAL_COMMUNITIES_IDS.include?(self.insurable_type_id)
       return "The insurable has a 'confirmed' value of false; it must be assigned to an account and marked as confirmed before being registered as preferred" unless self.confirmed
       cp = self.carrier_profile(::QbeService.carrier_id)
-      return "The community has no CarrierInsurableProfile for QBE" if cp.nil?
+      if cp.nil?
+        if strict
+          return "The community has no CarrierInsurableProfile for QBE"
+        else
+          self.create_carrier_profile(::QbeService.carrier_id)
+          cp = self.carrier_profile(::QbeService.carrier_id)
+        end
+      end
       cp.traits['pref_facility'] = 'MDU'
+      if apply_defaults
+        cp.traits['occupancy_type'] ||= 'Other'
+        cp.traits['construction_type'] ||= 'F'
+        cp.traits['protection_device_cd'] ||= 'F'
+        cp.traits['alarm_credit'] = false if cp.traits['alarm_credit'].nil?
+        cp.traits['professionally_managed'] = true
+        cp.traits['professionally_managed_year'] ||= 2015
+        cp.traits['construction_year'] ||= 1996
+        cp.traits['gated'] = false if cp.traits['gated'].nil?
+        cp.traits['city_limit'] = true if cp.traits['city_limit'].nil?
+      end
       unless cp.save
         return "The modified preferred status failed to save"
       end
@@ -67,7 +85,7 @@ module CarrierQbeInsurable
 	      carrier_agency = CarrierAgency.where(agency_id: agency_id || account&.agency_id || Agency::GET_COVERED_ID, carrier: @carrier).take
 	      
 	      qbe_service = QbeService.new(:action => 'getZipCode')
-	      qbe_service.build_request({ prop_zipcode: @address.zip_code, agent_code: carrier_agency.external_carrier_id })
+	      qbe_service.build_request({ prop_zipcode: @address.zip_code, agent_code: carrier_agency.get_agent_code })
 	      event.request = qbe_service.compiled_rxml  
 	      
 	      if event.save  
@@ -119,7 +137,7 @@ module CarrierQbeInsurable
 	            
               # if address has no county, restrict by city and try to get the county if necessary
 	            if @address.county.nil?
-	              @carrier_profile.data["county_resolution"]["matches"].select! { |opt| opt['locality'].downcase == @address.city.downcase }
+	              @carrier_profile.data["county_resolution"]["matches"].select! { |opt| opt['locality'].downcase == @address.city.downcase || opt['locality'].downcase == @address.neighborhood&.downcase }
                 if @carrier_profile.data["county_resolution"]["matches"].length > 1
                   @address.geocode if @address.latitude.blank?
                   unless @address.latitude.blank?
@@ -131,7 +149,7 @@ module CarrierQbeInsurable
 
               # if address has a county, restrict by it
 	            if !@address.county.nil?
-	              @carrier_profile.data["county_resolution"]["matches"].select! { |opt| opt['locality'].downcase == @address.city.downcase && qbe_standardize_county_string(opt['county']) == qbe_standardize_county_string(@address.county) } # just in case one is "Whatever County" and the other is just "Whatever", one has a dash and one doesn't, etc
+	              @carrier_profile.data["county_resolution"]["matches"].select! { |opt| (opt['locality'].downcase == @address.city.downcase || opt['locality'].downcase == @address.neighborhood&.downcase) && qbe_standardize_county_string(opt['county']) == qbe_standardize_county_string(@address.county) } # just in case one is "Whatever County" and the other is just "Whatever", one has a dash and one doesn't, etc
 	            end
 	  
 	            case @carrier_profile.data["county_resolution"]["matches"].length
@@ -227,13 +245,14 @@ module CarrierQbeInsurable
 	      
 	      qbe_service = QbeService.new(:action => 'PropertyInfo')
 	      carrier_agency = CarrierAgency.where(agency_id: agency_id || account&.agency_id || Agency::GET_COVERED_ID, carrier: @carrier).take
+        city = @carrier_profile.data&.[]("county_resolution")&.[]("matches")&.find{|m| m["seq"] == @carrier_profile.data["county_resolution"]["selected"] }&.[]("locality") || @address.city
 	      
 	      qbe_service.build_request({ prop_number: @address.street_number,
 	                                  prop_street: @address.street_name,
-	                                  prop_city: @address.city,
+	                                  prop_city: city,
 	                                  prop_state: @address.state,
 	                                  prop_zipcode: @address.zip_code, 
-	                                  agent_code: carrier_agency.external_carrier_id })
+	                                  agent_code: carrier_agency.get_agent_code })
 	
 	      event.request = qbe_service.compiled_rxml
         
@@ -356,7 +375,7 @@ module CarrierQbeInsurable
     # Passing diagnostics_hash as a hash will cause diagnostic info to be inserted into it (since the return value is set up to indicate success via a boolean, we can't use it to return information)
     #   - the only diagnostic returned right now is diagnostics_hash[:event] = the event recording the getRates call
     # Passing irc_configurable_override will cause an IRC to be created for a DIFFERENT configurable, rather than this insurable. This is used to create IRCs for IGCs for rate caching, since the IGC rates are calculated with fixed parameters that may not match those of its sample insurable.
-	  def get_qbe_rates(number_insured, effective_date = nil, refresh_coverage_options: false, traits_override: self.get_qbe_traits(), diagnostics_hash: nil, irc_configurable_override: nil)
+	  def get_qbe_rates(number_insured, effective_date = nil, refresh_coverage_options: false, traits_override: nil, diagnostics_hash: nil, irc_configurable_override: nil)
   	  
 	    return if self.insurable_type.title != "Residential Community"
 	    @carrier = ::QbeService.carrier
@@ -388,22 +407,30 @@ module CarrierQbeInsurable
 	        end: nil
 	      }
 	      
-	      carrier_agency = CarrierAgency.where(agency_id: agency_id || account&.agency_id || Agency::GET_COVERED_ID, carrier: @carrier).take
         
+	      carrier_agency = CarrierAgency.where(agency_id: agency_id || account&.agency_id || Agency::GET_COVERED_ID, carrier: @carrier).take
         carrier_policy_type = CarrierPolicyType.where(carrier: @carrier, policy_type_id: ::PolicyType::RESIDENTIAL_ID).take
-        irc = ::InsurableRateConfiguration.where(carrier_policy_type: carrier_policy_type, configurer: @carrier, configurable: irc_configurable_override || self).take || ::InsurableRateConfiguration.new(
+        city = @carrier_profile.data&.[]("county_resolution")&.[]("matches")&.find{|m| m["seq"] == @carrier_profile.data["county_resolution"]["selected"] }&.[]("locality") || @address.city
+        county = @carrier_profile.data&.[]("county_resolution")&.[]("matches")&.find{|m| m["seq"] == @carrier_profile.data["county_resolution"]["selected"] }&.[]("county") || @address.county # we use the QBE formatted one in case .titlecase killed dashes etc.
+        carrier_status = self.get_carrier_status(@carrier)
+        full_traits_override = self.get_qbe_traits().merge(traits_override || {})
+        applicability = QbeService.get_applicability(self, full_traits_override, cip: @carrier_profile)
+        
+        
+        irc = ::InsurableRateConfiguration.where(carrier_policy_type: carrier_policy_type, configurer: @carrier, configurable: irc_configurable_override || self)
+            .find{|irc| irc_configurable_override || irc.rates['applicability'] == applicability } || ::InsurableRateConfiguration.new(
           carrier_policy_type: carrier_policy_type,
           configurer: @carrier,
           configurable: irc_configurable_override || self,
           configuration: { 'coverage_options' => {}, "rules" => {} },
           rates: { 'rates' => [nil, [], [], [], [], []] }
         )
+        irc.rates['applicability'] = applicability unless irc_configurable_override
+      
         
-        county = @carrier_profile.data&.[]("county_resolution")&.[]("matches")&.find{|m| m["seq"] == @carrier_profile.data["county_resolution"]["selected"] }&.[]("county") || @address.county # we use the QBE formatted one in case .titlecase killed dashes etc.
-	      
 	      qbe_request_options = {
-          pref_facility: (self.get_carrier_status(@carrier) == :preferred ? 'MDU' : 'FIC'),
-	        prop_city: @address.city,
+          pref_facility: (carrier_status == :preferred ? 'MDU' : 'FIC'),
+	        prop_city: city,
 	        prop_county: county,
 	        prop_state: @address.state,
 	        prop_zipcode: @address.combined_zip_code,
@@ -418,9 +445,9 @@ module CarrierQbeInsurable
 	        constr_type: @carrier_profile.traits['construction_type'],
 	        ppc_code: @carrier_profile.traits['ppc'],
 	        bceg_code: @carrier_profile.traits['bceg'],
-	        agent_code: carrier_agency.external_carrier_id,
+	        agent_code: carrier_agency.get_agent_code,
           effective_date: (effective_date || (Time.current.to_date + 1.day)).strftime('%m/%d/%Y')
-	      }.merge(self.get_qbe_traits()).merge(traits_override || {})
+	      }.merge(full_traits_override)
 	      
 # 	      qbe_request_options = {
 # 	        num_insured: number_insured,
@@ -437,7 +464,7 @@ module CarrierQbeInsurable
 # 	        gated_community: @carrier_profile.traits['gated_access'] == true ? 1 : 0,
 # 	        prof_managed: @carrier_profile.traits['professionally_managed'] == true ? 1 : 0,
 # 	        prof_managed_year: @carrier_profile.traits['professionally_managed_year'].nil? ? "" : @carrier_profile.traits['professionally_managed_year'], 
-# 	        agent_code: carrier_agency.external_carrier_id
+# 	        agent_code: carrier_agency.get_agent_code
 # 	      }
 	      
 	      qbe_service.build_request(qbe_request_options)

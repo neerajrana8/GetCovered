@@ -180,7 +180,7 @@ module PolicyApplicationMethods
     carrier_policy_type = CarrierPolicyType.where(carrier_id: carrier_id, policy_type_id: @ho4_policy_type_id).take
     coverage_selections = inputs[:coverage_selections]&.to_unsafe_h || {}
     effective_date = inputs[:effective_date] ? Date.parse(inputs[:effective_date]) : nil
-    effective_date = nil if effective_date && effective_date < Time.current.to_date
+    effective_date = nil if effective_date && effective_date < Time.current.to_date + 1.day
     # get coverage options
     results = ::InsurableRateConfiguration.get_coverage_options(
       carrier_policy_type, unit, coverage_selections, effective_date, inputs[:additional_insured].to_i, billing_strategy,
@@ -202,8 +202,10 @@ module PolicyApplicationMethods
         })
       )
     )
+    special_error_flags = [results[:errors]&.[](:special)].flatten.compact
     keys_to_keep = [:valid, :coverage_options, :estimated_premium, :estimated_installment, :estimated_first_payment, :installment_fee]
     response_tr = results.select{|k, v| keys_to_keep.include?(k) }.merge(results[:errors] ? { estimated_premium_errors: [results[:errors][:external]].flatten } : {})
+                                                                  .merge(special_error_flags.blank? ? {} : { special_error_flags: special_error_flags })
     use_translations_for_coverage_options!(response_tr)
 
     render json: response_tr,

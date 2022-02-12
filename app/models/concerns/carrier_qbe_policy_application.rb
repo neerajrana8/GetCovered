@@ -22,6 +22,7 @@ module CarrierQbePolicyApplication
       carrier_agency = CarrierAgency.where(agency_id: self.agency_id, carrier_id: self.carrier_id).take
       carrier_policy_type = CarrierPolicyType.where(carrier_id: self.carrier_id, policy_type_id: PolicyType::RESIDENTIAL_ID).take
       preferred = (unit.get_carrier_status(::QbeService.carrier_id) == :preferred)
+      community_traits = community.get_qbe_traits(force_defaults: true, extra_settings: self.extra_settings, community: community, community_profile: community_profile, community_address: address)
       # get estimate
       results = ::InsurableRateConfiguration.get_coverage_options(
         carrier_policy_type, unit, self.coverage_selections, self.effective_date, address.state == 'MO' && self.policy_users.any?{|pu| pu.spouse } ? self.users.count - 2 : self.users.count - 1, self.billing_strategy,
@@ -33,7 +34,7 @@ module CarrierQbePolicyApplication
         additional_interest_count: preferred ? nil : self.extra_settings&.[]('additional_interest').blank? ? 0 : 1,
         agency: self.agency,
         account: self.account,
-        nonpreferred_final_premium_params: community.get_qbe_traits(force_defaults: true, extra_settings: self.extra_settings, community: community, community_profile: community_profile, community_address: address)
+        nonpreferred_final_premium_params: community_traits
       )
       # make sure we succeeded
       if !results[:valid]
@@ -94,11 +95,12 @@ module CarrierQbePolicyApplication
 
 	        qbe_service = QbeService.new(action: 'getMinPrem')
 
+          city = community_profile.data&.[]("county_resolution")&.[]("matches")&.find{|m| m["seq"] == community_profile.data["county_resolution"]["selected"] }&.[]("locality") || address.city
           county = community_profile.data&.[]("county_resolution")&.[]("matches")&.find{|m| m["seq"] == community_profile.data["county_resolution"]["selected"] }&.[]("county") || address.county # we use the QBE formatted one in case .titlecase killed dashes etc.
 
 	        qbe_request_options = {
             pref_facility: preferred ? 'MDU' : 'FIC',
-	          prop_city: address.city,
+	          prop_city: city,
 	          prop_county: county,
 	          prop_state: address.state,
 	          prop_zipcode: address.combined_zip_code,
@@ -107,7 +109,7 @@ module CarrierQbePolicyApplication
 	          premium_pif: quote.est_premium.to_f / 100,
 	          num_insured: user_count,
 	          lia_amount: ((coverage_selections["liability"]&.[]('selection')&.[]('value') || 0).to_d / 100).to_f,
-	          agent_code: carrier_agency.external_carrier_id
+	          agent_code: carrier_agency.get_agent_code
 	        }.merge(community.get_qbe_traits(force_defaults: false, extra_settings: self.extra_settings, community: community, community_profile: community_profile, community_address: address))
 
 	        qbe_service.build_request(qbe_request_options)

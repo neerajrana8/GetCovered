@@ -108,7 +108,7 @@ gem "combine_pdf"
 # xlsx file generation
 gem 'caxlsx'
 # Roo for spreadsheet interaction
-gem 'roo', '~> 2.8.0'
+gem "roo", git: "https://github.com/roo-rb/roo.git", ref: "868d4ea419cf393c9d8832838d96c82e47116d2f"
 
 # profilers
 gem 'memory_profiler', require: false
