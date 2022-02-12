@@ -48,7 +48,7 @@ class Policy < ApplicationRecord
   include RecordChange
 
   after_create :schedule_coverage_reminders, if: -> { policy_type&.master_coverage }
-  after_create_commit :create_necessary_policy_coverages_for_external, if: -> { policy_in_system == false }
+  after_create :create_necessary_policy_coverages_for_external, unless: -> { in_system? }
 
   # after_save :start_automatic_master_coverage_policy_issue, if: -> { policy_type&.designation == 'MASTER' }
 
