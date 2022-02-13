@@ -40,20 +40,28 @@ module Integrations
             RESIDENT_STATUSES['nonfuture'].map{|s| (resident_datas[s] || []).select{|td| !td['MoveOut'].blank? && (Date.parse(td['MoveOut']) rescue nil)&.<(Time.current.to_date) } }
           ).flatten
           # create active new leases
+          created_by_email = {}
           in_system = IntegrationProfile.where(integration: integration, external_context: 'lease', external_id: present_tenants.map{|l| l['Id'] }, profileable_type: "Lease").pluck(:external_id)
           present_tenants.each do |tenant|
             next if in_system.include?(tenant["Id"])
             # get the users
             da_tenants = [tenant] + (tenant["Roommate"].nil? ? [] : tenant["Roommate"].class == ::Array ? tenant["Roommate"] : [tenant["Roommate"]])
-            userobjs = ::User.where(email: da_tenants.map{|t| t["Email"] }.compact) # (compact to leave out any nil email boyos) we are only using email here because this lease is not in the system; since tenant IDs are lease-specific, no IPs are going to exist with these tenant ids
+            userobjs = ::User.where(email: da_tenants.select{|t| !t["Email"].blank? }.map{|t| t["Email"] }) # (compact to leave out any nil email boyos) we are only using email here because this lease is not in the system; since tenant IDs are lease-specific, no IPs are going to exist with these tenant ids
             userobjs = da_tenants.map.with_index do |ten, ind|
               # get or create the user object
+              log_found = true
               userobj = userobjs.find{|u| u.email == ten["Email"] } # MOOSE WARNING: what if emails match but names don't....?
+              if userobj.nil?
+                userobj = created_by_email[ten["Email"]]
+                log_found = false if !userobj.nil?
+              end
               if !userobj.nil?
-                found_users[tenant["Id"]] ||= {}
-                found_users[tenant["Id"]][ten["Id"]] = userobj
+                if log_found
+                  found_users[tenant["Id"]] ||= {}
+                  found_users[tenant["Id"]][ten["Id"]] = userobj
+                end
               else
-                userobj = ::User.create(email: ten["Email"], profile_attributes: {
+                userobj = ::User.create_with_random_password(email: ten["Email"], profile_attributes: {
                   first_name: ten["FirstName"],
                   last_name: ten["LastName"],
                   middle_name: ten["MiddleName"],
@@ -64,6 +72,7 @@ module Integrations
                   user_errors[tenant["Id"]][ten["Id"]] = "Failed to create user #{ten["FirstName"]} #{ten["LastName"]}: #{userobj.errors.to_h}"
                   break nil
                 end
+                created_by_email[ten["Email"]] = userobj unless ten["Email"].blank?
                 created_users[tenant["Id"]] ||= {}
                 created_users[tenant["Id"]][ten["Id"]] = userobj
                 created_profile = IntegrationProfile.create(
@@ -85,7 +94,7 @@ module Integrations
             end
             next if userobjs.nil? # if here, we already pushed an error message above in the "unless userobj.id" block; skip the rest of this lease
             # create the lease
-            lease = unit.leases.create(start_date: Date.parse(tenant["LeaseFrom"]), end_date: tenant["LeaseTo"].blank? ? nil : Date.parse(tenant["LeaseTo"]), lease_type_id: LeaseType::RESIDENTIAL_ID, account: integration.integratable)
+            lease = unit.leases.create(start_date: Date.parse(tenant["LeaseFrom"]), end_date: tenant["LeaseTo"].blank? ? nil : Date.parse(tenant["LeaseTo"]), lease_type_id: LeaseType.residential_id, account: integration.integratable)
             if lease.id.nil?
               lease_errors[tenant["Id"]] = "Failed to create Lease: #{lease.errors.to_h}"
               next
