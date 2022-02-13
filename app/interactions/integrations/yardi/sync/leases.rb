@@ -17,8 +17,8 @@ module Integrations
         
         def execute
           # scream if integration is invalid
-          return { status: :error, message: "No yardi integration provided" } unless integration ############## MOOSE WARNING FIX THIS
-          return { status: :error, message: "Invalid yardi integration provided" } unless integration.provider == 'yardi'
+          return { lease_errors: { 'all' => "No yardi integration provided" } } unless integration ############## MOOSE WARNING FIX THIS
+          return { lease_errors: { 'all' => "Invalid yardi integration provided" } } unless integration.provider == 'yardi'
           # set up outputs
           lease_errors = {}
           created_leases = {}
@@ -91,7 +91,11 @@ module Integrations
               next
             end
             da_tenants.each.with_index do |ten, ind|
-              lease.users << userobjs[ind] if ind == 0 || ten["Lessee"] == "Yes"
+              lease.lease_users.create(
+                user: userobjs[ind],
+                primary: (ind == 0),
+                lessee: (ind == 0 || ten["Lessee"] == "Yes")
+              )
             end
             created_leases[tenant["Id"]] = lease
             created_profile = IntegrationProfile.create(
