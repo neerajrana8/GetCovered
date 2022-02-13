@@ -75,7 +75,6 @@ class User < ApplicationRecord
   accepts_nested_attributes_for :profile, update_only: true
   accepts_nested_attributes_for :address, update_only: true
 
-
   enum current_payment_method: ['none', 'ach_unverified', 'ach_verified', 'card', 'other'],
     _prefix: true
 
@@ -264,6 +263,30 @@ class User < ApplicationRecord
       principalPhone:     (self.profile.contact_phone || '').tr('^0-9', ''),
       isPrimaryOccupant:  primary
     }
+  end
+
+  def get_owners
+    owners_array = Array.new
+    self.accounts.each do |a|
+      owners_array.append(a) unless self.accounts.nil?
+      owners_array.append(a.agency) unless a.agency.nil?
+    end
+  end
+
+  #TODO: need to understand from where get the branding_profile url & community_id
+  def invite_to_pm_tenant_portal(branding_profile_url, community_id)
+    raise ArgumentError.new('community_id & branding_profile_url must be presented') if branding_profile_url.blank? || community_id.blank?
+
+    str_to_encrypt = "user #{self.id} community #{community_id}" #user 1443 community 10035
+    auth_token_for_email = EncryptionService.encrypt(str_to_encrypt)
+    @tenant_onboarding_url = "https://#{branding_profile_url}/pma-tenant-onboarding/#{auth_token_for_email}"
+    @community = Insurable.find(community_id)
+
+    #TODO: need to add validations to parameters
+    #TODO: need to send via workers to make possible to have delayed send (or use deliver in)
+    PmTenantPortal::InvitationToPmTenantPortalMailer.first_audit_email(user: self, community: @community, tenant_onboarding_url: @tenant_onboarding_url).deliver_later
+    PmTenantPortal::InvitationToPmTenantPortalMailer.second_audit_email(user: self, community: @community, tenant_onboarding_url: @tenant_onboarding_url).deliver_later
+    PmTenantPortal::InvitationToPmTenantPortalMailer.third_audit_email(user: self, community: @community, tenant_onboarding_url: @tenant_onboarding_url).deliver_later
   end
 
   private
