@@ -93,7 +93,7 @@ class User < ApplicationRecord
   validates_format_of     :email, with: Devise.email_regexp, allow_blank: true, if: Proc.new{|u| u.email_changed? && !u.email.blank? }
   
   #validates_presence_of     :password
-  validates_presence_of :password_confirmation, :if => Proc.new{|u| u.password_changed? && !u.password.blank? }
+  validates_presence_of :password_confirmation, :if => Proc.new{|u| u.will_save_change_to_attribute?('password') && !u.password.blank? }
   validates_confirmation_of :password
   #validates_length_of       :password, within: Devise.password_length
 
