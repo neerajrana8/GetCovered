@@ -16,6 +16,9 @@ class User < ApplicationRecord
   # Active Record Callbacks
   after_initialize :initialize_user
   
+  before_validation :set_default_provider,
+    on: :create
+  
   before_validation :set_random_password,
     on: :create,
     if: Proc.new{|u| u.email.nil? && u.password.blank? }
@@ -115,10 +118,6 @@ class User < ApplicationRecord
     u.send(:set_random_password)
     u.save!
     return u
-  end
-  
-  def email_required?
-    false
   end
 
   # Set Stripe ID
@@ -335,6 +334,11 @@ class User < ApplicationRecord
     secure_tmp_password = SecureRandom.base64(12)
     self.password = secure_tmp_password
     self.password_confirmation = secure_tmp_password
+  end
+  
+  def set_default_provider
+    #self.provider = (self.email.blank? ? 'created_at' : 'email')
+    #self.created_at = Time.current
   end
 
   	def add_to_mailchimp
