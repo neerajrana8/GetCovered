@@ -25,7 +25,9 @@ module Integrations
           if property_ids.nil?
             # get em all
             propz = Integrations::Yardi::RentersInsurance::GetPropertyConfigurations.run!({ integration: integration, property_id: property_list_id }.compact)
-            propz = propz&.[](:parsed_response)&.dig("Envelope", "Body", "GetPropertyConfigurationsResponse", "GetPropertyConfigurationsResult", "Properties", "Property")&.map{|comm| comm["Code"] }
+            propz = propz&.[](:parsed_response)&.dig("Envelope", "Body", "GetPropertyConfigurationsResponse", "GetPropertyConfigurationsResult", "Properties", "Property")
+            propz = [propz] if !propz.nil? && propz.class != ::Array
+            propz = propz&.map{|comm| comm["Code"] }
             return(to_return) if propz.blank?
             return propz.inject(to_return){|tr, property_id| tr.deep_merge(Integrations::Yardi::Sync::Policies.run!(integration: integration, property_ids: [property_id])) }
           elsif property_ids.length > 1
