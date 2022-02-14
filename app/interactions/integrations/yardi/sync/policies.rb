@@ -220,7 +220,7 @@ module Integrations
           ##############################################################
           ###################### EXPORT TO YARDI #######################
           ##############################################################
-          
+          to_return[:policy_export_errors]['all'] = "Yardi policy export is currently disabled"
 =begin
           # get data on internal policies that haven't yet been exported
           unexported_policy_ids = PolicyUser.where.not(policy_id: nil).where.not(policy_id: in_system_ids).where(user_id: in_system_user_list.values).pluck(:policy_id).uniq
