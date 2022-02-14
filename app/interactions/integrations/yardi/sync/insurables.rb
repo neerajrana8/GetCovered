@@ -72,6 +72,7 @@ module Integrations
 
           communities = Integrations::Yardi::RentersInsurance::GetPropertyConfigurations.run!({ integration: integration, property_id: property_list_id }.compact)
           communities = communities[:parsed_response].dig("Envelope", "Body", "GetPropertyConfigurationsResponse", "GetPropertyConfigurationsResult", "Properties", "Property")
+          communities = [communities].compact unless communities.class == ::Array
           all_units = {}
           communities.each do |comm|
             next unless should_import_community(comm["Code"])
@@ -91,6 +92,7 @@ module Integrations
               to_return[:community_errors][property_id] = "Attempt to retrieve unit list from Yardi failed."
             else
               units = units[:parsed_response].dig("Envelope", "Body", "GetUnitConfigurationResponse", "GetUnitConfigurationResult", "Units", "Unit")
+              units = [units].compact unless units.class == ::Array
               all_units[property_id] = units
               to_return[:unit_errors][property_id] = {}
               to_return[:unit_exclusions][property_id] = {}
