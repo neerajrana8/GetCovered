@@ -4,6 +4,9 @@
 class Lease < ApplicationRecord
   # Concerns
   include RecordChange
+  
+  RESIDENTIAL_ID = 1
+  COMMERCIAL_ID = 2
 
   # Active Record Callbacks
   after_initialize :initialize_lease

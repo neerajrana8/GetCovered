@@ -188,6 +188,16 @@ class Policy < ApplicationRecord
     manual_cancellation_with_refunds:     7,     # no qbe code
     manual_cancellation_without_refunds:  8    # no qbe code
   }
+  
+  def get_liability
+    if self.carrier_id == MsiService.carrier_id
+      self.coverages.find{|cov| cov.designation == "1005" }&.limit
+    elsif self.carrier_id == QbeService.carrier_id
+      self.coverages.find{|cov| cov.designation == "liability" }&.limit
+    else
+      self.coverages.find{|cov| !(["LiabilityAmount", "Liability", "Liability Amount", "Liability Limit", "LiabilityLimit", "liability"] & [cov.designation, cov.title]).blank? }&.limit
+    end || 0
+  end
 
   enum document_status: {
     absent: 0,

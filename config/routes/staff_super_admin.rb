@@ -268,6 +268,8 @@
     post :insurables_index, action: :index, controller: :insurables
 
     resources :insurable_types, path: "insurable-types", only: [ :index ]
+    
+    get 'integrations/:provider/:account_id', controller: 'integrations', action: :show
 
     resources :leads, only: [:index, :show, :update]
     post :leads_recent_index, action: :index, controller: :leads

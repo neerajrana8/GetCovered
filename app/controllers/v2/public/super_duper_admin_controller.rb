@@ -7,7 +7,7 @@ module V2
     
       def dump
         if (Rails.env == 'local' || Rails.env == 'awsdev' || Rails.env == 'development') && params[:secret] == "I told a goose a password and that goose said honk honk honk--hey! Dance, everybody!"
-          app = Rails.application.class.parent_name.underscore
+          app = Rails.application.class.module_parent_name.underscore
           host = ActiveRecord::Base.connection_config[:host]
           db = ActiveRecord::Base.connection_config[:database]
           user = ActiveRecord::Base.connection_config[:username]
