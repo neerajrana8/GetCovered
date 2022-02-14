@@ -17,7 +17,7 @@ module Integrations
         
         def execute
           # scream if integration is invalid
-          return { lease_errors: { 'all' => "No yardi integration provided" } } unless integration ############## MOOSE WARNING FIX THIS
+          return { lease_errors: { 'all' => "No yardi integration provided" } } unless integration
           return { lease_errors: { 'all' => "Invalid yardi integration provided" } } unless integration.provider == 'yardi'
           # set up outputs
           lease_errors = {}
@@ -31,6 +31,9 @@ module Integrations
           
           # group resident leases
           resident_datas = resident_data.group_by{|td| td["Status"] }
+          future_tenants = (
+            RESIDENT_STATUSES['future'].map{|s| resident_data[s] || [] }
+          ).flatten
           present_tenants = (
             RESIDENT_STATUSES['present'].map{|s| resident_datas[s] || [] } +
             RESIDENT_STATUSES['nonfuture'].map{|s| (resident_datas[s] || []).select{|td| td['MoveOut'].blank? || (Date.parse(td['MoveOut']) rescue nil)&.>=(Time.current.to_date) } }
@@ -39,10 +42,10 @@ module Integrations
             RESIDENT_STATUSES['past'].map{|s| resident_datas[s] || [] } +
             RESIDENT_STATUSES['nonfuture'].map{|s| (resident_datas[s] || []).select{|td| !td['MoveOut'].blank? && (Date.parse(td['MoveOut']) rescue nil)&.<(Time.current.to_date) } }
           ).flatten
-          # create active new leases
+          # create active new and future leases
           created_by_email = {}
           in_system = IntegrationProfile.where(integration: integration, external_context: 'lease', external_id: present_tenants.map{|l| l['Id'] }, profileable_type: "Lease").pluck(:external_id)
-          present_tenants.each do |tenant|
+          (present_tenants + future_tenants).each do |tenant|
             next if in_system.include?(tenant["Id"])
             # get the users
             da_tenants = [tenant] + (tenant["Roommate"].nil? ? [] : tenant["Roommate"].class == ::Array ? tenant["Roommate"] : [tenant["Roommate"]])
