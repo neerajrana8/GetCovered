@@ -31,7 +31,7 @@ module PoliciesMethods
     @policy.status           = 'BOUND'
     add_error_master_types(@policy.policy_type_id)
     if @policy.errors.blank? && @policy.save
-      result = Policies::UpdateUsers.run!(policy: @policy, policy_users_params: user_params[:policy_users_attributes]&.values)
+      result = Policies::UpdateUsers.run!(policy: @policy, policy_users_params: user_params[:policy_users_attributes])
       if result.failure?
         render json: result.failure, status: 422
       else
@@ -47,7 +47,7 @@ module PoliciesMethods
   end
 
   def primary_user_email
-    user_params[:policy_users_attributes]&.values&.first["user_attributes"]["email"]
+    user_params[:policy_users_attributes]&.first["user_attributes"]["email"]
   end
 
   def update_coverage_proof
