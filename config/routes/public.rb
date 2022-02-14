@@ -114,9 +114,11 @@ scope module: :public do
   resources :policies, only: [ :index, :show ] do
     collection do
       post :add_coverage_proof
-      delete :delete_coverage_proof_documents
+      #delete :delete_coverage_proof_documents
     end
   end
+
+  post 'policies/enroll_master_policy', to: '/v2/public/policies#enroll_master_policy'
 
   post 'users/check_email', to: '/v2/check_email#user'
   post 'staffs/check_email', to: '/v2/check_email#staff'
