@@ -32,15 +32,15 @@ module Integrations
           # group resident leases
           resident_datas = resident_data.group_by{|td| td["Status"] }
           future_tenants = (
-            RESIDENT_STATUSES['future'].map{|s| resident_data[s] || [] }
+            (RESIDENT_STATUSES['future'] || []).map{|s| resident_datas[s] || [] }
           ).flatten
           present_tenants = (
-            RESIDENT_STATUSES['present'].map{|s| resident_datas[s] || [] } +
-            RESIDENT_STATUSES['nonfuture'].map{|s| (resident_datas[s] || []).select{|td| td['MoveOut'].blank? || (Date.parse(td['MoveOut']) rescue nil)&.>=(Time.current.to_date) } }
+            (RESIDENT_STATUSES['present'] || []).map{|s| resident_datas[s] || [] } +
+            (RESIDENT_STATUSES['nonfuture'] || []).map{|s| (resident_datas[s] || []).select{|td| td['MoveOut'].blank? || (Date.parse(td['MoveOut']) rescue nil)&.>=(Time.current.to_date) } }
           ).flatten
           past_tenants = (
-            RESIDENT_STATUSES['past'].map{|s| resident_datas[s] || [] } +
-            RESIDENT_STATUSES['nonfuture'].map{|s| (resident_datas[s] || []).select{|td| !td['MoveOut'].blank? && (Date.parse(td['MoveOut']) rescue nil)&.<(Time.current.to_date) } }
+            (RESIDENT_STATUSES['past'] || []).map{|s| resident_datas[s] || [] } +
+            (RESIDENT_STATUSES['nonfuture'] || []).map{|s| (resident_datas[s] || []).select{|td| !td['MoveOut'].blank? && (Date.parse(td['MoveOut']) rescue nil)&.<(Time.current.to_date) } }
           ).flatten
           # create active new and future leases
           created_by_email = {}
