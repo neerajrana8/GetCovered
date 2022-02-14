@@ -6,7 +6,7 @@ require 'socket'
 @account = Account.all.first
 
 
-usage_mode = :orion_live # could also be :yardi or :qa
+usage_mode = :orion_test # could also be :yardi or :qa
 
 
 
@@ -98,35 +98,6 @@ case usage_mode
       configuration: {
         'renters_insurance' => { 'enabled' => true },
         'billing_and_payments' => { 'enabled' => true }
-      }
-    )
-  when :orion_live
-    Integration.create!(
-      integratable: @account,
-      provider: 'yardi',
-      enabled: true,
-      credentials: {
-        'voyager' => {
-          'username' => 'getcovered',
-          'password' => '3094asjd!',
-          'database_server' => 'bfraobtpd_live',
-          'database_name' => 'bfraobtpd_live'
-        },
-        'billing' => {
-          'username' => 'getcovered',
-          'password' => '3094asjd!',
-          'database_server' => 'bfraobtpd_live',
-          'database_name' => 'bfraobtpd_live'
-        },
-        'urls' => {
-          'billing_and_payments' => 'https://www.yardiasptx10.com/02667regency/Webservices/ItfResidentTransactions20.asmx',
-          'renters_insurance' => 'https://www.yardiasptx10.com/02667regency/Webservices/ItfRentersinsurance.asmx',
-          'system_batch' => 'https://www.yardiasptx10.com/02667regency/Webservices/ItfResidentTransactions20_SysBatch.asmx'
-        }
-      },
-      configuration: {
-        'renters_insurance' => { 'enabled' => true },
-        'billing_and_payments' => { 'enabled' => false }
       }
     )
 end
