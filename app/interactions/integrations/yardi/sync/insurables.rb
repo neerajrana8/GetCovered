@@ -3,16 +3,17 @@ module Integrations
     module Sync
       class Insurables < ActiveInteraction::Base
         object :integration
-        array :communities_to_import, default: nil
+        string :property_list_id, default: nil
+        array :property_ids, default: nil
         
         def account_id
           integration.integratable_id
         end
                 
         def should_import_community(property_id)
-          return case communities_to_import
-            when ::String;    communities_to_import == property_id # WARNING: can't actually pass a string atm because ActiveIntegration is stupid...
-            when ::Array;     communities_to_import.include?(property_id)
+          return case property_ids
+            when ::String;    property_ids == property_id # WARNING: can't actually pass a string atm because ActiveIntegration is stupid...
+            when ::Array;     property_ids.include?(property_id)
             else;             true
           end
         end
@@ -56,17 +57,20 @@ module Integrations
         def execute
           ######### DEFINE OUTPUT VARIABLES ###########
 
-          community_errors = {}   # [community prop id] = error string
-          unit_errors = {}        # [community prop id][unit id] = error string
-          unit_exclusions = {}    # [community prop id][unit id] = explanation string (errors are not present here, just exclusions)
-          lease_errors = {}
-          user_errors = {}
+          to_return = {
+            community_errors: {}, # [community prop id] = error string
+            unit_errors: {},      # [community prop id][unit id] = error string
+            unit_exclusions: {},  # [community prop id][unit id] = explanation string (errors are not present here, just exclusions)
+            lease_errors: {},
+            user_errors: {},
+            sync_results: []
+          }
           output_array = []
 
 
           ##### BUILD communities ARRAY AND all_units HASH #########
 
-          communities = Integrations::Yardi::RentersInsurance::GetPropertyConfigurations.run!(integration: integration, property_id: 'getcove')
+          communities = Integrations::Yardi::RentersInsurance::GetPropertyConfigurations.run!({ integration: integration, property_id: property_list_id }.compact)
           communities = communities[:parsed_response].dig("Envelope", "Body", "GetPropertyConfigurationsResponse", "GetPropertyConfigurationsResult", "Properties", "Property")
           all_units = {}
           communities.each do |comm|
@@ -84,12 +88,12 @@ module Integrations
               units = (Integrations::Yardi::RentersInsurance::GetUnitConfiguration.run!(integration: integration, property_id: property_id) rescue nil)
             end
             if units.nil?
-              community_errors[property_id] = "Attempt to retrieve unit list from Yardi failed."
+              to_return[:community_errors][property_id] = "Attempt to retrieve unit list from Yardi failed."
             else
               units = units[:parsed_response].dig("Envelope", "Body", "GetUnitConfigurationResponse", "GetUnitConfigurationResult", "Units", "Unit")
               all_units[property_id] = units
-              unit_errors[property_id] = {}
-              unit_exclusions[property_id] = {}
+              to_return[:unit_errors][property_id] = {}
+              to_return[:unit_exclusions][property_id] = {}
             end
           end
 
@@ -99,11 +103,11 @@ module Integrations
             comm = communities.find{|c| c["Code"] == k }
             [k,
               v.map do |u|
-                (unit_exclusions[k][u["UnitId"]] = "Field 'Excluded' is not equal to 0."; next nil) if u["Excluded"] != "0" && u["Excluded"] != 0
-                (unit_exclusions[k][u["UnitId"]] = "Unit ID is #{u["UnitId"]}."; next nil) if ["NONRESID", "WAIT", "WAIT_AFF", "RETAIL"].include?(u["UnitId"])
-                (unit_exclusions[k][u["UnitId"]] = "Field 'Address' is blank."; next nil) if u["Address"].blank?
+                (to_return[:unit_exclusions][k][u["UnitId"]] = "Field 'Excluded' is not equal to 0."; next nil) if u["Excluded"] != "0" && u["Excluded"] != 0
+                (to_return[:unit_exclusions][k][u["UnitId"]] = "Unit ID is #{u["UnitId"]}."; next nil) if ["NONRESID", "WAIT", "WAIT_AFF", "RETAIL"].include?(u["UnitId"])
+                (to_return[:unit_exclusions][k][u["UnitId"]] = "Field 'Address' is blank."; next nil) if u["Address"].blank?
                 addr = fixaddr(comm["MarketingName"], u["UnitId"], u["Address"])
-                (unit_errors[k][u["UnitId"]] = "Could not clean up address (Community name #{comm["MarketingName"]}, unit ID #{u["UnitId"]}, unit address #{u["Address"]})."; next nil) if addr.blank?
+                (to_return[:unit_errors][k][u["UnitId"]] = "Could not clean up address (Community name #{comm["MarketingName"]}, unit ID #{u["UnitId"]}, unit address #{u["Address"]})."; next nil) if addr.blank?
                 u.merge({
                   gc_addr: addr
                 })
@@ -118,7 +122,7 @@ module Integrations
               v.map do |u|
                 addr = Address.from_string("#{u[:gc_addr]}, #{u["City"]}, #{u["State"]} #{u["PostalCode"]}")
                 if addr.street_name.blank?
-                  unit_errors[k][u["UnitId"]] = "Unable to parse address (#{u[:gc_addr]}, #{u["City"]}, #{u["State"]} #{u["PostalCode"]})"
+                  to_return[:unit_errors][k][u["UnitId"]] = "Unable to parse address (#{u[:gc_addr]}, #{u["City"]}, #{u["State"]} #{u["PostalCode"]})"
                   nil
                 else
                   addr = after_address_hacks(addr)
@@ -141,7 +145,7 @@ module Integrations
                   next u
                 end
                 next u if u["UnitId"] == u[:gc_addr_obj].street_number || u["UnitId"] == "#{u[:gc_addr_obj].street_number}-0" || u["UnitId"].chomp(u[:gc_addr_obj].street_number).chars.all?{|c| c == "0" || c == " " || c == "-" }
-                unit_errors[k][u["UnitId"]] = "Unable to determine line two of address, but UnitId does not seem to conform to line one (UnitId '#{u["UnitId"]}', address '#{u["Address"]}', parsed as '#{u[:gc_addr_obj].full}')"
+                to_return[:unit_errors][k][u["UnitId"]] = "Unable to determine line two of address, but UnitId does not seem to conform to line one (UnitId '#{u["UnitId"]}', address '#{u["Address"]}', parsed as '#{u[:gc_addr_obj].full}')"
                 next nil
               end.compact
             ]
@@ -152,7 +156,7 @@ module Integrations
 
           all_units.select! do |k,v|
             if v.blank?
-              community_errors[k] = "No units in this community were importable."
+              to_return[:community_errors][k] = "No units in this community were importable."
               next false
             end
             next true
@@ -199,7 +203,7 @@ module Integrations
           ###### HANDLE COMMUNITIES ######
 
           community_ips = IntegrationProfile.where(integration: integration, profileable_type: "Insurable", external_context: "community").to_a
-          local_unmatched_ips = community_ips.select{|ip| !output_array.any?{|comm| comm[:yardi_id] == ip.external_id } && !community_errors.has_key?(ip.external_id) }
+          local_unmatched_ips = community_ips.select{|ip| !output_array.any?{|comm| comm[:yardi_id] == ip.external_id } && !to_return[:community_errors].has_key?(ip.external_id) }
           output_array.each do |comm|
             errored = false
             ip = community_ips.find{|ip| ip.external_id == comm[:yardi_id] }
@@ -233,19 +237,19 @@ module Integrations
                     found.select!{|c| c.title == comm[:title] } unless found.count <= 1 || comm[:title].blank?
                     unless found.count == 1
                       comm[:errored] = true
-                      community_errors[comm[:yardi_id]] = "Community address was ambiguous; community address '#{comm[:address]}', get-or-create returned multiple results (ids: #{community.map{|c| c.id }})"
+                      to_return[:community_errors][comm[:yardi_id]] = "Community address was ambiguous; community address '#{comm[:address]}', get-or-create returned multiple results (ids: #{community.map{|c| c.id }})"
                     end
                     community = found.first
                   when ::Hash
                     comm[:errored] = true
-                    community_errors[comm[:yardi_id]] = "Community address failure; community address '#{comm[:address]}', get-or-create returned #{community.to_s}"
+                    to_return[:community_errors][comm[:yardi_id]] = "Community address failure; community address '#{comm[:address]}', get-or-create returned #{community.to_s}"
                   when ::NilClass
                     comm[:errored] = true
-                    community_errors[comm[:yardi_id]] = "Community address failure; community address '#{comm[:address]}', get-or-create returned nil"
+                    to_return[:community_errors][comm[:yardi_id]] = "Community address failure; community address '#{comm[:address]}', get-or-create returned nil"
                 end
                 if community.class == ::Insurable && !community.account_id.nil? && community.account_id != account_id
                   comm[:errored] = true
-                  community_errors[comm[:yardi_id]] = "Community is registered to another account (community id ##{community.id}, account id ##{account_id})"
+                  to_return[:community_errors][comm[:yardi_id]] = "Community is registered to another account (community id ##{community.id}, account id ##{account_id})"
                 end
                 next if comm[:errored]
                 # fix matching community fields if necessary
@@ -262,7 +266,7 @@ module Integrations
                 )
                 if ip.id.nil?
                   comm[:errored] = true
-                  community_errors[comm[:yardi_id]] = "Encountered an error while saving IntegrationProfile: #{ip.errors.to_h}"
+                  to_return[:community_errors][comm[:yardi_id]] = "Encountered an error while saving IntegrationProfile: #{ip.errors.to_h}"
                   next
                 end
               end
@@ -270,7 +274,7 @@ module Integrations
             # last line of defense against missing IP
             if ip.nil?
               comm[:errored] = true
-              community_errors[comm[:yardi_id]] = "Unknown error occurred; unable to find/create IntegrationProfile"
+              to_return[:community_errors][comm[:yardi_id]] = "Unknown error occurred; unable to find/create IntegrationProfile"
               next
             end
             # log the stuff bro
@@ -296,7 +300,7 @@ module Integrations
                 )
                 if building.id.nil?
                   bldg[:units].each do |u|
-                    unit_errors[comm[:yardi_id]][u[:yardi_id]] = "Failed to create building; got error #{building.errors.to_h}."
+                    to_return[:unit_errors][comm[:yardi_id]][u[:yardi_id]] = "Failed to create building; got error #{building.errors.to_h}."
                   end
                   bldg[:errored] = true
                   next
@@ -308,7 +312,7 @@ module Integrations
                   building.update(account_id: account_id, confirmed: true)
                 else
                   bldg[:units].each do |u|
-                    unit_errors[comm[:yardi_id]][u[:yardi_id]] = "Building already exists and belongs to the wrong account (insurable #{building.id} has account_id #{building.account_id} instead of #{account_id})."
+                    to_return[:unit_errors][comm[:yardi_id]][u[:yardi_id]] = "Building already exists and belongs to the wrong account (insurable #{building.id} has account_id #{building.account_id} instead of #{account_id})."
                   end
                   bldg[:errored] = true
                   next
@@ -333,7 +337,7 @@ module Integrations
                 if !unit.nil?
                   if unit.account_id != account_id && !unit.account_id.nil?
                     u[:errored] = true
-                    unit_errors[comm[:yardi_id]][u[:yardi_id]] = "Unit already exists and belongs to the wrong account (insurable #{unit.id} has account_id #{unit.account_id} instead of #{account_id})."
+                    to_return[:unit_errors][comm[:yardi_id]][u[:yardi_id]] = "Unit already exists and belongs to the wrong account (insurable #{unit.id} has account_id #{unit.account_id} instead of #{account_id})."
                     next
                   end
                 end
@@ -348,7 +352,7 @@ module Integrations
                   )
                   if unit.id.nil?
                     u[:errored] = true
-                    unit_errors[comm[:yardi_id]][u[:yardi_id]] = "Failed to create unit; got error #{unit.errors.to_h}."
+                    to_return[:unit_errors][comm[:yardi_id]][u[:yardi_id]] = "Failed to create unit; got error #{unit.errors.to_h}."
                     next
                   end
                 end
@@ -364,7 +368,7 @@ module Integrations
                 )
                 if ip.id.nil?
                   u[:errored] = true
-                  unit_errors[comm[:yardi_id]][u[:yardi_id]] = "Encountered an error while saving IntegrationProfile: #{ip.errors.to_h}"
+                  to_return[:unit_errors][comm[:yardi_id]][u[:yardi_id]] = "Encountered an error while saving IntegrationProfile: #{ip.errors.to_h}"
                   next
                 end
                 # log the created unit
@@ -386,12 +390,12 @@ module Integrations
                 next if unit[:yardi_data]["Resident"].blank?
                 result = Integrations::Yardi::Sync::Leases.run!(integration: integration, unit: unit[:insurable], resident_data: unit[:yardi_data]["Resident"].class == ::Array ? unit[:yardi_data]["Resident"] : [unit[:yardi_data]["Resident"]])
                 unless result[:lease_errors].blank?
-                  lease_errors[comm[:yardi_id]] ||= {}
-                  lease_errors[comm[:yardi_id]][unit[:yardi_id]] = result[:lease_errors]
+                  to_return[:lease_errors][comm[:yardi_id]] ||= {}
+                  to_return[:lease_errors][comm[:yardi_id]][unit[:yardi_id]] = result[:lease_errors]
                 end
                 unless result[:user_errors].blank?
-                  user_errors[comm[:yardi_id]] ||= {}
-                  user_errors[comm[:yardi_id]][unit[:yardi_id]] = result[:user_errors]
+                  to_return[:user_errors][comm[:yardi_id]] ||= {}
+                  to_return[:user_errors][comm[:yardi_id]][unit[:yardi_id]] = result[:user_errors]
                 end
                 [:leases_created, :leases_found, :leases_expired, :users_created, :users_found].each do |prop|
                   unit[prop] = result[prop]
@@ -400,19 +404,31 @@ module Integrations
             end
           end
           
+          ###### UPDATE syncable_communities LIST ######
+          
+          integration.configuration['sync'] ||= {}
+          integration.configuration['sync']['syncable_communities'] ||= {}
+          output_array.each do |comm|
+            integration.configuration['sync']['syncable_communities'][comm[:yardi_id]] ||= {}
+            integration.configuration['sync']['syncable_communities'][comm[:yardi_id]]["name"] = comm[:title]
+            integration.configuration['sync']['syncable_communities'][comm[:yardi_id]]["gc_id"] = comm[:insurable]&.id
+          end
+          integration.configuration['sync']['sync_history'] ||= []
+          integration.configuration['sync']['sync_history'].push({
+            'log_format' => '1.0',
+            'event_type' => "sync_insurables",
+            'message' => "Synced properties, users, and leases.",
+            'timestamp' => Time.current.to_s,
+            'errors' => to_return.select{|k,v| k != :sync_results }
+          })
+          integration.save
+          
           ###### ORGANIZE & RETURN RESULTS ######
           
-          unit_errors.select!{|k,v| !v.blank? }
-          unit_exclusions.select!{|k,v| !v.blank? }
-          
-          return {
-            community_errors: community_errors,
-            unit_errors: unit_errors,
-            unit_exclusions: unit_exclusions,
-            lease_errors: lease_errors,
-            user_errors: user_errors,
-            sync_results: output_array
-          }
+          to_return[:unit_errors].select!{|k,v| !v.blank? }
+          to_return[:unit_exclusions].select!{|k,v| !v.blank? }
+          to_return[:sync_results] = output_array
+          return to_return
 
         end # end execute
       end # end class Insurables

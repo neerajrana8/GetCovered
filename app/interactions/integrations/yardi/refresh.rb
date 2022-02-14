@@ -60,7 +60,7 @@ module Integrations
           if result[:comms].class == ::Array
             integration.configuration['sync']['syncable_communities'] = result[:comms].map{|c| [c["Code"], {
               'name' => c["MarketingName"],
-              'gc_id' => (integration.configuration['sync']['syncable_communities'] || {})[c["Code"]]&.[]('gc_id'), # MOOSE WARNING: modify sync to fill this out
+              'gc_id' => (integration.configuration['sync']['syncable_communities'] || {})[c["Code"]]&.[]('gc_id'), # WARNING: insurables sync fills this out
               'enabled' => (integration.configuration['sync']['syncable_communities'] || {})[c["Code"]]&.[]('enabled') ? true : false
             }] }.to_h
           end

@@ -14,6 +14,10 @@ module Integrations
             PolicyDateLastModified: policy_date_last_modified&.to_date&.to_s
           }.compact)
         end
+                
+        def retry_request?(prior_attempts, elapsed_seconds)
+          prior_attempts < 3
+        end
       end
     end
   end

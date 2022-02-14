@@ -3,11 +3,15 @@ module Integrations
     module Sync
       class Policies < ActiveInteraction::Base
         object :integration
-        string :property_id
+        string :property_list_id, default: nil
+        array :property_ids, default: nil
         date :from_date, default: nil
         
         
         def execute
+          ##############################################################
+          ###################### MANAGE ARGUMENTS ######################
+          ##############################################################
 
           to_return = {
             policy_import_errors: {},
@@ -17,6 +21,19 @@ module Integrations
             policies_updated: {},
             policies_exported: {}
           }
+        
+          if property_ids.nil?
+            # get em all
+            propz = Integrations::Yardi::RentersInsurance::GetPropertyConfigurations.run!({ integration: integration, property_id: property_list_id }.compact)
+            propz = propz&.[](:parsed_response)&.dig("Envelope", "Body", "GetPropertyConfigurationsResponse", "GetPropertyConfigurationsResult", "Properties", "Property")&.map{|comm| comm["Code"] }
+            return(to_return) if propz.blank?
+            return propz.inject(to_return){|tr, property_id| tr.deep_merge(Integrations::Yardi::Sync::Policies.run!(integration: integration, property_ids: [property_id])) }
+          elsif property_ids.length > 1
+            return property_ids.inject(to_return){|tr, property_id| tr.deep_merge(Integrations::Yardi::Sync::Policies.run!(integration: integration, property_ids: [property_id])) }
+          elsif property_ids.length == 0
+            return(to_return)
+          end
+          property_id = property_ids.first
         
           ##############################################################
           ###################### SETUP #################################
@@ -43,7 +60,7 @@ module Integrations
           in_system_user_list = ::IntegrationProfile.where(
             integration: integration,
             profileable_type: "User",
-            external_context: "resident"
+            external_context: "resident",
             external_id: policy_hashes.map do |ph|
               temp = ph.dig("Customer", "Identification")
               next nil if temp.nil?
@@ -62,7 +79,11 @@ module Integrations
               if obj.nil?
                 not_present_in_yardi.push(pn)
               else
-                policy_hashes.push(obj)
+                if obj.class == ::Array
+                  policy_hashes.concat(obj)
+                else
+                  policy_hashes.push(obj)
+                end
               end
             else
               new_pending_yardi_numbers.push(pn) # we got an actual FAILED REQUEST, so leave it in for next time
@@ -90,16 +111,18 @@ module Integrations
           #end
           to_return[:policy_update_errors]['all'] = "Yardi sync policy updates are currently disabled." unless import_results[true].blank?
           # policies creation section
-          lease_ips = ::IntegrationProfile.references(:leases).includes(:leases)
+          lease_ips = ::IntegrationProfile.references(:leases).includes(:lease)
                           .order(external_id: :asc)
                           .where(
                             integration: integration,
                             external_context: "lease",
-                            external_id: import_results[false].map{|polhash| polhash.dig("Customer", "Lease", "Identification", "IDValue") }
+                            external_id: import_results[false]&.map{|polhash| polhash.dig("Customer", "Lease", "Identification", "IDValue") },
                             profileable_type: "Lease"
-                          ).select(:external_id, :'leases.id', :'leases.insurable_id')
-          import_results[false].each do |polhash|
-            lease = lease_ips.find{|ip| ip.external_id == polhash.dig("Customer", "Lease", "Identification", "IDValue") }&.lease
+                          )
+          created_lease_ips = []
+          import_results[false]&.each do |polhash|
+            lease = lease_ips.find{|ip| ip.external_id == polhash.dig("Customer", "Lease", "Identification", "IDValue") }&.lease ||
+                    created_lease_ips.find{|ip| ip.external_id == polhash.dig("Customer", "Lease", "Identification", "IDValue") }&.lease
             if lease.nil?
               integration.configuration['pending_yardi_policy_numbers'] ||= []
               integration.configuration['pending_yardi_policy_numbers'][property_id] ||= []
@@ -179,11 +202,16 @@ module Integrations
                 in_system[created.number] = created_ip
               end
               to_return[:policies_imported][polhash["PolicyNumber"]] = created
+              created_lease_ips.push(created_ip)
             rescue ActiveRecord::RecordInvalid => err
-              integration.configuration['pending_yardi_policy_numbers'] ||= []
-              integration.configuration['pending_yardi_policy_numbers'][property_id] ||= []
-              integration.configuration['pending_yardi_policy_numbers'][property_id].push(polhash["PolicyNumber"])
-              to_return[:policy_import_errors][polhash["PolicyNumber"]] = "Failed to create #{err.record.class.name}: #{err.record.errors.to_h}"
+              temp = err.record.errors.to_h
+              unless err.record.class == ::Policy && temp.length == 1 && temp[:number] == "has already been taken"
+                # we only log this policy as pending (to force ourselves to look at it again next import attempt) if the problem WASN'T that it already exists in our database
+                integration.configuration['pending_yardi_policy_numbers'] ||= []
+                integration.configuration['pending_yardi_policy_numbers'][property_id] ||= []
+                integration.configuration['pending_yardi_policy_numbers'][property_id].push(polhash["PolicyNumber"])
+              end
+              to_return[:policy_import_errors][polhash["PolicyNumber"]] = "Failed to create #{err.record.class.name}: #{err.record.errors.to_h}. Yardi policy hash was: #{polhash}"
             end
             next
           end # end policy creation block
@@ -193,7 +221,7 @@ module Integrations
           ###################### EXPORT TO YARDI #######################
           ##############################################################
           
-          
+=begin
           # get data on internal policies that haven't yet been exported
           unexported_policy_ids = PolicyUser.where.not(policy_id: nil).where.not(policy_id: in_system_ids).where(user_id: in_system_user_list.values).pluck(:policy_id).uniq
           unexported_policy_ids.each do |pol_id|
@@ -215,8 +243,8 @@ module Integrations
             # export the policy
             policy_hash = {
               Customer: {
-                Identification: users_to_export.map{|u| { "IDValue" => u[:external_id], "IDType" => u[:policy_user].primary ? "Resident ID" : "Roomate#{roommate_index += 1} ID" } }
-                Name: users_to_export.mapdo |u|
+                Identification: users_to_export.map{|u| { "IDValue" => u[:external_id], "IDType" => u[:policy_user].primary ? "Resident ID" : "Roomate#{roommate_index += 1} ID" } },
+                Name: users_to_export.map do |u|
                   {
                     "FirstName" => u[:policy_user].user.profile.first_name,
                     "MiddleName" => u[:policy_user].user.profile.middle_name.blank? ? nil : u[:policy_user].user.profile.middle_name,
@@ -259,11 +287,19 @@ module Integrations
             to_return[:policy_export_errors][policy.number] = "Failed to export policy due to error response from Yardi's API (Event id #{result[:event]})."
             next
           end.compact # end export process; we ignore some instead of reporting errors, because they might not be exportable policies and we only found out when we looked at them in detail
-          
+=end          
           
           ##############################################################
           ###################### CLOSING UP SHOP #######################
           ##############################################################
+          integration.configuration['sync']['sync_history'] ||= []
+          integration.configuration['sync']['sync_history'].push({
+            'log_format' => '1.0',
+            'event_type' => "sync_policies",
+            'message' => "Synced policies for Yardi property '#{property_id}'.",
+            'timestamp' => Time.current.to_s,
+            'errors' => to_return.select{|k,v| k.to_s.end_with?("errors") }
+          })
           integration.save
           return to_return
           

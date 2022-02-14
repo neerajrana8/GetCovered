@@ -26,6 +26,10 @@ module Integrations
         val.to_s
       end
       
+      def retry_request?(prior_attempts, elapsed_seconds)
+        false
+      end
+      
       # useful for little derived buddies
       def xml_block(tag, value)
         value.nil? ? "<#{tag} />" : value.class == ::Array ? value.map{|v| "<#{tag}>#{v}</#{tag}>" }.join("") : "<#{tag}>#{value}</#{tag}>"
@@ -61,15 +65,35 @@ module Integrations
         event.save
         event.started = Time.now
         # make the call
-        result = HTTParty.post(integration.credentials['urls'][type],
-          body: request_body,
-          headers: {
-            'Content-Type' => 'text/xml;charset=utf-8',
-            'SOAPAction' => soap_action,
-            'Content-Length' => request_body.length.to_s
-          },
-          ssl_version: :TLSv1_2
-        )
+        true_started = event.started
+        attempts = 1
+        done_requesting = false
+        while !done_requesting
+          done_requesting = true
+          begin
+            result = HTTParty.post(integration.credentials['urls'][type],
+              body: request_body,
+              headers: {
+                'Content-Type' => 'text/xml;charset=utf-8',
+                'SOAPAction' => soap_action,
+                'Content-Length' => request_body.length.to_s
+              },
+              ssl_version: :TLSv1_2
+            )
+          rescue Net::ReadTimeout => e
+            if retry_request?(attempts, Time.now - true_started)
+              done_requesting = false
+              attempts += 1
+              event.completed = Time.now
+              event.response = "TIMEOUT"
+              event.status = 'error'
+              event.save
+              event = event.dup
+              event.id = nil # just to be safe and explicit
+              event.started = Time.now
+            end
+          end
+        end
         # postprocess the event
         event.completed = Time.now
         event.response = result.response.body

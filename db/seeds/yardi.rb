@@ -6,7 +6,7 @@ require 'socket'
 @account = Account.all.first
 
 
-usage_mode = :orion_test # could also be :yardi or :qa
+usage_mode = :orion_live # could also be :yardi or :qa
 
 
 
@@ -36,6 +36,10 @@ case usage_mode
           'common_data' => 'https://www.yardipcv.com/8223tp7s7dev/webservices/itfCommonData.asmx',
           'resident_data' => 'https://www.yardipcv.com/8223tp7s7dev/webservices/itfresidentdata.asmx'
         }
+      },
+      configuration: {
+        'renters_insurance' => { 'enabled' => true },
+        'billing_and_payments' => { 'enabled' => true }
       }
     )
   when :qa
@@ -61,6 +65,10 @@ case usage_mode
           'renters_insurance' => 'https://www.yardipcv.com/8223tp7s7qa/Webservices/ItfRentersinsurance.asmx',
           'system_batch' => 'https://www.yardipcv.com/8223tp7s7qa/Webservices/ItfResidentTransactions20_SysBatch.asmx'
         }
+      },
+      configuration: {
+        'renters_insurance' => { 'enabled' => true },
+        'billing_and_payments' => { 'enabled' => true }
       }
     )
   when :orion_test
@@ -86,6 +94,10 @@ case usage_mode
           'renters_insurance' => 'https://www.yardiasptx10.com/02667regency/Webservices/ItfRentersinsurance.asmx',
           'system_batch' => 'https://www.yardiasptx10.com/02667regency/Webservices/ItfResidentTransactions20_SysBatch.asmx'
         }
+      },
+      configuration: {
+        'renters_insurance' => { 'enabled' => true },
+        'billing_and_payments' => { 'enabled' => true }
       }
     )
   when :orion_live
@@ -111,6 +123,10 @@ case usage_mode
           'renters_insurance' => 'https://www.yardiasptx10.com/02667regency/Webservices/ItfRentersinsurance.asmx',
           'system_batch' => 'https://www.yardiasptx10.com/02667regency/Webservices/ItfResidentTransactions20_SysBatch.asmx'
         }
+      },
+      configuration: {
+        'renters_insurance' => { 'enabled' => true },
+        'billing_and_payments' => { 'enabled' => false }
       }
     )
 end
