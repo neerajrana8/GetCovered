@@ -48,6 +48,7 @@ class Policy < ApplicationRecord
   include RecordChange
 
   after_create :schedule_coverage_reminders, if: -> { policy_type&.master_coverage }
+  after_create :create_necessary_policy_coverages_for_external, unless: -> { in_system? }
 
   # after_save :start_automatic_master_coverage_policy_issue, if: -> { policy_type&.designation == 'MASTER' }
 
@@ -161,7 +162,7 @@ class Policy < ApplicationRecord
 
   enum status: { AWAITING_PAYMENT: 0, AWAITING_ACH: 1, PAID: 2, BOUND: 3, BOUND_WITH_WARNING: 4,
     BIND_ERROR: 5, BIND_REJECTED: 6, RENEWING: 7, RENEWED: 8, EXPIRED: 9, CANCELLED: 10,
-    REINSTATED: 11, EXTERNAL_UNVERIFIED: 12, EXTERNAL_VERIFIED: 13 }
+    REINSTATED: 11, EXTERNAL_UNVERIFIED: 12, EXTERNAL_VERIFIED: 13, EXTERNAL_REJECTED: 14 }
 
   enum billing_status: { CURRENT: 0, BEHIND: 1, REJECTED: 2, RESCINDED: 3, ERROR: 4, EXTERNAL: 5 }
 
@@ -484,6 +485,17 @@ class Policy < ApplicationRecord
   def update_users_status
     users.each do |user|
       user.update(has_existing_policies: true)
+    end
+  end
+
+  def create_necessary_policy_coverages_for_external
+    unless self.policy_coverages.where(designation: "liability").count > 0
+      self.policy_coverages.create!(
+        title: "Liability",
+        designation: "liability",
+        limit: 0,
+        enabled: true
+      )
     end
   end
 end

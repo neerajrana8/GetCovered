@@ -12,14 +12,14 @@ class Staff < ApplicationRecord
   include DeviseCustomUser
   include SessionRecordable
 
-  enum role: { staff: 0, agent: 1, owner: 2, super_admin: 3 }
+  enum role: { staff: 0, agent: 1, owner: 2, super_admin: 3, policy_support: 4 }
 
   enum current_payment_method: %w[none ach_unverified ach_verified card other],
        _prefix: true
 
 
   validate :proper_role
-  validates :organizable, presence: true, unless: -> { super_admin? }
+  validates :organizable, presence: true, unless: -> { super_admin? || policy_support? }
 
   # Active Record Callbacks
   after_initialize :initialize_staff
