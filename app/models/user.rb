@@ -7,7 +7,7 @@ class User < ApplicationRecord
   # Include default devise modules. Others available are:
   # :confirmable, :lockable, :timeoutable and :omniauthable
   devise :database_authenticatable, :registerable, :recoverable, :rememberable,
-         :trackable, :validatable, :invitable, validate_on_invite: true
+         :trackable, :invitable, validate_on_invite: true
 
   include RecordChange
   include DeviseCustomUser
@@ -15,6 +15,13 @@ class User < ApplicationRecord
 
   # Active Record Callbacks
   after_initialize :initialize_user
+  
+  before_validation :set_default_provider,
+    on: :create
+  
+  before_validation :set_random_password,
+    on: :create,
+    if: Proc.new{|u| u.email.nil? && u.password.blank? }
 
   before_validation :set_default_provider,
     on: :create
@@ -88,7 +95,13 @@ class User < ApplicationRecord
   enum mailchimp_category: ['prospect', 'customer']
 
   # VALIDATIONS
-  validates :email, uniqueness: true
+  validates_uniqueness_of :email, if: Proc.new{|u| u.email_changed? && !u.email.blank? }
+  validates_format_of     :email, with: Devise.email_regexp, allow_blank: true, if: Proc.new{|u| u.email_changed? && !u.email.blank? }
+  
+  #validates_presence_of     :password
+  validates_presence_of :password_confirmation, :if => Proc.new{|u| !u.password.blank? }
+  validates_confirmation_of :password
+  #validates_length_of       :password, within: Devise.password_length
 
   validates_uniqueness_of :email, if: Proc.new{|u| u.email_changed? && !u.email.blank? }
   validates_format_of     :email, with: Devise.email_regexp, allow_blank: true, if: Proc.new{|u| u.email_changed? && !u.email.blank? }
@@ -108,6 +121,20 @@ class User < ApplicationRecord
   #    def payment_methods
   #     super.nil? ? super : EncryptionService.decrypt(super)
   #   end
+  
+  def self.create_with_random_password(*lins, **keys)
+    u = ::User.new(*lins, **keys)
+    u.send(:set_random_password)
+    u.save
+    return u
+  end
+  
+  def self.create_with_random_password!(*lins, **keys)
+    u = ::User.new(*lins, **keys)
+    u.send(:set_random_password)
+    u.save!
+    return u
+  end
 
 
   def self.create_with_random_password!(*lins, **keys)
@@ -350,6 +377,18 @@ class User < ApplicationRecord
     update_column(:qbe_id, self.qbe_id) if return_status == true
 
     return return_status
+  end
+  
+  def set_random_password
+    secure_tmp_password = SecureRandom.base64(12)
+    self.password = secure_tmp_password
+    self.password_confirmation = secure_tmp_password
+  end
+  
+  def set_default_provider
+    self.provider = (self.email.blank? ? 'altuid' : 'email')
+    self.altuid = Time.current.to_i.to_s + rand.to_s
+    self.uid = self.altuid
   end
 
   def set_random_password
