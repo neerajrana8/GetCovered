@@ -13,8 +13,8 @@ module V2
         #TODO: need to remove after testing
         master_policy = @community.policies.where(policy_type_id: 2).take || Policy.last
 
-        @users = User.where(email: enrollment_params[:user_attributes].map{|el| el[:email]})
-
+        @users = access_model(::User).where(email: enrollment_params[:user_attributes].map{|el| el[:email]})
+        
         if master_policy.present?
           start_coverage =  master_policy.effective_date
           render json: { message: 'Users not found' }, status: :ok if @users.blank?
