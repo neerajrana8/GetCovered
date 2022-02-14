@@ -6,7 +6,7 @@ require 'socket'
 @account = Account.all.first
 
 
-usage_mode = :orion_live # could also be :yardi or :qa or :orion
+usage_mode = :orion_test # could also be :yardi or :qa
 
 
 
@@ -63,7 +63,7 @@ case usage_mode
         }
       }
     )
-  when :orion
+  when :orion_test
     Integration.create!(
       integratable: @account,
       provider: 'yardi',

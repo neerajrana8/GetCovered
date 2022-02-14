@@ -92,7 +92,7 @@ module Integrations
               end
               next userobj
             end
-            next if userobjs.nil? # if here, we already pushed an error message above in the "unless userobj.id" block; skip the rest of this lease
+            next if userobjs.any?{|uo| uo.nil? } # if here, we already pushed an error message above in the "unless userobj.id" block; skip the rest of this lease
             # create the lease
             lease = unit.leases.create(start_date: Date.parse(tenant["LeaseFrom"]), end_date: tenant["LeaseTo"].blank? ? nil : Date.parse(tenant["LeaseTo"]), lease_type_id: LeaseType.residential_id, account: integration.integratable)
             if lease.id.nil?

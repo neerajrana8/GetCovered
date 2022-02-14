@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2022_02_13_205723) do
+ActiveRecord::Schema.define(version: 2022_02_14_004013) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
@@ -1891,6 +1891,7 @@ ActiveRecord::Schema.define(version: 2022_02_13_205723) do
     t.boolean "has_existing_policies", default: false
     t.boolean "has_current_leases", default: false
     t.boolean "has_leases", default: false
+    t.string "altuid"
     t.index ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["invitation_token"], name: "index_users_on_invitation_token", unique: true

@@ -337,8 +337,9 @@ class User < ApplicationRecord
   end
   
   def set_default_provider
-    #self.provider = (self.email.blank? ? 'created_at' : 'email')
-    #self.created_at = Time.current
+    self.provider = (self.email.blank? ? 'altuid' : 'email')
+    self.altuid = Time.current.to_i.to_s + rand.to_s
+    self.uid = self.altuid
   end
 
   	def add_to_mailchimp
