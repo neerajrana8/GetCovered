@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2022_02_14_004013) do
+ActiveRecord::Schema.define(version: 2022_02_15_184113) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
@@ -1325,7 +1325,7 @@ ActiveRecord::Schema.define(version: 2022_02_14_004013) do
     t.boolean "auto_renew", default: true
     t.boolean "auto_pay", default: true
     t.bigint "policy_application_group_id"
-    t.jsonb "coverage_selections", default: [], null: false
+    t.jsonb "coverage_selections", default: {}, null: false
     t.jsonb "extra_settings", default: {}
     t.jsonb "resolver_info"
     t.bigint "tag_ids", default: [], null: false, array: true
