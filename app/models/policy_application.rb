@@ -184,7 +184,7 @@ class PolicyApplication < ApplicationRecord
 
   def check_residential_question_responses
     if self.carrier_id == QbeService.carrier_id
-      liability_number = self.coverage_selections&.[]("liability")&.[]("selection")&.[]("value")
+      liability_number = self.coverage_selections&.[]("liability")&.[]("selection")&.[]("value").to_i
       if liability_number == 30000000
         self.questions.select{|q| q['value'] == 'true' }.each do |question|
           errors.add(:questions, "#{ question["title"] } #{I18n.t('policy_app_model.cannot_be_true_with_liability_limit')}")
