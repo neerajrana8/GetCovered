@@ -110,6 +110,15 @@ en:
       please_login: "Please login to %{agency_title} at the link below to update your credit card information to
         avoid interruption of coverage."
       contact_us: "Feel free to contact us at %{contact_email} if you have any questions."
+  invitation_to_pm_tenant_portal_mailer:
+    audit_email_1:
+      subject: "Welcome Home!  Let's Chat about Insurance Requirements"
+    audit_email_2:
+      subject: "Welcome Home!  Insurance Requirements | Action Needed"
+    audit_email_3:
+      subject: "Insurance Reminder | Action Needed Before You Move In!"
+    policy_submitted_email:
+      subject: "POLICY SUBMITTED - Get Covered"
     second_nonpayment_warning:
       subject: "%{agency_title} - Rent Guarantee - Default FINAL NOTICE"
       thank_you:

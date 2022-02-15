@@ -32,15 +32,22 @@ module PoliciesMethods
     add_error_master_types(@policy.policy_type_id)
     if @policy.errors.blank? && @policy.save
       result = Policies::UpdateUsers.run!(policy: @policy, policy_users_params: user_params[:policy_users_attributes])
-
       if result.failure?
         render json: result.failure, status: 422
       else
+        #TODO: need to add rule to determine who uploaded from tenant portal and who no
+        PmTenantPortal::InvitationToPmTenantPortalMailer.external_policy_submitted(user_email: @policy.primary_user.email,
+                                                                                   community_id: @policy.primary_insurable.insurable_id,
+                                                                                   policy_id: @policy.id).deliver_now
         render :show, status: :created
       end
     else
       render json: @policy.errors, status: :unprocessable_entity
     end
+  end
+
+  def primary_user_email
+    user_params[:policy_users_attributes]&.first["user_attributes"]["email"]
   end
 
   def update_coverage_proof

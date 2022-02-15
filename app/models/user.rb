@@ -23,6 +23,13 @@ class User < ApplicationRecord
     on: :create,
     if: Proc.new{|u| u.email.nil? && u.password.blank? }
 
+  before_validation :set_default_provider,
+    on: :create
+
+  before_validation :set_random_password,
+    on: :create,
+    if: Proc.new{|u| u.email.nil? && u.password.blank? }
+
   after_create_commit :add_to_mailchimp,
                       :set_qbe_id
 
@@ -82,7 +89,6 @@ class User < ApplicationRecord
   accepts_nested_attributes_for :profile, update_only: true
   accepts_nested_attributes_for :address, update_only: true
 
-
   enum current_payment_method: ['none', 'ach_unverified', 'ach_verified', 'card', 'other'],
     _prefix: true
 
@@ -96,6 +102,15 @@ class User < ApplicationRecord
   validates_presence_of :password_confirmation, :if => Proc.new{|u| !u.password.blank? }
   validates_confirmation_of :password
   #validates_length_of       :password, within: Devise.password_length
+
+  validates_uniqueness_of :email, if: Proc.new{|u| u.email_changed? && !u.email.blank? }
+  validates_format_of     :email, with: Devise.email_regexp, allow_blank: true, if: Proc.new{|u| u.email_changed? && !u.email.blank? }
+
+  #validates_presence_of     :password
+  validates_presence_of :password_confirmation, :if => Proc.new{|u| !u.password.blank? }
+  validates_confirmation_of :password
+  #validates_length_of       :password, within: Devise.password_length
+
 
   # Override payment_method attribute getters and setters to store data
   # as encrypted
@@ -114,6 +129,14 @@ class User < ApplicationRecord
     return u
   end
   
+  def self.create_with_random_password!(*lins, **keys)
+    u = ::User.new(*lins, **keys)
+    u.send(:set_random_password)
+    u.save!
+    return u
+  end
+
+
   def self.create_with_random_password!(*lins, **keys)
     u = ::User.new(*lins, **keys)
     u.send(:set_random_password)
@@ -293,6 +316,31 @@ class User < ApplicationRecord
     }
   end
 
+  def get_owners
+    owners_array = Array.new
+    self.accounts.each do |a|
+      owners_array.append(a) unless self.accounts.nil?
+      owners_array.append(a.agency) unless a.agency.nil?
+    end
+  end
+
+  #TODO: need to understand from where get the branding_profile url & community_id
+  def invite_to_pm_tenant_portal(branding_profile_url, community_id)
+    raise ArgumentError.new('community_id & branding_profile_url must be presented') if branding_profile_url.blank? || community_id.blank?
+
+    str_to_encrypt = "user #{self.id} community #{community_id}" #user 1443 community 10035
+    auth_token_for_email = EncryptionService.encrypt(str_to_encrypt)
+    @tenant_onboarding_url = "https://#{branding_profile_url}/pma-tenant-onboarding?token=#{auth_token_for_email}"
+    @community = Insurable.find(community_id)
+
+    #TODO: need to add validations to parameters
+    #TODO: need to send via workers to make possible to have delayed send (or use deliver in)
+
+    PmTenantPortal::InvitationToPmTenantPortalMailer.first_audit_email(user: self, community: @community, tenant_onboarding_url: @tenant_onboarding_url).deliver_now
+    PmTenantPortal::InvitationToPmTenantPortalMailer.second_audit_email(user: self, community: @community, tenant_onboarding_url: @tenant_onboarding_url).deliver_now
+    PmTenantPortal::InvitationToPmTenantPortalMailer.third_audit_email(user: self, community: @community, tenant_onboarding_url: @tenant_onboarding_url).deliver_now
+  end
+
   private
 
   def history_blacklist
@@ -337,6 +385,18 @@ class User < ApplicationRecord
     self.password_confirmation = secure_tmp_password
   end
   
+  def set_default_provider
+    self.provider = (self.email.blank? ? 'altuid' : 'email')
+    self.altuid = Time.current.to_i.to_s + rand.to_s
+    self.uid = self.altuid
+  end
+
+  def set_random_password
+    secure_tmp_password = SecureRandom.base64(12)
+    self.password = secure_tmp_password
+    self.password_confirmation = secure_tmp_password
+  end
+
   def set_default_provider
     self.provider = (self.email.blank? ? 'altuid' : 'email')
     self.altuid = Time.current.to_i.to_s + rand.to_s

@@ -4,6 +4,8 @@ module InsurablesMethods
   included do
     before_action :set_insurable,
                   only: [:show, :get_qbe_county_options, :set_qbe_county]
+    before_action :set_master_policies, only: :show
+    before_action :set_user_from_auth_token, only: :show, if: :user_param_presented?
 
     before_action :set_substrate,
                   only: [:index]
@@ -35,7 +37,7 @@ module InsurablesMethods
     community = CarrierInsurableProfile.where(carrier_id: 5, external_carrier_id: msi_id.to_s).take&.insurable
     @units = community&.units&.confirmed&.order("title ASC") || []
   end
-  
+
   def get_qbe_county_options
     # get community and make sure we actually have a cip with county options
     @insurable = @insurable.parent_community unless ::InsurableType::RESIDENTIAL_COMMUNITIES_IDS.include?(@insurable.insurable_type_id)
@@ -65,7 +67,7 @@ module InsurablesMethods
     render json: { resolved: resolved, options: options },
       status: 200
   end
-  
+
   def set_qbe_county
     @insurable = @insurable.parent_community unless ::InsurableType::RESIDENTIAL_COMMUNITIES_IDS.include?(@insurable.insurable_type_id)
     cip = @insurable.carrier_profile(1)
@@ -147,6 +149,42 @@ module InsurablesMethods
     @insurable = access_model(::Insurable, params[:id])
   end
 
+  def set_master_policies
+    if @insurable.unit?
+      @master_policy_coverage =
+          @insurable.policies.current.where(policy_type_id: PolicyType::MASTER_COVERAGES_IDS).take
+      @master_policy = @master_policy_coverage&.policy
+    else
+      @master_policy =
+          @insurable.policies.current.where(policy_type_id: PolicyType::MASTER_IDS).take
+      @master_policy_coverage = nil
+    end
+  end
+
+  def set_insurable_liabilities
+    if @master_policy.primary_insurable.nil?
+      @min_liability = 1000000
+      @max_liability = 30000000
+    else
+      insurable = @master_policy.primary_insurable.parent_community
+      account = insurable.account
+      carrier_id = account.agency.providing_carrier_id(PolicyType::RESIDENTIAL_ID, insurable){|cid| (insurable.get_carrier_status(carrier_id) == :preferred) ? true : nil }
+      carrier_policy_type = CarrierPolicyType.where(carrier_id: carrier_id, policy_type_id: PolicyType::RESIDENTIAL_ID).take
+      uid = (carrier_id == ::MsiService.carrier_id ? '1005' : carrier_id == ::QbeService.carrier_id ? 'liability' : nil)
+      liability_options = ::InsurableRateConfiguration.get_inherited_irc(carrier_policy_type, account, insurable).configuration['coverage_options']&.[](uid)&.[]('options')
+      @max_liability = liability_options&.map{|opt| opt['value'].to_i }&.max
+      @min_liability = liability_options&.map{|opt| opt['value'].to_i }&.min
+    end
+
+    if @min_liability.nil? || @min_liability == 0 || @min_liability == "null"
+      @min_liability = 1000000
+    end
+
+    if @max_liability.nil? || @max_liability == 0 || @max_liability == "null"
+      @max_liability = 30000000
+    end
+  end
+
   def set_substrate
     super
     if @substrate.nil?
@@ -179,6 +217,14 @@ module InsurablesMethods
     )
   end
 
+  def user_param_presented?
+    params[:user_id].present?
+  end
+
+  def set_user_from_auth_token
+    @user = access_model(::User, params[:user_id])
+  end
+
   # output stuff with essentially the same format as in the Address search
   def insurable_prejson(
     ins,
@@ -188,7 +234,7 @@ module InsurablesMethods
     carrier_id: nil
   )
     case ins
-    when ::Insurable    
+    when ::Insurable
       if carrier_id.nil?
         carrier_id = Agency.find(agency_id || ins.account&.agency_id || ins.agency_id || Agency.where(master_agency: true).take.id).
                      providing_carrier_id(policy_type_id || ::PolicyType::RESIDENTIAL_ID, ins){|carrier_id| (carrier_id == ::QbeService.carrier_id && ins.get_carrier_status(carrier_id) == :preferred) ? true : nil }

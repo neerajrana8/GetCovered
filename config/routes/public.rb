@@ -40,7 +40,7 @@ scope module: :public do
 			resources :insurable_rates,
 				path: 'rates',
 				only: [:index]
-        
+
       get '/qbe-county',
         to: 'insurables#get_qbe_county_options',
         as: :get_qbe_county_options
@@ -55,13 +55,15 @@ scope module: :public do
     end
   end
 
+  get 'insurable_by_auth_token/:auth_hash', to: '/v2/public/insurables#insurable_by_auth_token'
+
   post '/msi/unit-list',
     to: 'insurables#msi_unit_list',
     as: :msi_unit_list,
     defaults: { format: 'xml' }
 
   resources :lead_events, only: [:create]
-  
+
   resources :policy_applications,
     path: "policy-applications",
     only: [ :create, :update ] do
@@ -95,7 +97,7 @@ scope module: :public do
         as: :external_payment_auth
 		end
 	end
-  
+
   resources :signable_documents,
     path: "signable-documents",
     only: [] do
@@ -108,6 +110,15 @@ scope module: :public do
         as: :sign_document
     end
   end
+
+  resources :policies, only: [ :index, :show ] do
+    collection do
+      post :add_coverage_proof
+      #delete :delete_coverage_proof_documents
+    end
+  end
+
+  post 'policies/enroll_master_policy', to: '/v2/public/policies#enroll_master_policy'
 
   post 'users/check_email', to: '/v2/check_email#user'
   post 'staffs/check_email', to: '/v2/check_email#staff'
