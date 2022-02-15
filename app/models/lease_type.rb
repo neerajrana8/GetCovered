@@ -4,6 +4,9 @@
 
 class LeaseType < ApplicationRecord
   
+  def self.residential_id; 1; end
+  def self.commercial_id; 2; end
+  
   has_many :leases
   
   has_many :lease_type_policy_types

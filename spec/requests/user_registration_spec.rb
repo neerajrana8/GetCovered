@@ -3,7 +3,7 @@ include ActionController::RespondWith
 ActiveJob::Base.queue_adapter = :test
 
 describe 'User registraion spec', type: :request do
-  let(:user_params) { { email: 'test@getcovered.com', password: 'foobar' } }
+  let(:user_params) { { email: 'test@getcovered.com', password: 'foobar', password_confirmation: 'foobar' } }
   def create_user(params)
     post '/v2/user/auth', params: params.to_json, headers: { 'CONTENT_TYPE' => 'application/json', 'ACCEPT' => 'application/json' }
   end

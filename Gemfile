@@ -93,6 +93,7 @@ gem 'aws-sdk', '~> 3.1.0'
 
 gem 'active_interaction', '~> 4.0.5'
 gem 'mini_magick'
+gem 'image_processing', '~> 1.2'
 
 gem 'net-sftp', '~> 3.0.0'
 

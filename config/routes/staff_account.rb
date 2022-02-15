@@ -144,7 +144,11 @@
     post 'insurables/:insurable_id/policies_index', controller: 'policies', action: :index
 
     resources :insurable_types, path: "insurable-types", only: [ :index ]
-
+    
+    get 'integrations/:provider', controller: 'integrations', action: :show
+    post 'integrations/:provider', controller: 'integrations', action: :create
+    put 'integrations/:provider', controller: 'integrations', action: :update
+    
     resources :leases,
       only: [ :create, :update, :destroy, :index, :show ] do
         member do

@@ -115,6 +115,8 @@ class Address < ApplicationRecord
 
   geocoded_by :full
 
+  before_save :standardize_case
+
   before_save :set_full,
               :set_full_searchable,
               :from_full
@@ -172,6 +174,21 @@ class Address < ApplicationRecord
              .gsub(/\s+/, ' ')
              .strip
   end
+  
+  # force pseudo-titlecase everywhere so things are predictable
+  def standardize_case
+    ["street_name", "street_two", "city", "county"].each do |prop|
+      next if self.send(prop).blank?
+      lastchar = ' '
+      (0...self.send(prop).length).each do |chr|
+        if self.send(prop)[chr] == self.send(prop)[chr].upcase && lastchar != ' ' && lastchar != '-'
+          self.send(prop)[chr] = self.send(prop)[chr].downcase
+        end
+        lastchar = self.send(prop)[chr]
+      end unless prop.blank?
+      
+    end
+  end
 
   # Address.set_full
   # Sets full field with the result of full_street_address()
@@ -196,15 +213,39 @@ class Address < ApplicationRecord
        !full.nil?
       parsed_address = StreetAddress::US.parse(full)
       unless parsed_address.nil?
+        # fix hideous bug in parser
+        true_street = parsed_address.street
+        true_number = parsed_address.number
+        true_prefix = parsed_address.prefix
+        haspref = !parsed_address.prefix.blank?
+        combino = "#{(parsed_address.number || "").split(" ")[-1]}#{haspref ? parsed_address.prefix.split(" ")[0] : (parsed_address.street || "").split(" ")[0]}"
+        if haspref
+          ind1 = full.index(combino)
+          ind2 = full.index((parsed_address.prefix.split(" ").drop(1) + parsed_address.street.split(" ")).join(" "))
+          if ind1 && ind2 && ind1 < ind2
+            true_number = "#{parsed_address.number}#{(parsed_address.prefix || "").split(" ")[0]}"
+            true_prefix = parsed_address.prefix.split(" ").drop(1).join(" ")
+          end
+        else
+          if (parsed_address.street || "").split(" ")[1]
+            ind1 = full.index(combino)
+            ind2 = full.index((parsed_address.street || "").split(" ").drop(1).join(" "))
+            if ind1 && ind2 && ind1 < ind2
+              true_street = (parsed_address.street || "").split(" ").drop(1).join(" ")
+              true_number = "#{parsed_address.number}#{(parsed_address.street || "").split(" ")[0]}"
+            end
+          end
+        end
+        # go wild
         street_address.keys.each do |key|
           if self.send(key).nil?
             key_string = key.to_s
             case key_string
             when 'street_number'
-              self.street_number = parsed_address.number
-              self.street_name = "#{ parsed_address.prefix } #{ parsed_address.street } #{ parsed_address.suffix } #{ parsed_address.street_type }".gsub(/\s+/, ' ').strip
+              self.street_number = true_number
+              self.street_name = "#{ true_prefix } #{ true_street } #{ parsed_address.suffix } #{ parsed_address.street_type }".gsub(/\s+/, ' ').strip
             when 'street_name'
-              self.street_name = "#{ parsed_address.prefix } #{ parsed_address.street } #{ parsed_address.suffix } #{ parsed_address.street_type }".gsub(/\s+/, ' ').strip
+              self.street_name = "#{ true_prefix } #{ true_street } #{ parsed_address.suffix } #{ parsed_address.street_type }".gsub(/\s+/, ' ').strip
             when 'street_two'
               self.street_two = !parsed_address.unit.nil? || !parsed_address.unit_prefix.nil? ? "#{ parsed_address.unit_prefix } #{ parsed_address.unit }".gsub(/\s+/, ' ').strip : nil
             when 'city'
@@ -219,6 +260,15 @@ class Address < ApplicationRecord
           end
         end
       end
+    end
+    ['street_name', 'city'].each do |prop|
+      lastchar = ' '
+      (0...self.send(prop).length).each do |chr|
+        if self.send(prop)[chr] == self.send(prop)[chr].upcase && lastchar != ' ' && lastchar != '-'
+          self.send(prop)[chr] = self.send(prop)[chr].downcase
+        end
+        lastchar = self.send(prop)[chr]
+      end unless self.send(prop).blank?
     end
   end
 

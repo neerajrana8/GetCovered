@@ -53,9 +53,9 @@ require './db/seeds/functions'
 
 	      end
 		  end
-		  
+      
       begin
-		  @lease.reload.primary_user.attach_payment_source("tok_visa", true)
+        @lease.reload.primary_user.attach_payment_source("tok_visa", true)
       rescue
         puts "Well mate, everything is FUCKED."
         puts "Lease users: #{@lease.lease_users.to_a}"
