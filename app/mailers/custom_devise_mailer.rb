@@ -15,11 +15,13 @@ class CustomDeviseMailer < Devise::Mailer
       opts[:template_name] = 'product_invitation_instructions'
     end
 
+    record_mail(resource)
     super
   end
 
   def reset_password_instructions(record, token, opts={})
     set_locale(record)
+    record_mail(record)
     super
   end
 
@@ -27,5 +29,16 @@ class CustomDeviseMailer < Devise::Mailer
 
   def set_locale(record)
     I18n.locale = record&.profile&.language if record&.profile&.language&.present?
+  end
+
+  def record_mail(user)
+    contact_record = ContactRecord.new(
+      approach: 'email',
+      direction: 'outgoing',
+      status: 'sent',
+      contactable: user
+    )
+
+    contact_record.save
   end
 end
