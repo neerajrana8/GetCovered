@@ -55,7 +55,7 @@ scope module: :public do
     end
   end
 
-  get 'insurable_by_auth_token/:auth_hash', to: '/v2/public/insurables#insurable_by_auth_token'
+  get 'insurable_by_auth_token', to: '/v2/public/insurables#insurable_by_auth_token'
 
   post '/msi/unit-list',
     to: 'insurables#msi_unit_list',
