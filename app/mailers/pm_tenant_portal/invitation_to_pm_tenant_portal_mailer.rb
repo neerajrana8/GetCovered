@@ -77,10 +77,52 @@ module PmTenantPortal
       @review_number = policy_id
       @pm_account = @community.account
 
-      @from = @pm_account.contact_info.has_key?("contact_email") && !@pm_account.contact_info["contact_email"].nil? ? @pm_account.contact_info["contact_email"] : "policyverify@getcovered.io"
+      @from = @pm_account&.contact_info&.has_key?("contact_email") && !@pm_account&.contact_info["contact_email"].nil? ? @pm_account&.contact_info["contact_email"] : "policyverify@getcovered.io"
       subject = t('invitation_to_pm_tenant_portal_mailer.policy_submitted_email.subject')
 
       mail(from: @from, to: @user.email, subject: subject)
+    end
+
+    def external_policy_accepted(policy:)
+      @policy = policy
+      @user = @policy.primary_user
+
+      set_locale(@user.profile&.language)
+
+      @community = @policy.primary_insurable
+      @pm_account = @community.account
+      @tenant_onboarding_url = tenant_onboarding_url(@user.id, @community)
+
+      @from = @pm_account&.contact_info&.has_key?("contact_email") && !@pm_account&.contact_info["contact_email"].nil? ? @pm_account&.contact_info["contact_email"] : "policyverify@getcovered.io"
+      subject = t('invitation_to_pm_tenant_portal_mailer.policy_accepted_email.subject')
+
+      mail(from: @from, to: @user.email, subject: subject)
+    end
+
+    def external_policy_declined(policy:)
+      @policy = policy
+      @user = @policy.primary_user
+
+      set_locale(@user.profile&.language)
+
+      @community = @policy.primary_insurable
+      @pm_account = @community.account
+
+      @tenant_onboarding_url = tenant_onboarding_url(@user.id, @community)
+
+      @from = @pm_account&.contact_info&.has_key?("contact_email") && !@pm_account&.contact_info["contact_email"].nil? ? @pm_account&.contact_info["contact_email"] : "policyverify@getcovered.io"
+      subject = t('invitation_to_pm_tenant_portal_mailer.policy_declined_email.subject')
+
+      mail(from: @from, to: @user.email, subject: subject)
+    end
+
+    private
+
+    def tenant_onboarding_url(user_id, community)
+      branding_profile_url = community&.account&.branding_profiles&.take&.url
+      str_to_encrypt = "user #{user_id} community #{community.id}" #user 1443 community 10035
+      auth_token_for_email = EncryptionService.encrypt(str_to_encrypt)
+      "https://#{branding_profile_url}/pma-tenant-onboarding?token=#{auth_token_for_email}"
     end
   end
 end
