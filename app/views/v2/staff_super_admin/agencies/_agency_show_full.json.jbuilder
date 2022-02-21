@@ -39,7 +39,8 @@ end
 json.global_permission do
   if agency.global_permission
     json.partial! 'v2/shared/global_permissions/full.json.jbuilder',
-                  global_permission: agency.global_permission
+                  global_permission: agency.global_permission,
+                  follow: true
   end
 end
 

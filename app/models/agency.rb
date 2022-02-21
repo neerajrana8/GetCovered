@@ -243,7 +243,7 @@ class Agency < ApplicationRecord
   end
 
   def check_permissions
-    if self.agency_id.nil?
+    if self.global_permission.nil?
       GlobalPermission.create(ownerable: self, permissions: GlobalPermission::AVAILABLE_PERMISSIONS)
     end
   end

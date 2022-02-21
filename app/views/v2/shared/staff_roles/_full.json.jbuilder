@@ -18,7 +18,7 @@ json.array! staff_roles do
         category = key.split('.').first
         json.category category
         json.category_title I18n.t("permission_categories.#{category}")
-        json.value staff_role.global_permission ? staff_role.global_permission.permissions[key] : false
+        json.value staff_role.global_permission.permissions.has_key?(key) ? staff_role.global_permission.permissions[key] : false
       end
     end
   end
