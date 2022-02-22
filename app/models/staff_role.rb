@@ -13,14 +13,18 @@ class StaffRole < ApplicationRecord
   # validations
   validate :proper_role
   validates :organizable, presence: true, unless: -> { super_admin? || policy_support? }
+  validate :should_have_global_permission
 
   # callbacks
   after_create :set_first_as_primary_on_staff
-  after_create :create_permissions
 
   accepts_nested_attributes_for :global_permission, update_only: true
 
   private
+
+  def should_have_global_permission
+    errors.add(:global_permission, 'cannot be blank') if global_permission.nil?
+  end
 
   def proper_role
     errors.add(:role, 'must match organization type') if organizable_type == 'Agency' && role != 'agent'
@@ -31,13 +35,6 @@ class StaffRole < ApplicationRecord
     if staff&.staff_roles.count.eql?(1)
       update_attribute(:primary, true)
       update_attribute(:active, true)
-    end
-  end
-
-  def create_permissions
-    if !self.global_permission and role === 'agent'
-      permissions = self.organizable&.global_permission&.permissions || {}
-      GlobalPermission.create(ownerable: self, permissions: permissions)
     end
   end
 end

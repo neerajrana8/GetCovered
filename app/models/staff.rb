@@ -25,7 +25,6 @@ class Staff < ApplicationRecord
   # Active Record Callbacks
   after_initialize :initialize_staff
   after_create :set_first_as_primary_on_organizable
-  after_create :set_permissions_for_agent
   after_create :build_notification_settings
 
   # belongs_to relationships
@@ -158,10 +157,6 @@ class Staff < ApplicationRecord
       organizable.update staff_id: id
       update_attribute(:owner, true)
     end
-  end
-
-  def set_permissions_for_agent
-    StaffRole.create(staff: self, organizable: self.organizable, role: self.role)
   end
 
   def build_notification_settings
