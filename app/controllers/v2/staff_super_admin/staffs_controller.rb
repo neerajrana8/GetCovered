@@ -49,21 +49,35 @@ module V2
                 errors: errors_staffs
             }
           else
-            @staff = ::Staff.new(create_params)
-            # remove password issues from errors since this is a Devise model
-            @staff.valid? if @staff.errors.blank?
-            #because it had FrozenError (can't modify frozen Hash: {:password=>["can't be blank"]}):
-            #@staff.errors.messages.except!(:password)
-            if (@staff.errors.none? || only_password_blank_error?(@staff.errors) ) && @staff.invite_as!(current_staff)
-              render :show,
-                     status: :created
+            if create_params[:id].present?
+              @staff = ::Staff.find create_params[:id]
+              check_roles(@staff, create_params[:staff_roles_attributes])
+
+              if @staff.errors.none?
+                add_roles(@staff, create_params[:staff_roles_attributes])
+                if @staff.errors.none?
+                  render :show,
+                         status: :created
+                else
+                  render json: @staff.errors,
+                         status: :unprocessable_entity
+                end
+              end
             else
-              render json: @staff.errors,
-                     status: :unprocessable_entity
+              @staff = ::Staff.new(create_params)
+              # remove password issues from errors since this is a Devise model
+              @staff.valid? if @staff.errors.blank?
+              #because it had FrozenError (can't modify frozen Hash: {:password=>["can't be blank"]}):
+              #@staff.errors.messages.except!(:password)
+              if (@staff.errors.none? || only_password_blank_error?(@staff.errors) ) && @staff.invite_as!(current_staff)
+                render :show,
+                       status: :created
+              else
+                render json: @staff.errors,
+                       status: :unprocessable_entity
+              end
             end
-
           end
-
         else
           render json: { success: false, errors: ['Unauthorized Access'] },
                  status: :unauthorized
@@ -113,7 +127,7 @@ module V2
       def create_params
         return({}) if params[:staff].blank?
         to_return = params.require(:staff).permit(
-          :email, :enabled, :organizable_id, :organizable_type, :role,
+          :id, :email, :enabled, :organizable_id, :organizable_type, :role,
           notification_options: {}, settings: {},
           profile_attributes: %i[
             birth_date contact_email contact_phone first_name
@@ -202,6 +216,26 @@ module V2
               standard_error(:invitation_was_not_accepted, 'Invitation was not accepted')
             end
           render json: error_object, status: :unprocessable_entity
+        end
+      end
+
+      def check_roles(staff, roles)
+        roles.each do |role|
+          if staff.staff_roles.where(organizable_id: role[:organizable_id], organizable_type: role[:organizable_type], role: role[:role]).count > 0
+            staff.errors.add(:staff_role, "Role '#{role[:role]}' already exists for this #{role[:organizable_type]}")
+          end
+        end
+      end
+
+      def add_roles(staff, roles)
+        roles.each do |role|
+          staff_role = staff.staff_roles.build(role)
+
+          if staff_role.valid?
+            staff_role.save
+          else
+            staff.errors.add(:staff_role, staff_role.errors.first.type)
+          end
         end
       end
     end
