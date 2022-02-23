@@ -20,7 +20,7 @@ module V2
           render json: standard_error(:account_id_param_blank,'Account id parameter can\'t be blank'),
                  status: :unprocessable_entity
         else
-          account = Account.find_by_id(params[:id])
+          account = Account.find_by_id(params[:account_id])
           if account.blank?
             render json: standard_error(:account_not_found,'Account with this id not found'),
                    status: :unprocessable_entity
