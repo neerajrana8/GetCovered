@@ -16,13 +16,15 @@ module V2
       end
 
       def account_states
-        if params[:account_id].blank?
-          render json: standard_error(:account_id_param_blank,'Account id parameter can\'t be blank'),
+        if params[:branding_profile_id].blank?
+          render json: standard_error(:branding_profile_id_param_blank,'branding_profile_id parameter can\'t be blank'),
                  status: :unprocessable_entity
         else
-          account = Account.find_by_id(params[:account_id])
+          account_id = BrandingProfile.find_by_id(params[:branding_profile_id])&.profileable_id
+          account = Account.find_by_id(account_id)
+
           if account.blank?
-            render json: standard_error(:account_not_found,'Account with this id not found'),
+            render json: standard_error(:account_not_found,'Account for this branding_id not found'),
                    status: :unprocessable_entity
           else
             begin

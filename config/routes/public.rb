@@ -131,7 +131,7 @@ scope module: :public do
 
   get 'communities/:id' => 'communities#accounts'
   get 'communities/by_state/:state' => 'communities#communities'
-  get 'communities/account_states/:account_id' => 'communities#account_states'
+  get 'communities/account_states/:branding_profile_id' => 'communities#account_states'
   get 'units/:id' => 'units#communities'
   get 'buildings/:id' => 'buildings#community'
 
