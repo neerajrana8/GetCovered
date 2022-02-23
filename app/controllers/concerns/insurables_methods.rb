@@ -126,12 +126,12 @@ module InsurablesMethods
     when ::Insurable
       render json: {
           results_type: 'confirmed_match',
-          results: [insurable_prejson(result, agency_id: get_or_create_params[:agency_id], policy_type_id: get_or_create_params[:policy_type_id], carrier_id: get_or_create_params[:carrier_id])]
+          results: [insurable_prejson(result, short_mode: get_or_create_params[:short] || false, agency_id: get_or_create_params[:agency_id], policy_type_id: get_or_create_params[:policy_type_id], carrier_id: get_or_create_params[:carrier_id])]
       }, status: 200
     when ::Array
       render json: {
           results_type: 'possible_match',
-          results: result.map{|r| insurable_prejson(r, agency_id: get_or_create_params[:agency_id], policy_type_id: get_or_create_params[:policy_type_id], carrier_id: get_or_create_params[:carrier_id]) }
+          results: result.map{|r| insurable_prejson(r, short_mode: get_or_create_params[:short] || false, agency_id: get_or_create_params[:agency_id], policy_type_id: get_or_create_params[:policy_type_id], carrier_id: get_or_create_params[:carrier_id]) }
       }, status: 200
     when ::Hash
       render json: standard_error(result[:error_type], result[:message], result[:details]),
@@ -211,7 +211,7 @@ module InsurablesMethods
   end
 
   def get_or_create_params
-    params.permit(:address, :unit, :insurable_id, :create_if_ambiguous, :allow_creation, :communities_only, :titleless, :neighborhood,
+    params.permit(:address, :unit, :insurable_id, :create_if_ambiguous, :allow_creation, :communities_only, :titleless, :neighborhood, :short,
       # optional:
       :agency_id, :policy_type_id, :carrier_id
     )
@@ -255,9 +255,10 @@ module InsurablesMethods
         return {
           id: ins.id, title: ins.title, enabled: ins.enabled, preferred_ho4: preferred,
           account_id: ins.account_id, agency_id: ins.agency_id, insurable_type_id: ins.insurable_type_id
-        }.merge(short_mode ? {} : {
+        }.merge(short_mode && short_mode != 'buildings' ? {} : {
           category: ins.category, primary_address: insurable_prejson(ins.primary_address, agency_id: agency_id, policy_type_id: policy_type_id, carrier_id: carrier_id),
-          units: preferred && ins.enabled ? ins.units.confirmed.select{|u| u.enabled }.map{|u| insurable_prejson(u, short_mode: true, agency_id: agency_id, policy_type_id: policy_type_id, carrier_id: carrier_id) } : nil
+          buildings: preferred && ins.enabled ? ins.insurables.confirmed.where(insurable_type_id: ::InsurableType::RESIDENTIAL_BUILDINGS_IDS, enabled: true).map{|u| insurable_prejson(u, short_mode: short_mode == 'buildings' ? true : false, agency_id: agency_id, policy_type_id: policy_type_id, carrier_id: carrier_id) } : nil,
+          units: preferred && ins.enabled ? ins.insurables.confirmed.where(insurable_type_id: ::InsurableType::RESIDENTIAL_UNITS_IDS, enabled: true).map{|u| insurable_prejson(u, short_mode: true, agency_id: agency_id, policy_type_id: policy_type_id, carrier_id: carrier_id) } : nil
         }).compact
       elsif ::InsurableType::RESIDENTIAL_BUILDINGS_IDS.include?(ins.insurable_type_id)
         com = ins.parent_community
