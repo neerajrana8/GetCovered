@@ -12,7 +12,7 @@ json.permissions do
   end
 end
 
-if follow
+if defined?(follow) && follow
   if global_permission.ownerable_type === 'Agency'
     json.parent_global_agency_permission do
       if global_permission.ownerable.parent_agency.present?
