@@ -124,4 +124,15 @@ scope module: :public do
   post 'staffs/check_email', to: '/v2/check_email#staff'
 
   post 'secret_authentication/:secret_token/authenticate', to: '/v2/public/secret_authentication#authenticate'
+
+  resources :search_contents,
+            only: [:index],
+            path: 'search'
+
+  get 'communities/:id' => 'communities#accounts'
+  get 'communities/by_state/:state' => 'communities#communities'
+  get 'communities/account_states/:account_id' => 'communities#account_states'
+  get 'units/:id' => 'units#communities'
+  get 'buildings/:id' => 'buildings#community'
+
 end
