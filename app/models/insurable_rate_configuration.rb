@@ -823,6 +823,7 @@ class InsurableRateConfiguration < ApplicationRecord
             end # msi result handling (starts at if result[:error])
           end # event handling (starts at if !result)
         when ::QbeService.carrier_id
+          interval = { 'FL' => 'annual', 'SA' => 'bi_annual', 'QT' => 'quarter', 'QBE_MoRe' => 'month' }[billing_strategy_carrier_code]
           # try to fix things if our irc is missing info the qbe prepare method already verified that it has (should be because there are duplicate IRCs and one is missing data)
           if on_retry == 0 && irc&.rates&.[]('rates')&.[](additional_insured_count + 1)&.[](interval).blank?
             ircs = ::InsurableRateConfiguration.where(configurable: irc.configurable, configurer: irc.configurer, carrier_policy_type_id: irc.carrier_policy_type_id).select{|i| irc_filter_block.call(i) }
@@ -833,7 +834,6 @@ class InsurableRateConfiguration < ApplicationRecord
             end
           end
           # perform approximation using rates
-          interval = { 'FL' => 'annual', 'SA' => 'bi_annual', 'QT' => 'quarter', 'QBE_MoRe' => 'month' }[billing_strategy_carrier_code]
           selected_rates = irc.rates['rates'][additional_insured_count + 1][interval].select do |rate|
             if rate['sub_schedule'] == 'policy_fee'
               policy_fee = rate['premium']
