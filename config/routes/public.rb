@@ -114,6 +114,9 @@ scope module: :public do
   resources :policies, only: [ :index, :show ] do
     collection do
       post :add_coverage_proof
+      get '/master_policy_unit_coverage/:community_id',
+          to: 'policies#master_policy_unit_coverage',
+          as: :master_policy_unit_coverage
       #delete :delete_coverage_proof_documents
     end
   end
