@@ -672,12 +672,21 @@ class InsurableRateConfiguration < ApplicationRecord
     end.compact.to_h.compact.transform_values{|v| { 'selection' => remove_overridability_data!(v) } }
   end
 
-  # 
-  def self.get_coverage_options(carrier_policy_type, insurable, selections, effective_date, additional_insured_count, billing_strategy,                 # required data
+  
+  def self.get_coverage_options(*largs, **kargs, &blck)
+    result = get_coverage_options(*largs, **kargs, &blck)
+    if result == :retry
+      result = get_coverage_options(*largs, **kargs, on_repeat: 1, &blck)
+    end
+    return result
+  end
+  
+  def self.true_get_coverage_options(carrier_policy_type, insurable, selections, effective_date, additional_insured_count, billing_strategy,                 # required data
                                 eventable: nil, perform_estimate: true, estimate_default_on_billing_strategy_code_failure: :min,                        # execution options (note: perform_estimate should be 'final' instead of true for QBE, if you want to trigger a getMinPrem request)
                                 add_selection_fields: false,
                                 additional_interest_count: nil, agency: nil, account: insurable.class == ::Insurable ? insurable.account : nil,         # optional/overridable data
-                                nonpreferred_final_premium_params: nil)                                                                                 # special optional data
+                                nonpreferred_final_premium_params: nil,                                                                                 # special optional data
+                                on_retry: 0)                                                                                                            # used by system to tell method whether it's already retrying
     # clean up params info
     billing_strategy_carrier_code = billing_strategy.carrier_code
     unit = nil
@@ -814,6 +823,15 @@ class InsurableRateConfiguration < ApplicationRecord
             end # msi result handling (starts at if result[:error])
           end # event handling (starts at if !result)
         when ::QbeService.carrier_id
+          # try to fix things if our irc is missing info the qbe prepare method already verified that it has (should be because there are duplicate IRCs and one is missing data)
+          if on_retry == 0 && irc&.rates&.[]('rates')&.[](additional_insured_count + 1)&.[](interval).blank?
+            ircs = ::InsurableRateConfiguration.where(configurable: irc.configurable, configurer: irc.configurer, carrier_policy_type_id: irc.carrier_policy_type_id).select{|i| irc_filter_block.call(i) }
+            if ircs.count > 1
+              survivor = ircs.max{|i| i.created_at }
+              ircs.each{|i| i.delete unless i == survivor }
+              return :retry
+            end
+          end
           # perform approximation using rates
           interval = { 'FL' => 'annual', 'SA' => 'bi_annual', 'QT' => 'quarter', 'QBE_MoRe' => 'month' }[billing_strategy_carrier_code]
           selected_rates = irc.rates['rates'][additional_insured_count + 1][interval].select do |rate|
