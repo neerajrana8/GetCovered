@@ -1,6 +1,6 @@
 json.array! staff_roles do |staff_role|
   # staff_roles.each do |staff_role|
-    json.extract! staff_role, :id, :role, :organizable_id, :organizable_type
+    json.extract! staff_role, :id, :role, :organizable_id, :organizable_type, :primary, :active
     if staff_role.organizable_type == 'Account'
       json.account staff_role.organizable&.title
       json.agency  staff_role.organizable&.agency&.title
