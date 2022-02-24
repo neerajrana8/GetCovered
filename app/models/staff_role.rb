@@ -13,17 +13,19 @@ class StaffRole < ApplicationRecord
   # validations
   validate :proper_role
   validates :organizable, presence: true, unless: -> { super_admin? || policy_support? }
-  validate :should_have_global_permission
 
   # callbacks
+  before_create :set_global_permissions
   after_create :set_first_as_primary_on_staff
 
   accepts_nested_attributes_for :global_permission, update_only: true
 
   private
 
-  def should_have_global_permission
-    errors.add(:global_permission, 'cannot be blank') if global_permission.nil?
+  def set_global_permissions
+    self.global_permission_attributes = {
+      permissions: organizable.global_permission.permissions
+    }
   end
 
   def proper_role
