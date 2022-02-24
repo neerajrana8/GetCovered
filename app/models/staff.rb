@@ -26,6 +26,7 @@ class Staff < ApplicationRecord
   after_initialize :initialize_staff
   after_create :set_first_as_primary_on_organizable
   after_create :build_notification_settings
+  after_create :check_staff_role
 
   # belongs_to relationships
   # belongs_to :account, required: true
@@ -140,6 +141,12 @@ class Staff < ApplicationRecord
   end
 
   private
+
+  def check_staff_role
+    if staff_roles.count === 0
+      staff_roles.build(role: role, organizable: organizable, global_permission: organizable.global_permission)
+    end
+  end
 
   def history_blacklist
     %i[tokens sign_in_count current_sign_in_at last_sign_in_at]
