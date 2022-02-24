@@ -27,6 +27,19 @@ module V2
           if is_bulk_creation?
             created_staffs = [], errors_staffs = []
             bulk_create_params["property_managers_attributes"].each do |pm_create_params|
+              if pm_create_params[:id].present?
+                @staff = ::Staff.find pm_create_params[:id]
+                check_roles(@staff, pm_create_params[:staff_roles_attributes])
+
+                if @staff.errors.none?
+                  add_roles(@staff, pm_create_params[:staff_roles_attributes])
+                  if @staff.errors.none?
+                    created_staffs << @staff
+                  else
+                    errors_staffs << {"staff": @staff, "errors": @staff.errors.full_messages}
+                  end
+                end
+              end
               @staff = ::Staff.new(pm_create_params)
               # remove password issues from errors since this is a Devise model
               @staff.valid? if @staff.errors.blank?
@@ -143,11 +156,14 @@ module V2
       def bulk_create_params
         return({}) if params[:staff].blank?
         to_return = params.require(:staff).permit(
-            property_managers_attributes: [:email, :enabled, :organizable_id, :organizable_type, :role,
+            property_managers_attributes: [:id, :email, :enabled, :organizable_id, :organizable_type, :role,
                                            notification_options: {}, settings: {},
                                            profile_attributes: %i[
                                               birth_date contact_email contact_phone first_name
                                               job_title last_name middle_name suffix title ]
+                                           ], staff_roles_attributes: [
+                                            :organizable_id, :organizable_type, :role,
+                                            global_permission_attributes: {permissions: {}}
                                            ]
         )
         to_return
