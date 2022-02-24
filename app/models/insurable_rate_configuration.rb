@@ -674,9 +674,9 @@ class InsurableRateConfiguration < ApplicationRecord
 
   
   def self.get_coverage_options(*largs, **kargs, &blck)
-    result = get_coverage_options(*largs, **kargs, &blck)
+    result = true_get_coverage_options(*largs, **kargs, &blck)
     if result == :retry
-      result = get_coverage_options(*largs, **kargs, on_repeat: 1, &blck)
+      result = true_get_coverage_options(*largs, **kargs, on_repeat: 1, &blck)
     end
     return result
   end
