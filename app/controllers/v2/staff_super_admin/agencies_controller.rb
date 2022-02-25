@@ -24,6 +24,7 @@ module V2
           outcome = Agencies::Create.run(agency_params: create_params.to_h)
           if outcome.valid?
             @agency = outcome.result
+            @agency.reload
             render :show, status: :created
           else
             render json: standard_error(:agency_creation_error, nil, outcome.errors.full_messages),
