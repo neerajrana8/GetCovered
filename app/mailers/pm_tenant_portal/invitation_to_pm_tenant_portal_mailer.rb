@@ -73,7 +73,7 @@ module PmTenantPortal
 
       set_locale(@user.profile&.language)
 
-      @community = Insurable.find(community_id)
+      @community = Insurable.find_by_id(community_id)
       @review_number = policy_id
       @pm_account = @community.account
 
