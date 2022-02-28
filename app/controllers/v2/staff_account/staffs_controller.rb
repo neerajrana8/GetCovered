@@ -18,9 +18,19 @@ module V2
 
       def create
         if create_allowed?
-          @staff = current_staff.organizable.staff.new(create_params)
-          # remove password issues from errors since this is a Devise model
-          @staff.valid? if @staff.errors.blank?
+          if create_params[:id].present?
+            @staff = ::Staff.find create_params[:id]
+            check_roles(@staff, create_params[:staff_roles_attributes])
+
+            if @staff.errors.none?
+              add_roles(@staff, create_params[:staff_roles_attributes])
+            end
+          else
+            @staff = current_staff.organizable.staff.new(create_params)
+            # remove password issues from errors since this is a Devise model
+            @staff.valid? if @staff.errors.blank?
+          end
+
           #because it had FrozenError (can't modify frozen Hash: {:password=>["can't be blank"]}):
           #@staff.errors.messages.except!(:password)
           if (@staff.errors.none? || only_password_blank_error?(@staff.errors) ) && @staff.invite_as(current_staff)
@@ -91,7 +101,7 @@ module V2
         return({}) if params[:staff].blank?
 
         to_return = params.require(:staff).permit(
-          :email, notification_options: {}, settings: {},
+          :id, :email, notification_options: {}, settings: {},
                   profile_attributes: %i[
                     birth_date contact_email contact_phone first_name
                     job_title last_name middle_name suffix title
@@ -114,8 +124,9 @@ module V2
           profile_attributes: %i[
             id birth_date contact_email contact_phone first_name
             job_title last_name middle_name suffix title
-          ],
-          global_permission_attributes: {permissions: {}}
+          ], staff_roles_attributes: [
+            :id, global_permission_attributes: {permissions: {}}
+          ]
         )
       end
 
