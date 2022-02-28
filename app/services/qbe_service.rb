@@ -34,9 +34,17 @@ class QbeService
       "in_city_limits" => false
     },
     'WA' => {
+      "year_built" => Time.current.year - 25,
+      "number_of_units" => 50,
+      "gated" => false,
+      "years_professionally_managed" => 0,
       "in_city_limits" => false
     },
     'FL' => {
+      "year_built" => Time.current.year - 25,
+      "number_of_units" => 50,
+      "gated" => false,
+      "years_professionally_managed" => 0,
       "in_city_limits" => false
     }
   }.merge(['CO', 'DC', 'GA', 'IL', 'IN', 'LA', 'MA', 'MD', 'MI', 'MO', 'NV', 'OH', 'PA', 'SC', 'TN', 'TX', 'UT', 'VA'].map do |state|
