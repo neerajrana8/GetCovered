@@ -19,3 +19,9 @@ if staff.organizable_type == 'Account'
   json.account staff&.organizable&.title
   json.agency  staff&.organizable&.agency&.title
 end
+
+json.staff_roles do
+  if staff.staff_roles.present?
+    json.partial! 'v2/shared/staff_roles/full.json.jbuilder', staff_roles: staff.staff_roles
+  end
+end

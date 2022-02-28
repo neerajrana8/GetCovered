@@ -28,3 +28,9 @@ json.staff_permission do
     json.partial! 'v2/shared/staff_permissions/full.json.jbuilder', staff_permission: staff.staff_permission
   end
 end
+
+json.staff_roles do
+  if staff.staff_roles.present?
+    json.partial! 'v2/shared/staff_roles/full.json.jbuilder', staff_roles: staff.staff_roles
+  end
+end
