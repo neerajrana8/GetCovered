@@ -415,17 +415,6 @@ module CarrierQbeInsurable
         carrier_status = self.get_carrier_status(@carrier)
         full_traits_override = self.get_qbe_traits().merge(traits_override || {})
         applicability = QbeService.get_applicability(self, full_traits_override, cip: @carrier_profile)
-        
-        
-        irc = ::InsurableRateConfiguration.where(carrier_policy_type: carrier_policy_type, configurer: @carrier, configurable: irc_configurable_override || self)
-            .find{|irc| irc_configurable_override || irc.rates['applicability'] == applicability } || ::InsurableRateConfiguration.new(
-          carrier_policy_type: carrier_policy_type,
-          configurer: @carrier,
-          configurable: irc_configurable_override || self,
-          configuration: { 'coverage_options' => {}, "rules" => {} },
-          rates: { 'rates' => [nil, [], [], [], [], []] }
-        )
-        irc.rates['applicability'] = applicability unless irc_configurable_override
       
         
 	      qbe_request_options = {
@@ -510,6 +499,16 @@ module CarrierQbeInsurable
 	          
             rates = create_qbe_rates(qbe_data[:data], split_deductible, number_insured)
             
+            irc = ::InsurableRateConfiguration.where(carrier_policy_type: carrier_policy_type, configurer: @carrier, configurable: irc_configurable_override || self)
+                .find{|irc| irc_configurable_override || irc.rates['applicability'] == applicability } || ::InsurableRateConfiguration.new(
+              carrier_policy_type: carrier_policy_type,
+              configurer: @carrier,
+              configurable: irc_configurable_override || self,
+              configuration: { 'coverage_options' => {}, "rules" => {} },
+              rates: { 'rates' => [nil, [], [], [], [], []] }
+            )
+            irc.rates['applicability'] = applicability unless irc_configurable_override
+            
 	          if rates
 		          
 	            @carrier_profile.data['rates_resolution']["#{ number_insured }"] = true
@@ -519,9 +518,8 @@ module CarrierQbeInsurable
 	              @carrier_profile.data["get_rates_resolved"] = true 
 	              @carrier_profile.data["get_rates_resolved_on"] = Time.current.strftime("%m/%d/%Y %I:%M %p")
 	            end
-	            
 	            @carrier_profile.save() unless irc_configurable_override
-	            
+              
               irc.rates['rates'][number_insured] = rates      
 	            
 	            process_status[:error] = false
