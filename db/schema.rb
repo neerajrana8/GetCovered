@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2022_02_15_184113) do
+ActiveRecord::Schema.define(version: 2022_03_01_190943) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
@@ -63,6 +63,7 @@ ActiveRecord::Schema.define(version: 2022_02_15_184113) do
     t.datetime "updated_at", null: false
     t.string "payment_profile_stripe_id"
     t.integer "current_payment_method"
+    t.boolean "additional_interest", default: true
     t.index ["agency_id"], name: "index_accounts_on_agency_id"
     t.index ["call_sign"], name: "index_accounts_on_call_sign", unique: true
     t.index ["staff_id"], name: "index_accounts_on_staff_id"
@@ -839,6 +840,8 @@ ActiveRecord::Schema.define(version: 2022_02_15_184113) do
     t.boolean "confirmed", default: true, null: false
     t.boolean "occupied", default: false
     t.jsonb "expanded_covered", default: {}, null: false
+    t.jsonb "preferred", default: {}
+    t.boolean "additional_interest", default: false
     t.index ["account_id"], name: "index_insurables_on_account_id"
     t.index ["agency_id"], name: "index_insurables_on_agency_id"
     t.index ["insurable_id"], name: "index_insurables_on_insurable_id"
@@ -1356,6 +1359,9 @@ ActiveRecord::Schema.define(version: 2022_02_15_184113) do
     t.integer "special_deductible"
     t.integer "occurrence_limit"
     t.boolean "is_carrier_fee", default: false
+    t.integer "aggregate_limit"
+    t.integer "external_payments_limit"
+    t.integer "limit_used"
     t.index ["policy_application_id"], name: "index_policy_coverages_on_policy_application_id"
     t.index ["policy_id"], name: "index_policy_coverages_on_policy_id"
   end
