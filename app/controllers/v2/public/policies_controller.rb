@@ -14,7 +14,7 @@ module V2
         master_policy = @community.policies.where(policy_type_id: 2).take || Policy.last
 
         @users = access_model(::User).where(email: enrollment_params[:user_attributes].map{|el| el[:email]})
-        
+
         if master_policy.present?
           start_coverage =  master_policy.effective_date
           render json: { message: 'Users not found' }, status: :ok if @users.blank?
@@ -33,6 +33,46 @@ module V2
               :master_policy_not_founded_for_current_insurable,
               'Master policy wasn\'t found for current insurable'
           ), status: :unprocessable_entity
+        end
+      end
+
+      def master_policy_unit_coverage
+        if params[:community_id].blank?
+          render json: standard_error(:community_id_param_blank,'Community parameter can\'t be blank'),
+                 status: :unprocessable_entity
+        else
+          @community = Insurable.communities.find_by_id(params[:community_id])
+          if @community.present?
+            request.params[:id] = @community.id
+            request.params[:user_id] = nil
+
+            res = V2::Public::InsurablesController.dispatch(:show, request, response)
+          else
+            render json: standard_error(:community_not_found,'Community with this id not found'),
+                   status: :unprocessable_entity
+          end
+
+        end
+      end
+
+      def add_coverage_proof
+        @policy                  = Policy.new(coverage_proof_params)
+        @policy.policy_in_system = false
+        @policy.status           = 'BOUND'
+        add_error_master_types(@policy.policy_type_id)
+        if @policy.errors.blank? && @policy.save
+          result = Policies::UpdateUsers.run!(policy: @policy, policy_users_params: user_params[:policy_users_attributes]&.values)
+          if result.failure?
+            render json: result.failure, status: 422
+          else
+            #TODO: need to add rule to determine who uploaded from tenant portal and who no
+            PmTenantPortal::InvitationToPmTenantPortalMailer.external_policy_submitted(user_email: @policy&.primary_user&.email,
+                                                                                       community_id: @policy&.primary_insurable&.insurable_id || insurable_id_param,
+                                                                                       policy_id: @policy.id).deliver_now
+            render :show, status: :created
+          end
+        else
+          render json: @policy.errors, status: :unprocessable_entity
         end
       end
 
