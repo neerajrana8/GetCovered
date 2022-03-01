@@ -1435,7 +1435,7 @@ GEM
       multi_xml (>= 0.5.2)
     i18n (1.8.11)
       concurrent-ruby (~> 1.0)
-    image_processing (1.12.1)
+    image_processing (1.12.2)
       mini_magick (>= 4.9.5, < 5)
       ruby-vips (>= 2.0.17, < 3)
     jaro_winkler (1.5.4)
@@ -1758,7 +1758,7 @@ DEPENDENCIES
   guard-rspec
   guard-shell
   httparty
-  image_processing (~> 1.2)
+  image_processing (~> 1.12)
   jbuilder (~> 2.11.2)
   kaminari (>= 1.2.1)
   klaviyo!
