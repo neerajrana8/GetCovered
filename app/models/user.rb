@@ -341,6 +341,10 @@ class User < ApplicationRecord
     PmTenantPortal::InvitationToPmTenantPortalMailer.third_audit_email(user: self, community: @community, tenant_onboarding_url: @tenant_onboarding_url).deliver_later(wait_until: 168.hours.from_now)
   end
 
+  def full_name
+    profile.first_name + " " + profile.last_name
+  end
+
   private
 
   def history_blacklist
