@@ -10,7 +10,8 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2022_02_24_181906) do
+
+ActiveRecord::Schema.define(version: 2022_03_01_190943) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
@@ -1359,6 +1360,9 @@ ActiveRecord::Schema.define(version: 2022_02_24_181906) do
     t.integer "special_deductible"
     t.integer "occurrence_limit"
     t.boolean "is_carrier_fee", default: false
+    t.integer "aggregate_limit"
+    t.integer "external_payments_limit"
+    t.integer "limit_used"
     t.index ["policy_application_id"], name: "index_policy_coverages_on_policy_application_id"
     t.index ["policy_id"], name: "index_policy_coverages_on_policy_id"
   end
