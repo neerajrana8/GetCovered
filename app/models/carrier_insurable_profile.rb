@@ -36,9 +36,9 @@ class CarrierInsurableProfile < ApplicationRecord
 
     def check_preferred_status
       if self.insurable.get_carrier_status(carrier_id) == :preferred &&
-         self.insuralbe.preferred[self.carrier_id.to_s] == false
+         self.insurable.preferred[self.carrier_id.to_s] == false
 
-        self.insuralbe.preferred[self.carrier_id.to_s] = true
+        self.insurable.preferred[self.carrier_id.to_s] = true
         self.insurable.save()
       end
     end
