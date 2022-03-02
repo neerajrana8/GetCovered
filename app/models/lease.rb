@@ -26,6 +26,9 @@ class Lease < ApplicationRecord
   belongs_to :insurable
   belongs_to :lease_type
 
+  has_many :policies,
+           through: :insurable
+
   has_many :lease_users, inverse_of: :lease
 
   has_many :users, through: :lease_users
