@@ -59,6 +59,7 @@ module Integrations
           end
           the_event = result[:event]
           policy_hashes = result[:parsed_response].dig("Envelope", "Body", "GetInsurancePoliciesResponse", "GetInsurancePoliciesResult", "RenterInsurance", "InsurancePolicy") || []
+          policy_hashes = [policy_hashes] unless policy_hashes.class == ::Array
           in_system_user_list = ::IntegrationProfile.where(
             integration: integration,
             profileable_type: "User",
