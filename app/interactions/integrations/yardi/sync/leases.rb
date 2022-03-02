@@ -43,10 +43,11 @@ module Integrations
             (RESIDENT_STATUSES['nonfuture'] || []).map{|s| (resident_datas[s] || []).select{|td| !td['MoveOut'].blank? && (Date.parse(td['MoveOut']) rescue nil)&.<(Time.current.to_date) } }
           ).flatten
           # create active new and future leases
+          relevant_tenants = present_tenants + future_tenants
           created_by_email = {}
           user_ip_ids = IntegrationProfile.where(integration: integration, external_context: 'resident', profileable_type: "User").pluck(:external_id, :profileable_id).to_h
-          in_system = IntegrationProfile.where(integration: integration, external_context: 'lease', external_id: present_tenants.map{|l| l['Id'] }, profileable_type: "Lease").pluck(:external_id)
-          (present_tenants + future_tenants).each do |tenant|
+          in_system = IntegrationProfile.where(integration: integration, external_context: 'lease', external_id: relevant_tenants.map{|l| l['Id'] }, profileable_type: "Lease").pluck(:external_id)
+          relevant_tenants.each do |tenant|
             next if in_system.include?(tenant["Id"])
             # get the users
             da_tenants = [tenant] + (tenant["Roommate"].nil? ? [] : tenant["Roommate"].class == ::Array ? tenant["Roommate"] : [tenant["Roommate"]])
