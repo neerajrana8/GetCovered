@@ -1,0 +1,977 @@
+Account ID,Account Name,Address 1*,Address 2,City*,County*,State*,Zip*,Year Built,Community Name,Unit Number for Site,Office Address,Office Unit,Office City,Office State,Office Zip
+32,Avenue Living,915 Teal Court,1,Colorado Springs,El Paso,Colorado,80910,,The Monroe,915-01,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,915 Teal Court,2,Colorado Springs,El Paso,Colorado,80910,,The Monroe,915-02,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,915 Teal Court,3,Colorado Springs,El Paso,Colorado,80910,,The Monroe,915-03,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,915 Teal Court,4,Colorado Springs,El Paso,Colorado,80910,,The Monroe,915-04,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,915 Teal Court,5,Colorado Springs,El Paso,Colorado,80910,,The Monroe,915-05,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,915 Teal Court,6,Colorado Springs,El Paso,Colorado,80910,,The Monroe,915-06,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,915 Teal Court,7,Colorado Springs,El Paso,Colorado,80910,,The Monroe,915-07,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,915 Teal Court,8,Colorado Springs,El Paso,Colorado,80910,,The Monroe,915-08,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,915 Teal Court,9,Colorado Springs,El Paso,Colorado,80910,,The Monroe,915-09,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,915 Teal Court,11,Colorado Springs,El Paso,Colorado,80910,,The Monroe,915-11,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,915 Teal Court,12,Colorado Springs,El Paso,Colorado,80910,,The Monroe,915-12,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,915 Teal Court,13,Colorado Springs,El Paso,Colorado,80910,,The Monroe,915-13,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,915 Teal Court,14,Colorado Springs,El Paso,Colorado,80910,,The Monroe,915-14,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,915 Teal Court,15,Colorado Springs,El Paso,Colorado,80910,,The Monroe,915-15,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,915 Teal Court,16,Colorado Springs,El Paso,Colorado,80910,,The Monroe,915-16,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,915 Teal Court,17,Colorado Springs,El Paso,Colorado,80910,,The Monroe,915-17,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,915 Teal Court,18,Colorado Springs,El Paso,Colorado,80910,,The Monroe,915-18,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,915 Teal Court,19,Colorado Springs,El Paso,Colorado,80910,,The Monroe,915-19,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,915 Teal Court,20,Colorado Springs,El Paso,Colorado,80910,,The Monroe,915-20,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,915 Teal Court,21,Colorado Springs,El Paso,Colorado,80910,,The Monroe,915-21,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,915 Teal Court,22,Colorado Springs,El Paso,Colorado,80910,,The Monroe,915-22,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,915 Teal Court,23,Colorado Springs,El Paso,Colorado,80910,,The Monroe,915-23,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,915 Teal Court,24,Colorado Springs,El Paso,Colorado,80910,,The Monroe,915-24,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,915 Teal Court,25,Colorado Springs,El Paso,Colorado,80910,,The Monroe,915-25,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,915 Teal Court,26,Colorado Springs,El Paso,Colorado,80910,,The Monroe,915-26,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,915 Teal Court,27,Colorado Springs,El Paso,Colorado,80910,,The Monroe,915-27,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,915 Teal Court,28,Colorado Springs,El Paso,Colorado,80910,,The Monroe,915-28,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,915 Teal Court,29,Colorado Springs,El Paso,Colorado,80910,,The Monroe,915-29,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,915 Teal Court,30,Colorado Springs,El Paso,Colorado,80910,,The Monroe,915-30,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,3040 Mallard Drive,11,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3040-11,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,3040 Mallard Drive,12,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3040-12,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,3040 Mallard Drive,13,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3040-13,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,3040 Mallard Drive,14,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3040-14,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,3040 Mallard Drive,15,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3040-15,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,3040 Mallard Drive,16,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3040-16,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,3040 Mallard Drive,22,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3040-22,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,3040 Mallard Drive,23,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3040-23,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,3040 Mallard Drive,24,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3040-24,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,3040 Mallard Drive,25,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3040-25,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,3040 Mallard Drive,26,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3040-26,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,3040 Mallard Drive,31,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3040-31,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,3040 Mallard Drive,32,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3040-32,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,3040 Mallard Drive,33,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3040-33,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,3040 Mallard Drive,34,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3040-34,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,3040 Mallard Drive,35,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3040-35,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,3040 Mallard Drive,36,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3040-36,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,350 Mallard Drive,11,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3050-11,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,350 Mallard Drive,12,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3050-12,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,350 Mallard Drive,13,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3050-13,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,350 Mallard Drive,14,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3050-14,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,350 Mallard Drive,15,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3050-15,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,350 Mallard Drive,16,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3050-16,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,350 Mallard Drive,21,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3050-21,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,350 Mallard Drive,22,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3050-22,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,350 Mallard Drive,23,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3050-23,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,350 Mallard Drive,24,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3050-24,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,350 Mallard Drive,25,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3050-25,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,350 Mallard Drive,26,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3050-26,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,350 Mallard Drive,31,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3050-31,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,350 Mallard Drive,32,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3050-32,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,350 Mallard Drive,33,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3050-33,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,350 Mallard Drive,34,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3050-34,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,350 Mallard Drive,35,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3050-35,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,350 Mallard Drive,36,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3050-36,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,360 Mallard Drive,11,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3060-11,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,360 Mallard Drive,12,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3060-12,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,360 Mallard Drive,13,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3060-13,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,360 Mallard Drive,14,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3060-14,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,360 Mallard Drive,15,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3060-15,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,360 Mallard Drive,16,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3060-16,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,360 Mallard Drive,21,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3060-21,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,360 Mallard Drive,22,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3060-22,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,360 Mallard Drive,23,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3060-23,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,360 Mallard Drive,24,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3060-24,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,360 Mallard Drive,25,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3060-25,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,360 Mallard Drive,26,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3060-26,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,360 Mallard Drive,31,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3060-31,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,360 Mallard Drive,32,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3060-32,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,360 Mallard Drive,33,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3060-33,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,360 Mallard Drive,34,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3060-34,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,360 Mallard Drive,35,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3060-35,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,360 Mallard Drive,36,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3060-36,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,3110 Mallard Drive,101,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3110-101,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,3110 Mallard Drive,103,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3110-103,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,3110 Mallard Drive,104,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3110-104,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,3110 Mallard Drive,105,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3110-105,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,3110 Mallard Drive,106,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3110-106,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,3110 Mallard Drive,107,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3110-107,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,3110 Mallard Drive,108,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3110-108,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,3110 Mallard Drive,201,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3110-201,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,3110 Mallard Drive,202,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3110-202,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,3110 Mallard Drive,203,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3110-203,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,3110 Mallard Drive,204,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3110-204,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,3110 Mallard Drive,205,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3110-205,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,3110 Mallard Drive,206,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3110-206,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,3110 Mallard Drive,207,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3110-207,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,3110 Mallard Drive,208,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3110-208,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,3110 Mallard Drive,301,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3110-301,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,3110 Mallard Drive,302,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3110-302,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,3110 Mallard Drive,303,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3110-303,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,3110 Mallard Drive,304,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3110-304,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,3110 Mallard Drive,305,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3110-305,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,3110 Mallard Drive,306,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3110-306,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,3110 Mallard Drive,307,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3110-307,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,3110 Mallard Drive,308,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3110-308,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,3122 Mallard Drive,101,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3122-101,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,3122 Mallard Drive,103,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3122-103,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,3122 Mallard Drive,104,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3122-104,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,3122 Mallard Drive,105,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3122-105,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,3122 Mallard Drive,106,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3122-106,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,3122 Mallard Drive,107,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3122-107,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,3122 Mallard Drive,108,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3122-108,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,3122 Mallard Drive,201,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3122-201,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,3122 Mallard Drive,202,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3122-202,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,3122 Mallard Drive,203,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3122-203,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,3122 Mallard Drive,204,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3122-204,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,3122 Mallard Drive,205,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3122-205,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,3122 Mallard Drive,206,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3122-206,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,3122 Mallard Drive,207,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3122-207,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,3122 Mallard Drive,208,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3122-208,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,3122 Mallard Drive,301,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3122-301,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,3122 Mallard Drive,302,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3122-302,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,3122 Mallard Drive,303,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3122-303,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,3122 Mallard Drive,304,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3122-304,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,3122 Mallard Drive,305,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3122-305,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,3122 Mallard Drive,306,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3122-306,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,3122 Mallard Drive,307,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3122-307,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,3122 Mallard Drive,308,Colorado Springs,El Paso,Colorado,80910,,The Monroe,3122-308,3040 Mallard Drive,21,Colorado Springs,CO,80910
+32,Avenue Living,3801 Somerset Drive,101,Prairie Village,Johnson,Kansas,66208,,Corinth Place,01-101,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3801 Somerset Drive,102,Prairie Village,Johnson,Kansas,66208,,Corinth Place,01-102,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3801 Somerset Drive,103,Prairie Village,Johnson,Kansas,66208,,Corinth Place,01-103,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3801 Somerset Drive,104,Prairie Village,Johnson,Kansas,66208,,Corinth Place,01-104,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3801 Somerset Drive,201,Prairie Village,Johnson,Kansas,66208,,Corinth Place,01-201,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3801 Somerset Drive,202,Prairie Village,Johnson,Kansas,66208,,Corinth Place,01-202,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3801 Somerset Drive,203,Prairie Village,Johnson,Kansas,66208,,Corinth Place,01-203,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3801 Somerset Drive,204,Prairie Village,Johnson,Kansas,66208,,Corinth Place,01-204,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3803 Somerset Drive,101,Prairie Village,Johnson,Kansas,66208,,Corinth Place,03-101,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3803 Somerset Drive,102,Prairie Village,Johnson,Kansas,66208,,Corinth Place,03-102,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3803 Somerset Drive,103,Prairie Village,Johnson,Kansas,66208,,Corinth Place,03-103,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3803 Somerset Drive,104,Prairie Village,Johnson,Kansas,66208,,Corinth Place,03-104,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3803 Somerset Drive,105,Prairie Village,Johnson,Kansas,66208,,Corinth Place,03-105,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3803 Somerset Drive,106,Prairie Village,Johnson,Kansas,66208,,Corinth Place,03-106,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3803 Somerset Drive,107,Prairie Village,Johnson,Kansas,66208,,Corinth Place,03-107,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3803 Somerset Drive,108,Prairie Village,Johnson,Kansas,66208,,Corinth Place,03-108,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3803 Somerset Drive,201,Prairie Village,Johnson,Kansas,66208,,Corinth Place,03-201,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3803 Somerset Drive,202,Prairie Village,Johnson,Kansas,66208,,Corinth Place,03-202,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3803 Somerset Drive,203,Prairie Village,Johnson,Kansas,66208,,Corinth Place,03-203,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3803 Somerset Drive,204,Prairie Village,Johnson,Kansas,66208,,Corinth Place,03-204,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3803 Somerset Drive,205,Prairie Village,Johnson,Kansas,66208,,Corinth Place,03-205,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3803 Somerset Drive,206,Prairie Village,Johnson,Kansas,66208,,Corinth Place,03-206,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3803 Somerset Drive,207,Prairie Village,Johnson,Kansas,66208,,Corinth Place,03-207,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3803 Somerset Drive,208,Prairie Village,Johnson,Kansas,66208,,Corinth Place,03-208,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3805 Somerset Drive,101,Prairie Village,Johnson,Kansas,66208,,Corinth Place,05-101,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3805 Somerset Drive,102,Prairie Village,Johnson,Kansas,66208,,Corinth Place,05-102,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3805 Somerset Drive,103,Prairie Village,Johnson,Kansas,66208,,Corinth Place,05-103,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3805 Somerset Drive,104,Prairie Village,Johnson,Kansas,66208,,Corinth Place,05-104,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3805 Somerset Drive,105,Prairie Village,Johnson,Kansas,66208,,Corinth Place,05-105,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3805 Somerset Drive,106,Prairie Village,Johnson,Kansas,66208,,Corinth Place,05-106,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3805 Somerset Drive,107,Prairie Village,Johnson,Kansas,66208,,Corinth Place,05-107,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3805 Somerset Drive,108,Prairie Village,Johnson,Kansas,66208,,Corinth Place,05-108,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3805 Somerset Drive,201,Prairie Village,Johnson,Kansas,66208,,Corinth Place,05-201,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3805 Somerset Drive,202,Prairie Village,Johnson,Kansas,66208,,Corinth Place,05-202,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3805 Somerset Drive,203,Prairie Village,Johnson,Kansas,66208,,Corinth Place,05-203,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3805 Somerset Drive,204,Prairie Village,Johnson,Kansas,66208,,Corinth Place,05-204,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3805 Somerset Drive,205,Prairie Village,Johnson,Kansas,66208,,Corinth Place,05-205,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3805 Somerset Drive,206,Prairie Village,Johnson,Kansas,66208,,Corinth Place,05-206,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3805 Somerset Drive,207,Prairie Village,Johnson,Kansas,66208,,Corinth Place,05-207,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3805 Somerset Drive,208,Prairie Village,Johnson,Kansas,66208,,Corinth Place,05-208,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3807 Somerset Drive,101,Prairie Village,Johnson,Kansas,66208,,Corinth Place,07-101,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3807 Somerset Drive,102,Prairie Village,Johnson,Kansas,66208,,Corinth Place,07-102,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3807 Somerset Drive,103,Prairie Village,Johnson,Kansas,66208,,Corinth Place,07-103,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3807 Somerset Drive,104,Prairie Village,Johnson,Kansas,66208,,Corinth Place,07-104,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3807 Somerset Drive,105,Prairie Village,Johnson,Kansas,66208,,Corinth Place,07-105,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3807 Somerset Drive,106,Prairie Village,Johnson,Kansas,66208,,Corinth Place,07-106,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3807 Somerset Drive,107,Prairie Village,Johnson,Kansas,66208,,Corinth Place,07-107,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3807 Somerset Drive,108,Prairie Village,Johnson,Kansas,66208,,Corinth Place,07-108,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3807 Somerset Drive,201,Prairie Village,Johnson,Kansas,66208,,Corinth Place,07-201,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3807 Somerset Drive,202,Prairie Village,Johnson,Kansas,66208,,Corinth Place,07-202,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3807 Somerset Drive,203,Prairie Village,Johnson,Kansas,66208,,Corinth Place,07-203,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3807 Somerset Drive,204,Prairie Village,Johnson,Kansas,66208,,Corinth Place,07-204,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3807 Somerset Drive,205,Prairie Village,Johnson,Kansas,66208,,Corinth Place,07-205,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3807 Somerset Drive,206,Prairie Village,Johnson,Kansas,66208,,Corinth Place,07-206,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3807 Somerset Drive,207,Prairie Village,Johnson,Kansas,66208,,Corinth Place,07-207,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3807 Somerset Drive,208,Prairie Village,Johnson,Kansas,66208,,Corinth Place,07-208,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3809 Somerset Drive,101,Prairie Village,Johnson,Kansas,66208,,Corinth Place,09-101,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3809 Somerset Drive,102,Prairie Village,Johnson,Kansas,66208,,Corinth Place,09-102,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3809 Somerset Drive,103,Prairie Village,Johnson,Kansas,66208,,Corinth Place,09-103,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3809 Somerset Drive,104,Prairie Village,Johnson,Kansas,66208,,Corinth Place,09-104,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3809 Somerset Drive,201,Prairie Village,Johnson,Kansas,66208,,Corinth Place,09-201,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3809 Somerset Drive,202,Prairie Village,Johnson,Kansas,66208,,Corinth Place,09-202,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3809 Somerset Drive,203,Prairie Village,Johnson,Kansas,66208,,Corinth Place,09-203,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3809 Somerset Drive,204,Prairie Village,Johnson,Kansas,66208,,Corinth Place,09-204,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3811 Somerset Drive,101,Prairie Village,Johnson,Kansas,66208,,Corinth Place,11-101,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3811 Somerset Drive,102,Prairie Village,Johnson,Kansas,66208,,Corinth Place,11-102,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3811 Somerset Drive,103,Prairie Village,Johnson,Kansas,66208,,Corinth Place,11-103,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3811 Somerset Drive,104,Prairie Village,Johnson,Kansas,66208,,Corinth Place,11-104,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3811 Somerset Drive,105,Prairie Village,Johnson,Kansas,66208,,Corinth Place,11-105,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3811 Somerset Drive,106,Prairie Village,Johnson,Kansas,66208,,Corinth Place,11-106,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3811 Somerset Drive,201,Prairie Village,Johnson,Kansas,66208,,Corinth Place,11-201,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3811 Somerset Drive,202,Prairie Village,Johnson,Kansas,66208,,Corinth Place,11-202,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3811 Somerset Drive,203,Prairie Village,Johnson,Kansas,66208,,Corinth Place,11-203,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3811 Somerset Drive,204,Prairie Village,Johnson,Kansas,66208,,Corinth Place,11-204,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3811 Somerset Drive,205,Prairie Village,Johnson,Kansas,66208,,Corinth Place,11-205,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3811 Somerset Drive,206,Prairie Village,Johnson,Kansas,66208,,Corinth Place,11-206,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3901 West 84th Street,A,Prairie Village,Johnson,Kansas,66208,,Corinth Gardens,3901A,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3901 West 84th Street,B,Prairie Village,Johnson,Kansas,66208,,Corinth Gardens,3901B,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3901 West 84th Street,C,Prairie Village,Johnson,Kansas,66208,,Corinth Gardens,3901C,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3901 West 84th Street,D,Prairie Village,Johnson,Kansas,66208,,Corinth Gardens,3901D,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3905 West 84th Street,A,Prairie Village,Johnson,Kansas,66208,,Corinth Gardens,3905A,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3905 West 84th Street,B,Prairie Village,Johnson,Kansas,66208,,Corinth Gardens,3905B,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3905 West 84th Street,C,Prairie Village,Johnson,Kansas,66208,,Corinth Gardens,3905C,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3905 West 84th Street,D,Prairie Village,Johnson,Kansas,66208,,Corinth Gardens,3905D,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3909 WEST 84TH STREET,A,Prairie Village,Johnson,Kansas,66208,,Corinth Gardens,3909A,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3909 WEST 84TH STREET,B,Prairie Village,Johnson,Kansas,66208,,Corinth Gardens,3909B,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3909 WEST 84TH STREET,C,Prairie Village,Johnson,Kansas,66208,,Corinth Gardens,3909C,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3909 WEST 84TH STREET,D,Prairie Village,Johnson,Kansas,66208,,Corinth Gardens,3909D,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3917 WEST 84TH STREET,A,Prairie Village,Johnson,Kansas,66208,,Corinth Gardens,3917A,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3917 WEST 84TH STREET,B,Prairie Village,Johnson,Kansas,66208,,Corinth Gardens,3917B,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3917 WEST 84TH STREET,C,Prairie Village,Johnson,Kansas,66208,,Corinth Gardens,3917C,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3917 WEST 84TH STREET,D,Prairie Village,Johnson,Kansas,66208,,Corinth Gardens,3917D,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,4001 WEST 84TH STREET,A,Prairie Village,Johnson,Kansas,66208,,Corinth Gardens,4001A,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,4001 WEST 84TH STREET,B,Prairie Village,Johnson,Kansas,66208,,Corinth Gardens,4001B,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,4001 WEST 84TH STREET,C,Prairie Village,Johnson,Kansas,66208,,Corinth Gardens,4001C,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,4001 WEST 84TH STREET,D,Prairie Village,Johnson,Kansas,66208,,Corinth Gardens,4001D,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,4005 WEST 84TH STREET,A,Prairie Village,Johnson,Kansas,66208,,Corinth Gardens,4005A,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,4005 WEST 84TH STREET,B,Prairie Village,Johnson,Kansas,66208,,Corinth Gardens,4005B,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,4005 WEST 84TH STREET,C,Prairie Village,Johnson,Kansas,66208,,Corinth Gardens,4005C,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,4005 WEST 84TH STREET,D,Prairie Village,Johnson,Kansas,66208,,Corinth Gardens,4005D,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,4009 WEST 84TH STREET,A,Prairie Village,Johnson,Kansas,66208,,Corinth Gardens,4009A,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,4009 WEST 84TH STREET,B,Prairie Village,Johnson,Kansas,66208,,Corinth Gardens,4009B,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,4009 WEST 84TH STREET,C,Prairie Village,Johnson,Kansas,66208,,Corinth Gardens,4009C,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,4009 WEST 84TH STREET,D,Prairie Village,Johnson,Kansas,66208,,Corinth Gardens,4009D,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,4017 WEST 84TH STREET,A,Prairie Village,Johnson,Kansas,66208,,Corinth Gardens,4017A,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,4017 WEST 84TH STREET,B,Prairie Village,Johnson,Kansas,66208,,Corinth Gardens,4017B,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,4017 WEST 84TH STREET,C,Prairie Village,Johnson,Kansas,66208,,Corinth Gardens,4017C,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,4017 WEST 84TH STREET,D,Prairie Village,Johnson,Kansas,66208,,Corinth Gardens,4017D,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,4021 WEST 84TH STREET,A,Prairie Village,Johnson,Kansas,66208,,Corinth Gardens,4021A,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,4021 WEST 84TH STREET,B,Prairie Village,Johnson,Kansas,66208,,Corinth Gardens,4021B,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,4021 WEST 84TH STREET,C,Prairie Village,Johnson,Kansas,66208,,Corinth Gardens,4021C,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,4021 WEST 84TH STREET,D,Prairie Village,Johnson,Kansas,66208,,Corinth Gardens,4021D,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,4025 WEST 84TH STREET,A,Prairie Village,Johnson,Kansas,66208,,Corinth Gardens,4025A,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,4025 WEST 84TH STREET,B,Prairie Village,Johnson,Kansas,66208,,Corinth Gardens,4025B,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,4025 WEST 84TH STREET,C,Prairie Village,Johnson,Kansas,66208,,Corinth Gardens,4025C,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,4025 WEST 84TH STREET,D,Prairie Village,Johnson,Kansas,66208,,Corinth Gardens,4025D,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,4029 WEST 84TH STREET,A,Prairie Village,Johnson,Kansas,66208,,Corinth Gardens,4029A,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,4029 WEST 84TH STREET,B,Prairie Village,Johnson,Kansas,66208,,Corinth Gardens,4029B,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,4029 WEST 84TH STREET,C,Prairie Village,Johnson,Kansas,66208,,Corinth Gardens,4029C,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,4029 WEST 84TH STREET,D,Prairie Village,Johnson,Kansas,66208,,Corinth Gardens,4029D,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,4033 WEST 84TH STREET,A,Prairie Village,Johnson,Kansas,66208,,Corinth Gardens,4033A,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,4033 WEST 84TH STREET,B,Prairie Village,Johnson,Kansas,66208,,Corinth Gardens,4033B,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,4033 WEST 84TH STREET,C,Prairie Village,Johnson,Kansas,66208,,Corinth Gardens,4033C,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,4033 WEST 84TH STREET,D,Prairie Village,Johnson,Kansas,66208,,Corinth Gardens,4033D,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,4037 WEST 84TH STREET,A,Prairie Village,Johnson,Kansas,66208,,Corinth Gardens,4037A,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,4037 WEST 84TH STREET,B,Prairie Village,Johnson,Kansas,66208,,Corinth Gardens,4037B,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,4037 WEST 84TH STREET,C,Prairie Village,Johnson,Kansas,66208,,Corinth Gardens,4037C,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,4037 WEST 84TH STREET,D,Prairie Village,Johnson,Kansas,66208,,Corinth Gardens,4037D,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3500 SOMERSET DR,,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,3500,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3504 SOMERSET DR,,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,3504,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3508 SOMERSET DR,,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,3508,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3512 SOMERSET DR,,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,3512,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3600 SOMERSET DR,,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,3600,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3604 SOMERSET DR,,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,3604,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3608 SOMERSET DR,,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,3608,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3612 SOMERSET DR,,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,3612,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3616 SOMERSET DR,,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,3616,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3620 SOMERSET DR,,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,3620,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8018 MOHAWK,101,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8018M101,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8018 MOHAWK,102,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8018M102,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8018 MOHAWK,103,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8018M103,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8018 MOHAWK,201,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8018M201,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8018 MOHAWK,202,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8018M202,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8018 MOHAWK,203,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8018M203,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8022 MOHAWK,101,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8022M101,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8022 MOHAWK,102,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8022M102,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8022 MOHAWK,103,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8022M103,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8022 MOHAWK,201,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8022M201,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8022 MOHAWK,202,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8022M202,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8022 MOHAWK,203,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8022M203,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8026 MOHAWK,101,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8026M101,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8026 MOHAWK,102,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8026M102,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8026 MOHAWK,103,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8026M103,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8026 MOHAWK,201,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8026M201,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8026 MOHAWK,202,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8026M202,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8026 MOHAWK,203,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8026M203,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8028 CORINTH,101,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8028C101,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8028 CORINTH,102,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8028C102,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8028 CORINTH,103,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8028C103,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8028 CORINTH,201,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8028C201,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8028 CORINTH,202,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8028C202,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8028 CORINTH,203,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8028C203,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8030 MOHAWK,101,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8030M101,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8030 MOHAWK,102,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8030M102,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8030 MOHAWK,103,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8030M103,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8030 MOHAWK,201,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8030M201,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8030 MOHAWK,202,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8030M202,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8030 MOHAWK,203,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8030M203,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8031 MOHAWK,101,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8031M101,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8031 MOHAWK,102,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8031M102,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8031 MOHAWK,103,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8031M103,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8031 MOHAWK,201,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8031M201,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8031 MOHAWK,202,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8031M202,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8031 MOHAWK,203,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8031M203,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8031 PAWNEE,101,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8031P101,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8031 PAWNEE,102,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8031P102,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8031 PAWNEE,103,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8031P103,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8031 PAWNEE,201,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8031P201,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8031 PAWNEE,202,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8031P202,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8031 PAWNEE,203,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8031P203,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8032 CORINTH,101,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8032C101,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8032 CORINTH,102,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8032C102,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8032 CORINTH,103,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8032C103,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8032 CORINTH,201,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8032C201,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8032 CORINTH,202,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8032C202,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8032 CORINTH,203,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8032C203,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8032 PAWNEE,101,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8032P101,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8032 PAWNEE STREET,102,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8032P102,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8032 PAWNEE,103,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8032P103,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8032 PAWNEE,201,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8032P201,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8032 PAWNEE,202,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8032P202,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8032 PAWNEE,203,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8032P203,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8035 PAWNEE,101,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8035P101,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8035 PAWNEE,102,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8035P102,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8035 PAWNEE,201,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8035P201,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8035 PAWNEE,202,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8035P202,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8036 CORINTH,101,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8036C101,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8036 CORINTH,102,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8036C102,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8036 CORINTH,201,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8036C201,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8036 CORINTH,202,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8036C202,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8036 PAWNEE,101,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8036P101,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8036 PAWNEE,102,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8036P102,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8036 PAWNEE,201,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8036P201,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8036 PAWNEE,202,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8036P202,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8037 MOHAWK,101,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8037M101,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8037 MOHAWK,102,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8037M102,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8037 MOHAWK,103,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8037M103,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8037 MOHAWK,201,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8037M201,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8037 MOHAWK,202,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8037M202,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8037 MOHAWK,203,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8037M203,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8039 PAWNEE,101,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8039P101,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8039 PAWNEE,102,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8039P102,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8039 PAWNEE,201,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8039P201,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8039 PAWNEE,202,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8039P202,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8040 CORINTH,101,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8040C101,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8040 CORINTH,102,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8040C102,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8040 CORINTH,103,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8040C103,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8040 CORINTH,201,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8040C201,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8040 CORINTH,202,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8040C202,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8040 CORINTH,203,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8040C203,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8040 PAWNEE,101,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8040P101,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8040 PAWNEE,102,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8040P102,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8040 PAWNEE,103,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8040P103,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8040 PAWNEE,201,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8040P201,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8040 PAWNEE,202,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8040P202,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8040 PAWNEE,203,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8040P203,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8042 MOHAWK,101,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8042M101,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8042 MOHAWK,102,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8042M102,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8042 MOHAWK,103,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8042M103,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8042 MOHAWK,201,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8042M201,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8042 MOHAWK,202,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8042M202,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8042 MOHAWK,203,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8042M203,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8043 PAWNEE,101,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8043P101,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8043 PAWNEE,102,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8043P102,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8043 PAWNEE,103,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8043P103,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8043 PAWNEE,201,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8043P201,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8043 PAWNEE,202,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8043P202,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8043 PAWNEE,203,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8043P203,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8044 PAWNEE,101,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8044P101,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8044 PAWNEE,102,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8044P102,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8044 PAWNEE,201,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8044P201,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8044 PAWNEE,202,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8044P202,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8046 MOHAWK,101,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8046M101,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8046 MOHAWK,102,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8046M102,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8046 MOHAWK,103,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8046M103,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8046 MOHAWK,201,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8046M201,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8046 MOHAWK,202,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8046M202,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8046 MOHAWK,203,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8046M203,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8050 MOHAWK,101,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8050M101,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8050 MOHAWK,102,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8050M102,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8050 MOHAWK,103,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8050M103,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8050 MOHAWK,201,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8050M201,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8050 MOHAWK,202,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8050M202,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,8050 MOHAWK,203,Prairie Village,Johnson,Kansas,66208,,Corinth Paddock,8050M203,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3804 BOOTH STREET,1,Kansas City,Johnson,Kansas,66103,,Johns Med Center,3804-01,3808 BOOTH STREET,2,Kansas City,Kansas,66103
+32,Avenue Living,3804 BOOTH STREET,2,Kansas City,Johnson,Kansas,66103,,Johns Med Center,3804-02,3808 BOOTH STREET,2,Kansas City,Kansas,66103
+32,Avenue Living,3804 BOOTH STREET,3,Kansas City,Johnson,Kansas,66103,,Johns Med Center,3804-03,3808 BOOTH STREET,2,Kansas City,Kansas,66103
+32,Avenue Living,3804 BOOTH STREET,4,Kansas City,Johnson,Kansas,66103,,Johns Med Center,3804-04,3808 BOOTH STREET,2,Kansas City,Kansas,66103
+32,Avenue Living,3804 BOOTH STREET,5,Kansas City,Johnson,Kansas,66103,,Johns Med Center,3804-05,3808 BOOTH STREET,2,Kansas City,Kansas,66103
+32,Avenue Living,3804 BOOTH STREET,6,Kansas City,Johnson,Kansas,66103,,Johns Med Center,3804-06,3808 BOOTH STREET,2,Kansas City,Kansas,66103
+32,Avenue Living,3804 BOOTH STREET,7,Kansas City,Johnson,Kansas,66103,,Johns Med Center,3804-07,3808 BOOTH STREET,2,Kansas City,Kansas,66103
+32,Avenue Living,3804 BOOTH STREET,8,Kansas City,Johnson,Kansas,66103,,Johns Med Center,3804-08,3808 BOOTH STREET,2,Kansas City,Kansas,66103
+32,Avenue Living,3804 BOOTH STREET,9,Kansas City,Johnson,Kansas,66103,,Johns Med Center,3804-09,3808 BOOTH STREET,2,Kansas City,Kansas,66103
+32,Avenue Living,3804 BOOTH STREET,10,Kansas City,Johnson,Kansas,66103,,Johns Med Center,3804-10,3808 BOOTH STREET,2,Kansas City,Kansas,66103
+32,Avenue Living,3804 BOOTH STREET,11,Kansas City,Johnson,Kansas,66103,,Johns Med Center,3804-11,3808 BOOTH STREET,2,Kansas City,Kansas,66103
+32,Avenue Living,3804 BOOTH STREET,12,Kansas City,Johnson,Kansas,66103,,Johns Med Center,3804-12,3808 BOOTH STREET,2,Kansas City,Kansas,66103
+32,Avenue Living,3808 BOOTH STREET,1,Kansas City,Johnson,Kansas,66103,,Johns Med Center,3808-01,3808 BOOTH STREET,2,Kansas City,Kansas,66103
+32,Avenue Living,3808 BOOTH STREET,3,Kansas City,Johnson,Kansas,66103,,Johns Med Center,3808-03,3808 BOOTH STREET,2,Kansas City,Kansas,66103
+32,Avenue Living,3808 BOOTH STREET,4,Kansas City,Johnson,Kansas,66103,,Johns Med Center,3808-04,3808 BOOTH STREET,2,Kansas City,Kansas,66103
+32,Avenue Living,3808 BOOTH STREET,5,Kansas City,Johnson,Kansas,66103,,Johns Med Center,3808-05,3808 BOOTH STREET,2,Kansas City,Kansas,66103
+32,Avenue Living,3808 BOOTH STREET,6,Kansas City,Johnson,Kansas,66103,,Johns Med Center,3808-06,3808 BOOTH STREET,2,Kansas City,Kansas,66103
+32,Avenue Living,3808 BOOTH STREET,7,Kansas City,Johnson,Kansas,66103,,Johns Med Center,3808-07,3808 BOOTH STREET,2,Kansas City,Kansas,66103
+32,Avenue Living,3808 BOOTH STREET,8,Kansas City,Johnson,Kansas,66103,,Johns Med Center,3808-08,3808 BOOTH STREET,2,Kansas City,Kansas,66103
+32,Avenue Living,3808 BOOTH STREET,9,Kansas City,Johnson,Kansas,66103,,Johns Med Center,3808-09,3808 BOOTH STREET,2,Kansas City,Kansas,66103
+32,Avenue Living,3808 BOOTH STREET,10,Kansas City,Johnson,Kansas,66103,,Johns Med Center,3808-10,3808 BOOTH STREET,2,Kansas City,Kansas,66103
+32,Avenue Living,3808 BOOTH STREET,11,Kansas City,Johnson,Kansas,66103,,Johns Med Center,3808-11,3808 BOOTH STREET,2,Kansas City,Kansas,66103
+32,Avenue Living,3808 BOOTH STREET,12,Kansas City,Johnson,Kansas,66103,,Johns Med Center,3808-12,3808 BOOTH STREET,2,Kansas City,Kansas,66103
+32,Avenue Living,3812 BOOTH STREET,1,Kansas City,Johnson,Kansas,66103,,Johns Med Center,3812-01,3808 BOOTH STREET,2,Kansas City,Kansas,66103
+32,Avenue Living,3812 BOOTH STREET,2,Kansas City,Johnson,Kansas,66103,,Johns Med Center,3812-02,3808 BOOTH STREET,2,Kansas City,Kansas,66103
+32,Avenue Living,3812 BOOTH STREET,3,Kansas City,Johnson,Kansas,66103,,Johns Med Center,3812-03,3808 BOOTH STREET,2,Kansas City,Kansas,66103
+32,Avenue Living,3812 BOOTH STREET,4,Kansas City,Johnson,Kansas,66103,,Johns Med Center,3812-04,3808 BOOTH STREET,2,Kansas City,Kansas,66103
+32,Avenue Living,3812 BOOTH STREET,5,Kansas City,Johnson,Kansas,66103,,Johns Med Center,3812-05,3808 BOOTH STREET,2,Kansas City,Kansas,66103
+32,Avenue Living,3812 BOOTH STREET,6,Kansas City,Johnson,Kansas,66103,,Johns Med Center,3812-06,3808 BOOTH STREET,2,Kansas City,Kansas,66103
+32,Avenue Living,3812 BOOTH STREET,7,Kansas City,Johnson,Kansas,66103,,Johns Med Center,3812-07,3808 BOOTH STREET,2,Kansas City,Kansas,66103
+32,Avenue Living,3812 BOOTH STREET,8,Kansas City,Johnson,Kansas,66103,,Johns Med Center,3812-08,3808 BOOTH STREET,2,Kansas City,Kansas,66103
+32,Avenue Living,3812 BOOTH STREET,9,Kansas City,Johnson,Kansas,66103,,Johns Med Center,3812-09,3808 BOOTH STREET,2,Kansas City,Kansas,66103
+32,Avenue Living,3812 BOOTH STREET,10,Kansas City,Johnson,Kansas,66103,,Johns Med Center,3812-10,3808 BOOTH STREET,2,Kansas City,Kansas,66103
+32,Avenue Living,3812 BOOTH STREET,11,Kansas City,Johnson,Kansas,66103,,Johns Med Center,3812-11,3808 BOOTH STREET,2,Kansas City,Kansas,66103
+32,Avenue Living,3812 BOOTH STREET,12,Kansas City,Johnson,Kansas,66103,,Johns Med Center,3812-12,3808 BOOTH STREET,2,Kansas City,Kansas,66103
+32,Avenue Living,3820 BOOTH STREET,1,Kansas City,Johnson,Kansas,66103,,Johns Med Center,3820-01,3808 BOOTH STREET,2,Kansas City,Kansas,66103
+32,Avenue Living,3820 BOOTH STREET,2,Kansas City,Johnson,Kansas,66103,,Johns Med Center,3820-02,3808 BOOTH STREET,2,Kansas City,Kansas,66103
+32,Avenue Living,3820 BOOTH STREET,3,Kansas City,Johnson,Kansas,66103,,Johns Med Center,3820-03,3808 BOOTH STREET,2,Kansas City,Kansas,66103
+32,Avenue Living,3820 BOOTH STREET,4,Kansas City,Johnson,Kansas,66103,,Johns Med Center,3820-04,3808 BOOTH STREET,2,Kansas City,Kansas,66103
+32,Avenue Living,3820 BOOTH STREET,5,Kansas City,Johnson,Kansas,66103,,Johns Med Center,3820-05,3808 BOOTH STREET,2,Kansas City,Kansas,66103
+32,Avenue Living,3820 BOOTH STREET,6,Kansas City,Johnson,Kansas,66103,,Johns Med Center,3820-06,3808 BOOTH STREET,2,Kansas City,Kansas,66103
+32,Avenue Living,3820 BOOTH STREET,7,Kansas City,Johnson,Kansas,66103,,Johns Med Center,3820-07,3808 BOOTH STREET,2,Kansas City,Kansas,66103
+32,Avenue Living,3820 BOOTH STREET,8,Kansas City,Johnson,Kansas,66103,,Johns Med Center,3820-08,3808 BOOTH STREET,2,Kansas City,Kansas,66103
+32,Avenue Living,3820 BOOTH STREET,9,Kansas City,Johnson,Kansas,66103,,Johns Med Center,3820-09,3808 BOOTH STREET,2,Kansas City,Kansas,66103
+32,Avenue Living,3820 BOOTH STREET,10,Kansas City,Johnson,Kansas,66103,,Johns Med Center,3820-10,3808 BOOTH STREET,2,Kansas City,Kansas,66103
+32,Avenue Living,3820 BOOTH STREET,11,Kansas City,Johnson,Kansas,66103,,Johns Med Center,3820-11,3808 BOOTH STREET,2,Kansas City,Kansas,66103
+32,Avenue Living,3820 BOOTH STREET,12,Kansas City,Johnson,Kansas,66103,,Johns Med Center,3820-12,3808 BOOTH STREET,2,Kansas City,Kansas,66103
+32,Avenue Living,3824 BOOTH STREET,1,Kansas City,Johnson,Kansas,66103,,Johns Med Center,3824-01,3808 BOOTH STREET,2,Kansas City,Kansas,66103
+32,Avenue Living,3824 BOOTH STREET,2,Kansas City,Johnson,Kansas,66103,,Johns Med Center,3824-02,3808 BOOTH STREET,2,Kansas City,Kansas,66103
+32,Avenue Living,3824 BOOTH STREET,3,Kansas City,Johnson,Kansas,66103,,Johns Med Center,3824-03,3808 BOOTH STREET,2,Kansas City,Kansas,66103
+32,Avenue Living,3824 BOOTH STREET,4,Kansas City,Johnson,Kansas,66103,,Johns Med Center,3824-04,3808 BOOTH STREET,2,Kansas City,Kansas,66103
+32,Avenue Living,3824 BOOTH STREET,5,Kansas City,Johnson,Kansas,66103,,Johns Med Center,3824-05,3808 BOOTH STREET,2,Kansas City,Kansas,66103
+32,Avenue Living,3824 BOOTH STREET,6,Kansas City,Johnson,Kansas,66103,,Johns Med Center,3824-06,3808 BOOTH STREET,2,Kansas City,Kansas,66103
+32,Avenue Living,3824 BOOTH STREET,7,Kansas City,Johnson,Kansas,66103,,Johns Med Center,3824-07,3808 BOOTH STREET,2,Kansas City,Kansas,66103
+32,Avenue Living,3824 BOOTH STREET,8,Kansas City,Johnson,Kansas,66103,,Johns Med Center,3824-08,3808 BOOTH STREET,2,Kansas City,Kansas,66103
+32,Avenue Living,3824 BOOTH STREET,9,Kansas City,Johnson,Kansas,66103,,Johns Med Center,3824-09,3808 BOOTH STREET,2,Kansas City,Kansas,66103
+32,Avenue Living,3824 BOOTH STREET,10,Kansas City,Johnson,Kansas,66103,,Johns Med Center,3824-10,3808 BOOTH STREET,2,Kansas City,Kansas,66103
+32,Avenue Living,3824 BOOTH STREET,11,Kansas City,Johnson,Kansas,66103,,Johns Med Center,3824-11,3808 BOOTH STREET,2,Kansas City,Kansas,66103
+32,Avenue Living,3824 BOOTH STREET,12,Kansas City,Johnson,Kansas,66103,,Johns Med Center,3824-12,3808 BOOTH STREET,2,Kansas City,Kansas,66103
+32,Avenue Living,3828 BOOTH STREET,1,Kansas City,Johnson,Kansas,66103,,Johns Med Center,3828-01,3808 BOOTH STREET,2,Kansas City,Kansas,66103
+32,Avenue Living,3828 BOOTH STREET,2,Kansas City,Johnson,Kansas,66103,,Johns Med Center,3828-02,3808 BOOTH STREET,2,Kansas City,Kansas,66103
+32,Avenue Living,3828 BOOTH STREET,3,Kansas City,Johnson,Kansas,66103,,Johns Med Center,3828-03,3808 BOOTH STREET,2,Kansas City,Kansas,66103
+32,Avenue Living,3828 BOOTH STREET,4,Kansas City,Johnson,Kansas,66103,,Johns Med Center,3828-04,3808 BOOTH STREET,2,Kansas City,Kansas,66103
+32,Avenue Living,3828 BOOTH STREET,5,Kansas City,Johnson,Kansas,66103,,Johns Med Center,3828-05,3808 BOOTH STREET,2,Kansas City,Kansas,66103
+32,Avenue Living,3828 BOOTH STREET,6,Kansas City,Johnson,Kansas,66103,,Johns Med Center,3828-06,3808 BOOTH STREET,2,Kansas City,Kansas,66103
+32,Avenue Living,3828 BOOTH STREET,7,Kansas City,Johnson,Kansas,66103,,Johns Med Center,3828-07,3808 BOOTH STREET,2,Kansas City,Kansas,66103
+32,Avenue Living,3828 BOOTH STREET,8,Kansas City,Johnson,Kansas,66103,,Johns Med Center,3828-08,3808 BOOTH STREET,2,Kansas City,Kansas,66103
+32,Avenue Living,3828 BOOTH STREET,9,Kansas City,Johnson,Kansas,66103,,Johns Med Center,3828-09,3808 BOOTH STREET,2,Kansas City,Kansas,66103
+32,Avenue Living,3828 BOOTH STREET,10,Kansas City,Johnson,Kansas,66103,,Johns Med Center,3828-10,3808 BOOTH STREET,2,Kansas City,Kansas,66103
+32,Avenue Living,3828 BOOTH STREET,11,Kansas City,Johnson,Kansas,66103,,Johns Med Center,3828-11,3808 BOOTH STREET,2,Kansas City,Kansas,66103
+32,Avenue Living,3828 BOOTH STREET,12,Kansas City,Johnson,Kansas,66103,,Johns Med Center,3828-12,3808 BOOTH STREET,2,Kansas City,Kansas,66103
+32,Avenue Living,3500 WEST 83RD STREET,110,Prairie Village,Johnson,Kansas,66208,,Corinth Valley,00-110,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3500 WEST 83RD STREET,111,Prairie Village,Johnson,Kansas,66208,,Corinth Valley,00-111,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3500 WEST 83RD STREET,112,Prairie Village,Johnson,Kansas,66208,,Corinth Valley,00-112,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3500 WEST 83RD STREET,210,Prairie Village,Johnson,Kansas,66208,,Corinth Valley,00-210,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3500 WEST 83RD STREET,211,Prairie Village,Johnson,Kansas,66208,,Corinth Valley,00-211,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3500 WEST 83RD STREET,212,Prairie Village,Johnson,Kansas,66208,,Corinth Valley,00-212,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3502 WEST 83RD STREET,110,Prairie Village,Johnson,Kansas,66208,,Corinth Valley,02-110,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3502 WEST 83RD STREET,111,Prairie Village,Johnson,Kansas,66208,,Corinth Valley,02-111,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3502 WEST 83RD STREET,210,Prairie Village,Johnson,Kansas,66208,,Corinth Valley,02-210,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3502 WEST 83RD STREET,211,Prairie Village,Johnson,Kansas,66208,,Corinth Valley,02-211,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3504 WEST 83RD STREET,110,Prairie Village,Johnson,Kansas,66208,,Corinth Valley,04-110,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3504 WEST 83RD STREET,111,Prairie Village,Johnson,Kansas,66208,,Corinth Valley,04-111,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3504 WEST 83RD STREET,210,Prairie Village,Johnson,Kansas,66208,,Corinth Valley,04-210,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3504 WEST 83RD STREET,211,Prairie Village,Johnson,Kansas,66208,,Corinth Valley,04-211,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3506 WEST 83RD STREET,11,Prairie Village,Johnson,Kansas,66208,,Corinth Valley,06-011,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3506 WEST 83RD STREET,12,Prairie Village,Johnson,Kansas,66208,,Corinth Valley,06-012,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3506 WEST 83RD STREET,110,Prairie Village,Johnson,Kansas,66208,,Corinth Valley,06-110,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3506 WEST 83RD STREET,111,Prairie Village,Johnson,Kansas,66208,,Corinth Valley,06-111,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3506 WEST 83RD STREET,112,Prairie Village,Johnson,Kansas,66208,,Corinth Valley,06-112,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3506 WEST 83RD STREET,210,Prairie Village,Johnson,Kansas,66208,,Corinth Valley,06-210,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3506 WEST 83RD STREET,211,Prairie Village,Johnson,Kansas,66208,,Corinth Valley,06-211,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3506 WEST 83RD STREET,212,Prairie Village,Johnson,Kansas,66208,,Corinth Valley,06-212,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3508 WEST 83RD STREET,110,Prairie Village,Johnson,Kansas,66208,,Corinth Valley,08-110,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3508 WEST 83RD STREET,111,Prairie Village,Johnson,Kansas,66208,,Corinth Valley,08-111,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3508 WEST 83RD STREET,112,Prairie Village,Johnson,Kansas,66208,,Corinth Valley,08-112,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3508 WEST 83RD STREET,210,Prairie Village,Johnson,Kansas,66208,,Corinth Valley,08-210,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3508 WEST 83RD STREET,211,Prairie Village,Johnson,Kansas,66208,,Corinth Valley,08-211,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3508 WEST 83RD STREET,212,Prairie Village,Johnson,Kansas,66208,,Corinth Valley,08-212,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3510 WEST 83RD STREET,110,Prairie Village,Johnson,Kansas,66208,,Corinth Valley,10-110,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3510 WEST 83RD STREET,111,Prairie Village,Johnson,Kansas,66208,,Corinth Valley,10-111,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3510 WEST 83RD STREET,112,Prairie Village,Johnson,Kansas,66208,,Corinth Valley,10-112,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3510 WEST 83RD STREET,210,Prairie Village,Johnson,Kansas,66208,,Corinth Valley,10-210,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3510 WEST 83RD STREET,211,Prairie Village,Johnson,Kansas,66208,,Corinth Valley,10-211,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3510 WEST 83RD STREET,212,Prairie Village,Johnson,Kansas,66208,,Corinth Valley,10-212,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3512 WEST 83RD STREET,110,Prairie Village,Johnson,Kansas,66208,,Corinth Valley,12-110,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3512 WEST 83RD STREET,111,Prairie Village,Johnson,Kansas,66208,,Corinth Valley,12-111,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3512 WEST 83RD STREET,112,Prairie Village,Johnson,Kansas,66208,,Corinth Valley,12-112,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3512 WEST 83RD STREET,210,Prairie Village,Johnson,Kansas,66208,,Corinth Valley,12-210,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3512 WEST 83RD STREET,211,Prairie Village,Johnson,Kansas,66208,,Corinth Valley,12-211,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3512 WEST 83RD STREET,212,Prairie Village,Johnson,Kansas,66208,,Corinth Valley,12-212,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3514 WEST 83RD STREET,110,Prairie Village,Johnson,Kansas,66208,,Corinth Valley,14-110,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3514 WEST 83RD STREET,111,Prairie Village,Johnson,Kansas,66208,,Corinth Valley,14-111,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3514 WEST 83RD STREET,210,Prairie Village,Johnson,Kansas,66208,,Corinth Valley,14-210,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3514 WEST 83RD STREET,211,Prairie Village,Johnson,Kansas,66208,,Corinth Valley,14-211,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3516 WEST 83RD STREET,110,Prairie Village,Johnson,Kansas,66208,,Corinth Valley,16-110,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3516 WEST 83RD STREET,111,Prairie Village,Johnson,Kansas,66208,,Corinth Valley,16-111,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3516 WEST 83RD STREET,210,Prairie Village,Johnson,Kansas,66208,,Corinth Valley,16-210,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3516 WEST 83RD STREET,211,Prairie Village,Johnson,Kansas,66208,,Corinth Valley,16-211,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3518 WEST 83RD STREET,110,Prairie Village,Johnson,Kansas,66208,,Corinth Valley,18-110,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3518 WEST 83RD STREET,111,Prairie Village,Johnson,Kansas,66208,,Corinth Valley,18-111,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3518 WEST 83RD STREET,112,Prairie Village,Johnson,Kansas,66208,,Corinth Valley,18-112,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3518 WEST 83RD STREET,210,Prairie Village,Johnson,Kansas,66208,,Corinth Valley,18-210,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3518 WEST 83RD STREET,211,Prairie Village,Johnson,Kansas,66208,,Corinth Valley,18-211,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3518 WEST 83RD STREET,212,Prairie Village,Johnson,Kansas,66208,,Corinth Valley,18-212,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3520 WEST 83RD STREET,110,Prairie Village,Johnson,Kansas,66208,,Corinth Valley,20-110,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3520 WEST 83RD STREET,111,Prairie Village,Johnson,Kansas,66208,,Corinth Valley,20-111,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3520 WEST 83RD STREET,210,Prairie Village,Johnson,Kansas,66208,,Corinth Valley,20-210,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3520 WEST 83RD STREET,211,Prairie Village,Johnson,Kansas,66208,,Corinth Valley,20-211,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3522 WEST 83RD STREET,110,Prairie Village,Johnson,Kansas,66208,,Corinth Valley,22-110,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3522 WEST 83RD STREET,111,Prairie Village,Johnson,Kansas,66208,,Corinth Valley,22-111,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3522 WEST 83RD STREET,210,Prairie Village,Johnson,Kansas,66208,,Corinth Valley,22-210,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3522 WEST 83RD STREET,211,Prairie Village,Johnson,Kansas,66208,,Corinth Valley,22-211,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3524 WEST 83RD STREET,110,Prairie Village,Johnson,Kansas,66208,,Corinth Valley,24-110,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3524 WEST 83RD STREET,111,Prairie Village,Johnson,Kansas,66208,,Corinth Valley,24-111,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3524 WEST 83RD STREET,210,Prairie Village,Johnson,Kansas,66208,,Corinth Valley,24-210,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3524 WEST 83RD STREET,211,Prairie Village,Johnson,Kansas,66208,,Corinth Valley,24-211,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3526 WEST 83RD STREET,110,Prairie Village,Johnson,Kansas,66208,,Corinth Valley,26-110,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3526 WEST 83RD STREET,111,Prairie Village,Johnson,Kansas,66208,,Corinth Valley,26-111,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3526 WEST 83RD STREET,210,Prairie Village,Johnson,Kansas,66208,,Corinth Valley,26-210,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3526 WEST 83RD STREET,211,Prairie Village,Johnson,Kansas,66208,,Corinth Valley,26-211,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3528 WEST 83RD STREET,110,Prairie Village,Johnson,Kansas,66208,,Corinth Valley,28-110,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3528 WEST 83RD STREET,111,Prairie Village,Johnson,Kansas,66208,,Corinth Valley,28-111,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3528 WEST 83RD STREET,112,Prairie Village,Johnson,Kansas,66208,,Corinth Valley,28-112,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3528 WEST 83RD STREET,210,Prairie Village,Johnson,Kansas,66208,,Corinth Valley,28-210,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3528 WEST 83RD STREET,211,Prairie Village,Johnson,Kansas,66208,,Corinth Valley,28-211,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3528 WEST 83RD STREET,212,Prairie Village,Johnson,Kansas,66208,,Corinth Valley,28-212,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3530 WEST 83RD STREET,110,Prairie Village,Johnson,Kansas,66208,,Corinth Valley,30-110,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3530 WEST 83RD STREET,111,Prairie Village,Johnson,Kansas,66208,,Corinth Valley,30-111,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3530 WEST 83RD STREET,112,Prairie Village,Johnson,Kansas,66208,,Corinth Valley,30-112,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3530 WEST 83RD STREET,210,Prairie Village,Johnson,Kansas,66208,,Corinth Valley,30-210,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3530 WEST 83RD STREET,211,Prairie Village,Johnson,Kansas,66208,,Corinth Valley,30-211,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3530 WEST 83RD STREET,212,Prairie Village,Johnson,Kansas,66208,,Corinth Valley,30-212,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3532 WEST 83RD STREET,110,Prairie Village,Johnson,Kansas,66208,,Corinth Valley,32-110,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3532 WEST 83RD STREET,111,Prairie Village,Johnson,Kansas,66208,,Corinth Valley,32-111,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3532 WEST 83RD STREET,112,Prairie Village,Johnson,Kansas,66208,,Corinth Valley,32-112,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3532 WEST 83RD STREET,210,Prairie Village,Johnson,Kansas,66208,,Corinth Valley,32-210,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3532 WEST 83RD STREET,211,Prairie Village,Johnson,Kansas,66208,,Corinth Valley,32-211,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,3532 WEST 83RD STREET,212,Prairie Village,Johnson,Kansas,66208,,Corinth Valley,32-212,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,6801 W. 76TH STREET,,Overland Park,Johnson,Kansas,66204,,Townhomes By Corinth,6801,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,6803 W. 76TH STREET,,Overland Park,Johnson,Kansas,66204,,Townhomes By Corinth,6803,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,6805 W. 76TH STREET,,Overland Park,Johnson,Kansas,66204,,Townhomes By Corinth,6805,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,6807 W. 76TH STREET,,Overland Park,Johnson,Kansas,66204,,Townhomes By Corinth,6807,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,6809 W. 76TH STREET,,Overland Park,Johnson,Kansas,66204,,Townhomes By Corinth,6809,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,6815 W. 76TH STREET,,Overland Park,Johnson,Kansas,66204,,Townhomes By Corinth,6815,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,6817 W. 76TH STREET,,Overland Park,Johnson,Kansas,66204,,Townhomes By Corinth,6817,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,6819 W. 76TH STREET,,Overland Park,Johnson,Kansas,66204,,Townhomes By Corinth,6819,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,6821 W. 76TH STREET,,Overland Park,Johnson,Kansas,66204,,Townhomes By Corinth,6821,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,6823 W. 76TH STREET,,Overland Park,Johnson,Kansas,66204,,Townhomes By Corinth,6823,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,6827 W. 76TH STREET,,Overland Park,Johnson,Kansas,66204,,Townhomes By Corinth,6827,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,6829 W. 76TH STREET,,Overland Park,Johnson,Kansas,66204,,Townhomes By Corinth,6829,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,6831 W. 76TH STREET,,Overland Park,Johnson,Kansas,66204,,Townhomes By Corinth,6831,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,6833 W. 76TH STREET,,Overland Park,Johnson,Kansas,66204,,Townhomes By Corinth,6833,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,6835 W. 76TH STREET,,Overland Park,Johnson,Kansas,66204,,Townhomes By Corinth,6835,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,6843 W. 76TH STREET,,Overland Park,Johnson,Kansas,66204,,Townhomes By Corinth,6843,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,6845 W. 76TH STREET,,Overland Park,Johnson,Kansas,66204,,Townhomes By Corinth,6845,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,6847 W. 76TH STREET,,Overland Park,Johnson,Kansas,66204,,Townhomes By Corinth,6847,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,6849 W. 76TH STREET,,Overland Park,Johnson,Kansas,66204,,Townhomes By Corinth,6849,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,6853 W. 76TH STREET,,Overland Park,Johnson,Kansas,66204,,Townhomes By Corinth,6853,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,6855 W. 76TH STREET,,Overland Park,Johnson,Kansas,66204,,Townhomes By Corinth,6855,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,6857 W. 76TH STREET,,Overland Park,Johnson,Kansas,66204,,Townhomes By Corinth,6857,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,6859 W. 76TH STREET,,Overland Park,Johnson,Kansas,66204,,Townhomes By Corinth,6859,3815 S Somerset Drive,,Prairie Village,KS,66218
+32,Avenue Living,2351 Madison Rd,201,Cincinnati,Hamilton,Ohio,45208,,The Madison,201,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2351 Madison Rd,202,Cincinnati,Hamilton,Ohio,45208,,The Madison,202,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2351 Madison Rd,203,Cincinnati,Hamilton,Ohio,45208,,The Madison,203,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2351 Madison Rd,204,Cincinnati,Hamilton,Ohio,45208,,The Madison,204,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2351 Madison Rd,205,Cincinnati,Hamilton,Ohio,45208,,The Madison,205,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2351 Madison Rd,206,Cincinnati,Hamilton,Ohio,45208,,The Madison,206,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2351 Madison Rd,207,Cincinnati,Hamilton,Ohio,45208,,The Madison,207,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2351 Madison Rd,208,Cincinnati,Hamilton,Ohio,45208,,The Madison,208,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2351 Madison Rd,209,Cincinnati,Hamilton,Ohio,45208,,The Madison,209,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2351 Madison Rd,210,Cincinnati,Hamilton,Ohio,45208,,The Madison,210,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2351 Madison Rd,211,Cincinnati,Hamilton,Ohio,45208,,The Madison,211,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2351 Madison Rd,212,Cincinnati,Hamilton,Ohio,45208,,The Madison,212,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2351 Madison Rd,213,Cincinnati,Hamilton,Ohio,45208,,The Madison,213,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2351 Madison Rd,214,Cincinnati,Hamilton,Ohio,45208,,The Madison,214,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2351 Madison Rd,215,Cincinnati,Hamilton,Ohio,45208,,The Madison,215,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2349 Madison Rd,216,Cincinnati,Hamilton,Ohio,45208,,The Madison,216,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2349 Madison Rd,217,Cincinnati,Hamilton,Ohio,45208,,The Madison,217,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2349 Madison Rd,218,Cincinnati,Hamilton,Ohio,45208,,The Madison,218,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2349 Madison Rd,219,Cincinnati,Hamilton,Ohio,45208,,The Madison,219,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2349 Madison Rd,220,Cincinnati,Hamilton,Ohio,45208,,The Madison,220,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2349 Madison Rd,221,Cincinnati,Hamilton,Ohio,45208,,The Madison,221,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2349 Madison Rd,222,Cincinnati,Hamilton,Ohio,45208,,The Madison,222,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2349 Madison Rd,223,Cincinnati,Hamilton,Ohio,45208,,The Madison,223,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2349 Madison Rd,224,Cincinnati,Hamilton,Ohio,45208,,The Madison,224,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2349 Madison Rd,225,Cincinnati,Hamilton,Ohio,45208,,The Madison,225,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2349 Madison Rd,226,Cincinnati,Hamilton,Ohio,45208,,The Madison,226,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2349 Madison Rd,227,Cincinnati,Hamilton,Ohio,45208,,The Madison,227,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2349 Madison Rd,228,Cincinnati,Hamilton,Ohio,45208,,The Madison,228,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2349 Madison Rd,229,Cincinnati,Hamilton,Ohio,45208,,The Madison,229,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2347 Madison Rd,230,Cincinnati,Hamilton,Ohio,45208,,The Madison,230,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2347 Madison Rd,231,Cincinnati,Hamilton,Ohio,45208,,The Madison,231,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2347 Madison Rd,232,Cincinnati,Hamilton,Ohio,45208,,The Madison,232,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2347 Madison Rd,233,Cincinnati,Hamilton,Ohio,45208,,The Madison,233,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2347 Madison Rd,234,Cincinnati,Hamilton,Ohio,45208,,The Madison,234,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2347 Madison Rd,235,Cincinnati,Hamilton,Ohio,45208,,The Madison,235,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2347 Madison Rd,236,Cincinnati,Hamilton,Ohio,45208,,The Madison,236,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2347 Madison Rd,237,Cincinnati,Hamilton,Ohio,45208,,The Madison,237,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2347 Madison Rd,238,Cincinnati,Hamilton,Ohio,45208,,The Madison,238,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2347 Madison Rd,239,Cincinnati,Hamilton,Ohio,45208,,The Madison,239,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2347 Madison Rd,240,Cincinnati,Hamilton,Ohio,45208,,The Madison,240,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2347 Madison Rd,241,Cincinnati,Hamilton,Ohio,45208,,The Madison,241,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2347 Madison Rd,242,Cincinnati,Hamilton,Ohio,45208,,The Madison,242,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2347 Madison Rd,243,Cincinnati,Hamilton,Ohio,45208,,The Madison,243,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2347 Madison Rd,244,Cincinnati,Hamilton,Ohio,45208,,The Madison,244,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2339 Madison Rd,301,Cincinnati,Hamilton,Ohio,45208,,The Madison,301,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2339 Madison Rd,302,Cincinnati,Hamilton,Ohio,45208,,The Madison,302,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2339 Madison Rd,303,Cincinnati,Hamilton,Ohio,45208,,The Madison,303,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2339 Madison Rd,304,Cincinnati,Hamilton,Ohio,45208,,The Madison,304,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2339 Madison Rd,305,Cincinnati,Hamilton,Ohio,45208,,The Madison,305,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2339 Madison Rd,306,Cincinnati,Hamilton,Ohio,45208,,The Madison,306,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2339 Madison Rd,307,Cincinnati,Hamilton,Ohio,45208,,The Madison,307,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2339 Madison Rd,308,Cincinnati,Hamilton,Ohio,45208,,The Madison,308,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2339 Madison Rd,309,Cincinnati,Hamilton,Ohio,45208,,The Madison,309,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2339 Madison Rd,310,Cincinnati,Hamilton,Ohio,45208,,The Madison,310,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2339 Madison Rd,311,Cincinnati,Hamilton,Ohio,45208,,The Madison,311,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2339 Madison Rd,312,Cincinnati,Hamilton,Ohio,45208,,The Madison,312,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2339 Madison Rd,313,Cincinnati,Hamilton,Ohio,45208,,The Madison,313,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2339 Madison Rd,314,Cincinnati,Hamilton,Ohio,45208,,The Madison,314,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2339 Madison Rd,315,Cincinnati,Hamilton,Ohio,45208,,The Madison,315,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2339 Madison Rd,316,Cincinnati,Hamilton,Ohio,45208,,The Madison,316,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2341 Madison Rd,317,Cincinnati,Hamilton,Ohio,45208,,The Madison,317,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2341 Madison Rd,318,Cincinnati,Hamilton,Ohio,45208,,The Madison,318,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2341 Madison Rd,319,Cincinnati,Hamilton,Ohio,45208,,The Madison,319,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2341 Madison Rd,320,Cincinnati,Hamilton,Ohio,45208,,The Madison,320,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2341 Madison Rd,321,Cincinnati,Hamilton,Ohio,45208,,The Madison,321,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2341 Madison Rd,322,Cincinnati,Hamilton,Ohio,45208,,The Madison,322,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2341 Madison Rd,323,Cincinnati,Hamilton,Ohio,45208,,The Madison,323,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2341 Madison Rd,324,Cincinnati,Hamilton,Ohio,45208,,The Madison,324,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2341 Madison Rd,325,Cincinnati,Hamilton,Ohio,45208,,The Madison,325,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2341 Madison Rd,326,Cincinnati,Hamilton,Ohio,45208,,The Madison,326,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2341 Madison Rd,327,Cincinnati,Hamilton,Ohio,45208,,The Madison,327,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2341 Madison Rd,328,Cincinnati,Hamilton,Ohio,45208,,The Madison,328,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2341 Madison Rd,329,Cincinnati,Hamilton,Ohio,45208,,The Madison,329,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2341 Madison Rd,330,Cincinnati,Hamilton,Ohio,45208,,The Madison,330,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2341 Madison Rd,331,Cincinnati,Hamilton,Ohio,45208,,The Madison,331,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2341 Madison Rd,332,Cincinnati,Hamilton,Ohio,45208,,The Madison,332,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2341 Madison Rd,333,Cincinnati,Hamilton,Ohio,45208,,The Madison,333,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2341 Madison Rd,334,Cincinnati,Hamilton,Ohio,45208,,The Madison,334,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2341 Madison Rd,335,Cincinnati,Hamilton,Ohio,45208,,The Madison,335,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2341 Madison Rd,336,Cincinnati,Hamilton,Ohio,45208,,The Madison,336,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2341 Madison Rd,337,Cincinnati,Hamilton,Ohio,45208,,The Madison,337,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2341 Madison Rd,338,Cincinnati,Hamilton,Ohio,45208,,The Madison,338,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2341 Madison Rd,339,Cincinnati,Hamilton,Ohio,45208,,The Madison,339,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2341 Madison Rd,340,Cincinnati,Hamilton,Ohio,45208,,The Madison,340,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2343 Madison Rd,341,Cincinnati,Hamilton,Ohio,45208,,The Madison,341,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2343 Madison Rd,342,Cincinnati,Hamilton,Ohio,45208,,The Madison,342,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2343 Madison Rd,343,Cincinnati,Hamilton,Ohio,45208,,The Madison,343,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2343 Madison Rd,344,Cincinnati,Hamilton,Ohio,45208,,The Madison,344,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2343 Madison Rd,345,Cincinnati,Hamilton,Ohio,45208,,The Madison,345,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2343 Madison Rd,346,Cincinnati,Hamilton,Ohio,45208,,The Madison,346,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2343 Madison Rd,347,Cincinnati,Hamilton,Ohio,45208,,The Madison,347,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2343 Madison Rd,348,Cincinnati,Hamilton,Ohio,45208,,The Madison,348,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2343 Madison Rd,349,Cincinnati,Hamilton,Ohio,45208,,The Madison,349,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2343 Madison Rd,350,Cincinnati,Hamilton,Ohio,45208,,The Madison,350,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2343 Madison Rd,351,Cincinnati,Hamilton,Ohio,45208,,The Madison,351,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2343 Madison Rd,352,Cincinnati,Hamilton,Ohio,45208,,The Madison,352,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2343 Madison Rd,353,Cincinnati,Hamilton,Ohio,45208,,The Madison,353,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2343 Madison Rd,354,Cincinnati,Hamilton,Ohio,45208,,The Madison,354,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2343 Madison Rd,355,Cincinnati,Hamilton,Ohio,45208,,The Madison,355,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2343 Madison Rd,356,Cincinnati,Hamilton,Ohio,45208,,The Madison,356,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2345 Madison Rd,357,Cincinnati,Hamilton,Ohio,45208,,The Madison,357,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2345 Madison Rd,358,Cincinnati,Hamilton,Ohio,45208,,The Madison,358,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2345 Madison Rd,359,Cincinnati,Hamilton,Ohio,45208,,The Madison,359,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2345 Madison Rd,360,Cincinnati,Hamilton,Ohio,45208,,The Madison,360,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2345 Madison Rd,361,Cincinnati,Hamilton,Ohio,45208,,The Madison,361,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2345 Madison Rd,362,Cincinnati,Hamilton,Ohio,45208,,The Madison,362,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2345 Madison Rd,363,Cincinnati,Hamilton,Ohio,45208,,The Madison,363,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2345 Madison Rd,364,Cincinnati,Hamilton,Ohio,45208,,The Madison,364,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2345 Madison Rd,365,Cincinnati,Hamilton,Ohio,45208,,The Madison,365,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2345 Madison Rd,366,Cincinnati,Hamilton,Ohio,45208,,The Madison,366,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2345 Madison Rd,367,Cincinnati,Hamilton,Ohio,45208,,The Madison,367,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2345 Madison Rd,368,Cincinnati,Hamilton,Ohio,45208,,The Madison,368,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2345 Madison Rd,369,Cincinnati,Hamilton,Ohio,45208,,The Madison,369,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2345 Madison Rd,370,Cincinnati,Hamilton,Ohio,45208,,The Madison,370,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2345 Madison Rd,371,Cincinnati,Hamilton,Ohio,45208,,The Madison,371,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,2345 Madison Rd,372,Cincinnati,Hamilton,Ohio,45208,,The Madison,372,2341 Madison Road,,Cincinnati,OH,45208
+32,Avenue Living,101 Deer Valley Road,1,Madison,Dane,Wisconsin,53713,,Sycamore Woods,101D_1,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,101 Deer Valley Road,2,Madison,Dane,Wisconsin,53713,,Sycamore Woods,101D_2,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,101 Deer Valley Road,3,Madison,Dane,Wisconsin,53713,,Sycamore Woods,101D_3,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,101 Deer Valley Road,4,Madison,Dane,Wisconsin,53713,,Sycamore Woods,101D_4,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,101 Deer Valley Road,5,Madison,Dane,Wisconsin,53713,,Sycamore Woods,101D_5,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,101 Deer Valley Road,6,Madison,Dane,Wisconsin,53713,,Sycamore Woods,101D_6,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,101 Deer Valley Road,7,Madison,Dane,Wisconsin,53713,,Sycamore Woods,101D_7,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,101 Deer Valley Road,8,Madison,Dane,Wisconsin,53713,,Sycamore Woods,101D_8,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,102 Brown Quail Court,1,Madison,Dane,Wisconsin,53713,,Sycamore Woods,102B_1,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,102 Brown Quail Court,2,Madison,Dane,Wisconsin,53713,,Sycamore Woods,102B_2,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,102 Brown Quail Court,3,Madison,Dane,Wisconsin,53713,,Sycamore Woods,102B_3,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,102 Brown Quail Court,4,Madison,Dane,Wisconsin,53713,,Sycamore Woods,102B_4,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,102 Brown Quail Court,5,Madison,Dane,Wisconsin,53713,,Sycamore Woods,102B_5,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,102 Brown Quail Court,6,Madison,Dane,Wisconsin,53713,,Sycamore Woods,102B_6,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,102 Brown Quail Court,7,Madison,Dane,Wisconsin,53713,,Sycamore Woods,102B_7,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,102 Brown Quail Court,8,Madison,Dane,Wisconsin,53713,,Sycamore Woods,102B_8,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,102 Deer Valley Road,1,Madison,Dane,Wisconsin,53713,,Sycamore Woods,102D_1,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,102 Deer Valley Road,2,Madison,Dane,Wisconsin,53713,,Sycamore Woods,102D_2,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,102 Deer Valley Road,3,Madison,Dane,Wisconsin,53713,,Sycamore Woods,102D_3,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,102 Deer Valley Road,4,Madison,Dane,Wisconsin,53713,,Sycamore Woods,102D_4,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,102 Deer Valley Road,5,Madison,Dane,Wisconsin,53713,,Sycamore Woods,102D_5,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,102 Deer Valley Road,6,Madison,Dane,Wisconsin,53713,,Sycamore Woods,102D_6,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,102 Deer Valley Road,7,Madison,Dane,Wisconsin,53713,,Sycamore Woods,102D_7,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,102 Deer Valley Road,8,Madison,Dane,Wisconsin,53713,,Sycamore Woods,102D_8,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,103 Deer Valley Road,1,Madison,Dane,Wisconsin,53713,,Sycamore Woods,103D_1,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,103 Deer Valley Road,2,Madison,Dane,Wisconsin,53713,,Sycamore Woods,103D_2,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,103 Deer Valley Road,3,Madison,Dane,Wisconsin,53713,,Sycamore Woods,103D_3,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,103 Deer Valley Road,4,Madison,Dane,Wisconsin,53713,,Sycamore Woods,103D_4,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,103 Deer Valley Road,5,Madison,Dane,Wisconsin,53713,,Sycamore Woods,103D_5,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,103 Deer Valley Road,6,Madison,Dane,Wisconsin,53713,,Sycamore Woods,103D_6,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,103 Deer Valley Road,7,Madison,Dane,Wisconsin,53713,,Sycamore Woods,103D_7,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,103 Deer Valley Road,8,Madison,Dane,Wisconsin,53713,,Sycamore Woods,103D_8,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,104 Brown Quail Court,1,Madison,Dane,Wisconsin,53713,,Sycamore Woods,104B_1,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,104 Brown Quail Court,2,Madison,Dane,Wisconsin,53713,,Sycamore Woods,104B_2,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,104 Brown Quail Court,3,Madison,Dane,Wisconsin,53713,,Sycamore Woods,104B_3,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,104 Brown Quail Court,4,Madison,Dane,Wisconsin,53713,,Sycamore Woods,104B_4,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,104 Brown Quail Court,5,Madison,Dane,Wisconsin,53713,,Sycamore Woods,104B_5,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,104 Brown Quail Court,6,Madison,Dane,Wisconsin,53713,,Sycamore Woods,104B_6,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,104 Brown Quail Court,7,Madison,Dane,Wisconsin,53713,,Sycamore Woods,104B_7,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,104 Brown Quail Court,8,Madison,Dane,Wisconsin,53713,,Sycamore Woods,104B_8,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,104 Deer Valley Road,1,Madison,Dane,Wisconsin,53713,,Sycamore Woods,104D_1,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,104 Deer Valley Road,2,Madison,Dane,Wisconsin,53713,,Sycamore Woods,104D_2,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,104 Deer Valley Road,3,Madison,Dane,Wisconsin,53713,,Sycamore Woods,104D_3,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,104 Deer Valley Road,4,Madison,Dane,Wisconsin,53713,,Sycamore Woods,104D_4,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,104 Deer Valley Road,5,Madison,Dane,Wisconsin,53713,,Sycamore Woods,104D_5,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,104 Deer Valley Road,6,Madison,Dane,Wisconsin,53713,,Sycamore Woods,104D_6,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,104 Deer Valley Road,7,Madison,Dane,Wisconsin,53713,,Sycamore Woods,104D_7,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,104 Deer Valley Road,8,Madison,Dane,Wisconsin,53713,,Sycamore Woods,104D_8,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,105 Deer Valley Road,1,Madison,Dane,Wisconsin,53713,,Sycamore Woods,105D_1,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,105 Deer Valley Road,2,Madison,Dane,Wisconsin,53713,,Sycamore Woods,105D_2,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,105 Deer Valley Road,3,Madison,Dane,Wisconsin,53713,,Sycamore Woods,105D_3,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,105 Deer Valley Road,4,Madison,Dane,Wisconsin,53713,,Sycamore Woods,105D_4,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,105 Deer Valley Road,5,Madison,Dane,Wisconsin,53713,,Sycamore Woods,105D_5,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,105 Deer Valley Road,6,Madison,Dane,Wisconsin,53713,,Sycamore Woods,105D_6,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,105 Deer Valley Road,7,Madison,Dane,Wisconsin,53713,,Sycamore Woods,105D_7,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,105 Deer Valley Road,8,Madison,Dane,Wisconsin,53713,,Sycamore Woods,105D_8,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,106 Brown Quail Court,1,Madison,Dane,Wisconsin,53713,,Sycamore Woods,106B_1,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,106 Brown Quail Court,2,Madison,Dane,Wisconsin,53713,,Sycamore Woods,106B_2,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,106 Brown Quail Court,3,Madison,Dane,Wisconsin,53713,,Sycamore Woods,106B_3,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,106 Brown Quail Court,4,Madison,Dane,Wisconsin,53713,,Sycamore Woods,106B_4,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,106 Brown Quail Court,5,Madison,Dane,Wisconsin,53713,,Sycamore Woods,106B_5,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,106 Brown Quail Court,6,Madison,Dane,Wisconsin,53713,,Sycamore Woods,106B_6,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,106 Brown Quail Court,7,Madison,Dane,Wisconsin,53713,,Sycamore Woods,106B_7,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,106 Brown Quail Court,8,Madison,Dane,Wisconsin,53713,,Sycamore Woods,106B_8,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,106 Deer Valley Road,1,Madison,Dane,Wisconsin,53713,,Sycamore Woods,106D_1,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,106 Deer Valley Road,2,Madison,Dane,Wisconsin,53713,,Sycamore Woods,106D_2,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,106 Deer Valley Road,3,Madison,Dane,Wisconsin,53713,,Sycamore Woods,106D_3,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,106 Deer Valley Road,4,Madison,Dane,Wisconsin,53713,,Sycamore Woods,106D_4,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,106 Deer Valley Road,5,Madison,Dane,Wisconsin,53713,,Sycamore Woods,106D_5,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,106 Deer Valley Road,6,Madison,Dane,Wisconsin,53713,,Sycamore Woods,106D_6,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,106 Deer Valley Road,7,Madison,Dane,Wisconsin,53713,,Sycamore Woods,106D_7,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,106 Deer Valley Road,8,Madison,Dane,Wisconsin,53713,,Sycamore Woods,106D_8,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,108 Brown Quail Court,1,Madison,Dane,Wisconsin,53713,,Sycamore Woods,108B_1,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,108 Brown Quail Court,2,Madison,Dane,Wisconsin,53713,,Sycamore Woods,108B_2,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,108 Brown Quail Court,3,Madison,Dane,Wisconsin,53713,,Sycamore Woods,108B_3,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,108 Brown Quail Court,4,Madison,Dane,Wisconsin,53713,,Sycamore Woods,108B_4,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,108 Brown Quail Court,5,Madison,Dane,Wisconsin,53713,,Sycamore Woods,108B_5,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,108 Brown Quail Court,6,Madison,Dane,Wisconsin,53713,,Sycamore Woods,108B_6,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,108 Brown Quail Court,7,Madison,Dane,Wisconsin,53713,,Sycamore Woods,108B_7,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,108 Brown Quail Court,8,Madison,Dane,Wisconsin,53713,,Sycamore Woods,108B_8,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,205 Deer Valley Road,1,Madison,Dane,Wisconsin,53713,,Sycamore Woods,205D_1,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,205 Deer Valley Road,2,Madison,Dane,Wisconsin,53713,,Sycamore Woods,205D_2,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,205 Deer Valley Road,3,Madison,Dane,Wisconsin,53713,,Sycamore Woods,205D_3,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,205 Deer Valley Road,4,Madison,Dane,Wisconsin,53713,,Sycamore Woods,205D_4,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,207 Deer Valley Road,5,Madison,Dane,Wisconsin,53713,,Sycamore Woods,207D_5,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,207 Deer Valley Road,6,Madison,Dane,Wisconsin,53713,,Sycamore Woods,207D_6,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,207 Deer Valley Road,7,Madison,Dane,Wisconsin,53713,,Sycamore Woods,207D_7,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,207 Deer Valley Road,8,Madison,Dane,Wisconsin,53713,,Sycamore Woods,207D_8,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2501 Pheasant Ridge Trail,1,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2501P_1,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2501 Pheasant Ridge Trail,2,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2501P_2,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2501 Pheasant Ridge Trail,3,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2501P_3,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2501 Pheasant Ridge Trail,4,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2501P_4,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2501 Pheasant Ridge Trail,5,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2501P_5,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2501 Pheasant Ridge Trail,6,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2501P_6,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2501 Pheasant Ridge Trail,7,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2501P_7,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2501 Pheasant Ridge Trail,8,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2501P_8,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2503 Pheasant Ridge Trail,1,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2503P_1,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2503 Pheasant Ridge Trail,2,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2503P_2,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2503 Pheasant Ridge Trail,3,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2503P_3,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2503 Pheasant Ridge Trail,4,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2503P_4,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2503 Pheasant Ridge Trail,5,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2503P_5,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2503 Pheasant Ridge Trail,6,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2503P_6,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2503 Pheasant Ridge Trail,7,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2503P_7,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2503 Pheasant Ridge Trail,8,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2503P_8,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2507 Pheasant Ridge Trail,1,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2507P_1,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2507 Pheasant Ridge Trail,2,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2507P_2,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2507 Pheasant Ridge Trail,3,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2507P_3,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2507 Pheasant Ridge Trail,4,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2507P_4,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2507 Pheasant Ridge Trail,5,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2507P_5,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2507 Pheasant Ridge Trail,6,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2507P_6,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2507 Pheasant Ridge Trail,7,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2507P_7,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2507 Pheasant Ridge Trail,8,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2507P_8,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2509 Pheasant Ridge Trail,1,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2509P_1,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2509 Pheasant Ridge Trail,2,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2509P_2,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2509 Pheasant Ridge Trail,3,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2509P_3,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2509 Pheasant Ridge Trail,4,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2509P_4,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2509 Pheasant Ridge Trail,5,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2509P_5,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2509 Pheasant Ridge Trail,6,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2509P_6,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2509 Pheasant Ridge Trail,7,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2509P_7,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2509 Pheasant Ridge Trail,8,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2509P_8,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2511 Pheasant Ridge Trail,1,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2511P_1,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2511 Pheasant Ridge Trail,2,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2511P_2,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2511 Pheasant Ridge Trail,3,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2511P_3,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2511 Pheasant Ridge Trail,4,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2511P_4,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2511 Pheasant Ridge Trail,5,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2511P_5,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2511 Pheasant Ridge Trail,6,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2511P_6,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2511 Pheasant Ridge Trail,7,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2511P_7,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2511 Pheasant Ridge Trail,8,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2511P_8,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2513 Pheasant Ridge Trail,1,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2513P_1,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2513 Pheasant Ridge Trail,2,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2513P_2,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2513 Pheasant Ridge Trail,3,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2513P_3,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2513 Pheasant Ridge Trail,4,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2513P_4,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2513 Pheasant Ridge Trail,5,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2513P_5,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2513 Pheasant Ridge Trail,6,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2513P_6,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2513 Pheasant Ridge Trail,7,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2513P_7,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2513 Pheasant Ridge Trail,8,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2513P_8,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2515 Pheasant Ridge Trail,1,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2515P_1,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2515 Pheasant Ridge Trail,2,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2515P_2,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2515 Pheasant Ridge Trail,3,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2515P_3,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2515 Pheasant Ridge Trail,4,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2515P_4,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2515 Pheasant Ridge Trail,5,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2515P_5,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2515 Pheasant Ridge Trail,6,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2515P_6,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2515 Pheasant Ridge Trail,7,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2515P_7,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2515 Pheasant Ridge Trail,8,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2515P_8,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2517 Pheasant Ridge Trail,1,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2517P_1,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2517 Pheasant Ridge Trail,2,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2517P_2,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2517 Pheasant Ridge Trail,3,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2517P_3,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2517 Pheasant Ridge Trail,4,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2517P_4,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2517 Pheasant Ridge Trail,5,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2517P_5,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2517 Pheasant Ridge Trail,6,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2517P_6,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2517 Pheasant Ridge Trail,7,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2517P_7,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2517 Pheasant Ridge Trail,8,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2517P_8,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2601 Pheasant Ridge Trail,1,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2601P_1,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2601 Pheasant Ridge Trail,2,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2601P_2,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2601 Pheasant Ridge Trail,3,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2601P_3,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2601 Pheasant Ridge Trail,4,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2601P_4,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2601 Pheasant Ridge Trail,5,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2601P_5,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2601 Pheasant Ridge Trail,6,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2601P_6,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2601 Pheasant Ridge Trail,7,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2601P_7,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2601 Pheasant Ridge Trail,8,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2601P_8,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2604 Pheasant Ridge Trail,1,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2604P_1,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2604 Pheasant Ridge Trail,2,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2604P_2,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2604 Pheasant Ridge Trail,3,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2604P_3,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2604 Pheasant Ridge Trail,4,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2604P_4,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2604 Pheasant Ridge Trail,5,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2604P_5,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2604 Pheasant Ridge Trail,6,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2604P_6,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2604 Pheasant Ridge Trail,7,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2604P_7,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2604 Pheasant Ridge Trail,8,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2604P_8,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2605 Pheasant Ridge Trail,1,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2605P_1,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2605 Pheasant Ridge Trail,2,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2605P_2,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2605 Pheasant Ridge Trail,3,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2605P_3,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2605 Pheasant Ridge Trail,4,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2605P_4,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2605 Pheasant Ridge Trail,5,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2605P_5,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2605 Pheasant Ridge Trail,6,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2605P_6,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2605 Pheasant Ridge Trail,7,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2605P_7,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2605 Pheasant Ridge Trail,8,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2605P_8,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2606 Pheasant Ridge Trail,1,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2606P_1,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2606 Pheasant Ridge Trail,2,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2606P_2,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2606 Pheasant Ridge Trail,3,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2606P_3,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2606 Pheasant Ridge Trail,4,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2606P_4,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2606 Pheasant Ridge Trail,5,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2606P_5,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2606 Pheasant Ridge Trail,6,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2606P_6,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2606 Pheasant Ridge Trail,7,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2606P_7,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2606 Pheasant Ridge Trail,8,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2606P_8,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2608 Pheasant Ridge Trail,1,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2608P_1,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2608 Pheasant Ridge Trail,2,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2608P_2,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2608 Pheasant Ridge Trail,3,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2608P_3,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2608 Pheasant Ridge Trail,4,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2608P_4,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2608 Pheasant Ridge Trail,5,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2608P_5,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2608 Pheasant Ridge Trail,6,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2608P_6,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2608 Pheasant Ridge Trail,7,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2608P_7,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2608 Pheasant Ridge Trail,8,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2608P_8,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2609 Hazelwood Court,1,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2609H_1,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2609 Hazelwood Court,2,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2609H_2,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2609 Hazelwood Court,3,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2609H_3,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2609 Hazelwood Court,4,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2609H_4,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2609 Hazelwood Court,5,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2609H_5,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2609 Hazelwood Court,6,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2609H_6,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2609 Hazelwood Court,7,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2609H_7,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2609 Hazelwood Court,8,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2609H_8,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2610 Pheasant Ridge Trail,1,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2610P_1,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2610 Pheasant Ridge Trail,2,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2610P_2,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2610 Pheasant Ridge Trail,3,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2610P_3,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2610 Pheasant Ridge Trail,4,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2610P_4,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2610 Pheasant Ridge Trail,5,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2610P_5,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2610 Pheasant Ridge Trail,6,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2610P_6,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2610 Pheasant Ridge Trail,7,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2610P_7,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2610 Pheasant Ridge Trail,8,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2610P_8,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2611 Hazelwood Court,1,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2611H_1,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2611 Hazelwood Court,2,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2611H_2,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2611 Hazelwood Court,3,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2611H_3,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2611 Hazelwood Court,4,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2611H_4,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2611 Hazelwood Court,5,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2611H_5,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2611 Hazelwood Court,6,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2611H_6,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2611 Hazelwood Court,7,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2611H_7,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2611 Hazelwood Court,8,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2611H_8,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2612 Pheasant Ridge Trail,1,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2612P_1,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2612 Pheasant Ridge Trail,2,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2612P_2,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2612 Pheasant Ridge Trail,3,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2612P_3,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2612 Pheasant Ridge Trail,4,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2612P_4,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2612 Pheasant Ridge Trail,5,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2612P_5,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2612 Pheasant Ridge Trail,6,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2612P_6,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2612 Pheasant Ridge Trail,7,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2612P_7,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2612 Pheasant Ridge Trail,8,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2612P_8,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2613 Hazelwood Court,1,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2613H_1,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2613 Hazelwood Court,2,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2613H_2,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2613 Hazelwood Court,3,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2613H_3,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2613 Hazelwood Court,4,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2613H_4,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2613 Hazelwood Court,5,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2613H_5,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2613 Hazelwood Court,6,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2613H_6,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2613 Hazelwood Court,7,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2613H_7,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2613 Hazelwood Court,8,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2613H_8,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2615 Hazelwood Court,1,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2615H_1,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2615 Hazelwood Court,2,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2615H_2,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2615 Hazelwood Court,3,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2615H_3,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2615 Hazelwood Court,4,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2615H_4,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2615 Hazelwood Court,5,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2615H_5,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2615 Hazelwood Court,6,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2615H_6,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2615 Hazelwood Court,7,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2615H_7,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2615 Hazelwood Court,8,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2615H_8,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2617 Hazelwood Court,1,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2617H_1,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2617 Hazelwood Court,2,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2617H_2,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2617 Hazelwood Court,3,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2617H_3,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2617 Hazelwood Court,4,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2617H_4,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2617 Hazelwood Court,5,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2617H_5,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2617 Hazelwood Court,6,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2617H_6,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2617 Hazelwood Court,7,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2617H_7,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2617 Hazelwood Court,8,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2617H_8,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2706 Pheasant Ridge Trail,1,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2706P_1,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2706 Pheasant Ridge Trail,2,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2706P_2,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2706 Pheasant Ridge Trail,3,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2706P_3,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2706 Pheasant Ridge Trail,4,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2706P_4,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2706 Pheasant Ridge Trail,5,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2706P_5,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2706 Pheasant Ridge Trail,6,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2706P_6,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2706 Pheasant Ridge Trail,7,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2706P_7,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2706 Pheasant Ridge Trail,8,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2706P_8,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2708 Pheasant Ridge Trail,1,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2708P_1,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2708 Pheasant Ridge Trail,2,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2708P_2,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2708 Pheasant Ridge Trail,3,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2708P_3,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2708 Pheasant Ridge Trail,4,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2708P_4,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2708 Pheasant Ridge Trail,5,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2708P_5,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2708 Pheasant Ridge Trail,6,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2708P_6,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2708 Pheasant Ridge Trail,7,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2708P_7,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2708 Pheasant Ridge Trail,8,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2708P_8,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2710 Pheasant Ridge Trail,1,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2710P_1,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2710 Pheasant Ridge Trail,2,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2710P_2,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2710 Pheasant Ridge Trail,3,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2710P_3,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2710 Pheasant Ridge Trail,4,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2710P_4,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2710 Pheasant Ridge Trail,5,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2710P_5,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2710 Pheasant Ridge Trail,6,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2710P_6,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2710 Pheasant Ridge Trail,7,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2710P_7,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2710 Pheasant Ridge Trail,8,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2710P_8,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2712 Pheasant Ridge Trail,1,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2712P_1,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2712 Pheasant Ridge Trail,2,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2712P_2,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2712 Pheasant Ridge Trail,3,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2712P_3,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2712 Pheasant Ridge Trail,4,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2712P_4,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2712 Pheasant Ridge Trail,5,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2712P_5,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2712 Pheasant Ridge Trail,6,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2712P_6,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2712 Pheasant Ridge Trail,7,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2712P_7,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2712 Pheasant Ridge Trail,8,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2712P_8,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2714 Pheasant Ridge Trail,1,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2714P_1,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2714 Pheasant Ridge Trail,2,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2714P_2,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2714 Pheasant Ridge Trail,3,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2714P_3,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2714 Pheasant Ridge Trail,4,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2714P_4,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2714 Pheasant Ridge Trail,5,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2714P_5,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2714 Pheasant Ridge Trail,6,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2714P_6,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2714 Pheasant Ridge Trail,7,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2714P_7,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2714 Pheasant Ridge Trail,8,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2714P_8,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2716 Pheasant Ridge Trail,1,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2716P_1,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2716 Pheasant Ridge Trail,2,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2716P_2,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2716 Pheasant Ridge Trail,3,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2716P_3,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2716 Pheasant Ridge Trail,4,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2716P_4,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2716 Pheasant Ridge Trail,5,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2716P_5,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2716 Pheasant Ridge Trail,6,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2716P_6,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2716 Pheasant Ridge Trail,7,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2716P_7,2517 Pheasant Ridge Trail,,Madison,WI,53713
+32,Avenue Living,2716 Pheasant Ridge Trail,8,Madison,Dane,Wisconsin,53713,,Sycamore Woods,2716P_8,2517 Pheasant Ridge Trail,,Madison,WI,53713

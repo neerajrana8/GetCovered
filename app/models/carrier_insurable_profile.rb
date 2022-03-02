@@ -1,4 +1,5 @@
 class CarrierInsurableProfile < ApplicationRecord
+
   after_create_commit :set_qbe_id,
     if: Proc.new { |cip| cip.carrier_id == 1 }
 

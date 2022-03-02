@@ -18,7 +18,7 @@ json.communityList do
 			json.zipCode community.primary_address().zip_code
 			json.cityLimit community.carrier_profile(1).traits['in_city_limits']
 			json.propertyMgmtCompany community.account.title
-			json.propertyManager community.primary_staff.profile.full_name
+			json.propertyManager nil
 			json.units community.units.confirmed.count
 			json.ageOfFacility community.carrier_profile(1).traits['construction_year']
 			json.gatedCommunity community.carrier_profile(1).traits['gated']

@@ -23,8 +23,6 @@ class PolicyType < ApplicationRecord
     MASTER_SECURITY_DEPOSIT_ID => [SECURITY_DEPOSIT_ID, MASTER_SECURITY_COVERAGE_ID]
   }.freeze
 
-  MASTER_TYPES_IDS = [MASTER_ID, MASTER_COVERAGE_ID].freeze
-
   after_initialize :initialize_policy_type
 
   # Relationships

@@ -1,4 +1,14 @@
-<soapenv:Envelope 
+<%
+
+def sanitize(str)
+  return str.nil? ? nil :
+    str.gsub('&', 'and')
+       .gsub('_', '-')
+       .gsub('–', '-')
+       .gsub(/\*|@|#|\$|%|\(|\)|<|>|\?|\/|\\|\{|\}|\[|\]|\||;|:|\+|’|`|\'|"|\~|\,|\^/, '')
+end
+
+%><soapenv:Envelope 
   xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
   xmlns:proc="<%= Rails.application.credentials.qbe[:uri][ENV['RAILS_ENV'].to_sym] %>">
   <soapenv:Header/>
@@ -46,7 +56,7 @@
                   <QBE_BillingSystem>Q</QBE_BillingSystem>
                   
                   <CurrentTermAmt>
-                    <Amt><%= '%.2f' % ((request[:data][:premium].total_premium + request[:data][:premium].total_tax).to_f / 100) %></Amt>
+                    <Amt><%= '%.2f' % ((request[:data][:quote].carrier_payment_data['policy_fee'] + request[:data][:premium].total_premium + request[:data][:premium].total_tax).to_d / 100) %></Amt>
                   </CurrentTermAmt>
                   
                   <PayorCd>PD</PayorCd>
@@ -71,22 +81,22 @@
                       </FromAcct>
                     </ElectronicFundsTransfer> 
                   </PaymentOption>
-                  
+                  <% if request[:data][:account] %>
                   <AdditionalInterest>
                     <GeneralPartyInfo>
                       <NameInfo>
                         <CommlName>
-                          <CommercialName><%= request[:data][:account].title %></CommercialName>
+                          <CommercialName><%= sanitize(request[:data][:account].title) %></CommercialName>
                         </CommlName>
                       </NameInfo>
                       <Addr>
-                        <Addr1><%= request[:data][:account].primary_address().combined_street_address() %></Addr1>
+                        <Addr1><%= sanitize(request[:data][:account].primary_address().combined_street_address()) %></Addr1>
                         <% if request[:data][:account].primary_address().street_two.nil? %>
                         <Addr2 />
                         <% else %>
-                        <Addr2><%= request[:data][:account].primary_address().street_two %></Addr2>
+                        <Addr2><%= sanitize(request[:data][:account].primary_address().street_two) %></Addr2>
                         <% end %>
-                        <City><%= request[:data][:account].primary_address().city %></City>
+                        <City><%= sanitize(request[:data][:account].primary_address().city) %></City>
                         <StateProvCd><%= request[:data][:account].primary_address().state %></StateProvCd>
                         <PostalCode><%= request[:data][:account].primary_address().combined_zip_code() %></PostalCode>
                       </Addr>
@@ -95,7 +105,34 @@
                       <NatureInterestCd>PM</NatureInterestCd>
                     </AdditionalInterestInfo>
                   </AdditionalInterest>
-                  
+                  <% elsif !request[:data][:pm_info].blank? %>
+                  <AdditionalInterest>
+                    <GeneralPartyInfo>
+                      <NameInfo><% if request[:data][:pm_info]['entity_type'] == 'company' %>
+                        <CommlName>
+                          <CommercialName><%= sanitize(request[:data][:pm_info]['company_name']) %></CommercialName>
+                        </CommlName><% else %>
+                        <CommlName>
+                          <CommercialName><%= sanitize(['first_name', 'middle_name', 'last_name'].map{|prop| request[:data][:pm_info][prop]&.strip }.select{|v| !v.blank? }.join(" ")) %></CommercialName>
+                        </CommlName><% end %>
+                      </NameInfo>
+                      <Addr>
+                        <Addr1><%= sanitize(request[:data][:pm_info]['addr1']) %></Addr1>
+                        <% if request[:data][:pm_info]['addr2'].blank? %>
+                        <Addr2 />
+                        <% else %>
+                        <Addr2><%= sanitize(request[:data][:pm_info]['addr2']) %></Addr2>
+                        <% end %>
+                        <City><%= sanitize(request[:data][:pm_info]['city']) %></City>
+                        <StateProvCd><%= request[:data][:pm_info]['state']&.upcase %></StateProvCd>
+                        <PostalCode><%= request[:data][:pm_info]['zip'] %></PostalCode>
+                      </Addr>
+                    </GeneralPartyInfo>
+                    <AdditionalInterestInfo>
+                      <NatureInterestCd>PM</NatureInterestCd>
+                    </AdditionalInterestInfo>
+                  </AdditionalInterest>
+                  <% end %>
                   <% unless request[:data][:users].nil? %>
                   <% request[:data][:users].each do |policy_user| %>
                   <% if policy_user.spouse == false %>
@@ -103,13 +140,13 @@
                     <GeneralPartyInfo>
                       <NameInfo>
                         <CommlName>
-                          <CommercialName><%= policy_user.user.profile.full_name %></CommercialName>
+                          <CommercialName><%= sanitize(policy_user.user.profile.full_name) %></CommercialName>
                         </CommlName>
                       </NameInfo>
                       <Addr>
-                        <Addr1><%= request[:data][:address].combined_street_address() %></Addr1>
-                        <Addr2><%= request[:data][:unit].title.gsub(/[^0-9,.]/, "") %></Addr2>
-                        <City><%= request[:data][:address].city %></City>
+                        <Addr1><%= sanitize(request[:data][:address].combined_street_address()) %></Addr1><% unless request[:data][:unit].title.blank? %>
+                        <Addr2><%= sanitize(request[:data][:unit].title.gsub(/[^0-9,.]/, "")) %></Addr2><% end %>
+                        <City><%= sanitize(request[:data][:address].city) %></City>
                         <StateProvCd><%= request[:data][:address].state %></StateProvCd>
                         <PostalCode><%= request[:data][:address].zip_code %></PostalCode>
                       </Addr>                      
@@ -124,10 +161,10 @@
                   
                   <QBE_BusinessSource>NP</QBE_BusinessSource>
                   <QBE_BusinessType><%= request[:data][:carrier_profile].traits["pref_facility"] %></QBE_BusinessType>
-                  <QBE_MDU_CommName><%= request[:data][:community].title %></QBE_MDU_CommName>
+                  <QBE_MDU_CommName><%= sanitize(request[:data][:community].title) %></QBE_MDU_CommName>
                   <QBE_MDU_CommID><%= request[:data][:carrier_profile].external_carrier_id %></QBE_MDU_CommID>
-                  <% if request[:data][:carrier_profile].traits["professionally_managed"] == true %>
-                  <QBE_MDU_ProfManagedDt><%= request[:data][:carrier_profile].traits["professionally_managed_year"] %></QBE_MDU_ProfManagedDt>
+                  <% if request[:data][:prof_managed] == 1 %>
+                  <QBE_MDU_ProfManagedDt><%= request[:data][:prof_managed_year] %></QBE_MDU_ProfManagedDt>
                   <% end %>
                 </PersPolicy>
                 
@@ -151,9 +188,9 @@
                     </NameInfo>
                     <Addr>
                       <AddrTypeCd>InsuredsAddress</AddrTypeCd>
-                      <Addr1><%= request[:data][:address].combined_street_address() %></Addr1>
-                      <Addr2><%= request[:data][:unit].title.gsub(/[^0-9,.]/, "") %></Addr2>
-                      <City><%= request[:data][:address].city %></City>
+                      <Addr1><%= sanitize(request[:data][:address].combined_street_address()) %></Addr1><% unless request[:data][:unit].title.blank? %>
+                      <Addr2><%= sanitize(request[:data][:unit].title.gsub(/[^0-9,.]/, "")) %></Addr2><% end %>
+                      <City><%= sanitize(request[:data][:address].city) %></City>
                       <StateProvCd><%= request[:data][:address].state %></StateProvCd>
                       <PostalCode><%= request[:data][:address].zip_code %></PostalCode>
                     </Addr>
@@ -178,10 +215,10 @@
                   <GeneralPartyInfo>
                     <NameInfo>
                       <PersonName>
-                        <Surname><%= policy_user.user.profile.last_name %></Surname>
-                        <GivenName><%= policy_user.user.profile.first_name %></GivenName>
+                        <Surname><%= sanitize(policy_user.user.profile.last_name) %></Surname>
+                        <GivenName><%= sanitize(policy_user.user.profile.first_name) %></GivenName>
                         <% unless policy_user.user.profile.middle_name.nil? %>
-                        <OtherGivenName><%= policy_user.user.profile.middle_name %></OtherGivenName>
+                        <OtherGivenName><%= sanitize(policy_user.user.profile.middle_name) %></OtherGivenName>
                         <% end %>
                       </PersonName>
                     </NameInfo>
@@ -200,16 +237,16 @@
                 <Location id="0">
                   <Addr>
                     <AddrTypeCd>InsuredsAddress</AddrTypeCd>
-                    <Addr1><%= request[:data][:address].combined_street_address() %></Addr1>
-                    <Addr2><%= request[:data][:unit].title.gsub(/[^0-9,.]/, "") %></Addr2>
-                    <City><%= request[:data][:address].city %></City>
+                    <Addr1><%= sanitize(request[:data][:address].combined_street_address()) %></Addr1><% unless request[:data][:unit].title.blank? %>
+                    <Addr2><%= sanitize(request[:data][:unit].title.gsub(/[^0-9,.]/, "")) %></Addr2><% end %>
+                    <City><%= sanitize(request[:data][:city] || request[:data][:address].city) %></City>
                     <StateProvCd><%= request[:data][:address].state %></StateProvCd>
                     <PostalCode><%= request[:data][:address].zip_code %></PostalCode>
                     <QBE_UnitID><%= request[:data][:unit].carrier_profile(1).external_carrier_id %></QBE_UnitID>
-                    <QBE_InsideCityLimitInd>N</QBE_InsideCityLimitInd>
+                    <QBE_InsideCityLimitInd><%= request[:data][:city_limit] == 1 ? "Y" : "N" %></QBE_InsideCityLimitInd>
                   </Addr>
                   <TaxCodeInfo>
-                    <TaxCd><%= request[:data][:address].county %></TaxCd>
+                    <TaxCd><%= sanitize(request[:data][:county] || request[:data][:address].county) %></TaxCd>
                     <TaxTypeCd>CountyProp</TaxTypeCd>
                   </TaxCodeInfo>
                 </Location>
@@ -221,104 +258,62 @@
                       <% if request[:data][:address].state == 'FL' %>
                       <ConstructionCd><%= request[:data][:carrier_profile].traits["construction_type"] %></ConstructionCd>
                       <BldgCodeEffectivenessGradeCd>03</BldgCodeEffectivenessGradeCd>
-                      <% end %>                   
-                      <YearBuilt><%= request[:data][:carrier_profile].traits["construction_year"] %></YearBuilt>
+                      <% end %>
+                      <YearBuilt><%= request[:data][:age_of_facility] %></YearBuilt>
                     </Construction>
                     <DwellOccupancy>
                       <OccupancyTypeCd><%= request[:data][:carrier_profile].traits["occupancy_type"] %></OccupancyTypeCd>
                     </DwellOccupancy>
                     <BldgProtection>
-                      <NumFireDivisions><%= request[:data][:community].insurables.count %></NumFireDivisions>
+                      <NumFireDivisions><%= request[:data][:units_on_site] %></NumFireDivisions>
                       <% if request[:data][:address].state == 'FL' %>
                       <FireProtectionClassCd><%= request[:data][:carrier_profile].traits["ppc"] %></FireProtectionClassCd>
                       <OtherProtectionDesc><%= request[:data][:carrier_profile].traits["protection_device_cd"] %></OtherProtectionDesc>
                       <% end %>    
-                    </BldgProtection>
+                    </BldgProtection>a
                     
                     <Coverage>
                       <CoverageCd>DED</CoverageCd>
                       <Deductible>
-                        <FormatInteger><%= request[:data][:coverage_c].deductibles["all_peril"].to_i / 100 %></FormatInteger>
+                        <FormatInteger><%= ((request[:data][:coverage_selections]['all_peril']&.[]('selection')&.[]('value') || 0).to_d / 100).to_i %></FormatInteger>
                       </Deductible>
                     </Coverage>
                     
                     <Coverage>
                       <CoverageCd>PP</CoverageCd>
                       <Limit>
-                        <FormatInteger><%= request[:data][:coverage_c].coverage_limits["coverage_c"].to_i / 100 %></FormatInteger>
+                        <FormatInteger><%= ((request[:data][:coverage_selections]['coverage_c']&.[]('selection')&.[]('value') || 0).to_d / 100).to_i %></FormatInteger>
                       </Limit>
                     </Coverage>
                     
                     <Coverage>
                       <CoverageCd>LOU</CoverageCd>
                       <Limit>
-                        <FormatInteger><%= request[:data][:coverage_d].to_i / 100 %></FormatInteger>
+                        <FormatInteger><%= ((request[:data][:coverage_selections]['coverage_c']&.[]('selection')&.[]('value') || 0).to_d * (request[:data][:address].state == 'CT' ? 0.3 : 0.2) / 100).to_i %></FormatInteger>
                       </Limit>
                     </Coverage>
                     
-                    <% if request[:data][:optional_rates] %>
-                    <% request[:data][:optional_rates].each do |rate| %>
-                    
-                    <% if rate.sub_schedule == 'pet_damage' %>
+                    <% request[:data][:coverage_selections].select{|k,cs| cs['category'] == 'option' && ['pet_damage','water_backup','bedbug','equip','earthquake_coverage'].include?(k) }.each do |subschedule, covopt| %>
                     <Coverage>
-                      <CoverageCd>QBE_PetDam</CoverageCd>
+                      <CoverageCd><%= { 'pet_damage' => 'QBE_PetDam', 'water_backup' => 'SEWER_Sump', 'bedbug' => 'BEDBUG', 'equip' => 'EQUIP', 'earthquake_coverage' => 'ERQK' }[subschedule] %></CoverageCd>
                       <Limit>
-                        <FormatInteger>0</FormatInteger>
+                        <FormatInteger><%= ((request[:data][:coverage_selections][subschedule]&.[]('selection') == true ? 0 : request[:data][:coverage_selections][subschedule]&.[]('selection')&.[]('value') || 0).to_d / 100).to_i %></FormatInteger>
                       </Limit>
                     </Coverage>
-                    <% end %>
-                    
-                    <% if rate.sub_schedule == 'water_backup' %>
-                    <Coverage>
-                      <CoverageCd>SEWER_Sump</CoverageCd>
-                      <Limit>
-                        <FormatInteger>0</FormatInteger>
-                      </Limit>
-                    </Coverage>
-                    <% end %>
-                    
-                    <% if rate.sub_schedule == 'bedbug' %>
-                    <Coverage>
-                      <CoverageCd>BEDBUG</CoverageCd>
-                      <Limit>
-                        <FormatInteger>0</FormatInteger>
-                      </Limit>
-                    </Coverage>
-                    <% end %>
-                    
-                    <% if rate.sub_schedule == 'equip' %>
-                    <Coverage>
-                      <CoverageCd>EQUIP</CoverageCd>
-                      <Limit>
-                        <FormatInteger>0</FormatInteger>
-                      </Limit>
-                    </Coverage>
-                    <% end %>
-                    
-                    <% if rate.sub_schedule == 'earthquake_coverage' %>
-                    <Coverage>
-                      <CoverageCd>ERQK</CoverageCd>
-                      <Limit>
-                        <FormatInteger><%= rate.coverage_limits['coverage_c'].to_i / 100 %></FormatInteger>
-                      </Limit>
-                    </Coverage>
-                    <% end %>
-                    
-                    <% end %>
                     <% end %>
                     
                     <% if request[:data][:address].state == 'FL' %>
                     <Coverage>
                       <CoverageCd>QBE_HURRD</CoverageCd>
                       <Deductible>
-                        <FormatInteger><%= request[:data][:coverage_c].deductibles["hurricane"].to_i / 100 %></FormatInteger>
+                        <FormatInteger><%= ((request[:data][:coverage_selections]['hurricane']&.[]('selection')&.[]('value') || 0).to_d / 100).to_i %></FormatInteger>
                       </Deductible>
                     </Coverage>                    
                     <% end %>
                     
                     <QuestionAnswer>
                       <QuestionCd>QBEPL00040</QuestionCd>
-                      <YesNoCd><%= request[:data][:carrier_profile].traits["gated"] == true ? "Y" : "N" %></YesNoCd>
+                      <YesNoCd><%= request[:data][:gated_community] == 1 ? "Y" : "N" %></YesNoCd>
                     </QuestionAnswer>
                     
                     <QBE_WH_Ded>1000</QBE_WH_Ded>
@@ -327,13 +322,13 @@
                   <Coverage>
                     <CoverageCd>PL</CoverageCd>
                     <Limit>
-                      <FormatInteger><%= request[:data][:liability].coverage_limits["liability"].to_i / 100 %></FormatInteger>
+                      <FormatInteger><%= ((request[:data][:coverage_selections]['liability']&.[]('selection')&.[]('value') || 0).to_d / 100).to_i %></FormatInteger>
                     </Limit>
                   </Coverage>
                   <Coverage>
                     <CoverageCd>MEDPM</CoverageCd>
                     <Limit>
-                      <FormatInteger><%= request[:data][:liability].coverage_limits["medical"].to_i / 100 %></FormatInteger>
+                      <FormatInteger><%= ((request[:data][:coverage_selections]['medical']&.[]('selection')&.[]('value') || 0).to_d / 100).to_i %></FormatInteger>
                     </Limit>
                   </Coverage>
                 </HomeLineBusiness>

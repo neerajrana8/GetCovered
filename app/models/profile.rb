@@ -3,13 +3,10 @@
 
 class Profile < ApplicationRecord
 
-  include ElasticsearchSearchable
-
   belongs_to :profileable, polymorphic: true, required: false
 
   before_validation :format_contact_phone
   before_save :set_full_name, :fix_phone_number
-  after_commit :update_relations, unless: -> { [Lead].include?(profileable.class) }
 
   # Validations(remove validation for profiles for leads)
   validates_presence_of :first_name, :last_name, unless: -> { [Lead].include?(profileable.class) }
@@ -18,21 +15,7 @@ class Profile < ApplicationRecord
   enum salutation: { unspecified: 0, mr: 1, mrs: 2, miss: 3, dr: 4, lord: 5 }
   enum language: { en: 0, es: 1 }
 
-  settings index: { number_of_shards: 1 } do
-    mappings dynamic: 'false' do
-      indexes :first_name, type: :text, analyzer: 'english'
-      indexes :last_name, type: :text, analyzer: 'english'
-      indexes :full_name, type: :text, analyzer: 'english'
-    end
-  end
-
   private
-
-    def update_relations
-      Staff.update_profile(self)
-    end
-
-
     # Profile.format_contact_phone
     def format_contact_phone
       if self.contact_phone == ""

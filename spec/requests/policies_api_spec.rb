@@ -3,22 +3,11 @@ include ActionController::RespondWith
 
 describe 'Admin Policy spec', type: :request do
   before :all do
-#<<<<<<< HEAD
-    Policy.__elasticsearch__.client.indices.delete index: Policy.index_name rescue nil
-    Policy.__elasticsearch__.create_index!
-    Policy.import force: true
-#=======
-#    begin
-#      Policy.__elasticsearch__.client.indices.delete index: Policy.index_name
-#    rescue StandardError
-#      nil
-#    end
-#    Policy.__elasticsearch__.create_index!
-#    Policy.import force: true
-#>>>>>>> master
     @user = create_user
     @agency = Agency.find(1)
-    @account = FactoryBot.create(:account, agency: @agency)
+    @account = FactoryBot.create(:account, agency: @agency, contact_info: { "contact_email": "test@test.com" })
+    @community = FactoryBot.create(:insurable, account: @account, insurable_type_id: 1)
+    @unit = FactoryBot.create(:insurable, account: @account, insurable: @community, insurable_type_id: 4)
     @carrier = Carrier.find(1)
     @policy_type = PolicyType.find(1)
   end
@@ -89,15 +78,16 @@ describe 'Admin Policy spec', type: :request do
       expect(result.count).to eq(1)
     end
 
-    it 'should search policies by number' do
-      policy = FactoryBot.create(:policy, number: 'n0101', agency: @agency, carrier: @carrier, account: @account, policy_type: @policy_type)
-      sleep 5
-      get '/v2/staff_account/policies/search', params: { 'query' => policy.number }, headers: @headers
-      result = JSON.parse response.body
-      expect(response.status).to eq(200)
-      expect(result.count).to eq(1)
-      expect(result.first['number']).to eq(policy.number)
-    end
+    # it 'should search policies by number' do
+    #   pending "#{__FILE__} Needs to be updated after removing elasticsearch tests"
+    #   # policy = FactoryBot.create(:policy, number: 'n0101', agency: @agency, carrier: @carrier, account: @account, policy_type: @policy_type)
+    #   # sleep 5
+    #   # get '/v2/staff_account/policies/search', params: { 'query' => policy.number }, headers: @headers
+    #   # result = JSON.parse response.body
+    #   # expect(response.status).to eq(200)
+    #   # expect(result.count).to eq(1)
+    #   # expect(result.first['number']).to eq(policy.number)
+    # end
   end
 
   context 'for StaffAgency roles' do
@@ -168,15 +158,16 @@ describe 'Admin Policy spec', type: :request do
       expect(result.count).to eq(1)
     end
 
-    it 'should search policies by number' do
-      policy = FactoryBot.create(:policy, number: 'nagency0101', agency: @agency, carrier: @carrier, account: @account, policy_type: @policy_type)
-      sleep 5
-      get '/v2/staff_agency/policies/search', params: { 'query' => policy.number }, headers: @headers
-      result = JSON.parse response.body
-      expect(response.status).to eq(200)
-      expect(result.count).to eq(1)
-      expect(result.first['number']).to eq(policy.number)
-    end
+    # it 'should search policies by number' do
+    #   pending "#{__FILE__} Needs to be updated after removing elasticsearch tests"
+    #   # policy = FactoryBot.create(:policy, number: 'nagency0101', agency: @agency, carrier: @carrier, account: @account, policy_type: @policy_type)
+    #   # sleep 5
+    #   # get '/v2/staff_agency/policies/search', params: { 'query' => policy.number }, headers: @headers
+    #   # result = JSON.parse response.body
+    #   # expect(response.status).to eq(200)
+    #   # expect(result.count).to eq(1)
+    #   # expect(result.first['number']).to eq(policy.number)
+    # end
   end
 
   def coverage_proof_params
@@ -190,6 +181,9 @@ describe 'Admin Policy spec', type: :request do
       expiration_date: 6.months.from_now,
       out_of_system_carrier_title: 'Out of system carrier',
       address: 'Some address',
+      policy_insurables_attributes: [
+        { insurable_id: @unit.id }
+      ],
       policy_users_attributes: [
         {
           spouse: false,

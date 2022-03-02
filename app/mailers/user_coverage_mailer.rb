@@ -29,42 +29,73 @@ class UserCoverageMailer < ApplicationMailer
 
   end
 
+  def qbe_proof_of_coverage
+    @policy.reload()
+    unless @policy.sent?
+      @user_name = @user&.profile&.full_name
+      I18n.locale = @user&.profile&.language if @user&.profile&.language&.present?
+      @accepted_on = Time.current.strftime('%m/%d/%y')
+      @site = whitelabel_host(@policy.agency)
+
+      @content = {
+        subject: I18n.t('user_coverage_mailer.all_documents.other_title'),
+        text: 'Your Renters Insurance Policy has been accepted on ' + @accepted_on  +'.</br>
+               Please log in to <a href="' + @site + '">our site</a> for more information.'
+      }
+
+      attachments["evidence-of-insurance.pdf"] = {
+        mime_type: "application/pdf",
+        encoding: "base64",
+        content: Base64.strict_encode64(@policy.documents.last.download)
+      }
+
+      mail(subject: @content[:subject])
+      return true
+    else
+      return false
+    end
+  end
+
   def proof_of_coverage
-    attach_all_documents
+    unless @policy.carrier_id == 1
+      attach_all_documents
 
-    @user_name = @user&.profile&.full_name
-    I18n.locale = @user&.profile&.language if @user&.profile&.language&.present?
-    @accepted_on = Time.current.strftime('%m/%d/%y')
-    @site = whitelabel_host(@policy.agency)
+      @user_name = @user&.profile&.full_name
+      I18n.locale = @user&.profile&.language if @user&.profile&.language&.present?
+      @accepted_on = Time.current.strftime('%m/%d/%y')
+      @site = whitelabel_host(@policy.agency)
 
-    @content =
-      if @policy.policy_type_id == 5
-        documents =
-          if @policy&.documents&.any?
-            I18n.t('user_coverage_mailer.all_documents.rent_guarantee_documents')
-          else
-            ''
-          end
-        {
-          subject: I18n.t('user_coverage_mailer.all_documents.rent_guarantee_title'),
-          text: I18n.t('user_coverage_mailer.all_documents.rent_guarantee_text',
-                       site: @site, accepted_on: @accepted_on, documents: documents, user_name: @user_name)
-        }
-      else
-        documents =
-          if @policy&.documents&.any?
-            I18n.t('user_coverage_mailer.all_documents.other_documents')
-          else
-            ''
-          end
-        {
-          subject: I18n.t('user_coverage_mailer.all_documents.other_title'),
-          text: I18n.t('user_coverage_mailer.all_documents.other_text',
-                       site: @site, accepted_on: @accepted_on, documents: documents, user_name: @user_name)
-        }
-      end
+      @content =
+        if @policy.policy_type_id == 5
+          documents =
+            if @policy&.documents&.any?
+              I18n.t('user_coverage_mailer.all_documents.rent_guarantee_documents')
+            else
+              ''
+            end
+          {
+            subject: I18n.t('user_coverage_mailer.all_documents.rent_guarantee_title'),
+            text: I18n.t('user_coverage_mailer.all_documents.rent_guarantee_text',
+                         site: @site, accepted_on: @accepted_on, documents: documents, user_name: @user_name)
+          }
+        else
+          documents =
+            if @policy&.documents&.any?
+              I18n.t('user_coverage_mailer.all_documents.other_documents')
+            else
+              ''
+            end
+          {
+            subject: I18n.t('user_coverage_mailer.all_documents.other_title'),
+            text: I18n.t('user_coverage_mailer.all_documents.other_text',
+                         site: @site, accepted_on: @accepted_on, documents: documents, user_name: @user_name)
+          }
+        end
 
-    mail(:subject => @content[:subject])
+      mail(:subject => @content[:subject])
+    else
+      return false
+    end
   end
   
   def all_documents
@@ -101,7 +132,10 @@ class UserCoverageMailer < ApplicationMailer
                          site: @site, accepted_on: @accepted_on, documents: documents, user_name: @user_name)
           }
         end
-
+      documents.each do |doc|
+        file_url = Rails.application.routes.url_helpers.rails_blob_url(doc, host: Rails.application.credentials[:uri][ENV['RAILS_ENV'].to_sym][:api]).to_s
+        attachments[doc.filename.to_s] = open(file_url).read
+      end
       mail(:subject => @content[:subject])
     else
       return false

@@ -6,7 +6,7 @@ module PoliciesMethods
       if update_user_params[:users].is_a? Array
         update_user_params[:users].each do |user_param|
           user = ::User.find_by(id: user_param[:id])
-          user.update_attributes(user_param)
+          user.update(user_param)
         end
       end
       Policies::UpdateDocuments.run!(policy: @policy)
@@ -32,15 +32,22 @@ module PoliciesMethods
     add_error_master_types(@policy.policy_type_id)
     if @policy.errors.blank? && @policy.save
       result = Policies::UpdateUsers.run!(policy: @policy, policy_users_params: user_params[:policy_users_attributes])
-
       if result.failure?
         render json: result.failure, status: 422
       else
+        #TODO: need to add rule to determine who uploaded from tenant portal and who no
+        PmTenantPortal::InvitationToPmTenantPortalMailer.external_policy_submitted(user_email: @policy.primary_user.email,
+                                                                                   community_id: @policy.primary_insurable.insurable_id,
+                                                                                   policy_id: @policy.id).deliver_now
         render :show, status: :created
       end
     else
       render json: @policy.errors, status: :unprocessable_entity
     end
+  end
+
+  def primary_user_email
+    user_params[:policy_users_attributes]&.first["user_attributes"]["email"]
   end
 
   def update_coverage_proof
@@ -109,16 +116,17 @@ module PoliciesMethods
   end
 
   def set_optional_coverages
-    if @policy.carrier_id != MsiService.carrier_id || @policy.primary_insurable.nil? || @policy.primary_insurable.primary_address.nil?
+    if ![::MsiService.carrier_id, ::QbeService.carrier_id].include?(@policy.carrier_id) || @policy.primary_insurable.nil? || @policy.primary_insurable.primary_address.nil?
       @optional_coverages = nil
     else
       results = ::InsurableRateConfiguration.get_coverage_options(
-        @policy.carrier_id,
-        @policy.primary_insurable&.primary_address,
-        [{ 'category' => 'coverage', 'options_type' => 'none', 'uid' => '1010', 'selection' => true }],
-        nil,
-        0,
-        @policy.policy_premiums.last&.billing_strategy&.carrier_code,
+        ::CarrierPolicyType.where(carrier_id: @policy.carrier_id, policy_type_id: @policy.policy_type_id).take,
+        @policy.primary_insurable,
+        {},
+        #[{ 'category' => 'coverage', 'options_type' => 'none', 'uid' => '1010', 'selection' => true }],
+        @policy.effective_date,
+        @policy.policy_users.count - 1,
+        @policy.policy_premiums.last&.billing_strategy,
         agency: @policy.agency,
         perform_estimate: false,
         eventable: @policy.primary_insurable,
