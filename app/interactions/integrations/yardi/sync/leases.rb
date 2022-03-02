@@ -44,6 +44,7 @@ module Integrations
           ).flatten
           # create active new and future leases
           created_by_email = {}
+          user_ip_ids = IntegrationProfile.where(integration: integration, external_context: 'resident').pluck(:external_id, :user_id).to_h
           in_system = IntegrationProfile.where(integration: integration, external_context: 'lease', external_id: present_tenants.map{|l| l['Id'] }, profileable_type: "Lease").pluck(:external_id)
           (present_tenants + future_tenants).each do |tenant|
             next if in_system.include?(tenant["Id"])
@@ -53,10 +54,20 @@ module Integrations
             userobjs = da_tenants.map.with_index do |ten, ind|
               # get or create the user object
               log_found = true
-              userobj = userobjs.find{|u| u.email == ten["Email"] } # MOOSE WARNING: what if emails match but names don't....?
+              userobj = userobjs.find{|u| u.email == ten["Email"] } # WARNING: what if emails match but names don't....?
               if userobj.nil?
+                # try to grab it from the previously-created list, just in case
                 userobj = created_by_email[ten["Email"]]
-                log_found = false if !userobj.nil?
+                # try to find it by IP
+                if userobj.nil? && !user_ip_ids[tenant["Id"]].blank?
+                  userobj = ::User.where(id: user_ip_ids[tenant["Id"]]).take
+                  found_users[tenant["Id"]] ||= {}
+                  found_users[tenant["Id"]][ten["Id"]] = userobj
+                end
+                # log it as missing
+                if userobj.nil?
+                  log_found = false if !userobj.nil?
+                end
               end
               if !userobj.nil?
                 if log_found
