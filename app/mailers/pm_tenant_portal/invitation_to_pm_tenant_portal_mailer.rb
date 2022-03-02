@@ -77,7 +77,7 @@ module PmTenantPortal
       @review_number = policy_id
       @pm_account = @community.account
 
-      @from = @pm_account&.contact_info&.has_key?("contact_email") && !@pm_account&.contact_info&.fetch("contact_email", nil).nil? ? @pm_account&.contact_info&.fetch("contact_email") : "policyverify@getcovered.io"
+      @from = @pm_account&.contact_info&.has_key?("contact_email") && !@pm_account&.contact_info&.fetch("contact_email", nil).blank? ? @pm_account&.contact_info&.fetch("contact_email") : "policyverify@getcovered.io"
       subject = t('invitation_to_pm_tenant_portal_mailer.policy_submitted_email.subject')
 
       mail(from: @from, to: @user.email, subject: subject)
