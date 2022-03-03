@@ -55,7 +55,7 @@ scope module: :public do
     end
   end
 
-  get 'insurable_by_auth_token/:auth_hash', to: '/v2/public/insurables#insurable_by_auth_token'
+  get 'insurable_by_auth_token', to: '/v2/public/insurables#insurable_by_auth_token'
 
   post '/msi/unit-list',
     to: 'insurables#msi_unit_list',
@@ -125,7 +125,14 @@ scope module: :public do
 
   post 'secret_authentication/:secret_token/authenticate', to: '/v2/public/secret_authentication#authenticate'
 
+  resources :search_contents,
+            only: [:index],
+            path: 'search'
+
   get 'communities/:id' => 'communities#accounts'
+  get 'communities/by_state/:state' => 'communities#communities'
+  get 'communities/account_states/:branding_profile_id' => 'communities#account_states'
   get 'units/:id' => 'units#communities'
   get 'buildings/:id' => 'buildings#community'
+
 end

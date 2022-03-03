@@ -16,6 +16,7 @@ module PmTenantPortal
       #TODO: need to remove after test
       @master_policy = @community.policies.where(policy_type_id: 2).take || Policy.last
 
+      set_liabilities(@community)
       #@agency = master_policy.agency
 
       @from = @pm_account.contact_info["contact_email"]
@@ -33,6 +34,8 @@ module PmTenantPortal
       @user = user
       @community = community
       @tenant_onboarding_url = tenant_onboarding_url
+
+      set_liabilities(@community)
 
       @pm_account = @community.account
       #TODO: need to remove after test
@@ -73,14 +76,74 @@ module PmTenantPortal
 
       set_locale(@user.profile&.language)
 
-      @community = Insurable.find(community_id)
+      @community = Insurable.find_by_id(community_id)
       @review_number = policy_id
       @pm_account = @community.account
 
-      @from = @pm_account.contact_info.has_key?("contact_email") && !@pm_account.contact_info["contact_email"].nil? ? @pm_account.contact_info["contact_email"] : "policyverify@getcovered.io"
+      @from = @pm_account&.contact_info&.has_key?("contact_email") && !@pm_account&.contact_info&.fetch("contact_email", nil).blank? ? @pm_account&.contact_info&.fetch("contact_email") : "policyverify@getcovered.io"
       subject = t('invitation_to_pm_tenant_portal_mailer.policy_submitted_email.subject')
 
       mail(from: @from, to: @user.email, subject: subject)
+    end
+
+    def external_policy_accepted(policy:)
+      @policy = policy
+      @user = @policy.primary_user
+
+      set_locale(@user.profile&.language)
+
+      @community = @policy.primary_insurable
+      @pm_account = @community.account
+      @tenant_onboarding_url = tenant_onboarding_url(@user.id, @community)
+
+      @from = @pm_account&.contact_info&.has_key?("contact_email") && !@pm_account&.contact_info["contact_email"].nil? ? @pm_account&.contact_info["contact_email"] : "policyverify@getcovered.io"
+      subject = t('invitation_to_pm_tenant_portal_mailer.policy_accepted_email.subject')
+
+      mail(from: @from, to: @user.email, subject: subject)
+    end
+
+    def external_policy_declined(policy:)
+      @policy = policy
+      @user = @policy.primary_user
+
+      set_locale(@user.profile&.language)
+
+      @community = @policy.primary_insurable
+      @pm_account = @community.account
+
+      @tenant_onboarding_url = tenant_onboarding_url(@user.id, @community)
+
+      @from = @pm_account&.contact_info&.has_key?("contact_email") && !@pm_account&.contact_info["contact_email"].nil? ? @pm_account&.contact_info["contact_email"] : "policyverify@getcovered.io"
+      subject = t('invitation_to_pm_tenant_portal_mailer.policy_declined_email.subject')
+
+      mail(from: @from, to: @user.email, subject: subject)
+    end
+
+    private
+
+    def tenant_onboarding_url(user_id, community)
+      branding_profile_url = community&.account&.branding_profiles&.take&.url
+      str_to_encrypt = "user #{user_id} community #{community.id}" #user 1443 community 10035
+      auth_token_for_email = EncryptionService.encrypt(str_to_encrypt)
+      "https://#{branding_profile_url}/pma-tenant-onboarding?token=#{auth_token_for_email}"
+    end
+
+    def set_liabilities(insurable)
+      account = insurable.account
+      carrier_id = account.agency.providing_carrier_id(PolicyType::RESIDENTIAL_ID, insurable){|cid| (insurable.get_carrier_status(carrier_id) == :preferred) ? true : nil }
+      carrier_policy_type = CarrierPolicyType.where(carrier_id: carrier_id, policy_type_id: PolicyType::RESIDENTIAL_ID).take
+      uid = (carrier_id == ::MsiService.carrier_id ? '1005' : carrier_id == ::QbeService.carrier_id ? 'liability' : nil)
+      liability_options = ::InsurableRateConfiguration.get_inherited_irc(carrier_policy_type, account, insurable).configuration['coverage_options']&.[](uid)&.[]('options')
+      @max_liability = liability_options&.map{|opt| opt['value'].to_i }&.max
+      @min_liability = liability_options&.map{|opt| opt['value'].to_i }&.min
+
+      if @min_liability.nil? || @min_liability == 0 || @min_liability == "null"
+        @min_liability = 1000000
+      end
+
+      if @max_liability.nil? || @max_liability == 0 || @max_liability == "null"
+        @max_liability = 30000000
+      end
     end
   end
 end

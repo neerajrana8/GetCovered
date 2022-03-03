@@ -252,6 +252,10 @@
           defaults: { type: 'Insurable', carrier_id: 5, insurable_type_id: ::InsurableType::RESIDENTIAL_UNITS_IDS.first }
       end
 
+      collection do
+        post :bulk_create
+      end
+
       resources :insurable_rates,
                 path: "insurable-rates",
                 defaults: {

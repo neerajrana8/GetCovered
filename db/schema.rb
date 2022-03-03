@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2022_03_02_013613) do
+ActiveRecord::Schema.define(version: 2022_03_02_155738) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
@@ -842,6 +842,7 @@ ActiveRecord::Schema.define(version: 2022_03_02_013613) do
     t.jsonb "expanded_covered", default: {}, null: false
     t.jsonb "preferred", default: {}
     t.boolean "additional_interest", default: false
+    t.string "additional_interest_name"
     t.index ["account_id"], name: "index_insurables_on_account_id"
     t.index ["agency_id"], name: "index_insurables_on_agency_id"
     t.index ["insurable_id"], name: "index_insurables_on_insurable_id"
@@ -1716,6 +1717,19 @@ ActiveRecord::Schema.define(version: 2022_03_02_013613) do
     t.index ["reportable_type", "reportable_id"], name: "index_reports_on_reportable"
   end
 
+  create_table "search_contents", force: :cascade do |t|
+    t.string "field"
+    t.string "value"
+    t.string "searchable_type"
+    t.bigint "searchable_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.tsvector "vectorized"
+    t.index "to_tsvector('english'::regconfig, (COALESCE(value, ''::character varying))::text)", name: "sc_vectorized_index", using: :gin
+    t.index ["searchable_type", "searchable_id"], name: "index_search_contents_on_searchable_type_and_searchable_id"
+    t.index ["vectorized"], name: "searchindex", using: :gin
+  end
+
   create_table "signable_documents", force: :cascade do |t|
     t.string "title", null: false
     t.integer "document_type", null: false
@@ -1914,6 +1928,7 @@ ActiveRecord::Schema.define(version: 2022_03_02_013613) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "master_policy_configurations", "carrier_policy_types"
   add_foreign_key "policy_coverages", "policies"
   add_foreign_key "policy_coverages", "policy_applications"
   add_foreign_key "policy_types", "policy_types", column: "master_policy_id"

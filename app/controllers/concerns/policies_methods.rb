@@ -28,17 +28,13 @@ module PoliciesMethods
   def add_coverage_proof
     @policy                  = Policy.new(coverage_proof_params)
     @policy.policy_in_system = false
-    @policy.status           = 'BOUND'
+    @policy.status           = 'BOUND' if @policy&.status&.blank?
     add_error_master_types(@policy.policy_type_id)
     if @policy.errors.blank? && @policy.save
       result = Policies::UpdateUsers.run!(policy: @policy, policy_users_params: user_params[:policy_users_attributes])
       if result.failure?
         render json: result.failure, status: 422
       else
-        #TODO: need to add rule to determine who uploaded from tenant portal and who no
-        PmTenantPortal::InvitationToPmTenantPortalMailer.external_policy_submitted(user_email: @policy.primary_user.email,
-                                                                                   community_id: @policy.primary_insurable.insurable_id,
-                                                                                   policy_id: @policy.id).deliver_now
         render :show, status: :created
       end
     else
@@ -285,6 +281,10 @@ module PoliciesMethods
                                       limit deductible enabled designation]
     )
     to_return
+  end
+
+  def insurable_id_param
+    coverage_proof_params[:policy_insurables_attributes].fetch("0", nil)&.fetch("insurable_id", nil)
   end
 
   def supported_orders

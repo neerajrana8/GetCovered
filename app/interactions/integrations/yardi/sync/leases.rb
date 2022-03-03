@@ -43,9 +43,11 @@ module Integrations
             (RESIDENT_STATUSES['nonfuture'] || []).map{|s| (resident_datas[s] || []).select{|td| !td['MoveOut'].blank? && (Date.parse(td['MoveOut']) rescue nil)&.<(Time.current.to_date) } }
           ).flatten
           # create active new and future leases
+          relevant_tenants = present_tenants + future_tenants
           created_by_email = {}
-          in_system = IntegrationProfile.where(integration: integration, external_context: 'lease', external_id: present_tenants.map{|l| l['Id'] }, profileable_type: "Lease").pluck(:external_id)
-          (present_tenants + future_tenants).each do |tenant|
+          user_ip_ids = IntegrationProfile.where(integration: integration, external_context: 'resident', profileable_type: "User").pluck(:external_id, :profileable_id).to_h
+          in_system = IntegrationProfile.where(integration: integration, external_context: 'lease', external_id: relevant_tenants.map{|l| l['Id'] }, profileable_type: "Lease").pluck(:external_id)
+          relevant_tenants.each do |tenant|
             next if in_system.include?(tenant["Id"])
             # get the users
             da_tenants = [tenant] + (tenant["Roommate"].nil? ? [] : tenant["Roommate"].class == ::Array ? tenant["Roommate"] : [tenant["Roommate"]])
@@ -53,10 +55,20 @@ module Integrations
             userobjs = da_tenants.map.with_index do |ten, ind|
               # get or create the user object
               log_found = true
-              userobj = userobjs.find{|u| u.email == ten["Email"] } # MOOSE WARNING: what if emails match but names don't....?
+              userobj = userobjs.find{|u| u.email == ten["Email"] } # WARNING: what if emails match but names don't....?
               if userobj.nil?
+                # try to grab it from the previously-created list, just in case
                 userobj = created_by_email[ten["Email"]]
-                log_found = false if !userobj.nil?
+                # try to find it by IP
+                if userobj.nil? && !user_ip_ids[tenant["Id"]].blank?
+                  userobj = ::User.where(id: user_ip_ids[tenant["Id"]]).take
+                  found_users[tenant["Id"]] ||= {}
+                  found_users[tenant["Id"]][ten["Id"]] = userobj
+                end
+                # log it as missing
+                if userobj.nil?
+                  log_found = false if !userobj.nil?
+                end
               end
               if !userobj.nil?
                 if log_found
