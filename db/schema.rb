@@ -1003,6 +1003,7 @@ ActiveRecord::Schema.define(version: 2022_03_02_155738) do
     t.bigint "account_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.jsonb "expanded_covered", default: {}
     t.index ["account_id"], name: "index_leases_on_account_id"
     t.index ["insurable_id"], name: "index_leases_on_insurable_id"
     t.index ["lease_type_id"], name: "index_leases_on_lease_type_id"
@@ -1116,6 +1117,7 @@ ActiveRecord::Schema.define(version: 2022_03_02_155738) do
     t.bigint "configurable_id", null: false
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
+    t.boolean "enabled", default: false
     t.index ["carrier_policy_type_id", "configurable_type", "configurable_id"], name: "index_cpt_and_conf_on_mpc", unique: true
     t.index ["configurable_type", "configurable_id"], name: "index_master_policy_configurations_on_configurable"
   end

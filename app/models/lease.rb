@@ -4,6 +4,7 @@
 class Lease < ApplicationRecord
   # Concerns
   include RecordChange
+  include ExpandedCovered
   
   RESIDENTIAL_ID = 1
   COMMERCIAL_ID = 2
@@ -25,6 +26,9 @@ class Lease < ApplicationRecord
 
   belongs_to :insurable
   belongs_to :lease_type
+
+  has_many :policies,
+           through: :insurable
 
   has_many :lease_users, inverse_of: :lease
 

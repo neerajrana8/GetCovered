@@ -211,7 +211,7 @@ class Policy < ApplicationRecord
   end
 
   def self.active_statuses
-    ['BOUND', 'BOUND_WITH_WARNING', 'RENEWING', 'RENEWED', 'REINSTATED']
+    %w[BOUND BOUND_WITH_WARNING RENEWING RENEWED REINSTATED EXTERNAL_VERIFIED]
   end
 
   def is_active?
@@ -331,7 +331,6 @@ class Policy < ApplicationRecord
       { error: I18n.t('policy_model.error_with_policy')  }
     end
   end
-
 
   # Cancels a policy; returns nil if no errors, otherwise a string explaining the error
   def cancel(reason, last_active_moment = Time.current.to_date.end_of_day)
@@ -455,6 +454,23 @@ class Policy < ApplicationRecord
     super if defined?(super)
   end
 
+  def update_coverage
+    if Policy.active_statuses.include?(self.status) && Time.current.to_date.between?(self.effective_date, self.expiration_date)
+      if self.cancellation_date.nil? ||
+         self.cancellation_date > Time.current.to_date
+        self.insurables.each do |insurable|
+          insurable.add_to_covered(self.policy_type_id, self.id)
+          insurable.leases.each { |lease| lease.add_to_covered(self.policy_type_id, self.id) if lease.active? }
+        end
+      end
+    else
+      self.insurables.each do |insurable|
+        insurable.remove_from_covered(self.policy_type_id, self.id)
+        insurable.leases.each { |lease| lease.remove_from_covered(self.policy_type_id, self.id) unless lease.active? }
+      end
+    end
+  end
+
   private
 
   def notify_relevant
@@ -479,7 +495,7 @@ class Policy < ApplicationRecord
   end
 
   def update_insurables_coverage
-    insurables.each { |insurable| Insurables::UpdateCoveredStatus.run!(insurable: insurable) }
+    # insurables.each { |insurable| Insurables::UpdateCoveredStatus.run!(insurable: insurable) }
   end
 
   def update_users_status
