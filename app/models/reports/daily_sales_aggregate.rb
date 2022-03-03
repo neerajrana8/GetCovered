@@ -110,7 +110,7 @@ module Reports
 
       agencies_reports = agencies_reports.sort_by { |row| [row[:agency_data]['any_activity'] ? 0 : 1] }
 
-      flatten_agency_report(get_covered_report)
+      flatten_agency_report(get_covered_report) if get_covered_report
 
       agencies_reports.each do |agency_report|
         flatten_agency_report(agency_report)

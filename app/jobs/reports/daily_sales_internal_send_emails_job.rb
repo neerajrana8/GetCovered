@@ -9,7 +9,7 @@ module Reports
         if Rails.env == 'production'
           ['salesreports@getcovered.io']
         else
-          ['testing@getcovered.io']
+          ['testing@getcovered.io', "ankit.khandelwal@carmatec.in"]
         end
       DailySalesReportMailer.send_report(recipients, report_path, 'All partners', range_start.yesterday.to_date.to_s).deliver
     end
