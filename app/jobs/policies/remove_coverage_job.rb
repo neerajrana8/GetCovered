@@ -10,7 +10,9 @@ module Policies
 
     private
     def set_policies
-      @policies = Policy.where(status: Policy.active_statuses, expiration_date: Time.current.to_date)
+      @policies = Policy.where(status: Policy.active_statuses,
+                               policy_type_id: [1,3,4,5,6,8],
+                               expiration_date: Time.current.to_date)
     end
   end
 end
