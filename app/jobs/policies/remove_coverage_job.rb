@@ -1,5 +1,5 @@
 module Policies
-  class CheckCoverageJob < ApplicationJob
+  class RemoveCoverageJob < ApplicationJob
     before_perform :set_policies
 
     def perform()
@@ -10,7 +10,7 @@ module Policies
 
     private
     def set_policies
-      @policies = Policy.where(status: Policy.active_statuses, effective_date: Time.current.to_date)
+      @policies = Policy.where(status: Policy.active_statuses, expiration_date: Time.current.to_date)
     end
   end
 end
