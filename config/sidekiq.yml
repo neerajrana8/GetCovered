@@ -13,15 +13,18 @@ production:
   - mailers
 
 :schedule:
-  insurables_update_covered_status:
+  add_coverage:
     cron: '0 0 * * *'   # Every day at 0:00 AM
-    class: Insurables::UpdateCoveredStatusJob
+    class: Policies::AddCoverageJob
+  remove_coverage:
+    cron: '0 0 * * *'   # Every day at 0:00 AM
+    class: Policies::RemoveCoverageJob
   insurables_refresh_insurable_data:
     cron: '0 */2 * * *'   # Every day at 0:00 AM
     class: Insurables::RefreshInsurableDataJob
-  insurables_master_policy_auto_assign:
+  configuration_sweep_job:
     cron: '0 3 * * *'   # Every day at 3:00 AM
-    class: Insurables::MasterPolicyAutoAssignJob
+    class: MasterPolicies::ConfigurationSweepJob
   # Reports
   daily_sales_reports:
     cron:  '0 4 * * *'   # Each day at 4:00 AM
