@@ -4,7 +4,7 @@
 module ExpandedCovered
   extend ActiveSupport::Concern
 
-  module ClassMethods
+  included do
 
     def add_to_covered(policy_type_id, policy_id)
       if policy_type_id.present? && policy_id.present?
