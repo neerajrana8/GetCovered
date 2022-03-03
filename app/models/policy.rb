@@ -455,7 +455,14 @@ class Policy < ApplicationRecord
   end
 
   def update_coverage
-    if Policy.active_statuses.include?(self.status) && Time.current.to_date.between?(self.effective_date, self.expiration_date)
+    time_condition = nil
+    if [1,4,5,6].include?(self.policy_type_id)
+      time_condition = Time.current.to_date.between?(self.effective_date, self.expiration_date)
+    elsif [3,8].include?(self.policy_type_id)
+      time_condition = Time.current.to_date >= self.effective_date
+    end
+
+    if Policy.active_statuses.include?(self.status) && time_condition
       if self.cancellation_date.nil? ||
          self.cancellation_date > Time.current.to_date
         self.insurables.each do |insurable|
