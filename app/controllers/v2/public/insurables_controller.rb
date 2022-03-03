@@ -25,8 +25,8 @@ module V2
       end
 
       def insurable_encoded_params
-        if params[:auth_hash].present?
-          params.require(:auth_hash)
+        if params[:token].present?
+          params.require(:token)
         end
       end
     end

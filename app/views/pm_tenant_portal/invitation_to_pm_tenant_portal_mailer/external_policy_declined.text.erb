@@ -15,9 +15,6 @@
           blockquote {
               -webkit-text-size-adjust: none !important;
           }
-          a {
-              color: #69acdd;
-          }
           body {
               width: 100% !important;
               min-width: 100% !important;
@@ -364,49 +361,36 @@
                                     </p>
                                     <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
                                                   <span style="font-size: 16px;">
-                                                    A little reminder! As referenced in your lease, <%= @community.title %> requires <%= @min_liability %> in liability coverage for the length of your lease term. You are receiving this letter because we do not have active insurance on file and you are out of compliance. We have partnered with Get Covered to offer an easy and affordable insurance option and track our insurance compliance.
+                                                    <b>Wait a minute... Action Needed! </b>
+                                                    The policy information that you submitted does not meet the requirements of your management company (<%= @pm_account.title %>).
                                                   </span>
                                     </p>
                                     <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
                                                   <span style="font-size: 16px;">
-                                                    <b>Need Renter's Insurance?</b>
-                                                    Please visit
-                                                    <a href="<%= @tenant_onboarding_url %>" target="_blank">
-                                                      <%= @tenant_onboarding_url %>
-                                                    </a>
-                                                    to quote and purchase renter’s insurance.
-                                                  </span>
-                                    </p>
-                                    <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
-                                                  <span style="font-size: 16px;">
-                                                    <b>Already have Insurance?</b>
-                                                    You can satisfy our audit request by emailing your declaration page/certificate to <%= @from %> or simply respond to this email.
-                                                  </span>
-                                    </p>
-                                    <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
-                                                  <span style="font-size: 16px;">
-                                                    Ensure that your active policy meets the following requirements:
+                                                    Please resolve the following error(s) listed below:
                                                   </span>
                                     </p>
                                     <ul style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
-                                      <li style="font-size: 16px;"><%= @min_liability %>  or more in liability coverage</li>
-                                      <li style="font-size: 16px;">Active Policy Dates</li>
-                                      <li style="font-size: 16px; text-decoration: underline;" >
-                                        <%= @community.title %> is listed as an Additional Interest on your policy using the address below
-                                      </li>
+                                      <li style="font-size: 16px;">{{ Declined Policy Review Reason }}</li>
+                                      <li style="font-size: 16px;">{{ Declined Policy Review Reason }}</li>
+                                      <li style="font-size: 16px;">{{ Declined Policy Review Reason }}</li>
+                                      <li style="font-size: 16px;">{{ Declined Policy Review Reason }}</li>
                                     </ul>
-                                    <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em; text-align: center; font-size: 16px;">
-                                      <%= @community&.additional_interest_name %><br>
-                                      <b>82 Nassau Street, DPT 33028<br>
-                                        New York, NY 10038</b>
+                                    <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
+                                      <span style="font-size: 16px;"> Review #: <b><%= @policy.id %></b> </span>
                                     </p>
                                     <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
                                                   <span style="font-size: 16px;">
-                                                    Thank you for your attention to the matter. Please contact Get Covered at  <%= @from %> if you have any questions.
+                                                    Either reupload your new file on our portal at
+                                                    <a href="<%= @tenant_onboarding_url %>" target="_blank">
+                                                      <%= @tenant_onboarding_url %>}
+                                                    </a>
+                                                    or email
+                                                    <a href="mailto: <%= @from %>" target="_blank">
+                                                      <%= @from %>
+                                                    </a>
+                                                    with your new file attached.
                                                   </span>
-                                    </p>
-                                    <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em; ">
-                                      <span style="font-size: 16px;"><b><%= @pm_account.title %></b></span>
                                     </p>
                                   </td>
                                 </tr>

@@ -53,14 +53,15 @@ json.agency do
   end
 end
 
-json.units_attributes do
-  unless insurable.unit?
-    json.array! insurable.units do |unit|
-      json.partial! "v2/staff_super_admin/insurables/insurable_show_fields.json.jbuilder",
-                    insurable: unit
-    end
-  end
-end
+#TODO: need to be removed when move to get_or_create EP
+#json.units_attributes do
+#  unless insurable.unit?
+#    json.array! insurable.units do |unit|
+#      json.partial! "v2/staff_super_admin/insurables/insurable_show_fields.json.jbuilder",
+#                    insurable: unit
+#    end
+#  end
+#end
 
 json.user_attributes do
   if @user.present?

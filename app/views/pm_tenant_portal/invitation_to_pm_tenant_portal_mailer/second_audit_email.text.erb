@@ -364,7 +364,7 @@
                                     </p>
                                     <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
                                                   <span style="font-size: 16px;">
-                                                    A little reminder! As referenced in your lease, <%= @community.title %> requires {{ Liability Coverage Min }} in liability coverage for the length of your lease term. You are receiving this letter because we do not have active insurance on file and you are out of compliance. We have partnered with Get Covered to offer an easy and affordable insurance option and track our insurance compliance.
+                                                    A little reminder! As referenced in your lease, <%= @community.title %> requires <%= @min_liability %> in liability coverage for the length of your lease term. You are receiving this letter because we do not have active insurance on file and you are out of compliance. We have partnered with Get Covered to offer an easy and affordable insurance option and track our insurance compliance.
                                                   </span>
                                     </p>
                                     <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
@@ -389,14 +389,14 @@
                                                   </span>
                                     </p>
                                     <ul style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
-                                      <li style="font-size: 16px;">{{ Liability Coverage Min }} or more in liability coverage</li>
+                                      <li style="font-size: 16px;"><%= @min_liability %>  or more in liability coverage</li>
                                       <li style="font-size: 16px;">Active Policy Dates</li>
                                       <li style="font-size: 16px; text-decoration: underline;" >
                                         <%= @community.title %> is listed as an Additional Interest on your policy using the address below
                                       </li>
                                     </ul>
                                     <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em; text-align: center; font-size: 16px;">
-                                      {{ Community Additional Interest Name }}<br>
+                                      <%= @community&.additional_interest_name %><br>
                                       <b>82 Nassau Street, DPT 33028<br>
                                         New York, NY 10038</b>
                                     </p>

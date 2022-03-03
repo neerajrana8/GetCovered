@@ -119,6 +119,10 @@ en:
       subject: "Insurance Reminder | Action Needed Before You Move In!"
     policy_submitted_email:
       subject: "POLICY SUBMITTED - Get Covered"
+    policy_accepted_email:
+      subject: "POLICY APPROVED - Get Covered"
+    policy_declined_email:
+      subject: "POLICY DECLINED - Get Covered"
     second_nonpayment_warning:
       subject: "%{agency_title} - Rent Guarantee - Default FINAL NOTICE"
       thank_you:
