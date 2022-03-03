@@ -24,6 +24,9 @@ module V2
 
             if @staff.errors.none?
               add_roles(@staff, create_params[:staff_roles_attributes])
+            else
+              render json: @staff.errors,
+                     status: :unprocessable_entity
             end
           else
             @staff = current_staff.organizable.staff.new(create_params)

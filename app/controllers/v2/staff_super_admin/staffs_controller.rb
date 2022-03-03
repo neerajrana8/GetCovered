@@ -38,6 +38,8 @@ module V2
                   else
                     errors_staffs << {"staff": @staff, "errors": @staff.errors.full_messages}
                   end
+                else
+                  errors_staffs << @staff.errors.full_messages
                 end
               end
               @staff = ::Staff.new(pm_create_params)
@@ -75,6 +77,9 @@ module V2
                   render json: @staff.errors,
                          status: :unprocessable_entity
                 end
+              else
+                render json: @staff.errors,
+                       status: :unprocessable_entity
               end
             else
               @staff = ::Staff.new(create_params)
