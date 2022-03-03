@@ -455,12 +455,19 @@ class Policy < ApplicationRecord
   end
 
   def update_coverage
-    if Policy.active_statuses.include?(self.status)
-      if Date.today.between?(self.effective_date, self.expiration_date)
-
+    if Policy.active_statuses.include?(self.status) && Time.current.to_date.between?(self.effective_date, self.expiration_date)
+      if self.cancellation_date.nil? ||
+         self.cancellation_date > Time.current.to_date
+        self.insurables.each do |insurable|
+          insurable.add_to_covered(self.policy_type_id, self.id)
+          insurable.leases.each { |lease| lease.add_to_covered(self.policy_type_id, self.id) if lease.active? }
+        end
       end
     else
-
+      self.insurables.each do |insurable|
+        insurable.remove_from_covered(self.policy_type_id, self.id)
+        insurable.leases.each { |lease| lease.remove_from_covered(self.policy_type_id, self.id) unless lease.active? }
+      end
     end
   end
 

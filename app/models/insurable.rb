@@ -9,6 +9,7 @@ class Insurable < ApplicationRecord
   include CoverageReport # , EarningsReport, RecordChange
   include RecordChange
   include SetSlug
+  include ExpandedCovered
 
   before_validation :set_confirmed_automatically
   before_save :refresh_policy_type_ids
