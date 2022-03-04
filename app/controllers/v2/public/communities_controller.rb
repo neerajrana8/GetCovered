@@ -11,11 +11,11 @@ module V2
           render json: standard_error(:state_param_blank,'State parameter can\'t be blank'),
                  status: :unprocessable_entity
         else
-          if params[:branding_profile_id].blank?
+          if params[:branding_id].blank?
             render json: standard_error(:branding_profile_id_param_blank,'branding_profile_id parameter can\'t be blank'),
                    status: :unprocessable_entity
           else
-            account_id = BrandingProfile.find_by_id(params[:branding_profile_id])&.profileable_id
+            account_id = BrandingProfile.find_by_id(params[:branding_id])&.profileable_id
             account = Account.find_by_id(account_id)
 
             if account.blank?
@@ -61,7 +61,6 @@ module V2
           end
         end
       end
-
     end
   end
 end
