@@ -263,7 +263,8 @@ module PoliciesMethods
           full_name: %i[scalar like]
         }
       },
-      agency_id: %i[scalar array]
+      agency_id: %i[scalar array],
+      account_id: %i[scalar array]
     }
   end
 
