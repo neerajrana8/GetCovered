@@ -23,7 +23,7 @@ module V2
                      status: :unprocessable_entity
             else
               begin
-                @communities = Insurable.communities.where(account_id: account.id)
+                @communities = Insurable.communities.where(account_id: account.id, preferred_ho4: true)
                                    .joins(:addresses).where(addresses: { state: params[:state] } )
               rescue StandardError => e
                 render json: standard_error(:query_failed,"#{e.message}"),
