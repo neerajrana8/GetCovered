@@ -34,4 +34,13 @@ module StaffsMethods
       end
     end
   end
+
+  def build_first_role(staff)
+    staff_role = staff.staff_roles.build(
+      role: staff.role,
+      organizable: staff.organizable
+    )
+
+    staff_role.save
+  end
 end

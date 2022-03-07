@@ -52,6 +52,9 @@ module V2
           # because it had FrozenError (can't modify frozen Hash: {:password=>["can't be blank"]}):
           # @staff.errors.messages.except!(:password)
           if (@staff.errors.none? || only_password_blank_error?(@staff.errors) ) && @staff.invite_as(current_staff)
+            if @staff.staff_roles.count === 0
+              build_first_role(@staff)
+            end
             render :show, status: :created
           else
             render json: @staff.errors, status: :unprocessable_entity

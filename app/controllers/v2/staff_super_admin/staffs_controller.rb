@@ -48,6 +48,9 @@ module V2
               #because it had FrozenError (can't modify frozen Hash: {:password=>["can't be blank"]}):
               #@staff.errors.messages.except!(:password)
               if (@staff.errors.none? || only_password_blank_error?(@staff.errors) ) && @staff.invite_as(current_staff)
+                if @staff.staff_roles.count === 0
+                  build_first_role(@staff)
+                end
                 created_staffs << @staff
                 #render :show,
                 #       status: :created
@@ -88,6 +91,9 @@ module V2
               #because it had FrozenError (can't modify frozen Hash: {:password=>["can't be blank"]}):
               #@staff.errors.messages.except!(:password)
               if (@staff.errors.none? || only_password_blank_error?(@staff.errors) ) && @staff.invite_as!(current_staff)
+                if @staff.staff_roles.count === 0
+                  build_first_role(@staff)
+                end
                 render :show,
                        status: :created
               else
@@ -156,6 +162,13 @@ module V2
           ]
         )
         to_return
+      end
+
+      def staff_role_params
+        return({}) if params[:staff].blank?
+        params.require(:staff).permit(
+                :role, :organizable_id, :organizable_type
+                )
       end
 
       def bulk_create_params
