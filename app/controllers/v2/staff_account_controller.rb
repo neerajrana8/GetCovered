@@ -12,7 +12,7 @@ module V2
     private
 
     def is_staff?
-      render json: { error: "Unauthorized access"}, status: :unauthorized unless current_staff.current_role(organizable: 'Account').staff?
+      render json: { error: "Unauthorized access"}, status: :unauthorized unless current_staff.current_role(organizable: 'Account')&.staff?
     end
 
     def view_path

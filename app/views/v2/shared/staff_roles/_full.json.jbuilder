@@ -1,17 +1,17 @@
 json.array! staff_roles do |staff_role|
   # staff_roles.each do |staff_role|
-    json.extract! staff_role, :id, :role, :organizable_id, :organizable_type, :primary, :active
-    if staff_role.organizable_type == 'Account'
-      json.account staff_role.organizable&.title
-      json.agency  staff_role.organizable&.agency&.title
-    end
+  json.extract! staff_role, :id, :role, :organizable_id, :organizable_type, :primary, :active
+  if staff_role.organizable_type == 'Account'
+    json.account staff_role.organizable&.title
+    json.agency staff_role.organizable&.agency&.title
+  end
 
-    if staff_role.organizable_type == 'Agency'
-      json.agency staff_role.organizable&.title
-    end
+  if staff_role.organizable_type == 'Agency'
+    json.agency staff_role.organizable&.title
+  end
 
-
-    json.permissions do
+  json.permissions do
+    if staff_role.global_permission
       json.array! GlobalPermission::AVAILABLE_PERMISSIONS.keys.each do |key|
         json.key key
         json.title I18n.t("permissions.#{key}")
@@ -21,5 +21,6 @@ json.array! staff_roles do |staff_role|
         json.value staff_role.global_permission.permissions.has_key?(key) ? staff_role.global_permission.permissions[key] : false
       end
     end
+  end
   # end
 end

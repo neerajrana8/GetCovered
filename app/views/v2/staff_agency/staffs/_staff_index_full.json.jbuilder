@@ -11,3 +11,6 @@ end
 
 json.organizable_title staff.organizable&.title
 
+json.staff_roles do
+  json.partial! 'v2/shared/staff_roles/full.json.jbuilder', staff_roles: staff.staff_roles
+end
