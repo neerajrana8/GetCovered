@@ -118,7 +118,7 @@ module Reports
     end
 
     def flatten_agency_report(agency_report)
-      data['rows'] << agency_report[:agency_data]
+      data['rows'] << agency_report.dig(:agency_data)
 
       agency_report[:accounts].each do |account_report|
         data['rows'] << account_report
