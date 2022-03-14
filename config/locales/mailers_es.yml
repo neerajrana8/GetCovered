@@ -7,7 +7,7 @@ es:
               Nuestro equipo revisará la solicitud tan pronto como podamos. Recibirá una actualización una vez que
               hayamos procesado su solicitud. Si se aprueba,
               sus fondos se transferirán nuevamente dentro de 1-3 días hábiles.
-              Si ha realizado esta solicitud por error, comuníquese con nosotros a %{contact_email} lo antes posible."
+              Si ha realizado esta solicitud por error, comuníquese con nosotros en %{contact_phone} o %{contact_email} lo antes posible."
     cancel_request:
       subject: "%{agency_policy_type} Cancelación de su póliza"
       title: "Cancelación de su póliza"

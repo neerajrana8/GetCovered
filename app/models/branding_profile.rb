@@ -37,6 +37,10 @@ class BrandingProfile < ApplicationRecord
     branding_profile_attributes.find_by_name('contact_email')&.value
   end
 
+  def contact_phone
+    branding_profile_attributes.find_by_name('contact_phone')&.value
+  end
+
   def formatted_url
     self.url.blank? ? I18n.t('agency_model.no_branding') : self.url.include?('https') ? self.url : "https://#{self.url}"
   end
