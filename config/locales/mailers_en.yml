@@ -133,3 +133,40 @@ en:
         "Please login to %{agency_title} at the link below to update your credit card information
         to avoid interruption of coverage."
       contact_us: "Feel free to contact us at %{contact_email} if you have any questions."
+  charge_mailer:
+    charge_failed:
+      subject: "%{product_type} Payment Failed"
+      body: "Hello %{recipient_name},
+             Thank you for selecting a %{product_type} from %{agency_title}.
+             Unfortunately, we had an issue processing payment for your %{product_type} %{product_identifier}.
+             To avoid an interruption in your coverage, you may need to update your payment information.
+             You can do so by visiting the link below:
+                %{url}
+             If this seems to be an error, please contact us at %{support_email} and we'll look into it.
+             Thank you,
+             The Get Covered Team
+             %{support_email}"
+  invoice_mailer:
+    invoice_complete:
+      subject: "%{product_type} Invoice Paid"
+      body: "Hello %{recipient_name},
+             Thank you for selecting a %{product_type} from %{agency_title}.
+             Your account invoice for %{product_type} %{product_identifier} in the amount of $%{invoice_total} was successfully paid on %{invoice_date}.
+             To review your policy information, please visit the following link:
+                %{url}
+             If you have any questions, please contact us at %{support_email}.
+             Thank you,
+             The Get Covered Team
+             %{support_email}"
+    invoice_missed:
+      subject: "%{product_type} Invoice Missed"
+      body: "Hello %{recipient_name},
+             Thank you for selecting a %{product_type} from %{agency_title}.
+             Payment for your invoice for %{product_type} %{product_identifier} in the amount of $%{invoice_total} due on %{invoice_date} was missed, and your account is now past due.
+             To avoid losing your coverage, payment must be made to your account immediately. You can do so by visiting the link below:
+                %{url}
+             If this seems to be an error, please contact us at %{support_email} and we'll look into it.
+             Thank you,
+             The Get Covered Team
+             %{support_email}"
+             
