@@ -124,7 +124,16 @@ describe 'Leads API spec', type: :request do
     PolicyApplication.any_instance.stub(:billing_strategy){ billing_strategy }
     PolicyApplication.any_instance.stub(:agency){ agency_partner }
 
-    result = external_api_call(external_api_call_params(test_email, branding_profile), get_external_access_token_headers(agency_partner))
+    logger_params = external_api_call_params(test_email, branding_profile)
+    logger_headers = get_external_access_token_headers(agency_partner)
+
+    puts logger_params.to_json
+    puts logger_headers.to_json
+
+    result = external_api_call(logger_params, logger_headers)
+
+    pp result
+
     expect(response.status).to eq(200)
     expect(result['reference']).to_not eq(nil)
     expect(Lead.find_by(email: test_email)).to_not eq(nil)
