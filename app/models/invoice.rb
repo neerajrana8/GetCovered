@@ -429,10 +429,12 @@ class Invoice < ApplicationRecord
 
   # WARNING: only called from stripe charges right now, not external charges!
   def send_charge_notifications(charge)
+    # WARNING: ChargeMailer calls can throw exceptions! Shouldn't be a problem here since it's after transactions are closed (process_reductions doesn't have to run every step) & I'd rather see it on NewRelic if it happens, so leaving uncaught for now
     case charge.status # value will never be 'processing'
       when 'errored'
       when 'pending'
       when 'failed'
+        ChargeMailer.charge_failed(charge)
       when 'succeeded'
     end
   end
@@ -455,8 +457,13 @@ class Invoice < ApplicationRecord
     end
     # send any other notifications
     if self.autosend_status_change_notifications
-      # this gets called after_commit whenever our status has changed
-      # MOOSE WARNING: fill this out, notification people
+      # WARNING: InvoiceMailer calls can throw exceptions! Shouldn't be a problem here since it's in an after_commit & I'd rather see it on NewRelic if it happens, so leaving uncaught for now
+      case self.status
+        when 'complete'
+          InvoiceMailer.invoice_complete(self)
+        when 'missed'
+          InvoiceMailer.invoice_missed(self)
+      end
     end
   end
   
