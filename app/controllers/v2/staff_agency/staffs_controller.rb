@@ -106,13 +106,13 @@ module V2
       end
 
       def show_allowed?
-        return true if @agency == @staff.organizable
-
         return true if current_staff.getcovered_agent?
 
-        return true if @agency.agencies.include?(@staff.organizable)
+        return true unless (@agency.agencies.pluck(:id) & @staff.agencies.pluck(:id)).empty?
 
-        return true if @agency.accounts.include?(@staff.organizable)
+        return true if current_staff.agencies.include?(@agency)
+
+        return true unless (@agency.accounts.pluck(:id) & @staff.accounts.pluck(:id)).empty?
 
         false
       end
