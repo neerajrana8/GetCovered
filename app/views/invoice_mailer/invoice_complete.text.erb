@@ -1,0 +1,16 @@
+Hello <%= @user.profile.full_name %>,
+
+Thank you for selecting a <%= @product_type %> from <%= @agency.title %>.
+
+Your policy invoice for $<%= (@invoice.total_due/100).floor %>.<%= (@invoice.total_due % 100) %> was successfully paid on <%= @invoice.status_changed.to_date %>.
+
+To review your policy information, please visit:
+
+  https://www.getcoveredinsurance.com/user/policies
+
+If you have any questions, please contact support@getcoveredinsurance.com.
+
+Thank you,
+
+The Get Covered Team
+support@getcoveredinsurance.com

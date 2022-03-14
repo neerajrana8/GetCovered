@@ -1,0 +1,16 @@
+Hello <%= @user.profile.full_name %>,
+
+Thank you for selecting a <%= @product_type %> from <%= @agency.title %>.
+
+Payment for your policy invoice of $<%= (@invoice.total_due/100).floor %>.<%= (@invoice.total_due % 100) %> due on <%= @invoice.due_date.to_s %> was missed, and your account is now past due.
+
+To avoid losing your coverage, payment must be made to your account immediately. You can do so by visiting the link below:
+
+  https://www.getcoveredinsurance.com/user/payment-methods
+
+If this seems to be an error, please contact us at support@getcoveredinsurance.com and we'll look into it.
+
+Thank you,
+
+The Get Covered Team
+support@getcoveredinsurance.com
