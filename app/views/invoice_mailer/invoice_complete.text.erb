@@ -1,6 +1,6 @@
 <%=
 
-  I18n.t('invoice_mailer.invoice_complete.body',
+  raw(I18n.t('invoice_mailer.invoice_complete.body',
     recipient_name: @user.profile.full_name,
     product_type: @product_type,
     product_identifier: @product_identifier,
@@ -9,6 +9,6 @@
     invoice_date: (@invoice.status_changed || @invoice.due_date).to_date.to_s,
     url: 'https://www.getcoveredinsurance.com/user/policies',
     support_email: "support@getcoveredinsurance.com"
-  )
+  ))
 
 %>
