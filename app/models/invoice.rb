@@ -434,7 +434,7 @@ class Invoice < ApplicationRecord
       when 'errored'
       when 'pending'
       when 'failed'
-        ChargeMailer.charge_failed(charge)
+        ChargeMailer.charge_failed(charge).deliver_later
       when 'succeeded'
     end
   end
@@ -460,9 +460,9 @@ class Invoice < ApplicationRecord
       # WARNING: InvoiceMailer calls can throw exceptions! Shouldn't be a problem here since it's in an after_commit & I'd rather see it on NewRelic if it happens, so leaving uncaught for now
       case self.status
         when 'complete'
-          InvoiceMailer.invoice_complete(self)
+          InvoiceMailer.invoice_complete(self).deliver_later
         when 'missed'
-          InvoiceMailer.invoice_missed(self)
+          InvoiceMailer.invoice_missed(self).deliver_later
       end
     end
   end
