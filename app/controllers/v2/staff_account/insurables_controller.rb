@@ -17,7 +17,7 @@ module V2
       end
 
       def communities
-        if params[:search].presence && params[:account_id].presence
+        if params[:search].presence
           account = current_staff.organizable
           @insurables = Insurable.where(account_id: account.id).communities.where(
             "title ILIKE '%#{ params[:search] }%'"
