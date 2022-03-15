@@ -16,6 +16,25 @@ module V2
         super_index(:@insurables, current_staff.organizable.insurables)
       end
 
+      def communities
+        if params[:search].presence && params[:account_id].presence
+          account = current_staff.organizable
+          @insurables = Insurable.where(account_id: account.id).communities.where(
+            "title ILIKE '%#{ params[:search] }%'"
+          )
+
+          @response = V2::StaffSuperAdmin::Insurables.new(
+            @insurables
+          ).response
+
+          render json: @response.to_json,
+                 status: :ok
+        else
+          render json: [].to_json,
+                 status: :ok
+        end
+      end
+
       def show; end
 
       def create
