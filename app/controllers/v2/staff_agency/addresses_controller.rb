@@ -7,15 +7,13 @@ module V2
     class AddressesController < StaffAgencyController
       def index
         if params[:search].presence
-          @addresses = Address.search_insurables(params[:search])
-          @ids = @addresses.select { |a| a['_source']['addressable_type'] == 'Insurable' }.map { |a| a['_source']['addressable_id'] }
-
-          @insurables = 
-            Insurable.where(id: @ids, enabled: true, agency: @agency)
-              .send(*(params[:policy_type_id].blank? ? [:itself] : [:where, 'policy_type_ids @> ARRAY[?]::bigint[]', params[:policy_type_id].to_i]))
-              .send(*(params[:policy_type_id].to_i == PolicyType::RESIDENTIAL_ID ? [:where, { preferred_ho4: true }] : [:itself]))
-              .send(*(params[:account_id].present? ? [:where, { account_id: params[:account_id] }] : [:itself]))
-
+          insurable_ids = Address.where(addressable_type: "Insurable").where("addresses.full ILIKE '%#{ params[:search] }%'").pluck(:addressable_id)
+          insurable_type_ids = InsurableType::RESIDENTIAL_COMMUNITIES_IDS + InsurableType::BUILDINGS_IDS
+          @insurables = Insurable.where(id: insurable_ids, insurable_type_id: insurable_type_ids, enabled: true)
+                                 .send(*(params[:policy_type_id].blank? ? [:itself] : [:where, "policy_type_ids @> ARRAY[?]::bigint[]", params[:policy_type_id].to_i]))
+                                 .send(*(params[:policy_type_id].to_i == PolicyType::RESIDENTIAL_ID ? [:where, { preferred_ho4: true }] : [:itself]))
+                                 .send(*(params[:account_id].present? ? [:where, { account_id: params[:account_id] }] : [:itself]))
+                                 .send(*(params[:agency_id].present? ?  [:where, { agency_id: params[:agency_id] }] : [:itself]))
 
           @response = []
 
@@ -34,7 +32,7 @@ module V2
                 created_at: i.created_at,
                 updated_at: i.updated_at,
                 addresses: i.addresses,
-                insurables: i.units.select(&:enabled)
+                insurables: i.units.select{|u| u.enabled }
               )
             end
           end
