@@ -15,27 +15,9 @@ module V2
                                  .send(*(params[:account_id].present? ? [:where, { account_id: params[:account_id] }] : [:itself]))
                                  .send(*(params[:agency_id].present? ?  [:where, { agency_id: params[:agency_id] }] : [:itself]))
 
-          @response = []
-
-          @insurables&.each do |i|
-            if (InsurableType::COMMUNITIES_IDS | InsurableType::BUILDINGS_IDS).include?(i.insurable_type_id)
-              @response.push(
-                id: i.id,
-                title: i.title,
-                enabled: i.enabled,
-                preferred_ho4: i.preferred_ho4,
-                account_id: i.account_id,
-                agency_id: i.account.agency_id,
-                insurable_type_id: i.insurable_type_id,
-                category: i.category,
-                covered: i.covered,
-                created_at: i.created_at,
-                updated_at: i.updated_at,
-                addresses: i.addresses,
-                insurables: i.units.select{|u| u.enabled }
-              )
-            end
-          end
+          @response = V2::StaffSuperAdmin::Insurables.new(
+            @insurables
+          ).response
 
           render json: @response.to_json,
                  status: :ok

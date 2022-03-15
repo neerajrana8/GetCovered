@@ -238,6 +238,8 @@
 
     resources :fees, only: [:index, :show, :create, :update]
 
+    get 'communities', to: 'insurables#communities'
+
     resources :insurables, only: [:create, :update, :index, :show, :destroy], concerns: :reportable do
       member do
         get :coverage_report

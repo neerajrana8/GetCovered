@@ -182,6 +182,8 @@
     resources :histories,
       only: [ :index ]
 
+    get 'communities', to: 'insurables#communities'
+
     resources :insurables,
       only: [ :create, :update, :destroy, :index, :show ],
       concerns: :reportable do
