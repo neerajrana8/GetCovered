@@ -6,7 +6,7 @@ es:
       text: "Hemos recibido una solicitud de reembolso por su póliza %{policy_type} de garantía de alquiler %{policy_number} el %{request_date}.
               Nuestro equipo revisará la solicitud tan pronto como podamos. Recibirá una actualización una vez que
               hayamos procesado su solicitud. Si se aprueba,
-              sus fondos se transferirán nuevamente dentro de 1-3 días hábiles.
+              sus fondos se transferirán nuevamente dentro de 5-7 días hábiles.
               Si ha realizado esta solicitud por error, comuníquese con nosotros a %{contact_email} lo antes posible."
     cancel_request:
       subject: "%{agency_policy_type} Cancelación de su póliza"
@@ -118,3 +118,39 @@ es:
         "Inicie sesión en %{agency_title} en el enlace siguiente para actualizar la información de su tarjeta de crédito a
          evitar la interrupción de la cobertura."
       contact_us: "No dude en contactarnos al %{contact_email} si tiene alguna pregunta."
+  charge_mailer:
+    charge_failed:
+      subject: "%{product_type} Pago de Prima Fallido"
+      body: "Hola %{recipient_name},\n
+             Gracias por elegir una %{product_type} de %{agency_title}.\n
+             Lamentablemente, tuvimos un problema al procesar el pago de la prima de su %{product_type} %{product_identifier}.\n
+             Para evitar una interrupción en su cobertura, es posible que deba actualizar su información de pago.\n
+             Puede hacerlo visitando el siguiente enlace:\n
+                %{url}\n
+             Si esto parece ser un error, contáctenos en %{support_email} y lo investigaremos.\n
+             Gracias,\n
+             El equipo de Get Covered\n
+             %{support_email}"
+  invoice_mailer:
+    invoice_complete:
+      subject: "%{product_type} Factura Premium Pagada"
+      body: "Hola %{recipient_name},\n
+             Gracias por elegir una %{product_type} de %{agency_title}.\n
+             La factura de la prima de su cuenta de $%{invoice_total} se pagó con éxito el %{invoice_date}.\n
+             Para revisar la información de su póliza, visite el siguiente enlace:\n
+                %{url}\n
+             Si tiene alguna pregunta, comuníquese con nosotros a %{support_email}.\n
+             Gracias,\n
+             El equipo de Get Covered\n
+             %{support_email}"
+    invoice_missed:
+      subject: "%{product_type} Factura Perdida"
+      body: "Hola %{recipient_name},\n
+             Gracias por elegir una %{product_type} de %{agency_title}.\n
+             No se realizó el pago de la factura de la prima de %{product_type} %{product_identifier} que vence el %{invoice_date} y su cuenta ahora está vencida.\n
+             Para evitar perder su cobertura, el pago debe hacerse a su cuenta inmediatamente. Puede hacerlo visitando el siguiente enlace:\n
+                %{url}\n
+             Si esto parece ser un error, contáctenos en %{support_email} y lo investigaremos.\n
+             Gracias,\n
+             El equipo de Get Covered\n
+             %{support_email}"

@@ -6,9 +6,9 @@ en:
       text: "We have received a refund request for your %{policy_type} policy %{policy_number} on %{request_date}.
               Our team will review the request as soon as we can.
               You will receive an update once we have processed your request.
-              If approved, your funds will be transferred back within 1-3 business days.
+              If approved, your funds will be transferred back within 5-7 business days.
               If you have made this request in error,
-              please reach out to us a %{contact_email} as soon as possible."
+              please reach out to us at %{contact_phone} or %{contact_email} as soon as possible."
     cancel_request:
       subject: "%{agency_policy_type} Cancellation Request"
       title: "Cancel request"
@@ -133,3 +133,40 @@ en:
         "Please login to %{agency_title} at the link below to update your credit card information
         to avoid interruption of coverage."
       contact_us: "Feel free to contact us at %{contact_email} if you have any questions."
+  charge_mailer:
+    charge_failed:
+      subject: "%{product_type} Payment Failed"
+      body: "Hello %{recipient_name},\n
+             Thank you for selecting a %{product_type} from %{agency_title}.\n
+             Unfortunately, we had an issue processing payment for your %{product_type} %{product_identifier}.\n
+             To avoid an interruption in your coverage, you may need to update your payment information.\n
+             You can do so by visiting the link below:\n
+                %{url}\n
+             If this seems to be an error, please contact us at %{support_email} and we'll look into it.\n
+             Thank you,\n
+             The Get Covered Team\n
+             %{support_email}"
+  invoice_mailer:
+    invoice_complete:
+      subject: "%{product_type} Invoice Paid"
+      body: "Hello %{recipient_name},\n
+             Thank you for selecting a %{product_type} from %{agency_title}.\n
+             Your account invoice for %{product_type} %{product_identifier} in the amount of $%{invoice_total} was successfully paid on %{invoice_date}.\n
+             To review your policy information, please visit the following link:\n
+                %{url}\n
+             If you have any questions, please contact us at %{support_email}.\n
+             Thank you,\n
+             The Get Covered Team\n
+             %{support_email}"
+    invoice_missed:
+      subject: "%{product_type} Invoice Missed"
+      body: "Hello %{recipient_name},\n
+             Thank you for selecting a %{product_type} from %{agency_title}.\n
+             Payment for your invoice for %{product_type} %{product_identifier} in the amount of $%{invoice_total} due on %{invoice_date} was missed, and your account is now past due.\n
+             To avoid losing your coverage, payment must be made to your account immediately. You can do so by visiting the link below:\n
+                %{url}\n
+             If this seems to be an error, please contact us at %{support_email} and we'll look into it.\n
+             Thank you,\n
+             The Get Covered Team\n
+             %{support_email}"
+             
