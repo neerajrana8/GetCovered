@@ -29,19 +29,14 @@ class UserCoverageMailer < ApplicationMailer
 
   end
 
+
   def qbe_proof_of_coverage
     @policy.reload()
     unless @policy.sent?
       @user_name = @user&.profile&.full_name
       I18n.locale = @user&.profile&.language if @user&.profile&.language&.present?
-      @accepted_on = Time.current.strftime('%m/%d/%y')
-      @site = whitelabel_host(@policy.agency)
-
-      @content = {
-        subject: I18n.t('user_coverage_mailer.all_documents.other_title'),
-        text: 'Your Renters Insurance Policy has been accepted on ' + @accepted_on  +'.</br>
-               Please log in to <a href="' + @site + '">our site</a> for more information.'
-      }
+      #@accepted_on = Time.current.strftime('%m/%d/%y')
+      #@site = whitelabel_host(@policy.agency)
 
       attachments["evidence-of-insurance.pdf"] = {
         mime_type: "application/pdf",
@@ -49,7 +44,10 @@ class UserCoverageMailer < ApplicationMailer
         content: Base64.strict_encode64(@policy.documents.last.download)
       }
 
-      mail(subject: @content[:subject])
+      @second_logo_url = @policy&.branding_profile&.second_logo_url
+
+      subject = t('user_coverage_mailer.qbe_proof_of_coverage.subject')
+      mail(to: @user.email, subject: subject)
       return true
     else
       return false
@@ -97,7 +95,7 @@ class UserCoverageMailer < ApplicationMailer
       return false
     end
   end
-  
+
   def all_documents
     unless @policy.nil? || @user.nil?
 

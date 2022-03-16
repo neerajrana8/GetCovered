@@ -50,7 +50,17 @@ en:
         thank_you: 'Thank you for registering for a Rent Guarantee policy. Below are the details of your policy along with the attached agreement and summary for your records.'
         please_log_in: 'Please log in to our site <a class="o_text-light o_underline" href="%{login_url}" style="text-decoration: underline;outline: none;color: #126de5;">this page</a> for more information.'
         contact_us: 'Please contact us at %{contact_email} if you have any questions'
-
+    qbe_proof_of_coverage:
+      subject: "Congrats! You’re Covered!"
+      thank_you_for_purchase: "Thank you for purchasing a renters insurance policy with Get Covered. Sit back and relax knowing you’re covered!"
+      attached: "Attached you can find your Certificate of Insurance."
+      your_policy_is_written: "Your policy is written through our partner, QBE. Be on the lookout for an email introduction from QBE."
+      need_to_make_changes: "Need to make changes?"
+      no_worries: "No worries. You have full control over your policy. For specific questions regarding your renters insurance policy, claims and policy updates, please contact"
+      or_visit: "or visit"
+      we_look_forward: "We look forward to providing you with quality coverage and outstanding service."
+      thank_you: "Thank you,"
+      team_name: "The Get Covered Team"
   payment_made_mailer:
     send_successful_payment_notification:
       subject: "%{agency_title} - %{policy_type} Premium Payment Made"
@@ -169,4 +179,4 @@ en:
              Thank you,\n
              The Get Covered Team\n
              %{support_email}"
-             
+
