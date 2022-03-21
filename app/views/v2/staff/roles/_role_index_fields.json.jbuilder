@@ -1,1 +1,1 @@
-json.extract! role, :id, :organizable_id, :organizable_type, :role, :primary, :active
+json.extract! role, :id, :organizable_id, :organizable_type, :role, :primary, :active, :created_at, :updated_at

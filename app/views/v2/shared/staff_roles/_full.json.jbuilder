@@ -1,6 +1,5 @@
 json.array! staff_roles do |staff_role|
-  # staff_roles.each do |staff_role|
-  json.extract! staff_role, :id, :role, :organizable_id, :organizable_type, :primary, :active
+  json.extract! staff_role, :id, :role, :organizable_id, :organizable_type, :primary, :active, :created_at, :updated_at
   if staff_role.organizable_type == 'Account'
     json.account staff_role.organizable&.title
     json.agency staff_role.organizable&.agency&.title
@@ -8,6 +7,7 @@ json.array! staff_roles do |staff_role|
 
   if staff_role.organizable_type == 'Agency'
     json.agency staff_role.organizable&.title
+    json.agency_owner staff_role.organizable.staff_id === staff_role.staff_id
   end
 
   json.permissions do
