@@ -68,7 +68,7 @@ module Integrations
         # set up next sync if needed
         if integration.configuration['sync']['next_sync'].nil?
           integration.configuration['sync']['next_sync'] = {
-            timestamp: (Time.current + 1.day).beginning_of_day
+            timestamp: (Time.current + 1.day).to_s
           }
           # MOOSE WARNING: add sync job call
         end
