@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2022_02_02_153208) do
+ActiveRecord::Schema.define(version: 2022_03_21_093602) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
@@ -111,7 +111,9 @@ ActiveRecord::Schema.define(version: 2022_02_02_153208) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.boolean "searchable", default: false
-    t.index ["addressable_type", "addressable_id"], name: "index_addresses_on_addressable_type_and_addressable_id"
+    t.boolean "verified", default: false
+    t.string "neighborhood"
+    t.index ["addressable_type", "addressable_id"], name: "index_addresses_on_addressable"
   end
 
   create_table "agencies", force: :cascade do |t|
@@ -706,7 +708,7 @@ ActiveRecord::Schema.define(version: 2022_02_02_153208) do
   create_table "fees", force: :cascade do |t|
     t.string "title"
     t.string "slug"
-    t.integer "amount", default: 0, null: false
+    t.decimal "amount", default: "0.0", null: false
     t.integer "amount_type", default: 0, null: false
     t.integer "type", default: 0, null: false
     t.boolean "per_payment", default: false, null: false
@@ -991,6 +993,7 @@ ActiveRecord::Schema.define(version: 2022_02_02_153208) do
     t.bigint "user_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "lessee", default: true, null: false
     t.index ["lease_id"], name: "index_lease_users_on_lease_id"
     t.index ["user_id"], name: "index_lease_users_on_user_id"
   end
@@ -1249,6 +1252,7 @@ ActiveRecord::Schema.define(version: 2022_02_02_153208) do
     t.string "marked_for_cancellation_info"
     t.datetime "marked_cancellation_time"
     t.string "marked_cancellation_reason"
+    t.integer "document_status", default: 0
     t.index ["account_id"], name: "index_policies_on_account_id"
     t.index ["agency_id"], name: "index_policies_on_agency_id"
     t.index ["carrier_id"], name: "index_policies_on_carrier_id"
@@ -1331,8 +1335,8 @@ ActiveRecord::Schema.define(version: 2022_02_02_153208) do
     t.boolean "auto_renew", default: true
     t.boolean "auto_pay", default: true
     t.bigint "policy_application_group_id"
-    t.jsonb "coverage_selections", default: [], null: false
-    t.jsonb "extra_settings"
+    t.jsonb "coverage_selections", default: {}, null: false
+    t.jsonb "extra_settings", default: {}
     t.jsonb "resolver_info"
     t.bigint "tag_ids", default: [], null: false, array: true
     t.jsonb "tagging_data"
@@ -1360,6 +1364,8 @@ ActiveRecord::Schema.define(version: 2022_02_02_153208) do
     t.datetime "updated_at", null: false
     t.boolean "enabled", default: false, null: false
     t.integer "special_deductible"
+    t.integer "occurrence_limit"
+    t.boolean "is_carrier_fee", default: false
     t.index ["policy_application_id"], name: "index_policy_coverages_on_policy_application_id"
     t.index ["policy_id"], name: "index_policy_coverages_on_policy_id"
   end
@@ -1750,6 +1756,7 @@ ActiveRecord::Schema.define(version: 2022_02_02_153208) do
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
     t.boolean "active", default: false
+    t.boolean "enabled", default: true
     t.index ["organizable_type", "organizable_id"], name: "index_staff_roles_on_organizable_type_and_organizable_id"
     t.index ["staff_id"], name: "index_staff_roles_on_staff_id"
   end
@@ -1908,6 +1915,7 @@ ActiveRecord::Schema.define(version: 2022_02_02_153208) do
     t.boolean "has_existing_policies", default: false
     t.boolean "has_current_leases", default: false
     t.boolean "has_leases", default: false
+    t.string "altuid"
     t.index ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["invitation_token"], name: "index_users_on_invitation_token", unique: true

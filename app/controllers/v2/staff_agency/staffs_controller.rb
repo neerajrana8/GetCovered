@@ -143,7 +143,7 @@ module V2
             birth_date contact_email contact_phone first_name
             job_title last_name middle_name suffix title
           ], staff_roles_attributes: [
-            :organizable_id, :organizable_type, :role,
+            :organizable_id, :organizable_type, :role, :enabled,
             global_permission_attributes: {permissions: {}}
           ]
         )
