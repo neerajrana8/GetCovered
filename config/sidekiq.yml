@@ -30,7 +30,7 @@ production:
     cron:  '0 4 * * *'   # Each day at 4:00 AM
     class: Reports::DailySalesAllJob
   daily_sales_internal_send_emails:
-    cron:  '0 * * * *'   # Each day at 5:00 AM Changing hourly for debugging and will be reverted to 0 5 * * *
+    cron:  '0 5 * * *'   # Each day at 5:00 AM
     class: Reports::DailySalesInternalSendEmailsJob
   coverage_reports_job:
     cron: '0 2 * * *'   # Every day at 2:00 AM
