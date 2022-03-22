@@ -18,7 +18,7 @@ class ScheduledAction < ApplicationRecord
     errored: 4
   }
   
-  enum action: {
+  enum action: { # WARNING: define a method called perform_#{self.action} when you add an action here
     scheduled_action_test: 0,
     error_handling_test: 1
   }
@@ -59,7 +59,7 @@ class ScheduledAction < ApplicationRecord
     end
     
     def perform_scheduled_action_test
-      self.update(output: { 'success' => true })
+      self.output = { 'success' => true }
     end
   
     def perform_error_handling_test
