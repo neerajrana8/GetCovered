@@ -150,6 +150,7 @@ class Policy < ApplicationRecord
   validate :is_allowed_to_update?, on: :update
   validate :status_allowed
   validate :carrier_agency_exists
+  validate :force_placement_for_master_coverage_only
   validate :master_policy, if: -> { policy_type&.master_coverage }
   validates :agency, presence: true, if: :in_system?
   validates :carrier, presence: true, if: :in_system?
@@ -257,6 +258,12 @@ class Policy < ApplicationRecord
     return unless in_system?
 
     errors.add(:carrier, I18n.t('policy_model.carrier_agency_must_exist')) unless agency&.carriers&.include?(carrier)
+  end
+
+  def force_placement_for_master_coverage_only
+    unless self.force_placed.nil?
+      errors.add(:force_placed, "Only applicable to Master Policy Coverages") unless self.policy_type_id == ::PolicyType::MASTER_COVERAGE_ID
+    end
   end
 
   def master_policy

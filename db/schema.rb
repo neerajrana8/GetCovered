@@ -1249,6 +1249,7 @@ ActiveRecord::Schema.define(version: 2022_03_22_214629) do
     t.datetime "marked_cancellation_time"
     t.string "marked_cancellation_reason"
     t.integer "document_status", default: 0
+    t.boolean "force_placed"
     t.index ["account_id"], name: "index_policies_on_account_id"
     t.index ["agency_id"], name: "index_policies_on_agency_id"
     t.index ["carrier_id"], name: "index_policies_on_carrier_id"
@@ -1735,7 +1736,7 @@ ActiveRecord::Schema.define(version: 2022_03_22_214629) do
     t.index ["parent_id"], name: "index_scheduled_actions_on_parent_id"
     t.index ["status", "trigger_time", "action"], name: "index_scheduled_actions_on_status_and_trigger_time_and_action"
   end
-
+  
   create_table "signable_documents", force: :cascade do |t|
     t.string "title", null: false
     t.integer "document_type", null: false
@@ -1851,6 +1852,18 @@ ActiveRecord::Schema.define(version: 2022_03_22_214629) do
     t.bigint "stripe_charge_id"
     t.index ["refund_id"], name: "index_stripe_refunds_on_refund_id"
     t.index ["stripe_charge_id"], name: "index_stripe_refunds_on_stripe_charge_id"
+  end
+
+  create_table "system_histories", force: :cascade do |t|
+    t.string "field"
+    t.string "previous_value_str"
+    t.string "new_value_str"
+    t.jsonb "system_data", default: {}
+    t.string "recordable_type", null: false
+    t.bigint "recordable_id", null: false
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["recordable_type", "recordable_id"], name: "index_system_histories_on_recordable"
   end
 
   create_table "tags", force: :cascade do |t|

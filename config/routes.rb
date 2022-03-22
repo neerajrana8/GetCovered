@@ -2,6 +2,7 @@ require 'sidekiq/web'
 
 Rails.application.routes.draw do
 
+  mount Rswag::Api::Engine => '/api-docs'
   Sidekiq::Web.use Rack::Auth::Basic do |username, password|
     username == Rails.application.credentials[:sidekiq_credentials][Rails.env.to_sym][:username] &&
       password == Rails.application.credentials[:sidekiq_credentials][Rails.env.to_sym][:password]
