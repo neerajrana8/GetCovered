@@ -37,11 +37,11 @@ class MasterPolicyConfiguration < ApplicationRecord
       total_monthly_charge = charge_amount(coverage.force_placed)
       if prorate_charges == true && (first_month || last_month)
         days_in_month = t.end_of_month.day
-        current_day = t.current.day
+        current_day = coverage.effective_date.day - 1
         daily_charge_amount = total_monthly_charge.to_f / days_in_month
 
         if first_month && last_month
-          days = coverage.expiration_date.day - coverage.effective_date.day
+          days = coverage.expiration_date.day - current_day
         elsif first_month
           days = days_in_month - current_day
         elsif last_month
