@@ -19,7 +19,8 @@ class ScheduledAction < ApplicationRecord
   }
   
   enum action: {
-    scheduled_action_test: 0
+    scheduled_action_test: 0,
+    error_handling_test: 1
   }
   
   def perform!
@@ -57,9 +58,11 @@ class ScheduledAction < ApplicationRecord
       self.ended_at = Time.current
     end
     
-    # add actual action code here
     def perform_scheduled_action_test
       self.update(output: { 'success' => true })
     end
   
+    def perform_error_handling_test
+      goose = 3 / 0
+    end
 end
