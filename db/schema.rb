@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2022_03_02_155738) do
+ActiveRecord::Schema.define(version: 2022_03_22_214629) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
@@ -1717,17 +1717,23 @@ ActiveRecord::Schema.define(version: 2022_03_02_155738) do
     t.index ["reportable_type", "reportable_id"], name: "index_reports_on_reportable"
   end
 
-  create_table "search_contents", force: :cascade do |t|
-    t.string "field"
-    t.string "value"
-    t.string "searchable_type"
-    t.bigint "searchable_id"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.tsvector "vectorized"
-    t.index "to_tsvector('english'::regconfig, (COALESCE(value, ''::character varying))::text)", name: "sc_vectorized_index", using: :gin
-    t.index ["searchable_type", "searchable_id"], name: "index_search_contents_on_searchable_type_and_searchable_id"
-    t.index ["vectorized"], name: "searchindex", using: :gin
+  create_table "scheduled_actions", force: :cascade do |t|
+    t.integer "action", null: false
+    t.integer "status", default: 0, null: false
+    t.datetime "trigger_time", null: false
+    t.jsonb "input"
+    t.jsonb "output"
+    t.string "error_messages", default: [], null: false, array: true
+    t.datetime "started_at"
+    t.datetime "ended_at"
+    t.string "actionable_type"
+    t.bigint "actionable_id"
+    t.bigint "parent_id"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["actionable_type", "actionable_id"], name: "index_scheduled_actions_on_actionable"
+    t.index ["parent_id"], name: "index_scheduled_actions_on_parent_id"
+    t.index ["status", "trigger_time", "action"], name: "index_scheduled_actions_on_status_and_trigger_time_and_action"
   end
 
   create_table "signable_documents", force: :cascade do |t|
@@ -1928,7 +1934,6 @@ ActiveRecord::Schema.define(version: 2022_03_02_155738) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
-  add_foreign_key "master_policy_configurations", "carrier_policy_types"
   add_foreign_key "policy_coverages", "policies"
   add_foreign_key "policy_coverages", "policy_applications"
   add_foreign_key "policy_types", "policy_types", column: "master_policy_id"
