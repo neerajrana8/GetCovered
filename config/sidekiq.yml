@@ -144,4 +144,7 @@ production:
   create_commissions_for_policy_premium_item_transactions_job:
     cron: '0 5 * * *' # Every day at 5:00 AM
     class: CreateCommissionsForPolicyPremiumItemTransactionsJob
-
+  # Generic Actions
+  perform_scheduled_actoins_job:
+    cron: '45 * * * *' # every hour, 45 minutes in
+    class: PerformScheduledActionsJob

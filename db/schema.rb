@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2022_03_22_160538) do
+ActiveRecord::Schema.define(version: 2022_03_22_214629) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
@@ -1718,6 +1718,25 @@ ActiveRecord::Schema.define(version: 2022_03_22_160538) do
     t.index ["reportable_type", "reportable_id"], name: "index_reports_on_reportable"
   end
 
+  create_table "scheduled_actions", force: :cascade do |t|
+    t.integer "action", null: false
+    t.integer "status", default: 0, null: false
+    t.datetime "trigger_time", null: false
+    t.jsonb "input"
+    t.jsonb "output"
+    t.string "error_messages", default: [], null: false, array: true
+    t.datetime "started_at"
+    t.datetime "ended_at"
+    t.string "actionable_type"
+    t.bigint "actionable_id"
+    t.bigint "parent_id"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["actionable_type", "actionable_id"], name: "index_scheduled_actions_on_actionable"
+    t.index ["parent_id"], name: "index_scheduled_actions_on_parent_id"
+    t.index ["status", "trigger_time", "action"], name: "index_scheduled_actions_on_status_and_trigger_time_and_action"
+  end
+  
   create_table "signable_documents", force: :cascade do |t|
     t.string "title", null: false
     t.integer "document_type", null: false
