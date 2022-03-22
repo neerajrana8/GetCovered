@@ -26,7 +26,7 @@ module CarrierQbeMasterPolicy
       end
     end
 
-    def qbe_specialty_issue_coverage(insurable, users, start_coverage)
+    def qbe_specialty_issue_coverage(insurable, users, start_coverage, force = false)
       to_return = false
 
       coverage = self.policies.new(
@@ -36,7 +36,8 @@ module CarrierQbeMasterPolicy
         account_id: self.account_id,
         carrier_id: self.carrier_id,
         status: "BOUND",
-        policy_type_id: 3
+        policy_type_id: 3,
+        force_placed: force
       )
 
       if coverage.save!
