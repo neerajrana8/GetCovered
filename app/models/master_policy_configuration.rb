@@ -24,6 +24,38 @@ class MasterPolicyConfiguration < ApplicationRecord
     return return_charge
   end
 
+  def term_amount(coverage = nil, t = DateTime.current)
+    amount = nil
+    coverage_check = coverage.nil? ? false : coverage.is_a?(Policy) && ::PolicyType::MASTER_COVERAGE_ID == coverage.policy_type_id
+    if coverage_check
+      first_month = t.month == coverage.effective_date.month &&
+                    t.year == coverage.effective_date.year
+
+      last_month = coverage.expiration_date.nil? ? false : t.month == coverage.expiration_date.month &&
+                                                           t.year == coverage.expiration_date.year
+
+      total_monthly_charge = charge_amount(coverage.force_placed)
+      if prorate_charges == true && (first_month || last_month)
+        days_in_month = t.end_of_month.day
+        current_day = coverage.effective_date.day - 1
+        daily_charge_amount = total_monthly_charge.to_f / days_in_month
+
+        if first_month && last_month
+          days = coverage.expiration_date.day - current_day
+        elsif first_month
+          days = days_in_month - current_day
+        elsif last_month
+          days = coverage.expiration_date.day
+        end
+
+        amount = (daily_charge_amount * days).ceil(0)
+      else
+        amount = total_monthly_charge
+      end
+    end
+    return amount
+  end
+
   private
 
   def set_program_start_date
