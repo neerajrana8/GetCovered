@@ -35,8 +35,6 @@ class UserCoverageMailer < ApplicationMailer
     unless @policy.sent?
       @user_name = @user&.profile&.full_name
       I18n.locale = @user&.profile&.language if @user&.profile&.language&.present?
-      #@accepted_on = Time.current.strftime('%m/%d/%y')
-      #@site = whitelabel_host(@policy.agency)
 
       attachments["evidence-of-insurance.pdf"] = {
         mime_type: "application/pdf",
@@ -44,10 +42,10 @@ class UserCoverageMailer < ApplicationMailer
         content: Base64.strict_encode64(@policy.documents.last.download)
       }
 
-      @second_logo_url = @policy&.branding_profile&.second_logo_url
+      @agency_account_name = @policy.agency&.title || @policy.account&.title
 
-      subject = t('user_coverage_mailer.qbe_proof_of_coverage.subject')
-      mail(to: @user.email, subject: subject)
+      subject = "#{@agency_account_name} - #{t('user_coverage_mailer.qbe_proof_of_coverage.subject')}"
+      mail(to: @user.email, subject: subject, from: "support@getcoveredinsurance.com")
       return true
     else
       return false

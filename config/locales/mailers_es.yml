@@ -50,7 +50,7 @@ es:
         contact_us: 'Por favor contáctenos en %{contact_email} si tiene alguna pregunta.'
     qbe_proof_of_coverage:
       subject: "¡Felicidades! ¡Estás cubierto!"
-      thank_you_for_purchase: "Gracias por comprar la póliza de seguro para inquilinos con Get Covered. ¡Siéntese y relájese sabiendo que ya estás cubierto!"
+      thank_you_for_purchase: "Gracias por comprar la póliza de seguro para inquilinos con %{agency_account_name}. ¡Siéntese y relájese sabiendo que ya estás cubierto!"
       attached: "Adjunto puedes encontrar tu Certificado de Seguro."
       your_policy_is_written: "Tu póliza está escrita a través de nuestro socio, QBE. Estés atento a una presentación por correo electrónico de QBE. Estés atento a las actualizaciones y novedades por correo electrónico de QBE."
       need_to_make_changes: "¿Necesitas hacer cambios?"
@@ -60,6 +60,7 @@ es:
       we_look_forward: "Esperamos brindarle una cobertura de calidad y un servicio excepcional."
       thank_you: "Gracias,"
       team_name: "TEl equipo de Get Covered"
+      email_preview_text: "Documentos de seguro adjuntos"
   payment_made_mailer:
     send_successful_payment_notification:
       subject: "%{agency_title} - %{policy_type} Pago de prima realizado"
