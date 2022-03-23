@@ -271,9 +271,9 @@ module InsurablesMethods
             carrier_id: master_policy.carrier_id,
             policy_type_id: master_policy.policy_type_id,
             coverage_attributes: {
-              master_policy_liability: master_policy.policy_coverages.where(designation: 'liability_coverage').take.limit,
-              master_policy_contents: master_policy.policy_coverages.where(designation: 'tenant_contingent_contents').take.limit,
-              master_policy_per_month_charge: config.charge_amount(false)
+              master_policy_liability: master_policy.policy_coverages.where(designation: 'liability_coverage').take&.limit || 0,
+              master_policy_contents: master_policy.policy_coverages.where(designation: 'tenant_contingent_contents').take&.limit || 0,
+              master_policy_per_month_charge: config.nil? ? nil : config.charge_amount(false)
             }
           }
         end
