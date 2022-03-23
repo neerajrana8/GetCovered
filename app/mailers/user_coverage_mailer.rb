@@ -42,7 +42,7 @@ class UserCoverageMailer < ApplicationMailer
         content: Base64.strict_encode64(@policy.documents.last.download)
       }
 
-      @agency_account_name = @policy.agency&.title || @policy.account&.title
+      @agency_account_name = @policy.account&.title || @policy.agency&.title
 
       subject = "#{@agency_account_name} - #{t('user_coverage_mailer.qbe_proof_of_coverage.subject')}"
       mail(to: @user.email, subject: subject, from: "support@getcoveredinsurance.com")
