@@ -7,6 +7,8 @@ module V2
     class PoliciesController < StaffPolicySupportController
       include PoliciesMethods
 
+      MAX_COUNTS = 9998
+
       before_action :set_policy,
                     only: %i[update show]
       before_action :set_optional_coverages, only: [:show]
@@ -53,6 +55,14 @@ module V2
         end
       end
 
+      def default_pagination_per
+        MAX_COUNTS
+      end
+
+      def maximum_pagination_per
+        MAX_COUNTS
+      end
+
       private
 
       def view_path
@@ -69,6 +79,7 @@ module V2
       def set_substrate
         super
         if @substrate.nil?
+          # TO DO: why there was poliy_in_system == false? if it verified we need to change status to true?
           @substrate = access_model(::Policy.where(status: ["EXTERNAL_UNVERIFIED", "EXTERNAL_VERIFIED", "EXTERNAL_REJECTED"]))
         elsif !params[:substrate_association_provided]
           @substrate = @substrate.policies
