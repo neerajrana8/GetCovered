@@ -115,7 +115,7 @@ class PolicyPremium < ApplicationRecord
         end
       rescue ActiveRecord::RecordInvalid => rie
         # MOOSE WARNING: error! should we really just throw the hash back at the caller?
-        returned_errors = rie.record.errors.to_h
+        returned_errors = rie.record.errors.to_h.to_s
         raise ActiveRecord::Rollback
       end
     end
