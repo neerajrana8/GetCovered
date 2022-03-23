@@ -1,4 +1,4 @@
-class SyncYardiJob < ApplicationJob
+class YardiSyncJob < ApplicationJob
   queue_as :default
   before_perform :set_integrations
 
@@ -11,10 +11,10 @@ class SyncYardiJob < ApplicationJob
       rescue
         begin
           integration.configuration['sync_history'].push({
-           "message"=>"Failed to sync properties & leases; encountered a system error.",
-          "timestamp"=>Time.current.to_date.to_s,
-          "event_type"=>"sync_insurables",
-          "log_format"=>"1.0"}
+            "message"=>"Failed to sync properties & leases; encountered a system error.",
+            "timestamp"=>Time.current.to_date.to_s,
+            "event_type"=>"sync_insurables",
+            "log_format"=>"1.0"
           })
           integration.save
         rescue
@@ -26,10 +26,10 @@ class SyncYardiJob < ApplicationJob
       rescue
         begin
           integration.configuration['sync_history'].push({
-           "message"=>"Failed to sync policies; encountered a system error.",
-          "timestamp"=>Time.current.to_date.to_s,
-          "event_type"=>"sync_policies",
-          "log_format"=>"1.0"}
+            "message"=>"Failed to sync policies; encountered a system error.",
+            "timestamp"=>Time.current.to_date.to_s,
+            "event_type"=>"sync_policies",
+            "log_format"=>"1.0"
           })
           integration.save
         rescue
@@ -44,6 +44,6 @@ class SyncYardiJob < ApplicationJob
   private
 
     def set_invoices
-      @integration_ids = ::Integration.enabled.where(provider: 'yardi').select{|i| (Date.parse(i.configuration['sync']['next_sync']['timestamp']) rescue nil) == Time.current.to_date }.map{|i| i.id }
+      @integration_ids = ::Integration.enabled.where(provider: 'yardi').select{|i| (Date.parse(i.configuration['sync']['next_sync']['timestamp']) rescue nil) <= Time.current.to_date }.map{|i| i.id }
     end
 end
