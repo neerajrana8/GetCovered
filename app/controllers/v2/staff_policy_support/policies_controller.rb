@@ -69,7 +69,7 @@ module V2
       def set_substrate
         super
         if @substrate.nil?
-          @substrate = access_model(::Policy.where(policy_in_system: false, status: ["EXTERNAL_UNVERIFIED", "EXTERNAL_VERIFIED", "EXTERNAL_REJECTED"]))
+          @substrate = access_model(::Policy.where(policy_in_system: [false, true], status: ["EXTERNAL_UNVERIFIED", "EXTERNAL_VERIFIED", "EXTERNAL_REJECTED"]))
         elsif !params[:substrate_association_provided]
           @substrate = @substrate.policies
         end
