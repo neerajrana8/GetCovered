@@ -106,8 +106,8 @@ class PolicyPremium < ApplicationRecord
               default_weight: term_weight,
               term_group: term_group
             )
-            term_start = next_term_start + 1.month
-            next_term_start = next_term_start + 2.months
+            term_start = next_term_start
+            next_term_start = next_term_start + 1.month
             term_weight = weight
           else
             next_term_start += 1.month
