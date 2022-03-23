@@ -270,7 +270,7 @@ class PolicyPremium < ApplicationRecord
         proration_calculation: proratable,
         proration_refunds_allowed: refundable,
         # MOOSE WARNING: preprocessed
-        recipient: self.commission_strategy,
+        recipient: recipient || self.commission_strategy,
         collector: collector || self.carrier_agency_policy_type&.collector || ::PolicyPremium.default_collector,
         policy_premium_item_payment_terms: payment_terms.map.with_index do |pt, index|
           next nil if index == 0 && down_payment_revised_weight == 0
