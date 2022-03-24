@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2022_03_22_214629) do
+ActiveRecord::Schema.define(version: 2022_03_24_172827) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
@@ -1118,6 +1118,7 @@ ActiveRecord::Schema.define(version: 2022_03_22_214629) do
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
     t.boolean "enabled", default: false
+    t.string "integration_account_number"
     t.index ["carrier_policy_type_id", "configurable_type", "configurable_id"], name: "index_cpt_and_conf_on_mpc", unique: true
     t.index ["configurable_type", "configurable_id"], name: "index_master_policy_configurations_on_configurable"
   end
@@ -1736,7 +1737,7 @@ ActiveRecord::Schema.define(version: 2022_03_22_214629) do
     t.index ["parent_id"], name: "index_scheduled_actions_on_parent_id"
     t.index ["status", "trigger_time", "action"], name: "index_scheduled_actions_on_status_and_trigger_time_and_action"
   end
-  
+
   create_table "signable_documents", force: :cascade do |t|
     t.string "title", null: false
     t.integer "document_type", null: false
@@ -1852,18 +1853,6 @@ ActiveRecord::Schema.define(version: 2022_03_22_214629) do
     t.bigint "stripe_charge_id"
     t.index ["refund_id"], name: "index_stripe_refunds_on_refund_id"
     t.index ["stripe_charge_id"], name: "index_stripe_refunds_on_stripe_charge_id"
-  end
-
-  create_table "system_histories", force: :cascade do |t|
-    t.string "field"
-    t.string "previous_value_str"
-    t.string "new_value_str"
-    t.jsonb "system_data", default: {}
-    t.string "recordable_type", null: false
-    t.bigint "recordable_id", null: false
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
-    t.index ["recordable_type", "recordable_id"], name: "index_system_histories_on_recordable"
   end
 
   create_table "tags", force: :cascade do |t|
