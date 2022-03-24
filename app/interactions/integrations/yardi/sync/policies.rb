@@ -124,6 +124,8 @@ module Integrations
                           )
           created_lease_ips = []
           import_results[false]&.each do |polhash|
+            next if ((Date.parse(polhash["PolicyDetails"]["EffectiveDate"]).year < 2002) rescue true) # flee from messed up MP listings
+            next if ((Date.parse(polhash["PolicyDetails"]["ExpirationDate"]).year < 2002) rescue true) # flee from messed up MP listings
             lease = lease_ips.find{|ip| ip.external_id == polhash.dig("Customer", "Lease", "Identification", "IDValue") }&.lease ||
                     created_lease_ips.find{|ip| ip.external_id == polhash.dig("Customer", "Lease", "Identification", "IDValue") }&.lease
             if lease.nil?

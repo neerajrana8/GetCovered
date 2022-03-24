@@ -144,6 +144,10 @@ production:
   create_commissions_for_policy_premium_item_transactions_job:
     cron: '0 5 * * *' # Every day at 5:00 AM
     class: CreateCommissionsForPolicyPremiumItemTransactionsJob
+  # Yardi Sync
+  yardi_sync_job:
+    cron: '0 1 * * *' # Every day at 1:00 AM
+    class: YardiSyncJob
   # Generic Actions
   perform_scheduled_actoins_job:
     cron: '45 * * * *' # every hour, 45 minutes in
