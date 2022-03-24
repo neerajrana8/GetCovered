@@ -10,7 +10,7 @@ class YardiSyncJob < ApplicationJob
         Integrations::Yardi::Sync::Insurables.run!(integration: integration)
       rescue
         begin
-          integration.configuration['sync_history'].push({
+          integration.configuration['sync']['sync_history'].push({
             "message"=>"Failed to sync properties & leases; encountered a system error.",
             "timestamp"=>Time.current.to_date.to_s,
             "event_type"=>"sync_insurables",
@@ -25,7 +25,7 @@ class YardiSyncJob < ApplicationJob
         Integrations::Yardi::Sync::Policies.run!(integration: integration)
       rescue
         begin
-          integration.configuration['sync_history'].push({
+          integration.configuration['sync']['sync_history'].push({
             "message"=>"Failed to sync policies; encountered a system error.",
             "timestamp"=>Time.current.to_date.to_s,
             "event_type"=>"sync_policies",
@@ -43,7 +43,7 @@ class YardiSyncJob < ApplicationJob
 
   private
 
-    def set_invoices
-      @integration_ids = ::Integration.where(provider: 'yardi', enabled: true).select{|i| (Date.parse(i.configuration['sync']['next_sync']['timestamp']) rescue nil) <= Time.current.to_date }.map{|i| i.id }
+    def set_integrations
+      @integration_ids = ::Integration.where(provider: 'yardi', enabled: true).select{|i| (Date.parse(i.configuration['sync']['next_sync']['timestamp']) rescue Time.current.to_date + 10.days) <= Time.current.to_date }.map{|i| i.id }
     end
 end
