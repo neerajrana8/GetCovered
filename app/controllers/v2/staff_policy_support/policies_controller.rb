@@ -80,7 +80,7 @@ module V2
         super
         if @substrate.nil?
           # TO DO: why there was poliy_in_system == false? if it verified we need to change status to true?
-          @substrate = access_model(::Policy.where(status: ["EXTERNAL_UNVERIFIED", "EXTERNAL_VERIFIED", "EXTERNAL_REJECTED"]))
+          @substrate = access_model(::Policy.where(policy_in_system: false, status: ["EXTERNAL_UNVERIFIED", "EXTERNAL_VERIFIED", "EXTERNAL_REJECTED"]))
         elsif !params[:substrate_association_provided]
           @substrate = @substrate.policies
         end
