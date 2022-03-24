@@ -48,7 +48,19 @@ es:
         thank_you: 'Gracias, por registrarse para una póliza de garantía de alquiler. A continuación se encuentran los detalles de su póliza junto con el acuerdo adjunto y el resumen para sus registros.'
         please_log_in: 'Inicie sesión en nuestro sitio <a class="o_text-light o_underline" href="%{login_url}" style="text-decoration: underline;outline: none;color: #126de5;">esta página</a>  para obtener más información.'
         contact_us: 'Por favor contáctenos en %{contact_email} si tiene alguna pregunta.'
-
+    qbe_proof_of_coverage:
+      subject: "¡Felicidades! ¡Estás cubierto!"
+      thank_you_for_purchase: "Gracias por comprar la póliza de seguro para inquilinos con %{agency_account_name}. ¡Siéntese y relájese sabiendo que ya estás cubierto!"
+      attached: "Adjunto puedes encontrar tu Certificado de Seguro."
+      your_policy_is_written: "Tu póliza está escrita a través de nuestro socio, QBE. Estés atento a una presentación por correo electrónico de QBE. Estés atento a las actualizaciones y novedades por correo electrónico de QBE."
+      need_to_make_changes: "¿Necesitas hacer cambios?"
+      no_worries: "No te preocupes. Tienes control total sobre tu póliza.
+                   Si tienes preguntas específicas sobre tu póliza de seguro para inquilinos, reclamos y actualizaciones, comuníquete con"
+      or_visit: "or visite"
+      we_look_forward: "Esperamos brindarle una cobertura de calidad y un servicio excepcional."
+      thank_you: "Gracias,"
+      team_name: "TEl equipo de Get Covered"
+      email_preview_text: "Documentos de seguro adjuntos"
   payment_made_mailer:
     send_successful_payment_notification:
       subject: "%{agency_title} - %{policy_type} Pago de prima realizado"
