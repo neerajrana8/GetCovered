@@ -702,6 +702,7 @@ class InsurableRateConfiguration < ApplicationRecord
       error = qbe_prepare_for_get_coverage_options(insurable, cip, additional_insured_count + 1, effective_date, traits_override: nonpreferred_final_premium_params, force_address_specific_rates: (eventable.class == ::PolicyQuote))
       if error.blank?
         # add irc filter block to ensure we only use IRCs with rates for the right insurable traits
+        cip = (insurable.class != ::Insurable ? nil : insurable.carrier_profile(carrier_policy_type.carrier_id)) if cip.nil?
         applicability = QbeService.get_applicability(insurable, nonpreferred_final_premium_params || {}, cip: cip.reload)
         irc_filter_block = Proc.new{|irc| irc.configurable_type != 'Insurable' || irc.configurable_id != insurable.id || irc.configurer_type != 'Carrier' || irc.configurer_id != ::QbeService.carrier_id || irc.rates['applicability'] == applicability }
       else

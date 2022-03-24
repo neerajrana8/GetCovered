@@ -126,10 +126,10 @@ class PolicyPremiumPaymentTerm < ApplicationRecord
     end
   
     def validate_term
-      errors.add(:original_last_moment, I18n.t("policy_premium_payment_term.original_last_moment_invalid")) unless self.original_last_moment >= self.original_first_moment
-      errors.add(:last_moment, I18n.t("policy_premium_payment_term.last_moment_invalid")) unless self.last_moment >= self.first_moment
-      errors.add(:first_moment, I18n.t("policy_premium_payment_term.first_moment_too_early")) unless self.first_moment >= self.original_first_moment
-      errors.add(:last_moment, I18n.t("policy_premium_payment_term.last_moment_too_late")) unless self.last_moment <= self.original_last_moment
+      errors.add(:original_last_moment, "Original last moment of coverage cannot occur before original first moment of coverage") unless self.original_last_moment >= self.original_first_moment
+      errors.add(:last_moment, "Last moment of coverage cannot occur before first moment of coverage") unless self.last_moment >= self.first_moment
+      errors.add(:first_moment, "First moment of coverage cannot be set to before the original first moment") unless self.first_moment >= self.original_first_moment
+      errors.add(:last_moment, "Last moment of coverage cannot be set to be after the original last moment") unless self.last_moment <= self.original_last_moment
     end
 end
 

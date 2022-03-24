@@ -90,27 +90,32 @@ class PolicyPremium < ApplicationRecord
     return "Payment terms for term group '#{term_group || 'nil'}' already exist" unless self.policy_premium_payment_terms.where(term_group: term_group).blank?
     return "The billing strategy terms are interpreted as applying to successive months, but there are more than 12 of them" if billing_strategy_terms.length > 12
     returned_errors = nil
-    last_end = self.policy_rep.effective_date - 1.day
-    extra_months = 0
+    term_start = self.policy_rep.effective_date
+    next_term_start = term_start + 1.month
+    term_weight = billing_strategy_terms.first
+    weight = 0
     ActiveRecord::Base.transaction do
       begin
-        billing_strategy_terms.each.with_index do |weight,index|
-          unless weight > 0
-            extra_months += 1
-            next
+        (1..billing_strategy_terms.length).each do |index|
+          if index == billing_strategy_terms.length || (weight = billing_strategy_terms[index]) > 0
+            ::PolicyPremiumPaymentTerm.create!(
+              policy_premium: self,
+              first_moment: term_start.beginning_of_day,
+              last_moment: (index == billing_strategy_terms.length ? self.policy_rep.expiration_date : next_term_start - 1.day).end_of_day,
+              time_resolution: 'day',
+              default_weight: term_weight,
+              term_group: term_group
+            )
+            term_start = next_term_start
+            next_term_start = next_term_start + 1.month
+            term_weight = weight
+          else
+            next_term_start += 1.month
           end
-          ::PolicyPremiumPaymentTerm.create!(
-            policy_premium: self,
-            first_moment: (last_end + 1.day).beginning_of_day,
-            last_moment: (last_end = (last_end + 1.day + (1 + extra_months).months - 1.day)).end_of_day,
-            time_resolution: 'day',
-            default_weight: weight,
-            term_group: term_group
-          )
         end
       rescue ActiveRecord::RecordInvalid => rie
         # MOOSE WARNING: error! should we really just throw the hash back at the caller?
-        returned_errors = rie.record.errors.to_h
+        returned_errors = rie.record.errors.to_h.to_s
         raise ActiveRecord::Rollback
       end
     end
@@ -265,7 +270,7 @@ class PolicyPremium < ApplicationRecord
         proration_calculation: proratable,
         proration_refunds_allowed: refundable,
         # MOOSE WARNING: preprocessed
-        recipient: self.commission_strategy,
+        recipient: recipient || self.commission_strategy,
         collector: collector || self.carrier_agency_policy_type&.collector || ::PolicyPremium.default_collector,
         policy_premium_item_payment_terms: payment_terms.map.with_index do |pt, index|
           next nil if index == 0 && down_payment_revised_weight == 0
