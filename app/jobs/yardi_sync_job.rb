@@ -44,6 +44,6 @@ class YardiSyncJob < ApplicationJob
   private
 
     def set_invoices
-      @integration_ids = ::Integration.enabled.where(provider: 'yardi').select{|i| (Date.parse(i.configuration['sync']['next_sync']['timestamp']) rescue nil) <= Time.current.to_date }.map{|i| i.id }
+      @integration_ids = ::Integration.where(provider: 'yardi', enabled: true).select{|i| (Date.parse(i.configuration['sync']['next_sync']['timestamp']) rescue nil) <= Time.current.to_date }.map{|i| i.id }
     end
 end

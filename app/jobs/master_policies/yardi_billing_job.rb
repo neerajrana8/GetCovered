@@ -3,11 +3,14 @@ module MasterPolicies
     queue_as :default
 
     def perform(*)
+=begin
       start_of_last_month = (Time.current.beginning_of_month - 1.day).beginning_of_month.to_date
       mps = Policy.where.not(status: 'CANCELLED').or(Policy.where("cancellation_date >= ?", start_of_last_month))
                   .where("expiration_date >= ?", start_of_last_month)
                   .where(policy_type_id: PolicyType::MASTER_ID)
       mps.each do |mp|
+        integration = mp.account.integrations.where(provider: 'yardi').take
+        # MOOSE WARNING: erorrr if integration not set up
         mpcs = Policy.where.not(status: 'CANCELLED').or(Policy.where("cancellation_date >= ?", start_of_last_month))
                     .where("expiration_date >= ?", start_of_last_month)
                     .where(policy_type_id: PolicyType::MASTER_COVERAGE_ID, policy: mp)
@@ -33,33 +36,36 @@ module MasterPolicies
             else
               # send charge through yardi
               ###################### make sure mpc.primary_user corresponds to primary lease user!!!
+              
+              
+              
+              
+              result = Integrations::Yardi::BillingAndPayments::ImportResidentTransactions.run!(integration: integration, charge_hash: {
+                Description: "Master Policy...............",
+                TransactionDate: start_of_last_month.to_date.to_s,
+                ServiceToDate: start_of_last_month.end_of_month.to_date.to_s,
+                ChargeCode: mpc.charge_code,
+                GLAccountNumber: mpc.integration_account_number,
+                CustomerID: ?????????,
+                Amount: (term_amount.to_d / 100.to_d).to_s,
+                Comment: ???,
+                PropertyPrimaryID: ???????
+              })
+              
+              
+              
+              
+              
             end
           end
         end
         
         
         
-        
-  PolicyInsurable.where(policy: mpcs, insurable_id: mp.insurables
-        
-        
-        #######
-        mpc_ids = mpcs.pluck(:id)
-        mp.insurables.each do |ins|
-          config = mp.find_closest_master_policy_configuration(ins)
-          units = ins.units.references(:policy_insurables).includes(:policy_insurables)
-                     .where(policy_insurables: { policy_id: mpc_ids })
-          
-          
-          term_amount(coverage = nil, t = DateTime.current)
-          
-          
-        end
-        ######
       end
 
-                  
-
+=end
+    end
 
 
 
