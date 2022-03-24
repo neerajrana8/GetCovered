@@ -32,7 +32,7 @@ module MasterPolicies
               #### MOOSE WARNING: don't assess a charge ####
             else
               # send charge through yardi
-              mpc.users
+              ###################### make sure mpc.primary_user corresponds to primary lease user!!!
             end
           end
         end
