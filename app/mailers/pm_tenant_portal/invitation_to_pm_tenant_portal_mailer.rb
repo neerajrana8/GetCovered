@@ -5,12 +5,13 @@ module PmTenantPortal
     #PmTenantPortal::InvitationToPmTenantPortalMailer.first_audit_email(user: User.last, master_policy: @policy).deliver_later
     # Command to test from dev console : User.find(1).invite_to_pm_tenant_portal(BrandingProfile.find(1).url, 10)
     # User.find(1443).invite_to_pm_tenant_portal(BrandingProfile.find(45).url, 10035)
-    def first_audit_email(user:, community:, tenant_onboarding_url:)
+    def first_audit_email(user:, community:, tenant_onboarding_url:, lease_start_date:)
       set_locale(user.profile&.language)
 
       @user = user
       @community = community
       @tenant_onboarding_url = tenant_onboarding_url
+      @requirement_date = lease_start_date.nil? ? DateTime.current : lease_start_date
 
       @pm_account = @community.account
       #TODO: need to remove after test
@@ -28,12 +29,13 @@ module PmTenantPortal
 
     #TODO: move the same parts in shared method
     # Send after 72 hours (3 days)
-    def second_audit_email(user:, community:, tenant_onboarding_url:)
+    def second_audit_email(user:, community:, tenant_onboarding_url:, lease_start_date:)
       set_locale(user.profile&.language)
 
       @user = user
       @community = community
       @tenant_onboarding_url = tenant_onboarding_url
+      @requirement_date = lease_start_date.nil? ? DateTime.current : lease_start_date
 
       set_liabilities(@community)
 
@@ -51,12 +53,13 @@ module PmTenantPortal
     end
 
     # Send after 168 hours (7 days)
-    def third_audit_email(user:, community:, tenant_onboarding_url:)
+    def third_audit_email(user:, community:, tenant_onboarding_url:, lease_start_date:)
       set_locale(user.profile&.language)
 
       @user = user
       @community = community
       @tenant_onboarding_url = tenant_onboarding_url
+      @requirement_date = lease_start_date.nil? ? DateTime.current : lease_start_date
 
       @pm_account = @community.account
       #TODO: need to remove after test
