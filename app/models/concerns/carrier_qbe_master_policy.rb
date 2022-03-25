@@ -26,7 +26,7 @@ module CarrierQbeMasterPolicy
       end
     end
 
-    def qbe_specialty_issue_coverage(insurable, users, start_coverage, force = false)
+    def qbe_specialty_issue_coverage(insurable, users, start_coverage, force = false, primary_user: nil)
       to_return = false
 
       coverage = self.policies.new(
@@ -43,6 +43,7 @@ module CarrierQbeMasterPolicy
       if coverage.save!
         to_return = true
         coverage.insurables << insurable
+        users.sort_by!{|user| primary_user == user ? -1 : 0 } unless primary_user.nil?
         users.each do |user|
           coverage.users << user
         end
