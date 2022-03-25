@@ -30,14 +30,51 @@ module MasterPolicies
           if config.nil?
             config = mp.find_closest_master_policy_configuration(mpc.primary_insurable) # try to do it the direct way (which would be less query-efficient to do for all records when avoidable)
             if config.nil?
-              #### MOOSE WARNING: alert! myseteriously missing config! oh no, Jack! ####
+              #### MOOSE WARNING: alert! mysteriously missing config! oh no, Jack! ####
             end
           end
           term_amount = config.term_amount(mpc, start_of_last_month)
+          charge_description = ????????????????????????????????????????????????????????????????????? # MOOSE WARNING
           unless term_amount.nil?
             if term_amount == 0
-              #### MOOSE WARNING: don't assess a charge ####
+              ::Invoice.create!(
+                available_date: start_of_last_month.end_of_month + 1.day,
+                due_date: start_of_last_month.end_of_month + 1.day,
+                external: true,
+                status: "managed_externally",
+                invoiceable: mpc,
+                payer: mpc.primary_user,
+                collector: integration,
+                line_items: [
+                  ::LineItem.new(
+                    chargeable: mpc,
+                    title: charge_description,
+                    original_total_due: term_amount,
+                    analytics_category: 'other',
+                    policy: mpc
+                  )
+                ]
+              )
             else
+              # set up invoice to log errors
+              invoice = ::Invoice.new(
+                available_date: start_of_last_month.end_of_month + 1.day,
+                due_date: start_of_last_month.end_of_month + 1.day,
+                external: true,
+                status: "managed_externally",
+                invoiceable: mpc,
+                payer: mpc.primary_user,
+                collector: integration,
+                line_items: [
+                  ::LineItem.new(
+                    chargeable: mpc,
+                    title: charge_description,
+                    original_total_due: term_amount,
+                    analytics_category: 'other',
+                    policy: mpc
+                  )
+                ]
+              )
               # send charge through yardi
               yardi_property_id = integration_profiles[mpc.primary_insurable.insurable_id]&.external_id
               yardi_customer_id = mpc.primary_user&.integration_profiles&.where(integration: integration)&.take&.external_id
@@ -56,15 +93,33 @@ module MasterPolicies
                 PropertyPrimaryID: yardi_property_id
               })
               unless result[:success]
-                ## MOOSE WARNING we fail't
+                # error code returned by yardi
+                invoice.under_review = true
+                invoice.error_info = [{
+                  description: "Attempt to export charge to Yardi resulted in an error response.",
+                  time: Time.current.to_s,
+                  amount: term_amount,
+                  event_id: result[:event]&.id,
+                  parsed_response: result[:parsed_response]
+                }]
               else
                 result_message = result[:parsed_response]&.dig('Envelope', 'Body', 'ImportResidentTransactions_LoginResponse', 'ImportResidentTransactions_LoginResult', 'Messages', 'Message')
-                if result_message.class != ::String || result.include?("charges were successfully imported")
-                  ## no error code but weird error ###
+                if result_message.class != ::String || !result.include?("charges were successfully imported")
+                  # no error code but weird error with yardi attempt
+                  invoice.under_review = true
+                  invoice.error_info = [{
+                    description: "Attempt to export charge to Yardi resulted in an unknown error.",
+                    time: Time.current.to_s,
+                    amount: term_amount,
+                    event_id: result[:event]&.id,
+                    parsed_response: result[:parsed_response]
+                  }]
                 else
-                  ## SUCcess ##
+                  # success
+                  # no need to touch the invoice
                 end
               end
+              invoice.save
               
               
               
