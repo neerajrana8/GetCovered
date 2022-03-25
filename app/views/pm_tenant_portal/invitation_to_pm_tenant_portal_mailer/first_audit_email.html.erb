@@ -379,7 +379,7 @@
                                                       <a href="<%= @tenant_onboarding_url %>" target="_blank">
                                                         <%= @tenant_onboarding_url %>
                                                       </a>
-                                                      to select or purchase coverage by <%= (@requirement_date + (@pm_account&.master_policy_configurations&.take&.grace_period&.days || 0))&.to_s %>.
+                                                      to select or purchase coverage by <%= (@requirement_date + (@pm_account&.master_policy_configurations&.take&.grace_period&.days || 0)).strftime('%B %d, %Y') %>.
                                                     </b>
                                                   </span>
                                     </p>
