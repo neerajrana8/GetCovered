@@ -2,17 +2,24 @@ module Compliance
   class AuditMailer < ApplicationMailer
     include ::ComplianceMethods
     layout 'branded_mailer'
+    before_action :set_variables
 
     def intro(user:, community:, lease_start_date:, follow_up:)
       raise ArgumentError.new(
-        "Expected a follow up value of 0 to 2, got #{ follow_up }"
+        "Expected a follow up value of 0 to 2, got #{ follow_up.nil? ? 'nil' : follow_up }"
       ) if follow_up.nil? || follow_up > 2
 
       @user = user
       @community = community
-      @onboarding_url = tokenized_url(@user, @community)
-      @requirements_date = lease_start_date + @configuration.grace_period
       @pm_account = @community.account
+
+      # Hard coded to QBE for now.
+      set_master_policy_and_configuration(@community, 2)
+      set_liabilities(@community)
+      set_locale(@user.profile&.language)
+
+      @onboarding_url = tokenized_url(@user, @community)
+      @requirements_date = @configuration.nil? ? lease_start_date : lease_start_date + @configuration.grace_period
 
       case follow_up
       when 0
@@ -26,11 +33,6 @@ module Compliance
         template = 'intro_second_follow_up'
       end
 
-      # Hard coded to QBE for now.
-      master_policy_and_configuration(@community, 2)
-      set_liabilities(@community)
-      set_locale(@user.profile&.language)
-
       mail(from: @pm_account.contact_info["contact_email"],
            to: @user.email,
            subject: subject,
@@ -40,7 +42,13 @@ module Compliance
 
     private
 
-    def master_policy_and_configuration(community:, carrier_id:)
+    def set_variables
+      @organization = params[:organization]
+      @address = @organization.primary_address()
+      @branding_profile = @organization.branding_profiles.where(default: true).take
+    end
+
+    def set_master_policy_and_configuration(community, carrier_id)
       @master_policy = community.policies.where(policy_type_id: 2, carrier_id: carrier_id).take
       @configuration = @master_policy.find_closest_master_policy_configuration(community)
     end

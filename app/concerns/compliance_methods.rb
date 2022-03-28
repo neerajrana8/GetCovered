@@ -24,3 +24,4 @@ module ComplianceMethods
       @max_liability = 30000000
     end
   end
+end
