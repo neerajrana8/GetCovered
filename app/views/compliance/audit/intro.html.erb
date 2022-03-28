@@ -1,0 +1,58 @@
+<p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
+  <span style="font-size: 16px;">Hi <%= @user.profile.full_name %>,</span>
+</p>
+<p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
+  <span style="font-size: 16px;">
+    Thank you for making <%= @community.title %> your home!
+  </span>
+</p>
+<p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
+  <span style="font-size: 16px;">
+    Per your lease agreement, <%= @pm_account.title %> requires <%= number_to_currency(@min_liability.to_f / 100, unit: "$") %>
+    in liability coverage. You are receiving this email as <%= @pm_account.title %> needs your active insurance on file.
+  </span>
+</p>
+<p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
+  <span style="font-size: 16px;">
+    <b>
+      If you need Renters Insurance, please visit
+      <a href="<%= @onboarding_url %>" target="_blank">
+        <%= @onboarding_url %>
+      </a>
+      to select or purchase coverage by <%= @requirements_date.strftime('%B %d, %Y') %>.
+    </b>
+  </span>
+</p>
+<p style="margin-bottom: 0; margin-left: 50px; margin-right: 50px; margin-top: 0; padding-bottom: 2em;">
+  <span style="font-size: 16px;">
+    Already have Renters Insurance? Upload your 3rd party insurance declaration page at
+    <a href="<%= @onboarding_url %>" target="_blank">
+      <%= @onboarding_url %>
+    </a>.
+    You may also email your declaration page to <%= @pm_account.contact_info["contact_email"] %>.
+  </span>
+</p>
+<p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
+  <span style="font-size: 16px;">
+    Ensure that your active policy meets the following requirements:
+  </span>
+</p>
+<ul style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
+  <li style="font-size: 16px;"><%= number_to_currency(@min_liability.to_f / 100, unit: "$") %> or more in liability coverage</li>
+  <li style="font-size: 16px; text-decoration: underline;" >
+    <%= @community.title %> is listed as an Additional Interest on your policy using the address below
+  </li>
+</ul>
+<p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em; text-align: center; font-size: 16px;">
+  <%= @pm_account.additional_interest ? @pm_account.title : @community.title %><br>
+  <b>82 Nassau Street, DPT 33028<br>
+    New York, NY 10038</b>
+</p>
+<p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
+  <span style="font-size: 16px;">
+    Thank you for your attention to the matter. Please contact Get Covered at <%= @pm_account.contact_info["contact_email"] %> if you have any questions.
+  </span>
+</p>
+<p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em; ">
+  <span style="font-size: 16px;"><b> <%= @pm_account.title %></b></span>
+</p>
