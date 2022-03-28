@@ -3,6 +3,7 @@ module MasterPolicies
     queue_as :default
 
     def perform
+=begin
       start_of_last_month = (Time.current.beginning_of_month - 1.day).beginning_of_month.to_date
       mps = Policy.where.not(status: 'CANCELLED').or(Policy.where("cancellation_date >= ?", start_of_last_month))
                   .where("expiration_date >= ?", start_of_last_month)
@@ -128,6 +129,7 @@ module MasterPolicies
           end # end unless term_amount.nil?
         end # end mpcs.each
       end # end mps.each
+=end
     end # end perform()
   end # end class YardiBillingJob
 end # end module
