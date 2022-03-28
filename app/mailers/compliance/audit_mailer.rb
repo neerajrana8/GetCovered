@@ -15,7 +15,7 @@ module Compliance
 
       # Hard coded to QBE for now.
       set_master_policy_and_configuration(@community, 2)
-      set_liabilities(@community)
+      get_insurable_liability_range(@community)
       set_locale(@user.profile&.language)
 
       @onboarding_url = tokenized_url(@user, @community)

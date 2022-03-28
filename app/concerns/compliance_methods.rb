@@ -7,7 +7,7 @@ module ComplianceMethods
     return "https://#{branding_profile_url}/pma-tenant-onboarding?token=#{auth_token_for_email}"
   end
 
-  def set_liabilities(insurable)
+  def get_insurable_liability_range(insurable)
     account = insurable.account
     carrier_id = account.agency.providing_carrier_id(PolicyType::RESIDENTIAL_ID, insurable){ |cid| (insurable.get_carrier_status(carrier_id) == :preferred) ? true : nil }
     carrier_policy_type = CarrierPolicyType.where(carrier_id: carrier_id, policy_type_id: PolicyType::RESIDENTIAL_ID).take
