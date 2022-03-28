@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2022_03_24_172827) do
+ActiveRecord::Schema.define(version: 2022_03_25_201328) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
@@ -64,6 +64,7 @@ ActiveRecord::Schema.define(version: 2022_03_24_172827) do
     t.string "payment_profile_stripe_id"
     t.integer "current_payment_method"
     t.boolean "additional_interest", default: true
+    t.integer "minimum_liability"
     t.index ["agency_id"], name: "index_accounts_on_agency_id"
     t.index ["call_sign"], name: "index_accounts_on_call_sign", unique: true
     t.index ["staff_id"], name: "index_accounts_on_staff_id"
@@ -843,6 +844,7 @@ ActiveRecord::Schema.define(version: 2022_03_24_172827) do
     t.jsonb "preferred", default: {}
     t.boolean "additional_interest", default: false
     t.string "additional_interest_name"
+    t.integer "minimum_liability"
     t.index ["account_id"], name: "index_insurables_on_account_id"
     t.index ["agency_id"], name: "index_insurables_on_agency_id"
     t.index ["insurable_id"], name: "index_insurables_on_insurable_id"
