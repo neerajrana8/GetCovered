@@ -20,6 +20,7 @@ module Compliance
 
       @onboarding_url = tokenized_url(@user, @community)
       @requirements_date = @configuration.nil? ? lease_start_date : lease_start_date + @configuration.grace_period
+      @from = @pm_account&.contact_info&.has_key?("contact_email") && !@pm_account&.contact_info["contact_email"].nil? ? @pm_account&.contact_info["contact_email"] : "policyverify@getcovered.io"
 
       case follow_up
       when 0
@@ -33,7 +34,7 @@ module Compliance
         template = 'intro_second_follow_up'
       end
 
-      mail(from: @pm_account.contact_info["contact_email"],
+      mail(from: @from,
            to: @user.email,
            subject: subject,
            template_path: 'compliance/audit',
