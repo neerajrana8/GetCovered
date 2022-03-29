@@ -7,7 +7,7 @@ module Compliance
     def policy_expiring_soon(policy:)
       @user = policy.primary_user()
       @pm_account = policy.account
-      @content = "Hello, Resident First Name!<br><br>
+      @content = "Hello, #{ @user.profile.first_name }!<br><br>
                   Your insurance policy on file with us is set to expire on #{ policy.expiration_date.strftime('%B %d, %Y') }.
                   Please submit your new insurance policy or renewal documents before the expiration date.Thank you!"
 
@@ -51,9 +51,9 @@ module Compliance
 
       @content = "Hi #{ user.profile.first_name },<br><br><strong>Default policy activated. The default policy has been
                   activated in compliance with the insurance requirement per your lease agreement. You will be charged
-                  $#{ sprintf "%.2f", @configuration.charge_amount(force).to_f / 100 } each month. The
-                  community policy includes $#{ sprintf "%.2f", liability_coverage.limit.to_f / 100 } in property
-                  liability coverage and $#{ sprintf "%.2f", contents_coverage.limit.to_f / 100 } in contents coverage
+                  #{ ActionController::Base.helpers.number_to_currency @configuration.charge_amount(force).to_f / 100 } each month. The
+                  community policy includes #{ ActionController::Base.helpers.number_to_currency liability_coverage.limit.to_f / 100 } in property
+                  liability coverage and #{ ActionController::Base.helpers.number_to_currency contents_coverage.limit.to_f / 100 } in contents coverage
                   <strong>(contents if applicable)</strong>."
 
       from = @master_policy&.account&.contact_info&.has_key?("contact_email") &&
@@ -104,6 +104,7 @@ module Compliance
       @organization = params[:organization]
       @address = @organization.primary_address()
       @branding_profile = @organization.branding_profiles.where(default: true).take
+      @GC_ADDRESS = Agency.find(1).primary_address()
     end
 
     def set_master_policy_and_configuration(community, carrier_id)

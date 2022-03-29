@@ -47,6 +47,7 @@ module Compliance
       @organization = params[:organization]
       @address = @organization.primary_address()
       @branding_profile = @organization.branding_profiles.where(default: true).take
+      @GC_ADDRESS = Agency.find(1).primary_address()
     end
 
     def set_master_policy_and_configuration(community, carrier_id)
