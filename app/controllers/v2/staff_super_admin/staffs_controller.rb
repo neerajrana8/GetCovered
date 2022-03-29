@@ -11,7 +11,7 @@ module V2
       before_action :validate_password_changing, only: %i[update]
 
       def index
-        super(:@staffs, ::Staff, :profile)
+        super(:@staffs, ::Staff, :profile, :staff_roles)
         @staffs = filter_by_agency_id if params['agency_id'].present?
       end
 
@@ -233,6 +233,10 @@ module V2
             first_name: %i[scalar like],
             last_name: %i[scalar like],
             full_name: %i[scalar like]
+          },
+          staff_roles: {
+            organizable_type: %i[scalar array],
+            organizable_id: %i[scalar array]
           }
         }
       end

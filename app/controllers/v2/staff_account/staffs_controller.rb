@@ -153,6 +153,10 @@ module V2
             first_name: %i[scalar like],
             last_name: %i[scalar like],
             full_name: %i[scalar like]
+          },
+          staff_roles: {
+            organizable_id: %i[scalar array],
+            organizable_type: %i[scalar array]
           }
         }
       end
