@@ -1,6 +1,7 @@
 module Compliance
   class PolicyMailer < ApplicationMailer
     include ::ComplianceMethods
+    layout 'branded_mailer'
 
     def policy_lapsed(policy:)
 
@@ -10,16 +11,29 @@ module Compliance
 
     end
 
-    def external_policy_received(policy:)
+    def external_policy_status_changed(policy:)
+      @policy = policy
+      @user = @policy.primary_user
 
-    end
+      set_locale(@user.profile&.language)
 
-    def external_policy_accepted(policy:)
+      @community = @policy.primary_insurable.parent_community
+      @pm_account = @community.account
 
-    end
+      @onboarding_url = tokenized_url(@user, @community)
 
-    def external_policy_rejected(policy:)
+      @from = @pm_account&.contact_info&.has_key?("contact_email") && !@pm_account&.contact_info["contact_email"].nil? ? @pm_account&.contact_info["contact_email"] : "policyverify@getcovered.io"
 
+      case @policy.status
+      when "EXTERNAL_UNVERIFIED"
+        subject = t('invitation_to_pm_tenant_portal_mailer.policy_submitted_email.subject')
+      when "EXTERNAL_VERIFIED"
+        subject = t('invitation_to_pm_tenant_portal_mailer.policy_accepted_email.subject')
+      when "EXTERNAL_REJECTED"
+        subject = t('invitation_to_pm_tenant_portal_mailer.policy_declined_email.subject')
+      end
+
+      mail(from: @from, to: @user.email, subject: subject)
     end
 
   end
