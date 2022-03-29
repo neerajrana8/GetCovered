@@ -34,7 +34,7 @@ module Compliance
         subject = t('invitation_to_pm_tenant_portal_mailer.policy_declined_email.subject')
       end
 
-      mail(from: @from, to: @user.email, subject: subject)
+      mail(from: @from, to: @user.email, subject: subject, template_path: 'compliance/policy')
     end
 
     private
