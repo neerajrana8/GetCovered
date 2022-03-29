@@ -2,6 +2,7 @@ module Compliance
   class PolicyMailer < ApplicationMailer
     include ::ComplianceMethods
     layout 'branded_mailer'
+    before_action :set_variables
 
     def policy_lapsed(policy:)
 
@@ -34,6 +35,14 @@ module Compliance
       end
 
       mail(from: @from, to: @user.email, subject: subject)
+    end
+
+    private
+
+    def set_variables
+      @organization = params[:organization]
+      @address = @organization.primary_address()
+      @branding_profile = @organization.branding_profiles.where(default: true).take
     end
 
   end
