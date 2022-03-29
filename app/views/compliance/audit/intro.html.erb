@@ -45,8 +45,8 @@
 </ul>
 <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em; text-align: center; font-size: 16px;">
   <%= @pm_account.additional_interest ? @pm_account.title : @community.title %><br>
-  <b>82 Nassau Street, DPT 33028<br>
-    New York, NY 10038</b>
+  <b><%= @pm_account.primary_address().combined_street_address %><%= ", #{ @pm_account.primary_address().street_two }" unless @pm_account.primary_address().street_two.nil? %><br>
+  <%= @pm_account.primary_address().city %>, <%= @pm_account.primary_address().state %> <%= @pm_account.primary_address().combined_zip_code %></b>
 </p>
 <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
   <span style="font-size: 16px;">
