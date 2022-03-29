@@ -11,7 +11,7 @@ module Compliance
                   Your insurance policy on file with us is set to expire on #{ policy.expiration_date.strftime('%B %d, %Y') }.
                   Please submit your new insurance policy or renewal documents before the expiration date.Thank you!"
 
-      from = @pm_account&.account&.contact_info&.has_key?("contact_email") &&
+      from = @pm_account&.contact_info&.has_key?("contact_email") &&
              !@pm_account&.contact_info["contact_email"].nil? ? @pm_account&.contact_info["contact_email"] :
                                                                 "policyverify@getcovered.io"
       subject = "Your insurance will expire soon!"
@@ -31,7 +31,7 @@ module Compliance
                   policy. Please reinstate your insurance policy or upload your new policy information
                   <a href=\"https://#{ @branding_profile&.url }/pma-tenant-onboarding\">on our portal</a> for review."
 
-      from = @pm_account&.account&.contact_info&.has_key?("contact_email") &&
+      from = @pm_account&.contact_info&.has_key?("contact_email") &&
              !@pm_account&.contact_info["contact_email"].nil? ? @pm_account&.contact_info["contact_email"] :
                                                                 "policyverify@getcovered.io"
 
@@ -52,8 +52,8 @@ module Compliance
       @content = "Hi #{ user.profile.first_name },<br><br><strong>Default policy activated. The default policy has been
                   activated in compliance with the insurance requirement per your lease agreement. You will be charged
                   $#{ sprintf "%.2f", @configuration.charge_amount(force).to_f / 100 } each month. The
-                  community policy includes $#{ sprintf "%.2f", liability_coverage.to_f / 100 } in property
-                  liability coverage and $#{ sprintf "%.2f", contents_coverage.to_f / 100 } in contents coverage
+                  community policy includes $#{ sprintf "%.2f", liability_coverage.limit.to_f / 100 } in property
+                  liability coverage and $#{ sprintf "%.2f", contents_coverage.limit.to_f / 100 } in contents coverage
                   <strong>(contents if applicable)</strong>."
 
       from = @master_policy&.account&.contact_info&.has_key?("contact_email") &&
