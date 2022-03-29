@@ -45,6 +45,10 @@ module CarrierQbeMasterPolicy
         coverage.insurables << insurable
         users.each do |user|
           coverage.users << user
+          Compliance::PolicyMailer.with(organization: self.account ? self.account : self.agency)
+                                  .enrolled_in_master(user: user,
+                                                      community: insurable.parent_community(),
+                                                      force: force).deliver_now
         end
       end
 

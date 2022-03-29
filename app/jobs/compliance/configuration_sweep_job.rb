@@ -1,4 +1,4 @@
-module MasterPolicies
+module Compliance
   class ConfigurationSweepJob < ApplicationJob
     queue_as :default
     before_perform :set_configurations
