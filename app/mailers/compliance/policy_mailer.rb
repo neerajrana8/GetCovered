@@ -6,11 +6,14 @@ module Compliance
 
     def policy_expiring_soon(policy:)
       @user = policy.primary_user()
+      @pm_account = policy.account
       @content = "Hello, Resident First Name!<br><br>
                   Your insurance policy on file with us is set to expire on #{ policy.expiration_date.strftime('%B %d, %Y') }.
                   Please submit your new insurance policy or renewal documents before the expiration date.Thank you!"
 
-      from = policy&.account&.contact_info&.has_key?("contact_email") && !@pm_account&.contact_info["contact_email"].nil? ? @pm_account&.contact_info["contact_email"] : "policyverify@getcovered.io"
+      from = @pm_account&.account&.contact_info&.has_key?("contact_email") &&
+             !@pm_account&.contact_info["contact_email"].nil? ? @pm_account&.contact_info["contact_email"] :
+                                                                "policyverify@getcovered.io"
       subject = "Your insurance will expire soon!"
 
       mail(to: @user.email,
@@ -22,12 +25,16 @@ module Compliance
 
     def policy_lapsed(policy:)
       @user = policy.primary_user()
+      @pm_account = policy.account
       @content = "Hi #{ @user.profile.first_name },<br><br><strong>Your policy has lapsed or is canceled.</strong>  You
                   are out of compliance with your lease agreement and subject to being enrolled into the default community
                   policy. Please reinstate your insurance policy or upload your new policy information
                   <a href=\"https://#{ @branding_profile&.url }/pma-tenant-onboarding\">on our portal</a> for review."
 
-      from = policy&.account&.contact_info&.has_key?("contact_email") && !@pm_account&.contact_info["contact_email"].nil? ? @pm_account&.contact_info["contact_email"] : "policyverify@getcovered.io"
+      from = @pm_account&.account&.contact_info&.has_key?("contact_email") &&
+             !@pm_account&.contact_info["contact_email"].nil? ? @pm_account&.contact_info["contact_email"] :
+                                                                "policyverify@getcovered.io"
+
       subject = "You are out of compliance"
       mail(to: @user.email,
            from: from,
@@ -49,7 +56,10 @@ module Compliance
                   liability coverage and $#{ sprintf "%.2f", contents_coverage.to_f / 100 } in contents coverage
                   <strong>(contents if applicable)</strong>."
 
-      from = policy&.account&.contact_info&.has_key?("contact_email") && !@pm_account&.contact_info["contact_email"].nil? ? @pm_account&.contact_info["contact_email"] : "policyverify@getcovered.io"
+      from = @master_policy&.account&.contact_info&.has_key?("contact_email") &&
+             !@master_policy&.account&.contact_info["contact_email"].nil? ? @master_policy&.account&.contact_info["contact_email"] :
+                                                                            "policyverify@getcovered.io"
+
       subject = "Default Policy Enrollment"
       mail(to: user.email,
            from: from,
@@ -69,7 +79,9 @@ module Compliance
 
       @onboarding_url = tokenized_url(@user, @community)
 
-      @from = @pm_account&.contact_info&.has_key?("contact_email") && !@pm_account&.contact_info["contact_email"].nil? ? @pm_account&.contact_info["contact_email"] : "policyverify@getcovered.io"
+      @from = @pm_account&.contact_info&.has_key?("contact_email") &&
+              !@pm_account&.contact_info["contact_email"].nil? ? @pm_account&.contact_info["contact_email"] :
+                                                                 "policyverify@getcovered.io"
 
       case @policy.status
       when "EXTERNAL_UNVERIFIED"
@@ -80,7 +92,10 @@ module Compliance
         subject = t('invitation_to_pm_tenant_portal_mailer.policy_declined_email.subject')
       end
 
-      mail(from: @from, to: @user.email, subject: subject, template_path: 'compliance/policy')
+      sending_condition = @policy.policy_in_system == false &&
+                          ['EXTERNAL_UNVERIFIED','EXTERNAL_VERIFIED','EXTERNAL_REJECTED'].include?(@policy.status)
+
+      mail(from: @from, to: @user.email, subject: subject, template_path: 'compliance/policy') if sending_condition
     end
 
     private
