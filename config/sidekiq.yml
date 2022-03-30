@@ -24,7 +24,7 @@ production:
     class: Insurables::RefreshInsurableDataJob
   configuration_sweep_job:
     cron: '0 3 * * *'   # Every day at 3:00 AM
-    class: MasterPolicies::ConfigurationSweepJob
+    class: Compliance::ConfigurationSweepJob
   # Reports
   daily_sales_reports:
     cron:  '0 4 * * *'   # Each day at 4:00 AM
