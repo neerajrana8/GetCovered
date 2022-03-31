@@ -5,12 +5,10 @@ module V2
 
       def index
         if params[:short]
-          super(:@insurables, Insurable)
+          super(:@insurables, @substrate, :insurables)
         else
-          super(:@insurables, Insurable, :addresses)
+          super(:@insurables, @substrate, :addresses)
         end
-
-        @insurables = @insurables.communities.where(preferred_ho4: true)
       end
 
       private
@@ -18,7 +16,7 @@ module V2
       def set_substrate
         super
         if @substrate.nil?
-          @substrate = access_model(::Insurable)
+          @substrate = access_model(::Insurable).communities.where(preferred_ho4: true)
         elsif !params[:substrate_association_provided]
           @substrate = @substrate.communities
         end

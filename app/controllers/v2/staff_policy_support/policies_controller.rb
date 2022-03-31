@@ -108,7 +108,7 @@ module V2
                                  .keys
 
         params.require(:policy)
-              .permit(:id, :policy_number, :out_of_system_carrier_title, :status,
+              .permit(:id, :policy_number, :out_of_system_carrier_title, :status, :number, :out_of_system_carrier_title,
                       :system_data => system_data_keys,
                       policy_coverages_attributes: [:title, :designation, :limit])
       end
