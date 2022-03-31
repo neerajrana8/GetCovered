@@ -14,7 +14,14 @@ module V2
         super(:@staffs, current_staff.organizable.staff, :profile)
       end
 
-      def show; end
+      def show
+        @organizable_type = nil
+        if params['filter']
+          if params['filter']['staff_roles']
+            @organizable_type = params['filter']['staff_roles']['organizable_type']
+          end
+        end
+      end
 
       def create
         if create_allowed?

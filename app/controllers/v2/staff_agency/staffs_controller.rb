@@ -23,6 +23,12 @@ module V2
 
       def show
         if show_allowed?
+          @organizable_type = nil
+          if params['filter']
+            if params['filter']['staff_roles']
+              @organizable_type = params['filter']['staff_roles']['organizable_type']
+            end
+          end
           render :show, status: :ok
         else
           render json: { success: false, errors: ['Unauthorized Access'] }, status: :unauthorized

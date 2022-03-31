@@ -32,6 +32,11 @@ end
 
 json.staff_roles do
   if staff.staff_roles.present?
-    json.partial! 'v2/shared/staff_roles/full.json.jbuilder', staff_roles: staff.staff_roles
+    if @organizable_type
+      roles = staff.staff_roles.where(organizable_type: @organizable_type)
+    else
+      roles = staff.staff_roles
+    end
+    json.partial! 'v2/shared/staff_roles/full.json.jbuilder', staff_roles: roles
   end
 end

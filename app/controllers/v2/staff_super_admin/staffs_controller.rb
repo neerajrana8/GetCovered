@@ -20,7 +20,14 @@ module V2
           where("agencies.id=#{params['agency_id']}")
       end
 
-      def show; end
+      def show
+        @organizable_type = nil
+        if params['filter']
+          if params['filter']['staff_roles']
+            @organizable_type = params['filter']['staff_roles']['organizable_type']
+          end
+        end
+      end
 
       def create
         if create_allowed?
