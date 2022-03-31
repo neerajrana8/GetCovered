@@ -10,8 +10,7 @@ module V2
       before_action :set_community, only: [:enroll_master_policy]
 
       def enroll_master_policy
-        #TODO: need to remove after testing
-        master_policy = @community.policies.where(policy_type_id: 2).take || Policy.last
+        master_policy = @community.policies.where(policy_type_id: 2).take
 
         @users = access_model(::User).where(email: enrollment_params[:user_attributes].map{|el| el[:email]})
 

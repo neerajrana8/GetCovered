@@ -112,7 +112,7 @@ module V2
         init_hash = {
           :agency => @access_token.bearer,
           :policy_type => PolicyType.find(policy_type),
-          :carrier => policy_type == 1 ? Carrier.find(5) : Carrier.find(4),
+          :carrier => policy_type == 1 ? Carrier.find(1) : Carrier.find(4),
           :account => nil,
           :effective_date => place_holder_date,
           :expiration_date => place_holder_date + 1.year
@@ -127,9 +127,9 @@ module V2
           end
         end
 
-        # Warning to remember to fix this for agencies that have multiple branding profiles in the future.
-        site = @access_token.bearer.branding_profiles.count > 0 ? "https://#{@access_token.bearer.branding_profiles.first.url}" :
+        site = @access_token.bearer.branding_profiles.count > 0 ? "https://#{@access_token.bearer.branding_profiles.where(default: true).take.url}" :
                                                                   Rails.application.credentials[:uri][Rails.env.to_sym][:client]
+
         program = policy_type == 1 ? "residential" : "rentguarantee"
 
         @application = PolicyApplication.new(init_hash)

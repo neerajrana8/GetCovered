@@ -26,7 +26,7 @@ module CarrierQbeMasterPolicy
       end
     end
 
-    def qbe_specialty_issue_coverage(insurable, users, start_coverage)
+    def qbe_specialty_issue_coverage(insurable, users, start_coverage, force = false, primary_user: nil)
       to_return = false
 
       coverage = self.policies.new(
@@ -36,14 +36,20 @@ module CarrierQbeMasterPolicy
         account_id: self.account_id,
         carrier_id: self.carrier_id,
         status: "BOUND",
-        policy_type_id: 3
+        policy_type_id: 3,
+        force_placed: force
       )
 
       if coverage.save!
         to_return = true
         coverage.insurables << insurable
+        users.sort_by!{|user| primary_user == user ? -1 : 0 } unless primary_user.nil?
         users.each do |user|
           coverage.users << user
+          Compliance::PolicyMailer.with(organization: self.account ? self.account : self.agency)
+                                  .enrolled_in_master(user: user,
+                                                      community: insurable.parent_community(),
+                                                      force: force).deliver_now
         end
       end
 
@@ -88,6 +94,35 @@ module CarrierQbeMasterPolicy
       if documents.attach(io: File.open(save_path), filename: "evidence-of-insurance.pdf", content_type: 'application/pdf')
         File.delete(save_path) if File.exist?(save_path) unless %w[local development].include?(ENV["RAILS_ENV"])
       end
+    end
+
+    def find_closest_master_policy_configuration(insurable = nil)
+      master_policy_configuration = nil
+
+      unless insurable.nil?
+        community = nil
+        if ::InsurableType::RESIDENTIAL_COMMUNITIES_IDS.include?(insurable.insurable_type_id)
+          community = insurable
+        elsif (::InsurableType::RESIDENTIAL_BUILDINGS_IDS + ::InsurableType::RESIDENTIAL_UNITS_IDS).include?(insurable.insurable_type_id)
+          community = insurable.parent_community
+        end
+
+        if !community.nil? && self.insurables.include?(community)
+          carrier_policy_type = CarrierPolicyType.where(carrier_id: self.carrier_id, policy_type: self.policy_type_id).take
+          closest_link = nil
+          if community.master_policy_configurations.where(carrier_policy_type: carrier_policy_type).count > 0
+            master_policy_configuration = community.master_policy_configurations.where(carrier_policy_type: carrier_policy_type).take
+            closest_link = "community"
+          elsif !self.master_policy_configuration.nil? && closest_link.nil?
+            master_policy_configuration = self.master_policy_configuration
+            closest_link = "master_policy"
+          elsif self.account.master_policy_configurations.where(carrier_policy_type: carrier_policy_type).count > 0 && closest_link.nil?
+            master_policy_configuration = self.account.master_policy_configurations.where(carrier_policy_type: carrier_policy_type).take
+          end
+        end
+      end
+
+      return master_policy_configuration
     end
 
   end

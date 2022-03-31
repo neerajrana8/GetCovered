@@ -11,7 +11,7 @@ class BrandingProfile < ApplicationRecord
   before_save :sanitize_branding_url
   after_save :check_default
   after_save :check_global_default
-  after_create :set_up_from_master
+  after_create :set_as_default
 
   validates_presence_of :url
 
@@ -97,6 +97,12 @@ class BrandingProfile < ApplicationRecord
     end
 
     uri.to_s
+  end
+
+  def set_as_default
+    unless profileable.branding_profiles.count > 1
+      self.update default: true
+    end
   end
 
   def set_up_from_master

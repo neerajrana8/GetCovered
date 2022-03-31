@@ -46,6 +46,30 @@ module V2
         end
       end
 
+      def communities
+        if params[:search].presence && params[:account_id].presence
+          account = Account.find(params[:account_id])
+          if current_staff.organizable.accounts.include?(account)
+            @insurables = Insurable.where(account_id: account.id).communities.where(
+              "title ILIKE '%#{ params[:search] }%'"
+            )
+
+            @response = V2::StaffSuperAdmin::Insurables.new(
+              @insurables
+            ).response
+
+            render json: @response.to_json,
+                   status: :ok
+          else
+            render json: { success: false, errors: ['Unauthorized Access'] },
+                   status: :unauthorized
+          end
+        else
+          render json: [].to_json,
+                 status: :ok
+        end
+      end
+
       def show; end
 
       def create

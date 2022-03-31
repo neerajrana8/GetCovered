@@ -83,6 +83,10 @@ module InsurablesMethods
       return
     else
       cip.data['county_resolution']['matches'].select!{|opt| opt['county'].chomp(" COUNTY").gsub(/[^a-z]/i, ' ') == (params[:county] || "").upcase.chomp(" COUNTY").gsub(/[^a-z]/i, ' ') } # just in case one is "Whatever County" and the other is just "Whatever", one has a dash and one doesn't, etc
+      addr = @insurable.primary_address
+      if cip.data['county_resolution']['matches'].count{|opt| opt['locality'].downcase == addr.city.downcase } == 1 && cip.data['county_resolution']['matches'].count{|opt| opt['locality'].downcase == addr.neighborhood&.downcase } == 1
+        cip.data['county_resolution']['matches'].select!{|opt| opt['locality'].downcase == addr.neighborhood&.downcase }
+      end
       if cip.data['county_resolution']['matches'].length == 1
         cip.data['county_resolution']['selected'] = cip.data["county_resolution"]["matches"][0]['seq']
         cip.data['county_resolution']['county_resolved_on'] = Time.current.strftime("%m/%d/%Y %I:%M %p")
@@ -253,9 +257,31 @@ module InsurablesMethods
         }.compact)
       elsif ::InsurableType::RESIDENTIAL_COMMUNITIES_IDS.include?(ins.insurable_type_id)
         preferred = (ins.get_carrier_status(carrier_id) == :preferred)
+        master_policy_hash = nil
+
+        # Moose warning, this is some bad juju
+        if preferred && ins.policies.exists?(policy_type_id: 2, carrier_id: 2)
+          master_policy = ins.policies.where(policy_type_id: 2, carrier_id: 2).take
+          config = master_policy.find_closest_master_policy_configuration(ins)
+          master_policy_hash = {
+            number: master_policy.number,
+            status: master_policy.status,
+            account_id: master_policy.account_id,
+            agency_id: master_policy.agency_id,
+            carrier_id: master_policy.carrier_id,
+            policy_type_id: master_policy.policy_type_id,
+            coverage_attributes: {
+              master_policy_liability: master_policy.policy_coverages.where(designation: 'liability_coverage').take&.limit || 0,
+              master_policy_contents: master_policy.policy_coverages.where(designation: 'tenant_contingent_contents').take&.limit || 0,
+              master_policy_per_month_charge: config.nil? ? nil : config.charge_amount(false)
+            }
+          }
+        end
+
         return {
           id: ins.id, title: ins.title, enabled: ins.enabled, preferred_ho4: preferred,
-          account_id: ins.account_id, agency_id: ins.agency_id, insurable_type_id: ins.insurable_type_id
+          account_id: ins.account_id, agency_id: ins.agency_id, insurable_type_id: ins.insurable_type_id,
+          active_master_policy: master_policy_hash,
         }.merge(short_mode && short_mode != 'buildings' ? {} : {
           category: ins.category, primary_address: insurable_prejson(ins.primary_address, agency_id: agency_id, policy_type_id: policy_type_id, carrier_id: carrier_id, subcall: true),
           buildings: preferred && ins.enabled ? ins.insurables.confirmed.where(insurable_type_id: ::InsurableType::RESIDENTIAL_BUILDINGS_IDS, enabled: true).order(title: :asc).map{|u| insurable_prejson(u, subcall: true, short_mode: short_mode == 'buildings' ? true : false, agency_id: agency_id, policy_type_id: policy_type_id, carrier_id: carrier_id) } : nil,

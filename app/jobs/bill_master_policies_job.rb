@@ -2,6 +2,7 @@ class BillMasterPoliciesJob < ApplicationJob
   queue_as :default
 
   def perform(now = false)
+    return # temporarily DISABLED because the MP system has been updated drastically
     master_policies.each do |master_policy|
       begin
         invoice = MasterPolicies::GenerateNextInvoice.run!(master_policy: master_policy)

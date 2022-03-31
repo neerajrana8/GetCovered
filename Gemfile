@@ -10,7 +10,7 @@ gem 'pg', '~> 1.2.3'
 # Add union queries to the Rails
 gem 'active_record_union', '~> 1.3.0'
 # Use Puma as the app server
-gem 'puma', '~> 5.6.2'
+gem 'puma', '~> 5.6.4'
 # Build JSON APIs with ease. Read more: https://github.com/rails/jbuilder
 gem 'jbuilder', '~> 2.11.2'
 # Use Redis adapter to run Action Cable in production
@@ -93,7 +93,7 @@ gem 'aws-sdk', '~> 3.1.0'
 
 gem 'active_interaction', '~> 4.0.5'
 gem 'mini_magick'
-gem 'image_processing', '~> 1.2'
+gem 'image_processing', '~> 1.12'
 
 gem 'net-sftp', '~> 3.0.0'
 
@@ -124,7 +124,9 @@ gem 'dry-monads'
 
 gem 'rails-i18n', '~> 6.0.0'
 
-group :development, :test, :test_container do
+gem 'rswag-api'
+
+group :local, :development, :test, :test_container do
   # Call 'byebug' anywhere in the code to stop execution and get a debugger console
   gem 'byebug', platforms: %i[mri mingw x64_mingw]
   #gem 'pry'
@@ -134,6 +136,7 @@ group :development, :test, :test_container do
   gem 'guard-rspec'
   gem 'rails-controller-testing'
   gem 'rspec-rails'
+  gem 'rswag-specs'
   gem 'rubocop', '~> 0.63.1', require: false
   gem 'simplecov', require: false
   # RDoc for Documentation

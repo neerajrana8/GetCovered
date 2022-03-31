@@ -1,0 +1,50 @@
+<p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
+  <span style="font-size: 16px;">Hi <%= @user.profile.full_name %>,</span>
+</p>
+<p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
+  <span style="font-size: 16px;">
+    As referenced in your lease, <%= @community.title %> requires <%= number_to_currency(@min_liability.to_f / 100, unit: "$") %>
+    in liability coverage for the length of your lease term. You are receiving this letter because we do not have active
+    insurance on file and you are out of compliance. We have partnered with Get Covered to offer an easy and affordable
+    insurance option and track our insurance compliance.
+  </span>
+</p>
+<p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
+  <span style="font-size: 16px;">
+    <b>Need Renter's Insurance?</b> Please visit <a href="<%= @onboarding_url %>" target="_blank">Get Covered</a> to
+    quote and purchase renter’s insurance.
+  </span>
+</p>
+<p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
+  <span style="font-size: 16px;">
+    <b>Already have Insurance?</b>
+    You can satisfy our audit request by emailing your declaration page/certificate to
+    <%= @from %> or simply respond to this email.
+  </span>
+</p>
+<p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
+  <span style="font-size: 16px;">
+    Ensure that your active policy meets the following requirements:
+  </span>
+</p>
+<ul style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
+  <li style="font-size: 16px;"><%= number_to_currency(@min_liability.to_f / 100, unit: "$") %> or more in liability coverage</li>
+  <li style="font-size: 16px;">Active Policy Dates</li>
+  <li style="font-size: 16px; text-decoration: underline;" >
+    <%= @community.title %> is listed as an Additional Interest on your policy using the address below
+  </li>
+</ul>
+<p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em; text-align: center; font-size: 16px;">
+  <%= @pm_account.additional_interest ? @pm_account.title : @community.title %><br>
+  <b><%= @pm_account.primary_address().combined_street_address %><%= ", #{ @pm_account.primary_address().street_two }" unless @pm_account.primary_address().street_two.nil? %><br>
+    <%= @pm_account.primary_address().city %>, <%= @pm_account.primary_address().state %> <%= @pm_account.primary_address().combined_zip_code %></b>
+</p>
+<p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
+  <span style="font-size: 16px;">
+    Thank you for your attention to the matter. Please contact Get Covered at
+    <%= @from %> if you have any questions.
+  </span>
+</p>
+<p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em; ">
+  <span style="font-size: 16px;"><b><%= @pm_account.title %></b></span>
+</p>

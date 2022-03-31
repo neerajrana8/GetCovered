@@ -1,4 +1,4 @@
-module MasterPolicies
+module Compliance
   class ConfigurationSweepJob < ApplicationJob
     queue_as :default
     before_perform :set_configurations
@@ -10,7 +10,7 @@ module MasterPolicies
         leases = configurable.leases.where("start_date >= :date AND covered = false", date: config.program_start_date)
         leases.each do |lease|
           if Time.current.to_date >= lease.start_date + config.grace_period.days
-            master_policy.qbe_specialty_issue_coverage(lease.insurable, lease.users, lease.start_date)
+            master_policy.qbe_specialty_issue_coverage(lease.insurable, lease.users, lease.start_date, true, primary_user: lease.primary_user)
           end
         end
       end

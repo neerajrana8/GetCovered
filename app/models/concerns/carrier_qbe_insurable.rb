@@ -151,6 +151,10 @@ module CarrierQbeInsurable
 	            if !@address.county.nil?
 	              @carrier_profile.data["county_resolution"]["matches"].select! { |opt| (opt['locality'].downcase == @address.city.downcase || opt['locality'].downcase == @address.neighborhood&.downcase) && qbe_standardize_county_string(opt['county']) == qbe_standardize_county_string(@address.county) } # just in case one is "Whatever County" and the other is just "Whatever", one has a dash and one doesn't, etc
 	            end
+              
+              if @carrier_profile.data['county_resolution']['matches'].count{|opt| opt['locality'].downcase == @address.city.downcase } == 1 && @carrier_profile.data['county_resolution']['matches'].count{|opt| opt['locality'].downcase == @address.neighborhood&.downcase } == 1
+                @carrier_profile.data['county_resolution']['matches'].select!{|opt| opt['locality'].downcase == @address.neighborhood&.downcase }
+              end
 	  
 	            case @carrier_profile.data["county_resolution"]["matches"].length
 	              when 0
