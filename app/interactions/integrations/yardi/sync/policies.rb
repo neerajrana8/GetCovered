@@ -21,8 +21,10 @@ module Integrations
             policies_updated: {},
             policies_exported: {}
           }
+          
+          true_property_ids = property_ids.nil? ? integration.configuration['sync']['syncable_communities'].map{|k,v| v['enabled'] ? k : nil }.compact : property_ids
         
-          if property_ids.nil?
+          if true_property_ids.nil?
             # get em all
             propz = Integrations::Yardi::RentersInsurance::GetPropertyConfigurations.run!({ integration: integration, property_id: property_list_id }.compact)
             propz = propz&.[](:parsed_response)&.dig("Envelope", "Body", "GetPropertyConfigurationsResponse", "GetPropertyConfigurationsResult", "Properties", "Property")
@@ -30,12 +32,12 @@ module Integrations
             propz = propz&.map{|comm| comm["Code"] }
             return(to_return) if propz.blank?
             return propz.inject(to_return){|tr, property_id| tr.deep_merge(Integrations::Yardi::Sync::Policies.run!(integration: integration, property_ids: [property_id])) }
-          elsif property_ids.length > 1
-            return property_ids.inject(to_return){|tr, property_id| tr.deep_merge(Integrations::Yardi::Sync::Policies.run!(integration: integration, property_ids: [property_id])) }
-          elsif property_ids.length == 0
+          elsif true_property_ids.length > 1
+            return true_property_ids.inject(to_return){|tr, property_id| tr.deep_merge(Integrations::Yardi::Sync::Policies.run!(integration: integration, property_ids: [property_id])) }
+          elsif true_property_ids.length == 0
             return(to_return)
           end
-          property_id = property_ids.first
+          property_id = true_property_ids.first
         
           ##############################################################
           ###################### SETUP #################################

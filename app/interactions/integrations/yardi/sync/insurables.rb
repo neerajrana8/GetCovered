@@ -14,7 +14,7 @@ module Integrations
           return case property_ids
             when ::String;    property_ids == property_id # WARNING: can't actually pass a string atm because ActiveIntegration is stupid...
             when ::Array;     property_ids.include?(property_id)
-            else;             true
+            else;             integration.configuration['sync']['syncable_communities'][property_id]&.enabled == true
           end
         end
 
