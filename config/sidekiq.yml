@@ -1,8 +1,12 @@
 :concurrency: 10
+awsdev:
+  :concurrency: 20
+aws_staging:
+  :concurrency: 20
 staging:
   :concurrency: 20
 production:
-  :concurrency: 30
+  :concurrency: 20
 
 :queues:
   - default
