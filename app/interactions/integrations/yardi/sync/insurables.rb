@@ -14,7 +14,7 @@ module Integrations
           return case property_ids
             when ::String;    property_ids == property_id # WARNING: can't actually pass a string atm because ActiveIntegration is stupid...
             when ::Array;     property_ids.include?(property_id)
-            else;             integration.configuration['sync']['syncable_communities'][property_id]&.enabled == true
+            else;             integration.configuration['sync']['syncable_communities'][property_id]&.[]('enabled') == true
           end
         end
 
@@ -73,6 +73,7 @@ module Integrations
           communities = Integrations::Yardi::RentersInsurance::GetPropertyConfigurations.run!({ integration: integration, property_id: property_list_id }.compact)
           communities = communities[:parsed_response].dig("Envelope", "Body", "GetPropertyConfigurationsResponse", "GetPropertyConfigurationsResult", "Properties", "Property")
           communities = [communities].compact unless communities.class == ::Array
+          communities.select!{|comm| should_import_community(comm["Code"]) }
           all_units = {}
           communities.each do |comm|
             next unless should_import_community(comm["Code"])
