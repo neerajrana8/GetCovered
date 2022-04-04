@@ -48,6 +48,7 @@ test_container:
 
 awsdev:
   <<: *production_default
+  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 150 } %>
   database: <%= Rails.application.credentials.postgres[:awsdev][:database] %>
   username: <%= Rails.application.credentials.postgres[:awsdev][:username] %>
   password: <%= Rails.application.credentials.postgres[:awsdev][:password] %>
@@ -56,6 +57,7 @@ awsdev:
   
 aws_staging:
   <<: *production_default
+  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 150 } %>
   database: <%= Rails.application.credentials.postgres[:aws_staging][:database] %>
   username: <%= Rails.application.credentials.postgres[:aws_staging][:username] %>
   password: <%= Rails.application.credentials.postgres[:aws_staging][:password] %>
@@ -64,6 +66,7 @@ aws_staging:
   
 production:
   <<: *default
+  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 400 } %>
   database: <%= Rails.application.credentials.postgres[:production][:database] %>
   username: <%= Rails.application.credentials.postgres[:production][:username] %>
   password: <%= Rails.application.credentials.postgres[:production][:password] %>
