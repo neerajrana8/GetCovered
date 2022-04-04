@@ -12,6 +12,7 @@ class Insurable < ApplicationRecord
   include ExpandedCovered
 
   before_validation :set_confirmed_automatically
+  before_save :flush_parent_insurable_id, :if => Proc.new { |ins| ::InsurableType::COMMUNITIES_IDS.include?(ins.insurable_type_id) }
   before_save :refresh_policy_type_ids
 
   after_commit :create_profile_by_carrier,
@@ -634,6 +635,16 @@ class Insurable < ApplicationRecord
   end
 
   private
+
+  def flush_parent_insurable_id
+    if Rails.env == "production"
+      self.insurable_id = nil
+    else
+      raise ArgumentError.new(
+        "#{ self.title } IS A COMMUNITY!  NO PARENT INSURABLE FOR A COMMUNITY!  NO MORE INFINITE RECURSION!"
+      ) unless self.insurable_id.nil?
+    end
+  end
 
   def assign_master_policy
     return if InsurableType::COMMUNITIES_IDS.include?(insurable_type_id) || insurable.blank?
