@@ -7,8 +7,6 @@ module V2
     class PoliciesController < StaffPolicySupportController
       include PoliciesMethods
 
-      MAX_COUNTS = 9998
-
       before_action :set_policy,
                     only: %i[update show]
       before_action :set_optional_coverages, only: [:show]
@@ -54,15 +52,7 @@ module V2
                  status: 422
         end
       end
-
-      def default_pagination_per
-        MAX_COUNTS
-      end
-
-      def maximum_pagination_per
-        MAX_COUNTS
-      end
-
+      
       private
 
       def view_path
