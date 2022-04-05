@@ -19,10 +19,15 @@ module V2
   				@agency = carrier_agency.agency
 
           @communities = []
-          @prelim_communities = @agency.insurables.where(insurable_type_id: 1).each do |i|
+          @agency.insurables.where(insurable_type_id: 1).each do |i|
             profile = i.carrier_profile(1)
+						address = i.primary_address()
 						unless profile.nil?
-            	@communities << i if profile.traits["pref_facility"] == "MDU" && i.primary_address().zip_code == params["sourceInfo"]["zipCodeRequest"]["zipCode"].to_s
+							if profile.traits["pref_facility"] == "MDU"
+								unless address.nil?
+									@communities << i if address.zip_code == params["sourceInfo"]["zipCodeRequest"]["zipCode"].to_s
+								end
+							end
 						end
           end
           						 	 
