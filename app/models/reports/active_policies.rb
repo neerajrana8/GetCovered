@@ -48,8 +48,8 @@ module Reports
 
     def headers
       %w[management_company property_name property_city property_state property_phone policy_type
-         policy_number primary_insured_name primary_insured_phone primary_insured_email
-         primary_insurance_location effective_date expiration_date finished_date]
+         policy_number primary_insured_name primary_insured_phone primary_insured_email primary_insurance_location
+         effective_date expiration_date finished_date]
     end
 
     private
