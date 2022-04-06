@@ -99,11 +99,9 @@ module V2
       def update_policy_attributes
         system_data_keys = params.require(:policy).fetch(:system_data, {}).keys
 
-        #TODO: need to ask FE to rename policy_number to number
-        to_update = params.require(:policy).permit(:id, :out_of_system_carrier_title, :status, :number, :out_of_system_carrier_title,
+        params.require(:policy).permit(:id, :number, :out_of_system_carrier_title, :status, :number, :out_of_system_carrier_title,
                       :system_data => system_data_keys,
                       policy_coverages_attributes: %i[id title designation limit])
-        to_update.merge(number: params[:policy_number])
       end
 
     end
