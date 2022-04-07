@@ -13,30 +13,28 @@ module V2
 					 	 params["sourceInfo"]["zipCodeRequest"]["zipCode"].blank? ||
 					 	 params["sourceInfo"]["zipCodeRequest"]["Agent_Number"].blank?
 				
-				carrier_agency = CarrierAgency.where(external_carrier_id: params["sourceInfo"]["zipCodeRequest"]["Agent_Number"]).take
+				carrier_agency = CarrierAgency.find_by_external_carrier_id(params["sourceInfo"]["zipCodeRequest"]["Agent_Number"])
 				
 				unless carrier_agency.nil?
   				@agency = carrier_agency.agency
-
+					@community_ids = @agency.insurables.communities.pluck(:id)
+					@addresses = Address.includes(:addressable)
+															.where(zip_code: params["sourceInfo"]["zipCodeRequest"]["zipCode"].to_s,
+																		 addressable_id: @community_ids,
+																		 addressable_type: "Insurable")
           @communities = []
-          @agency.insurables.where(insurable_type_id: 1).each do |i|
-            profile = i.carrier_profile(1)
-						address = i.primary_address()
-						unless profile.nil?
-							if profile.traits["pref_facility"] == "MDU"
-								unless address.nil?
-									@communities << i if address.zip_code == params["sourceInfo"]["zipCodeRequest"]["zipCode"].to_s
-								end
-							end
-						end
-          end
-          						 	 
+					@addresses.each do |address|
+						community = address.insurable
+						profile = community.carrier_profile(1)
+						@communities << community unless profile.nil? || profile.traits["pref_facility"] != "MDU"
+					end
+
         else
-  				render json: { statusCd: "Error", statusMessage: "Missing or improperly formated Agent Number" }.to_json,
+  				render json: { statusCd: "Error", statusMessage: "Missing or improperly formatted Agent Number" }.to_json,
   						 status: :unprocessable_entity
         end
 			else
-				render json: { statusCd: "Error", statusMessage: "Missing or improperly formated Zip Code or Agent Number" }.to_json,
+				render json: { statusCd: "Error", statusMessage: "Missing or improperly formatted Zip Code or Agent Number" }.to_json,
 						 status: :unprocessable_entity
 			end
 		end
