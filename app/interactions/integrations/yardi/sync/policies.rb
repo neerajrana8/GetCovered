@@ -105,15 +105,40 @@ module Integrations
           ###################### IMPORT FROM YARDI #####################
           ##############################################################
           
-          # do some preliminary stuff
-          in_system = ::IntegrationProfile.references(:policies).includes(:policy).where(external_context: 'policy', external_id: policy_hashes.map{|ph| ph["PolicyNumber"] })
-          in_system_ids = in_system.map{|ip| ip.profileable_id }
-          in_system = in_system.group_by{|ip| ip.policy.number }.transform_values!{|vs| vs.first }
+          # construct a hash in_system[policy_number] = { policy: policy_object, integration_profile: ip_object_or_nil }
+          in_system = ::Policy.where(number: policy_hashes.map{|ph| ph["PolicyNumber"] })
+          in_system_ips = ::IntegrationProfile.where(external_context: 'policy', profileable: in_system)
+          in_system = in_system.group_by{|p| p.number }.transform_values{|vs| { policy: vs.first } }
+          in_system_ips.each{|ip| dat_hash = in_system[ip.external_id]; next if dat_hash.nil?; dat_hash[:integration_profile] = ip }
+          in_system_ips = nil # so ruby can garbage collect
+          in_system_ids = in_system.map{|is| is[:policy].id } # for later use
+          # group up in-system and out-of-system policies
           import_results = policy_hashes.group_by{|polhash| in_system[polhash["PolicyNumber"]] ? true : false }
+          import_results[true] ||= []
+          import_results[false] ||= []
           # policies update section
-          #import_results[true].each do |polhash|
-            ############# MOOSE WARNING: no policy update implemented ###########
-          #end
+          import_results[true].each do |polhash|
+            data = in_system[polhash["PolicyNumber"]]
+            ############# MOOSE WARNING: no policy update implemented except for IP creation ###########
+            if data[:integration_profile].nil?
+              created_ip = IntegrationProfile.create(
+                integration: integration,
+                profileable: data[:policy],
+                external_context: "policy",
+                external_id: data[:policy].number,
+                configuration: {
+                  'history' => 'matched_with_yardi_record',
+                  'synced_at' => Time.current.to_s
+                }
+              )
+              if created_ip.id.nil?
+                integration.configuration['pending_yardi_policy_numbers'] ||= []
+                integration.configuration['pending_yardi_policy_numbers'][property_id] ||= []
+                integration.configuration['pending_yardi_policy_numbers'][property_id].push(data[:policy].number)
+                to_return[:policy_import_errors][data[:policy].number] = "In-system policy #{data[:policy].number} matches Yardi record, but failed to create IntegrationProfile (#{created_ip.errors.to_h}). Policy added to pending import list."
+              end
+            end
+          end
           to_return[:policy_update_errors]['all'] = "Yardi sync policy updates are currently disabled." unless import_results[true].blank?
           # policies creation section
           lease_ips = ::IntegrationProfile.references(:leases).includes(:lease)
@@ -206,7 +231,7 @@ module Integrations
                   }
                 )
                 in_system_ids.push(created.id)
-                in_system[created.number] = created_ip
+                in_system[created.number] = { policy: created, integration_profile: created_ip }
               end
               to_return[:policies_imported][polhash["PolicyNumber"]] = created
               created_lease_ips.push(created_ip)
@@ -264,6 +289,7 @@ module Integrations
               PolicyNumber: policy.number,
               PolicyTitle: policy.number,
               PolicyDetails: {
+                Notes: "GC Verified",
                 EffectiveDate: policy.effective_date.to_s,
                 ExpirationDate: policy.expiration_date.to_s,
                 IsRenew: policy.auto_renew,

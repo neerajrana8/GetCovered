@@ -98,7 +98,7 @@ module Integrations
         event.completed = Time.now
         event.response = result.response.body
         event.status = (result.code == 200 ? 'success' : 'error')
-        if result.code == 200 && result.response.body.index("Login failed.")
+        if result.code == 200 && (result.response.body.index("Login failed.") || result.response.body.index("Invalid Interface Entity"))
           event.status = 'error'
         end
         event.save
