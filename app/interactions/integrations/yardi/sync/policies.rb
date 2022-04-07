@@ -114,6 +114,8 @@ module Integrations
           in_system_ids = in_system.map{|is| is[:policy].id } # for later use
           # group up in-system and out-of-system policies
           import_results = policy_hashes.group_by{|polhash| in_system[polhash["PolicyNumber"]] ? true : false }
+          import_results[true] ||= []
+          import_results[false] ||= []
           # policies update section
           import_results[true].each do |polhash|
             data = in_system[polhash["PolicyNumber"]]
