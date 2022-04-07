@@ -24,7 +24,7 @@ module V2
 																		 addressable_type: "Insurable")
           @communities = []
 					@addresses.each do |address|
-						community = address.insurable
+						community = address.addressable
 						profile = community.carrier_profile(1)
 						@communities << community unless profile.nil? || profile.traits["pref_facility"] != "MDU"
 					end
