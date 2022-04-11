@@ -291,14 +291,16 @@ module Integrations
 
           output_array.each do |comm|
             comm[:buildings].each do |bldg|
-              building = (comm[:buildings].length == 1 && bldg[:is_community] ? comm[:insurable] : comm[:insurable].buildings.confirmed.find{|b| b.primary_address.street_name == bldg[:street_name] && b.primary_address.street_number == bldg[:street_number] })
+              addr = ::Address.new(street_name: bldg[:street_name], street_number: bldg[:street_number], city: bldg[:city], state: bldg[:state], zip_code: bldg[:zip_code])
+              addr.standardize_case; addr.set_full; addr.set_full_searchable; addr.from_full; addr.standardize
+              building = (comm[:buildings].length == 1 && bldg[:is_community] ? comm[:insurable] : comm[:insurable].buildings.confirmed.find{|b| b.primary_address.street_name == addr.street_name && b.primary_address.street_number == addr.street_number })
               if building.nil?
                 building = Insurable.create(
                   insurable_id: comm[:insurable].id,
                   title: "#{bldg[:street_number]} #{bldg[:street_name]}",
                   insurable_type_id: 7,
                   enabled: true, preferred_ho4: false, category: 'property',
-                  addresses: [ ::Address.new(street_name: bldg[:street_name], street_number: bldg[:street_number], city: bldg[:city], state: bldg[:state], zip_code: bldg[:zip_code]) ],
+                  addresses: [ addr ],
                   account_id: account_id, confirmed: true
                 )
                 if building.id.nil?
