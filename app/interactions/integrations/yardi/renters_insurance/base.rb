@@ -4,7 +4,6 @@ module Integrations
       class Base < Integrations::Yardi::Base
       
         def execute(**params)
-          puts "RI BASE: #{params}"
           super(**{
             UserName: integration.credentials['voyager']['username'],
             Password: integration.credentials['voyager']['password'],
