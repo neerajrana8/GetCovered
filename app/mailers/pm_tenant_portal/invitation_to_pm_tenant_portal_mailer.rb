@@ -80,6 +80,8 @@ module PmTenantPortal
       set_locale(@user.profile&.language)
 
       @community = Insurable.find_by_id(community_id)
+      set_liabilities(@community)
+
       @review_number = policy_id
       @pm_account = @community.account
 
@@ -96,6 +98,8 @@ module PmTenantPortal
       set_locale(@user.profile&.language)
 
       @community = @policy.primary_insurable
+      set_liabilities(@community)
+
       @pm_account = @community.account
       @tenant_onboarding_url = tenant_onboarding_url(@user.id, @community)
 
