@@ -6,57 +6,63 @@ module PoliciesDashboardMethods
   end
 
   def total
-    lics = line_item_changes(all_policies, date_params[:start]...date_params[:end])
-    total_premium_paid = premium_collected(lics)
-    bound_policies = bound_policy_count(all_policies)
-    filtered_policies_count = all_policies.count
-
-    @total = {
-      all_policies_count: filtered_policies_count,
-      bound: bound_policies,
-      cancelled: cancelled_policy_count(all_policies),
-      total_premium_paid: total_premium_paid,
-      average_premium_paid: filtered_policies_count.zero? ? 0 : (total_premium_paid.to_f / filtered_policies_count).round,
-      agencies_commissions: commissions_collected(lics, recipient_type: 'Agency'),
-      get_covered_commissions: commissions_collected(lics, recipient_type: 'Agency', recipient_id: Agency::GET_COVERED_ID),
-      carriers_commissions: commissions_collected(lics, recipient_type: 'Carrier')
-    }
-
-    render json: @total.to_json
+    # lics = line_item_changes(all_policies, date_params[:start]...date_params[:end])
+    # total_premium_paid = premium_collected(lics)
+    # bound_policies = bound_policy_count(all_policies)
+    # filtered_policies_count = all_policies.count
+    #
+    # @total = {
+    #   all_policies_count: filtered_policies_count,
+    #   bound: bound_policies,
+    #   cancelled: cancelled_policy_count(all_policies),
+    #   total_premium_paid: total_premium_paid,
+    #   average_premium_paid: filtered_policies_count.zero? ? 0 : (total_premium_paid.to_f / filtered_policies_count).round,
+    #   agencies_commissions: commissions_collected(lics, recipient_type: 'Agency'),
+    #   get_covered_commissions: commissions_collected(lics, recipient_type: 'Agency', recipient_id: Agency::GET_COVERED_ID),
+    #   carriers_commissions: commissions_collected(lics, recipient_type: 'Carrier')
+    # }
+    #
+    # render json: @total.to_json
+    render json: {
+      message: "Currently Unavailable: Under Construction"
+    }, status: :ok
   end
 
   def graphs
-    start_date = Date.parse(date_params[:start])
-    end_date   = Date.parse(date_params[:end])
-
-    @graphs = {
-      total: {
-        total_new_policies: 0,
-        current_added_policies: 0,
-        premium_collected: 0,
-        agencies_commissions: 0,
-        get_covered_commissions: 0,
-        carriers_commissions: 0
-      },
-      graphs: {}
-    }
-
-    if filter_by_day?(start_date, end_date)
-      start_date.upto(end_date) do |date|
-        params[:filter][:created_at] = Date.parse(date.to_s).all_day
-        apply_filters(:@policies_by_day, @policies)
-        set_day_data(@policies_by_day, date)
-      end
-    else
-      while start_date < end_date
-        params[:filter][:created_at] = start_date.all_month
-        apply_filters(:@policies_by_month, @policies)
-        set_day_data(@policies_by_month, start_date.end_of_month)
-        start_date += 1.month
-      end
-    end
-
-    render json: @graphs.to_json
+    # start_date = Date.parse(date_params[:start])
+    # end_date   = Date.parse(date_params[:end])
+    #
+    # @graphs = {
+    #   total: {
+    #     total_new_policies: 0,
+    #     current_added_policies: 0,
+    #     premium_collected: 0,
+    #     agencies_commissions: 0,
+    #     get_covered_commissions: 0,
+    #     carriers_commissions: 0
+    #   },
+    #   graphs: {}
+    # }
+    #
+    # if filter_by_day?(start_date, end_date)
+    #   start_date.upto(end_date) do |date|
+    #     params[:filter][:created_at] = Date.parse(date.to_s).all_day
+    #     apply_filters(:@policies_by_day, @policies)
+    #     set_day_data(@policies_by_day, date)
+    #   end
+    # else
+    #   while start_date < end_date
+    #     params[:filter][:created_at] = start_date.all_month
+    #     apply_filters(:@policies_by_month, @policies)
+    #     set_day_data(@policies_by_month, start_date.end_of_month)
+    #     start_date += 1.month
+    #   end
+    # end
+    #
+    # render json: @graphs.to_json
+    render json: {
+      message: "Currently Unavailable: Under Construction"
+    }, status: :ok
   end
 
   private
