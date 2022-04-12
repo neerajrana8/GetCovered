@@ -56,6 +56,7 @@ scope module: :public do
   end
 
   get 'insurable_by_auth_token', to: '/v2/public/insurables#insurable_by_auth_token'
+  get 'additional_interest_name_usage/:community_id', to: '/v2/public/insurables#additional_interest_name_usage'
 
   post '/msi/unit-list',
     to: 'insurables#msi_unit_list',
