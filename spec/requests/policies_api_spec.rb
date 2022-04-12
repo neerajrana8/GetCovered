@@ -107,12 +107,12 @@ describe 'Admin Policy spec', type: :request do
       expect(Policy.last.users.last.email).to eq('yernar.mussin@nitka.com')
     end
 
-    it 'should include policy type title in index' do
-      FactoryBot.create(:policy, agency: @agency, carrier: @carrier, account: @account, policy_type: @policy_type)
-      get '/v2/staff_agency/policies', headers: @headers
-      result = JSON.parse response.body
-      expect(result.first['policy_type_title']).to eq(@policy_type.title)
-    end
+    # it 'should include policy type title in index' do
+    #   FactoryBot.create(:policy, agency: @agency, carrier: @carrier, account: @account, policy_type: @policy_type)
+    #   get '/v2/staff_agency/policies', headers: @headers
+    #   result = JSON.parse response.body
+    #   expect(result.first['policy_type_title']).to eq(@policy_type.title)
+    # end
 
     it 'should filter by policy number' do
       # First Request should return 3 policies belonging to @policy_type
