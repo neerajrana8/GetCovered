@@ -5,7 +5,8 @@
 module V2
   module StaffAccount
     class DashboardController < StaffAccountController
-      # def total_dashboard
+
+      def total_dashboard
       #   unit_ids = InsurableType::UNITS_IDS
       #   @covered = Insurable.where(insurable_type_id: unit_ids, covered: true, account: current_staff.organizable).count || 0
       #   @uncovered = Insurable.where(insurable_type_id: unit_ids, covered: false, account: current_staff.organizable).count || 0
