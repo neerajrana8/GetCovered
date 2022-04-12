@@ -17,7 +17,7 @@ module V2
       before_action :set_substrate, only: [:index]
 
       def index
-        super(:@policies, @substrate, invoices: :line_items)
+        super(:@policies, @substrate)
       end
 
       def search

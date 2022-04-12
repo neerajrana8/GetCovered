@@ -5,38 +5,41 @@
 module V2
   module StaffAccount
     class DashboardController < StaffAccountController
-      def total_dashboard
-        unit_ids = InsurableType::UNITS_IDS
-        @covered = Insurable.where(insurable_type_id: unit_ids, covered: true, account: current_staff.organizable).count || 0
-        @uncovered = Insurable.where(insurable_type_id: unit_ids, covered: false, account: current_staff.organizable).count || 0
-        @units = @covered + @uncovered
-        community_ids = InsurableType::COMMUNITIES_IDS
-        @communities = Insurable.where(insurable_type_id: community_ids, account: current_staff.organizable).count
-        @total_policy = ::Policy.current.where(account: current_staff.organizable).count
-        @total_residential_policies = ::Policy.current.where(policy_type_id: 1, account: current_staff.organizable).count
-        @total_master_policies = ::Policy.current.where(policy_type_id: PolicyType::MASTER_IDS, account: current_staff.organizable).count
-        @total_master_policy_coverages = ::Policy.current.where(policy_type_id: 3, account: current_staff.organizable).count
-        @total_commercial_policies = ::Policy.current.where(policy_type_id: 4, account: current_staff.organizable).count
-        @total_rent_guarantee_policies = ::Policy.current.where(policy_type_id: 5, account: current_staff.organizable).count
-        policy_ids = ::Policy.where(account: current_staff.organizable).pluck(:id)
-        policy_quote_ids = ::PolicyQuote.includes(:policy_application).references(:policy_applications).where(status: 'accepted', policy_applications: { account_id: current_staff.organizable.id }).pluck(:id)
-        @total_commission = ::Commission.where(recipient: current_staff.organizable).pluck(:total).inject(:+) || 0
-        @total_premium = ::PolicyPremium.where(policy_quote_id: policy_quote_ids).or(::PolicyPremium.where(policy_id: policy_ids)).pluck(:total_premium).inject(:+) || 0
-
-        render json: {
-          total_units: @units,
-          total_covered_units: @covered,
-          total_uncovered_units: @uncovered,
-          total_communities: @communities,
-          total_policies: @total_policy,
-          total_residential_policies: @total_residential_policies,
-          total_master_policies: @total_master_policies,
-          total_master_policy_coverages: @total_master_policy_coverages,
-          total_commercial_policies: @total_commercial_policies,
-          total_rent_guarantee_policies: @total_rent_guarantee_policies,
-          total_commission: @total_commission,
-          total_premium: @total_premium
-        }, status: :ok
+      # def total_dashboard
+      #   unit_ids = InsurableType::UNITS_IDS
+      #   @covered = Insurable.where(insurable_type_id: unit_ids, covered: true, account: current_staff.organizable).count || 0
+      #   @uncovered = Insurable.where(insurable_type_id: unit_ids, covered: false, account: current_staff.organizable).count || 0
+      #   @units = @covered + @uncovered
+      #   community_ids = InsurableType::COMMUNITIES_IDS
+      #   @communities = Insurable.where(insurable_type_id: community_ids, account: current_staff.organizable).count
+      #   @total_policy = ::Policy.current.where(account: current_staff.organizable).count
+      #   @total_residential_policies = ::Policy.current.where(policy_type_id: 1, account: current_staff.organizable).count
+      #   @total_master_policies = ::Policy.current.where(policy_type_id: PolicyType::MASTER_IDS, account: current_staff.organizable).count
+      #   @total_master_policy_coverages = ::Policy.current.where(policy_type_id: 3, account: current_staff.organizable).count
+      #   @total_commercial_policies = ::Policy.current.where(policy_type_id: 4, account: current_staff.organizable).count
+      #   @total_rent_guarantee_policies = ::Policy.current.where(policy_type_id: 5, account: current_staff.organizable).count
+      #   policy_ids = ::Policy.where(account: current_staff.organizable).pluck(:id)
+      #   policy_quote_ids = ::PolicyQuote.includes(:policy_application).references(:policy_applications).where(status: 'accepted', policy_applications: { account_id: current_staff.organizable.id }).pluck(:id)
+      #   @total_commission = ::Commission.where(recipient: current_staff.organizable).pluck(:total).inject(:+) || 0
+      #   @total_premium = ::PolicyPremium.where(policy_quote_id: policy_quote_ids).or(::PolicyPremium.where(policy_id: policy_ids)).pluck(:total_premium).inject(:+) || 0
+      #
+      #   render json: {
+      #     total_units: @units,
+      #     total_covered_units: @covered,
+      #     total_uncovered_units: @uncovered,
+      #     total_communities: @communities,
+      #     total_policies: @total_policy,
+      #     total_residential_policies: @total_residential_policies,
+      #     total_master_policies: @total_master_policies,
+      #     total_master_policy_coverages: @total_master_policy_coverages,
+      #     total_commercial_policies: @total_commercial_policies,
+      #     total_rent_guarantee_policies: @total_rent_guarantee_policies,
+      #     total_commission: @total_commission,
+      #     total_premium: @total_premium
+      #   }, status: :ok
+      render json: {
+        message: "Currently Unavailable: Under Construction"
+      }, status: :ok
       end
 
       def communities_list
