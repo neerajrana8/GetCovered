@@ -36,6 +36,8 @@ json.account do
   if insurable.account&.present?
     json.id insurable.account.id
     json.title insurable.account.title
+    json.additional_interest insurable.account.additional_interest
+    json.additional_interest_name insurable.account.additional_interest_name
   end
 end
 
@@ -70,5 +72,3 @@ json.user_attributes do
     json.last_name @user.profile.last_name
   end
 end
-
-

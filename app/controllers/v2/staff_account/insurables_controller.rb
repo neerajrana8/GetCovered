@@ -207,7 +207,8 @@ module V2
         params.require(:insurables).permit(
           common_attributes: [
             :category, :covered, :enabled, :insurable_id, :occupied,
-            :insurable_type_id, addresses_attributes: %i[
+            :insurable_type_id, :additional_interest_name, :additional_interest,
+            addresses_attributes: %i[
               city country county id latitude longitude
               plus_four state street_name street_number
               street_two timezone zip_code
@@ -222,7 +223,8 @@ module V2
 
         to_return = params.require(:insurable).permit(
           :category, :covered, :enabled, :insurable_id, :occupied,
-          :insurable_type_id, :title, addresses_attributes: %i[
+          :insurable_type_id, :title, :additional_interest_name, :additional_interest,
+          addresses_attributes: %i[
             city country county id latitude longitude
             plus_four state street_name street_number
             street_two timezone zip_code
@@ -245,7 +247,8 @@ module V2
 
         to_return = params.require(:insurable).permit(
           :covered, :enabled, :insurable_id, :occupied,
-          :title, addresses_attributes: %i[
+          :title, :additional_interest_name, :additional_interest,
+          addresses_attributes: %i[
             city country county id latitude longitude
             plus_four state street_name street_number
             street_two timezone zip_code

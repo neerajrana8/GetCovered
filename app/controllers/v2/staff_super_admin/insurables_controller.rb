@@ -206,10 +206,11 @@ module V2
 
         to_return = params.require(:insurable).permit(
             :category, :covered, :enabled, :insurable_id, :occupied,
-            :insurable_type_id, :title, :agency_id, :account_id, addresses_attributes: %i[
+            :insurable_type_id, :title, :agency_id, :account_id, :additional_interest_name, :additional_interest,
+            addresses_attributes: %i[
               city country county id latitude longitude
               plus_four state street_name street_number
-              street_two timezone zip_code 
+              street_two timezone zip_code
             ]
           )
 
@@ -233,7 +234,7 @@ module V2
       def bulk_create_params
         params.require(:insurables).permit(
           common_attributes: [
-            :category, :account_id, :insurable_type_id, :insurable_id, :enabled, :agency_id
+            :category, :account_id, :insurable_type_id, :insurable_id, :enabled, :agency_id, :additional_interest_name, :additional_interest,
           ],
           ranges: []
         )
