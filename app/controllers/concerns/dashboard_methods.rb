@@ -3,20 +3,23 @@ module DashboardMethods
 
   included do
     def communities_data
-      index(:@communities_relation, communities, :account, :insurable_data)
-
-      @communities_data = @communities_relation.map do |community|
-        {
-          id: community.id,
-          title: community.title,
-          account_title: community.account&.title,
-          total_units: community.insurable_data&.total_units,
-          uninsured_units: community.insurable_data&.uninsured_units,
-          expiring_policies: community.insurable_data&.expiring_policies
-        }
-      end
-
-      render template: 'v2/shared/dashboard/communities_data', status: :ok
+      # index(:@communities_relation, communities, :account, :insurable_data)
+      #
+      # @communities_data = @communities_relation.map do |community|
+      #   {
+      #     id: community.id,
+      #     title: community.title,
+      #     account_title: community.account&.title,
+      #     total_units: community.insurable_data&.total_units,
+      #     uninsured_units: community.insurable_data&.uninsured_units,
+      #     expiring_policies: community.insurable_data&.expiring_policies
+      #   }
+      # end
+      #
+      # render template: 'v2/shared/dashboard/communities_data', status: :ok
+      render json: {
+        message: "Currently Unavailable: Under Construction"
+      }, status: :ok
     end
 
     private
