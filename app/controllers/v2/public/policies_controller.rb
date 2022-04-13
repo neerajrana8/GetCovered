@@ -60,7 +60,7 @@ module V2
       def add_coverage_proof
         @policy                  = Policy.new(coverage_proof_params)
         @policy.policy_in_system = false
-        @policy.status           = 'BOUND' if coverage_proof_params[:status].blank?
+        @policy.status           = 'EXTERNAL_UNVERIFIED' if coverage_proof_params[:status].blank?
         add_error_master_types(@policy.policy_type_id)
         if @policy.errors.blank? && @policy.save
           result = Policies::UpdateUsers.run!(policy: @policy, policy_users_params: user_params[:policy_users_attributes]&.values)
