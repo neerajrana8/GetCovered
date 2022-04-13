@@ -7,8 +7,6 @@ module V2
     class PoliciesController < StaffPolicySupportController
       include PoliciesMethods
 
-      MAX_COUNTS = 9998
-
       before_action :set_policy,
                     only: %i[update show]
       before_action :set_optional_coverages, only: [:show]
@@ -45,22 +43,18 @@ module V2
 
       def update
         if @policy.update(update_policy_attributes)
-          PmTenantPortal::InvitationToPmTenantPortalMailer.external_policy_declined(policy: @policy).deliver_now if update_policy_attributes[:status] == "EXTERNAL_REJECTED"
-          PmTenantPortal::InvitationToPmTenantPortalMailer.external_policy_accepted(policy: @policy).deliver_now if update_policy_attributes[:status] == "EXTERNAL_VERIFIED"
-          render json: @policy.to_json,
-                 status: 202
+          begin
+            PmTenantPortal::InvitationToPmTenantPortalMailer.external_policy_declined(policy: @policy).deliver_now if update_policy_attributes[:status] == "EXTERNAL_REJECTED"
+            PmTenantPortal::InvitationToPmTenantPortalMailer.external_policy_accepted(policy: @policy).deliver_now if update_policy_attributes[:status] == "EXTERNAL_VERIFIED"
+          rescue NoMethodError => e
+          ensure
+            render json: @policy.to_json,
+                   status: 202
+          end
         else
           render json: @policy.errors.to_json,
                  status: 422
         end
-      end
-
-      def default_pagination_per
-        MAX_COUNTS
-      end
-
-      def maximum_pagination_per
-        MAX_COUNTS
       end
 
       private
@@ -103,14 +97,11 @@ module V2
       end
 
       def update_policy_attributes
-        system_data_keys = params.require(:policy)
-                                 .fetch(:system_data, {})
-                                 .keys
+        system_data_keys = params.require(:policy).fetch(:system_data, {}).keys
 
-        params.require(:policy)
-              .permit(:id, :policy_number, :out_of_system_carrier_title, :status,
+        params.require(:policy).permit(:id, :number, :out_of_system_carrier_title, :status, :number, :out_of_system_carrier_title,
                       :system_data => system_data_keys,
-                      policy_coverages_attributes: [:title, :designation, :limit])
+                      policy_coverages_attributes: %i[id title designation limit])
       end
 
     end

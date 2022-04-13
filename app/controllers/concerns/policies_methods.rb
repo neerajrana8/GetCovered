@@ -263,6 +263,12 @@ module PoliciesMethods
           full_name: %i[scalar like]
         }
       },
+      primary_insurable: {
+          insurable_id: %i[scalar array],
+          parent_community: {
+              id: %i[scalar array],
+          }
+      },
       agency_id: %i[scalar array],
       account_id: %i[scalar array]
     }
