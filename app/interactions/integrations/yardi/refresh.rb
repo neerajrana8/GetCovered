@@ -85,7 +85,7 @@ module Integrations
         integration.configuration['sync'] ||= {}
         integration.configuration['sync']['syncable_communities'] ||= {}
         integration.configuration['sync']['pull_policies'] = false if integration.configuration['sync']['pull_policies'].nil?
-        integration.configuration['sync']['push_policies'] = true if integration.configuration['sync']['pull_policies'].nil?
+        integration.configuration['sync']['push_policies'] = true if integration.configuration['sync']['push_policies'].nil?
         integration.configuration['sync']['push_master_policy_invoices'] = true if integration.configuration['sync']['push_master_policy_invoices'].nil?
         integration.configuration['sync']['sync_history'] ||= []
         integration.configuration['sync']['next_sync'] ||= nil
@@ -105,7 +105,7 @@ module Integrations
         # set up next sync if needed
         if integration.configuration['sync']['next_sync'].nil?
           integration.configuration['sync']['next_sync'] = {
-            timestamp: (Time.current + 1.day).to_s
+            'timestamp' => (Time.current + 1.day).to_date.to_s
           }
           # MOOSE WARNING: add sync job call
         end

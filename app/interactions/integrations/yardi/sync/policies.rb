@@ -111,7 +111,7 @@ module Integrations
           in_system = in_system.group_by{|p| p.number }.transform_values{|vs| { policy: vs.first } }
           in_system_ips.each{|ip| dat_hash = in_system[ip.external_id]; next if dat_hash.nil?; dat_hash[:integration_profile] = ip }
           in_system_ips = nil # so ruby can garbage collect
-          in_system_ids = in_system.map{|is| is[:policy].id } # for later use
+          in_system_ids = in_system.map{|num,is| is[:policy].id } # for later use
           # group up in-system and out-of-system policies
           import_results = policy_hashes.group_by{|polhash| in_system[polhash["PolicyNumber"]] ? true : false }
           import_results[true] ||= []
@@ -257,19 +257,18 @@ module Integrations
           ##############################################################
           ###################### EXPORT TO YARDI #######################
           ##############################################################
-          to_return[:policy_export_errors]['all'] = "Yardi policy export is currently disabled"
           
           if integration.configuration['sync']['push_policies']
 
             # get data on internal policies that haven't yet been exported
-            unexported_policy_ids = PolicyUser.where(
+            unexported_policy_ids = Policy.where(
               policy_type_id: [::PolicyType::RESIDENTIAL_ID, ::PolicyType::MASTER_COVERAGE_ID],
               status: ["BOUND", "BOUND_WITH_WARNING", "EXTERNAL_VERIFIED"]
-            ).where.not(policy_id: nil).where.not(policy_id: in_system_ids).where(user_id: in_system_user_list.values).pluck(:policy_id).uniq
+            ).where.not(id: IntegrationProfile.where(integration: integration, profileable_type: "Policy").pluck(:profileable_id)).pluck(:id)
             unexported_policy_ids.each do |pol_id|
               # verify that the policy really should be exported and prepare a users list
               policy = Policy.where(id: pol_id).references(:policy_insurables, :policy_users).includes(:policy_insurables, :policy_users).take
-              lease_users = LeaseUser.where(user_id: policy.policy_users.map{|pu| pu.user_id }, insurable_id: policy.policy_insurables.find{|pi| pi.primary }&.insurable_id)
+              lease_users = LeaseUser.includes(:lease).references(:leases).where(user_id: policy.policy_users.map{|pu| pu.user_id }, leases: { insurable_id: policy.policy_insurables.find{|pi| pi.primary }&.insurable_id })
               next nil if lease_users.blank?
               lease_user_ips = IntegrationProfile.where(integration: integration, profileable_type: "User", profileable_id: lease_users.map{|lu| lu.user_id })
               next nil if lease_user_ips.blank?
@@ -299,7 +298,7 @@ module Integrations
                 PolicyNumber: policy.number,
                 PolicyTitle: policy.number,
                 PolicyDetails: {
-                  Notes: "GC Verified",
+                  #Notes: "GC Verified",
                   EffectiveDate: policy.effective_date.to_s,
                   ExpirationDate: policy.expiration_date.to_s,
                   IsRenew: policy.auto_renew,
@@ -326,9 +325,9 @@ module Integrations
                   next
                 end
                 to_return[:policies_exported][policy.number] = policy
+              else
+                to_return[:policy_export_errors][policy.number] = "Failed to export policy due to error response from Yardi's API (Event id #{result[:event]&.id})."
               end
-              to_return[:policy_export_errors][policy.number] = "Failed to export policy due to error response from Yardi's API (Event id #{result[:event]})."
-              next
             end.compact # end export process; we ignore some instead of reporting errors, because they might not be exportable policies and we only found out when we looked at them in detail
 
           end # end if pull_policies
