@@ -41,6 +41,9 @@ module CarrierQbeInsurable
       unless cp.save
         return "The modified preferred status failed to save"
       end
+      self.update(preferred_ho4: true)
+      self.buildings.confirmed.update_all(preferred_ho4: true)
+      self.units.confirmed.update_all(preferred_ho4: true)
       FetchQbeRatesJob.perform_later(self)
       return nil
     end
