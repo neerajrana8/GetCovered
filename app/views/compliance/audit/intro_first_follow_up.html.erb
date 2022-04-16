@@ -1,50 +1,67 @@
 <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
   <span style="font-size: 16px;">Hi <%= @user.profile.full_name %>,</span>
 </p>
+
 <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
-  <span style="font-size: 16px;">
-    A little reminder! As referenced in your lease, <%= @community.title %> requires <%= number_to_currency(@min_liability.to_f / 100, unit: "$") %>
-    in liability coverage for the length of your lease term. You are receiving this letter because we do not have active
-    insurance on file and you are out of compliance. We have partnered with Get Covered to offer an easy and affordable
-    insurance option and track our insurance compliance.
-  </span>
+  <span style="font-size: 16px;">Thank you for choosing <%= @community.title %> as your new home! Please be advised we
+    have not received your active insurance policy as referenced in your lease agreement. Active insurance is required
+    to be setup prior to move-in.</span>
 </p>
+
 <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
-  <span style="font-size: 16px;">
-    <b>Need Renter's Insurance?</b> Please visit <a href="<%= @onboarding_url %>" target="_blank">Get Covered</a> to
-    quote and purchase renter’s insurance.
-  </span>
+  <span style="font-size: 16px;">Failure to provide your active insurance policy may delay your move-in, please activate
+    your insurance policy through one of the two options below as soon as possible.</span>
 </p>
+
+<h4 style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
+  <span style="font-size: 18px; font-weight: bold">Option 1:</span>
+</h4>
+
 <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
-  <span style="font-size: 16px;">
-    <b>Already have Insurance?</b>
-    You can satisfy our audit request by emailing your declaration page/certificate to
-    <%= @from %> or simply respond to this email.
-  </span>
-</p>
+  <span style="font-size: 16px;">For your convenience, <%= @pm_account.title %> has partnered with Get Covered to offer
+    preferred insurance rates. Once your purchase is complete, <%= @community.title %> will be notified of your active
+    policy and no further action is needed. To activate a policy with Get Covered, please visit
+    <a href="<%= @onboarding_url %>">Get Covered</a> to purchase a policy.</span></p>
+
+<h4 style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
+  <span style="font-size: 18px; font-weight: bold">Option 2:</span>
+</h4>
+
 <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
-  <span style="font-size: 16px;">
-    Ensure that your active policy meets the following requirements:
-  </span>
+  <span style="font-size: 16px;">If you would prefer to have coverage through a 3rd party insurance carrier, please ensure
+    that your policy meets the requirements below. Visit Get Covered and upload a copy of your certificate of insurance by
+    <%= @requirements_date.strftime('%B %d, %Y') %>.  Once verified, <%= @community.title %> will be notified of your
+    active policy and no further action is needed.</span>
 </p>
-<ul style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
-  <li style="font-size: 16px;"><%= number_to_currency(@min_liability.to_f / 100, unit: "$") %> or more in liability coverage</li>
-  <li style="font-size: 16px;">Active Policy Dates</li>
-  <li style="font-size: 16px; text-decoration: underline;" >
-    <%= @community.title %> is listed as an Additional Interest on your policy using the address below
+
+<h5 style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 0em;">
+  <span style="font-size: 16px; font-weight: bold;"><u>Insurance minimum requirements:</u></span>
+</h5>
+<ul style="padding-left: 20px; list-style-type: circle;">
+  <li><strong>Name:</strong> <%= @user.profile.full_name %> & all leaseholders</li>
+  <li><strong>Address:</strong></li>
+  <li><strong>Minimum Liability Coverage:</strong> <%= number_to_currency(@min_liability.to_f / 100, unit: "$") %></li>
+  <li><strong>Policy Start Date:</strong> <%= @requirements_date.strftime('%B %d, %Y') %></li>
+  <li><strong>Policy End Date:</strong> <%= (@requirements_date + 1.year).strftime('%B %d, %Y') %></li>
+  <li>
+    <strong>Additional Interest:</strong><br>
+    <%= @pm_account.additional_interest ? @pm_account.title : @community.title %><br>
+    <%= @pm_account.primary_address().combined_street_address %><%= ", #{ @pm_account.primary_address().street_two }" unless @pm_account.primary_address().street_two.nil? %><br>
+    <%= @pm_account.primary_address().city %>, <%= @pm_account.primary_address().state %> <%= @pm_account.primary_address().combined_zip_code %>
   </li>
 </ul>
-<p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em; text-align: center; font-size: 16px;">
-  <%= @pm_account.additional_interest ? @pm_account.title : @community.title %><br>
-  <b><%= @pm_account.primary_address().combined_street_address %><%= ", #{ @pm_account.primary_address().street_two }" unless @pm_account.primary_address().street_two.nil? %><br>
-    <%= @pm_account.primary_address().city %>, <%= @pm_account.primary_address().state %> <%= @pm_account.primary_address().combined_zip_code %></b>
-</p>
+
 <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
-  <span style="font-size: 16px;">
-    Thank you for your attention to the matter. Please contact Get Covered at
-    <%= @from %> if you have any questions.
-  </span>
+  <span style="font-size: 16px;">Failure to meet the minimum insurance requirements will result in <%= @community.title %>
+    assessing a non-compliance fee of <%= number_to_currency(@placement_cost, unit: "$") %> per month, until said requirements are met.</span>
 </p>
-<p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em; ">
-  <span style="font-size: 16px;"><b><%= @pm_account.title %></b></span>
+
+<p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
+  <span style="font-size: 16px;">We appreciate your prompt attention to the above insurance requirements. Please reply
+    to this email if you have any questions.</span>
+</p>
+
+<p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
+  <span style="font-size: 16px;">Thank you,<br> <%= @pm_account.title %> & Get Covered<br>
+    <a href="mailto:<%= @from %>"><%= @from %></a></span>
 </p>

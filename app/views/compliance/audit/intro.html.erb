@@ -4,7 +4,7 @@
 
 <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
   <span style="font-size: 16px;">Thank you for choosing <%= @community.title %> as your new home! As referenced in your
-    lease agreement, <Community Name> requires a minimum liability coverage amount of
+    lease agreement, <%= @community.title %> requires a minimum liability coverage amount of
     <%= number_to_currency(@min_liability.to_f / 100, unit: "$") %> for the length of your lease term. Active insurance
     is required to be setup prior to move-in, please activate your insurance policy through one of the two options
     below as soon as possible.</span>
@@ -21,7 +21,7 @@
     <a href="<%= @onboarding_url %>">Get Covered</a> to purchase a policy.</span></p>
 
 <h4 style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
-  <span style="font-size: 18px; font-weight: bold">Option 1:</span>
+  <span style="font-size: 18px; font-weight: bold">Option 2:</span>
 </h4>
 
 <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
@@ -50,7 +50,7 @@
 
 <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
   <span style="font-size: 16px;">Failure to meet the minimum insurance requirements will result in <%= @community.title %>
-    assessing a non-compliance fee of {{ Compliance Fee }} per month, until said requirements are met.</span>
+    assessing a non-compliance fee of <%= number_to_currency(@placement_cost, unit: "$") %> per month, until said requirements are met.</span>
 </p>
 
 <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
