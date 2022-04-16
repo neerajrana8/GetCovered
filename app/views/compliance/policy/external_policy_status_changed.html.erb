@@ -15,17 +15,8 @@
   </p>
   <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
     <span style="font-size: 16px;">
-      Get Covered is reviewing your policy to ensure that it meets the requirements of your management company.
-      Your management company (<%= @pm_account&.title %>) has the following requirements:
+      Get Covered is reviewing your policy to ensure that it meets the requirements of <%= @pm_account&.title %>
     </span>
-  </p>
-  <p style="margin-bottom: 0; margin-left: 50px; margin-right: 50px; margin-top: 0; padding-bottom: 2em;">
-    <span style="font-size: 16px;">
-      Liability Coverage: {{ Liability Coverage Min }}
-    </span>
-  </p>
-  <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
-    <span style="font-size: 16px;"> For reference, your Review # is: <b><%= @policy.id %></b> </span>
   </p>
   <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
     <span style="font-size: 16px;"> We will notify you as soon as the review is complete.</span>
@@ -47,9 +38,7 @@
   <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
     <span style="font-size: 16px;">
       If you decide to switch carriers, please make sure to upload your new policy information in the Get Covered portal at
-      <a href="<%= @onboarding_url %>" target="_blank">
-        <%= @onboarding_url %>
-      </a>
+      <a href="<%= @onboarding_url %>" target="_blank"><%= @branding_profile.url %></a>
     </span>
   </p>
 <% elsif @policy.status == "EXTERNAL_REJECTED" %>
