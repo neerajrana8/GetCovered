@@ -52,8 +52,11 @@ Rails.application.configure do
   # Use an evented file watcher to asynchronously detect changes in source code,
   # routes, locales, etc. This feature depends on the listen gem.
   config.file_watcher = ActiveSupport::EventedFileUpdateChecker
-  
+
   config.action_mailer.default_url_options = { host: 'localhost', port: 3000 }
+  config.action_mailer.preview_path ||= defined?(Rails.root) ? "#{Rails.root}/test/mailers/previews" : nil
+  config.autoload_paths += [config.action_mailer.preview_path]
+  config.action_mailer.show_previews = true
 
   config.active_storage.service = :local
   # ActiveStorage::Current.host = 'localhost:3000' # to get attachment url methods to work
