@@ -22,10 +22,12 @@ module Compliance
            template_name: 'text_only')
     end
 
-    def policy_lapsed(policy:)
-      @user = policy.primary_user()
-      @pm_account = policy.account
+    def policy_lapsed(policy:, lease:)
       @policy = policy
+      @lease = lease
+
+      @user = @policy.primary_user()
+      @pm_account = @policy.account
       @community = @policy&.primary_insurable&.parent_community
 
       @onboarding_url = tokenized_url(@user, @community)

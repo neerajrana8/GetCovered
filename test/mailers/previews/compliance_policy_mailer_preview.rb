@@ -18,7 +18,7 @@ class CompliancePolicyMailerPreview < ActionMailer::Preview
     expiration = Time.current - 1.day
     @policy.update effective_date: expiration - 1.year, expiration_date: expiration, status: "EXPIRED", policy_in_system: true
     Compliance::PolicyMailer.with(organization: @essex)
-                            .policy_lapsed(policy: @policy)
+                            .policy_lapsed(policy: @policy, lease: @lease)
   end
 
   #TODO: wasnt able to send
