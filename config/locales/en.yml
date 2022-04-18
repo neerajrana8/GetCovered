@@ -31,6 +31,7 @@
 
 en:
   hello: "Hello world"
+  support_email: "support@getcoveredinsurance.com"
   shared:
     hi_there: "Hi there %{name},"
     help_center: "Help center"

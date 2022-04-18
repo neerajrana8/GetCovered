@@ -180,4 +180,24 @@ en:
              Thank you,\n
              The Get Covered Team\n
              %{support_email}"
+  activate_account_mailer:
+    third_party_insurance:
+      subject: "Finish Registering Your Get Covered Account - Policy Submission"
+      thank_you_for_registering: "Thank you for registering your insurance documents!"
+      please_click: "Please click below to finish activating your account."
+      the_gc_portal_will_allow: "The Get Covered portal will allow you to update your personal information, settings and manage your insurance documents."
+      let_us_know: "Let us know if we can help! Enjoy your day."
+      activate_your_account: "Activate Your Account"
+    master_policy_enrollment:
+      subject: "Finish Registering Your Get Covered Account - Master Policy"
+      thank_you_for_registering: "Thank you for enrolling! You have met the insurance requirements per your lease agreement."
+      please_click: "Please click below to finish activating your account."
+      the_gc_portal_will_allow: "The Get Covered portal will allow you to update your personal information, settings and manage your insurance enrollment."
+    renters_insurance_policy_purchase:
+      subject: "Finish Registering Your Get Covered Account - Residential"
+      thank_you_for_registering: "Thank you for purchasing a renters insurance policy with Get Covered!"
+      please_click: "Please click below to finish activating your account."
+      the_gc_portal_will_allow: "The Get Covered portal will allow you to access your policy documents, update your personal information and review your billing details."
+
+
 
