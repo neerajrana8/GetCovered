@@ -31,7 +31,7 @@
     <ul style="padding-left: 20px; list-style-type: circle;">
       <li>
         <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
-          <span style="font-size: 16px;">Update the Additional Interest in your policy to:</br>
+          <span style="font-size: 16px;">Update the Additional Interest in your policy to:<br><br>
             <%= @pm_account.additional_interest ? @pm_account.title : @community.title %><br>
             <%= @pm_account.primary_address().combined_street_address %><%= ", #{ @pm_account.primary_address().street_two }" unless @pm_account.primary_address().street_two.nil? %><br>
             <%= @pm_account.primary_address().city %>, <%= @pm_account.primary_address().state %> <%= @pm_account.primary_address().combined_zip_code %></span>

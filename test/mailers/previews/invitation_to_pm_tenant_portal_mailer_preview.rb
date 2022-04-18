@@ -32,7 +32,7 @@ class InvitationToPmTenantPortalMailerPreview < ActionMailer::Preview
   def external_policy_submitted
     self.set_account_by_env()
     effective_date = Time.current.at_beginning_of_month
-    @policy.update effective_date: effective_date, expiration_date: effective_date + 1.year, status: "EXTERNAL_UNVERIFIED", policy_in_system: false
+    @policy.update effective_date: effective_date, expiration_date: effective_date + 1.year, status: "EXTERNAL_UNVERIFIED", policy_in_system: false, system_data: {}
     Compliance::PolicyMailer.with(organization: @essex)
                             .external_policy_status_changed(policy: @policy)
   end
@@ -40,7 +40,7 @@ class InvitationToPmTenantPortalMailerPreview < ActionMailer::Preview
   def external_policy_accepted
     self.set_account_by_env()
     effective_date = Time.current.at_beginning_of_month
-    @policy.update effective_date: effective_date, expiration_date: effective_date + 1.year, status: "EXTERNAL_VERIFIED", policy_in_system: false
+    @policy.update effective_date: effective_date, expiration_date: effective_date + 1.year, status: "EXTERNAL_VERIFIED", policy_in_system: false, system_data: {}
     Compliance::PolicyMailer.with(organization: @essex)
                             .external_policy_status_changed(policy: @policy)
   end
@@ -48,7 +48,14 @@ class InvitationToPmTenantPortalMailerPreview < ActionMailer::Preview
   def external_policy_declined
     self.set_account_by_env()
     effective_date = Time.current.at_beginning_of_month
-    @policy.update effective_date: effective_date, expiration_date: effective_date + 1.year, status: "EXTERNAL_REJECTED", policy_in_system: false
+    system_data = {
+      'rejection_reasons': [
+        'Minimum liability coverage does not meet the requirement of $300,000.00',
+        'Insurance policy start date is missing: Policy Start Date on or before ' + effective_date.strftime('%B %d, %Y'),
+        'Insurance policy end date is missing: Policy End Date on or after ' + (effective_date + 1.year).strftime('%B %d, %Y')
+      ]
+    }
+    @policy.update effective_date: effective_date, expiration_date: effective_date + 1.year, status: "EXTERNAL_REJECTED", policy_in_system: false, system_data: system_data
     Compliance::PolicyMailer.with(organization: @essex)
                             .external_policy_status_changed(policy: @policy)
   end
