@@ -5,7 +5,7 @@
 <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
   <span style="font-size: 16px;">Thank you for choosing <%= @community.title %> as your new home! Please be advised we
     have not received your active insurance policy as referenced in your lease agreement. Active insurance is required
-    to be setup prior to move-in.</span>
+    to be set up prior to move-in.</span>
 </p>
 
 <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
@@ -29,9 +29,9 @@
 
 <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
   <span style="font-size: 16px;">If you would prefer to have coverage through a 3rd party insurance carrier, please ensure
-    that your policy meets the requirements below. Visit Get Covered and upload a copy of your certificate of insurance by
-    <%= @requirements_date.strftime('%B %d, %Y') %>.  Once verified, <%= @community.title %> will be notified of your
-    active policy and no further action is needed.</span>
+    that your policy meets the requirements below. Visit <a href="<%= @onboarding_url %>">Get Covered</a> and upload a
+    copy of your certificate of insurance by <%= @requirements_date.strftime('%B %d, %Y') %>.  Once verified,
+    <%= @community.title %> will be notified of your active policy and no further action is needed.</span>
 </p>
 
 <h5 style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 0em;">

@@ -21,7 +21,18 @@
     <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
       <span style="font-size: 16px;">Purchase a policy through our preferred partner Get Covered who offers several policies through
     A-rated carriers that meet the required insurance requirements.</span><br>
-      <span style="font-size: 16px; font-weight: bold;"><a href="<%= @onboarding_url %>">Buy Now</a> </span>
+      <span style="font-size: 16px; font-weight: bold; display: block; text-align: center; margin-top: 1em;">
+        <a href="<%= @onboarding_url %>">
+          <button style="
+            background-color: <%= @branding_profile.styles["client"]["colors"]["primary"] %>;
+            color: <%= @branding_profile.styles["client"]["colors"]["highlight"] %>;
+            border: 1px <%= @branding_profile.styles["client"]["colors"]["secondary"] %> solid;
+            border-radius: 3px 3px;
+            font-size: 16px;
+            padding: 8px 12px;
+          ">Buy Now</button>
+        </a>
+      </span>
     </p>
   </li>
   <li>
@@ -31,7 +42,7 @@
     <ul style="padding-left: 20px; list-style-type: circle;">
       <li>
         <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
-          <span style="font-size: 16px;">Update the Additional Interest in your policy to:<br><br>
+          <span style="font-size: 16px;">Update the <a href="<%= @branding_profile.url %>/additional-interest/">Additional Interest</a> in your policy to:<br><br>
             <%= @pm_account.additional_interest ? @pm_account.title : @community.title %><br>
             <%= @pm_account.primary_address().combined_street_address %><%= ", #{ @pm_account.primary_address().street_two }" unless @pm_account.primary_address().street_two.nil? %><br>
             <%= @pm_account.primary_address().city %>, <%= @pm_account.primary_address().state %> <%= @pm_account.primary_address().combined_zip_code %></span>
