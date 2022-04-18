@@ -59,8 +59,8 @@ module Compliance
 
       @from = @pm_account&.contact_info&.has_key?("contact_email") && !@pm_account&.contact_info["contact_email"].nil? ? @pm_account&.contact_info["contact_email"] : "policyverify@getcovered.io"
 
-      mail(to: user.email,
-           from: from,
+      mail(to: @user.email,
+           from: @from,
            subject: "Default Policy Enrollment",
            template_path: 'compliance/policy')
     end

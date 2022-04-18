@@ -1,6 +1,9 @@
 class CompliancePolicyMailerPreview < ActionMailer::Preview
   def policy_expiring_soon
     self.set_account_by_env()
+    @essex = Account.find(7)
+    @lease = Lease.find(20)
+    @policy = Policy.find(1)
     expiration = Time.current + 14.days
     @policy.update effective_date: expiration - 1.year, expiration_date: expiration, status: "EXPIRED", policy_in_system: true
     Compliance::PolicyMailer.with(organization: @essex)
@@ -9,6 +12,9 @@ class CompliancePolicyMailerPreview < ActionMailer::Preview
 
   def policy_lapsed
     self.set_account_by_env()
+    @essex = Account.find(7)
+    @lease = Lease.find(20)
+    @policy = Policy.find(1)
     expiration = Time.current - 1.day
     @policy.update effective_date: expiration - 1.year, expiration_date: expiration, status: "EXPIRED", policy_in_system: true
     Compliance::PolicyMailer.with(organization: @essex)
@@ -18,6 +24,9 @@ class CompliancePolicyMailerPreview < ActionMailer::Preview
   #TODO: wasnt able to send
   def enrolled_in_master
     self.set_account_by_env()
+    @essex = Account.find(7)
+    @lease = Lease.find(20)
+    @policy = Policy.find(1)
     Compliance::PolicyMailer.with(organization: @essex)
                             .enrolled_in_master(user: @lease.primary_user(),
                                                 community: @lease.insurable.parent_community(),
@@ -26,6 +35,9 @@ class CompliancePolicyMailerPreview < ActionMailer::Preview
 
   def enrolled_in_master_force_placement
     self.set_account_by_env()
+    @essex = Account.find(7)
+    @lease = Lease.find(20)
+    @policy = Policy.find(1)
     Compliance::PolicyMailer.with(organization: @essex)
                             .enrolled_in_master(user: @lease.primary_user(),
                                                 community: @lease.insurable.parent_community(),
