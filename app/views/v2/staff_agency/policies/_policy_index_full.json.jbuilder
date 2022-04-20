@@ -10,7 +10,11 @@ json.partial! "v2/staff_agency/policies/policy_index_fields.json.jbuilder",
 # end
 
 json.account do
-  json.title policy.account&.title
+  if policy.account.present?
+    json.title policy.account&.title
+  else
+    json.title policy.insurables&.last&.account&.title
+  end
 end
 
 json.policy_type_title policy&.policy_type&.title

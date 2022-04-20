@@ -3,9 +3,22 @@ json.partial! 'v2/staff_agency/policies/policy_show_fields.json.jbuilder',
 
 json.carrier policy.carrier
 
-json.agency policy.agency
+#TODO: temp fix for pma policies
+json.agency do
+  if policy.agency.present?
+    policy.agency
+  else
+    policy.insurables&.last&.agency
+  end
+end
 
-json.account policy.account
+json.account do
+  if policy.account.present?
+    policy.account
+  else
+    policy.insurables&.last&.account
+  end
+end
 
 json.policy_application_group_id policy.policy_group&.policy_application_group&.id
 
