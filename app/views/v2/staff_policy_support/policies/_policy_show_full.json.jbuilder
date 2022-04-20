@@ -4,20 +4,16 @@ json.partial! "v2/staff_policy_support/policies/policy_show_fields.json.jbuilder
 json.carrier policy.carrier
 
 #TODO: temp fix for pma policies
-json.agency do
-  if policy.agency.present?
-    policy.agency
-  else
-    policy.insurables&.last&.agency
-  end
+if policy.agency.present?
+  json.agency policy.agency
+else
+  json.agency policy.insurables&.last&.agency
 end
 
-json.account do
-  if policy.account.present?
-    policy.account
-  else
-    policy.insurables&.last&.account
-  end
+if policy.account.present?
+  json.account policy.account
+else
+  json.account policy.insurables&.last&.account
 end
 
 json.compliance do
