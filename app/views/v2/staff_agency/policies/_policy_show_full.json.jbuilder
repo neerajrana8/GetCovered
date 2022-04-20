@@ -7,7 +7,11 @@ json.carrier policy.carrier
 if policy.agency.present?
   json.agency policy.agency
 else
-  json.agency policy.insurables&.last&.agency
+  if policy.insurables&.last&.agency.present?
+    json.agency policy.insurables&.last&.agency
+  else
+    json.agency policy.insurables&.last&.account&.agency
+  end
 end
 
 if policy.account.present?

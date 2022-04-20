@@ -6,7 +6,11 @@ json.agency do
   if policy.agency.present?
     json.title policy.agency&.title
   else
-    json.title policy.insurables&.last&.agency&.title
+    if policy.insurables&.last&.agency.present?
+      json.title policy.insurables&.last&.agency&.title
+    else
+      json.title policy.insurables&.last&.account&.agency&.title
+    end
   end
 end
 
