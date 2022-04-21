@@ -12,7 +12,7 @@ module Compliance
                                      .intro(user: lease.primary_user(),
                                             community: lease.insurable.parent_community(),
                                             lease_start_date: lease.start_date,
-                                            follow_up: 1)
+                                            follow_up: 1).deliver_now()
             rescue Exception => e
               message = "Unable to generate follow up contact email for lease id: #{ lease.id }\n\n"
               message += "#{ e.to_json }\n\n"
@@ -21,7 +21,7 @@ module Compliance
               ActionMailer::Base.mail(from: from,
                                       to: 'dev@getcovered.io',
                                       subject: "[Get Covered] Follow Up Audit Email Error",
-                                      body: message).deliver
+                                      body: message).deliver_now()
             end
           end
         end
