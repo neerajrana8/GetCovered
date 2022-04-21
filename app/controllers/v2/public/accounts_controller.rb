@@ -15,7 +15,7 @@ module V2
             title: account.title,
             address: [:street_number, :street_name, :street_two, :city, :state, :zip_code, :full].inject({}){|hash, prop| hash[prop] = account.primary_address&.send(prop); hash }
           }
-        end, 200
+        end, status: 200
         
       end
 
