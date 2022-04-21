@@ -15,7 +15,7 @@ post 'qbe/communities/show',
 
 scope module: :public do
 
-  get 'agency-accounts/:agency_id',
+  get '/agency-accounts/:agency_id',
     to: 'accounts#agency_accounts'
 
   resources :addresses,
