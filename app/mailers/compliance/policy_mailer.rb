@@ -11,61 +11,60 @@ module Compliance
                   Your insurance policy on file with us is set to expire on #{ policy.expiration_date.strftime('%B %d, %Y') }.
                   Please submit your new insurance policy or renewal documents before the expiration date.Thank you!"
 
-      from = @pm_account&.contact_info&.has_key?("contact_email") &&
-             !@pm_account&.contact_info["contact_email"].nil? ? @pm_account&.contact_info["contact_email"] :
-                                                                "policyverify@getcovered.io"
+      @from = @pm_account&.contact_info&.has_key?("contact_email") && !@pm_account&.contact_info["contact_email"].nil? ? @pm_account&.contact_info["contact_email"] : "policyverify@getcovered.io"
+
       subject = "Your insurance will expire soon!"
 
       mail(to: @user.email,
-           from: from,
+           from: @from,
            subject: subject,
            template_path: 'compliance/policy',
            template_name: 'text_only')
     end
 
-    def policy_lapsed(policy:)
-      @user = policy.primary_user()
-      @pm_account = policy.account
-      @content = "Hi #{ @user.profile.first_name },<br><br><strong>Your policy has lapsed or is canceled.</strong>  You
-                  are out of compliance with your lease agreement and subject to being enrolled into the default community
-                  policy. Please reinstate your insurance policy or upload your new policy information
-                  <a href=\"https://#{ @branding_profile&.url }/pma-tenant-onboarding\">on our portal</a> for review."
+    def policy_lapsed(policy:, lease:)
+      @policy = policy
+      @lease = lease
 
-      from = @pm_account&.contact_info&.has_key?("contact_email") &&
-             !@pm_account&.contact_info["contact_email"].nil? ? @pm_account&.contact_info["contact_email"] :
-                                                                "policyverify@getcovered.io"
+      @user = @policy.primary_user()
+      @pm_account = @policy.account
+      @community = @policy&.primary_insurable&.parent_community
 
-      subject = "You are out of compliance"
+      @onboarding_url = tokenized_url(@user, @community)
+      get_insurable_liability_range(@community)
+      set_master_policy_and_configuration(@community, 2)
+
+      @placement_cost = @configuration.nil? ? 0 : @configuration.charge_amount(true).to_f / 100
+
+      @from = @pm_account&.contact_info&.has_key?("contact_email") &&
+        !@pm_account&.contact_info["contact_email"].nil? ? @pm_account&.contact_info["contact_email"] :
+                "policyverify@getcovered.io"
+
       mail(to: @user.email,
-           from: from,
-           subject: subject,
-           template_path: 'compliance/policy',
-           template_name: 'text_only')
+           from: @from,
+           subject: "You are out of compliance",
+           template_path: 'compliance/policy')
     end
 
     def enrolled_in_master(user:, community:, force:)
+      get_insurable_liability_range(community)
       set_master_policy_and_configuration(community, 2)
 
-      liability_coverage = @master_policy.policy_coverages.where(designation: "liability_coverage").take
-      contents_coverage = @master_policy.policy_coverages.where(designation: "tenant_contingent_contents").take
+      @user = user
+      @community = community
+      @pm_account = @community.account
+      @placement_cost = @configuration.nil? ? 0 : @configuration.charge_amount(force).to_f / 100
+      @onboarding_url = tokenized_url(@user, @community)
 
-      @content = "Hi #{ user.profile.first_name },<br><br><strong>Default policy activated. The default policy has been
-                  activated in compliance with the insurance requirement per your lease agreement. You will be charged
-                  #{ ActionController::Base.helpers.number_to_currency @configuration.charge_amount(force).to_f / 100 } each month. The
-                  community policy includes #{ ActionController::Base.helpers.number_to_currency liability_coverage.limit.to_f / 100 } in property
-                  liability coverage and #{ ActionController::Base.helpers.number_to_currency contents_coverage.limit.to_f / 100 } in contents coverage
-                  <strong>(contents if applicable)</strong>."
+      @liability_coverage = @master_policy.policy_coverages.where(designation: "liability_coverage").take
+      @contents_coverage = @master_policy.policy_coverages.where(designation: "tenant_contingent_contents").take
 
-      from = @master_policy&.account&.contact_info&.has_key?("contact_email") &&
-             !@master_policy&.account&.contact_info["contact_email"].nil? ? @master_policy&.account&.contact_info["contact_email"] :
-                                                                            "policyverify@getcovered.io"
+      @from = @pm_account&.contact_info&.has_key?("contact_email") && !@pm_account&.contact_info["contact_email"].nil? ? @pm_account&.contact_info["contact_email"] : "policyverify@getcovered.io"
 
-      subject = "Default Policy Enrollment"
-      mail(to: user.email,
-           from: from,
-           subject: subject,
-           template_path: 'compliance/policy',
-           template_name: 'text_only')
+      mail(to: @user.email,
+           from: @from,
+           subject: "Default Policy Enrollment",
+           template_path: 'compliance/policy')
     end
 
     def external_policy_status_changed(policy:)
@@ -80,8 +79,8 @@ module Compliance
       @onboarding_url = tokenized_url(@user, @community)
 
       @from = @pm_account&.contact_info&.has_key?("contact_email") &&
-              !@pm_account&.contact_info["contact_email"].nil? ? @pm_account&.contact_info["contact_email"] :
-                                                                 "policyverify@getcovered.io"
+        !@pm_account&.contact_info["contact_email"].nil? ? @pm_account&.contact_info["contact_email"] :
+                "policyverify@getcovered.io"
 
       case @policy.status
       when "EXTERNAL_UNVERIFIED"
@@ -93,7 +92,7 @@ module Compliance
       end
 
       sending_condition = @policy.policy_in_system == false &&
-                          ['EXTERNAL_UNVERIFIED','EXTERNAL_VERIFIED','EXTERNAL_REJECTED'].include?(@policy.status)
+        ['EXTERNAL_UNVERIFIED','EXTERNAL_VERIFIED','EXTERNAL_REJECTED'].include?(@policy.status)
 
       mail(from: @from, to: @user.email, subject: subject, template_path: 'compliance/policy') if sending_condition
     end

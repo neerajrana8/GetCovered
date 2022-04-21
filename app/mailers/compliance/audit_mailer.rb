@@ -20,6 +20,7 @@ module Compliance
 
       @onboarding_url = tokenized_url(@user, @community)
       @requirements_date = @configuration.nil? ? lease_start_date : lease_start_date + @configuration.grace_period
+      @placement_cost = @configuration.nil? ? 0 : @configuration.charge_amount(true).to_f / 100
       @from = @pm_account&.contact_info&.has_key?("contact_email") && !@pm_account&.contact_info["contact_email"].nil? ? @pm_account&.contact_info["contact_email"] : "policyverify@getcovered.io"
 
       case follow_up

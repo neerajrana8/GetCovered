@@ -63,6 +63,15 @@ Rails.application.configure do
   config.file_watcher = ActiveSupport::EventedFileUpdateChecker
 
   config.action_mailer.default_url_options = { host: 'localhost', port: 3001 }
+  config.action_mailer.preview_path ||= defined?(Rails.root) ? "#{Rails.root}/test/mailers/previews" : nil
+  config.autoload_paths += [config.action_mailer.preview_path]
+  config.action_mailer.show_previews = true
+
+  routes.append do
+    get '/rails/mailers'         => "rails/mailers#index"
+    get '/rails/mailers/*path'   => "rails/mailers#preview"
+  end
+
   config.i18n.default_locale = :en
   config.i18n.available_locales = [:en, :es]
 
