@@ -56,9 +56,6 @@ module Compliance
       @placement_cost = @configuration.nil? ? 0 : @configuration.charge_amount(force).to_f / 100
       @onboarding_url = tokenized_url(@user, @community)
 
-      @liability_coverage = @master_policy.policy_coverages.where(designation: "liability_coverage").take
-      @contents_coverage = @master_policy.policy_coverages.where(designation: "tenant_contingent_contents").take
-
       @from = @pm_account&.contact_info&.has_key?("contact_email") && !@pm_account&.contact_info["contact_email"].nil? ? @pm_account&.contact_info["contact_email"] : "policyverify@getcovered.io"
 
       mail(to: @user.email,
