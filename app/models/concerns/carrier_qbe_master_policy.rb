@@ -26,6 +26,19 @@ module CarrierQbeMasterPolicy
       end
     end
 
+    def qbe_master_get_coverage_option_limit(designation:, limit:)
+      raise ArgumentError.new(
+        "#{ limit } is not available field coverage limit"
+      ) unless %w[limit occurrence_limit aggregate_limit external_payments_limit].include?(limit)
+
+      if self.policy_coverages.exists?(designation: designation)
+        coverage = self.policy_coverages.where(designation: designation).take
+        return coverage.send(limit)
+      else
+        return nil
+      end
+    end
+
     def qbe_specialty_issue_coverage(insurable, users, start_coverage, force = false, primary_user: nil)
       to_return = false
 
