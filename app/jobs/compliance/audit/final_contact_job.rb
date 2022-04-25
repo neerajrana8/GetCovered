@@ -12,7 +12,7 @@ module Compliance
               begin
                 Compliance::AuditMailer.with(organization: lease.account)
                                        .intro(user: lease.primary_user(),
-                                              community: lease.insurable.parent_community(),
+                                              unit: lease.insurable,
                                               lease_start_date: lease.start_date,
                                               follow_up: 2).deliver_now()
               rescue Exception => e

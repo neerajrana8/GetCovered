@@ -4,7 +4,7 @@ class InvitationToPmTenantPortalMailerPreview < ActionMailer::Preview
 
     Compliance::AuditMailer.with(organization: @essex)
                            .intro(user: @lease.primary_user(),
-                                  community: @lease.insurable.parent_community(),
+                                  unit: @lease.insurable,
                                   lease_start_date: @lease.start_date,
                                   follow_up: 0)
   end
@@ -14,7 +14,7 @@ class InvitationToPmTenantPortalMailerPreview < ActionMailer::Preview
 
     Compliance::AuditMailer.with(organization: @essex)
                            .intro(user: @lease.primary_user(),
-                                  community: @lease.insurable.parent_community(),
+                                  unit: @lease.insurable,
                                   lease_start_date: @lease.start_date,
                                   follow_up: 1)
   end
@@ -24,7 +24,7 @@ class InvitationToPmTenantPortalMailerPreview < ActionMailer::Preview
 
     Compliance::AuditMailer.with(organization: @essex)
                            .intro(user: @lease.primary_user(),
-                                  community: @lease.insurable.parent_community(),
+                                  unit: @lease.insurable,
                                   lease_start_date: @lease.start_date,
                                   follow_up: 2)
   end
