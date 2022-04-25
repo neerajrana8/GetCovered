@@ -29,8 +29,8 @@
 
 <p style="margin-bottom: 0; margin-left: 0; margin-right: 0; margin-top: 0; padding-bottom: 2em;">
   <span style="font-size: 16px;">If you would prefer to have coverage through a 3rd party insurance carrier, please ensure that your
-    policy meets the requirements below. Visit <a href="<%= @onboarding_url %>">Get Covered</a> and upload a copy of
-    your certificate of insurance by your lease start date. Once verified, <%= @community.title %> will be notified
+    policy meets the requirements below. Visit <a href="<%= @onboarding_url %>">Get Covered</a> to register and upload a
+    copy of your certificate of insurance by your lease start date. Once verified, <%= @community.title %> will be notified
     of your active policy and no further action is needed.</span>
 </p>
 
@@ -38,12 +38,14 @@
   <span style="font-size: 16px; font-weight: bold;"><u>Insurance minimum requirements:</u></span>
 </h5>
 <ul style="padding-left: 20px; list-style-type: circle;">
-  <li><strong>Name:</strong> <%= @user.profile.full_name %> & all leaseholders</li>
-  <li><strong>Address:</strong></li>
-  <li><strong>Minimum Liability Coverage:</strong> <%= number_to_currency(@min_liability.to_f / 100, unit: "$") %></li>
-  <li><strong>Policy Start Date:</strong> <%= @lease&.start_date&.strftime('%B %d, %Y') %></li>
-  <li><strong>Policy End Date:</strong> <%= @lease&.end_date&.strftime('%B %d, %Y') %></li>
-  <li>
+  <li style="font-size: 16px;"><strong>Name:</strong> <%= @user.profile.full_name %> & all leaseholders</li>
+  <% unless @address.nil? %>
+  <li style="font-size: 16px;"><strong>Address:</strong> <%= @address %></li>
+  <% end %>
+  <li style="font-size: 16px;"><strong>Minimum Liability Coverage:</strong> <%= number_to_currency(@min_liability.to_f / 100, unit: "$") %></li>
+  <li style="font-size: 16px;"><strong>Policy Start Date:</strong> <%= @lease&.start_date&.strftime('%B %d, %Y') %></li>
+  <li style="font-size: 16px;"><strong>Policy End Date:</strong> <%= @lease&.end_date&.strftime('%B %d, %Y') %></li>
+  <li style="font-size: 16px;">
     <strong>Additional Interest:</strong><br>
     <%= @pm_account.additional_interest ? @pm_account.title : @community.title %><br>
     <%= @pm_account.primary_address().combined_street_address %><%= ", #{ @pm_account.primary_address().street_two }" unless @pm_account.primary_address().street_two.nil? %><br>

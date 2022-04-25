@@ -25,6 +25,8 @@ module Compliance
     def policy_lapsed(policy:, lease:)
       @policy = policy
       @lease = lease
+      @street_address = @policy&.primary_insurable&.primary_address()
+      @address = @street_address.nil? ? nil : "#{ @street_address.combined_street_address }, #{ @policy&.primary_insurable.title }, #{ @street_address.city }, #{ @street_address.state }, #{ @street_address.zip_code }"
 
       @user = @policy.primary_user()
       @pm_account = @policy.account
