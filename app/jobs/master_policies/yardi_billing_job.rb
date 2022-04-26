@@ -84,8 +84,8 @@ module MasterPolicies
               end
               result = Integrations::Yardi::BillingAndPayments::ImportResidentTransactions.run!(integration: integration, charge_hash: {
                 Description: "Master Policy Fee", # MOOSE WARNING: retitle???
-                TransactionDate: start_of_last_month.to_date.to_s,
-                ServiceToDate: start_of_last_month.end_of_month.to_date.to_s,
+                TransactionDate: Time.current.to_date.to_s,
+                ServiceToDate: (start_of_last_month + 1.month).to_s,
                 ChargeCode: mpc.charge_code,
                 GLAccountNumber: mpc.integration_account_number,
                 CustomerID: yardi_customer_id,
