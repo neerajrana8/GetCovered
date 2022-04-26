@@ -4,14 +4,18 @@ module Compliance
     layout 'branded_mailer'
     before_action :set_variables
 
-    def intro(user:, community:, lease_start_date:, follow_up:)
+    def intro(user:, unit:, lease_start_date:, follow_up:)
       raise ArgumentError.new(
         "Expected a follow up value of 0 to 2, got #{ follow_up.nil? ? 'nil' : follow_up }"
       ) if follow_up.nil? || follow_up > 2
 
       @user = user
-      @community = community
+      @unit = unit
+      @community = @unit.parent_community()
       @pm_account = @community.account
+
+      @street_address = @community&.primary_address()
+      @address = @street_address.nil? ? nil : "#{ @street_address.combined_street_address }, #{ @unit.title }, #{ @street_address.city }, #{ @street_address.state }, #{ @street_address.zip_code }"
 
       # Hard coded to QBE for now.
       set_master_policy_and_configuration(@community, 2)

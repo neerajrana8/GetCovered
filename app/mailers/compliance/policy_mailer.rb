@@ -25,6 +25,8 @@ module Compliance
     def policy_lapsed(policy:, lease:)
       @policy = policy
       @lease = lease
+      @street_address = @policy&.primary_insurable&.primary_address()
+      @address = @street_address.nil? ? nil : "#{ @street_address.combined_street_address }, #{ @policy&.primary_insurable.title }, #{ @street_address.city }, #{ @street_address.state }, #{ @street_address.zip_code }"
 
       @user = @policy.primary_user()
       @pm_account = @policy.account
@@ -55,9 +57,6 @@ module Compliance
       @pm_account = @community.account
       @placement_cost = @configuration.nil? ? 0 : @configuration.charge_amount(force).to_f / 100
       @onboarding_url = tokenized_url(@user, @community)
-
-      @liability_coverage = @master_policy.policy_coverages.where(designation: "liability_coverage").take
-      @contents_coverage = @master_policy.policy_coverages.where(designation: "tenant_contingent_contents").take
 
       @from = @pm_account&.contact_info&.has_key?("contact_email") && !@pm_account&.contact_info["contact_email"].nil? ? @pm_account&.contact_info["contact_email"] : "policyverify@getcovered.io"
 
@@ -103,7 +102,7 @@ module Compliance
       @organization = params[:organization]
       @address = @organization.primary_address()
       @branding_profile = @organization.branding_profiles.where(default: true).take
-      @GC_ADDRESS = Agency.find(1).primary_address()
+      @GC_ADDRESS = Agency.get_covered.primary_address.nil? ? Address.find(1) : Agency.get_covered.primary_address
     end
 
     def set_master_policy_and_configuration(community, carrier_id)
