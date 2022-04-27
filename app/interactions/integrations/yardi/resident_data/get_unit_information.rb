@@ -12,6 +12,12 @@ module Integrations
         def retry_request?(prior_attempts, elapsed_seconds)
           prior_attempts < 3
         end
+        
+        
+        def response_has_error?(response_body)
+          #.dig("Envelope", "Body", "GetUnitInformationResponse", "GetUnitInformationResult", "UnitInformation", "Property", "Units", "UnitInfo").class == ::Array
+          response_body.index("<GetUnitInformationResult><UnitInformation").nil? || super
+        end
       end
     end
   end

@@ -99,6 +99,26 @@ module Integrations
               to_return[:unit_exclusions][property_id] = {}
             end
           end
+          
+          ###### APPLY FORBIDDEN UNIT TYPES ######
+          
+          forbidden_unit_types = integration.configuration['sync']['forbidden_unit_types'] || []
+          is_forbidden = forbidden_unit_types.class == ::Array ? Proc.new{|ut| forbidden_unit_types.include?(ut) } : forbidden_unit_types == "bmr" ? Proc.new{|ut| ut&.downcase&.index("bmr") } : nil
+          unless forbidden_unit_types.blank?
+            all_units = all_units.map do |k,v|
+              uresult = ::Integrations::Yardi::ResidentData::GetUnitInformation.run!(integration: integration, property_id: k)
+              unless uresult[:success]
+                to_return[:community_errors][k] = "Could not import; failed to get Resident Data Unit Information to cull forbidden Unit Types"
+                next [k, nil]
+              end
+              verboten = uresult[:parsed_response].dig("Envelope", "Body", "GetUnitInformationResponse", "GetUnitInformationResult", "UnitInformation", "Property", "Units", "UnitInfo")
+                                                  .select{|u| is_forbidden.call(["Unit"]["UnitType"]) }
+                                                  .map{|u| u["UnitID"]["__content__"] }
+              next [k,
+                v.select{|u| !verboten.include?(u["UnitId"]) }
+              ]
+            end.to_h
+          end
 
           ###### CLEAN UP FAKE UNITS, FIX BROKEN ADDRESSES ##########
 
