@@ -11,6 +11,7 @@ module MasterPolicies
                   .order(id: :asc)
       mps.each do |mp|
         integration = mp.account.integrations.where(provider: 'yardi').take
+        next unless !integration.nil? && integration.configuration['sync']['push_master_policy_invoices']
         # MOOSE WARNING: erorrr if integration not set up
         mpcs = Policy.where.not(status: 'CANCELLED').or(Policy.where("cancellation_date >= ?", start_of_last_month))
                     .where("expiration_date >= ?", start_of_last_month)
@@ -79,42 +80,59 @@ module MasterPolicies
               # send charge through yardi
               yardi_property_id = integration_profiles[mpc.primary_insurable.insurable_id]&.external_id
               yardi_customer_id = mpc.primary_user&.integration_profiles&.where(integration: integration)&.take&.external_id
-              if yardi_property_id.nil? || yardi_customer_id.nil?
-                #### moose warning: FREAK OUT, WE CAN'T DO IT
+              result = nil
+              if yardi_property_id.nil? || yardi_customer_id.nil? || mpc.integration_charge_code.nil? || mpc.integration_account_number.nil?
+                result = { 'yardi_property_id' => yardi_property_id, 'yardi_customer_id' => yardi_customer_id, 'integration_charge_code' => mpc.integration_charge_code, 'integration_account_number' => mpc.integration_account_number }
+                result = { preerrors: result.select{|k,v| v.nil? }.keys }
+              else
+                result = Integrations::Yardi::BillingAndPayments::ImportResidentTransactions.run!(integration: integration, charge_hash: {
+                  Description: "Master Policy Fee", # MOOSE WARNING: retitle???
+                  TransactionDate: Time.current.to_date.to_s,
+                  ServiceToDate: (start_of_last_month + 1.month).to_s,
+                  ChargeCode: mpc.integration_charge_code,
+                  GLAccountNumber: mpc.integration_account_number,
+                  CustomerID: yardi_customer_id,
+                  Amount: (term_amount.to_d / 100.to_d).to_s,
+                  Comment: "GC MPC ##{mpc.number} MP ##{mp.number}", # do we want something like the following? "Get Covered Master Policy ##{mp.number}, Coverage ##{mpc.number}, #{Date::MONTHNAMES[start_of_last_month.month]} #{start_of_last_month.year}",
+                  PropertyPrimaryID: yardi_property_id
+                })
               end
-              result = Integrations::Yardi::BillingAndPayments::ImportResidentTransactions.run!(integration: integration, charge_hash: {
-                Description: "Master Policy Fee", # MOOSE WARNING: retitle???
-                TransactionDate: Time.current.to_date.to_s,
-                ServiceToDate: (start_of_last_month + 1.month).to_s,
-                ChargeCode: mpc.charge_code,
-                GLAccountNumber: mpc.integration_account_number,
-                CustomerID: yardi_customer_id,
-                Amount: (term_amount.to_d / 100.to_d).to_s,
-                Comment: "", # do we want something like the following? "Get Covered Master Policy ##{mp.number}, Coverage ##{mpc.number}, #{Date::MONTHNAMES[start_of_last_month.month]} #{start_of_last_month.year}",
-                PropertyPrimaryID: yardi_property_id
-              })
-              unless result[:success]
+              if result[:preerrors]
+                invoice.under_review = true
+                invoice.error_info ||= []
+                invoice.error_info.push({
+                  description: "Unable to export charge to Yardi due to missing fields.",
+                  time: Time.current.to_s,
+                  amount: term_amount,
+                  event_id: nil,
+                  parsed_response: nil,
+                  empty_fields: result[:preerrors],
+                  master_policy_configuration_id: mpc.id
+                })
+              elsif !result[:success]
                 # error code returned by yardi
                 invoice.under_review = true
-                invoice.error_info = [{
+                invoice.error_info ||= []
+                invoice.error_info.push({
                   description: "Attempt to export charge to Yardi resulted in an error response.",
                   time: Time.current.to_s,
                   amount: term_amount,
                   event_id: result[:event]&.id,
                   parsed_response: result[:parsed_response]
-                }]
+                })
               else
                 result_message = result[:parsed_response]&.dig('Envelope', 'Body', 'ImportResidentTransactions_LoginResponse', 'ImportResidentTransactions_LoginResult', 'Messages', 'Message')
                 if result_message.class != ::String || !result.include?("charges were successfully imported")
                   # no error code but weird error with yardi attempt
                   invoice.under_review = true
-                  invoice.error_info = [{
+                  invoice.error_info ||= []
+                  invoice.error_info.push({
                     description: "Attempt to export charge to Yardi resulted in an unknown error.",
                     time: Time.current.to_s,
                     amount: term_amount,
                     event_id: result[:event]&.id,
                     parsed_response: result[:parsed_response]
-                  }]
+                  })
                 else
                   # success
                   # no need to touch the invoice
