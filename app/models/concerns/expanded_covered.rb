@@ -58,8 +58,6 @@ module ExpandedCovered
           model_id: self.id,
           description: message
         )
-
-        pp @error
       end
     end
 

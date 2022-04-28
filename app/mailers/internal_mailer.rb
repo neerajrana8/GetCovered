@@ -8,10 +8,11 @@ class InternalMailer < ApplicationMailer
   #   en.internal_mailer.error.subject
   #
   def model_error(error:)
+    @subject = error.subject
     @content = error.description
     mail(from: "no-reply-#{ Rails.env.gsub('_', '-') }@getcovered.io",
          to: "proderror@getcovered.io",
-         subject: error.subject)
+         subject: @subject)
   end
 
   private
@@ -21,5 +22,6 @@ class InternalMailer < ApplicationMailer
     @address = @organization.primary_address()
     @branding_profile = @organization.branding_profiles.where(default: true).take
     @GC_ADDRESS = Agency.find(1).primary_address()
+    @internal_mailer = true
   end
 end
