@@ -112,7 +112,7 @@ module Integrations
                 next [k, nil]
               end
               verboten = uresult[:parsed_response].dig("Envelope", "Body", "GetUnitInformationResponse", "GetUnitInformationResult", "UnitInformation", "Property", "Units", "UnitInfo")
-                                                  .select{|u| is_forbidden.call(["Unit"]["UnitType"]) }
+                                                  .select{|u| is_forbidden.call(u["Unit"]["UnitType"]) }
                                                   .map{|u| u["UnitID"]["__content__"] }
               next [k,
                 v.select{|u| !verboten.include?(u["UnitId"]) }
