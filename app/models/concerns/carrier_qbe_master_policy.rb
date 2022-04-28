@@ -69,6 +69,10 @@ module CarrierQbeMasterPolicy
       return to_return
     end
 
+    def qbe_specialty_evict_master_coverage
+
+    end
+
     def qbe_specialty_issue_policy
       %w[evidence_of_insurance premises_liability_endorsement property_coverage_endorsement].each do |document|
         qbe_generate_master_document(document, {
@@ -107,6 +111,14 @@ module CarrierQbeMasterPolicy
       if documents.attach(io: File.open(save_path), filename: "evidence-of-insurance.pdf", content_type: 'application/pdf')
         File.delete(save_path) if File.exist?(save_path) unless %w[local development].include?(ENV["RAILS_ENV"])
       end
+    end
+
+    def get_unit_ids
+      unit_ids = []
+      self.insurables.where(insurable_type_id: InsurableType::RESIDENTIAL_COMMUNITIES_IDS).each do |ins|
+        unit_ids += ins.units.pluck(:id)
+      end
+      return unit_ids.blank? ? nil : unit_ids
     end
 
     def find_closest_master_policy_configuration(insurable = nil)

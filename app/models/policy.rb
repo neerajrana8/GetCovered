@@ -470,6 +470,41 @@ class Policy < ApplicationRecord
       time_condition = Time.current.to_date >= self.effective_date
     end
 
+    action_method = nil
+    if self.persisted?
+      if self.previous_changes.has_key?("id") && self.previous_changes["id"][0].nil?
+        action_method = :create
+      else
+        action_method = :update
+      end
+    elsif self.destroyed?
+      action_method = :destroy
+    end
+
+    if Policy.active_statuses.include?(self.status) &&
+       [:create, :update].include(action_method) &&
+       self.cancellation_date.nil? &&
+       time_condition
+
+      self.insurables.each do |insurable|
+        insurable.add_to_covered(self.policy_type_id, self.id)
+        insurable.leases.where(status: "current").each do |lease|
+          lease.add_to_covered(self.policy_type_id, self.id) if lease.active?
+        end
+      end
+    end
+
+
+  end
+
+  def update_coverage_old
+    time_condition = nil
+    if [1,4,5,6].include?(self.policy_type_id)
+      time_condition = Time.current.to_date.between?(self.effective_date, self.expiration_date)
+    elsif [3,8].include?(self.policy_type_id)
+      time_condition = Time.current.to_date >= self.effective_date
+    end
+
     if Policy.active_statuses.include?(self.status) && time_condition
       if self.cancellation_date.nil? ||
          self.cancellation_date > Time.current.to_date

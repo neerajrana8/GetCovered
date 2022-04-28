@@ -56,6 +56,17 @@ class MasterPolicyConfiguration < ApplicationRecord
     return amount
   end
 
+  def find_closest_account
+    if self.configurable_type == "Account"
+      return self.configurable
+    elsif self.configurable_type == "Policy" ||
+          self.configurable_type == "Insurable"
+      return self.configurable&.account
+    else
+      return nil
+    end
+  end
+
   private
 
   def set_program_start_date
