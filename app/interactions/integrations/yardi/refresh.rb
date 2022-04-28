@@ -87,6 +87,9 @@ module Integrations
         integration.configuration['sync']['pull_policies'] = false if integration.configuration['sync']['pull_policies'].nil?
         integration.configuration['sync']['push_policies'] = true if integration.configuration['sync']['push_policies'].nil?
         integration.configuration['sync']['push_master_policy_invoices'] = false if integration.configuration['sync']['push_master_policy_invoices'].nil?
+        integration.configuration['sync']['master_policy_invoices'] ||= {}
+        integration.configuration['sync']['master_policy_invoices']['charge_description'] ||= "Master Policy"
+        integration.configuration['sync']['master_policy_invoices']['log'] ||= []
         integration.configuration['sync']['sync_history'] ||= []
         integration.configuration['sync']['next_sync'] ||= nil
         

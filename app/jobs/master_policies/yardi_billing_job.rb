@@ -2,17 +2,21 @@ module MasterPolicies
   class YardiBillingJob < ApplicationJob
     queue_as :default
 
-    def perform
-=begin
+    def perform(mps = nil) # can pass array of master policies to prevent autoselection
+#=begin
       start_of_last_month = (Time.current.beginning_of_month - 1.day).beginning_of_month.to_date
-      mps = Policy.where.not(status: 'CANCELLED').or(Policy.where("cancellation_date >= ?", start_of_last_month))
+      mps ||= Policy.where.not(status: 'CANCELLED').or(Policy.where("cancellation_date >= ?", start_of_last_month))
                   .where("expiration_date >= ?", start_of_last_month)
                   .where(policy_type_id: PolicyType::MASTER_ID)
                   .order(id: :asc)
       mps.each do |mp|
         integration = mp.account.integrations.where(provider: 'yardi').take
-        next unless !integration.nil? && integration.configuration['sync']['push_master_policy_invoices']
-        # MOOSE WARNING: erorrr if integration not set up
+        next unless !integration.nil? && integration.configuration&.[]('sync')&.[]('push_master_policy_invoices')
+        integration.configuration['sync'] ||= {}
+        integration.configuration['sync']['master_policy_invoices'] ||= {}
+        integration.configuration['sync']['master_policy_invoices']['log'] ||= []
+        log_entry = { 'date' => Time.current.to_date.to_s, 'mp_id' => mp.id, 'status' => 'pending', 'mpc_errors' => [] }
+        integration.configuration['sync']['master_policy_invoices']['log'].push(log_entry)
         mpcs = Policy.where.not(status: 'CANCELLED').or(Policy.where("cancellation_date >= ?", start_of_last_month))
                     .where("expiration_date >= ?", start_of_last_month)
                     .where(policy_type_id: PolicyType::MASTER_COVERAGE_ID, policy: mp)
@@ -32,16 +36,17 @@ module MasterPolicies
           if config.nil?
             config = mp.find_closest_master_policy_configuration(mpc.primary_insurable) # try to do it the direct way (which would be less query-efficient to do for all records when avoidable)
             if config.nil?
-              #### MOOSE WARNING: alert! mysteriously missing config! oh no, Jack! ####
+              log_entry['mpc_errors'].push({ 'mpc_id' => mpc.id, 'error' => "find_closest_master_policy_configuration returned nil", 'invoice_id' => nil })
+              next
             end
           end
           term_amount = config.term_amount(mpc, start_of_last_month)
-          charge_description = ????????????????????????????????????????????????????????????????????? # MOOSE WARNING
+          charge_description = (integration.configuration&.[]('sync')&.[]('master_policy_invoices')&.[]('charge_description') || "Master Policy")
           unless term_amount.nil?
             if term_amount == 0
-              ::Invoice.create!(
-                available_date: start_of_last_month.end_of_month + 1.day,
-                due_date: start_of_last_month.end_of_month + 1.day,
+              created = ::Invoice.create(
+                available_date: Time.current.to_date,
+                due_date: start_of_last_month + 1.month,
                 external: true,
                 status: "managed_externally",
                 invoiceable: mpc,
@@ -57,11 +62,14 @@ module MasterPolicies
                   )
                 ]
               )
+              if created.id.nil?
+                log_entry['mpc_errors'].push({ 'mpc_id' => mpc.id, 'error' => "Failed to create bookkeeping invoice for $0", 'invoice_id' => nil })
+              end
             else
               # set up invoice to log errors
               invoice = ::Invoice.new(
-                available_date: start_of_last_month.end_of_month + 1.day,
-                due_date: start_of_last_month.end_of_month + 1.day,
+                available_date: Time.current.to_date,
+                due_date: start_of_last_month + 1.month,
                 external: true,
                 status: "managed_externally",
                 invoiceable: mpc,
@@ -93,7 +101,7 @@ module MasterPolicies
                   GLAccountNumber: mpc.integration_account_number,
                   CustomerID: yardi_customer_id,
                   Amount: (term_amount.to_d / 100.to_d).to_s,
-                  Comment: "GC MPC ##{mpc.number} MP ##{mp.number}", # do we want something like the following? "Get Covered Master Policy ##{mp.number}, Coverage ##{mpc.number}, #{Date::MONTHNAMES[start_of_last_month.month]} #{start_of_last_month.year}",
+                  Comment: "GC MP ##{mp.number} MPC ##{mpc.number}",
                   PropertyPrimaryID: yardi_property_id
                 })
               end
@@ -139,15 +147,16 @@ module MasterPolicies
                 end
               end
               invoice.save
+              if invoice.under_review
+                log_entry['mpc_errors'].push({ 'mpc_id' => mpc.id, 'error' => (invoice.error_info['description'] || invoice.error_info[:description]), 'invoice_id' => invoice.id })
+              end
               
-              
-              
-              
-            end # end if term_amount == 0
+            end # end if term_amount == 0 else
           end # end unless term_amount.nil?
         end # end mpcs.each
+        integration.save
       end # end mps.each
-=end
+#=end
     end # end perform()
   end # end class YardiBillingJob
 end # end module
