@@ -10,36 +10,39 @@ module V2
       check_privileges 'dashboard.properties'
 
       def total_dashboard
-        unit_ids = InsurableType::UNITS_IDS
-        community_ids = InsurableType::COMMUNITIES_IDS
-        @covered = Insurable.where(insurable_type_id: unit_ids, covered: true, account: @agency.accounts).count
-        @uncovered = Insurable.where(insurable_type_id: unit_ids, covered: false, account: @agency.accounts).count
-        @units = @covered + @uncovered
-        @communities = Insurable.where(insurable_type_id: community_ids, account: @agency.accounts).count
-        @total_policy = ::Policy.current.where(agency: @agency).count
-        @total_residential_policies = ::Policy.current.where(policy_type_id: 1, agency: @agency).count
-        @total_master_policies = ::Policy.current.where(policy_type_id: PolicyType::MASTER_IDS, agency: @agency).count
-        @total_master_policy_coverages = ::Policy.current.where(policy_type_id: 3, agency: @agency).count
-        @total_commercial_policies = ::Policy.current.where(policy_type_id: 4, agency: @agency).count
-        @total_rent_guarantee_policies = ::Policy.current.where(policy_type_id: 5, agency: @agency).count
-        policy_ids = ::Policy.where(agency: @agency).pluck(:id)
-        policy_quote_ids = ::PolicyQuote.includes(:policy_application).references(:policy_applications).where(status: 'accepted', policy_applications: { agency_id: @agency.id }).pluck(:id)
-        @total_commission = ::Commission.where(recipient: @agency).pluck(:total).inject(:+) || 0
-        @total_premium = ::PolicyPremium.where(policy_quote_id: policy_quote_ids).or(::PolicyPremium.where(policy_id: policy_ids)).pluck(:total_premium).inject(:+) || 0
-
+        # unit_ids = InsurableType::UNITS_IDS
+        # community_ids = InsurableType::COMMUNITIES_IDS
+        # @covered = Insurable.where(insurable_type_id: unit_ids, covered: true, account: @agency.accounts).count
+        # @uncovered = Insurable.where(insurable_type_id: unit_ids, covered: false, account: @agency.accounts).count
+        # @units = @covered + @uncovered
+        # @communities = Insurable.where(insurable_type_id: community_ids, account: @agency.accounts).count
+        # @total_policy = ::Policy.current.where(agency: @agency).count
+        # @total_residential_policies = ::Policy.current.where(policy_type_id: 1, agency: @agency).count
+        # @total_master_policies = ::Policy.current.where(policy_type_id: PolicyType::MASTER_IDS, agency: @agency).count
+        # @total_master_policy_coverages = ::Policy.current.where(policy_type_id: 3, agency: @agency).count
+        # @total_commercial_policies = ::Policy.current.where(policy_type_id: 4, agency: @agency).count
+        # @total_rent_guarantee_policies = ::Policy.current.where(policy_type_id: 5, agency: @agency).count
+        # policy_ids = ::Policy.where(agency: @agency).pluck(:id)
+        # policy_quote_ids = ::PolicyQuote.includes(:policy_application).references(:policy_applications).where(status: 'accepted', policy_applications: { agency_id: @agency.id }).pluck(:id)
+        # @total_commission = ::Commission.where(recipient: @agency).pluck(:total).inject(:+) || 0
+        # @total_premium = ::PolicyPremium.where(policy_quote_id: policy_quote_ids).or(::PolicyPremium.where(policy_id: policy_ids)).pluck(:total_premium).inject(:+) || 0
+        #
+        # render json: {
+        #   total_units: @units,
+        #   total_covered_units: @covered,
+        #   total_uncovered_units: @uncovered,
+        #   total_communities: @communities,
+        #   total_policies: @total_policy,
+        #   total_residential_policies: @total_residential_policies,
+        #   total_master_policies: @total_master_policies,
+        #   total_master_policy_coverages: @total_master_policy_coverages,
+        #   total_commercial_policies: @total_commercial_policies,
+        #   total_rent_guarantee_policies: @total_rent_guarantee_policies,
+        #   total_commission: @total_commission,
+        #   total_premium: @total_premium
+        # }, status: :ok
         render json: {
-          total_units: @units,
-          total_covered_units: @covered,
-          total_uncovered_units: @uncovered,
-          total_communities: @communities,
-          total_policies: @total_policy,
-          total_residential_policies: @total_residential_policies,
-          total_master_policies: @total_master_policies,
-          total_master_policy_coverages: @total_master_policy_coverages,
-          total_commercial_policies: @total_commercial_policies,
-          total_rent_guarantee_policies: @total_rent_guarantee_policies,
-          total_commission: @total_commission,
-          total_premium: @total_premium
+          message: "Currently Unavailable: Under Construction"
         }, status: :ok
       end
 
