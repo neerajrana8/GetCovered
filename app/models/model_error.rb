@@ -5,7 +5,7 @@ class ModelError < ApplicationRecord
 
   def subject
     if self.persisted?
-      string = "#{ self.model_type } #{self.description.gsub("_", " ").titlecase }".strip
+      string = "#{ self.model_type } #{self.kind.gsub("_", " ").titlecase }".strip
       return string.blank? ? "New Application Error #{ self.created_at.strftime('%B %d, %Y, %H:%I:%S') }" : string
     else
       return nil

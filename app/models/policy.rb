@@ -574,6 +574,14 @@ class Policy < ApplicationRecord
                                 .external_policy_status_changed(policy: self)
                                 .deliver_now() unless self.in_system?
       rescue Exception => e
+        @error = ModelError.create!(
+          kind: "external_policy_status_change_notification_error",
+          model_type: "Policy",
+          model_id: self.id,
+          information: e.to_json,
+          backtrace: e.backtrace.to_json,
+          description: "Unable to generate external Policy status change email for Policy ID: #{ self.id }<br><br>"
+        )
         message = "Unable to generate external policy status change Policy ID: #{ self.id }\n\n"
         message += "#{ e.to_json }\n\n"
         message += e.backtrace.join("\n")

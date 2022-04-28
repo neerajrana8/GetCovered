@@ -10,6 +10,17 @@ class InternalMailer < ApplicationMailer
   def model_error(error:)
     @subject = error.subject
     @content = error.description
+
+    unless error.information.nil?
+      @content += "<br><strong>Error Data:</strong><br>"
+      @content += "#{ error.information.to_json }"
+    end
+
+    unless error.information.nil?
+      @content += "<br><strong>Backtrace:</strong><br>"
+      @content += "#{ error.backtrace.join("<br>") }"
+    end
+
     mail(from: "no-reply-#{ Rails.env.gsub('_', '-') }@getcovered.io",
          to: "proderror@getcovered.io",
          subject: @subject)
