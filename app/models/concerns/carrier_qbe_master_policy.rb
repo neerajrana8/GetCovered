@@ -70,7 +70,10 @@ module CarrierQbeMasterPolicy
     end
 
     def qbe_specialty_evict_master_coverage
-
+      if self.status == "BOUND"
+        eviction_time = Time.current
+        self.update status: "CANCELLED", cancellation_date: eviction_time, expiration_date: eviction_time
+      end
     end
 
     def qbe_specialty_issue_policy
