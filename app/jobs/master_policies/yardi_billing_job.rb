@@ -32,16 +32,46 @@ module MasterPolicies
         mpc_id_to_config = PolicyInsurable.references(:insurables).includes(:insurable).where(policy: mpcs).group_by{|pi| pi.policy_id }.transform_values{|v| configs[v.first.insurable_id] }
         # send off charges
         mpcs.each do |mpc|
+          charge_description = (integration.configuration&.[]('sync')&.[]('master_policy_invoices')&.[]('charge_description') || "Master Policy")
           config = mpc_id_to_config[mpc.id]
           if config.nil?
             config = mp.find_closest_master_policy_configuration(mpc.primary_insurable) # try to do it the direct way (which would be less query-efficient to do for all records when avoidable)
             if config.nil?
-              log_entry['mpc_errors'].push({ 'mpc_id' => mpc.id, 'error' => "find_closest_master_policy_configuration returned nil", 'invoice_id' => nil })
+              created = ::Invoice.create(
+                available_date: Time.current.to_date,
+                due_date: start_of_last_month + 1.month,
+                external: true,
+                status: "managed_externally",
+                invoiceable: mpc,
+                payer: mpc.primary_user,
+                collector: integration,
+                under_review: true,
+                error_info: [
+                  {
+                    description: "Unable to determine master policy configuration; find_closest_master_policy_configuration returned nil",
+                    time: Time.current.to_s,
+                    amount: 'unknown',
+                    event_id: nil,
+                    parsed_response: nil
+                  }
+                ],
+                line_items: [
+                  ::LineItem.new(
+                    chargeable: mpc,
+                    title: charge_description,
+                    original_total_due: 0,
+                    analytics_category: 'other',
+                    policy: mpc
+                  )
+                ]
+              )
+              if created.id.nil?
+                log_entry['mpc_errors'].push({ 'mpc_id' => mpc.id, 'error' => "Failed to create invoice recording inability to find master policy configuration: #{invoice.errors.to_h}" })
+              end
               next
             end
           end
           term_amount = config.term_amount(mpc, start_of_last_month)
-          charge_description = (integration.configuration&.[]('sync')&.[]('master_policy_invoices')&.[]('charge_description') || "Master Policy")
           unless term_amount.nil?
             if term_amount == 0
               created = ::Invoice.create(
@@ -63,7 +93,7 @@ module MasterPolicies
                 ]
               )
               if created.id.nil?
-                log_entry['mpc_errors'].push({ 'mpc_id' => mpc.id, 'error' => "Failed to create bookkeeping invoice for $0", 'invoice_id' => nil })
+                log_entry['mpc_errors'].push({ 'mpc_id' => mpc.id, 'error' => "Failed to create bookkeeping invoice for $0: #{invoice.errors.to_h}" })
               end
             else
               # set up invoice to log errors
@@ -147,8 +177,8 @@ module MasterPolicies
                 end
               end
               invoice.save
-              if invoice.under_review
-                log_entry['mpc_errors'].push({ 'mpc_id' => mpc.id, 'error' => (invoice.error_info['description'] || invoice.error_info[:description]), 'invoice_id' => invoice.id })
+              if invoice.id.nil?
+                log_entry['mpc_errors'].push({ 'mpc_id' => mpc.id, 'error' => "Failed to create invoice recording #{invoice.under_review == false ? "successful charge push of $#{term_amount.to_d/100.to_d}" : "failed charge push of $#{term_amount.to_d/100.to_d} (with error #{invoice.error_info})"}: #{invoice.errors.to_h}" })
               end
               
             end # end if term_amount == 0 else
