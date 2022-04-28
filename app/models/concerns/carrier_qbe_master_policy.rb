@@ -56,7 +56,7 @@ module CarrierQbeMasterPolicy
       if coverage.save!
         to_return = true
         coverage.insurables << insurable
-        users.sort_by!{|user| primary_user == user ? -1 : 0 } unless primary_user.nil?
+        users.sort_by { |user| primary_user == user ? -1 : 0 } unless primary_user.nil?
         users.each do |user|
           coverage.users << user
           Compliance::PolicyMailer.with(organization: self.account ? self.account : self.agency)
