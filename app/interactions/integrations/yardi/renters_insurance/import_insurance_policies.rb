@@ -15,6 +15,10 @@ module Integrations
           }.compact)
         end
         
+        def response_has_error?(response_body)
+          return response_body&.index('XSD Error') ? true : false
+        end
+        
         
         def get_policy_xml_from_hash
           harsh = policy_hash.deep_stringify_keys

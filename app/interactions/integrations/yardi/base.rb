@@ -30,6 +30,10 @@ module Integrations
         false
       end
       
+      def response_has_error?(response_body)
+        false
+      end
+      
       # useful for little derived buddies
       def xml_block(tag, value)
         value.nil? ? "<#{tag} />" : value.class == ::Array ? value.map{|v| "<#{tag}>#{v}</#{tag}>" }.join("") : "<#{tag}>#{value}</#{tag}>"
@@ -98,7 +102,7 @@ module Integrations
         event.completed = Time.now
         event.response = result.response.body
         event.status = (result.code == 200 ? 'success' : 'error')
-        if result.code == 200 && (result.response.body.index("Login failed.") || result.response.body.index("Invalid Interface Entity"))
+        if result.code == 200 && (result.response.body.index("Login failed.") || result.response.body.index("Invalid Interface Entity")) || response_has_error?(result.response.body)
           event.status = 'error'
         end
         event.save
