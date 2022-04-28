@@ -117,7 +117,7 @@ module Integrations
               next [k,
                 v.select{|u| !verboten.include?(u["UnitId"]) }
               ]
-            end.to_h
+            end.to_h.compact
           end
 
           ###### CLEAN UP FAKE UNITS, FIX BROKEN ADDRESSES ##########
