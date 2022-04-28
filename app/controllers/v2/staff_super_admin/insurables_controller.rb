@@ -5,6 +5,8 @@
 module V2
   module StaffSuperAdmin
     class InsurablesController < StaffSuperAdminController
+      #include Insurables::UploadMethods
+
       alias super_index index
 
       before_action :set_insurable, only: %i[show coverage_report policies related_insurables destroy update]
@@ -166,6 +168,23 @@ module V2
         render json: result.to_json
       end
 
+      def upload
+        if file_correct?
+          #TODO: need to run background job here for processing files
+          render json: {
+            title: "Insurables File Uploaded",
+            message: "File scheduled for import. Insurables will be available soon."
+          }.to_json,
+                 status: :ok
+        else
+          render json: {
+            title: "Insurables File Upload Failed",
+            message: "File could not be scheduled for import"
+          }.to_json,
+                 status: 422
+        end
+      end
+
       private
 
       def view_path
@@ -177,6 +196,11 @@ module V2
       end
 
       def create_allowed?
+        true
+      end
+
+      #TO DO: better to add validation for headers and amount of rows during parsing in background job to prevent double reading of file
+      def file_correct?
         true
       end
 
@@ -209,7 +233,7 @@ module V2
             :insurable_type_id, :title, :agency_id, :account_id, addresses_attributes: %i[
               city country county id latitude longitude
               plus_four state street_name street_number
-              street_two timezone zip_code 
+              street_two timezone zip_code
             ]
           )
 
@@ -260,6 +284,10 @@ module V2
           end
         end
         to_return
+      end
+
+      def insurable_upload_params
+        params.require(:file)
       end
 
       def supported_filters(called_from_orders = false)

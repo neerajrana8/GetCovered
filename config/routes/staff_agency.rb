@@ -221,6 +221,7 @@
     end
     post :insurables_index, action: :index, controller: :insurables
     post 'insurables/:insurable_id/policies_index', controller: 'policies', action: :index
+    post 'insurables/upload', controller: 'insurables', action: :upload
 
     resources :invoices, only: [ :update, :index, :show ]
 

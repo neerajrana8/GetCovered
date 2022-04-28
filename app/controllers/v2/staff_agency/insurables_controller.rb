@@ -205,7 +205,29 @@ module V2
         end
       end
 
+      def upload
+        if file_correct?
+          #TODO: need to run background job here for processing files
+          render json: {
+              title: "Insurables File Uploaded",
+              message: "File scheduled for import. Insurables will be available soon."
+          }.to_json,
+                 status: :ok
+        else
+          render json: {
+              title: "Insurables File Upload Failed",
+              message: "File could not be scheduled for import"
+          }.to_json,
+                 status: 422
+        end
+      end
+
       private
+
+      #TO DO: better to add validation for headers and amount of rows during parsing in background job to prevent double reading of file
+      def file_correct?
+        true
+      end
 
       def insurables_titles
         bulk_create_params[:ranges].reduce([]) do |result, range_string|
