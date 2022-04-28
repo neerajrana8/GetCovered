@@ -478,7 +478,7 @@ class Policy < ApplicationRecord
       action_method = :destroy
     end
 
-    if [:create, :update].include(action_method) &&
+    if [:create, :update].include?(action_method) &&
        self.previous_changes.has_key?("status") &&
        self.previous_changes["status"][0] != self.previous_changes["status"][1]
 
