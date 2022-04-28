@@ -11,7 +11,7 @@ module Compliance
             unless config.nil?
               leases = Lease.includes(:insurable, :users)
                             .where(status: 'current',
-                                   lease_start_date: lease_start_date + config.grace_period.days,
+                                   start_date: lease_start_date + config.grace_period.days,
                                    insurable_id: community.units.pluck(:id),
                                    covered: false)
               process_leases(master: master, leases: leases)
