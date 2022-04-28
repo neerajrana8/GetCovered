@@ -99,8 +99,8 @@ module Compliance
     private
 
     def set_variables
-      @organization = params[:organization]
-      @address = @organization.primary_address()
+      @organization = params[:organization].blank? ? Agency.find(1) : params[:organization]
+      @address = @organization.addresses.where(primary: true).nil? ? Address.find(1) : @organization.primary_address()
       @branding_profile = @organization.branding_profiles.where(default: true).take
       @GC_ADDRESS = Agency.get_covered.primary_address.nil? ? Address.find(1) : Agency.get_covered.primary_address
     end

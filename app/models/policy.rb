@@ -49,9 +49,11 @@ class Policy < ApplicationRecord
 
   after_create :schedule_coverage_reminders, if: -> { policy_type&.master_coverage }
   after_create :create_necessary_policy_coverages_for_external, unless: -> { in_system? }
+  after_create :update_users_status
+
+  after_save :update_coverage
 
   after_commit :notify_users, on: [:create, :update], unless: -> { in_system? }
-  # after_save :start_automatic_master_coverage_policy_issue, if: -> { policy_type&.designation == 'MASTER' }
 
   belongs_to :agency, optional: true
   belongs_to :account, optional: true
@@ -141,11 +143,6 @@ class Policy < ApplicationRecord
   :insurables, :policy_users, :policy_insurables, :policy_application
   accepts_nested_attributes_for :policy_coverages, allow_destroy: true
   #  after_save :update_leases, if: :saved_changes_to_status?
-
-  after_create :update_users_status
-  after_commit :update_insurables_coverage,
-             if: Proc.new{ saved_change_to_status? || saved_change_to_effective_date? || saved_change_to_effective_date? }
-  after_destroy_commit :update_insurables_coverage
 
   validate :correct_document_mime_type
   validate :is_allowed_to_update?, on: :update
@@ -272,8 +269,8 @@ class Policy < ApplicationRecord
   end
 
   def schedule_coverage_reminders
-    CoverageReminderJob.set(wait: policy.system_data['send_first_coverage_reminder_in_days'].to_i.days).perform_later(id, true)
-    CoverageReminderJob.set(wait: policy.system_data['send_second_coverage_reminder_in_days'].to_i.days).perform_later(id, false)
+    # CoverageReminderJob.set(wait: policy.system_data['send_first_coverage_reminder_in_days'].to_i.days).perform_later(id, true)
+    # CoverageReminderJob.set(wait: policy.system_data['send_second_coverage_reminder_in_days'].to_i.days).perform_later(id, false)
   end
 
   def start_automatic_master_coverage_policy_issue
@@ -470,18 +467,41 @@ class Policy < ApplicationRecord
       time_condition = Time.current.to_date >= self.effective_date
     end
 
-    if Policy.active_statuses.include?(self.status) && time_condition
-      if self.cancellation_date.nil? ||
-         self.cancellation_date > Time.current.to_date
+    action_method = nil
+    if self.persisted?
+      if self.previous_changes.has_key?("id") && self.previous_changes["id"][0].nil?
+        action_method = :create
+      else
+        action_method = :update
+      end
+    elsif self.destroyed?
+      action_method = :destroy
+    end
+
+    if [:create, :update].include?(action_method) &&
+       self.previous_changes.has_key?("status") &&
+       self.previous_changes["status"][0] != self.previous_changes["status"][1]
+
+      if Policy.active_statuses.include?(self.status) &&
+         self.cancellation_date.nil? &&
+         time_condition
+
         self.insurables.each do |insurable|
           insurable.add_to_covered(self.policy_type_id, self.id)
-          insurable.leases.each { |lease| lease.add_to_covered(self.policy_type_id, self.id) if lease.active? }
+          insurable.leases.where(status: "current").each do |lease|
+            lease.add_to_covered(self.policy_type_id, self.id) if lease.active?
+          end
         end
       end
-    else
-      self.insurables.each do |insurable|
-        insurable.remove_from_covered(self.policy_type_id, self.id)
-        insurable.leases.each { |lease| lease.remove_from_covered(self.policy_type_id, self.id) unless lease.active? }
+
+      if ['EXPIRED', 'CANCELLED', 'EXTERNAL_REJECTED'].include?(self.status)
+
+        self.insurables.each do |insurable|
+          insurable.remove_from_covered(self.policy_type_id, self.id)
+          insurable.leases.each do |lease|
+            lease.remove_from_covered(self.policy_type_id, self.id)
+          end
+        end
       end
     end
   end
@@ -507,10 +527,6 @@ class Policy < ApplicationRecord
         errors.add(:documents, I18n.t('policy_model.document_wrong_format'))
       end
     end
-  end
-
-  def update_insurables_coverage
-    # insurables.each { |insurable| Insurables::UpdateCoveredStatus.run!(insurable: insurable) }
   end
 
   def update_users_status
@@ -539,14 +555,14 @@ class Policy < ApplicationRecord
                                 .external_policy_status_changed(policy: self)
                                 .deliver_now() unless self.in_system?
       rescue Exception => e
-        message = "Unable to generate external policy status change Policy ID: #{ self.id }\n\n"
-        message += "#{ e.to_json }\n\n"
-        message += e.backtrace.join("\n")
-        from = Rails.env == "production" ? "no-reply-#{ Rails.env.gsub('_','-') }@getcovered.io" : 'no-reply@getcovered.io'
-        ActionMailer::Base.mail(from: from,
-                                to: 'dev@getcovered.io',
-                                subject: "[Get Covered] External Policy Status Change Email Error",
-                                body: message).deliver_now()
+        @error = ModelError.create!(
+          kind: "external_policy_status_change_notification_error",
+          model_type: "Policy",
+          model_id: self.id,
+          information: e.to_json,
+          backtrace: e.backtrace.to_json,
+          description: "Unable to generate external Policy status change email for Policy ID: #{ self.id }<br><br>"
+        )
       end
     end
   end

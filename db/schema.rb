@@ -1132,6 +1132,8 @@ ActiveRecord::Schema.define(version: 2022_04_28_181408) do
     t.jsonb "information"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.jsonb "backtrace"
+    t.text "description"
     t.index ["model_type", "model_id"], name: "index_model_errors_on_model"
   end
 
@@ -1855,6 +1857,18 @@ ActiveRecord::Schema.define(version: 2022_04_28_181408) do
     t.bigint "stripe_charge_id"
     t.index ["refund_id"], name: "index_stripe_refunds_on_refund_id"
     t.index ["stripe_charge_id"], name: "index_stripe_refunds_on_stripe_charge_id"
+  end
+
+  create_table "system_histories", force: :cascade do |t|
+    t.string "field"
+    t.string "previous_value_str"
+    t.string "new_value_str"
+    t.jsonb "system_data", default: {}
+    t.string "recordable_type", null: false
+    t.bigint "recordable_id", null: false
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["recordable_type", "recordable_id"], name: "index_system_histories_on_recordable"
   end
 
   create_table "tags", force: :cascade do |t|
