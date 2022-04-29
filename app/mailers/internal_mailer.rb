@@ -17,8 +17,8 @@ class InternalMailer < ApplicationMailer
     end
 
     unless error.information.nil?
-      @content += "<br><strong>Backtrace:</strong><br>"
-      @content += "#{ error.backtrace.join("<br>") }"
+      @content += "<br><strong>Backtrace:</strong><br>Coming Soon."
+      # @content += "#{ error.backtrace.join("<br>") }"
     end
 
     mail(from: "no-reply-#{ Rails.env.gsub('_', '-') }@getcovered.io",
