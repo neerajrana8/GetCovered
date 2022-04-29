@@ -67,10 +67,6 @@ module V2
           if result.failure?
             render json: result.failure, status: 422
           else
-            #TODO: need to add rule to determine who uploaded from tenant portal and who no
-            PmTenantPortal::InvitationToPmTenantPortalMailer.external_policy_submitted(user_email: @policy&.primary_user&.email,
-                                                                                       community_id: @policy&.primary_insurable&.insurable_id || insurable_id_param,
-                                                                                       policy_id: @policy.id).deliver_now
             render :show, status: :created
           end
         else
