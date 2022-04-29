@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2022_04_28_181408) do
+ActiveRecord::Schema.define(version: 2022_04_29_010423) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
@@ -1121,6 +1121,7 @@ ActiveRecord::Schema.define(version: 2022_04_28_181408) do
     t.datetime "updated_at", precision: 6, null: false
     t.boolean "enabled", default: false
     t.string "integration_account_number"
+    t.boolean "lease_violation_only", default: true
     t.index ["carrier_policy_type_id", "configurable_type", "configurable_id"], name: "index_cpt_and_conf_on_mpc", unique: true
     t.index ["configurable_type", "configurable_id"], name: "index_master_policy_configurations_on_configurable"
   end
