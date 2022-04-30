@@ -124,7 +124,7 @@ module MasterPolicies
                 result = { preerrors: result.select{|k,v| v.nil? }.keys }
               else
                 result = Integrations::Yardi::BillingAndPayments::ImportResidentTransactions.run!(integration: integration, charge_hash: {
-                  Description: "Master Policy Fee", # MOOSE WARNING: retitle???
+                  Description: charge_description,
                   TransactionDate: Time.current.to_date.to_s,
                   ServiceToDate: (start_of_last_month + 1.month).to_s,
                   ChargeCode: mpc.integration_charge_code,
