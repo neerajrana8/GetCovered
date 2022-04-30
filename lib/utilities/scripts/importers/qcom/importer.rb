@@ -120,37 +120,106 @@ ActiveRecord::Base.transaction do
       end
       bc['in_system'] = community
       # get the buildings and units
-      unless community.insurables.blank?
-        errors.push "Community on line #{bc['line']} (title '#{com[0]}') already has insurables! Update the importer to add support for this situation."
-        raise ActiveRecord::Rollback
-      end
-      # go wild
-      bc['units'].each do |u|
+      if community.insurables.blank?
+        # go wild
+        bc['units'].each do |u|
           puts "[com ##{bc['line']}:#{com[0]}] Creating unit #{u['line']}: #{u['title']}..."
-        ::Insurable.create!(
-          insurable_id: community.id,
-          title: u['title'], insurable_type_id: 4, enabled: true, category: 'property',
-          account_id: account_id, confirmed: !account_id.nil?
-        )
-      end
-      bc['by_building'].each do |bldg, bb|
-        puts "[com ##{bc['line']}:#{com[0]}] Creating building ##{bb['line']}: #{bldg[0]}..."
-        addr = Address.from_string(bldg.select{|y| !y.blank? }.join(", "))
-        addr.primary = true
-        building = ::Insurable.create!(
-          insurable_id: community.id,
-          title: bldg[0], insurable_type_id: 7, enabled: true, category: 'property',
-          account_id: account_id, confirmed: !account_id.nil?,
-          addresses: [addr]
-        )
-        bb['units'].each do |u|
-          puts "[com ##{bc['line']}:#{com[0]}][bldg ##{bb['line']}:#{bldg[0]}] Creating unit #{u['line']}: #{u['title']}..."
           ::Insurable.create!(
-            insurable_id: building.id,
+            insurable_id: community.id,
             title: u['title'], insurable_type_id: 4, enabled: true, category: 'property',
             account_id: account_id, confirmed: !account_id.nil?
           )
         end
+        bc['by_building'].each do |bldg, bb|
+          puts "[com ##{bc['line']}:#{com[0]}] Creating building ##{bb['line']}: #{bldg[0]}..."
+          addr = Address.from_string(bldg.select{|y| !y.blank? }.join(", "))
+          addr.primary = true
+          building = ::Insurable.create!(
+            insurable_id: community.id,
+            title: bldg[0], insurable_type_id: 7, enabled: true, category: 'property',
+            account_id: account_id, confirmed: !account_id.nil?,
+            addresses: [addr]
+          )
+          bb['units'].each do |u|
+            puts "[com ##{bc['line']}:#{com[0]}][bldg ##{bb['line']}:#{bldg[0]}] Creating unit #{u['line']}: #{u['title']}..."
+            ::Insurable.create!(
+              insurable_id: building.id,
+              title: u['title'], insurable_type_id: 4, enabled: true, category: 'property',
+              account_id: account_id, confirmed: !account_id.nil?
+            )
+          end
+        end
+      else
+        # complete community import against possible duplicates
+        bc['units'].each do |u|
+          puts "[com ##{bc['line']}:#{com[0]}] Get-or-creating unit #{u['line']}: #{u['title']}..."
+          found = community.units.find{|un| un.title == u['title'] }
+          if found.nil?
+            ::Insurable.create!(
+              insurable_id: community.id,
+              title: u['title'], insurable_type_id: 4, enabled: true, category: 'property',
+              account_id: account_id, confirmed: !account_id.nil?
+            )
+          else
+            if !found.account_id.nil? && found.account_id != account_id
+              errors.push "Unit on line #{u['line']} (title '#{u['title']}') already exists and belongs to the wrong account! Aborting import..."
+              raise ActiveRecord::Rollback
+            end
+            found.update!(account_id: account_id, confirmed: true, enabled: true)
+          end
+        end
+        bc['by_building'].each do |bldg, bb|
+          puts "[com ##{bc['line']}:#{com[0]}] Get-or-creating building ##{bb['line']}: #{bldg[0]}..."
+          # try to find the building
+          building = ::Insurable.get_or_create(
+            address: bldg.select{|y| !y.blank? }.join(", "),
+            unit: false,
+            insurable_id: community.id,
+            disallow_creation: true
+          )
+          building = case building
+            when ::Insurable
+              ::InsurableType::RESIDENTIAL_BUILDINGS_IDS.include?(building.insurable_type_id) ? building : nil
+            when ::Array
+              arr.find{|bildin| ::InsurableType::RESIDENTIAL_BUILDINGS_IDS.include?(bildin.insurable_type_id) }
+            else
+              nil
+          end
+          if building.nil?
+            building = ::Insurable.create!(
+              insurable_id: community.id,
+              title: bldg[0], insurable_type_id: 7, enabled: true, category: 'property',
+              account_id: account_id, confirmed: !account_id.nil?,
+              addresses: [addr]
+            )
+          else
+            if !building.account_id.nil? && building.account_id != account_id
+              errors.push "Building on line #{bc['line']} (title '#{bldg[0]}') already exists and belongs to the wrong account! Aborting import..."
+              raise ActiveRecord::Rollback
+            end
+            building.update!(account_id: account_id, confirmed: true, enabled: true)
+          end
+          bb['units'].each do |u|
+            puts "[com ##{bc['line']}:#{com[0]}][bldg ##{bb['line']}:#{bldg[0]}] Get-or-creating unit #{u['line']}: #{u['title']}..."
+            found = building.units.find{|un| un.title == u['title'] }
+            if found.nil?
+              ::Insurable.create!(
+                insurable_id: building.id,
+                title: u['title'], insurable_type_id: 4, enabled: true, category: 'property',
+                account_id: account_id, confirmed: !account_id.nil?
+              )
+            else
+              if !found.account_id.nil? && found.account_id != account_id
+                errors.push "Unit on line #{u['line']} (title '#{u['title']}') already exists and belongs to the wrong account! Aborting import..."
+                raise ActiveRecord::Rollback
+              end
+              found.update!(account_id: account_id, confirmed: true, enabled: true)
+            end
+          end
+        end
+        
+        
+        
       end
     end
   end

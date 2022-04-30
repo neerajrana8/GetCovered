@@ -20,9 +20,19 @@ production:
   insurables_refresh_insurable_data:
     cron: '0 */2 * * *'   # Every day at 0:00 AM
     class: Insurables::RefreshInsurableDataJob
+  # Compliance
   configuration_sweep_job:
-    cron: '0 3 * * *'   # Every day at 3:00 AM
+    cron: '0 2 * * *'   # Every day at 3:00 AM
     class: Compliance::ConfigurationSweepJob
+  first_contact_job:
+    cron: '0 3 * * *' # Every Day at 3:00 AM
+    class: Compliance::Audit::FirstContactJob
+  follow_up_contact_job:
+    cron: '0 4 * * *' # Every Day at 4:00 AM
+    class: Compliance::Audit::FollowUpContactJob
+  final_contact_job:
+    cron: '0 5 * * *' # Every Day at 5:00 AM
+    class: Compliance::Audit::FinalContactJob
   # Reports
   active_policies_reports_job:
     cron: '0 2 * * *'   # Every day at 2:00 AM

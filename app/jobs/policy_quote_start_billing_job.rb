@@ -35,11 +35,14 @@ class PolicyQuoteStartBillingJob < ApplicationJob
       content += "Policy Status: #{ policy.status.titlecase }\n\n\n"
       content += "Issue Method #{ issue }\n"
       content += "Queued By: #{ queued_by }\n"
-      content += "Queued At: #{ queued_at }\n"
-      content += "Queue Count: #{ policy.system_data["policy_quote_start_billing"]["count"] }"
+      content += "Queued At: #{ queued_at.strftime('%B %d, %Y - %l:%M:%S %p UTC:%z') }\n"
+      content += "Queue Count: #{ policy.system_data["policy_quote_start_billing"]["count"] }\n"
 
       if policy.system_data["policy_quote_start_billing"]["history"].count > 1
-        content += "Queue History: #{ policy.system_data["policy_quote_start_billing"]["history"].reject(&:blank?).join(', ') }"
+        content += "Queue History:\n"
+        policy.system_data["policy_quote_start_billing"]["history"].reject(&:blank?).each do |entry|
+          content += "#{ entry.to_datetime.strftime('%B %d, %Y - %l:%M:%S %p UTC:%z') }\n"
+        end
       end
 
       ActionMailer::Base.mail(

@@ -50,6 +50,7 @@ class Policy < ApplicationRecord
   after_create :schedule_coverage_reminders, if: -> { policy_type&.master_coverage }
   after_create :create_necessary_policy_coverages_for_external, unless: -> { in_system? }
 
+  after_commit :notify_users, on: [:create, :update], unless: -> { in_system? }
   # after_save :start_automatic_master_coverage_policy_issue, if: -> { policy_type&.designation == 'MASTER' }
 
   belongs_to :agency, optional: true
@@ -526,6 +527,27 @@ class Policy < ApplicationRecord
         limit: 0,
         enabled: true
       )
+    end
+  end
+
+  def notify_users
+    if self.previous_changes.has_key?('status') &&
+      ['EXTERNAL_UNVERIFIED', 'EXTERNAL_VERIFIED', 'EXTERNAL_REJECTED'].include?(self.status)
+
+      begin
+        Compliance::PolicyMailer.with(organization: self.account.nil? ? self.agency : self.account)
+                                .external_policy_status_changed(policy: self)
+                                .deliver_now() unless self.in_system?
+      rescue Exception => e
+        message = "Unable to generate external policy status change Policy ID: #{ self.id }\n\n"
+        message += "#{ e.to_json }\n\n"
+        message += e.backtrace.join("\n")
+        from = Rails.env == "production" ? "no-reply-#{ Rails.env.gsub('_','-') }@getcovered.io" : 'no-reply@getcovered.io'
+        ActionMailer::Base.mail(from: from,
+                                to: 'dev@getcovered.io',
+                                subject: "[Get Covered] External Policy Status Change Email Error",
+                                body: message).deliver_now()
+      end
     end
   end
 end

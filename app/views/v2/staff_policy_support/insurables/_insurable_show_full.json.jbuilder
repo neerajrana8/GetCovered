@@ -4,7 +4,7 @@ json.partial! "v2/staff_policy_support/insurables/insurable_show_fields.json.jbu
 json.addresses_attributes do
   unless insurable.addresses.nil?
     json.array! insurable.addresses do |insurable_addresses|
-      json.partial! "v2/staff_policy_support/addresses/address_show_fields.json.jbuilder",
+      json.partial! "v2/staff_super_admin/addresses/address_show_fields.json.jbuilder",
         address: insurable_addresses
     end
   end
