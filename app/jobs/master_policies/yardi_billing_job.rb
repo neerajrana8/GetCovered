@@ -2,9 +2,9 @@ module MasterPolicies
   class YardiBillingJob < ApplicationJob
     queue_as :default
 
-    def perform(mps = nil) # can pass array of master policies to prevent autoselection
+    def perform(mps = nil, current_time: Time.current) # can pass array of master policies to prevent autoselection
 #=begin
-      start_of_last_month = (Time.current.beginning_of_month - 1.day).beginning_of_month.to_date
+      start_of_last_month = (current_time.beginning_of_month - 1.day).beginning_of_month.to_date
       mps ||= Policy.where.not(status: 'CANCELLED').or(Policy.where("cancellation_date >= ?", start_of_last_month))
                   .where("expiration_date >= ?", start_of_last_month)
                   .where(policy_type_id: PolicyType::MASTER_ID)
@@ -15,7 +15,7 @@ module MasterPolicies
         integration.configuration['sync'] ||= {}
         integration.configuration['sync']['master_policy_invoices'] ||= {}
         integration.configuration['sync']['master_policy_invoices']['log'] ||= []
-        log_entry = { 'date' => Time.current.to_date.to_s, 'mp_id' => mp.id, 'status' => 'pending', 'mpc_errors' => [] }
+        log_entry = { 'date' => current_time.to_date.to_s, 'mp_id' => mp.id, 'status' => 'pending', 'mpc_errors' => [] }
         integration.configuration['sync']['master_policy_invoices']['log'].push(log_entry)
         mpcs = Policy.where.not(status: 'CANCELLED').or(Policy.where("cancellation_date >= ?", start_of_last_month))
         mpcs = mpcs.where("expiration_date >= ?", start_of_last_month).or(mpcs.where(expiration_date: nil))
@@ -39,7 +39,7 @@ module MasterPolicies
             config = mp.find_closest_master_policy_configuration(mpc.primary_insurable) # try to do it the direct way (which would be less query-efficient to do for all records when avoidable)
             if config.nil?
               created = ::Invoice.create(
-                available_date: Time.current.to_date,
+                available_date: current_time.to_date,
                 due_date: start_of_last_month + 1.month,
                 external: true,
                 status: "managed_externally",
@@ -50,7 +50,7 @@ module MasterPolicies
                 error_info: [
                   {
                     description: "Unable to determine master policy configuration; find_closest_master_policy_configuration returned nil",
-                    time: Time.current.to_s,
+                    time: current_time.to_s,
                     amount: 'unknown',
                     event_id: nil,
                     parsed_response: nil
@@ -78,7 +78,7 @@ module MasterPolicies
           unless term_amount.nil?
             if term_amount == 0
               created = ::Invoice.create(
-                available_date: Time.current.to_date,
+                available_date: current_time.to_date,
                 due_date: start_of_last_month + 1.month,
                 external: true,
                 status: "managed_externally",
@@ -103,7 +103,7 @@ module MasterPolicies
             else
               # set up invoice to log errors
               invoice = ::Invoice.new(
-                available_date: Time.current.to_date,
+                available_date: current_time.to_date,
                 due_date: start_of_last_month + 1.month,
                 external: true,
                 status: "managed_externally",
@@ -133,7 +133,7 @@ module MasterPolicies
               else
                 result = Integrations::Yardi::BillingAndPayments::ImportResidentTransactions.run!(integration: integration, charge_hash: {
                   Description: charge_description,
-                  TransactionDate: Time.current.to_date.to_s,
+                  TransactionDate: current_time.to_date.to_s,
                   ServiceToDate: (start_of_last_month + 1.month).to_s,
                   ChargeCode: config.integration_charge_code,
                   GLAccountNumber: config.integration_account_number,
@@ -148,7 +148,7 @@ module MasterPolicies
                 invoice.error_info ||= []
                 invoice.error_info.push({
                   description: "Unable to export charge to Yardi due to missing fields.",
-                  time: Time.current.to_s,
+                  time: current_time.to_s,
                   amount: term_amount,
                   event_id: nil,
                   parsed_response: nil,
@@ -161,7 +161,7 @@ module MasterPolicies
                 invoice.error_info ||= []
                 invoice.error_info.push({
                   description: "Attempt to export charge to Yardi resulted in an error response.",
-                  time: Time.current.to_s,
+                  time: current_time.to_s,
                   amount: term_amount,
                   event_id: result[:event]&.id,
                   parsed_response: result[:parsed_response]
@@ -174,7 +174,7 @@ module MasterPolicies
                   invoice.error_info ||= []
                   invoice.error_info.push({
                     description: "Attempt to export charge to Yardi resulted in an unknown error.",
-                    time: Time.current.to_s,
+                    time: current_time.to_s,
                     amount: term_amount,
                     event_id: result[:event]&.id,
                     parsed_response: result[:parsed_response]
