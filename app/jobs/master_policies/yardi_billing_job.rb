@@ -18,18 +18,19 @@ module MasterPolicies
         log_entry = { 'date' => Time.current.to_date.to_s, 'mp_id' => mp.id, 'status' => 'pending', 'mpc_errors' => [] }
         integration.configuration['sync']['master_policy_invoices']['log'].push(log_entry)
         mpcs = Policy.where.not(status: 'CANCELLED').or(Policy.where("cancellation_date >= ?", start_of_last_month))
-                    .where("expiration_date >= ?", start_of_last_month)
+        mpcs = mpcs.where("expiration_date >= ?", start_of_last_month).or(mpcs.where(expiration_date: nil))
                     .where(policy_type_id: PolicyType::MASTER_COVERAGE_ID, policy: mp)
                     .order(id: :asc)
         # set up map from insurable to yardi profiles
         integration_profiles = integration.integration_profiles.where(profileable_id: (mp.insurables.map{|i| i.id } + mp.insurables.map{|i| i.insurable_id }).compact, external_context: 'community')
-        integration_profiles = mp.insurables.map{|ins| [ins.id, yardi_property_ids.find{|ip| ip.profileable_id == ins.id } || yardi_property_ids.find{|ip| ip.profileable_id == ins.insurable_id } ] }.to_h
+        integration_profiles = mp.insurables.map{|ins| [ins.id, ins.integration_profiles.where(integration: integration).take ]}.to_h.compact#yardi_property_ids.find{|ip| ip.profileable_id == ins.id } || yardi_property_ids.find{|ip| ip.profileable_id == ins.insurable_id } ] }.to_h
         # set up map from MP coverage to MP configuration
         configs = mp.insurables.map{|ins| [ins.id, mp.find_closest_master_policy_configuration(ins)] }.to_h
         Insurable.where(insurable_id: configs.keys, insurable_type_id: InsurableType::RESIDENTIAL_BUILDINGS_IDS).where.not(id: configs.keys).each do |bldg|
           configs[bldg.id] = configs[bldg.insurable_id]
         end
-        mpc_id_to_config = PolicyInsurable.references(:insurables).includes(:insurable).where(policy: mpcs).group_by{|pi| pi.policy_id }.transform_values{|v| configs[v.first.insurable_id] }
+# MOOSE WARNING: FIXED? line does not work use mpc_id_to_config = mpcs.map{|mpc| [mpc.id, mp.find_closest_master_policy_configuration(mpc.primary_insurable)] }.to_h
+        mpc_id_to_config = PolicyInsurable.references(:insurables).includes(:insurable).where(policy: mpcs).group_by{|pi| pi.policy_id }.transform_values{|v| configs[v.first.insurable.insurable_id] }
         # send off charges
         mpcs.each do |mpc|
           charge_description = (integration.configuration&.[]('sync')&.[]('master_policy_invoices')&.[]('charge_description') || "Master Policy")
@@ -60,6 +61,8 @@ module MasterPolicies
                     chargeable: mpc,
                     title: charge_description,
                     original_total_due: 0,
+                    total_due: 0,
+                    preproration_total_due: 0,
                     analytics_category: 'other',
                     policy: mpc
                   )
@@ -88,7 +91,9 @@ module MasterPolicies
                     title: charge_description,
                     original_total_due: term_amount,
                     analytics_category: 'other',
-                    policy: mpc
+                    policy: mpc,
+                    preproration_total_due: term_amount,
+                    total_due: term_amount
                   )
                 ]
               )
@@ -111,26 +116,29 @@ module MasterPolicies
                     title: charge_description,
                     original_total_due: term_amount,
                     analytics_category: 'other',
-                    policy: mpc
+                    policy: mpc,
+                    preproration_total_due: term_amount,
+                    total_due: term_amount
                   )
                 ]
               )
               # send charge through yardi
-              yardi_property_id = integration_profiles[mpc.primary_insurable.insurable_id]&.external_id
+              yardi_property_id = mpc.primary_insurable.integration_profiles.find{|ip| ip.integration == integration }&.external_context&.gsub("unit_in_community_", "") || 
+                                  integration_profiles[mpc.primary_insurable.parent_community&.id]&.external_id # WARNING: this line won't work right when community has multiple profiles, hence the attempt to use the unit's external_context
               yardi_customer_id = mpc.primary_user&.integration_profiles&.where(integration: integration)&.take&.external_id
               result = nil
-              if yardi_property_id.nil? || yardi_customer_id.nil? || mpc.integration_charge_code.nil? || mpc.integration_account_number.nil?
-                result = { 'yardi_property_id' => yardi_property_id, 'yardi_customer_id' => yardi_customer_id, 'integration_charge_code' => mpc.integration_charge_code, 'integration_account_number' => mpc.integration_account_number }
+              if yardi_property_id.nil? || yardi_customer_id.nil? || config.integration_charge_code.nil? || config.integration_account_number.nil?
+                result = { 'yardi_property_id' => yardi_property_id, 'yardi_customer_id' => yardi_customer_id, 'integration_charge_code' => config.integration_charge_code, 'integration_account_number' => config.integration_account_number }
                 result = { preerrors: result.select{|k,v| v.nil? }.keys }
               else
                 result = Integrations::Yardi::BillingAndPayments::ImportResidentTransactions.run!(integration: integration, charge_hash: {
-                  Description: "Master Policy Fee", # MOOSE WARNING: retitle???
+                  Description: charge_description,
                   TransactionDate: Time.current.to_date.to_s,
                   ServiceToDate: (start_of_last_month + 1.month).to_s,
-                  ChargeCode: mpc.integration_charge_code,
-                  GLAccountNumber: mpc.integration_account_number,
+                  ChargeCode: config.integration_charge_code,
+                  GLAccountNumber: config.integration_account_number,
                   CustomerID: yardi_customer_id,
-                  Amount: (term_amount.to_d / 100.to_d).to_s,
+                  Amount: '%.2f' % (term_amount.to_d / 100.to_d),
                   Comment: "GC MP ##{mp.number} MPC ##{mpc.number}",
                   PropertyPrimaryID: yardi_property_id
                 })
