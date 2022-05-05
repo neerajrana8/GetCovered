@@ -262,8 +262,9 @@ module Integrations
 
             # get data on internal policies that haven't yet been exported
             unexported_policy_ids = Policy.where(
+              id: PolicyInsurable.where(insurable: integration.integratable.insurables).where.not(policy_id: nil).pluck(:policy_id),
               policy_type_id: [::PolicyType::RESIDENTIAL_ID, ::PolicyType::MASTER_COVERAGE_ID],
-              status: ["BOUND", "BOUND_WITH_WARNING", "EXTERNAL_VERIFIED"]
+              status: ::Policy.active_statuses,
             ).where.not(id: IntegrationProfile.where(integration: integration, profileable_type: "Policy").pluck(:profileable_id)).pluck(:id)
             unexported_policy_ids.each do |pol_id|
               # verify that the policy really should be exported and prepare a users list
@@ -281,6 +282,7 @@ module Integrations
                 }
               end.compact
               roommate_index = 0
+              next if users_to_export.blank?
               # export the policy
               policy_hash = {
                 Customer: {
@@ -298,7 +300,7 @@ module Integrations
                 PolicyNumber: policy.number,
                 PolicyTitle: policy.number,
                 PolicyDetails: {
-                  #Notes: "GC Verified",
+                  Notes: "GC Verified",
                   EffectiveDate: policy.effective_date.to_s,
                   ExpirationDate: policy.expiration_date.to_s,
                   IsRenew: policy.auto_renew,
