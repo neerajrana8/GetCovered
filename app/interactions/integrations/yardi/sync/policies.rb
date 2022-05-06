@@ -304,7 +304,7 @@ module Integrations
                   EffectiveDate: policy.effective_date.to_s,
                   ExpirationDate: policy.expiration_date.to_s,
                   IsRenew: policy.auto_renew,
-                  LiabilityAmount: policy.get_liability.nil? ? nil : (policy.get_liability.to_d / 100.0) #,
+                  LiabilityAmount: '%.2f' % (policy.get_liability.nil? ? nil : (policy.get_liability.to_d / 100.to_d)) #,
                   #IsRequiredForMoveIn: "false",
                   #IsPMInterestedParty: "true"
                   # MOOSE WARNING: are these weirdos required?
