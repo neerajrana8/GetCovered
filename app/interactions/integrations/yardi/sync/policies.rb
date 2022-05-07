@@ -38,7 +38,7 @@ module Integrations
             return(to_return)
           end
           property_id = true_property_ids.first
-        
+          the_community = IntegrationProfile.where(integration: integration, external_context: "community", external_id: property_id).take.profileable
           ##############################################################
           ###################### SETUP #################################
           ##############################################################
@@ -99,8 +99,7 @@ module Integrations
           else
             integration.configuration['pending_yardi_policy_numbers'][property_id] = new_pending_yardi_numbers
           end
-          
-          
+                
           ##############################################################
           ###################### IMPORT FROM YARDI #####################
           ##############################################################
@@ -116,7 +115,6 @@ module Integrations
           import_results = policy_hashes.group_by{|polhash| in_system[polhash["PolicyNumber"]] ? true : false }
           import_results[true] ||= []
           import_results[false] ||= []
-          
           # policy create and update
           if integration.configuration['sync']['pull_policies']
             
@@ -257,13 +255,12 @@ module Integrations
           ##############################################################
           ###################### EXPORT TO YARDI #######################
           ##############################################################
-          
           if integration.configuration['sync']['push_policies']
-
             # get data on internal policies that haven't yet been exported
             unexported_policy_ids = Policy.where(
+              id: PolicyInsurable.where(insurable: the_community.insurables).where.not(policy_id: nil).pluck(:policy_id),
               policy_type_id: [::PolicyType::RESIDENTIAL_ID, ::PolicyType::MASTER_COVERAGE_ID],
-              status: ["BOUND", "BOUND_WITH_WARNING", "EXTERNAL_VERIFIED"]
+              status: ::Policy.active_statuses,
             ).where.not(id: IntegrationProfile.where(integration: integration, profileable_type: "Policy").pluck(:profileable_id)).pluck(:id)
             unexported_policy_ids.each do |pol_id|
               # verify that the policy really should be exported and prepare a users list
@@ -281,6 +278,7 @@ module Integrations
                 }
               end.compact
               roommate_index = 0
+              next if users_to_export.blank?
               # export the policy
               policy_hash = {
                 Customer: {
@@ -298,15 +296,15 @@ module Integrations
                 PolicyNumber: policy.number,
                 PolicyTitle: policy.number,
                 PolicyDetails: {
-                  #Notes: "GC Verified",
                   EffectiveDate: policy.effective_date.to_s,
-                  ExpirationDate: policy.expiration_date.to_s,
+                  ExpirationDate: policy.expiration_date&.to_s, # MOOSE WARNING: should we do something else for MPCs?
                   IsRenew: policy.auto_renew,
-                  LiabilityAmount: policy.get_liability.nil? ? nil : (policy.get_liability.to_d / 100.0) #,
+                  LiabilityAmount: '%.2f' % (policy.get_liability.nil? ? nil : (policy.get_liability.to_d / 100.to_d)) #,
+                  #Notes: "GC Verified" #, TEMP DISALBRD CAUSSES BROKEENNN
                   #IsRequiredForMoveIn: "false",
                   #IsPMInterestedParty: "true"
                   # MOOSE WARNING: are these weirdos required?
-                }
+                }.compact
               }
               result = Integrations::Yardi::RentersInsurance::ImportInsurancePolicies.run!(integration: integration, property_id: property_id, policy_hash: policy_hash, change: false)
               if result[:success]

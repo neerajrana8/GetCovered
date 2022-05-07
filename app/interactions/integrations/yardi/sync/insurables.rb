@@ -284,6 +284,7 @@ module Integrations
                 next if comm[:errored]
                 # fix matching community fields if necessary
                 community.update(title: comm[:title], account_id: account_id, confirmed: true) if community.account_id != account_id || community.title != comm[:title] || !community.confirmed
+                community.qbe_mark_preferred unless community.preferred_ho4
                 # create the ip
                 ip = IntegrationProfile.create(
                   integration: integration,

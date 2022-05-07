@@ -170,6 +170,8 @@ ActiveRecord::Base.transaction do
         end
         bc['by_building'].each do |bldg, bb|
           puts "[com ##{bc['line']}:#{com[0]}] Get-or-creating building ##{bb['line']}: #{bldg[0]}..."
+          addr = Address.from_string(bldg.select{|y| !y.blank? }.join(", "))
+          addr.primary = true
           # try to find the building
           building = ::Insurable.get_or_create(
             address: bldg.select{|y| !y.blank? }.join(", "),

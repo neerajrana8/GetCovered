@@ -55,10 +55,10 @@ module Integrations
             userobjs = da_tenants.map.with_index do |ten, ind|
               # get or create the user object
               log_found = true
-              userobj = userobjs.find{|u| u.email == ten["Email"] } # WARNING: what if emails match but names don't....?
+              userobj = userobjs.find{|u| u.email&.downcase == ten["Email"]&.downcase } # WARNING: what if emails match but names don't....?
               if userobj.nil?
                 # try to grab it from the previously-created list, just in case
-                userobj = created_by_email[ten["Email"]]
+                userobj = created_by_email[ten["Email"]&.downcase]
                 # try to find it by IP
                 if userobj.nil? && !user_ip_ids[tenant["Id"]].blank?
                   userobj = ::User.where(id: user_ip_ids[tenant["Id"]]).take
@@ -71,6 +71,23 @@ module Integrations
                 end
               end
               if !userobj.nil?
+                if user_ip_ids[ten["Id"]].nil?
+                  created_profile = IntegrationProfile.create(
+                    integration: integration,
+                    profileable: userobj,
+                    external_context: "resident",
+                    external_id: ten["Id"],
+                    configuration: {
+                      'synced_at' => Time.current.to_s
+                    }
+                  )
+                  if created_profile.id.nil?
+                    user_errors[tenant["Id"]] ||= {}
+                    user_errors[tenant["Id"]][ten["Id"]] = "Failed to create IntegrationProfile for pre-existing user #{ten["FirstName"]} #{ten["LastName"]} (GC id #{userobj.id}): #{created_profile.errors.to_h}"
+                    break nil
+                  end
+                  user_ip_ids[ten["Id"]] = userobj.id
+                end
                 if log_found
                   found_users[tenant["Id"]] ||= {}
                   found_users[tenant["Id"]][ten["Id"]] = userobj
@@ -87,9 +104,10 @@ module Integrations
                   user_errors[tenant["Id"]][ten["Id"]] = "Failed to create user #{ten["FirstName"]} #{ten["LastName"]}: #{userobj.errors.to_h}"
                   break nil
                 end
-                created_by_email[ten["Email"]] = userobj unless ten["Email"].blank?
+                created_by_email[ten["Email"]&.downcase] = userobj unless ten["Email"].blank?
                 created_users[tenant["Id"]] ||= {}
                 created_users[tenant["Id"]][ten["Id"]] = userobj
+                user_ip_ids[ten["Id"]] = userobj.id
                 created_profile = IntegrationProfile.create(
                   integration: integration,
                   profileable: userobj,
