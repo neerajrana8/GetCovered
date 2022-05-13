@@ -28,6 +28,27 @@ end
 
 json.policy_type_title policy&.policy_type&.title
 
+#TODO: it can be very very heavy!
+json.primary_insurable do
+  unless policy.primary_insurable.nil?
+    json.partial! "v2/staff_agency/insurables/insurable_short_fields.json.jbuilder",
+                  insurable: policy.primary_insurable
+    json.parent_community do
+      if policy.primary_insurable.parent_community_for_all.present?
+        json.partial! 'v2/staff_agency/insurables/insurable_short_fields.json.jbuilder',
+                      insurable: policy.primary_insurable.parent_community_for_all
+      end
+    end
+    json.parent_building do
+      if policy.primary_insurable.parent_building.present?
+        json.partial! 'v2/staff_agency/insurables/insurable_short_fields.json.jbuilder',
+                      insurable: policy.primary_insurable.parent_building
+      end
+    end
+  end
+end
+
+
 # json.primary_insurable do
 #   unless policy.primary_insurable.nil?
 #     json.partial! "v2/staff_agency/insurables/insurable_short_fields.json.jbuilder",
