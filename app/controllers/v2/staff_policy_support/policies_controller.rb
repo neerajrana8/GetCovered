@@ -43,14 +43,8 @@ module V2
 
       def update
         if @policy.update(update_policy_attributes)
-          begin
-            PmTenantPortal::InvitationToPmTenantPortalMailer.external_policy_declined(policy: @policy).deliver_now if update_policy_attributes[:status] == "EXTERNAL_REJECTED"
-            PmTenantPortal::InvitationToPmTenantPortalMailer.external_policy_accepted(policy: @policy).deliver_now if update_policy_attributes[:status] == "EXTERNAL_VERIFIED"
-          rescue NoMethodError => e
-          ensure
-            render json: @policy.to_json,
-                   status: 202
-          end
+          render json: @policy.to_json,
+                 status: 202
         else
           render json: @policy.errors.to_json,
                  status: 422
