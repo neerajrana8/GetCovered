@@ -45,7 +45,7 @@ class InternalMailer < ApplicationMailer
     unless claim.claimant.nil?
       if claim.claimant_type == "User"
         @content += '<strong>Claimant Type:</strong> Policy Holder<br>'
-        @content += '<strong>Claimant:</strong> ' + claim.claimant&.policy&.full_name + '<br>'
+        @content += '<strong>Claimant:</strong> ' + claim.claimant&.profile&.full_name + '<br>'
       elsif claim.claimant_type == "Account"
         @content += '<strong>Claimant Type:</strong> Property Manager<br>'
         @content += '<strong>Claimant:</strong> ' + claim.claimant&.title + '<br>'
