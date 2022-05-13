@@ -7,6 +7,7 @@ class Claim < ApplicationRecord
 
   # Active Record Callbacks
   after_initialize :initialize_claim
+  after_create_commit :notify_support
 
   # Relationships
   belongs_to :claimant,
@@ -80,5 +81,9 @@ class Claim < ApplicationRecord
       policies_ids = claimant.policies.ids
     end
     errors.add(:policy_id, "Policy is not included in claimant's scope") unless policies_ids.include?(policy_id)
+  end
+
+  def notify_support
+    InternalMailer.with(organization: Agency.find(1)).claim_notification(claim: self).deliver_now
   end
 end
