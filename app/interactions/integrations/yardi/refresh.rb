@@ -39,11 +39,9 @@ module Integrations
           if !result[:success]
             billing_issues.push("We encountered an error while trying to connect to Yardi. Please double-check your configuration and verify that the entity 'Get Covered Billing' has access to your Billing and Payments interface.")
           else
-=begin
-# COMMENTED OUT because ChargeCode and GLAccountNumber are defined per-MasterPolicyConfiguration on that model
-
             result = Integrations::Yardi::BillingAndPayments::GetChargeTypes.run!(integration: integration)
             if !result[:success]
+              
               billing_issues.push("Your Yardi account is accessible, but we were unable to retrieve your charge codes / GL account numbers. Please verify that the entity 'Get Covered Billing' has access to your Billing and Payments interface.")
             else
               charge_buckets = result[:parsed_response].dig("Envelope", "Body", "GetChargeTypes_LoginResponse", "GetChargeTypes_LoginResult", "Charges", "Charge")
@@ -53,23 +51,44 @@ module Integrations
               else
                 our_bucket = charge_buckets.find{|ct| ct["Entity"] == "Get Covered Billing" }
                 if our_bucket.nil?
-                  billing_issues.push("We were unable to find any charge codes / GL account numbers associated with the entity 'Get Covered Billing' in your Billing and Payments interface; we cannot post master policy charges to your tenants without a charge code & GL account number, so please reattempt connection once such an entry is set up.")
+                  unless !integration.configuration['billing_and_payments']['master_policy_gla'].blank? &&
+                         !integration.configuration['billing_and_payments']['master_policy_charge_code'].blank? &&
+                         integration.configuration['billing_and_payments']['available_charge_settings'].any? do |ct|
+                            ct['charge_code'] == integration.configuration['billing_and_payments']['master_policy_charge_code'] &&
+                            ct['gla'] == integration.configuration['billing_and_payments']['master_policy_gla']
+                         end
+                    billing_issues.push("We were unable to find any charge codes / GL account numbers associated with the entity 'Get Covered Billing' in your Billing and Payments interface; we cannot post master policy charges to your tenants without a charge code & GL account number, so please reattempt connection once such an entry is set up.")
+                  end # we skip complaining if we already have valid settings, because it could just be a network issue
                 else
                   charge_types = our_bucket["Charge"]
                   charge_types = [charge_types] unless charge_types.nil? || charge_types.class == ::Array
                   case charge_types.length
                     when 0
+                      integration.configuration['billing_and_payments']['available_charge_settings'] = []
+                      integration.configuration['billing_and_payments']['master_policy_charge_code'] = nil
+                      integration.configuration['billing_and_payments']['master_policy_gla'] = nil
                       billing_issues.push("We found a Charge Code entry for the entity 'Get Covered Billing' in your Billing and Payments interface, but were unable to find any charge codes / GL account numbers associated with it; we cannot post master policy charges to your tenants without a charge code & GL account number, so please reattempt connection once such an entry is set up.")
                     when 1
+                      integration.configuration['billing_and_payments']['available_charge_settings'] = charge_types.map{|ct| { 'charge_code' => ct['ChargeCode'], 'gla' => ct['GLCode'].first } }
                       integration.configuration['billing_and_payments']['master_policy_charge_code'] = charge_types.first['ChargeCode']
                       integration.configuration['billing_and_payments']['master_policy_gla'] = charge_types.first['GLCode'].first
                     else
-                      billing_issues.push("We found more than one Charge Code entry for the entity 'Get Covered Billing' in your Billing and Payments interface; our system cannot determine which to use & does not at this time support manual configuration. Please contact support.")
+                      integration.configuration['billing_and_payments']['available_charge_settings'] = charge_types.map{|ct| { 'charge_code' => ct['ChargeCode'], 'gla' => ct['GLCode'].first } }
+                      unless !integration.configuration['billing_and_payments']['master_policy_gla'].blank? &&
+                             !integration.configuration['billing_and_payments']['master_policy_charge_code'].blank? &&
+                             integration.configuration['billing_and_payments']['available_charge_settings'].any? do |ct|
+                                ct['charge_code'] == integration.configuration['billing_and_payments']['master_policy_charge_code'] &&
+                                ct['gla'] == integration.configuration['billing_and_payments']['master_policy_gla']
+                             end
+                        integration.configuration['billing_and_payments']['master_policy_charge_code'] = nil
+                        integration.configuration['billing_and_payments']['master_policy_gla'] = nil
+                        billing_issues.push("We found more than one Charge Code entry for the entity 'Get Covered Billing' in your Billing and Payments interface; please select which we should use for pushing master policy charges to residents.")
+                      end
                   end
                 end
               end
             end
-=end
+            
           end
         end
         integration.configuration['billing_and_payments']['active'] = billing_issues.blank?
