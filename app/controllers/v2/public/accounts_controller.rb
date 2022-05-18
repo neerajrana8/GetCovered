@@ -4,7 +4,7 @@ module V2
     class AccountsController < PublicController
 
       def agency_accounts
-        @accounts = Account.where(agency_id: params[:agency_id].to_i).order(:title)
+        @accounts = Account.where(agency_id: params[:agency_id].to_i, enabled: true).order(:title)
         
         render json: (@accounts.map do |account|
           {
