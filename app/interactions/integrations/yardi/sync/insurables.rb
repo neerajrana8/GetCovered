@@ -118,9 +118,9 @@ module Integrations
                 v.select do |u|
                   if verboten.include?(u["UnitId"])
                     to_return[:unit_exclusions][k][u["UnitId"]] = "Unit's UnitType is on blacklist"
-                    next true
-                  else
                     next false
+                  else
+                    next true
                   end
                 end
               ]

@@ -40,12 +40,19 @@ module IntegrationsMethods
             } : {}).merge({
               enabled: nil,
               active: false,
+              master_policy_charge_code: nil,
+              master_policy_gla: nil,
+              available_charge_settings: [],
               problems: "The integration has not been set up yet."
             }),
             sync: {
               syncable_communities: [],
               sync_history: [],
-              next_sync: nil
+              next_sync: nil,
+              pull_policies: false,
+              push_policies: false,
+              push_master_policy_invoices: false,
+              master_policy_charge_description: nil
             }
           }, status: 404
         else
@@ -85,14 +92,21 @@ module IntegrationsMethods
             database_name: @integration.credentials['billing']['database_name'],
             url: @integration.credentials['urls']['billing_and_payments']
           } : {}).merge({
+            available_charge_settings: @integration.configuration['billing_and_payments']['available_charge_settings'],
+            master_policy_charge_code: @integration.configuration['billing_and_payments']['master_policy_charge_code'],
+            master_policy_gla: @integration.configuration['billing_and_payments']['master_policy_gla'],
             enabled: @integration.configuration['billing_and_payments']['enabled'],
             active: @integration.configuration['billing_and_payments']['active'],
             problems: @integration.configuration['billing_and_payments']['configuration_problems']
           }),
           sync: {
             syncable_communities: @integration.configuration['sync']['syncable_communities'],
-            sync_history: @integration.configuration['sync']['sync_history'],
-            next_sync: @integration.configuration['sync']['next_sync']
+            sync_history: [], # disabled until log system properly set up @integration.configuration['sync']['sync_history'],
+            next_sync: @integration.configuration['sync']['next_sync'],
+            pull_policies: @integration.configuration['sync']['pull_policies'],
+            push_policies: @integration.configuration['sync']['push_policies'],
+            push_master_policy_invoices: @integration.configuration['sync']['push_master_policy_invoices'],
+            master_policy_charge_description: @integration.configuration['sync']['master_policy_invoices']['charge_description']
           }
         }, status: 200
       else
@@ -147,17 +161,28 @@ module IntegrationsMethods
     end
     case @provider
       when 'yardi'
-        # update @interface's fields
+        # update interface's fields
         { renters_insurance: :voyager, billing_and_payments: :billing }.each do |interface, cred_section|
           [:username, :password, :database_server, :database_name].each do |field|
             @integration.credentials[cred_section.to_s][field.to_s] = yardi_update_params[interface][field] if yardi_update_params[interface]&.has_key?(field)
           end
           @integration.credentials['urls'][interface.to_s] = yardi_update_params[interface]['url'] if yardi_update_params[interface]&.has_key?('url')
           @integration.configuration[interface.to_s]['enabled'] = yardi_update_params[interface]['enabled'] if yardi_update_params[interface]&.has_key?('enabled')
-          yups = (yardi_update_params['sync']['syncable_communities'] rescue {})
-          @integration.configuration['sync']['syncable_communities'].each do |k,v|
-            v['enabled'] = yups[k.to_sym][:enabled] if yups.has_key?(k.to_sym) && yups[k.to_sym].has_key?(:enabled)
-          end
+        end
+        @integration.configuration['billing_and_payments']['master_policy_charge_code'] = yardi_update_params['billing_and_payments']&.has_key?('master_policy_charge_code')
+        @integration.configuration['billing_and_payments']['master_policy_gla'] = yardi_update_params['billing_and_payments']&.has_key?('master_policy_gla')
+        # update syncable community enablings
+        yups = (yardi_update_params['sync']['syncable_communities'] rescue {})
+        @integration.configuration['sync']['syncable_communities'].each do |k,v|
+          v['enabled'] = yups[k.to_sym][:enabled] if yups.has_key?(k.to_sym) && yups[k.to_sym].has_key?(:enabled)
+        end
+        # update generic sync settings
+        ['pull_policies', 'push_policies', 'push_master_policy_invoices'].each do |k,v|
+          next unless yardi_update_params[:sync]&.has_key?(k)
+          @integration.configuration['sync'][k] = yardi_update_params[:sync][k]
+        end
+        if yardi_update_params[:sync].has_key?('master_policy_charge_description') && yardi_update_params[:sync].has_key?('master_policy_charge_description').class == ::String
+          @integration.configuration['sync']['master_policy_invoices']['charge_description'] = yardi_update_params[:sync]['master_policy_charge_description']
         end
         # try saving
         if !@integration.save
@@ -188,7 +213,8 @@ module IntegrationsMethods
       if @namespace == 'staff_account'
         params.permit(
           renters_insurance: [:username, :password, :database_server, :database_name, :url, :enabled],
-          billing_and_payments: [:username, :password, :database_server, :database_name, :url, :enabled]
+          billing_and_payments: [:username, :password, :database_server, :database_name, :url, :master_policy_charge_code, :master_policy_gla, :enabled],
+          sync: [ :pull_policies, :push_policies, :push_master_policies, :master_policy_charge_description ]
         )
       else
         {}
@@ -199,8 +225,9 @@ module IntegrationsMethods
       if @namespace == 'staff_account'
         params.permit({
           renters_insurance: [:username, :password, :database_server, :database_name, :url, :enabled],
-          billing_and_payments: [:username, :password, :database_server, :database_name, :url, :enabled],
+          billing_and_payments: [:username, :password, :database_server, :database_name, :url, :master_policy_charge_code, :master_policy_gla, :enabled],
           sync: [
+            :pull_policies, :push_policies, :push_master_policies, :master_policy_charge_description,
             syncable_communities: [@integration.configuration['sync']['syncable_communities'].map do |k,v|
               [k, [:enabled]]
             end.to_h]
