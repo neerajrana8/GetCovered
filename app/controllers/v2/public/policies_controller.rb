@@ -69,7 +69,7 @@ module V2
 
       def external_unverified_proof(params)
         policy = Policy.find_by number: params[:number]
-        if policy.exists and policy.status = "external_unverified" || policy.status == "external_declined"
+        if policy.exists and policy_in_system == false and policy.status = "external_unverified" || policy.status == "external_declined"
           policy.update(params)
         end
 
