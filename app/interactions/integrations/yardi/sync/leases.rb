@@ -63,7 +63,7 @@ module Integrations
                     created_ip = IntegrationProfile.create(
                       integration: integration,
                       external_context: "lease_user_for_lease_#{tenant["Id"]}",
-                      external_id: ten["Id"],
+                      external_id: rip.external_id,
                       profileable: lu,
                       configuration: { 'synced_at' => Time.current.to_s }
                     )
