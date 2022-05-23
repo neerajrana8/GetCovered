@@ -79,6 +79,7 @@ module Integrations
                   lease_ip.save
                 end
               end
+              # MOOSE WARNING: handle resident changes here...
               next
             end
             ################### CREATE MODE ######################

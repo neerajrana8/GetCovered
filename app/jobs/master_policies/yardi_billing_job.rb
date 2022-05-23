@@ -126,6 +126,9 @@ module MasterPolicies
               yardi_property_id = mpc.primary_insurable.integration_profiles.find{|ip| ip.integration == integration }&.external_context&.gsub("unit_in_community_", "") || 
                                   integration_profiles[mpc.primary_insurable.parent_community&.id]&.external_id # WARNING: this line won't work right when community has multiple profiles, hence the attempt to use the unit's external_context
               yardi_customer_id = mpc.primary_user&.integration_profiles&.where(integration: integration)&.take&.external_id
+              
+              yardi_customer_id = IntegrationProfile.where(integration: integration, profileable: mpc.primary_insurable.leases.where("start_date <= ?", start_of_last_month).where("end_date >= ?", start_of_last_month)).take.external_id
+              #### MOOSE WARNING: the above may not be perfect... could be multiple leases...
               result = nil
               if yardi_property_id.nil? || yardi_customer_id.nil? || config.integration_charge_code.nil? || config.integration_account_number.nil?
                 result = { 'yardi_property_id' => yardi_property_id, 'yardi_customer_id' => yardi_customer_id, 'integration_charge_code' => config.integration_charge_code, 'integration_account_number' => config.integration_account_number }
