@@ -11,6 +11,7 @@ class LeaseUser < ApplicationRecord
   # Relationships
   belongs_to :lease
   belongs_to :user
+  has_many :integration_profiles, as: :profileable
     
   def related_records_list
     %w[lease user]  

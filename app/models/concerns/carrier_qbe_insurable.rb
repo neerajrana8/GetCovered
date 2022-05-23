@@ -538,7 +538,7 @@ module CarrierQbeInsurable
               unless irc.save
                 set_error = true
                 puts "IRC FAILURE #{irc.errors.to_h}"
-                irc.rates['rates'][number_insured] = []
+                irc.rates['rates'][number_insured] = {}
                 irc.configuration['coverage_options'] = {} if irc.rates['rates'].values.all?{|rate_array| rate_array.blank? }
                 set_error = true
                 @carrier_profile.data["get_rates_resolved"] = false 
@@ -546,7 +546,7 @@ module CarrierQbeInsurable
               end
 	          else
             
-              irc.rates['rates'][number_insured] = []
+              irc.rates['rates'][number_insured] = {}
               irc.configuration['coverage_options'] = {} if irc.rates['rates'].values.all?{|rate_array| rate_array.blank? } # note: for index 0, rate_array will be nil instead of [] if blank
 	                 
 	            set_error = true

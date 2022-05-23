@@ -29,7 +29,7 @@ module IntegrationsMethods
             } : {}).merge({
               enabled: nil,
               active: false,
-              problems: "The integration has not been set up yet."
+              problems: ["The integration has not been set up yet."]
             }),
             billing_and_payments: (@namespace == 'staff_account' ? {
               username: nil,
@@ -43,7 +43,7 @@ module IntegrationsMethods
               master_policy_charge_code: nil,
               master_policy_gla: nil,
               available_charge_settings: [],
-              problems: "The integration has not been set up yet."
+              problems: ["The integration has not been set up yet."]
             }),
             sync: {
               syncable_communities: [],

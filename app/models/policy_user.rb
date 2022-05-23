@@ -10,6 +10,8 @@ class PolicyUser < ApplicationRecord
   belongs_to :policy_application, optional: true
   belongs_to :policy, optional: true
   belongs_to :user, optional: true
+  
+  has_many :integration_profiles, as: :profileable
 
   accepts_nested_attributes_for :user
 

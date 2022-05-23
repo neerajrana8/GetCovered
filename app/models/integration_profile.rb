@@ -11,4 +11,5 @@ class IntegrationProfile < ApplicationRecord
   has_one :lease, through: :self_reference, source: :profileable, source_type: 'Lease'
   has_one :policy, through: :self_reference, source: :profileable, source_type: 'Policy'
   has_one :user, through: :self_reference, source: :profileable, source_type: 'User'
+  has_one :lease_user, through: :self_reference, source: :profileable, source_type: 'LeaseUser'
 end

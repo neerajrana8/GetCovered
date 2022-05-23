@@ -44,7 +44,7 @@ module Integrations
               
               billing_issues.push("Your Yardi account is accessible, but we were unable to retrieve your charge codes / GL account numbers. Please verify that the entity 'Get Covered Billing' has access to your Billing and Payments interface.")
             else
-              charge_buckets = result[:parsed_response].dig("Envelope", "Body", "GetChargeTypes_LoginResponse", "GetChargeTypes_LoginResult", "Charges", "Charge")
+              charge_buckets = result[:parsed_response].dig("Envelope", "Body", "GetChargeTypes_LoginResponse", "GetChargeTypes_LoginResult", "Charges")
               charge_buckets = [charge_buckets] unless charge_buckets.nil? || charge_buckets.class == ::Array
               if charge_buckets.nil?
                 billing_issues.push("Your Yardi account is accessible, but we were unable to retrieve your charge codes / GL account numbers. Please verify that the entity 'Get Covered Billing' has access to your Billing and Payments interface.")
