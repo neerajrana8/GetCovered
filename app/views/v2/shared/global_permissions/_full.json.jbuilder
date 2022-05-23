@@ -2,13 +2,13 @@ json.agency_id global_permission.ownerable_id if global_permission.ownerable_typ
 json.account_id global_permission.ownerable_id if global_permission.ownerable_type === 'Account'
 
 json.permissions do
-  json.array! GlobalPermission::AVAILABLE_PERMISSIONS.keys.each do |key|
+  json.array! global_permission.permissions.keys.each do |key|
     json.key key
     json.title I18n.t("permissions.#{key}")
     category = key.split('.').first
     json.category category
     json.category_title I18n.t("permission_categories.#{category}")
-    json.value global_permission.permissions.has_key?(key) ? global_permission.permissions[key] : false
+    json.value global_permission.permissions[key]
   end
 end
 

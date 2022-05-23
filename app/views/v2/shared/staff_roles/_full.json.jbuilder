@@ -12,13 +12,13 @@ json.array! staff_roles do |staff_role|
 
   json.permissions do
     if staff_role.global_permission
-      json.array! GlobalPermission::AVAILABLE_PERMISSIONS.keys.each do |key|
+      json.array! staff_role.global_permission.permissions.keys.each do |key|
         json.key key
         json.title I18n.t("permissions.#{key}")
         category = key.split('.').first
         json.category category
         json.category_title I18n.t("permission_categories.#{category}")
-        json.value staff_role.global_permission.permissions.has_key?(key) ? staff_role.global_permission.permissions[key] : false
+        json.value staff_role.global_permission.permissions[key]
       end
     end
   end

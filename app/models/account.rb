@@ -176,12 +176,12 @@ class Account < ApplicationRecord
     def initialize_agency
       # Blank for now...
     end
-
     def create_permissions
       unless self.global_permission
-        permissions = self.agency.global_permission&.permissions || {}
+        permissions = self.agency.global_permission&.permissions.except("agencies.agents", "agencies.details", "agencies.carriers", "agencies.manage_agents", "requests.refunds", "requests.cancellations") || {}
+        permissions["policies.rent_mass_import"] = false
         GlobalPermission.create(ownerable: self, permissions: permissions)
-      end
+        end
     end
 
     # get an array [first, last] presenting self.title as if it were a name;

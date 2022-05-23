@@ -3,7 +3,7 @@ module V2
     class GlobalAgencyPermissionsController < StaffSuperAdminController
 
       def available_permissions
-        @available_permissions = GlobalAgencyPermission::AVAILABLE_PERMISSIONS
+        @available_permissions = GlobalPermission::AVAILABLE_PERMISSIONS
         render template: 'v2/shared/global_agency_permissions/available_permissions', status: :ok
       end
     end
