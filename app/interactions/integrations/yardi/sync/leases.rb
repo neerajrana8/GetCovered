@@ -48,9 +48,41 @@ module Integrations
           user_ip_ids = IntegrationProfile.where(integration: integration, external_context: 'resident', profileable_type: "User").pluck(:external_id, :profileable_id).to_h
           in_system = IntegrationProfile.where(integration: integration, external_context: 'lease', external_id: relevant_tenants.map{|l| l['Id'] }, profileable_type: "Lease").pluck(:external_id)
           relevant_tenants.each do |tenant|
-            next if in_system.include?(tenant["Id"])
-            # get the users
             da_tenants = [tenant] + (tenant["Roommate"].nil? ? [] : tenant["Roommate"].class == ::Array ? tenant["Roommate"] : [tenant["Roommate"]])
+            ################### UPDATE MODE ######################
+            if in_system.include?(tenant["Id"])
+              lease_ip = IntegrationProfile.where(integration: integration, external_context: 'lease', external_id: tenant["Id"]).take
+              # ensure lease user IPs are created
+              if !lease_ip.configuration&.[]('luips_created')
+                lease = lease_ip.profileable
+                skip_this = false
+                IntegrationProfile.where(integration: integration, external_context: 'resident', profileable: lease.users, external_id: da_tenants.map{|dt| dt["Id"] }).each do |rip|
+                  lu = lease.lease_users.find{|lu| lu.user_id == rip.profileable_id }
+                  next if lu.nil? # just skip for now... shouldn't happen
+                  unless lu.integration_profiles.where(integration: integration).count > 0
+                    created_ip = IntegrationProfile.create(
+                      integration: integration,
+                      external_context: "lease_user_for_lease_#{tenant["Id"]}",
+                      external_id: ten["Id"],
+                      profileable: lu,
+                      configuration: { 'synced_at' => Time.current.to_s }
+                    )
+                    if created_ip.id.nil?
+                      skip_this = true
+                      break # just try again l8urrr
+                    end
+                  end
+                end
+                unless skip_this
+                  lease_ip.configuration ||= {}
+                  lease_ip.configuration['luips_created'] = true
+                  lease_ip.save
+                end
+              end
+              next
+            end
+            ################### CREATE MODE ######################
+            # get the users
             userobjs = ::User.where(email: da_tenants.select{|t| !t["Email"].blank? }.map{|t| t["Email"] }) # (compact to leave out any nil email boyos) we are only using email here because this lease is not in the system; since tenant IDs are lease-specific, no IPs are going to exist with these tenant ids
             userobjs = da_tenants.map.with_index do |ten, ind|
               # get or create the user object
@@ -107,7 +139,6 @@ module Integrations
                 created_by_email[ten["Email"]&.downcase] = userobj unless ten["Email"].blank?
                 created_users[tenant["Id"]] ||= {}
                 created_users[tenant["Id"]][ten["Id"]] = userobj
-                user_ip_ids[ten["Id"]] = userobj.id
                 created_profile = IntegrationProfile.create(
                   integration: integration,
                   profileable: userobj,
@@ -121,6 +152,8 @@ module Integrations
                   user_errors[tenant["Id"]] ||= {}
                   user_errors[tenant["Id"]][ten["Id"]] = "Failed to create IntegrationProfile for user #{ten["FirstName"]} #{ten["LastName"]} (GC id #{userobj.id}): #{created_profile.errors.to_h}"
                   break nil
+                else
+                  user_ip_ids[ten["Id"]] = created_profile.id
                 end
               end
               next userobj
@@ -136,10 +169,17 @@ module Integrations
               next
             end
             da_tenants.each.with_index do |ten, ind|
-              lease.lease_users.create(
+              lu = lease.lease_users.create(
                 user: userobjs[ind],
                 primary: (ind == 0),
                 lessee: (ind == 0 || ten["Lessee"] == "Yes")
+              )
+              IntegrationProfile.create(
+                integration: integration,
+                external_context: "lease_user_for_lease_#{tenant["Id"]}",
+                external_id: ten["Id"],
+                profileable: lu,
+                configuration: { 'synced_at' => Time.current.to_s }
               )
             end
             created_leases[tenant["Id"]] = lease
@@ -149,6 +189,7 @@ module Integrations
               external_context: "lease",
               external_id: tenant["Id"],
               configuration: {
+                'luips_created' => true, # to tell the system we have created lease user integration profiles, since we need to fix those that don't have this property
                 'synced_at' => Time.current.to_s,
                 'external_data' => tenant
               }

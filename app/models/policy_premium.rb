@@ -74,8 +74,10 @@ class PolicyPremium < ApplicationRecord
       result = self.itemize_premium(premium_amount, and_update_totals: false, term_group: term_group, collector: collector, first_payment_down_payment: first_payment_down_payment, first_payment_down_payment_override: first_payment_down_payment_override)
       raise ActiveRecord::Rollback unless result.nil?
       # taxes
-      result = self.itemize_taxes(tax, and_update_totals: false, term_group: term_group, collector: collector, recipient: tax_recipient, first_payment_down_payment: first_payment_down_payment, first_payment_down_payment_override: first_tax_payment_down_payment_override) unless tax.nil? || tax == 0
-      raise ActiveRecord::Rollback unless result.nil?
+      unless tax.nil? || tax == 0
+        result = self.itemize_taxes(tax, and_update_totals: false, term_group: term_group, collector: collector, recipient: tax_recipient, first_payment_down_payment: first_payment_down_payment, first_payment_down_payment_override: first_tax_payment_down_payment_override)
+        raise ActiveRecord::Rollback unless result.nil?
+      end
       # fees
       result = self.itemize_fees(premium_amount, and_update_totals: false, term_group: term_group, collector: collector, filter: filter_fees)
       raise ActiveRecord::Rollback unless result.nil?
