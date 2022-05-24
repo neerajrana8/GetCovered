@@ -826,7 +826,7 @@ class InsurableRateConfiguration < ApplicationRecord
         when ::QbeService.carrier_id
           interval = { 'FL' => 'annual', 'SA' => 'bi_annual', 'QT' => 'quarter', 'QBE_MoRe' => 'month' }[billing_strategy_carrier_code]
           # try to fix things if our irc is missing info the qbe prepare method already verified that it has (should be because there are duplicate IRCs and one is missing data)
-          if on_retry == 0 && irc&.rates&.[]('rates')&.[](additional_insured_count.to_i + 1)&.[](interval).blank?
+          if on_retry == 0 && (irc&.rates&.[]('rates')&.[](additional_insured_count.to_i + 1)&.[](interval).blank? rescue false)
             ircs = ::InsurableRateConfiguration.where(configurable: irc.configurable, configurer: irc.configurer, carrier_policy_type_id: irc.carrier_policy_type_id).select{|i| irc_filter_block.call(i) }
             if ircs.count > 1
               survivor = ircs.max{|i| i.created_at }

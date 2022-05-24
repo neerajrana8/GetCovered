@@ -512,7 +512,7 @@ module CarrierQbeInsurable
               configurer: @carrier,
               configurable: irc_configurable_override || self,
               configuration: { 'coverage_options' => {}, "rules" => {} },
-              rates: { 'rates' => [nil, [], [], [], [], []] }
+              rates: { 'rates' => [nil, {}, {}, {}, {}, {}] }
             )
             irc.rates['applicability'] = applicability unless irc_configurable_override
             
@@ -539,7 +539,7 @@ module CarrierQbeInsurable
                 set_error = true
                 puts "IRC FAILURE #{irc.errors.to_h}"
                 irc.rates['rates'][number_insured] = {}
-                irc.configuration['coverage_options'] = {} if irc.rates['rates'].values.all?{|rate_array| rate_array.blank? }
+                irc.configuration['coverage_options'] = {} if irc.rates['rates'].compact.all?{|rate_hash| rate_hash.values.all?{|v| v.blank? } }
                 set_error = true
                 @carrier_profile.data["get_rates_resolved"] = false 
                 irc.save
@@ -547,7 +547,7 @@ module CarrierQbeInsurable
 	          else
             
               irc.rates['rates'][number_insured] = {}
-              irc.configuration['coverage_options'] = {} if irc.rates['rates'].values.all?{|rate_array| rate_array.blank? } # note: for index 0, rate_array will be nil instead of [] if blank
+              irc.configuration['coverage_options'] = {} if irc.rates['rates'].compact.all?{|rate_hash| rate_hash.values.all?{|v| v.blank? } }
 	                 
 	            set_error = true
 	            @carrier_profile.data["get_rates_resolved"] = false 
