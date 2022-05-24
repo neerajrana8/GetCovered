@@ -970,7 +970,7 @@ class InsurableRateConfiguration < ApplicationRecord
       unless cip.data['rates_resolution']&.[](number_insured.to_s) &&
             ::InsurableRateConfiguration.where(
               configurer_type: "Carrier", configurer_id: ::QbeService.carrier_id, configurable: community, carrier_policy_type: cpt,
-            ).find{|irc| irc.rates['applicability'] == applicability && irc.rates['rates']&.[](number_insured.to_i) }
+            ).find{|irc| irc.rates['applicability'] == applicability && !irc.rates['rates']&.[](number_insured.to_i)&.blank? }
         # begin 'unless' code here, sorry for the hideous indentation
         if cip.data['rates_resolution']&.[](number_insured.to_s)
           cip.data['rates_resolution'][number_insured.to_s] = false
