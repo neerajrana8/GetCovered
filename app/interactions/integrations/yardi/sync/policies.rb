@@ -274,7 +274,7 @@ module Integrations
             # get data on internal policies that haven't yet been exported
             unexported_policy_ids = Policy.where(
               id: PolicyInsurable.where(insurable: the_community.insurables).where.not(policy_id: nil).pluck(:policy_id),
-              policy_type_id: [::PolicyType::RESIDENTIAL_ID, ::PolicyType::MASTER_COVERAGE_ID],
+              policy_type_id: [::PolicyType::RESIDENTIAL_ID], #, ::PolicyType::MASTER_COVERAGE_ID],
               status: ::Policy.active_statuses,
             ).where.not(id: IntegrationProfile.where(integration: integration, profileable_type: "Policy").pluck(:profileable_id)).pluck(:id)
             unexported_policy_ids.each do |pol_id|
@@ -304,17 +304,17 @@ module Integrations
               next if users_to_export.blank?
               # export the policy
               policy_hash = {
-                Customer: {
-                  Identification: users_to_export.map{|u| { "IDValue" => u[:external_id], "IDType" => u[:policy_user].primary ? "Resident ID" : "Roomate#{roommate_index += 1} ID" } },
-                  Name: users_to_export.map do |u|
-                    {
-                      "FirstName" => u[:policy_user].user.profile.first_name,
-                      "MiddleName" => u[:policy_user].user.profile.middle_name.blank? ? nil : u[:policy_user].user.profile.middle_name,
-                      "LastName" => u[:policy_user].user.profile.last_name,
-                      "Relationship"=> u[:policy_user].primary ? nil : u[:policy_user].spouse ? "Spouse" : "Roommate"
+                Customer: users_to_export.map do |u|
+                  {
+                    Identification: { "IDValue" => u[:external_id], "IDType" => u[:policy_user].primary ? "Resident ID" : "Roomate#{roommate_index += 1} ID" },
+                    Name: {
+                        "FirstName" => u[:policy_user].user.profile.first_name,
+                        "MiddleName" => u[:policy_user].user.profile.middle_name.blank? ? nil : u[:policy_user].user.profile.middle_name,
+                        "LastName" => u[:policy_user].user.profile.last_name,
+                        "Relationship"=> u[:policy_user].primary ? nil : u[:policy_user].spouse ? "Spouse" : "Roommate"
                     }.compact
-                  end
-                },
+                  }
+                end,
                 Insurer: { Name: policy.carrier&.title || policy.out_of_system_carrier_title },
                 PolicyNumber: policy.number,
                 PolicyTitle: policy.number,
