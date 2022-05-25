@@ -24,21 +24,24 @@ module Integrations
           harsh = policy_hash.deep_stringify_keys
           strang = '<RenterInsurance xmlns="http://yardi.com/RentersInsurance30" xmlns:MITS="http://my-company.com/namespace" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://yardi.com/RentersInsurance30 D:\YSI.NET_600822Plug-in8\Source\Interfaces\XSD\RentersInsurance.xsd">' + "\n"
           strang += "<InsurancePolicy Type=\"#{change ? "change" : "new"}\">\n"
-          harsh["Customer"].each do |cust|
-            strang += "<Customer>\n"
-            strang += "  <MITS:Identification IDType=\"#{cust["Identification"]["IDType"] || "Resident ID"}\">\n"
-            strang += "    <MITS:IDValue>#{cust["Identification"]["IDValue"]}</MITS:IDValue>\n"
+          ids = harsh["Customer"]["Identification"]
+          ids = [ids] unless ids.class == ::Array
+          ids.each do |id|
+            strang += "  <MITS:Identification IDType=\"#{id["IDType"] || "Resident ID"}\">\n"
+            strang += "    <MITS:IDValue>#{id["IDValue"]}</MITS:IDValue>\n"
             strang += "  </MITS:Identification>\n"
-            strang += "  <MITS:Name>\n"
-            strang += "    <MITS:FirstName>#{cust["Name"]["FirstName"]}</MITS:FirstName>\n"
-            if(cust["Name"]["MiddleName"])
-              strang += "    <MITS:MiddleName>#{cust["Name"]["MiddleName"]}</MITS:MiddleName>\n"
-            end
-            strang += "    <MITS:LastName>#{cust["Name"]["LastName"]}</MITS:LastName>\n"
-            strang += "    <MITS:Relationship>#{cust["Name"]["Relationship"]}</MITS:Relationship>\n" unless cust["Name"]["Relationship"].blank?
-            strang += "  </MITS:Name>\n"
-            strang += "</Customer>\n"
           end
+          names = harsh["Customer"]["Name"]
+          names = [names] unless names.class == ::Array
+          names.each do |name|
+            strang += "  <MITS:Name>\n"
+            strang += "    <MITS:FirstName>#{name["FirstName"]}</MITS:FirstName>\n"
+            strang += "    <MITS:MiddleName>#{name["MiddleName"]}</MITS:MiddleName>\n" unless name["MiddleName"].blank?
+            strang += "    <MITS:LastName>#{name["LastName"]}</MITS:LastName>\n"
+            strang += "    <MITS:Relationship>#{name["Relationship"]}</MITS:Relationship>\n" unless name["Relationship"].blank?
+            strang += "  </MITS:Name>\n"
+          end
+          strang += "</Customer>\n"
           strang += "<Insurer><Name>#{harsh["Insurer"]["Name"]}</Name></Insurer>\n"
           strang += "<PolicyNumber>#{harsh["PolicyNumber"]}</PolicyNumber>\n"
           strang += "<PolicyTitle>#{harsh["PolicyTitle"]}</PolicyTitle>\n"
