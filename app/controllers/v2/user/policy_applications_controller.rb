@@ -331,16 +331,6 @@ module V2
               end
             end
           end
-          # scream if we are missing critical community information          
-          if @policy_application.carrier_id == ::QbeService.carrier_id && @policy_application.primary_insurable.account.nil?
-            defaults = ::QbeService::FIC_DEFAULTS[@policy_application.primary_insurable.primary_address.state] || ::QbeService::FIC_DEFAULTS[nil]
-            missing_fic_info = ::QbeService::FIC_DEFAULT_KEYS.select{|k| !@policy_application.extra_settings&.has_key?(k) && !defaults.has_key?(k) }
-            unless missing_fic_info.blank?
-              render json: standard_error(:community_information_missing, I18n.t('policy_application_contr.qbe_application.missing_fic_info', missing_list: missing_fic_info.map{|v| I18n.t("policy_application_contr.qbe_application.#{v}") }.join(", "))),
-                status: 400
-              return
-            end
-          end
           # remove duplicate pis
           @policy_application.policy_rates.destroy_all
           @replacement_policy_insurables = nil
@@ -350,6 +340,17 @@ module V2
           unless unsaved_pis.blank?
             unsaved_pis.first.primary = true if unsaved_pis.find{|pi| pi.primary }.nil?
             @replacement_policy_insurables = unsaved_pis
+          end
+          @policy_application.policy_insurables.first.primary = true if @policy_application.policy_insurables.all?{|pi| !pi.primary }
+          # scream if we are missing critical community information          
+          if @policy_application.carrier_id == ::QbeService.carrier_id && @policy_application.primary_insurable.account.nil?
+            defaults = ::QbeService::FIC_DEFAULTS[@policy_application.primary_insurable.primary_address.state] || ::QbeService::FIC_DEFAULTS[nil]
+            missing_fic_info = ::QbeService::FIC_DEFAULT_KEYS.select{|k| !@policy_application.extra_settings&.has_key?(k) && !defaults.has_key?(k) }
+            unless missing_fic_info.blank?
+              render json: standard_error(:community_information_missing, I18n.t('policy_application_contr.qbe_application.missing_fic_info', missing_list: missing_fic_info.map{|v| I18n.t("policy_application_contr.qbe_application.#{v}") }.join(", "))),
+                status: 400
+              return
+            end
           end
           # try to update users
           update_users_result = update_policy_users_params.blank? ? true :

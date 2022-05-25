@@ -303,18 +303,17 @@ module Integrations
               roommate_index = 0
               next if users_to_export.blank?
               # export the policy
+              priu = users_to_export.find{|u| u[:policy_user].primary }
               policy_hash = {
-                Customer: users_to_export.map do |u|
-                  {
-                    Identification: { "IDValue" => u[:external_id], "IDType" => u[:policy_user].primary ? "Resident ID" : "Roomate#{roommate_index += 1} ID" },
-                    Name: {
-                        "FirstName" => u[:policy_user].user.profile.first_name,
-                        "MiddleName" => u[:policy_user].user.profile.middle_name.blank? ? nil : u[:policy_user].user.profile.middle_name,
-                        "LastName" => u[:policy_user].user.profile.last_name,
-                        "Relationship"=> u[:policy_user].primary ? nil : u[:policy_user].spouse ? "Spouse" : "Roommate"
-                    }.compact
-                  }
-                end,
+                Customer: {
+                  Identification: users_to_export.map{|u| { "IDValue" => u[:external_id], "IDType" => u[:policy_user].primary ? "Resident ID" : "Roomate#{roommate_index += 1} ID" } },
+                  Name: {
+                      "FirstName" => priu[:policy_user].user.profile.first_name,
+                      "MiddleName" => priu[:policy_user].user.profile.middle_name.blank? ? nil : priu[:policy_user].user.profile.middle_name,
+                      "LastName" => priu[:policy_user].user.profile.last_name#,
+                      #"Relationship"=> priu[:policy_user].primary ? nil : priu[:policy_user].spouse ? "Spouse" : "Roommate"
+                  }.compact
+                },
                 Insurer: { Name: policy.carrier&.title || policy.out_of_system_carrier_title },
                 PolicyNumber: policy.number,
                 PolicyTitle: policy.number,
