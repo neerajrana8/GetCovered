@@ -313,7 +313,11 @@
                                         color: #2c338b;
                                       "
                                     >
+                                      <% if defined?(@internal_mailer).nil? %>
                                       Get Covered is emailing you on behalf of <%= @organization.title %> to provide certificate of insurance (COI) verification services.
+                                      <% elsif defined?(@internal_mailer) == "instance-variable" %>
+                                      Get Covered <%= Rails.env.gsub("_", " ").titlecase %>: <%= @subject %>
+                                      <% end %>
                                     </h3>
                                   </td>
                                 </tr>
