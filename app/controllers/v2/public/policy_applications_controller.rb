@@ -151,7 +151,7 @@ module V2
           when 1 # residential
             unit = ::Insurable.get_or_create(address: address_string, unit: unit_string.blank? ? true : unit_string)
             if unit.class == ::Insurable
-              @application.policy_insurabes_attributes = [{ primary: true, insurable_id: unit.id, policy_id: nil }]
+              @application.policy_insurables_attributes = [{ primary: true, insurable_id: unit.id, policy_id: nil }]
               @application.resolver_info["insurable_id"] = unit.id
               @application.resolver_info["parent_insurable_id"] = unit.insurable_id
               @application.resolver_info["unit_title"] = unit.title
