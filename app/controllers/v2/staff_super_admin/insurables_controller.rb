@@ -170,7 +170,13 @@ module V2
 
       def upload
         if file_correct?
-          #TODO: need to run background job here for processing files
+          file = insurable_upload_params
+          filename = "#{file.original_filename.split('.').first}-#{DateTime.now.to_i}.csv"
+          file_path = Rails.root.join("tmp", filename)
+          File.open(file_path, 'wb') do |tmp_file|
+            tmp_file << file.read
+          end
+          ::Insurables::UploadJob.perform_later(file: file_path.to_s, email: current_staff.email)
           render json: {
             title: "Insurables File Uploaded",
             message: "File scheduled for import. Insurables will be available soon."

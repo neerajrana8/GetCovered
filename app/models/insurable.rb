@@ -514,7 +514,8 @@ class Insurable < ApplicationRecord
             zip_code: address.zip_code
           },
           insurable_type_id: ::InsurableType::RESIDENTIAL_COMMUNITIES_IDS | (communities_only ? [] : ::InsurableType::RESIDENTIAL_BUILDINGS_IDS),
-          insurable_id: insurable_id
+          insurable_id: insurable_id,
+          title: created_community_title
         }.compact
       )
       if county # set counties on results if missing but provided (result primary addresses all have the same postal address up to line 2 hence the same county)
