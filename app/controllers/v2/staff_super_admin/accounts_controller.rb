@@ -46,7 +46,10 @@ module V2
       end
 
       def create
-        @account = Account.new(account_params)
+        new_params = account_params
+        new_params[:global_permission_attributes][:permissions]["policies.rent_mass_import"] = false
+        new_params[:global_permission_attributes][:permissions] = new_params[:global_permission_attributes][:permissions].except("agencies.agents", "agencies.details", "agencies.carriers", "agencies.manage_agents", "requests.refunds", "requests.cancellations")
+        @account = Account.new(new_params)
 
         if @account.errors.none? && @account.save_as(current_staff)
           render :show, status: :created
