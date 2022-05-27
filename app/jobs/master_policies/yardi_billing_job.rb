@@ -11,7 +11,7 @@ module MasterPolicies
                   .order(id: :asc)
       mps.each do |mp|
         integration = mp.account.integrations.where(provider: 'yardi').take
-        next unless !integration.nil? && integration.configuration&.[]('sync')&.[]('push_master_policy_invoices')
+        next unless !integration.nil? && integration.enabled && integration.configuration&.[]('billing_and_payments')&.[]('active') && integration.configuration&.[]('sync')&.[]('push_master_policy_invoices')
         integration.configuration['sync'] ||= {}
         integration.configuration['sync']['master_policy_invoices'] ||= {}
         integration.configuration['sync']['master_policy_invoices']['log'] ||= []
@@ -138,8 +138,8 @@ module MasterPolicies
                   Description: charge_description,
                   TransactionDate: current_time.to_date.to_s,
                   ServiceToDate: (start_of_last_month + 1.month).to_s,
-                  ChargeCode: config.integration_charge_code,
-                  GLAccountNumber: config.integration_account_number,
+                  ChargeCode: config.integration_charge_code || integration.configuration['billing_and_payments']['master_policy_charge_code'],
+                  GLAccountNumber: config.integration_account_number || integration.configuration['billing_and_payments']['master_policy_gla'],
                   CustomerID: yardi_customer_id,
                   Amount: '%.2f' % (term_amount.to_d / 100.to_d),
                   Comment: "GC MP ##{mp.number} MPC ##{mpc.number}",
