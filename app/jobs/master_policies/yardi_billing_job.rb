@@ -19,6 +19,7 @@ module MasterPolicies
         integration.configuration['sync']['master_policy_invoices']['log'].push(log_entry)
         mpcs = Policy.where.not(status: 'CANCELLED').or(Policy.where("cancellation_date >= ?", start_of_last_month))
         mpcs = mpcs.where("expiration_date >= ?", start_of_last_month).or(mpcs.where(expiration_date: nil))
+                    .where("effective_date <= ?", start_of_last_month)
                     .where(policy_type_id: PolicyType::MASTER_COVERAGE_ID, policy: mp)
                     .order(id: :asc)
         # set up map from insurable to yardi profiles
