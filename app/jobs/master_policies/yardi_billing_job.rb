@@ -18,7 +18,7 @@ module MasterPolicies
         log_entry = { 'date' => current_time.to_date.to_s, 'mp_id' => mp.id, 'status' => 'pending', 'mpc_errors' => [] }
         integration.configuration['sync']['master_policy_invoices']['log'].push(log_entry)
         mpcs = Policy.where.not(status: 'CANCELLED').or(Policy.where("cancellation_date >= ?", start_of_last_month))
-        mpcs = mpcs.where("expiration_date >= ?", start_of_last_month).or(mpcs.where(expiration_date: nil))
+         .where("expiration_date >= ?", start_of_last_month).or(mpcs.where(expiration_date: nil))
                     .where("effective_date <= ?", start_of_last_month)
                     .where(policy_type_id: PolicyType::MASTER_COVERAGE_ID, policy: mp)
                     .order(id: :asc)
@@ -132,7 +132,7 @@ module MasterPolicies
               #### MOOSE WARNING: the above may not be perfect... could be multiple leases...
               result = nil
               if yardi_property_id.nil? || yardi_customer_id.nil? || config.integration_charge_code.nil? || config.integration_account_number.nil?
-                result = { 'yardi_property_id' => yardi_property_id, 'yardi_customer_id' => yardi_customer_id, 'integration_charge_code' => config.integration_charge_code, 'integration_account_number' => config.integration_account_number }
+                result = { 'yardi_property_id' => yardi_property_id, 'yardi_customer_id' => yardi_customer_id, 'integration_charge_code' => config.integration_charge_code || integration.configuration['billing_and_payments']['master_policy_charge_code'], 'integration_account_number' => config.integration_account_number || integration.configuration['billing_and_payments']['master_policy_gla'] }
                 result = { preerrors: result.select{|k,v| v.nil? }.keys }
               else
                 result = Integrations::Yardi::BillingAndPayments::ImportResidentTransactions.run!(integration: integration, charge_hash: {
