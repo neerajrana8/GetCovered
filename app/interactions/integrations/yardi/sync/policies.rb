@@ -22,7 +22,7 @@ module Integrations
             policies_exported: {}
           }
           
-          true_property_ids = property_ids.nil? ? integration.configuration['sync']['syncable_communities'].map{|k,v| v['enabled'] ? k : nil }.compact : property_ids
+          true_property_ids = property_ids.nil? ? integration.configuration['sync']['syncable_communities'].map{|k,v| v['enabled'] && v['gc_id'] ? k : nil }.compact : property_ids
         
           if true_property_ids.nil?
             # get em all
