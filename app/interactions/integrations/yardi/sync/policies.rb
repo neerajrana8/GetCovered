@@ -287,7 +287,7 @@ module Integrations
               users_to_export = policy.policy_users.to_a.map do |pu|
                 found = lease_user_ips.find{|lup| lup.lease_user.user_id == pu.user_id }
                 next nil if found.nil?
-                unless pu.integration_profiles.where(integration: integration).count > 0
+                unless pu.integration_profiles.where(integration: integration).reload.count > 0
                   IntegrationProfile.create(
                     integration: integration,
                     profileable: pu,
@@ -304,6 +304,7 @@ module Integrations
               next if users_to_export.blank?
               # export the policy
               priu = users_to_export.find{|u| u[:policy_user].primary }
+              next if priu.blank? # MOOSE WARNING: we are rejecting policies whose primary user is not on the lease...
               policy_hash = {
                 Customer: {
                   Identification: users_to_export.map{|u| { "IDValue" => u[:external_id], "IDType" => u[:policy_user].primary ? "Resident ID" : "Roomate#{roommate_index += 1} ID" } },
