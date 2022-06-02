@@ -181,7 +181,7 @@ class Account < ApplicationRecord
         permissions["policies.rent_mass_import"] = false
         permissions = permissions.except("agencies.agents", "agencies.details", "agencies.carriers", "agencies.manage_agents", "requests.refunds", "requests.cancellations")
         GlobalPermission.create(ownerable: self, permissions: permissions)
-        end
+      end
     end
 
     # get an array [first, last] presenting self.title as if it were a name;
