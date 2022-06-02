@@ -174,14 +174,14 @@ module IntegrationsMethods
         # update syncable community enablings
         yups = (yardi_update_params['sync']['syncable_communities'] rescue {})
         @integration.configuration['sync']['syncable_communities'].each do |k,v|
-          v['enabled'] = yups[k.to_sym][:enabled] if yups.has_key?(k.to_sym) && yups[k.to_sym].has_key?(:enabled)
+          v['enabled'] = yups[k.to_sym][:enabled] if yups&.has_key?(k.to_sym) && yups[k.to_sym]&.has_key?(:enabled)
         end
         # update generic sync settings
         ['pull_policies', 'push_policies', 'push_master_policy_invoices'].each do |k,v|
           next unless yardi_update_params[:sync]&.has_key?(k)
           @integration.configuration['sync'][k] = yardi_update_params[:sync][k]
         end
-        if yardi_update_params[:sync].has_key?('master_policy_charge_description') && yardi_update_params[:sync].has_key?('master_policy_charge_description').class == ::String
+        if yardi_update_params[:sync]&.has_key?('master_policy_charge_description') && yardi_update_params[:sync]['master_policy_charge_description'].class == ::String
           @integration.configuration['sync']['master_policy_invoices']['charge_description'] = yardi_update_params[:sync]['master_policy_charge_description']
         end
         # try saving
