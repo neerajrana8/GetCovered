@@ -22,7 +22,8 @@ module Integrations
             policies_exported: {}
           }
           
-          true_property_ids = property_ids.nil? ? integration.configuration['sync']['syncable_communities'].map{|k,v| v['enabled'] ? k : nil }.compact : property_ids
+          true_property_ids = property_ids.nil? ? integration.configuration['sync']['syncable_communities'].map{|k,v| v['enabled'] && v['gc_id'] ? k : nil }.compact : property_ids
+        
           if true_property_ids.nil?
             # get em all
             propz = Integrations::Yardi::RentersInsurance::GetPropertyConfigurations.run!({ integration: integration, property_id: property_list_id }.compact)
@@ -38,7 +39,7 @@ module Integrations
           end
           property_id = true_property_ids.first
           the_community = IntegrationProfile.where(integration: integration, external_context: "community", external_id: property_id).take.profileable
-
+          
           ##############################################################
           ###################### SETUP #################################
           ##############################################################
@@ -50,9 +51,10 @@ module Integrations
           start_date = from_date&.to_s || integration.configuration['last_policy_sync'][property_id]
           integration.configuration['last_policy_sync'][property_id] = Time.current.to_date # MOOSE WARNING: minus 1 to ensure overlap? or is it good?
           integration.configuration['pending_yardi_policy_numbers'] ||= {}
-
+          
           # get data on policies updated since our last run
           if integration.configuration['sync']['pull_policies']
+          
             the_response = nil
             result = Integrations::Yardi::RentersInsurance::GetInsurancePolicies.run!(integration: integration, property_id: property_id, **{ policy_date_last_modified: start_date }.compact)
             if !result[:success]
@@ -101,7 +103,7 @@ module Integrations
             else
               integration.configuration['pending_yardi_policy_numbers'][property_id] = new_pending_yardi_numbers
             end
-                
+                  
             ##############################################################
             ###################### IMPORT FROM YARDI #####################
             ##############################################################
@@ -268,16 +270,12 @@ module Integrations
               end # end policy creation block
 
             end # end policy create/update block
-          
-          end # end if pull_policies block
-          
+
+          end # end if pull_policies
           
           ##############################################################
           ###################### EXPORT TO YARDI #######################
           ##############################################################
-          
-          
-          
           if integration.configuration['sync']['push_policies']
             # get data on internal policies that haven't yet been exported
             unexported_policy_ids = Policy.where(
@@ -295,7 +293,7 @@ module Integrations
               users_to_export = policy.policy_users.to_a.map do |pu|
                 found = lease_user_ips.find{|lup| lup.lease_user.user_id == pu.user_id }
                 next nil if found.nil?
-                unless pu.integration_profiles.where(integration: integration).count > 0
+                unless pu.integration_profiles.where(integration: integration).reload.count > 0
                   IntegrationProfile.create(
                     integration: integration,
                     profileable: pu,
@@ -312,6 +310,7 @@ module Integrations
               next if users_to_export.blank?
               # export the policy
               priu = users_to_export.find{|u| u[:policy_user].primary }
+              next if priu.blank? # MOOSE WARNING: we are rejecting policies whose primary user is not on the lease...
               policy_hash = {
                 Customer: {
                   Identification: users_to_export.map{|u| { "IDValue" => u[:external_id], "IDType" => u[:policy_user].primary ? "Resident ID" : "Roomate#{roommate_index += 1} ID" } },
@@ -358,7 +357,7 @@ module Integrations
               end
             end.compact # end export process; we ignore some instead of reporting errors, because they might not be exportable policies and we only found out when we looked at them in detail
 
-          end # end if push_policies
+          end # end if pull_policies
           
           ##############################################################
           ###################### CLOSING UP SHOP #######################
