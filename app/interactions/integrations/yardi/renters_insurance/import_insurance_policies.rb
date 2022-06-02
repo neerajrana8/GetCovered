@@ -24,6 +24,7 @@ module Integrations
           harsh = policy_hash.deep_stringify_keys
           strang = '<RenterInsurance xmlns="http://yardi.com/RentersInsurance30" xmlns:MITS="http://my-company.com/namespace" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://yardi.com/RentersInsurance30 D:\YSI.NET_600822Plug-in8\Source\Interfaces\XSD\RentersInsurance.xsd">' + "\n"
           strang += "<InsurancePolicy Type=\"#{change ? "change" : "new"}\">\n"
+          strang += "<Customer>\n"
           ids = harsh["Customer"]["Identification"]
           ids = [ids] unless ids.class == ::Array
           ids.each do |id|
