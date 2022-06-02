@@ -151,12 +151,8 @@
           get :carrier_agencies
           get :toggle_billing_strategy
           get :billing_strategies_list
-          get :commission_list
           post :unassign_agency_from_carrier
           post :add_billing_strategy
-          post :add_commissions
-          put :update_commission
-          get :commission
           get :available_agencies
 
           post :add_fee

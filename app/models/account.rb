@@ -55,10 +55,9 @@ class Account < ApplicationRecord
     through: :active_account_users,
     source: :user
   
-  has_many :commission_strategies, as: :commissionable
-  
-  has_many :commissions, as: :commissionable
-  has_many :commission_deductions, as: :deductee
+  has_many :commission_strategies, as: :recipient
+  has_many :commissions, as: :recipient
+  has_many :commission_items, through: :commissions
 
   has_many :events,
     as: :eventable
@@ -101,10 +100,6 @@ class Account < ApplicationRecord
   def as_json(options = {})
     json = super(options.reverse_merge(include: %i[agency primary_address owner]))
     json
-  end
-
-  def commission_balance
-    commission_deductions.map(&:unearned_balance).reduce(:+) || 0
   end
 
   # Attach Payment Source
