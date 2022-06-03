@@ -68,9 +68,13 @@ module V2
       private
 
       def external_unverified_proof(params)
-        policy = Policy.find_by number: params[:number]
-        if policy.exists and policy_in_system == false and policy.status = "external_unverified" || policy.status == "external_declined"
-          policy.update(params)
+        policy = Policy.find_by_number params[:number]
+        if !policy.nil? && policy.policy_in_system == false && ["EXTERNAL_UNVERIFIED", "EXTERNAL_DECLINED"].include?(policy.status)
+          if policy.update(params)
+            render json: policy.errors, status: 422
+          else
+            render :show, status: :updated
+          end
         end
       end
 
