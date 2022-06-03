@@ -59,7 +59,7 @@ module V2
 
       def add_coverage_proof
         if Policy.exists?(number: coverage_proof_params[:number])
-          self.external_unverified_proof(coverage_proof_parmas)
+          self.external_unverified_proof(coverage_proof_params)
         else
           self.apply_proof(coverage_proof_params)
         end
@@ -72,7 +72,6 @@ module V2
         if policy.exists and policy_in_system == false and policy.status = "external_unverified" || policy.status == "external_declined"
           policy.update(params)
         end
-
       end
 
       def apply_proof(params)
