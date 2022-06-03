@@ -58,7 +58,7 @@ module V2
       end
 
       def add_coverage_proof
-        if Policy.exists?(number: coverage_proof_params[:number])
+        if Policy.where(number: coverage_proof_params[:number]).count > 0
           self.external_unverified_proof(coverage_proof_params)
         else
           self.apply_proof(coverage_proof_params)
