@@ -6,7 +6,6 @@ module V2
   module StaffSuperAdmin
     class CarriersController < StaffSuperAdminController
       include FeesMethods
-      include Carriers::CommissionsMethods
 
       before_action :set_carrier, only: %i[update show available_agencies]
       before_action :set_substrate, only: %i[create index]

@@ -9,7 +9,7 @@ module V2
       before_action :set_commission, only: %i[show update separate_for_approval]
       
       def index
-        super(:@commissions, Commission.all, :commission_items)
+        super(:@commissions, Commission.all)
       end
       
       def show

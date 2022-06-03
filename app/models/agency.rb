@@ -221,10 +221,6 @@ class Agency < ApplicationRecord
     end
   end
 
-  def commission_balance
-    commission_deductions.map(&:unearned_balance).reduce(:+) || 0
-  end
-
   def parent_agencies_ids
     @ids ||= Agency.main_agencies.pluck(:id)
   end
