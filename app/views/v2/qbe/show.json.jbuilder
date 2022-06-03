@@ -11,7 +11,7 @@ json.communityId do
   		
   			json.apartmentList do
   				json.apartments do
-  					json.array!(i.insurables.order(:title)) do |unit|
+  					json.array!(i.insurables.confirmed.order(:title)) do |unit|
   						json.apartmentId unit.carrier_profile(1).external_carrier_id
   						json.unitNumber unit.title.nil? ? nil : unit.title.gsub(/[^0-9,.]/, "")
   					end
@@ -30,7 +30,7 @@ json.communityId do
   		
   			json.apartmentList do
   				json.apartments do
-  					json.array!(@community.insurables.order(:title)) do |unit|
+  					json.array!(@community.insurables.confirmed.order(:title)) do |unit|
   						json.apartmentId unit.carrier_profile(1).nil? ? nil : unit.carrier_profile(1).external_carrier_id
   						json.unitNumber unit.title.nil? ? nil : unit.title.gsub(/[^0-9,.]/, "")
   					end
