@@ -71,9 +71,9 @@ module V2
         policy = Policy.find_by_number params[:number]
         if !policy.nil? && policy.policy_in_system == false && ["EXTERNAL_UNVERIFIED", "EXTERNAL_DECLINED"].include?(policy.status)
           if policy.update(params)
-            render json: policy.errors, status: 422
+            render :show, status: :ok
           else
-            render :show, status: :updated
+            render json: policy.errors, status: 422
           end
         end
       end
