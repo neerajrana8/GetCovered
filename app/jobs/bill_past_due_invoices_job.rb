@@ -5,6 +5,7 @@ class BillPastDueInvoicesJob < ApplicationJob
   before_perform :set_invoices
 
   def perform(*_args)
+    return # MOOSE WARNING: we turn this off at request of miguel and jared
     @invoices.each do |invoice|
       if invoice.stripe_charges.failed.where('created_at >= ?', invoice.due_date.midnight + 1.day).count < PAYMENT_ATTEMPTS
         invoice.pay(allow_missed: true, stripe_source: :default)
@@ -17,6 +18,7 @@ class BillPastDueInvoicesJob < ApplicationJob
   private
 
   def set_invoices
+    return # MOOSE WARNING: we turn this off at request of miguel and jared
     # WARNING: we take Policies/PolicyGroups which are BEHIND and have been so for 1-29 days... we check each invoice's charges manually to count the number of tries in perform
     curdate = Time.current.to_date
     @invoices = Invoice.where(invoiceable_type: 'PolicyQuote', invoiceable_id: PolicyQuote.select(:id).where(status: 'accepted', policy_id: Policy.select(:id).policy_in_system(true).current.where(auto_pay: true, billing_status: 'BEHIND', billing_behind_since: (curdate - 30.days)...curdate))).
