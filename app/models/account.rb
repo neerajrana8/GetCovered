@@ -84,6 +84,10 @@ class Account < ApplicationRecord
   scope :enabled, -> { where(enabled: true) }
 
   accepts_nested_attributes_for :addresses, allow_destroy: true
+  
+  def self.find_like(str, all = false)
+    Account.where("title ILIKE '%#{str}%'").send(all ? :to_a : :take)
+  end
 
   # Validations
 
