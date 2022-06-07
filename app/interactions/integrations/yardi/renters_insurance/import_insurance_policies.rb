@@ -16,7 +16,7 @@ module Integrations
         end
         
         def response_has_error?(response_body)
-          return response_body&.index('XSD Error') ? true : false
+          return response_body&.index("Xml Imported:") ? false : true
         end
         
         
