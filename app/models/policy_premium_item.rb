@@ -137,6 +137,7 @@ class PolicyPremiumItem < ApplicationRecord
                                                         .references(:line_items).includes(:line_item)
                                                         .where(policy_premium_payment_terms: { prorated: true })
           terms.each do |ppipt|
+            next if ppipt.line_item.nil?
             created = ppipt.line_item.line_item_reductions.create(
               reason: "Proration Adjustment",
               amount_interpretation: 'max_total_after_reduction',
@@ -155,6 +156,7 @@ class PolicyPremiumItem < ApplicationRecord
                                                         .where(policy_premium_payment_terms: { prorated: true })
                                                         .select{|ppit| !ppit.policy_premium_payment_term.intersects?(self.policy_premium.prorated_first_moment, self.policy_premium.prorated_last_moment) }
           terms.each do |ppipt|
+            next if ppipt.line_item.nil?
             created = ppipt.line_item.line_item_reductions.create(
               reason: "Proration Adjustment",
               amount_interpretation: 'max_total_after_reduction',
@@ -173,6 +175,7 @@ class PolicyPremiumItem < ApplicationRecord
                                                         .where(policy_premium_payment_terms: { prorated: true })
                                                         .select{|ppit| !ppit.policy_premium_payment_term.is_contained_in?(self.policy_premium.prorated_first_moment, self.policy_premium.prorated_last_moment) }
           terms.each do |ppipt|
+            next if ppipt.line_item.nil?
             created = ppipt.line_item.line_item_reductions.create(
               reason: "Proration Adjustment",
               amount_interpretation: 'max_total_after_reduction',
