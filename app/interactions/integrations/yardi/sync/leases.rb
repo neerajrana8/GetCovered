@@ -52,13 +52,35 @@ module Integrations
             ################### UPDATE MODE ######################
             if in_system.include?(tenant["Id"])
               lease_ip = IntegrationProfile.where(integration: integration, external_context: 'lease', external_id: tenant["Id"]).take
+              lease = lease_ip.profileable
+              # fix profileless users, skipping if we fail
+              profileless_users = lease.users.where.not(id: !IntegrationProfile.where(integration: integration, profileable: lease.users).pluck(:profileable_id))
+              next if profileless_users.map do |u|
+                ext_id = da_tenants.find{|dt| dt["Email"] == u.email } || da_tenants.find{|dt| dt['FirstName'] == u.profile.first_name && dt['LastName'] == u.profile.last_name }
+                next nil if ext_id.nil? # neither success nor failure
+                created = (IntegrationProfile.create(
+                  integration: integration,
+                  profileable: u,
+                  external_context: "resident",
+                  external_id: ext_id,
+                  configuration: {
+                    'synced_at' => Time.current.to_s
+                  }
+                ) rescue nil)
+                next true unless created.id # failure
+                next false # success
+              end.any?{|x| x == true }
+              # remove moved out users MOOSE WARNING: do it!
+              # add new users MOOSE WARNING: do it!
               # ensure lease user IPs are created
               if !lease_ip.configuration&.[]('luips_created')
-                lease = lease_ip.profileable
                 skip_this = false
                 IntegrationProfile.where(integration: integration, external_context: 'resident', profileable: lease.users, external_id: da_tenants.map{|dt| dt["Id"] }).each do |rip|
                   lu = lease.lease_users.find{|lu| lu.user_id == rip.profileable_id }
-                  next if lu.nil? # just skip for now... shouldn't happen
+                  if lu.nil? # just skip for now... shouldn't happen
+                    skip_this = true
+                    break
+                  end
                   unless lu.integration_profiles.where(integration: integration).count > 0
                     created_ip = IntegrationProfile.create(
                       integration: integration,
@@ -79,8 +101,7 @@ module Integrations
                   lease_ip.save
                 end
               end
-              # MOOSE WARNING: handle resident changes here...
-              next
+              next # skip create mode stuff after this
             end
             ################### CREATE MODE ######################
             # get the users
