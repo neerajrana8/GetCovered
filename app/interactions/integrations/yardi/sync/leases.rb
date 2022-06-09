@@ -5,7 +5,7 @@ module Integrations
         object :integration
         object :unit, class: Insurable
         array :resident_data
-        boolean :update_old, default: false # if you pass true, will run update on past leases that are already in the system
+        boolean :update_old, default: false # if you pass true, will run update on past leases that are already in the system; if false, it will ignore them
         
         RESIDENT_STATUSES = {
           'past' => ['Past', 'Canceled', 'Cancelled'],
@@ -44,12 +44,12 @@ module Integrations
             (RESIDENT_STATUSES['nonfuture'] || []).map{|s| (resident_datas[s] || []).select{|td| !td['MoveOut'].blank? && (Date.parse(td['MoveOut']) rescue nil)&.<(Time.current.to_date) } }
           ).flatten
           # create active new and future leases
+          in_system = IntegrationProfile.where(integration: integration, external_context: 'lease', external_id: resident_data.map{|l| l['Id'] }, profileable_type: "Lease").pluck(:external_id)
           relevant_tenants = present_tenants + future_tenants
           noncreatable_start = relevant_tenants.count
-          relevant_tenants += past_tenants if update_old
+          relevant_tenants += resident_data.select{|x| !relevant_tenants.include?(x) && in_system.include?(x["Id"]) } if update_old
           created_by_email = {}
           user_ip_ids = IntegrationProfile.where(integration: integration, external_context: 'resident', profileable_type: "User").pluck(:external_id, :profileable_id).to_h
-          in_system = IntegrationProfile.where(integration: integration, external_context: 'lease', external_id: relevant_tenants.map{|l| l['Id'] }, profileable_type: "Lease").pluck(:external_id)
           relevant_tenants.each.with_index do |tenant, tenant_index|
             da_tenants = [tenant] + (tenant["Roommate"].nil? ? [] : tenant["Roommate"].class == ::Array ? tenant["Roommate"] : [tenant["Roommate"]])
             ################### UPDATE MODE ######################

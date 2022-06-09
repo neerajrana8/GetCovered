@@ -421,7 +421,7 @@ module Integrations
             comm[:buildings].each do |bldg|
               bldg[:units].each do |unit|
                 next if unit[:yardi_data]["Resident"].blank?
-                result = Integrations::Yardi::Sync::Leases.run!(integration: integration, unit: unit[:insurable], resident_data: unit[:yardi_data]["Resident"].class == ::Array ? unit[:yardi_data]["Resident"] : [unit[:yardi_data]["Resident"]])
+                result = Integrations::Yardi::Sync::Leases.run!(integration: integration, update_old: true, unit: unit[:insurable], resident_data: unit[:yardi_data]["Resident"].class == ::Array ? unit[:yardi_data]["Resident"] : [unit[:yardi_data]["Resident"]])
                 unless result[:lease_errors].blank?
                   to_return[:lease_errors][comm[:yardi_id]] ||= {}
                   to_return[:lease_errors][comm[:yardi_id]][unit[:yardi_id]] = result[:lease_errors]
