@@ -214,7 +214,7 @@ module IntegrationsMethods
         params.permit(
           renters_insurance: [:username, :password, :database_server, :database_name, :url, :enabled],
           billing_and_payments: [:username, :password, :database_server, :database_name, :url, :master_policy_charge_code, :master_policy_gla, :enabled],
-          sync: [ :pull_policies, :push_policies, :push_master_policies, :master_policy_charge_description ]
+          sync: [ :pull_policies, :push_policies, :push_master_policy_invoices, :master_policy_charge_description ]
         )
       else
         {}
@@ -227,7 +227,7 @@ module IntegrationsMethods
           renters_insurance: [:username, :password, :database_server, :database_name, :url, :enabled],
           billing_and_payments: [:username, :password, :database_server, :database_name, :url, :master_policy_charge_code, :master_policy_gla, :enabled],
           sync: [
-            :pull_policies, :push_policies, :push_master_policies, :master_policy_charge_description,
+            :pull_policies, :push_policies, :push_master_policy_invoices, :master_policy_charge_description,
             syncable_communities: [@integration.configuration['sync']['syncable_communities'].map do |k,v|
               [k, [:enabled]]
             end.to_h]
