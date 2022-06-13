@@ -2,10 +2,10 @@ module IntegrationsMethods
   extend ActiveSupport::Concern
 
   included do
+    before_action :set_namespace_and_account
     before_action :set_substrate, only: :index
     before_action :set_provider, except: :index
     before_action :set_integration, except: :index # yes, even in create; we want to see if the thing exists already
-    before_action :set_namespace_and_account
   end
 
   def index
@@ -253,7 +253,7 @@ module IntegrationsMethods
     def set_namespace_and_account
       @account = nil
       @namespace = if request.original_fullpath.include?("staff_super_admin")
-        @account = Account.find(params[:account_id])
+        @account = Account.find(params[:account_id].to_i)
         "staff_super_admin"
       elsif request.original_fullpath.include?("staff_account")
         @account = current_staff.organizable
