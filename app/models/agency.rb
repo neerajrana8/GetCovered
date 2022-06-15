@@ -122,6 +122,10 @@ class Agency < ApplicationRecord
     @gcag ||= Agency.find(GET_COVERED_ID)
   end
   
+  def self.find_like(str, all = false)
+    Agency.where("title ILIKE '%#{str}%'").send(all ? :to_a : :take)
+  end
+  
   # returns the carrier id to use for a given policy type and insurable
   # accepts an optional block for additional filtering which should take a carrier id as its only parameter and return:
   #   true if the id should be used
