@@ -210,7 +210,7 @@ module Integrations
             }.merge({
                 buildings: by_building[comm["Code"]].map do |bldg, units|
                   {
-                    is_community: ("#{bldg[1]} #{bldg[0]}" == comm["AddressLine1"] && bldg[2] == comm["City"] && bldg[3] == comm["State"] && bldg[4] == comm["PostalCode"]),
+                    is_community: ("#{bldg[1]} #{bldg[0]}" == comm["AddressLine1"] && bldg[2] == comm["City"] && bldg[3] == comm["State"] && bldg[4] == comm["PostalCode"]&.split('-')&.[](0)),
                     street_name: bldg[0],
                     street_number: bldg[1],
                     city: bldg[2],
@@ -283,7 +283,7 @@ module Integrations
                 end
                 next if comm[:errored]
                 # fix matching community fields if necessary
-                community.update(title: comm[:title], account_id: account_id, confirmed: true) if community.account_id != account_id || community.title != comm[:title] || !community.confirmed
+                community.update(title: comm[:title], account_id: account_id, confirmed: true) if community.account_id != account_id && !community.confirmed
                 community.qbe_mark_preferred unless community.preferred_ho4
                 # create the ip
                 ip = IntegrationProfile.create(

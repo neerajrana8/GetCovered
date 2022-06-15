@@ -15,7 +15,7 @@ class Agency < ApplicationRecord
 
   # Active Record Callbacks
   after_initialize :initialize_agency
-  before_validation :set_producer_code, on: :create
+  before_validation :set_producer_code, on: :create, unless: Proc.new{|gnc| !gnc.producer_code.blank? }
 
   # belongs_to relationships
   belongs_to :agency,
