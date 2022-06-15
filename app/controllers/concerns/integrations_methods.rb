@@ -133,10 +133,10 @@ module IntegrationsMethods
         )
         { renters_insurance: :voyager, billing_and_payments: :billing }.each do |interface, cred_section|
           [:username, :password, :database_server, :database_name].each do |field|
-            created.credentials[cred_section.to_s][field.to_s] = yardi_update_params[interface][field] if yardi_update_params[interface]&.has_key?(field)
+            created.credentials[cred_section.to_s][field.to_s] = yardi_create_params[interface][field] if yardi_create_params[interface]&.has_key?(field)
           end
-          created.credentials['urls'][interface.to_s] = yardi_update_params[interface]['url'] if yardi_update_params[interface]&.has_key?('url')
-          created.configuration[interface.to_s]['enabled'] = yardi_update_params[interface]['enabled'] if yardi_update_params[interface]&.has_key?('enabled')
+          created.credentials['urls'][interface.to_s] = yardi_create_params[interface]['url'] if yardi_create_params[interface]&.has_key?('url')
+          created.configuration[interface.to_s]['enabled'] = yardi_create_params[interface]['enabled'] if yardi_create_params[interface]&.has_key?('enabled')
         end
         if !created.id
           render json: standard_error(:error_creating_integration, "#{created.errors.to_h}"),
