@@ -58,7 +58,8 @@ es:
       or_visit: "or visite"
       we_look_forward: "Esperamos brindarle una cobertura de calidad y un servicio excepcional."
       thank_you: "Gracias,"
-      team_name: "TEl equipo de Get Covered"
+      let_us_know: "Déjanos saber si podemos ayudarle! ¡Que tenga un buen día."
+      team_name: "El equipo de Get Covered"
       email_preview_text: "Documentos de seguro adjuntos"
   payment_made_mailer:
     send_successful_payment_notification:
