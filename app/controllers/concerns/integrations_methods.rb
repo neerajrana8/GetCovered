@@ -252,14 +252,29 @@ module IntegrationsMethods
     
     def set_namespace_and_account
       @account = nil
-      @namespace = if request.original_fullpath.include?("staff_super_admin")
-        @account = Account.find(params[:account_id].to_i)
-        "staff_super_admin"
-      elsif request.original_fullpath.include?("staff_account")
-        @account = current_staff.organizable
-        "staff_account"
+      @namespace = nil
+      
+      if current_staff&.respond_to?(:staff_roles)
+        if request.original_fullpath.include?("staff_super_admin") && current_staff.staff_roles.exists?(role: 'super_admin', enabled: true) 
+          @namespace = 'staff_super_admin'
+          @account = Account.find(params[:account_id].to_i)
+        else
+          @namespace = 'staff_account'
+          @account = current_staff.staff_roles.where(enabled: true, active: true, organizable_type: 'Account').take.organizable
+        end
       else
+        if request.original_fullpath.include?("staff_super_admin")
+          @account = Account.where(params[:account_id].to_i).take
+          @namespace = "staff_super_admin"
+        elsif request.original_fullpath.include?("staff_account")
+          @account = current_staff&.organizable
+          @namespace = "staff_account"
+        end
+      end
+      
+      if @account.nil? || @namespace.nil?
         render json: {}, status: 404 # apparently rendering in a before_action aborts the rest of the handling, woohoo
       end
+      
     end
 end
