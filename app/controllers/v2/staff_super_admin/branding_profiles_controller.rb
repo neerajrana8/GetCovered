@@ -5,30 +5,30 @@ module V2
 
       before_action :set_branding_profile,
                     only: %i[update show destroy faqs faq_create faq_update faq_question_create
-                             faq_question_update faq_delete faq_question_delete attach_images export update_from_file]
+                             faq_question_update faq_delete faq_question_delete attach_images export update_from_file second_logo_delete]
 
       before_action :set_agency, only: [:import]
-      
+
       def create
-        profileable = 
+        profileable =
           case branding_profile_params[:profileable_type]
           when 'Account'
             Account.find_by_id(branding_profile_params[:profileable_id])
           when 'Agency'
             Agency.find_by_id(branding_profile_params[:profileable_id])
           end
-          
-        
+
+
         if profileable.present?
-          branding_profile_outcome = 
+          branding_profile_outcome =
             case profileable
             when Agency
               BrandingProfiles::CreateFromDefault.run(agency: profileable)
             when Account
               BrandingProfiles::CreateFromDefault.run(account: profileable)
             end
-            
-          
+
+
           if branding_profile_outcome.valid?
             @branding_profile = branding_profile_outcome.result
             render template: 'v2/shared/branding_profiles/show', status: :created

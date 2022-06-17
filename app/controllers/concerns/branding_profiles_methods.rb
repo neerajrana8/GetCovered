@@ -62,10 +62,23 @@ module BrandingProfilesMethods
       logo_status = process_image(:logo_url) if attach_images_params[:logo_url].present?
       logo_jpeg_status = process_image(:logo_jpeg_url) if attach_images_params[:logo_jpeg_url].present?
       footer_status = process_image(:footer_logo_url) if attach_images_params[:footer_logo_url].present?
-      if logo_status == 'error' || logo_jpeg_status == 'error' || footer_status == 'error'
+      second_logo_status = process_image(:second_logo_url) if attach_images_params[:second_logo_url].present?
+      if logo_status == 'error' || logo_jpeg_status == 'error' || footer_status == 'error' || second_logo_status == 'error'
         render json: { success: false }, status: :unprocessable_entity
       else
-        render json: { logo_url: logo_status, logo_jpeg_url: logo_jpeg_status, footer_logo_url: footer_status }, status: :ok
+        render json: { logo_url: logo_status, logo_jpeg_url: logo_jpeg_status, footer_logo_url: footer_status, second_logo_url: second_logo_status }, status: :ok
+      end
+    else
+      render json: { success: false, errors: ['Unauthorized Access'] }, status: :unauthorized
+    end
+  end
+
+  def second_logo_delete
+    if update_allowed?
+      if @branding_profile.update(second_logo_url: nil)
+        render json: { message: 'Second logo deleted' }, status: :ok
+      else
+        render json: { message: @branding_profile.errors }, status: :unprocessable_entity
       end
     else
       render json: { success: false, errors: ['Unauthorized Access'] }, status: :unauthorized
@@ -77,7 +90,7 @@ module BrandingProfilesMethods
   def attach_images_params
     return({}) if params.blank?
 
-    params.require(:images).permit(:logo_url, :logo_jpeg_url, :footer_logo_url)
+    params.require(:images).permit(:logo_url, :logo_jpeg_url, :footer_logo_url, :second_logo_url)
   end
 
   def validate_images_size
