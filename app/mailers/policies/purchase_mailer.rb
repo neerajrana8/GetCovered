@@ -59,7 +59,7 @@ module Policies
       currency_selector = ENV['RAILS_ENV'] == "production" ? rand(0..10) : 0
       currency_symbol = "$"
       currency_multiplier = 1
-      if ENV['RAILS_ENV'] == production
+      if ENV['RAILS_ENV'] == "production"
         currencies.keys.each_with_index do |key, index|
           if index == currency_selector
             exchange = get_exchange_rates(to: key)
