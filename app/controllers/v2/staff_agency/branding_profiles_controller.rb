@@ -8,9 +8,9 @@ module V2
       include BrandingProfilesMethods
       before_action :set_branding_profile,
                     only: %i[update show destroy faqs faq_create faq_update
-                             faq_question_create faq_question_update attach_images export update_from_file]
+                             faq_question_create faq_question_update attach_images export update_from_file second_logo_delete]
 
-      
+
       def create
         profileable =
           case branding_profile_params[:profileable_type]
@@ -132,7 +132,7 @@ module V2
           url: [:scalar, :like]
         }
       end
-      
+
       def relation
         BrandingProfile.where(profileable_type: 'Agency', profileable_id: @agency.id).
           or BrandingProfile.where(profileable_type: 'Account', profileable_id: @agency.accounts&.ids)
