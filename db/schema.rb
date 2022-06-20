@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2022_04_29_010423) do
+ActiveRecord::Schema.define(version: 2022_06_17_191950) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
@@ -413,6 +413,7 @@ ActiveRecord::Schema.define(version: 2022_04_29_010423) do
     t.boolean "global_default", default: false, null: false
     t.string "logo_jpeg_url"
     t.boolean "enabled", default: true
+    t.string "second_logo_url"
     t.index ["profileable_type", "profileable_id"], name: "index_branding_profiles_on_profileable"
     t.index ["url"], name: "index_branding_profiles_on_url", unique: true
   end
@@ -1858,18 +1859,6 @@ ActiveRecord::Schema.define(version: 2022_04_29_010423) do
     t.bigint "stripe_charge_id"
     t.index ["refund_id"], name: "index_stripe_refunds_on_refund_id"
     t.index ["stripe_charge_id"], name: "index_stripe_refunds_on_stripe_charge_id"
-  end
-
-  create_table "system_histories", force: :cascade do |t|
-    t.string "field"
-    t.string "previous_value_str"
-    t.string "new_value_str"
-    t.jsonb "system_data", default: {}
-    t.string "recordable_type", null: false
-    t.bigint "recordable_id", null: false
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
-    t.index ["recordable_type", "recordable_id"], name: "index_system_histories_on_recordable"
   end
 
   create_table "tags", force: :cascade do |t|
