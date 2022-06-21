@@ -94,7 +94,7 @@ module BrandingProfilesMethods
   end
 
   def validate_images_size
-    images = %i[logo_url logo_jpeg_url footer_logo_url]
+    images = %i[logo_url logo_jpeg_url footer_logo_url second_logo_url]
     images.each do |image|
       if attach_images_params[image].present? && (attach_images_params[image].size > 10.megabyte)
         render json: standard_error(:images_bad_size, "#{image} is bigger than 10 megabytes"), status: :unprocessable_entity
