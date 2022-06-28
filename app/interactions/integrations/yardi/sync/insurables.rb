@@ -101,6 +101,7 @@ module Integrations
             addr = Address.from_string(comm[:address])
             if addr.street_name.blank?
               to_return[:community_errors][property_id] = "Unable to parse community address (#{comm[:address]})"
+              all_units.delete(property_id)
             else
               addr = after_address_hacks(addr)
               comm[:gc_addr_obj] = addr
