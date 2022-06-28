@@ -170,7 +170,7 @@ module Integrations
                   lu = lease.lease_users.create(
                     user: userobj,
                     primary: to_create["Id"] == tenant["Id"],
-                    lessee: (to_create["Id"] == tenant["Id"] || ten["Lessee"] == "Yes")
+                    lessee: (to_create["Id"] == tenant["Id"] || to_create["Lessee"] == "Yes")
                   )
                   if lu&.id.nil?
                     next
@@ -185,7 +185,7 @@ module Integrations
                   if ip&.id.nil?
                     next
                   end
-                elsif lu.integration_profiles.where(integration: integration).blank?
+                elsif lu.integration_profiles.where(integration: integration).reload.blank?
                   created_ip = IntegrationProfile.create(
                     integration: integration,
                     external_context: "lease_user_for_lease_#{tenant["Id"]}",
