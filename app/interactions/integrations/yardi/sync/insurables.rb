@@ -99,9 +99,10 @@ module Integrations
               to_return[:unit_errors][property_id] = {}
               to_return[:unit_exclusions][property_id] = {}
             end
-            addr = Address.from_string(comm[:address])
+            addr_str = "#{comm["AddressLine1"]}, #{comm["City"]}, #{comm["State"]} #{comm["PostalCode"]}"
+            addr = Address.from_string(addr_str)
             if addr.street_name.blank?
-              to_return[:community_errors][property_id] = "Unable to parse community address (#{comm[:address]})"
+              to_return[:community_errors][property_id] = "Unable to parse community address (#{addr_str})"
               comm[:errored] = true
               all_units.delete(property_id)
             else
