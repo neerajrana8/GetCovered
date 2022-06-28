@@ -185,7 +185,7 @@ module Integrations
                   if ip&.id.nil?
                     next
                   end
-                else if lu.integration_profiles.where(integration: integration).blank?
+                elsif lu.integration_profiles.where(integration: integration).blank?
                   created_ip = IntegrationProfile.create(
                     integration: integration,
                     external_context: "lease_user_for_lease_#{tenant["Id"]}",
