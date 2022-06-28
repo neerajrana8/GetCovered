@@ -102,7 +102,7 @@ module Integrations
               lease.start_date = Date.parse(tenant["LeaseFrom"])
               lease.end_date = tenant["LeaseTo"].blank? ? nil : Date.parse(tenant["LeaseTo"])
               lease.save if lease.changed?
-              # fix profileless users, skipping if we fail
+              # fix profileless users, skipping this lease if we fail (so we can assume below this block that every user has an IP)
               profileless_users = lease.users.where.not(id: IntegrationProfile.where(integration: integration, profileable: lease.users).pluck(:profileable_id))
               next if profileless_users.map do |u|
                 ext_id = (da_tenants.find{|dt| dt["Email"] == u.email } || da_tenants.find{|dt| dt['FirstName'] == u.profile.first_name && dt['LastName'] == u.profile.last_name })&.[]('Id')
@@ -123,7 +123,7 @@ module Integrations
                 next false # success
               end.any?{|x| x == true }
               # remove moved out users MOOSE WARNING: do it!
-              # ensure lease user IPs are created
+              # ensure lease user IPs are created, skipping the lease if we fail (so below this block we can assume all LeaseUsers have an IP
               if true #!lease_ip.configuration&.[]('luips_created')
                 skip_this = false
                 IntegrationProfile.where(integration: integration, external_context: 'resident', profileable: lease.users, external_id: da_tenants.map{|dt| dt["Id"] }).each do |rip|
@@ -146,9 +146,12 @@ module Integrations
                     end
                   end
                 end
-                unless skip_this
+                if skip_this
+                  next
+                else
                   lease_ip.configuration ||= {}
                   lease_ip.configuration['luips_created'] = true
+                  lease_ip.configuration['external_data'] = tenant
                   lease_ip.save
                 end
               end
@@ -163,7 +166,26 @@ module Integrations
                 end
                 # create the lease user IP
                 lu = lease.lease_users.find{|larse_yarsarr| larse_yarsarr.user_id == userobj.id }
-                if lu&.integration_profiles.where(integration: integration).blank?
+                if lu.nil?
+                  lu = lease.lease_users.create(
+                    user: userobj,
+                    primary: to_create["Id"] == tenant["Id"],
+                    lessee: (to_create["Id"] == tenant["Id"] || ten["Lessee"] == "Yes")
+                  )
+                  if lu&.id.nil?
+                    next
+                  end
+                  ip = IntegrationProfile.create(
+                    integration: integration,
+                    external_context: "lease_user_for_lease_#{tenant["Id"]}",
+                    external_id: to_create["Id"],
+                    profileable: lu,
+                    configuration: { 'synced_at' => Time.current.to_s }
+                  )
+                  if ip&.id.nil?
+                    next
+                  end
+                else if lu.integration_profiles.where(integration: integration).blank?
                   created_ip = IntegrationProfile.create(
                     integration: integration,
                     external_context: "lease_user_for_lease_#{tenant["Id"]}",
