@@ -91,6 +91,7 @@ module Integrations
             end
             if units.nil?
               to_return[:community_errors][property_id] = "Attempt to retrieve unit list from Yardi failed."
+              comm[:errored] = true
             else
               units = units[:parsed_response].dig("Envelope", "Body", "GetUnitConfigurationResponse", "GetUnitConfigurationResult", "Units", "Unit")
               units = [units].compact unless units.class == ::Array
@@ -101,6 +102,7 @@ module Integrations
             addr = Address.from_string(comm[:address])
             if addr.street_name.blank?
               to_return[:community_errors][property_id] = "Unable to parse community address (#{comm[:address]})"
+              comm[:errored] = true
               all_units.delete(property_id)
             else
               addr = after_address_hacks(addr)
@@ -216,7 +218,7 @@ module Integrations
               title: comm["MarketingName"],
               address: "#{comm["AddressLine1"]}, #{comm["City"]}, #{comm["State"]} #{comm["PostalCode"]}",
             }.merge({
-                buildings: by_building[comm["Code"]].map do |bldg, units|
+                buildings: (by_building[comm["Code"]] || {}).map do |bldg, units|
                   {
                     is_community: ("#{bldg[1]} #{bldg[0]}" == comm[:gc_addr_obj].combined_street_address && bldg[2] == comm[:gc_addr_obj].city && bldg[3] == comm[:gc_addr_obj].state && bldg[4] == comm[:gc_addr_obj].zip_code),
                     street_name: bldg[0],
@@ -243,6 +245,7 @@ module Integrations
           community_ips = IntegrationProfile.where(integration: integration, profileable_type: "Insurable", external_context: "community").to_a
           local_unmatched_ips = community_ips.select{|ip| !output_array.any?{|comm| comm[:yardi_id] == ip.external_id } && !to_return[:community_errors].has_key?(ip.external_id) }
           output_array.each do |comm|
+            next if comm[:errored]
             errored = false
             ip = community_ips.find{|ip| ip.external_id == comm[:yardi_id] }
             if ip.nil?
