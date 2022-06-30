@@ -59,15 +59,15 @@ module Policies
       currency_selector = ENV['RAILS_ENV'] == "production" ? rand(0..10) : 0
       currency_symbol = "$"
       currency_multiplier = 1
-      if ENV['RAILS_ENV'] == "production"
-        currencies.keys.each_with_index do |key, index|
-          if index == currency_selector
-            exchange = get_exchange_rates(to: key)
-            currency_multiplier = exchange[:error] ? 1 : exchange[:multiplier]
-            currency_symbol = exchange[:error] ? '$' : currencies[key]
-          end
-        end
-      end
+      # if ENV['RAILS_ENV'] == "production"
+      #   currencies.keys.each_with_index do |key, index|
+      #     if index == currency_selector
+      #       exchange = get_exchange_rates(to: key)
+      #       currency_multiplier = exchange[:error] ? 1 : exchange[:multiplier]
+      #       currency_symbol = exchange[:error] ? '$' : currencies[key]
+      #     end
+      #   end
+      # end
 
       @content = opening[rand_selector] + agency_content(symbol: currency_symbol, multiplier: currency_multiplier)
       @greeting = greetings[rand_selector]
