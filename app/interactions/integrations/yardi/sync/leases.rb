@@ -155,7 +155,7 @@ module Integrations
                   lease_ip.save
                 end
               end
-              # add new users MOOSE WARNING: do it!
+              # add new users
               ips = IntegrationProfile.where(integration: integration, external_context: 'resident', profileable: lease.users, external_id: da_tenants.map{|dt| dt["Id"] })
               da_tenants.select{|t| !ips.any?{|i| i.external_id == t["Id"] } }.each do |to_create|
                 # find or create the user
