@@ -16,6 +16,48 @@ module Integrations
           'null' => ['Denied']
         }
         
+        
+        
+        def create_user(tenant, ten, created_by_email, created_users, user_errors, user_ip_ids, create_ip: true) # tenant is a t-code resident hash, ren is either the same hash or a roommate hash from inside it
+          userobj = ::User.create_with_random_password(email: ten["Email"], profile_attributes: {
+            first_name: ten["FirstName"],
+            last_name: ten["LastName"],
+            middle_name: ten["MiddleName"],
+            contact_phone: ten["Phone"]&.select{|x| x["PhoneDescription"] == "cell" || x["PhoneDescription"] == "home" }&.sort_by{|x| { "cell" => 0, "home" => 1 }[x["PhoneDescription"]] || 999 }&.first&.[]("PhoneNumber")
+          }.compact)
+          unless userobj.id
+            user_errors[tenant["Id"]] ||= {}
+            user_errors[tenant["Id"]][ten["Id"]] = "Failed to create user #{ten["FirstName"]} #{ten["LastName"]}: #{userobj.errors.to_h}"
+            return nil
+          end
+          created_by_email[ten["Email"]&.downcase] = userobj unless ten["Email"].blank?
+          created_users[tenant["Id"]] ||= {}
+          created_users[tenant["Id"]][ten["Id"]] = userobj
+          if create_ip
+            created_profile = IntegrationProfile.create(
+              integration: integration,
+              profileable: userobj,
+              external_context: "resident",
+              external_id: ten["Id"],
+              configuration: {
+                'synced_at' => Time.current.to_s
+              }
+            )
+            if created_profile.id.nil?
+              user_errors[tenant["Id"]] ||= {}
+              user_errors[tenant["Id"]][ten["Id"]] = "Failed to create IntegrationProfile for user #{ten["FirstName"]} #{ten["LastName"]} (GC id #{userobj.id}): #{created_profile.errors.to_h}"
+              return nil
+            else
+              user_ip_ids[ten["Id"]] = created_profile.id
+            end
+          end
+          return userobj
+        end
+        
+        
+        
+        
+        
         def execute
           # scream if integration is invalid
           return { lease_errors: { 'all' => "No yardi integration provided" } } unless integration
@@ -60,7 +102,7 @@ module Integrations
               lease.start_date = Date.parse(tenant["LeaseFrom"])
               lease.end_date = tenant["LeaseTo"].blank? ? nil : Date.parse(tenant["LeaseTo"])
               lease.save if lease.changed?
-              # fix profileless users, skipping if we fail
+              # fix profileless users, skipping this lease if we fail (so we can assume below this block that every user has an IP)
               profileless_users = lease.users.where.not(id: IntegrationProfile.where(integration: integration, profileable: lease.users).pluck(:profileable_id))
               next if profileless_users.map do |u|
                 ext_id = (da_tenants.find{|dt| dt["Email"] == u.email } || da_tenants.find{|dt| dt['FirstName'] == u.profile.first_name && dt['LastName'] == u.profile.last_name })&.[]('Id')
@@ -81,8 +123,7 @@ module Integrations
                 next false # success
               end.any?{|x| x == true }
               # remove moved out users MOOSE WARNING: do it!
-              # add new users MOOSE WARNING: do it!
-              # ensure lease user IPs are created
+              # ensure lease user IPs are created, skipping the lease if we fail (so below this block we can assume all LeaseUsers have an IP
               if true #!lease_ip.configuration&.[]('luips_created')
                 skip_this = false
                 IntegrationProfile.where(integration: integration, external_context: 'resident', profileable: lease.users, external_id: da_tenants.map{|dt| dt["Id"] }).each do |rip|
@@ -105,13 +146,79 @@ module Integrations
                     end
                   end
                 end
-                unless skip_this
+                if skip_this
+                  next
+                else
                   lease_ip.configuration ||= {}
                   lease_ip.configuration['luips_created'] = true
+                  lease_ip.configuration['external_data'] = tenant
                   lease_ip.save
                 end
               end
-              next # skip create mode stuff after this
+              # add new users
+              ips = IntegrationProfile.where(integration: integration, external_context: 'resident', profileable: lease.users, external_id: da_tenants.map{|dt| dt["Id"] })
+              da_tenants.select{|t| !ips.any?{|i| i.external_id == t["Id"] } }.each do |to_create|
+                # find or create the user
+                userobj = to_create["Email"].blank? ? nil : User.where(email: to_create["Email"]).take
+                if userobj.nil?
+                  userobj = create_user(tenant, to_create, created_by_email, created_users, user_errors, user_ip_ids, create_ip: false)
+                  next if userobj.nil?
+                end
+                # create the lease user IP
+                lu = lease.lease_users.find{|larse_yarsarr| larse_yarsarr.user_id == userobj.id }
+                if lu.nil?
+                  lu = lease.lease_users.create(
+                    user: userobj,
+                    primary: to_create["Id"] == tenant["Id"],
+                    lessee: (to_create["Id"] == tenant["Id"] || to_create["Lessee"] == "Yes")
+                  )
+                  if lu&.id.nil?
+                    next
+                  end
+                  ip = IntegrationProfile.create(
+                    integration: integration,
+                    external_context: "lease_user_for_lease_#{tenant["Id"]}",
+                    external_id: to_create["Id"],
+                    profileable: lu,
+                    configuration: { 'synced_at' => Time.current.to_s }
+                  )
+                  if ip&.id.nil?
+                    next
+                  end
+                elsif lu.integration_profiles.where(integration: integration).reload.blank?
+                  created_ip = IntegrationProfile.create(
+                    integration: integration,
+                    external_context: "lease_user_for_lease_#{tenant["Id"]}",
+                    external_id: to_create['Id'],
+                    profileable: lu,
+                    configuration: { 'synced_at' => Time.current.to_s }
+                  )
+                  if created_ip.id.nil?
+                    next # try again next time, we want all our ducks in a row before the user's IP is created
+                  end
+                end
+                # create the IP (which we know doesn't exist because we filtered precisely for guys who lacked one)
+                unless userobj.nil?
+                  created_ip = IntegrationProfile.create(
+                    integration: integration,
+                    profileable: userobj,
+                    external_context: "resident",
+                    external_id: to_create["Id"],
+                    configuration: {
+                      'synced_at' => Time.current.to_s
+                    }
+                  )
+                  if created_ip.id.nil?
+                    user_errors[tenant["Id"]] ||= {}
+                    user_errors[tenant["Id"]][to_create["Id"]] = "Failed to create IntegrationProfile for user #{to_create["FirstName"]} #{to_create["LastName"]} (GC id #{userobj.id}): #{created_ip.errors.to_h}"
+                    return nil
+                  else
+                    user_ip_ids[to_create["Id"]] = created_ip.id
+                  end
+                end
+              end
+              # skip create mode stuff since the lease was pre-existing
+              next 
             end
             ################### CREATE MODE ######################
             next if tenant_index >= noncreatable_start
@@ -158,40 +265,11 @@ module Integrations
                   found_users[tenant["Id"]][ten["Id"]] = userobj
                 end
               else
-                userobj = ::User.create_with_random_password(email: ten["Email"], profile_attributes: {
-                  first_name: ten["FirstName"],
-                  last_name: ten["LastName"],
-                  middle_name: ten["MiddleName"],
-                  contact_phone: ten["Phone"]&.select{|x| x["PhoneDescription"] == "cell" || x["PhoneDescription"] == "home" }&.sort_by{|x| { "cell" => 0, "home" => 1 }[x["PhoneDescription"]] || 999 }&.first&.[]("PhoneNumber")
-                }.compact)
-                unless userobj.id
-                  user_errors[tenant["Id"]] ||= {}
-                  user_errors[tenant["Id"]][ten["Id"]] = "Failed to create user #{ten["FirstName"]} #{ten["LastName"]}: #{userobj.errors.to_h}"
-                  break nil
-                end
-                created_by_email[ten["Email"]&.downcase] = userobj unless ten["Email"].blank?
-                created_users[tenant["Id"]] ||= {}
-                created_users[tenant["Id"]][ten["Id"]] = userobj
-                created_profile = IntegrationProfile.create(
-                  integration: integration,
-                  profileable: userobj,
-                  external_context: "resident",
-                  external_id: ten["Id"],
-                  configuration: {
-                    'synced_at' => Time.current.to_s
-                  }
-                )
-                if created_profile.id.nil?
-                  user_errors[tenant["Id"]] ||= {}
-                  user_errors[tenant["Id"]][ten["Id"]] = "Failed to create IntegrationProfile for user #{ten["FirstName"]} #{ten["LastName"]} (GC id #{userobj.id}): #{created_profile.errors.to_h}"
-                  break nil
-                else
-                  user_ip_ids[ten["Id"]] = created_profile.id
-                end
+                break nil if create_user(tenant, ten, created_by_email, created_users, user_errors, user_ip_ids).nil?
               end
               next userobj
             end
-            if userobjs.nil? # if here, we already pushed an error message above in the "unless userobj.id" block; skip the rest of this lease
+            if userobjs.nil? # if here, we already pushed an error message above; skip the rest of this lease since the lease users won't be accurate
               lease_errors[tenant["Id"]] = "Skipped lease due to user import failures."
               next
             end

@@ -15,7 +15,7 @@ class Agency < ApplicationRecord
 
   # Active Record Callbacks
   after_initialize :initialize_agency
-  before_validation :set_producer_code, on: :create
+  before_validation :set_producer_code, on: :create, unless: Proc.new{|gnc| !gnc.producer_code.blank? }
 
   # belongs_to relationships
   belongs_to :agency,
@@ -120,6 +120,10 @@ class Agency < ApplicationRecord
 
   def self.get_covered
     @gcag ||= Agency.find(GET_COVERED_ID)
+  end
+  
+  def self.find_like(str, all = false)
+    Agency.where("title ILIKE '%#{str}%'").send(all ? :to_a : :take)
   end
   
   # returns the carrier id to use for a given policy type and insurable

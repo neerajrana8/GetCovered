@@ -2,10 +2,10 @@ module IntegrationsMethods
   extend ActiveSupport::Concern
 
   included do
+    before_action :set_namespace_and_account
     before_action :set_substrate, only: :index
     before_action :set_provider, except: :index
     before_action :set_integration, except: :index # yes, even in create; we want to see if the thing exists already
-    before_action :set_namespace_and_account
   end
 
   def index
@@ -133,10 +133,10 @@ module IntegrationsMethods
         )
         { renters_insurance: :voyager, billing_and_payments: :billing }.each do |interface, cred_section|
           [:username, :password, :database_server, :database_name].each do |field|
-            created.credentials[cred_section.to_s][field.to_s] = yardi_update_params[interface][field] if yardi_update_params[interface]&.has_key?(field)
+            created.credentials[cred_section.to_s][field.to_s] = yardi_create_params[interface][field] if yardi_create_params[interface]&.has_key?(field)
           end
-          created.credentials['urls'][interface.to_s] = yardi_update_params[interface]['url'] if yardi_update_params[interface]&.has_key?('url')
-          created.configuration[interface.to_s]['enabled'] = yardi_update_params[interface]['enabled'] if yardi_update_params[interface]&.has_key?('enabled')
+          created.credentials['urls'][interface.to_s] = yardi_create_params[interface]['url'] if yardi_create_params[interface]&.has_key?('url')
+          created.configuration[interface.to_s]['enabled'] = yardi_create_params[interface]['enabled'] if yardi_create_params[interface]&.has_key?('enabled')
         end
         if !created.id
           render json: standard_error(:error_creating_integration, "#{created.errors.to_h}"),
@@ -214,7 +214,7 @@ module IntegrationsMethods
         params.permit(
           renters_insurance: [:username, :password, :database_server, :database_name, :url, :enabled],
           billing_and_payments: [:username, :password, :database_server, :database_name, :url, :master_policy_charge_code, :master_policy_gla, :enabled],
-          sync: [ :pull_policies, :push_policies, :push_master_policies, :master_policy_charge_description ]
+          sync: [ :pull_policies, :push_policies, :push_master_policy_invoices, :master_policy_charge_description ]
         )
       else
         {}
@@ -227,7 +227,7 @@ module IntegrationsMethods
           renters_insurance: [:username, :password, :database_server, :database_name, :url, :enabled],
           billing_and_payments: [:username, :password, :database_server, :database_name, :url, :master_policy_charge_code, :master_policy_gla, :enabled],
           sync: [
-            :pull_policies, :push_policies, :push_master_policies, :master_policy_charge_description,
+            :pull_policies, :push_policies, :push_master_policy_invoices, :master_policy_charge_description,
             syncable_communities: [@integration.configuration['sync']['syncable_communities'].map do |k,v|
               [k, [:enabled]]
             end.to_h]
@@ -252,14 +252,29 @@ module IntegrationsMethods
     
     def set_namespace_and_account
       @account = nil
-      @namespace = if request.original_fullpath.include?("staff_super_admin")
-        @account = Account.find(params[:account_id])
-        "staff_super_admin"
-      elsif request.original_fullpath.include?("staff_account")
-        @account = current_staff.organizable
-        "staff_account"
+      @namespace = nil
+      
+      if current_staff&.respond_to?(:staff_roles)
+        if request.original_fullpath.include?("staff_super_admin") && current_staff.staff_roles.exists?(role: 'super_admin', enabled: true) 
+          @namespace = 'staff_super_admin'
+          @account = Account.find(params[:account_id].to_i)
+        else
+          @namespace = 'staff_account'
+          @account = current_staff.staff_roles.where(enabled: true, active: true, organizable_type: 'Account').take.organizable
+        end
       else
+        if request.original_fullpath.include?("staff_super_admin")
+          @account = Account.where(params[:account_id].to_i).take
+          @namespace = "staff_super_admin"
+        elsif request.original_fullpath.include?("staff_account")
+          @account = current_staff&.organizable
+          @namespace = "staff_account"
+        end
+      end
+      
+      if @account.nil? || @namespace.nil?
         render json: {}, status: 404 # apparently rendering in a before_action aborts the rest of the handling, woohoo
       end
+      
     end
 end

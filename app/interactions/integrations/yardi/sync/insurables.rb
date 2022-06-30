@@ -91,12 +91,23 @@ module Integrations
             end
             if units.nil?
               to_return[:community_errors][property_id] = "Attempt to retrieve unit list from Yardi failed."
+              comm[:errored] = true
             else
               units = units[:parsed_response].dig("Envelope", "Body", "GetUnitConfigurationResponse", "GetUnitConfigurationResult", "Units", "Unit")
               units = [units].compact unless units.class == ::Array
               all_units[property_id] = units
               to_return[:unit_errors][property_id] = {}
               to_return[:unit_exclusions][property_id] = {}
+            end
+            addr_str = "#{comm["AddressLine1"]}, #{comm["City"]}, #{comm["State"]} #{comm["PostalCode"]}"
+            addr = Address.from_string(addr_str)
+            if addr.street_name.blank?
+              to_return[:community_errors][property_id] = "Unable to parse community address (#{addr_str})"
+              comm[:errored] = true
+              all_units.delete(property_id)
+            else
+              addr = after_address_hacks(addr)
+              comm[:gc_addr_obj] = addr
             end
           end
           
@@ -208,9 +219,9 @@ module Integrations
               title: comm["MarketingName"],
               address: "#{comm["AddressLine1"]}, #{comm["City"]}, #{comm["State"]} #{comm["PostalCode"]}",
             }.merge({
-                buildings: by_building[comm["Code"]].map do |bldg, units|
+                buildings: (by_building[comm["Code"]] || {}).map do |bldg, units|
                   {
-                    is_community: ("#{bldg[1]} #{bldg[0]}" == comm["AddressLine1"] && bldg[2] == comm["City"] && bldg[3] == comm["State"] && bldg[4] == comm["PostalCode"]),
+                    is_community: ("#{bldg[1]} #{bldg[0]}" == comm[:gc_addr_obj].combined_street_address && bldg[2] == comm[:gc_addr_obj].city && bldg[3] == comm[:gc_addr_obj].state && bldg[4] == comm[:gc_addr_obj].zip_code),
                     street_name: bldg[0],
                     street_number: bldg[1],
                     city: bldg[2],
@@ -235,13 +246,15 @@ module Integrations
           community_ips = IntegrationProfile.where(integration: integration, profileable_type: "Insurable", external_context: "community").to_a
           local_unmatched_ips = community_ips.select{|ip| !output_array.any?{|comm| comm[:yardi_id] == ip.external_id } && !to_return[:community_errors].has_key?(ip.external_id) }
           output_array.each do |comm|
+            next if comm[:errored]
             errored = false
             ip = community_ips.find{|ip| ip.external_id == comm[:yardi_id] }
             if ip.nil?
               # look for previous IP that matches it
               ip = local_unmatched_ips.find do |ip|
                 addr = ip.profileable.primary_address
-                next "#{addr.combined_street_address}, #{addr.city}, #{addr.state} #{addr.zip_code}" == comm[:address] || "#{addr.combined_street_address}, #{addr.city}, #{addr.state} #{addr.combined_zip_code}" == comm[:address]
+                caddr = comm[:gc_addr_obj]
+                next "#{addr.combined_street_address}, #{addr.city}, #{addr.state} #{addr.zip_code}" == "#{caddr.combined_street_address}, #{caddr.city}, #{caddr.state} #{caddr.zip_code}"
               end
               if !ip.nil?
                 # we found a match... they've changed the id -_-
@@ -283,7 +296,7 @@ module Integrations
                 end
                 next if comm[:errored]
                 # fix matching community fields if necessary
-                community.update(title: comm[:title], account_id: account_id, confirmed: true) if community.account_id != account_id || community.title != comm[:title] || !community.confirmed
+                community.update(title: comm[:title], account_id: account_id, confirmed: true) if community.account_id != account_id && !community.confirmed
                 community.qbe_mark_preferred unless community.preferred_ho4
                 # create the ip
                 ip = IntegrationProfile.create(
@@ -409,6 +422,11 @@ module Integrations
                 u[:integration_profile] = ip
               end # end unit loop
               bldg[:units].select!{|u| !u[:errored] }
+              # kill if empty
+              if building.reload.insurables.reload.blank?
+                delete building.address
+                delete building
+              end
             end # end building loop
             comm[:buildings].select!{|b| !b[:errored] }
           end # end community loop
