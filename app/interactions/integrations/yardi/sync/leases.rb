@@ -18,11 +18,12 @@ module Integrations
         ALLOW_USER_CHANGE = true # true to allow previously imported users that aren't primary leaseholders to change to emailless users if their email appears used by a distinct primary user
         
         
-        def find_or_create_user(tenant, ten, primary)
+        def find_or_create_user(tenant, ten)
+          primary = (tenant["Id"] == ten["Id"])
           user = IntegrationProfile.where(integration: integration, external_context: "resident", external_id: ten["Id"]).take&.profileable
           return user unless user.nil?
           user = User.find_by_email(ten["Email"]) unless ten["Email"].blank?
-          ActiveRecord::Base.transaction do
+          ActiveRecord::Base.transaction(requires_new: true) do
             if ten["Email"].blank?
               user = ::User.create_with_random_password(email: nil, profile_attributes: {
                 first_name: ten["FirstName"],
@@ -300,54 +301,8 @@ module Integrations
             ################### CREATE MODE ######################
             next if tenant_index >= noncreatable_start
             # get the users
-            userobjs = ::User.where(email: da_tenants.select{|t| !t["Email"].blank? }.map{|t| t["Email"] }) # (compact to leave out any nil email boyos) we are only using email here because this lease is not in the system; since tenant IDs are lease-specific, no IPs are going to exist with these tenant ids
-            userobjs = da_tenants.map.with_index do |ten, ind|
-            
-              # get or create the user object
-              log_found = true
-              userobj = userobjs.find{|u| u.email&.downcase == ten["Email"]&.downcase } # WARNING: what if emails match but names don't....?
-              if !userobj.nil? && userobj.profile.full_name != expected_full_name(ten)
-              end
-              if userobj.nil?
-                # try to grab it from the previously-created list, just in case
-                userobj = created_by_email[ten["Email"]&.downcase]
-              end
-              if userobj.nil? && !user_ip_ids[tenant["Id"]].blank?
-                # try to find it by IP
-                userobj = ::User.where(id: user_ip_ids[tenant["Id"]]).take
-                found_users[tenant["Id"]] ||= {}
-                found_users[tenant["Id"]][ten["Id"]] = userobj
-              end
-              if userobj.nil?
-                # log it as missing
-                log_found = false if !userobj.nil?
-              end
-              if !userobj.nil?
-                if user_ip_ids[ten["Id"]].nil?
-                  created_profile = IntegrationProfile.create(
-                    integration: integration,
-                    profileable: userobj,
-                    external_context: "resident",
-                    external_id: ten["Id"],
-                    configuration: {
-                      'synced_at' => Time.current.to_s
-                    }
-                  )
-                  if created_profile.id.nil?
-                    user_errors[tenant["Id"]] ||= {}
-                    user_errors[tenant["Id"]][ten["Id"]] = "Failed to create IntegrationProfile for pre-existing user #{ten["FirstName"]} #{ten["LastName"]} (GC id #{userobj.id}): #{created_profile.errors.to_h}"
-                    break nil
-                  end
-                  user_ip_ids[ten["Id"]] = userobj.id
-                end
-                if log_found
-                  found_users[tenant["Id"]] ||= {}
-                  found_users[tenant["Id"]][ten["Id"]] = userobj
-                end
-              else
-                break nil if create_user(tenant, ten, created_by_email, created_users, user_errors, user_ip_ids).nil?
-              end
-              next userobj
+            userobjs = da_tenants.map do |ten|
+              break nil if find_or_create_user(tenant, ten).nil?
             end
             if userobjs.nil? # if here, we already pushed an error message above; skip the rest of this lease since the lease users won't be accurate
               lease_errors[tenant["Id"]] = "Skipped lease due to user import failures."
@@ -361,14 +316,19 @@ module Integrations
                 next
               end
               da_tenants.each.with_index do |ten, ind|
+                userobj = find_or_create_user(tenant, ten)
+                if userobj.nil?
+                  lease_errors[tenant["Id"]] = "Skipped lease due to user import failures."
+                  raise ActiveRecord::Rollback
+                end
                 lu = lease.lease_users.create(
-                  user: userobjs[ind],
+                  user: userobj,
                   primary: (ind == 0),
                   lessee: (ind == 0 || ten["Lessee"] == "Yes")
                 )
                 if lu&.id.nil?
                   lease_errors[tenant["Id"]] = "Failed to create Lease due to LeaseUser creation failure for resident '#{ten["Id"]}': #{lu.errors.to_h}"
-                  rails ActiveRecord::Rollback
+                  raise ActiveRecord::Rollback
                 end
                 IntegrationProfile.create(
                   integration: integration,
@@ -391,8 +351,8 @@ module Integrations
                 }
               )
               if created_profile.id.nil?
-                lease_errors[tenant["Id"]] = "Failed to create IntegrationProfile for lease #{lease.id}: #{created_profile.errors.to_h}"
-                next
+                lease_errors[tenant["Id"]] = "Failed to create lease due to IntegrationProfile creation errors: #{created_profile.errors.to_h}"
+                raise ActiveRecord::Rollback
               end
             end # end transaction
           end
