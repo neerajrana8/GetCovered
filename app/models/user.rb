@@ -250,7 +250,7 @@ class User < ApplicationRecord
           PhoneNumber: (self.profile.contact_phone || '').tr('^0-9', '')
         },
         EmailInfo: {
-          EmailAddr: self.email
+          EmailAddr: self.contact_email
         }
       }
     }
@@ -266,7 +266,7 @@ class User < ApplicationRecord
       },
       Communications: {
         EmailInfo: {
-          EmailAddr: self.email,
+          EmailAddr: self.contact_email,
           DoNotContactInd: 0
         }
       }.merge(self.profile.contact_phone.blank? ? {} : {
@@ -289,6 +289,10 @@ class User < ApplicationRecord
         ]
       )
     }.compact
+  end
+
+  def contact_email
+    self.email.blank? ? self.profile.contact_email : self.email
   end
 
   def get_deposit_choice_occupant_hash(primary: false)
