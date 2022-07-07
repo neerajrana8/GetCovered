@@ -118,7 +118,8 @@ module InsurablesMethods
         disallow_creation: (get_or_create_params[:allow_creation] != true),
         communities_only: get_or_create_params[:communities_only],
         titleless: get_or_create_params[:titleless] ? true : false,
-        neighborhood: get_or_create_params[:neighborhood]
+        neighborhood: get_or_create_params[:neighborhood],
+        account_id: get_or_create_params[:account_id]
         #, diagnostics: diagnostics
     }.compact)
     if result.class == ::Array
@@ -224,7 +225,7 @@ module InsurablesMethods
   def get_or_create_params
     params.permit(:address, :unit, :insurable_id, :create_if_ambiguous, :allow_creation, :communities_only, :titleless, :neighborhood, :short,
       # optional:
-      :agency_id, :policy_type_id, :carrier_id
+      :agency_id, :policy_type_id, :carrier_id, :account_id
     )
   end
 
