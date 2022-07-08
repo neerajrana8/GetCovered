@@ -11,7 +11,7 @@ jobs:
         environment:
           POSTGRES_DB: gc_v2_test
           POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: ""
+          POSTGRES_PASSWORD: ''
       - image: circleci/redis:4.0.9
         environment:
           - REDIS_URL: "redis://localhost:6379/"
@@ -19,7 +19,7 @@ jobs:
       BUNDLE_JOBS: "3"
       BUNDLE_RETRY: "3"
       PGUSER: postgres
-      PGPASSWORD: ""
+      PGPASSWORD: ''
       PGHOST: 127.0.0.1
       RAILS_ENV: test
     steps:
