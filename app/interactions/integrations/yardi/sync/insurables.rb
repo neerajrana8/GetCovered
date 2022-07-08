@@ -424,8 +424,8 @@ module Integrations
               bldg[:units].select!{|u| !u[:errored] }
               # kill if empty
               if building.reload.insurables.reload.blank?
-                delete building.address
-                delete building
+                building.addresses.delete_all
+                building.delete
               end
             end # end building loop
             comm[:buildings].select!{|b| !b[:errored] }

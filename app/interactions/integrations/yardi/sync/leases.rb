@@ -45,7 +45,7 @@ module Integrations
               else
                 unless ["FirstName", "LastName"].all?{|prop| ten[prop]&.strip&.downcase == user.profile.send(prop.underscore)&.strip&.downcase }
                   # crap, they're really a different one (and the email is taken)... alrighty then
-                  if !allow_user_change || !primary || user.lease_users.where(primary: true) || user.integration_profiles.where(provider: 'yardi').count == 0
+                  if !ALLOW_USER_CHANGE || !primary || user.lease_users.where(primary: true) || user.integration_profiles.where(provider: 'yardi').count == 0
                     # we can't change the original
                     user = ::User.create_with_random_password(email: nil, profile_attributes: {
                       first_name: firster,
