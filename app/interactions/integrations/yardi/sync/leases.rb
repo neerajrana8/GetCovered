@@ -81,7 +81,8 @@ module Integrations
                 external_context: "resident",
                 external_id: ten["Id"],
                 configuration: {
-                  'synced_at' => Time.current.to_s
+                  'synced_at' => Time.current.to_s,
+                  'post_fix_em' => 'IMPORT'
                 }
               )
               if ip.id.nil?
