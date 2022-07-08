@@ -19,6 +19,10 @@ end
 
 
 def fix_em(user_ids = IntegrationProfile.where(profileable_type: "User").order(profileable_id: :asc).pluck(:profileable_id).uniq, do_it_for_real: false)
+  ActiveRecord::Base.logger.level = 1
+  if do_it_for_real
+    IntegrationProfile.where(profileable_type: "LeaseUser").delete_all
+  end
   $counts = {
     users: 0,
     users_with_multiple_identities: 0,
@@ -73,7 +77,6 @@ def fix_em(user_ids = IntegrationProfile.where(profileable_type: "User").order(p
     54511 => "emmanuel uzomah",
     21853 => "stellar stays inc. #3305 represented by nehemiah ladner"
   }
-  ActiveRecord::Base.logger.level = 1
   user_ids ||= User.where(id: IntegrationProfile.where(profileable_type: "User").select(:profileable_id)).pluck(:id)
   user_ids.each.with_index do |user_id, indie_boi|
     puts "Behold! We shall now begin to process User #{user_id}."
