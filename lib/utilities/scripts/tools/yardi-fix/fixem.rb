@@ -173,8 +173,8 @@ def fix_em(user_ids = IntegrationProfile.where(profileable_type: "User").order(p
         resident_groups.push(res[:group] = {
           first_name: ten["FirstName"]&.strip&.downcase,
           last_name: ten["LastName"]&.strip&.downcase,
-          og_first_name: ten["FirstName"],
-          og_last_name: ten["LastName"],
+          og_first_name: ten["FirstName"].blank? ? "Unknown" : ten["FirstName"],
+          og_last_name: ten["LastName"].blank? ? "Unknown" : ten["LastName"],
           residents: [res]
         })
       else

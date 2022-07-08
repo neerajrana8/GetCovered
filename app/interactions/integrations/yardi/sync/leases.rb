@@ -22,32 +22,34 @@ module Integrations
           user = IntegrationProfile.where(integration: integration, external_context: "resident", external_id: ten["Id"]).take&.profileable
           return user unless user.nil?
           user = User.find_by_email(ten["Email"]) unless ten["Email"].blank?
+          firster = (ten["FirstName"].blank? ? "Unknown" : ten["FirstName"]).strip
+          laster = (ten["LastName"].blank? ? "Unknown" : ten["LastName"]).strip
           ActiveRecord::Base.transaction(requires_new: true) do
             if ten["Email"].blank?
               user = ::User.create_with_random_password(email: nil, profile_attributes: {
-                first_name: ten["FirstName"],
-                last_name: ten["LastName"],
+                first_name: firster,
+                last_name: laster,
                 middle_name: ten["MiddleName"],
                 contact_phone: ten["Phone"]&.select{|x| x["PhoneDescription"] == "cell" || x["PhoneDescription"] == "home" }&.sort_by{|x| { "cell" => 0, "home" => 1 }[x["PhoneDescription"]] || 999 }&.first&.[]("PhoneNumber")
               }.compact)
             else
               if user.nil?
                 # WARNING: we are creating the user without an email uid if they aren't the primary leaseholder... not sure if this is better or worse than defaulting to an email uid
-                user = ::User.create_with_random_password(email: primary ? ten["Email"] : nil, profile_attributes: {
-                  first_name: ten["FirstName"],
-                  last_name: ten["LastName"],
+                user = ::User.create_with_random_password(email: nil, profile_attributes: { # MOOSE WARNING: would use ten["Email"] if primary is true here, but going with nil for everyone for now
+                  first_name: firster,
+                  last_name: laster,
                   middle_name: ten["MiddleName"],
                   contact_phone: ten["Phone"]&.select{|x| x["PhoneDescription"] == "cell" || x["PhoneDescription"] == "home" }&.sort_by{|x| { "cell" => 0, "home" => 1 }[x["PhoneDescription"]] || 999 }&.first&.[]("PhoneNumber"),
-                  contact_email: primary ? nil : ten["Email"]
+                  contact_email: ten["Email"]
                 }.compact)
               else
-                unless ["FirstName", "MiddleName", "LastName"].all?{|prop| ten[prop] == user.profile.send(prop.underscore) }
+                unless ["FirstName", "LastName"].all?{|prop| ten[prop]&.strip&.downcase == user.profile.send(prop.underscore)&.strip&.downcase }
                   # crap, they're really a different one (and the email is taken)... alrighty then
                   if !allow_user_change || !primary || user.lease_users.where(primary: true) || user.integration_profiles.where(provider: 'yardi').count == 0
                     # we can't change the original
                     user = ::User.create_with_random_password(email: nil, profile_attributes: {
-                      first_name: ten["FirstName"],
-                      last_name: ten["LastName"],
+                      first_name: firster,
+                      last_name: laster,
                       middle_name: ten["MiddleName"],
                       contact_phone: ten["Phone"]&.select{|x| x["PhoneDescription"] == "cell" || x["PhoneDescription"] == "home" }&.sort_by{|x| { "cell" => 0, "home" => 1 }[x["PhoneDescription"]] || 999 }&.first&.[]("PhoneNumber"),
                       contact_email: ten["Email"]
@@ -58,11 +60,12 @@ module Integrations
                     user.altuid = Time.current.to_i.to_s + rand.to_s
                     user.uid = user.altuid
                     user.save
-                    user = ::User.create_with_random_password(email: ten["Email"], profile_attributes: {
-                      first_name: ten["FirstName"],
-                      last_name: ten["LastName"],
+                    user = ::User.create_with_random_password(email: nil, profile_attributes: {  # MOOSE WARNING: would use ten["Email"] if primary is true here, but going with nil for everyone for now
+                      first_name: firster,
+                      last_name: laster,
                       middle_name: ten["MiddleName"],
-                      contact_phone: ten["Phone"]&.select{|x| x["PhoneDescription"] == "cell" || x["PhoneDescription"] == "home" }&.sort_by{|x| { "cell" => 0, "home" => 1 }[x["PhoneDescription"]] || 999 }&.first&.[]("PhoneNumber")
+                      contact_phone: ten["Phone"]&.select{|x| x["PhoneDescription"] == "cell" || x["PhoneDescription"] == "home" }&.sort_by{|x| { "cell" => 0, "home" => 1 }[x["PhoneDescription"]] || 999 }&.first&.[]("PhoneNumber"),
+                      contact_email: ten["Email"]
                     }.compact)
                   end
                 end
