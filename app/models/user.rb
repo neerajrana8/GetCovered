@@ -128,6 +128,13 @@ class User < ApplicationRecord
     u.save
     return u
   end
+  
+  def self.create_with_random_password!(*lins, **keys)
+    u = ::User.new(*lins, **keys)
+    u.send(:set_random_password)
+    u.save!
+    return u
+  end
 
   # Set Stripe ID
   #

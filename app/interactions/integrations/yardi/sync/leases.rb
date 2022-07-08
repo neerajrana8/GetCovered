@@ -17,7 +17,6 @@ module Integrations
         }
         ALLOW_USER_CHANGE = true # true to allow previously imported users that aren't primary leaseholders to change to emailless users if their email appears used by a distinct primary user
         
-        
         def find_or_create_user(tenant, ten)
           primary = (tenant["Id"] == ten["Id"])
           user = IntegrationProfile.where(integration: integration, external_context: "resident", external_id: ten["Id"]).take&.profileable
@@ -174,6 +173,7 @@ module Integrations
             da_tenants = [tenant] + (tenant["Roommate"].nil? ? [] : tenant["Roommate"].class == ::Array ? tenant["Roommate"] : [tenant["Roommate"]])
             ################### UPDATE MODE ######################
             if in_system.include?(tenant["Id"])
+=begin
               lease_ip = IntegrationProfile.where(integration: integration, external_context: 'lease', external_id: tenant["Id"]).take
               lease = lease_ip.profileable
               # fix basic data
@@ -181,58 +181,70 @@ module Integrations
               lease.end_date = tenant["LeaseTo"].blank? ? nil : Date.parse(tenant["LeaseTo"])
               lease.save if lease.changed?
               # fix profileless users, skipping this lease if we fail (so we can assume below this block that every user has an IP)
-              profileless_users = lease.users.where.not(id: IntegrationProfile.where(integration: integration, profileable: lease.users).pluck(:profileable_id))
+  #####
+              user_profiles = IntegrationProfile.where(integration: integration, profileable: lease.users).to_a
+              profileless_users = lease.users.select{|u| !user_profiles.any?{|up| up.profileable_id == u.id } }
+              userless_tenants = da_tenants.select{|t| !user_profiles.any?{|up| up.external_id == t["Id"] } }
+              
               next if profileless_users.map do |u|
-                ext_id = (da_tenants.find{|dt| dt["Email"] == u.email } || da_tenants.find{|dt| dt['FirstName'] == u.profile.first_name && dt['LastName'] == u.profile.last_name })&.[]('Id')
-                next nil if ext_id.nil? # neither success nor failure
+                ext_id = userless_tenants.find{|ut| ut["FirstName"]&.strip&.downcase == u.profile.first_name&.strip&.downcase && ut["LastName"]&.strip&.downcase == u.profile.last_name&.strip&.downcase }&.[]("Id")
+                next false if ext_id.nil? # MOOSE WARNING: change to next nil if you want to allow continuation if someone has no match
                 created = (IntegrationProfile.create(
                   integration: integration,
                   profileable: u,
                   external_context: "resident",
                   external_id: ext_id,
                   configuration: {
-                    'synced_at' => Time.current.to_s
+                    'synced_at' => Time.current.to_s,
+                    'post_fix_em' => true
                   }
                 ) rescue nil)
                 unless created&.id # failure
-                  puts "Failed to create IP for user #{u.id}: #{created&.errors&.to_h}"
-                  next true
+                  puts "Failed to create IntegrationProfile for user #{u.id}: #{created&.errors&.to_h}"
+                  next false
                 end
-                next false # success
-              end.any?{|x| x == true }
+                user_profiles.push(created)
+                userless_tenants.select!{|ut| ut["Id"] != ext_id }
+                next u # success
+              end.compact.map{|u| profileless_users.delete(u) unless u == false; u }.any?{|x| x == false }
+              
               # remove moved out users MOOSE WARNING: do it!
+              
               # ensure lease user IPs are created, skipping the lease if we fail (so below this block we can assume all LeaseUsers have an IP
-              if true #!lease_ip.configuration&.[]('luips_created')
-                skip_this = false
-                IntegrationProfile.where(integration: integration, external_context: 'resident', profileable: lease.users, external_id: da_tenants.map{|dt| dt["Id"] }).each do |rip|
-                  lu = lease.lease_users.find{|lu| lu.user_id == rip.profileable_id }
-                  if lu.nil? # just skip for now... shouldn't happen
-                    skip_this = true
-                    break
+              luip_fix_failed = false
+              luips = integration.integration_profiles.where(profileable: lease.lease_users)
+              lease.lease_users.select do |lu|
+                luip = luips.find{|luip| luip.profileable == lu }
+                if luip.nil?
+                  up = user_profiles.find{|up| up.profileable_id == lu.user_id }
+                  created_ip = IntegrationProfile.create(
+                    integration: integration,
+                    external_context: "lease_user_for_lease_#{tenant["Id"]}",
+                    external_id: up.external_id,
+                    profileable: lu,
+                    configuration: { 'synced_at' => Time.current.to_s }
+                  )
+                  if created_ip.id.nil?
+                    luip_fix_failed = true
+                    break # we will just try again l8urr, but MOOSE WARNING you may want to scream about the error
                   end
-                  unless lu.integration_profiles.where(integration: integration).count > 0
-                    created_ip = IntegrationProfile.create(
-                      integration: integration,
-                      external_context: "lease_user_for_lease_#{tenant["Id"]}",
-                      external_id: rip.external_id,
-                      profileable: lu,
-                      configuration: { 'synced_at' => Time.current.to_s }
-                    )
-                    if created_ip.id.nil?
-                      skip_this = true
-                      break # just try again l8urrr
-                    end
-                  end
-                end
-                if skip_this
-                  next
-                else
-                  lease_ip.configuration ||= {}
-                  lease_ip.configuration['luips_created'] = true
-                  lease_ip.configuration['external_data'] = tenant
-                  lease_ip.save
                 end
               end
+              if luip_fix_failed
+                next
+              end
+              lease_ip.configuration ||= {}
+              lease_ip.configuration['luips_created'] = true
+              lease_ip.configuration['external_data'] = tenant
+              lease_ip.save
+              
+              # add new users
+
+              IntegrationProfile.where(integration: integration, external_context: 'resident', profileable: lease.users, external_id: da_tenants.map{|dt| dt["Id"] }).each do |rip|
+              end
+  #####
+              
+              
               # add new users
               ips = IntegrationProfile.where(integration: integration, external_context: 'resident', profileable: lease.users, external_id: da_tenants.map{|dt| dt["Id"] })
               da_tenants.select{|t| !ips.any?{|i| i.external_id == t["Id"] } }.each do |to_create|
@@ -295,21 +307,14 @@ module Integrations
                   end
                 end
               end
+=end
               # skip create mode stuff since the lease was pre-existing
               next 
             end
             ################### CREATE MODE ######################
             next if tenant_index >= noncreatable_start
-            # get the users
-            userobjs = da_tenants.map do |ten|
-              break nil if find_or_create_user(tenant, ten).nil?
-            end
-            if userobjs.nil? # if here, we already pushed an error message above; skip the rest of this lease since the lease users won't be accurate
-              lease_errors[tenant["Id"]] = "Skipped lease due to user import failures."
-              next
-            end
             # create the lease
-            ActiveRecord::Base.transaction do
+            ActiveRecord::Base.transaction(requires_new: true) do
               lease = unit.leases.create(start_date: Date.parse(tenant["LeaseFrom"]), end_date: tenant["LeaseTo"].blank? ? nil : Date.parse(tenant["LeaseTo"]), lease_type_id: LeaseType.residential_id, account: integration.integratable)
               if lease.id.nil?
                 lease_errors[tenant["Id"]] = "Failed to create Lease: #{lease.errors.to_h}"
@@ -330,13 +335,17 @@ module Integrations
                   lease_errors[tenant["Id"]] = "Failed to create Lease due to LeaseUser creation failure for resident '#{ten["Id"]}': #{lu.errors.to_h}"
                   raise ActiveRecord::Rollback
                 end
-                IntegrationProfile.create(
+                luip = IntegrationProfile.create!(
                   integration: integration,
                   external_context: "lease_user_for_lease_#{tenant["Id"]}",
                   external_id: ten["Id"],
                   profileable: lu,
-                  configuration: { 'synced_at' => Time.current.to_s }
+                  configuration: { 'synced_at' => Time.current.to_s, 'post_fix_em' => true }
                 )
+                if luip.id.nil?
+                  lease_errors[tenant["Id"]] = "Failed to create Lease due to LeaseUser IntegrationProfile creation failure for resident '#{ten["Id"]}': #{luip.errors.to_h}"
+                  raise ActiveRecord::Rollback
+                end
               end
               created_leases[tenant["Id"]] = lease
               created_profile = IntegrationProfile.create(
@@ -347,7 +356,8 @@ module Integrations
                 configuration: {
                   'luips_created' => true, # to tell the system we have created lease user integration profiles, since we need to fix those that don't have this property
                   'synced_at' => Time.current.to_s,
-                  'external_data' => tenant
+                  'external_data' => tenant,
+                  'post_fix_em' => true
                 }
               )
               if created_profile.id.nil?
