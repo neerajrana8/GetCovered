@@ -373,7 +373,7 @@ module Integrations
             rec = past_tenants.find{|l| l['Id'] == ip.external_id }
             l = ip.lease
             found_leases[ip.external_id] = l
-            if l.update({ end_date: rec["MoveOut"] || rec["LeaseTo"] }.compact) # MOOSE WARNING: ask yardi if MoveOut might apply only to the primary tenant (in which case the lease doesn't end on this date necessarily...)
+            if l.update({ end_date: rec["LeaseTo"] }.compact) # MOOSE WARNING: ask yardi if MoveOut might apply only to the primary tenant (in which case the lease doesn't end on this date necessarily...)
               expired_leases[ip.external_id] = l
             else
               lease_errors[ip.external_id] = "Failed to mark lease (GC id #{l.id}) expired: #{l.errors.to_h}"
