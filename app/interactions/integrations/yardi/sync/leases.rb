@@ -267,7 +267,7 @@ module Integrations
               lease.lease_users.each do |lu|
                 ten = da_tenants.find{|t| t["Id"] == lu.integration_profiles.where(integration: integration).take.external_id }
                 next if ten.nil? # can't happen but just in case
-                moved_in_at = (Date.parse(ten["MoveIn"]) rescue nil),
+                moved_in_at = (Date.parse(ten["MoveIn"]) rescue nil)
                 moved_out_at = (Date.parse(ten["MoveOut"]) rescue nil)
                 if lu.moved_in_at != moved_in_at || lu.moved_out_at != moved_out_at
                   lu.update(moved_in_at: moved_in_at, moved_out_at: moved_out_at)
