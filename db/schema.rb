@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2022_06_17_191950) do
+ActiveRecord::Schema.define(version: 2022_07_14_204504) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
@@ -991,6 +991,8 @@ ActiveRecord::Schema.define(version: 2022_06_17_191950) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.boolean "lessee", default: true, null: false
+    t.date "moved_in_at"
+    t.date "moved_out_at"
     t.index ["lease_id"], name: "index_lease_users_on_lease_id"
     t.index ["user_id"], name: "index_lease_users_on_user_id"
   end
