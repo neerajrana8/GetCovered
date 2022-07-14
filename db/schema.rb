@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2022_04_29_010423) do
+ActiveRecord::Schema.define(version: 2022_07_14_204504) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
@@ -990,6 +990,8 @@ ActiveRecord::Schema.define(version: 2022_04_29_010423) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.boolean "lessee", default: true, null: false
+    t.date "moved_in_at"
+    t.date "moved_out_at"
     t.index ["lease_id"], name: "index_lease_users_on_lease_id"
     t.index ["user_id"], name: "index_lease_users_on_user_id"
   end
@@ -1858,18 +1860,6 @@ ActiveRecord::Schema.define(version: 2022_04_29_010423) do
     t.bigint "stripe_charge_id"
     t.index ["refund_id"], name: "index_stripe_refunds_on_refund_id"
     t.index ["stripe_charge_id"], name: "index_stripe_refunds_on_stripe_charge_id"
-  end
-
-  create_table "system_histories", force: :cascade do |t|
-    t.string "field"
-    t.string "previous_value_str"
-    t.string "new_value_str"
-    t.jsonb "system_data", default: {}
-    t.string "recordable_type", null: false
-    t.bigint "recordable_id", null: false
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
-    t.index ["recordable_type", "recordable_id"], name: "index_system_histories_on_recordable"
   end
 
   create_table "tags", force: :cascade do |t|

@@ -227,7 +227,9 @@ module Integrations
                 lu = lease.lease_users.find{|lu| lu.user_id == user.id && lu.integration_profiles.where(integration: integration, external_context: "lease_user_for_lease_#{tenant["Id"]}").blank? } || LeaseUser.create(
                   user: user,
                   primary: ten["Id"] == tenant["Id"],
-                  lessee: (ten["Id"] == tenant["Id"] || ten["Lessee"] == "Yes")
+                  lessee: (ten["Id"] == tenant["Id"] || ten["Lessee"] == "Yes"),
+                  moved_in_at: (Date.parse(ten["MoveIn"]) rescue nil),
+                  moved_out_at: (Date.parse(ten["MoveOut"]) rescue nil)
                 )
                 if lu&.id.nil?
                   failed = true
@@ -261,6 +263,16 @@ module Integrations
                 dl.integration_profiles.each{|ip| ip.delete }
                 dl.delete
               end
+              # now ensure we update the move in/out dates
+              lease.lease_users.each do |lu|
+                ten = da_tenants.find{|t| t["Id"] == lu.integration_profiles.where(integration: integration).take.external_id }
+                next if ten.nil? # can't happen but just in case
+                moved_in_at = (Date.parse(ten["MoveIn"]) rescue nil),
+                moved_out_at = (Date.parse(ten["MoveOut"]) rescue nil)
+                if lu.moved_in_at != moved_in_at || lu.moved_out_at != moved_out_at
+                  lu.update(moved_in_at: moved_in_at, moved_out_at: moved_out_at)
+                end
+              end
               # skip create mode stuff since the lease was pre-existing
               next 
             end
@@ -268,7 +280,12 @@ module Integrations
             next if tenant_index >= noncreatable_start
             # create the lease
             ActiveRecord::Base.transaction(requires_new: true) do
-              lease = unit.leases.create(start_date: Date.parse(tenant["LeaseFrom"]), end_date: tenant["LeaseTo"].blank? ? nil : Date.parse(tenant["LeaseTo"]), lease_type_id: LeaseType.residential_id, account: integration.integratable)
+              lease = unit.leases.create(
+                start_date: Date.parse(tenant["LeaseFrom"]),
+                end_date: tenant["LeaseTo"].blank? ? nil : Date.parse(tenant["LeaseTo"]),
+                lease_type_id: LeaseType.residential_id,
+                account: integration.integratable
+              )
               if lease.id.nil?
                 lease_errors[tenant["Id"]] = "Failed to create Lease: #{lease.errors.to_h}"
                 next
@@ -282,7 +299,9 @@ module Integrations
                 lu = lease.lease_users.create(
                   user: userobj,
                   primary: (ind == 0),
-                  lessee: (ind == 0 || ten["Lessee"] == "Yes")
+                  lessee: (ind == 0 || ten["Lessee"] == "Yes"),
+                  moved_in_at: (Date.parse(ten["MoveIn"]) rescue nil),
+                  moved_out_at: (Date.parse(ten["MoveOut"]) rescue nil)
                 )
                 if lu&.id.nil?
                   lease_errors[tenant["Id"]] = "Failed to create Lease due to LeaseUser creation failure for resident '#{ten["Id"]}': #{lu.errors.to_h}"
