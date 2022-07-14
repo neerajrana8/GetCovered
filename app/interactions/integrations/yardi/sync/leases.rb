@@ -27,7 +27,7 @@ module Integrations
           firster = (ten["FirstName"].blank? ? "Unknown" : ten["FirstName"]).strip
           laster = (ten["LastName"].blank? ? "Unknown" : ten["LastName"]).strip
           email_bearer = ten["email"].blank? ? nil : User.where(email: ten["Email"])
-          candidates = ten["Email"].blank? || (firster == "Unknown" || laster == "Unknown") ? [] : [email_bearer] + User.references(:profiles).includes(:profile).where.not(email: ten["Email"]).where(profiles: { contact_email: ten["Email"] }).to_a.compact
+          candidates = ten["Email"].blank? || (firster == "Unknown" || laster == "Unknown") ? [] : ([email_bearer] + User.references(:profiles).includes(:profile).where.not(email: ten["Email"]).where(profiles: { contact_email: ten["Email"] }).to_a).compact
           candidates.select!{|u| u.profile.first_name&.downcase&.strip == firster.downcase && u.profile.last_name&.downcase&.strip == laster.downcase }
           user = candidates.find{|c| c.integration_profiles.any?{|ip| ip.integration_id == integration.id } } || candidates.first # there should be at most 1 candidate; if not, we could merge them, but instead lets just take the best one and continue
           # create the user if necessary & create the UIP
