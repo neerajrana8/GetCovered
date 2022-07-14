@@ -413,6 +413,7 @@ ActiveRecord::Schema.define(version: 2022_07_14_204504) do
     t.boolean "global_default", default: false, null: false
     t.string "logo_jpeg_url"
     t.boolean "enabled", default: true
+    t.string "second_logo_url"
     t.index ["profileable_type", "profileable_id"], name: "index_branding_profiles_on_profileable"
     t.index ["url"], name: "index_branding_profiles_on_url", unique: true
   end

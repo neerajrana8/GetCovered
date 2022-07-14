@@ -1,5 +1,5 @@
 json.extract! branding_profile, :default, :id, :profileable_id,
-              :profileable_type, :styles, :url, :logo_url, :footer_logo_url, :subdomain, :logo_jpeg_url, :enabled
+              :profileable_type, :styles, :url, :logo_url, :footer_logo_url, :second_logo_url, :subdomain, :logo_jpeg_url, :enabled
 
 json.profile_attributes do
   json.array! branding_profile&.branding_profile_attributes
