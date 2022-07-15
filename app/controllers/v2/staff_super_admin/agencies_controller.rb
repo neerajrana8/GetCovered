@@ -8,13 +8,15 @@ module V2
       before_action :set_agency, only: %i[update show branding_profile enable disable]
 
       def index
-        relation = 
+        relation =
           if params[:with_subagencies].present?
             Agency.all
           else
             Agency.where(agency_id: nil)
           end
-        super(:@agencies, relation, :agency)
+        relation = filtered_by_carrier(relation)
+
+        super(:@agencies, relation, :agency, :addresses)
       end
 
       def show; end
@@ -77,7 +79,7 @@ module V2
           render json: { success: false, errors: ['Agency does not have a branding profile'] }, status: :not_found
         end
       end
-      
+
       def disable
         result = Agencies::Disable.run(agency: @agency)
         if result.valid?
@@ -97,13 +99,13 @@ module V2
                  status: 422
         end
       end
-      
+
       def get_policy_types
         pts = CarrierAgencyPolicyType.includes(:policy_type, carrier_agency: :carrier).references(:policy_types, carrier_agencies: :carriers).where(carrier_agencies: { agency_id: params[:id].to_i })
                                      .group_by{|capt| capt.policy_type_id }
                                      .transform_values{|capts| { id: capts.first.policy_type_id, title: capts.first.policy_type.title, carriers: capts.map{|capt| { id: capt.carrier_agency.carrier_id, title: capt.carrier_agency.carrier.title } }.uniq } }
                                      .values.sort_by{|v| v[:title] }
-          
+
         render json: pts,
           status: 200
       end
@@ -130,6 +132,7 @@ module V2
         params[:agency_id].blank? ? nil : params.require(:agency_id)
       end
 
+      #TODO: need to check and update as filters queries
       def filtered_sub_agencies
         passed_carriers_filters = params[:policy_type_id].present? || params[:carrier_id].present?
 
@@ -146,7 +149,41 @@ module V2
           relation = relation.where(carrier_agency_policy_types: { policy_type_id: params[:policy_type_id] })
         end
 
+        if params[:like].present?
+          relation = relation.where("agencies.title ILIKE ?",
+                     Agency.sanitize_sql_like(params[:like]) + "%")
+        end
+
         passed_carriers_filters ? relation.distinct : relation
+      end
+
+      def filtered_by_carrier(sub_agency_relation)
+        passed_carriers_filters = filter_params[:policy_type_id].present? || filter_params[:carrier_id].present?
+
+        relation =
+          if passed_carriers_filters
+            Agency.left_joins(carrier_agencies: :carrier_agency_policy_types)
+          else
+            sub_agency_relation
+          end
+
+        relation = relation.where(carrier_agencies: { carrier_id: filter_params[:carrier_id] }) if filter_params[:carrier_id].present?
+
+        if filter_params[:policy_type_id].present?
+          relation = relation.where(carrier_agency_policy_types: { policy_type_id: filter_params[:policy_type_id] })
+        end
+
+        if filter_params[:title].present?
+          relation = relation.where("agencies.title ILIKE ?",
+                                    Agency.sanitize_sql_like(filter_params[:title][:like]) + "%")
+        end
+
+        passed_carriers_filters ? relation.distinct : relation
+      end
+
+      def filter_params
+        to_return = params.permit(filter: [:policy_type_id, :carrier_id, title: [:like]])
+        to_return[:filter]
       end
 
       def create_params
