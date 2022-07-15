@@ -27,7 +27,7 @@ class StripeRefund < ApplicationRecord
   }, _prefix: true
   
   def balance_transaction
-    Stripe::Charge.retrieve(self.stripe_id).balance_transaction rescue nil
+    Stripe::Refund.retrieve(self.stripe_id).balance_transaction rescue nil
   end
   
   def execute
