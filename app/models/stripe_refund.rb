@@ -26,6 +26,10 @@ class StripeRefund < ApplicationRecord
     canceled: 3
   }, _prefix: true
   
+  def balance_transaction
+    Stripe::Refund.retrieve(self.stripe_id).balance_transaction rescue nil
+  end
+  
   def execute
     self.with_lock do
       return unless self.status == 'awaiting_execution'

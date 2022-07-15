@@ -33,6 +33,10 @@ class StripeCharge < ApplicationRecord
     }
   end
   
+  def balance_transaction
+    Stripe::Charge.retrieve(self.stripe_id).balance_transaction rescue nil
+  end
+  
   def displayable_error
     self.client_error.blank? ? nil : I18n.t(*(self.client_error['linear'] || []), **(self.client_error['keyword'] || {}))
   end
