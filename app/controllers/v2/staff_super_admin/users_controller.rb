@@ -5,9 +5,9 @@
 module V2
   module StaffSuperAdmin
     class UsersController < StaffSuperAdminController
-      
+
       before_action :set_user, only: %i[show update]
-      
+
       def index
         query = ::User.all
         if params[:community_like]
@@ -38,7 +38,7 @@ module V2
       end
 
       private
-      
+
       def view_path
         super + '/users'
       end
@@ -58,7 +58,8 @@ module V2
           updated_at: %i[scalar array interval],
           has_existing_policies: %i[scalar array],
           has_current_leases: %i[scalar array],
-          accounts: { agency_id: %i[scalar array], id: %i[scalar array] }
+          accounts: { agency_id: %i[scalar array], id: %i[scalar array] },
+          insurables: { id: %i[scalar array], title: %i[scalar array like] }
         }
       end
 
