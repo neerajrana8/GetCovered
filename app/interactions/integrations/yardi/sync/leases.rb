@@ -38,7 +38,7 @@ module Integrations
                 # we want to use an email
                 if !email_bearer.nil?
                   # try to remove the email from the email-bearer
-                  unmodifiable = !ALLOW_USER_CHANGE || !primary || user.sign_in_count > 0 || user.lease_users.where(primary: true).count > 0 || user.integration_profiles.where(provider: 'yardi').count == 0
+                  unmodifiable = !ALLOW_USER_CHANGE || !primary || email_bearer.sign_in_count > 0 || email_bearer.lease_users.where(primary: true).count > 0 || email_bearer.integration_profiles.where(provider: 'yardi').count == 0
                   unless unmodifiable
                     abandon_attempt = false
                     abandon_attempt = true unless email_bearer.profile.update(contact_email: email_bearer.email)
@@ -164,13 +164,19 @@ module Integrations
             (RESIDENT_STATUSES['past'] || []).map{|s| resident_datas[s] || [] } +
             (RESIDENT_STATUSES['nonfuture'] || []).map{|s| (resident_datas[s] || []).select{|td| !td['MoveOut'].blank? && (Date.parse(td['MoveOut']) rescue nil)&.<(Time.current.to_date) } }
           ).flatten
-          # create active new and future leases
+          # grab some variables we shall require in the execution of our noble purpose
           in_system = IntegrationProfile.where(integration: integration, external_context: 'lease', external_id: resident_data.map{|l| l['Id'] }, profileable_type: "Lease").pluck(:external_id)
           relevant_tenants = present_tenants + future_tenants
           noncreatable_start = relevant_tenants.count
           relevant_tenants += resident_data.select{|x| !relevant_tenants.include?(x) && in_system.include?(x["Id"]) } if update_old
           created_by_email = {}
           user_ip_ids = IntegrationProfile.where(integration: integration, external_context: 'resident', profileable_type: "User").pluck(:external_id, :profileable_id).to_h
+          # mark defunct those leases which the horrific architecture of Yardi's database requires to be removed from their system when they have been superseded
+          # MOOSE WARNING: the 'defunct' boolean is a placeholder architectural solution just to get the feature working. ultimately we should be giving these leases a special status and doing something to their IPs...
+          IntegrationProfile.where(integration: integration, external_context: 'lease', profileable: unit.leases.where(defunct: false)).where.not(external_id: in_system).each do |lip|
+            lip.profileable.update(defunct: true)
+          end
+          # create active new and future leases
           relevant_tenants.each.with_index do |tenant, tenant_index|
             da_tenants = [tenant] + (tenant["Roommate"].nil? ? [] : tenant["Roommate"].class == ::Array ? tenant["Roommate"] : [tenant["Roommate"]])
             ################### UPDATE MODE ######################
@@ -180,6 +186,7 @@ module Integrations
               # fix basic data
               lease.start_date = Date.parse(tenant["LeaseFrom"])
               lease.end_date = tenant["LeaseTo"].blank? ? nil : Date.parse(tenant["LeaseTo"])
+              lease.defunct = false # just in case it was once missing from yardi and now is magically back
               lease.save if lease.changed?
               user_profiles = IntegrationProfile.where(integration: integration, profileable: lease.users).to_a
               # take any tenants that don't correspond to a user, construct/find a user for them, and set up LeaseUser stuff appropriately
