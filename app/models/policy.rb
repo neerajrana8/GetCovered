@@ -38,6 +38,7 @@
 
 class Policy < ApplicationRecord
   # Concerns
+  include Filterable
   include CarrierPensioPolicy
   include CarrierCrumPolicy
   include CarrierQbePolicy
@@ -138,6 +139,40 @@ class Policy < ApplicationRecord
   }
   scope :master_policy_coverages, -> { where(policy_type_id: PolicyType::MASTER_COVERAGES_IDS) }
   scope :not_master, -> { where.not(policy_type_id: PolicyType::MASTER_IDS) }
+
+  ## Filterable
+
+  scope :filter_by_policy_in_system, ->(state) {
+    where(policy_in_system: state)
+  }
+
+  scope :filter_by_agency_id, ->(agency_id) {
+    where(agency_id: agency_id)
+  }
+
+  scope :filter_by_status, ->(status) {
+    where(status: status)
+  }
+
+  scope :filter_by_account_id, ->(account_id) {
+    where(account_id: account_id)
+  }
+
+  scope :filter_by_policy_type_id, ->(policy_type_id) {
+    where(policy_type_id: policy_type_id)
+  }
+
+  scope :filter_by_number, ->(number) {
+    where('number LIKE ?', "%#{number[:like]}%")
+  }
+
+  scope :filter_by_users, ->(payload) {
+    if payload[:email]
+      where('users.email LIKE ?', "%#{payload['email']['like']}%")
+    else
+      where('profiles.full_name LIKE ?', "%#{payload[:profile][:full_name][:like]}%")
+    end
+  }
 
   accepts_nested_attributes_for :policy_premiums,
   :insurables, :policy_users, :policy_insurables, :policy_application
