@@ -22,10 +22,13 @@ module V2
                         :agency,
                         :account,
                         :policy_type,
+                        :policy_quotes,
                         :carrier,
                         :primary_user,
                         { users: :profile },
-                        { agency: :billing_strategies }
+                        { agency: :billing_strategies },
+                        { policy_quotes: :policy_application },
+                        { policy_application: :billing_strategy }
                       )
                       .left_joins(users: :profile)
                       .preload(
@@ -36,6 +39,8 @@ module V2
                         :policy_application,
                         :policy_users,
                         { agency: :billing_strategies },
+                        { :policy_quotes => { policy_application: :billing_strategy }},
+                        { policy_application: :billing_strategy },
                         { primary_user: :profile }
                       )
 

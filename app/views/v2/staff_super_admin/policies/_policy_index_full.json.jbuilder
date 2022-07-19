@@ -43,4 +43,4 @@ json.primary_user do
   end
 end
 # FIXME: Possible wrong constraint logic: duplicate key value violates unique constraint "index_policy_quotes_on_external_id"
-#json.billing_strategy policy.policy_quotes&.last&.policy_application&.billing_strategy&.title
+json.billing_strategy policy.policy_quotes&.last&.policy_application&.billing_strategy&.title
