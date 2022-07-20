@@ -273,23 +273,18 @@ module Integrations
               end
               # we can assume all tenants have corresponding users & lease users & appropriate IPs, if we're here
               # remove any lease users that don't correspond to tenants
-              doomed_luips = lease.lease_users.select{|lu| lu.integration_profiles.where(integration: integration, external_context: "lease_user_for_lease_#{tenant["Id"]}", external_id: da_tenants.map{|t| t["Id"] }).count == 0 }
-              doomed_lus = []
-              doomed_luips.each do |dl|
-                doomed_lus.push(dl.profileable) unless dl.profileable.nil? || doomed_lus.include?(dl.profileable)
-                dl.delete
-              end
+              doomed_lus = lease.lease_users.select{|lu| lu.integration_profiles.where(integration: integration, external_context: "lease_user_for_lease_#{tenant["Id"]}", external_id: da_tenants.map{|t| t["Id"] }).count == 0 }
               doomed_lus.each do |dl|
                 dl.integration_profiles.each{|ip| ip.delete }
                 dl.delete
               end
               # now ensure we update the move in/out dates
-              lease.lease_users.each do |lu|
+              lease.lease_users.reload.each do |lu|
                 ten = da_tenants.find{|t| t["Id"] == lu.integration_profiles.where(integration: integration).take.external_id }
                 next if ten.nil? # can't happen but just in case
                 moved_in_at = (Date.parse(ten["MoveIn"]) rescue nil)
                 moved_out_at = (Date.parse(ten["MoveOut"]) rescue nil)
-                if lu.moved_in_at != moved_in_at || lu.moved_out_at != moved_out_at
+                if (lu.moved_in_at != moved_in_at && !moved_in_at.blank?) || (lu.moved_out_at != moved_out_at && !moved_out_at.blank?)
                   lu.update(moved_in_at: moved_in_at, moved_out_at: moved_out_at)
                 end
               end
