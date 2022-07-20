@@ -176,6 +176,19 @@ module Integrations
           IntegrationProfile.where(integration: integration, external_context: 'lease', profileable: unit.leases.where(defunct: false)).where.not(external_id: in_system).each do |lip|
             lip.profileable.update(defunct: true)
           end
+          # update expired old leases
+          in_system_lips = IntegrationProfile.references(:leases).includes(:lease).where(integration: integration, external_context: 'lease', external_id: past_tenants.map{|l| l['Id'] }, profileable_type: "Lease", leases: { status: ['current', 'pending'] })
+          in_system_lips.each do |ip|
+            rec = past_tenants.find{|l| l['Id'] == ip.external_id }
+            l = ip.lease
+            found_leases[ip.external_id] = l
+            if l.update({ end_date: rec["LeaseTo"].blank? ? Time.current.to_date : Date.parse(rec["LeaseTo"]), status: 'expired' }.compact)
+              expired_leases[ip.external_id] = l
+            else
+              lease_errors[ip.external_id] = "Failed to mark lease (GC id #{l.id}) expired: #{l.errors.to_h}"
+            end
+          end
+          in_system_lips = nil
           # create active new and future leases
           relevant_tenants.each.with_index do |tenant, tenant_index|
             da_tenants = [tenant] + (tenant["Roommate"].nil? ? [] : tenant["Roommate"].class == ::Array ? tenant["Roommate"] : [tenant["Roommate"]])
@@ -184,8 +197,8 @@ module Integrations
               lease_ip = IntegrationProfile.where(integration: integration, external_context: 'lease', external_id: tenant["Id"]).take
               lease = lease_ip.profileable
               # fix basic data
-              lease.start_date = Date.parse(tenant["LeaseFrom"])
-              lease.end_date = tenant["LeaseTo"].blank? ? nil : Date.parse(tenant["LeaseTo"])
+              lease.start_date = Date.parse(tenant["LeaseFrom"]) unless tenant["LeaseFrom"].blank?
+              lease.end_date = Date.parse(tenant["LeaseTo"]) unless tenant["LeaseTo"].blank?
               lease.defunct = false # just in case it was once missing from yardi and now is magically back
               lease.save if lease.changed?
               user_profiles = IntegrationProfile.where(integration: integration, profileable: lease.users).to_a
@@ -345,18 +358,6 @@ module Integrations
               end
             end # end transaction
           end # end lease creation & update logic
-          # update expired old leases
-          in_system = IntegrationProfile.references(:leases).includes(:lease).where(integration: integration, external_context: 'lease', external_id: past_tenants.map{|l| l['Id'] }, profileable_type: "Lease", leases: { status: ['current', 'pending'] })
-          in_system.each do |ip|
-            rec = past_tenants.find{|l| l['Id'] == ip.external_id }
-            l = ip.lease
-            found_leases[ip.external_id] = l
-            if l.update({ end_date: rec["LeaseTo"] }.compact)
-              expired_leases[ip.external_id] = l
-            else
-              lease_errors[ip.external_id] = "Failed to mark lease (GC id #{l.id}) expired: #{l.errors.to_h}"
-            end
-          end
           # done
           return({
             lease_errors: lease_errors,
