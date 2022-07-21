@@ -1,5 +1,41 @@
 # frozen_string_literal: true
 
+# == Schema Information
+#
+# Table name: invoices
+#
+#  id                                   :bigint           not null, primary key
+#  number                               :string           not null
+#  description                          :text
+#  available_date                       :date             not null
+#  due_date                             :date             not null
+#  created_at                           :datetime         not null
+#  updated_at                           :datetime         not null
+#  external                             :boolean          default(FALSE), not null
+#  status                               :integer          not null
+#  under_review                         :boolean          default(FALSE), not null
+#  pending_charge_count                 :integer          default(0), not null
+#  pending_dispute_count                :integer          default(0), not null
+#  error_info                           :jsonb            not null
+#  was_missed                           :boolean          default(FALSE), not null
+#  was_missed_at                        :datetime
+#  autosend_status_change_notifications :boolean          default(TRUE), not null
+#  original_total_due                   :integer          default(0), not null
+#  total_due                            :integer          default(0), not null
+#  total_payable                        :integer          default(0), not null
+#  total_reducing                       :integer          default(0), not null
+#  total_pending                        :integer          default(0), not null
+#  total_received                       :integer          default(0), not null
+#  total_undistributable                :integer          default(0), not null
+#  invoiceable_type                     :string
+#  invoiceable_id                       :bigint
+#  payer_type                           :string
+#  payer_id                             :bigint
+#  collector_type                       :string
+#  collector_id                         :bigint
+#  archived_invoice_id                  :bigint
+#  status_changed                       :datetime
+#
 RSpec.describe Invoice, elasticsearch: false, type: :model do
 
   before :each do

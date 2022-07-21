@@ -1,3 +1,22 @@
+# == Schema Information
+#
+# Table name: signable_documents
+#
+#  id            :bigint           not null, primary key
+#  title         :string           not null
+#  document_type :integer          not null
+#  document_data :jsonb
+#  status        :integer          default("preparing_document"), not null
+#  errored       :boolean          default(FALSE), not null
+#  error_data    :jsonb
+#  signed_at     :datetime
+#  signer_type   :string
+#  signer_id     :bigint
+#  referent_type :string
+#  referent_id   :bigint
+#  created_at    :datetime         not null
+#  updated_at    :datetime         not null
+#
 require 'base64'
 
 class SignableDocument < ApplicationRecord

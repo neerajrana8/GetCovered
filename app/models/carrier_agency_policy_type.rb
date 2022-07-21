@@ -1,3 +1,14 @@
+# == Schema Information
+#
+# Table name: carrier_agency_policy_types
+#
+#  id                     :bigint           not null, primary key
+#  carrier_agency_id      :bigint
+#  policy_type_id         :bigint
+#  commission_strategy_id :bigint           not null
+#  collector_type         :string
+#  collector_id           :bigint
+#
 ##
 # CarrierAgencyPolicyType Model
 # file: +app/models/carrier_agency_policy_type.rb+

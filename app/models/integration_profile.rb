@@ -1,3 +1,18 @@
+# == Schema Information
+#
+# Table name: integration_profiles
+#
+#  id               :bigint           not null, primary key
+#  external_id      :string
+#  configuration    :jsonb
+#  enabled          :boolean          default(FALSE)
+#  integration_id   :bigint
+#  profileable_type :string
+#  profileable_id   :bigint
+#  created_at       :datetime         not null
+#  updated_at       :datetime         not null
+#  external_context :string
+#
 # Integration Profile Model
 # file: app/models/integration_profile.rb
 

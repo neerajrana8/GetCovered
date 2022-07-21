@@ -1,3 +1,22 @@
+# == Schema Information
+#
+# Table name: commission_items
+#
+#  id                   :bigint           not null, primary key
+#  amount               :integer          not null
+#  notes                :text
+#  created_at           :datetime         not null
+#  updated_at           :datetime         not null
+#  commission_id        :bigint
+#  commissionable_type  :string
+#  commissionable_id    :bigint
+#  reason_type          :string
+#  reason_id            :bigint
+#  policy_quote_id      :bigint
+#  policy_id            :bigint
+#  analytics_category   :integer          default("other"), not null
+#  parent_payment_total :integer
+#
 class CommissionItem < ApplicationRecord
   include FinanceAnalyticsCategory # provides analytics_category enum
 
