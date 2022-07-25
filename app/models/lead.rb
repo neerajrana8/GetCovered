@@ -38,6 +38,71 @@ class Lead < ApplicationRecord
   scope :not_archived, -> { where(archived: false)}
   scope :with_user, -> { where.not(user_id: nil) }
 
+  scope :by_last_visit, ->(start_date, end_date) {
+    where(last_visit: start_date.beginning_of_day..end_date.end_of_day)
+  }
+
+  scope :group_trunc_day_by_last_visit, -> {
+    group("DATE_TRUNC('day', last_visit)::date")
+  }
+
+  scope :grouped_by_last_visit, -> {
+    select(Arel.sql("date_trunc('day', last_visit)::date as last_visit, #{STATUS_CASE_SQL}")).
+      group_trunc_day_by_last_visit
+  }
+
+  scope :actual, -> {
+    where(archived: false)
+  }
+
+  scope :archived, -> {
+    where(archived: true)
+  }
+
+  scope :by_agency, ->(agency_id) { where(agency_id: agency_id) }
+
+  scope :join_last_events, -> {
+    from(
+      <<-SQL
+      (
+        SELECT l.*, lead_event.policy_type_id, lead_event.data FROM leads as l JOIN (
+          SELECT * FROM lead_events le WHERE id IN (
+            SELECT MAX(id) FROM lead_events le2 GROUP BY lead_id
+          )
+        ) AS lead_event
+        ON l.id = lead_event.lead_id
+      ) AS leads
+      SQL
+    )
+  }
+
+
+  # TODO: Rewrite to Arel.SQL
+  STATUS_CASE_SQL = <<-SQL.freeze
+        SUM(CASE WHEN status != -1 then 1 else 0 end) AS visits,
+        SUM(CASE WHEN status = 0 then 1 else 0 end) AS prospected,
+        SUM(CASE WHEN status = 1 then 1 else 0 end) AS returned,
+        SUM(CASE WHEN status = 2 then 1 else 0 end) AS converted,
+        SUM(CASE WHEN status != 4 then 1 else 0 end) AS not_converted,
+        SUM(CASE WHEN status = 3 then 1 else 0 end) AS lost,
+        SUM(CASE WHEN status = 4 then 1 else 0 end) AS archived,
+        SUM(CASE WHEN (status != 4 AND last_visited_page IN ('Payment Page', 'Payment Section')) then 1 else 0 end)
+        AS not_finished_applications,
+        SUM(CASE WHEN (status != 4 AND last_visited_page NOT IN ('Landing Page', 'Basic info Section')) then 1 else 0 end)
+        AS applications,
+        SUM(CASE WHEN (status = 2 OR status = 0) then 1 else 0 end) AS visitors
+  SQL
+
+  def self.get_stats(date_from, date_to, agency_id)
+    sql = "SELECT #{STATUS_CASE_SQL} FROM leads
+WHERE last_visit BETWEEN '#{date_from}' AND '#{date_to}'"
+
+    sql += " AND agency_id IN (#{agency_id.join(',')})" unless agency_id.nil?
+
+    record = ActiveRecord::Base.connection.execute(sql)
+    record.first unless record.first.values.compact.empty?
+  end
+
   def self.date_of_first_lead
     Lead.pluck(:last_visit).select(&:present?).sort.first
   end
