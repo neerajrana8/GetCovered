@@ -1,3 +1,23 @@
+# == Schema Information
+#
+# Table name: line_item_reductions
+#
+#  id                    :bigint           not null, primary key
+#  reason                :string           not null
+#  refundability         :integer          not null
+#  proration_interaction :integer          default("shared"), not null
+#  amount_interpretation :integer          default("max_amount_to_reduce"), not null
+#  amount                :integer          not null
+#  amount_successful     :integer          default(0), not null
+#  amount_refunded       :integer          default(0), not null
+#  pending               :boolean          default(TRUE), not null
+#  stripe_refund_reason  :integer
+#  created_at            :datetime         not null
+#  updated_at            :datetime         not null
+#  line_item_id          :bigint
+#  dispute_id            :bigint
+#  refund_id             :bigint
+#
 class LineItemReduction < ApplicationRecord
   attr_accessor :callbacks_disabled
 

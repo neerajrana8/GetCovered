@@ -1,3 +1,21 @@
+# == Schema Information
+#
+# Table name: billing_strategies
+#
+#  id             :bigint           not null, primary key
+#  title          :string
+#  slug           :string
+#  enabled        :boolean          default(FALSE), not null
+#  new_business   :jsonb
+#  renewal        :jsonb
+#  locked         :boolean          default(FALSE), not null
+#  agency_id      :bigint
+#  carrier_id     :bigint
+#  policy_type_id :bigint
+#  created_at     :datetime         not null
+#  updated_at     :datetime         not null
+#  carrier_code   :string
+#
 FactoryBot.define do
   factory :monthly_billing_strategy, class: "BillingStrategy" do
     title { "Monthly" }

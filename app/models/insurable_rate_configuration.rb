@@ -1,4 +1,19 @@
-
+# == Schema Information
+#
+# Table name: insurable_rate_configurations
+#
+#  id                     :bigint           not null, primary key
+#  carrier_info           :jsonb            not null
+#  configurable_type      :string
+#  configurable_id        :bigint
+#  configurer_type        :string
+#  configurer_id          :bigint
+#  created_at             :datetime         not null
+#  updated_at             :datetime         not null
+#  configuration          :jsonb            not null
+#  rates                  :jsonb            not null
+#  carrier_policy_type_id :bigint           not null
+#
 class InsurableRateConfiguration < ApplicationRecord
 
   include Structurable

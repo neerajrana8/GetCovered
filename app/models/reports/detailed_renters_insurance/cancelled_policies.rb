@@ -1,3 +1,18 @@
+# == Schema Information
+#
+# Table name: reports
+#
+#  id              :bigint           not null, primary key
+#  duration        :integer
+#  range_start     :datetime
+#  range_end       :datetime
+#  data            :jsonb
+#  reportable_type :string
+#  reportable_id   :bigint
+#  created_at      :datetime         not null
+#  updated_at      :datetime         not null
+#  type            :string
+#
 module Reports
   module DetailedRentersInsurance
     class CancelledPolicies < ::Report

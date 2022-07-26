@@ -1,3 +1,15 @@
+# == Schema Information
+#
+# Table name: branding_profile_attributes
+#
+#  id                  :bigint           not null, primary key
+#  name                :string
+#  value               :text
+#  attribute_type      :string
+#  branding_profile_id :bigint
+#  created_at          :datetime         not null
+#  updated_at          :datetime         not null
+#
 ##
 # =Branding Profile Attribute Model
 # file: +app/models/branding_profile_attribute.rb+

@@ -1,3 +1,19 @@
+# == Schema Information
+#
+# Table name: insurable_geographical_categories
+#
+#  id                  :bigint           not null, primary key
+#  state               :integer
+#  counties            :string           is an Array
+#  created_at          :datetime         not null
+#  updated_at          :datetime         not null
+#  zip_codes           :string           is an Array
+#  cities              :string           is an Array
+#  insurable_id        :bigint
+#  special_usage       :integer
+#  special_designation :string
+#  special_settings    :jsonb
+#
 class InsurableGeographicalCategory < ApplicationRecord
 
   # Associations

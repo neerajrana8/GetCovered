@@ -1,7 +1,28 @@
+# frozen_string_literal: true
+
+# == Schema Information
+#
+# Table name: policy_quotes
+#
+#  id                    :bigint           not null, primary key
+#  reference             :string
+#  external_reference    :string
+#  status                :integer          default("awaiting_estimate")
+#  status_updated_on     :datetime
+#  policy_application_id :bigint
+#  agency_id             :bigint
+#  account_id            :bigint
+#  policy_id             :bigint
+#  created_at            :datetime         not null
+#  updated_at            :datetime         not null
+#  est_premium           :integer
+#  external_id           :string
+#  policy_group_quote_id :bigint
+#  carrier_payment_data  :jsonb
+#
 ##
 # =Policy Quote Model
 # file: +app/models/policy_quote.rb+
-# frozen_string_literal: true
 
 class PolicyQuote < ApplicationRecord
   # Concerns

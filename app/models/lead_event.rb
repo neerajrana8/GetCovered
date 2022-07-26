@@ -1,3 +1,19 @@
+# == Schema Information
+#
+# Table name: lead_events
+#
+#  id                  :bigint           not null, primary key
+#  data                :jsonb
+#  tag                 :string
+#  latitude            :float
+#  longitude           :float
+#  lead_id             :bigint
+#  created_at          :datetime         not null
+#  updated_at          :datetime         not null
+#  policy_type_id      :bigint
+#  agency_id           :bigint
+#  branding_profile_id :integer
+#
 class LeadEvent < ApplicationRecord
 
   #include ElasticsearchSearchable

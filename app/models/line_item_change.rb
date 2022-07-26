@@ -1,5 +1,22 @@
-
-
+# == Schema Information
+#
+# Table name: line_item_changes
+#
+#  id                 :bigint           not null, primary key
+#  field_changed      :integer          not null
+#  amount             :integer          not null
+#  new_value          :integer          not null
+#  handled            :boolean          default(FALSE), not null
+#  created_at         :datetime         not null
+#  updated_at         :datetime         not null
+#  line_item_id       :bigint
+#  reason_type        :string
+#  reason_id          :bigint
+#  handler_type       :string
+#  handler_id         :bigint
+#  error_info         :string
+#  analytics_category :integer          default("other"), not null
+#
 class LineItemChange < ApplicationRecord
   include FinanceAnalyticsCategory # provides analytics_category enum
   

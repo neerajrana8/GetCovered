@@ -1,3 +1,23 @@
+# == Schema Information
+#
+# Table name: leads
+#
+#  id                  :bigint           not null, primary key
+#  email               :string
+#  identifier          :string
+#  user_id             :bigint
+#  labels              :string           is an Array
+#  created_at          :datetime         not null
+#  updated_at          :datetime         not null
+#  status              :integer          default("prospect")
+#  last_visit          :datetime
+#  last_visited_page   :string
+#  tracking_url_id     :integer
+#  agency_id           :integer
+#  archived            :boolean          default(FALSE)
+#  account_id          :integer
+#  branding_profile_id :integer
+#
 class Lead < ApplicationRecord
 
   include RecordChange

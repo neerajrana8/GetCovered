@@ -1,3 +1,22 @@
+# == Schema Information
+#
+# Table name: scheduled_actions
+#
+#  id              :bigint           not null, primary key
+#  action          :integer          not null
+#  status          :integer          default("pending"), not null
+#  trigger_time    :datetime         not null
+#  input           :jsonb
+#  output          :jsonb
+#  error_messages  :string           default([]), not null, is an Array
+#  started_at      :datetime
+#  ended_at        :datetime
+#  actionable_type :string
+#  actionable_id   :bigint
+#  parent_id       :bigint
+#  created_at      :datetime         not null
+#  updated_at      :datetime         not null
+#
 class ScheduledAction < ApplicationRecord
   belongs_to :actionable,
     polymorphic: true,

@@ -1,3 +1,23 @@
+# == Schema Information
+#
+# Table name: archived_refunds
+#
+#  id                          :bigint           not null, primary key
+#  stripe_id                   :string
+#  amount                      :integer
+#  currency                    :string
+#  failure_reason              :string
+#  stripe_reason               :integer
+#  receipt_number              :string
+#  stripe_status               :integer
+#  status                      :integer
+#  full_reason                 :string
+#  error_message               :string
+#  amount_returned_via_dispute :integer          default(0)
+#  charge_id                   :bigint
+#  created_at                  :datetime         not null
+#  updated_at                  :datetime         not null
+#
 class ArchivedRefund < ApplicationRecord
 
   belongs_to :charge, class_name: "ArchivedCharge", foreign_key: "charge_id"
