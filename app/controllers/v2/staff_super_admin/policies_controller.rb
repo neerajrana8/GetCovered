@@ -25,12 +25,13 @@ module V2
                         :policy_quotes,
                         :carrier,
                         :primary_user,
+                        :policy_users,
+                        :policy_insurables,
                         { users: :profile },
                         { agency: :billing_strategies },
                         { policy_quotes: :policy_application },
                         { policy_application: :billing_strategy }
                       )
-                      .left_joins(users: :profile)
                       .preload(
                         :policy_type,
                         :carrier,
@@ -39,13 +40,16 @@ module V2
                         :policy_application,
                         :policy_users,
                         { agency: :billing_strategies },
-                        { :policy_quotes => { policy_application: :billing_strategy }},
-                        { policy_application: :billing_strategy },
-                        { primary_user: :profile }
+                        { policy_quotes: { policy_application: :billing_strategy } },
+                        { policy_application: :billing_strategy }
                       )
 
+        if params[:insurable_id].present?
+          @policies = @policies.where(policy_insurables: { insurable_id: params[:insurable_id] })
+        end
+
         total = @policies.count
-        @policies = @policies.page(params[:pagination][:page]).per(params[:pagination][:per])
+        @policies = @policies.order(created_at: :desc).page(params[:pagination][:page]).per(params[:pagination][:per])
 
         # TODO: Deprecate unless client side support
         response.headers['total-pages'] = @policies.total_pages
