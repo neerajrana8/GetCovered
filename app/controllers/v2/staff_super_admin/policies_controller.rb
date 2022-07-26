@@ -26,6 +26,7 @@ module V2
                         :carrier,
                         :primary_user,
                         :policy_users,
+                        :policy_insurables,
                         { users: :profile },
                         { agency: :billing_strategies },
                         { policy_quotes: :policy_application },
@@ -39,9 +40,13 @@ module V2
                         :policy_application,
                         :policy_users,
                         { agency: :billing_strategies },
-                        { :policy_quotes => { policy_application: :billing_strategy }},
+                        { policy_quotes: { policy_application: :billing_strategy } },
                         { policy_application: :billing_strategy }
                       )
+
+        if params[:insurable_id].present?
+          @policies = @policies.where(policy_insurables: { insurable_id: params[:insurable_id] })
+        end
 
         total = @policies.count
         @policies = @policies.order(created_at: :desc).page(params[:pagination][:page]).per(params[:pagination][:per])
