@@ -57,13 +57,7 @@ module V2
         response.headers['total-entries'] = total
       end
 
-      def show
-        unless params[:id].nil?
-          @policy = Policy.joins(:agency, :policy_quotes, :policy_type)
-                      .preload(:policy_type, :carrier, :account, :policy_quotes, :policy_application, :agency, :insurables)
-                      .find(params[:id])
-        end
-      end
+      def show; end
 
       def search
         @policies = Policy.search(params[:query]).records
