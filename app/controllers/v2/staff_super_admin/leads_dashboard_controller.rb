@@ -111,6 +111,8 @@ module V2
             @stats_by[date_slug][:site_visits] = e.cx
           end
 
+          # Sort hash by date keys
+          @stats_by = @stats_by.sort.to_h
         end
 
         render 'v2/shared/leads/dashboard_index'
