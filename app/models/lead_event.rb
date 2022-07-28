@@ -39,10 +39,13 @@ class LeadEvent < ApplicationRecord
   }
 
   scope :by_created_at, -> (start_date, end_date) {
-    where(created_at: start_date.beginning_of_day..end_date.end_of_day)
+    where(created_at: start_date..end_date)
   }
 
   scope :by_agency, -> (agency_id) { where(agency_id: agency_id) }
+
+  scope :by_policy_type, -> (policy_type_id) { where(policy_type_id: policy_type_id) }
+
 
   private
 
