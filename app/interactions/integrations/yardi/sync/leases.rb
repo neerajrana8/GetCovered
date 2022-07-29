@@ -174,7 +174,7 @@ module Integrations
           # mark defunct those leases which the horrific architecture of Yardi's database requires to be removed from their system when they have been superseded
           # MOOSE WARNING: the 'defunct' boolean is a placeholder architectural solution just to get the feature working. ultimately we should be giving these leases a special status and doing something to their IPs...
           IntegrationProfile.where(integration: integration, external_context: 'lease', profileable: unit.leases.where(defunct: false)).where.not(external_id: in_system).each do |lip|
-            lip.profileable.update(defunct: true)
+            lip.profileable.update(defunct: true, status: 'expired')
           end
           # update expired old leases
           in_system_lips = IntegrationProfile.references(:leases).includes(:lease).where(integration: integration, external_context: 'lease', external_id: past_tenants.map{|l| l['Id'] }, profileable_type: "Lease", leases: { status: ['current', 'pending'] })
