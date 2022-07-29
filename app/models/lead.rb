@@ -64,13 +64,13 @@ class Lead < ApplicationRecord
     where(last_visit: start_date..end_date)
   }
 
-  scope :group_trunc_day_by_last_visit, -> {
-    group("DATE_TRUNC('day', last_visit)::date")
+  scope :group_trunc_day_by_last_visit, ->(trunc_by = 'day') {
+    group("DATE_TRUNC('#{trunc_by}', last_visit)::date")
   }
 
-  scope :grouped_by_last_visit, -> {
-    select(Arel.sql("date_trunc('day', last_visit)::date as last_visit, #{STATUS_CASE_SQL}")).
-      group_trunc_day_by_last_visit
+  scope :grouped_by_last_visit, ->(trunc_by = 'day') {
+    select(Arel.sql("date_trunc('#{trunc_by}', last_visit)::date as last_visit, #{STATUS_CASE_SQL}")).
+      group_trunc_day_by_last_visit(trunc_by)
   }
 
   scope :actual, -> {
@@ -122,9 +122,9 @@ class Lead < ApplicationRecord
         SUM(CASE WHEN (status = 2 OR status = 0) then 1 else 0 end) AS visitors
   SQL
 
-  def self.get_stats(date_from, date_to, agency_id, branding_profile_id, account_id, leads_ids)
+  def self.get_stats(range, agency_id, branding_profile_id, account_id, leads_ids)
     sql = "SELECT #{STATUS_CASE_SQL} FROM leads"
-    sql += " WHERE last_visit BETWEEN '#{date_from}' AND '#{date_to}'"
+    sql += " WHERE last_visit BETWEEN '#{range[0]}' AND '#{range[1]}'"
     sql += " AND agency_id IN (#{agency_id.join(',')})" unless agency_id.nil?
     sql += ' AND archived = False'
     sql += " AND (email != '' OR email IS NOT NULL)"
