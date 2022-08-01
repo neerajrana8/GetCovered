@@ -38,7 +38,7 @@ module Integrations
                 # we want to use an email
                 if !email_bearer.nil?
                   # try to remove the email from the email-bearer
-                  unmodifiable = !ALLOW_USER_CHANGE || !primary || email_bearer.sign_in_count > 0 || email_bearer.lease_users.where(primary: true).count > 0 || email_bearer.integration_profiles.where(provider: 'yardi').count == 0
+                  unmodifiable = !ALLOW_USER_CHANGE || !primary || (email_bearer.sign_in_count > 0) || email_bearer.lease_users.where(primary: true).count > 0 || email_bearer.integration_profiles.where(provider: 'yardi').count == 0
                   unless unmodifiable
                     abandon_attempt = false
                     abandon_attempt = true unless email_bearer.profile.update(contact_email: email_bearer.email)
