@@ -182,7 +182,7 @@ module Integrations
             rec = past_tenants.find{|l| l['Id'] == ip.external_id }
             l = ip.lease
             found_leases[ip.external_id] = l
-            if l.update({ end_date: rec["LeaseTo"].blank? ? Time.current.to_date : Date.parse(rec["LeaseTo"]), status: 'expired' }.compact)
+            if l.update({ insurable_id: unit.id, end_date: rec["LeaseTo"].blank? ? Time.current.to_date : Date.parse(rec["LeaseTo"]), status: 'expired' }.compact)
               expired_leases[ip.external_id] = l
             else
               lease_errors[ip.external_id] = "Failed to mark lease (GC id #{l.id}) expired: #{l.errors.to_h}"
@@ -197,6 +197,7 @@ module Integrations
               lease_ip = IntegrationProfile.where(integration: integration, external_context: 'lease', external_id: tenant["Id"]).take
               lease = lease_ip.profileable
               # fix basic data
+              lease.insurable_id = unit.id
               lease.start_date = Date.parse(tenant["LeaseFrom"]) unless tenant["LeaseFrom"].blank?
               lease.end_date = Date.parse(tenant["LeaseTo"]) unless tenant["LeaseTo"].blank?
               lease.defunct = false # just in case it was once missing from yardi and now is magically back
