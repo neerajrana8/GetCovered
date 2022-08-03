@@ -57,8 +57,38 @@ class Claim < ApplicationRecord
 
   enum type_of_loss: { OTHER: 0, FIRE: 1, WATER: 2, THEFT: 3 }
 
+  scope :by_created_at, ->(start_date, end_date) {
+    where(created_at: start_date..end_date)
+  }
+
   def claimant_full_name
     claimant&.profile&.full_name
+  end
+
+  def self.get_stats(date_from, date_to, units)
+    sql =
+      <<~SQL.freeze
+        SELECT type_of_loss,
+        SUM(CASE WHEN status = 0 then 1 else 0 end) AS pending,
+        SUM(CASE WHEN status = 1 then 1 else 0 end) AS approved,
+        SUM(CASE WHEN status = 2 then 1 else 0 end) AS declined
+        FROM claims
+        WHERE created_at BETWEEN '#{date_from}' AND '#{date_to}'
+        AND insurable_id IN (#{units.join(',')})
+        GROUP BY type_of_loss
+      SQL
+
+    record = ActiveRecord::Base.connection.execute(sql)
+    stats = {}
+    tps = Claim.type_of_losses.invert
+    record.each do |r|
+      stats[tps[r['type_of_loss']]] = [
+        r['pending'],
+        r['approved'],
+        r['declined']
+      ]
+    end
+    stats
   end
 
   private
