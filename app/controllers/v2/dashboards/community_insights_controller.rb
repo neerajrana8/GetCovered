@@ -43,7 +43,8 @@ module V2
         policies_total = master_policies_for_units_total + gc_policies_for_units_total + foreign_policies_for_units_total
 
         claims = Claim.where(insurable_id: units).by_created_at(date_from, date_to)
-        claims_paid = claims.sum(:amount)
+        claims_amount_total = claims.sum(:amount)
+        claims_approved_cx = claims.where(status: :approved).count
         claims_cx = claims.count
 
         claims_grouped = claims.group(:type_of_loss).count
@@ -53,7 +54,8 @@ module V2
 
         @claims_data = {
           total: claims_cx,
-          paid: claims_paid,
+          paid_amount: claims_amount_total,
+          paid_percentage: ((claims_approved_cx.to_f / claims_cx.to_f) * 100).round(2),
           by_type_of_loss: claims_grouped,
           by_status: claims_by_status,
           by_type_of_loss_by_status_charts: claim_stats
