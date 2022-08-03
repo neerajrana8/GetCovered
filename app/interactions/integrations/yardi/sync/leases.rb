@@ -200,7 +200,9 @@ module Integrations
               lease.insurable_id = unit.id
               lease.start_date = Date.parse(tenant["LeaseFrom"]) unless tenant["LeaseFrom"].blank?
               lease.end_date = Date.parse(tenant["LeaseTo"]) unless tenant["LeaseTo"].blank?
-              lease.defunct = false # just in case it was once missing from yardi and now is magically back
+              lease.defunct = false # just in case it was once missing from yardi and now is magically back, for example if it got moved to a different unit. likewise, update statuses in case someone defuncted and expired us previously because we jumped units
+              lease.status = 'current' if (lease.end_date.nil? || lease.end_date > Time.current.to_date) && RESIDENT_STATUSES['present'].include?(tenant["Status"])
+              lease.status = 'pending' if (lease.end_date.nil? || lease.end_date > Time.current.to_date) && RESIDENT_STATUSES['future'].include?(tenant["Status"]) || RESIDENT_STATUSES['potential'].include?(tenant["Status"])
               lease.save if lease.changed?
               user_profiles = IntegrationProfile.where(integration: integration, profileable: lease.users).to_a
               # take any tenants that don't correspond to a user, construct/find a user for them, and set up LeaseUser stuff appropriately
