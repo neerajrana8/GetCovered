@@ -21,8 +21,8 @@ module V2
           date_to = date_to_dt.end_of_day.utc.strftime(date_utc_format)
         end
 
-        if params[:insurable_id].present?
-          units = Insurable.where(insurable_id: params[:insurable_id], occupied: true).pluck(:id) if params[:insurable_id].present?
+        if filter[:insurable_id].present?
+          units = Insurable.where(insurable_id: filter[:insurable_id], occupied: true).pluck(:id) if filter[:insurable_id].present?
         else
           units = Insurable.where(occupied: true).pluck(:id)
         end
