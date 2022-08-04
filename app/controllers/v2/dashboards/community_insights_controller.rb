@@ -4,7 +4,7 @@ module V2
   module Dashboards
     # Community insights controller
     class CommunityInsightsController < ApplicationController
-      before_action :check_permissions
+      # before_action :check_permissions
 
       def stats
         @data = {}
