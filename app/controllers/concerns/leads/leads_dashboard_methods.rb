@@ -66,7 +66,7 @@ module Leads
 
       if filter[:account_id].present?
         leads_ids = leads.pluck(:id)
-        lead_events = LeadEvent.where(lead_id: leads_ids) unless leads_ids.count.zero?
+        lead_events = lead_events.where(lead_id: leads_ids) unless leads_ids.count.zero?
       end
 
       leads_filtered = []
@@ -91,7 +91,7 @@ module Leads
         leads_filtered = lead_data.pluck(:lead_id)
         leads = leads.where(id: leads_filtered) unless leads_filtered.count.zero?
 
-        lead_events = LeadEvent.where(lead_id: leads_filtered)
+        lead_events = lead_events.where(lead_id: leads_filtered)
       end
 
       lead_events_total = lead_events.count
