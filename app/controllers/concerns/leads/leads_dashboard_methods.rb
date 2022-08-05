@@ -76,8 +76,9 @@ module Leads
       leads_cx = leads.not_converted.count
       leads_ids = leads.pluck(:id)
 
+      lead_events_total = 0
       lead_events = LeadEvent.where(lead_id: leads_ids) unless leads_ids.count.zero?
-      lead_events_total = lead_events.count
+      lead_events_total = lead_events.count unless lead_events.blank?
 
       total_by_status = Lead.get_stats(
         [date_from, date_to],
@@ -97,7 +98,7 @@ module Leads
       unless total_by_status.nil?
 
         total_by_status_grouped = leads.grouped_by_last_visit(trunc_by)
-        lead_events_grouped = lead_events.grouped_by_created_at(trunc_by)
+        lead_events_grouped = lead_events.grouped_by_created_at(trunc_by) unless lead_events.blank?
 
         @stats = {
           leads: leads_cx,
@@ -121,10 +122,12 @@ module Leads
           }
         end
 
-        lead_events_grouped.each do |e|
-          date_slug = e.created_at.strftime(date_slug_format)
-          @stats_by[date_slug] ||= {}
-          @stats_by[date_slug][:site_visits] = e.cx
+        if lead_events.present?
+          lead_events_grouped.each do |e|
+            date_slug = e.created_at.strftime(date_slug_format)
+            @stats_by[date_slug] ||= {}
+            @stats_by[date_slug][:site_visits] = e.cx
+          end
         end
 
         # Sort hash by date keys
