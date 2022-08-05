@@ -34,8 +34,7 @@ class LeadEvent < ApplicationRecord
   }
 
   scope :grouped_by_created_at, ->(trunc_by = 'day') {
-    select(Arel.sql("date_trunc('#{trunc_by}', created_at)::date as created_at, COUNT(id) as cx")).
-      group_trunc_day_by_created_at(trunc_by)
+    select(Arel.sql("date_trunc('#{trunc_by}', created_at)::date as created_at, COUNT(id) as cx")).group('created_at')
   }
 
   scope :by_created_at, ->(start_date, end_date) {

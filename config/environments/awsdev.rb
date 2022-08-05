@@ -52,6 +52,12 @@ Rails.application.configure do
   # Use a different cache store in production.
   # config.cache_store = :mem_cache_store
 
+  # Add Redis Cache Store
+  redis_host = Rails.application.credentials.redis[ENV["RAILS_ENV"].to_sym][:host]
+  redis_port = Rails.application.credentials.redis[ENV["RAILS_ENV"].to_sym][:port]
+  redis_cache_url = "#{redis_host}:#{redis_port}"
+  config.cache_store = :redis_cache_store, { url: redis_cache_url }
+
   # Use a real queuing backend for Active Job (and separate queues per environment)
   # config.active_job.queue_adapter     = :resque
   # config.active_job.queue_name_prefix = "GetCovered_#{Rails.env}"
