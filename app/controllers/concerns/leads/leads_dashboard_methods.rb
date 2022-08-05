@@ -48,7 +48,6 @@ module Leads
           filter[:tracking_url].each do |v|
             tracking_urls = tracking_urls.where("#{v.first} IN (?)", v.last.join(','))
           end
-          Rails.logger.info "#DEBUG #{tracking_urls.to_sql}"
           tracking_url_ids = tracking_urls.pluck(:id)
           leads = leads.where(tracking_url_id: tracking_url_ids)
         end
