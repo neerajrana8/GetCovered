@@ -23,9 +23,7 @@ module Leads
 
       @stats_by = {}
 
-      if params[:filter]
-        filter = params[:filter]
-      end
+      filter = params[:filter] if params[:filter].present?
 
       # Role attributes filters
       if current_staff.role == 'staff' && !current_staff.getcovered_agent?
@@ -43,6 +41,22 @@ module Leads
         leads = leads.by_agency(filter[:agency_id]) unless filter[:agency_id].nil?
         leads = leads.by_account(filter[:account_id]) unless filter[:account_id].nil?
         leads = leads.by_branding_profile(filter[:branding_profile_id]) unless filter[:branding_profile_id].nil?
+
+        # Tracking urls and parameters filtering
+        tracking_urls = TrackingUrl.all
+        if filter[:tracking_url].present?
+          filter[:tracking_url].each do |v|
+            tracking_urls = tracking_urls.where("#{v.first} IN (?)", v.last.join(','))
+          end
+          Rails.logger.info "#DEBUG #{tracking_urls.to_sql}"
+          tracking_url_ids = tracking_urls.pluck(:id)
+          leads = leads.where(tracking_url_id: tracking_url_ids)
+        end
+
+        if filter[:lead_events].present?
+          leads = leads.includes(:lead_events)
+                    .where(lead_events: { policy_type_id: filter[:lead_events][:policy_type_id] })
+        end
       end
 
       # Date diff in months
@@ -60,40 +74,9 @@ module Leads
 
       leads = leads.by_last_visit(date_from, date_to)
       leads_cx = leads.not_converted.count
+      leads_ids = leads.pluck(:id)
 
-      lead_events = LeadEvent.by_created_at(date_from, date_to)
-      lead_events = lead_events.by_agency(filter[:agency_id]) unless filter[:agency_id].nil?
-
-      if filter[:account_id].present?
-        leads_ids = leads.pluck(:id)
-        lead_events = lead_events.where(lead_id: leads_ids) unless leads_ids.count.zero?
-      end
-
-      leads_filtered = []
-
-      # Policy Type filter
-      if filter[:lead_events].present?
-
-        lead_data = Lead.select(:id).distinct(:id).presented.not_converted
-                      .includes(:account, :agency, :branding_profile, :lead_events).preload(:lead_events)
-        lead_data = lead_data
-                      .where(
-                        lead_events: { policy_type_id: filter[:lead_events][:policy_type_id] },
-                        last_visit: date_from..date_to,
-                        archived: false
-                      )
-        lead_data = lead_data.where(agency: filter[:agency_id]) unless filter[:agency_id].nil?
-        lead_data = lead_data.where(account_id: filter[:account_id]) unless filter[:account_id].nil?
-        lead_data = lead_data.where(branding_profile_id: filter[:branding_profile_id]) unless filter[:branding_profile_id].nil?
-
-        lead_data_cx = lead_data.count
-        leads_cx = lead_data_cx
-        leads_filtered = lead_data.pluck(:lead_id)
-        leads = leads.where(id: leads_filtered) unless leads_filtered.count.zero?
-
-        lead_events = lead_events.where(lead_id: leads_filtered)
-      end
-
+      lead_events = LeadEvent.where(lead_id: leads_ids) unless leads_ids.count.zero?
       lead_events_total = lead_events.count
 
       total_by_status = Lead.get_stats(
@@ -101,7 +84,7 @@ module Leads
         filter[:agency_id],
         filter[:branding_profile_id],
         filter[:account_id],
-        leads_filtered
+        leads_ids
       )
 
       # Prepare charts data
