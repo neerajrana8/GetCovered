@@ -183,7 +183,7 @@ module V2
 
       def filter_params
         to_return = params.permit(filter: [:policy_type_id, :carrier_id, title: [:like]])
-        to_return[:filter]
+        to_return[:filter] || {}
       end
 
       def create_params
