@@ -1,3 +1,18 @@
+# == Schema Information
+#
+# Table name: reports
+#
+#  id              :bigint           not null, primary key
+#  duration        :integer
+#  range_start     :datetime
+#  range_end       :datetime
+#  data            :jsonb
+#  reportable_type :string
+#  reportable_id   :bigint
+#  created_at      :datetime         not null
+#  updated_at      :datetime         not null
+#  type            :string
+#
 module Reports
   # This report is available for agencies and accounts.
   # Maximum communities in report is ~1_000_000, because jsonb can't store JSON bigger than ~200MB.

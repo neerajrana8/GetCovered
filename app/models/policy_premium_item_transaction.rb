@@ -1,5 +1,23 @@
-
-
+# == Schema Information
+#
+# Table name: policy_premium_item_transactions
+#
+#  id                         :bigint           not null, primary key
+#  pending                    :boolean          default(TRUE), not null
+#  create_commission_items_at :datetime         not null
+#  amount                     :integer          not null
+#  error_info                 :jsonb
+#  created_at                 :datetime         not null
+#  updated_at                 :datetime         not null
+#  recipient_type             :string
+#  recipient_id               :bigint
+#  commissionable_type        :string
+#  commissionable_id          :bigint
+#  reason_type                :string
+#  reason_id                  :bigint
+#  policy_premium_item_id     :bigint
+#  analytics_category         :integer          default("other"), not null
+#
 class PolicyPremiumItemTransaction < ApplicationRecord
   include FinanceAnalyticsCategory # provides analytics_category enum
 

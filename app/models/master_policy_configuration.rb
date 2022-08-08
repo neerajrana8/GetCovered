@@ -1,3 +1,27 @@
+# == Schema Information
+#
+# Table name: master_policy_configurations
+#
+#  id                         :bigint           not null, primary key
+#  program_type               :integer          default("auto")
+#  grace_period               :integer          default(0)
+#  integration_charge_code    :string
+#  prorate_charges            :boolean          default(FALSE)
+#  auto_post_charges          :boolean          default(TRUE)
+#  consolidate_billing        :boolean          default(TRUE)
+#  program_start_date         :datetime
+#  program_delay              :integer          default(0)
+#  placement_cost             :integer          default(0)
+#  force_placement_cost       :integer
+#  carrier_policy_type_id     :bigint           not null
+#  configurable_type          :string           not null
+#  configurable_id            :bigint           not null
+#  created_at                 :datetime         not null
+#  updated_at                 :datetime         not null
+#  enabled                    :boolean          default(FALSE)
+#  integration_account_number :string
+#  lease_violation_only       :boolean          default(TRUE)
+#
 # Master Policy Configuration model
 # file: app/models/master_policy_configuration.rb
 #

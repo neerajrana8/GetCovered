@@ -1,3 +1,17 @@
+# == Schema Information
+#
+# Table name: model_errors
+#
+#  id          :bigint           not null, primary key
+#  model_type  :string
+#  model_id    :bigint
+#  kind        :string
+#  information :jsonb
+#  created_at  :datetime         not null
+#  updated_at  :datetime         not null
+#  backtrace   :jsonb
+#  description :text
+#
 class ModelError < ApplicationRecord
   after_create :send_error_notification
 

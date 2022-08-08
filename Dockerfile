@@ -12,10 +12,12 @@ RUN apt-get update && apt-get install -y \
   imagemagick
 
 # Use en_US.UTF8 as our locale
-RUN locale-gen en_US.UTF8
-ENV LANG en_US.UTF8
+RUN sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen && \
+    locale-gen
+RUN locale-gen en_US.UTF-8
+ENV LANG en_US.UTF-8
 ENV LANGUAGE en_US:en
-ENV LC_ALL en_US.UTF8
+ENV LC_ALL en_US.UTF-8
 
 # Configure the main working directory. This is the base
 # directory used in any further RUN, COPY, and ENTRYPOINT

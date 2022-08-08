@@ -1,3 +1,19 @@
+# == Schema Information
+#
+# Table name: lead_events
+#
+#  id                  :bigint           not null, primary key
+#  data                :jsonb
+#  tag                 :string
+#  latitude            :float
+#  longitude           :float
+#  lead_id             :bigint
+#  created_at          :datetime         not null
+#  updated_at          :datetime         not null
+#  policy_type_id      :bigint
+#  agency_id           :bigint
+#  branding_profile_id :integer
+#
 class LeadEvent < ApplicationRecord
 
   #include ElasticsearchSearchable
@@ -12,6 +28,24 @@ class LeadEvent < ApplicationRecord
   after_create :update_lead_phone, if: -> {self.data["phone"].present? && self.data["phone"] != self.lead.profile.contact_phone}
   after_create :update_lead_organization, if: -> {self.data["employer_name"].present? && self.data["employer_name"] != self.lead.profile.title}
   after_create :update_lead_job_title, if: -> {self.data["employment_description"].present? && self.data["employment_description"] != self.lead.profile.job_title}
+
+  scope :group_trunc_day_by_created_at, ->(trunc_by = 'day') {
+    group("DATE_TRUNC('#{trunc_by}', created_at)::date")
+  }
+
+  scope :grouped_by_created_at, ->(trunc_by = 'day') {
+    select(Arel.sql("date_trunc('#{trunc_by}', created_at)::date as created_at, COUNT(id) as cx")).
+      group_trunc_day_by_created_at(trunc_by)
+  }
+
+  scope :by_created_at, ->(start_date, end_date) {
+    where(created_at: start_date..end_date)
+  }
+
+  scope :by_agency, -> (agency_id) { where(agency_id: agency_id) }
+
+  scope :by_policy_type, -> (policy_type_id) { where(policy_type_id: policy_type_id) }
+
 
   private
 

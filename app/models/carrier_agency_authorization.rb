@@ -1,3 +1,16 @@
+# == Schema Information
+#
+# Table name: carrier_agency_authorizations
+#
+#  id                 :bigint           not null, primary key
+#  state              :integer
+#  available          :boolean          default(FALSE), not null
+#  zip_code_blacklist :jsonb
+#  carrier_agency_id  :bigint
+#  policy_type_id     :bigint
+#  created_at         :datetime         not null
+#  updated_at         :datetime         not null
+#
 ##
 # Carrier Agency Authorization Model
 # file: +app/models/carrier_agency_authorization.rb+

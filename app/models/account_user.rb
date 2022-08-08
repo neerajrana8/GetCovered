@@ -1,3 +1,14 @@
+# == Schema Information
+#
+# Table name: account_users
+#
+#  id         :bigint           not null, primary key
+#  status     :integer          default("pending")
+#  account_id :bigint
+#  user_id    :bigint
+#  created_at :datetime         not null
+#  updated_at :datetime         not null
+#
 # Account User Model
 # file: app/models/account_user.rb
 

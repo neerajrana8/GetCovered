@@ -1,5 +1,22 @@
 # frozen_string_literal: true
 
+# == Schema Information
+#
+# Table name: tracking_urls
+#
+#  id                  :bigint           not null, primary key
+#  landing_page        :string
+#  campaign_source     :string
+#  campaign_medium     :string
+#  campaign_term       :string
+#  campaign_content    :text
+#  campaign_name       :string
+#  deleted             :boolean          default(FALSE)
+#  agency_id           :bigint
+#  created_at          :datetime         not null
+#  updated_at          :datetime         not null
+#  branding_profile_id :integer
+#
 class TrackingUrl < ApplicationRecord
   has_many :leads
 

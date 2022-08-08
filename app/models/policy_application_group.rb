@@ -1,3 +1,23 @@
+# == Schema Information
+#
+# Table name: policy_application_groups
+#
+#  id                        :bigint           not null, primary key
+#  created_at                :datetime         not null
+#  updated_at                :datetime         not null
+#  policy_applications_count :integer
+#  status                    :integer          default("in_progress")
+#  account_id                :bigint
+#  agency_id                 :bigint
+#  effective_date            :date
+#  expiration_date           :date
+#  auto_renew                :boolean          default(FALSE)
+#  auto_pay                  :boolean          default(FALSE)
+#  billing_strategy_id       :bigint
+#  policy_group_id           :bigint
+#  carrier_id                :bigint
+#  policy_type_id            :bigint
+#
 class PolicyApplicationGroup < ApplicationRecord
   belongs_to :account, optional: true
   belongs_to :agency, optional: true

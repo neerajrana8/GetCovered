@@ -42,7 +42,7 @@ module V2
 
       def set_substrate
         if @substrate.nil?
-          @substrate = access_model(::Lead).presented.not_converted.includes(:profile, :tracking_url)
+          @substrate = access_model(::Lead).presented.not_converted.includes(:profile, :tracking_url).preload(:lead_events)
           # need to delete after fix on ui
           # if params[:filter].present? && params[:filter][:archived]
           #  @substrate = access_model(::Lead).presented.not_converted.archived.includes(:profile, :tracking_url)
