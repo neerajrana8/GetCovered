@@ -11,7 +11,7 @@ namespace :leads do
         time_series = {}
         lead_events_grouped = lead_events.grouped_by_created_at
         lead_events_grouped.each do |g|
-          date_slug = g.created_at.strftime(date_slug_format)
+          date_slug = g.created_at.utc.strftime(date_slug_format)
           time_series[date_slug] ||= 0
           time_series[date_slug] += g.cx
         end
