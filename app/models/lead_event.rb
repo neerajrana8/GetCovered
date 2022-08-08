@@ -29,6 +29,7 @@ class LeadEvent < ApplicationRecord
   after_create :update_lead_organization, if: -> {self.data["employer_name"].present? && self.data["employer_name"] != self.lead.profile.title}
   after_create :update_lead_job_title, if: -> {self.data["employment_description"].present? && self.data["employment_description"] != self.lead.profile.job_title}
   after_create :update_lead_events_cx
+  after_create :update_lead_events_timeseries
 
   scope :group_trunc_day_by_created_at, ->(trunc_by = 'day') {
     group("DATE_TRUNC('#{trunc_by}', created_at)::date")
@@ -52,6 +53,19 @@ class LeadEvent < ApplicationRecord
   def update_lead_events_cx
     cx = lead.lead_events_cx + 1
     lead.update_columns(lead_events_cx: cx)
+  end
+
+  def update_lead_events_timeseries
+    date_slug_format = '%Y-%m-%d'
+    date_slug = created_at.strftime(date_slug_format)
+    ts = lead.lead_events_timeseries
+    ts = { date_slug => 1 } if ts.nil?
+    if ts[date_slug].blank?
+      ts[date_slug] = 1
+    else
+      ts[date_slug] += 1
+    end
+    lead.update_columns(lead_events_timeseries: ts)
   end
 
   def update_lead_last_visit
