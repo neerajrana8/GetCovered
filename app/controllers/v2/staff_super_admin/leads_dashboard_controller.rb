@@ -85,7 +85,7 @@ module V2
             tracking_urls = TrackingUrl.all
             if filter[:tracking_url].present?
               filter[:tracking_url].each do |v|
-                tracking_urls = tracking_urls.where("#{v.first} IN (?)", v.last.join(','))
+                tracking_urls = tracking_urls.where("#{v.first} IN (?)", v.last)
               end
               tracking_url_ids = tracking_urls.pluck(:id)
               leads = leads.where(tracking_url_id: tracking_url_ids)
