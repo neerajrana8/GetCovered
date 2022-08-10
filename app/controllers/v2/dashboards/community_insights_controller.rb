@@ -10,6 +10,7 @@ module V2
         @data = {}
         date_from = DateTime.now - 5.year
         date_to = DateTime.now
+        date_utc_format = '%Y-%m-%d %H:%M:%S'
 
         filter = {}
         filter = params[:filter] if params[:filter].present?
