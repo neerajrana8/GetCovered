@@ -138,7 +138,7 @@ module V2
               customers: total_by_status['converted'],
               applications: total_by_status['applications'],
               not_finished_applications: total_by_status['not_finished_applications'],
-              visitors: total_by_status['prospected'] + total_by_status['not_converted'],
+              visitors: total_by_status['converted'] + total_by_status['not_converted'],
               conversions: total_by_status['converted']
             }
 
@@ -152,7 +152,7 @@ module V2
                 applications: s.applications,
                 not_finished_applications: s.not_finished_applications,
                 conversions: s.converted,
-                visitors: s.prospected + s.not_converted,
+                visitors: s.converted + s.not_converted,
                 site_visits: site_visits
               }
             end
