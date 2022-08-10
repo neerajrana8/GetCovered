@@ -25,14 +25,21 @@ module V2
         if filter[:insurable_id].present?
           units = Insurable.where(insurable_id: filter[:insurable_id], occupied: true).pluck(:id) if filter[:insurable_id].present?
         else
-          units = Insurable.where(occupied: true).pluck(:id)
+          units = []
         end
 
         units_cx = units.count
-        policies = PolicyInsurable.joins(:policy).where(insurable_id: units).where('policies.expiration_date > ?', Date.today)
+        policies =
+          PolicyInsurable
+            .joins(:policy)
+            .where('policies.expiration_date > ?', Date.today)
 
-        master_policies_for_units = policies.where(policies: { policy_type_id: PolicyType::MASTER_IDS })
-                                      .pluck(:policy_id)
+        policies = policies.where(insurable_id: units) unless units.count.zero?
+
+        master_policies_for_units =
+          policies
+            .where(policies: { policy_type_id: PolicyType::MASTER_IDS })
+            .pluck(:policy_id)
 
         master_policies_for_units_total = master_policies_for_units.count
 
