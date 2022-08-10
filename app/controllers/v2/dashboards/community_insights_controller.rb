@@ -43,7 +43,8 @@ module V2
 
         policies_total = master_policies_for_units_total + gc_policies_for_units_total + foreign_policies_for_units_total
 
-        claims = Claim.where(insurable_id: units).by_created_at(date_from, date_to)
+        claims = Claim.by_created_at(date_from, date_to)
+        claims = claims.where(insurable_id: units) unless units.count.zero?
         claims_amount_total = claims.sum(:amount)
         claims_approved_cx = claims.where(status: :approved).count
         claims_cx = claims.count
