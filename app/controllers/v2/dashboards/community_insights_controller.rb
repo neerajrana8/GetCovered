@@ -22,19 +22,20 @@ module V2
           date_to = date_to_dt.end_of_day.utc.strftime(date_utc_format)
         end
 
-        if filter[:insurable_id].present?
-          units = Insurable.where(insurable_id: filter[:insurable_id], occupied: true).pluck(:id) if filter[:insurable_id].present?
-        else
-          units = []
-        end
+        units =
+          if filter[:insurable_id].present?
+            Insurable.where(id: filter[:insurable_id], occupied: true)
+          else
+            Insurable.where(occupied: true, insurable_type_id: InsurableType::UNITS_IDS)
+          end
 
-        units_cx = units.count
+        units_ids = units.pluck(:id)
+        units_cx = units_ids.count
         policies =
           PolicyInsurable
             .joins(:policy)
+            .where(insurable_id: units_ids)
             .where('policies.expiration_date > ?', Date.today)
-
-        policies = policies.where(insurable_id: units) unless units.count.zero?
 
         master_policies_for_units =
           policies
@@ -51,7 +52,7 @@ module V2
         policies_total = master_policies_for_units_total + gc_policies_for_units_total + foreign_policies_for_units_total
 
         claims = Claim.by_created_at(date_from, date_to)
-        claims = claims.where(insurable_id: units) unless units.count.zero?
+        claims = claims.where(insurable_id: units_ids)
         claims_amount_total = claims.sum(:amount)
         claims_approved_cx = claims.where(status: :approved).count
         claims_cx = claims.count
@@ -59,7 +60,7 @@ module V2
         claims_grouped = claims.group(:type_of_loss).count
         claims_by_status = claims.group(:status).count
 
-        claim_stats = Claim.get_stats(date_from, date_to, units)
+        claim_stats = Claim.get_stats(date_from, date_to, units_ids)
 
         @claims_data = {
           total: claims_cx,
