@@ -51,6 +51,7 @@ class LeadEvent < ApplicationRecord
   private
 
   def update_lead_events_cx
+    lead.lead_events_cx = 0 if lead.lead_events_cx.nil?
     cx = lead.lead_events_cx + 1
     lead.update_columns(lead_events_cx: cx)
   end
