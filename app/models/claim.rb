@@ -74,9 +74,10 @@ class Claim < ApplicationRecord
         SUM(CASE WHEN status = 2 then 1 else 0 end) AS declined
         FROM claims
         WHERE created_at BETWEEN '#{date_from}' AND '#{date_to}'
-        AND insurable_id IN (#{units.join(',')})
-        GROUP BY type_of_loss
       SQL
+
+    sql += "AND insurable_id IN (#{units.join(',')})" unless units.nil?
+    sql += 'GROUP BY type_of_loss'
 
     record = ActiveRecord::Base.connection.execute(sql)
     stats = {}
