@@ -76,7 +76,7 @@ class Claim < ApplicationRecord
         WHERE created_at BETWEEN '#{date_from}' AND '#{date_to}'
       SQL
 
-    sql += "AND insurable_id IN (#{units.join(',')})" unless units.nil?
+    sql += "AND insurable_id IN (#{units.join(',')})" unless units.count.zero?
     sql += 'GROUP BY type_of_loss'
 
     record = ActiveRecord::Base.connection.execute(sql)
