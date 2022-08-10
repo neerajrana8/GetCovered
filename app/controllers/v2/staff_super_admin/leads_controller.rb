@@ -24,11 +24,9 @@ module V2
         date_to = date_to_dt.end_of_day.utc.strftime(date_utc_format)
 
         leads = Lead.all.includes(
-          :agency,
           :profile,
           :tracking_url,
-          :branding_profile,
-          user: :policy_quotes
+          :branding_profile
         )
         leads = leads.by_agency(filter[:agency_id]) unless filter[:agency_id].nil?
         leads = leads.by_account(filter[:account_id]) unless filter[:account_id].nil?
