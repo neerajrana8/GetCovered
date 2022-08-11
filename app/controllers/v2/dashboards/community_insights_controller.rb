@@ -34,6 +34,10 @@ module V2
               Insurable.where(insurable_type_id: InsurableType::UNITS_IDS)
             end
 
+          accounts_ids = current_staff.organizable.accounts if current_staff.role == :agency
+          accounts_ids = current_staff.organizable.id if current_staff.role == :staff
+          units = units.where(account_id: accounts_ids)
+
           units_occupied_ids = units.where(occupied: true).pluck(:id)
           units_cx = units_occupied_ids.count
           policies =
