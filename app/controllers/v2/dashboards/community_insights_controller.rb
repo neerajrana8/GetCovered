@@ -73,7 +73,7 @@ module V2
             claims_data = {
               total: claims_cx,
               paid_amount: claims_amount_total,
-              paid_percentage: ((claims_approved_cx.to_f / claims_cx.to_f) * 100.0).round(1),
+              paid_percentage: (claims_approved_cx.to_f / claims_cx.to_f * 100.0).round(1),
               by_type_of_loss: claims_grouped,
               by_status: claims_by_status,
               by_type_of_loss_by_status_charts: claim_stats
