@@ -6,6 +6,18 @@ module V2
     class CommunityInsightsController < ApplicationController
       # before_action :check_permissions
 
+      CACHE_KEY = 'dashboards_ci'.freeze
+
+      def generate_cache_key(payload)
+        token = []
+        token << CACHE_KEY
+        payload.each do |v|
+          token << v.map { |k| k }
+        end
+        cache_key = token.join('_')
+        cache_key
+      end
+
       def stats
         date_from = DateTime.now - 5.year
         date_to = DateTime.now
@@ -14,7 +26,7 @@ module V2
         filter = {}
         filter = params[:filter] if params[:filter].present?
 
-        cache_key = filter
+        cache_key = generate_cache_key(filter)
 
         stats = Rails.cache.read(cache_key)
         if stats.nil?
