@@ -17,6 +17,7 @@ module V2
         filter = params[:filter] if params[:filter].present?
 
         cache_key = generate_cache_key(CACHE_KEY, filter)
+        cache_key += "_#{current_staff.role}"
 
         stats = Rails.cache.read(cache_key)
         if stats.nil?
