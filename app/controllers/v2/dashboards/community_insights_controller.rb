@@ -3,20 +3,10 @@
 module V2
   module Dashboards
     # Community insights controller
-    class CommunityInsightsController < ApplicationController
-      # before_action :check_permissions
+    class CommunityInsightsController < ApiController
+      before_action :check_permissions
 
       CACHE_KEY = 'dashboards_ci'.freeze
-
-      def generate_cache_key(payload)
-        token = []
-        token << CACHE_KEY
-        payload.each do |v|
-          token << v.map { |k| k }
-        end
-        cache_key = token.join('_')
-        cache_key
-      end
 
       def stats
         date_from = DateTime.now - 5.year
@@ -26,7 +16,7 @@ module V2
         filter = {}
         filter = params[:filter] if params[:filter].present?
 
-        cache_key = generate_cache_key(filter)
+        cache_key = generate_cache_key(CACHE_KEY, filter)
 
         stats = Rails.cache.read(cache_key)
         if stats.nil?
@@ -83,7 +73,7 @@ module V2
             claims_data = {
               total: claims_cx,
               paid_amount: claims_amount_total,
-              paid_percentage: ((claims_approved_cx.to_f / claims_cx.to_f) * 100).round(2),
+              paid_percentage: ((claims_approved_cx.to_f / claims_cx.to_f) * 100.0).round(1),
               by_type_of_loss: claims_grouped,
               by_status: claims_by_status,
               by_type_of_loss_by_status_charts: claim_stats
@@ -95,19 +85,19 @@ module V2
               totals: {
                 units: units_cx,
                 policies: policies_total,
-                coverage: ((policies_total.to_f / units_cx.to_f) * 100).round(2)
+                coverage: (policies_total.to_f / units_cx.to_f * 100.0).round(1)
               },
               master: {
                 policies: master_policies_for_units_total,
-                coverage: ((master_policies_for_units_total.to_f / units_cx.to_f) * 100).round(2)
+                coverage: (master_policies_for_units_total.to_f / units_cx.to_f * 100.0).round(1)
               },
               gc: {
                 policies: gc_policies_for_units_total,
-                coverage: ((gc_policies_for_units_total.to_f / units_cx.to_f) * 100).round(2)
+                coverage: (gc_policies_for_units_total.to_f / units_cx.to_f * 100.0).round(1)
               },
               third_party: {
                 policies: foreign_policies_for_units_total,
-                coverage: ((foreign_policies_for_units_total.to_f / units_cx.to_f) * 100).round(2)
+                coverage: (foreign_policies_for_units_total.to_f / units_cx.to_f * 100.0).round(1)
               }
             },
             claims: claims_data
@@ -121,7 +111,7 @@ module V2
       private
 
       def check_permissions
-        if current_staff && current_staff.role == :super_admin
+        if current_staff && %(super_admin, staff, agent).include?(current_staff.role)
           true
         else
           render json: { error: 'Permission denied' }, status: 403
