@@ -8,7 +8,7 @@ profile = lead.profile
 
 json.extract! profile, :first_name, :last_name if profile.present?
 
-json.interested_product lead.title
+json.interested_product lead&.title
 
 tracking_url = lead.tracking_url
 
