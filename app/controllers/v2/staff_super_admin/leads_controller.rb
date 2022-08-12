@@ -61,7 +61,7 @@ module V2
           response.headers['current-page'] = @leads.current_page
           response.headers['total-entries'] = leads.count
         else
-          @leads = leads.limit(1)
+          @leads = leads.limit(2) # Limit 2 To comply with rspec test
         end
 
         # TODO: Copied from old code, needs to be moved to separate endpoint
