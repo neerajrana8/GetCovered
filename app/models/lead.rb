@@ -20,7 +20,9 @@
 #
 class Lead < ApplicationRecord
 
+  include Filterable
   include RecordChange
+
 
   #TODO: move to config file
   PAGES_RENT_GUARANTEE = ['Landing Page', 'Eligibility Page', 'Basic Info Page', 'Eligibility Requirements Page', 'Address Page', 'Employer Page',
@@ -59,16 +61,16 @@ class Lead < ApplicationRecord
   scope :with_user, -> { where.not(user_id: nil) }
 
   scope :by_last_visit, ->(start_date, end_date) {
-    where(last_visit: start_date.beginning_of_day..end_date.end_of_day)
+    where(last_visit: start_date..end_date)
   }
 
-  scope :group_trunc_day_by_last_visit, -> {
-    group("DATE_TRUNC('day', last_visit)::date")
+  scope :group_trunc_day_by_last_visit, ->(trunc_by = 'day') {
+    group("DATE_TRUNC('#{trunc_by}', last_visit)::date")
   }
 
-  scope :grouped_by_last_visit, -> {
-    select(Arel.sql("date_trunc('day', last_visit)::date as last_visit, #{STATUS_CASE_SQL}")).
-      group_trunc_day_by_last_visit
+  scope :grouped_by_last_visit, ->(trunc_by = 'day') {
+    select(Arel.sql("date_trunc('#{trunc_by}', last_visit)::date as last_visit, #{STATUS_CASE_SQL}")).
+      group_trunc_day_by_last_visit(trunc_by)
   }
 
   scope :actual, -> {
@@ -79,7 +81,14 @@ class Lead < ApplicationRecord
     where(archived: true)
   }
 
+  scope :presented, -> {
+    where.not(email: [nil, ''])
+  }
+
   scope :by_agency, ->(agency_id) { where(agency_id: agency_id) }
+  scope :by_account, ->(account_id) { where(account_id: account_id) }
+  scope :by_branding_profile, ->(branding_profile_id) { where(branding_profile_id: branding_profile_id) }
+
 
   scope :join_last_events, -> {
     from(
@@ -103,7 +112,7 @@ class Lead < ApplicationRecord
         SUM(CASE WHEN status = 0 then 1 else 0 end) AS prospected,
         SUM(CASE WHEN status = 1 then 1 else 0 end) AS returned,
         SUM(CASE WHEN status = 2 then 1 else 0 end) AS converted,
-        SUM(CASE WHEN status != 4 then 1 else 0 end) AS not_converted,
+        SUM(CASE WHEN status != 2 then 1 else 0 end) AS not_converted,
         SUM(CASE WHEN status = 3 then 1 else 0 end) AS lost,
         SUM(CASE WHEN status = 4 then 1 else 0 end) AS archived,
         SUM(CASE WHEN (status != 4 AND last_visited_page IN ('Payment Page', 'Payment Section')) then 1 else 0 end)
@@ -113,11 +122,15 @@ class Lead < ApplicationRecord
         SUM(CASE WHEN (status = 2 OR status = 0) then 1 else 0 end) AS visitors
   SQL
 
-  def self.get_stats(date_from, date_to, agency_id)
-    sql = "SELECT #{STATUS_CASE_SQL} FROM leads
-WHERE last_visit BETWEEN '#{date_from}' AND '#{date_to}'"
-
+  def self.get_stats(range, agency_id, branding_profile_id, account_id, leads_ids)
+    sql = "SELECT #{STATUS_CASE_SQL} FROM leads"
+    sql += " WHERE last_visit BETWEEN '#{range[0]}' AND '#{range[1]}'"
     sql += " AND agency_id IN (#{agency_id.join(',')})" unless agency_id.nil?
+    sql += ' AND archived = False'
+    sql += " AND (email != '' OR email IS NOT NULL)"
+    sql += " AND branding_profile_id IN (#{branding_profile_id.join(',')})" unless branding_profile_id.nil?
+    sql += " AND account_id IN (#{account_id.join(',')})" unless account_id.nil?
+    sql += " AND id IN (#{leads_ids.join(',')})" unless leads_ids.count.zero?
 
     record = ActiveRecord::Base.connection.execute(sql)
     record.first unless record.first.values.compact.empty?

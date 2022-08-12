@@ -60,6 +60,7 @@ module Leads
 
     # need to refactor
     def site_visits(leads)
+      return 0
       visits = 0
       leads.each do |lead|
         visits += lead.lead_events.order('DATE(created_at)').group('DATE(created_at)').count.keys.size
