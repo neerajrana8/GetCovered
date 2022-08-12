@@ -960,16 +960,9 @@ ActiveRecord::Schema.define(version: 2022_08_05_151112) do
     t.bigint "agency_id"
     t.integer "branding_profile_id"
     t.bigint "session_id"
-    t.index "date_trunc('day'::text, created_at), lead_id, id", name: "lead_events_date_trunc_lead_id_id_idx"
-    t.index "date_trunc('month'::text, created_at)", name: "lead_events_date_trunc_idx"
-    t.index "date_trunc('month'::text, created_at)", name: "lead_events_date_trunc_idx1"
-    t.index "date_trunc('month'::text, created_at)", name: "lead_events_date_trunc_idx2"
-    t.index "date_trunc('month'::text, created_at), lead_id", name: "lead_events_date_trunc"
-    t.index "date_trunc('month'::text, created_at), lead_id, id", name: "lead_events_date_trunc_id"
     t.index ["agency_id"], name: "index_lead_events_on_agency_id"
     t.index ["created_at"], name: "lead_events_created_at_idx"
     t.index ["lead_id"], name: "index_lead_events_on_lead_id"
-    t.index ["lead_id"], name: "lead_events_lead_id_idx"
     t.index ["policy_type_id"], name: "index_lead_events_on_policy_type_id"
   end
 
