@@ -55,9 +55,10 @@ module V2
         if params[:pagination].present?
           params[:pagination][:page] += 1
           params[:pagination][:per] = 20 if params[:pagination][:per].zero?
+          @leads = leads.page(params[:pagination][:page]).per(params[:pagination][:per])
+        else
+          @leads = leads.limit(1)
         end
-
-        @leads = leads.page(params[:pagination][:page]).per(params[:pagination][:per])
 
         # TODO: Deprecate headers pagination unless client side support fixed
         response.headers['total-pages'] = @leads.total_pages
