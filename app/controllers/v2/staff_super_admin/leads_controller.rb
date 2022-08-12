@@ -15,7 +15,7 @@ module V2
         date_from_dt = DateTime.now - 1.month
         date_to_dt = DateTime.now
 
-        if filter[:last_visit]
+        if filter[:last_visit].present?
           date_from_dt = Time.zone.parse(filter[:last_visit][:start]) unless filter[:last_visit][:start].nil?
           date_to_dt = Time.zone.parse(filter[:last_visit][:end]) unless filter[:last_visit][:end].nil?
         end
@@ -51,8 +51,10 @@ module V2
         end
 
         # Pagination
-        params[:pagination][:page] += 1
-        params[:pagination][:per] = 20 if params[:pagination][:per].zero?
+        if params[:pagination].present?
+          params[:pagination][:page] += 1
+          params[:pagination][:per] = 20 if params[:pagination][:per].zero?
+        end
 
         @leads = leads.page(params[:pagination][:page]).per(params[:pagination][:per])
 
