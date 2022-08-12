@@ -1,12 +1,11 @@
 module Integrations
   module Yardi
-    module CommonData
-      class ImportTenantLeaseDocumentExt < Integrations::Yardi::CommonData::Base
+    module ResidentData
+      class ImportTenantLeaseDocumentPDF < Integrations::Yardi::ResidentData::Base
         string :property_id
         string :resident_id
         string :attachment
         string :attachment_type
-        string :file_extension # pdf, xls, xlsx, doc, docx
         string :description, default: "GC Verified Policy"
         
         def execute
@@ -15,7 +14,6 @@ module Integrations
             TenantCode: resident_id,
             AttachmentType: attachment_type,
             Description: description,
-            FileExtension: file_extension,
             Attachment: Base64.strict_encode64(attachment)
           }.compact)
         end

@@ -1,10 +1,10 @@
 module Integrations
   module Yardi
-    module CommonData
-      class GetAttachmentTypes < Integrations::Yardi::CommonData::Base
+    module ResidentData
+      class GetAttachmentTypes < Integrations::Yardi::ResidentData::Base
       
         def execute
-          super({})
+          super(**{})
         end
                 
         def retry_request?(prior_attempts, elapsed_seconds)
