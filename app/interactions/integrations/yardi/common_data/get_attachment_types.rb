@@ -1,7 +1,7 @@
 module Integrations
   module Yardi
     module CommonData
-      class GetAttachmentTypes < Integrations::Yardi::CommonData::Base=
+      class GetAttachmentTypes < Integrations::Yardi::CommonData::Base
       
         def execute
           super({})
