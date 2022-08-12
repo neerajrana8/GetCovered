@@ -8,7 +8,8 @@ module V2
       before_action :set_substrate, only: :index
 
       def index
-        filter = params[:filter]
+        filter = {}
+        filter = params[:filter] if params[:filter].present?
 
         date_utc_format = '%Y-%m-%d %H:%M:%S'
 
