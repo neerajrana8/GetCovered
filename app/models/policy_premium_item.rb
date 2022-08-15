@@ -1,3 +1,31 @@
+# == Schema Information
+#
+# Table name: policy_premium_items
+#
+#  id                              :bigint           not null, primary key
+#  title                           :string           not null
+#  category                        :integer          not null
+#  rounding_error_distribution     :integer          default("last_payment_simple"), not null
+#  created_at                      :datetime         not null
+#  updated_at                      :datetime         not null
+#  original_total_due              :integer          not null
+#  total_due                       :integer          not null
+#  total_received                  :integer          default(0), not null
+#  proration_pending               :boolean          default(FALSE), not null
+#  proration_calculation           :integer          not null
+#  proration_refunds_allowed       :boolean          not null
+#  commission_calculation          :integer          default("as_received"), not null
+#  commission_creation_delay_hours :integer
+#  policy_premium_id               :bigint
+#  recipient_type                  :string
+#  recipient_id                    :bigint
+#  collector_type                  :string
+#  collector_id                    :bigint
+#  collection_plan_type            :string
+#  collection_plan_id              :bigint
+#  fee_id                          :bigint
+#  hidden                          :boolean          default(FALSE), not null
+#
 class PolicyPremiumItem < ApplicationRecord
   # Associations
   belongs_to :policy_premium  # the policy_premium to which this item applies

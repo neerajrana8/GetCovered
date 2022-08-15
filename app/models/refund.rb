@@ -1,3 +1,17 @@
+# == Schema Information
+#
+# Table name: refunds
+#
+#  id                         :bigint           not null, primary key
+#  refund_reasons             :string           default([]), not null, is an Array
+#  amount                     :integer          default(0), not null
+#  amount_refunded            :integer          default(0), not null
+#  amount_returned_by_dispute :integer          default(0), not null
+#  complete                   :boolean          default(FALSE), not null
+#  created_at                 :datetime         not null
+#  updated_at                 :datetime         not null
+#  invoice_id                 :bigint
+#
 class Refund < ApplicationRecord
 
   belongs_to :invoice

@@ -1,3 +1,16 @@
+# == Schema Information
+#
+# Table name: carrier_insurable_types
+#
+#  id                :bigint           not null, primary key
+#  profile_traits    :jsonb
+#  profile_data      :jsonb
+#  enabled           :boolean          default(FALSE), not null
+#  carrier_id        :bigint
+#  insurable_type_id :bigint
+#  created_at        :datetime         not null
+#  updated_at        :datetime         not null
+#
 class CarrierInsurableType < ApplicationRecord
   belongs_to :carrier
   belongs_to :insurable_type

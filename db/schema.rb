@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2022_07_20_164717) do
+ActiveRecord::Schema.define(version: 2022_08_05_151112) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
@@ -65,6 +65,7 @@ ActiveRecord::Schema.define(version: 2022_07_20_164717) do
     t.integer "current_payment_method"
     t.boolean "additional_interest", default: true
     t.integer "minimum_liability"
+    t.string "additional_interest_name"
     t.index ["agency_id"], name: "index_accounts_on_agency_id"
     t.index ["call_sign"], name: "index_accounts_on_call_sign", unique: true
     t.index ["staff_id"], name: "index_accounts_on_staff_id"
@@ -145,6 +146,7 @@ ActiveRecord::Schema.define(version: 2022_07_20_164717) do
     t.string "integration_designation"
     t.string "producer_code"
     t.jsonb "carrier_preferences", default: {"by_policy_type"=>{}}, null: false
+    t.boolean "passthrough", default: false
     t.index ["agency_id"], name: "index_agencies_on_agency_id"
     t.index ["call_sign"], name: "index_agencies_on_call_sign", unique: true
     t.index ["integration_designation"], name: "index_agencies_on_integration_designation", unique: true
@@ -581,6 +583,10 @@ ActiveRecord::Schema.define(version: 2022_07_20_164717) do
     t.datetime "updated_at", null: false
     t.integer "type_of_loss", default: 0, null: false
     t.text "staff_notes"
+    t.string "name"
+    t.string "address"
+    t.string "nature_of_claim"
+    t.integer "amount"
     t.index ["claimant_type", "claimant_id"], name: "index_claims_on_claimant"
     t.index ["insurable_id"], name: "index_claims_on_insurable_id"
     t.index ["policy_id"], name: "index_claims_on_policy_id"
@@ -639,6 +645,19 @@ ActiveRecord::Schema.define(version: 2022_07_20_164717) do
     t.index ["approved_by_id"], name: "index_commissions_on_approved_by_id"
     t.index ["marked_paid_by_id"], name: "index_commissions_on_marked_paid_by_id"
     t.index ["recipient_type", "recipient_id"], name: "index_commissions_on_recipient"
+  end
+
+  create_table "daily_reports", force: :cascade do |t|
+    t.bigint "account_id"
+    t.json "report"
+    t.string "report_type"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.string "reportable_type", null: false
+    t.bigint "reportable_id", null: false
+    t.integer "resolution"
+    t.index ["account_id"], name: "index_daily_reports_on_account_id"
+    t.index ["reportable_type", "reportable_id"], name: "index_daily_reports_on_reportable"
   end
 
   create_table "disputes", force: :cascade do |t|
@@ -732,6 +751,14 @@ ActiveRecord::Schema.define(version: 2022_07_20_164717) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["agency_id"], name: "index_global_agency_permissions_on_agency_id"
+  end
+
+  create_table "global_permissions", force: :cascade do |t|
+    t.jsonb "permissions"
+    t.bigint "ownerable_id"
+    t.string "ownerable_type"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
   end
 
   create_table "histories", force: :cascade do |t|
@@ -932,8 +959,17 @@ ActiveRecord::Schema.define(version: 2022_07_20_164717) do
     t.bigint "policy_type_id"
     t.bigint "agency_id"
     t.integer "branding_profile_id"
+    t.bigint "session_id"
+    t.index "date_trunc('day'::text, created_at), lead_id, id", name: "lead_events_date_trunc_lead_id_id_idx"
+    t.index "date_trunc('month'::text, created_at)", name: "lead_events_date_trunc_idx"
+    t.index "date_trunc('month'::text, created_at)", name: "lead_events_date_trunc_idx1"
+    t.index "date_trunc('month'::text, created_at)", name: "lead_events_date_trunc_idx2"
+    t.index "date_trunc('month'::text, created_at), lead_id", name: "lead_events_date_trunc"
+    t.index "date_trunc('month'::text, created_at), lead_id, id", name: "lead_events_date_trunc_id"
     t.index ["agency_id"], name: "index_lead_events_on_agency_id"
+    t.index ["created_at"], name: "lead_events_created_at_idx"
     t.index ["lead_id"], name: "index_lead_events_on_lead_id"
+    t.index ["lead_id"], name: "lead_events_lead_id_idx"
     t.index ["policy_type_id"], name: "index_lead_events_on_policy_type_id"
   end
 
@@ -952,8 +988,19 @@ ActiveRecord::Schema.define(version: 2022_07_20_164717) do
     t.boolean "archived", default: false
     t.integer "account_id"
     t.integer "branding_profile_id"
+    t.bigint "session_id"
+    t.integer "lead_events_cx"
+    t.json "lead_events_timeseries"
+    t.index ["archived", "last_visit", "status", "email"], name: "leads_archived_last_visit_status_email_idx"
+    t.index ["archived"], name: "leads_archived_idx"
     t.index ["email"], name: "index_leads_on_email"
+    t.index ["email"], name: "leads_email_idx", where: "(email IS NOT NULL)"
+    t.index ["email"], name: "leads_email_idx1", where: "(email IS NULL)"
     t.index ["identifier"], name: "index_leads_on_identifier", unique: true
+    t.index ["last_visit"], name: "leads_last_visit_idx"
+    t.index ["last_visit"], name: "leads_last_visit_idx1"
+    t.index ["last_visit"], name: "leads_last_visit_idx2", using: :brin
+    t.index ["status", "last_visit"], name: "leads_status_last_visit_idx"
     t.index ["tracking_url_id"], name: "index_leads_on_tracking_url_id"
     t.index ["user_id"], name: "index_leads_on_user_id"
   end
@@ -1677,6 +1724,7 @@ ActiveRecord::Schema.define(version: 2022_07_20_164717) do
     t.datetime "disputed_at"
     t.integer "dispute_status", default: 0
     t.text "dispute_reason"
+    t.bigint "insured_address_id"
     t.index ["policy_application_id"], name: "index_policy_users_on_policy_application_id"
     t.index ["policy_id"], name: "index_policy_users_on_policy_id"
     t.index ["user_id"], name: "index_policy_users_on_user_id"
@@ -1775,6 +1823,20 @@ ActiveRecord::Schema.define(version: 2022_07_20_164717) do
     t.datetime "updated_at", null: false
     t.index ["global_agency_permission_id"], name: "index_staff_permissions_on_global_agency_permission_id"
     t.index ["staff_id"], name: "index_staff_permissions_on_staff_id"
+  end
+
+  create_table "staff_roles", force: :cascade do |t|
+    t.integer "role", default: 0
+    t.boolean "primary", default: false
+    t.bigint "staff_id", null: false
+    t.string "organizable_type"
+    t.bigint "organizable_id"
+    t.boolean "active", default: false
+    t.boolean "enabled", default: true
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["organizable_type", "organizable_id"], name: "index_staff_roles_on_organizable_type_and_organizable_id"
+    t.index ["staff_id"], name: "index_staff_roles_on_staff_id"
   end
 
   create_table "staffs", force: :cascade do |t|
@@ -1932,6 +1994,7 @@ ActiveRecord::Schema.define(version: 2022_07_20_164717) do
     t.boolean "has_current_leases", default: false
     t.boolean "has_leases", default: false
     t.string "altuid"
+    t.bigint "insured_address_id"
     t.index ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["invitation_token"], name: "index_users_on_invitation_token", unique: true
@@ -1949,4 +2012,5 @@ ActiveRecord::Schema.define(version: 2022_07_20_164717) do
   add_foreign_key "policy_coverages", "policies"
   add_foreign_key "policy_coverages", "policy_applications"
   add_foreign_key "policy_types", "policy_types", column: "master_policy_id"
+  add_foreign_key "staff_roles", "staffs"
 end

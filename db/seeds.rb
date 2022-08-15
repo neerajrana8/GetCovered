@@ -7,7 +7,7 @@
 	  		 'policy-residential', 'policy-master', 'policy-commercial',
 	  		 'production', 'staging', 'reset', 'elasticsearch', 'pensio', 'branding-profiles',
          'msi', 'msi-production', 'msi-test-addresses', 'msi-regenerate-ircs',
-         'deposit-choice', 'yardi', 'set-permissions']
+         'deposit-choice', 'yardi', 'set-permissions', 'leads']
 
 def display_options()
 	@string = ""

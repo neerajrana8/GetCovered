@@ -1,3 +1,25 @@
+# == Schema Information
+#
+# Table name: fees
+#
+#  id              :bigint           not null, primary key
+#  title           :string
+#  slug            :string
+#  amount          :decimal(, )      default(0.0), not null
+#  amount_type     :integer          default("FLAT"), not null
+#  type            :integer          default("ORIGINATION"), not null
+#  per_payment     :boolean          default(FALSE), not null
+#  amortize        :boolean          default(FALSE), not null
+#  enabled         :boolean          default(FALSE), not null
+#  locked          :boolean          default(FALSE), not null
+#  assignable_type :string
+#  assignable_id   :bigint
+#  ownerable_type  :string
+#  ownerable_id    :bigint
+#  created_at      :datetime         not null
+#  updated_at      :datetime         not null
+#  hidden          :boolean          default(FALSE), not null
+#
 ##
 # =Fee Model
 # file: +app/models/fee.rb+

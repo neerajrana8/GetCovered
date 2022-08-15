@@ -159,6 +159,7 @@ group :development do
   #gem 'ruby-debug-ide' #, '0.7.0'
   #gem 'debase' , '0.2.4'
   #gem 'web-console'
+  gem 'annotate'
 end
 
 # Windows does not include zoneinfo files, so bundle the tzinfo-data gem

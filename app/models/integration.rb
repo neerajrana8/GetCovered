@@ -1,3 +1,18 @@
+# == Schema Information
+#
+# Table name: integrations
+#
+#  id                :bigint           not null, primary key
+#  external_id       :string
+#  credentials       :jsonb
+#  configuration     :jsonb
+#  enabled           :boolean          default(FALSE)
+#  integratable_type :string
+#  integratable_id   :bigint
+#  created_at        :datetime         not null
+#  updated_at        :datetime         not null
+#  provider          :integer          default("yardi")
+#
 # Integration Model
 # file: app/models/integration.rb
 
