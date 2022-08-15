@@ -991,9 +991,15 @@ ActiveRecord::Schema.define(version: 2022_08_05_151112) do
     t.bigint "session_id"
     t.integer "lead_events_cx"
     t.json "lead_events_timeseries"
+    t.index ["archived", "last_visit", "status", "email"], name: "leads_archived_last_visit_status_email_idx"
+    t.index ["archived"], name: "leads_archived_idx"
     t.index ["email"], name: "index_leads_on_email"
+    t.index ["email"], name: "leads_email_idx", where: "(email IS NOT NULL)"
+    t.index ["email"], name: "leads_email_idx1", where: "(email IS NULL)"
     t.index ["identifier"], name: "index_leads_on_identifier", unique: true
     t.index ["last_visit"], name: "leads_last_visit_idx"
+    t.index ["last_visit"], name: "leads_last_visit_idx1"
+    t.index ["last_visit"], name: "leads_last_visit_idx2", using: :brin
     t.index ["status", "last_visit"], name: "leads_status_last_visit_idx"
     t.index ["tracking_url_id"], name: "index_leads_on_tracking_url_id"
     t.index ["user_id"], name: "index_leads_on_user_id"

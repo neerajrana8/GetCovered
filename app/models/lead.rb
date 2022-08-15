@@ -90,20 +90,22 @@ class Lead < ApplicationRecord
   scope :by_branding_profile, ->(branding_profile_id) { where(branding_profile_id: branding_profile_id) }
 
 
-  scope :join_last_events, -> {
-    from(
-      <<-SQL
-      (
-        SELECT l.*, lead_event.policy_type_id, lead_event.data FROM leads as l JOIN (
+  scope :join_last_events, ->(policy_type_id = nil){
+    sql = "(#{JOIN_LATEST_EVENT_SQL}"
+    sql += " WHERE policy_type_id IN (#{policy_type_id.join(',')})" unless policy_type_id.nil?
+    sql += ') AS leads'
+    from(sql)
+  }
+
+  JOIN_LATEST_EVENT_SQL = <<-SQL.freeze
+    SELECT l.*, lead_event.policy_type_id, lead_event.data, policy_type_id, title FROM leads as l JOIN (
           SELECT * FROM lead_events le WHERE id IN (
             SELECT MAX(id) FROM lead_events le2 GROUP BY lead_id
           )
         ) AS lead_event
         ON l.id = lead_event.lead_id
-      ) AS leads
-      SQL
-    )
-  }
+        LEFT JOIN policy_types pt ON pt.id = policy_type_id
+  SQL
 
   scope :grouped_by_date, ->(trunc_by) {
     sql = Arel.sql("date_trunc('#{trunc_by}', last_visit)::date as last_visit, #{STATUS_CASE_SQL}")
