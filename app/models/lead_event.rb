@@ -28,14 +28,15 @@ class LeadEvent < ApplicationRecord
   after_create :update_lead_phone, if: -> {self.data["phone"].present? && self.data["phone"] != self.lead.profile.contact_phone}
   after_create :update_lead_organization, if: -> {self.data["employer_name"].present? && self.data["employer_name"] != self.lead.profile.title}
   after_create :update_lead_job_title, if: -> {self.data["employment_description"].present? && self.data["employment_description"] != self.lead.profile.job_title}
+  after_create :update_lead_events_cx
+  after_create :update_lead_events_timeseries
 
   scope :group_trunc_day_by_created_at, ->(trunc_by = 'day') {
     group("DATE_TRUNC('#{trunc_by}', created_at)::date")
   }
 
   scope :grouped_by_created_at, ->(trunc_by = 'day') {
-    select(Arel.sql("date_trunc('#{trunc_by}', created_at)::date as created_at, COUNT(id) as cx")).
-      group_trunc_day_by_created_at(trunc_by)
+    select(Arel.sql("date_trunc('#{trunc_by}', created_at)::date as created_at, COUNT(id) as cx")).group('created_at')
   }
 
   scope :by_created_at, ->(start_date, end_date) {
@@ -48,6 +49,25 @@ class LeadEvent < ApplicationRecord
 
 
   private
+
+  def update_lead_events_cx
+    lead.lead_events_cx = 0 if lead.lead_events_cx.nil?
+    cx = lead.lead_events_cx + 1
+    lead.update_columns(lead_events_cx: cx)
+  end
+
+  def update_lead_events_timeseries
+    date_slug_format = '%Y-%m-%d'
+    date_slug = created_at.strftime(date_slug_format)
+    ts = lead.lead_events_timeseries
+    ts = { date_slug => 1 } if ts.nil?
+    if ts[date_slug].blank?
+      ts[date_slug] = 1
+    else
+      ts[date_slug] += 1
+    end
+    lead.update_columns(lead_events_timeseries: ts)
+  end
 
   def update_lead_last_visit
     self.lead.update(last_visit: self.created_at)
