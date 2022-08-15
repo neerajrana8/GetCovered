@@ -124,6 +124,7 @@
           delete :faq_question_delete, path: '/faqs/:faq_id/faq_question_delete/:faq_question_id'
           post :attach_images, path: '/attach_images'
           delete :second_logo_delete, path: '/images/second_logo_delete'
+          delete :second_footer_logo_delete, path: '/images/second_footer_logo_delete'
         end
 
         collection do
