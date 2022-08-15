@@ -9,9 +9,11 @@ module Integrations
         string :file_extension # pdf, xls, xlsx, doc, docx
         string :description, default: "GC Verified Policy"
         
+        bool :debug, default: false
+        
         def execute
           super(**{
-            PropertyId: property_id,
+            (debug ? :YardiPropertyId : :PropertyId) => property_id,
             TenantCode: resident_id,
             AttachmentType: attachment_type,
             Description: description,
