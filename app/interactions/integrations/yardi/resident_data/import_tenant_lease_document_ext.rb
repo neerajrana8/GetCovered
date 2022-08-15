@@ -9,7 +9,7 @@ module Integrations
         string :file_extension # pdf, xls, xlsx, doc, docx
         string :description, default: "GC Verified Policy"
         
-        bool :debug, default: false
+        boolean :debug, default: false
         
         def execute
           super(**{
