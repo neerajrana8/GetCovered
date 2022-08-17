@@ -53,10 +53,14 @@ module Integrations
           </soap:Envelope>
         XML
       end
+      
+      def universal_param_prefix
+        nil
+      end
     
       def execute(**params)
         # prepare the event
-        request_body = self.request_template(**params)
+        request_body = self.request_template(**(universal_param_prefix.nil? ? params : params.transform_keys{|k| "#{universal_param_prefix}#{k.to_s}" }))
         event = Event.new(
           eventable: self.get_eventable,
           verb: 'post',
