@@ -21,10 +21,6 @@ module Integrations
         def retry_request?(prior_attempts, elapsed_seconds)
           prior_attempts < 3
         end
-        
-        def universal_param_prefix
-          "itf"
-        end
       end
     end
   end
