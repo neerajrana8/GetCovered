@@ -117,7 +117,6 @@ gem 'ruby-prof', require: false
 gem 'addressable'
 
 gem 'klaviyo', :github => 'getcoveredllc/ruby-klaviyo'
-gem 'minuteman'
 
 gem 'rack-attack'
 gem 'dry-monads'
