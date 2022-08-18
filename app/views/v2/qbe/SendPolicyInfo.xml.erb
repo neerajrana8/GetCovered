@@ -205,7 +205,7 @@ end
                   </GeneralPartyInfo>
                   <InsuredOrPrincipalInfo>
                     <InsuredOrPrincipalRoleCd>Insured</InsuredOrPrincipalRoleCd>
-                    <% if request[:data][:users].any?{|policy_user| policy_user.spouse == true } %>
+                    <% if request[:data][:users]&.any?{|policy_user| policy_user.spouse == true } %>
                     <PersonInfo>
                       <MaritalStatusCd>M</MaritalStatusCd>
                     </PersonInfo>
