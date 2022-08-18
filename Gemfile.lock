@@ -1332,6 +1332,9 @@ GEM
     crass (1.0.6)
     css_parser (1.11.0)
       addressable
+    data_migrate (8.1.1)
+      activerecord (>= 5.0)
+      railties (>= 5.0)
     database_cleaner (2.0.1)
       database_cleaner-active_record (~> 2.0.0)
     database_cleaner-active_record (2.0.1)
@@ -1756,6 +1759,7 @@ DEPENDENCIES
   caxlsx
   colorize
   combine_pdf
+  data_migrate
   database_cleaner
   devise (>= 4.8.0)
   devise_invitable (>= 2.0.5)

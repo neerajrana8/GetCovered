@@ -97,7 +97,7 @@ class Policy < ApplicationRecord
 
   after_create :schedule_coverage_reminders, if: -> { policy_type&.master_coverage }
   after_create :create_necessary_policy_coverages_for_external, unless: -> { in_system? }
-  after_create :update_users_status
+  after_save :update_users_status
 
   after_save :update_coverage
 
@@ -163,7 +163,7 @@ class Policy < ApplicationRecord
   has_many :change_requests, as: :changeable
 
   has_many :signable_documents, as: :referent
-  
+
   has_many :integration_profiles,
     as: :profileable
 
@@ -270,7 +270,7 @@ class Policy < ApplicationRecord
     manual_cancellation_with_refunds:     7,     # no qbe code
     manual_cancellation_without_refunds:  8    # no qbe code
   }
-  
+
   def get_liability
     if self.carrier_id == MsiService.carrier_id
       self.coverages.find{|cov| cov.designation == "1005" }&.limit
@@ -613,7 +613,7 @@ class Policy < ApplicationRecord
 
   def update_users_status
     users.each do |user|
-      user.update(has_existing_policies: true)
+      user.update(has_existing_policies: true) if user.policies.present?
     end
   end
 
