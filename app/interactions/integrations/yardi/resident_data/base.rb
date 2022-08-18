@@ -8,7 +8,7 @@ module Integrations
             UserName: integration.credentials['voyager']['username'],
             Password: integration.credentials['voyager']['password'],
             ServerName: integration.credentials['voyager']['database_server'],
-            Database: integration.credentials['voyager']['database_name'],
+            DataBase: integration.credentials['voyager']['database_name'],
             Platform: "SQL Server",
             InterfaceEntity: Rails.application.credentials.yardi[ENV['RAILS_ENV'].to_sym][:voyager_entity],
             InterfaceLicense: Rails.application.credentials.yardi[ENV['RAILS_ENV'].to_sym][:voyager_license]

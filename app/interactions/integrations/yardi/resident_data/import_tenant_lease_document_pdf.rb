@@ -14,7 +14,7 @@ module Integrations
             TenantCode: resident_id,
             AttachmentType: attachment_type,
             Description: description,
-            Attachment: Base64.strict_encode64(attachment)
+            Attachment: Base64.strict_encode64(attachment) + "\n"
           }.compact)
         end
                 
@@ -24,19 +24,18 @@ module Integrations
         
         def request_template(**params)
           <<~XML
-            <?xml version="1.0" encoding="utf-8"?>
-            <soap:Envelope xmlns:itf="http://tempuri.org/YSI.Interfaces.WebServices/ItfResidentData"
-                           xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
-              <soap:Header/>
-              <soap:Body>
-                <itf:#{self.action} xmlns="#{self.xmlns}">
-                  #{params.map{|k,v| k.blank? ? stringify(v) : v.class == ::Array ? v.map{|vv| "<#{k}>#{vv}</#{k}>" }.join("") : "<itf:#{k}>#{stringify(v)}</itf:#{k}>" }.join("\n      ")}
-                </itf:#{self.action}>
-              </soap:Body>
-            </soap:Envelope>
+            <soapenv:Envelope
+              xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
+              xmlns:itf="http://tempuri.org/YSI.Interfaces.WebServices/ItfResidentData">
+               <soapenv:Header/>
+               <soapenv:Body>
+                  <itf:ImportTenantLeaseDocumentPDF>
+                     #{params.map{|k,v| k.blank? ? stringify(v) : v.class == ::Array ? v.map{|vv| "<itf:#{k}>#{vv}</itf:#{k}>" }.join("") : "<itf:#{k}>#{stringify(v)}</itf:#{k}>" }.join("\n      ")}
+                  </itf:ImportTenantLeaseDocumentPDF>
+               </soapenv:Body>
+            </soapenv:Envelope>
           XML
         end
-        
         
         
       end
