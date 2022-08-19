@@ -26,8 +26,6 @@ module Integrations
           result = Integrations::Yardi::RentersInsurance::GetVersionNumber.run!(integration: integration)
           renters_issues.push("We encountered an error while trying to connect to Yardi. Please double-check your configuration and verify that the entity 'Get Covered Insurance' has access to your Renters Insurance interface.") if !result[:success]
         end
-        integration.configuration['renters_insurance']['active'] = renters_issues.blank?
-        integration.configuration['renters_insurance']['configuration_problems'] = renters_issues
         # billing stuff
         billing_issues = []
         missing_fields = [:username, :password, :database_server, :database_name].map{|s| s.to_s }.select{|field| integration.credentials['billing'][field].blank? }
@@ -91,16 +89,19 @@ module Integrations
             
           end
         end
+        # make sure the proper sync-related stuff is set up
+        sync_field_issues = prepare_sync_fields(renters_issues)
+        # set issues stuff
         integration.configuration['billing_and_payments']['active'] = billing_issues.blank?
         integration.configuration['billing_and_payments']['configuration_problems'] = billing_issues
-        # make sure the proper sync-related stuff is set up
-        prepare_sync_fields
+        integration.configuration['renters_insurance']['active'] = renters_issues.blank?
+        integration.configuration['renters_insurance']['configuration_problems'] = renters_issues
         # save changes and return the integration
         integration.save
         return integration
       end
       
-      def prepare_sync_fields
+      def prepare_sync_fields(renters_issues)
         integration.configuration['sync'] ||= {}
         integration.configuration['sync']['syncable_communities'] ||= {}
         integration.configuration['sync']['pull_policies'] = false if integration.configuration['sync']['pull_policies'].nil?
@@ -130,6 +131,21 @@ module Integrations
         end
         # set up policy push configuration if needed
         result = Integrations::Yardi::ResidentData::GetAttachmentTypes.run!(integration: integration)
+        if result[:success] && result[:parsed_response].class == ::Hash && !result[:parsed_response].dig("Envelope", "Body", "GetAttachmentTypesResponse", "GetAttachmentTypesResult", "AttachmentTypes", "Type").nil?
+          attachment_types = result[:parsed_response].dig("Envelope", "Body", "GetAttachmentTypesResponse", "GetAttachmentTypesResult", "AttachmentTypes", "Type")
+          if !attachment_types.blank?
+            integration.configuration['sync']['policy_push']['attachment_type_options'] = attachment_types.map{|at| at["__content__"] }
+            integration.configuration['sync']['policy_push']['attachment_type'] = nil unless integration.configuration['sync']['policy_push']['attachment_type_options'].include?(integration.configuration['sync']['policy_push']['attachment_type'])
+          else
+            # error no attachment types
+            integration.configuration['sync']['policy_push']['attachment_type_options'] = []
+            renters_issues.push("We received an empty list of Attachment Types from your server. Please configure an AttachmentType in Yardi so that we can upload policy documents.")
+          end
+        else
+          # error couldn't make the call
+          integration.configuration['sync']['policy_push']['attachment_type_options'] = []
+          renters_issues.push("We were unable to retrieve a list of Attachment Types (labels for uploaded proof-of-policy documents). Please ensure the entity 'Get Covered Insurance' has access to your Yardi ResidentData interface and that an AttachmentType is set up for us to use.")
+        end
         # set up next sync if needed
         if integration.configuration['sync']['next_sync'].nil?
           integration.configuration['sync']['next_sync'] = {
