@@ -373,10 +373,10 @@ end
                 end
                 to_return[:policies_exported][policy.number] = policy
                 # upload document
-                result2 = Integrations::Yardi::ResidentData::ImportTenantLeaseDocumentPDF.run!(
-                  integration: integration,
-                  property_id: property_id,
-                  resident_id: 
+                #result2 = Integrations::Yardi::ResidentData::ImportTenantLeaseDocumentPDF.run!(
+                #  integration: integration,
+                #  property_id: property_id,
+                #  resident_id: 
                 
                 
                 
