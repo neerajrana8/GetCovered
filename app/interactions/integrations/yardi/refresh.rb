@@ -106,6 +106,10 @@ module Integrations
         integration.configuration['sync']['pull_policies'] = false if integration.configuration['sync']['pull_policies'].nil?
         integration.configuration['sync']['push_policies'] = true if integration.configuration['sync']['push_policies'].nil?
         integration.configuration['sync']['push_master_policy_invoices'] = false if integration.configuration['sync']['push_master_policy_invoices'].nil?
+        integration.configuration['sync']['policy_push'] ||= {}
+        integration.configuration['sync']['policy_push']['push_document'] = true if integration.configuration['sync']['policy_push']['push_document'].nil?
+        integration.configuration['sync']['policy_push']['attachment_type_options'] ||= []
+        integration.configuration['sync']['policy_push']['attachment_type'] ||= nil
         integration.configuration['sync']['master_policy_invoices'] ||= {}
         integration.configuration['sync']['master_policy_invoices']['charge_description'] ||= "Master Policy"
         integration.configuration['sync']['master_policy_invoices']['log'] ||= []
@@ -124,6 +128,8 @@ module Integrations
             }] }.to_h
           end
         end
+        # set up policy push configuration if needed
+        result = Integrations::Yardi::ResidentData::GetAttachmentTypes.run!(integration: integration)
         # set up next sync if needed
         if integration.configuration['sync']['next_sync'].nil?
           integration.configuration['sync']['next_sync'] = {

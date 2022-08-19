@@ -38,7 +38,8 @@ module Integrations
             return(to_return)
           end
           property_id = true_property_ids.first
-          the_community = IntegrationProfile.where(integration: integration, external_context: "community", external_id: property_id).take.profileable
+          the_community_ip = IntegrationProfile.where(integration: integration, external_context: "community", external_id: property_id).take
+          the_community = the_community_ip.profileable
           
           ##############################################################
           ###################### SETUP #################################
@@ -337,6 +338,25 @@ module Integrations
               }
               result = Integrations::Yardi::RentersInsurance::ImportInsurancePolicies.run!(integration: integration, property_id: property_id, policy_hash: policy_hash, change: false)
               if result[:success]
+###
+=begin
+if  (
+      integration.configuration.dig('sync', 'policy_push', 'push_document') &&
+      !integration.configuration.dig('sync', 'policy_push', 'attachment_type').blank? &&
+      policy.documents.count > 0
+    )
+  policy_document = policy.documents.last # MOOSE WARNING: change to something more reliable once we have a system for labelling documents properly
+  result2 = Integrations::Yardi::ResidentData::ImportTenantLeaseDocumentPDF.run!(
+    integration: integration,
+    property_id: the_community_ip.external_id,
+    resident_id: priu.external_id,
+    attachment_type: integration.configuration['sync']['policy_push']['attachment_type'],
+    description: "(GC) Policy ##{policy.number}",
+    attachment: policy_document
+  ); nil
+end
+=end
+###
                 created_ip = IntegrationProfile.create(
                   integration: integration,
                   profileable: policy,
@@ -352,10 +372,18 @@ module Integrations
                   next
                 end
                 to_return[:policies_exported][policy.number] = policy
+                # upload document
+                result2 = Integrations::Yardi::ResidentData::ImportTenantLeaseDocumentPDF.run!(
+                  integration: integration,
+                  property_id: property_id,
+                  resident_id: 
+                
+                
+                
               else
                 to_return[:policy_export_errors][policy.number] = "Failed to export policy due to error response from Yardi's API (Event id #{result[:event]&.id})."
               end
-            end.compact # end export process; we ignore some instead of reporting errors, because they might not be exportable policies and we only found out when we looked at them in detail
+            end # end export process; we ignore some instead of reporting errors, because they might not be exportable policies and we only found out when we looked at them in detail
 
           end # end if pull_policies
           

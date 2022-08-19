@@ -3,9 +3,16 @@ module Integrations
     class Base < ActiveInteraction::Base
       object :integration
       
-      # subclasses are expected to define:
-      #   get_eventable
+      # subclasses are expected to define folk, see the subfolder base.rb classes as examples
       
+      ENDPOINT_ENDS = {
+        "common_data"=>"itfcommondata.asmx",
+        "system_batch"=>"itfresidenttransactions20_sysbatch.asmx",
+        "resident_data"=>"itfresidentdata.asmx",
+        "renters_insurance"=>"itfrentersinsurance.asmx",
+        "billing_and_payments"=>"itfresidenttransactions20.asmx"
+      }
+
       def get_eventable
         nil
       end
@@ -57,6 +64,15 @@ module Integrations
       def universal_param_prefix
         nil
       end
+      
+      def get_endpoint
+        if integration.credentials['urls'][type].blank?
+          endpoint_end = ENDPOINT_ENDS[type]
+          raise StandardError.new("No endpoint has been set for this Yardi call!") if endpoint_end.nil?
+          return integration.credentials['urls']['renters_insurance'].downcase.chomp("itfrentersinsurance.asmx") + endpoint_end
+        end
+        return integration.credentials['urls'][type]
+      end
     
       def execute(**params)
         # prepare the event
@@ -67,7 +83,7 @@ module Integrations
           format: 'xml',
           interface: 'SOAP',
           process: "yardi__#{self.get_event_process}",
-          endpoint: integration.credentials['urls'][type],
+          endpoint: get_endpoint,
           request: request_body
         )
         event.save
@@ -79,7 +95,7 @@ module Integrations
         while !done_requesting
           done_requesting = true
           begin
-            result = HTTParty.post(integration.credentials['urls'][type],
+            result = HTTParty.post(get_endpoint,
               body: request_body,
               headers: {
                 'Content-Type' => 'text/xml;charset=utf-8',

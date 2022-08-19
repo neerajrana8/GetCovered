@@ -18,13 +18,18 @@ module Integrations
             AttachmentType: attachment_type,
             Description: description,
             FileExtension: file_extension,
-            Attachment: Base64.strict_encode64(attachment)
+            Attachment: Base64.strict_encode64(attachment.class == ::String ? attachment : attachment.download)
           }.compact)
         end
                 
         def retry_request?(prior_attempts, elapsed_seconds)
           prior_attempts < 3
         end
+        
+        def camelbase_datacase
+          true
+        end
+        
       end
     end
   end
