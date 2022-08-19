@@ -320,9 +320,10 @@ module Integrations
             policy_ids.each do |pol_id|
               policy = Policy.where(id: pol_id).references(:policy_insurables, :policy_users, :integration_profiles).includes(:policy_insurables, :policy_users, :integration_profiles).take
               policy_ip = policy.integration_profiles.find{|ip| ip.integration_id == integration.id }
+              policy_imported = (policy_ip&.configuration&.[]('history') == 'imported_from_yardi')
               policy_exported = (policy_ip&.configuration&.[]('history') == 'exported_to_yardi')
               policy_document_exported = policy_ip&.configuration&.[]('exported_to_primary')
-              dunny_mcdonesters = policy_document_exported # if we've done this, we've done the others too
+              dunny_mcdonesters = policy_imported || policy_document_exported # skip if imported or if all tasks are done (which is equiv to document exported being done more or less)
               next if dunny_mcdonesters
               if !policy_exported
                 lease_users = LeaseUser.includes(:lease).references(:leases).where(user_id: policy.policy_users.map{|pu| pu.user_id }, leases: { insurable_id: policy.policy_insurables.find{|pi| pi.primary }&.insurable_id })
