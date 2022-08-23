@@ -6,4 +6,8 @@ scope module: :dashboards, path: 'dashboards' do
     post :stats, action: :stats
   end
 
+  namespace :leads do
+    post :stats, action: :stats
+  end
+
 end
