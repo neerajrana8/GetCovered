@@ -7,7 +7,7 @@ module V2
   module Public
     class PolicyApplicationsController < PublicController
 
-      include ::Leads::CreateMethods
+      include Concerns::Leads::LeadsCreateMethods
       include Devise::Controllers::SignInOut
       include PolicyApplicationMethods
 
