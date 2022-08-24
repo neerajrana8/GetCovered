@@ -3,7 +3,7 @@
 module V2
   module Public
     class LeadEventsController < PublicController
-      include Leads::CreateMethods
+      include ::Leads::CreateMethods
 
       before_action :set_lead, only: :create
 
