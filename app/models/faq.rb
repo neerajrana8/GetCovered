@@ -1,3 +1,15 @@
+# == Schema Information
+#
+# Table name: faqs
+#
+#  id                  :bigint           not null, primary key
+#  title               :string
+#  branding_profile_id :integer
+#  created_at          :datetime         not null
+#  updated_at          :datetime         not null
+#  faq_order           :integer          default(0)
+#  language            :integer          default("en")
+#
 class Faq < ApplicationRecord
   belongs_to :branding_profile
   has_many :faq_questions, dependent: :destroy

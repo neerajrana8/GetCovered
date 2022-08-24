@@ -1,3 +1,16 @@
+# == Schema Information
+#
+# Table name: carrier_insurable_profiles
+#
+#  id                  :bigint           not null, primary key
+#  traits              :jsonb
+#  data                :jsonb
+#  carrier_id          :bigint
+#  insurable_id        :bigint
+#  created_at          :datetime         not null
+#  updated_at          :datetime         not null
+#  external_carrier_id :string
+#
 class CarrierInsurableProfile < ApplicationRecord
 
   after_create_commit :set_qbe_id,

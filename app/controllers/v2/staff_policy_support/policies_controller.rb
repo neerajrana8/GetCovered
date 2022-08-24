@@ -23,13 +23,19 @@ module V2
           @max_liability = 30000000
         else
           insurable = @policy.primary_insurable.parent_community
-          account = insurable.account
-          carrier_id = account.agency.providing_carrier_id(PolicyType::RESIDENTIAL_ID, insurable){|cid| (insurable.get_carrier_status(carrier_id) == :preferred) ? true : nil }
+          account = insurable&.account || @policy.account
+          agency = account&.agency || insurable&.agency || @policy.agency
+          carrier_id = agency&.providing_carrier_id(PolicyType::RESIDENTIAL_ID, insurable){|cid| (insurable.get_carrier_status(carrier_id) == :preferred) ? true : nil }
           carrier_policy_type = CarrierPolicyType.where(carrier_id: carrier_id, policy_type_id: PolicyType::RESIDENTIAL_ID).take
           uid = (carrier_id == ::MsiService.carrier_id ? '1005' : carrier_id == ::QbeService.carrier_id ? 'liability' : nil)
-          liability_options = ::InsurableRateConfiguration.get_inherited_irc(carrier_policy_type, account, insurable).configuration['coverage_options']&.[](uid)&.[]('options')
-          @max_liability = liability_options&.map{|opt| opt['value'].to_i }&.max
-          @min_liability = liability_options&.map{|opt| opt['value'].to_i }&.min
+          liability_options = (::InsurableRateConfiguration.get_inherited_irc(carrier_policy_type, account || agency, insurable, agency: agency)&.configuration['coverage_options']&.[](uid)&.[]('options') rescue  nil)
+          if liability_options.nil?
+            @min_liability = 1000000
+            @max_liability = 30000000
+          else
+            @max_liability = liability_options&.map{|opt| opt['value'].to_i }&.max
+            @min_liability = liability_options&.map{|opt| opt['value'].to_i }&.min
+          end
         end
 
         if @min_liability.nil? || @min_liability == 0 || @min_liability == "null"
@@ -43,14 +49,8 @@ module V2
 
       def update
         if @policy.update(update_policy_attributes)
-          begin
-            PmTenantPortal::InvitationToPmTenantPortalMailer.external_policy_declined(policy: @policy).deliver_now if update_policy_attributes[:status] == "EXTERNAL_REJECTED"
-            PmTenantPortal::InvitationToPmTenantPortalMailer.external_policy_accepted(policy: @policy).deliver_now if update_policy_attributes[:status] == "EXTERNAL_VERIFIED"
-          rescue NoMethodError => e
-          ensure
-            render json: @policy.to_json,
-                   status: 202
-          end
+          render json: @policy.to_json,
+                 status: 202
         else
           render json: @policy.errors.to_json,
                  status: 422

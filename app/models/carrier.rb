@@ -1,3 +1,23 @@
+# == Schema Information
+#
+# Table name: carriers
+#
+#  id                      :bigint           not null, primary key
+#  title                   :string
+#  slug                    :string
+#  call_sign               :string
+#  integration_designation :string
+#  syncable                :boolean          default(FALSE), not null
+#  rateable                :boolean          default(FALSE), not null
+#  quotable                :boolean          default(FALSE), not null
+#  bindable                :boolean          default(FALSE), not null
+#  verifiable              :boolean          default(FALSE), not null
+#  enabled                 :boolean          default(FALSE), not null
+#  settings                :jsonb            not null
+#  created_at              :datetime         not null
+#  updated_at              :datetime         not null
+#  commission_strategy_id  :bigint
+#
 ##
 # Carrier Model
 # file: +app/models/carrier.rb+

@@ -28,11 +28,11 @@
 
           put :enable
           put :disable
-          
+
           get 'coverage-options',
             to: 'insurable_rate_configurations#get_parent_options',
             defaults: { type: 'Account', carrier_id: 5, insurable_type_id: ::InsurableType::RESIDENTIAL_UNITS_IDS.first }
-            
+
           post 'coverage-options',
             to: 'insurable_rate_configurations#set_options',
             defaults: { type: 'Account', carrier_id: 5, insurable_type_id: ::InsurableType::RESIDENTIAL_UNITS_IDS.first }
@@ -75,11 +75,11 @@
 
           put :enable
           put :disable
-          
+
           get 'coverage-options',
             to: 'insurable_rate_configurations#get_parent_options',
             defaults: { type: 'Agency', carrier_id: 5, insurable_type_id: ::InsurableType::RESIDENTIAL_UNITS_IDS.first }
-            
+
           post 'coverage-options',
             to: 'insurable_rate_configurations#set_options',
             defaults: { type: 'Agency', carrier_id: 5, insurable_type_id: ::InsurableType::RESIDENTIAL_UNITS_IDS.first }
@@ -123,6 +123,8 @@
           delete :faq_delete, path: '/faqs/:faq_id/faq_delete'
           delete :faq_question_delete, path: '/faqs/:faq_id/faq_question_delete/:faq_question_id'
           post :attach_images, path: '/attach_images'
+          delete :second_logo_delete, path: '/images/second_logo_delete'
+          delete :second_footer_logo_delete, path: '/images/second_footer_logo_delete'
         end
 
         collection do
@@ -151,12 +153,8 @@
           get :carrier_agencies
           get :toggle_billing_strategy
           get :billing_strategies_list
-          get :commission_list
           post :unassign_agency_from_carrier
           post :add_billing_strategy
-          post :add_commissions
-          put :update_commission
-          get :commission
           get :available_agencies
 
           post :add_fee
@@ -245,7 +243,7 @@
         get :coverage_report
         get :policies
         get 'related-insurables', to: 'insurables#related_insurables'
-        
+
         get 'coverage-options',
           to: 'insurable_rate_configurations#get_parent_options',
           defaults: { type: 'Insurable', carrier_id: 5, insurable_type_id: ::InsurableType::RESIDENTIAL_UNITS_IDS.first }
@@ -275,7 +273,7 @@
     post 'insurables/upload', controller: 'insurables', action: :upload
 
     resources :insurable_types, path: "insurable-types", only: [ :index ]
-    
+
     get 'integrations/:provider/:account_id', controller: 'integrations', action: :show
 
     resources :leads, only: [:index, :show, :update]

@@ -1,3 +1,29 @@
+# == Schema Information
+#
+# Table name: accounts
+#
+#  id                        :bigint           not null, primary key
+#  title                     :string
+#  slug                      :string
+#  call_sign                 :string
+#  enabled                   :boolean          default(FALSE), not null
+#  whitelabel                :boolean          default(FALSE), not null
+#  tos_accepted              :boolean          default(FALSE), not null
+#  tos_accepted_at           :datetime
+#  tos_acceptance_ip         :string
+#  verified                  :boolean          default(FALSE), not null
+#  stripe_id                 :string
+#  contact_info              :jsonb
+#  settings                  :jsonb
+#  staff_id                  :bigint
+#  agency_id                 :bigint
+#  created_at                :datetime         not null
+#  updated_at                :datetime         not null
+#  payment_profile_stripe_id :string
+#  current_payment_method    :integer
+#  additional_interest       :boolean          default(TRUE)
+#  minimum_liability         :integer
+#
 # Account model
 # file: app/models/account.rb
 #
@@ -55,10 +81,9 @@ class Account < ApplicationRecord
     through: :active_account_users,
     source: :user
   
-  has_many :commission_strategies, as: :commissionable
-  
-  has_many :commissions, as: :commissionable
-  has_many :commission_deductions, as: :deductee
+  has_many :commission_strategies, as: :recipient
+  has_many :commissions, as: :recipient
+  has_many :commission_items, through: :commissions
 
   has_many :events,
     as: :eventable
@@ -84,6 +109,10 @@ class Account < ApplicationRecord
   scope :enabled, -> { where(enabled: true) }
 
   accepts_nested_attributes_for :addresses, allow_destroy: true
+  
+  def self.find_like(str, all = false)
+    Account.where("title ILIKE '%#{str}%'").send(all ? :to_a : :take)
+  end
 
   # Validations
 
@@ -101,10 +130,6 @@ class Account < ApplicationRecord
   def as_json(options = {})
     json = super(options.reverse_merge(include: %i[agency primary_address owner]))
     json
-  end
-
-  def commission_balance
-    commission_deductions.map(&:unearned_balance).reduce(:+) || 0
   end
 
   # Attach Payment Source

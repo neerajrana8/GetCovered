@@ -1,3 +1,50 @@
+# == Schema Information
+#
+# Table name: policies
+#
+#  id                           :bigint           not null, primary key
+#  number                       :string
+#  effective_date               :date
+#  expiration_date              :date
+#  auto_renew                   :boolean          default(FALSE), not null
+#  last_renewed_on              :date
+#  renew_count                  :integer
+#  billing_status               :integer
+#  billing_dispute_count        :integer          default(0), not null
+#  billing_behind_since         :date
+#  status                       :integer
+#  status_changed_on            :datetime
+#  billing_dispute_status       :integer          default("UNDISPUTED"), not null
+#  billing_enabled              :boolean          default(FALSE), not null
+#  system_purchased             :boolean          default(FALSE), not null
+#  serviceable                  :boolean          default(FALSE), not null
+#  has_outstanding_refund       :boolean          default(FALSE), not null
+#  system_data                  :jsonb
+#  agency_id                    :bigint
+#  account_id                   :bigint
+#  carrier_id                   :bigint
+#  policy_type_id               :bigint
+#  created_at                   :datetime         not null
+#  updated_at                   :datetime         not null
+#  policy_in_system             :boolean
+#  auto_pay                     :boolean
+#  last_payment_date            :date
+#  next_payment_date            :date
+#  policy_group_id              :bigint
+#  declined                     :boolean
+#  address                      :string
+#  out_of_system_carrier_title  :string
+#  policy_id                    :bigint
+#  cancellation_reason          :integer
+#  branding_profile_id          :integer
+#  marked_for_cancellation      :boolean          default(FALSE), not null
+#  marked_for_cancellation_info :string
+#  marked_cancellation_time     :datetime
+#  marked_cancellation_reason   :string
+#  document_status              :integer          default("absent")
+#  force_placed                 :boolean
+#  cancellation_date            :date
+#
 ##
 # =Policy Model
 # file: +app/models/policy.rb+
@@ -38,6 +85,7 @@
 
 class Policy < ApplicationRecord
   # Concerns
+  include Filterable
   include CarrierPensioPolicy
   include CarrierCrumPolicy
   include CarrierQbePolicy
@@ -49,8 +97,11 @@ class Policy < ApplicationRecord
 
   after_create :schedule_coverage_reminders, if: -> { policy_type&.master_coverage }
   after_create :create_necessary_policy_coverages_for_external, unless: -> { in_system? }
+  after_create :update_users_status
 
-  # after_save :start_automatic_master_coverage_policy_issue, if: -> { policy_type&.designation == 'MASTER' }
+  after_save :update_coverage
+
+  after_commit :notify_users, on: [:create, :update], unless: -> { in_system? }
 
   belongs_to :agency, optional: true
   belongs_to :account, optional: true
@@ -136,15 +187,44 @@ class Policy < ApplicationRecord
   scope :master_policy_coverages, -> { where(policy_type_id: PolicyType::MASTER_COVERAGES_IDS) }
   scope :not_master, -> { where.not(policy_type_id: PolicyType::MASTER_IDS) }
 
+  ## Filterable
+
+  scope :filter_by_policy_in_system, ->(state) {
+    where(policy_in_system: state)
+  }
+
+  scope :filter_by_agency_id, ->(agency_id) {
+    where(agency_id: agency_id)
+  }
+
+  scope :filter_by_status, ->(status) {
+    where(status: status)
+  }
+
+  scope :filter_by_account_id, ->(account_id) {
+    where(account_id: account_id)
+  }
+
+  scope :filter_by_policy_type_id, ->(policy_type_id) {
+    where(policy_type_id: policy_type_id)
+  }
+
+  scope :filter_by_number, ->(number) {
+    where('number LIKE ?', "%#{number[:like]}%")
+  }
+
+  scope :filter_by_users, ->(payload) {
+    if payload[:email]
+      where('users.email LIKE ?', "%#{payload['email']['like']}%")
+    else
+      where('profiles.full_name LIKE ?', "%#{payload[:profile][:full_name][:like]}%")
+    end
+  }
+
   accepts_nested_attributes_for :policy_premiums,
   :insurables, :policy_users, :policy_insurables, :policy_application
   accepts_nested_attributes_for :policy_coverages, allow_destroy: true
   #  after_save :update_leases, if: :saved_changes_to_status?
-
-  after_create :update_users_status
-  after_commit :update_insurables_coverage,
-             if: Proc.new{ saved_change_to_status? || saved_change_to_effective_date? || saved_change_to_effective_date? }
-  after_destroy_commit :update_insurables_coverage
 
   validate :correct_document_mime_type
   validate :is_allowed_to_update?, on: :update
@@ -271,8 +351,8 @@ class Policy < ApplicationRecord
   end
 
   def schedule_coverage_reminders
-    CoverageReminderJob.set(wait: policy.system_data['send_first_coverage_reminder_in_days'].to_i.days).perform_later(id, true)
-    CoverageReminderJob.set(wait: policy.system_data['send_second_coverage_reminder_in_days'].to_i.days).perform_later(id, false)
+    # CoverageReminderJob.set(wait: policy.system_data['send_first_coverage_reminder_in_days'].to_i.days).perform_later(id, true)
+    # CoverageReminderJob.set(wait: policy.system_data['send_second_coverage_reminder_in_days'].to_i.days).perform_later(id, false)
   end
 
   def start_automatic_master_coverage_policy_issue
@@ -469,18 +549,41 @@ class Policy < ApplicationRecord
       time_condition = Time.current.to_date >= self.effective_date
     end
 
-    if Policy.active_statuses.include?(self.status) && time_condition
-      if self.cancellation_date.nil? ||
-         self.cancellation_date > Time.current.to_date
+    action_method = nil
+    if self.persisted?
+      if self.previous_changes.has_key?("id") && self.previous_changes["id"][0].nil?
+        action_method = :create
+      else
+        action_method = :update
+      end
+    elsif self.destroyed?
+      action_method = :destroy
+    end
+
+    if [:create, :update].include?(action_method) &&
+       self.previous_changes.has_key?("status") &&
+       self.previous_changes["status"][0] != self.previous_changes["status"][1]
+
+      if Policy.active_statuses.include?(self.status) &&
+         self.cancellation_date.nil? &&
+         time_condition
+
         self.insurables.each do |insurable|
           insurable.add_to_covered(self.policy_type_id, self.id)
-          insurable.leases.each { |lease| lease.add_to_covered(self.policy_type_id, self.id) if lease.active? }
+          insurable.leases.where(status: "current").each do |lease|
+            lease.add_to_covered(self.policy_type_id, self.id) if lease.active?
+          end
         end
       end
-    else
-      self.insurables.each do |insurable|
-        insurable.remove_from_covered(self.policy_type_id, self.id)
-        insurable.leases.each { |lease| lease.remove_from_covered(self.policy_type_id, self.id) unless lease.active? }
+
+      if ['EXPIRED', 'CANCELLED', 'EXTERNAL_REJECTED'].include?(self.status)
+
+        self.insurables.each do |insurable|
+          insurable.remove_from_covered(self.policy_type_id, self.id)
+          insurable.leases.each do |lease|
+            lease.remove_from_covered(self.policy_type_id, self.id)
+          end
+        end
       end
     end
   end
@@ -508,10 +611,6 @@ class Policy < ApplicationRecord
     end
   end
 
-  def update_insurables_coverage
-    # insurables.each { |insurable| Insurables::UpdateCoveredStatus.run!(insurable: insurable) }
-  end
-
   def update_users_status
     users.each do |user|
       user.update(has_existing_policies: true)
@@ -527,5 +626,28 @@ class Policy < ApplicationRecord
         enabled: true
       )
     end
+  end
+
+  def notify_users
+    # Todo: Fix errors with account / agency title being nil before turning back on.
+    #
+    # if self.previous_changes.has_key?('status') &&
+    #   ['EXTERNAL_UNVERIFIED', 'EXTERNAL_VERIFIED', 'EXTERNAL_REJECTED'].include?(self.status)
+    #
+    #   begin
+    #     Compliance::PolicyMailer.with(organization: self.account.nil? ? self.agency : self.account)
+    #                             .external_policy_status_changed(policy: self)
+    #                             .deliver_now() unless self.in_system?
+    #   rescue Exception => e
+    #     @error = ModelError.create!(
+    #       kind: "external_policy_status_change_notification_error",
+    #       model_type: "Policy",
+    #       model_id: self.id,
+    #       information: e.to_json,
+    #       backtrace: e.backtrace.to_json,
+    #       description: "Unable to generate external Policy status change email for Policy ID: #{ self.id }<br><br>"
+    #     )
+    #   end
+    # end
   end
 end

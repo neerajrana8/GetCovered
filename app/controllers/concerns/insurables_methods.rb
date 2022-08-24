@@ -118,28 +118,36 @@ module InsurablesMethods
         disallow_creation: (get_or_create_params[:allow_creation] != true),
         communities_only: get_or_create_params[:communities_only],
         titleless: get_or_create_params[:titleless] ? true : false,
-        neighborhood: get_or_create_params[:neighborhood]
+        neighborhood: get_or_create_params[:neighborhood],
+        account_id: get_or_create_params[:account_id]
         #, diagnostics: diagnostics
     }.compact)
+    if result.class == ::Array
+      result = result.select{|r| r.enabled }
+      result = case result.size; when 0; nil; when 1; result.first; else; result; end
+    end
+    if result.class == ::Insurable
+      result = nil if !result.enabled
+    end
     case result
-    when ::NilClass
-      render json: {
-          results_type: 'no_match',
-          results: []
-      }, status: 200
-    when ::Insurable
-      render json: {
-          results_type: 'confirmed_match',
-          results: [insurable_prejson(result, short_mode: get_or_create_params[:short] || false, agency_id: get_or_create_params[:agency_id], policy_type_id: get_or_create_params[:policy_type_id], carrier_id: get_or_create_params[:carrier_id])]
-      }, status: 200
-    when ::Array
-      render json: {
-          results_type: 'possible_match',
-          results: result.map{|r| insurable_prejson(r, short_mode: get_or_create_params[:short] || false, agency_id: get_or_create_params[:agency_id], policy_type_id: get_or_create_params[:policy_type_id], carrier_id: get_or_create_params[:carrier_id]) }
-      }, status: 200
-    when ::Hash
-      render json: standard_error(result[:error_type], result[:message], result[:details]),
-             status: 422
+      when ::NilClass
+        render json: {
+            results_type: 'no_match',
+            results: []
+        }, status: 200
+      when ::Insurable
+        render json: {
+            results_type: 'confirmed_match',
+            results: [insurable_prejson(result, short_mode: get_or_create_params[:short] || false, agency_id: get_or_create_params[:agency_id], policy_type_id: get_or_create_params[:policy_type_id], carrier_id: get_or_create_params[:carrier_id])]
+        }, status: 200
+      when ::Array
+        render json: {
+            results_type: 'possible_match',
+            results: result.map{|r| insurable_prejson(r, short_mode: get_or_create_params[:short] || false, agency_id: get_or_create_params[:agency_id], policy_type_id: get_or_create_params[:policy_type_id], carrier_id: get_or_create_params[:carrier_id]) }
+        }, status: 200
+      when ::Hash
+        render json: standard_error(result[:error_type], result[:message], result[:details]),
+               status: 422
     end
   end
 
@@ -217,7 +225,7 @@ module InsurablesMethods
   def get_or_create_params
     params.permit(:address, :unit, :insurable_id, :create_if_ambiguous, :allow_creation, :communities_only, :titleless, :neighborhood, :short,
       # optional:
-      :agency_id, :policy_type_id, :carrier_id
+      :agency_id, :policy_type_id, :carrier_id, :account_id
     )
   end
 

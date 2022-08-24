@@ -1,3 +1,14 @@
+# == Schema Information
+#
+# Table name: carrier_agencies
+#
+#  id                  :bigint           not null, primary key
+#  external_carrier_id :string
+#  carrier_id          :bigint
+#  agency_id           :bigint
+#  created_at          :datetime         not null
+#  updated_at          :datetime         not null
+#
 ##
 # Carrier Agency Model
 # file: +app/models/carrier_agency.rb+

@@ -14,7 +14,7 @@ module V2
       before_action :parse_input_file, only: %i[bulk_create]
       
       def index
-        super(:@leases, Lease, :account, :insurable, :lease_type)
+        super(:@leases, current_staff.organizable.leases, :account, :insurable, :lease_type)
 
         render template: 'v2/shared/leases/index', status: :ok
       end

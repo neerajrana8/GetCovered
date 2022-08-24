@@ -1,3 +1,18 @@
+# == Schema Information
+#
+# Table name: policy_insurables
+#
+#  id                    :bigint           not null, primary key
+#  value                 :integer          default(0)
+#  primary               :boolean          default(FALSE)
+#  current               :boolean          default(FALSE)
+#  policy_id             :bigint
+#  policy_application_id :bigint
+#  insurable_id          :bigint
+#  created_at            :datetime         not null
+#  updated_at            :datetime         not null
+#  auto_assign           :boolean          default(FALSE)
+#
 # Policy Insurable Model
 # file: app/models/policy_insurable.rb
 #

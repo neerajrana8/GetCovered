@@ -52,6 +52,12 @@ Rails.application.configure do
   # Use a different cache store in production.
   # config.cache_store = :mem_cache_store
 
+  # Add Redis Cache Store
+  redis_host = Rails.application.credentials.redis[ENV["RAILS_ENV"].to_sym][:host]
+  redis_port = Rails.application.credentials.redis[ENV["RAILS_ENV"].to_sym][:port]
+  redis_cache_url = "redis://#{redis_host}:#{redis_port}"
+  config.cache_store = :redis_cache_store, { url: redis_cache_url }
+
   # Use a real queuing backend for Active Job (and separate queues per environment)
   # config.active_job.queue_adapter     = :resque
   # config.active_job.queue_name_prefix = "GetCovered_#{Rails.env}"
@@ -86,7 +92,15 @@ Rails.application.configure do
   config.active_record.dump_schema_after_migration = false
   
   config.action_mailer.default_url_options = { :host => 'getcoveredinsurance.com' }
-  
+  config.action_mailer.preview_path ||= defined?(Rails.root) ? "#{Rails.root}/test/mailers/previews" : nil
+  config.autoload_paths += [config.action_mailer.preview_path]
+  config.action_mailer.show_previews = true
+
+  routes.append do
+    get '/rails/mailers'         => "rails/mailers#index"
+    get '/rails/mailers/*path'   => "rails/mailers#preview"
+  end
+
   config.action_mailer.delivery_method = :mailgun
   config.action_mailer.mailgun_settings = {
     api_key: 'key-05bd714e309dbddc7ad7388c20c71f6e',
