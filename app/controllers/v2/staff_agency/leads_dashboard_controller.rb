@@ -1,8 +1,8 @@
 module V2
   module StaffAgency
     class LeadsDashboardController < StaffAgencyController
-      include Leads::LeadsDashboardCalculations
-      include Leads::LeadsDashboardMethods
+      include Concerns::Leads::LeadsDashboardCalculations
+      include Concerns::Leads::LeadsDashboardMethods
 
       before_action :set_substrate, only: :index
       check_privileges 'dashboard.leads'
