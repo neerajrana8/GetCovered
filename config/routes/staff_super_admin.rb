@@ -447,5 +447,8 @@
     resources :notification_settings,
               only: [ :index, :show, :update ]
     resources :contact_records, only: [:index, :show]
+    get '/gmail_sync', to: 'contact_records#gmail_sync'
+
+
   end
 # end
