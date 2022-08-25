@@ -22,12 +22,12 @@ class GmailMailSyncJob < ApplicationJob
     result = service.list_user_messages user_id
     result.messages.each do |f|
       mail_data = service.get_user_message(user_id, f.id)
-      from_email_id =  mail_data.payload.headers.detect { |f| f.name === 'From' }.value
-      to_email_id =  mail_data.payload.headers.detect { |f| f.name === 'To' }.value
+      from_email_id = mail_data.payload.headers.detect { |f| f.name === 'From' }.value
+      to_email_id = mail_data.payload.headers.detect { |f| f.name === 'To' }.value
       user = ::User.where(email: [from_email_id, to_email_id])
-      thread_id = mail_data.thread_id
-      next unless user.count > 0
-      record_mail(mail_data, user.last) if user.contact_records.where(thread_id: thread_id).count < 1
+      if  user.count > 0
+        record_mail(mail_data, user.last)
+      end
     end
   end
 
