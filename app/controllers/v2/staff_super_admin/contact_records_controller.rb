@@ -3,14 +3,14 @@ module V2
     class ContactRecordsController < StaffSuperAdminController
       before_action :set_contact_record, only: [:show]
       def index
-        @mail_records = paginator(::ContactRecord.all)
+        @mail_records = paginator(ContactRecord.all.order("created_at DESC"))
       end
 
       def show
         if @contact_record.contactable_type === "User"
           @user = User.find(@contact_record.contactable_id)
         elsif @contact_record.contactable_type === "Staff"
-          @user = Staff.find(@contact_record.contactable_id)
+          @user = ::Staff.find(@contact_record.contactable_id)
         end
       end
 

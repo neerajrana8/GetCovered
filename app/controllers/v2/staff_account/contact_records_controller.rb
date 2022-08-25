@@ -4,14 +4,14 @@ module V2
       before_action :set_contact_record, only: [:show]
       def index
         @account_users = @account.users + @account.staffs
-        @mail_records = paginator(::ContactRecord.where(contactable: @account_users))
+        @mail_records = paginator(ContactRecord.where(contactable: @account_users).order("created_at DESC"))
       end
 
       def show
         if @contact_record.contactable_type === "User"
           @user = User.find(@contact_record.contactable_id)
         elsif @contact_record.contactable_type === "Staff"
-          @user = Staff.find(@contact_record.contactable_id)
+          @user = ::Staff.find(@contact_record.contactable_id)
         end
       end
 
