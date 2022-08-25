@@ -277,7 +277,7 @@
           get "search", to: 'users#search'
         end
       end
-
+    resources :contact_records, only: [:index, :show]
     resources :notification_settings,
               only: [ :index, :show, :update ]
   end
