@@ -19,11 +19,25 @@ module Insurables
     COMMUNITY_STATE = 14
     COMMUNITY_ZIP = 15
 
-    def perform(file:, email:)
+    def s3_bucket
+      env = Rails.env.to_sym
+      aws_bucket_name = Rails.application.credentials.aws[env][:bucket]
+      Aws::S3::Resource.new.bucket(aws_bucket_name)
+    end
+
+    def perform(object_name:, file:, email:)
       puts "Preparing infrastructure..."
       zipper = Proc.new { |zip| tr = zip.strip.split("-")[0]; "#{(0...(5 - tr.length)).map { |n| "0" }.join("")}#{tr}" }
       errors = []
       by_account = {}
+
+      Rails.logger.info 'Loading uploaded file from aws::s3'
+
+      File.open(file, 'wb') do |tmp_file|
+        s3_bucket.object(object_name) do |chunk|
+          tmp_file << chunk
+        end
+      end
 
       puts "Reading spreadsheet..."
       lines = Roo::Spreadsheet.open(file)

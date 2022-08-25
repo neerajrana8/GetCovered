@@ -172,11 +172,14 @@ module V2
         if file_correct?
           file = insurable_upload_params
           filename = "#{file.original_filename.split('.').first}-#{DateTime.now.to_i}.csv"
-          file_path = Rails.root.join("tmp", filename)
-          File.open(file_path, 'wb') do |tmp_file|
-            tmp_file << file.read
-          end
-          ::Insurables::UploadJob.perform_later(file: file_path.to_s, email: current_staff.email)
+          file_path = Rails.root.join('tmp', filename)
+
+          Rails.logger.info 'Put insurables.csv to aws::s3'
+          obj = s3_bucket.object(filename)
+          obj.put(body: file.read)
+
+          ::Insurables::UploadJob.perform_later(object_name: filename, file: file_path.to_s, email: current_staff.email)
+
           render json: {
             title: "Insurables File Uploaded",
             message: "File scheduled for import. Insurables will be available soon."
@@ -192,6 +195,13 @@ module V2
       end
 
       private
+
+      def s3_bucket
+        env = Rails.env.to_sym
+        aws_bucket_name = Rails.application.credentials.aws[env][:bucket]
+        Aws::S3::Resource.new.bucket(aws_bucket_name)
+      end
+
 
       def view_path
         super + '/insurables'
