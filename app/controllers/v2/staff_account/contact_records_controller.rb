@@ -8,11 +8,6 @@ module V2
       end
 
       def show
-        if @contact_record.contactable_type === "User"
-          @user = User.find(@contact_record.contactable_id)
-        elsif @contact_record.contactable_type === "Staff"
-          @user = ::Staff.find(@contact_record.contactable_id)
-        end
       end
 
 
