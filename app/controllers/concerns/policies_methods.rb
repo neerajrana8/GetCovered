@@ -44,26 +44,25 @@ module PoliciesMethods
     else
       @policy = Policy.find_by_number(create_params[:number])
       unless @policy.policy_in_system
-        self.external_unverified_proof(coverage_proof_params)
+        self.update_unverified_proof(@policy, coverage_proof_params)
       else
         render json: standard_error(:policy_cannot_be_edited, "Policy ##{ @policy.number } is unavailable for editing.", nil)
       end
     end
   end
 
-  def external_unverified_proof(params)
-    @policy = Policy.find_by_number params[:number]
-    if !@policy.nil? && @policy.policy_in_system == false && ["EXTERNAL_UNVERIFIED", "EXTERNAL_DECLINED"].include?(@policy.status)
-      if @policy.update_as(current_staff, update_coverage_params)
-        @policy.policy_coverages.where.not(id: @policy.policy_coverages.order(id: :asc).last.id).each do |coverage|
+  def update_unverified_proof(policy, update_coverage_params)
+    if !policy.nil? && policy.policy_in_system == false && self.external_policy_status_check(policy)
+      if policy.update_as(current_staff, update_coverage_params)
+        policy.policy_coverages.where.not(id: policy.policy_coverages.order(id: :asc).last.id).each do |coverage|
           coverage.destroy
         end
         render :show, status: :ok
       else
-        render json: @policy.errors, status: 422
+        render json: policy.errors, status: 422
       end
     else
-      render json: standard_error(:policy_cannot_be_edited, "Policy ##{ @policy.number } is unavailable for editing.", nil)
+      render json: standard_error(:policy_cannot_be_edited, "Policy ##{ policy.number } is unavailable for editing.", nil)
     end
   end
 
@@ -321,5 +320,17 @@ module PoliciesMethods
 
   def supported_orders
     supported_filters(true)
+  end
+
+  def external_policy_status_check(policy)
+    to_return = false
+    if ["EXTERNAL_UNVERIFIED", "EXTERNAL_DECLINED"].include?(policy.status)
+      to_return = true
+    elsif policy.status == "EXTERNAL_VERIFIED"
+      if (Time.now .. (Time.now + 30.days)) === policy.expiration_date
+        to_return = true
+      end
+    end
+    return to_return
   end
 end
