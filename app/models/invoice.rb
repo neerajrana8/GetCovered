@@ -84,7 +84,7 @@ class Invoice < ApplicationRecord
   }
   
   def refund!(reason, stripe_refund_reason: nil, proration_interaction: nil)
-    ActiveRecord::Base.transaction do(requires_new: true)
+    ActiveRecord::Base.transaction(requires_new: true) do
       self.line_items.each{|li| LineItemReduction.create!({
         line_item: li,
         reason: reason,
