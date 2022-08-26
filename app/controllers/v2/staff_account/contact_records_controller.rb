@@ -10,6 +10,14 @@ module V2
       def show
       end
 
+      def user_mails
+        if params[:contactable_type] === "User"
+          user = ::User.find(params[:contactable_id])
+        elsif params[:contactable_type] === "Staff"
+          user = ::Staff.find(params[:contactable_id])
+        end
+        @mail_records = paginator(ContactRecord.where(contactable: user).order("created_at DESC"))
+      end
 
 
 

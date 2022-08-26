@@ -448,6 +448,7 @@
               only: [ :index, :show, :update ]
     resources :contact_records, only: [:index, :show]
     get '/gmail_sync', to: 'contact_records#gmail_sync'
+    post '/contact_records', to: 'contact_records#user_mails'
 
 
   end
