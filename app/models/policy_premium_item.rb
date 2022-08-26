@@ -51,6 +51,8 @@ class PolicyPremiumItem < ApplicationRecord
     through: :policy_premium_item_payment_terms
   has_many :line_item_reductions,
     through: :line_items
+  has_many :commission_items,
+    through: :policy_premium_item_commissions
     
 
   # Callbacks

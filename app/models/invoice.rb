@@ -82,6 +82,20 @@ class Invoice < ApplicationRecord
     cancelled:          6,    # cancelled, no longer applies
     managed_externally: 7     # managed by a partner who does not keep us abreast of invoice status
   }
+  
+  def refund!(reason, stripe_refund_reason: nil, proration_interaction: nil)
+    ActiveRecord::Base.transaction do(requires_new: true)
+      self.line_items.each{|li| LineItemReduction.create!({
+        line_item: li,
+        reason: reason,
+        refundability: 'cancel_or_refund',
+        amount_interpretation: 'max_total_after_reduction',
+        amount: 0,
+        stripe_refund_reason: stripe_refund_reason,
+        proration_interaction: proration_interaction
+      }.compact)
+    end
+  end
 
   def with_payment_lock
     ActiveRecord::Base.transaction(requires_new: true) do

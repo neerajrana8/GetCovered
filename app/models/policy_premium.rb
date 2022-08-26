@@ -44,6 +44,8 @@ class PolicyPremium < ApplicationRecord
   has_many :fees,
     as: :assignable
   def carrier_agency_policy_type; @capt ||= ::CarrierAgencyPolicyType.where(policy_type_id: self.policy_rep.policy_type_id, carrier_agency_id: self.policy_rep.carrier_agency.id).take; end
+  has_many :commission_items,
+    through: :policy_premium_item_commissions
 
   # Callbacks
   before_validation :set_default_commission_strategy,
