@@ -327,7 +327,7 @@ module PoliciesMethods
     if ["EXTERNAL_UNVERIFIED", "EXTERNAL_REJECTED"].include?(policy.status)
       to_return = true
     elsif policy.status == "EXTERNAL_VERIFIED"
-      if (Time.now .. (Time.now + 30.days)) === policy.expiration_date
+      if (policy.effective_date .. (policy.expiration_date + 1.year)) === Time.now
         to_return = true
       end
     end

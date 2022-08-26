@@ -69,7 +69,7 @@ module V2
 
       def external_unverified_proof(params)
         @policy = Policy.find_by_number params[:number]
-        if !@policy.nil? && @policy.policy_in_system == false && ["EXTERNAL_UNVERIFIED", "EXTERNAL_REJECTED"].include?(@policy.status)
+        if !@policy.nil? && @policy.policy_in_system == false && self.external_policy_status_check(@policy)
           if @policy.update(params)
             @policy.policy_coverages.where.not(id: @policy.policy_coverages.order(id: :asc).last.id).each do |coverage|
               coverage.destroy
@@ -104,6 +104,18 @@ module V2
 
       def enrollment_params
         params.permit(user_attributes: [:email, :first_name, :last_name])
+      end
+
+      def external_policy_status_check(policy)
+        to_return = false
+        if ["EXTERNAL_UNVERIFIED", "EXTERNAL_REJECTED"].include?(policy.status)
+          to_return = true
+        elsif policy.status == "EXTERNAL_VERIFIED"
+          if (Time.now .. (Time.now + 30.days)) === policy.expiration_date
+            to_return = true
+          end
+        end
+        return to_return
       end
 
     end
