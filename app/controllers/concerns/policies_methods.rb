@@ -17,11 +17,36 @@ module PoliciesMethods
   end
 
   def create
-    @policy = Policy.new(create_params)
-    if @policy.save_as(current_staff)
-      render :show, status: :created
+    unless Policy.exists?(number: create_params[:number])
+      @policy = Policy.new(create_params)
+      if @policy.save_as(current_staff)
+        render :show, status: :created
+      else
+        render json: @policy.errors, status: :unprocessable_entity
+      end
     else
-      render json: @policy.errors, status: :unprocessable_entity
+      @policy = Policy.find_by_number(create_params[:number])
+      unless @policy.policy_in_system
+        self.external_unverified_proof(coverage_proof_params)
+      else
+        render json: standard_error(:policy_cannot_be_edited, "Policy ##{ @policy.number } is unavailable for editing.", nil)
+      end
+    end
+  end
+
+  def external_unverified_proof(params)
+    @policy = Policy.find_by_number params[:number]
+    if !@policy.nil? && @policy.policy_in_system == false && ["EXTERNAL_UNVERIFIED", "EXTERNAL_DECLINED"].include?(@policy.status)
+      if @policy.update(params)
+        @policy.policy_coverages.where.not(id: @policy.policy_coverages.order(id: :asc).last.id).each do |coverage|
+          coverage.destroy
+        end
+        render :show, status: :ok
+      else
+        render json: @policy.errors, status: 422
+      end
+    else
+      render json: standard_error(:policy_cannot_be_edited, "Policy ##{ @policy.number } is unavailable for editing.", nil)
     end
   end
 
