@@ -17,10 +17,27 @@ module PoliciesMethods
   end
 
   def create
+    @policy = Policy.new(create_params)
+    if @policy.save_as(current_staff)
+      render :show, status: :created
+    else
+      render json: @policy.errors, status: :unprocessable_entity
+    end
+  end
+
+  def add_coverage_proof
     unless Policy.exists?(number: create_params[:number])
-      @policy = Policy.new(create_params)
-      if @policy.save_as(current_staff)
-        render :show, status: :created
+      @policy                  = Policy.new(coverage_proof_params)
+      @policy.policy_in_system = false
+      @policy.status           = 'EXTERNAL_UNVERIFIED' if @policy&.status&.blank?
+      add_error_master_types(@policy.policy_type_id)
+      if @policy.errors.blank? && @policy.save
+        result = Policies::UpdateUsers.run!(policy: @policy, policy_users_params: user_params[:policy_users_attributes])
+        if result.failure?
+          render json: result.failure, status: 422
+        else
+          render :show, status: :created
+        end
       else
         render json: @policy.errors, status: :unprocessable_entity
       end
@@ -37,7 +54,7 @@ module PoliciesMethods
   def external_unverified_proof(params)
     @policy = Policy.find_by_number params[:number]
     if !@policy.nil? && @policy.policy_in_system == false && ["EXTERNAL_UNVERIFIED", "EXTERNAL_DECLINED"].include?(@policy.status)
-      if @policy.update(params)
+      if @policy.update_as(current_staff, update_coverage_params)
         @policy.policy_coverages.where.not(id: @policy.policy_coverages.order(id: :asc).last.id).each do |coverage|
           coverage.destroy
         end
@@ -47,23 +64,6 @@ module PoliciesMethods
       end
     else
       render json: standard_error(:policy_cannot_be_edited, "Policy ##{ @policy.number } is unavailable for editing.", nil)
-    end
-  end
-
-  def add_coverage_proof
-    @policy                  = Policy.new(coverage_proof_params)
-    @policy.policy_in_system = false
-    @policy.status           = 'EXTERNAL_UNVERIFIED' if @policy&.status&.blank?
-    add_error_master_types(@policy.policy_type_id)
-    if @policy.errors.blank? && @policy.save
-      result = Policies::UpdateUsers.run!(policy: @policy, policy_users_params: user_params[:policy_users_attributes])
-      if result.failure?
-        render json: result.failure, status: 422
-      else
-        render :show, status: :created
-      end
-    else
-      render json: @policy.errors, status: :unprocessable_entity
     end
   end
 
