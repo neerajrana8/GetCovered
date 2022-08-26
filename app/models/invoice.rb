@@ -85,15 +85,17 @@ class Invoice < ApplicationRecord
   
   def refund!(reason, stripe_refund_reason: nil, proration_interaction: nil)
     ActiveRecord::Base.transaction(requires_new: true) do
-      self.line_items.each{|li| LineItemReduction.create!({
-        line_item: li,
-        reason: reason,
-        refundability: 'cancel_or_refund',
-        amount_interpretation: 'max_total_after_reduction',
-        amount: 0,
-        stripe_refund_reason: stripe_refund_reason,
-        proration_interaction: proration_interaction
-      }.compact)
+      self.line_items.each do |li|
+        LineItemReduction.create!({
+          line_item: li,
+          reason: reason,
+          refundability: 'cancel_or_refund',
+          amount_interpretation: 'max_total_after_reduction',
+          amount: 0,
+          stripe_refund_reason: stripe_refund_reason,
+          proration_interaction: proration_interaction
+        }.compact)
+      end
     end
   end
 
