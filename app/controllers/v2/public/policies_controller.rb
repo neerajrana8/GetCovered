@@ -69,7 +69,7 @@ module V2
 
       def external_unverified_proof(params)
         @policy = Policy.find_by_number params[:number]
-        if !@policy.nil? && @policy.policy_in_system == false && ["EXTERNAL_UNVERIFIED", "EXTERNAL_DECLINED"].include?(@policy.status)
+        if !@policy.nil? && @policy.policy_in_system == false && ["EXTERNAL_UNVERIFIED", "EXTERNAL_REJECTED"].include?(@policy.status)
           if @policy.update(params)
             @policy.policy_coverages.where.not(id: @policy.policy_coverages.order(id: :asc).last.id).each do |coverage|
               coverage.destroy

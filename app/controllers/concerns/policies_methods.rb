@@ -324,7 +324,7 @@ module PoliciesMethods
 
   def external_policy_status_check(policy)
     to_return = false
-    if ["EXTERNAL_UNVERIFIED", "EXTERNAL_DECLINED"].include?(policy.status)
+    if ["EXTERNAL_UNVERIFIED", "EXTERNAL_REJECTED"].include?(policy.status)
       to_return = true
     elsif policy.status == "EXTERNAL_VERIFIED"
       if (Time.now .. (Time.now + 30.days)) === policy.expiration_date
