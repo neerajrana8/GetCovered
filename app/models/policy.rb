@@ -277,7 +277,7 @@ class Policy < ApplicationRecord
     elsif self.carrier_id == QbeService.carrier_id
       self.coverages.find{|cov| cov.designation == "liability" }&.limit
     else
-      self.coverages.find{|cov| !(["LiabilityAmount", "Liability", "Liability Amount", "Liability Limit", "LiabilityLimit", "liability"] & [cov.designation, cov.title]).blank? }&.limit
+      self.coverages.select{|cov| !(["LiabilityAmount", "Liability", "Liability Amount", "Liability Limit", "LiabilityLimit", "liability", "Liability Coverage", "liability_coverage"] & [cov.designation, cov.title]).blank? }.find{|cov| !cov.limit.nil? && cov.limit != 0 }&.limit
     end || 0
   end
 
