@@ -140,5 +140,5 @@ scope module: :public do
   get 'communities/account_states/:branding_profile_id' => 'communities#account_states'
   get 'units/:id' => 'units#communities'
   get 'buildings/:id' => 'buildings#community'
-
+  post '/sendgrid', to: 'contact_records#sendgrid_mails'
 end

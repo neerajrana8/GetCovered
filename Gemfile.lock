@@ -1699,9 +1699,12 @@ GEM
     ruby-vips (2.1.4)
       ffi (~> 1.12)
     ruby2_keywords (0.0.5)
+    ruby_http_client (3.5.5)
     rubyzip (2.3.2)
     rufus-scheduler (3.8.1)
       fugit (~> 1.1, >= 1.1.6)
+    sendgrid-ruby (6.6.2)
+      ruby_http_client (~> 3.4)
     shellany (0.0.1)
     sidekiq (6.4.0)
       connection_pool (>= 2.2.2)
@@ -1845,6 +1848,7 @@ DEPENDENCIES
   rswag-specs
   rubocop (~> 0.63.1)
   ruby-prof
+  sendgrid-ruby
   sidekiq
   sidekiq-scheduler
   simplecov
