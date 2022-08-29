@@ -21,7 +21,7 @@ module V2
 
       def create
         if create_allowed?
-          outcome = Agencies::Create.run(agency_params: create_params.to_h)
+          outcome = ::Agencies::Create.run(agency_params: create_params.to_h)
           if outcome.valid?
             @agency = outcome.result
             render :show, status: :created
