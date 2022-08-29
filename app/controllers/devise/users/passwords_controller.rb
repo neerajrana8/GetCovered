@@ -2,6 +2,7 @@ class Devise::Users::PasswordsController < DeviseTokenAuth::PasswordsController
   skip_after_action :update_auth_header, only: [:create, :edit, :update]
 
   def create
+    binding.pry
     return render_create_error_missing_email unless resource_params[:email]
 
     @email = get_case_insensitive_field_from_resource_params(:email)
@@ -9,7 +10,6 @@ class Devise::Users::PasswordsController < DeviseTokenAuth::PasswordsController
     if @resource
       yield @resource if block_given?
       @resource.settings['last_reset_password_base_url'] = request.headers['origin']
-      # binding.pry
       @resource.save
       @resource.send_reset_password_instructions(
         email: @email,
