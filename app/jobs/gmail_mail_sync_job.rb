@@ -24,7 +24,7 @@ class GmailMailSyncJob < ApplicationJob
       mail_data = service.get_user_message(user_id, f.id)
       from_email_id = mail_data.payload.headers.detect { |f| f.name === 'From' }.value
       to_email_id = mail_data.payload.headers.detect { |f| f.name === 'To' }.value
-      user = ::User.where(email: [from_email_id, to_email_id])
+      user = User.where(email: [from_email_id, to_email_id])
       if  user.count > 0
         record_mail(mail_data, user.last)
       end
