@@ -27,6 +27,7 @@ module Insurables
 
     def perform(object_name:, file:, email:)
       puts "Preparing infrastructure..."
+      Rails.logger.info "Prepare o#{object_name}, email=#{email}"
       zipper = Proc.new { |zip| tr = zip.strip.split("-")[0]; "#{(0...(5 - tr.length)).map { |n| "0" }.join("")}#{tr}" }
       errors = []
       by_account = {}
@@ -34,9 +35,8 @@ module Insurables
       Rails.logger.info 'Loading uploaded file from aws::s3'
 
       File.open(file, 'wb') do |tmp_file|
-        s3_bucket.object(object_name) do |chunk|
-          tmp_file << chunk
-        end
+        x = s3_bucket.object(object_name)
+        tmp_file << x.get.body.read
       end
 
       puts "Reading spreadsheet..."
@@ -91,13 +91,17 @@ module Insurables
         end
       end
 
+      Rails.logger.info "#{by_account}"
       puts "Performing import..."
+      Rails.logger.info 'Perform importing...'
       import_success = false
       ActiveRecord::Base.transaction do
         by_account.each do |account_id, ba|
           ba['by_community'].each do |com, bc|
             puts "Creating community ##{bc['line']}: #{com[0]}"
             # get the community
+            Rails.logger.info "Creating community... #{bc['line']}"
+
             community = ::Insurable.get_or_create(**(parmz = {
               account_id: account_id,
               address: com.drop(1).select { |x| !x.blank? }.join(", "),
@@ -120,16 +124,24 @@ module Insurables
                 addresses: [addr]
               )
             end
+
             if community.class != ::Insurable
-              errors.push "Failed to get/create community on line #{bc['line']} (title '#{com[0]}'); get-or-create returned results of type #{community.class.name}#{community.class == ::Hash ? " contents #{community.to_s}" : "" }... GOC parameters were: #{parmz}!"
+              errors.push "Failed to get/create community on line #{bc['line']} (title '#{com[0]}');"
+              errors.push 'get-or-create returned results of wrong type'
+              errors.push "GOC parameters were: #{parmz}!"
               raise ActiveRecord::Rollback
-            elsif !community.account_id.nil? && community.account_id != account_id
+            end
+
+            if !community.account_id.nil? && community.account_id != account_id
               errors.push "Found community on line #{bc['line']} (title '#{com[0]}'), but already belongs to account ##{community.account_id} (#{community.account&.title})!"
               raise ActiveRecord::Rollback
-            elsif !community.update(account_id: account_id, confirmed: !account_id.nil?)
+            end
+
+            if !community.update(account_id: account_id, confirmed: !account_id.nil?)
               errors.push "Failed to update account & preferred status for community on line #{bc['line']} (title '#{com[0]}')! Errors: #{community.errors.to_h}"
               raise ActiveRecord::Rollback
             end
+
             bc['in_system'] = community
             # get the buildings and units
             if community.insurables.blank?
