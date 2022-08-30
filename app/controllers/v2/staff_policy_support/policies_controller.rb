@@ -100,7 +100,7 @@ module V2
         system_data_keys = params.require(:policy).fetch(:system_data, {}).keys
 
         params.require(:policy).permit(:id, :number, :out_of_system_carrier_title, :status, :number, :out_of_system_carrier_title,
-                      :system_data => system_data_keys,
+                      :system_data => { :rejection_reasons => []},
                       policy_coverages_attributes: %i[id title designation limit])
       end
 
