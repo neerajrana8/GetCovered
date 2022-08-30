@@ -24,6 +24,12 @@ module V2
           children = Agency.where(agency_id: agencies.pluck(:id)) if params[:filter][:include_children].present?
         end
 
+        # Sorting
+
+        if params[:sort].present?
+          agencies = agencies.order(title: params[:sort].to_sym)
+        end
+
         # Pagination
         if params[:pagination].present?
           page = params[:pagination][:page] if params[:pagination][:page]
