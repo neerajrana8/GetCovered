@@ -8,15 +8,15 @@ module V2
         sg = SendGrid::API.new(api_key: Rails.application.credentials.sendgrid[:development])
         params[:_json].each do |event|
           user = User.where(email: event['email'])
-          next unless user.count > 0
-
+          if user.count > 0
           next unless events_to_process.include? event['event']
-
           next unless event['template_id'].present?
-
           response = sg.client.templates._(event['template_id']).get()
           body = JSON.parse response.body
           record_mail(user.last, body, event['event'])
+          else
+            logger.info event['email'] + 'user not fount'
+          end
         end
         render json: {
           status: 'Processed'
