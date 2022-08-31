@@ -13,40 +13,75 @@ class GmailMailSyncJob < ApplicationJob
   # time.
   TOKEN_PATH = "#{Rails.root}/config/token.yaml".freeze
   SCOPE = Google::Apis::GmailV1::AUTH_GMAIL_READONLY
-  def perform(*_args)
-    service = Google::Apis::GmailV1::GmailService.new
-    service.client_options.application_name = APPLICATION_NAME
-    service.authorization = authorize
-    # Show the user's messages
-    user_id = 'me'
-    result = service.list_user_messages user_id
-    result.messages.each do |f|
-      mail_data = service.get_user_message(user_id, f.id)
-      from_email_id = mail_data.payload.headers.detect { |f| f.name === 'From' }.value
-      to_email_id = mail_data.payload.headers.detect { |f| f.name === 'To' }.value
-      user = User.where(email: [from_email_id, to_email_id])
-      if  user.count > 0
-        record_mail(mail_data, user.last)
-      end
+  def perform(type)
+    if type === 0
+      full_sync
+    elsif type === 1
+      partial_sync
     end
   end
 
   private
 
+  def partial_sync
+    service = Google::Apis::GmailV1::GmailService.new
+    service.client_options.application_name = APPLICATION_NAME
+    service.authorization = authorize
+    user_id = 'me'
+    history_id = ContactRecord.where(source: "gmail").last.thread_id
+    result = service.list_user_histories(user_id, start_history_id: history_id)
+    if result.history.count > 0
+      result.history.each do |f|
+        mail_data = service.get_user_message(user_id, f.messages.last.id)
+        process_message(mail_data)
+      end
+    else
+      logger.info "No new mails"
+    end
+  end
+
+
+  def full_sync
+    service = Google::Apis::GmailV1::GmailService.new
+    service.client_options.application_name = APPLICATION_NAME
+    service.authorization = authorize
+    user_id = 'me'
+    result = service.list_user_messages(user_id, max_results: 500)
+    result.messages.reverse_each do |f|
+      mail_data = service.get_user_message(user_id, f.id)
+      process_message(mail_data)
+    end
+  end
+
+  def process_message(mail_data)
+    from_email_id = find_email(mail_data.payload.headers.detect { |f| f.name === 'From' }.value).downcase
+    to_email_id = find_email(mail_data.payload.headers.detect { |f| f.name === 'To' }.value).downcase
+    user = User.where(email: [from_email_id, to_email_id])
+    if  user.count > 0
+      record_mail(mail_data, user.last)
+    else
+      logger.info to_email_id + "user not found"
+    end
+  end
+
   def record_mail(mail_data, user)
+
     contact_record = ContactRecord.new(
       approach: 'email',
       direction: 'incoming',
       status: 'Delivered',
       contactable: user,
-      body: mail_data.payload.body,
+      body: mail_data.payload.body.data ? mail_data.payload.body.data : mail_data.snippet ,
       source: 'gmail',
-      thread_id: mail_data.thread_id,
+      thread_id: mail_data.history_id,
       subject: mail_data.payload.headers.detect { |f| f.name === 'Subject' }.value
     )
     contact_record.save
   end
 
+  def find_email(string)
+    string[/<([^>]*)>$/, 1] || string
+  end
   def authorize
     client_id = Google::Auth::ClientId.from_file CREDENTIALS_PATH
     token_store = Google::Auth::Stores::FileTokenStore.new file: TOKEN_PATH

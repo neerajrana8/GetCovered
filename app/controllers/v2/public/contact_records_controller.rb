@@ -3,25 +3,23 @@ module V2
     class ContactRecordsController < PublicController
       require 'sendgrid-ruby'
       include SendGrid
-
       def sendgrid_mails
-        events_to_process = ['processed', 'delivered']
+        events_to_process = %w[processed delivered]
         sg = SendGrid::API.new(api_key: Rails.application.credentials.sendgrid[:development])
         params[:_json].each do |event|
           user = User.where(email: event['email'])
-          if user.count > 0
-            if events_to_process.include? event['event']
-              if event['template_id'].present?
-                response = sg.client.templates._(event['template_id']).get()
-                body = JSON.parse response.body
-                record_mail(user.last, body, event['event'])
-              end
+          next unless user.count > 0
 
-            end
-          end
+          next unless events_to_process.include? event['event']
+
+          next unless event['template_id'].present?
+
+          response = sg.client.templates._(event['template_id']).get()
+          body = JSON.parse response.body
+          record_mail(user.last, body, event['event'])
         end
         render json: {
-          status: "Processed"
+          status: 'Processed'
         }
       end
 
@@ -40,9 +38,6 @@ module V2
         )
         contact_record.save
       end
-
-
     end
   end
 end
-
