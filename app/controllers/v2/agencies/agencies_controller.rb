@@ -21,7 +21,6 @@ module V2
         if params[:filter].present?
           agencies = agencies.where(agency_id: params[:filter][:agency_id]) if params[:filter][:agency_id].present?
           agencies = agencies.title_like(params[:filter][:title]) if params[:filter][:title].present?
-          children = Agency.where(agency_id: agencies.pluck(:id)) if params[:filter][:include_children].present?
         end
 
         # Sorting
@@ -37,6 +36,7 @@ module V2
         end
 
         agencies = agencies.page(page).per(per)
+        children = Agency.where(agency_id: agencies.pluck(:id)) if params[:filter][:include_children].present?
 
         @agencies = agencies + children
         render 'v2/agencies/agencies/filter'
