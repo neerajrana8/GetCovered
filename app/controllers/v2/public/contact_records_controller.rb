@@ -7,7 +7,7 @@ module V2
         events_to_process = %w[processed delivered]
         sg = SendGrid::API.new(api_key: Rails.application.credentials.sendgrid[:development])
         params[:_json].each do |event|
-          user = User.where(email: event['email'])
+          user = ::User.where(email: event['email'])
           if user.count > 0
             next unless events_to_process.include? event['event']
             next unless event['template_id'].present?
@@ -29,7 +29,7 @@ module V2
       private
 
       def record_mail(user, body, event)
-        contact_record = ContactRecord.new(
+        contact_record = ::ContactRecord.new(
           approach: 'email',
           direction: 'Outgoing',
           status: event,
