@@ -1,6 +1,5 @@
 class PolicyApplicationsMailer < ApplicationMailer
   before_action { @policy_application = params[:policy_application] }
-  after_action :record_mail
 
   def invite_to_pay
     @user = @policy_application.primary_user
@@ -36,16 +35,4 @@ class PolicyApplicationsMailer < ApplicationMailer
     "Finish Registering Your #{application_holder&.title} Account - #{@policy_application.policy_type.title} policy"
   end
 
-  def record_mail
-    user = @policy_application.primary_user
-
-    contact_record = ContactRecord.new(
-      direction: 'outgoing',
-      approach: 'email',
-      status: 'sent',
-      contactable: user
-    )
-
-    contact_record.save
-  end
 end

@@ -17,7 +17,6 @@ class RentGuaranteeNotificationsMailer < ApplicationMailer
     subject = t('rent_guarantee_notifications_mailer.first_nonpayment_warning.subject',
                 agency_title: @agency.title)
     mail(from: @from, to: @user.email, subject: subject)
-    record_mail(@user)
   end
 
   def second_nonpayment_warning(invoice:)
@@ -38,19 +37,6 @@ class RentGuaranteeNotificationsMailer < ApplicationMailer
     subject = t('rent_guarantee_notifications_mailer.second_nonpayment_warning.subject',
                 agency_title: @agency.title)
     mail(from: @from, to: @user.email, subject: subject)
-    record_mail(@user)
   end
 
-  private
-
-  def record_mail(user)
-    contact_record = ContactRecord.new(
-      approach: 'email',
-      direction: 'outgoing',
-      status: 'sent',
-      contactable: user
-    )
-
-    contact_record.save
-  end
 end

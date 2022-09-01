@@ -4,7 +4,6 @@ module Policies
   class PurchaseMailer < ApplicationMailer
     before_action :set_variables
     before_action :set_address
-    after_action :record_mail, except: [:get_covered]
 
     default to: -> { ENV["RAILS_ENV"] == "production" ? "policysold@getcovered.io" : "testing@getcovered.io" },
             from: -> { "purchase-notifier-#{ENV["RAILS_ENV"]}@getcovered.io" }
@@ -90,18 +89,6 @@ module Policies
 
     private
 
-    def record_mail
-      staff = params[:staff]
-
-      contact_record = ContactRecord.new(
-        direction: 'outgoing',
-        approach: 'email',
-        status: 'sent',
-        contactable: staff
-      )
-
-      contact_record.save
-    end
 
     def set_variables
       @policy = params[:policy]
