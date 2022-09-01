@@ -1,5 +1,6 @@
-class MailObserver
-  def self.delivered_email(message)
+class MailInterceptor
+  def self.delivering_email(message)
+    #do not modify the message vairble
     message.to.each do |f|
       user = User.find_by(email: f)
       if user

@@ -19,7 +19,7 @@ module V2
       end
 
       def gmail_sync
-        GmailMailSyncJob.perform_later
+        GmailMailSyncJob.perform_later(1)
         render json: {
           status: "Started Job"
         }
