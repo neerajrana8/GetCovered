@@ -15,10 +15,6 @@ module V2
             response = sg.client.templates._(event['template_id']).get
             body = JSON.parse response.body
             record_mail(user.last, body, event['event'])
-          else
-            render json: {
-              status: 'User Not found'
-            }
           end
         end
         render json: {
