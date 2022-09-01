@@ -146,7 +146,7 @@ class Agency < ApplicationRecord
 
   # Scopes
 
-  scope :title_like, ->(title) { where("agency_id IS NULL AND title LIKE '%#{title}%'") }
+  scope :title_like, ->(title) { where("agency_id IS NULL AND title ILIKE '%#{title}%'") }
 
   def self.get_covered
     @gcag ||= Agency.find(GET_COVERED_ID)
