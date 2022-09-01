@@ -631,7 +631,12 @@ class Policy < ApplicationRecord
   def notify_users
     # ['EXTERNAL_UNVERIFIED', 'EXTERNAL_VERIFIED', 'EXTERNAL_REJECTED'].include?(self.status)
     if self.previous_changes.has_key?('status') && ['EXTERNAL_VERIFIED', 'EXTERNAL_REJECTED'].include?(self.status)
-      unless self.integration_profiles.count > 0
+      unless self.integration_profiles.count > 0 || policy.agency_id == 416
+
+        if self.account_id == 0 || self.agency_id == 0
+          reload() if inline_fix_external_policy_relationships
+        end
+
         begin
           Compliance::PolicyMailer.with(organization: self.account.nil? ? self.agency : self.account)
                                   .external_policy_status_changed(policy: self)
@@ -652,10 +657,31 @@ class Policy < ApplicationRecord
 
   def inline_fix_external_policy_relationships
     to_return = false
+    to_save = false
+    account_condition = (self.account_id.nil? || self.account_id == 0)
+    agency_condition = (self.agency_id.nil? || self.agency_id == 0)
     unless self.policy_in_system
-      if (self.account_id.nil? || self.account_id == 0) ||
-         (self.agency_id.nil? || self.agency_id == 0)
+      if account_condition || agency_condition
         insurable = policy.primary_insurable
+
+        if account_condition
+          unless insurable.account_id == 0 || insurable.account_id.nil?
+            self.account_id = insurable.account_id
+            to_return = true
+            to_save = true
+          end
+        end
+
+        if agency_condition
+          unless self.account_id.nil? || self.account_id == 0
+            self.agency_id = Account.find(insurable.account_id).agency_id
+            to_return = true
+            to_save = true
+          end
+        end
+
+        self.save! if to_save
+
       end
     end
     return to_return
