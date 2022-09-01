@@ -92,7 +92,7 @@ class GmailMailSyncJob < ApplicationJob
       url = authorizer.get_authorization_url base_url: OOB_URI
       puts 'Open the following URL in the browser and enter the ' \
          "resulting code after authorization:\n" + url
-      code = '4/1AdQt8qjoB7o1sJ_XmQGO2iixmbrOTJc_sY51SE6PS_h49g6TEv6z8TkI64E'
+      code =  Rails.application.credentials.gmail[:development]
       credentials = authorizer.get_and_store_credentials_from_code(
         user_id: user_id, code: code, base_url: OOB_URI
       )
