@@ -84,7 +84,7 @@ class User < ApplicationRecord
                       :set_qbe_id
   
   before_update :ensure_email_based,
-    if: Proc.new{|u| u.will_save_change_to_attribute?('sign_in_count') && u.attribute_in_database('sign_in_count') == 0 }
+    if: Proc.new{|u| u.will_save_change_to_attribute?('sign_in_count') && u.attribute_in_database('sign_in_count') == 0 && u.provider != 'email' }
 
 	has_many :invoices, as: :payer
 
