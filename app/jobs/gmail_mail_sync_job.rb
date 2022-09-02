@@ -13,11 +13,12 @@ class GmailMailSyncJob < ApplicationJob
   # time.
   TOKEN_PATH = "#{Rails.root}/config/token.yaml".freeze
   SCOPE = Google::Apis::GmailV1::AUTH_GMAIL_READONLY
-  def perform(type)
-    if type === 0
-      full_sync
-    elsif type === 1
+  def perform
+    gmail_record = ContactRecord.find_by(source: 'gmail')
+    if gmail_record
       partial_sync
+    else
+      full_sync
     end
   end
 
@@ -28,7 +29,7 @@ class GmailMailSyncJob < ApplicationJob
     service.client_options.application_name = APPLICATION_NAME
     service.authorization = authorize
     user_id = 'me'
-    history_id = ContactRecord.where(source: "gmail").last.thread_id
+    history_id = ContactRecord.where(source: 'gmail').last.thread_id
     result = service.list_user_histories(user_id, start_history_id: history_id)
     if result.history.count > 0
       result.history.each do |f|
@@ -36,7 +37,7 @@ class GmailMailSyncJob < ApplicationJob
         process_message(mail_data)
       end
     else
-      logger.info "No new mails"
+      logger.info 'No new mails'
     end
   end
 
@@ -60,7 +61,7 @@ class GmailMailSyncJob < ApplicationJob
     if  user.count > 0
       record_mail(mail_data, user.last)
     else
-      logger.info to_email_id + "user not found"
+      logger.info to_email_id + 'user not found'
     end
   end
 
