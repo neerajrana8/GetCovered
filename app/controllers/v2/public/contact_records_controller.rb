@@ -35,7 +35,8 @@ module V2
           body: body['versions'].last['plain_content'],
           source: 'sendgrid',
           thread_id: body['versions'].last['template_id'],
-          subject: body['versions'].last['subject']
+          subject: body['versions'].last['subject'],
+          created_at: Time.at(event['timestamp']).to_datetime
         )
         contact_record.save
       end

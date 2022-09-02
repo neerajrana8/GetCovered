@@ -57,9 +57,9 @@ class GmailMailSyncJob < ApplicationJob
   def process_message(mail_data)
     from_email_id = find_email(mail_data.payload.headers.detect { |f| f.name === 'From' }.value).downcase
     to_email_id = find_email(mail_data.payload.headers.detect { |f| f.name === 'To' }.value).downcase
-    user = User.where(email: [from_email_id, to_email_id])
-    if  user.count > 0
-      record_mail(mail_data, user.last)
+    user = User.find_by(email: [from_email_id, to_email_id])
+    if  user
+      record_mail(mail_data, user)
     else
       logger.info to_email_id + 'user not found'
     end
@@ -75,7 +75,8 @@ class GmailMailSyncJob < ApplicationJob
       body: mail_data.payload.body.data ? mail_data.payload.body.data : mail_data.snippet ,
       source: 'gmail',
       thread_id: mail_data.history_id,
-      subject: mail_data.payload.headers.detect { |f| f.name === 'Subject' }.value
+      subject: mail_data.payload.headers.detect { |f| f.name === 'Subject' }.value,
+      created_at: Time.at(mail_data.internal_date).to_datetime
     )
     contact_record.save
   end
