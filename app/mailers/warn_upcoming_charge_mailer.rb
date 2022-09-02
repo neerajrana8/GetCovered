@@ -18,4 +18,5 @@ class WarnUpcomingChargeMailer < ApplicationMailer
                 policy_number: @policy.number)
     mail(from: @from, to: @user.email, subject: subject)
   end
+
 end

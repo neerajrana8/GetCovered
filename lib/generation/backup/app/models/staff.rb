@@ -31,7 +31,7 @@ class Staff < ApplicationRecord
            foreign_key: :recordable_id
            
   has_many :assignments
-
+  has_many :contact_records, as: :contactable
   # has_one relationships
   has_one :profile,
           as: :profileable,

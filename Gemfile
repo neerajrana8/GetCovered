@@ -122,6 +122,8 @@ gem 'rack-attack'
 gem 'dry-monads'
 
 gem 'rails-i18n', '~> 6.0.0'
+gem 'google-apis-gmail_v1'
+gem 'sendgrid-ruby'
 
 gem 'rswag-api'
 

@@ -87,9 +87,10 @@ module Policies
     end
 
     private
+
+
     def set_variables
       @policy = params[:policy]
-      @staff = params[:staff]
       @staff = params[:staff]
       @agency = @policy.agency
       @account = @policy.account

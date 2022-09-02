@@ -134,6 +134,7 @@ class User < ApplicationRecord
   has_many :agencies, through: :accounts
   has_many :notification_settings, as: :notifyable
   has_many :insurables, through: :policies
+  has_many :contact_records, as: :contactable
 
   accepts_nested_attributes_for :payment_profiles, :address
   accepts_nested_attributes_for :profile, update_only: true
@@ -178,7 +179,7 @@ class User < ApplicationRecord
     u.save
     return u
   end
-  
+
   def self.create_with_random_password!(*lins, **keys)
     u = ::User.new(*lins, **keys)
     u.send(:set_random_password)
@@ -361,6 +362,7 @@ class User < ApplicationRecord
       isPrimaryOccupant:  primary
     }
   end
+
 
   def get_owners
     owners_array = Array.new
