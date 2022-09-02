@@ -102,7 +102,7 @@ production:
     cron: '0 5 * * *' # Every day at 5:00 AM
     class: CreateCommissionsForPolicyPremiumItemTransactionsJob
   gmail_mail_sync_job:
-    cron: '30 * * * *' # Every hour, thirty minutes in
+    cron: '0 1 * * *'   # Every day at 1:00 AM
     class: GmailMailSyncJob
   # Yardi Sync
   yardi_sync_job:
