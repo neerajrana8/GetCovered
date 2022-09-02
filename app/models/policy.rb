@@ -629,23 +629,61 @@ class Policy < ApplicationRecord
   end
 
   def notify_users
-    if self.previous_changes.has_key?('status') &&
-         ['EXTERNAL_VERIFIED', 'EXTERNAL_REJECTED'].include?(self.status)
-         # ['EXTERNAL_UNVERIFIED', 'EXTERNAL_VERIFIED', 'EXTERNAL_REJECTED'].include?(self.status)
-      begin
-        Compliance::PolicyMailer.with(organization: self.account.nil? ? self.agency : self.account)
-                                .external_policy_status_changed(policy: self)
-                                .deliver_now() unless self.in_system?
-      rescue Exception => e
-        @error = ModelError.create!(
-          kind: "external_policy_status_change_notification_error",
-          model_type: "Policy",
-          model_id: self.id,
-          information: e.to_json,
-          backtrace: e.backtrace.to_json,
-          description: "Unable to generate external Policy status change email for Policy ID: #{ self.id }<br><br>"
-        )
+    # ['EXTERNAL_UNVERIFIED', 'EXTERNAL_VERIFIED', 'EXTERNAL_REJECTED'].include?(self.status)
+    if self.previous_changes.has_key?('status') && ['EXTERNAL_VERIFIED', 'EXTERNAL_REJECTED'].include?(self.status)
+      unless self.integration_profiles.count > 0 || policy.agency_id == 416
+
+        if self.account_id == 0 || self.agency_id == 0
+          reload() if inline_fix_external_policy_relationships
+        end
+
+        begin
+          Compliance::PolicyMailer.with(organization: self.account.nil? ? self.agency : self.account)
+                                  .external_policy_status_changed(policy: self)
+                                  .deliver_now() unless self.in_system?
+        rescue Exception => e
+          @error = ModelError.create!(
+            kind: "external_policy_status_change_notification_error",
+            model_type: "Policy",
+            model_id: self.id,
+            information: e.to_json,
+            backtrace: e.backtrace.to_json,
+            description: "Unable to generate external Policy status change email for Policy ID: #{ self.id }<br><br>"
+          )
+        end
       end
     end
+  end
+
+  def inline_fix_external_policy_relationships
+    to_return = false
+    to_save = false
+    account_condition = (self.account_id.nil? || self.account_id == 0)
+    agency_condition = (self.agency_id.nil? || self.agency_id == 0)
+    unless self.policy_in_system
+      if account_condition || agency_condition
+        insurable = policy.primary_insurable
+
+        if account_condition
+          unless insurable.account_id == 0 || insurable.account_id.nil?
+            self.account_id = insurable.account_id
+            to_return = true
+            to_save = true
+          end
+        end
+
+        if agency_condition
+          unless self.account_id.nil? || self.account_id == 0
+            self.agency_id = Account.find(insurable.account_id).agency_id
+            to_return = true
+            to_save = true
+          end
+        end
+
+        self.save! if to_save
+
+      end
+    end
+    return to_return
   end
 end
