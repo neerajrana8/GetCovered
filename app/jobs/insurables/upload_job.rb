@@ -26,7 +26,6 @@ module Insurables
     end
 
     def perform(object_name:, file:, email:)
-      puts "Preparing infrastructure..."
       Rails.logger.info "Prepare o#{object_name}, email=#{email}"
       zipper = Proc.new { |zip| tr = zip.strip.split("-")[0]; "#{(0...(5 - tr.length)).map { |n| "0" }.join("")}#{tr}" }
       errors = []
@@ -39,7 +38,6 @@ module Insurables
         tmp_file << x.get.body.read
       end
 
-      puts "Reading spreadsheet..."
       lines = Roo::Spreadsheet.open(file)
       n = 2
       line = lines.row(n)
@@ -79,7 +77,6 @@ module Insurables
         line = lines.row(n)
       end
 
-      puts "Postprocessing spreadsheet data..."
       by_account.values.map { |v| v['by_community'] }.each do |x|
         x.each do |com, bc|
           if !bc['by_building'].blank? && !bc['units'].blank?
@@ -91,9 +88,7 @@ module Insurables
         end
       end
 
-      Rails.logger.info "#{by_account}"
-      puts "Performing import..."
-      Rails.logger.info 'Perform importing...'
+      Rails.logger.info "Perform importing... #{by_account}"
       import_success = false
       ActiveRecord::Base.transaction do
         by_account.each do |account_id, ba|
@@ -147,7 +142,7 @@ module Insurables
             if community.insurables.blank?
               # go wild
               bc['units'].each do |u|
-                puts "[com ##{bc['line']}:#{com[0]}] Creating unit #{u['line']}: #{u['title']}..."
+                Rails.logger.info "[com ##{bc['line']}:#{com[0]}] Creating unit #{u['line']}: #{u['title']}..."
                 ::Insurable.create!(
                   insurable_id: community.id,
                   title: u['title'], insurable_type_id: 4, enabled: true, category: 'property',
@@ -155,7 +150,7 @@ module Insurables
                 )
               end
               bc['by_building'].each do |bldg, bb|
-                puts "[com ##{bc['line']}:#{com[0]}] Creating building ##{bb['line']}: #{bldg[0]}..."
+                Rails.logger.info "[com ##{bc['line']}:#{com[0]}] Creating building ##{bb['line']}: #{bldg[0]}..."
                 addr = Address.from_string(bldg.select { |y| !y.blank? }.join(", "))
                 addr.primary = true
                 building = ::Insurable.create!(
@@ -165,7 +160,7 @@ module Insurables
                   addresses: [addr]
                 )
                 bb['units'].each do |u|
-                  puts "[com ##{bc['line']}:#{com[0]}][bldg ##{bb['line']}:#{bldg[0]}] Creating unit #{u['line']}: #{u['title']}..."
+                  Rails.logger.info "[com ##{bc['line']}:#{com[0]}][bldg ##{bb['line']}:#{bldg[0]}] Creating unit #{u['line']}: #{u['title']}..."
                   ::Insurable.create!(
                     insurable_id: building.id,
                     title: u['title'], insurable_type_id: 4, enabled: true, category: 'property',
@@ -176,7 +171,7 @@ module Insurables
             else
               # complete community import against possible duplicates
               bc['units'].each do |u|
-                puts "[com ##{bc['line']}:#{com[0]}] Get-or-creating unit #{u['line']}: #{u['title']}..."
+                Rails.logger.info "[com ##{bc['line']}:#{com[0]}] Get-or-creating unit #{u['line']}: #{u['title']}..."
                 found = community.units.find { |un| un.title == u['title'] }
                 if found.nil?
                   ::Insurable.create!(
@@ -193,7 +188,7 @@ module Insurables
                 end
               end
               bc['by_building'].each do |bldg, bb|
-                puts "[com ##{bc['line']}:#{com[0]}] Get-or-creating building ##{bb['line']}: #{bldg[0]}..."
+                Rails.logger.info "[com ##{bc['line']}:#{com[0]}] Get-or-creating building ##{bb['line']}: #{bldg[0]}..."
                 # try to find the building
                 building = ::Insurable.get_or_create(
                   address: bldg.select { |y| !y.blank? }.join(", "),
@@ -224,7 +219,7 @@ module Insurables
                   building.update!(account_id: account_id, confirmed: true, enabled: true)
                 end
                 bb['units'].each do |u|
-                  puts "[com ##{bc['line']}:#{com[0]}][bldg ##{bb['line']}:#{bldg[0]}] Get-or-creating unit #{u['line']}: #{u['title']}..."
+                  Rails.logger.info "[com ##{bc['line']}:#{com[0]}][bldg ##{bb['line']}:#{bldg[0]}] Get-or-creating unit #{u['line']}: #{u['title']}..."
                   found = building.units.find { |un| un.title == u['title'] }
                   if found.nil?
                     ::Insurable.create!(
@@ -250,22 +245,25 @@ module Insurables
       end
 
       if !import_success
-        puts "Import failed. Errors:"
+        Rails.logger.info 'Import failed. Errors:'
         InsurableUploadJobMailer.send_report(status: false, message: "<li>#{errors.join('</li><li>')}</li>", to: email).deliver
-        errors.each { |x| puts "  #{x}" }
+        errors.each { |x| Rails.logger.info "  #{x}" }
       else
 
-        puts "Import succeeded. Queueing QBE calls."
-        puts "Created community ids:"
-        puts "  #{by_account.values.map { |ba| ba['by_community'].values.map { |bc| bc['in_system'].id } }.flatten}"
-        InsurableUploadJobMailer.send_report(status: true, message: nil, to: email).deliver
+        Rails.logger.info 'Import succeeded. Queueing QBE calls.'
+        Rails.logger.info 'Created community ids:'
+        Rails.logger.info "#{by_account.values.map { |ba| ba['by_community'].values.map { |bc| bc['in_system'].id } }.flatten}"
 
-        by_account.each do |account_id, ba|
+        message = by_account.values.map { |ba| ba['by_community'].values.map { |bc| bc['in_system'].id } }.flatten
+
+        InsurableUploadJobMailer.send_report(status: true, message: message, to: email).deliver
+
+        by_account.each do |_account_id, ba|
           ba['by_community'].values.each do |bc|
             bc['in_system'].qbe_mark_preferred(strict: false, apply_defaults: true)
           end
         end
-        puts "QBE calls queued."
+        Rails.logger.info 'QBE calls queued.'
 
       end
     end
