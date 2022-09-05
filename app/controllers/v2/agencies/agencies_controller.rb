@@ -15,7 +15,7 @@ module V2
         agencies_ids = current_staff.organizable.agencies.pluck(:id) if current_staff.role == :agent.to_s
         agencies_ids = [current_staff.organizable.agency_id] if current_staff.role == :staff.to_s
 
-        agencies_ids << current_staff.organizable.id
+        agencies_ids << current_staff.organizable.id if current_staff.role == :agent.to_s
         agencies = agencies.where(id: agencies_ids) if %(staff, agent).include?(current_staff.role)
 
         # Filtering
