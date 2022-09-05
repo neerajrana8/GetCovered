@@ -12,9 +12,10 @@ module V2
         page = 1
 
         # Permitted selection
-        agencies_ids = current_staff.organizable.accounts if current_staff.role == :agent.to_s
-        agencies_ids = current_staff.organizable.id if current_staff.role == :staff.to_s
+        agencies_ids = current_staff.organizable.agencies.pluck(:id) if current_staff.role == :agent.to_s
+        agencies_ids = [current_staff.organizable.agency_id] if current_staff.role == :staff.to_s
 
+        agencies_ids << current_staff.organizable.id
         agencies = agencies.where(id: agencies_ids) if %(staff, agent).include?(current_staff.role)
 
         # Filtering
@@ -24,7 +25,6 @@ module V2
         end
 
         # Sorting
-
         if params[:sort].present?
           agencies = agencies.order(title: params[:sort].to_sym)
         end
