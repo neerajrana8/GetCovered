@@ -20,13 +20,15 @@ module V2
         end
 
         if current_staff.organizable_type == 'Agency'
-          sub_agencies_ids = []
-          sub_agencies = Agency.where(agency_id: current_staff.organizable_id)
-          if sub_agencies.count > 0
-            sub_agencies_ids = sub_agencies.pluck(:id)
+          current_agency = Agency.find(current_staff.organizable_id)
+          # We are root agency
+          if current_agency.agency_id.nil? && filter[:agency_id].blank?
+            sub_agencies_ids = []
+            sub_agencies = current_agency.agencies
+            sub_agencies_ids = sub_agencies.pluck(:id) if sub_agencies.count.positive?
+            sub_agencies_ids << current_staff.organizable_id
+            filter[:agency_id] = sub_agencies_ids
           end
-          sub_agencies_ids << current_staff.organizable_id
-          filter[:agency_id] = sub_agencies_ids
         end
 
         cache_key = generate_cache_key(CACHE_KEY, filter)
