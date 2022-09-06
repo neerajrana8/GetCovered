@@ -73,6 +73,7 @@ Rails.application.routes.draw do
     draw :public
     draw :sdk
     draw :dashboards
+    draw :insurables
   end
 
   root to: "application#redirect_home"
