@@ -241,3 +241,7 @@ render(
   status: 401
 )
 ```
+
+##### Using data migrations
+
+Currently we split schema migrations and data migrations to keep track of changes on prod. Please each time when you understand that there is a need to change any field value on prod or dev create data migration and run deploy with steps decribed below. For separating migrations we use gem https://github.com/ilyakatz/data-migrate . 
