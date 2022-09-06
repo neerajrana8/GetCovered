@@ -4,7 +4,8 @@ module V2
       include BrandingProfilesMethods
       before_action :set_branding_profile,
                     only: %i[update show destroy faqs faq_create faq_update
-                             faq_question_create faq_question_update attach_images export update_from_file second_logo_delete]
+                             faq_question_create faq_question_update attach_images export update_from_file
+second_logo_delete second_footer_logo_delete]
 
       def create
         branding_profile_outcome = BrandingProfiles::CreateFromDefault.run(account: @account)

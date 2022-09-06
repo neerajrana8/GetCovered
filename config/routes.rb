@@ -72,6 +72,7 @@ Rails.application.routes.draw do
     draw :staff_policy_support
     draw :public
     draw :sdk
+    draw :dashboards
   end
 
   root to: "application#redirect_home"

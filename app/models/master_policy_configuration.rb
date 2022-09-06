@@ -99,7 +99,7 @@ class MasterPolicyConfiguration < ApplicationRecord
 
   def uniqueness_of_assignment
     if MasterPolicyConfiguration.exists?(carrier_policy_type: self.carrier_policy_type, configurable: self.configurable)
-      errors.add(:base, message: "#{ self.configurable.title } already has a configuration for a Master Policy with #{ self.carrier_policy_type.carrier.title }")
+      errors.add(:base, message: "#{ self.configurable.class.name } already has a configuration for a Master Policy with #{ self.carrier_policy_type.carrier.title }")
     end
   end
 end

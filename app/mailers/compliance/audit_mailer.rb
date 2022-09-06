@@ -41,7 +41,7 @@ module Compliance
 
       mail(from: @from,
            to: @user.contact_email,
-           bcc: ['brandon@getcovered.io', 'dylan@getcovered.io'],
+           bcc: "systememails@getcovered.io",
            subject: subject,
            template_path: 'compliance/audit',
            template_name: template)

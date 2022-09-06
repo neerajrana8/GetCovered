@@ -208,4 +208,5 @@ class UserCoverageMailer < ApplicationMailer
   def check_user_preference
     return false if @user.nil?
   end
+
 end
