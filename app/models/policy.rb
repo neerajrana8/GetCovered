@@ -656,7 +656,10 @@ class Policy < ApplicationRecord
   end
 
   def inline_fix_external_policy_relationships
-    to_return = false
+    return true
+    # the below is commented out because it was breaking upload
+=begin
+    to_return = false 
     to_save = false
     account_condition = (self.account_id.nil? || self.account_id == 0)
     agency_condition = (self.agency_id.nil? || self.agency_id == 0)
@@ -685,5 +688,6 @@ class Policy < ApplicationRecord
       end
     end
     return to_return
+=end
   end
 end
