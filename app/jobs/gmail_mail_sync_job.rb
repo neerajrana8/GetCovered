@@ -31,10 +31,14 @@ class GmailMailSyncJob < ApplicationJob
     user_id = 'me'
     history_id = ContactRecord.where(source: 'gmail').last.thread_id
     result = service.list_user_histories(user_id, start_history_id: history_id)
-    if result.history.count > 0
+    if result&.history
       result.history.each do |f|
-        mail_data = service.get_user_message(user_id, f.messages.last.id)
-        process_message(mail_data)
+        begin
+          mail_data = service.get_user_message(user_id, f.messages.last.id)
+          process_message(mail_data)
+        rescue => e
+          Rails.logger.debug(e)
+        end
       end
     else
       logger.info 'No new mails'

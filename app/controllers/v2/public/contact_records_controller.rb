@@ -16,7 +16,7 @@ module V2
             body = JSON.parse response.body
             record_mail(user, body, event['event'])
           else
-            logger.info user.email + "user not found"
+            logger.info event['email'] + "user not found"
           end
         end
         render json: {
