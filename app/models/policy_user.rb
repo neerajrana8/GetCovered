@@ -1,3 +1,20 @@
+# == Schema Information
+#
+# Table name: policy_users
+#
+#  id                    :bigint           not null, primary key
+#  primary               :boolean          default(FALSE), not null
+#  spouse                :boolean          default(FALSE), not null
+#  policy_application_id :bigint
+#  policy_id             :bigint
+#  user_id               :bigint
+#  created_at            :datetime         not null
+#  updated_at            :datetime         not null
+#  status                :integer          default("invited")
+#  disputed_at           :datetime
+#  dispute_status        :integer          default("undisputed")
+#  dispute_reason        :text
+#
 # Policy User model
 # file: app/models/policy_user.rb
 
@@ -10,6 +27,8 @@ class PolicyUser < ApplicationRecord
   belongs_to :policy_application, optional: true
   belongs_to :policy, optional: true
   belongs_to :user, optional: true
+  
+  has_many :integration_profiles, as: :profileable
 
   accepts_nested_attributes_for :user
 

@@ -26,19 +26,43 @@ module PoliciesMethods
   end
 
   def add_coverage_proof
-    @policy                  = Policy.new(coverage_proof_params)
-    @policy.policy_in_system = false
-    @policy.status           = 'BOUND' if @policy&.status&.blank?
-    add_error_master_types(@policy.policy_type_id)
-    if @policy.errors.blank? && @policy.save
-      result = Policies::UpdateUsers.run!(policy: @policy, policy_users_params: user_params[:policy_users_attributes])
-      if result.failure?
-        render json: result.failure, status: 422
+    unless Policy.exists?(number: create_params[:number])
+      @policy                  = Policy.new(coverage_proof_params)
+      @policy.policy_in_system = false
+      @policy.status           = 'EXTERNAL_UNVERIFIED' if @policy&.status&.blank?
+      add_error_master_types(@policy.policy_type_id)
+      if @policy.errors.blank? && @policy.save
+        result = Policies::UpdateUsers.run!(policy: @policy, policy_users_params: user_params[:policy_users_attributes])
+        if result.failure?
+          render json: result.failure, status: 422
+        else
+          render :show, status: :created
+        end
       else
-        render :show, status: :created
+        render json: @policy.errors, status: :unprocessable_entity
       end
     else
-      render json: @policy.errors, status: :unprocessable_entity
+      @policy = Policy.find_by_number(create_params[:number])
+      unless @policy.policy_in_system
+        self.update_unverified_proof(@policy, coverage_proof_params)
+      else
+        render json: standard_error(:policy_cannot_be_edited, "Policy ##{ @policy.number } is unavailable for editing.", nil)
+      end
+    end
+  end
+
+  def update_unverified_proof(policy, update_coverage_params)
+    if !policy.nil? && policy.policy_in_system == false && self.external_policy_status_check(policy)
+      if policy.update_as(current_staff, update_coverage_params)
+        policy.policy_coverages.where.not(id: policy.policy_coverages.order(id: :asc).last.id).each do |coverage|
+          coverage.destroy
+        end
+        render :show, status: :ok
+      else
+        render json: policy.errors, status: 422
+      end
+    else
+      render json: standard_error(:policy_cannot_be_edited, "Policy ##{ policy.number } is unavailable for editing.", nil)
     end
   end
 
@@ -263,6 +287,12 @@ module PoliciesMethods
           full_name: %i[scalar like]
         }
       },
+      primary_insurable: {
+          insurable_id: %i[scalar array],
+          parent_community: {
+              id: %i[scalar array],
+          }
+      },
       agency_id: %i[scalar array],
       account_id: %i[scalar array]
     }
@@ -290,5 +320,17 @@ module PoliciesMethods
 
   def supported_orders
     supported_filters(true)
+  end
+
+  def external_policy_status_check(policy)
+    to_return = false
+    if ["EXTERNAL_UNVERIFIED", "EXTERNAL_REJECTED"].include?(policy.status)
+      to_return = true
+    elsif policy.status == "EXTERNAL_VERIFIED"
+      if (policy.effective_date .. (policy.expiration_date + 1.year)) === Time.now
+        to_return = true
+      end
+    end
+    return to_return
   end
 end

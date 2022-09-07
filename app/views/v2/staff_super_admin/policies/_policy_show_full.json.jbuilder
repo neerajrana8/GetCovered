@@ -3,9 +3,23 @@ json.partial! "v2/staff_super_admin/policies/policy_show_fields.json.jbuilder",
 
 json.carrier policy.carrier
 
-json.agency policy.agency
+#TODO: temp fix for pma policies
+if policy.agency.present?
+  json.agency policy.agency
+else
+  if policy.insurables&.last&.agency.present?
+    json.agency policy.insurables&.last&.agency
+  else
+    json.agency policy.insurables&.last&.account&.agency
+  end
+end
 
-json.account policy.account
+if policy.account.present?
+  json.account policy.account
+else
+  json.account policy.insurables&.last&.account
+end
+
 
 json.policy_application_group_id policy.policy_group&.policy_application_group&.id
 
@@ -31,7 +45,8 @@ json.premium_total(policy.policy_quotes&.last&.policy_premium&.total_premium || 
 json.premium_first(policy.policy_quotes&.last&.invoices&.first&.line_items&.where(analytics_category: 'policy_premium')&.inject(0){|s,li| s + li.total_due } || 0)
 
 if policy.in_system?
-  json.billing_strategy (policy.policy_quotes&.last&.policy_application&.billing_strategy || policy.billing_strategies&.last)&.title
+  # FIXME: HOTFIX commented until proper query
+  # json.billing_strategy (policy.policy_quotes&.last&.policy_application&.billing_strategy || policy.billing_strategies&.last)&.title
 end
 
 json.partial! 'v2/shared/policies/policy_coverages.json.jbuilder', policy: policy

@@ -1,3 +1,14 @@
+# == Schema Information
+#
+# Table name: policy_premium_item_payment_terms
+#
+#  id                             :bigint           not null, primary key
+#  weight                         :integer          not null
+#  created_at                     :datetime         not null
+#  updated_at                     :datetime         not null
+#  policy_premium_payment_term_id :bigint
+#  policy_premium_item_id         :bigint
+#
 class PolicyPremiumItemPaymentTerm < ApplicationRecord
 
   # Associations

@@ -40,7 +40,7 @@ module V2
       end
 
       def set_substrate
-        @substrate = access_model(::Lead)
+        @substrate = access_model(::Lead).presented.not_converted
       end
 
       def supported_orders

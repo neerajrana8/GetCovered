@@ -7,4 +7,5 @@ class StaffReportsMailer < ApplicationMailer
 
     mail(:subject => "Daily Purchase Activity Report")
   end
+
 end

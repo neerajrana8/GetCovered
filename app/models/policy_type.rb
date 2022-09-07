@@ -1,3 +1,18 @@
+# == Schema Information
+#
+# Table name: policy_types
+#
+#  id               :bigint           not null, primary key
+#  title            :string
+#  slug             :string
+#  designation      :string
+#  enabled          :boolean          default(FALSE), not null
+#  created_at       :datetime         not null
+#  updated_at       :datetime         not null
+#  master           :boolean          default(FALSE)
+#  master_coverage  :boolean          default(FALSE)
+#  master_policy_id :integer
+#
 ##
 # Policy Type Model
 # file: +app/models/policy_type.rb+

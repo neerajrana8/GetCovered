@@ -1,3 +1,22 @@
+# == Schema Information
+#
+# Table name: policy_premium_item_commissions
+#
+#  id                     :bigint           not null, primary key
+#  status                 :integer          not null
+#  payability             :integer          not null
+#  total_expected         :integer          not null
+#  total_received         :integer          default(0), not null
+#  total_commission       :integer          default(0), not null
+#  percentage             :decimal(5, 2)    not null
+#  payment_order          :integer          not null
+#  created_at             :datetime         not null
+#  updated_at             :datetime         not null
+#  policy_premium_item_id :bigint
+#  recipient_type         :string
+#  recipient_id           :bigint
+#  commission_strategy_id :bigint
+#
 ##
 # =PolicyPremiumItemCommission Model
 # file: +app/models/policy_premium_item_commission.rb+
@@ -8,6 +27,8 @@ class PolicyPremiumItemCommission < ApplicationRecord
   belongs_to :policy_premium_item
   belongs_to :recipient,
     polymorphic: true
+  has_many :commission_items,
+    as: :commissionable
   
   # Validations
   validates_presence_of :status

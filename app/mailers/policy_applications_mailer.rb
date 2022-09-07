@@ -34,4 +34,5 @@ class PolicyApplicationsMailer < ApplicationMailer
     application_holder = @policy_application.account || @policy_application.agency
     "Finish Registering Your #{application_holder&.title} Account - #{@policy_application.policy_type.title} policy"
   end
+
 end

@@ -131,7 +131,8 @@ module V2
           updated_at: %i[scalar array interval],
           has_existing_policies: %i[scalar array],
           has_current_leases: %i[scalar array],
-          accounts: { agency_id: %i[scalar array], id: %i[scalar array] }
+          accounts: { agency_id: %i[scalar array], id: %i[scalar array] },
+          insurables: { id: %i[scalar array], title: %i[scalar array like] }
         }
       end
 

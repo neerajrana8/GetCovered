@@ -1,3 +1,15 @@
+# == Schema Information
+#
+# Table name: notification_settings
+#
+#  id              :bigint           not null, primary key
+#  action          :string
+#  enabled         :boolean          default(FALSE), not null
+#  notifyable_type :string
+#  notifyable_id   :bigint
+#  created_at      :datetime         not null
+#  updated_at      :datetime         not null
+#
 class NotificationSetting < ApplicationRecord
   USERS_NOTIFICATIONS = %w[upcoming_invoice update_credit_card rent_guarantee_warnings].freeze
   STAFFS_NOTIFICATIONS = %w[purchase cancellation_request cancelled expired renewed daily_sales_report].freeze

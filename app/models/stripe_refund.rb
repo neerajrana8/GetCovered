@@ -1,3 +1,22 @@
+# == Schema Information
+#
+# Table name: stripe_refunds
+#
+#  id               :bigint           not null, primary key
+#  status           :integer          default("awaiting_execution"), not null
+#  full_reasons     :string           default([]), not null, is an Array
+#  amount           :integer          not null
+#  stripe_id        :string
+#  stripe_reason    :integer
+#  stripe_status    :integer
+#  failure_reason   :string
+#  receipt_number   :string
+#  error_message    :string
+#  created_at       :datetime         not null
+#  updated_at       :datetime         not null
+#  refund_id        :bigint
+#  stripe_charge_id :bigint
+#
 class StripeRefund < ApplicationRecord
 
   belongs_to :refund
@@ -25,6 +44,10 @@ class StripeRefund < ApplicationRecord
     failed: 2,
     canceled: 3
   }, _prefix: true
+  
+  def balance_transaction
+    Stripe::Refund.retrieve(self.stripe_id).balance_transaction rescue nil
+  end
   
   def execute
     self.with_lock do

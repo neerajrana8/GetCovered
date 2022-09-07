@@ -1,3 +1,20 @@
+# == Schema Information
+#
+# Table name: policy_users
+#
+#  id                    :bigint           not null, primary key
+#  primary               :boolean          default(FALSE), not null
+#  spouse                :boolean          default(FALSE), not null
+#  policy_application_id :bigint
+#  policy_id             :bigint
+#  user_id               :bigint
+#  created_at            :datetime         not null
+#  updated_at            :datetime         not null
+#  status                :integer          default("invited")
+#  disputed_at           :datetime
+#  dispute_status        :integer          default("undisputed")
+#  dispute_reason        :text
+#
 FactoryBot.define do
   factory :policy_user do
     primary { true }

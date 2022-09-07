@@ -4,7 +4,10 @@ class CancelUnpaidPoliciesJob < ApplicationJob
 
   # MOOSE WARNING: policy group stuff commented out for now because PGs introduce problems (no #cancel method, what if someone cancels an individual policy, how are we tracking unearned_premium anyway, etc.)
 
+  # MOOSE WARNING: commented out at miguel's request until pexrex time
+
   def perform(*_args)
+=begin
     curdate = Time.current.to_date
     @policies.each do |policy|
       policy.cancel('nonpayment', curdate)
@@ -12,11 +15,13 @@ class CancelUnpaidPoliciesJob < ApplicationJob
     #@policy_groups.each do |policy_group|
     #  policy_group.cancel('nonpayment', curdate)
     #end
+=end
   end
 
   private
   
     def set_policies
+=begin
       # grab all policies that need to be cancelled due to nonpayment
       @policies = ::Policy.where(id: 0) # guaranteed to have empty result set (we just want to attach .or queries to this)
       CarrierPolicyType.all.each do |cpt|
@@ -25,6 +30,7 @@ class CancelUnpaidPoliciesJob < ApplicationJob
       end
       @policies = @policies.policy_in_system(true).current
       # MOOSE WARNING: @policy_group stuff???
+=end
     end
 
 

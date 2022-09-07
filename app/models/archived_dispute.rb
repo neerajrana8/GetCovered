@@ -1,3 +1,17 @@
+# == Schema Information
+#
+# Table name: archived_disputes
+#
+#  id         :bigint           not null, primary key
+#  stripe_id  :string
+#  amount     :integer
+#  reason     :integer
+#  status     :integer
+#  active     :boolean          default(TRUE), not null
+#  charge_id  :bigint
+#  created_at :datetime         not null
+#  updated_at :datetime         not null
+#
 class ArchivedDispute < ApplicationRecord
   belongs_to :charge, class_name: "ArchivedCharge", foreign_key: "charge_id"
   has_one :invoice, class_name: "ArchivedInvoice", foreign_key: "invoice_id", through: :charge

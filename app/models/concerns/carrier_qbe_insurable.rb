@@ -41,6 +41,9 @@ module CarrierQbeInsurable
       unless cp.save
         return "The modified preferred status failed to save"
       end
+      self.update(preferred_ho4: true)
+      self.buildings.confirmed.update_all(preferred_ho4: true)
+      self.units.confirmed.update_all(preferred_ho4: true)
       FetchQbeRatesJob.perform_later(self)
       return nil
     end
@@ -509,7 +512,7 @@ module CarrierQbeInsurable
               configurer: @carrier,
               configurable: irc_configurable_override || self,
               configuration: { 'coverage_options' => {}, "rules" => {} },
-              rates: { 'rates' => [nil, [], [], [], [], []] }
+              rates: { 'rates' => [nil, {}, {}, {}, {}, {}] }
             )
             irc.rates['applicability'] = applicability unless irc_configurable_override
             
@@ -535,16 +538,16 @@ module CarrierQbeInsurable
               unless irc.save
                 set_error = true
                 puts "IRC FAILURE #{irc.errors.to_h}"
-                irc.rates['rates'][number_insured] = []
-                irc.configuration['coverage_options'] = {} if irc.rates['rates'].values.all?{|rate_array| rate_array.blank? }
+                irc.rates['rates'][number_insured] = {}
+                irc.configuration['coverage_options'] = {} if irc.rates['rates'].compact.all?{|rate_hash| rate_hash.values.all?{|v| v.blank? } }
                 set_error = true
                 @carrier_profile.data["get_rates_resolved"] = false 
                 irc.save
               end
 	          else
             
-              irc.rates['rates'][number_insured] = []
-              irc.configuration['coverage_options'] = {} if irc.rates['rates'].values.all?{|rate_array| rate_array.blank? } # note: for index 0, rate_array will be nil instead of [] if blank
+              irc.rates['rates'][number_insured] = {}
+              irc.configuration['coverage_options'] = {} if irc.rates['rates'].compact.all?{|rate_hash| rate_hash.values.all?{|v| v.blank? } }
 	                 
 	            set_error = true
 	            @carrier_profile.data["get_rates_resolved"] = false 
