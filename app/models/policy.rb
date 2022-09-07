@@ -97,7 +97,7 @@ class Policy < ApplicationRecord
 
   after_create :schedule_coverage_reminders, if: -> { policy_type&.master_coverage }
   after_create :create_necessary_policy_coverages_for_external, unless: -> { in_system? }
-  after_create :update_users_status
+  after_save :update_users_status
 
   after_save :update_coverage
 
@@ -163,7 +163,7 @@ class Policy < ApplicationRecord
   has_many :change_requests, as: :changeable
 
   has_many :signable_documents, as: :referent
-  
+
   has_many :integration_profiles,
     as: :profileable
 
@@ -270,7 +270,7 @@ class Policy < ApplicationRecord
     manual_cancellation_with_refunds:     7,     # no qbe code
     manual_cancellation_without_refunds:  8    # no qbe code
   }
-  
+
   def get_liability
     if self.carrier_id == MsiService.carrier_id
       self.coverages.find{|cov| cov.designation == "1005" }&.limit
@@ -613,7 +613,7 @@ class Policy < ApplicationRecord
 
   def update_users_status
     users.each do |user|
-      user.update(has_existing_policies: true)
+      user.update(has_existing_policies: true) if user.policies.present?
     end
   end
 
@@ -629,23 +629,65 @@ class Policy < ApplicationRecord
   end
 
   def notify_users
-    if self.previous_changes.has_key?('status') &&
-         ['EXTERNAL_VERIFIED', 'EXTERNAL_REJECTED'].include?(self.status)
-         # ['EXTERNAL_UNVERIFIED', 'EXTERNAL_VERIFIED', 'EXTERNAL_REJECTED'].include?(self.status)
-      begin
-        Compliance::PolicyMailer.with(organization: self.account.nil? ? self.agency : self.account)
-                                .external_policy_status_changed(policy: self)
-                                .deliver_now() unless self.in_system?
-      rescue Exception => e
-        @error = ModelError.create!(
-          kind: "external_policy_status_change_notification_error",
-          model_type: "Policy",
-          model_id: self.id,
-          information: e.to_json,
-          backtrace: e.backtrace.to_json,
-          description: "Unable to generate external Policy status change email for Policy ID: #{ self.id }<br><br>"
-        )
+    # ['EXTERNAL_UNVERIFIED', 'EXTERNAL_VERIFIED', 'EXTERNAL_REJECTED'].include?(self.status)
+    if self.previous_changes.has_key?('status') && ['EXTERNAL_VERIFIED', 'EXTERNAL_REJECTED'].include?(self.status)
+      unless self.integration_profiles.count > 0 || self.agency_id == 416
+
+        if self.account_id == 0 || self.agency_id == 0
+          reload() if inline_fix_external_policy_relationships
+        end
+
+        begin
+          Compliance::PolicyMailer.with(organization: self.account.nil? ? self.agency : self.account)
+                                  .external_policy_status_changed(policy: self)
+                                  .deliver_now() unless self.in_system?
+        rescue Exception => e
+          @error = ModelError.create!(
+            kind: "external_policy_status_change_notification_error",
+            model_type: "Policy",
+            model_id: self.id,
+            information: e.to_json,
+            backtrace: e.backtrace.to_json,
+            description: "Unable to generate external Policy status change email for Policy ID: #{ self.id }<br><br>"
+          )
+        end
       end
     end
+  end
+
+  def inline_fix_external_policy_relationships
+    return true
+    # the below is commented out because it was breaking upload
+=begin
+    to_return = false 
+    to_save = false
+    account_condition = (self.account_id.nil? || self.account_id == 0)
+    agency_condition = (self.agency_id.nil? || self.agency_id == 0)
+    unless self.policy_in_system
+      if account_condition || agency_condition
+        insurable = policy.primary_insurable
+
+        if account_condition
+          unless insurable.account_id == 0 || insurable.account_id.nil?
+            self.account_id = insurable.account_id
+            to_return = true
+            to_save = true
+          end
+        end
+
+        if agency_condition
+          unless self.account_id.nil? || self.account_id == 0
+            self.agency_id = Account.find(insurable.account_id).agency_id
+            to_return = true
+            to_save = true
+          end
+        end
+
+        self.save! if to_save
+
+      end
+    end
+    return to_return
+=end
   end
 end

@@ -80,9 +80,12 @@ module Compliance
 
       @onboarding_url = tokenized_url(@user, @community)
 
-      @from = @pm_account&.contact_info&.has_key?("contact_email") &&
-        !@pm_account&.contact_info["contact_email"].nil? ? @pm_account&.contact_info["contact_email"] :
-                "policyverify@getcovered.io"
+      @from = nil
+      unless @pm_account.nil?
+        @from = @pm_account&.contact_info["contact_email"] if @pm_account&.contact_info&.has_key?("contact_email") &&
+          (!@pm_account&.contact_info["contact_email"].nil? || !@pm_account&.contact_info["contact_email"].blank?)
+      end
+      @from = "policyverify@getcovered.io" if @from.nil?
 
       case @policy.status
       when "EXTERNAL_UNVERIFIED"
