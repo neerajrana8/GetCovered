@@ -80,7 +80,7 @@ class GmailMailSyncJob < ApplicationJob
       source: 'gmail',
       thread_id: mail_data.history_id,
       subject: mail_data.payload.headers.detect { |f| f.name === 'Subject' }.value,
-      created_at: Time.at(mail_data.internal_date).to_datetime
+      created_at: Time.at(mail_data.internal_date.to_s[0,10].to_i).to_datetime
     )
     contact_record.save
   end
@@ -98,7 +98,7 @@ class GmailMailSyncJob < ApplicationJob
       url = authorizer.get_authorization_url base_url: OOB_URI
       puts 'Open the following URL in the browser and enter the ' \
          "resulting code after authorization:\n" + url
-      code =  Rails.application.credentials.gmail[ENV['RAILS_ENV'].to_sym]
+      code = Rails.application.credentials.gmail[ENV['RAILS_ENV'].to_sym]
       credentials = authorizer.get_and_store_credentials_from_code(
         user_id: user_id, code: code, base_url: OOB_URI
       )
