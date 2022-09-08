@@ -2,14 +2,12 @@ class MailInterceptor
   def self.delivering_email(message)
     # do not modify the message variable
     message.to.each do |f|
-      user = User.find_by(email: f)
-      
+      user = User.find_by('email = ? or uid = ?', f, f)
       next unless user
-
-      body = if 'Finish Registering'.in?(message.subject) || 'Reset password instructions'.in?(message.subject) || 'Portal Invitation'.in?(message.subject)
-        'This is sensitive information.'
+      if 'Finish Registering'.in?(message.subject) || 'Reset password'.in?(message.subject) || 'Portal Invitation'.in?(message.subject)
+        body = 'Sensitive information is hidden'
       else
-        message.body
+        body = message.body
       end
       contact_record = ContactRecord.new(
         direction: 'outgoing',
