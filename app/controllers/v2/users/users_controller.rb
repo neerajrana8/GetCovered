@@ -8,7 +8,11 @@ module V2
         page = 1
         per = 10
 
-        users = ::User.all
+        users = if current_staff.role.to_sym == :super_admin
+          ::User.all
+        else
+          current_staff.organizable.active_users
+        end
 
         # Filtering
         if params[:filter].present?
@@ -23,6 +27,16 @@ module V2
             account_ids = params[:filter][:account_id]
             users = users.includes(:account_users).where(account_users: { account_id: account_ids })
           end
+
+          if params[:filter][:has_policies].present?
+            policy_users_ids = PolicyUser.all.pluck(:user_id)
+            users = users.where(id: policy_users_ids)
+          end
+
+          if params[:filter][:has_leases].present?
+            lease_users_ids = LeaseUser.all.pluck(:user_id)
+            users = users.where(id: lease_users_ids)
+          end
         end
 
         # Pagination
@@ -30,13 +44,19 @@ module V2
           page = params[:pagination][:page] if params[:pagination][:page]
           per = params[:pagination][:per] if params[:pagination][:per]
         end
-
-        users = users.page(page).per(per)
-        render json: users
+        @users = users.page(page).per(per)
+        render template: 'v2/users/list', status: :ok
       end
 
       def show
-        user = User.find(params[:user_id]) if params[:user_id].present?
+        if params[:id].present?
+          @user = ::User.includes(:policy_users, :account_users).find(params[:id])
+        end
+        if @user
+          render template: 'v2/users/show', status: :ok
+        else
+          render json: { errors: [:not_found] }, status: 404
+        end
       end
 
 
