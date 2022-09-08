@@ -7,7 +7,7 @@ module V2
         events_to_process = %w[processed delivered]
         sg = SendGrid::API.new(api_key: Rails.application.credentials.sendgrid[ENV['RAILS_ENV'].to_sym])
         params[:_json].each do |event|
-          user = ::User.find_by(email: event['email'])
+          user = ::User.find_by('email = ? or uid = ?', event['email'], event['email'])
           if user
             next unless events_to_process.include? event['event']
             next unless event['template_id'].present?

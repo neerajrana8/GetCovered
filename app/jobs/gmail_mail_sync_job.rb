@@ -61,9 +61,9 @@ class GmailMailSyncJob < ApplicationJob
   def process_message(mail_data)
     from_email_id = find_email(mail_data.payload.headers.detect { |f| f.name === 'From' }.value).downcase
     to_email_id = find_email(mail_data.payload.headers.detect { |f| f.name === 'To' }.value).downcase
-    user = User.find_by(email: [from_email_id, to_email_id])
-    if  user
-      record_mail(mail_data, user)
+    user = User.where(email: [from_email_id, to_email_id]).or(User.where(uid: [from_email_id, to_email_id]))
+    if user
+      record_mail(mail_data, user.last)
     else
       logger.info to_email_id + 'user not found'
     end
