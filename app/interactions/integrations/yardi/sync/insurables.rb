@@ -213,7 +213,7 @@ module Integrations
 
           ###### MAKE HASH #########
 
-          output_array = communities.map do |comm|
+          output_array = communities.select{|comm| !comm[:errored] }.map do |comm|
             {
               yardi_id: comm["Code"],
               title: comm["MarketingName"],
@@ -254,6 +254,13 @@ module Integrations
               ip = local_unmatched_ips.find do |ip|
                 addr = ip.profileable.primary_address
                 caddr = comm[:gc_addr_obj]
+#puts "!!!!!!!!!!!!! The comm is:"
+#puts comm
+#puts "!!!!!!!!!!!!! The unmatched IP is:"
+#puts "#{ip.to_json}"
+#puts "!!!!!!!!!!!!! and addr is #{addr ? "not null" : "null"}"
+#puts "!!!!!!!!!!!!! and caddr is #{caddr ? "not null" : "null"}"
+                next if caddr.nil?
                 next "#{addr.combined_street_address}, #{addr.city}, #{addr.state} #{addr.zip_code}" == "#{caddr.combined_street_address}, #{caddr.city}, #{caddr.state} #{caddr.zip_code}"
               end
               if !ip.nil?
