@@ -9,7 +9,7 @@ AuthTrail.transform_method = lambda do |data, request|
                     request.headers.env["HTTP_CLIENT"] || request.headers['client']
                   end
   data[:expiry] = if request.headers['client'].blank?
-                    data[:user].tokens[data[:user].tokens&.keys&.last]&.try("expiry")#request.headers[:expiry]
+                    data[:user].tokens[data[:user].tokens&.keys&.last].fetch("expiry", nil)#request.headers[:expiry]
                   else
                     request.headers['client']
                   end
