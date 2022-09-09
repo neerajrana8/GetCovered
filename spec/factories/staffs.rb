@@ -42,9 +42,13 @@
 FactoryBot.define do
   factory :staff do
     sequence(:email) { |n| "test#{n}@test.com" }
+
+    #email { FactoryBot.generate(:email) }
     enabled { true }
     password { 'test1234' }
     password_confirmation { 'test1234' }
+    provider { 'email' }
+    uid { email }
     association :profile, factory: :profile
     organizable do
       case role
@@ -53,6 +57,7 @@ FactoryBot.define do
       when 'staff'
         FactoryBot.create(:account)
       end
+
     end
 
     after(:create) do |staff|

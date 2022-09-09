@@ -67,6 +67,8 @@ class Staff < ApplicationRecord
   after_create :set_first_as_primary_on_organizable
   after_create :set_permissions_for_agent
   after_create :build_notification_settings
+  before_validation :set_default_provider,
+                    on: :create
 
   # belongs_to relationships
   # belongs_to :account, required: true
@@ -149,7 +151,12 @@ class Staff < ApplicationRecord
       self.notification_settings.create(action: opt, enabled: false)
     end
   end
-  
+
+  def set_default_provider
+    self.provider = (self.email.blank? ? '' : 'email')
+    self.uid = self.provider == 'email' ? self.email : ''
+  end
+
   def switch_agency(new_agency_id) # can also pass an Agency instead of an id
     new_agency = new_agency_id.class == ::Agency ? new_agency_id : ::Agency.where(id: new_agency_id).take
     new_agency_id = new_agency.id if new_agency_id.class == ::Agency
