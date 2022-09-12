@@ -37,6 +37,14 @@ module V2
             lease_users_ids = LeaseUser.all.pluck(:user_id)
             users = users.where(id: lease_users_ids)
           end
+
+          if params[:filter][:full_name].present?
+            users = users.joins(:profile).where("profiles.full_name ILIKE '%#{params[:filter][:full_name]}%'")
+          end
+
+          if params[:filter][:email].present?
+            users = users.where("email ILIKE '%#{params[:filter][:email]}%'")
+          end
         end
 
         # Pagination
