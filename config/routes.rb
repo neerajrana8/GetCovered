@@ -1,4 +1,5 @@
 require 'sidekiq/web'
+require 'sidekiq-scheduler/web'
 
 # Configure Sidekiq-specific session middleware to prevent error for Rails 6
 # Error message:
