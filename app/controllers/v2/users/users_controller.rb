@@ -47,11 +47,19 @@ module V2
           end
         end
 
+        # Sorting
+        if params[:sort].present?
+          users = users.order(email: params[:sort][:email]) if params[:sort][:email].present?
+          users = users.order(created_at: params[:sort][:created_at]) if params[:sort][:created_at].present?
+        end
+
         # Pagination
         if params[:pagination].present?
           page = params[:pagination][:page] if params[:pagination][:page]
           per = params[:pagination][:per] if params[:pagination][:per]
         end
+
+        @meta = { total: users.count, page: page, per: per }
         @users = users.page(page).per(per)
         render template: 'v2/users/list', status: :ok
       end

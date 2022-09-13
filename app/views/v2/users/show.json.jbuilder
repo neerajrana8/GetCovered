@@ -1,1 +1,3 @@
-json.partial! @user
+json.data do
+  json.partial! @user
+end
