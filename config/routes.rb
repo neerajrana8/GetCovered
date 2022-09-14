@@ -1,4 +1,11 @@
 require 'sidekiq/web'
+require 'sidekiq-scheduler/web'
+
+# Configure Sidekiq-specific session middleware to prevent error for Rails 6
+# Error message:
+# Sidekiq::Web needs a valid Rack session for CSRF protection.
+Sidekiq::Web.use ActionDispatch::Cookies
+Sidekiq::Web.use ActionDispatch::Session::CookieStore, key: "_interslice_session"
 
 Rails.application.routes.draw do
 
