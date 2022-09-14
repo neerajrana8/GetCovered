@@ -76,7 +76,12 @@ class GmailMailSyncJob < ApplicationJob
       direction: 'incoming',
       status: 'Delivered',
       contactable: user,
-      body: mail_data.payload.body.data ? mail_data.payload.body.data : mail_data.snippet ,
+      body: if mail_data.payload.body.data
+              mail_data.payload.body.data
+            elsif mail_data.payload&.parts&.first&.body&.data
+              mail_data.payload&.parts&.first&.body&.data
+            else mail_data.snippet
+            end,
       source: 'gmail',
       thread_id: mail_data.history_id,
       subject: mail_data.payload.headers.detect { |f| f.name === 'Subject' }.value,
