@@ -28,7 +28,15 @@ module V2
         )
 
         if current_staff.organizable_type == 'Agency'
-          filter[:agency_id] = [current_staff.organizable.id]
+          current_agency = Agency.find(current_staff.organizable_id)
+          # We are root agency
+          if current_agency.agency_id.nil? && filter[:agency_id].blank?
+            sub_agencies_ids = []
+            sub_agencies = current_agency.agencies
+            sub_agencies_ids = sub_agencies.pluck(:id) if sub_agencies.count.positive?
+            sub_agencies_ids << current_staff.organizable_id
+            filter[:agency_id] = sub_agencies_ids
+          end
         end
 
         leads = leads.by_agency(filter[:agency_id]) unless filter[:agency_id].nil?
