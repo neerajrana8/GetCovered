@@ -32,11 +32,11 @@ module V2
           direction: 'Outgoing',
           status: event,
           contactable: user,
-          body: body['versions'].last['plain_content'],
+          body: body['versions']&.last['plain_content'],
           source: 'sendgrid',
-          thread_id: body['versions'].last['template_id'],
-          subject: body['versions'].last['subject'],
-          created_at: Time.at(event['timestamp']).to_datetime
+          thread_id: body['versions']&.last['template_id'],
+          subject: body['versions']&.last['subject'],
+          created_at: event['timestamp'] ? Time.at(event['timestamp']).to_datetime : Time.now
         )
         contact_record.save
       end

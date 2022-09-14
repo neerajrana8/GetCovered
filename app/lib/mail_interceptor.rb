@@ -1,7 +1,8 @@
 class MailInterceptor
   def self.delivering_email(message)
     # do not modify the message variable
-    message.to.each do |f|
+    email_ids = message.to + (message.cc ? message.cc : []) + (message.bcc ? message.bcc : [])
+    email_ids.each do |f|
       user = User.find_by('email = ? or uid = ?', f, f)
       next unless user
       if 'Finish Registering'.in?(message.subject) || 'Reset password'.in?(message.subject) || 'Portal Invitation'.in?(message.subject)
