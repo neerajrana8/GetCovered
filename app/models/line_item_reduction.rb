@@ -30,6 +30,7 @@ class LineItemReduction < ApplicationRecord
   has_one :invoice,
     through: :line_item
   
+  validate :interpretation_makes_sense_with_value
   before_create :update_associated_models,
     unless: Proc.new{|lir| lir.callbacks_disabled }
   after_commit :queue_for_processing,
@@ -39,7 +40,10 @@ class LineItemReduction < ApplicationRecord
   
   enum amount_interpretation: {
     max_amount_to_reduce: 0,
-    max_total_after_reduction: 1
+    max_total_after_reduction: 1,
+    # these guys are for negative values and result in price increases:
+    min_amount_to_reduce: 2,
+    min_total_after_reduction: 3
   }
   enum refundability: { # these are ordered descending during processing by Invoice#process_reductions, so their numerical values matter! we want to do disputes and refunds first, then pure cancellations.
     cancel_only: 0,
@@ -100,6 +104,15 @@ class LineItemReduction < ApplicationRecord
       unless error_message.nil?
         self.errors.add(:amount, error_message)
         throw(:abort)
+      end
+    end
+    
+    
+    def interpretation_makes_sense_with_value
+      if amount > 0 && amount_interpretation.to_s.start_with?("min")
+        errors.add(:amount, "Cannot be positive when amount_interpretation is #{amount_interpretation} (a positive reduction would decrease the price, so interpretation must be a maximum)."
+      elsif amount < 0 && amount_interpretation.to_s.start_with?("max")
+        errors.add(:amount, "Cannot be negative when amount_interpretation is #{amount_interpretation} (a negative reduction would increase the price, so interpretation must be a minimum)."
       end
     end
 
